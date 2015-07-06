@@ -1,0 +1,19 @@
+Status by scene downloaded, not the request itself
+
+
+Landsat from S3
+---------------
+
+https://aws.amazon.com/datasets/1571164061367186
+    s3://nasanex/Landsat
+
+http://aws.amazon.com/nasa/nex/
+
+http://aws.amazon.com/public-data-sets/landsat/
+    s3://landsat-pds/L8/139/045/LC81390452014295LGN00/
+
+
+
+http://landsat-pds.s3.amazonaws.com/L8/001/003/LC80010032015115LGN00/LC80010032015115LGN00_B1.TIF
+
+    http://landsat-pds.s3.amazonaws.com/L8/191/031/LC81910312015150LGN00/LC81910312015150LGN00_B1.TIF

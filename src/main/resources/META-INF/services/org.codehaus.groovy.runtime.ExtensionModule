@@ -1,0 +1,3 @@
+moduleName = sepal
+moduleVersion = 1.0
+extensionClasses = org.openforis.sepal.util.MvcExtension
