@@ -1,38 +1,48 @@
 package org.openforis.sepal.sceneretrieval
 
 import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.dataprovider.DelegatingSceneProvider
-import org.openforis.sepal.dataprovider.FileSystemSceneDownloadCoordinator
-import org.openforis.sepal.dataprovider.FileSystemSceneRepository
-import org.openforis.sepal.dataprovider.SceneProvider
-import org.openforis.sepal.dataprovider.earthexplorer.EarthExplorerSceneProvider
-import org.openforis.sepal.dataprovider.earthexplorer.RestfulEarthExplorerClient
-import org.openforis.sepal.dataprovider.s3landsat8.RestfulS3LandsatClient
-import org.openforis.sepal.dataprovider.s3landsat8.S3Landsat8SceneProvider
+import org.openforis.sepal.sceneretrieval.provider.DelegatingSceneProvider
+import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneDownloadCoordinator
+import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
+import org.openforis.sepal.sceneretrieval.provider.SceneDownloadCoordinator
+import org.openforis.sepal.sceneretrieval.provider.SceneProvider
+import org.openforis.sepal.sceneretrieval.provider.earthexplorer.EarthExplorerSceneProvider
+import org.openforis.sepal.sceneretrieval.provider.earthexplorer.RestfulEarthExplorerClient
+import org.openforis.sepal.sceneretrieval.provider.s3landsat8.RestfulS3LandsatClient
+import org.openforis.sepal.sceneretrieval.provider.s3landsat8.S3Landsat8SceneProvider
 import org.openforis.sepal.util.ExecutorServiceBasedJobExecutor
 
 import java.util.concurrent.Executors
 
 class SceneRetrievalComponent {
     final SceneProvider sceneProvider
+    private final SceneDownloadCoordinator coordinator
 
-    SceneRetrievalComponent() {
-        def coordinator = new FileSystemSceneDownloadCoordinator(
-                new FileSystemSceneRepository(new File(SepalConfiguration.instance.downloadWorkingDirectory))
+    SceneRetrievalComponent(SceneRetrievalListener... listeners) {
+        def downloadWorkingDirectory = new File(SepalConfiguration.instance.downloadWorkingDirectory)
+        def userHomePath = SepalConfiguration.instance.getUserHomeDir()
+        coordinator = new FileSystemSceneDownloadCoordinator(
+                new FileSystemSceneRepository(downloadWorkingDirectory,userHomePath)
         )
+
+        register(listeners)
 
         sceneProvider = new DelegatingSceneProvider([
                 new S3Landsat8SceneProvider(
                         new RestfulS3LandsatClient('http://landsat-pds.s3.amazonaws.com/'),
                         new ExecutorServiceBasedJobExecutor(Executors.newCachedThreadPool()),
-                        coordinator
+                        this.coordinator
                 ),
                 new EarthExplorerSceneProvider(
                         new RestfulEarthExplorerClient(),
-                        new ExecutorServiceBasedJobExecutor(Executors.newFixedThreadPool(2)()),
-                        coordinator
+                        new ExecutorServiceBasedJobExecutor(Executors.newFixedThreadPool(2)),
+                        this.coordinator
                 )
         ])
+    }
+
+    void register(SceneRetrievalListener... listeners){
+        coordinator.register(listeners)
     }
 
     void start() {

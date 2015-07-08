@@ -2,6 +2,7 @@ package org.openforis.sepal.endpoint
 
 import groovymvc.AbstractMvcFilter
 import groovymvc.Controller
+
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed
@@ -9,8 +10,6 @@ import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.repository.DataSetRepository
 import org.openforis.sepal.scenesdownload.RequestScenesDownload
 import org.openforis.sepal.scenesdownload.RequestScenesDownloadHandler
-import org.openforis.sepal.scenesdownload.ScenesDownloadRepository
-import org.openforis.sepal.transaction.SqlConnectionManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -20,14 +19,15 @@ import static groovy.json.JsonOutput.toJson
 
 final class Endpoints extends AbstractMvcFilter {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private final Server server = new Server()
+    private static final Server server = new Server()
+
+    private static DataSetRepository dataSetRepository
+    private static HandlerRegistryCommandDispatcher commandDispatcher
+    private static RequestScenesDownloadHandler requestScenesDownloadHandler
+    private static ScenesDownloadEndPoint scenesDownloadEndPoint
 
     Controller bootstrap(ServletContext servletContext) {
-        def connectionManager = new SqlConnectionManager(SepalConfiguration.instance.dataSource)
-        def scenesDownloadRepo = new ScenesDownloadRepository(connectionManager)
-        def dataSetRepository = new DataSetRepository(connectionManager)
-        def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
-                .register(RequestScenesDownload, new RequestScenesDownloadHandler(scenesDownloadRepo))
+        commandDispatcher.register(RequestScenesDownload, requestScenesDownloadHandler)
 
         def controller = Controller.builder(servletContext)
                 .messageSource('messages')
@@ -51,19 +51,29 @@ final class Endpoints extends AbstractMvcFilter {
             }
         }
 
-        new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo)
-                .registerWith(controller)
+        scenesDownloadEndPoint.registerWith(controller)
 
         return controller
     }
 
-    void deploy() {
+
+    static void deploy(
+            DataSetRepository dataSetRepository,
+            HandlerRegistryCommandDispatcher commandDispatcher,
+            RequestScenesDownloadHandler requestScenesDownloadHandler,
+            ScenesDownloadEndPoint scenesDownloadEndPoint
+    ) {
+        this.dataSetRepository = dataSetRepository
+        this.commandDispatcher = commandDispatcher
+        this.requestScenesDownloadHandler = requestScenesDownloadHandler
+        this.scenesDownloadEndPoint = scenesDownloadEndPoint
+
         def webAppPort = SepalConfiguration.instance.webAppPort
         LOG.debug("Deploying SEPAL endpoints on port $webAppPort")
         server.deploy(Endpoints, webAppPort)
     }
 
-    void undeploy() {
+    static void undeploy() {
         server.undeploy()
     }
 }

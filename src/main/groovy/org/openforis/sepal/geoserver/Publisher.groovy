@@ -1,18 +1,23 @@
 package org.openforis.sepal.geoserver
 
+
 import org.openforis.sepal.geoserver.io.GeoServerOutputFileFilter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.nio.file.Files
 
-class Publisher {
+class Publisher{
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final File targetDir
     private final String relativeLayersPath
     private final ProcessingChain processingChain
     private final GeoServer geoServer
+    private final File homeDir
+
     private final Map<File, Layer> layers = [:]
+
+    private boolean initialized = false
 
     Publisher(File homeDir, File targetDir, String relativeLayersPath, ProcessingChain processingChain, GeoServer geoServer) {
         LOG.info("Publisher instance created for homeDir $homeDir")
@@ -20,10 +25,12 @@ class Publisher {
         this.processingChain = processingChain
         this.geoServer = geoServer
         this.targetDir = targetDir
+        this.homeDir = homeDir
 
         homeDir.eachDir { userDir ->
             setupUserDir(userDir)
         }
+
     }
 
     void userAdded(File userDir) {
@@ -152,5 +159,4 @@ class Publisher {
         }
         geoServer.addWorkspace(userName)
     }
-
 }

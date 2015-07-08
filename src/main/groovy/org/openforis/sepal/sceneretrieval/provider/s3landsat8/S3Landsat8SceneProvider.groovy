@@ -1,6 +1,6 @@
-package org.openforis.sepal.dataprovider.s3landsat8
+package org.openforis.sepal.sceneretrieval.provider.s3landsat8
 
-import org.openforis.sepal.dataprovider.*
+import org.openforis.sepal.sceneretrieval.provider.*
 import org.openforis.sepal.util.JobExecutor
 
 class S3Landsat8SceneProvider implements SceneProvider {
@@ -14,10 +14,10 @@ class S3Landsat8SceneProvider implements SceneProvider {
         this.coordinator = coordinator
     }
 
-    Collection<SceneReference> retrieve(long requestId, Collection<SceneReference> scenes) {
+    Collection<SceneReference> retrieve(long requestId,String username, Collection<SceneReference> scenes) {
         def indexByScene = loadSceneIndexes(scenes)
         indexByScene.each { scene, index ->
-            retrieveScene(index, new SceneRequest(requestId, scene))
+            retrieveScene(index, new SceneRequest(requestId, scene,username))
         }
 
         def notRetrieved = scenes.minus(indexByScene.keySet())

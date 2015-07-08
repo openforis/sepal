@@ -2,7 +2,13 @@ package endtoend
 
 import fake.Database
 import org.openforis.sepal.SepalConfiguration
+import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
+import org.openforis.sepal.endpoint.ScenesDownloadEndPoint
+import org.openforis.sepal.repository.DataSetRepository
+import org.openforis.sepal.scenesdownload.JdbcScenesDownloadRepository
+import org.openforis.sepal.scenesdownload.RequestScenesDownloadHandler
+import org.openforis.sepal.transaction.SqlConnectionManager
 import org.slf4j.LoggerFactory
 import util.Port
 
@@ -31,8 +37,18 @@ class Sepal {
         database = new Database()
         configure()
 
-        endpoints = new Endpoints()
-        endpoints.deploy()
+
+
+        SqlConnectionManager connectionManager = new SqlConnectionManager(database.dataSource)
+        def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
+        def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
+
+        Endpoints.deploy(
+                new DataSetRepository(connectionManager),
+                commandDispatcher,
+                new RequestScenesDownloadHandler(scenesDownloadRepo),
+                new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo)
+        )
     }
 
     private void configure() {
@@ -48,7 +64,7 @@ class Sepal {
     void stop() {
         started = false
         database.reset()
-        endpoints.undeploy()
+        Endpoints.undeploy()
     }
 
     private void addShutdownHook() {

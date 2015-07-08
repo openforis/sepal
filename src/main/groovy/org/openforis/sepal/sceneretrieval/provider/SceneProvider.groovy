@@ -1,4 +1,4 @@
-package org.openforis.sepal.dataprovider
+package org.openforis.sepal.sceneretrieval.provider
 
 interface SceneProvider {
     /**
@@ -6,7 +6,7 @@ interface SceneProvider {
      * @param scenes the scenes to retrieve
      * @return scenes not retrievable for this provider
      */
-    Collection<SceneReference> retrieve(long requestId, Collection<SceneReference> scenes)
+    Collection<SceneReference> retrieve(long requestId,String username, Collection<SceneReference> scenes)
 
     void stop()
 }

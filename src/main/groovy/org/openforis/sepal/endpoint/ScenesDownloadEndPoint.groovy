@@ -21,7 +21,7 @@ public class ScenesDownloadEndPoint {
 
             get('downloadRequests/{user}') {
                 response.contentType = 'application/json'
-                def requests = repo.findRequests(params.user as Integer)
+                def requests = repo.findUserRequests(params.user as String)
                 send(toJson(requests))
             }
             post('downloadRequests') {

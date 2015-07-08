@@ -2,18 +2,18 @@ package org.openforis.sepal.scenesdownload
 
 import org.apache.commons.io.FileUtils
 import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.dataprovider.earthexplorer.RestfulEarthExplorerClient
+import org.openforis.sepal.sceneretrieval.provider.earthexplorer.RestfulEarthExplorerClient
 import org.openforis.sepal.model.User
 import org.openforis.sepal.repository.DataSetRepository
 import org.openforis.sepal.repository.UserRepository
-import org.openforis.sepal.scenesdownload.DownloadRequest.RequestStatus
+import org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import util.FilePermissions
 
 import java.util.concurrent.Callable
 
-class EarthExplorerScenesDownloader implements Callable<RequestStatus> {
+class EarthExplorerScenesDownloader implements Callable<SceneStatus> {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private DownloadRequest downloadRequest
@@ -45,24 +45,24 @@ class EarthExplorerScenesDownloader implements Callable<RequestStatus> {
         }
     }
 
-    public RequestStatus call() throws Exception {
+    public DownloadRequest.SceneStatus call() throws Exception {
         LOG.debug("New download triggered. Request id $downloadRequest.requestId")
-        repository.updateDownloadStatus(downloadRequest.requestId, RequestStatus.STARTED)
+        repository.updateDownloadStatus(downloadRequest.requestId, DownloadRequest.SceneStatus.STARTED)
         try {
             earthExplorerClient.login()
             String[] directLinks = collectDownloadLinks()
-            repository.updateDownloadStatus(downloadRequest.requestId, RequestStatus.DOWNLOADING)
+            repository.updateDownloadStatus(downloadRequest.requestId, DownloadRequest.SceneStatus.DOWNLOADING)
             File[] files = directLinks.collect { earthExplorerClient.download(it, downloadWorkingDirectory) }
-            repository.updateDownloadStatus(downloadRequest.requestId, RequestStatus.UNZIPPING)
+            repository.updateDownloadStatus(downloadRequest.requestId, DownloadRequest.SceneStatus.UNZIPPING)
             File[] scenes = unzipScenes(files)
-            repository.updateDownloadStatus(downloadRequest.requestId, RequestStatus.PROCESSING)
+            repository.updateDownloadStatus(downloadRequest.requestId, DownloadRequest.SceneStatus.PROCESSING)
             processScenes(scenes)
-            repository.updateDownloadStatus(downloadRequest.requestId, RequestStatus.COMPLETED, "Download Completed", true)
+            repository.updateDownloadStatus(downloadRequest.requestId, DownloadRequest.SceneStatus.COMPLETED, "Download Completed", true)
 
             downloadWorkingDirectory.deleteDir()
         } catch (Exception ex) {
             LOG.error("Error while working on RequestId $downloadRequest.requestId", ex)
-            repository.updateDownloadStatus(downloadRequest.requestId, RequestStatus.FAILED, ex.getMessage(), true)
+            repository.updateDownloadStatus(downloadRequest.requestId, SceneStatus.FAILED, ex.getMessage(), true)
         } finally {
             earthExplorerClient.logout()
         }

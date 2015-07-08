@@ -1,6 +1,6 @@
-package org.openforis.sepal.dataprovider.earthexplorer
+package org.openforis.sepal.sceneretrieval.provider.earthexplorer
 
-import org.openforis.sepal.dataprovider.*
+import org.openforis.sepal.sceneretrieval.provider.*
 import org.openforis.sepal.util.JobExecutor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -21,20 +21,28 @@ class EarthExplorerSceneProvider implements SceneProvider {
 
     @Override
     public Collection<SceneReference> retrieve(long requestId,
+                                               String username,
                                                Collection<SceneReference> scenes) {
         def filteredList = scenes.findAll { SceneReference scene ->
             scene.dataSet == DataSet.LANDSAT_8
         }
-        filteredList.each { SceneReference reference ->
-            retrieveScene(new SceneRequest(requestId, reference))
+
+        filteredList = filteredList.collect {
+            def sceneRequest = new SceneRequest(requestId, it,username)
+            def downloadLink = client.lookupDownloadLink(sceneRequest)
+            if (downloadLink) {
+                retrieveScene(sceneRequest, downloadLink)
+                return it
+            }
+            return null
         }
         scenes.minus(filteredList)
     }
 
-    SceneReference retrieveScene(SceneRequest sceneRequest) {
+    private SceneReference retrieveScene(SceneRequest sceneRequest, String downloadLink) {
         executor.execute {
             coordinator.withScene(sceneRequest, 0d) { Scene scene ->
-                client.download(sceneRequest) { InputStream inputStream ->
+                client.download(sceneRequest, downloadLink) { InputStream inputStream ->
                     scene.addArchive(new FileStream(inputStream, sceneRequest.sceneReference.id + ".tar.gz", 0d))
                 }
 

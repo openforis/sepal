@@ -1,7 +1,7 @@
 package org.openforis.sepal.scenesdownload
 
 import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.dataprovider.earthexplorer.RestfulEarthExplorerClient
+import org.openforis.sepal.sceneretrieval.provider.earthexplorer.RestfulEarthExplorerClient
 import org.openforis.sepal.repository.DataSetRepository
 import org.openforis.sepal.repository.UserRepository
 import org.openforis.sepal.transaction.SqlConnectionManager
@@ -27,7 +27,7 @@ class Downloader {
 
     Downloader() {
         def connectionManager = new SqlConnectionManager(SepalConfiguration.instance.dataSource)
-        repository = new ScenesDownloadRepository(connectionManager)
+        repository = new JdbcScenesDownloadRepository(connectionManager)
         dataSetRepository = new DataSetRepository(connectionManager)
         client = new RestfulEarthExplorerClient()
         userRepository = new UserRepository(connectionManager)

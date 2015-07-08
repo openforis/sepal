@@ -5,13 +5,8 @@ import groovy.transform.ToString
 @ToString
 class DownloadRequest {
     def requestId
-    int requestor
+    def username
     def requestTime
-    def completionTime
-    def requestStatus
-    def response
-    String processingChain
-    int dataSetId
     List<RequestedScene> scenes = []
 
     DownloadRequest() {
@@ -24,58 +19,25 @@ class DownloadRequest {
     }
 
 
-    static enum RequestStatus {
-        UNKNOWN(-1L), REQUESTED(0L), INVALID(1), STARTED(2L), DOWNLOADING(3), UNZIPPING(4), PROCESSING(5L), COMPLETED(6L), FAILED(7L)
+    static enum SceneStatus {
+        UNKNOWN(-1L), REQUESTED(0L), INVALID(1), STARTED(2L), DOWNLOADING(3L), DOWNLOADED(4L), TRANSFORMING(5L), TRANSFORMED(6L), PROCESSING(7L), PROCESSED(8L), PUBLISHING(9L), PUBLISHED(10L), FAILED(11L)
 
         Long requestCode
 
-        RequestStatus(Long requestCode) {
+        SceneStatus(Long requestCode) {
             this.requestCode = requestCode
         }
 
         def static byValue(final String requestStatus) {
-            RequestStatus status = RequestStatus.UNKNOWN
-            RequestStatus[] values = status.values()
-            for (RequestStatus value : values) {
+            SceneStatus status = UNKNOWN
+            SceneStatus[] values = status.values()
+            for (SceneStatus value : values) {
                 if (value.toString().equals(requestStatus)) {
                     status = value
                     break
                 }
             }
             status
-        }
-
-        def static byRequestCode(final Long requestCode) {
-            RequestStatus reqStatus = UNKNOWN
-            switch (requestCode) {
-                case 0:
-                    reqStatus = REQUESTED
-                    break
-                case 1:
-                    reqStatus = INVALID
-                    break
-                case 2:
-                    reqStatus = STARTED
-                    break
-                case 3:
-                    reqStatus = DOWNLOADING
-                    break
-                case 4:
-                    reqStatus = UNZIPPING
-                    break
-                case 5:
-                    reqStatus = PROCESSING
-                    break
-                case 6:
-                    reqStatus = COMPLETED
-                    break
-                case 7:
-                    reqStatus = FAILED
-                    break
-                default:
-                    reqStatus = UNKNOWN
-                    break
-            }
         }
     }
 }

@@ -2,25 +2,23 @@ package endtoend.dataprovider
 
 import fake.SynchronousJobExecutor
 
-import org.openforis.sepal.dataprovider.FileSystemSceneDownloadCoordinator
-import org.openforis.sepal.dataprovider.FileSystemSceneRepository
-import org.openforis.sepal.dataprovider.SceneReference
-import org.openforis.sepal.dataprovider.s3landsat8.S3Landsat8SceneProvider
-import org.openforis.sepal.dataprovider.s3landsat8.S3LandsatClient
-import org.openforis.sepal.dataprovider.s3landsat8.SceneIndex
+import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneDownloadCoordinator
+import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
+import org.openforis.sepal.sceneretrieval.provider.SceneReference
+import org.openforis.sepal.sceneretrieval.provider.s3landsat8.S3Landsat8SceneProvider
+import org.openforis.sepal.sceneretrieval.provider.s3landsat8.S3LandsatClient
+import org.openforis.sepal.sceneretrieval.provider.s3landsat8.SceneIndex
 
 import spock.lang.Ignore
-import spock.lang.Specification
-import spock.util.concurrent.PollingConditions
 import util.DirectoryStructure
-import static org.openforis.sepal.dataprovider.DataSet.LANDSAT_8
+import static org.openforis.sepal.sceneretrieval.provider.DataSet.LANDSAT_8
 
 class S3Landsat8SceneProviderTest extends SceneProviderTest {
     def provider = new S3Landsat8SceneProvider(
             new FakeS3LandsatClient(),
             new SynchronousJobExecutor(),
             new FileSystemSceneDownloadCoordinator(
-                    new FileSystemSceneRepository(workingDir)
+                    new FileSystemSceneRepository(workingDir,null)
             )
     )
     
@@ -31,7 +29,7 @@ class S3Landsat8SceneProviderTest extends SceneProviderTest {
 
     def 'Retrieving a scene downloads the files'() {
         when:
-            provider.retrieve(requestId, [new SceneReference(sceneId, LANDSAT_8)])
+            provider.retrieve(requestId, 'Test.User', [new SceneReference(sceneId, LANDSAT_8)])
         then:
                 DirectoryStructure.matches(workingDir) {
                     "${requestId}" {
@@ -45,13 +43,7 @@ class S3Landsat8SceneProviderTest extends SceneProviderTest {
                 }
     }
     
-    @Ignore
-    def 'Retrieving a scene notifies about the different stages'() {
-        when:
-            provider.retrieve(requestId, [new SceneReference(sceneId, LANDSAT_8)])
-        then:
-            false
-    }
+
 
     static class FakeS3LandsatClient implements S3LandsatClient {
         SceneIndex index(String sceneId) {

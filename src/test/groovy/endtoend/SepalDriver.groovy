@@ -5,7 +5,9 @@ import groovy.json.JsonOutput
 import groovyx.net.http.HttpResponseDecorator
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.SepalConfiguration
+import org.openforis.sepal.scenesdownload.DownloadRequest
 import org.openforis.sepal.scenesdownload.Downloader
+import org.openforis.sepal.scenesdownload.RequestScenesDownload
 import spock.util.concurrent.PollingConditions
 
 import static org.openforis.sepal.SepalConfiguration.*
@@ -25,8 +27,8 @@ class SepalDriver {
         }
     }
 
-    HttpResponseDecorator getDownloadRequests(int userId) {
-        client.get(path: "downloadRequests/$userId") as HttpResponseDecorator
+    HttpResponseDecorator getDownloadRequests(String username) {
+        client.get(path: "downloadRequests/$username") as HttpResponseDecorator
     }
 
     HttpResponseDecorator postDownloadRequests(Map downloadRequest) {
@@ -37,11 +39,17 @@ class SepalDriver {
         ) as HttpResponseDecorator
     }
 
-    SepalDriver withUsers(int ... userIds) {
-        userIds.each {
+    SepalDriver withUsers(String ... usernames) {
+        usernames.each {
             system.database.addUser(it)
         }
         return this
+    }
+
+    SepalDriver withRequests(RequestScenesDownload... requests){
+        requests.each {
+            system.database.addDownloadRequest(it)
+        }
     }
 
     SepalDriver withActiveDataSets(int ... dataSetIds) {

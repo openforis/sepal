@@ -3,12 +3,12 @@ package endtoend
 import spock.lang.Specification
 
 class ScenesDownloadTest extends Specification {
-    private static final USER_ID = 1
-    private static final DATASET_ID = 2
+    private static final USERNAME = 'Test.User'
+    private static final DATASET_ID = 1
     private static final INVALID_DATASET_ID = 20
 
     private final SepalDriver driver = new SepalDriver()
-            .withUsers(USER_ID)
+            .withUsers(USERNAME)
             .withActiveDataSets(DATASET_ID)
 
     def cleanup() {
@@ -17,21 +17,21 @@ class ScenesDownloadTest extends Specification {
 
     def 'Given no download requests, when getting download requests, none are returned'() {
         when:
-            def response = driver.getDownloadRequests(USER_ID)
+            def response = driver.getDownloadRequests(USERNAME)
         then:
             response.data == []
     }
 
     def 'Given a download request, when getting download requests, the request is returned'() {
         def request = [
-                userId   : USER_ID,
+                username   : USERNAME,
                 dataSetId: DATASET_ID,
                 sceneIds : ['the scene id']
         ]
         driver.postDownloadRequests(request)
 
         when:
-            def response = driver.getDownloadRequests(USER_ID)
+            def response = driver.getDownloadRequests(USERNAME)
         then:
             def requests = response.data as Map
             requests.size() == 1
@@ -41,7 +41,7 @@ class ScenesDownloadTest extends Specification {
 
     def 'Given a download request with invalid data set, 400 is returned'() {
         def request = [
-                userId   : USER_ID,
+                userId   : USERNAME,
                 dataSetId: INVALID_DATASET_ID,
                 sceneIds : ['the scene id']
         ]
@@ -55,7 +55,7 @@ class ScenesDownloadTest extends Specification {
 
     def 'Given a download request without scenes, 400 is returned'() {
         def request = [
-                userId   : USER_ID,
+                userId   : USERNAME,
                 dataSetId: DATASET_ID,
                 sceneIds : []
         ]

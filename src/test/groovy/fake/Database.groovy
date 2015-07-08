@@ -1,7 +1,10 @@
 package fake
 
+import groovy.sql.BatchingPreparedStatementWrapper
 import groovy.sql.Sql
 import org.h2.jdbcx.JdbcDataSource
+import org.openforis.sepal.scenesdownload.DownloadRequest
+import org.openforis.sepal.scenesdownload.RequestScenesDownload
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -22,14 +25,23 @@ class Database {
 
     DataSource getDataSource() { dataSource }
 
-    void addUser(int userId) {
-        def username = "user$userId" as String
-        sql.executeInsert("INSERT INTO users(id, username) values($userId, $username)")
+    void addUser(String username) {
+      sql.executeInsert("INSERT INTO users(username) values($username)")
     }
 
     def addActiveDataSet(int dataSetId) {
         def dataSetName = "DataSet$dataSetId" as String
         sql.executeInsert("INSERT INTO data_set(id, dataset_name, dataset_value, dataset_active) values($dataSetId, $dataSetName, $dataSetName, 1)")
+    }
+
+    def addDownloadRequest(RequestScenesDownload downloadRequest){
+        def generated = sql.executeInsert('INSERT INTO download_requests(username) VALUES(?)',[downloadRequest.username])
+        def requestId = generated[0][0] as int
+        sql.withBatch('INSERT INTO requested_scenes(request_id, scene_id,dataset_id,processing_chain) VALUES(?, ?,?,?)') { BatchingPreparedStatementWrapper ps ->
+            downloadRequest.sceneIds.each {
+                ps.addBatch([requestId, it,downloadRequest.dataSetId,downloadRequest.processingChain])
+            }
+        }
     }
 
     void reset() {

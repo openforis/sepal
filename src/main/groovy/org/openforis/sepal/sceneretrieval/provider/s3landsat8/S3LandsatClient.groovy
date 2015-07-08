@@ -1,4 +1,4 @@
-package org.openforis.sepal.dataprovider.s3landsat8
+package org.openforis.sepal.sceneretrieval.provider.s3landsat8
 
 import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient

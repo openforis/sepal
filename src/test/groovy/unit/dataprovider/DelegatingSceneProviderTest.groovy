@@ -1,13 +1,14 @@
 package unit.dataprovider
 
-import org.openforis.sepal.dataprovider.SceneProvider
-import org.openforis.sepal.dataprovider.DataSet
-import org.openforis.sepal.dataprovider.DelegatingSceneProvider
-import org.openforis.sepal.dataprovider.SceneReference
+import org.openforis.sepal.sceneretrieval.provider.SceneProvider
+import org.openforis.sepal.sceneretrieval.provider.DataSet
+import org.openforis.sepal.sceneretrieval.provider.DelegatingSceneProvider
+import org.openforis.sepal.sceneretrieval.provider.SceneReference
 import spock.lang.Specification
 
 class DelegatingSceneProviderTest extends Specification {
     def requestId = 1L
+    def username = 'Test.User'
     def dataSet = DataSet.LANDSAT_8
 
     def 'Retrieves scenes from '() {
@@ -19,14 +20,14 @@ class DelegatingSceneProviderTest extends Specification {
         def scenes = [new SceneReference('first', dataSet), new SceneReference('last', dataSet)]
 
         when:
-            delegating.retrieve(requestId, scenes)
+            delegating.retrieve(requestId,username, scenes)
 
         then: 'None retrievable'
-            1 * provider1.retrieve(requestId, scenes) >> scenes
+            1 * provider1.retrieve(requestId,username, scenes) >> scenes
         then: 'Last retrievable'
-            1 * provider2.retrieve(requestId, scenes) >> [scenes.first()]
+            1 * provider2.retrieve(requestId,username, scenes) >> [scenes.first()]
         then: 'First retrievable'
-            1 * provider3.retrieve(requestId, [scenes.first()]) >> []
+            1 * provider3.retrieve(requestId,username, [scenes.first()]) >> []
         then: 'No scenes left to retrieve - provider not invoked'
             0 * provider4.retrieve(_)
     }

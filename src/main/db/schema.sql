@@ -190,22 +190,22 @@ CREATE TABLE wrs_points (
   PRIMARY KEY (id)
 );
 
+
 CREATE TABLE download_requests (
-  request_id       INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  data_set_id      INT(10) UNSIGNED NOT NULL,
-  user_id          INT(10) UNSIGNED NOT NULL,
-  request_time     TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  end_time         TIMESTAMP        NOT NULL DEFAULT '0000-01-01 00:00:00',
-  request_status   VARCHAR(50)      NOT NULL DEFAULT 'REQUESTED',
-  response         TEXT,
-  processing_chain VARCHAR(255)              DEFAULT NULL,
+  request_id   INT(11)      NOT NULL AUTO_INCREMENT,
+  request_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  username     VARCHAR(255) NOT NULL,
   PRIMARY KEY (request_id)
 );
 
 
 CREATE TABLE requested_scenes (
-  scene_request_id    INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  download_request_id INT(10) UNSIGNED NOT NULL,
-  scene_id            VARCHAR(255)     NOT NULL,
-  PRIMARY KEY (scene_request_id)
+  id               INT(11)      NOT NULL AUTO_INCREMENT,
+  request_id       INT(11)      NOT NULL,
+  scene_id         VARCHAR(255) NOT NULL,
+  dataset_id       INT(11)      NOT NULL,
+  last_updated     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  status           VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
+  processing_chain VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`)
 );

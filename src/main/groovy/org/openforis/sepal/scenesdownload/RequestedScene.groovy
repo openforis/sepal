@@ -4,7 +4,11 @@ import groovy.transform.ToString
 
 @ToString
 class RequestedScene {
-    int sceneRequestId
-    def downloadRequestId
-    String sceneId
+    int id
+    def requestId
+    def sceneId
+    def dataSet
+    def lastUpdated
+    def status
+    def processingChain
 }

@@ -73,7 +73,11 @@ class SepalConfiguration {
     }
 
     def getUserHomeDir(String userName) {
-        getValue(USER_HOME_DIR).replaceAll(Pattern.quote('$user'), userName)
+        getUserHomeDir().replaceAll(Pattern.quote('$user'), userName)
+    }
+
+    def getUserHomeDir(){
+        getValue(USER_HOME_DIR)
     }
 
 

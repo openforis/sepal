@@ -1,4 +1,4 @@
-package org.openforis.sepal.dataprovider
+package org.openforis.sepal.sceneretrieval.provider
 
 enum DataSet {
     LANDSAT_7(2),

@@ -1,4 +1,4 @@
-package org.openforis.sepal.dataprovider
+package org.openforis.sepal.sceneretrieval.provider
 
 class RetrievalRequest {
     final String requestId

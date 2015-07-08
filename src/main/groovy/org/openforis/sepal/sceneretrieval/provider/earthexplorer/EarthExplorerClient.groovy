@@ -1,21 +1,23 @@
-package org.openforis.sepal.dataprovider.earthexplorer
+package org.openforis.sepal.sceneretrieval.provider.earthexplorer
 
 import groovy.json.JsonOutput
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.dataprovider.SceneReference
-import org.openforis.sepal.dataprovider.SceneRequest
+import org.openforis.sepal.sceneretrieval.provider.SceneReference
+import org.openforis.sepal.sceneretrieval.provider.SceneRequest
+import org.openforis.sepal.util.Is
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static groovyx.net.http.ContentType.JSON
 
 interface EarthExplorerClient {
-    void download(SceneRequest sceneRequest, Closure callback)
+    void download(SceneRequest sceneRequest, String downloadLink, Closure callback)
+
+    String lookupDownloadLink(SceneRequest sceneRequest)
 }
 
 class RestfulEarthExplorerClient implements EarthExplorerClient {
-
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private RESTClient restClient
@@ -24,8 +26,7 @@ class RestfulEarthExplorerClient implements EarthExplorerClient {
     private String loginPassword
 
     RestfulEarthExplorerClient() {
-        LOG.trace("New EarthExplorerClient created")
-        SepalConfiguration configuration = SepalConfiguration.instance
+        def configuration = SepalConfiguration.instance
         defaultURI = configuration.earthExplorerRestEndpoint
         loginUsername = configuration.earthExplorerUsername
         loginPassword = configuration.earthExplorerPassword
@@ -33,37 +34,44 @@ class RestfulEarthExplorerClient implements EarthExplorerClient {
         LOG.info("EarthExplorerClient created. URI: $defaultURI")
     }
 
-
-    public void download(SceneRequest sceneRequest, Closure callback) {
+    String lookupDownloadLink(SceneRequest sceneRequest) {
+        def downloadLink = null
         def token = null
-        InputStream stream = null
         try {
             token = login()
-            def directLink = getSceneDirectLinks(sceneRequest, token)
-            URL url = new URL(directLink)
-            stream = url.openStream()
-            callback(stream)
+            downloadLink = getSceneDirectLink(sceneRequest, token)
+        } catch (Exception ex) {
+            LOG.warn("Could not find $sceneRequest", ex)
         } finally {
             if (token) {
                 logout(token)
             }
-            stream?.closeQuietly()
+        }
+        return downloadLink
+    }
+
+
+    public void download(SceneRequest sceneRequest, String downloadLink, Closure callback) {
+        Is.notNull(downloadLink)
+        URL url = new URL(downloadLink)
+        url.withInputStream {
+            callback(it)
         }
     }
 
 
-    def login() {
+    String login() {
         def authToken
-        String qs = "jsonRequest=" + this.encode("{\"username\":\"$loginUsername\",\"password\":\"$loginPassword\"}")
+        String qs = "jsonRequest=" + this.urlEncode("{\"username\":\"$loginUsername\",\"password\":\"$loginPassword\"}")
         try {
             def response = restClient.get(
                     path: 'login',
                     requestContentType: JSON,
                     queryString: qs
             )
-            def error = response.data.error
-            if (error) {
-                throw new RuntimeException("Error while trying to login", error)
+            def errorMessage = response.data.error
+            if (errorMessage) {
+                throw new RuntimeException("Error while trying to login: $errorMessage")
             }
             authToken = response.data.data
         } catch (Exception ex) {
@@ -72,45 +80,48 @@ class RestfulEarthExplorerClient implements EarthExplorerClient {
         return authToken
     }
 
-    String getSceneDirectLinks(SceneRequest sceneRequest, String token) {
-        def ret
+    private String getSceneDirectLink(SceneRequest sceneRequest, String token) {
+        def downloadLinks
         SceneReference sceneReference = sceneRequest.sceneReference
         def mapParams = [
-                datasetName: sceneReference.dataSet.name,
+                datasetName: sceneReference.dataSet.name(),
                 entityIds  : [sceneReference.id],
                 apiKey     : token,
                 products   : ['STANDARD'],
                 node       : 'EE'
         ]
         String jsonRequest = new JsonOutput().toJson(mapParams)
-        String qs = "jsonRequest=" + this.encode(jsonRequest)
+        String qs = "jsonRequest=" + urlEncode(jsonRequest)
         try {
             def response = restClient.get(
                     path: 'download',
                     requestContentType: JSON,
                     queryString: qs
             )
-            def error = response.data.error
-            if (error) {
-                throw new RuntimeException("Error while trying to request direct links to download scenes. errorMessage: $error")
+
+            def responseJson = response.data
+            def errorMessage = responseJson.error
+            if (errorMessage) {
+                throw new RuntimeException("Error while trying to request direct links to download scenes. errorMessage: $errorMessage")
             }
-            ret = response.data.data
+            downloadLinks = responseJson.data as List
         } catch (Exception ex) {
             throw new RuntimeException("Error while trying to request direct links to download scenes", ex)
         }
-        return ret
+        return downloadLinks.first()
     }
 
     def logout(String token) {
-        String qs = "jsonRequest=" + this.encode("{\"apiKey\":\"$token\"}")
+        String qs = "jsonRequest=" + this.urlEncode("{\"apiKey\":\"$token\"}")
         def response = restClient.get(
                 path: "logout",
                 requestContentType: JSON,
+                queryString: qs
         )
         return response.data.data
     }
 
-    private encode(def qs) {
+    private urlEncode(String qs) {
         URLEncoder.encode(qs, "UTF-8")
     }
 
