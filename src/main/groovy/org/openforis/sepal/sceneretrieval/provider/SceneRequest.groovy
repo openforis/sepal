@@ -8,7 +8,6 @@ class SceneRequest {
     SceneReference sceneReference
     String userName
 
-
 }
 
 

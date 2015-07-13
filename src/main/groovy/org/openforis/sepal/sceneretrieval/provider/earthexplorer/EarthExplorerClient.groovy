@@ -15,13 +15,16 @@ interface EarthExplorerClient {
     void download(SceneRequest sceneRequest, String downloadLink, Closure callback)
 
     String lookupDownloadLink(SceneRequest sceneRequest)
+
+    double getSceneSize(String sceneUrl)
 }
 
 class RestfulEarthExplorerClient implements EarthExplorerClient {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
-    private RESTClient restClient
     private String defaultURI
+
+
     private String loginUsername
     private String loginPassword
 
@@ -30,7 +33,6 @@ class RestfulEarthExplorerClient implements EarthExplorerClient {
         defaultURI = configuration.earthExplorerRestEndpoint
         loginUsername = configuration.earthExplorerUsername
         loginPassword = configuration.earthExplorerPassword
-        restClient = new RESTClient(defaultURI)
         LOG.info("EarthExplorerClient created. URI: $defaultURI")
     }
 
@@ -54,9 +56,21 @@ class RestfulEarthExplorerClient implements EarthExplorerClient {
     public void download(SceneRequest sceneRequest, String downloadLink, Closure callback) {
         Is.notNull(downloadLink)
         URL url = new URL(downloadLink)
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
         url.withInputStream {
-            callback(it)
+            callback(it, Double.valueOf(con.getHeaderField('Content-Length')))
         }
+    }
+
+    @Override
+    double getSceneSize(String sceneUrl) {
+        HttpURLConnection.setFollowRedirects(false)
+        HttpURLConnection con =
+                (HttpURLConnection) new URL(sceneUrl).openConnection();
+        con.setRequestMethod("HEAD");
+        def size = con.getHeaderField('Content-Length')
+        return Double.valueOf(size)
+
     }
 
 
@@ -123,6 +137,10 @@ class RestfulEarthExplorerClient implements EarthExplorerClient {
 
     private urlEncode(String qs) {
         URLEncoder.encode(qs, "UTF-8")
+    }
+
+    private getRestClient() {
+        return new RESTClient(defaultURI)
     }
 
 

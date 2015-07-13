@@ -1,3 +1,6 @@
+File progress monitoring - improve scheduling
+
+
 Status by scene downloaded, not the request itself
 
 

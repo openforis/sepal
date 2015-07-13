@@ -1,9 +1,12 @@
 package org.openforis.sepal.sceneretrieval.provider.s3landsat8
 
+
 import org.openforis.sepal.sceneretrieval.provider.*
 import org.openforis.sepal.util.JobExecutor
 
-class S3Landsat8SceneProvider implements SceneProvider {
+import static org.openforis.sepal.sceneretrieval.provider.s3landsat8.SceneIndex.Entry
+
+class S3Landsat8SceneProvider implements SceneProvider{
     private final S3LandsatClient client
     private final JobExecutor executor
     private final SceneDownloadCoordinator coordinator
@@ -14,46 +17,57 @@ class S3Landsat8SceneProvider implements SceneProvider {
         this.coordinator = coordinator
     }
 
-    Collection<SceneReference> retrieve(long requestId,String username, Collection<SceneReference> scenes) {
-        def indexByScene = loadSceneIndexes(scenes)
-        indexByScene.each { scene, index ->
-            retrieveScene(index, new SceneRequest(requestId, scene,username))
+
+
+    @Override
+    Collection<SceneRequest> retrieve(List<SceneRequest> requests) {
+        def indexByRequest = loadSceneIndexes(requests)
+        indexByRequest.each { request, index ->
+            retrieveScene(index, request)
         }
 
-        def notRetrieved = scenes.minus(indexByScene.keySet())
+        def notRetrieved = requests.minus(indexByRequest.keySet())
         return notRetrieved
     }
 
     private void retrieveScene(SceneIndex index, SceneRequest request) {
         executor.execute {
             coordinator.withScene(request, index.sizeInBytes) { Scene scene ->
-                index.entries.each { entry ->
-                    client.download(entry) { InputStream entryStream ->
-                        scene.add(
-                                new FileStream(entryStream, entry.fileName, entry.sizeInBytes)
-                        )
-                    }
-                }
+                downloadFilesForScene(scene, index)
             }
         }
     }
 
-
-    private LinkedHashMap<SceneReference, SceneIndex> loadSceneIndexes(Collection<SceneReference> scenes) {
-        Map<SceneReference, SceneIndex> indexByScene = [:]
-        scenes.findAll {
-            it.dataSet == DataSet.LANDSAT_8
-        }.each {
-            def index = client.index(it.id)
-            if (index)
-                indexByScene[it] = index
+    private void downloadFilesForScene(Scene scene, SceneIndex index) {
+        index.entries.each { entry ->
+            client.download(entry) { InputStream entryStream ->
+                def fileStream = toFileStream(entryStream, entry)
+                scene.addFile(fileStream)
+            }
         }
-        return indexByScene
+    }
+
+    private FileStream toFileStream(InputStream entryStream, Entry entry) {
+        new FileStream(entryStream, entry.fileName, entry.sizeInBytes)
+    }
+
+
+    private Map<SceneRequest, SceneIndex> loadSceneIndexes(List<SceneRequest> requests) {
+        Map<SceneRequest, SceneIndex> indexByRequest = [:]
+        requests.findAll {
+            it.sceneReference.dataSet == DataSet.LANDSAT_8
+        }.each {
+            def index = client.index(it.sceneReference.id)
+            if (index)
+                indexByRequest[it] = index
+        }
+        return indexByRequest
     }
 
     @Override
     public void stop() {
         executor.stop()
     }
+
 }
 

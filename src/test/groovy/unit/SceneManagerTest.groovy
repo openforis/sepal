@@ -1,6 +1,7 @@
 package unit
 
 import org.openforis.sepal.SceneManager
+
 import org.openforis.sepal.sceneretrieval.processor.SceneProcessor
 import org.openforis.sepal.sceneretrieval.provider.DataSet
 import org.openforis.sepal.sceneretrieval.provider.SceneProvider
@@ -38,7 +39,7 @@ class SceneManagerTest extends Specification {
         manager.sceneStatusChanged(request, REQUESTED)
 
         then:
-        1 * sceneProvider.retrieve(_, _ as String, _ as Collection<SceneReference>)
+        1 * sceneProvider.retrieve(_ as List)
 
     }
 

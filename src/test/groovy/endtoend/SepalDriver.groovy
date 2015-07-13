@@ -4,13 +4,8 @@ import fake.FakeEarthExplorer
 import groovy.json.JsonOutput
 import groovyx.net.http.HttpResponseDecorator
 import groovyx.net.http.RESTClient
-import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.scenesdownload.DownloadRequest
-import org.openforis.sepal.scenesdownload.Downloader
 import org.openforis.sepal.scenesdownload.RequestScenesDownload
 import spock.util.concurrent.PollingConditions
-
-import static org.openforis.sepal.SepalConfiguration.*
 
 class SepalDriver {
     private final system = new Sepal().init()
@@ -18,7 +13,6 @@ class SepalDriver {
 
     final downloadWorkingDir = File.createTempDir('download', null)
     final homeDir = File.createTempDir('home', null)
-    private Downloader downloader
     private FakeEarthExplorer fakeEarthExplorer
 
     SepalDriver() {
@@ -59,18 +53,6 @@ class SepalDriver {
         return this
     }
 
-    SepalDriver startDownloader() {
-        fakeEarthExplorer = new FakeEarthExplorer()
-        configure([
-                (DOWNLOADS_WORKING_DIRECTORY): downloadWorkingDir.absolutePath,
-                (USER_HOME_DIR)              : "$homeDir.absolutePath/\$user" as String,
-                (EARTHEXPLORER_REST_ENDPOINT): fakeEarthExplorer.url
-        ])
-        downloader = new Downloader()
-        downloader.start()
-        return this
-    }
-
     void eventually(Closure callback) {
         new PollingConditions().eventually(callback)
     }
@@ -78,13 +60,7 @@ class SepalDriver {
     void stop() {
         system.stop()
         fakeEarthExplorer?.stop()
-        downloader?.stop()
     }
-
-    private void configure(Map<String, String> configuration) {
-        SepalConfiguration.instance.properties.putAll(configuration)
-    }
-
 }
 
 class FailedRequest extends RuntimeException {

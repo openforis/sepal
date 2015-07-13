@@ -12,7 +12,7 @@ class DownloaderTest extends Specification {
     private final SepalDriver driver = new SepalDriver()
             .withUsers(USER_ID)
             .withActiveDataSets(DATASET_ID)
-            .startDownloader()
+//            .startDownloader()
 
     def cleanup() {
         driver.stop()

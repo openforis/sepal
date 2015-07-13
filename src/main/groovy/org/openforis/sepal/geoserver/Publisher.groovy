@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 
 import java.nio.file.Files
 
-class Publisher{
+class Publisher {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final File targetDir
     private final String relativeLayersPath

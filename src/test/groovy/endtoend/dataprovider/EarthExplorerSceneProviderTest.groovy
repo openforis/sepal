@@ -24,8 +24,9 @@ class EarthExplorerSceneProviderTest extends SceneProviderTest{
 
 
     def 'retrieve a scene and download/unzip the files'(){
+        def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User')
         when:
-            provider.retrieve(requestId,'Test.User', [new SceneReference(sceneId, LANDSAT_8)])
+            provider.retrieve([request])
         then:
                 DirectoryStructure.matches(workingDir) {
                     "${requestId}" {
@@ -45,7 +46,12 @@ class EarthExplorerSceneProviderTest extends SceneProviderTest{
 
         @Override
         void download(SceneRequest sceneRequest, String downloadLink, Closure callback) {
-            callback(getClass().getResourceAsStream("/scene.tar.gz"))
+            callback(getClass().getResourceAsStream("/scene.tar.gz"),0d)
+        }
+
+        @Override
+        double getSceneSize(String sceneUrl) {
+            return 0d
         }
 
         @Override

@@ -20,12 +20,10 @@ interface S3LandsatClient {
 
 class RestfulS3LandsatClient implements S3LandsatClient {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private final RESTClient s3
     private final String baseUrl
 
     RestfulS3LandsatClient(String baseUrl) {
         this.baseUrl = baseUrl
-        s3 = new RESTClient(baseUrl)
     }
 
     SceneIndex index(String sceneId) {
@@ -87,6 +85,10 @@ class RestfulS3LandsatClient implements S3LandsatClient {
         def path = matcher[0][1]
         def row = matcher[0][2]
         return "L8/$path/$row/$sceneId/"
+    }
+
+    private RESTClient getS3() {
+        new RESTClient(baseUrl)
     }
 }
 

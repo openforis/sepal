@@ -2,16 +2,13 @@ package org.openforis.sepal.sceneretrieval.provider.earthexplorer
 
 import org.openforis.sepal.sceneretrieval.provider.*
 import org.openforis.sepal.util.JobExecutor
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+
 
 class EarthExplorerSceneProvider implements SceneProvider {
-
-    private static Logger LOG = LoggerFactory.getLogger(this)
-
     private final EarthExplorerClient client
     private final JobExecutor executor
     private final SceneDownloadCoordinator coordinator
+
 
     EarthExplorerSceneProvider(EarthExplorerClient client, JobExecutor executor, SceneDownloadCoordinator coordinator) {
         this.client = client
@@ -19,35 +16,53 @@ class EarthExplorerSceneProvider implements SceneProvider {
         this.coordinator = coordinator
     }
 
-    @Override
-    public Collection<SceneReference> retrieve(long requestId,
-                                               String username,
-                                               Collection<SceneReference> scenes) {
-        def filteredList = scenes.findAll { SceneReference scene ->
-            scene.dataSet == DataSet.LANDSAT_8
-        }
-
-        filteredList = filteredList.collect {
-            def sceneRequest = new SceneRequest(requestId, it,username)
-            def downloadLink = client.lookupDownloadLink(sceneRequest)
-            if (downloadLink) {
-                retrieveScene(sceneRequest, downloadLink)
-                return it
-            }
-            return null
-        }
-        scenes.minus(filteredList)
+    private Map<String, SceneRequest> filterRequests(List<SceneRequest> requests) {
+        findAvailableScenes(filterDataSet(requests))
     }
 
-    private SceneReference retrieveScene(SceneRequest sceneRequest, String downloadLink) {
-        executor.execute {
-            coordinator.withScene(sceneRequest, 0d) { Scene scene ->
-                client.download(sceneRequest, downloadLink) { InputStream inputStream ->
-                    scene.addArchive(new FileStream(inputStream, sceneRequest.sceneReference.id + ".tar.gz", 0d))
-                }
+    private List<SceneRequest> filterDataSet(List<SceneRequest> requests) {
+        requests.findAll { SceneRequest request ->
+            request.sceneReference.dataSet == DataSet.LANDSAT_8
+            // TODO: Add all data sets supported by earth explorer
+        }
+    }
 
+    private Map<String, SceneRequest> findAvailableScenes(List<SceneRequest> requests) {
+        def scenesMap = [:]
+        def availableScenes = requests.each { request ->
+            def downloadLink = client.lookupDownloadLink(request)
+            if (downloadLink) {
+                scenesMap.put(downloadLink, request)
             }
         }
+        return scenesMap
+    }
+
+    @Override
+    Collection<SceneRequest> retrieve(List<SceneRequest> requests) {
+        def filteredList = filterRequests(requests)
+        filteredList.each {
+            retrieveScene(it.value, it.key)
+        }
+        requests.minus(filteredList.values())
+    }
+
+    private void retrieveScene(SceneRequest request, String downloadLink) {
+        executor.execute {
+            coordinator.withScene(request) { Scene scene ->
+                downloadSceneArchive(scene, request, downloadLink)
+            }
+        }
+    }
+
+    private downloadSceneArchive(scene, SceneRequest request, String downloadLink) {
+        client.download(request, downloadLink) { InputStream inputStream, double size ->
+            scene.addArchive(toFileStream(inputStream, request, size))
+        }
+    }
+
+    private FileStream toFileStream(InputStream inputStream, SceneRequest request, double size) {
+        new FileStream(inputStream, request.sceneReference.id + ".tar.gz", size)
     }
 
     @Override

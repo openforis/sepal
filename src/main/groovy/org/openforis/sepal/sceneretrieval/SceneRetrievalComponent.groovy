@@ -1,11 +1,7 @@
 package org.openforis.sepal.sceneretrieval
 
 import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.sceneretrieval.provider.DelegatingSceneProvider
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneDownloadCoordinator
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
-import org.openforis.sepal.sceneretrieval.provider.SceneDownloadCoordinator
-import org.openforis.sepal.sceneretrieval.provider.SceneProvider
+import org.openforis.sepal.sceneretrieval.provider.*
 import org.openforis.sepal.sceneretrieval.provider.earthexplorer.EarthExplorerSceneProvider
 import org.openforis.sepal.sceneretrieval.provider.earthexplorer.RestfulEarthExplorerClient
 import org.openforis.sepal.sceneretrieval.provider.s3landsat8.RestfulS3LandsatClient
@@ -22,12 +18,12 @@ class SceneRetrievalComponent {
         def downloadWorkingDirectory = new File(SepalConfiguration.instance.downloadWorkingDirectory)
         def userHomePath = SepalConfiguration.instance.getUserHomeDir()
         coordinator = new FileSystemSceneDownloadCoordinator(
-                new FileSystemSceneRepository(downloadWorkingDirectory,userHomePath)
+                new FileSystemSceneRepository(downloadWorkingDirectory, userHomePath)
         )
 
         register(listeners)
 
-        sceneProvider = new DelegatingSceneProvider([
+        sceneProvider = new DispatchingSceneProvider([
                 new S3Landsat8SceneProvider(
                         new RestfulS3LandsatClient('http://landsat-pds.s3.amazonaws.com/'),
                         new ExecutorServiceBasedJobExecutor(Executors.newCachedThreadPool()),
@@ -41,7 +37,7 @@ class SceneRetrievalComponent {
         ])
     }
 
-    void register(SceneRetrievalListener... listeners){
+    void register(SceneRetrievalListener... listeners) {
         coordinator.register(listeners)
     }
 

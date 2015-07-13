@@ -2,7 +2,6 @@ package org.openforis.sepal.endpoint
 
 import groovymvc.AbstractMvcFilter
 import groovymvc.Controller
-
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed

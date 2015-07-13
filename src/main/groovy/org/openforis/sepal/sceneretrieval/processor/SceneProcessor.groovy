@@ -30,7 +30,7 @@ class SepalSceneProcessor implements SceneProcessor {
 
     @Override
     void processScene(SceneRequest sceneRequest, String processingScript) {
-        if (processingScript){
+        if (processingScript) {
             File scriptFile = new File(scriptsHome, processingScript)
             Is.existingFile(scriptFile)
             def sceneWorkingDir = sceneRepository.getSceneWorkingDirectory(sceneRequest)

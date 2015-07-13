@@ -200,12 +200,16 @@ CREATE TABLE download_requests (
 
 
 CREATE TABLE requested_scenes (
-  id               INT(11)      NOT NULL AUTO_INCREMENT,
-  request_id       INT(11)      NOT NULL,
-  scene_id         VARCHAR(255) NOT NULL,
-  dataset_id       INT(11)      NOT NULL,
-  last_updated     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  status           VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
-  processing_chain VARCHAR(255) NOT NULL,
+  id                   INT(11)      NOT NULL AUTO_INCREMENT,
+  request_id           INT(11)      NOT NULL,
+  scene_id             VARCHAR(255) NOT NULL,
+  dataset_id           INT(11)      NOT NULL,
+  last_updated         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  status               VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
+  processing_chain     VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`)
 );
+
+
+
+

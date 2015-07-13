@@ -2,7 +2,6 @@ package org.openforis.sepal.sceneretrieval.provider
 
 import util.Tar
 
-import java.nio.file.CopyOption
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.regex.Pattern
@@ -33,7 +32,7 @@ class FileSystemSceneRepository implements SceneRepository {
     @Override
     File getSceneHomeDirectory(SceneRequest request) {
         def userHomeDirectory = userHomeDir(request.userName)
-        File sceneHomeDir = new File(userHomeDirectory,request.sceneReference.id)
+        File sceneHomeDir = new File(userHomeDirectory, request.sceneReference.id)
         sceneHomeDir.mkdirs()
         return sceneHomeDir
     }
@@ -43,9 +42,9 @@ class FileSystemSceneRepository implements SceneRepository {
         return sceneDir(request)
     }
 
-    File addFileToScene(SceneRequest request, FileStream fileStream) {
+     File addFileToScene(SceneRequest request, FileStream fileStream) {
         def file = new File(sceneDir(request), fileStream.fileName)
-        Files.copy(fileStream.stream, file.toPath(),StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(fileStream.stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING)
         return file
     }
 

@@ -1,10 +1,9 @@
 package org.openforis.sepal
 
 import org.openforis.sepal.sceneretrieval.SceneRetrievalListener
+
 import org.openforis.sepal.sceneretrieval.processor.SceneProcessor
-import org.openforis.sepal.sceneretrieval.provider.DataSet
 import org.openforis.sepal.sceneretrieval.provider.SceneProvider
-import org.openforis.sepal.sceneretrieval.provider.SceneReference
 import org.openforis.sepal.sceneretrieval.provider.SceneRequest
 import org.openforis.sepal.sceneretrieval.publisher.ScenePublisher
 import org.openforis.sepal.scenesdownload.DownloadRequest
@@ -47,51 +46,52 @@ class SceneManager implements SceneRetrievalListener {
         sceneProvider.stop()
     }
 
-    @Override
-    void sceneStatusChanged(SceneRequest request, DownloadRequest.SceneStatus status) {
+
+    void sceneStatusChanged(
+            SceneRequest request,
+            DownloadRequest.SceneStatus status
+    ) {
         try {
             DownloadRequest downloadRequest = scenesRepository.getById(request.id)
             RequestedScene relatedScene = downloadRequest.scenes.find { it.sceneId = request.sceneReference.id }
             switch (status) {
-                case DownloadRequest.SceneStatus.REQUESTED:
-                    sceneProvider.retrieve(request.id,request.userName, [request.sceneReference])
+                case REQUESTED:
+                    notifyListeners(request, DOWNLOADING)
+                    sceneProvider.retrieve([request])
                     break
-                case DownloadRequest.SceneStatus.DOWNLOADED:
-                    notifyListeners(request,PROCESSING)
+                case DOWNLOADED:
+                    notifyListeners(request, PROCESSING)
                     sceneProcessor.processScene(request, relatedScene.processingChain)
-                    notifyListeners(request,PROCESSED)
+                    notifyListeners(request, PROCESSED)
                     break
-                case DownloadRequest.SceneStatus.PROCESSED:
-                    notifyListeners(request,PUBLISHING)
+                case PROCESSED:
+                    notifyListeners(request, PUBLISHING)
                     scenePublisher.publishScene(request)
-                    notifyListeners(request,PUBLISHED)
+                    notifyListeners(request, PUBLISHED)
                     break
             }
         } catch (Exception ex) {
-            scenesRepository.sceneStatusChanged(request, FAILED)
+            scenesRepository.sceneStatusChanged(request, FAILED, metadata)
             LOG.error("Error while processing request $request", ex)
         }
     }
 
-    void notifyListeners(SceneRequest request, DownloadRequest.SceneStatus status){
+    void notifyListeners(SceneRequest request,
+                         DownloadRequest.SceneStatus status
+    ) {
         scenesRepository.sceneStatusChanged(request, status)
-        this.sceneStatusChanged(request,status)
+        this.sceneStatusChanged(request, status)
     }
 
     private class Job implements Runnable {
 
         @Override
         public void run() {
-            List<DownloadRequest> requests = scenesRepository.getNewDownloadRequests()
-            requests.each { DownloadRequest req ->
-                def scenes = req.scenes.collect {
-                    new SceneReference(it.sceneId, it.dataSet)
-                }
-                sceneProvider.retrieve(req.requestId,req.username, scenes)
+            List<SceneRequest> requests = scenesRepository.getNewDownloadRequests()
+            requests.each {
+               sceneStatusChanged(it,REQUESTED)
             }
         }
-
-
     }
 
 }

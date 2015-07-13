@@ -1,7 +1,6 @@
 package org.openforis.sepal.sceneretrieval.publisher
 
 import org.apache.commons.io.FileUtils
-import org.openforis.sepal.sceneretrieval.provider.Scene
 import org.openforis.sepal.sceneretrieval.provider.SceneReference
 import org.openforis.sepal.sceneretrieval.provider.SceneRepository
 import org.openforis.sepal.sceneretrieval.provider.SceneRequest
@@ -19,7 +18,7 @@ class SepalScenePublisher implements ScenePublisher {
 
     private final SceneRepository sceneRepository
 
-    SepalScenePublisher(SceneRepository sceneRepository){
+    SepalScenePublisher(SceneRepository sceneRepository) {
         this.sceneRepository = sceneRepository
     }
 
@@ -28,7 +27,7 @@ class SepalScenePublisher implements ScenePublisher {
         File workingDirectory = sceneRepository.getSceneWorkingDirectory(sceneRequest)
         File targetDirectory = sceneRepository.getSceneHomeDirectory(sceneRequest)
         FilePermissions.readWritableRecursive(workingDirectory)
-        if (targetDirectory.exists()){
+        if (targetDirectory.exists()) {
             targetDirectory.deleteDir()
         }
         FileUtils.moveDirectory(workingDirectory, targetDirectory)

@@ -1,16 +1,15 @@
 package endtoend.dataprovider
 
 import fake.SynchronousJobExecutor
-
 import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneDownloadCoordinator
 import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
 import org.openforis.sepal.sceneretrieval.provider.SceneReference
+import org.openforis.sepal.sceneretrieval.provider.SceneRequest
 import org.openforis.sepal.sceneretrieval.provider.s3landsat8.S3Landsat8SceneProvider
 import org.openforis.sepal.sceneretrieval.provider.s3landsat8.S3LandsatClient
 import org.openforis.sepal.sceneretrieval.provider.s3landsat8.SceneIndex
-
-import spock.lang.Ignore
 import util.DirectoryStructure
+
 import static org.openforis.sepal.sceneretrieval.provider.DataSet.LANDSAT_8
 
 class S3Landsat8SceneProviderTest extends SceneProviderTest {
@@ -18,31 +17,31 @@ class S3Landsat8SceneProviderTest extends SceneProviderTest {
             new FakeS3LandsatClient(),
             new SynchronousJobExecutor(),
             new FileSystemSceneDownloadCoordinator(
-                    new FileSystemSceneRepository(workingDir,null)
+                    new FileSystemSceneRepository(workingDir, null)
             )
     )
-    
+
     def cleanup() {
         workingDir.deleteDir()
     }
 
 
     def 'Retrieving a scene downloads the files'() {
+        def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User')
         when:
-            provider.retrieve(requestId, 'Test.User', [new SceneReference(sceneId, LANDSAT_8)])
+            provider.retrieve([request])
         then:
-                DirectoryStructure.matches(workingDir) {
-                    "${requestId}" {
-                        "${LANDSAT_8}" {
-                            "$sceneId" {
-                                '1.tif'()
-                                '2.tif'()
-                            }
+            DirectoryStructure.matches(workingDir) {
+                "${requestId}" {
+                    "${LANDSAT_8}" {
+                        "$sceneId" {
+                            '1.tif'()
+                            '2.tif'()
                         }
                     }
                 }
+            }
     }
-    
 
 
     static class FakeS3LandsatClient implements S3LandsatClient {

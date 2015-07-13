@@ -64,7 +64,9 @@ class SepalConfiguration {
                 driverClass: getValue(JDBC_DRIVER_PARAMETER),
                 jdbcUrl: getValue(JDBC_CONN_STRING_PARAMETER),
                 user: getValue(JDBC_CONN_USER_PARAMETER),
-                password: getValue(JDBC_CONN_PWD_PARAMETER)
+                password: getValue(JDBC_CONN_PWD_PARAMETER),
+                testConnectionOnCheckout: true,
+
         )
     }
 
@@ -76,7 +78,7 @@ class SepalConfiguration {
         getUserHomeDir().replaceAll(Pattern.quote('$user'), userName)
     }
 
-    def getUserHomeDir(){
+    def getUserHomeDir() {
         getValue(USER_HOME_DIR)
     }
 

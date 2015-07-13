@@ -2,20 +2,22 @@ package org.openforis.sepal.scenesdownload
 
 import groovy.sql.BatchingPreparedStatementWrapper as BatchPs
 import groovy.sql.Sql
-import org.openforis.sepal.sceneretrieval.provider.DataSet
-import org.openforis.sepal.sceneretrieval.provider.SceneRequest
 import org.openforis.sepal.sceneretrieval.SceneRetrievalListener
-import org.openforis.sepal.transaction.SqlConnectionProvider
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
-interface ScenesDownloadRepository extends SceneRetrievalListener{
+import org.openforis.sepal.sceneretrieval.provider.DataSet
+import org.openforis.sepal.sceneretrieval.provider.SceneReference
+import org.openforis.sepal.sceneretrieval.provider.SceneRequest
+import org.openforis.sepal.transaction.SqlConnectionProvider
+
+import java.sql.Timestamp
+
+interface ScenesDownloadRepository extends SceneRetrievalListener {
 
     void saveDownloadRequest(RequestScenesDownload requestScenesDownload)
 
-    List<DownloadRequest> getNewDownloadRequests()
+    List<SceneRequest> getNewDownloadRequests()
 
-    int updateSceneStatus(long requestId,String sceneId, DownloadRequest.SceneStatus status)
+    int updateSceneStatus(long requestId, String sceneId, DownloadRequest.SceneStatus status)
 
     List<DownloadRequest> findUserRequests(String username)
 
@@ -23,17 +25,19 @@ interface ScenesDownloadRepository extends SceneRetrievalListener{
 
 }
 
-class JdbcScenesDownloadRepository implements ScenesDownloadRepository{
-    private static final Logger LOG = LoggerFactory.getLogger(this)
+class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
     private final SqlConnectionProvider connectionProvider
 
     JdbcScenesDownloadRepository(SqlConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider
     }
 
-    @Override
-    void sceneStatusChanged(SceneRequest request, DownloadRequest.SceneStatus status) {
-        this.updateSceneStatus(request.id,request.sceneReference.id,status)
+
+    void sceneStatusChanged(
+            SceneRequest request,
+            DownloadRequest.SceneStatus status
+    ) {
+        this.updateSceneStatus(request.id, request.sceneReference.id, status)
     }
 
     @Override
@@ -45,10 +49,10 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository{
                 JOIN requested_scenes rs
                 ON dr.request_id = rs.request_id
                 WHERE dr.request_id = ?
-                ORDER BY dr.request_time DESC''',[requestId]) {
+                ORDER BY dr.request_time DESC''', [requestId]) {
             map(request, it)
         }
-        if (! (request.scenes)){
+        if (!(request.scenes)) {
             throw new IllegalArgumentException("request $requestId not found or invalid")
         }
         return request
@@ -56,33 +60,38 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository{
 
     @Override
     void saveDownloadRequest(RequestScenesDownload requestScenesDownload) {
-        def generated = sql.executeInsert('INSERT INTO download_requests(username) VALUES(?)',[requestScenesDownload.username])
+        def generated = sql.executeInsert('INSERT INTO download_requests(username) VALUES(?)', [requestScenesDownload.username])
         def requestId = generated[0][0] as int
         sql.withBatch('INSERT INTO requested_scenes(request_id, scene_id,dataset_id,processing_chain) VALUES(?, ?,?,?)') { BatchPs ps ->
             requestScenesDownload.sceneIds.each {
-                ps.addBatch([requestId, it,requestScenesDownload.dataSetId,requestScenesDownload.processingChain])
+                ps.addBatch([requestId, it, requestScenesDownload.dataSetId, requestScenesDownload.processingChain])
             }
         }
     }
 
     @Override
-    List<DownloadRequest> getNewDownloadRequests() {
-        List<DownloadRequest> requests = new ArrayList<DownloadRequest>()
+    List<SceneRequest> getNewDownloadRequests() {
+        List<SceneRequest> requests = new ArrayList<SceneRequest>()
         sql.eachRow('''
                 SELECT *
                 FROM download_requests dr
                 JOIN requested_scenes rs
                 ON dr.request_id = rs.request_id
                 WHERE rs.status = ?
-                ORDER BY dr.request_time DESC''',[DownloadRequest.SceneStatus.REQUESTED.name()]) {
-            map(requests, it)
+                ORDER BY dr.request_time DESC''', [DownloadRequest.SceneStatus.REQUESTED.name()]) {
+            requests.add(mapSceneRequest(it))
         }
         return requests
     }
 
-    int updateSceneStatus(long requestId,String sceneId, DownloadRequest.SceneStatus status) {
-        def query = 'UPDATE requested_scenes  SET last_updated = ?, status = ?  WHERE request_id = ? and scene_id = ?'
-        sql.executeUpdate(query, [new java.sql.Timestamp(Calendar.getInstance().getTime().getTime()), status.toString(), requestId,sceneId])
+    int updateSceneStatus(
+            long requestId,
+            String sceneId,
+            DownloadRequest.SceneStatus status
+    ) {
+        def now = new Timestamp(Calendar.getInstance().getTime().getTime())
+        def query = "UPDATE requested_scenes  SET last_updated = ?, status = ? WHERE request_id = ? and scene_id = ?"
+        sql.executeUpdate(query, [now, status.name(),requestId,sceneId])
     }
 
     List<DownloadRequest> findUserRequests(String username) {
@@ -99,18 +108,27 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository{
         return downloadRequests
     }
 
-     def map(List<DownloadRequest> downloadRequests, row) {
+    def map(List<DownloadRequest> downloadRequests, row) {
         int requestId = row.request_id
         DownloadRequest downloadRequest = new DownloadRequest(requestId)
         DownloadRequest alreadyMappedOne = downloadRequests.find { it.requestId == requestId }
         downloadRequest = alreadyMappedOne ? alreadyMappedOne : downloadRequest
-        map(downloadRequest,row)
-        if (! (alreadyMappedOne)){
+        map(downloadRequest, row)
+        if (!(alreadyMappedOne)) {
             downloadRequests.add(downloadRequest)
         }
     }
 
-    def map(DownloadRequest downloadRequest,row){
+    def mapSceneRequest(row){
+        int requestId = row.request_id
+        def userName = row.username
+        def sceneId = row.scene_id
+        def dataSet = DataSet.byId(row.dataset_id as int)
+        return new SceneRequest(requestId, new SceneReference(sceneId,dataSet),userName)
+
+    }
+
+    def map(DownloadRequest downloadRequest, row) {
         downloadRequest.requestId = row.request_id
         downloadRequest.username = row.username
         downloadRequest.requestTime = row.request_time

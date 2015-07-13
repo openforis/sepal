@@ -5,6 +5,7 @@ import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.endpoint.ScenesDownloadEndPoint
 import org.openforis.sepal.geoserver.GeoServerLayerMonitor
 import org.openforis.sepal.repository.DataSetRepository
+
 import org.openforis.sepal.sceneretrieval.SceneRetrievalComponent
 import org.openforis.sepal.sceneretrieval.processor.SepalSceneProcessor
 import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
@@ -25,11 +26,11 @@ class Main {
         startLayerMonitor()
     }
 
-    def static startLayerMonitor(){
+    def static startLayerMonitor() {
         GeoServerLayerMonitor.start()
     }
 
-    def static startSceneManager(){
+    def static startSceneManager() {
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(
                 new SqlConnectionManager(
                         SepalConfiguration.instance.dataSource
@@ -53,7 +54,7 @@ class Main {
         sceneManager.start()
     }
 
-    def static deployEndpoints(){
+    def static deployEndpoints() {
         def connectionManager = new SqlConnectionManager(SepalConfiguration.instance.dataSource)
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
         def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
