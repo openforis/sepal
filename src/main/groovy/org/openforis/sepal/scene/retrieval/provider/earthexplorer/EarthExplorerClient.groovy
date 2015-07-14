@@ -122,7 +122,7 @@ class RestfulEarthExplorerClient implements EarthExplorerClient {
         } catch (Exception ex) {
             throw new RuntimeException("Error while trying to request direct links to download scenes", ex)
         }
-        return downloadLinks.first()
+        return downloadLinks ? downloadLinks.first() : null
     }
 
     def logout(String token) {

@@ -3,19 +3,24 @@ package org.openforis.sepal.scene.retrieval.provider
 import org.openforis.sepal.scene.SceneProvider
 import org.openforis.sepal.scene.SceneRequest
 
+import static org.openforis.sepal.scene.SceneStatus.FAILED
+
 class DispatchingSceneProvider implements SceneProvider {
+    @Delegate
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
     private final List<SceneProvider> providers
 
     DispatchingSceneProvider(List<SceneProvider> providers) {
         this.providers = Collections.unmodifiableList(providers)
     }
 
-    @Override
     List<SceneRequest> retrieve(List<SceneRequest> requests) {
-        providers.inject(requests) { List<SceneRequest> toRetrieve, provider ->
+        def requestsNotRetrieved = providers.inject(requests) { List<SceneRequest> toRetrieve, provider ->
             return toRetrieve ? provider.retrieve(toRetrieve) : toRetrieve
         }
-        return null
+        requestsNotRetrieved.each { notifyListeners(it, FAILED) }
+        return []
     }
 
     @Override

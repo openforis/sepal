@@ -15,24 +15,17 @@ interface SceneContextProvider {
     public void withScene(SceneRequest request, Closure closure)
 
     public void withScene(SceneRequest request, Double sizeInBytes, Closure closure)
-
-    public void register(SceneRetrievalListener... listeners)
-
 }
 
 class FileSystemSceneContextProvider implements SceneContextProvider {
     private static final Logger LOG = LoggerFactory.getLogger(this)
+    @Delegate
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
     private final SceneRepository sceneRepository
-    private final List<SceneRetrievalListener> listeners = new CopyOnWriteArrayList<>()
 
     FileSystemSceneContextProvider(SceneRepository sceneRepository) {
         this.sceneRepository = sceneRepository
-    }
-
-    void register(SceneRetrievalListener... listeners) {
-        listeners.each {
-            this.listeners.add(it)
-        }
     }
 
     void withScene(SceneRequest request, Double sizeInBytes = null, Closure closure) {
@@ -43,13 +36,6 @@ class FileSystemSceneContextProvider implements SceneContextProvider {
         } catch (Exception e) {
             notifyListeners(request, FAILED)
             LOG.error("Failed to download scene $request", e)
-        }
-    }
-
-
-    public void notifyListeners(SceneRequest request, status) {
-        listeners.each {
-            it.sceneStatusChanged(request, status)
         }
     }
 }

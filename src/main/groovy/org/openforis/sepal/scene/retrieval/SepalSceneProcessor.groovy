@@ -1,18 +1,22 @@
 package org.openforis.sepal.scene.retrieval
 
-import org.openforis.sepal.scene.*
+import org.openforis.sepal.scene.SceneProcessor
+import org.openforis.sepal.scene.SceneReference
+import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.SceneStatus
+import org.openforis.sepal.scene.retrieval.provider.SceneRetrievalObservable
 import org.openforis.sepal.util.Is
 import org.openforis.sepal.util.Terminal
-
-import java.util.concurrent.CopyOnWriteArrayList
 
 import static SceneStatus.PROCESSED
 import static SceneStatus.PROCESSING
 
 class SepalSceneProcessor implements SceneProcessor {
+    @Delegate
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
     private final SceneRepository sceneRepository
     private final File scriptsHome
-    private final List<SceneRetrievalListener> listeners = new CopyOnWriteArrayList<>()
 
     SepalSceneProcessor(SceneRepository sceneRepository, File scriptsHome) {
         this.sceneRepository = sceneRepository
@@ -38,17 +42,5 @@ class SepalSceneProcessor implements SceneProcessor {
     @Override
     void processRequest(long requestId, Collection<SceneReference> scenes, String processingScript) {
 
-    }
-
-    void register(SceneRetrievalListener... listeners) {
-        listeners.each {
-            this.listeners.add(it)
-        }
-    }
-
-    private void notifyListeners(SceneRequest request,
-                                 SceneStatus status) {
-        for (SceneRetrievalListener listener : listeners)
-            listener.sceneStatusChanged(request, status)
     }
 }

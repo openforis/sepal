@@ -7,7 +7,6 @@ import org.openforis.sepal.scene.ScenePublisher
 import org.openforis.sepal.scene.SceneRetrievalListener
 import org.openforis.sepal.scene.retrieval.provider.DispatchingSceneProvider
 import org.openforis.sepal.scene.retrieval.provider.FileSystemSceneContextProvider
-import org.openforis.sepal.scene.retrieval.provider.SceneContextProvider
 import org.openforis.sepal.scene.retrieval.provider.earthexplorer.EarthExplorerSceneProvider
 import org.openforis.sepal.scene.retrieval.provider.earthexplorer.RestfulEarthExplorerClient
 import org.openforis.sepal.scene.retrieval.provider.s3landsat8.RestfulS3LandsatClient
@@ -18,14 +17,15 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 
+import static java.util.concurrent.TimeUnit.MINUTES
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.openforis.sepal.util.FileSystem.toDir
 
 class SceneRetrievalComponent {
-    final SceneProvider sceneProvider
-    final SceneProcessor sceneProcessor
-    final ScenePublisher scenePublisher
-    private final SceneContextProvider coordinator
+    private final DispatchingSceneProvider sceneProvider
+    private final SepalSceneProcessor sceneProcessor
+    private final SepalScenePublisher scenePublisher
+    private final FileSystemSceneContextProvider coordinator
 
     SceneRetrievalComponent() {
         def downloadWorkingDirectory = new File(SepalConfiguration.instance.downloadWorkingDirectory)
@@ -38,7 +38,7 @@ class SceneRetrievalComponent {
                 new S3Landsat8SceneProvider(
                         new RestfulS3LandsatClient('http://landsat-pds.s3.amazonaws.com/'),
                         new ExecutorServiceBasedJobExecutor(
-                                new ThreadPoolExecutor(10, 50, 10 * 60, SECONDS, new ArrayBlockingQueue<Runnable>(10000))
+                                Executors.newFixedThreadPool(100)
                         ),
                         this.coordinator
                 ),
@@ -57,10 +57,23 @@ class SceneRetrievalComponent {
         scenePublisher = new SepalScenePublisher(sceneRepository)
     }
 
+    SceneProvider getSceneProvider() {
+        return sceneProvider
+    }
+
+    SceneProcessor getSceneProcessor() {
+        return sceneProcessor
+    }
+
+    ScenePublisher getScenePublisher() {
+        return scenePublisher
+    }
+
     void register(SceneRetrievalListener... listeners) {
         coordinator.register(listeners)
         sceneProcessor.register(listeners)
         scenePublisher.register(listeners)
+        sceneProvider.register(listeners)
     }
 
     void start() {

@@ -2,21 +2,20 @@ package org.openforis.sepal.scene.retrieval
 
 import org.apache.commons.io.FileUtils
 import org.openforis.sepal.scene.ScenePublisher
-import org.openforis.sepal.scene.SceneStatus
-import org.openforis.sepal.scene.SceneRetrievalListener
 import org.openforis.sepal.scene.SceneReference
 import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.SceneStatus
+import org.openforis.sepal.scene.retrieval.provider.SceneRetrievalObservable
 import org.openforis.sepal.util.FilePermissions
-
-import java.util.concurrent.CopyOnWriteArrayList
 
 import static SceneStatus.PUBLISHED
 import static SceneStatus.PUBLISHING
 
-
 class SepalScenePublisher implements ScenePublisher {
+    @Delegate
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
     private final SceneRepository sceneRepository
-    private final List<SceneRetrievalListener> listeners = new CopyOnWriteArrayList<>()
 
     SepalScenePublisher(SceneRepository sceneRepository) {
         this.sceneRepository = sceneRepository
@@ -38,16 +37,5 @@ class SepalScenePublisher implements ScenePublisher {
     @Override
     void publishRequest(long requestId, String user, Collection<SceneReference> scenes) {
 
-    }
-
-    void register(SceneRetrievalListener... listeners) {
-        listeners.each {
-            this.listeners.add(it)
-        }
-    }
-
-    private void notifyListeners(SceneRequest request, SceneStatus status) {
-        for (SceneRetrievalListener listener : listeners)
-            listener.sceneStatusChanged(request, status)
     }
 }

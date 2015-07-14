@@ -9,5 +9,7 @@ interface SceneProvider {
      */
     Collection<SceneRequest> retrieve(List<SceneRequest> requests)
 
+
+
     void stop()
 }
