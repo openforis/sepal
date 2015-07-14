@@ -7,13 +7,13 @@ import org.openforis.sepal.util.JobExecutor
 class EarthExplorerSceneProvider implements SceneProvider {
     private final EarthExplorerClient client
     private final JobExecutor executor
-    private final SceneDownloadCoordinator coordinator
+    private final SceneContextProvider sceneContextProvider
 
 
-    EarthExplorerSceneProvider(EarthExplorerClient client, JobExecutor executor, SceneDownloadCoordinator coordinator) {
+    EarthExplorerSceneProvider(EarthExplorerClient client, JobExecutor executor, SceneContextProvider sceneContextProvider) {
         this.client = client
         this.executor = executor
-        this.coordinator = coordinator
+        this.sceneContextProvider = sceneContextProvider
     }
 
     private Map<String, SceneRequest> filterRequests(List<SceneRequest> requests) {
@@ -29,7 +29,7 @@ class EarthExplorerSceneProvider implements SceneProvider {
 
     private Map<String, SceneRequest> findAvailableScenes(List<SceneRequest> requests) {
         def scenesMap = [:]
-        def availableScenes = requests.each { request ->
+        requests.each { request ->
             def downloadLink = client.lookupDownloadLink(request)
             if (downloadLink) {
                 scenesMap.put(downloadLink, request)
@@ -49,7 +49,7 @@ class EarthExplorerSceneProvider implements SceneProvider {
 
     private void retrieveScene(SceneRequest request, String downloadLink) {
         executor.execute {
-            coordinator.withScene(request) { Scene scene ->
+            sceneContextProvider.withScene(request) { Scene scene ->
                 downloadSceneArchive(scene, request, downloadLink)
             }
         }

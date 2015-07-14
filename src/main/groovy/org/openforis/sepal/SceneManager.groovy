@@ -13,8 +13,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.*
-import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus
+import static org.openforis.sepal.SceneStatus.*
 
 class SceneManager implements SceneRetrievalListener {
     private static final Logger LOG = LoggerFactory.getLogger(this)

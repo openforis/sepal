@@ -1,7 +1,7 @@
 package endtoend.dataprovider
 
 import fake.SynchronousJobExecutor
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneDownloadCoordinator
+import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneContextProvider
 import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
 import org.openforis.sepal.sceneretrieval.provider.SceneReference
 import org.openforis.sepal.sceneretrieval.provider.SceneRequest
@@ -16,7 +16,7 @@ class S3Landsat8SceneProviderTest extends SceneProviderTest {
     def provider = new S3Landsat8SceneProvider(
             new FakeS3LandsatClient(),
             new SynchronousJobExecutor(),
-            new FileSystemSceneDownloadCoordinator(
+            new FileSystemSceneContextProvider(
                     new FileSystemSceneRepository(workingDir, null)
             )
     )

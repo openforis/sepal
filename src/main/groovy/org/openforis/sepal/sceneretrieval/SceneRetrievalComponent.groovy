@@ -20,14 +20,14 @@ class SceneRetrievalComponent {
     final SceneProvider sceneProvider
     final SceneProcessor sceneProcessor
     final ScenePublisher scenePublisher
-    private final SceneDownloadCoordinator coordinator
+    private final SceneContextProvider coordinator
 
     SceneRetrievalComponent() {
         def downloadWorkingDirectory = new File(SepalConfiguration.instance.downloadWorkingDirectory)
         def userHomePath = SepalConfiguration.instance.getUserHomeDir()
 
         def sceneRepository = new FileSystemSceneRepository(downloadWorkingDirectory, userHomePath)
-        coordinator = new FileSystemSceneDownloadCoordinator(sceneRepository)
+        coordinator = new FileSystemSceneContextProvider(sceneRepository)
 
         sceneProvider = new DispatchingSceneProvider([
                 new S3Landsat8SceneProvider(

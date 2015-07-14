@@ -1,18 +1,17 @@
 package org.openforis.sepal.sceneretrieval.publisher
 
 import org.apache.commons.io.FileUtils
+import org.openforis.sepal.SceneStatus
 import org.openforis.sepal.sceneretrieval.SceneRetrievalListener
 import org.openforis.sepal.sceneretrieval.provider.SceneReference
 import org.openforis.sepal.sceneretrieval.provider.SceneRepository
 import org.openforis.sepal.sceneretrieval.provider.SceneRequest
-import org.openforis.sepal.scenesdownload.DownloadRequest
 import org.openforis.sepal.util.FilePermissions
 
 import java.util.concurrent.CopyOnWriteArrayList
 
-import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.PROCESSING
-import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.PUBLISHED
-import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.PUBLISHING
+import static org.openforis.sepal.SceneStatus.PUBLISHED
+import static org.openforis.sepal.SceneStatus.PUBLISHING
 
 interface ScenePublisher {
 
@@ -55,8 +54,7 @@ class SepalScenePublisher implements ScenePublisher {
         }
     }
 
-    private void notifyListeners(SceneRequest request,
-                                 DownloadRequest.SceneStatus status) {
+    private void notifyListeners(SceneRequest request, SceneStatus status) {
         for (SceneRetrievalListener listener : listeners)
             listener.sceneStatusChanged(request, status)
     }

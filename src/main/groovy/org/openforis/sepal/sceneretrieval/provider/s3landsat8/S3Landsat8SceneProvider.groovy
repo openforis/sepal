@@ -9,12 +9,12 @@ import static org.openforis.sepal.sceneretrieval.provider.s3landsat8.SceneIndex.
 class S3Landsat8SceneProvider implements SceneProvider{
     private final S3LandsatClient client
     private final JobExecutor executor
-    private final SceneDownloadCoordinator coordinator
+    private final SceneContextProvider sceneContextProvider
 
-    S3Landsat8SceneProvider(S3LandsatClient client, JobExecutor executor, SceneDownloadCoordinator coordinator) {
+    S3Landsat8SceneProvider(S3LandsatClient client, JobExecutor executor, SceneContextProvider sceneContextProvider) {
         this.client = client
         this.executor = executor
-        this.coordinator = coordinator
+        this.sceneContextProvider = sceneContextProvider
     }
 
     @Override
@@ -30,7 +30,7 @@ class S3Landsat8SceneProvider implements SceneProvider{
 
     private void retrieveScene(SceneIndex index, SceneRequest request) {
         executor.execute {
-            coordinator.withScene(request, index.sizeInBytes) { Scene scene ->
+            sceneContextProvider.withScene(request, index.sizeInBytes) { Scene scene ->
                 downloadFilesForScene(scene, index)
             }
         }

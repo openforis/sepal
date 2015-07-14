@@ -1,17 +1,17 @@
 package org.openforis.sepal.sceneretrieval.processor
 
+import org.openforis.sepal.SceneStatus
 import org.openforis.sepal.sceneretrieval.SceneRetrievalListener
 import org.openforis.sepal.sceneretrieval.provider.SceneReference
 import org.openforis.sepal.sceneretrieval.provider.SceneRepository
 import org.openforis.sepal.sceneretrieval.provider.SceneRequest
-import org.openforis.sepal.scenesdownload.DownloadRequest
 import org.openforis.sepal.util.Is
 import org.openforis.sepal.util.Terminal
 
 import java.util.concurrent.CopyOnWriteArrayList
 
-import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.PROCESSED
-import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.PROCESSING
+import static org.openforis.sepal.SceneStatus.PROCESSED
+import static org.openforis.sepal.SceneStatus.PROCESSING
 
 interface SceneProcessor {
 
@@ -60,7 +60,7 @@ class SepalSceneProcessor implements SceneProcessor {
     }
 
     private void notifyListeners(SceneRequest request,
-                                 DownloadRequest.SceneStatus status) {
+                                 SceneStatus status) {
         for (SceneRetrievalListener listener : listeners)
             listener.sceneStatusChanged(request, status)
     }

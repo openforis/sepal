@@ -7,12 +7,10 @@ import org.openforis.sepal.sceneretrieval.provider.SceneProvider
 import org.openforis.sepal.sceneretrieval.provider.SceneReference
 import org.openforis.sepal.sceneretrieval.provider.SceneRequest
 import org.openforis.sepal.sceneretrieval.publisher.ScenePublisher
-import org.openforis.sepal.scenesdownload.DownloadRequest
-import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommand
 import org.openforis.sepal.scenesdownload.ScenesDownloadRepository
 import spock.lang.Specification
 
-import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.*
+import static org.openforis.sepal.SceneStatus.*
 
 class SceneManagerTest extends Specification {
     private static final USERNAME = 'Test.User'
@@ -20,7 +18,7 @@ class SceneManagerTest extends Specification {
     private static final SCENE_ID = 'LL123456'
 
     def sceneProvider = Mock(SceneProvider)
-    def repo = new MockSceneDownloadRepository()
+    def repo = Mock(ScenesDownloadRepository)
     def processor = Mock(SceneProcessor)
     def publisher = Mock(ScenePublisher)
     def manager = new SceneManager(sceneProvider, processor, publisher, repo)
@@ -53,34 +51,6 @@ class SceneManagerTest extends Specification {
     }
 
 
-}
-
-class MockSceneDownloadRepository implements ScenesDownloadRepository {
-
-    @Override
-    void saveDownloadRequest(RequestScenesDownloadCommand requestScenesDownload) {
-
-    }
-
-    @Override
-    List<DownloadRequest> getNewDownloadRequests() {
-        return null
-    }
-
-    @Override
-    int updateSceneStatus(long requestId, String sceneId, DownloadRequest.SceneStatus status) {
-        return 0
-    }
-
-    @Override
-    List<DownloadRequest> findUserRequests(String username) {
-        return null
-    }
-
-    @Override
-    void sceneStatusChanged(SceneRequest request, DownloadRequest.SceneStatus status) {
-
-    }
 }
 
 

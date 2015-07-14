@@ -2,7 +2,7 @@ package endtoend.dataprovider
 
 
 
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneDownloadCoordinator
+import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneContextProvider
 import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
 import org.openforis.sepal.sceneretrieval.provider.SceneReference
 import org.openforis.sepal.sceneretrieval.provider.SceneRequest
@@ -17,7 +17,7 @@ class EarthExplorerSceneProviderTest extends SceneProviderTest{
     def provider = new EarthExplorerSceneProvider(
         new FakeEarthExplorerClient(),
     new SynchronousJobExecutor(),
-    new FileSystemSceneDownloadCoordinator(
+    new FileSystemSceneContextProvider(
     new FileSystemSceneRepository(workingDir,null)
     )
     )

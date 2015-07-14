@@ -1,33 +1,29 @@
 package org.openforis.sepal.sceneretrieval.provider
 
-
 import org.openforis.sepal.sceneretrieval.SceneRetrievalListener
-
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.util.concurrent.CopyOnWriteArrayList
 
-import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.*
+import static org.openforis.sepal.SceneStatus.*
 
-interface SceneDownloadCoordinator {
+interface SceneContextProvider {
 
     public void withScene(SceneRequest request, Closure closure)
 
     public void withScene(SceneRequest request, Double sizeInBytes, Closure closure)
 
-    public void notifyListeners(SceneRequest request, status)
-
     public void register(SceneRetrievalListener... listeners)
 
 }
 
-class FileSystemSceneDownloadCoordinator implements SceneDownloadCoordinator{
+class FileSystemSceneContextProvider implements SceneContextProvider {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final SceneRepository sceneRepository
     private final List<SceneRetrievalListener> listeners = new CopyOnWriteArrayList<>()
 
-    FileSystemSceneDownloadCoordinator(SceneRepository sceneRepository) {
+    FileSystemSceneContextProvider(SceneRepository sceneRepository) {
         this.sceneRepository = sceneRepository
     }
 
@@ -47,7 +43,6 @@ class FileSystemSceneDownloadCoordinator implements SceneDownloadCoordinator{
             LOG.error("Failed to download scene $request", e)
         }
     }
-
 
 
     public void notifyListeners(SceneRequest request, status) {
