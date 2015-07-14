@@ -12,8 +12,12 @@ import org.openforis.sepal.scene.retrieval.provider.s3landsat8.S3Landsat8ScenePr
 import org.openforis.sepal.scene.ScenePublisher
 import org.openforis.sepal.util.ExecutorServiceBasedJobExecutor
 
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
+import static java.util.concurrent.TimeUnit.*
 import static org.openforis.sepal.util.FileSystem.toDir
 
 class SceneRetrievalComponent {
@@ -32,7 +36,9 @@ class SceneRetrievalComponent {
         sceneProvider = new DispatchingSceneProvider([
                 new S3Landsat8SceneProvider(
                         new RestfulS3LandsatClient('http://landsat-pds.s3.amazonaws.com/'),
-                        new ExecutorServiceBasedJobExecutor(Executors.newCachedThreadPool()),
+                        new ExecutorServiceBasedJobExecutor(
+                                new ThreadPoolExecutor(10,50,10*60,SECONDS,new ArrayBlockingQueue<Runnable>(20))
+                        ),
                         this.coordinator
                 ),
                 new EarthExplorerSceneProvider(

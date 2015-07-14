@@ -5,6 +5,8 @@ import java.util.concurrent.ExecutorService
 interface JobExecutor {
     void execute(Closure job)
 
+    void executeAllAndWait(Collection<Closure> jobs)
+
     void stop()
 }
 
@@ -19,6 +21,11 @@ class ExecutorServiceBasedJobExecutor implements JobExecutor {
     @Override
     public void execute(Closure job) {
         executor.execute(job as Runnable)
+    }
+
+    public void executeAllAndWait(Collection<Closure> jobs) {
+        def futures = executor.invokeAll(jobs)
+        futures.each {it.get()}
     }
 
     @Override

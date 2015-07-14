@@ -3,12 +3,14 @@ package org.openforis.sepal.scene.retrieval.provider.s3landsat8
 import org.openforis.sepal.scene.DataSet
 import org.openforis.sepal.scene.SceneProvider
 import org.openforis.sepal.scene.SceneRequest
-import org.openforis.sepal.scene.retrieval.provider.*
+import org.openforis.sepal.scene.retrieval.provider.FileStream
+import org.openforis.sepal.scene.retrieval.provider.Scene
+import org.openforis.sepal.scene.retrieval.provider.SceneContextProvider
 import org.openforis.sepal.util.JobExecutor
 
 import static org.openforis.sepal.scene.retrieval.provider.s3landsat8.SceneIndex.Entry
 
-class S3Landsat8SceneProvider implements SceneProvider{
+class S3Landsat8SceneProvider implements SceneProvider {
     private final S3LandsatClient client
     private final JobExecutor executor
     private final SceneContextProvider sceneContextProvider
@@ -39,12 +41,15 @@ class S3Landsat8SceneProvider implements SceneProvider{
     }
 
     private void downloadFilesForScene(Scene scene, SceneIndex index) {
-        index.entries.each { entry ->
-            client.download(entry) { InputStream entryStream ->
-                def fileStream = toFileStream(entryStream, entry)
-                scene.addFile(fileStream)
+        def jobs = index.entries.collect { entry ->
+            return {
+                client.download(entry) { InputStream entryStream ->
+                    def fileStream = toFileStream(entryStream, entry)
+                    scene.addFile(fileStream)
+                }
             }
         }
+        executor.executeAllAndWait(jobs)
     }
 
     private FileStream toFileStream(InputStream entryStream, Entry entry) {
