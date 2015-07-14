@@ -1,10 +1,14 @@
 package org.openforis.sepal.scene.retrieval.provider.earthexplorer
 
-import org.openforis.sepal.scene.DataSet
+
 import org.openforis.sepal.scene.SceneProvider
 import org.openforis.sepal.scene.SceneRequest
-import org.openforis.sepal.scene.retrieval.provider.*
+import org.openforis.sepal.scene.retrieval.provider.FileStream
+import org.openforis.sepal.scene.retrieval.provider.Scene
+import org.openforis.sepal.scene.retrieval.provider.SceneContextProvider
 import org.openforis.sepal.util.JobExecutor
+
+import static org.openforis.sepal.scene.DataSet.*
 
 
 class EarthExplorerSceneProvider implements SceneProvider {
@@ -25,8 +29,16 @@ class EarthExplorerSceneProvider implements SceneProvider {
 
     private List<SceneRequest> filterDataSet(List<SceneRequest> requests) {
         requests.findAll { SceneRequest request ->
-            request.sceneReference.dataSet == DataSet.LANDSAT_8
-            // TODO: Add all data sets supported by earth explorer
+            request.sceneReference.dataSet in [
+                    LANDSAT_8,
+                    LANDSAT_ETM_SLC_OFF,
+                    LANDSAT_ETM,
+                    LANDSAT_TM,
+                    LANDSAT_MSS,
+                    LANDSAT_MSS1,
+                    LANDSAT_COMBINED,
+                    LANDSAT_COMBINED78
+            ]
         }
     }
 
