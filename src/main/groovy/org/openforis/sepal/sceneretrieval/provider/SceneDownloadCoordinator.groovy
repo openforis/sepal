@@ -39,6 +39,7 @@ class FileSystemSceneDownloadCoordinator implements SceneDownloadCoordinator{
 
     void withScene(SceneRequest request, Double sizeInBytes = null, Closure closure) {
         try {
+            notifyListeners(request, DOWNLOADING)
             closure(new DefaultScene(request, sceneRepository))
             notifyListeners(request, DOWNLOADED)
         } catch (Exception e) {

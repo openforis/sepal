@@ -3,8 +3,7 @@ package fake
 import groovy.sql.BatchingPreparedStatementWrapper
 import groovy.sql.Sql
 import org.h2.jdbcx.JdbcDataSource
-import org.openforis.sepal.scenesdownload.DownloadRequest
-import org.openforis.sepal.scenesdownload.RequestScenesDownload
+import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommand
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -34,7 +33,7 @@ class Database {
         sql.executeInsert("INSERT INTO data_set(id, dataset_name, dataset_value, dataset_active) values($dataSetId, $dataSetName, $dataSetName, 1)")
     }
 
-    def addDownloadRequest(RequestScenesDownload downloadRequest){
+    def addDownloadRequest(RequestScenesDownloadCommand downloadRequest){
         def generated = sql.executeInsert('INSERT INTO download_requests(username) VALUES(?)',[downloadRequest.username])
         def requestId = generated[0][0] as int
         sql.withBatch('INSERT INTO requested_scenes(request_id, scene_id,dataset_id,processing_chain) VALUES(?, ?,?,?)') { BatchingPreparedStatementWrapper ps ->

@@ -7,8 +7,8 @@ import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.repository.DataSetRepository
-import org.openforis.sepal.scenesdownload.RequestScenesDownload
-import org.openforis.sepal.scenesdownload.RequestScenesDownloadHandler
+import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommand
+import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommandHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -22,18 +22,18 @@ final class Endpoints extends AbstractMvcFilter {
 
     private static DataSetRepository dataSetRepository
     private static HandlerRegistryCommandDispatcher commandDispatcher
-    private static RequestScenesDownloadHandler requestScenesDownloadHandler
+    private static RequestScenesDownloadCommandHandler requestScenesDownloadHandler
     private static ScenesDownloadEndPoint scenesDownloadEndPoint
 
     Controller bootstrap(ServletContext servletContext) {
-        commandDispatcher.register(RequestScenesDownload, requestScenesDownloadHandler)
+        commandDispatcher.register(RequestScenesDownloadCommand, requestScenesDownloadHandler)
 
         def controller = Controller.builder(servletContext)
                 .messageSource('messages')
                 .build()
 
         controller.with {
-            constrain(RequestScenesDownload, RequestScenesDownload.constraints(dataSetRepository))
+            constrain(RequestScenesDownloadCommand, RequestScenesDownloadCommand.constraints(dataSetRepository))
 
             error(InvalidRequest) {
                 response.status = 400
@@ -59,7 +59,7 @@ final class Endpoints extends AbstractMvcFilter {
     static void deploy(
             DataSetRepository dataSetRepository,
             HandlerRegistryCommandDispatcher commandDispatcher,
-            RequestScenesDownloadHandler requestScenesDownloadHandler,
+            RequestScenesDownloadCommandHandler requestScenesDownloadHandler,
             ScenesDownloadEndPoint scenesDownloadEndPoint
     ) {
         this.dataSetRepository = dataSetRepository

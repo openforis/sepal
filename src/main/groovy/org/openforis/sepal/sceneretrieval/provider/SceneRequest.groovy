@@ -1,13 +1,24 @@
 package org.openforis.sepal.sceneretrieval.provider
 
-import groovy.transform.Immutable
+import groovy.transform.ToString
 
-@Immutable
+@ToString
 class SceneRequest {
-    long id
-    SceneReference sceneReference
-    String userName
+    final long id
+    final SceneReference sceneReference
+    final String processingChain
+    final String userName
 
+    SceneRequest(long id, SceneReference sceneReference, String userName) {
+        this(id, sceneReference, null, userName)
+    }
+
+    SceneRequest(long id, SceneReference sceneReference, String processingChain, String userName) {
+        this.id = id
+        this.sceneReference = sceneReference
+        this.processingChain = processingChain
+        this.userName = userName
+    }
 }
 
 

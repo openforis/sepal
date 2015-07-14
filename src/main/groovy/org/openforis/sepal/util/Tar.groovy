@@ -1,4 +1,4 @@
-package util
+package org.openforis.sepal.util
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream

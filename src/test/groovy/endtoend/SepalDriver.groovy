@@ -4,7 +4,7 @@ import fake.FakeEarthExplorer
 import groovy.json.JsonOutput
 import groovyx.net.http.HttpResponseDecorator
 import groovyx.net.http.RESTClient
-import org.openforis.sepal.scenesdownload.RequestScenesDownload
+import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommand
 import spock.util.concurrent.PollingConditions
 
 class SepalDriver {
@@ -40,7 +40,7 @@ class SepalDriver {
         return this
     }
 
-    SepalDriver withRequests(RequestScenesDownload... requests){
+    SepalDriver withRequests(RequestScenesDownloadCommand... requests){
         requests.each {
             system.database.addDownloadRequest(it)
         }

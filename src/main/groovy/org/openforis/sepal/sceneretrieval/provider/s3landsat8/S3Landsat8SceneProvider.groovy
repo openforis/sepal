@@ -17,8 +17,6 @@ class S3Landsat8SceneProvider implements SceneProvider{
         this.coordinator = coordinator
     }
 
-
-
     @Override
     Collection<SceneRequest> retrieve(List<SceneRequest> requests) {
         def indexByRequest = loadSceneIndexes(requests)

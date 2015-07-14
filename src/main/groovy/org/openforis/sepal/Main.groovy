@@ -11,7 +11,7 @@ import org.openforis.sepal.sceneretrieval.processor.SepalSceneProcessor
 import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
 import org.openforis.sepal.sceneretrieval.publisher.SepalScenePublisher
 import org.openforis.sepal.scenesdownload.JdbcScenesDownloadRepository
-import org.openforis.sepal.scenesdownload.RequestScenesDownloadHandler
+import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommandHandler
 import org.openforis.sepal.transaction.SqlConnectionManager
 
 import static org.openforis.sepal.util.FileSystem.toDir
@@ -36,21 +36,14 @@ class Main {
                         SepalConfiguration.instance.dataSource
                 )
         )
-        def retrievalComponent = new SceneRetrievalComponent(scenesDownloadRepo)
-        def sceneRepository = new FileSystemSceneRepository(
-                toDir(SepalConfiguration.instance.downloadWorkingDirectory),
-                SepalConfiguration.instance.getUserHomeDir()
-        )
+        def retrievalComponent = new SceneRetrievalComponent()
         def sceneManager = new SceneManager(
                 retrievalComponent.sceneProvider,
-                new SepalSceneProcessor(
-                        sceneRepository,
-                        toDir(SepalConfiguration.instance.processingHomeDir)
-                ),
-                new SepalScenePublisher(sceneRepository),
+                retrievalComponent.sceneProcessor,
+                retrievalComponent.scenePublisher,
                 scenesDownloadRepo)
 
-        retrievalComponent.register(sceneManager)
+        retrievalComponent.register(scenesDownloadRepo, sceneManager)
         sceneManager.start()
     }
 
@@ -62,7 +55,7 @@ class Main {
         Endpoints.deploy(
                 new DataSetRepository(connectionManager),
                 commandDispatcher,
-                new RequestScenesDownloadHandler(scenesDownloadRepo),
+                new RequestScenesDownloadCommandHandler(scenesDownloadRepo),
                 new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo)
         )
     }

@@ -1,5 +1,6 @@
 package endtoend
 
+import spock.lang.Ignore
 import spock.lang.Specification
 
 class ScenesDownloadTest extends Specification {
@@ -39,6 +40,7 @@ class ScenesDownloadTest extends Specification {
             requests.first().scenes.first().sceneId == 'the scene id'
     }
 
+    @Ignore
     def 'Given a download request with invalid data set, 400 is returned'() {
         def request = [
                 userId   : USERNAME,

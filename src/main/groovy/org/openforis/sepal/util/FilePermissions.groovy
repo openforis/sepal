@@ -1,4 +1,4 @@
-package util
+package org.openforis.sepal.util
 
 class FilePermissions {
 

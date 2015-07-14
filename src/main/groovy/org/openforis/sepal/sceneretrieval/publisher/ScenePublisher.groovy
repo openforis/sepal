@@ -1,10 +1,18 @@
 package org.openforis.sepal.sceneretrieval.publisher
 
 import org.apache.commons.io.FileUtils
+import org.openforis.sepal.sceneretrieval.SceneRetrievalListener
 import org.openforis.sepal.sceneretrieval.provider.SceneReference
 import org.openforis.sepal.sceneretrieval.provider.SceneRepository
 import org.openforis.sepal.sceneretrieval.provider.SceneRequest
-import util.FilePermissions
+import org.openforis.sepal.scenesdownload.DownloadRequest
+import org.openforis.sepal.util.FilePermissions
+
+import java.util.concurrent.CopyOnWriteArrayList
+
+import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.PROCESSING
+import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.PUBLISHED
+import static org.openforis.sepal.scenesdownload.DownloadRequest.SceneStatus.PUBLISHING
 
 interface ScenePublisher {
 
@@ -12,29 +20,44 @@ interface ScenePublisher {
 
     void publishRequest(long requestId, String user, Collection<SceneReference> scenes)
 
+    void register(SceneRetrievalListener... listeners)
 }
 
 class SepalScenePublisher implements ScenePublisher {
-
     private final SceneRepository sceneRepository
+    private final List<SceneRetrievalListener> listeners = new CopyOnWriteArrayList<>()
 
     SepalScenePublisher(SceneRepository sceneRepository) {
         this.sceneRepository = sceneRepository
     }
 
     @Override
-    void publishScene(SceneRequest sceneRequest) {
-        File workingDirectory = sceneRepository.getSceneWorkingDirectory(sceneRequest)
-        File targetDirectory = sceneRepository.getSceneHomeDirectory(sceneRequest)
+    void publishScene(SceneRequest request) {
+        notifyListeners(request, PUBLISHING)
+        File workingDirectory = sceneRepository.getSceneWorkingDirectory(request)
+        File targetDirectory = sceneRepository.getSceneHomeDirectory(request)
         FilePermissions.readWritableRecursive(workingDirectory)
         if (targetDirectory.exists()) {
             targetDirectory.deleteDir()
         }
         FileUtils.moveDirectory(workingDirectory, targetDirectory)
+        notifyListeners(request, PUBLISHED)
     }
 
     @Override
     void publishRequest(long requestId, String user, Collection<SceneReference> scenes) {
 
+    }
+
+    void register(SceneRetrievalListener... listeners) {
+        listeners.each {
+            this.listeners.add(it)
+        }
+    }
+
+    private void notifyListeners(SceneRequest request,
+                                 DownloadRequest.SceneStatus status) {
+        for (SceneRetrievalListener listener : listeners)
+            listener.sceneStatusChanged(request, status)
     }
 }

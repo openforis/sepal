@@ -7,12 +7,9 @@ import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.endpoint.ScenesDownloadEndPoint
 import org.openforis.sepal.repository.DataSetRepository
 import org.openforis.sepal.scenesdownload.JdbcScenesDownloadRepository
-import org.openforis.sepal.scenesdownload.RequestScenesDownloadHandler
+import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommandHandler
 import org.openforis.sepal.transaction.SqlConnectionManager
-import org.slf4j.LoggerFactory
 import util.Port
-
-import java.util.logging.Logger
 
 import static org.openforis.sepal.SepalConfiguration.*
 
@@ -46,7 +43,7 @@ class Sepal {
         Endpoints.deploy(
                 new DataSetRepository(connectionManager),
                 commandDispatcher,
-                new RequestScenesDownloadHandler(scenesDownloadRepo),
+                new RequestScenesDownloadCommandHandler(scenesDownloadRepo),
                 new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo)
         )
     }

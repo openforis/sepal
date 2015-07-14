@@ -2,7 +2,7 @@ package org.openforis.sepal.endpoint
 
 import groovymvc.Controller
 import org.openforis.sepal.command.CommandDispatcher
-import org.openforis.sepal.scenesdownload.RequestScenesDownload
+import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommand
 import org.openforis.sepal.scenesdownload.ScenesDownloadRepository
 
 import static groovy.json.JsonOutput.toJson
@@ -25,7 +25,8 @@ public class ScenesDownloadEndPoint {
                 send(toJson(requests))
             }
             post('downloadRequests') {
-                def command = bindAndValidateJson(new RequestScenesDownload(), body)
+                def theBody = body
+                def command = bindAndValidateJson(new RequestScenesDownloadCommand(), theBody)
                 commandDispatcher.submit(command)
             }
         }

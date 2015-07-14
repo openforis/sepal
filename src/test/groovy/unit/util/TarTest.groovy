@@ -1,7 +1,7 @@
 package unit.util
 
 import spock.lang.Specification
-import util.Tar
+import org.openforis.sepal.util.Tar
 
 import java.nio.file.Files
 

@@ -9,7 +9,7 @@ import static groovymvc.validate.Constraints.custom
 import static groovymvc.validate.Constraints.minLength
 
 @ToString
-class RequestScenesDownload extends AbstractCommand<Void> {
+class RequestScenesDownloadCommand extends AbstractCommand<Void> {
     int dataSetId
     String processingChain
     List<String> sceneIds = []
@@ -22,14 +22,14 @@ class RequestScenesDownload extends AbstractCommand<Void> {
     }
 }
 
-class RequestScenesDownloadHandler implements CommandHandler<Void, RequestScenesDownload> {
+class RequestScenesDownloadCommandHandler implements CommandHandler<Void, RequestScenesDownloadCommand> {
     private final ScenesDownloadRepository repository
 
-    RequestScenesDownloadHandler(ScenesDownloadRepository repository) {
+    RequestScenesDownloadCommandHandler(ScenesDownloadRepository repository) {
         this.repository = repository
     }
 
-    public Void execute(RequestScenesDownload command) {
+    public Void execute(RequestScenesDownloadCommand command) {
         repository.saveDownloadRequest(command)
         return null
     }

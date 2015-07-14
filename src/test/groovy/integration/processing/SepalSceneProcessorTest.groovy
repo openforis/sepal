@@ -16,13 +16,13 @@ class SepalSceneProcessorTest extends Specification {
     def processingScript = setupProcessingScript()
     def processor = new SepalSceneProcessor(sceneRepo, new File(workingDir, 'scripts'))
 
-    def sceneRequest = new SceneRequest(11L, new SceneReference('L45345', LANDSAT_8), 'username')
+    def sceneRequest = new SceneRequest(11L, new SceneReference('L45345', LANDSAT_8), processingScript, 'username')
 
     def 'Processing a scene executes the script in the scene directory'() {
         sceneRepo.createScene(sceneRequest)
 
         when:
-        processor.processScene(sceneRequest, processingScript)
+        processor.processScene(sceneRequest)
 
         then:
         DirectoryStructure.matches(new File(workingDir, "" + sceneRequest.id)) {

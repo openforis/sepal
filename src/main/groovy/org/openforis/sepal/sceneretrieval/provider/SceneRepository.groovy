@@ -1,6 +1,6 @@
 package org.openforis.sepal.sceneretrieval.provider
 
-import util.Tar
+import org.openforis.sepal.util.Tar
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
