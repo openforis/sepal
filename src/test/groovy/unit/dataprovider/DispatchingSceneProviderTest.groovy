@@ -1,10 +1,10 @@
 package unit.dataprovider
 
-import org.openforis.sepal.sceneretrieval.provider.DataSet
-import org.openforis.sepal.sceneretrieval.provider.DispatchingSceneProvider
-import org.openforis.sepal.sceneretrieval.provider.SceneProvider
-import org.openforis.sepal.sceneretrieval.provider.SceneReference
-import org.openforis.sepal.sceneretrieval.provider.SceneRequest
+import org.openforis.sepal.scene.DataSet
+import org.openforis.sepal.scene.retrieval.provider.DispatchingSceneProvider
+import org.openforis.sepal.scene.SceneProvider
+import org.openforis.sepal.scene.SceneReference
+import org.openforis.sepal.scene.SceneRequest
 import spock.lang.Specification
 
 class DispatchingSceneProviderTest extends Specification {

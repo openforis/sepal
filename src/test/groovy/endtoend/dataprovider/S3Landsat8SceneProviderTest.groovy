@@ -1,16 +1,16 @@
 package endtoend.dataprovider
 
 import fake.SynchronousJobExecutor
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneContextProvider
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
-import org.openforis.sepal.sceneretrieval.provider.SceneReference
-import org.openforis.sepal.sceneretrieval.provider.SceneRequest
-import org.openforis.sepal.sceneretrieval.provider.s3landsat8.S3Landsat8SceneProvider
-import org.openforis.sepal.sceneretrieval.provider.s3landsat8.S3LandsatClient
-import org.openforis.sepal.sceneretrieval.provider.s3landsat8.SceneIndex
+import org.openforis.sepal.scene.retrieval.provider.FileSystemSceneContextProvider
+import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
+import org.openforis.sepal.scene.SceneReference
+import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.retrieval.provider.s3landsat8.S3Landsat8SceneProvider
+import org.openforis.sepal.scene.retrieval.provider.s3landsat8.S3LandsatClient
+import org.openforis.sepal.scene.retrieval.provider.s3landsat8.SceneIndex
 import util.DirectoryStructure
 
-import static org.openforis.sepal.sceneretrieval.provider.DataSet.LANDSAT_8
+import static org.openforis.sepal.scene.DataSet.LANDSAT_8
 
 class S3Landsat8SceneProviderTest extends SceneProviderTest {
     def provider = new S3Landsat8SceneProvider(

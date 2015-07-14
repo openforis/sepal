@@ -1,14 +1,14 @@
 package integration.processing
 
 import org.apache.commons.io.FileUtils
-import org.openforis.sepal.sceneretrieval.processor.SepalSceneProcessor
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
-import org.openforis.sepal.sceneretrieval.provider.SceneReference
-import org.openforis.sepal.sceneretrieval.provider.SceneRequest
+import org.openforis.sepal.scene.retrieval.SepalSceneProcessor
+import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
+import org.openforis.sepal.scene.SceneReference
+import org.openforis.sepal.scene.SceneRequest
 import spock.lang.Specification
 import util.DirectoryStructure
 
-import static org.openforis.sepal.sceneretrieval.provider.DataSet.LANDSAT_8
+import static org.openforis.sepal.scene.DataSet.LANDSAT_8
 
 class SepalSceneProcessorTest extends Specification {
     def workingDir = File.createTempDir('workingDir', null)
@@ -19,7 +19,7 @@ class SepalSceneProcessorTest extends Specification {
     def sceneRequest = new SceneRequest(11L, new SceneReference('L45345', LANDSAT_8), processingScript, 'username')
 
     def 'Processing a scene executes the script in the scene directory'() {
-        sceneRepo.createScene(sceneRequest)
+        sceneRepo.createSceneDir(sceneRequest)
 
         when:
         processor.processScene(sceneRequest)

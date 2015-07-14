@@ -2,16 +2,16 @@ package endtoend.dataprovider
 
 
 
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneContextProvider
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
-import org.openforis.sepal.sceneretrieval.provider.SceneReference
-import org.openforis.sepal.sceneretrieval.provider.SceneRequest
-import org.openforis.sepal.sceneretrieval.provider.earthexplorer.EarthExplorerClient
-import org.openforis.sepal.sceneretrieval.provider.earthexplorer.EarthExplorerSceneProvider
+import org.openforis.sepal.scene.retrieval.provider.FileSystemSceneContextProvider
+import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
+import org.openforis.sepal.scene.SceneReference
+import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.retrieval.provider.earthexplorer.EarthExplorerClient
+import org.openforis.sepal.scene.retrieval.provider.earthexplorer.EarthExplorerSceneProvider
 
 import util.DirectoryStructure;
 import fake.SynchronousJobExecutor
-import static org.openforis.sepal.sceneretrieval.provider.DataSet.LANDSAT_8
+import static org.openforis.sepal.scene.DataSet.LANDSAT_8
 
 class EarthExplorerSceneProviderTest extends SceneProviderTest{
     def provider = new EarthExplorerSceneProvider(

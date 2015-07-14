@@ -3,7 +3,7 @@ package fake
 import groovy.sql.BatchingPreparedStatementWrapper
 import groovy.sql.Sql
 import org.h2.jdbcx.JdbcDataSource
-import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommand
+import org.openforis.sepal.scene.management.RequestScenesDownloadCommand
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

@@ -6,9 +6,10 @@ import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
-import org.openforis.sepal.repository.DataSetRepository
-import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommand
-import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommandHandler
+import org.openforis.sepal.scene.management.DataSetRepository
+import org.openforis.sepal.scene.management.RequestScenesDownloadCommand
+import org.openforis.sepal.scene.management.RequestScenesDownloadCommandHandler
+import org.openforis.sepal.scene.management.ScenesDownloadEndPoint
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -60,8 +61,7 @@ final class Endpoints extends AbstractMvcFilter {
             DataSetRepository dataSetRepository,
             HandlerRegistryCommandDispatcher commandDispatcher,
             RequestScenesDownloadCommandHandler requestScenesDownloadHandler,
-            ScenesDownloadEndPoint scenesDownloadEndPoint
-    ) {
+            ScenesDownloadEndPoint scenesDownloadEndPoint) {
         this.dataSetRepository = dataSetRepository
         this.commandDispatcher = commandDispatcher
         this.requestScenesDownloadHandler = requestScenesDownloadHandler

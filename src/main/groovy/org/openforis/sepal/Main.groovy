@@ -2,19 +2,15 @@ package org.openforis.sepal
 
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
-import org.openforis.sepal.endpoint.ScenesDownloadEndPoint
+import org.openforis.sepal.scene.management.SceneManager
+import org.openforis.sepal.scene.management.ScenesDownloadEndPoint
 import org.openforis.sepal.geoserver.GeoServerLayerMonitor
-import org.openforis.sepal.repository.DataSetRepository
+import org.openforis.sepal.scene.management.DataSetRepository
 
-import org.openforis.sepal.sceneretrieval.SceneRetrievalComponent
-import org.openforis.sepal.sceneretrieval.processor.SepalSceneProcessor
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
-import org.openforis.sepal.sceneretrieval.publisher.SepalScenePublisher
-import org.openforis.sepal.scenesdownload.JdbcScenesDownloadRepository
-import org.openforis.sepal.scenesdownload.RequestScenesDownloadCommandHandler
+import org.openforis.sepal.scene.retrieval.SceneRetrievalComponent
+import org.openforis.sepal.scene.management.JdbcScenesDownloadRepository
+import org.openforis.sepal.scene.management.RequestScenesDownloadCommandHandler
 import org.openforis.sepal.transaction.SqlConnectionManager
-
-import static org.openforis.sepal.util.FileSystem.toDir
 
 class Main {
     static void main(String[] args) {

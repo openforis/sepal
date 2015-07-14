@@ -1,16 +1,16 @@
 package unit
 
-import org.openforis.sepal.SceneManager
-import org.openforis.sepal.sceneretrieval.processor.SceneProcessor
-import org.openforis.sepal.sceneretrieval.provider.DataSet
-import org.openforis.sepal.sceneretrieval.provider.SceneProvider
-import org.openforis.sepal.sceneretrieval.provider.SceneReference
-import org.openforis.sepal.sceneretrieval.provider.SceneRequest
-import org.openforis.sepal.sceneretrieval.publisher.ScenePublisher
-import org.openforis.sepal.scenesdownload.ScenesDownloadRepository
+import org.openforis.sepal.scene.management.SceneManager
+import org.openforis.sepal.scene.SceneProcessor
+import org.openforis.sepal.scene.DataSet
+import org.openforis.sepal.scene.SceneProvider
+import org.openforis.sepal.scene.SceneReference
+import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.ScenePublisher
+import org.openforis.sepal.scene.management.ScenesDownloadRepository
 import spock.lang.Specification
 
-import static org.openforis.sepal.SceneStatus.*
+import static org.openforis.sepal.scene.SceneStatus.*
 
 class SceneManagerTest extends Specification {
     private static final USERNAME = 'Test.User'

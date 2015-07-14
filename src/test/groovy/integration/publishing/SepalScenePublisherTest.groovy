@@ -1,13 +1,13 @@
 package integration.publishing
 
-import org.openforis.sepal.sceneretrieval.provider.FileSystemSceneRepository
-import org.openforis.sepal.sceneretrieval.provider.SceneReference
-import org.openforis.sepal.sceneretrieval.provider.SceneRequest
-import org.openforis.sepal.sceneretrieval.publisher.SepalScenePublisher
+import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
+import org.openforis.sepal.scene.SceneReference
+import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.retrieval.SepalScenePublisher
 import spock.lang.Specification
 import util.DirectoryStructure
 
-import static org.openforis.sepal.sceneretrieval.provider.DataSet.LANDSAT_8
+import static org.openforis.sepal.scene.DataSet.LANDSAT_8
 
 class SepalScenePublisherTest extends Specification {
 
@@ -20,7 +20,7 @@ class SepalScenePublisherTest extends Specification {
     def publisher = new SepalScenePublisher(sceneRepo)
 
     def 'Publishing a scene'() {
-        def sceneWorkingDirectory = sceneRepo.createScene(sceneRequest)
+        def sceneWorkingDirectory = sceneRepo.createSceneDir(sceneRequest)
         def scenePublishingDirectory = sceneRepo.getSceneHomeDirectory(sceneRequest)
         new File(sceneWorkingDirectory, "image.tif").createNewFile()
         when:
