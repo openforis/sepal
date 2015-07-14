@@ -1,23 +1,24 @@
 package org.openforis.sepal.scene.retrieval
 
 import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.scene.SceneProvider
-import org.openforis.sepal.scene.SceneRetrievalListener
 import org.openforis.sepal.scene.SceneProcessor
-import org.openforis.sepal.scene.retrieval.provider.*
+import org.openforis.sepal.scene.SceneProvider
+import org.openforis.sepal.scene.ScenePublisher
+import org.openforis.sepal.scene.SceneRetrievalListener
+import org.openforis.sepal.scene.retrieval.provider.DispatchingSceneProvider
+import org.openforis.sepal.scene.retrieval.provider.FileSystemSceneContextProvider
+import org.openforis.sepal.scene.retrieval.provider.SceneContextProvider
 import org.openforis.sepal.scene.retrieval.provider.earthexplorer.EarthExplorerSceneProvider
 import org.openforis.sepal.scene.retrieval.provider.earthexplorer.RestfulEarthExplorerClient
 import org.openforis.sepal.scene.retrieval.provider.s3landsat8.RestfulS3LandsatClient
 import org.openforis.sepal.scene.retrieval.provider.s3landsat8.S3Landsat8SceneProvider
-import org.openforis.sepal.scene.ScenePublisher
 import org.openforis.sepal.util.ExecutorServiceBasedJobExecutor
 
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
 
-import static java.util.concurrent.TimeUnit.*
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.openforis.sepal.util.FileSystem.toDir
 
 class SceneRetrievalComponent {
@@ -37,7 +38,7 @@ class SceneRetrievalComponent {
                 new S3Landsat8SceneProvider(
                         new RestfulS3LandsatClient('http://landsat-pds.s3.amazonaws.com/'),
                         new ExecutorServiceBasedJobExecutor(
-                                new ThreadPoolExecutor(10,50,10*60,SECONDS,new ArrayBlockingQueue<Runnable>(20))
+                                new ThreadPoolExecutor(10, 50, 10 * 60, SECONDS, new ArrayBlockingQueue<Runnable>(10000))
                         ),
                         this.coordinator
                 ),
