@@ -4,4 +4,6 @@ target
 frontend/dist
 frontend/node
 frontend/node_modules
+test-folders/data-dir
+
 
