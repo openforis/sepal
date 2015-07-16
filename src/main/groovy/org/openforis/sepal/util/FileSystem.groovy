@@ -24,6 +24,25 @@ class FileSystem {
         return file
     }
 
+    public static void mkDirs(File dir){
+        if ( ! (dir.exists())){
+            boolean created = dir.mkdirs()
+            if (! (created)){
+                throw new RuntimeException("Unable to create directory $dir.absolutePath. Please check permissions on server")
+            }
+        }
+    }
+
+    public static void deleteDirContent(File dir, Boolean recursive = true){
+        dir.eachFile{
+            if (it.isDirectory() && recursive){
+                FileUtils.deleteDirectory(it)
+            }else if (it.isFile()){
+                FileUtils.forceDelete(it)
+            }
+        }
+    }
+
     private static void illegalArgument(String error) {
         LOG.error(error)
     }

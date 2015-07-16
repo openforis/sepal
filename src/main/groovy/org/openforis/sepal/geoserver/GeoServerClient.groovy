@@ -8,18 +8,30 @@ import org.slf4j.LoggerFactory
 import static groovyx.net.http.ContentType.TEXT
 import static groovyx.net.http.ContentType.XML
 
-class RestGeoServer implements GeoServer {
+interface GeoServerClient {
+    void addWorkspace(String user)
+
+    void removeWorkspace(String user)
+
+    void removeLayer(String user, String layerName)
+
+    void publishLayer(String user,String layerName, String layerLocation)
+
+    void publishStore(String user,String layerName, String layerLocation)
+}
+
+class RestGeoServerClient implements GeoServerClient {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final RESTClient server
     private final String style
 
-    RestGeoServer(String style, String serverUrl, String userName, String password) {
+    RestGeoServerClient(String style, String serverUrl, String userName, String password) {
         LOG.info("Creating RestGeoServer at $serverUrl")
         server = new RESTClient(serverUrl)
         server.auth.basic(userName, password)
         this.style = style
-    }
+}
 
     void addWorkspace(String user) {
         LOG.debug("Checking workspace for $user")
@@ -40,8 +52,6 @@ class RestGeoServer implements GeoServer {
         } catch (Exception ex) {
             LOG.error("Error during workspace adding", ex)
         }
-
-
     }
 
     void removeWorkspace(String user) {
@@ -58,31 +68,33 @@ class RestGeoServer implements GeoServer {
 
     }
 
-    void publishStore(String user, File dir) {
-        LOG.debug("Publishing store $dir for $user")
-        def layerName = dir.name
+    void publishStore(String user,String layerName, String layerLocation) {
+        LOG.debug("Publishing store $layerLocation for $user")
+
         try {
             def path = "$server.defaultURI/rest/workspaces/$user/coveragestores/$layerName/external.imagemosaic"
-            def body = "file://$dir.absolutePath"
-            LOG.trace("Going to create a PUT request at $path with body $body")
-            server.put(
-                    path: path,
-                    requestContentType: TEXT,
-                    body: body
-            )
-            LOG.trace("Request succesfully served")
+            if (!exists(path)){
+                def body = "file://$layerLocation"
+                LOG.trace("Going to create a PUT request at $path with body $body")
+                server.put(
+                        path: path,
+                        requestContentType: TEXT,
+                        body: body
+                )
+                LOG.trace("Request succesfully served")
+            }
         } catch (HttpResponseException e) {
             LOG.error("Error during store publishing", e)
         }
     }
 
-    void publishLayer(String user, File dir) {
-        LOG.debug("Publishing layer $dir for $user")
-        def layerName = dir.name
+    void publishLayer(String user,String layerName, String layerLocation) {
+        LOG.debug("Publishing layer $layerLocation for $user")
+
         if (!exists("$server.defaultURI/rest/layers/$layerName"))
             try {
-                LOG.debug("Layer $dir does not exist on GeoServer")
-                publishStore(user, dir)
+                publishStore(user,layerName, layerLocation)
+                LOG.debug("Layer $layerName does not exist on GeoServer")
                 def path = "$server.defaultURI/rest/layers/$user:${layerName}.xml"
                 def body = "<layer><defaultStyle><name>" + style + "</name></defaultStyle></layer>"
                 LOG.trace("Goint to create a PUT request at $path with body $body")
@@ -101,7 +113,7 @@ class RestGeoServer implements GeoServer {
         LOG.debug("Going to remove layer $user:$layerName")
         try {
             if (!exists("$server.defaultURI/rest/layers/$layerName")) {
-                LOG.warn("Layer $user:layerName does not exist. Impossible to proceed further")
+                LOG.warn("Layer $user:layerName does not exist. Nothing will happen on geoserver side")
             } else {
                 def path = "$server.defaultURI/rest/workspaces/$user/coveragestores/$layerName"
                 LOG.trace("Going to create a DELETE request at $path")

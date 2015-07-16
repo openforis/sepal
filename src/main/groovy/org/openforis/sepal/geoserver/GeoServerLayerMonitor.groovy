@@ -5,7 +5,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.util.FileSystem.toDir
-import static org.openforis.sepal.util.FileSystem.toFile
 
 class GeoServerLayerMonitor {
     private static final Logger LOG = LoggerFactory.getLogger(this)
@@ -13,31 +12,25 @@ class GeoServerLayerMonitor {
     static void start() {
         new Thread(new Runnable() {
             void run() {
+                LOG.info('GeoServerLayerMonitor Started')
 
                 def homeDir = toDir(SepalConfiguration.instance.homeDir)
+                def targetDir = toDir(SepalConfiguration.instance.targetDir)
+                def homeUserLayerDirContainer = SepalConfiguration.instance.layerFolderName
+                def processingScript = SepalConfiguration.instance.processingChain
 
-                def geoServer = new RestGeoServer(
+                def geoServerClient = new RestGeoServerClient(
                         SepalConfiguration.instance.style,
                         SepalConfiguration.instance.geoServerUrl,
                         SepalConfiguration.instance.geoServerUser,
                         SepalConfiguration.instance.geoServerPwd
                 )
 
-                def processingChain = new NativeProcessingChain(
-                        toFile(SepalConfiguration.instance.processingChain)
-                )
+                def layerRepository = new FSLayerRepository(targetDir,homeDir,homeUserLayerDirContainer,processingScript)
+                def monitorChangeHandler = new FSMonitorChangeHandler(layerRepository, geoServerClient)
 
-                def publisher = new Publisher(
-                        homeDir,
-                        toDir(SepalConfiguration.instance.targetDir),
-                        SepalConfiguration.instance.layerFolderName,
-                        processingChain,
-                        geoServer
-                )
-
-                def fsMonitor = new FSMonitor(homeDir, publisher)
-
-                fsMonitor.take()
+                monitorChangeHandler.performCheck()
+                new FSChangeAwareListener(homeDir, monitorChangeHandler).watch()
             }
         }).start()
     }

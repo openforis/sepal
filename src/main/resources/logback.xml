@@ -16,9 +16,21 @@
         </encoder>
     </appender>
 
-    <logger name="org.openforis" additivity="false" level="DEBUG">
+    <appender name="FILE_GEOSERVER" class="ch.qos.logback.core.FileAppender">
+        <file>${sepal.logLocation}/sepal-geoserver-monitoring.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.openforis" additivity="false" level="INFO">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
+    </logger>
+
+    <logger name="org.openforis.sepal.geoserver" additivity="false" level="DEBUG">
+        <appender-ref ref="FILE_GEOSERVER" />
     </logger>
 
 
