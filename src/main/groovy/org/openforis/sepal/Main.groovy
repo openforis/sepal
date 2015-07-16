@@ -17,8 +17,8 @@ class Main {
         def propertiesLocation = args.length == 1 ? args[0] : "/etc/sdms/sepal.properties"
         SepalConfiguration.instance.setConfigFileLocation(propertiesLocation)
 
-       // deployEndpoints()
-       // startSceneManager()
+        deployEndpoints()
+        startSceneManager()
         startLayerMonitor()
     }
 
