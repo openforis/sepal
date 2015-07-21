@@ -21,6 +21,14 @@ interface ScenesDownloadRepository extends SceneRetrievalListener {
 
     List<Map> findUserRequests(String username)
 
+    Boolean containsRequestWithId(Integer requestId)
+
+    Boolean containsSceneWithId(Integer sceneId)
+
+    void deleteRequest(int requestId)
+
+    void deleteScene(int requestId, int sceneId)
+
 }
 
 class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
@@ -81,6 +89,34 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
         return downloadRequests
     }
 
+    @Override
+    Boolean containsRequestWithId(Integer requestId) {
+        def row = sql.firstRow("SELECT * FROM download_requests dr WHERE dr.request_id = ?",[requestId])
+        return row != null
+    }
+
+    @Override
+    void deleteRequest(int requestId) {
+        def sqlScenes = " DELETE FROM requested_scenes WHERE request_id = ?"
+        def sqlRequest = "DELETE FROM download_requests WHERE request_id = ?"
+        sql.withTransaction {
+            sql.execute(sqlScenes,[requestId])
+            sql.execute(sqlRequest,[requestId])
+        }
+    }
+
+    @Override
+    Boolean containsSceneWithId(Integer sceneId) {
+        def row = sql.firstRow("SELECT * FROM requested_scenes rs WHERE rs.id = ?",[sceneId])
+        return row != null
+    }
+
+    @Override
+    void deleteScene(int requestId, int sceneId) {
+        def sqlScenes = " DELETE FROM requested_scenes WHERE request_id = ? AND id = ?"
+        sql.execute(sqlScenes,[requestId,sceneId])
+    }
+
     def map(List<Map> downloadRequests, row) {
         int requestId = row.request_id
         def downloadRequest = [
@@ -110,7 +146,7 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
         downloadRequest.username = row.username
         downloadRequest.requestTime = row.request_time
         Map scene = [:]
-        scene.id = row.request_id
+        scene.id = row.id
         scene.requestId = row.request_id
         scene.sceneId = row.scene_id
         scene.processingChain = row.processing_chain

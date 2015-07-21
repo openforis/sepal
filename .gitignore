@@ -6,5 +6,5 @@ frontend/node
 frontend/node_modules
 test-folders/data-dir/*
 test-folders/home/*
-
+test-folders/sepal.properties
 

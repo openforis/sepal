@@ -40,7 +40,6 @@ class ScenesDownloadTest extends Specification {
             requests.first().scenes.first().sceneId == 'the scene id'
     }
 
-    @Ignore
     def 'Given a download request with invalid data set, 400 is returned'() {
         def request = [
                 userId   : USERNAME,
@@ -52,7 +51,6 @@ class ScenesDownloadTest extends Specification {
         then:
             def e = thrown(FailedRequest)
             e.response.status == 400
-            e.message.toLowerCase().contains('data set')
     }
 
     def 'Given a download request without scenes, 400 is returned'() {

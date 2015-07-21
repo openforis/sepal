@@ -2,10 +2,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.openforis.sepal</groupId>
-    <artifactId>sepal-geoserver</artifactId>
+    <artifactId>sepal</artifactId>
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
-    <name>SEPAL GeoServer</name>
+    <name>SEPAL</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -22,6 +22,14 @@
             <url>http://www.openforis.org/nexus/content/groups/public/</url>
         </repository>
     </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>openforis-releases</id>
+            <name>Open Foris Repository</name>
+            <url>http://www.openforis.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+    </distributionManagement>
 
     <dependencies>
         <dependency>

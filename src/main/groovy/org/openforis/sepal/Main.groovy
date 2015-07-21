@@ -2,11 +2,12 @@ package org.openforis.sepal
 
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
+import org.openforis.sepal.scene.management.RemoveRequestCommandHandler
 import org.openforis.sepal.scene.management.SceneManager
 import org.openforis.sepal.scene.management.ScenesDownloadEndPoint
 import org.openforis.sepal.geoserver.GeoServerLayerMonitor
 import org.openforis.sepal.scene.management.DataSetRepository
-
+import org.openforis.sepal.scene.management.RemoveSceneCommandHandler
 import org.openforis.sepal.scene.retrieval.SceneRetrievalComponent
 import org.openforis.sepal.scene.management.JdbcScenesDownloadRepository
 import org.openforis.sepal.scene.management.RequestScenesDownloadCommandHandler
@@ -52,7 +53,10 @@ class Main {
                 new DataSetRepository(connectionManager),
                 commandDispatcher,
                 new RequestScenesDownloadCommandHandler(scenesDownloadRepo),
-                new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo)
+                new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo),
+                scenesDownloadRepo,
+                new RemoveRequestCommandHandler(scenesDownloadRepo),
+                new RemoveSceneCommandHandler(scenesDownloadRepo)
         )
     }
 

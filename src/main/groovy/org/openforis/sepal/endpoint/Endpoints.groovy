@@ -7,9 +7,14 @@ import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.scene.management.DataSetRepository
+import org.openforis.sepal.scene.management.RemoveRequestCommand
+import org.openforis.sepal.scene.management.RemoveRequestCommandHandler
 import org.openforis.sepal.scene.management.RequestScenesDownloadCommand
 import org.openforis.sepal.scene.management.RequestScenesDownloadCommandHandler
 import org.openforis.sepal.scene.management.ScenesDownloadEndPoint
+import org.openforis.sepal.scene.management.ScenesDownloadRepository
+import org.openforis.sepal.scene.management.RemoveSceneCommand
+import org.openforis.sepal.scene.management.RemoveSceneCommandHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -24,10 +29,15 @@ final class Endpoints extends AbstractMvcFilter {
     private static DataSetRepository dataSetRepository
     private static HandlerRegistryCommandDispatcher commandDispatcher
     private static RequestScenesDownloadCommandHandler requestScenesDownloadHandler
+    private static RemoveRequestCommandHandler deleteCommandHandler
     private static ScenesDownloadEndPoint scenesDownloadEndPoint
+    private static ScenesDownloadRepository scenesDownloadRepository
+    private static RemoveSceneCommandHandler singleSceneDeleteCommandHandler
 
     Controller bootstrap(ServletContext servletContext) {
         commandDispatcher.register(RequestScenesDownloadCommand, requestScenesDownloadHandler)
+        commandDispatcher.register(RemoveRequestCommand,deleteCommandHandler)
+        commandDispatcher.register(RemoveSceneCommand,singleSceneDeleteCommandHandler)
 
         def controller = Controller.builder(servletContext)
                 .messageSource('messages')
@@ -35,6 +45,8 @@ final class Endpoints extends AbstractMvcFilter {
 
         controller.with {
             constrain(RequestScenesDownloadCommand, RequestScenesDownloadCommand.constraints(dataSetRepository))
+            constrain(RemoveRequestCommand,RemoveRequestCommand.constraints(scenesDownloadRepository))
+            constrain(RemoveSceneCommand, RemoveSceneCommand.constraints(scenesDownloadRepository))
 
             error(InvalidRequest) {
                 response.status = 400
@@ -61,12 +73,17 @@ final class Endpoints extends AbstractMvcFilter {
             DataSetRepository dataSetRepository,
             HandlerRegistryCommandDispatcher commandDispatcher,
             RequestScenesDownloadCommandHandler requestScenesDownloadHandler,
-            ScenesDownloadEndPoint scenesDownloadEndPoint) {
+            ScenesDownloadEndPoint scenesDownloadEndPoint,
+            ScenesDownloadRepository scenesDownloadRepository,
+            RemoveRequestCommandHandler deleteCommandHandler,
+            RemoveSceneCommandHandler singleSceneDeleteCommandHandler) {
         this.dataSetRepository = dataSetRepository
         this.commandDispatcher = commandDispatcher
         this.requestScenesDownloadHandler = requestScenesDownloadHandler
         this.scenesDownloadEndPoint = scenesDownloadEndPoint
-
+        this.scenesDownloadRepository = scenesDownloadRepository
+        this.deleteCommandHandler = deleteCommandHandler
+        this.singleSceneDeleteCommandHandler = singleSceneDeleteCommandHandler
         def webAppPort = SepalConfiguration.instance.webAppPort
         LOG.debug("Deploying SEPAL endpoints on port $webAppPort")
         server.deploy(Endpoints, webAppPort)
