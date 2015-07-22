@@ -206,7 +206,7 @@ CREATE TABLE requested_scenes (
   dataset_id           INT(11)      NOT NULL,
   last_updated         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   status               VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
-  processing_chain     VARCHAR(255) NOT NULL,
+  processing_chain     VARCHAR(255) ,
   PRIMARY KEY (`id`)
 );
 

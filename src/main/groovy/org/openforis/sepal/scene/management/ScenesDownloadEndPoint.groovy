@@ -32,18 +32,16 @@ public class ScenesDownloadEndPoint {
             delete('downloadRequests/{requestId}') {
                 def command = new RemoveRequestCommand(params.requestId as Integer)
                 def errors = validate(command)
-                if (errors){
+                if (errors)
                     throw new InvalidRequest(errors)
-                }
                 commandDispatcher.submit(command)
             }
 
-            delete('downloadRequests/{requestId}/{sceneId}'){
+            delete('downloadRequests/{requestId}/{sceneId}') {
                 def command = new RemoveSceneCommand(params.requestId as int, params.sceneId as int)
                 def errors = validate(command)
-                if (errors){
+                if (errors)
                     throw new InvalidRequest(errors)
-                }
                 commandDispatcher.submit(command)
             }
         }
