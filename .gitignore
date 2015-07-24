@@ -4,7 +4,5 @@ target
 sepal-server/frontend/dist/*
 sepal-server/frontend/node/*
 sepal-server/frontend/node_modules/*
-test-folders/data-dir/*
-test-folders/home/*
-test-folders/sepal.properties
+test-folders/*
 
