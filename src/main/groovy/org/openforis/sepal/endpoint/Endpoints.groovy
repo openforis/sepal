@@ -6,15 +6,7 @@ import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
-import org.openforis.sepal.scene.management.DataSetRepository
-import org.openforis.sepal.scene.management.RemoveRequestCommand
-import org.openforis.sepal.scene.management.RemoveRequestCommandHandler
-import org.openforis.sepal.scene.management.RequestScenesDownloadCommand
-import org.openforis.sepal.scene.management.RequestScenesDownloadCommandHandler
-import org.openforis.sepal.scene.management.ScenesDownloadEndPoint
-import org.openforis.sepal.scene.management.ScenesDownloadRepository
-import org.openforis.sepal.scene.management.RemoveSceneCommand
-import org.openforis.sepal.scene.management.RemoveSceneCommandHandler
+import org.openforis.sepal.scene.management.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -36,8 +28,8 @@ final class Endpoints extends AbstractMvcFilter {
 
     Controller bootstrap(ServletContext servletContext) {
         commandDispatcher.register(RequestScenesDownloadCommand, requestScenesDownloadHandler)
-        commandDispatcher.register(RemoveRequestCommand,deleteCommandHandler)
-        commandDispatcher.register(RemoveSceneCommand,singleSceneDeleteCommandHandler)
+        commandDispatcher.register(RemoveRequestCommand, deleteCommandHandler)
+        commandDispatcher.register(RemoveSceneCommand, singleSceneDeleteCommandHandler)
 
         def controller = Controller.builder(servletContext)
                 .messageSource('messages')
@@ -45,8 +37,6 @@ final class Endpoints extends AbstractMvcFilter {
 
         controller.with {
             constrain(RequestScenesDownloadCommand, RequestScenesDownloadCommand.constraints(dataSetRepository))
-            constrain(RemoveRequestCommand,RemoveRequestCommand.constraints(scenesDownloadRepository))
-            constrain(RemoveSceneCommand, RemoveSceneCommand.constraints(scenesDownloadRepository))
 
             error(InvalidRequest) {
                 response.status = 400

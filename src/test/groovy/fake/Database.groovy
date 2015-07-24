@@ -25,7 +25,7 @@ class Database {
     DataSource getDataSource() { dataSource }
 
     void addUser(String username) {
-      sql.executeInsert("INSERT INTO users(username) values($username)")
+        sql.executeInsert("INSERT INTO users(username) values($username)")
     }
 
     def addActiveDataSet(int dataSetId) {
@@ -33,12 +33,12 @@ class Database {
         sql.executeInsert("INSERT INTO data_set(id, dataset_name, dataset_value, dataset_active) values($dataSetId, $dataSetName, $dataSetName, 1)")
     }
 
-    def addDownloadRequest(RequestScenesDownloadCommand downloadRequest){
-        def generated = sql.executeInsert('INSERT INTO download_requests(username) VALUES(?)',[downloadRequest.username])
+    def addDownloadRequest(RequestScenesDownloadCommand downloadRequest) {
+        def generated = sql.executeInsert('INSERT INTO download_requests(username) VALUES(?)', [downloadRequest.username])
         def requestId = generated[0][0] as int
         sql.withBatch('INSERT INTO requested_scenes(request_id, scene_id,dataset_id,processing_chain) VALUES(?, ?,?,?)') { BatchingPreparedStatementWrapper ps ->
             downloadRequest.sceneIds.each {
-                ps.addBatch([requestId, it,downloadRequest.dataSetId,downloadRequest.processingChain])
+                ps.addBatch([requestId, it, downloadRequest.dataSetId, downloadRequest.processingChain])
             }
         }
     }

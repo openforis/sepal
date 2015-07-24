@@ -29,6 +29,11 @@
         <appender-ref ref="FILE"/>
     </logger>
 
+    <logger name="com.amazonaws" additivity="false" level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
     <logger name="org.openforis.sepal.geoserver" additivity="false" level="DEBUG">
         <appender-ref ref="FILE_GEOSERVER" />
     </logger>

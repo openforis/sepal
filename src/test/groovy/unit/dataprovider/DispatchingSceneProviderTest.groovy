@@ -1,10 +1,10 @@
 package unit.dataprovider
 
 import org.openforis.sepal.scene.DataSet
-import org.openforis.sepal.scene.retrieval.provider.DispatchingSceneProvider
 import org.openforis.sepal.scene.SceneProvider
 import org.openforis.sepal.scene.SceneReference
 import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.retrieval.provider.DispatchingSceneProvider
 import spock.lang.Specification
 
 class DispatchingSceneProviderTest extends Specification {
@@ -24,16 +24,16 @@ class DispatchingSceneProviderTest extends Specification {
         ]
 
         when:
-            delegating.retrieve(requests)
+        delegating.retrieve(requests)
 
         then: 'None retrievable'
-            1 * provider1.retrieve(requests) >> requests
+        1 * provider1.retrieve(requests) >> requests
         then: 'Last retrievable'
-            1 * provider2.retrieve(requests) >> [requests.first()]
+        1 * provider2.retrieve(requests) >> [requests.first()]
         then: 'First retrievable'
-            1 * provider3.retrieve([requests.first()]) >> []
+        1 * provider3.retrieve([requests.first()]) >> []
         then: 'No scenes left to retrieve - provider not invoked'
-            0 * provider4.retrieve(_)
+        0 * provider4.retrieve(_)
     }
 
     SceneRequest request(String sceneId, DataSet dataSet) {

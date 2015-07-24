@@ -12,7 +12,6 @@ enum DataSet {
     PLANET_LAB_SCENES(9)
 
 
-
     private final int id
 
     DataSet(int id) {

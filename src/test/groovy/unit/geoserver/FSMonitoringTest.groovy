@@ -5,9 +5,6 @@ import org.openforis.sepal.geoserver.FSChangeAwareListener
 import org.openforis.sepal.geoserver.MonitorChangeHandler
 import spock.lang.Specification
 
-/**
- * Created by monzione on 16/07/2015.
- */
 class FSMonitoringTest extends Specification {
 
     def userLayerHome = "LAYERS"
@@ -39,7 +36,7 @@ class FSMonitoringTest extends Specification {
 
     }
 
-    def 'When a file is created under the root, nothings should happen'(){
+    def 'When a file is created under the root, nothings should happen'() {
         when:
         new File(homeDir, "a_file.txt").createNewFile()
         Thread.sleep(200)

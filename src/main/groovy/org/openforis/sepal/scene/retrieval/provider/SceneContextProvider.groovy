@@ -2,11 +2,8 @@ package org.openforis.sepal.scene.retrieval.provider
 
 import org.openforis.sepal.scene.SceneRequest
 import org.openforis.sepal.scene.retrieval.SceneRepository
-import org.openforis.sepal.scene.SceneRetrievalListener
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
-import java.util.concurrent.CopyOnWriteArrayList
 
 import static org.openforis.sepal.scene.SceneStatus.*
 

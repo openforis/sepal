@@ -12,18 +12,13 @@ class RemoveRequestCommand extends AbstractCommand<Void> {
 
     Integer requestId
 
-    static constraints(ScenesDownloadRepository repository) {
-        [
-                requestId: custom { repository.containsRequestWithId(it) },
-        ]
-    }
 
-    RemoveRequestCommand(int requestId){
+    RemoveRequestCommand(int requestId) {
         this.requestId = requestId
     }
 }
 
-class RemoveRequestCommandHandler implements CommandHandler<Void,RemoveRequestCommand>{
+class RemoveRequestCommandHandler implements CommandHandler<Void, RemoveRequestCommand> {
 
     private final ScenesDownloadRepository repository
 

@@ -2,7 +2,6 @@ package org.openforis.sepal.scene.management
 
 import groovymvc.Controller
 import org.openforis.sepal.command.CommandDispatcher
-import org.openforis.sepal.endpoint.InvalidRequest
 
 import static groovy.json.JsonOutput.toJson
 
@@ -30,19 +29,11 @@ public class ScenesDownloadEndPoint {
             }
 
             delete('downloadRequests/{requestId}') {
-                def command = new RemoveRequestCommand(params.requestId as Integer)
-                def errors = validate(command)
-                if (errors)
-                    throw new InvalidRequest(errors)
-                commandDispatcher.submit(command)
+                commandDispatcher.submit(new RemoveRequestCommand(params.requestId as Integer))
             }
 
             delete('downloadRequests/{requestId}/{sceneId}') {
-                def command = new RemoveSceneCommand(params.requestId as int, params.sceneId as int)
-                def errors = validate(command)
-                if (errors)
-                    throw new InvalidRequest(errors)
-                commandDispatcher.submit(command)
+                commandDispatcher.submit(new RemoveSceneCommand(params.requestId as int, params.sceneId as int))
             }
         }
     }

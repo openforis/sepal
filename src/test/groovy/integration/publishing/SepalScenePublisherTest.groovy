@@ -1,8 +1,8 @@
 package integration.publishing
 
-import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
 import org.openforis.sepal.scene.SceneReference
 import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
 import org.openforis.sepal.scene.retrieval.SepalScenePublisher
 import spock.lang.Specification
 import util.DirectoryStructure

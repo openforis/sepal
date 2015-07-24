@@ -1,7 +1,7 @@
 package org.openforis.sepal.scene.retrieval
 
-import org.openforis.sepal.scene.retrieval.provider.FileStream
 import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.retrieval.provider.FileStream
 import org.openforis.sepal.util.Tar
 
 import java.nio.file.Files

@@ -25,7 +25,7 @@ class ExecutorServiceBasedJobExecutor implements JobExecutor {
 
     public void executeAllAndWait(Collection<Closure> jobs) {
         def futures = executor.invokeAll(jobs)
-        futures.each {it.get()}
+        futures.each { it.get() }
     }
 
     @Override

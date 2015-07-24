@@ -2,11 +2,7 @@ package org.openforis.sepal.scene.management
 
 import groovy.sql.BatchingPreparedStatementWrapper as BatchPs
 import groovy.sql.Sql
-import org.openforis.sepal.scene.SceneStatus
-import org.openforis.sepal.scene.SceneRetrievalListener
-import org.openforis.sepal.scene.DataSet
-import org.openforis.sepal.scene.SceneReference
-import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.*
 import org.openforis.sepal.transaction.SqlConnectionProvider
 
 import java.sql.Timestamp
@@ -20,10 +16,6 @@ interface ScenesDownloadRepository extends SceneRetrievalListener {
     int updateSceneStatus(long requestId, String sceneId, SceneStatus status)
 
     List<Map> findUserRequests(String username)
-
-    Boolean containsRequestWithId(Integer requestId)
-
-    Boolean containsSceneWithId(Integer sceneId)
 
     void deleteRequest(int requestId)
 
@@ -47,7 +39,9 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
     void saveDownloadRequest(RequestScenesDownloadCommand requestScenesDownload) {
         def generated = sql.executeInsert('INSERT INTO download_requests(username) VALUES(?)', [requestScenesDownload.username])
         def requestId = generated[0][0] as int
-        sql.withBatch('INSERT INTO requested_scenes(request_id, scene_id,dataset_id,processing_chain) VALUES(?, ?,?,?)') { BatchPs ps ->
+        sql.withBatch('''
+                INSERT INTO requested_scenes(request_id, scene_id, dataset_id, processing_chain)
+                VALUES(?, ?, ?, ?)''') { BatchPs ps ->
             requestScenesDownload.sceneIds.each {
                 ps.addBatch([requestId, it, requestScenesDownload.dataSetId, requestScenesDownload.processingChain])
             }
@@ -90,31 +84,19 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
     }
 
     @Override
-    Boolean containsRequestWithId(Integer requestId) {
-        def row = sql.firstRow("SELECT * FROM download_requests dr WHERE dr.request_id = ?",[requestId])
-        return row != null
-    }
-
-    @Override
     void deleteRequest(int requestId) {
         def sqlScenes = " DELETE FROM requested_scenes WHERE request_id = ?"
         def sqlRequest = "DELETE FROM download_requests WHERE request_id = ?"
         sql.withTransaction {
-            sql.execute(sqlScenes,[requestId])
-            sql.execute(sqlRequest,[requestId])
+            sql.execute(sqlScenes, [requestId])
+            sql.execute(sqlRequest, [requestId])
         }
-    }
-
-    @Override
-    Boolean containsSceneWithId(Integer sceneId) {
-        def row = sql.firstRow("SELECT * FROM requested_scenes rs WHERE rs.id = ?",[sceneId])
-        return row != null
     }
 
     @Override
     void deleteScene(int requestId, int sceneId) {
         def sqlScenes = " DELETE FROM requested_scenes WHERE request_id = ? AND id = ?"
-        sql.execute(sqlScenes,[requestId,sceneId])
+        sql.execute(sqlScenes, [requestId, sceneId])
     }
 
     def map(List<Map> downloadRequests, row) {

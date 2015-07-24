@@ -15,9 +15,9 @@ interface GeoServerClient {
 
     void removeLayer(String user, String layerName)
 
-    void publishLayer(String user,String layerName, String layerLocation)
+    void publishLayer(String user, String layerName, String layerLocation)
 
-    void publishStore(String user,String layerName, String layerLocation)
+    void publishStore(String user, String layerName, String layerLocation)
 }
 
 class RestGeoServerClient implements GeoServerClient {
@@ -31,7 +31,7 @@ class RestGeoServerClient implements GeoServerClient {
         server = new RESTClient(serverUrl)
         server.auth.basic(userName, password)
         this.style = style
-}
+    }
 
     void addWorkspace(String user) {
         LOG.debug("Checking workspace for $user")
@@ -68,12 +68,12 @@ class RestGeoServerClient implements GeoServerClient {
 
     }
 
-    void publishStore(String user,String layerName, String layerLocation) {
+    void publishStore(String user, String layerName, String layerLocation) {
         LOG.debug("Publishing store $layerLocation for $user")
 
         try {
             def path = "$server.defaultURI/rest/workspaces/$user/coveragestores/$layerName/external.imagemosaic"
-            if (!exists(path)){
+            if (!exists(path)) {
                 def body = "file://$layerLocation"
                 LOG.trace("Going to create a PUT request at $path with body $body")
                 server.put(
@@ -88,12 +88,12 @@ class RestGeoServerClient implements GeoServerClient {
         }
     }
 
-    void publishLayer(String user,String layerName, String layerLocation) {
+    void publishLayer(String user, String layerName, String layerLocation) {
         LOG.debug("Publishing layer $layerLocation for $user")
 
         if (!exists("$server.defaultURI/rest/layers/$layerName"))
             try {
-                publishStore(user,layerName, layerLocation)
+                publishStore(user, layerName, layerLocation)
                 LOG.debug("Layer $layerName does not exist on GeoServer")
                 def path = "$server.defaultURI/rest/layers/$user:${layerName}.xml"
                 def body = "<layer><defaultStyle><name>" + style + "</name></defaultStyle></layer>"

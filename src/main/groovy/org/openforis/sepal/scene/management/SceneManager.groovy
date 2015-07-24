@@ -1,11 +1,6 @@
 package org.openforis.sepal.scene.management
 
-import org.openforis.sepal.scene.SceneStatus
-import org.openforis.sepal.scene.SceneRetrievalListener
-import org.openforis.sepal.scene.SceneProcessor
-import org.openforis.sepal.scene.SceneProvider
-import org.openforis.sepal.scene.SceneRequest
-import org.openforis.sepal.scene.ScenePublisher
+import org.openforis.sepal.scene.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -13,7 +8,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-import static SceneStatus.*
+import static org.openforis.sepal.scene.SceneStatus.*
 
 class SceneManager implements SceneRetrievalListener {
     private static final Logger LOG = LoggerFactory.getLogger(this)

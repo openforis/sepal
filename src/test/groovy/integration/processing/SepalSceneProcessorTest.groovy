@@ -1,10 +1,10 @@
 package integration.processing
 
 import org.apache.commons.io.FileUtils
-import org.openforis.sepal.scene.retrieval.SepalSceneProcessor
-import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
 import org.openforis.sepal.scene.SceneReference
 import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
+import org.openforis.sepal.scene.retrieval.SepalSceneProcessor
 import spock.lang.Specification
 import util.DirectoryStructure
 

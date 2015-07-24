@@ -4,12 +4,7 @@ import fake.Database
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
-import org.openforis.sepal.scene.management.RemoveRequestCommandHandler
-import org.openforis.sepal.scene.management.ScenesDownloadEndPoint
-import org.openforis.sepal.scene.management.DataSetRepository
-import org.openforis.sepal.scene.management.JdbcScenesDownloadRepository
-import org.openforis.sepal.scene.management.RequestScenesDownloadCommandHandler
-import org.openforis.sepal.scene.management.RemoveSceneCommandHandler
+import org.openforis.sepal.scene.management.*
 import org.openforis.sepal.transaction.SqlConnectionManager
 import util.Port
 

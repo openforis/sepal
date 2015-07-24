@@ -26,7 +26,7 @@ class GeoServerLayerMonitor {
                         SepalConfiguration.instance.geoServerPwd
                 )
 
-                def layerRepository = new FSLayerRepository(targetDir,homeDir,homeUserLayerDirContainer,processingScript)
+                def layerRepository = new FSLayerRepository(targetDir, homeDir, homeUserLayerDirContainer, processingScript)
                 def monitorChangeHandler = new FSMonitorChangeHandler(layerRepository, geoServerClient)
 
                 monitorChangeHandler.performCheck()

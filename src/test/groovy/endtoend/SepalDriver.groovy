@@ -33,28 +33,28 @@ class SepalDriver {
         ) as HttpResponseDecorator
     }
 
-    HttpResponseDecorator sendDeleteRequest(Integer requestId){
+    HttpResponseDecorator sendDeleteRequest(Integer requestId) {
         client.delete(
                 path: "downloadRequests/$requestId",
                 requestContentType: 'application/json'
         ) as HttpResponseDecorator
     }
 
-    HttpResponseDecorator sendDeleteRequestScene(Integer requestId, Integer sceneId){
+    HttpResponseDecorator sendDeleteRequestScene(Integer requestId, Integer sceneId) {
         client.delete(
                 path: "downloadRequests/$requestId/$sceneId",
                 requestContentType: 'application/json'
         ) as HttpResponseDecorator
     }
 
-    SepalDriver withUsers(String ... usernames) {
+    SepalDriver withUsers(String... usernames) {
         usernames.each {
             system.database.addUser(it)
         }
         return this
     }
 
-    SepalDriver withRequests(RequestScenesDownloadCommand... requests){
+    SepalDriver withRequests(RequestScenesDownloadCommand... requests) {
         requests.each {
             system.database.addDownloadRequest(it)
         }

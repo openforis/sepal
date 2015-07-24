@@ -1,12 +1,7 @@
 package unit
 
+import org.openforis.sepal.scene.*
 import org.openforis.sepal.scene.management.SceneManager
-import org.openforis.sepal.scene.SceneProcessor
-import org.openforis.sepal.scene.DataSet
-import org.openforis.sepal.scene.SceneProvider
-import org.openforis.sepal.scene.SceneReference
-import org.openforis.sepal.scene.SceneRequest
-import org.openforis.sepal.scene.ScenePublisher
 import org.openforis.sepal.scene.management.ScenesDownloadRepository
 import spock.lang.Specification
 

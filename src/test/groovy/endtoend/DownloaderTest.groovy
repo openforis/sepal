@@ -1,6 +1,6 @@
 package endtoend
 
-import spock.lang.Ignore;
+import spock.lang.Ignore
 import spock.lang.Specification
 import util.DirectoryStructure
 
@@ -26,18 +26,18 @@ class DownloaderTest extends Specification {
         ]
 
         when:
-            driver.postDownloadRequests(request)
+        driver.postDownloadRequests(request)
         then:
-            driver.eventually {
-                DirectoryStructure.matches(driver.homeDir) {
-                    user1 {
-                        the_scene_id {
-                            '1.tif'()
-                            '2.tif'()
-                        }
+        driver.eventually {
+            DirectoryStructure.matches(driver.homeDir) {
+                user1 {
+                    the_scene_id {
+                        '1.tif'()
+                        '2.tif'()
                     }
                 }
             }
+        }
 
     }
 }

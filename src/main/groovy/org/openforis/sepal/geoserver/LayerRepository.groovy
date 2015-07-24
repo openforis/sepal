@@ -4,17 +4,12 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.openforis.sepal.util.FileSystem
 import org.openforis.sepal.util.Terminal
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
-/**
- * Created by monzione on 15/07/2015.
- */
 interface LayerRepository {
 
     public static final String STORE_INDEX_NAME = "storeIndex.properties"
 
-    void checkLayerTargetContainer(String userName,String layerName)
+    void checkLayerTargetContainer(String userName, String layerName)
 
     void checkUserTargetContainer(String userName)
 
@@ -44,14 +39,14 @@ interface LayerRepository {
 
 }
 
-class FSLayerRepository implements LayerRepository{
+class FSLayerRepository implements LayerRepository {
 
     private final File targetDirectory
     private final File homeDirectory
     private final String homeUserLayersContainerDir
     private final String processingScript
 
-    public FSLayerRepository(File targetDirectory,File homeDirectory, String homeUserLayersContainerDir, String processingScript){
+    public FSLayerRepository(File targetDirectory, File homeDirectory, String homeUserLayersContainerDir, String processingScript) {
         this.targetDirectory = targetDirectory
         this.homeDirectory = homeDirectory
         this.homeUserLayersContainerDir = homeUserLayersContainerDir
@@ -61,7 +56,7 @@ class FSLayerRepository implements LayerRepository{
     @Override
     List<String> getHomeUsers() {
         def users = []
-        homeDirectory.eachFile { users.add(it.name)}
+        homeDirectory.eachFile { users.add(it.name) }
         return users
     }
 
@@ -69,24 +64,24 @@ class FSLayerRepository implements LayerRepository{
     List<String> getHomeUserLayers(String userName) {
         def layers = []
         File homeDir = getUserHomeLayerContainer(userName)
-        homeDir.eachDir{ layers.add(it.name)}
+        homeDir.eachDir { layers.add(it.name) }
         return layers
     }
 
     @Override
     void checkLayerTargetContainer(String userName, String layerName) {
-        getLayerTargetContainer(userName,layerName)
+        getLayerTargetContainer(userName, layerName)
     }
 
     private File getLayerTargetContainer(String userName, String layerName) {
-        File layerTargetFolder = new File(getUserTargetContainer(userName),layerName)
+        File layerTargetFolder = new File(getUserTargetContainer(userName), layerName)
         FileSystem.mkDirs(layerTargetFolder)
         return layerTargetFolder
     }
 
     @Override
     void removeLayerTargetContainer(String userName, String layerName) {
-        getLayerTargetContainer(userName,layerName).delete()
+        getLayerTargetContainer(userName, layerName).delete()
     }
 
     @Override
@@ -94,8 +89,8 @@ class FSLayerRepository implements LayerRepository{
         getUserTargetContainer(userName)
     }
 
-    private File getUserTargetContainer(String userName){
-        File userTargetFolder = new File(targetDirectory,userName)
+    private File getUserTargetContainer(String userName) {
+        File userTargetFolder = new File(targetDirectory, userName)
         FileSystem.mkDirs(userTargetFolder)
         return userTargetFolder
     }
@@ -105,15 +100,15 @@ class FSLayerRepository implements LayerRepository{
         getUserHomeLayerContainer(userName)
     }
 
-    private File getUserHomeLayerContainer(String userName){
-        File userHomeDir = new File(homeDirectory,userName)
-        File userHomeLayerDir = new File(userHomeDir,homeUserLayersContainerDir)
+    private File getUserHomeLayerContainer(String userName) {
+        File userHomeDir = new File(homeDirectory, userName)
+        File userHomeLayerDir = new File(userHomeDir, homeUserLayersContainerDir)
         FileSystem.mkDirs(userHomeLayerDir)
         return userHomeLayerDir
     }
 
-    private File getUserHomeLayer(String userName, String layerName){
-        return new File(getUserHomeLayerContainer(userName),layerName)
+    private File getUserHomeLayer(String userName, String layerName) {
+        return new File(getUserHomeLayerContainer(userName), layerName)
     }
 
     @Override
@@ -124,18 +119,18 @@ class FSLayerRepository implements LayerRepository{
 
     @Override
     void cleanTargetLayerContainer(String username, String layerName) {
-        FileSystem.deleteDirContent(getLayerTargetContainer(username,layerName))
+        FileSystem.deleteDirContent(getLayerTargetContainer(username, layerName))
     }
 
-    private File getStoreIndex(String userName, String layerName){
-        File layerDir = getUserHomeLayer(userName,layerName)
-        return new File(layerDir,STORE_INDEX_NAME)
+    private File getStoreIndex(String userName, String layerName) {
+        File layerDir = getUserHomeLayer(userName, layerName)
+        return new File(layerDir, STORE_INDEX_NAME)
     }
 
-    private Properties loadStoreIndex(String userName, String layerName){
+    private Properties loadStoreIndex(String userName, String layerName) {
         Properties properties = null
         File storeIndexFile = getStoreIndex(userName, layerName)
-        if (storeIndexFile.exists()){
+        if (storeIndexFile.exists()) {
             properties = new Properties()
             FileInputStream fis = new FileInputStream(storeIndexFile)
             properties.load(fis)
@@ -147,17 +142,17 @@ class FSLayerRepository implements LayerRepository{
     @Override
     Boolean isLayerContentChanged(String userName, String layerName) {
         def changed = false
-        Properties storeIndexProps = loadStoreIndex(userName,layerName)
-        if (storeIndexProps){
-            File layerDir = getUserHomeLayer(userName,layerName)
-            if (storeIndexProps.size() != layerDir.listFiles().size() -1){
+        Properties storeIndexProps = loadStoreIndex(userName, layerName)
+        if (storeIndexProps) {
+            File layerDir = getUserHomeLayer(userName, layerName)
+            if (storeIndexProps.size() != layerDir.listFiles().size() - 1) {
                 changed = true
-            }else{
+            } else {
                 layerDir.eachFile {
-                    if (! (changed) && ! (it.name.equals(STORE_INDEX_NAME))){
-                        if (! (storeIndexProps.containsKey(it.name))){
+                    if (!(changed) && !(it.name.equals(STORE_INDEX_NAME))) {
+                        if (!(storeIndexProps.containsKey(it.name))) {
                             changed = true
-                        }else{
+                        } else {
                             long timestampModified = Long.valueOf(storeIndexProps.getProperty(it.name))
                             long fileLastModified = it.lastModified()
                             changed = timestampModified == fileLastModified ? changed : true
@@ -165,7 +160,7 @@ class FSLayerRepository implements LayerRepository{
                     }
                 }
             }
-        }else{
+        } else {
             changed = true
         }
         return changed
@@ -175,22 +170,22 @@ class FSLayerRepository implements LayerRepository{
     void storeLayerIndex(String userName, String layerName) {
         Properties properties = new Properties()
         FileWriter fWriter = null
-        File layerDir = getUserHomeLayer(userName,layerName)
-        File propertiesFile = getStoreIndex(userName,layerName)
-        if (propertiesFile.exists()){
+        File layerDir = getUserHomeLayer(userName, layerName)
+        File propertiesFile = getStoreIndex(userName, layerName)
+        if (propertiesFile.exists()) {
             propertiesFile.delete()
         }
-        try{
+        try {
             fWriter = new FileWriter(propertiesFile)
-            layerDir.eachFile{
+            layerDir.eachFile {
                 // check each file but the storeIndex
-                if ( ! (STORE_INDEX_NAME.equals(it.name))  ){
-                    properties.put(it.name,""+it.lastModified())
+                if (!(STORE_INDEX_NAME.equals(it.name))) {
+                    properties.put(it.name, "" + it.lastModified())
                 }
             }
-            properties.store(fWriter,"StoreIndex")
-        }finally{
-            if (fWriter){
+            properties.store(fWriter, "StoreIndex")
+        } finally {
+            if (fWriter) {
                 IOUtils.closeQuietly(fWriter)
             }
         }
@@ -198,33 +193,33 @@ class FSLayerRepository implements LayerRepository{
 
     @Override
     void copyHomeContentToTarget(String userName, String layerName) {
-        def homeLayerDir = getUserHomeLayer(userName,layerName)
-        def targetLayerDir = getLayerTargetContainer(userName,layerName)
-        if (homeLayerDir.exists()){
-            homeLayerDir.eachFile{
-                FileUtils.copyFileToDirectory(it,targetLayerDir)
+        def homeLayerDir = getUserHomeLayer(userName, layerName)
+        def targetLayerDir = getLayerTargetContainer(userName, layerName)
+        if (homeLayerDir.exists()) {
+            homeLayerDir.eachFile {
+                FileUtils.copyFileToDirectory(it, targetLayerDir)
             }
         }
     }
 
     @Override
     Boolean applyProcessingChain(String userName, String layerName) {
-        def targetLayerDir = getLayerTargetContainer(userName,layerName)
-        if (targetLayerDir.list()){
+        def targetLayerDir = getLayerTargetContainer(userName, layerName)
+        if (targetLayerDir.list()) {
             String targetLayerAbsPath = targetLayerDir.absolutePath
-            Terminal.execute(targetLayerDir, processingScript, targetLayerAbsPath,targetLayerAbsPath)
+            Terminal.execute(targetLayerDir, processingScript, targetLayerAbsPath, targetLayerAbsPath)
         }
         return targetLayerDir.list()
     }
 
     @Override
     String getTargetLayerLocation(String userName, String layerName) {
-        return getLayerTargetContainer(userName,layerName).absolutePath
+        return getLayerTargetContainer(userName, layerName).absolutePath
     }
 
     @Override
     Boolean isLayerReady(String userName, String layerName) {
-        return getLayerTargetContainer(userName,layerName).list()
+        return getLayerTargetContainer(userName, layerName).list()
     }
 
 

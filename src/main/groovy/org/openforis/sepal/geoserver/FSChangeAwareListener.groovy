@@ -15,7 +15,7 @@ interface ChangeAwareListener {
 }
 
 
-class FSChangeAwareListener implements ChangeAwareListener{
+class FSChangeAwareListener implements ChangeAwareListener {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     File homeDirectory
@@ -138,18 +138,18 @@ class FSChangeAwareListener implements ChangeAwareListener{
                 processLayerContainerEvent(directoryInvolved, resourcePath, eventKind)
                 break
             case LAYER:
-                processLayerEvent(directoryInvolved,eventPath)
+                processLayerEvent(directoryInvolved, eventPath)
                 break
         }
     }
 
-    def processLayerEvent(Path layerFolder,Path targetResource) {
-        if (! (LayerRepository.STORE_INDEX_NAME.equals(targetResource.toString()))){
+    def processLayerEvent(Path layerFolder, Path targetResource) {
+        if (!(LayerRepository.STORE_INDEX_NAME.equals(targetResource.toString()))) {
             Path layerFolderContainer = layerFolder.parent
             Path userHome = layerFolderContainer.parent
             String layerName = layerFolder.getFileName().toString()
             String userName = userHome.getFileName().toString()
-            changeHandler.layerChanged(userName,layerName)
+            changeHandler.layerChanged(userName, layerName)
         }
     }
 
@@ -158,7 +158,7 @@ class FSChangeAwareListener implements ChangeAwareListener{
         String layerName = targetResource.getFileName().toString()
         switch (eventKind) {
             case ENTRY_CREATE:
-                if (targetResource.toFile().isDirectory()){
+                if (targetResource.toFile().isDirectory()) {
                     LOG.info("New layer folder has been created, $targetResource")
                     changeHandler.layerAdded(userName, layerName)
                     registerLayerWatcher(targetResource)
@@ -178,7 +178,7 @@ class FSChangeAwareListener implements ChangeAwareListener{
         String username = targetResource.getFileName().toString()
         switch (eventKind) {
             case ENTRY_CREATE:
-                if (targetResourceFile.isDirectory()){
+                if (targetResourceFile.isDirectory()) {
                     LOG.info("New user folder has been created, $targetResource")
                     changeHandler.userAdded(username)
                     registerUserWatcher(targetResource)

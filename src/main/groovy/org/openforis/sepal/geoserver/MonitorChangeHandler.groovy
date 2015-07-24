@@ -19,21 +19,21 @@ interface MonitorChangeHandler {
 
 }
 
-class FSMonitorChangeHandler implements MonitorChangeHandler{
+class FSMonitorChangeHandler implements MonitorChangeHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final LayerRepository layerRepository
     private final GeoServerClient geoServerClient
 
-    public FSMonitorChangeHandler(LayerRepository layerRepository,GeoServerClient geoServerClient){
+    public FSMonitorChangeHandler(LayerRepository layerRepository, GeoServerClient geoServerClient) {
         this.layerRepository = layerRepository
         this.geoServerClient = geoServerClient
     }
 
     @Override
     void performCheck() {
-        layerRepository.getHomeUsers().each{
+        layerRepository.getHomeUsers().each {
             userAdded(it)
         }
     }
@@ -43,7 +43,7 @@ class FSMonitorChangeHandler implements MonitorChangeHandler{
         layerRepository.checkUserTargetContainer(username)
         geoServerClient.addWorkspace(username)
         layerRepository.getHomeUserLayers(username).each {
-            layerAdded(username,it)
+            layerAdded(username, it)
         }
     }
 
@@ -55,34 +55,34 @@ class FSMonitorChangeHandler implements MonitorChangeHandler{
 
     @Override
     void layerAdded(String username, String layerName) {
-        layerRepository.checkLayerTargetContainer(username,layerName)
-        if (layerRepository.isLayerReady(username,layerName)){
-           if (layerRepository.isLayerContentChanged(username,layerName)){
-               layerChanged(username,layerName)
-           }else{
-               LOG.debug("Layer content didn't changed since last check.")
-           }
-        }else{
+        layerRepository.checkLayerTargetContainer(username, layerName)
+        if (layerRepository.isLayerReady(username, layerName)) {
+            if (layerRepository.isLayerContentChanged(username, layerName)) {
+                layerChanged(username, layerName)
+            } else {
+                LOG.debug("Layer content didn't changed since last check.")
+            }
+        } else {
             LOG.info("Layer contains no data. GeoServer creation is deferred")
         }
     }
 
     @Override
     void layerRemoved(String username, String layerName) {
-        geoServerClient.removeLayer(username,layerName)
-        layerRepository.removeLayerTargetContainer(username,layerName)
+        geoServerClient.removeLayer(username, layerName)
+        layerRepository.removeLayerTargetContainer(username, layerName)
     }
 
     @Override
     void layerChanged(String username, String layerName) {
-        geoServerClient.removeLayer(username,layerName)
-        layerRepository.cleanTargetLayerContainer(username,layerName)
-        String targetLayerLocation = layerRepository.getTargetLayerLocation(username,layerName)
-        layerRepository.copyHomeContentToTarget(username,layerName)
-        if (layerRepository.applyProcessingChain(username,layerName)){
-            geoServerClient.publishLayer(username,layerName,targetLayerLocation)
+        geoServerClient.removeLayer(username, layerName)
+        layerRepository.cleanTargetLayerContainer(username, layerName)
+        String targetLayerLocation = layerRepository.getTargetLayerLocation(username, layerName)
+        layerRepository.copyHomeContentToTarget(username, layerName)
+        if (layerRepository.applyProcessingChain(username, layerName)) {
+            geoServerClient.publishLayer(username, layerName, targetLayerLocation)
         }
-        layerRepository.storeLayerIndex(username,layerName)
+        layerRepository.storeLayerIndex(username, layerName)
     }
 
 

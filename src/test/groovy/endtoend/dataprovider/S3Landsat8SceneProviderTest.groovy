@@ -1,10 +1,10 @@
 package endtoend.dataprovider
 
 import fake.SynchronousJobExecutor
-import org.openforis.sepal.scene.retrieval.provider.FileSystemSceneContextProvider
-import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
 import org.openforis.sepal.scene.SceneReference
 import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
+import org.openforis.sepal.scene.retrieval.provider.FileSystemSceneContextProvider
 import org.openforis.sepal.scene.retrieval.provider.s3landsat8.S3Landsat8SceneProvider
 import org.openforis.sepal.scene.retrieval.provider.s3landsat8.S3LandsatClient
 import org.openforis.sepal.scene.retrieval.provider.s3landsat8.SceneIndex
@@ -29,18 +29,18 @@ class S3Landsat8SceneProviderTest extends SceneProviderTest {
     def 'Retrieving a scene downloads the files'() {
         def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User')
         when:
-            provider.retrieve([request])
+        provider.retrieve([request])
         then:
-            DirectoryStructure.matches(workingDir) {
-                "${requestId}" {
-                    "${LANDSAT_8}" {
-                        "$sceneId" {
-                            '1.tif'()
-                            '2.tif'()
-                        }
+        DirectoryStructure.matches(workingDir) {
+            "${requestId}" {
+                "${LANDSAT_8}" {
+                    "$sceneId" {
+                        '1.tif'()
+                        '2.tif'()
                     }
                 }
             }
+        }
     }
 
 
