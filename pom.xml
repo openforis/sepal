@@ -8,10 +8,8 @@
     <name>sepal</name>
 
     <modules>
-        <module>sepal-worker</module>
         <module>sepal-server</module>
-        <module>sepal-api</module>
-        <module>sepal-deps</module>
+        <module>sepal-sandbox</module>
     </modules>
 
 

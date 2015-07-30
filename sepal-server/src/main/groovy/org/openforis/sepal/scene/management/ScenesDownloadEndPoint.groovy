@@ -35,6 +35,8 @@ public class ScenesDownloadEndPoint {
             delete('downloadRequests/{requestId}/{sceneId}') {
                 commandDispatcher.submit(new RemoveSceneCommand(params.requestId as int, params.sceneId as int))
             }
+
+
         }
     }
 }

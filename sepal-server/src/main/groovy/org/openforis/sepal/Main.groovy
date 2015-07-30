@@ -15,17 +15,6 @@ import static com.amazonaws.services.ec2.model.VolumeType.Gp2
 
 class Main {
 
-    static void main0(String[] args) {
-        AmazonEC2Client ec2Client = new AmazonEC2Client()
-        def region = Region.getRegion(Regions.US_WEST_2)
-        ec2Client.setRegion(region)
-        def regionName = region.name.toLowerCase()
-        def createVolumeRequest = new CreateVolumeRequest(1, regionName + 'a')
-        createVolumeRequest.setVolumeType(Gp2)
-        def result = ec2Client.createVolume(createVolumeRequest)
-        System.out.println(result.volume.volumeId)
-        ec2Client.shutdown()
-    }
 
     static void main(String[] args) {
         def propertiesLocation = args.length == 1 ? args[0] : "/etc/sdms/sepal.properties"

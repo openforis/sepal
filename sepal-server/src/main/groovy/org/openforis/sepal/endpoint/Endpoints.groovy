@@ -26,6 +26,7 @@ final class Endpoints extends AbstractMvcFilter {
     private static ScenesDownloadRepository scenesDownloadRepository
     private static RemoveSceneCommandHandler singleSceneDeleteCommandHandler
 
+
     Controller bootstrap(ServletContext servletContext) {
         commandDispatcher.register(RequestScenesDownloadCommand, requestScenesDownloadHandler)
         commandDispatcher.register(RemoveRequestCommand, deleteCommandHandler)
