@@ -5,6 +5,7 @@ import groovy.json.JsonOutput
 import groovyx.net.http.HttpResponseDecorator
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.scene.management.RequestScenesDownloadCommand
+import org.openforis.sepal.transaction.SqlConnectionManager
 import spock.util.concurrent.PollingConditions
 
 class SepalDriver {
@@ -19,6 +20,10 @@ class SepalDriver {
         client.handler.failure = { response, body ->
             throw new FailedRequest(response, body)
         }
+    }
+
+    SqlConnectionManager getSQLManager(){
+        system.connectionManager
     }
 
     HttpResponseDecorator getDownloadRequests(String username) {

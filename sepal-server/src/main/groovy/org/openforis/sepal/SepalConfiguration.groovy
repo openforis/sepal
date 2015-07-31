@@ -32,6 +32,8 @@ class SepalConfiguration {
     public static final String DOWNLOADS_WORKING_DIRECTORY = "sepal.downloadWorkingDirectory"
     public static final String USER_HOME_DIR = "sepal.userHomeDir"
     public static final String PROCESSING_HOME_DIR = "sepal.processingChain.homeFolder"
+    public static final String DOCKER_IMAGE_NAME = "docker.imageName"
+    public static final String DOCKER_DAEMON_URI = "docker.daemonURI"
 
     Properties properties
     String configFileLocation
@@ -68,6 +70,14 @@ class SepalConfiguration {
                 testConnectionOnCheckout: true,
 
         )
+    }
+
+    def getDockerImageName(){
+        getValue(DOCKER_IMAGE_NAME)
+    }
+
+    def getDockerDaemonURI(){
+        getValue(DOCKER_DAEMON_URI)
     }
 
     def getProcessingHomeDir() {

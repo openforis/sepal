@@ -1,0 +1,1 @@
+UPDATE users add sandbox_id VARCHAR(100) NULL;

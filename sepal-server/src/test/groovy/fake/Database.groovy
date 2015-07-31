@@ -11,7 +11,7 @@ import javax.sql.DataSource
 
 class Database {
     private static final Logger LOG = LoggerFactory.getLogger(this.class)
-    private static final File SCHEMA = new File('src/main/db', 'schema.sql')
+    private static final File SCHEMA = new File('src/main/db', 'schema_dev.sql')
     private static final File RESET_SCRIPT = new File('src/main/db', 'reset.sql')
     static final String URL = "jdbc:h2:mem:sepal;MODE=MYSQL;DB_CLOSE_DELAY=-1"
 

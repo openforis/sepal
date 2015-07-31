@@ -6,6 +6,11 @@ import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
+import org.openforis.sepal.sandbox.ObtainUserSandboxCommand
+import org.openforis.sepal.sandbox.ObtainUserSandboxCommandHandler
+import org.openforis.sepal.sandbox.ReleaseUserSandboxCommand
+import org.openforis.sepal.sandbox.ReleaseUserSandboxCommandHandler
+import org.openforis.sepal.sandbox.SandboxManagerEndpoint
 import org.openforis.sepal.scene.management.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -23,14 +28,19 @@ final class Endpoints extends AbstractMvcFilter {
     private static RequestScenesDownloadCommandHandler requestScenesDownloadHandler
     private static RemoveRequestCommandHandler deleteCommandHandler
     private static ScenesDownloadEndPoint scenesDownloadEndPoint
+    private static SandboxManagerEndpoint sandboxManagerEndpoint
     private static ScenesDownloadRepository scenesDownloadRepository
     private static RemoveSceneCommandHandler singleSceneDeleteCommandHandler
+    private static ObtainUserSandboxCommandHandler obtainUserSandboxCommandHandler
+    private static ReleaseUserSandboxCommandHandler releaseUserSandboxCommandHandler
 
 
     Controller bootstrap(ServletContext servletContext) {
         commandDispatcher.register(RequestScenesDownloadCommand, requestScenesDownloadHandler)
         commandDispatcher.register(RemoveRequestCommand, deleteCommandHandler)
         commandDispatcher.register(RemoveSceneCommand, singleSceneDeleteCommandHandler)
+        commandDispatcher.register(ObtainUserSandboxCommand,obtainUserSandboxCommandHandler)
+        commandDispatcher.register(ReleaseUserSandboxCommand,releaseUserSandboxCommandHandler)
 
         def controller = Controller.builder(servletContext)
                 .messageSource('messages')
@@ -55,7 +65,7 @@ final class Endpoints extends AbstractMvcFilter {
         }
 
         scenesDownloadEndPoint.registerWith(controller)
-
+        sandboxManagerEndpoint.registerWith(controller)
         return controller
     }
 
@@ -67,7 +77,10 @@ final class Endpoints extends AbstractMvcFilter {
             ScenesDownloadEndPoint scenesDownloadEndPoint,
             ScenesDownloadRepository scenesDownloadRepository,
             RemoveRequestCommandHandler deleteCommandHandler,
-            RemoveSceneCommandHandler singleSceneDeleteCommandHandler) {
+            RemoveSceneCommandHandler singleSceneDeleteCommandHandler,
+            SandboxManagerEndpoint sandboxManagerEndpoint,
+            ObtainUserSandboxCommandHandler obtainUserSandboxCommandHandler,
+            ReleaseUserSandboxCommandHandler releaseUserSandboxCommandHandler) {
         this.dataSetRepository = dataSetRepository
         this.commandDispatcher = commandDispatcher
         this.requestScenesDownloadHandler = requestScenesDownloadHandler
@@ -75,6 +88,9 @@ final class Endpoints extends AbstractMvcFilter {
         this.scenesDownloadRepository = scenesDownloadRepository
         this.deleteCommandHandler = deleteCommandHandler
         this.singleSceneDeleteCommandHandler = singleSceneDeleteCommandHandler
+        this.sandboxManagerEndpoint = sandboxManagerEndpoint
+        this.obtainUserSandboxCommandHandler = obtainUserSandboxCommandHandler
+        this.releaseUserSandboxCommandHandler = releaseUserSandboxCommandHandler
         def webAppPort = SepalConfiguration.instance.webAppPort
         LOG.debug("Deploying SEPAL endpoints on port $webAppPort")
         server.deploy(Endpoints, webAppPort)

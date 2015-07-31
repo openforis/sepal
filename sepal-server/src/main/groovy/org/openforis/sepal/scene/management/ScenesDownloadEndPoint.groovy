@@ -2,15 +2,16 @@ package org.openforis.sepal.scene.management
 
 import groovymvc.Controller
 import org.openforis.sepal.command.CommandDispatcher
+import org.openforis.sepal.endpoint.SepalEndpoint
 
 import static groovy.json.JsonOutput.toJson
 
-public class ScenesDownloadEndPoint {
-    private CommandDispatcher commandDispatcher
+public class ScenesDownloadEndPoint extends SepalEndpoint{
+
     private ScenesDownloadRepository repo
 
     ScenesDownloadEndPoint(CommandDispatcher commandDispatcher, ScenesDownloadRepository repo) {
-        this.commandDispatcher = commandDispatcher
+        super(commandDispatcher)
         this.repo = repo
     }
 

@@ -4,8 +4,14 @@ import fake.Database
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
+import org.openforis.sepal.sandbox.DockerRESTClient
+import org.openforis.sepal.sandbox.DockerSandboxManager
+import org.openforis.sepal.sandbox.ObtainUserSandboxCommandHandler
+import org.openforis.sepal.sandbox.ReleaseUserSandboxCommandHandler
+import org.openforis.sepal.sandbox.SandboxManagerEndpoint
 import org.openforis.sepal.scene.management.*
 import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.user.JDBCUserRepository
 import util.Port
 
 import static org.openforis.sepal.SepalConfiguration.*
@@ -14,6 +20,8 @@ class Sepal {
     static Database database
     private static Endpoints endpoints
     private static Boolean started
+    private SqlConnectionManager connectionManager
+
     public int port
 
     Sepal init() {
@@ -25,6 +33,10 @@ class Sepal {
         return this
     }
 
+    SqlConnectionManager getConnectionManager(){
+        this.connectionManager
+    }
+
 
     private void start() {
         started = true
@@ -33,9 +45,17 @@ class Sepal {
 
 
 
-        SqlConnectionManager connectionManager = new SqlConnectionManager(database.dataSource)
+        connectionManager = new SqlConnectionManager(database.dataSource)
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
         def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
+
+        def daemonURI = SepalConfiguration.instance.dockerDaemonURI
+        def imageName = SepalConfiguration.instance.dockerImageName
+        def sandboxManager = new DockerSandboxManager(
+                new JDBCUserRepository(connectionManager),
+                new DockerRESTClient(daemonURI),
+                imageName
+        )
 
         Endpoints.deploy(
                 new DataSetRepository(connectionManager),
@@ -44,7 +64,10 @@ class Sepal {
                 new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo),
                 scenesDownloadRepo,
                 new RemoveRequestCommandHandler(scenesDownloadRepo),
-                new RemoveSceneCommandHandler(scenesDownloadRepo)
+                new RemoveSceneCommandHandler(scenesDownloadRepo),
+                new SandboxManagerEndpoint(commandDispatcher),
+                new ObtainUserSandboxCommandHandler(sandboxManager),
+                new ReleaseUserSandboxCommandHandler(sandboxManager)
         )
     }
 

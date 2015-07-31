@@ -7,9 +7,15 @@ import com.amazonaws.services.ec2.model.CreateVolumeRequest
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.geoserver.GeoServerLayerMonitor
+import org.openforis.sepal.sandbox.DockerRESTClient
+import org.openforis.sepal.sandbox.DockerSandboxManager
+import org.openforis.sepal.sandbox.ObtainUserSandboxCommandHandler
+import org.openforis.sepal.sandbox.ReleaseUserSandboxCommandHandler
+import org.openforis.sepal.sandbox.SandboxManagerEndpoint
 import org.openforis.sepal.scene.management.*
 import org.openforis.sepal.scene.retrieval.SceneRetrievalComponent
 import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.user.JDBCUserRepository
 
 import static com.amazonaws.services.ec2.model.VolumeType.Gp2
 
@@ -51,6 +57,14 @@ class Main {
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
         def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
 
+        def daemonURI = SepalConfiguration.instance.dockerDaemonURI
+        def imageName = SepalConfiguration.instance.dockerImageName
+        def sandboxManager = new DockerSandboxManager(
+                new JDBCUserRepository(connectionManager),
+                new DockerRESTClient(daemonURI),
+                imageName
+        )
+
         Endpoints.deploy(
                 new DataSetRepository(connectionManager),
                 commandDispatcher,
@@ -58,7 +72,10 @@ class Main {
                 new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo),
                 scenesDownloadRepo,
                 new RemoveRequestCommandHandler(scenesDownloadRepo),
-                new RemoveSceneCommandHandler(scenesDownloadRepo)
+                new RemoveSceneCommandHandler(scenesDownloadRepo),
+                new SandboxManagerEndpoint(commandDispatcher),
+                new ObtainUserSandboxCommandHandler(sandboxManager),
+                new ReleaseUserSandboxCommandHandler(sandboxManager)
         )
     }
 
