@@ -7,7 +7,7 @@ interface UserRepository {
 
     String getSandboxId(String username)
 
-    void update(String username, String sandboxId)
+    void update(String username, String sandboxId, Integer portId)
 }
 
 
@@ -26,8 +26,8 @@ class JDBCUserRepository implements UserRepository {
     }
 
     @Override
-    void update(String username, String sandboxId) {
-        sql.executeUpdate('UPDATE users SET sandbox_id = ? WHERE username = ?',[sandboxId,username])
+    void update(String username, String sandboxId, Integer portId) {
+        sql.executeUpdate('UPDATE users SET sandbox_id = ?, sandbox_ssh_port = ? WHERE username = ?',[sandboxId,portId,username])
     }
 
     private Sql getSql() {

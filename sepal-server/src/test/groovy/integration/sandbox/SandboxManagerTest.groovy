@@ -38,7 +38,7 @@ class SandboxManagerTest extends Specification {
         mockedManager.obtain(A_USER)
         then:
             1 * userMockedRepo.getSandboxId(A_USER)
-            1 * dockMockedClient.createSandbox(A_USER,A_IMAGE_NAME)
+            1 * dockMockedClient.createSandbox(A_IMAGE_NAME)
     }
 
     def 'Given a new sandbox request, if a sandbox is already running for a particular user. The sandbox should be recycled'(){
@@ -69,7 +69,7 @@ class SandboxManagerTest extends Specification {
         }
 
         @Override
-        void update(String username, String sandboxId) {
+        void update(String username, String sandboxId,Integer port) {
             usersSandboxes.put(username,sandboxId)
         }
     }
@@ -94,9 +94,9 @@ class SandboxManagerTest extends Specification {
         }
 
         @Override
-        def createSandbox(String username, String sandboxName) {
+        def createSandbox(String sandboxName) {
             def identifier = UUID.randomUUID().toString()
-            Sandbox sandbox = new Sandbox(identifier,A_IMAGE_NAME,sandboxName + "_" + username, new State(true))
+            Sandbox sandbox = new Sandbox(id: identifier, state: new State(true))
             dockerSandboxes.put(identifier,sandbox)
             return sandbox
         }

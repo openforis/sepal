@@ -55,9 +55,9 @@ class DockerSandboxManager implements  SandboxManager{
     }
 
     private Sandbox createSandbox(String userName){
-        Sandbox sandbox = dockerClient.createSandbox(userName,sandboxName)
+        Sandbox sandbox = dockerClient.createSandbox(sandboxName)
         if (sandbox){
-            userRepository.update(userName,sandbox.id)
+            userRepository.update(userName,sandbox.id,sandbox.sshPort)
         }
 
         return sandbox
@@ -71,7 +71,7 @@ class DockerSandboxManager implements  SandboxManager{
             }
             dockerClient.releaseSandbox(sandboxId)
         }
-        userRepository.update(userName,null)
+        userRepository.update(userName,null,null)
     }
 
     @Override

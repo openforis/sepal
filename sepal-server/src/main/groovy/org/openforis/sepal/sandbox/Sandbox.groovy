@@ -6,6 +6,7 @@ class Sandbox {
     String image
     String name
     State state
+    Integer sshPort
 
     Sandbox(String id, String image, String name, State state) {
         this(id)
@@ -16,7 +17,7 @@ class Sandbox {
 
     Sandbox(String id) { this.id = id}
 
-    private Sandbox(){}
+    Sandbox(){}
 
     String getImage() { image }
     void setImage(String image) { this.image = image }

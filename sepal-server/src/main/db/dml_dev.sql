@@ -1,1 +1,2 @@
-UPDATE users add sandbox_id VARCHAR(100) NULL;
+ALTER TABLE users ADD COLUMN sandbox_id VARCHAR(512);
+ALTER TABLE users ADD COLUMN sandbox_ssh_port INTEGER;

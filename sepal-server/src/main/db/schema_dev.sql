@@ -101,6 +101,7 @@ CREATE TABLE users (
   created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP   NULL     DEFAULT NULL,
   sandbox_id VARCHAR(100) NULL,
+  sandbox_ssh_port INT(11) NULL,
   PRIMARY KEY (id)
 );
 
