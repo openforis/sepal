@@ -6,7 +6,7 @@ class Sandbox {
     String image
     String name
     State state
-    Integer sshPort
+    String uri
 
     Sandbox(String id, String image, String name, State state) {
         this(id)

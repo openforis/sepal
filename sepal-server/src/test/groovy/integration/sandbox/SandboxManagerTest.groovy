@@ -38,7 +38,7 @@ class SandboxManagerTest extends Specification {
         mockedManager.obtain(A_USER)
         then:
             1 * userMockedRepo.getSandboxId(A_USER)
-            1 * dockMockedClient.createSandbox(A_IMAGE_NAME)
+            1 * dockMockedClient.createSandbox(A_IMAGE_NAME,A_USER)
     }
 
     def 'Given a new sandbox request, if a sandbox is already running for a particular user. The sandbox should be recycled'(){
@@ -64,12 +64,17 @@ class SandboxManagerTest extends Specification {
         private Map<String,String> usersSandboxes = [:]
 
         @Override
+        String getSandboxURI(String username) {
+            return null
+        }
+
+        @Override
         String getSandboxId(String username) {
             return usersSandboxes.get(username)
         }
 
         @Override
-        void update(String username, String sandboxId,Integer port) {
+        void update(String username, String sandboxId,String sandboxURI) {
             usersSandboxes.put(username,sandboxId)
         }
     }
@@ -77,6 +82,11 @@ class SandboxManagerTest extends Specification {
     static class FakeDockerClient implements DockerClient{
 
         private Map<String,Sandbox> dockerSandboxes = [:]
+
+        @Override
+        def exec(String sandboxId, String... commands) {
+            return null
+        }
 
         @Override
         Sandbox getSandbox(String identifier) {
@@ -94,7 +104,7 @@ class SandboxManagerTest extends Specification {
         }
 
         @Override
-        def createSandbox(String sandboxName) {
+        def createSandbox(String sandboxName,String username) {
             def identifier = UUID.randomUUID().toString()
             Sandbox sandbox = new Sandbox(id: identifier, state: new State(true))
             dockerSandboxes.put(identifier,sandbox)

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+user=$1
+pubKey=$2
+
+userHome="/home/$user"
+userSshHome="$userHome/.ssh"
+
+mkdir "$userHome"
+mkdir "$userSshHome"
+chmod 700 "$userSshHome"
+useradd -d "$userHome" "$user"
+
+touch "$userSshHome/authorized_keys"
+echo $pubKey > "$userSshHome/authorized_keys"
+chmod 640 "$userSshHome/authorized_keys"
+chown -R "$user:$user" "$userHome"
+
+/usr/bin/supervisord
+
+
+
+
+

@@ -1,2 +1,2 @@
 ALTER TABLE users ADD COLUMN sandbox_id VARCHAR(512);
-ALTER TABLE users ADD COLUMN sandbox_ssh_port INTEGER;
+ALTER TABLE users ADD COLUMN sandbox_uri VARCHAR(512);

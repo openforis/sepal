@@ -4,6 +4,8 @@ import groovy.json.JsonOutput
 import groovyx.net.http.HttpResponseDecorator
 import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient
+import org.apache.commons.io.IOUtils
+import org.openforis.sepal.SepalConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -16,9 +18,11 @@ interface DockerClient {
 
     def releaseSandbox(String sandboxId)
 
-    def createSandbox(String sandboxName)
+    def createSandbox(String sandboxName, String username)
 
     def stopSandbox(String sandboxId)
+
+    def exec(String sandboxId, String... commands)
 }
 
 class DockerRESTClient implements DockerClient {
@@ -31,7 +35,19 @@ class DockerRESTClient implements DockerClient {
         this.dockerDaemonURI = dockerDeamonURI
     }
 
-
+    @Override
+    def exec(String sandboxId, String... commands) {
+        def path = "containers/$sandboxId/exec"
+        def params = [AttachStdin: false, AttachStdout: true, AttachStderr: true, Tty: false, Cmd: commands]
+        def jsonParams = new JsonOutput().toJson(params)
+        def response = restClient.post(path: path,requestContentType: JSON, body: jsonParams)
+        def id = response.data.Id
+        path = "exec/$id/start"
+        params = [Detach: false, Tty: true]
+        jsonParams = new JsonOutput().toJson(params)
+        response = restClient.post(path: path,requestContentType: JSON, body: jsonParams)
+        return response.data
+    }
 
     @Override
     Sandbox getSandbox(String identifier) {
@@ -82,10 +98,11 @@ class DockerRESTClient implements DockerClient {
     }
 
     @Override
-    def createSandbox(String sandboxName) {
+    def createSandbox(String sandboxName, String username) {
         def restClient = new RESTClient(dockerDaemonURI)
         Sandbox sandbox = null
-        def body = new JsonOutput().toJson([Image: sandboxName, Tty: true ])
+        def generatedKey = IOUtils.toString(exec("gateone","/keygen/keygen.run",username))
+        def body = new JsonOutput().toJson([Image: sandboxName, Tty: true, Cmd: [ "/init_sandbox.run", username, generatedKey ] ])
         try{
             HttpResponseDecorator response = restClient.post(
                     path : 'containers/create',
@@ -108,7 +125,8 @@ class DockerRESTClient implements DockerClient {
             HttpResponseDecorator response = restClient.get(
                     path : path,
             )
-            sandbox.sshPort = Integer.parseInt(response.data.NetworkSettings.Ports["22/tcp"][0].HostPort)
+            def sshPort = Integer.parseInt(response.data.NetworkSettings.Ports["22/tcp"][0].HostPort)
+            sandbox.uri = SepalConfiguration.instance.dockerBaseURI + ":" + sshPort
         }catch (HttpResponseException responseException){
             LOG.error("Error while getting container infos. $responseException.message")
             releaseSandbox(sandbox.id,restClient)

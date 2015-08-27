@@ -33,7 +33,9 @@ class SepalConfiguration {
     public static final String USER_HOME_DIR = "sepal.userHomeDir"
     public static final String PROCESSING_HOME_DIR = "sepal.processingChain.homeFolder"
     public static final String DOCKER_IMAGE_NAME = "docker.imageName"
-    public static final String DOCKER_DAEMON_URI = "docker.daemonURI"
+    public static final String DOCKER_BASE_URI = "docker.baseURI"
+    public static final String DOCKER_DAEMON_PORT = "docker.daemonPort"
+    public static final String DOCKER_REST_ENTRYPOINT = "docker.restEntryPoint"
 
     Properties properties
     String configFileLocation
@@ -72,13 +74,25 @@ class SepalConfiguration {
         )
     }
 
+    def getDockerRESTEntryPoint(){
+        getValue(DOCKER_REST_ENTRYPOINT)
+    }
+
+    def getDockerDaemonPort(){
+        def portValue = getValue(DOCKER_DAEMON_PORT)
+        return portValue ? Integer.parseInt(portValue) : 2375
+    }
+
+    def getDockerBaseURI(){
+        getValue(DOCKER_BASE_URI)
+    }
+
+
     def getDockerImageName(){
         getValue(DOCKER_IMAGE_NAME)
     }
 
-    def getDockerDaemonURI(){
-        getValue(DOCKER_DAEMON_URI)
-    }
+    def getDockerDaemonURI(){ getDockerBaseURI()+ ':' + getDockerDaemonPort() + '/' + getDockerRESTEntryPoint()}
 
     def getProcessingHomeDir() {
         getValue(PROCESSING_HOME_DIR)

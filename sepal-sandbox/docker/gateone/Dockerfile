@@ -1,10 +1,12 @@
 FROM liftoff/gateone:latest
 MAINTAINER OpenForis
 
-RUN mkdir -p /gateone/users/ANONYMOUS /gateone/users/ANONYMOUS/.ssh
+RUN mkdir -p /keygen/
 
-ADD .default_ids /gateone/users/ANONYMOUS/.ssh/
-ADD id_rsa /gateone/users/ANONYMOUS/.ssh/
+ADD 30api_keys.conf /etc/gateone/conf.d/
+ADD keygen.run /keygen/
+ADD .default_ids /keygen/
+RUN chmod u+x /keygen/keygen.run
 
 EXPOSE 8000
-CMD ["/usr/local/bin/update_and_run_gateone --origins=*"]
+CMD /usr/local/bin/update_and_run_gateone --origins=* --auth=api

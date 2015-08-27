@@ -1,0 +1,39 @@
+#!/bin/bash
+
+function timestamp {
+  echo $(date +%s)
+}
+
+user=$1
+tst=$(timestamp)
+userDir="/gateone/users/$user"
+sshUserDir="$userDir/.ssh"
+if [ ! -d "$userDir" ]; then
+        mkdir "$userDir"
+fi
+if [ ! -d "$sshUserDir" ]; then
+	mkdir "$sshUserDir"
+fi
+if [ ! -f "$sshUserDir/session"]; then
+    rm "$sshUserDir/session"
+fi
+
+mkdir "$tst"
+ssh-keygen  -t rsa -b 4096 -f "./$tst/id_rsa" -q -N ""
+
+if [ -f "$sshUserDir/id_rsa" ]; then
+	rm -rf "$sshUserDir/id_rsa"
+fi
+mv "$tst/id_rsa" "$sshUserDir"
+pubKey=$(<"$tst/id_rsa.pub")
+
+rm -rf "$tst/id_rsa.pub"
+rmdir "$tst"
+echo $pubKey
+
+
+
+
+
+
+

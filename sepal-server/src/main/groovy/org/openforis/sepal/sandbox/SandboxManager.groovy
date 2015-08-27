@@ -37,6 +37,7 @@ class DockerSandboxManager implements  SandboxManager{
                 LOG.debug("$sandbox.name detected")
                 if (sandbox.state.running){
                     LOG.info("Found a running sandbox for the user $userName. Going to reuse it")
+                    sandbox.uri = userRepository.getSandboxURI(userName)
                 }else{
                     releaseSandbox(userName,sandboxId)
                     sandbox = createSandbox(userName)
@@ -55,9 +56,9 @@ class DockerSandboxManager implements  SandboxManager{
     }
 
     private Sandbox createSandbox(String userName){
-        Sandbox sandbox = dockerClient.createSandbox(sandboxName)
+        Sandbox sandbox = dockerClient.createSandbox(sandboxName,userName)
         if (sandbox){
-            userRepository.update(userName,sandbox.id,sandbox.sshPort)
+            userRepository.update(userName,sandbox.id,sandbox.uri)
         }
 
         return sandbox
