@@ -82,12 +82,14 @@ class FSMonitorChangeHandler implements MonitorChangeHandler {
     void layerChanged(String username, String layerName) {
         geoServerClient.removeLayer(username, layerName)
         layerRepository.cleanTargetLayerContainer(username, layerName)
-        String targetLayerLocation = layerRepository.getTargetLayerLocation(username, layerName)
+        layerRepository.storeLayerIndex(username, layerName)
         layerRepository.copyHomeContentToTarget(username, layerName)
         if (layerRepository.applyProcessingChain(username, layerName)) {
+            String targetLayerLocation = layerRepository.getTargetLayerLocation(username, layerName)
             geoServerClient.publishLayer(username, layerName, targetLayerLocation)
         }
-        layerRepository.storeLayerIndex(username, layerName)
+
+
     }
 
 
