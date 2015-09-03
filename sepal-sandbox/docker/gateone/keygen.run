@@ -14,8 +14,14 @@ fi
 if [ ! -d "$sshUserDir" ]; then
 	mkdir "$sshUserDir"
 fi
-if [ ! -f "$sshUserDir/session"]; then
-    rm "$sshUserDir/session"
+
+if [ -f "$sshUserDir/config" ]; then
+    rm "$sshUserDir/config"
+fi
+
+cp "/keygen/config" "$sshUserDir"
+if [ -f "$userDir/session" ]; then
+    rm "$userDir/session"
 fi
 
 mkdir "$tst"

@@ -56,11 +56,13 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>5.1.35</version>
         </dependency>
-        <dependency>
+
+
+       <!-- <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
             <version>1.10.5</version>
-        </dependency>
+        </dependency> -->
 
         <dependency>
             <groupId>io.undertow</groupId>
@@ -134,7 +136,7 @@
             </plugin>
 
             <!-- Install node, npm, bower, and gulp locally. Trigger gulp build. -->
-            <plugin>
+            <!--<plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
                 <version>0.0.23</version>
@@ -164,10 +166,10 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
 
             <!-- Build frontend -->
-            <plugin>
+            <!--<plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.4.0</version>
@@ -187,10 +189,10 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin> -->
 
             <!-- Clean frontend -->
-            <plugin>
+           <!-- <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
                 <version>2.6.1</version>
                 <configuration>
@@ -200,7 +202,7 @@
                         </fileset>
                     </filesets>
                 </configuration>
-            </plugin>
+            </plugin> -->
         </plugins>
     </build>
 

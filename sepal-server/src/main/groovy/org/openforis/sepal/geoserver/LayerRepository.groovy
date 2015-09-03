@@ -75,6 +75,7 @@ class FSLayerRepository implements LayerRepository {
 
     private File getLayerTargetContainer(String userName, String layerName) {
         File layerTargetFolder = new File(getUserTargetContainer(userName), layerName)
+        layerTargetFolder.setWritable(true,false)
         FileSystem.mkDirs(layerTargetFolder)
         return layerTargetFolder
     }
@@ -91,6 +92,7 @@ class FSLayerRepository implements LayerRepository {
 
     private File getUserTargetContainer(String userName) {
         File userTargetFolder = new File(targetDirectory, userName)
+        userTargetFolder.setWritable(true,false)
         FileSystem.mkDirs(userTargetFolder)
         return userTargetFolder
     }
@@ -103,6 +105,7 @@ class FSLayerRepository implements LayerRepository {
     private File getUserHomeLayerContainer(String userName) {
         File userHomeDir = new File(homeDirectory, userName)
         File userHomeLayerDir = new File(userHomeDir, homeUserLayersContainerDir)
+        userHomeLayerDir.setWritable(true,false)
         FileSystem.mkDirs(userHomeLayerDir)
         return userHomeLayerDir
     }
@@ -176,14 +179,16 @@ class FSLayerRepository implements LayerRepository {
             propertiesFile.delete()
         }
         try {
-            fWriter = new FileWriter(propertiesFile)
-            layerDir.eachFile {
-                // check each file but the storeIndex
-                if (!(STORE_INDEX_NAME.equals(it.name))) {
-                    properties.put(it.name, "" + it.lastModified())
+            if (layerDir.list()){
+                fWriter = new FileWriter(propertiesFile)
+                layerDir.eachFile {
+                    // check each file but the storeIndex
+                    if (!(STORE_INDEX_NAME.equals(it.name))) {
+                        properties.put(it.name, "" + it.lastModified())
+                    }
                 }
+                properties.store(fWriter, "StoreIndex")
             }
-            properties.store(fWriter, "StoreIndex")
         } finally {
             if (fWriter) {
                 IOUtils.closeQuietly(fWriter)

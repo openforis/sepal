@@ -5,7 +5,7 @@ RUN mkdir -p /keygen/
 
 ADD 30api_keys.conf /etc/gateone/conf.d/
 ADD keygen.run /keygen/
-ADD .default_ids /keygen/
+ADD config /keygen/
 RUN chmod u+x /keygen/keygen.run
 
 EXPOSE 8000

@@ -100,9 +100,13 @@ class DockerRESTClient implements DockerClient {
     @Override
     def createSandbox(String sandboxName, String username) {
         def restClient = new RESTClient(dockerDaemonURI)
+        LOG.debug("Going to create a sandbox on $dockerDaemonURI")
         Sandbox sandbox = null
         def generatedKey = IOUtils.toString(exec("gateone","/keygen/keygen.run",username))
-        def body = new JsonOutput().toJson([Image: sandboxName, Tty: true, Cmd: [ "/init_sandbox.run", username, generatedKey ] ])
+        def homeDir = SepalConfiguration.instance.homeDir
+        def volumeBinding = "$homeDir/$username:/home/$username/sdms"
+        def body = new JsonOutput().toJson([Image: sandboxName, Tty: true, Cmd: [ "/init_sandbox.run", username, generatedKey ], HostConfig: [ Binds: [ "$volumeBinding" ]] ])
+        LOG.info("Creating sandbox with: $body")
         try{
             HttpResponseDecorator response = restClient.post(
                     path : 'containers/create',
@@ -110,6 +114,7 @@ class DockerRESTClient implements DockerClient {
                     body: body
             )
             sandbox = new Sandbox(response.data.Id)
+            LOG.debug("Sandbox created: $sandbox.id")
             startContainer(restClient,sandbox.id)
             getContainerInfo(restClient,sandbox)
         }catch (HttpResponseException exception){
@@ -125,8 +130,7 @@ class DockerRESTClient implements DockerClient {
             HttpResponseDecorator response = restClient.get(
                     path : path,
             )
-            def sshPort = Integer.parseInt(response.data.NetworkSettings.Ports["22/tcp"][0].HostPort)
-            sandbox.uri = SepalConfiguration.instance.dockerBaseURI + ":" + sshPort
+            sandbox.uri = response.data.NetworkSettings.IPAddress
         }catch (HttpResponseException responseException){
             LOG.error("Error while getting container infos. $responseException.message")
             releaseSandbox(sandbox.id,restClient)

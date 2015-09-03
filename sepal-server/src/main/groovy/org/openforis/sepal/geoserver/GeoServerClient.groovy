@@ -18,6 +18,8 @@ interface GeoServerClient {
     void publishLayer(String user, String layerName, String layerLocation)
 
     void publishStore(String user, String layerName, String layerLocation)
+
+    Boolean layerExist(String user, String layerName)
 }
 
 class RestGeoServerClient implements GeoServerClient {
@@ -109,11 +111,13 @@ class RestGeoServerClient implements GeoServerClient {
             }
     }
 
+    Boolean layerExist(String username, String layerName){ exists("$server.defaultURI/rest/layers/$layerName")}
+
     void removeLayer(String user, String layerName) {
         LOG.debug("Going to remove layer $user:$layerName")
         try {
             if (!exists("$server.defaultURI/rest/layers/$layerName")) {
-                LOG.warn("Layer $user:layerName does not exist. Nothing will happen on geoserver side")
+                LOG.warn("Layer $user:$layerName does not exist. Nothing will happen on geoserver side")
             } else {
                 def path = "$server.defaultURI/rest/workspaces/$user/coveragestores/$layerName"
                 LOG.trace("Going to create a DELETE request at $path")
@@ -121,7 +125,7 @@ class RestGeoServerClient implements GeoServerClient {
                 LOG.debug("Layer succesfully deleted")
             }
         } catch (Exception ex) {
-            LOG.error("Error during layer deletion", e)
+            LOG.error("Error during layer deletion", ex)
         }
 
     }

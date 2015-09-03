@@ -24,7 +24,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.openforis" additivity="false" level="INFO">
+    <logger name="org.openforis" additivity="false" level="TRACE">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </logger>
