@@ -13,9 +13,9 @@ useradd -s /bin/bash -d "$userHome" "$user"
 touch "$userSshHome/authorized_keys"
 echo $pubKey > "$userSshHome/authorized_keys"
 chmod 640 "$userSshHome/authorized_keys"
-#cp /etc/skel/.bashrc "$userHome"
-#cp /etc/skel/.profile "$userHome"
-#cp /etc/skel/.bash_logout "$userHome"
+cp /etc/skel/.bashrc "$userHome"
+cp /etc/skel/.profile "$userHome"
+cp /etc/skel/.bash_logout "$userHome"
 chown -R "$user:$user" "$userHome"
 
 
