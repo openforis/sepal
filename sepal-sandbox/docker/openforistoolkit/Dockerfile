@@ -8,12 +8,11 @@ RUN ./OpenForisToolkit.run << 1
 
 RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 RUN chmod u+x Miniconda3-latest-Linux-x86_64.sh
-RUN ./Miniconda3-latest-Linux-x86_64.sh -b
-RUN /root/miniconda3/bin/conda install -y -c https://conda.binstar.org/osgeo arcsi
+RUN ./Miniconda3-latest-Linux-x86_64.sh -b -p /opt/miniconda3
+RUN /opt/miniconda3/bin/conda install -y -c https://conda.binstar.org/osgeo arcsi
 
-ENV GDAL_DRIVER_PATH="/root/miniconda3/lib/gdalplugins:$GDAL_DRIVER_PATH"
-ENV GDAL_DATA="/root/miniconda3/share/gdal"
-ENV PATH="$PATH:/root/miniconda3/bin"
-
+RUN echo "GDAL_DRIVER_PATH=\"/opt/miniconda3/lib/gdalplugins:$GDAL_DRIVER_PATH\"" >> /etc/environment
+RUN echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
+RUN echo "PATH=\"$PATH:/opt/miniconda3/bin\"" >> /etc/environment
 
 CMD ["/bin/bash"]
