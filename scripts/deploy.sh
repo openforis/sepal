@@ -1,1 +1,1 @@
-touch /newfile
+touch newfile
