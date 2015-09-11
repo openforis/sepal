@@ -1,17 +1,18 @@
 FROM ubuntu
 MAINTAINER OpenForis
 
-
-RUN apt-get update && apt-get install -y wget  gcc g++ gdal-bin libgdal1-dev libgsl0-dev libgsl0ldbl libproj-dev python-gdal python-scipy python-tk python-qt4 perl
-
-
+RUN apt-get update && apt-get install -y wget curl  gcc g++ gdal-bin libgdal1-dev libgsl0-dev libgsl0ldbl libproj-dev python-gdal python-scipy python-tk python-qt4 perl
 RUN wget http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
 RUN chmod u+x OpenForisToolkit.run
-
-ADD install_oft.sh .
-
-
-RUN chmod u+x ./install_oft.sh
 RUN ./OpenForisToolkit.run << 1
-EXPOSE 22
+
+RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+RUN chmod u+x Miniconda3-latest-Linux-x86_64.sh
+RUN ./Miniconda3-latest-Linux-x86_64.sh -b -p /opt/miniconda3
+RUN /opt/miniconda3/bin/conda install -y -c https://conda.binstar.org/osgeo arcsi
+
+RUN echo "GDAL_DRIVER_PATH=\"/opt/miniconda3/lib/gdalplugins:$GDAL_DRIVER_PATH\"" >> /etc/environment
+RUN echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
+RUN echo "PATH=\"$PATH:/opt/miniconda3/bin\"" >> /etc/environment
+
 CMD ["/bin/bash"]

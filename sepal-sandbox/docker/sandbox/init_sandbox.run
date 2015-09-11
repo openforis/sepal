@@ -9,16 +9,15 @@ userSshHome="$userHome/.ssh"
 mkdir "$userHome"
 mkdir "$userSshHome"
 chmod 700 "$userSshHome"
-useradd -d "$userHome" "$user"
-
+useradd -s /bin/bash -d "$userHome" "$user"
 touch "$userSshHome/authorized_keys"
 echo $pubKey > "$userSshHome/authorized_keys"
 chmod 640 "$userSshHome/authorized_keys"
 chown -R "$user:$user" "$userHome"
 
+
+
+echo "$user ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/rules"
+chmod 440 /etc/sudoers.d/rules
+
 /usr/bin/supervisord
-
-
-
-
-

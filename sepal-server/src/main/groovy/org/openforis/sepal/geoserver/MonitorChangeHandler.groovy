@@ -34,7 +34,12 @@ class FSMonitorChangeHandler implements MonitorChangeHandler {
     @Override
     void performCheck() {
         layerRepository.getHomeUsers().each {
-            userAdded(it)
+            try{
+                userAdded(it)
+            }catch (Exception ex){
+                LOG.error("Error during startup check for $it. $ex.message")
+            }
+
         }
     }
 
@@ -57,10 +62,10 @@ class FSMonitorChangeHandler implements MonitorChangeHandler {
     void layerAdded(String username, String layerName) {
         layerRepository.checkLayerTargetContainer(username, layerName)
         if (layerRepository.isLayerReady(username, layerName)) {
-            if (layerRepository.isLayerContentChanged(username, layerName)) {
+            if (layerRepository.isLayerContentChanged(username, layerName) || !(geoServerClient.layerExist(username,layerName))) {
                 layerChanged(username, layerName)
             } else {
-                LOG.debug("Layer content didn't changed since last check.")
+                LOG.debug("$layerName content didn't changed since last check.")
             }
         } else {
             LOG.info("Layer contains no data. GeoServer creation is deferred")
@@ -77,12 +82,14 @@ class FSMonitorChangeHandler implements MonitorChangeHandler {
     void layerChanged(String username, String layerName) {
         geoServerClient.removeLayer(username, layerName)
         layerRepository.cleanTargetLayerContainer(username, layerName)
-        String targetLayerLocation = layerRepository.getTargetLayerLocation(username, layerName)
+        layerRepository.storeLayerIndex(username, layerName)
         layerRepository.copyHomeContentToTarget(username, layerName)
         if (layerRepository.applyProcessingChain(username, layerName)) {
+            String targetLayerLocation = layerRepository.getTargetLayerLocation(username, layerName)
             geoServerClient.publishLayer(username, layerName, targetLayerLocation)
         }
-        layerRepository.storeLayerIndex(username, layerName)
+
+
     }
 
 

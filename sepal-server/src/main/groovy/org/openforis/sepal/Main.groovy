@@ -1,9 +1,6 @@
 package org.openforis.sepal
 
-import com.amazonaws.regions.Region
-import com.amazonaws.regions.Regions
-import com.amazonaws.services.ec2.AmazonEC2Client
-import com.amazonaws.services.ec2.model.CreateVolumeRequest
+
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.geoserver.GeoServerLayerMonitor
@@ -17,7 +14,6 @@ import org.openforis.sepal.scene.retrieval.SceneRetrievalComponent
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JDBCUserRepository
 
-import static com.amazonaws.services.ec2.model.VolumeType.Gp2
 
 class Main {
 

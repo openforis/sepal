@@ -56,6 +56,7 @@ class DockerSandboxManager implements  SandboxManager{
     }
 
     private Sandbox createSandbox(String userName){
+        LOG.info("A new container is goint to be created for $userName")
         Sandbox sandbox = dockerClient.createSandbox(sandboxName,userName)
         if (sandbox){
             userRepository.update(userName,sandbox.id,sandbox.uri)
