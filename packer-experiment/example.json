@@ -1,0 +1,26 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": "",
+    "dockerVersion": "1.0.1~dfsg1-0ubuntu1~ubuntu0.14.04.1"
+  },
+
+  "builders": [{
+    "type": "amazon-ebs",
+    "communicator": "ssh",
+    "region": "eu-west-1",
+    "source_ami": "ami-dfba9ea8",
+    "instance_type": "t2.micro",
+    "security_group_id": "sg-a26b9cc6",
+    "ssh_username": "ubuntu",
+    "ssh_pty": true,
+    "ami_name": "packer-example {{timestamp}}"
+  }],
+
+  "provisioners": [{
+    "type": "shell",
+    "scripts": ["./before.sh", "./provision.sh"],
+    "environment_vars": ["DOCKER_VERSION={{user `dockerVersion`}}"]
+  }]
+}
+
