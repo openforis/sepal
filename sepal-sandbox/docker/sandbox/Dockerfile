@@ -1,13 +1,10 @@
 FROM openforistoolkit
 MAINTAINER OpenForis
 
-RUN apt-get update && apt-get install -y openssh-server supervisor
+ADD script/init_sandbox.run .
+ADD script/init_image.sh .
 
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-RUN mkdir /var/run/sshd
+RUN chmod u+x /init_image.sh
+RUN ./init_image.sh
 
-ADD init_sandbox.run .
-RUN chmod u+x ./init_sandbox.run
-
-EXPOSE 22
 CMD ["/usr/bin/supervisord"]
