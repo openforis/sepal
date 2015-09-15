@@ -18,6 +18,7 @@ RUN mkdir /etc/apache2/sites-enabled
 RUN mkdir /etc/apache2/sites-available
 ADD 000-default.conf /etc/apache2/sites-available/
 ADD default-ssl.conf /etc/apache2/sites-available/
+ADD ports.conf /etc/apache2/
 
 RUN ln -s /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-enabled/
 RUN ln -s /etc/apache2/sites-available/default-ssl.conf /etc/apache2/sites-enabled/
