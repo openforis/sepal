@@ -1,4 +1,3 @@
-CREATE DATABASE sdms;
 USE sdms;
 
 
