@@ -1,2 +1,0 @@
-#!/bin/bash
-exec sudo -u sepal java -jar /opt/sepal-geoserver/bin/sepal.jar > /var/log/sepal-geoserver/out.log 2>&1

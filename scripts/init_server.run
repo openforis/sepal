@@ -44,9 +44,8 @@ sudo useradd sepal
 sudo usermod -aG sepal geoserver
 sudo usermod -aG sepal www-data
 sudo chmod -R g+s /data/home/
-sudo chmod -R g+s /data/geoserver/
+sudo chmod -R +s /data/geoserver/
 sudo chmod -R u+s /data/home/
-sudo chmod -R u+s /data/geoserver/
 sudo chmod -R 775 /data/home
 
 

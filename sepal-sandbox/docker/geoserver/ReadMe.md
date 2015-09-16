@@ -1,9 +1,16 @@
-[Preliminary actions]
-mkdir /opt/geoserver mount point source
-mount /data/geoserver
-/data/logs/geoserver
+[Action on the guest machine]
+useradd -m -u 998 -g sepal geoserver
+
+sudo mkdir /data/geoserver
+sudo chown -R geoserver:sepal /data/geoserver
+
+sudo mkdir /date/sdms/geoserver
+sudo chmod -R 770 /data/sdms/geoserver
+sudo chown -R geoserver:sepal /data/sdms/gepserver
+sudo chmod -R +s /data/sdms/geoserver/
+
+
+sudo mkdir -p /data/logs/geoserver
+sudo chown -R geoserver:sepal /data/logs/geoserver
 
 docker run --restart always -d --name geoserver -e "ADMIN_PASSWD=@Fperkele.Geoserver" -v /data/sdms/geoserver:/data/geoserver -v /data/geoserver:/opt/geoserver/data_dir/workspaces -v /data/logs/geoserver:/opt/geoserver/data_dir/logs openforis/geoserver
-
-[log files]
-docker logs -f geoserver
