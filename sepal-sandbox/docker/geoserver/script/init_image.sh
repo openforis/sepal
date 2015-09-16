@@ -2,7 +2,7 @@
 
 
 #install base package
-apt-get update && apt-get install  -y wget unzip
+apt-get update && apt-get install  -y wget unzip supervisor
 
 
 #install geoserver
@@ -13,8 +13,9 @@ apt-get update && apt-get install  -y wget unzip
     cd /opt && \
     ln -s geoserver-2.7.2 geoserver
 
-
-chmod +x /geoserver
+groupadd -g 9999 sepal
+useradd -m -u 998 -g sepal geoserver
+chown -R geoserver:sepal /opt/geoserver/
 
 apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

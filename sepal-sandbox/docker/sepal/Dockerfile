@@ -1,4 +1,4 @@
-FROM openforis/jdk
+FROM openforistoolkit
 
 MAINTAINER OpenForis
 
