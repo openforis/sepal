@@ -1,0 +1,38 @@
+---
+- name: Create config dir
+  file:
+    path: "/data/nginx/sites-enabled"
+    state: directory
+
+- name: Create certificates dir
+  file:
+    path: "/data/ssl/certificates"
+    state: directory
+
+- name: Create log dir
+  file:
+    path: "/data/logs/ngnix"
+    state: directory
+
+- name: Start container
+  docker:
+    docker_api_version: 1.16
+    name: nginx
+    registry: "{{ docker_repository_host }}"
+    pull: always
+    image: "{{ docker_repository_host }}/openforis/nginx"
+    state: started
+    restart_policy: always
+    username: "{{ lookup('env','SEPAL_DOCKER_USERNAME') }}"
+    email: "{{ lookup('env','SEPAL_DOCKER_EMAIL') }}"
+    password: "{{ lookup('env','SEPAL_DOCKER_PASSWORD') }}"
+    expose:
+    - 80:80
+    - 443:443
+    links:
+    - "sepal-php:sepal-php"
+    - "gateone:gateone"
+    volumes:
+    - /data/nginx/sites-enabled:/etc/nginx/sites-enabled
+    - /data/ssl/certificates:/etc/ssl/fao
+    - /data/logs/ngnix:/var/log/supervisor
