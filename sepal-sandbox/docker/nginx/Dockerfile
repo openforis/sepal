@@ -1,17 +1,13 @@
 FROM ubuntu:trusty
+MAINTAINER OpenForis
 
-                   MAINTAINER OpenForis
+ADD script/init_image.sh .
+ADD config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-                   ADD script/init_image.sh .
-
-
-
-                   RUN chmod u+x ./init_image.sh
-
-                   RUN ./init_image.sh
+RUN chmod u+x ./init_image.sh
+RUN ./init_image.sh
 
 VOLUME /etc/nginx/sites-enabled
 VOLUME /etc/ssl/fao
 
-
-CMD /usr/sbin/nginx -g "daemon off;"
+CMD ["/usr/bin/supervisord"]

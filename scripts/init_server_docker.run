@@ -1,14 +1,17 @@
-sudo useradd -m -u 9999
-sudo mkdir /data/mysql
-sudo chown 102:106 /data/mysql
-sudo mkdir /data/sdms/
-sudo mkdir /data/sdms/config/
-sudo mkdir /data/sdms/data/
-sudo chgrp -R sepal /data/sdms/data
-sudo chgrp -R sepal /data/sdms/config
+mkdir /data
+useradd -m -u 9999 sepal
+groupadd -g 106 mysql
+useradd -u 102 -g mysql -m mysql
+mkdir /data/mysql
+chown 102:106 /data/mysql
+mkdir -p /data/sdms/config/
+mkdir -p /data/sdms/data/
+
+chgrp -R sepal /data/sdms/config
+chmod -R g+s /data/sdms/data
+
+useradd -d /data/sdms/data/sdms-admin -m sdms-admin
+chgrp -R sepal /data/sdms/data
+
 #copy the conf file
 sudo chmod -R 777 /data/sdms/config
-
-sudo chmod -R g+s /data/sdms/data
-sudo mkdir /data/home/sdms-admin
-sudo chown 1000:sepal /data/sdms/data/sdms-admin

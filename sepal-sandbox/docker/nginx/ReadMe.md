@@ -8,4 +8,9 @@ Volumes to be mounted:
 /var/log/nginx -> log location
 
 [Docker command]
-docker run --restart always --name nginx -p 80:80 -p 443:443 --link gateone:gateone --link sepal-php:sepal-php -d -v /data/nginx/sites-enabled:/etc/nginx/sites-enabled -v /data/ssl/certificates:/etc/ssl/fao -v /data/logs/ngnix:/var/log/nginx openforis/nginx
+docker run --restart always --name nginx -p 80:80 -p 443:443 \
+--link gateone:gateone --link sepal-php:sepal-php \
+--link geoserver:geoserver \
+-d -v /data/nginx/sites-enabled:/etc/nginx/sites-enabled \
+-v /data/ssl/certificates:/etc/ssl/fao \
+-v /data/logs/ngnix:/var/log/supervisor openforis/nginx

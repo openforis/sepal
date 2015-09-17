@@ -13,4 +13,4 @@ sudo chmod -R +s /data/sdms/geoserver/
 sudo mkdir -p /data/logs/geoserver
 sudo chown -R geoserver:sepal /data/logs/geoserver
 
-docker run --restart always -d --name geoserver -e "ADMIN_PASSWD=@Fperkele.Geoserver" -v /data/sdms/geoserver:/data/geoserver -v /data/geoserver:/opt/geoserver/data_dir/workspaces -v /data/logs/geoserver:/opt/geoserver/data_dir/logs openforis/geoserver
+docker run --restart always -d --name geoserver -e "ADMIN_PASSWD=@Fperkele.Geoserver" -v /data/logs/geoserver:/var/log/supervisor -v /data/sdms/geoserver:/data/geoserver openforis/geoserver
