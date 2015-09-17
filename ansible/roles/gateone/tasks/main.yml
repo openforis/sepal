@@ -1,0 +1,23 @@
+---
+- name: Create log dir
+  file:
+    path: "/data/logs/gateone"
+    state: directory
+
+- name: Start container
+  docker:
+    docker_api_version: 1.16
+    name: gateone
+    registry: "{{ docker_repository_host }}"
+    pull: always
+    image: "{{ docker_repository_host }}/openforis/gateone"
+    state: started
+    restart_policy: always
+    username: "{{ lookup('env','SEPAL_DOCKER_USERNAME') }}"
+    email: "{{ lookup('env','SEPAL_DOCKER_EMAIL') }}"
+    password: "{{ lookup('env','SEPAL_DOCKER_PASSWORD') }}"
+    expose:
+    - 80:80
+    - 443:443
+    volumes:
+    - /data/logs/gateone:/gateone/logs

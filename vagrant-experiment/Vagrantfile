@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = 'ubuntu/trusty64'
+  config.vm.synced_folder '../sepal-sandbox/docker', '/docker'
+
+  config.vm.provision 'docker' do |d|
+    d.build_image '/docker/jdk',
+                  args: "-t openforis/jdk"
+
+    d.build_image '/docker/gateone',
+                  args: "-t gateone"
+    d.run 'gateone',
+          auto_assign_name: false,
+          args: "--name gateone"
+
+    d.build_image '/docker/openforistoolkit',
+                  args: "-t openforistoolkit"
+    d.run 'openforistoolkit',
+          auto_assign_name: false,
+          args: "--name openforistoolkit"
+
+    d.build_image '/docker/geoserver',
+                  args: "-t geoserver"
+    d.run 'geoserver',
+          auto_assign_name: false,
+          args: "--name geoserver"
+
+    d.build_image '/docker/sepal-php',
+                  args: "-t sepal-php"
+    d.run 'sepal-php',
+          auto_assign_name: false,
+          args: "-p 5555:80 --name sepal-php --link geoserver --link gateone"
+  end
+end

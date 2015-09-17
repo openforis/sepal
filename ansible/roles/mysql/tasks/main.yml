@@ -1,0 +1,41 @@
+---
+- name: Create mysql user
+  user: name=mysql uid=999
+
+- name: Create data dir
+  file:
+    path: "/data/mysql"
+    state: directory
+    recurse: yes
+    owner: mysql
+    group: mysql
+
+- name: Create log dir
+  file:
+    path: "/data/logs/mysql"
+    state: directory
+
+- name: Start container
+  docker:
+    docker_api_version: 1.16
+    name: mysql
+    registry: "{{ docker_repository_host }}"
+    pull: always
+    image: "{{ docker_repository_host }}/openforis/mysql"
+    state: started
+    restart_policy: always
+    username: "{{ lookup('env','SEPAL_DOCKER_USERNAME') }}"
+    email: "{{ lookup('env','SEPAL_DOCKER_EMAIL') }}"
+    password: "{{ lookup('env','SEPAL_DOCKER_PASSWORD') }}"
+    expose:
+    - 80:80
+    - 443:443
+    volumes:
+    - /data/mysql:/var/lib/mysql
+    - /data/logs/mysql:/var/log/supervisor
+    env:
+      MYSQL_DATABASE: sdms
+      MYSQL_USER: sepal
+      MYSQL_PASSWORD: "{{ lookup('env','SEPAL_MYSQL_PASSWORD') }}"
+      MYSQL_ROOT_PASSWORD: "{{ lookup('env','SEPAL_MYSQL_ROOT_PASSWORD') }}"
+      MYSQL_USER: sepal

@@ -1,0 +1,6 @@
+---
+ami_ids:
+  eu-central-1: 'ami-9e656583'
+
+docker_repository_host: '54.93.185.137'
+
