@@ -1,45 +1,43 @@
 server {
-        listen   80;
+    listen   80;
 
-        #server_name example.com;
+    location /geoserver/ {
+            proxy_set_header X-Real-IP  $remote_addr;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header Host $host;
+            proxy_pass http://geoserver:8080;
+
+            }
 
 
-
-        location / {
+    location / {
         proxy_set_header X-Real-IP  $remote_addr;
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Host $host;
         proxy_pass http://sepal-php:9090;
+    }
 
-        }
 
-         location ~ /\.ht {
-                deny all;
-       }
 
+    location ~ /\.ht {
+        deny all;
+    }
 }
 
 server {
-
     listen 443;
-
-#    ssl_certificate           /etc/apache2/ssl/fao-dm.ca-bundle;
-    ssl_certificate           /etc/apache2/ssl/fao-dm_org.crt;
-    ssl_certificate_key       /etc/apache2/ssl/server.key;
-
+    access_log                /var/log/nginx/sepal.access.log;
+    ssl_certificate           /etc/ssl/fao/fao-dm_org.crt;
+    ssl_certificate_key       /etc/ssl/fao/server.key;
     ssl on;
     ssl_session_cache  builtin:1000  shared:SSL:10m;
     ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;
     ssl_ciphers HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;
     ssl_prefer_server_ciphers on;
 
-    access_log            /var/log/nginx/sepal.access.log;
-
-        location /gateone/ws {
-                # switch off logging
-                access_log off;
-
-
+    location /gateone/ws {
+        # switch off logging
+        access_log off;
         proxy_pass https://gateone:8000/ws;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header Host $host;
@@ -51,28 +49,28 @@ server {
         proxy_set_header Connection "upgrade";
     }
 
+    location /gateone/ {
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        proxy_pass https://gateone:8000/;
+    }
 
 
-        location /gateone/ {
-                proxy_set_header        Host $host;
-                proxy_set_header        X-Real-IP $remote_addr;
-                proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header        X-Forwarded-Proto $scheme;
+    location / {
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
 
-                proxy_pass https://gateone:8000/;
-        }
+        # Use variable to force nginx to lookup /etc/hosts
 
 
- location / {
-
-      proxy_set_header        Host $host;
-      proxy_set_header        X-Real-IP $remote_addr;
-      proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header        X-Forwarded-Proto $scheme;
-
-      # Fix the “It appears that your reverse proxy set up is broken" error.
-      proxy_pass          https://sepal-php:9443;
-      proxy_read_timeout  90;
+        set $url_sepal_php_secure "https://sepal-php:9443";
+        proxy_pass           $url_sepal_php_secure;
+        #proxy_pass          https://sepal-php:9443;
+        proxy_read_timeout  90;
 
     }
-  }
+}

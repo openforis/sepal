@@ -1,8 +1,6 @@
 #!/bin/bash
 
 
-#install software-properties-common(needed for add apt repo)
-apt-get update && apt-get install -y wget
 
 useradd -m -u 9999 sepal
 wget -O "sepal.jar"  "http://openforis.org/nexus/service/local/artifact/maven/redirect?r=public&g=org.openforis.sepal&a=sepal-server&v=LATEST&e=jar"

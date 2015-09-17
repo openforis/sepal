@@ -1,4 +1,4 @@
-FROM openforis/jdk
+FROM ubuntu:trusty
 MAINTAINER OpenForis
 
 ADD script/init_image.sh .
