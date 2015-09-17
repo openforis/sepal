@@ -4,10 +4,17 @@
     path: "/data/nginx/sites-enabled"
     state: directory
 
+- name: Copy sepal config file
+  copy: src=sepal dest=/data/nginx/sites-enabled/sepal
+
 - name: Create certificates dir
   file:
     path: "/data/ssl/certificates"
     state: directory
+
+- copy: src=~/.sepal/certificates/sepal-web-cert.key dest=/data/ssl/certificates/server.key
+- copy: src=~/.sepal/certificates/fao-dm.ca-bundle dest=/data/ssl/certificates/fao-dm.ca-bundle
+- copy: src=~/.sepal/certificates/fao-dm_org.crt dest=/data/ssl/certificates/fao-dm_org.crt
 
 - name: Create log dir
   file:
@@ -23,15 +30,19 @@
     image: "{{ docker_repository_host }}/openforis/nginx"
     state: started
     restart_policy: always
-    username: "{{ lookup('env','SEPAL_DOCKER_USERNAME') }}"
-    email: "{{ lookup('env','SEPAL_DOCKER_EMAIL') }}"
-    password: "{{ lookup('env','SEPAL_DOCKER_PASSWORD') }}"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
     expose:
+    - 80
+    - 443
+    ports:
     - 80:80
     - 443:443
     links:
-    - "sepal-php:sepal-php"
     - "gateone:gateone"
+    - "sepal-php:sepal-php"
+    - "geoserver:geoserver"
     volumes:
     - /data/nginx/sites-enabled:/etc/nginx/sites-enabled
     - /data/ssl/certificates:/etc/ssl/fao

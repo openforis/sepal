@@ -13,11 +13,8 @@
     image: "{{ docker_repository_host }}/openforis/gateone"
     state: started
     restart_policy: always
-    username: "{{ lookup('env','SEPAL_DOCKER_USERNAME') }}"
-    email: "{{ lookup('env','SEPAL_DOCKER_EMAIL') }}"
-    password: "{{ lookup('env','SEPAL_DOCKER_PASSWORD') }}"
-    expose:
-    - 80:80
-    - 443:443
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
     volumes:
     - /data/logs/gateone:/gateone/logs

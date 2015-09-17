@@ -23,18 +23,15 @@
     image: "{{ docker_repository_host }}/openforis/mysql"
     state: started
     restart_policy: always
-    username: "{{ lookup('env','SEPAL_DOCKER_USERNAME') }}"
-    email: "{{ lookup('env','SEPAL_DOCKER_EMAIL') }}"
-    password: "{{ lookup('env','SEPAL_DOCKER_PASSWORD') }}"
-    expose:
-    - 80:80
-    - 443:443
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
     volumes:
     - /data/mysql:/var/lib/mysql
     - /data/logs/mysql:/var/log/supervisor
     env:
       MYSQL_DATABASE: sdms
       MYSQL_USER: sepal
-      MYSQL_PASSWORD: "{{ lookup('env','SEPAL_MYSQL_PASSWORD') }}"
-      MYSQL_ROOT_PASSWORD: "{{ lookup('env','SEPAL_MYSQL_ROOT_PASSWORD') }}"
+      MYSQL_PASSWORD: "{{ mysql_password }}"
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
       MYSQL_USER: sepal

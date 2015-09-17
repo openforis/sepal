@@ -62,6 +62,5 @@ server {
         # Use variable to force nginx to lookup /etc/hosts
         proxy_pass          https://sepal-php:9443;
         proxy_read_timeout  90;
-
     }
 }

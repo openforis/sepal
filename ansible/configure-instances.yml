@@ -6,6 +6,7 @@
 
   vars_files:
     - vars/vars.yml
+    - "{{ secret_vars_file }}"
 
   pre_tasks:
     - name: Create sepal group
@@ -23,19 +24,19 @@
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
   roles:
-    - role: unattended-upgrades
-      unattended_origins_patterns:
-      - 'origin=Ubuntu,archive=${distro_codename}-security'
-      - 'o=Ubuntu,a=${distro_codename}-updates'
-
-    - role: docker.ubuntu
-      docker_version: '1.8.1-0~trusty'
-      docker_storage_path: '/data/docker/'
-      docker_group_members: ['ubuntu']
-
-    - role: mysql
-    - role: geoserver
-    - role: gateone
-    - role: sepal
+#    - role: unattended-upgrades
+#      unattended_origins_patterns:
+#      - 'origin=Ubuntu,archive=${distro_codename}-security'
+#      - 'o=Ubuntu,a=${distro_codename}-updates'
+#
+#    - role: docker.ubuntu
+#      docker_version: '1.8.1-0~trusty'
+#      docker_storage_path: '/data/docker/'
+#      docker_group_members: ['ubuntu']
+#
+#    - role: mysql
+#    - role: geoserver
+#    - role: gateone
+#    - role: sepal
     - role: sepal-php
-    - role: nginx
+#    - role: nginx
