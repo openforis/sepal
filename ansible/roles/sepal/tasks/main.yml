@@ -1,39 +1,38 @@
 ---
-- name: Create geoserver user
-  user: name=geoserver uid=998 group=sepal
-
 - name: Create data dir
   file:
-    path: "/data/sdms/geoserver"
+    path: "/data/sdms/data"
     state: directory
-    owner: geoserver
-    group: sepal
-    mode: 0770
+
+- name: Create config dir
+  file:
+    path: "/data/sdms/config"
+    state: directory
 
 - name: Create log dir
   file:
-    path: "/data/logs/geoserver"
+    path: "/data/logs/sepal"
     state: directory
-    owner: geoserver
-    group: sepal
 
 - name: Start container
   docker:
     docker_api_version: 1.16
-    name: geoserver
+    name: sepal
     registry: "{{ docker_repository_host }}"
     pull: always
-    image: "{{ docker_repository_host }}/openforis/geoserver"
+    image: "{{ docker_repository_host }}/openforis/sepal"
     state: started
     restart_policy: always
     username: "{{ lookup('env','SEPAL_DOCKER_USERNAME') }}"
     email: "{{ lookup('env','SEPAL_DOCKER_EMAIL') }}"
     password: "{{ lookup('env','SEPAL_DOCKER_PASSWORD') }}"
     expose:
-    - 80:80
-    - 443:443
+    - 1025:1025
+    links:
+    - "mysql:mysql"
+    - "geoserver:geoserver"
     volumes:
+    - /data/sdms/config:/etc/sdms
     - /data/sdms/geoserver:/data/geoserver
-    - /data/logs/geoserver:/var/log/supervisor
-    env:
-      ADMIN_PASSWD: sdms
+    - /data/logs/sepal:/var/log/sepal
+    - /data/sdms/data:/data/home

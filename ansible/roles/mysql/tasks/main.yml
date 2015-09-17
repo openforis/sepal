@@ -6,7 +6,6 @@
   file:
     path: "/data/mysql"
     state: directory
-    recurse: yes
     owner: mysql
     group: mysql
 

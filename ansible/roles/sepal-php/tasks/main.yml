@@ -42,7 +42,7 @@
     links:
     - "mysql:mysql"
     - "geoserver:geoserver"
-#    TODO: Link sepal
+    - "sepal:sepal"
     volumes:
     - /data/sdms/data:/data/home/
     - /data/sdms/config:/etc/sdms
