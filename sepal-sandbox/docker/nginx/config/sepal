@@ -67,9 +67,8 @@ server {
         # Use variable to force nginx to lookup /etc/hosts
 
 
-        set $url_sepal_php_secure "https://sepal-php:9443";
-        proxy_pass           $url_sepal_php_secure;
-        #proxy_pass          https://sepal-php:9443;
+
+        proxy_pass          https://sepal-php:9443;
         proxy_read_timeout  90;
 
     }
