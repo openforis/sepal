@@ -2,12 +2,11 @@ server {
     listen   80;
 
     location /geoserver/ {
-            proxy_set_header X-Real-IP  $remote_addr;
-            proxy_set_header X-Forwarded-For $remote_addr;
-            proxy_set_header Host $host;
-            proxy_pass http://geoserver:8080;
-
-            }
+        proxy_set_header X-Real-IP  $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host $host;
+        proxy_pass http://geoserver:8080;
+    }
 
 
     location / {
@@ -54,7 +53,7 @@ server {
         proxy_set_header        X-Real-IP $remote_addr;
         proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header        X-Forwarded-Proto $scheme;
-        proxy_pass https://gateone:8000/;
+        proxy_pass              https://gateone:8000/;
     }
 
 
@@ -63,13 +62,8 @@ server {
         proxy_set_header        X-Real-IP $remote_addr;
         proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header        X-Forwarded-Proto $scheme;
-
-        # Use variable to force nginx to lookup /etc/hosts
-
-
-
-        proxy_pass          https://sepal-php:9443;
-        proxy_read_timeout  90;
+        proxy_pass              https://sepal-php:9443;
+        proxy_read_timeout      90;
 
     }
 }
