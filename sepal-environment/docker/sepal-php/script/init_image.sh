@@ -10,8 +10,10 @@ chmod -R 775 /var/www/html/app/config/processing-scripts/
 php5enmod mcrypt
 a2enmod rewrite
 a2enmod ssl
-useradd sdms-admin -d "/data/home/sdms-admin"
-echo sdms-admin:sdms-admin | chpasswd
+
 groupadd -g 9999 sepal
 usermod -aG sepal www-data
 mkdir /var/run/sshd
+
+rm -rf /etc/apache2/sites-enabled
+mkdir -p /etc/apache2/sites-enabled
