@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #install basic tools
-apt-get update && apt-get install -y parallel openssh-server supervisor wget curl  gcc g++ gdal-bin libgdal1-dev libgsl0-dev libgsl0ldbl libproj-dev python-gdal python-scipy python-tk python-qt4 perl
+apt-get update && apt-get install -y parallel openssh-server supervisor wget curl  gcc g++ gdal-bin libgdal1-dev libgsl0-dev libgsl0ldbl libproj-dev python-gdal python-scipy python-tk python-qt4 perl otb-bin otb-bin-qt python-otb
 
 #install oft
 wget http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run

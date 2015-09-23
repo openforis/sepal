@@ -210,6 +210,6 @@ insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 
 insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 4-8 Combined', 'LANDSAT_COMBINED', 1);
 insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 7/8 Combined', 'LANDSAT_COMBINED78', 1);
 insert into data_set(dataset_name,dataset_value,dataset_active) values('Planet Labs Scenes', 'PLANET_LAB_SCENES', 1);
-insert into groups_system(id.group_name) values (46,'admin');
+insert into groups_system(id,group_name) values (46,'admin');
 insert into roles(role_name,role_desc) values('application_admin','Application Administrator');
 

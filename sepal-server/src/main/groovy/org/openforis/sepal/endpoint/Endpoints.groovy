@@ -6,11 +6,7 @@ import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
-import org.openforis.sepal.sandbox.ObtainUserSandboxCommand
-import org.openforis.sepal.sandbox.ObtainUserSandboxCommandHandler
-import org.openforis.sepal.sandbox.ReleaseUserSandboxCommand
-import org.openforis.sepal.sandbox.ReleaseUserSandboxCommandHandler
-import org.openforis.sepal.sandbox.SandboxManagerEndpoint
+import org.openforis.sepal.sandbox.*
 import org.openforis.sepal.scene.management.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -33,6 +29,7 @@ final class Endpoints extends AbstractMvcFilter {
     private static RemoveSceneCommandHandler singleSceneDeleteCommandHandler
     private static ObtainUserSandboxCommandHandler obtainUserSandboxCommandHandler
     private static ReleaseUserSandboxCommandHandler releaseUserSandboxCommandHandler
+
 
 
     Controller bootstrap(ServletContext servletContext) {

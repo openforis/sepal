@@ -1,5 +1,6 @@
 package org.openforis.sepal.scene.management
 
+import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.scene.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -28,7 +29,7 @@ class SceneManager implements SceneRetrievalListener {
     }
 
     void start() {
-        executor.scheduleWithFixedDelay(new DownloadRequestPoller(), 0L, 10L, TimeUnit.SECONDS)
+        executor.scheduleWithFixedDelay(new DownloadRequestPoller(), 0L, SepalConfiguration.instance.downloadCheckInterval, TimeUnit.SECONDS)
     }
 
     void stop() {
