@@ -19,7 +19,7 @@ chmod u+x Miniconda3-latest-Linux-x86_64.sh
 /opt/miniconda3/bin/conda install -y -c https://conda.binstar.org/osgeo arcsi
 echo "GDAL_DRIVER_PATH=\"/opt/miniconda3/lib/gdalplugins:$GDAL_DRIVER_PATH\"" >> /etc/environment
 echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
-echo "PATH=\"$PATH:/opt/miniconda3/bin\"" >> /etc/environment
+echo "PATH=\"/opt/miniconda3/bin:$PATH\"" >> /etc/environment
 
 #create ssh deamon folder
 mkdir /var/run/sshd
