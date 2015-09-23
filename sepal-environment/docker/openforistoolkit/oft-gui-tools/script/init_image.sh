@@ -1,8 +1,6 @@
 #!/bin/bash
 
 
-#install software-properties-common(needed for add apt repo)
-apt-get update && apt-get install -y software-properties-common
 
 #install r-base
 add-apt-repository 'deb http://cran.cnr.Berkeley.edu/bin/linux/ubuntu trusty/'

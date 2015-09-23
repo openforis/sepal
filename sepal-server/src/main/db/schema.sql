@@ -37,7 +37,7 @@ CREATE TABLE data_set (
   dataset_name   VARCHAR(50) NOT NULL,
   dataset_value  VARCHAR(50) NOT NULL,
   dataset_active TINYINT(1)  NOT NULL,
-  metadata_provider INT(11)  NOT NULL,
+  metadata_provider INT(11)  NOT NULL DEFAULT 1,
   PRIMARY KEY (id)
 );
 

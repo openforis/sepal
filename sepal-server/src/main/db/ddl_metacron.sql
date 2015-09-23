@@ -18,5 +18,4 @@ INSERT INTO metadata_providers VALUES(2,'PlanetLabs',0,'',0,0,null,null);
 UPDATE data_set SET dataset_provider = 2 where lower(dataset_value) LIKE 'planet%';
 
 
-DROP TABLE IF EXISTS `sdms`.`data_set_providers`;
 
