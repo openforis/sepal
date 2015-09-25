@@ -21,4 +21,8 @@ enum DataSet {
     public static DataSet byId(int id) {
         values().find { it.id == id }
     }
+
+    public Integer getId(){ id}
+
+
 }

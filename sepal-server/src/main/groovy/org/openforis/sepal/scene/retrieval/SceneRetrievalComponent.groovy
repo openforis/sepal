@@ -40,7 +40,7 @@ class SceneRetrievalComponent {
                 ),
                 new EarthExplorerSceneProvider(
                         new RestfulEarthExplorerClient(),
-                        new ExecutorServiceBasedJobExecutor(Executors.newFixedThreadPool(2)),
+                        new ExecutorServiceBasedJobExecutor(Executors.newFixedThreadPool(SepalConfiguration.instance.maxConcurrentDownloads)),
                         this.coordinator
                 )
         ])

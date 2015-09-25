@@ -66,10 +66,20 @@ class SepalDriver {
         return this
     }
 
+    SepalDriver withMetadataProvider(int id, String name){
+        system.database.addActiveMetadataProvider(id,name)
+        return this
+    }
+
     SepalDriver withActiveDataSets(int ... dataSetIds) {
         dataSetIds.each {
             system.database.addActiveDataSet(it)
         }
+        return this
+    }
+
+    SepalDriver withActiveDataSet(int dataSetId, int metadataProviderId){
+        system.database.addActiveDataSet(dataSetId,metadataProviderId)
         return this
     }
 

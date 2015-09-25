@@ -14,3 +14,4 @@ DELETE FROM `usgs_data_repo`;
 DELETE FROM `wrs_points`;
 DELETE FROM `download_requests`;
 DELETE FROM `requested_scenes`;
+DELETE FROM `metadata_providers`;

@@ -4,11 +4,7 @@ import fake.Database
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
-import org.openforis.sepal.sandbox.DockerRESTClient
-import org.openforis.sepal.sandbox.DockerSandboxManager
-import org.openforis.sepal.sandbox.ObtainUserSandboxCommandHandler
-import org.openforis.sepal.sandbox.ReleaseUserSandboxCommandHandler
-import org.openforis.sepal.sandbox.SandboxManagerEndpoint
+import org.openforis.sepal.sandbox.*
 import org.openforis.sepal.scene.management.*
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JDBCUserRepository
@@ -56,9 +52,11 @@ class Sepal {
                 new DockerRESTClient(daemonURI),
                 imageName
         )
+        def dataSetRepository = new JdbcDataSetRepository(connectionManager)
+
 
         Endpoints.deploy(
-                new DataSetRepository(connectionManager),
+                dataSetRepository,
                 commandDispatcher,
                 new RequestScenesDownloadCommandHandler(scenesDownloadRepo),
                 new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo),
@@ -77,6 +75,8 @@ class Sepal {
                 (WEBAPP_PORT_PARAMETER)   : port as String,
                 (MAX_CONCURRENT_DOWNLOADS): '1',
                 (DOWNLOAD_CHECK_INTERVAL) : '1000',
+                (DOWNLOADS_WORKING_DIRECTORY) : System.getProperty('java.io.tmpdir'),
+                (CRAWLER_RUN_DELAY) : '12'
         ] as Properties
         SepalConfiguration.instance.dataSource = database.dataSource
     }

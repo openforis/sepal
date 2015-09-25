@@ -36,6 +36,7 @@ class SepalConfiguration {
     public static final String DOCKER_BASE_URI = "docker.baseURI"
     public static final String DOCKER_DAEMON_PORT = "docker.daemonPort"
     public static final String DOCKER_REST_ENTRYPOINT = "docker.restEntryPoint"
+    public static final String CRAWLER_RUN_DELAY = "metadata.crawler.delay"
 
     Properties properties
     String configFileLocation
@@ -65,13 +66,17 @@ class SepalConfiguration {
 
     private DataSource connectionPool() {
         new ComboPooledDataSource(
-                driverClass: getValue(JDBC_DRIVER_PARAMETER),
-                jdbcUrl: getValue(JDBC_CONN_STRING_PARAMETER),
-                user: getValue(JDBC_CONN_USER_PARAMETER),
-                password: getValue(JDBC_CONN_PWD_PARAMETER),
+                driverClass: getJdbcDriver(),
+                jdbcUrl: getJdbcConnectionString(),
+                user: getJdbcUser(),
+                password: getJdbcPassword(),
                 testConnectionOnCheckout: true,
 
         )
+    }
+
+    def getCrawlerRunDelay(){
+        Long.parseLong(getValue(CRAWLER_RUN_DELAY))
     }
 
     def getDockerRESTEntryPoint(){
@@ -96,10 +101,6 @@ class SepalConfiguration {
 
     def getProcessingHomeDir() {
         getValue(PROCESSING_HOME_DIR)
-    }
-
-    def getUserHomeDir(String userName) {
-        getUserHomeDir().replaceAll(Pattern.quote('$user'), userName)
     }
 
     def getUserHomeDir() {

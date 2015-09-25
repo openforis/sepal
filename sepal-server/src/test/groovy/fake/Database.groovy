@@ -11,7 +11,7 @@ import javax.sql.DataSource
 
 class Database {
     private static final Logger LOG = LoggerFactory.getLogger(this.class)
-    private static final File SCHEMA = new File('src/main/db', 'schema_dev.sql')
+    private static final File SCHEMA = new File('src/main/db', 'schema.sql')
     private static final File RESET_SCRIPT = new File('src/main/db', 'reset.sql')
     static final String URL = "jdbc:h2:mem:sepal;MODE=MYSQL;DB_CLOSE_DELAY=-1"
 
@@ -28,9 +28,13 @@ class Database {
         sql.executeInsert("INSERT INTO users(username) values($username)")
     }
 
-    def addActiveDataSet(int dataSetId) {
+    def addActiveDataSet(int dataSetId, int metadataProviderId = 1) {
         def dataSetName = "DataSet$dataSetId" as String
-        sql.executeInsert("INSERT INTO data_set(id, dataset_name, dataset_value, dataset_active) values($dataSetId, $dataSetName, $dataSetName, 1)")
+        sql.executeInsert("INSERT INTO data_set(id, dataset_name, dataset_value, dataset_active,metadata_provider) values($dataSetId, $dataSetName, $dataSetName, 1,$metadataProviderId)")
+    }
+
+    def addActiveMetadataProvider(int providerId, String providerName, String crawlingEntrypoint = '') {
+        sql.executeInsert("INSERT INTO metadata_providers(id,name,active,crawling_entrypoint) VALUES ($providerId,$providerName,1,$crawlingEntrypoint)")
     }
 
     def addDownloadRequest(RequestScenesDownloadCommand downloadRequest) {

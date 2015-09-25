@@ -21,3 +21,6 @@ apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 
+chmod u+x /etc/init.d/geoserver
+ln -s /etc/init.d/geoserver /etc/rc2.d/S20geoserver
+

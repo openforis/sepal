@@ -93,7 +93,7 @@ class RestGeoServerClient implements GeoServerClient {
     void publishLayer(String user, String layerName, String layerLocation) {
         LOG.debug("Publishing layer $layerLocation for $user")
 
-        if (!exists("$server.defaultURI/rest/layers/$layerName"))
+        if (!exists("$server.defaultURI/rest/layers/$user:$layerName"))
             try {
                 publishStore(user, layerName, layerLocation)
                 LOG.debug("Layer $layerName does not exist on GeoServer")
@@ -116,7 +116,7 @@ class RestGeoServerClient implements GeoServerClient {
     void removeLayer(String user, String layerName) {
         LOG.debug("Going to remove layer $user:$layerName")
         try {
-            if (!exists("$server.defaultURI/rest/layers/$layerName")) {
+            if (!exists("$server.defaultURI/rest/layers/$user:$layerName")) {
                 LOG.warn("Layer $user:$layerName does not exist. Nothing will happen on geoserver side")
             } else {
                 def path = "$server.defaultURI/rest/workspaces/$user/coveragestores/$layerName"

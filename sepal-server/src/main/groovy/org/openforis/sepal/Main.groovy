@@ -1,22 +1,22 @@
 package org.openforis.sepal
 
-
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.geoserver.GeoServerLayerMonitor
-import org.openforis.sepal.sandbox.DockerRESTClient
-import org.openforis.sepal.sandbox.DockerSandboxManager
-import org.openforis.sepal.sandbox.ObtainUserSandboxCommandHandler
-import org.openforis.sepal.sandbox.ReleaseUserSandboxCommandHandler
-import org.openforis.sepal.sandbox.SandboxManagerEndpoint
+import org.openforis.sepal.metadata.ConcreteMetadataProviderManager
+import org.openforis.sepal.metadata.JDBCUsgsDataRepository
+import org.openforis.sepal.metadata.crawling.EarthExplorerMetadataCrawler
+import org.openforis.sepal.sandbox.*
 import org.openforis.sepal.scene.management.*
 import org.openforis.sepal.scene.retrieval.SceneRetrievalComponent
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JDBCUserRepository
-
+import org.openforis.sepal.util.HttpResourceLocator
 
 class Main {
 
+    def static dataSetRepository
+    def static connectionManager
 
     static void main(String[] args) {
         def propertiesLocation = args.length == 1 ? args[0] : "/etc/sdms/sepal.properties"
@@ -25,6 +25,13 @@ class Main {
         deployEndpoints()
         startSceneManager()
         startLayerMonitor()
+        startCrawling()
+    }
+
+    def static startCrawling() {
+        def metadataProviderManager = new ConcreteMetadataProviderManager(dataSetRepository)
+        metadataProviderManager.registerCrawler( new EarthExplorerMetadataCrawler( new JDBCUsgsDataRepository(connectionManager), new HttpResourceLocator()))
+        metadataProviderManager.start();
     }
 
     def static startLayerMonitor() {
@@ -49,7 +56,7 @@ class Main {
     }
 
     def static deployEndpoints() {
-        def connectionManager = new SqlConnectionManager(SepalConfiguration.instance.dataSource)
+        connectionManager = new SqlConnectionManager(SepalConfiguration.instance.dataSource)
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
         def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
 
@@ -61,8 +68,11 @@ class Main {
                 imageName
         )
 
-        Endpoints.deploy(
-                new DataSetRepository(connectionManager),
+
+        dataSetRepository = new JdbcDataSetRepository(connectionManager)
+
+                Endpoints.deploy(
+                dataSetRepository,
                 commandDispatcher,
                 new RequestScenesDownloadCommandHandler(scenesDownloadRepo),
                 new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo),

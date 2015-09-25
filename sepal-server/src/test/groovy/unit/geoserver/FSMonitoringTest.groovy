@@ -30,7 +30,7 @@ class FSMonitoringTest extends Specification {
         def userHome = new File(homeDir, user)
         when:
         userHome.mkdirs()
-        Thread.sleep(200)
+        Thread.sleep(500)
         then:
         1 * monitorChangeHandler.userAdded(user)
 

@@ -1,8 +1,6 @@
 #!/bin/bash
 
 
-#install base package
-apt-get update && apt-get install  -y software-properties-common
 
 #install java-8
 \

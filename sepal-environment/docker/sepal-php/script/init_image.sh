@@ -4,6 +4,9 @@ apt-get update && apt-get install -y curl wget php5-mcrypt openssh-server superv
 wget -O "sepal-php.tar.gz"  "http://openforis.org/nexus/service/local/artifact/maven/redirect?r=public&g=org.openforis.sepal&a=sepal-php&v=1.0.0-SNAPSHOT&e=tgz"
 tar -zxvf sepal-php.tar.gz -C /var/www/html/
 chown -R www-data:www-data /var/www/html
+
+echo 'www-data ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/www-data
+chmod 440 /etc/sudoers.d/www-data
 chmod 775 /var/www/html/app/config/lsat_geoserver_fix.sh
 chmod -R 775 /var/www/html/app/config/processing-scripts/
 

@@ -37,6 +37,7 @@ CREATE TABLE data_set (
   dataset_name   VARCHAR(50) NOT NULL,
   dataset_value  VARCHAR(50) NOT NULL,
   dataset_active TINYINT(1)  NOT NULL,
+  metadata_provider INT(11)  NOT NULL DEFAULT 1,
   PRIMARY KEY (id)
 );
 
@@ -100,6 +101,8 @@ CREATE TABLE users (
   permissions    TEXT,
   created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP   NULL     DEFAULT NULL,
+  sandbox_id VARCHAR(100) NULL,
+  sandbox_uri VARCHAR(512) NULL,
   PRIMARY KEY (id)
 );
 
@@ -207,6 +210,18 @@ CREATE TABLE requested_scenes (
   last_updated         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   status               VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
   processing_chain     VARCHAR(255) ,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE  metadata_providers (
+  id INT(11) unsigned NOT NULL,
+  name VARCHAR(45) NOT NULL,
+  active TINYINT(1) NOT NULL DEFAULT '1',
+  crawling_entrypoint VARCHAR(255) NOT NULL,
+  iterations int(10) default 4,
+  iteration_size int(10) default 18,
+  last_execution_start DATETIME default null,
+  last_execution_end DATETIME default null,
   PRIMARY KEY (`id`)
 );
 

@@ -22,6 +22,7 @@ CREATE TABLE data_set (
   dataset_name   VARCHAR(50) NOT NULL,
   dataset_value  VARCHAR(50) NOT NULL,
   dataset_active TINYINT(1)  NOT NULL,
+  metadata_provider INT(11)  NOT NULL DEFAULT 1,
   PRIMARY KEY (id)
 );
 
@@ -160,24 +161,6 @@ CREATE INDEX idx_usgs_data_repo_5 ON usgs_data_repo (row);
 CREATE INDEX idx_usgs_data_repo_6 ON usgs_data_repo (cloudCoverFull);
 CREATE INDEX idx_usgs_data_repo_7 ON usgs_data_repo (dataset_id, acquisitionDate);
 
-CREATE TABLE wrs_points (
-  id                  INT(11)         NOT NULL AUTO_INCREMENT,
-  path                INT(11)         NOT NULL,
-  row                 INT(11)         NOT NULL,
-  centreLongitude     DECIMAL(15, 12) NOT NULL,
-  centreLatitude      DECIMAL(15, 12) NOT NULL,
-  upperLeftLongitude  DECIMAL(15, 12) NOT NULL,
-  upperLeftLatitude   DECIMAL(15, 12) NOT NULL,
-  lowerLeftLongitude  DECIMAL(15, 12) NOT NULL,
-  lowerLeftLatitude   DECIMAL(15, 12) NOT NULL,
-  lowerRightLongitude DECIMAL(15, 12) NOT NULL,
-  lowerRightLatitude  DECIMAL(15, 12) NOT NULL,
-  upperRightLongitude DECIMAL(15, 12) NOT NULL,
-  upperRightLatitude  DECIMAL(15, 12) NOT NULL,
-  PRIMARY KEY (id)
-);
-
-
 CREATE TABLE download_requests (
   request_id   INT(11)      NOT NULL AUTO_INCREMENT,
   request_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -197,19 +180,34 @@ CREATE TABLE requested_scenes (
   PRIMARY KEY (`id`)
 );
 
+CREATE TABLE  metadata_providers (
+  id INT(11) unsigned NOT NULL,
+  name VARCHAR(45) NOT NULL,
+  active TINYINT(1) NOT NULL DEFAULT '1',
+  crawling_entrypoint VARCHAR(255) NOT NULL,
+  iterations int(10) default 4,
+  iteration_size int(10) default 18,
+  last_execution_start DATETIME default null,
+  last_execution_end DATETIME default null,
+  PRIMARY KEY (`id`)
+);
+
 
 INSERT INTO users(username,full_name,email) values ('sdms-admin','sdms-admin','sdms-admin@sepal.org');
 INSERT INTO users_roles(user_id,role_id,created_by) values(1,1,1);
 INSERT INTO config_details values('cron_delay_days','50');
-insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 8 OLI/TIRS','LANDSAT_8',1);
-insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 7 SLC-off (2003 ->)', 'LANDSAT_ETM_SLC_OFF', 1);
-insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 7 SLC-on (1999-2003)', 'LANDSAT_ETM', 1);
-insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 4-5 TM', 'LANDSAT_TM', 1);
-insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 4-5 MSS', 'LANDSAT_MSS', 1);
-insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 1-3 MSS', 'LANDSAT_MSS1', 0);
-insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 4-8 Combined', 'LANDSAT_COMBINED', 1);
-insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 7/8 Combined', 'LANDSAT_COMBINED78', 1);
-insert into data_set(dataset_name,dataset_value,dataset_active) values('Planet Labs Scenes', 'PLANET_LAB_SCENES', 1);
-insert into groups_system(id.group_name) values (46,'admin');
+insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 8 OLI/TIRS','LANDSAT_8',1,1);
+insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 7 SLC-off (2003 ->)', 'LANDSAT_ETM_SLC_OFF', 1,1);
+insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 7 SLC-on (1999-2003)', 'LANDSAT_ETM', 1,1);
+insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 4-5 TM', 'LANDSAT_TM', 1,1);
+insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 4-5 MSS', 'LANDSAT_MSS', 1,1);
+insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 1-3 MSS', 'LANDSAT_MSS1', 0,1);
+insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 4-8 Combined', 'LANDSAT_COMBINED', 1,1);
+insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 7/8 Combined', 'LANDSAT_COMBINED78', 1,1);
+insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Planet Labs Scenes', 'PLANET_LAB_SCENES', 1,2);
+insert into groups_system(id,group_name) values (46,'admin');
 insert into roles(role_name,role_desc) values('application_admin','Application Administrator');
+
+INSERT INTO metadata_providers VALUES(1,'EarthExplorer',1,'http://earthexplorer.usgs.gov/EE/InventoryStream/pathrow',4,186,null,null);
+INSERT INTO metadata_providers VALUES(2,'PlanetLabs',0,'',0,0,null,null);
 
