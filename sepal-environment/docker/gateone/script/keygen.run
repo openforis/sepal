@@ -5,36 +5,60 @@ function timestamp {
 }
 
 user=$1
+userId=$2
 tst=$(timestamp)
-userDir="/gateone/users/$user"
-sshUserDir="$userDir/.ssh"
-if [ ! -d "$userDir" ]; then
-        mkdir "$userDir"
-fi
-if [ ! -d "$sshUserDir" ]; then
-	mkdir "$sshUserDir"
+userDir="/home/$user"
+gateOneUserDir="/gateone/users/$user"
+sshUserDir="$userDir/.ssh/"
+gateOneSshUserDir="$gateOneUserDir/.ssh/"
+
+if [ ! -d "$gateOneUserDir" ]; then
+    mkdir "$gateOneUserDir"
 fi
 
-if [ -f "$sshUserDir/config" ]; then
-    rm "$sshUserDir/config"
+if [ -d "$sshUserDir"  ]; then
+    rm -rf "$sshUserDir"
 fi
 
+mkdir "$sshUserDir"
+chmod 755 "$sshUserDir"
 cp "/keygen/config" "$sshUserDir"
-if [ -f "$userDir/session" ]; then
-    rm "$userDir/session"
+
+
+
+if [ ! -d "$gateOneSshUserDir" ]; then
+	mkdir "$gateOneSshUserDir"
+fi
+
+if [ -f "$gateOneSshUserDir/config" ]; then
+    rm "$gateOneSshUserDir/config"
+fi
+
+cp "/keygen/config" "$gateOneSshUserDir"
+
+if [ -f "$gateOneUserDir/session" ]; then
+    rm "$gateOneUserDir/session"
 fi
 
 mkdir "$tst"
 ssh-keygen  -t rsa -b 4096 -f "./$tst/id_rsa" -q -N ""
 
-if [ -f "$sshUserDir/id_rsa" ]; then
-	rm -rf "$sshUserDir/id_rsa"
+if [ -f "$gateOneSshUserDir/id_rsa" ]; then
+	rm -rf "$gateOneSshUserDir/id_rsa"
 fi
-mv "$tst/id_rsa" "$sshUserDir"
-pubKey=$(<"$tst/id_rsa.pub")
 
-rm -rf "$tst/id_rsa.pub"
-rmdir "$tst"
+cp "$tst/id_rsa" "$sshUserDir"
+cp "$tst/id_rsa" "$gateOneSshUserDir"
+chmod 400 "$sshUserDir/id_rsa"
+
+pubKey=$(<"$tst/id_rsa.pub")
+echo $pubKey > "$sshUserDir/authorized_keys"
+chmod 640 "$sshUserDir/authorized_keys"
+
+
+rm -rf "$tst"
+chown -R $userId "$sshUserDir"
+
 echo $pubKey
 
 

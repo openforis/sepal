@@ -1,0 +1,1 @@
+ALTER TABLE `sdms`.`users` ADD COLUMN `user_uid` INTEGER UNSIGNED DEFAULT 0;

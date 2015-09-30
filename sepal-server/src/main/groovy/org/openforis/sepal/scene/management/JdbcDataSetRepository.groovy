@@ -35,6 +35,7 @@ class JdbcDataSetRepository implements DataSetRepository {
             FROM metadata_providers mp
             INNER JOIN data_set ds ON mp.id = ds.metadata_provider
             WHERE mp.active = 1 AND ds.dataset_active = 1
+            ORDER by ds.id ASC
           '''
           ){
             mapMetadataProvider(it,providers)
@@ -58,10 +59,12 @@ class JdbcDataSetRepository implements DataSetRepository {
                 id: row.id, name: row.name,active: true,entrypoint: row.crawling_entrypoint,iterations: row.iterations, iterationSize: row.iteration_size,
                 lastStartTime: row.last_execution_start, lastEndTime: row.last_execution_end
         )
-        if (! (providers.contains(provider))){
-            providers.add(provider)
+
+        def providerInList = providers.find { it.id == provider.id }
+        if (providerInList){
+            provider = providerInList
         }else{
-            provider = providers.find(it.id == provider.id)
+            providers.add(provider)
         }
         provider.dataSets.add(DataSet.byId(row.datasetId))
     }

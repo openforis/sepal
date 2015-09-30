@@ -10,6 +10,8 @@ interface UserRepository {
     void update(String username, String sandboxId, String sandboxURI)
 
     String getSandboxURI(String username)
+
+    int getUserUid(String username)
 }
 
 
@@ -19,6 +21,12 @@ class JDBCUserRepository implements UserRepository {
 
     JDBCUserRepository(SqlConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider
+    }
+
+    @Override
+    int getUserUid(String username) {
+        def row = sql.firstRow('SELECT user_uid FROM users WHERE username = ?',[username])
+        row?.user_uid
     }
 
     @Override

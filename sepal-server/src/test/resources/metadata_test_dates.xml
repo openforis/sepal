@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<searchResponse xmlns='http://upe.ldcm.usgs.gov/schema/metadata'
+                xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+                xsi:schemaLocation='http://upe.ldcm.usgs.gov/schema/metadata http://earthexplorer.usgs.gov/EE/metadata.xsd'>
+
+    <returnStatus value="success">Completed Successfully</returnStatus>
+
+    <metaData>
+        <browseAvailable>Y</browseAvailable>
+        <browseURL>http://earthexplorer.usgs.gov/browse/landsat_8/2015/093/061/LC80930612015263LGN00.jpg</browseURL>
+        <sceneID>LC80930612015263LGN00</sceneID>
+        <sensor>OLI_TIRS</sensor>
+        <acquisitionDate></acquisitionDate>
+        <dateUpdated></dateUpdated>
+        <path>93</path>
+        <row>61</row>
+        <upperLeftCornerLatitude>-.39884</upperLeftCornerLatitude>
+        <upperLeftCornerLongitude>152.31454</upperLeftCornerLongitude>
+        <upperRightCornerLatitude>-.75822</upperRightCornerLatitude>
+        <upperRightCornerLongitude>153.98835</upperRightCornerLongitude>
+        <lowerLeftCornerLatitude>-2.13842</lowerLeftCornerLatitude>
+        <lowerLeftCornerLongitude>151.94374</lowerLeftCornerLongitude>
+        <lowerRightCornerLatitude>-2.50113</lowerRightCornerLatitude>
+        <lowerRightCornerLongitude>153.61882</lowerRightCornerLongitude>
+        <sceneCenterLatitude>-1.44663</sceneCenterLatitude>
+        <sceneCenterLongitude>152.96679</sceneCenterLongitude>
+        <cloudCover>3</cloudCover>
+        <cloudCoverFull>32.94</cloudCoverFull>
+        <dayOrNight>DAY</dayOrNight>
+        <sunElevation>64.43093258</sunElevation>
+        <sunAzimuth>84.85159374</sunAzimuth>
+        <receivingStation>LGN</receivingStation>
+        <sceneStartTime></sceneStartTime>
+        <sceneStopTime></sceneStopTime>
+        <imageQuality1>9</imageQuality1>
+        <DATA_TYPE_L1>L1GT</DATA_TYPE_L1>
+        <cartURL>http://earthexplorer.usgs.gov/order/process?dataset_name=LANDSAT_8&amp;ordered=LC80930612015263LGN00</cartURL>
+        <ROLL_ANGLE>-.001</ROLL_ANGLE>
+        <GEOMETRIC_RMSE_MODEL_X>0</GEOMETRIC_RMSE_MODEL_X>
+        <GEOMETRIC_RMSE_MODEL_Y>0</GEOMETRIC_RMSE_MODEL_Y>
+        <FULL_PARTIAL_SCENE>FULL</FULL_PARTIAL_SCENE>
+        <NADIR_OFFNADIR>NADIR</NADIR_OFFNADIR>
+        <PROCESSING_SOFTWARE_VERSION>LPGS_2.5.1</PROCESSING_SOFTWARE_VERSION>
+        <CPF_NAME>L8CPF20150701_20150930.02</CPF_NAME>
+        <RLUT_FILE_NAME>L8RLUT20150303_20431231v11.h5</RLUT_FILE_NAME>
+        <BPF_NAME_OLI>LO8BPF20150920233530_20150921002143.01</BPF_NAME_OLI>
+        <BPF_NAME_TIRS>LT8BPF20150920233136_20150921002247.01</BPF_NAME_TIRS>
+        <GROUND_CONTROL_POINTS_MODEL>-1</GROUND_CONTROL_POINTS_MODEL>
+        <GROUND_CONTROL_POINTS_VERSION>-1</GROUND_CONTROL_POINTS_VERSION>
+    </metaData>
+
+
+
+</searchResponse>
+
