@@ -7,8 +7,6 @@ chown -R www-data:www-data /var/www/html
 
 echo 'www-data ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/www-data
 chmod 440 /etc/sudoers.d/www-data
-chmod 775 /var/www/html/app/config/lsat_geoserver_fix.sh
-chmod -R 775 /var/www/html/app/config/processing-scripts/
 
 php5enmod mcrypt
 a2enmod rewrite

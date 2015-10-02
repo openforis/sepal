@@ -1,6 +1,3 @@
-USE sdms;
-
-
 CREATE TABLE admin_groups (
   id         INT(10)      NOT NULL,
   user_id    INT(10)      NOT NULL,
@@ -193,7 +190,7 @@ CREATE TABLE  metadata_providers (
 );
 
 
-INSERT INTO users(username,full_name,email) values ('sdms-admin','sdms-admin','sdms-admin@sepal.org');
+INSERT INTO users(username,full_name,user_uid) VALUES('sepalAdminWeb','sepalAdminWeb',1001);
 INSERT INTO users_roles(user_id,role_id,created_by) values(1,1,1);
 INSERT INTO config_details values('cron_delay_days','50');
 insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 8 OLI/TIRS','LANDSAT_8',1,1);
@@ -208,6 +205,6 @@ insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider
 insert into groups_system(id,group_name) values (46,'admin');
 insert into roles(role_name,role_desc) values('application_admin','Application Administrator');
 
-INSERT INTO metadata_providers VALUES(1,'EarthExplorer',1,'http://earthexplorer.usgs.gov/EE/InventoryStream/pathrow',4,186,null,null);
+INSERT INTO metadata_providers VALUES(1,'EarthExplorer',1,'http://earthexplorer.usgs.gov/EE/InventoryStream/pathrow',150,10,null,null);
 INSERT INTO metadata_providers VALUES(2,'PlanetLabs',0,'',0,0,null,null);
 

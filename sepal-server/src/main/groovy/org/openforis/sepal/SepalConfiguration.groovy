@@ -11,6 +11,7 @@ import java.util.regex.Pattern
 class SepalConfiguration {
     private static Logger LOG = null
 
+    public static final String MOUNTING_HOME_DIR_PARAMETER = "mounting.homeDir"
     public static final String HOME_DIR_PARAMETER = "home.dir"
     public static final String TARGET_DIR_PARAMETER = "target.dir"
     public static final String PROCESSING_CHAIN_PARAMETER = "processing.chain"
@@ -154,6 +155,10 @@ class SepalConfiguration {
 
     def getHomeDir() {
         getValue(HOME_DIR_PARAMETER)
+    }
+
+    def getMountingHomeDir() {
+        getValue(MOUNTING_HOME_DIR_PARAMETER)
     }
 
     def getTargetDir() {

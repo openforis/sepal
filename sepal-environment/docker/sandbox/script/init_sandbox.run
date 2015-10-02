@@ -2,20 +2,21 @@
 
 user=$1
 pubKey=$2
+uId=$3
 
 userHome="/home/$user"
 userSshHome="$userHome/.ssh"
-
-mkdir "$userHome"
-mkdir "$userSshHome"
+useradd -s /bin/bash -m -d "$userHome" "$user" -u "$uId"
+mkdir -p "$userSshHome"
 chmod 700 "$userSshHome"
-useradd -s /bin/bash -d "$userHome" "$user"
 touch "$userSshHome/authorized_keys"
 echo $pubKey > "$userSshHome/authorized_keys"
 chmod 640 "$userSshHome/authorized_keys"
 chown -R "$user:$user" "$userHome"
 
-
+cp /etc/skel/.bashrc "$userHome"
+cp /etc/skel/.profile "$userHome"
+cp /etc/skel/.bash_logout "$userHome"
 
 echo "$user ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/rules"
 chmod 440 /etc/sudoers.d/rules

@@ -28,6 +28,10 @@ class Database {
         sql.executeInsert("INSERT INTO users(username) values($username)")
     }
 
+    void addUser(String username, int userUid){
+        sql.executeInsert("INSERT INTO users(username,user_uid) values(?,?)",[username,userUid])
+    }
+
     def addActiveDataSet(int dataSetId, int metadataProviderId = 1) {
         def dataSetName = "DataSet$dataSetId" as String
         sql.executeInsert("INSERT INTO data_set(id, dataset_name, dataset_value, dataset_active,metadata_provider) values($dataSetId, $dataSetName, $dataSetName, 1,$metadataProviderId)")

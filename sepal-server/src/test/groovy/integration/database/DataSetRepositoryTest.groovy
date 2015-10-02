@@ -23,6 +23,8 @@ class DataSetRepositoryTest extends Specification{
 
     def setupSpec(){
         driver.withMetadataProvider(METADATA_PROVIDER,"TestMetaProvider")
+        driver.withActiveDataSet(DataSet.LANDSAT_8.id,METADATA_PROVIDER)
+        driver.withActiveDataSet(DataSet.LANDSAT_ETM.id,METADATA_PROVIDER)
     }
 
 
@@ -30,7 +32,7 @@ class DataSetRepositoryTest extends Specification{
 
     def 'Given  an existing dataset, you should be able to retrieve that row'(){
         when:
-            driver.withActiveDataSets(DataSet.LANDSAT_8.id)
+            dataSetRepo.metadataProviders
         then:
             dataSetRepo.containsDataSetWithId(DataSet.LANDSAT_8.id)
             !dataSetRepo.containsDataSetWithId(DataSet.LANDSAT_ETM_SLC_OFF.id)
@@ -38,14 +40,11 @@ class DataSetRepositoryTest extends Specification{
 
     def 'Linking a dataset to a metadataProvider, you should be able to fetch DP in the MP dataset list' (){
         when:
-            driver.withActiveDataSet(DataSet.LANDSAT_ETM_SLC_OFF.id,METADATA_PROVIDER)
-            def metadataProvider = dataSetRepo.metadataProviders
+             def metadataProvider = dataSetRepo.metadataProviders
         then:
             metadataProvider.size() == 1
-            metadataProvider.dataSets
-            metadataProvider.dataSets.size() == 1
-            def dataSet = metadataProvider.get(0).dataSets.first()
-            dataSet == DataSet.LANDSAT_ETM_SLC_OFF
+            metadataProvider.first().dataSets
+            metadataProvider.first().dataSets.size() == 2
     }
 
     def 'Storing crawler start and end time. When a query is performed for a particula provider data is returned'(){
@@ -59,7 +58,6 @@ class DataSetRepositoryTest extends Specification{
         then:
         metadataProvider.lastEndTime == endDate
         metadataProvider.lastStartTime == startDate
-
     }
 
 

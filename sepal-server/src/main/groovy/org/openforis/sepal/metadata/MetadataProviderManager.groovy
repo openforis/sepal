@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 
 interface MetadataProviderManager {
 
@@ -57,6 +56,8 @@ class ConcreteMetadataProviderManager implements MetadataProviderManager{
                         LOG.debug("Invoking crawl($it) on $crawler")
                         dataSetRepository.updateCrawlingStartTime(it.id,new Date())
                         crawler.crawl(it)
+                    }catch (Exception ex){
+                        LOG.error("Error during crawling with $crawler",ex)
                     }finally{
                         dataSetRepository.updateCrawlingEndTime(it.id,new Date())
                     }

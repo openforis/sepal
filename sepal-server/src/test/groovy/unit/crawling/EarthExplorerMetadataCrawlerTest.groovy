@@ -1,7 +1,6 @@
 package unit.crawling
 
-import groovy.util.slurpersupport.GPathResult
-import org.openforis.sepal.SepalConfiguration
+import endtoend.SepalDriver
 import org.openforis.sepal.metadata.MetadataProvider
 import org.openforis.sepal.metadata.UsgsDataRepository
 import org.openforis.sepal.metadata.crawling.EarthExplorerMetadataCrawler
@@ -10,6 +9,7 @@ import org.openforis.sepal.scene.DataSet
 import org.openforis.sepal.util.DateTime
 import org.openforis.sepal.util.ResourceLocator
 import org.openforis.sepal.util.XmlUtils
+import spock.lang.Shared
 import spock.lang.Specification
 
 class EarthExplorerMetadataCrawlerTest extends Specification{
@@ -20,6 +20,15 @@ class EarthExplorerMetadataCrawlerTest extends Specification{
      ResourceLocator httpDownloader = Mock(ResourceLocator)
      def usgsRepo = Mock(UsgsDataRepository)
      MetadataCrawler metaCrawler
+     @Shared SepalDriver sepalDriver
+
+    def setupSpec(){
+        sepalDriver = new SepalDriver()
+    }
+
+    def cleanupSpec(){
+        sepalDriver.stop()
+    }
 
     def setup(){
         metaCrawler = new EarthExplorerMetadataCrawler(usgsRepo,httpDownloader)
@@ -80,6 +89,16 @@ class EarthExplorerMetadataCrawlerTest extends Specification{
         then:
         updatedData.dateUpdated == DateTime.parseDateString(first.dateUpdated)
         untouchedData.dateUpdated > DateTime.parseDateString(second.dateUpdated)
+    }
+
+    def 'parsing a file containing entry with null dates, the parser will not throw any exception'(){
+        metaCrawler = new EarthExplorerMetadataCrawler(usgsRepo,new YAMRL())
+        MetadataProvider provider = new MetadataProvider(entrypoint: 'http://some_endpoint.org', id: PROVIDER_ID, active: 1, iterations: 1, iterationSize: 1)
+        provider.dataSets = [DataSet.LANDSAT_8]
+        when:
+        metaCrawler.crawl(provider)
+        then:
+        notThrown(Exception)
 
     }
 
@@ -88,6 +107,15 @@ class EarthExplorerMetadataCrawlerTest extends Specification{
         def download(String resourceURI, Closure callback) {
             def fileName = resourceURI.startsWith('http') ? "/metadata.xml" : '/metadata_edited.xml'
            MockResourceLocator.getResourceAsStream(fileName).withCloseable {
+                callback(it)
+            }
+        }
+    }
+
+    class YAMRL implements ResourceLocator{
+        @Override
+        def download(String resourceURI, Closure callback) {
+            MockResourceLocator.getResourceAsStream("/metadata_test_dates.xml").withCloseable {
                 callback(it)
             }
         }

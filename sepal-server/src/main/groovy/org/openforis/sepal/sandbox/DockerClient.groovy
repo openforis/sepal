@@ -18,7 +18,7 @@ interface DockerClient {
 
     def releaseSandbox(String sandboxId)
 
-    def createSandbox(String sandboxName, String username)
+    def createSandbox(String sandboxName, String username, int userId)
 
     def stopSandbox(String sandboxId)
 
@@ -98,14 +98,14 @@ class DockerRESTClient implements DockerClient {
     }
 
     @Override
-    def createSandbox(String sandboxName, String username) {
+    def createSandbox(String sandboxName, String username,int userId) {
         def restClient = new RESTClient(dockerDaemonURI)
         LOG.debug("Going to create a sandbox on $dockerDaemonURI")
-        Sandbox sandbox = null
-        def generatedKey = IOUtils.toString(exec("gateone","/keygen/keygen.run",username))
-        def homeDir = SepalConfiguration.instance.homeDir
-        def volumeBinding = "$homeDir/$username:/home/$username"
-        def body = new JsonOutput().toJson([Image: sandboxName, Tty: true, Cmd: [ "/init_sandbox.run", username, generatedKey ], HostConfig: [ Binds: [ "$volumeBinding" ]] ])
+        Sandbox sandbox
+        def generatedKey = IOUtils.toString(exec("gateone","/keygen/keygen.run",username,"$userId"))
+        def mountingHomeDir = SepalConfiguration.instance.mountingHomeDir
+        def volumeBinding = "$mountingHomeDir/$username:/home/$username"
+        def body = new JsonOutput().toJson([Image: sandboxName, Tty: true, Cmd: [ "/init_sandbox.run", username, generatedKey,"$userId" ], HostConfig: [ Binds: [ "$volumeBinding" ]] ])
         LOG.info("Creating sandbox with: $body")
         try{
             HttpResponseDecorator response = restClient.post(

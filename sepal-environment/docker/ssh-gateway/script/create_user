@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+#script invoked by PHP backend to create user
+#on the physical machine
+
+USERNAME=$1
+PASSWORD=$2
+ASSIGNED_GROUP=$3
+
+sudo -S useradd "$USERNAME" -s /bin/bash -m -d "/home/$USERNAME"
+if [ ! -z "$ASSIGNED_GROUP" ]; then
+    sudo  -S usermod -aG "$ASSIGNED_GROUP" "$USERNAME"
+fi
+
+sudo -S usermod -aG ${USER_GROUP} ${USERNAME}
+
+echo "$USERNAME:$PASSWORD" | sudo  -S chpasswd
+
+userId=$(id -u "$USERNAME")
+
+echo $userId
+
+
+

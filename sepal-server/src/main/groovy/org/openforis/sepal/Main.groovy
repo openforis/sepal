@@ -19,7 +19,7 @@ class Main {
     def static connectionManager
 
     static void main(String[] args) {
-        def propertiesLocation = args.length == 1 ? args[0] : "/etc/sdms/sepal.properties"
+        def propertiesLocation = args.length == 1 ? args[0] : "/etc/sepal/sepal.properties"
         SepalConfiguration.instance.setConfigFileLocation(propertiesLocation)
 
         deployEndpoints()

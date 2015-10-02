@@ -52,6 +52,10 @@ class SepalDriver {
         ) as HttpResponseDecorator
     }
 
+    SepalDriver withUser(String username, int userUid){
+        system.database.addUser(username,userUid)
+    }
+
     SepalDriver withUsers(String... usernames) {
         usernames.each {
             system.database.addUser(it)

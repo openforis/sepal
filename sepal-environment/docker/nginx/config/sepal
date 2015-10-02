@@ -8,8 +8,7 @@ server {
         proxy_pass http://geoserver:8080;
     }
 
-
-    location / {
+   location / {
         proxy_set_header X-Real-IP  $remote_addr;
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Host $host;
@@ -26,8 +25,8 @@ server {
 server {
     listen 443;
     access_log                /var/log/nginx/sepal.access.log;
-    ssl_certificate           /etc/ssl/fao/fao-dm_org.crt;
-    ssl_certificate_key       /etc/ssl/fao/server.key;
+    ssl_certificate           /etc/ssl/fao-dm_org.crt;
+    ssl_certificate_key       /etc/ssl/server.key;
     ssl on;
     ssl_session_cache  builtin:1000  shared:SSL:10m;
     ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;

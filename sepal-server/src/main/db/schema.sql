@@ -103,6 +103,7 @@ CREATE TABLE users (
   updated_at     TIMESTAMP   NULL     DEFAULT NULL,
   sandbox_id VARCHAR(100) NULL,
   sandbox_uri VARCHAR(512) NULL,
+  user_uid INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
