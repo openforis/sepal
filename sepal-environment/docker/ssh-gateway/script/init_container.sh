@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-
-
 if [ -f "/users/passwd" ]; then
 yes | cp -rf /users/passwd /etc/
 fi
@@ -47,6 +45,6 @@ chown ${ADMIN_USERNAME}:${ADMIN_USERNAME} "/home/${ADMIN_USERNAME}/create_user"
 echo "${ADMIN_USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${ADMIN_USERNAME}
 chmod 440 /etc/sudoers.d/${ADMIN_USERNAME}
 
-printf '%s\n' "USER_GROUP=%s" "$USER_GROUP" >> etc/environment
+printf "USER_GROUP=%s" "$USER_GROUP" >> etc/environment
 
 /usr/bin/supervisord

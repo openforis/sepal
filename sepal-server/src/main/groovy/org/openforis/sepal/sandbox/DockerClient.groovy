@@ -117,6 +117,7 @@ class DockerRESTClient implements DockerClient {
             LOG.debug("Sandbox created: $sandbox.id")
             startContainer(restClient,sandbox.id)
             getContainerInfo(restClient,sandbox)
+            exec(sandbox.id,"/waitforssh.sh")
         }catch (HttpResponseException exception){
             LOG.error("Error while creating the sandbox. $exception.message")
             throw exception
