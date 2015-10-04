@@ -43,10 +43,10 @@ CREATE TABLE groups_system (
 CREATE TABLE image_log (
   id            INT(11)      NOT NULL AUTO_INCREMENT,
   name          VARCHAR(256) NOT NULL,
-  downloaded_at DATETIME     NOT NULL,
-  last_accessed DATETIME     NOT NULL,
-  accessed_by   VARCHAR(50)  NOT NULL,
-  deleted       INT(11)      NOT NULL,
+  downloaded_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_accessed DATETIME,
+  accessed_by   VARCHAR(50),
+  deleted       INT(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
