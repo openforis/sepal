@@ -14,17 +14,17 @@ import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.util.DateTime.*
 
-class EarthExplorerMetadataCrawler implements MetadataCrawler {
+class EarthExplorerMetadataCrawler extends XmlMetadataCrawler {
 
     private static final Integer PROVIDER_ID = 1
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
-    final UsgsDataRepository usgsDataRepository
+
     final ResourceLocator downloader
-    final File downloadWorkingDir = new File(SepalConfiguration.instance.downloadWorkingDirectory)
+
 
     EarthExplorerMetadataCrawler(UsgsDataRepository usgsDataRepository, ResourceLocator downloader) {
-        this.usgsDataRepository = usgsDataRepository
+        super(usgsDataRepository)
         this.downloader = downloader
     }
 
@@ -55,32 +55,10 @@ class EarthExplorerMetadataCrawler implements MetadataCrawler {
 
     }
 
-
-    def store(InputStream stream) {
-        def fName = "metadata_" + System.currentTimeMillis() + ".xml"
-        File fsFile = new File(downloadWorkingDir, fName)
-        LOG.debug("Tmp file name $fsFile.absolutePath")
-        FileOutputStream fos = new FileOutputStream(fsFile)
-        fos.withCloseable {
-            IOUtils.copy(stream, fos)
-        }
-
-        return fsFile
-    }
-
-    private def applyCriteria(entries, MetadataProvider providerInfo){
-        providerInfo?.crawlingCriterias?.each{ criteria ->
-            entries = entries.findResults { entry ->
-                 XmlUtils.nodeToMap(entry).get(criteria.fieldName) == criteria.expectedValue ? entry : null
-            }
-        }
-        return entries
-    }
-
     private def process(DataSet dataSet, metadataFile,providerInfo) {
         try {
             LOG.trace("Going to process $metadataFile.absolutePath")
-            def metaDataTags = applyCriteria(parse(metadataFile),providerInfo)
+            def metaDataTags = applyCriteria(parse(metadataFile,'metaData'),providerInfo)
             def occurences = metaDataTags.size()
             LOG.debug("Found $occurences Occurences")
             def counter = 0
@@ -100,15 +78,12 @@ class EarthExplorerMetadataCrawler implements MetadataCrawler {
                     LOG.trace("$counter/$occurences: $sceneId Already available")
                 }
             }
-
         } finally {
             metadataFile.delete()
         }
     }
 
-    private def parse(metadataFile) {
-        new XmlSlurper().parse(metadataFile).depthFirst().findAll { it.name() == 'metaData' }
-    }
+
 
     private def normalize(GPathResult node) {
         def attributeMap = XmlUtils.nodeToMap(node)
@@ -132,8 +107,4 @@ class EarthExplorerMetadataCrawler implements MetadataCrawler {
         return attributeMap
 
     }
-
-    private def updateMetadata(Map metadata, rowId) { usgsDataRepository.updateMetadata(rowId, metadata) }
-
-    private def insertMetadata(DataSet dataSet, Map metadata) { usgsDataRepository.storeMetadata(dataSet.id, metadata) }
 }
