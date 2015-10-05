@@ -37,6 +37,10 @@ class Database {
         sql.executeInsert("INSERT INTO data_set(id, dataset_name, dataset_value, dataset_active,metadata_provider) values($dataSetId, $dataSetName, $dataSetName, 1,$metadataProviderId)")
     }
 
+    def addCrawlingCriteria(int providerId, String field, String expectedValue){
+        sql.executeInsert("INSERT INTO metadata_crawling_criteria(metadata_provider_id,field_name,expected_value) VALUES(?,?,?)",[providerId,field,expectedValue])
+    }
+
     def addActiveMetadataProvider(int providerId, String providerName, String crawlingEntrypoint = '') {
         sql.executeInsert("INSERT INTO metadata_providers(id,name,active,crawling_entrypoint) VALUES ($providerId,$providerName,1,$crawlingEntrypoint)")
     }

@@ -99,7 +99,6 @@ class EarthExplorerMetadataCrawlerTest extends Specification{
         metaCrawler.crawl(provider)
         then:
         notThrown(Exception)
-
     }
 
     class MockResourceLocator implements ResourceLocator{

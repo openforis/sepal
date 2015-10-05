@@ -15,3 +15,4 @@ DELETE FROM `wrs_points`;
 DELETE FROM `download_requests`;
 DELETE FROM `requested_scenes`;
 DELETE FROM `metadata_providers`;
+DELETE FROM `metadata_crawling_criteria`;

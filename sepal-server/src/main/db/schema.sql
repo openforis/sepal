@@ -226,6 +226,14 @@ CREATE TABLE  metadata_providers (
   PRIMARY KEY (`id`)
 );
 
+CREATE TABLE  metadata_crawling_criteria (
+  criteria_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  metadata_provider_id int(10) unsigned NOT NULL,
+  field_name varchar(255) NOT NULL,
+  expected_value varchar(255) NOT NULL,
+  PRIMARY KEY (`criteria_id`)
+);
+
 
 
 

@@ -29,6 +29,10 @@ class Sepal {
         return this
     }
 
+    void resetDatabase(){
+        database.reset()
+    }
+
     SqlConnectionManager getConnectionManager(){
         this.connectionManager
     }

@@ -22,6 +22,10 @@ class SepalDriver {
         }
     }
 
+    void resetDatabase(){
+        system.resetDatabase()
+    }
+
     SqlConnectionManager getSQLManager(){
         system.connectionManager
     }
@@ -67,6 +71,11 @@ class SepalDriver {
         requests.each {
             system.database.addDownloadRequest(it)
         }
+        return this
+    }
+
+    SepalDriver withCrawlingCriteria(int providerId, String field, String expectedValue){
+        system.database.addCrawlingCriteria(providerId,field,expectedValue)
         return this
     }
 

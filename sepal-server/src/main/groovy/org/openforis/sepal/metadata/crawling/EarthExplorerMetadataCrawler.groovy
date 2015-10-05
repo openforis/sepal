@@ -46,7 +46,7 @@ class EarthExplorerMetadataCrawler implements MetadataCrawler {
                 LOG.info("Going to request metadata through $downloadUrl")
                 downloader.download(downloadUrl) { InputStream inputStream ->
                     def storedFile = store(inputStream)
-                    process(dataSet, storedFile)
+                    process(dataSet, storedFile,crawlerInfo)
                 }
             }
             currentEndDate = DateTime.addDays(currentStartDate, -1)
@@ -68,10 +68,19 @@ class EarthExplorerMetadataCrawler implements MetadataCrawler {
         return fsFile
     }
 
-    private def process(DataSet dataSet, metadataFile) {
+    private def applyCriteria(entries, MetadataProvider providerInfo){
+        providerInfo?.crawlingCriterias?.each{ criteria ->
+            entries = entries.findResults { entry ->
+                 XmlUtils.nodeToMap(entry).get(criteria.fieldName) == criteria.expectedValue ? entry : null
+            }
+        }
+        return entries
+    }
+
+    private def process(DataSet dataSet, metadataFile,providerInfo) {
         try {
             LOG.trace("Going to process $metadataFile.absolutePath")
-            def metaDataTags = parse(metadataFile)
+            def metaDataTags = applyCriteria(parse(metadataFile),providerInfo)
             def occurences = metaDataTags.size()
             LOG.debug("Found $occurences Occurences")
             def counter = 0
