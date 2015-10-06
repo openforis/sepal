@@ -11,4 +11,8 @@ ADD script/waitforssh.sh .
 RUN chmod u+x /init_image.sh
 RUN ./init_image.sh
 
+ENV SEPAL_USERS_GID 9998
+ENV SEPAL_USERS_GRP_NAME sepalUsers
+
+
 CMD ["/usr/bin/supervisord"]

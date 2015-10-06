@@ -13,7 +13,6 @@ ADD config/ports.conf /etc/apache2/
 ADD config/000-default.conf /etc/apache2/sites-enabled/
 ADD config/default-ssl.conf /etc/apache2/sites-enabled/
 
-EXPOSE 22
 EXPOSE 9090
 EXPOSE 9443
 

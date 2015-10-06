@@ -46,7 +46,7 @@ getent passwd ${WEB_ADMIN_USERNAME}  >/dev/null 2>&1 && webAdminExist=true
 if $webAdminExist; then
 echo "user $WEB_ADMIN_USERNAME already exist"
 else
-useradd ${WEB_ADMIN_USERNAME} -s /bin/bash -m -d "/home/${WEB_ADMIN_USERNAME}"
+useradd ${WEB_ADMIN_USERNAME} -u 1001 -s /bin/bash -m -d "/home/${WEB_ADMIN_USERNAME}"
 usermod -aG "${USER_GROUP}" "${WEB_ADMIN_USERNAME}"
 fi
 

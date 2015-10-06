@@ -16,6 +16,8 @@ else
     groupadd -g "$uId" "$user"
 fi
 
+groupadd -g "${SEPAL_USERS_GID}" ${SEPAL_USERS_GRP_NAME}
+
 mkdir -p "$userSshHome"
 chmod 700 "$userSshHome"
 touch "$userSshHome/authorized_keys"

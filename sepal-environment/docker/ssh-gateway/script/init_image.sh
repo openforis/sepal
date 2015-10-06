@@ -8,7 +8,7 @@ chmod 700 /copyOver.run
 chmod 555 /ssh-bootstrap
 
 
-groupadd ${USER_GROUP}
+groupadd -g 9998 ${USER_GROUP}
 
 #create ssh deamon folder
 mkdir /var/run/sshd
