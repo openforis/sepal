@@ -38,6 +38,7 @@ class SepalConfiguration {
     public static final String DOCKER_DAEMON_PORT = "docker.daemonPort"
     public static final String DOCKER_REST_ENTRYPOINT = "docker.restEntryPoint"
     public static final String CRAWLER_RUN_DELAY = "metadata.crawler.delay"
+    public static final String USER_CREDENTIALS_HOME_DIR = "user.credentials.homeDir"
 
     Properties properties
     String configFileLocation
@@ -74,6 +75,10 @@ class SepalConfiguration {
                 testConnectionOnCheckout: true,
 
         )
+    }
+
+    def getUserCredentialsHomeDir(){
+        getValue(USER_CREDENTIALS_HOME_DIR)
     }
 
     def getCrawlerRunDelay(){

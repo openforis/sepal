@@ -104,8 +104,10 @@ class DockerRESTClient implements DockerClient {
         Sandbox sandbox
         def generatedKey = IOUtils.toString(exec("gateone","/keygen/keygen.run",username,"$userId"))
         def mountingHomeDir = SepalConfiguration.instance.mountingHomeDir
-        def volumeBinding = "$mountingHomeDir/$username:/home/$username"
-        def body = new JsonOutput().toJson([Image: sandboxName, Tty: true, Cmd: [ "/init_sandbox.run", username, generatedKey,"$userId" ], HostConfig: [ Binds: [ "$volumeBinding" ]] ])
+        def userCredentialHomeDir = SepalConfiguration.instance.userCredentialsHomeDir
+        def homeBinding = "$mountingHomeDir/$username:/home/$username"
+        def shadowBinding = "$userCredentialHomeDir/shadow:/etc/shadow"
+        def body = new JsonOutput().toJson([Image: sandboxName, Tty: true, Cmd: [ "/init_sandbox.run", username, generatedKey,"$userId" ], HostConfig: [ Binds: [ homeBinding, shadowBinding]] ])
         LOG.info("Creating sandbox with: $body")
         try{
             HttpResponseDecorator response = restClient.post(
