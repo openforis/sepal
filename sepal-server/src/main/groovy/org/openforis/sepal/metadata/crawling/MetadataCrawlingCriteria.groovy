@@ -6,7 +6,7 @@ import groovy.transform.Immutable
 @Immutable
 class MetadataCrawlingCriteria {
 
-    int criteriaId
+    Long criteriaId
     String fieldName
     String expectedValue
 }

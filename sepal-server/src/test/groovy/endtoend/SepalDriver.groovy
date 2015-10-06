@@ -79,8 +79,8 @@ class SepalDriver {
         return this
     }
 
-    SepalDriver withMetadataProvider(int id, String name){
-        system.database.addActiveMetadataProvider(id,name)
+    SepalDriver withMetadataProvider(int id, String name,Boolean active = true){
+        system.database.addMetadataProvider(id,name,'',active)
         return this
     }
 

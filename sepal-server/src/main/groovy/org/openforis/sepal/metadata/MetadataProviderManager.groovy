@@ -14,27 +14,28 @@ interface MetadataProviderManager {
 
 
     MetadataProviderManager registerCrawler(crawler)
+
     def start()
 
 
 }
 
-class ConcreteMetadataProviderManager implements MetadataProviderManager{
+class ConcreteMetadataProviderManager implements MetadataProviderManager {
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
     final static Logger LOG = LoggerFactory.getLogger(this)
 
-    final DataSetRepository  dataSetRepository
+    final DataSetRepository dataSetRepository
     Map<Integer, MetadataCrawler> crawlers = [:]
 
-    ConcreteMetadataProviderManager(DataSetRepository dataSetRepository){
+    ConcreteMetadataProviderManager(DataSetRepository dataSetRepository) {
         this.dataSetRepository = dataSetRepository
     }
 
     @Override
     MetadataProviderManager registerCrawler(crawler) {
         LOG.info("registing crawler $crawler ($crawler.providerId)")
-        crawlers.put(crawler.providerId,crawler)
+        crawlers.put(crawler.providerId, crawler)
         return this
     }
 
@@ -44,26 +45,35 @@ class ConcreteMetadataProviderManager implements MetadataProviderManager{
     }
 
 
-
-    private class FetchMetadataWorker implements Runnable{
+    private class FetchMetadataWorker implements Runnable {
 
         @Override
         void run() {
-            dataSetRepository.getMetadataProviders().each{
-                def crawler = crawlers.get(it.id)
-                if (crawler){
-                    try{
-                        LOG.debug("Invoking crawl($it) on $crawler")
-                        dataSetRepository.updateCrawlingStartTime(it.id,new Date())
-                        crawler.crawl(it)
-                    }catch (Exception ex){
-                        LOG.error("Error during crawling with $crawler",ex)
-                    }finally{
-                        dataSetRepository.updateCrawlingEndTime(it.id,new Date())
-                    }
+            LOG.info("New crawling started")
+            try {
+                doCrawl()
+            } catch (Exception ex) {
+                LOG.error("Error during crawling",ex)
+            }
 
-                }else{
-                    LOG.info("No crawler found for $it")
+        }
+
+        void doCrawl() {
+            dataSetRepository.getMetadataProviders().each { MetadataProvider it ->
+                LOG.debug("Searching crawling implementation for $it.name")
+                def crawler = crawlers.get(it.id)
+                if (crawler) {
+                    try {
+                        LOG.debug("Invoking crawl($it) on $crawler")
+                        dataSetRepository.updateCrawlingStartTime(it.id, new Date())
+                        crawler.crawl(it)
+                    } catch (Exception ex) {
+                        LOG.error("Error during crawling with $crawler", ex)
+                    } finally {
+                        dataSetRepository.updateCrawlingEndTime(it.id, new Date())
+                    }
+                } else {
+                    LOG.warn("No crawler found for $it")
                 }
             }
         }

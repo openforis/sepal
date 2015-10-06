@@ -41,8 +41,8 @@ class Database {
         sql.executeInsert("INSERT INTO metadata_crawling_criteria(metadata_provider_id,field_name,expected_value) VALUES(?,?,?)",[providerId,field,expectedValue])
     }
 
-    def addActiveMetadataProvider(int providerId, String providerName, String crawlingEntrypoint = '') {
-        sql.executeInsert("INSERT INTO metadata_providers(id,name,active,crawling_entrypoint) VALUES ($providerId,$providerName,1,$crawlingEntrypoint)")
+    def addMetadataProvider(int providerId, String providerName, String crawlingEntrypoint = '', Boolean active = true) {
+        sql.executeInsert("INSERT INTO metadata_providers(id,name,active,crawling_entrypoint) VALUES (?,?,?,?)",[providerId,providerName,active ? 1 : 0,crawlingEntrypoint])
     }
 
     def addDownloadRequest(RequestScenesDownloadCommand downloadRequest) {
