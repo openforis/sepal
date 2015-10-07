@@ -5,11 +5,13 @@ import org.openforis.sepal.scene.SceneReference
 import org.openforis.sepal.scene.SceneRequest
 import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
 import org.openforis.sepal.scene.retrieval.SepalSceneProcessor
+import spock.lang.Ignore
 import spock.lang.Specification
 import util.DirectoryStructure
 
 import static org.openforis.sepal.scene.DataSet.LANDSAT_8
 
+@Ignore
 class SepalSceneProcessorTest extends Specification {
     def workingDir = File.createTempDir('workingDir', null)
     def sceneRepo = new FileSystemSceneRepository(workingDir, null)
