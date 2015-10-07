@@ -1,11 +1,22 @@
 server {
     listen   80;
+    access_log                /var/log/nginx/sepal.http.log;
 
     location /geoserver/ {
         proxy_set_header X-Real-IP  $remote_addr;
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Host $host;
         proxy_pass http://geoserver:8080;
+    }
+
+
+    location ~ ^/user/(?<user>[^/]+)/(?<service>[^/]+) {
+        proxy_set_header X-Real-IP  $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header sepal-endpoint $service;
+        proxy_set_header sepal-user $user;
+        proxy_pass http://sepal:9191;
     }
 
    location / {
@@ -17,6 +28,8 @@ server {
 
 
 
+
+
     location ~ /\.ht {
         deny all;
     }
@@ -24,7 +37,7 @@ server {
 
 server {
     listen 443;
-    access_log                /var/log/nginx/sepal.access.log;
+    access_log                /var/log/nginx/sepal.https.log;
     ssl_certificate           /etc/ssl/fao-dm_org.crt;
     ssl_certificate_key       /etc/ssl/server.key;
     ssl on;

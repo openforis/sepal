@@ -36,7 +36,7 @@ class SandboxWebProxy {
     }
 
     private HttpHandler createHandler(Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
-        def sessionManager = new InMemorySessionManager('rstudio-proxy', 1000, true)
+        def sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
         sessionManager.registerSessionListener(new Listener(sandboxManager))
         new ErrorHandler(
                 new SessionAttachmentHandler(
