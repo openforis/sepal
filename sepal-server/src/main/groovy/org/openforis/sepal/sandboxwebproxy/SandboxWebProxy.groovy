@@ -2,8 +2,10 @@ package org.openforis.sepal.sandboxwebproxy
 
 import io.undertow.Handlers
 import io.undertow.Undertow
+import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.session.*
+import io.undertow.util.Headers
 import org.openforis.sepal.sandbox.SandboxManager
 
 /**
@@ -29,7 +31,10 @@ class SandboxWebProxy {
         def proxyHandler = Handlers.proxyHandler(new SandboxProxyClient(endpointByPort, sandboxManager))
         def sessionManager = new InMemorySessionManager('rstudio-proxy', 1000, true)
         sessionManager.registerSessionListener(new Listener())
-        def handler = new SessionAttachmentHandler(proxyHandler, sessionManager, new SessionCookieConfig())
+        def handler = new ErrorHandler(
+                new SessionAttachmentHandler(
+                        proxyHandler, sessionManager, new SessionCookieConfig())
+        )
         this.server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
                 .setHandler(handler)
@@ -42,6 +47,31 @@ class SandboxWebProxy {
 
     void stop() {
         server.stop()
+    }
+
+    static class BadRequestException extends RuntimeException {
+        BadRequestException(String message) {
+            super(message)
+        }
+    }
+
+    private static class ErrorHandler implements HttpHandler {
+        private final HttpHandler next
+
+        ErrorHandler(HttpHandler next) {
+            this.next = next
+        }
+
+        void handleRequest(HttpServerExchange exchange) throws Exception {
+            try {
+                next.handleRequest(exchange)
+            } catch (BadRequestException e) {
+                exchange.statusCode = 400
+                exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/html");
+                def sender = exchange.getResponseSender()
+                sender.send(e.message)
+            }
+        }
     }
 
     private static class Listener implements SessionListener {
