@@ -22,6 +22,10 @@ class SepalDriver {
         }
     }
 
+    void resetDatabase(){
+        system.resetDatabase()
+    }
+
     SqlConnectionManager getSQLManager(){
         system.connectionManager
     }
@@ -70,8 +74,13 @@ class SepalDriver {
         return this
     }
 
-    SepalDriver withMetadataProvider(int id, String name){
-        system.database.addActiveMetadataProvider(id,name)
+    SepalDriver withCrawlingCriteria(int providerId, String field, String expectedValue){
+        system.database.addCrawlingCriteria(providerId,field,expectedValue)
+        return this
+    }
+
+    SepalDriver withMetadataProvider(int id, String name,Boolean active = true){
+        system.database.addMetadataProvider(id,name,'',active)
         return this
     }
 

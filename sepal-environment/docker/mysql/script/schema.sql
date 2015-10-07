@@ -43,10 +43,10 @@ CREATE TABLE groups_system (
 CREATE TABLE image_log (
   id            INT(11)      NOT NULL AUTO_INCREMENT,
   name          VARCHAR(256) NOT NULL,
-  downloaded_at DATETIME     NOT NULL,
-  last_accessed DATETIME     NOT NULL,
-  accessed_by   VARCHAR(50)  NOT NULL,
-  deleted       INT(11)      NOT NULL,
+  downloaded_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_accessed DATETIME,
+  accessed_by   VARCHAR(50),
+  deleted       INT(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -85,6 +85,7 @@ CREATE TABLE users (
   updated_at     TIMESTAMP,
   sandbox_id VARCHAR(100) NULL,
   sandbox_uri VARCHAR(512) NULL,
+  user_uid INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -189,6 +190,14 @@ CREATE TABLE  metadata_providers (
   PRIMARY KEY (`id`)
 );
 
+CREATE TABLE  metadata_crawling_criteria (
+  criteria_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  metadata_provider_id int(10) unsigned NOT NULL,
+  field_name varchar(255) NOT NULL,
+  expected_value varchar(255) NOT NULL,
+  PRIMARY KEY (`criteria_id`)
+);
+
 
 INSERT INTO users(username,full_name,user_uid) VALUES('sepalAdminWeb','sepalAdminWeb',1001);
 INSERT INTO users_roles(user_id,role_id,created_by) values(1,1,1);
@@ -207,4 +216,5 @@ insert into roles(role_name,role_desc) values('application_admin','Application A
 
 INSERT INTO metadata_providers VALUES(1,'EarthExplorer',1,'http://earthexplorer.usgs.gov/EE/InventoryStream/pathrow',150,10,null,null);
 INSERT INTO metadata_providers VALUES(2,'PlanetLabs',0,'',0,0,null,null);
+INSERT INTO metadata_crawling_criteria(metadata_provider_id,field_name,expected_value) VALUES (1, 'DATA_TYPE_L1','L1T')
 

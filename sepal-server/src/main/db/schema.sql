@@ -61,10 +61,10 @@ CREATE TABLE groups_system (
 CREATE TABLE image_log (
   id            INT(11)      NOT NULL AUTO_INCREMENT,
   name          VARCHAR(256) NOT NULL,
-  downloaded_at DATETIME     NOT NULL,
-  last_accessed DATETIME     NOT NULL,
-  accessed_by   VARCHAR(50)  NOT NULL,
-  deleted       INT(11)      NOT NULL,
+  downloaded_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_accessed DATETIME,
+  accessed_by   VARCHAR(50),
+  deleted       INT(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -224,6 +224,14 @@ CREATE TABLE  metadata_providers (
   last_execution_start DATETIME default null,
   last_execution_end DATETIME default null,
   PRIMARY KEY (`id`)
+);
+
+CREATE TABLE  metadata_crawling_criteria (
+  criteria_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  metadata_provider_id int(10) unsigned NOT NULL,
+  field_name varchar(255) NOT NULL,
+  expected_value varchar(255) NOT NULL,
+  PRIMARY KEY (`criteria_id`)
 );
 
 

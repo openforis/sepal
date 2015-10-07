@@ -7,6 +7,17 @@ uId=$3
 userHome="/home/$user"
 userSshHome="$userHome/.ssh"
 useradd -s /bin/bash -m -d "$userHome" "$user" -u "$uId"
+userGroupExist=false
+cat /etc/group | grep "$user" >/dev/null 2>&1 && userGroupExist=true
+
+if userGroupExist; then
+    echo "User group correctly created"
+else
+    groupadd -g "$uId" "$user"
+fi
+
+groupadd -g "${SEPAL_USERS_GID}" ${SEPAL_USERS_GRP_NAME}
+
 mkdir -p "$userSshHome"
 chmod 700 "$userSshHome"
 touch "$userSshHome/authorized_keys"

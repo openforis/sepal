@@ -13,4 +13,6 @@ class XmlUtils {
     static def getAllNodeWithTagName(InputStream xmlFile, String nodeName){
         new XmlSlurper().parse(xmlFile).depthFirst().findAll { it.name() == nodeName}
     }
+
+
 }

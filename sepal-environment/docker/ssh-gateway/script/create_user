@@ -13,10 +13,14 @@ if [ ! -z "$ASSIGNED_GROUP" ]; then
 fi
 
 sudo -S usermod -aG ${USER_GROUP} ${USERNAME}
-
 echo "$USERNAME:$PASSWORD" | sudo  -S chpasswd
 
 userId=$(id -u "$USERNAME")
+
+
+#create shared directories
+sudo mkdir -p "/home/shared/$USERNAME"
+sudo chown  ${USERNAME}:${USER_GROUP} "/home/shared/$USERNAME"
 
 echo $userId
 

@@ -14,17 +14,17 @@ import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.util.DateTime.*
 
-class EarthExplorerMetadataCrawler implements MetadataCrawler {
+class EarthExplorerMetadataCrawler extends XmlMetadataCrawler {
 
     private static final Integer PROVIDER_ID = 1
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
-    final UsgsDataRepository usgsDataRepository
+
     final ResourceLocator downloader
-    final File downloadWorkingDir = new File(SepalConfiguration.instance.downloadWorkingDirectory)
+
 
     EarthExplorerMetadataCrawler(UsgsDataRepository usgsDataRepository, ResourceLocator downloader) {
-        this.usgsDataRepository = usgsDataRepository
+        super(usgsDataRepository)
         this.downloader = downloader
     }
 
@@ -39,14 +39,14 @@ class EarthExplorerMetadataCrawler implements MetadataCrawler {
         def currentStartDate = DateTime.addDays(currentEndDate, crawlerInfo.iterationSize * -1)
         iterations.times {
             def end = DateTime.toDateString(currentEndDate)
-            def start = DateTime.toDateString(currentStartDate)
-            crawlerInfo.dataSets.each { dataSet ->
+                def start = DateTime.toDateString(currentStartDate)
+                crawlerInfo.dataSets.each { dataSet ->
                 def baseDownloadURL = "$crawlerInfo.entrypoint?sensor=$dataSet&start_path=1&start_row=1&end_path=233&end_row=248"
                 def downloadUrl = "$baseDownloadURL&start_date=$start&end_date=$end"
                 LOG.info("Going to request metadata through $downloadUrl")
                 downloader.download(downloadUrl) { InputStream inputStream ->
                     def storedFile = store(inputStream)
-                    process(dataSet, storedFile)
+                    process(dataSet, storedFile,crawlerInfo)
                 }
             }
             currentEndDate = DateTime.addDays(currentStartDate, -1)
@@ -55,23 +55,10 @@ class EarthExplorerMetadataCrawler implements MetadataCrawler {
 
     }
 
-
-    def store(InputStream stream) {
-        def fName = "metadata_" + System.currentTimeMillis() + ".xml"
-        File fsFile = new File(downloadWorkingDir, fName)
-        LOG.debug("Tmp file name $fsFile.absolutePath")
-        FileOutputStream fos = new FileOutputStream(fsFile)
-        fos.withCloseable {
-            IOUtils.copy(stream, fos)
-        }
-
-        return fsFile
-    }
-
-    private def process(DataSet dataSet, metadataFile) {
+    private def process(DataSet dataSet, metadataFile,providerInfo) {
         try {
             LOG.trace("Going to process $metadataFile.absolutePath")
-            def metaDataTags = parse(metadataFile)
+            def metaDataTags = applyCriteria(parse(metadataFile,'metaData'),providerInfo)
             def occurences = metaDataTags.size()
             LOG.debug("Found $occurences Occurences")
             def counter = 0
@@ -91,15 +78,12 @@ class EarthExplorerMetadataCrawler implements MetadataCrawler {
                     LOG.trace("$counter/$occurences: $sceneId Already available")
                 }
             }
-
         } finally {
             metadataFile.delete()
         }
     }
 
-    private def parse(metadataFile) {
-        new XmlSlurper().parse(metadataFile).depthFirst().findAll { it.name() == 'metaData' }
-    }
+
 
     private def normalize(GPathResult node) {
         def attributeMap = XmlUtils.nodeToMap(node)
@@ -123,8 +107,4 @@ class EarthExplorerMetadataCrawler implements MetadataCrawler {
         return attributeMap
 
     }
-
-    private def updateMetadata(Map metadata, rowId) { usgsDataRepository.updateMetadata(rowId, metadata) }
-
-    private def insertMetadata(DataSet dataSet, Map metadata) { usgsDataRepository.storeMetadata(dataSet.id, metadata) }
 }

@@ -2,6 +2,7 @@ package org.openforis.sepal.scene.management
 
 import groovy.sql.Sql
 import org.openforis.sepal.metadata.MetadataProvider
+import org.openforis.sepal.metadata.crawling.MetadataCrawlingCriteria
 import org.openforis.sepal.scene.DataSet
 import org.openforis.sepal.transaction.SqlConnectionProvider
 
@@ -31,9 +32,10 @@ class JdbcDataSetRepository implements DataSetRepository {
         List<MetadataProvider> providers = new ArrayList<MetadataProvider>()
         sql.eachRow('''
             SELECT mp.id,mp.name,mp.crawling_entrypoint,mp.iterations,mp.iteration_size,
-            mp.last_execution_start,mp.last_execution_end,ds.id AS datasetId
+            mp.last_execution_start,mp.last_execution_end,ds.id AS datasetId,mcc.criteria_id,mcc.field_name,mcc.expected_value
             FROM metadata_providers mp
             INNER JOIN data_set ds ON mp.id = ds.metadata_provider
+            LEFT OUTER JOIN metadata_crawling_criteria mcc ON mp.id = mcc.metadata_provider_id
             WHERE mp.active = 1 AND ds.dataset_active = 1
             ORDER by ds.id ASC
           '''
@@ -66,7 +68,19 @@ class JdbcDataSetRepository implements DataSetRepository {
         }else{
             providers.add(provider)
         }
-        provider.dataSets.add(DataSet.byId(row.datasetId))
+
+        def dataSetInList = providers.dataSets.find{ it.id ==  row.datasetId}
+        if ( ! (dataSetInList)){
+            provider.dataSets.add(DataSet.byId(row.datasetId))
+        }
+        if (row.criteria_id){
+            def criteriaInList = providers.crawlingCriterias.find{it.criteriaId == row.criteria_id }
+            if (!(criteriaInList)){
+                provider.crawlingCriterias.add(new MetadataCrawlingCriteria(row.criteria_id, row.field_name,row.expected_value))
+            }
+        }
+
+
     }
 
     private Sql getSql() {
