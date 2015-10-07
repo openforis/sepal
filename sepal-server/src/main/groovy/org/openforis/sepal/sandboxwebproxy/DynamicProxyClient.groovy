@@ -8,11 +8,7 @@ import io.undertow.server.ServerConnection
 import io.undertow.server.handlers.proxy.ProxyCallback
 import io.undertow.server.handlers.proxy.ProxyClient
 import io.undertow.server.handlers.proxy.ProxyConnection
-import io.undertow.server.session.Session
-import io.undertow.server.session.SessionConfig
-import io.undertow.server.session.SessionManager
 import io.undertow.util.AttachmentKey
-import org.openforis.sepal.sandbox.SandboxManager
 import org.xnio.ChannelListener
 import org.xnio.IoUtils
 import org.xnio.OptionMap
@@ -22,42 +18,21 @@ import java.util.concurrent.TimeUnit
 
 import static io.undertow.server.handlers.proxy.ProxyClient.ProxyTarget
 
-
-class SandboxProxyClient implements ProxyClient {
-    private static final String PROXY_TARGET_ATTRIBUTE = 'sandbox-target'
+/**
+ * A client that provides connections for a proxy handler, with the connection uri determined runtime.
+ */
+class DynamicProxyClient implements ProxyClient {
     private final clientAttachmentKey = AttachmentKey.create(ClientConnection)
-    private final Map<String, Integer> endpointByPort
-    private final SandboxManager sandboxManager
+    private final UriProvider uriProvider
     private final UndertowClient client
 
-    SandboxProxyClient(Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
-        this.endpointByPort = endpointByPort
-        this.sandboxManager = sandboxManager
+    DynamicProxyClient(UriProvider uriProvider) {
+        this.uriProvider = uriProvider
         client = UndertowClient.getInstance()
     }
 
     ProxyTarget findTarget(HttpServerExchange exchange) {
-        def session = getOrCreateSession(exchange)
-        return currentTarget(session) ?: initTarget(session, exchange)
-    }
-
-    private ProxyTarget currentTarget(Session session) {
-        session.getAttribute(PROXY_TARGET_ATTRIBUTE) as ProxyTarget
-    }
-
-    private Session getOrCreateSession(HttpServerExchange exchange) {
-        SessionManager sessionManager = exchange.getAttachment(SessionManager.ATTACHMENT_KEY)
-        SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY)
-        def session = sessionManager.getSession(exchange, sessionConfig)
-        if (session == null)
-            session = sessionManager.createSession(exchange, sessionConfig)
-        session
-    }
-
-    private ProxyTarget initTarget(Session session, HttpServerExchange exchange) {
-        def target = new SandboxTarget(exchange, endpointByPort, sandboxManager)
-        session.setAttribute(PROXY_TARGET_ATTRIBUTE, target) as ProxyTarget
-        return target
+        new UriHoldingTarget(uriProvider.provide(exchange))
     }
 
     void getConnection(ProxyTarget target,
@@ -65,7 +40,7 @@ class SandboxProxyClient implements ProxyClient {
                        ProxyCallback<ProxyConnection> callback,
                        long timeout,
                        TimeUnit timeUnit) {
-        def uri = ((SandboxTarget) target).uri
+        def uri = ((UriHoldingTarget) target).uri
         ClientConnection existing = exchange.getConnection().getAttachment(clientAttachmentKey)
         if (existing != null) {
             if (existing.isOpen()) {
@@ -117,28 +92,15 @@ class SandboxProxyClient implements ProxyClient {
         }
     }
 
-    private static class SandboxTarget implements ProxyTarget {
-        public final URI uri
+    private static class UriHoldingTarget implements ProxyTarget {
+        final URI uri
 
-        SandboxTarget(HttpServerExchange exchange, Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
-            def endpoint = exchange.requestHeaders.getFirst('sepal-endpoint')
-            def user = exchange.requestHeaders.getFirst('sepal-user')
-            validateEndpoint(endpoint, endpointByPort)
-            validateUser(user)
-            def sandbox = sandboxManager.obtain(user) // TODO: Catch some exception here - user could be non-existing
-            uri = URI.create("http://$sandbox.uri:${endpointByPort[endpoint]}")
+        UriHoldingTarget(URI uri) {
+            this.uri = uri
         }
+    }
 
-        private void validateUser(String user) {
-            if (!user)
-                throw new SandboxWebProxy.BadRequestException('Missing header: sepal-user')
-        }
-
-        private void validateEndpoint(String endpoint, Map<String, Integer> endpointByPort) {
-            if (!endpoint)
-                throw new SandboxWebProxy.BadRequestException('Missing header: sepal-endpoint')
-            if (!endpointByPort.containsKey(endpoint))
-                throw new SandboxWebProxy.BadRequestException("Non-existing sepal-endpoint: $endpoint")
-        }
+    interface UriProvider {
+        URI provide(HttpServerExchange exchange)
     }
 }

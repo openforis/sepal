@@ -5,8 +5,9 @@ import io.undertow.Undertow
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.session.*
-import io.undertow.util.Headers
 import org.openforis.sepal.sandbox.SandboxManager
+
+import static io.undertow.server.session.SessionListener.SessionDestroyedReason
 
 /**
  * Proxy for web endpoints on user sandboxes. It provides the user a single, static url for each endpoint.
@@ -28,17 +29,23 @@ class SandboxWebProxy {
      * @param sandboxManager the sandbox manager used to obtain sandboxes.
      */
     SandboxWebProxy(int port, Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
-        def proxyHandler = Handlers.proxyHandler(new SandboxProxyClient(endpointByPort, sandboxManager))
-        def sessionManager = new InMemorySessionManager('rstudio-proxy', 1000, true)
-        sessionManager.registerSessionListener(new Listener())
-        def handler = new ErrorHandler(
-                new SessionAttachmentHandler(
-                        proxyHandler, sessionManager, new SessionCookieConfig())
-        )
         this.server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
-                .setHandler(handler)
+                .setHandler(createHandler(endpointByPort, sandboxManager))
                 .build()
+    }
+
+    private HttpHandler createHandler(Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
+        def sessionManager = new InMemorySessionManager('rstudio-proxy', 1000, true)
+        sessionManager.registerSessionListener(new Listener(sandboxManager))
+        new ErrorHandler(
+                new SessionAttachmentHandler(
+                        Handlers.proxyHandler(
+                                new DynamicProxyClient(
+                                        new SessionBasedUriProvider(endpointByPort, sandboxManager)
+                                )
+                        ), sessionManager, new SessionCookieConfig())
+        )
     }
 
     void start() {
@@ -49,50 +56,63 @@ class SandboxWebProxy {
         server.stop()
     }
 
-    static class BadRequestException extends RuntimeException {
-        BadRequestException(String message) {
-            super(message)
+    private static class Listener extends SessionDestroyedListener {
+        private final SandboxManager sandboxManager
+
+        Listener(SandboxManager sandboxManager) {
+            this.sandboxManager = sandboxManager
+        }
+
+        void sessionDestroyed(Session session, HttpServerExchange exchange, SessionDestroyedReason reason) {
         }
     }
 
-    private static class ErrorHandler implements HttpHandler {
-        private final HttpHandler next
+    private static class SessionBasedUriProvider implements DynamicProxyClient.UriProvider {
+        private static final URI_SESSION_ATTRIBUTE = 'sepal-target-uri'
+        private final Map<String, Integer> endpointByPort
+        private final SandboxManager sandboxManager
 
-        ErrorHandler(HttpHandler next) {
-            this.next = next
+        SessionBasedUriProvider(Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
+            this.endpointByPort = endpointByPort
+            this.sandboxManager = sandboxManager
         }
 
-        void handleRequest(HttpServerExchange exchange) throws Exception {
-            try {
-                next.handleRequest(exchange)
-            } catch (BadRequestException e) {
-                exchange.statusCode = 400
-                exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/html");
-                def sender = exchange.getResponseSender()
-                sender.send(e.message)
+        URI provide(HttpServerExchange exchange) {
+            def session = getOrCreateSession(exchange)
+            def uri = session.getAttribute(URI_SESSION_ATTRIBUTE) as URI
+            if (!uri) {
+                uri = determineUri(exchange)
+                session.setAttribute(URI_SESSION_ATTRIBUTE, uri)
             }
+            return uri
+        }
+
+        private Session getOrCreateSession(HttpServerExchange exchange) {
+            SessionManager sessionManager = exchange.getAttachment(SessionManager.ATTACHMENT_KEY)
+            SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY)
+            return sessionManager.getSession(exchange, sessionConfig) ?:
+                    sessionManager.createSession(exchange, sessionConfig)
+        }
+
+        private URI determineUri(HttpServerExchange exchange) {
+            def endpoint = exchange.requestHeaders.getFirst('sepal-endpoint')
+            def user = exchange.requestHeaders.getFirst('sepal-user')
+            validateEndpoint(endpoint, endpointByPort)
+            validateUser(user)
+            def sandbox = sandboxManager.obtain(user) // TODO: Catch some exception here - user could be non-existing
+            URI.create("http://$sandbox.uri:${endpointByPort[endpoint]}")
+        }
+
+        private void validateUser(String user) {
+            if (!user)
+                throw new BadRequest('Missing header: sepal-user')
+        }
+
+        private void validateEndpoint(String endpoint, Map<String, Integer> endpointByPort) {
+            if (!endpoint)
+                throw new BadRequest('Missing header: sepal-endpoint')
+            if (!endpointByPort.containsKey(endpoint))
+                throw new BadRequest("Non-existing sepal-endpoint: $endpoint")
         }
     }
-
-    private static class Listener implements SessionListener {
-        void sessionCreated(Session session, HttpServerExchange exchange) {
-        }
-
-        void sessionDestroyed(Session session, HttpServerExchange exchange, SessionListener.SessionDestroyedReason reason) {
-        }
-
-        void attributeAdded(Session session, String name, Object value) {
-        }
-
-        void attributeUpdated(Session session, String name, Object newValue, Object oldValue) {
-        }
-
-        void attributeRemoved(Session session, String name, Object oldValue) {
-        }
-
-        void sessionIdChanged(Session session, String oldSessionId) {
-        }
-    }
-
 }
-
