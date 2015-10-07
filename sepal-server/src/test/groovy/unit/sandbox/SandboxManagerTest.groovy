@@ -1,11 +1,9 @@
-package integration.sandbox
+package unit.sandbox
 
 import org.openforis.sepal.sandbox.DockerClient
 import org.openforis.sepal.sandbox.DockerSandboxManager
 import org.openforis.sepal.sandbox.Sandbox
 import org.openforis.sepal.user.UserRepository
-import spock.lang.Ignore
-import spock.lang.Shared
 import spock.lang.Specification
 
 import static org.openforis.sepal.sandbox.Sandbox.*
@@ -33,10 +31,8 @@ class SandboxManagerTest extends Specification {
 
 
     def setup(){
-        userMockedRepo = Mock(UserRepository)
-        userMockedRepo.getUserUid() >> {
-            A_USER_UID
-        }
+        userMockedRepo = Spy(FakeUserRepository)
+
 
         dockMockedClient = Mock(DockerClient)
         mockedManager = new DockerSandboxManager(
@@ -54,7 +50,7 @@ class SandboxManagerTest extends Specification {
         then:
         1 * userMockedRepo.getSandboxId(A_USER)
         1 * userMockedRepo.getUserUid(_)
-        1 * dockMockedClient.createSandbox(A_IMAGE_NAME,A_USER,_)
+        1 * dockMockedClient.createSandbox(A_IMAGE_NAME,A_USER,A_USER_UID)
     }
 
 
@@ -84,6 +80,11 @@ class SandboxManagerTest extends Specification {
         @Override
         String getSandboxURI(String username) {
             return null
+        }
+
+        @Override
+        Boolean userExist(String username) {
+            return true
         }
 
         @Override

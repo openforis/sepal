@@ -52,6 +52,10 @@ class DockerSandboxManager implements SandboxManager {
     }
 
     private String getRegisteredSanbox(String username) {
+        def userExist = userRepository.userExist(username)
+        if (! userExist){
+            throw new IllegalArgumentException("The user $username does not exist" )
+        }
         userRepository.getSandboxId(username)
     }
 

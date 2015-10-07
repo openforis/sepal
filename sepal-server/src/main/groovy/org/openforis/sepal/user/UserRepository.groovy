@@ -12,6 +12,8 @@ interface UserRepository {
     String getSandboxURI(String username)
 
     int getUserUid(String username)
+
+    Boolean userExist(String username)
 }
 
 
@@ -21,6 +23,12 @@ class JDBCUserRepository implements UserRepository {
 
     JDBCUserRepository(SqlConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider
+    }
+
+    @Override
+    Boolean userExist(String username) {
+        def row = sql.firstRow('SELECT count(*) as exist FROM users WHERE username = ?', [username])
+        return row?.exist > 0
     }
 
     @Override

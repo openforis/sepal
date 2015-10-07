@@ -31,4 +31,13 @@ class UserRepositoryTest extends Specification {
         then:
         uid == UID
     }
+
+    def 'looking for an existing user, the .userExist method will return a positive response'(){
+        when:
+        def exist = userRepo.userExist(USERNAME)
+        def doesNotExist =userRepo.userExist("Non.User")
+        then:
+        exist
+        !doesNotExist
+    }
 }
