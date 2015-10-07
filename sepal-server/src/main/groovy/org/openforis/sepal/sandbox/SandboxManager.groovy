@@ -12,7 +12,7 @@ interface SandboxManager {
 
 }
 
-class DockerSandboxManager implements  SandboxManager{
+class DockerSandboxManager implements SandboxManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
@@ -20,7 +20,7 @@ class DockerSandboxManager implements  SandboxManager{
     private final DockerClient dockerClient
     private final String sandboxName
 
-    DockerSandboxManager(UserRepository userRepository, DockerClient dockerClient, String sandboxName){
+    DockerSandboxManager(UserRepository userRepository, DockerClient dockerClient, String sandboxName) {
         this.userRepository = userRepository
         this.dockerClient = dockerClient
         this.sandboxName = sandboxName
@@ -30,59 +30,59 @@ class DockerSandboxManager implements  SandboxManager{
     Sandbox obtain(String userName) {
         def sandboxId = getRegisteredSanbox(userName)
         def sandbox
-        if (sandboxId){
+        if (sandboxId) {
             LOG.debug("$userName sandboxId is $sandboxId")
             sandbox = dockerClient.getSandbox(sandboxId)
-            if (sandbox){
+            if (sandbox) {
                 LOG.debug("$sandbox.name detected")
-                if (sandbox.state.running){
+                if (sandbox.state.running) {
                     LOG.info("Found a running sandbox for the user $userName. Going to reuse it")
                     sandbox.uri = userRepository.getSandboxURI(userName)
-                }else{
-                    releaseSandbox(userName,sandboxId)
+                } else {
+                    releaseSandbox(userName, sandboxId)
                     sandbox = createSandbox(userName)
                 }
-            }else{
+            } else {
                 sandbox = createSandbox(userName)
             }
-        }else{
+        } else {
             sandbox = createSandbox(userName)
         }
         return sandbox
     }
 
-    private String getRegisteredSanbox(String username){
+    private String getRegisteredSanbox(String username) {
         userRepository.getSandboxId(username)
     }
 
-    private Sandbox createSandbox(String userName){
+    private Sandbox createSandbox(String userName) {
         def userUid = userRepository.getUserUid(userName)
         LOG.info("A new container is goint to be created for $userName($userUid)")
 
-        Sandbox sandbox = dockerClient.createSandbox(sandboxName,userName,userUid)
-        if (sandbox){
-            userRepository.update(userName,sandbox.id,sandbox.uri)
+        Sandbox sandbox = dockerClient.createSandbox(sandboxName, userName, userUid)
+        if (sandbox) {
+            userRepository.update(userName, sandbox.id, sandbox.uri)
         }
 
         return sandbox
     }
 
-    private void releaseSandbox(String userName,String sandboxId){
+    private void releaseSandbox(String userName, String sandboxId) {
         def dockerSandbox = dockerClient.getSandbox(sandboxId)
-        if (dockerSandbox){
-            if (dockerSandbox.state.running){
+        if (dockerSandbox) {
+            if (dockerSandbox.state.running) {
                 dockerClient.stopSandbox(sandboxId)
             }
             dockerClient.releaseSandbox(sandboxId)
         }
-        userRepository.update(userName,null,null)
+        userRepository.update(userName, null, null)
     }
 
     @Override
     def release(String userName) {
         String sandboxId = getRegisteredSanbox(userName)
-        if (sandboxId){
-            releaseSandbox(userName,sandboxId)
+        if (sandboxId) {
+            releaseSandbox(userName, sandboxId)
         }
     }
 }

@@ -7,6 +7,7 @@ import org.openforis.sepal.metadata.ConcreteMetadataProviderManager
 import org.openforis.sepal.metadata.JDBCUsgsDataRepository
 import org.openforis.sepal.metadata.crawling.EarthExplorerMetadataCrawler
 import org.openforis.sepal.sandbox.*
+import org.openforis.sepal.sandboxwebproxy.SandboxWebProxy
 import org.openforis.sepal.scene.management.*
 import org.openforis.sepal.scene.retrieval.SceneRetrievalComponent
 import org.openforis.sepal.transaction.SqlConnectionManager
@@ -28,17 +29,17 @@ class Main {
         startCrawling()
     }
 
-    def static startCrawling() {
+    static startCrawling() {
         def metadataProviderManager = new ConcreteMetadataProviderManager(dataSetRepository)
-        metadataProviderManager.registerCrawler( new EarthExplorerMetadataCrawler( new JDBCUsgsDataRepository(connectionManager), new HttpResourceLocator()))
+        metadataProviderManager.registerCrawler(new EarthExplorerMetadataCrawler(new JDBCUsgsDataRepository(connectionManager), new HttpResourceLocator()))
         metadataProviderManager.start();
     }
 
-    def static startLayerMonitor() {
+    static startLayerMonitor() {
         GeoServerLayerMonitor.start()
     }
 
-    def static startSceneManager() {
+    static startSceneManager() {
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(
                 new SqlConnectionManager(
                         SepalConfiguration.instance.dataSource
@@ -55,7 +56,7 @@ class Main {
         sceneManager.start()
     }
 
-    def static deployEndpoints() {
+    static deployEndpoints() {
         connectionManager = new SqlConnectionManager(SepalConfiguration.instance.dataSource)
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
         def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
@@ -68,10 +69,10 @@ class Main {
                 imageName
         )
 
+        new SandboxWebProxy(9191, ['rstudio-server': 8787], sandboxManager).start()
 
         dataSetRepository = new JdbcDataSetRepository(connectionManager)
-
-                Endpoints.deploy(
+        Endpoints.deploy(
                 dataSetRepository,
                 commandDispatcher,
                 new RequestScenesDownloadCommandHandler(scenesDownloadRepo),
