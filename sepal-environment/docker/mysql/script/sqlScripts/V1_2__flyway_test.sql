@@ -1,0 +1,1 @@
+INSERT INTO users(username,user_uid) VALUES ('Ottavio.Monzione',8765);
