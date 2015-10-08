@@ -43,7 +43,7 @@ class DynamicProxyClient implements ProxyClient {
         def uri = ((UriHoldingTarget) target).uri
         ClientConnection existing = exchange.getConnection().getAttachment(clientAttachmentKey)
         if (existing != null) {
-            if (existing.isOpen()) {
+            if (existing.isOpen() && uri.port == existing.peerAddress.port) {
                 //this connection already has a client, re-use it
                 callback.completed(exchange, new ProxyConnection(existing, uri.getPath() == null ? "/" : uri.getPath()))
                 return

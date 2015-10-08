@@ -5,10 +5,8 @@ import io.undertow.Undertow
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.session.*
-import org.openforis.sepal.sandbox.Sandbox
+import org.openforis.sepal.sandbox.NonExistingUser
 import org.openforis.sepal.sandbox.SandboxManager
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import static io.undertow.server.session.SessionListener.SessionDestroyedReason
 
@@ -23,9 +21,6 @@ import static io.undertow.server.session.SessionListener.SessionDestroyedReason
  * </ul>
  */
 class SandboxWebProxy {
-
-    private final static Logger LOG = LoggerFactory.getLogger(this)
-
     private final Undertow server
 
     /**
@@ -74,7 +69,6 @@ class SandboxWebProxy {
     }
 
     private static class SessionBasedUriProvider implements DynamicProxyClient.UriProvider {
-        private static final URI_SESSION_ATTRIBUTE = 'sepal-target-uri'
         private final Map<String, Integer> endpointByPort
         private final SandboxManager sandboxManager
 
@@ -85,12 +79,59 @@ class SandboxWebProxy {
 
         URI provide(HttpServerExchange exchange) {
             def session = getOrCreateSession(exchange)
-            def uri = session.getAttribute(URI_SESSION_ATTRIBUTE) as URI
+            def endpoint = determineEndpoint(exchange)
+            def user = determineUser(exchange)
+            def sandboxHost = determineSandboxHost(user, session)
+
+            def uriSessionKey = determineUriSessionKey(endpoint, user)
+            def uri = session.getAttribute(uriSessionKey) as URI
             if (!uri) {
-                uri = determineUri(exchange)
-                session.setAttribute(URI_SESSION_ATTRIBUTE, uri)
+                uri = URI.create("http://$sandboxHost:${endpointByPort[endpoint]}")
+                session.setAttribute(uriSessionKey, uri)
             }
             return uri
+        }
+
+        private String determineUser(HttpServerExchange exchange) {
+            def user = exchange.requestHeaders.getFirst('sepal-user')
+            String user1 = user
+            if (!user1)
+                throw new BadRequest('Missing header: sepal-user')
+            return user
+        }
+
+        private String determineEndpoint(HttpServerExchange exchange) {
+            def endpoint = exchange.requestHeaders.getFirst('sepal-endpoint')
+            String endpoint1 = endpoint
+            if (!endpoint1)
+                throw new BadRequest('Missing header: sepal-endpoint')
+            if (!endpointByPort.containsKey(endpoint1))
+                throw new BadRequest("Non-existing sepal-endpoint: ${endpoint1}")
+            return endpoint
+        }
+
+        private String determineSandboxHost(String user, Session session) {
+            def sessionKey = determineSandboxHostSessionKey(user)
+            String sandboxHost = session.getAttribute(sessionKey) as String
+            if (!sandboxHost) {
+                def sandbox
+                try {
+                    sandbox = sandboxManager.obtain(user)
+                } catch (NonExistingUser e) {
+                    throw new BadRequest(e.getMessage())
+                }
+                sandboxHost = sandbox.uri
+                session.setAttribute(sessionKey, sandboxHost)
+            }
+            sandboxHost
+        }
+
+        private String determineSandboxHostSessionKey(String user) {
+            return 'sepal-sandbox-host' + user
+        }
+
+        private String determineUriSessionKey(String endpoint, String user) {
+            return 'sepal-target-uri-' + endpoint + '|' + user
         }
 
         private Session getOrCreateSession(HttpServerExchange exchange) {
@@ -98,35 +139,6 @@ class SandboxWebProxy {
             SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY)
             return sessionManager.getSession(exchange, sessionConfig) ?:
                     sessionManager.createSession(exchange, sessionConfig)
-        }
-
-        private URI determineUri(HttpServerExchange exchange) {
-            def endpoint = exchange.requestHeaders.getFirst('sepal-endpoint')
-            def user = exchange.requestHeaders.getFirst('sepal-user')
-            validateEndpoint(endpoint, endpointByPort)
-            def sandbox = null
-            try{
-                sandbox = validateUser(user)
-            }catch (Exception ex){
-                throw new BadRequest(ex.getMessage())
-            }
-            def createdUri = "http://$sandbox.uri:${endpointByPort[endpoint]}"
-            URI.create(createdUri)
-        }
-
-        private Sandbox validateUser(String user) {
-            if (!user) {
-                throw new BadRequest('Missing header: sepal-user')
-            }
-            return sandboxManager.obtain(user)
-
-        }
-
-        private void validateEndpoint(String endpoint, Map<String, Integer> endpointByPort) {
-            if (!endpoint)
-                throw new BadRequest('Missing header: sepal-endpoint')
-            if (!endpointByPort.containsKey(endpoint))
-                throw new BadRequest("Non-existing sepal-endpoint: $endpoint")
         }
     }
 }

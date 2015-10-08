@@ -6,10 +6,9 @@ import org.slf4j.LoggerFactory
 
 interface SandboxManager {
 
-    Sandbox obtain(String userName);
+    Sandbox obtain(String userName) throws NonExistingUser;
 
     def release(String userName);
-
 }
 
 class DockerSandboxManager implements SandboxManager {
@@ -28,7 +27,7 @@ class DockerSandboxManager implements SandboxManager {
 
     @Override
     Sandbox obtain(String userName) {
-        def sandboxId = getRegisteredSanbox(userName)
+        def sandboxId = getRegisteredSandbox(userName)
         def sandbox
         if (sandboxId) {
             LOG.debug("$userName sandboxId is $sandboxId")
@@ -51,11 +50,10 @@ class DockerSandboxManager implements SandboxManager {
         return sandbox
     }
 
-    private String getRegisteredSanbox(String username) {
+    private String getRegisteredSandbox(String username) {
         def userExist = userRepository.userExist(username)
-        if (! userExist){
-            throw new IllegalArgumentException("The user $username does not exist" )
-        }
+        if (!userExist)
+            throw new NonExistingUser(username)
         userRepository.getSandboxId(username)
     }
 
@@ -84,7 +82,7 @@ class DockerSandboxManager implements SandboxManager {
 
     @Override
     def release(String userName) {
-        String sandboxId = getRegisteredSanbox(userName)
+        String sandboxId = getRegisteredSandbox(userName)
         if (sandboxId) {
             releaseSandbox(userName, sandboxId)
         }

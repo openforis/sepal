@@ -3,6 +3,7 @@ package integration.sandbox
 import endtoend.SepalDriver
 import org.openforis.sepal.sandbox.DockerClient
 import org.openforis.sepal.sandbox.DockerSandboxManager
+import org.openforis.sepal.sandbox.NonExistingUser
 import org.openforis.sepal.sandbox.Sandbox
 import org.openforis.sepal.sandbox.SandboxManager
 import org.openforis.sepal.user.JDBCUserRepository
@@ -42,7 +43,7 @@ class SandboxManagerIntegrationTest extends Specification{
         when:
         sandboxManager.obtain("N/A")
         then:
-        thrown(IllegalArgumentException)
+        thrown(NonExistingUser)
     }
 
     def 'asking a sandbox for an existing user, it will succeed'(){
