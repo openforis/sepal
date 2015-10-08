@@ -22,27 +22,27 @@ class SceneManagerTest extends Specification {
 
     def 'When a download request is submitted, the scene provider should be invoked'() {
         when:
-        manager.sceneStatusChanged(request, REQUESTED)
+            manager.sceneStatusChanged(request, REQUESTED)
 
         then:
-        1 * sceneProvider.retrieve([request])
+            1 * sceneProvider.retrieve([request])
 
     }
 
     def 'When a scene download finish, the processor should be invoked'() {
         when:
-        manager.sceneStatusChanged(request, DOWNLOADED)
+            manager.sceneStatusChanged(request, DOWNLOADED)
 
         then:
-        1 * processor.processScene(request)
+            1 * processor.processScene(request)
     }
 
     def 'When a scene processing finish, the publisher should be invoked'() {
         when:
-        manager.sceneStatusChanged(request, PROCESSED)
+            manager.sceneStatusChanged(request, PROCESSED)
 
         then:
-        1 * publisher.publishScene(request)
+            1 * publisher.publishScene(request)
     }
 
 

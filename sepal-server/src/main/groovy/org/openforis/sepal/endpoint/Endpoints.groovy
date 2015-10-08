@@ -31,13 +31,12 @@ final class Endpoints extends AbstractMvcFilter {
     private static ReleaseUserSandboxCommandHandler releaseUserSandboxCommandHandler
 
 
-
     Controller bootstrap(ServletContext servletContext) {
         commandDispatcher.register(RequestScenesDownloadCommand, requestScenesDownloadHandler)
         commandDispatcher.register(RemoveRequestCommand, deleteCommandHandler)
         commandDispatcher.register(RemoveSceneCommand, singleSceneDeleteCommandHandler)
-        commandDispatcher.register(ObtainUserSandboxCommand,obtainUserSandboxCommandHandler)
-        commandDispatcher.register(ReleaseUserSandboxCommand,releaseUserSandboxCommandHandler)
+        commandDispatcher.register(ObtainUserSandboxCommand, obtainUserSandboxCommandHandler)
+        commandDispatcher.register(ReleaseUserSandboxCommand, releaseUserSandboxCommandHandler)
 
         def controller = Controller.builder(servletContext)
                 .messageSource('messages')

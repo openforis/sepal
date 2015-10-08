@@ -30,25 +30,25 @@ class DeleteRequestTest extends Specification {
     @SuppressWarnings("GroovyAssignabilityCheck")
     def 'Given a request with two scenes, once 1 is removed, the DB query should return the remaining one'() {
         when:
-        driver.sendDeleteRequestScene(1, 1)
-        def userRequests = driver.getDownloadRequests(USERNAME)
+            driver.sendDeleteRequestScene(1, 1)
+            def userRequests = driver.getDownloadRequests(USERNAME)
         then:
-        userRequests.data.size == 1
-        def responseRequest = userRequests.data[0]
-        responseRequest.requestId == 1
-        def requestScene = responseRequest.scenes[0]
-        responseRequest.scenes.size == 1
-        requestScene.id == 2
-        requestScene.sceneId == SCENE_ID
+            userRequests.data.size == 1
+            def responseRequest = userRequests.data[0]
+            responseRequest.requestId == 1
+            def requestScene = responseRequest.scenes[0]
+            responseRequest.scenes.size == 1
+            requestScene.id == 2
+            requestScene.sceneId == SCENE_ID
     }
 
 
     def 'Given a valid requestId, the request is successfully deleted'() {
         when:
-        driver.sendDeleteRequest(1)
-        def userRequests = driver.getDownloadRequests(USERNAME)
+            driver.sendDeleteRequest(1)
+            def userRequests = driver.getDownloadRequests(USERNAME)
         then:
-        userRequests.data.size == 0
+            userRequests.data.size == 0
     }
 
 

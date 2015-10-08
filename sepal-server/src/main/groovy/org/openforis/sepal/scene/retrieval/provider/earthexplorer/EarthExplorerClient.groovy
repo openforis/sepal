@@ -53,7 +53,6 @@ class RestfulEarthExplorerClient implements EarthExplorerClient {
     }
 
 
-
     public void download(SceneRequest sceneRequest, String downloadLink, Closure callback) {
         Is.notNull(downloadLink)
         URL url = new URL(downloadLink)

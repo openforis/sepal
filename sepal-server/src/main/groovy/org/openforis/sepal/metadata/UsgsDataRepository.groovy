@@ -38,13 +38,13 @@ class JDBCUsgsDataRepository implements UsgsDataRepository {
             DATA_TYPE_L1,cartURL,GEOMETRIC_RMSE_MODEL_X,GEOMETRIC_RMSE_MODEL_Y,FULL_PARTIAL_SCENE)
              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
              ''',
-                [dataSetId,metadata.browseAvailable, metadata.browseURL,metadata.sceneID, metadata.sensor,
-                 metadata.acquisitionDate,metadata.dateUpdated, metadata.path,metadata.row, metadata.upperLeftCornerLatitude,
-                 metadata.upperLeftCornerLongitude,metadata.upperRightCornerLatitude, metadata.upperRightCornerLongitude,
-                 metadata.lowerLeftCornerLatitude,metadata.lowerLeftCornerLongitude, metadata.lowerRightCornerLatitude,
-                 metadata.lowerRightCornerLongitude,metadata.sceneCenterLatitude, metadata.sceneCenterLongitude,
-                 metadata.cloudCover, metadata.cloudCoverFull,metadata.dayOrNight, metadata.sunElevation, metadata.sunAzimuth,
-                 metadata.receivingStation,metadata.sceneStartTime, metadata.sceneStopTime, metadata.imageQuality1, metadata.DATA_TYPE_L1,
+                [dataSetId, metadata.browseAvailable, metadata.browseURL, metadata.sceneID, metadata.sensor,
+                 metadata.acquisitionDate, metadata.dateUpdated, metadata.path, metadata.row, metadata.upperLeftCornerLatitude,
+                 metadata.upperLeftCornerLongitude, metadata.upperRightCornerLatitude, metadata.upperRightCornerLongitude,
+                 metadata.lowerLeftCornerLatitude, metadata.lowerLeftCornerLongitude, metadata.lowerRightCornerLatitude,
+                 metadata.lowerRightCornerLongitude, metadata.sceneCenterLatitude, metadata.sceneCenterLongitude,
+                 metadata.cloudCover, metadata.cloudCoverFull, metadata.dayOrNight, metadata.sunElevation, metadata.sunAzimuth,
+                 metadata.receivingStation, metadata.sceneStartTime, metadata.sceneStopTime, metadata.imageQuality1, metadata.DATA_TYPE_L1,
                  metadata.cartURL, metadata.GEOMETRIC_RMSE_MODEL_X, metadata.GEOMETRIC_RMSE_MODEL_Y, metadata.FULL_PARTIAL_SCENE
                 ])
     }
@@ -62,13 +62,13 @@ class JDBCUsgsDataRepository implements UsgsDataRepository {
             GEOMETRIC_RMSE_MODEL_Y = ?, FULL_PARTIAL_SCENE = ? WHERE id = ?
             ''',
                 [metadata.browseAvailable, metadata.browseURL, metadata.sensor, metadata.dateUpdated, metadata.path,
-                        metadata.row, metadata.upperLeftCornerLatitude, metadata.upperLeftCornerLongitude,
-                        metadata.upperRightCornerLatitude, metadata.upperRightCornerLongitude, metadata.lowerLeftCornerLatitude,
-                        metadata.lowerLeftCornerLongitude, metadata.lowerRightCornerLatitude, metadata.lowerRightCornerLongitude,
-                        metadata.sceneCenterLatitude, metadata.sceneCenterLongitude, metadata.cloudCover, metadata.cloudCoverFull,
-                        metadata.dayOrNight, metadata.sunElevation, metadata.sunAzimuth, metadata.receivingStation,
-                        metadata.sceneStartTime, metadata.sceneStopTime, metadata.imageQuality1, metadata.DATA_TYPE_L1,
-                        metadata.cartURL, metadata.GEOMETRIC_RMSE_MODEL_X, metadata.GEOMETRIC_RMSE_MODEL_Y, metadata.FULL_PARTIAL_SCENE,id
+                 metadata.row, metadata.upperLeftCornerLatitude, metadata.upperLeftCornerLongitude,
+                 metadata.upperRightCornerLatitude, metadata.upperRightCornerLongitude, metadata.lowerLeftCornerLatitude,
+                 metadata.lowerLeftCornerLongitude, metadata.lowerRightCornerLatitude, metadata.lowerRightCornerLongitude,
+                 metadata.sceneCenterLatitude, metadata.sceneCenterLongitude, metadata.cloudCover, metadata.cloudCoverFull,
+                 metadata.dayOrNight, metadata.sunElevation, metadata.sunAzimuth, metadata.receivingStation,
+                 metadata.sceneStartTime, metadata.sceneStopTime, metadata.imageQuality1, metadata.DATA_TYPE_L1,
+                 metadata.cartURL, metadata.GEOMETRIC_RMSE_MODEL_X, metadata.GEOMETRIC_RMSE_MODEL_Y, metadata.FULL_PARTIAL_SCENE, id
                 ])
     }
 

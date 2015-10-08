@@ -18,11 +18,10 @@ class MetadataProvider {
     Set<DataSet> dataSets
     Set<MetadataCrawlingCriteria> crawlingCriterias
 
-    MetadataProvider(){
+    MetadataProvider() {
         dataSets = new HashSet<DataSet>()
         crawlingCriterias = new HashSet<DataSet>()
     }
-
 
 
 }

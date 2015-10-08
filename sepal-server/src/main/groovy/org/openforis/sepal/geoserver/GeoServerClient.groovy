@@ -111,7 +111,7 @@ class RestGeoServerClient implements GeoServerClient {
             }
     }
 
-    Boolean layerExist(String username, String layerName){ exists("$server.defaultURI/rest/layers/$layerName")}
+    Boolean layerExist(String username, String layerName) { exists("$server.defaultURI/rest/layers/$layerName") }
 
     void removeLayer(String user, String layerName) {
         LOG.debug("Going to remove layer $user:$layerName")

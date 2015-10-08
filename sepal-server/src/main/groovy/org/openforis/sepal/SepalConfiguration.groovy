@@ -5,7 +5,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
-import java.util.regex.Pattern
 
 @Singleton
 class SepalConfiguration {
@@ -78,37 +77,37 @@ class SepalConfiguration {
         )
     }
 
-    def getPublicHomeDir(){
+    def getPublicHomeDir() {
         getValue(PUBLIC_HOME_DIR)
     }
 
-    def getUserCredentialsHomeDir(){
+    def getUserCredentialsHomeDir() {
         getValue(USER_CREDENTIALS_HOME_DIR)
     }
 
-    def getCrawlerRunDelay(){
+    def getCrawlerRunDelay() {
         Long.parseLong(getValue(CRAWLER_RUN_DELAY))
     }
 
-    def getDockerRESTEntryPoint(){
+    def getDockerRESTEntryPoint() {
         getValue(DOCKER_REST_ENTRYPOINT)
     }
 
-    def getDockerDaemonPort(){
+    def getDockerDaemonPort() {
         def portValue = getValue(DOCKER_DAEMON_PORT)
         return portValue ? Integer.parseInt(portValue) : 2375
     }
 
-    def getDockerBaseURI(){
+    def getDockerBaseURI() {
         getValue(DOCKER_BASE_URI)
     }
 
 
-    def getDockerImageName(){
+    def getDockerImageName() {
         getValue(DOCKER_IMAGE_NAME)
     }
 
-    def getDockerDaemonURI(){ getDockerBaseURI()+ ':' + getDockerDaemonPort() + '/' + getDockerRESTEntryPoint()}
+    def getDockerDaemonURI() { getDockerBaseURI() + ':' + getDockerDaemonPort() + '/' + getDockerRESTEntryPoint() }
 
     def getProcessingHomeDir() {
         getValue(PROCESSING_HOME_DIR)

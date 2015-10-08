@@ -29,11 +29,11 @@ class GeoServerLayerMonitor {
                 def layerRepository = new FSLayerRepository(targetDir, homeDir, homeUserLayerDirContainer, processingScript)
                 def monitorChangeHandler = new FSMonitorChangeHandler(layerRepository, geoServerClient)
 
-                try{
+                try {
                     monitorChangeHandler.performCheck()
-                }catch (Exception ex){
+                } catch (Exception ex) {
                     LOG.error("Error during startup check: $ex.message")
-                }finally{
+                } finally {
                     new FSChangeAwareListener(homeDir, monitorChangeHandler).watch()
                 }
             }

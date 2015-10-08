@@ -5,16 +5,16 @@ import org.openforis.sepal.command.CommandHandler
 
 class ReleaseUserSandboxCommand extends AbstractCommand<Void> {
 
-    ReleaseUserSandboxCommand(String username){
+    ReleaseUserSandboxCommand(String username) {
         this.username = username
     }
 }
 
-class ReleaseUserSandboxCommandHandler implements CommandHandler<Void,ReleaseUserSandboxCommand>{
+class ReleaseUserSandboxCommandHandler implements CommandHandler<Void, ReleaseUserSandboxCommand> {
 
     final SandboxManager manager
 
-    ReleaseUserSandboxCommandHandler(SandboxManager manager){
+    ReleaseUserSandboxCommandHandler(SandboxManager manager) {
         this.manager = manager
     }
 

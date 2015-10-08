@@ -1,8 +1,6 @@
 package org.openforis.sepal.metadata.crawling
 
 import groovy.util.slurpersupport.GPathResult
-import org.apache.commons.io.IOUtils
-import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.metadata.MetadataProvider
 import org.openforis.sepal.metadata.UsgsDataRepository
 import org.openforis.sepal.scene.DataSet
@@ -12,7 +10,8 @@ import org.openforis.sepal.util.XmlUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.util.DateTime.*
+import static org.openforis.sepal.util.DateTime.parseEarthExplorerDateString
+import static org.openforis.sepal.util.DateTime.todayDateString
 
 class EarthExplorerMetadataCrawler extends XmlMetadataCrawler {
 
@@ -39,14 +38,14 @@ class EarthExplorerMetadataCrawler extends XmlMetadataCrawler {
         def currentStartDate = DateTime.addDays(currentEndDate, crawlerInfo.iterationSize * -1)
         iterations.times {
             def end = DateTime.toDateString(currentEndDate)
-                def start = DateTime.toDateString(currentStartDate)
-                crawlerInfo.dataSets.each { dataSet ->
+            def start = DateTime.toDateString(currentStartDate)
+            crawlerInfo.dataSets.each { dataSet ->
                 def baseDownloadURL = "$crawlerInfo.entrypoint?sensor=$dataSet&start_path=1&start_row=1&end_path=233&end_row=248"
                 def downloadUrl = "$baseDownloadURL&start_date=$start&end_date=$end"
                 LOG.info("Going to request metadata through $downloadUrl")
                 downloader.download(downloadUrl) { InputStream inputStream ->
                     def storedFile = store(inputStream)
-                    process(dataSet, storedFile,crawlerInfo)
+                    process(dataSet, storedFile, crawlerInfo)
                 }
             }
             currentEndDate = DateTime.addDays(currentStartDate, -1)
@@ -55,10 +54,10 @@ class EarthExplorerMetadataCrawler extends XmlMetadataCrawler {
 
     }
 
-    private def process(DataSet dataSet, metadataFile,providerInfo) {
+    private def process(DataSet dataSet, metadataFile, providerInfo) {
         try {
             LOG.trace("Going to process $metadataFile.absolutePath")
-            def metaDataTags = applyCriteria(parse(metadataFile,'metaData'),providerInfo)
+            def metaDataTags = applyCriteria(parse(metadataFile, 'metaData'), providerInfo)
             def occurences = metaDataTags.size()
             LOG.debug("Found $occurences Occurences")
             def counter = 0
@@ -84,7 +83,6 @@ class EarthExplorerMetadataCrawler extends XmlMetadataCrawler {
     }
 
 
-
     private def normalize(GPathResult node) {
         def attributeMap = XmlUtils.nodeToMap(node)
 
@@ -97,11 +95,11 @@ class EarthExplorerMetadataCrawler extends XmlMetadataCrawler {
         endTime = (endTime) ? parseEarthExplorerDateString(endTime) : null
         attributeMap.put('sceneStopTime', endTime)
 
-        if ( ! (attributeMap.get("acquisitionDate"))){
-            attributeMap.put("acquisitionDate",todayDateString())
+        if (!(attributeMap.get("acquisitionDate"))) {
+            attributeMap.put("acquisitionDate", todayDateString())
         }
-        if ( ! (attributeMap.get("dateUpdated")) ){
-            attributeMap.put("dateUpdated",attributeMap.get("acquisitionDate"))
+        if (!(attributeMap.get("dateUpdated"))) {
+            attributeMap.put("dateUpdated", attributeMap.get("acquisitionDate"))
         }
 
         return attributeMap

@@ -21,23 +21,23 @@ class UserRepositoryTest extends Specification {
         userRepo = new JDBCUserRepository(sepalDriver.getSQLManager())
     }
 
-    def cleanupSpec(){
+    def cleanupSpec() {
         sepalDriver.stop()
     }
 
     def 'query the user table with a given username, the user uid is returned properly'() {
         when:
-        def uid = userRepo.getUserUid(USERNAME)
+            def uid = userRepo.getUserUid(USERNAME)
         then:
-        uid == UID
+            uid == UID
     }
 
-    def 'looking for an existing user, the .userExist method will return a positive response'(){
+    def 'looking for an existing user, the .userExist method will return a positive response'() {
         when:
-        def exist = userRepo.userExist(USERNAME)
-        def doesNotExist =userRepo.userExist("Non.User")
+            def exist = userRepo.userExist(USERNAME)
+            def doesNotExist = userRepo.userExist("Non.User")
         then:
-        exist
-        !doesNotExist
+            exist
+            !doesNotExist
     }
 }

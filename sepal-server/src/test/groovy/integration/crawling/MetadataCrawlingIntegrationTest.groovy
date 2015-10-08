@@ -67,45 +67,45 @@ class MetadataCrawlingIntegrationTest extends Specification {
 
     def 'Succesfully obtaining resource from the ResourceLocator, store them in the database and be able to retrieve'() {
         given:
-        Map firstNodeMap = nodeToMap(gPathResults.first())
-        def sceneID = firstNodeMap.sceneID
-        def starttime = parseEarthExplorerDateString(firstNodeMap.sceneStartTime)
-        def endtime = parseEarthExplorerDateString(firstNodeMap.sceneStopTime)
+            Map firstNodeMap = nodeToMap(gPathResults.first())
+            def sceneID = firstNodeMap.sceneID
+            def starttime = parseEarthExplorerDateString(firstNodeMap.sceneStartTime)
+            def endtime = parseEarthExplorerDateString(firstNodeMap.sceneStopTime)
         when:
-        metadataManager.registerCrawler(earthExplorerCrawler)
-        metadataManager.start()
+            metadataManager.registerCrawler(earthExplorerCrawler)
+            metadataManager.start()
         then:
-        new PollingConditions(timeout: 12, initialDelay: 2, factor: 1.25).eventually {
-            def dataRow = usgsRepository.getSceneMetadata(DataSet.LANDSAT_8.id, sceneID)
-            def metadataProvider = dataSetRepository.metadataProviders.first()
-            dataRow
-            dataRow.sceneStartTime == starttime
-            dataRow.sceneStopTime == endtime
-            metadataProvider.lastStartTime
-            metadataProvider.lastEndTime
-        }
+            new PollingConditions(timeout: 12, initialDelay: 2, factor: 1.25).eventually {
+                def dataRow = usgsRepository.getSceneMetadata(DataSet.LANDSAT_8.id, sceneID)
+                def metadataProvider = dataSetRepository.metadataProviders.first()
+                dataRow
+                dataRow.sceneStartTime == starttime
+                dataRow.sceneStopTime == endtime
+                metadataProvider.lastStartTime
+                metadataProvider.lastEndTime
+            }
     }
 
-    def 'Establishing crawling rules, they will be applied'(){
+    def 'Establishing crawling rules, they will be applied'() {
         given:
-        driver.withCrawlingCriteria(PROVIDER_ID, CRITERIA_FIELD,FIELD_VALUE).withCrawlingCriteria(PROVIDER_ID,CRITERIA_FIELD_2,FIELD_VALUE_2)
+            driver.withCrawlingCriteria(PROVIDER_ID, CRITERIA_FIELD, FIELD_VALUE).withCrawlingCriteria(PROVIDER_ID, CRITERIA_FIELD_2, FIELD_VALUE_2)
         when:
-        metadataManager.registerCrawler(earthExplorerCrawler)
-        metadataManager.start()
+            metadataManager.registerCrawler(earthExplorerCrawler)
+            metadataManager.start()
         then:
-        new PollingConditions(timeout: 12, initialDelay: 2, factor: 1.25).eventually {
-            gPathResults?.each{ result ->
-                Map nodeMap =  nodeToMap(result)
-                def dataRow = usgsRepository.getSceneMetadata(DataSet.LANDSAT_8.id,nodeMap.sceneID)
-                def field1Value = nodeMap.get(CRITERIA_FIELD)
-                def field2Value = nodeMap.get(CRITERIA_FIELD_2)
-                if (field1Value == FIELD_VALUE && field2Value == FIELD_VALUE_2){
-                    dataRow
-                }else{
-                    !dataRow
+            new PollingConditions(timeout: 12, initialDelay: 2, factor: 1.25).eventually {
+                gPathResults?.each { result ->
+                    Map nodeMap = nodeToMap(result)
+                    def dataRow = usgsRepository.getSceneMetadata(DataSet.LANDSAT_8.id, nodeMap.sceneID)
+                    def field1Value = nodeMap.get(CRITERIA_FIELD)
+                    def field2Value = nodeMap.get(CRITERIA_FIELD_2)
+                    if (field1Value == FIELD_VALUE && field2Value == FIELD_VALUE_2) {
+                        dataRow
+                    } else {
+                        !dataRow
+                    }
                 }
             }
-        }
     }
 
 

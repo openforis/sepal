@@ -3,8 +3,6 @@ package org.openforis.sepal.scene.management
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 
-import static groovymvc.validate.Constraints.custom
-
 /**
  * Created by monzione on 21/07/2015.
  */

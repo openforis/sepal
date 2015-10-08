@@ -31,19 +31,19 @@ class FSMonitoringTest extends Specification {
     def 'When a new Folder is created under the root, the Handler should be notified'() {
         def userHome = new File(homeDir, user)
         when:
-        userHome.mkdirs()
-        Thread.sleep(500)
+            userHome.mkdirs()
+            Thread.sleep(500)
         then:
-        1 * monitorChangeHandler.userAdded(user)
+            1 * monitorChangeHandler.userAdded(user)
 
     }
 
     def 'When a file is created under the root, nothings should happen'() {
         when:
-        new File(homeDir, "a_file.txt").createNewFile()
-        Thread.sleep(200)
+            new File(homeDir, "a_file.txt").createNewFile()
+            Thread.sleep(200)
         then:
-        0 * monitorChangeHandler.userAdded("a_file.txt")
+            0 * monitorChangeHandler.userAdded("a_file.txt")
     }
 
 }

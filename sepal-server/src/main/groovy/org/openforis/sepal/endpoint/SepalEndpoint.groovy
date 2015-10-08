@@ -7,7 +7,7 @@ abstract class SepalEndpoint {
 
     protected CommandDispatcher commandDispatcher
 
-    SepalEndpoint(CommandDispatcher commandDispatcher){
+    SepalEndpoint(CommandDispatcher commandDispatcher) {
         this.commandDispatcher = commandDispatcher
     }
 

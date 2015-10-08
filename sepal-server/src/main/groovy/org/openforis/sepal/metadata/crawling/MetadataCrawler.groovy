@@ -2,7 +2,7 @@ package org.openforis.sepal.metadata.crawling
 
 import org.openforis.sepal.metadata.MetadataProvider
 
-interface MetadataCrawler{
+interface MetadataCrawler {
 
     def crawl(MetadataProvider crawlerInfo)
 

@@ -22,11 +22,11 @@ class SepalDriver {
         }
     }
 
-    void resetDatabase(){
+    void resetDatabase() {
         system.resetDatabase()
     }
 
-    SqlConnectionManager getSQLManager(){
+    SqlConnectionManager getSQLManager() {
         system.connectionManager
     }
 
@@ -56,8 +56,8 @@ class SepalDriver {
         ) as HttpResponseDecorator
     }
 
-    SepalDriver withUser(String username, int userUid){
-        system.database.addUser(username,userUid)
+    SepalDriver withUser(String username, int userUid) {
+        system.database.addUser(username, userUid)
     }
 
     SepalDriver withUsers(String... usernames) {
@@ -74,13 +74,13 @@ class SepalDriver {
         return this
     }
 
-    SepalDriver withCrawlingCriteria(int providerId, String field, String expectedValue){
-        system.database.addCrawlingCriteria(providerId,field,expectedValue)
+    SepalDriver withCrawlingCriteria(int providerId, String field, String expectedValue) {
+        system.database.addCrawlingCriteria(providerId, field, expectedValue)
         return this
     }
 
-    SepalDriver withMetadataProvider(int id, String name,Boolean active = true){
-        system.database.addMetadataProvider(id,name,'',active)
+    SepalDriver withMetadataProvider(int id, String name, Boolean active = true) {
+        system.database.addMetadataProvider(id, name, '', active)
         return this
     }
 
@@ -91,8 +91,8 @@ class SepalDriver {
         return this
     }
 
-    SepalDriver withActiveDataSet(int dataSetId, int metadataProviderId){
-        system.database.addActiveDataSet(dataSetId,metadataProviderId)
+    SepalDriver withActiveDataSet(int dataSetId, int metadataProviderId) {
+        system.database.addActiveDataSet(dataSetId, metadataProviderId)
         return this
     }
 

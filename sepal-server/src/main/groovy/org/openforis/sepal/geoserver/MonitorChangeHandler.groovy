@@ -34,9 +34,9 @@ class FSMonitorChangeHandler implements MonitorChangeHandler {
     @Override
     void performCheck() {
         layerRepository.getHomeUsers().each {
-            try{
+            try {
                 userAdded(it)
-            }catch (Exception ex){
+            } catch (Exception ex) {
                 LOG.error("Error during startup check for $it. $ex.message")
             }
 
@@ -62,7 +62,7 @@ class FSMonitorChangeHandler implements MonitorChangeHandler {
     void layerAdded(String username, String layerName) {
         layerRepository.checkLayerTargetContainer(username, layerName)
         if (layerRepository.isLayerReady(username, layerName)) {
-            if (layerRepository.isLayerContentChanged(username, layerName) || !(geoServerClient.layerExist(username,layerName))) {
+            if (layerRepository.isLayerContentChanged(username, layerName) || !(geoServerClient.layerExist(username, layerName))) {
                 layerChanged(username, layerName)
             } else {
                 LOG.debug("$layerName content didn't changed since last check.")

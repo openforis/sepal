@@ -22,7 +22,7 @@ enum DataSet {
         values().find { it.id == id }
     }
 
-    public Integer getId(){ id}
+    public Integer getId() { id }
 
 
 }

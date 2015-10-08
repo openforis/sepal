@@ -6,7 +6,7 @@ import org.openforis.sepal.sandbox.Sandbox
 import org.openforis.sepal.user.UserRepository
 import spock.lang.Specification
 
-import static org.openforis.sepal.sandbox.Sandbox.*
+import static org.openforis.sepal.sandbox.Sandbox.State
 
 class SandboxManagerTest extends Specification {
 
@@ -29,8 +29,7 @@ class SandboxManagerTest extends Specification {
     )
 
 
-
-    def setup(){
+    def setup() {
         userMockedRepo = Spy(FakeUserRepository)
 
 
@@ -43,39 +42,38 @@ class SandboxManagerTest extends Specification {
     }
 
 
-    def 'given a new sandbox request. DockerClient.createSandbox() is invoked'(){
+    def 'given a new sandbox request. DockerClient.createSandbox() is invoked'() {
 
         when:
-        mockedManager.obtain(A_USER)
+            mockedManager.obtain(A_USER)
         then:
-        1 * userMockedRepo.getSandboxId(A_USER)
-        1 * userMockedRepo.getUserUid(_)
-        1 * dockMockedClient.createSandbox(A_IMAGE_NAME,A_USER,A_USER_UID)
+            1 * userMockedRepo.getSandboxId(A_USER)
+            1 * userMockedRepo.getUserUid(_)
+            1 * dockMockedClient.createSandbox(A_IMAGE_NAME, A_USER, A_USER_UID)
     }
 
 
-    def 'Given a new sandbox request, if a sandbox is already running for a particular user. The sandbox should be recycled'(){
+    def 'Given a new sandbox request, if a sandbox is already running for a particular user. The sandbox should be recycled'() {
         when:
-        def request1 = manager.obtain(A_USER)
-        def request2 = manager.obtain(A_USER)
+            def request1 = manager.obtain(A_USER)
+            def request2 = manager.obtain(A_USER)
         then:
-        request1.id == request2.id
+            request1.id == request2.id
     }
 
 
-    def 'Given two sandbox requests from 2 different users. Two new sandboxes should be created'(){
+    def 'Given two sandbox requests from 2 different users. Two new sandboxes should be created'() {
         when:
-        def request1 = manager.obtain(A_USER)
-        def request2 = manager.obtain(A_USER_2)
+            def request1 = manager.obtain(A_USER)
+            def request2 = manager.obtain(A_USER_2)
         then:
-        request1.id != request2.id
+            request1.id != request2.id
     }
 
 
+    static class FakeUserRepository implements UserRepository {
 
-    static class FakeUserRepository implements UserRepository{
-
-        private Map<String,String> usersSandboxes = [:]
+        private Map<String, String> usersSandboxes = [:]
 
         @Override
         String getSandboxURI(String username) {
@@ -98,14 +96,14 @@ class SandboxManagerTest extends Specification {
         }
 
         @Override
-        void update(String username, String sandboxId,String sandboxURI) {
-            usersSandboxes.put(username,sandboxId)
+        void update(String username, String sandboxId, String sandboxURI) {
+            usersSandboxes.put(username, sandboxId)
         }
     }
 
-    static class FakeDockerClient implements DockerClient{
+    static class FakeDockerClient implements DockerClient {
 
-        private Map<String,Sandbox> dockerSandboxes = [:]
+        private Map<String, Sandbox> dockerSandboxes = [:]
 
         @Override
         def exec(String sandboxId, String... commands) {
@@ -128,10 +126,10 @@ class SandboxManagerTest extends Specification {
         }
 
         @Override
-        def createSandbox(String sandboxName,String username, int userId) {
+        def createSandbox(String sandboxName, String username, int userId) {
             def identifier = UUID.randomUUID().toString()
             Sandbox sandbox = new Sandbox(id: identifier, state: new State(true))
-            dockerSandboxes.put(identifier,sandbox)
+            dockerSandboxes.put(identifier, sandbox)
             return sandbox
         }
     }

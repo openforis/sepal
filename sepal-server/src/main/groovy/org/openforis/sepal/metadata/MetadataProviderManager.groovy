@@ -53,7 +53,7 @@ class ConcreteMetadataProviderManager implements MetadataProviderManager {
             try {
                 doCrawl()
             } catch (Exception ex) {
-                LOG.error("Error during crawling",ex)
+                LOG.error("Error during crawling", ex)
             }
 
         }

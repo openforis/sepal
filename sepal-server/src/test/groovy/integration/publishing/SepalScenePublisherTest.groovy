@@ -24,11 +24,11 @@ class SepalScenePublisherTest extends Specification {
         def scenePublishingDirectory = sceneRepo.getSceneHomeDirectory(sceneRequest)
         new File(sceneWorkingDirectory, "image.tif").createNewFile()
         when:
-        publisher.publishScene(sceneRequest)
+            publisher.publishScene(sceneRequest)
         then:
-        DirectoryStructure.matches(scenePublishingDirectory) {
-            'image.tif'()
-        }
+            DirectoryStructure.matches(scenePublishingDirectory) {
+                'image.tif'()
+            }
 
     }
 

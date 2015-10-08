@@ -24,16 +24,16 @@ class SepalSceneProcessorTest extends Specification {
         sceneRepo.createSceneDir(sceneRequest)
 
         when:
-        processor.processScene(sceneRequest)
+            processor.processScene(sceneRequest)
 
         then:
-        DirectoryStructure.matches(new File(workingDir, "" + sceneRequest.id)) {
-            "${sceneRequest.sceneReference.dataSet.name()}" {
-                "$sceneRequest.sceneReference.id" {
-                    'file_create_by_script.txt'()
+            DirectoryStructure.matches(new File(workingDir, "" + sceneRequest.id)) {
+                "${sceneRequest.sceneReference.dataSet.name()}" {
+                    "$sceneRequest.sceneReference.id" {
+                        'file_create_by_script.txt'()
+                    }
                 }
             }
-        }
     }
 
     private String setupProcessingScript() {

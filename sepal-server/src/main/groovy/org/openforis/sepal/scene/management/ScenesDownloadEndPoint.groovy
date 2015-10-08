@@ -6,7 +6,7 @@ import org.openforis.sepal.endpoint.SepalEndpoint
 
 import static groovy.json.JsonOutput.toJson
 
-public class ScenesDownloadEndPoint extends SepalEndpoint{
+public class ScenesDownloadEndPoint extends SepalEndpoint {
 
     private ScenesDownloadRepository repo
 

@@ -28,7 +28,7 @@ abstract class XmlMetadataCrawler extends BaseMetadataCrawler {
         return entries
     }
 
-    protected def parse(metadataFile,String tagName) {
+    protected def parse(metadataFile, String tagName) {
         new XmlSlurper().parse(metadataFile).depthFirst().findAll { it.name() == tagName }
     }
 

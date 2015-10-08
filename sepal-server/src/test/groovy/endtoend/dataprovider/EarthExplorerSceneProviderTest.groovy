@@ -24,18 +24,18 @@ class EarthExplorerSceneProviderTest extends SceneProviderTest {
     def 'retrieve a scene and download/unzip the files'() {
         def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User')
         when:
-        provider.retrieve([request])
+            provider.retrieve([request])
         then:
-        DirectoryStructure.matches(workingDir) {
-            "${requestId}" {
-                "${LANDSAT_8}" {
-                    "$sceneId" {
-                        '1.tif'()
-                        '2.tif'()
+            DirectoryStructure.matches(workingDir) {
+                "${requestId}" {
+                    "${LANDSAT_8}" {
+                        "$sceneId" {
+                            '1.tif'()
+                            '2.tif'()
+                        }
                     }
                 }
             }
-        }
     }
 
 

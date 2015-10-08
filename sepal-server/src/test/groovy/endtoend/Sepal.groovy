@@ -29,11 +29,11 @@ class Sepal {
         return this
     }
 
-    void resetDatabase(){
+    void resetDatabase() {
         database.reset()
     }
 
-    SqlConnectionManager getConnectionManager(){
+    SqlConnectionManager getConnectionManager() {
         this.connectionManager
     }
 
@@ -76,11 +76,11 @@ class Sepal {
     private void configure() {
         port = Port.findFree()
         SepalConfiguration.instance.properties = [
-                (WEBAPP_PORT_PARAMETER)   : port as String,
-                (MAX_CONCURRENT_DOWNLOADS): '1',
-                (DOWNLOAD_CHECK_INTERVAL) : '1000',
-                (DOWNLOADS_WORKING_DIRECTORY) : System.getProperty('java.io.tmpdir'),
-                (CRAWLER_RUN_DELAY) : '12'
+                (WEBAPP_PORT_PARAMETER)      : port as String,
+                (MAX_CONCURRENT_DOWNLOADS)   : '1',
+                (DOWNLOAD_CHECK_INTERVAL)    : '1000',
+                (DOWNLOADS_WORKING_DIRECTORY): System.getProperty('java.io.tmpdir'),
+                (CRAWLER_RUN_DELAY)          : '12'
         ] as Properties
         SepalConfiguration.instance.dataSource = database.dataSource
     }

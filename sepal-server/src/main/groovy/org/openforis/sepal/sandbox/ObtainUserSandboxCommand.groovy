@@ -5,19 +5,19 @@ import org.openforis.sepal.command.CommandHandler
 
 class ObtainUserSandboxCommand extends AbstractCommand<Sandbox> {
 
-    ObtainUserSandboxCommand(String username){
+    ObtainUserSandboxCommand(String username) {
         this.username = username
     }
 }
 
-class ObtainUserSandboxCommandHandler implements CommandHandler<Sandbox,ObtainUserSandboxCommand>{
+class ObtainUserSandboxCommandHandler implements CommandHandler<Sandbox, ObtainUserSandboxCommand> {
 
     final SandboxManager manager
 
-    ObtainUserSandboxCommandHandler(SandboxManager manager){
+    ObtainUserSandboxCommandHandler(SandboxManager manager) {
         this.manager = manager
     }
 
     @Override
-    Sandbox execute(ObtainUserSandboxCommand command) { manager.obtain(command.username)}
+    Sandbox execute(ObtainUserSandboxCommand command) { manager.obtain(command.username) }
 }
