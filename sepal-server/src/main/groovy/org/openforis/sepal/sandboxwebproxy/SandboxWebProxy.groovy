@@ -5,7 +5,10 @@ import io.undertow.Undertow
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.session.*
+import org.openforis.sepal.sandbox.Sandbox
 import org.openforis.sepal.sandbox.SandboxManager
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import static io.undertow.server.session.SessionListener.SessionDestroyedReason
 
@@ -20,6 +23,9 @@ import static io.undertow.server.session.SessionListener.SessionDestroyedReason
  * </ul>
  */
 class SandboxWebProxy {
+
+    private final static Logger LOG = LoggerFactory.getLogger(this)
+
     private final Undertow server
 
     /**
@@ -98,14 +104,22 @@ class SandboxWebProxy {
             def endpoint = exchange.requestHeaders.getFirst('sepal-endpoint')
             def user = exchange.requestHeaders.getFirst('sepal-user')
             validateEndpoint(endpoint, endpointByPort)
-            validateUser(user)
-            def sandbox = sandboxManager.obtain(user) // TODO: Catch some exception here - user could be non-existing
-            URI.create("http://$sandbox.uri:${endpointByPort[endpoint]}")
+            def sandbox = null
+            try{
+                sandbox = validateUser(user)
+            }catch (Exception ex){
+                throw new BadRequest(ex.getMessage())
+            }
+            def createdUri = "http://$sandbox.uri:${endpointByPort[endpoint]}"
+            URI.create(createdUri)
         }
 
-        private void validateUser(String user) {
-            if (!user)
+        private Sandbox validateUser(String user) {
+            if (!user) {
                 throw new BadRequest('Missing header: sepal-user')
+            }
+            return sandboxManager.obtain(user)
+
         }
 
         private void validateEndpoint(String endpoint, Map<String, Integer> endpointByPort) {

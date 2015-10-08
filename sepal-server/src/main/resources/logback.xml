@@ -32,6 +32,14 @@
         </encoder>
     </appender>
 
+    <appender name="FILE_SANDBOX_PROXY" class="ch.qos.logback.core.FileAppender">
+        <file>${sepal.logLocation}/sepal-geoserver-sandbox_proxy.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <logger name="org.openforis" additivity="false" level="DEBUG">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
@@ -44,6 +52,10 @@
 
     <logger name="org.openforis.sepal.metadata" additivity="false" level="DEBUG">
         <appender-ref ref="FILE_METADATA" />
+    </logger>
+
+    <logger name="org.openforis.sepal.sandboxwebproxy" additivity="false" level="DEBUG">
+        <appender-ref ref="FILE_SANDBOX_PROXY" />
     </logger>
 
 

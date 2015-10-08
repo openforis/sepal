@@ -3,8 +3,13 @@ package org.openforis.sepal.sandboxwebproxy
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.util.Headers
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ErrorHandler implements HttpHandler {
+
+    private static final Logger LOG = LoggerFactory.getLogger(this)
+
     private final HttpHandler next
 
     ErrorHandler(HttpHandler next) {
@@ -15,6 +20,7 @@ class ErrorHandler implements HttpHandler {
         try {
             next.handleRequest(exchange)
         } catch (BadRequest e) {
+            LOG.info("Bad Request arrived: $e.message")
             exchange.statusCode = 400
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/html");
             def sender = exchange.getResponseSender()
