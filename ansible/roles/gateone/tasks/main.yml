@@ -9,8 +9,8 @@
     docker_api_version: 1.16
     name: gateone
     registry: "{{ docker_repository_host }}"
-    pull: always
-    image: "{{ docker_repository_host }}/openforis/gateone"
+    pull: "{{ 'always' if docker_repository_host else 'missing' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/gateone"
     state: started
     restart_policy: always
     username: "{{ docker_username }}"

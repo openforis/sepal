@@ -3,34 +3,22 @@
 
 Vagrant.configure(2) do |config|
   config.vm.box = 'ubuntu/trusty64'
-  config.vm.synced_folder '../sepal-sandbox/docker', '/docker'
+  config.vm.synced_folder '../sepal-environment/docker', '/docker'
 
-  config.vm.provision 'docker' do |d|
-    d.build_image '/docker/jdk',
-                  args: "-t openforis/jdk"
-
-    d.build_image '/docker/gateone',
-                  args: "-t gateone"
-    d.run 'gateone',
-          auto_assign_name: false,
-          args: "--name gateone"
-
-    d.build_image '/docker/openforistoolkit',
-                  args: "-t openforistoolkit"
-    d.run 'openforistoolkit',
-          auto_assign_name: false,
-          args: "--name openforistoolkit"
-
-    d.build_image '/docker/geoserver',
-                  args: "-t geoserver"
-    d.run 'geoserver',
-          auto_assign_name: false,
-          args: "--name geoserver"
-
-    d.build_image '/docker/sepal-php',
-                  args: "-t sepal-php"
-    d.run 'sepal-php',
-          auto_assign_name: false,
-          args: "-p 5555:80 --name sepal-php --link geoserver --link gateone"
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 2048
   end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "../ansible/local.yml"
+    # ansible.verbose = 'vvvv'
+    ansible.extra_vars = {
+        ansible_ssh_user: 'vagrant',
+        region: 'eu-central-1',
+        deploy_environment: 'Staging',
+        secret_vars_file: '~/.sepal/secret.yml',
+        docker_repository_host: ''
+    }
+  end
+
 end

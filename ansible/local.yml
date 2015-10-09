@@ -1,0 +1,38 @@
+- name: Configure Local Environment
+  hosts: all
+  user: ubuntu
+  sudo: yes
+  gather_facts: true
+
+  vars_files:
+    - vars/vars.yml
+    - "{{ secret_vars_file }}"
+
+  pre_tasks:
+    - name: Create sepal group
+      group: name=sepal state=present
+    - name: Create sepal user
+      user: name=sepal uid=9999 group=sepal
+
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        state: directory
+    - name: Copy docker-registry certificate
+      copy:
+        src: ~/.ssh/sepal/docker-registry.crt
+        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+
+  roles:
+    - role: docker.ubuntu
+      docker_version: '1.8.1-0~trusty'
+      docker_storage_path: '/data/docker/'
+      docker_group_members: ['vagrant']
+#
+    - role: build-images
+#    - role: mysql
+    - role: geoserver
+#    - role: gateone
+#    - role: sepal
+#    - role: sepal-php
+#    - role: nginx

@@ -1,0 +1,38 @@
+---
+
+- name: Build mysql
+  docker_image: path="/docker/mysql" name="mysql" state=build
+
+- name: Build jdk
+  docker_image: path="/docker/jdk" name="openforis/jdk" state=build
+
+- name: Build geoserver
+  docker_image: path="/docker/geoserver" name="openforis/geoserver" state=build
+
+- name: Build gateone
+  docker_image: path="/docker/gateone" name="openforis/gateone" state=build
+
+- name: Build openforistoolkit
+  docker_image: path="/docker/openforistoolkit/oft-base" name="openforistoolkit" state=build
+
+- name: Build openforistoolkit-jdk
+  docker_image: path="/docker/openforistoolkit/oft-jdk" name="openforistoolkit" tag="jdk" state=build
+
+- name: Build openforistoolkit-gui-tools
+  docker_image: path="/docker/openforistoolkit/oft-gui-tools" name="openforistoolkit" tag="graphical-tools" state=build
+
+- name: Build sandbox
+  docker_image: path="/docker/sandbox" name="openforis/sandbox" state=build
+
+- name: Build sepal
+  docker_image: path="/docker/sepal" name="openforis/sepal" state=build
+
+- name: Build sepal-php
+  docker_image: path="/docker/sepal-php" name="openforis/sepal-php" state=build
+
+- name: Build nginx
+  docker_image: path="/docker/nginx" name="openforis/nginx" state=build
+
+- name: Build ssh-gateway
+  docker_image: path="/docker/ssh-gateway" name="openforis/ssh-gateway" state=build
+
