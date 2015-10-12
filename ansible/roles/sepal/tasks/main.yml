@@ -2,14 +2,21 @@
 - name: Create data dir
   file:
     path: "/data/sepal/data"
-    owner: "33:sepal"
+    owner: "33"
+    group: "sepal"
     mode: "u=rwx,g=rws"
     state: "directory"
 
 - name: Create config dir
   file:
-    path: "/data/sepal/config"
+    path: "/data/sepal/config/"
     state: directory
+
+- name: Create processing scripts dir
+  file:
+    path: "/data/sepal/config/processing_scripts"
+    state: directory
+
 
 - name: Create downloads dir
   file:
@@ -20,15 +27,25 @@
 - name: Create log dir
   file:
     path: "/data/logs/sepal"
-    mode: "u=rw,g=r,o=r"
-    owner: "sepal:sepal"
+    mode: "u=rwx,g=rx,o=rx"
+    owner: "sepal"
+    group: "sepal"
     state: directory
 
 - name: Create config file
-  template: src=sepal.properties dest=/data/sepal/config/sepal.properties owner=sepal:sepal mode=0400
+  template: src=sepal.properties dest=/data/sepal/config/sepal.properties owner=sepal group=sepal mode=0400
 
 - name: Copy lsat_geoserver_script
-  copy: src=lsat_geoserver_fix dest=/data/sepal/config/processing_scripts/ owner=sepal:sepal mode=u=rwx,g=r,o=r
+  copy: src=lsat_geoserver_fix.sh dest=/data/sepal/config/processing_scripts/ owner=sepal group=sepal mode=u=rwx,g=r,o=r
+
+- name: Create LANDSAT_8 script folder
+  file:
+    path: "/data/sepal/confi/processing-scripts/LANDSAT_8"
+    owner: "sepal"
+    group: "sepal"
+    state: "directory"
+- name: Copy LANDSAT_8 default script
+  copy: src=LANDSAT_8/Stack_Images.sh  dest=/data/sepal/config/processing_scripts/ owner=sepal group=sepal mode=u=rwx
 
 - name: Start container
   docker:

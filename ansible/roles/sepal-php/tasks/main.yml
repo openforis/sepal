@@ -5,7 +5,8 @@
 - name: Create data dir
   file:
     path: "/data/sepal/data"
-    owner: "33:sepal"
+    owner: "www-data"
+    group: "sepal"
     mode: "u=rwx,g=rws"
     state: directory
 
@@ -13,7 +14,8 @@
   file:
     path: "/data/sepal/data/sepalAdminWeb"
     state: directory
-    owner: "1001:sepal"
+    owner: "1001"
+    group: "sepal"
 
 - name: Create admin user layers dir
   file:
@@ -25,16 +27,30 @@
     path: "/data/sepal/data/sepalAdminWeb/sdmsrepository"
     state: directory
 
+- name: Create admin public repo
+  file:
+    path: "/data/sepal/public/sepalAdminWeb"
+    state: directory
+    owner: 1001
+
+- name: Create symlink for admin public dir
+  file:
+    dest: "/data/sepal/data/sepalAdminWeb/public"
+    src: "/data/sepal/public"
+    state: "link"
+
 - name: Create image dir
   file:
     path: "/data/sepal/images"
-    owner: "33:sepal"
+    owner: "www-data"
+    group: "sepal"
     state: directory
 
 - name: Create thumb dir
   file:
     path: "/data/sepal/images/thumbnail"
-    owner: "33:sepal"
+    owner: "www-data"
+    group: "sepal"
     state: directory
 
 - name: Create config dir
@@ -52,18 +68,15 @@
 - name: Create admin public dir
   file:
     path: "/data/sepal/public/sepalAdminWeb"
-    owner: "1001:9998"
+    owner: "1001"
+    group: "9998"
     state: directory
 
-- name: Create symlink for admin public dir
-  file:
-    dest: "/data/sepal/public"
-    src: "/data/sepal/data/sepalAdminWeb"
-    state: "link"
+
 
 
 - name: Create config file
-  template: src=config.ini dest=/data/sdms/config/config.ini owner=www-data mode=0400
+  template: src=config.ini dest=/data/sepal/config/config.ini owner=www-data mode=0400
 
 - name: Create ssl certificates dir
   file:
@@ -76,7 +89,7 @@
 
 - name: Create log dir
   file:
-    path: "/data/logs/sdms"
+    path: "/data/logs/sepal-php"
     state: directory
 
 - name: Start container

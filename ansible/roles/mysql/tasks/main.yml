@@ -28,6 +28,8 @@
     volumes:
     - "/data/mysql:/var/lib/mysql"
     - "/data/logs/mysql:/var/log/supervisor"
+    expose:
+      - "3306:3006"
     env:
       MYSQL_DATABASE: "sdms"
       MYSQL_USER: "sepal"

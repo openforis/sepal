@@ -20,7 +20,7 @@
       docker_storage_path: '/data/docker/'
       docker_group_members: ['ubuntu','vagrant']
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
-#
+
     - role: build-images
     - role: mysql
     - role: geoserver

@@ -8,7 +8,8 @@
 - name: Create user home dir
   file:
     path: "/data/sepal/home"
-    owner: "root:sepal"
+    owner: "root"
+    group: "sepal"
     state: directory
 
 - name: Create log dir

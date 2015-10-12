@@ -1,0 +1,5 @@
+---
+
+- name: Pull the registry image
+  docker:
+  pull: "registry:2"

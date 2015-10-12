@@ -1,0 +1,19 @@
+- name: Build Operations server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  pre_tasks:
+    - name: "Create docker data dir"
+      file: "/data/docker"
+      state: "directory"
+      owner: "ubuntu"
+
+  roles:
+    - role: docker.ubuntu
+      docker_version: '1.8.1-0~trusty'
+      docker_storage_path: '/data/docker/'
+      docker_group_members: ['ubuntu']
+      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
+
+    - role: operations
