@@ -1,7 +1,7 @@
 ---
 
 - name: Build mysql
-  docker_image: path="/docker/mysql" name="mysql" state=build
+  docker_image: path="/docker/mysql" name="openforis/mysql" state=build
 
 - name: Build jdk
   docker_image: path="/docker/jdk" name="openforis/jdk" state=build

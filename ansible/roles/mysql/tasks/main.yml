@@ -1,13 +1,12 @@
 ---
-- name: Create mysql user
-  user: name=mysql uid=999
+#- name: Create mysql user
+#  user: name=mysql uid=999
 
 - name: Create data dir
   file:
     path: "/data/mysql"
     state: directory
-    owner: mysql
-    group: mysql
+    owner: 999
 
 - name: Create log dir
   file:

@@ -30,9 +30,10 @@
       docker_group_members: ['vagrant']
 #
     - role: build-images
-#    - role: mysql
+    - role: mysql
     - role: geoserver
-#    - role: gateone
-#    - role: sepal
-#    - role: sepal-php
-#    - role: nginx
+    - role: gateone
+    - role: sepal
+    - role: ssh-gateway
+    - role: sepal-php
+    - role: nginx

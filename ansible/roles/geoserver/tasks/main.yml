@@ -29,8 +29,6 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
-    ports:
-    - 8080:8080
     volumes:
     - /data/sdms/geoserver:/data/geoserver
     - /data/logs/geoserver:/var/log/supervisor
