@@ -18,7 +18,7 @@
     password: "{{ docker_password }}"
     expose:
         - "8000"
-        ports:
+    ports:
         - "32000:8000"
     volumes:
     - "/data/logs/gateone:/gateone/logs"
