@@ -8,6 +8,7 @@
 - name: Create user home dir
   file:
     path: "/data/sepal/home"
+    owner: "root:sepal"
     state: directory
 
 - name: Create log dir
@@ -15,15 +16,15 @@
     path: "/data/logs/ssh-gateway"
     state: directory
 
-- name: Start container
+- name: "Start container"
   docker:
-    docker_api_version: 1.16
-    name: ssh-gateway
+    docker_api_version: "1.16"
+    name: "ssh-gateway"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/ssh-gateway"
-    state: started
-    restart_policy: always
+    state: "started"
+    restart_policy: "always"
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
@@ -32,7 +33,7 @@
     links:
     - "sepal:sepal"
     volumes:
-    - /data/sepal/users:/users
-    - /data/logs/ssh-gateway:/var/log/supervisor
-    - /data/sepal/home:/home
+    - "/data/sepal/users:/users"
+    - "/data/logs/ssh-gateway:/var/log/supervisor"
+    - "/data/sepal/home:/home"
 

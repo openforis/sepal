@@ -4,7 +4,7 @@
 
 - name: Create data dir
   file:
-    path: "/data/sdms/geoserver"
+    path: "/data/sepal/geoserver"
     state: directory
     owner: geoserver
     group: sepal
@@ -17,20 +17,20 @@
     owner: geoserver
     group: sepal
 
-- name: Start container
+- name: "Start container"
   docker:
-    docker_api_version: 1.16
-    name: geoserver
+    docker_api_version: "1.16"
+    name: "geoserver"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/geoserver"
-    state: started
-    restart_policy: always
+    state: "started"
+    restart_policy: "always"
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
     volumes:
-    - /data/sdms/geoserver:/data/geoserver
-    - /data/logs/geoserver:/var/log/supervisor
+    - "/data/sepal/geoserver:/data/geoserver"
+    - "/data/logs/geoserver:/opt/geoserver/data_dir/logs"
     env:
-      ADMIN_PASSWD: sdms
+      ADMIN_PASSWD: "{{ geoserver_password }}"

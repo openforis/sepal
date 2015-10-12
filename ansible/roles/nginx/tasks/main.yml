@@ -23,27 +23,28 @@
 
 - name: Start container
   docker:
-    docker_api_version: 1.16
-    name: nginx
+    docker_api_version: "1.16"
+    name: "nginx"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/nginx"
-    state: started
-    restart_policy: always
+    state: "started"
+    restart_policy: "always"
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
     expose:
-    - 80
-    - 443
+    - "80"
+    - "443"
     ports:
-    - 80:80
-    - 443:443
+    - "80:80"
+    - "443:443"
     links:
     - "gateone:gateone"
     - "sepal-php:sepal-php"
     - "geoserver:geoserver"
+    - "sepal:sepal"
     volumes:
-    - /data/nginx/sites-enabled:/etc/nginx/sites-enabled
-    - /data/ssl/certificates:/etc/ssl/fao
-    - /data/logs/ngnix:/var/log/supervisor
+    - "/data/nginx/sites-enabled:/etc/nginx/sites-enabled"
+    - "/data/ssl/certificates:/etc/ssl"
+    - "/data/logs/nginx:/var/log/nginx"

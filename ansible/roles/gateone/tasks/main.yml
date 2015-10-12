@@ -4,10 +4,10 @@
     path: "/data/logs/gateone"
     state: directory
 
-- name: Start container
+- name: "Start container"
   docker:
-    docker_api_version: 1.16
-    name: gateone
+    docker_api_version: "1.16"
+    name: "gateone"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/gateone"
@@ -16,5 +16,10 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
+    expose:
+        - "8000"
+        ports:
+        - "32000:8000"
     volumes:
-    - /data/logs/gateone:/gateone/logs
+    - "/data/logs/gateone:/gateone/logs"
+    - "/data/sepal/home:/home"

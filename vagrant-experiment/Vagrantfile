@@ -15,7 +15,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "../ansible/local.yml"
-    # ansible.verbose = 'vvvv'
+    ansible.verbose = 'vvvv'
     ansible.extra_vars = {
         ansible_ssh_user: 'vagrant',
         region: 'eu-central-1',

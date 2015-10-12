@@ -4,18 +4,63 @@
 
 - name: Create data dir
   file:
-    path: "/data/sdms/data"
+    path: "/data/sepal/data"
+    owner: "33:sepal",
+    mode: "u=rwx,g=rws"
     state: directory
 
 - name: Create admin user dir
   file:
-    path: "/data/sdms/data/sdms-admin"
+    path: "/data/sepal/data/sepalAdminWeb"
+    state: directory
+    owner: "1001:sepal"
+
+- name: Create admin user layers dir
+  file:
+    path: "/data/sepal/data/sepalAdminWeb/layers"
+    state: directory
+
+- name: Create admin user repo dir
+  file:
+    path: "/data/sepal/data/sepalAdminWeb/sdmsrepository"
+    state: directory
+
+- name: Create image dir
+  file:
+    path: "/data/sepal/images"
+    owner: "33:sepal"
+    state: directory
+
+- name: Create thumb dir
+  file:
+    path: "/data/sepal/images/thumbnail"
+    owner: "33:sepal"
     state: directory
 
 - name: Create config dir
   file:
-    path: "/data/sdms/config"
+    path: "/data/sepal/config"
     state: directory
+
+- name: Create public dir
+  file:
+    path: "/data/sepal/public"
+    group: "9998"
+    mode: "u=rwx,g=rs,o=r"
+    state: directory
+
+- name: Create admin public dir
+  file:
+    path: "/data/sepal/public/sepalAdminWeb"
+    owner: "1001:9998"
+    state: directory
+
+- name: Create symlink for admin public dir
+  file:
+    dest: "/data/sepal/public"
+    src: "/data/sepal/data/sepalAdminWeb"
+    state: "link"
+
 
 - name: Create config file
   template: src=config.ini dest=/data/sdms/config/config.ini owner=www-data mode=0400
@@ -36,13 +81,13 @@
 
 - name: Start container
   docker:
-    docker_api_version: 1.16
-    name: sepal-php
+    docker_api_version: "1.16"
+    name: "sepal-php"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/sepal-php"
-    state: started
-    restart_policy: always
+    state: "started"
+    restart_policy: "always"
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
@@ -50,10 +95,13 @@
     - "mysql:mysql"
     - "geoserver:geoserver"
     - "sepal:sepal"
+    - "ssh-gateway:ssh-gateway"
     volumes:
-    - /data/sdms/data:/data/home/
-    - /data/sdms/config:/etc/sdms
-    - /data/ssl/certificates:/etc/apache2/ssl
-    - /data/logs/sdms:/var/log/supervisor
+    - "/data/logs/sepal-php:/var/log/apache2"
+    - "/data/sepal/data:/data/home/"
+    - "/data/sepal/config:/etc/sepal"
+    - "/data/ssl/certificates:/etc/apache2/ssl"
+    - "/data/sepal/images:/data/sdms-data-repo/scene-image"
+    - "/data/sepal/public:/data/sepal/public"
     env:
         ADMIN_PWD: "{{ sepal_admin_user_password }}"

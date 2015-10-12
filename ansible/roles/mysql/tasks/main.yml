@@ -15,22 +15,22 @@
 
 - name: Start container
   docker:
-    docker_api_version: 1.16
-    name: mysql
+    docker_api_version: "1.16"
+    name: "mysql"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/mysql"
-    state: started
-    restart_policy: always
+    state: "started"
+    restart_policy: "always"
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
     volumes:
-    - /data/mysql:/var/lib/mysql
-    - /data/logs/mysql:/var/log/supervisor
+    - "/data/mysql:/var/lib/mysql"
+    - "/data/logs/mysql:/var/log/supervisor"
     env:
-      MYSQL_DATABASE: sdms
-      MYSQL_USER: sepal
+      MYSQL_DATABASE: "sdms"
+      MYSQL_USER: "sepal"
       MYSQL_PASSWORD: "{{ mysql_password }}"
       MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
-      MYSQL_USER: sepal
+      MYSQL_USER: "sepal"

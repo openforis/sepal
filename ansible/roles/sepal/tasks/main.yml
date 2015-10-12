@@ -1,28 +1,44 @@
 ---
 - name: Create data dir
   file:
-    path: "/data/sdms/data"
-    state: directory
+    path: "/data/sepal/data",
+    owner: "33:sepal",
+    mode: "u=rwx,g=rws"
+    state: "directory"
 
 - name: Create config dir
   file:
-    path: "/data/sdms/config"
+    path: "/data/sepal/config"
+    state: directory
+
+- name: Create downloads dir
+  file:
+    path: "/data/sepal/downloads"
+    owner: "sepal"
     state: directory
 
 - name: Create log dir
   file:
     path: "/data/logs/sepal"
+    mode: "u=rw,g=r,o=r"
+    owner: "sepal:sepal"
     state: directory
+
+- name: Create config file
+  template: src=sepal.properties dest=/data/sepal/config/sepal.properties owner=sepal:sepal mode=0400
+
+- name: Copy lsat_geoserver_script
+  copy: src=lsat_geoserver_fix dest=/data/sepal/config/processing_scripts/ owner=sepal:sepal mode=u=rwx,g=r,o=r
 
 - name: Start container
   docker:
-    docker_api_version: 1.16
-    name: sepal
+    docker_api_version: "1.16"
+    name: "sepal"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/sepal"
-    state: started
-    restart_policy: always
+    state: "started"
+    restart_policy: "always"
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
@@ -30,7 +46,8 @@
     - "mysql:mysql"
     - "geoserver:geoserver"
     volumes:
-    - /data/sdms/config:/etc/sdms
-    - /data/sdms/geoserver:/data/geoserver
-    - /data/logs/sepal:/var/log/sepal
-    - /data/sdms/data:/data/home
+    - "/data/sepal/downloads:/data/workDir/downloads"
+    - "/data/sepal/config:/etc/sepal"
+    - "/data/sepal/geoserver:/data/geoserver"
+    - "/data/sdms/data:/data/home"
+    - "/data/logs/sepal:/var/log/sepal"
