@@ -10,7 +10,7 @@
 
   pre_tasks:
     - name: Create sepal group
-      group: name=sepal state=present
+      group: name=sepal state=present, gid=9999
     - name: Create sepal user
       user: name=sepal uid=9999 group=sepal
 

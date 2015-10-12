@@ -10,24 +10,16 @@
 
   pre_tasks:
     - name: Create sepal group
-      group: name=sepal state=present
+      group: name=sepal state=present gid=9999
     - name: Create sepal user
       user: name=sepal uid=9999 group=sepal
-
-    - name: Create docker-registry certificate dir
-      file:
-        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
-        state: directory
-    - name: Copy docker-registry certificate
-      copy:
-        src: ~/.ssh/sepal/docker-registry.crt
-        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
   roles:
     - role: docker.ubuntu
       docker_version: '1.8.1-0~trusty'
       docker_storage_path: '/data/docker/'
-      docker_group_members: ['vagrant']
+      docker_group_members: ['ubuntu','vagrant']
+      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
 #
     - role: build-images
     - role: mysql
