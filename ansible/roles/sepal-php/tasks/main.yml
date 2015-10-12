@@ -5,7 +5,7 @@
 - name: Create data dir
   file:
     path: "/data/sepal/data"
-    owner: "33:sepal",
+    owner: "33:sepal"
     mode: "u=rwx,g=rws"
     state: directory
 

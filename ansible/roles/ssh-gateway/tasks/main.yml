@@ -29,7 +29,7 @@
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
     ports:
-    - "2222:22"
+    - "22222:22"
     links:
     - "sepal:sepal"
     volumes:

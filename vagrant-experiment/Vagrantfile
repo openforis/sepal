@@ -2,9 +2,6 @@
 # vi: set ft=ruby :
 
 Vagrant.configure(2) do |config|
-  # config.vm.network "forwarded_port", guest: 80, host: 9090
-  # config.vm.network "forwarded_port", guest: 443, host: 9191
-  # config.vm.network "private_network", type: "dhcp"
   config.vm.network "private_network", ip: "172.28.128.3"
   config.vm.box = 'ubuntu/trusty64'
   config.vm.synced_folder '../sepal-environment/docker', '/docker'
@@ -15,7 +12,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "../ansible/local.yml"
-    ansible.verbose = 'vvvv'
+    # ansible.verbose = 'vvvv'
     ansible.extra_vars = {
         ansible_ssh_user: 'vagrant',
         region: 'eu-central-1',
