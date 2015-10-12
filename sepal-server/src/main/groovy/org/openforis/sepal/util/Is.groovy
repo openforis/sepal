@@ -10,8 +10,8 @@ class Is {
     }
 
     static void existingFolder(File folder, String errorMessage = DEFAULT_ERROR_MESSAGE) {
-        if (errorMessage == DEFAULT_ERROR_MESSAGE && folder != null){
-            if (folder != null){
+        if (errorMessage == DEFAULT_ERROR_MESSAGE && folder != null) {
+            if (folder != null) {
                 errorMessage = folder.absolutePath + errorMessage
             }
         }
@@ -21,8 +21,8 @@ class Is {
     }
 
     static void existingFile(File file, String errorMessage = DEFAULT_ERROR_MESSAGE) {
-        if (errorMessage == DEFAULT_ERROR_MESSAGE && file != null){
-            if (file != null){
+        if (errorMessage == DEFAULT_ERROR_MESSAGE && file != null) {
+            if (file != null) {
                 errorMessage = file.absolutePath + errorMessage
             }
         }
