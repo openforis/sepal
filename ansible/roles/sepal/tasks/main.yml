@@ -4,7 +4,7 @@
     path: "/data/sepal/data"
     owner: "33"
     group: "sepal"
-    mode: "u=rwx,g=rws"
+    mode: "u=rwx,g=rwxs"
     state: "directory"
 
 - name: Create config dir
@@ -22,6 +22,7 @@
   file:
     path: "/data/sepal/downloads"
     owner: "sepal"
+    group: "sepal"
     state: directory
 
 - name: Create log dir
@@ -40,12 +41,12 @@
 
 - name: Create LANDSAT_8 script folder
   file:
-    path: "/data/sepal/confi/processing-scripts/LANDSAT_8"
+    path: "/data/sepal/config/processing-scripts/LANDSAT_8"
     owner: "sepal"
     group: "sepal"
     state: "directory"
 - name: Copy LANDSAT_8 default script
-  copy: src=LANDSAT_8/Stack_Images.sh  dest=/data/sepal/config/processing_scripts/ owner=sepal group=sepal mode=u=rwx
+  copy: src=LANDSAT_8/Stack_Images.sh  dest=/data/sepal/config/processing_scripts/LANDSAT_8 owner=sepal group=sepal mode=u=rwx
 
 - name: Start container
   docker:
@@ -66,5 +67,5 @@
     - "/data/sepal/downloads:/data/workDir/downloads"
     - "/data/sepal/config:/etc/sepal"
     - "/data/sepal/geoserver:/data/geoserver"
-    - "/data/sdms/data:/data/home"
+    - "/data/sepal/data:/data/home"
     - "/data/logs/sepal:/var/log/sepal"
