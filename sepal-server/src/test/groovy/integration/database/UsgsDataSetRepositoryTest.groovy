@@ -4,8 +4,10 @@ import endtoend.SepalDriver
 import org.openforis.sepal.metadata.JDBCUsgsDataRepository
 import org.openforis.sepal.metadata.UsgsDataRepository
 import org.openforis.sepal.util.DateTime
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
+
 
 class UsgsDataSetRepositoryTest extends Specification {
 

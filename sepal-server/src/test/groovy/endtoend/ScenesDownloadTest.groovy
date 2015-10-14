@@ -1,17 +1,25 @@
 package endtoend
 
+import spock.lang.Ignore
+import spock.lang.Shared
 import spock.lang.Specification
+
+
 
 class ScenesDownloadTest extends Specification {
     private static final USERNAME = 'Test.User'
     private static final DATASET_ID = 1
     private static final INVALID_DATASET_ID = 20
 
-    private final SepalDriver driver = new SepalDriver()
-            .withUsers(USERNAME)
-            .withActiveDataSets(DATASET_ID)
+    @Shared private SepalDriver driver
 
-    def cleanup() {
+    def setupSpec() {
+        driver = new SepalDriver()
+                .withUsers(USERNAME)
+                .withActiveDataSets(DATASET_ID)
+    }
+
+    def cleanupSpec() {
         driver.stop()
     }
 

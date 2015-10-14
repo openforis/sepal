@@ -1,11 +1,13 @@
 package unit.crawling
 
+import endtoend.SepalDriver
 import org.openforis.sepal.metadata.ConcreteMetadataProviderManager
 import org.openforis.sepal.metadata.MetadataProvider
 import org.openforis.sepal.metadata.MetadataProviderManager
 import org.openforis.sepal.metadata.crawling.MetadataCrawler
 import org.openforis.sepal.scene.DataSet
 import org.openforis.sepal.scene.management.DataSetRepository
+import spock.lang.Shared
 import spock.lang.Specification
 
 class MetadataManagerTest extends Specification {
@@ -16,6 +18,15 @@ class MetadataManagerTest extends Specification {
     MetadataProviderManager metadataManager
     MetadataCrawler metadataCrawler
     MetadataCrawler metadataCrawler2
+    @Shared SepalDriver sepalDriver
+
+    def setupSpec(){
+        sepalDriver = new SepalDriver()
+    }
+
+    def cleanupSpec(){
+        sepalDriver.stop()
+    }
 
     def setup() {
 
@@ -35,7 +46,7 @@ class MetadataManagerTest extends Specification {
     }
 
 
-    def 'registering a crawler for a given dataset. The crawl method should be executed'() {
+    def 'registering a crawler for a given dataset The crawl method should be executed'() {
         when:
             metadataManager.registerCrawler(metadataCrawler).registerCrawler(metadataCrawler2)
             metadataManager.start()

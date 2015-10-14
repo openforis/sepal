@@ -2,17 +2,24 @@ package unit.user
 
 import endtoend.SepalDriver
 import org.openforis.sepal.user.JDBCUserRepository
+import spock.lang.Ignore
+import spock.lang.Shared
 import spock.lang.Specification
+
 
 class UserRepositoryTest extends Specification {
 
     private static final A_USER = 'Test.User'
     private static final FAKE_SANDBOX_ID = 'FFF4FFFEACD'
     private static final FAKE_URI = 'http://some_fake_uri'
-    private final SepalDriver sepalDriver = new SepalDriver().withUsers(A_USER)
+    @Shared private SepalDriver sepalDriver
 
 
-    def cleanup() {
+    def setupSpec(){
+        sepalDriver = new SepalDriver().withUsers(A_USER)
+    }
+
+    def cleanupSpec() {
         sepalDriver.stop()
     }
 

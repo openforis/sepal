@@ -4,9 +4,11 @@ import org.openforis.sepal.sandbox.DockerClient
 import org.openforis.sepal.sandbox.DockerSandboxManager
 import org.openforis.sepal.sandbox.Sandbox
 import org.openforis.sepal.user.UserRepository
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import static org.openforis.sepal.sandbox.Sandbox.State
+
 
 class SandboxManagerTest extends Specification {
 

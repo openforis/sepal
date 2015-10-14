@@ -1,6 +1,7 @@
 package endtoend
 
 import spock.lang.Ignore
+import spock.lang.Shared
 import spock.lang.Specification
 import util.DirectoryStructure
 
@@ -9,12 +10,15 @@ class DownloaderTest extends Specification {
     private static final USER_ID = 1
     private static final DATASET_ID = 2
 
-    private final SepalDriver driver = new SepalDriver()
-            .withUsers(USER_ID)
-            .withActiveDataSets(DATASET_ID)
-//            .startDownloader()
+    @Shared private SepalDriver driver
 
-    def cleanup() {
+    def setupSpec() {
+        driver = new SepalDriver()
+                .withUsers(USER_ID)
+                .withActiveDataSets(DATASET_ID)
+    }
+
+    def cleanupSpec() {
         driver.stop()
     }
 

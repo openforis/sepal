@@ -4,10 +4,12 @@ import org.openforis.sepal.scene.SceneReference
 import org.openforis.sepal.scene.SceneRequest
 import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
 import org.openforis.sepal.scene.retrieval.SepalScenePublisher
+import spock.lang.Ignore
 import spock.lang.Specification
 import util.DirectoryStructure
 
 import static org.openforis.sepal.scene.DataSet.LANDSAT_8
+
 
 class SepalScenePublisherTest extends Specification {
 

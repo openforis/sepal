@@ -3,9 +3,11 @@ package unit
 import org.openforis.sepal.scene.*
 import org.openforis.sepal.scene.management.SceneManager
 import org.openforis.sepal.scene.management.ScenesDownloadRepository
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import static org.openforis.sepal.scene.SceneStatus.*
+
 
 class SceneManagerTest extends Specification {
     private static final USERNAME = 'Test.User'

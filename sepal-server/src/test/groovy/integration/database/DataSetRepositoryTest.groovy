@@ -5,7 +5,10 @@ import org.openforis.sepal.scene.DataSet
 import org.openforis.sepal.scene.management.DataSetRepository
 import org.openforis.sepal.scene.management.JdbcDataSetRepository
 import org.openforis.sepal.util.DateTime
+import spock.lang.Ignore
+import spock.lang.Shared
 import spock.lang.Specification
+
 
 class DataSetRepositoryTest extends Specification {
 
@@ -14,9 +17,9 @@ class DataSetRepositoryTest extends Specification {
     def static final SOME_CRITERIA = "SomeCriteria"
     def static final SOME_CRITERIA_TEST = "12"
 
-    def static SepalDriver driver = new SepalDriver()
+    @Shared def SepalDriver driver
 
-    def static DataSetRepository dataSetRepo = new JdbcDataSetRepository(driver.SQLManager)
+    @Shared DataSetRepository dataSetRepo
 
 
     def cleanupSpec() {
@@ -24,6 +27,8 @@ class DataSetRepositoryTest extends Specification {
     }
 
     def setupSpec() {
+        driver = new SepalDriver()
+        dataSetRepo = new JdbcDataSetRepository(driver.SQLManager)
         driver.withMetadataProvider(METADATA_PROVIDER, "TestMetaProvider")
 
         driver.withActiveDataSet(DataSet.LANDSAT_8.id, METADATA_PROVIDER)

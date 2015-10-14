@@ -6,7 +6,7 @@ import org.openforis.sepal.geoserver.MonitorChangeHandler
 import spock.lang.Ignore
 import spock.lang.Specification
 
-@Ignore
+
 class FSMonitoringTest extends Specification {
 
     def userLayerHome = "LAYERS"

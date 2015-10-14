@@ -46,9 +46,9 @@ final class Endpoints extends AbstractMvcFilter {
             constrain(RequestScenesDownloadCommand, RequestScenesDownloadCommand.constraints(dataSetRepository))
 
             error(InvalidRequest) {
-                response.status = 400
-                response.setContentType('application/json')
-                send(toJson(it.errors))
+                response?.status = 400
+                response?.setContentType('application/json')
+                send(toJson(it?.errors))
             }
 
             error(ExecutionFailed) {

@@ -5,7 +5,9 @@ import org.openforis.sepal.scene.SceneProvider
 import org.openforis.sepal.scene.SceneReference
 import org.openforis.sepal.scene.SceneRequest
 import org.openforis.sepal.scene.retrieval.provider.DispatchingSceneProvider
+import spock.lang.Ignore
 import spock.lang.Specification
+
 
 class DispatchingSceneProviderTest extends Specification {
     def requestId = 1L

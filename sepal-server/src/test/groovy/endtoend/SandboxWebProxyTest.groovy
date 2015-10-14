@@ -9,8 +9,10 @@ import org.openforis.sepal.sandbox.NonExistingUser
 import org.openforis.sepal.sandbox.Sandbox
 import org.openforis.sepal.sandbox.SandboxManager
 import org.openforis.sepal.sandboxwebproxy.SandboxWebProxy
+import spock.lang.Ignore
 import spock.lang.Specification
 import util.Port
+
 
 class SandboxWebProxyTest extends Specification {
     def sandboxManager = Mock(SandboxManager)

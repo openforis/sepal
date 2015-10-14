@@ -1,7 +1,9 @@
 package unit.util
 
 import org.openforis.sepal.util.Is
+import spock.lang.Ignore
 import spock.lang.Specification
+
 
 class IsTest extends Specification {
 

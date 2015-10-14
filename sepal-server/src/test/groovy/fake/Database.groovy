@@ -12,7 +12,7 @@ import javax.sql.DataSource
 class Database {
     private static final Logger LOG = LoggerFactory.getLogger(this.class)
     private static final File SCHEMA = new File('src/test/resources/db', 'schema.sql')
-    private static final File RESET_SCRIPT = new File('src/test/resources/db', 'reset.sql')
+    private static final File RESET_SCRIPT = new File('src/test/resources/db', 'schema.sql')
     static final String URL = "jdbc:h2:mem:sepal;MODE=MYSQL;DB_CLOSE_DELAY=-1"
 
     private static boolean initialized

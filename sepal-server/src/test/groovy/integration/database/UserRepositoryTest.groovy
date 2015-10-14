@@ -3,8 +3,10 @@ package integration.database
 import endtoend.SepalDriver
 import org.openforis.sepal.user.JDBCUserRepository
 import org.openforis.sepal.user.UserRepository
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
+
 
 class UserRepositoryTest extends Specification {
 

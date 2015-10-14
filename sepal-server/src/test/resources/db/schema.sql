@@ -14,6 +14,8 @@ DROP TABLE IF EXISTS usgs_data_repo;
 DROP TABLE IF EXISTS wrs_points;
 DROP TABLE IF EXISTS download_requests;
 DROP TABLE IF EXISTS requested_scenes;
+DROP TABLE IF EXISTS metadata_providers;
+DROP TABLE IF EXISTS metadata_crawling_criteria;
 
 CREATE TABLE admin_groups (
   id         INT(10)      NOT NULL,
