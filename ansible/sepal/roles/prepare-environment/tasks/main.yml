@@ -1,0 +1,45 @@
+---
+# common tasks
+
+- name: Create ssl certificates dir
+  file:
+    path: "/data/ssl/certificates"
+    state: directory
+
+- name: Create sepal dir
+  file:
+    path: "/data/sepal/"
+    owner: "sepal"
+    group: "sepal"
+    mode: "u=rwx,g=rwxs"
+    state: "directory"
+
+- name: Create data dir
+  file:
+    path: "/data/sepal/data"
+    owner: "sepal"
+    group: "sepal"
+    mode: "u=rwx,g=rwxs"
+    state: "directory"
+
+- name: Create config dir
+  file:
+    path: "/data/sepal/config"
+    state: directory
+
+- name: Create processing scripts dir
+  file:
+    path: "/data/sepal/config/processing_scripts"
+    state: directory
+
+
+- name: Create LANDSAT_8 script folder
+  file:
+    path: "/data/sepal/config/processing_scripts/LANDSAT_8"
+    owner: "sepal"
+    group: "sepal"
+    state: "directory"
+
+
+- name: Copy LANDSAT_8 default script
+  copy: src=LANDSAT_8/Stack_Images.sh  dest=/data/sepal/config/processing_scripts/LANDSAT_8 owner=sepal group=sepal mode=u=rwx

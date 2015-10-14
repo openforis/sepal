@@ -1,0 +1,27 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.network "private_network", ip: "172.28.128.3"
+  config.vm.box = 'ubuntu/trusty64'
+  config.vm.synced_folder '../../sepal-environment/docker', '/docker'
+
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 3072
+  end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "../../ansible/sepal/local.yml"
+    #ansible.verbose = 'vvvv'
+    ansible.extra_vars = {
+        ansible_ssh_user: 'vagrant',
+        region: 'eu-central-1',
+        deploy_environment: 'Staging',
+        secret_vars_file: '~/.sepal/secret.yml',
+        docker_repository_host: '',
+        use_custom_host: true,
+        custom_host: '172.28.128.3'
+    }
+  end
+
+end

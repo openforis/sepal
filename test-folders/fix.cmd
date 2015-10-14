@@ -1,1 +1,0 @@
-copy NUL file_create_by_script.txt

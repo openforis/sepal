@@ -1,0 +1,34 @@
+- name: Configure Local Environment
+  hosts: all
+  user: ubuntu
+  sudo: yes
+  gather_facts: true
+
+  vars_files:
+    - vars/vars.yml
+    - "{{ secret_vars_file }}"
+
+  pre_tasks:
+    - name: Create sepal group
+      group: name=sepal state=present gid=9999
+    - name: Add vagrant to sepal group
+      user: name=vagrant append=yes groups=sepal
+    - name: Create sepal user
+      user: name=sepal uid=9999 group=sepal
+
+  roles:
+    - role: docker.ubuntu
+      docker_version: '1.8.1-0~trusty'
+      docker_storage_path: '/data/docker/'
+      docker_group_members: ['ubuntu','vagrant']
+      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
+
+    - role: build-images
+    - role: prepare-environment
+    - role: mysql
+    - role: geoserver
+    - role: gateone
+    - role: sepal
+    - role: ssh-gateway
+    - role: sepal-php
+    - role: nginx
