@@ -1,5 +1,5 @@
 - name: Build Operations server
-  hosts: all
+  hosts: "tag_Type_Operations"
   user: ubuntu
   sudo: yes
   gather_facts: true
@@ -13,11 +13,12 @@
     - role: docker.ubuntu
       docker_version: '1.8.1-0~trusty'
       docker_group_members: ['ubuntu']
-      ddocker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage'
+      #docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage'
+      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
 
     - role: docker-registry
     - role: pull-images
     - role: build-images
-    - role: ansible
-    - role: jenkins
+    #- role: ansible
+    #- role: jenkins
 

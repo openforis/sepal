@@ -5,7 +5,7 @@ Then we generated a new certificate by executing:
 sudo openssl req   -newkey rsa:4096 -nodes -sha256 -keyout /data/ssl/registry_certs/docker-registry.key   -x509 -days 365 -out /data/ssl/registry_certs/docker-registry.crt -days 365
 
 
-sudo openssl req   -newkey rsa:4096 -nodes -sha256 -keyout docker-registry.key   -x509 -days 365 -out docker-registry.crt -extfile subjAltNameConfig
+sudo openssl req   -newkey rsa:4096 -nodes -sha256 -keyout docker-registry.key   -x509 -days 365 -out docker-registry.crt
 
 Specifiy the IP Address when asked[FNQA]
 

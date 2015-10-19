@@ -4,12 +4,12 @@
   gather_facts: false
 
   vars_files:
-    - vars/vars.yml
+      - vars/vars.yml
 
   tasks:
-    - name: Create Sepal security group
+    - name: Create Operations security group
       ec2_group:
-        name: Sepal
+        name: Operations
         description: The Sepal Security Group
         region: "{{ region }}"
         rules:
@@ -18,34 +18,29 @@
             to_port: 22
             cidr_ip: 168.202.0.0/16
           - proto: tcp
-            from_port: 80
-            to_port: 80
-            cidr_ip: 168.202.0.0/16
-          - proto: tcp
             from_port: 443
             to_port: 443
-            cidr_ip: 168.202.0.0/16
+            cidr_ip: 0.0.0.0/0
         rules_egress:
           - proto: all
             from_port: 0
             to_port: 65535
             cidr_ip: 0.0.0.0/0
 
-    - name: Provision Sepal instance
+    - name: Provision Operations instance
       ec2:
         key_name: "{{ region }}"
-        group: Sepal
+        group: Operations
         instance_type: t2.medium
         image: "{{ ami_ids[region] }}"
         region: "{{ region }}"
         wait: true
         exact_count: 1
         count_tag:
-          Type: Sepal
+          Type: Operations
         instance_tags:
-          Name: "Sepal - {{ deploy_environment}}"
-          Type: Sepal
-          Environment: "{{ deploy_environment }}"
+          Name: "Operations"
+          Type: Operations
         volumes:
           - device_name: /dev/sda1
             volume_size: 30
@@ -56,8 +51,3 @@
                     port=22
                     state="started"
       with_items: ec2.instances
-
-
-# TODO Allocate and associate elastic IP, once Ansible 2.0 is released
-# https://github.com/ansible/ansible-modules-core/pull/1015 needed to make it idempotent
-# TODO Route 53 resources

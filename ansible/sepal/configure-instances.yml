@@ -10,7 +10,7 @@
 
   pre_tasks:
     - name: Create sepal group
-      group: name=sepal state=present, gid=9999
+      group: name=sepal state=present gid=9999
     - name: Create sepal user
       user: name=sepal uid=9999 group=sepal
 
@@ -20,23 +20,26 @@
         state: directory
     - name: Copy docker-registry certificate
       copy:
-        src: ~/.ssh/sepal/docker-registry.crt
+        src: ~/.sepal/certificates/docker-registry.crt
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
   roles:
-#    - role: unattended-upgrades
-#      unattended_origins_patterns:
-#      - 'origin=Ubuntu,archive=${distro_codename}-security'
-#      - 'o=Ubuntu,a=${distro_codename}-updates'
-#
-#    - role: docker.ubuntu
-#      docker_version: '1.8.1-0~trusty'
-#      docker_storage_path: '/data/docker/'
-#      docker_group_members: ['ubuntu']
-#
-#    - role: mysql
-#    - role: geoserver
-#    - role: gateone
-#    - role: sepal
+    - role: unattended-upgrades
+      unattended_origins_patterns:
+        - 'origin=Ubuntu,archive=${distro_codename}-security'
+        - 'o=Ubuntu,a=${distro_codename}-updates'
+
+    - role: docker.ubuntu
+      docker_version: '1.8.1-0~trusty'
+      docker_group_members: ['ubuntu']
+      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage'
+
+    - role: prepare-environment
+    - role: mysql
+    - role: geoserver
+    - role: gateone
+    - role: sepal
+    - role: ssh-gateway
     - role: sepal-php
-#    - role: nginx
+    - role: nginx
+    - role: sandbox

@@ -15,7 +15,7 @@
     path: "/data/ssl/registry"
     state: "directory"
 
-- name: Copy .htpasswd file
+- name: Copy htpasswd file
   copy: src=~/.sepal/.htpasswd dest=/data/ssl/registry
 
 - name: Copy registry ssl certificate
@@ -40,6 +40,7 @@
       - "/data/ssl/registry_certs:/certs"
     env:
       REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
-      REGISTRY_AUTH_HTPASSWD_PATH: "/auth/htpasswd"
+      REGISTRY_AUTH_HTPASSWD_PATH: "/auth/.htpasswd"
       REGISTRY_HTTP_TLS_CERTIFICATE: "/certs/docker-registry.crt"
       REGISTRY_HTTP_TLS_KEY: "/certs/docker-registry.key"
+      REGISTRY_AUTH: "htpasswd"

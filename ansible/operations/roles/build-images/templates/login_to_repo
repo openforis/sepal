@@ -1,0 +1,11 @@
+#!/usr/bin/expect
+
+spawn /data/ansible/push_images.sh
+expect "Username"
+send "{{ docker_username }}\n"
+expect "Password"
+send "{{ docker_password }}\n"
+expect "Email"
+send "{{ docker_email }}\n"
+interact
+

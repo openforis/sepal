@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 ansible-playbook setup.yml \
     -i ec2.py \
-    --private-key=~/.ssh/sepal/eu-central-1.pem \
-    --extra-vars "region=eu-central-1 deploy_environment=Staging"
+    --private-key=~/.ssh/sepal/eu-west-1.pem  \
+    --extra-vars "region=eu-west-1 deploy_environment=Development"
 
 ./ec2.py --refresh-cache > /dev/null
 
 ansible-playbook configure-instances.yml \
     -i ec2.py \
-    --private-key=~/.ssh/sepal/eu-central-1.pem \
-    --extra-vars "region=eu-central-1 deploy_environment=Staging secret_vars_file=~/.sepal/secret.yml"
+    --private-key=~/.ssh/sepal/eu-west-1.pem \
+    --extra-vars "region=eu-west-1 deploy_environment=Development use_custom_host=false secret_vars_file=~/.sepal/secret.yml"

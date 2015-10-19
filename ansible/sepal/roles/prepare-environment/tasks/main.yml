@@ -1,6 +1,16 @@
 ---
 # common tasks
 
+- name: Install Expect
+  apt:
+    name: "expect"
+
+- name: Create data dir
+  file:
+    path: "/data"
+    state: "directory"
+    group: "sepal"
+
 - name: Create ssl certificates dir
   file:
     path: "/data/ssl/certificates"
