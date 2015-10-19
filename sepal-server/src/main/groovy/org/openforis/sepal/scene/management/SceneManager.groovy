@@ -60,8 +60,8 @@ class SceneManager implements SceneRetrievalListener {
         @Override
         public void run() {
             def requests = scenesRepository.getNewDownloadRequests()
-            requests.each {
-                sceneStatusChanged(it, REQUESTED)
+            requests.each { iterartor ->
+                sceneStatusChanged(iterartor, REQUESTED)
             }
         }
     }

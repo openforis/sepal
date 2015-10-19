@@ -1,0 +1,7 @@
+ansible:0.3.1
+git:2.4.0
+git-client:1.19.0
+github:1.14.0
+github-api:1.69
+plain-credentials:1.1
+scm-api:0.2

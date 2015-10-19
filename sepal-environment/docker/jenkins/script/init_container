@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+if [ ! -z "$JENKINS_PASSWD" ]; then
+echo "jenkins:$JENKINS_PASSWD" | chpasswd
+fi
+
+/jenkins.sh

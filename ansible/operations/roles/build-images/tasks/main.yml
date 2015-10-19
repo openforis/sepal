@@ -1,0 +1,47 @@
+---
+
+- name: Copy the push script
+  copy: src="push_images.sh" dest="/data/ansible/" mode="u=rwx,g=rx,o=rx"
+
+- name: Build mysql
+  docker_image: path="/opt/sepal/sepal-environment/docker/mysql" name="localhost/openforis/mysql" state=build
+
+- name: Build jdk
+  docker_image: path="/opt/sepal/sepal-environment/docker/jdk" name="openforis/jdk" state=build
+
+- name: Build geoserver
+  docker_image: path="/opt/sepal/sepal-environment/docker/geoserver" name="localhost/openforis/geoserver" state=build
+
+- name: Build gateone
+  docker_image: path="/opt/sepal/sepal-environment/docker/gateone" name="localhost/openforis/gateone" state=build
+
+- name: Build openforistoolkit
+  docker_image: path="/opt/sepal/sepal-environment/docker/openforistoolkit/oft-base" name="openforistoolkit" state=build
+
+- name: Build openforistoolkit-jdk
+  docker_image: path="/opt/sepal/sepal-environment/docker/openforistoolkit/oft-jdk" name="openforistoolkit" tag="jdk" state=build
+
+- name: Build openforistoolkit-gui-tools
+  docker_image: path="/opt/sepal/sepal-environment/docker/openforistoolkit/oft-gui-tools" name="openforistoolkit" tag="graphical-tools" state=build
+
+- name: Build sandbox
+  docker_image: path="/opt/sepal/sepal-environment/docker/sandbox" name="localhost/openforis/sandbox" state=build
+
+- name: Build sepal
+  docker_image: path="/opt/sepal/sepal-environment/docker/sepal" name="localhost/openforis/sepal" state=build nocache="{{ skip_cache }}"
+
+- name: Build sepal-php
+  docker_image: path="/opt/sepal/sepal-environment/docker/sepal-php" name="localhost/openforis/sepal-php" state=build nocache="{{ skip_cache }}"
+
+- name: Build nginx
+  docker_image: path="/opt/sepal/sepal-environment/docker/nginx" name="localhost/openforis/nginx" state=build
+
+- name: Build ssh-gateway
+  docker_image: path="/opt/sepal/sepal-environment/docker/ssh-gateway" name="localhost/openforis/ssh-gateway" state=build
+
+- name: Build jenkins
+  docker_image: path="/opt/sepal/sepal-environment/docker/jenkins" name="openforis/jenkins" state="build"
+
+#- name: Pushing the images to the local repo
+#  shell: "/data/ansible/push_images.sh"
+

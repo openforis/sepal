@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+
+useradd -m -d "${JENKINS_HOME}"  jenkins
+
+chown -R jenkins /usr/share/jenkins/ref
+
+chmod +x /downloads
+chmod +x /init_container
+chmod +x /jenkins.sh
+chmod +x /usr/local/bin/plugins.sh
+
+
+

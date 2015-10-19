@@ -1,6 +1,6 @@
 - name: Configure Local Environment
   hosts: all
-  user: ubuntu
+  user: vagrant
   sudo: yes
   gather_facts: true
 
@@ -15,6 +15,15 @@
       user: name=vagrant append=yes groups=sepal
     - name: Create sepal user
       user: name=sepal uid=9999 group=sepal
+
+      - name: Create docker-registry certificate dir
+        file:
+          path: "/etc/docker/certs.d/172.28.128.4"
+          state: directory
+        - name: Copy docker-registry certificate
+          copy:
+            src: ~/.ssh/sepal/docker-registry.crt
+            dest: "/etc/docker/certs.d/172.28.128.4/ca.crt"
 
   roles:
     - role: docker.ubuntu

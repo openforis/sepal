@@ -1,0 +1,17 @@
+---
+
+- name: Start jenkins container
+  docker:
+    docker_api_version: "1.18"
+    name: "jenkins"
+    pull: 'missing'
+    image: "openforis/jenkins"
+    state: "started"
+    restart_policy: "always"
+    ports:
+      - "8080:8080"
+      - "5000:5000"
+    volumes:
+      - "/data/jenkins:/var/jenkins_home"
+    env:
+      JENKINS_PASSWD: "{{ jenkins_password }}"

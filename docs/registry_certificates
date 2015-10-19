@@ -3,6 +3,10 @@ subjectAltName=IP:54.93.185.137
 
 Then we generated a new certificate by executing:
 sudo openssl req   -newkey rsa:4096 -nodes -sha256 -keyout /data/ssl/registry_certs/docker-registry.key   -x509 -days 365 -out /data/ssl/registry_certs/docker-registry.crt -days 365
+
+
+sudo openssl req   -newkey rsa:4096 -nodes -sha256 -keyout docker-registry.key   -x509 -days 365 -out docker-registry.crt -extfile subjAltNameConfig
+
 Specifiy the IP Address when asked[FNQA]
 
 Then start docker_registry with:
@@ -11,4 +15,4 @@ docker run -d  --restart=always --name docker-registry -v /data/docker/registry:
 docker run -p 443:443 -d -e REGISTRY_HOST="docker-registry" -e REGISTRY_PORT="5000" --name docker-registry-proxy  -e SERVER_NAME="54.93.185.137" --link docker-registry:docker-registry -v /data/ssl/registry/.htpasswd:/etc/nginx/.htpasswd:ro -v /data/ssl/registry_certs:/etc/nginx/ssl:ro   containersol/docker-registry-proxy
 
 add the generated .crt file on each registry client by adding it to /etc/docker/certs.d/[IP:PORT]/ca.cert
-restart docker daemon
+restart docker daemonopendocker

@@ -1,0 +1,45 @@
+---
+
+- name: Create docker registry directory
+  file:
+    path: "/data/docker/registry"
+    state: "directory"
+
+- name: Create docker registry ssl directory
+  file:
+    path: "/data/ssl/registry_certs"
+    state: "directory"
+
+- name: Create docker registry auth directory
+  file:
+    path: "/data/ssl/registry"
+    state: "directory"
+
+- name: Copy .htpasswd file
+  copy: src=~/.sepal/.htpasswd dest=/data/ssl/registry
+
+- name: Copy registry ssl certificate
+  copy: src=~/.sepal/certificates/docker-registry.crt dest=/data/ssl/registry_certs
+
+- name: Copy registry ssl key
+  copy: src=~/.sepal/certificates/docker-registry.key dest=/data/ssl/registry_certs
+
+- name: Start docker registry
+  docker:
+    docker_api_version: "1.18"
+    name: "registry"
+    pull: 'missing'
+    image: "registry:2"
+    state: "started"
+    restart_policy: "always"
+    ports:
+      - "443:5000"
+    volumes:
+      - "/data/docker/registry:/var/lib/registry"
+      - "/data/ssl/registry:/auth"
+      - "/data/ssl/registry_certs:/certs"
+    env:
+      REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
+      REGISTRY_AUTH_HTPASSWD_PATH: "/auth/htpasswd"
+      REGISTRY_HTTP_TLS_CERTIFICATE: "/certs/docker-registry.crt"
+      REGISTRY_HTTP_TLS_KEY: "/certs/docker-registry.key"
