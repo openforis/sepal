@@ -19,5 +19,5 @@ docker exec -it mysql mysql --host=localhost --user=root --password=$ROOT_PWD -e
 
 docker rm -f mysql
 
-# re-run ansible provising to properly startup mysql
+# re-run ansible provising to properly startup mysql and sepal
 

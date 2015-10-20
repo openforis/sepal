@@ -1,4 +1,4 @@
-TRUNCATE TABLE usgs_data_repo;
+DELETE FROM usgs_data_repo WHERE DATA_TYPE_L1 <> 'L1T';
 
 CREATE TABLE  metadata_crawling_criteria (
   criteria_id int(10) unsigned NOT NULL AUTO_INCREMENT,
