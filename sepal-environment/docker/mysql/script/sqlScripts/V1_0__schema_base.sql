@@ -19,7 +19,6 @@ CREATE TABLE data_set (
   dataset_name   VARCHAR(50) NOT NULL,
   dataset_value  VARCHAR(50) NOT NULL,
   dataset_active TINYINT(1)  NOT NULL,
-  metadata_provider INT(11)  NOT NULL DEFAULT 1,
   PRIMARY KEY (id)
 );
 
@@ -85,7 +84,6 @@ CREATE TABLE users (
   updated_at     TIMESTAMP,
   sandbox_id VARCHAR(100) NULL,
   sandbox_uri VARCHAR(512) NULL,
-  user_uid INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -178,43 +176,24 @@ CREATE TABLE requested_scenes (
   PRIMARY KEY (`id`)
 );
 
-CREATE TABLE  metadata_providers (
-  id INT(11) unsigned NOT NULL,
-  name VARCHAR(45) NOT NULL,
-  active TINYINT(1) NOT NULL DEFAULT '1',
-  crawling_entrypoint VARCHAR(255) NOT NULL,
-  iterations int(10) default 4,
-  iteration_size int(10) default 18,
-  last_execution_start DATETIME default null,
-  last_execution_end DATETIME default null,
-  PRIMARY KEY (`id`)
-);
-
-CREATE TABLE  metadata_crawling_criteria (
-  criteria_id int(10) unsigned NOT NULL AUTO_INCREMENT,
-  metadata_provider_id int(10) unsigned NOT NULL,
-  field_name varchar(255) NOT NULL,
-  expected_value varchar(255) NOT NULL,
-  PRIMARY KEY (`criteria_id`)
-);
 
 
-INSERT INTO users(username,full_name,user_uid) VALUES('sepalAdminWeb','sepalAdminWeb',1001);
-INSERT INTO users_roles(user_id,role_id,created_by) values(1,1,1);
+
+
+
+
 INSERT INTO config_details values('cron_delay_days','50');
-insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 8 OLI/TIRS','LANDSAT_8',1,1);
-insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 7 SLC-off (2003 ->)', 'LANDSAT_ETM_SLC_OFF', 1,1);
-insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 7 SLC-on (1999-2003)', 'LANDSAT_ETM', 1,1);
-insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 4-5 TM', 'LANDSAT_TM', 1,1);
-insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 4-5 MSS', 'LANDSAT_MSS', 1,1);
-insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 1-3 MSS', 'LANDSAT_MSS1', 0,1);
-insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 4-8 Combined', 'LANDSAT_COMBINED', 1,1);
-insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Landsat 7/8 Combined', 'LANDSAT_COMBINED78', 1,1);
-insert into data_set(dataset_name,dataset_value,dataset_active,metadata_provider) values('Planet Labs Scenes', 'PLANET_LAB_SCENES', 1,2);
+insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 8 OLI/TIRS','LANDSAT_8',1);
+insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 7 SLC-off (2003 ->)', 'LANDSAT_ETM_SLC_OFF', 1);
+insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 7 SLC-on (1999-2003)', 'LANDSAT_ETM', 1);
+insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 4-5 TM', 'LANDSAT_TM', 1);
+insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 4-5 MSS', 'LANDSAT_MSS', 1);
+insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 1-3 MSS', 'LANDSAT_MSS1', 0);
+insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 4-8 Combined', 'LANDSAT_COMBINED', 1);
+insert into data_set(dataset_name,dataset_value,dataset_active) values('Landsat 7/8 Combined', 'LANDSAT_COMBINED78', 1);
+insert into data_set(dataset_name,dataset_value,dataset_active) values('Planet Labs Scenes', 'PLANET_LAB_SCENES', 1);
 insert into groups_system(id,group_name) values (46,'admin');
 insert into roles(role_name,role_desc) values('application_admin','Application Administrator');
 
-INSERT INTO metadata_providers VALUES(1,'EarthExplorer',1,'http://earthexplorer.usgs.gov/EE/InventoryStream/pathrow',150,10,null,null);
-INSERT INTO metadata_providers VALUES(2,'PlanetLabs',0,'',0,0,null,null);
-INSERT INTO metadata_crawling_criteria(metadata_provider_id,field_name,expected_value) VALUES (1, 'DATA_TYPE_L1','L1T')
+
 

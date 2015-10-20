@@ -10,6 +10,7 @@
     path: "/data"
     state: "directory"
     group: "sepal"
+    mode: "u=rwx,g=rx"
 
 - name: Create ssl certificates dir
   file:

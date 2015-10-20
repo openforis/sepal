@@ -38,6 +38,7 @@
         instance_type: t2.medium
         image: "{{ ami_ids[region] }}"
         region: "{{ region }}"
+        zone: "{{ availability_zone }}"
         wait: true
         exact_count: 1
         count_tag:
@@ -48,7 +49,7 @@
           Environment: "{{ deploy_environment }}"
         volumes:
           - device_name: /dev/sda1
-            volume_size: 30
+            volume_size: 300
       register: ec2
 
     - name: Wait for SSH to be available in Sepal instance
