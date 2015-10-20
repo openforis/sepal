@@ -1,4 +1,4 @@
-DELETE FROM usgs_data_repo;
+TRUNCATE TABLE usgs_data_repo;
 
 CREATE TABLE  metadata_crawling_criteria (
   criteria_id int(10) unsigned NOT NULL AUTO_INCREMENT,
