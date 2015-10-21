@@ -1,5 +1,3 @@
-DELETE FROM usgs_data_repo WHERE DATA_TYPE_L1 <> 'L1T';
-
 CREATE TABLE  metadata_crawling_criteria (
   criteria_id int(10) unsigned NOT NULL AUTO_INCREMENT,
   metadata_provider_id int(10) unsigned NOT NULL,
@@ -31,5 +29,7 @@ INSERT INTO metadata_providers VALUES(2,'PlanetLabs',0,'',0,0,null,null);
 INSERT INTO metadata_crawling_criteria(metadata_provider_id,field_name,expected_value) VALUES (1, 'DATA_TYPE_L1','L1T');
 
 UPDATE data_set SET metadata_provider = 2 WHERE id  = 9;
+
+DELETE FROM usgs_data_repo WHERE DATA_TYPE_L1 <> 'L1T';
 
 
