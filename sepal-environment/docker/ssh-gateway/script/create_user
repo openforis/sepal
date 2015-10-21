@@ -6,21 +6,35 @@
 USERNAME=$1
 PASSWORD=$2
 ASSIGNED_GROUP=$3
+ENCRYPTED_PASSWD=${4:-false}
 
-sudo -S useradd "$USERNAME" -s /bin/bash -m -d "/home/$USERNAME"
-if [ ! -z "$ASSIGNED_GROUP" ]; then
-    sudo  -S usermod -aG "$ASSIGNED_GROUP" "$USERNAME"
+
+userExist=false
+getent passwd ${USERNAME}  >/dev/null 2>&1 && userExist=true
+
+if $userExist; then
+    userId=$(id -u "$USERNAME")
+else
+    sudo -S useradd "$USERNAME" -s /bin/bash -m -d "/home/$USERNAME"
+    if [ ! -z "$ASSIGNED_GROUP" ]; then
+        sudo  -S usermod -aG "$ASSIGNED_GROUP" "$USERNAME"
+    fi
+
+    sudo -S usermod -aG ${USER_GROUP} ${USERNAME}
+
+
+    if $ENCRYPTED_PASSWD; then
+        echo "$USERNAME:$PASSWORD" | sudo  -S chpasswd --encrypted
+    else
+        echo "$USERNAME:$PASSWORD" | sudo  -S chpasswd
+    fi
+
+
+
+    userId=$(id -u "$USERNAME")
+
+
 fi
-
-sudo -S usermod -aG ${USER_GROUP} ${USERNAME}
-echo "$USERNAME:$PASSWORD" | sudo  -S chpasswd
-
-userId=$(id -u "$USERNAME")
-
-
-#create shared directories
-sudo mkdir -p "/home/shared/$USERNAME"
-sudo chown  ${USERNAME}:${USER_GROUP} "/home/shared/$USERNAME"
 
 echo $userId
 

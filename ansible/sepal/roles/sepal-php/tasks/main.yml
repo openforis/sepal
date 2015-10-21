@@ -59,7 +59,7 @@
   file:
     path: "/data/sepal/public"
     group: "9998"
-    mode: "u=rwx,g=rs,o=r"
+    mode: "u=rwx,g=rxs,o=rx"
     state: directory
 
 - name: Create admin public dir
