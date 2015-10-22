@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+SKIP_CACHE=${1:-false}
+
 ansible-playbook setup.yml \
     -i ec2.py \
     --private-key=~/.ssh/sepal/eu-central-1.pem \
@@ -9,4 +12,4 @@ ansible-playbook setup.yml \
 ansible-playbook operations.yml \
     -i ec2.py \
     --private-key=~/.ssh/sepal/eu-central-1.pem \
-    --extra-vars "region=eu-central-1 secret_vars_file=~/.sepal/secret.yml skip_cache=false"
+    --extra-vars "region=eu-central-1 secret_vars_file=~/.sepal/secret.yml skip_cache=$SKIP_CACHE"

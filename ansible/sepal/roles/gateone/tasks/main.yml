@@ -11,7 +11,7 @@
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/gateone"
-    state: started
+    state: "started"
     restart_policy: always
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
