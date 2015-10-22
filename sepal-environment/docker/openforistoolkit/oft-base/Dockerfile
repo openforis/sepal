@@ -7,5 +7,5 @@ ADD config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN chmod u+x /init_image.sh
 RUN /init_image.sh
 RUN ./OpenForisToolkit.run << 1
-
+RUN rm -rf ./OpenForisToolkit.run
 CMD ["/usr/bin/supervisord"]

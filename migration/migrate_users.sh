@@ -30,7 +30,7 @@ while read -r user; do
                 USER_ID=$(docker exec -t ssh-gateway /home/sepalAdmin/create_user $userName $SHADOW_ENTRY sepalUsers true)
                 USER_ID=$(echo "$USER_ID"|tr -d "\r")
                 echo "$USER_ID"
-                sudo chown -R $USER_ID:sepal "$DATA_HOME/$userName"
+                sudo chown -R "$USER_ID:sepal" "$DATA_HOME/$userName"
                 sudo mkdir -p "$PUBLIC_DIR/$userName"
                 sudo chown "$USER_ID" "$PUBLIC_DIR/$userName"
                 if [ ! -h "$DATA_HOME/$userName/public" ]; then

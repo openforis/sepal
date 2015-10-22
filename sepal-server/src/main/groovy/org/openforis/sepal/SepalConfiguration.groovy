@@ -39,6 +39,7 @@ class SepalConfiguration {
     public static final String CRAWLER_RUN_DELAY = "metadata.crawler.delay"
     public static final String USER_CREDENTIALS_HOME_DIR = "user.credentials.homeDir"
     public static final String PUBLIC_HOME_DIR = "sepal.publicHomeDir"
+    public static final String SANBOX_PORTS_TO_CHECK = "sepal.sandbox.healtCheckPorts"
 
     Properties properties
     String configFileLocation
@@ -75,6 +76,10 @@ class SepalConfiguration {
                 testConnectionOnCheckout: true,
 
         )
+    }
+
+    def getSandboxPortsToCheck(){
+        getValue(SANBOX_PORTS_TO_CHECK)
     }
 
     def getPublicHomeDir() {

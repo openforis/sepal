@@ -101,11 +101,13 @@ class DockerRESTClient implements DockerClient {
     def createSandbox(String sandboxName, String username, int userId) {
         def restClient = new RESTClient(dockerDaemonURI)
         LOG.debug("Going to create a sandbox on $dockerDaemonURI")
+
         Sandbox sandbox
         def generatedKey = IOUtils.toString(exec("gateone", "/keygen/keygen.run", username, "$userId"))
         def mountingHomeDir = SepalConfiguration.instance.mountingHomeDir
         def userCredentialHomeDir = SepalConfiguration.instance.userCredentialsHomeDir
         def publicHomeDir = SepalConfiguration.instance.publicHomeDir
+        def portsToCheck = SepalConfiguration.instance.sandboxPortsToCheck
         def homeBinding = "$mountingHomeDir/$username:/home/$username"
         def shadowBinding = "$userCredentialHomeDir/shadow:/etc/shadow"
         def publicFolderBinding = "$publicHomeDir:$publicHomeDir"
@@ -130,7 +132,7 @@ class DockerRESTClient implements DockerClient {
             LOG.debug("Sandbox created: $sandbox.id")
             startContainer(restClient, sandbox.id)
             getContainerInfo(restClient, sandbox)
-            exec(sandbox.id, "/waitforssh.sh")
+            exec(sandbox.id, "/root/healt_check.sh $portsToCheck")
         } catch (HttpResponseException exception) {
             LOG.error("Error while creating the sandbox. $exception.message")
             throw exception

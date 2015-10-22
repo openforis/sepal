@@ -30,6 +30,11 @@ INSERT INTO metadata_crawling_criteria(metadata_provider_id,field_name,expected_
 
 UPDATE data_set SET metadata_provider = 2 WHERE id  = 9;
 
+ALTER TABLE image_log MODIFY COLUMN downloaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE image_log MODIFY COLUMN last_accessed DATETIME NULL;
+ALTER TABLE image_log MODIFY COLUMN accessed_by VARCHAR(50) NULL;
+ALTER TABLE image_log MODIFY COLUMN deleted INT(11) NOT NULL DEFAULT 0;
+
 DELETE FROM usgs_data_repo WHERE DATA_TYPE_L1 <> 'L1T';
 
 

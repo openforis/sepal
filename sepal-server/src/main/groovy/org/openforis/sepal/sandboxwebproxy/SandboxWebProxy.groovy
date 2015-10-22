@@ -94,8 +94,7 @@ class SandboxWebProxy {
 
         private String determineUser(HttpServerExchange exchange) {
             def user = exchange.requestHeaders.getFirst('sepal-user')
-            String user1 = user
-            if (!user1)
+            if (!user)
                 throw new BadRequest('Missing header: sepal-user')
             return user
         }

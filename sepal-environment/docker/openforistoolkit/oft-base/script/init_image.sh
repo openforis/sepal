@@ -17,6 +17,7 @@ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 chmod u+x Miniconda3-latest-Linux-x86_64.sh
 ./Miniconda3-latest-Linux-x86_64.sh -b -p /opt/miniconda3
 /opt/miniconda3/bin/conda install -y -c https://conda.binstar.org/osgeo arcsi
+rm -rf ./Miniconda3-latest-Linux-x86_64.sh
 echo "GDAL_DRIVER_PATH=\"/opt/miniconda3/lib/gdalplugins:$GDAL_DRIVER_PATH\"" >> /etc/environment
 echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
 echo "PATH=\"/opt/miniconda3/bin:$PATH\"" >> /etc/environment
