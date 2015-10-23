@@ -20,6 +20,7 @@ RUN chmod u+x ./init_image.sh
 RUN ./init_image.sh
 
 EXPOSE 3306
+ENTRYPOINT []
 CMD ["/usr/bin/supervisord"]
 
 

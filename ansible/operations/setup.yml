@@ -18,6 +18,10 @@
             to_port: 22
             cidr_ip: 168.202.0.0/16
           - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 93.55.89.78/16
+          - proto: tcp
             from_port: 443
             to_port: 443
             cidr_ip: 0.0.0.0/0
