@@ -10,4 +10,7 @@ RUN ./init_image.sh
 VOLUME /etc/nginx/sites-enabled
 VOLUME /etc/ssl/fao
 
+EXPOSE 80
+EXPOSE 443
+
 CMD ["/usr/bin/supervisord"]

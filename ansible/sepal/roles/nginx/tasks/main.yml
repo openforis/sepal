@@ -24,17 +24,18 @@
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/nginx"
-    state: "started"
+    state: "reloaded"
+    net: "bridge"
     restart_policy: "always"
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
-    expose:
-    - "80"
-    - "443"
-    ports:
-    - "80:80"
-    - "443:443"
+   # expose:
+   # - "80"
+   # - "443"
+   # ports:
+   # - "80:80"
+   # - "443:443"
     links:
     - "gateone:gateone"
     - "sepal-php:sepal-php"
