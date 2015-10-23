@@ -30,12 +30,9 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
-   # expose:
-   # - "80"
-   # - "443"
-   # ports:
-   # - "80:80"
-   # - "443:443"
+    ports:
+    - "80:80"
+    - "443:443"
     links:
     - "gateone:gateone"
     - "sepal-php:sepal-php"
