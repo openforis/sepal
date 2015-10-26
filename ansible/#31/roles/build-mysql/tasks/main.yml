@@ -1,0 +1,5 @@
+---
+
+- name: Build mysql
+  docker_image: path="/data/sepal/sepal-environment/docker/mysql" name="openforis/mysql" state="build"
+

@@ -9,7 +9,6 @@
 
     <modules>
         <module>sepal-server</module>
-        <module>sepal-environment</module>
     </modules>
 
 
