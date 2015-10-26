@@ -2,7 +2,6 @@
 
 apt-get update && apt-get install -y supervisor net-tools wget procps nano
 chmod u+x /init_container.sh
-chmod u+x /entrypoint.sh
 
 
 wget --no-check-certificate -O "flyway.tar.gz" "https://bintray.com/artifact/download/business/maven/flyway-commandline-$FLYWAY_VERSION-linux-x64.tar.gz"
