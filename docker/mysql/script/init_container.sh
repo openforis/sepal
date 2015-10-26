@@ -2,11 +2,18 @@
 
 mysqlWaiting=true
 netstat -ntlp | grep ":3306"  >/dev/null 2>&1 && mysqlWaiting=false
-while $mysqlWaiting;
-do
-    echo "Trying again"
-    netstat -ntlp | grep ":3306"  >/dev/null 2>&1 && mysqlWaiting=false
+
+for i in {30..0}; do
+    if netstat -ntlp | grep ":3306"  >/dev/null 2>&1 then
+		break
+	fi
+	echo 'Waiting for mysql...'
+	sleep 1
 done
+if [ "$i" = 0 ]; then
+    echo >&2 'MySQL init process failed.'
+	exit 1
+fi
 
 /opt/flyway/flyway migrate -baselineVersion=${SCHEMA_BASELINE_VERSION} -baselineOnMigrate=true -url=jdbc:mysql://${INSTANCE_HOSTNAME}:3306/${MYSQL_DATABASE} -user=${MYSQL_USER} -password=${MYSQL_PASSWORD}
 
