@@ -3,9 +3,7 @@ MAINTAINER OpenForis
 
 
 ENV ADMIN_USERNAME sepalAdmin
-ENV ADMIN_PASSWORD qwertasdfzxcv
 ENV WEB_ADMIN_USERNAME sepalAdminWeb
-ENV WEB_ADMIN_PASSWORD "the admin user 123"
 ENV USER_GROUP "sepalUsers"
 
 ADD script/create_user .
