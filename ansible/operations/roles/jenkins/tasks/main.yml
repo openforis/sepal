@@ -6,7 +6,8 @@
     name: "jenkins"
     pull: 'missing'
     image: "openforis/jenkins"
-    state: "started"
+    state: "reloaded"
+    net: "bridge"
     restart_policy: "always"
     ports:
       - "8080:8080"

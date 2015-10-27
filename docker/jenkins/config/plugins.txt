@@ -1,4 +1,7 @@
 ansible:0.3.1
+ssh-credentials:1.10
+credentials: 1.22
+
 git:2.4.0
 git-client:1.19.0
 github:1.14.0
