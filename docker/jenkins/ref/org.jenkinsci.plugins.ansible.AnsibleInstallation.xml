@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<org.jenkinsci.plugins.ansible.AnsibleInstallation_-DescriptorImpl plugin="ansible@0.3.1">
+  <installations class="org.jenkinsci.plugins.ansible.AnsibleInstallation-array">
+    <org.jenkinsci.plugins.ansible.AnsibleInstallation>
+      <name>Default</name>
+      <home>/usr/bin/</home>
+      <properties/>
+    </org.jenkinsci.plugins.ansible.AnsibleInstallation>
+  </installations>
+</org.jenkinsci.plugins.ansible.AnsibleInstallation_-DescriptorImpl>

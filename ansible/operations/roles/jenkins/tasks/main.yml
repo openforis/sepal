@@ -1,5 +1,11 @@
 ---
 
+- name: Copy .sepal folder
+  copy: src=~/.sepal dest=/data/ansible.sepal/
+
+- name: Copy .ssh folder
+  copy: src=~/.ssh/sepal dest=/data/ansible/.ssh/
+
 - name: Start jenkins container
   docker:
     docker_api_version: "1.18"
@@ -14,5 +20,9 @@
       - "5000:5000"
     volumes:
       - "/data/jenkins:/var/jenkins_home"
+      - "/data/ansible/.sepal:/root/.sepal"
+      - "/data/ansible/.ssh:/root/.ssh/sepal"
     env:
       JENKINS_PASSWD: "{{ jenkins_password }}"
+      AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+      AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"

@@ -10,6 +10,7 @@ ADD script/downloads .
 ADD script/plugins.sh /usr/local/bin/plugins.sh
 ADD config/plugins.txt .
 
+
 RUN mkdir -p /usr/share/jenkins/ref/
 ADD ref /usr/share/jenkins/ref/
 
@@ -23,7 +24,7 @@ RUN /init_image
 RUN /downloads
 RUN /usr/local/bin/plugins.sh /plugins.txt
 
-
+ADD config/settings.xml /etc/maven/settings.xml
 
 VOLUME /var/jenkins_home
 
