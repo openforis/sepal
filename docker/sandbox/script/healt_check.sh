@@ -7,11 +7,11 @@ do
         if netstat -ntlp | grep ":$PORT"  >/dev/null 2>&1; then
     		break
     	fi
-    	echo 'Waiting for $PORT...'
+    	echo "Waiting for {PORT}..."
     	sleep 1
     done
     if [ "$i" = 0 ]; then
-        echo >&2 'port $PORT not available.'
+        echo >&2 "port $PORT not available."
     	exit 1
     else
         echo "Port $PORT available"
