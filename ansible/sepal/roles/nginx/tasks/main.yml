@@ -8,7 +8,7 @@
   copy: src=sepal dest=/data/nginx/sites-enabled/sepal
 
 
-- copy: src=~/.sepal/certificates/sepal-web-cert.key dest=/data/ssl/certificates/server.key
+- copy: src=~/.sepal/certificates/sepal-https.key dest=/data/ssl/certificates/sepal-https.key
 - copy: src=~/.sepal/certificates/sepal-https.ca-bundle dest=/data/ssl/certificates/sepal-https.ca-bundle
 - copy: src=~/.sepal/certificates/sepal-https.crt dest=/data/ssl/certificates/sepal-https.crt
 
