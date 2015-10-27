@@ -4,7 +4,7 @@ PORTS=$(echo $1 | tr ";" "\n")
 for PORT in $PORTS;
 do
     for i in {30..0}; do
-        if netstat -ntlp | grep ":$PORT"  >/dev/null 2>&1 then
+        if netstat -ntlp | grep ":$PORT"  >/dev/null 2>&1; then
     		break
     	fi
     	echo 'Waiting for $PORT...'
