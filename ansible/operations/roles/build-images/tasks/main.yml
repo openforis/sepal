@@ -42,8 +42,8 @@
 - name: Build ssh-gateway
   docker_image: path="/opt/sepal/docker/ssh-gateway" name="localhost/openforis/ssh-gateway" state=build
 
-#- name: Build jenkins
-#  docker_image: path="/opt/sepal/sepal-environment/docker/jenkins" name="openforis/jenkins" state="build"
+- name: Build jenkins
+  docker_image: path="/opt/sepal/docker/jenkins" name="openforis/jenkins" state="build"
 
 - name: Pushing the images to the local repo
   shell: "/data/ansible/login_to_repo"
