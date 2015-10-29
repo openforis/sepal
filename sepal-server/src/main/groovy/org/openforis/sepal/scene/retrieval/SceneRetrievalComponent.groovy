@@ -1,10 +1,7 @@
 package org.openforis.sepal.scene.retrieval
 
 import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.scene.SceneProcessor
-import org.openforis.sepal.scene.SceneProvider
-import org.openforis.sepal.scene.ScenePublisher
-import org.openforis.sepal.scene.SceneRetrievalListener
+import org.openforis.sepal.scene.*
 import org.openforis.sepal.scene.retrieval.provider.DispatchingSceneProvider
 import org.openforis.sepal.scene.retrieval.provider.FileSystemSceneContextProvider
 import org.openforis.sepal.scene.retrieval.provider.earthexplorer.EarthExplorerSceneProvider
@@ -64,6 +61,13 @@ class SceneRetrievalComponent {
     ScenePublisher getScenePublisher() {
         return scenePublisher
     }
+
+
+    void registerRequestListener(DownloadRequestListener... listeners) {
+        sceneProcessor.registerDownloadRequestListener(listeners)
+        scenePublisher.registerDownloadRequestListener(listeners)
+    }
+
 
     void register(SceneRetrievalListener... listeners) {
         coordinator.register(listeners)

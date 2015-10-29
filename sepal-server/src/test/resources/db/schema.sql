@@ -201,6 +201,9 @@ CREATE TABLE download_requests (
   request_id   INT(11)      NOT NULL AUTO_INCREMENT,
   request_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   username     VARCHAR(255) NOT NULL,
+  group_scenes INT(1) NOT NULL DEFAULT 0,
+  request_name VARCHAR(255),
+  request_status VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
   PRIMARY KEY (request_id)
 );
 

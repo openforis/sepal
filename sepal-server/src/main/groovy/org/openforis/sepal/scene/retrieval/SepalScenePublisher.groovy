@@ -1,41 +1,65 @@
 package org.openforis.sepal.scene.retrieval
 
 import org.apache.commons.io.FileUtils
+import org.openforis.sepal.scene.DownloadRequest
 import org.openforis.sepal.scene.ScenePublisher
-import org.openforis.sepal.scene.SceneReference
 import org.openforis.sepal.scene.SceneRequest
-import org.openforis.sepal.scene.SceneStatus
+import org.openforis.sepal.scene.Status
+import org.openforis.sepal.scene.retrieval.provider.DownloadRequestObservable
 import org.openforis.sepal.scene.retrieval.provider.SceneRetrievalObservable
 import org.openforis.sepal.util.FilePermissions
 
-import static SceneStatus.PUBLISHED
-import static SceneStatus.PUBLISHING
+import static Status.PUBLISHED
+import static Status.PUBLISHING
 
 class SepalScenePublisher implements ScenePublisher {
+
     @Delegate
     @SuppressWarnings("GroovyUnusedDeclaration")
     private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
+
+    @Delegate
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    private final DownloadRequestObservable downloadRequestObservable = new DownloadRequestObservable()
+
+
     private final SceneRepository sceneRepository
 
     SepalScenePublisher(SceneRepository sceneRepository) {
         this.sceneRepository = sceneRepository
     }
 
+    private void notifyRequestStatusChange(DownloadRequest request, Status status){
+        request.scenes.each { notifyListeners(it,status) }
+        notifyDownloadRequestListeners(request,status)
+    }
+
+    void publish(DownloadRequest downloadRequest){
+        notifyRequestStatusChange(downloadRequest, PUBLISHING)
+        doPublish(
+                sceneRepository.getDownloadRequestWorkingDirectory(downloadRequest),
+                sceneRepository.getDownloadRequestHomeDirectory(downloadRequest)
+        )
+        notifyRequestStatusChange(downloadRequest, PUBLISHED)
+    }
+
     @Override
-    void publishScene(SceneRequest request) {
+    void publish(SceneRequest request) {
         notifyListeners(request, PUBLISHING)
-        File workingDirectory = sceneRepository.getSceneWorkingDirectory(request)
-        File targetDirectory = sceneRepository.getSceneHomeDirectory(request)
-        FilePermissions.readWritableRecursive(workingDirectory)
-        if (targetDirectory.exists()) {
-            targetDirectory.deleteDir()
-        }
-        FileUtils.moveDirectory(workingDirectory, targetDirectory)
+        doPublish(
+                sceneRepository.getSceneWorkingDirectory(request),
+                sceneRepository.getSceneHomeDirectory(request)
+        )
         notifyListeners(request, PUBLISHED)
     }
 
-    @Override
-    void publishRequest(long requestId, String user, Collection<SceneReference> scenes) {
-
+    private void doPublish(File src, File dest){
+        FilePermissions.readWritableRecursive(src)
+        if (dest.exists()) {
+            dest.deleteDir()
+        }
+        FileUtils.moveDirectory(src, dest)
     }
+
+
 }

@@ -5,9 +5,9 @@ package org.openforis.sepal.scene
  */
 interface ScenePublisher {
 
-    void publishScene(SceneRequest sceneRequest)
+    void publish(SceneRequest request)
 
-    void publishRequest(long requestId, String user, Collection<SceneReference> scenes)
+    void publish(DownloadRequest request)
 
     void register(SceneRetrievalListener... listeners)
 }

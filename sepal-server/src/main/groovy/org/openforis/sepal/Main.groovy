@@ -53,6 +53,7 @@ class Main {
                 scenesDownloadRepo)
 
         retrievalComponent.register(scenesDownloadRepo, sceneManager)
+        retrievalComponent.registerRequestListener(scenesDownloadRepo, sceneManager)
         sceneManager.start()
     }
 

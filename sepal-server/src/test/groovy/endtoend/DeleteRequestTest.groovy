@@ -49,7 +49,7 @@ class DeleteRequestTest extends Specification {
             def requestScene = responseRequest.scenes[0]
             responseRequest.scenes.size == 1
             requestScene.id == expectedRequestedSceneId
-            requestScene.sceneId == SCENE_ID
+            requestScene.sceneReference.id == SCENE_ID
     }
 
 

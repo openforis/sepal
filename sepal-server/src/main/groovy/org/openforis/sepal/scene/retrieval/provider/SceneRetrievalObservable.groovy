@@ -2,7 +2,7 @@ package org.openforis.sepal.scene.retrieval.provider
 
 import org.openforis.sepal.scene.SceneRequest
 import org.openforis.sepal.scene.SceneRetrievalListener
-import org.openforis.sepal.scene.SceneStatus
+import org.openforis.sepal.scene.Status
 
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -15,7 +15,7 @@ class SceneRetrievalObservable {
         }
     }
 
-    final void notifyListeners(SceneRequest request, SceneStatus status) {
+    final void notifyListeners(SceneRequest request, Status status) {
         listeners.each {
             it.sceneStatusChanged(request, status)
         }

@@ -1,6 +1,6 @@
 package org.openforis.sepal.scene.retrieval.provider.earthexplorer
 
-
+import org.openforis.sepal.scene.DownloadRequest
 import org.openforis.sepal.scene.SceneProvider
 import org.openforis.sepal.scene.SceneRequest
 import org.openforis.sepal.scene.retrieval.provider.FileStream
@@ -27,7 +27,7 @@ class EarthExplorerSceneProvider implements SceneProvider {
         findAvailableScenes(filterDataSet(requests))
     }
 
-    private List<SceneRequest> filterDataSet(List<SceneRequest> requests) {
+    private static List<SceneRequest> filterDataSet(List<SceneRequest> requests) {
         requests.findAll { SceneRequest request ->
             request.sceneReference.dataSet in [
                     LANDSAT_8,
@@ -53,6 +53,10 @@ class EarthExplorerSceneProvider implements SceneProvider {
         return scenesMap
     }
 
+    Collection<SceneRequest> retrieve(DownloadRequest downloadRequest){
+        retrieve(downloadRequest.scenes)
+    }
+
     @Override
     Collection<SceneRequest> retrieve(List<SceneRequest> requests) {
         def filteredList = filterRequests(requests)
@@ -76,7 +80,7 @@ class EarthExplorerSceneProvider implements SceneProvider {
         }
     }
 
-    private FileStream toFileStream(InputStream inputStream, SceneRequest request, double size) {
+    private static FileStream toFileStream(InputStream inputStream, SceneRequest request, double size) {
         new FileStream(inputStream, request.sceneReference.id + ".tar.gz", size)
     }
 

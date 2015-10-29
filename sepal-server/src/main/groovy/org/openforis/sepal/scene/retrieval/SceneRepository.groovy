@@ -1,5 +1,6 @@
 package org.openforis.sepal.scene.retrieval
 
+import org.openforis.sepal.scene.DownloadRequest
 import org.openforis.sepal.scene.SceneRequest
 import org.openforis.sepal.scene.retrieval.provider.FileStream
 import org.openforis.sepal.util.Tar
@@ -20,6 +21,10 @@ interface SceneRepository {
 
     File getSceneHomeDirectory(SceneRequest request)
 
+    File getDownloadRequestWorkingDirectory(DownloadRequest request)
+
+    File getDownloadRequestHomeDirectory(DownloadRequest request)
+
 }
 
 class FileSystemSceneRepository implements SceneRepository {
@@ -32,11 +37,21 @@ class FileSystemSceneRepository implements SceneRepository {
     }
 
     @Override
-    File getSceneHomeDirectory(SceneRequest request) {
-        def userHomeDirectory = userHomeDir(request.userName)
-        File sceneHomeDir = new File(userHomeDirectory, request.sceneReference.id)
+    File getSceneHomeDirectory(SceneRequest scene) {
+        def userHomeDirectory = userHomeDir(scene.request.username)
+        File sceneHomeDir = new File(userHomeDirectory, scene.sceneReference.id)
         sceneHomeDir.mkdirs()
         return sceneHomeDir
+    }
+
+
+
+    @Override
+    File getDownloadRequestHomeDirectory(DownloadRequest request) {
+        def userHomeDirectory = userHomeDir(request.username)
+        File requestHomeDir = new File(userHomeDirectory, request.requestName)
+        requestHomeDir.mkdirs()
+        return requestHomeDir
     }
 
     @Override
@@ -55,16 +70,21 @@ class FileSystemSceneRepository implements SceneRepository {
         Tar.unpackTarGz(tarFile)
     }
 
+
     File createSceneDir(request) {
         File sceneDir = sceneDir(request)
         sceneDir.mkdirs()
         return sceneDir
     }
 
-    private File sceneDir(SceneRequest request) {
-        def requestDir = new File(workingDir, "" + request.id)
-        def dataSetDir = new File(requestDir, request.sceneReference.dataSet.name())
-        new File(dataSetDir, request.sceneReference.id)
+    @Override
+    File getDownloadRequestWorkingDirectory(DownloadRequest request) {
+        def requestDir = new File(workingDir, "" + request.requestId)
+        new File(requestDir, request.scenes.first().sceneReference.dataSet.name())
+    }
+
+    private File sceneDir(SceneRequest scene) {
+        new File(getDownloadRequestWorkingDirectory(scene.request), scene.sceneReference.id)
     }
 
     private File userHomeDir(String userName) {

@@ -5,7 +5,7 @@ import org.openforis.sepal.scene.retrieval.SceneRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.scene.SceneStatus.*
+import static org.openforis.sepal.scene.Status.*
 
 interface SceneContextProvider {
 
@@ -16,14 +16,19 @@ interface SceneContextProvider {
 
 class FileSystemSceneContextProvider implements SceneContextProvider {
     private static final Logger LOG = LoggerFactory.getLogger(this)
+
     @Delegate
     @SuppressWarnings("GroovyUnusedDeclaration")
     private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
+
+
+
     private final SceneRepository sceneRepository
 
     FileSystemSceneContextProvider(SceneRepository sceneRepository) {
         this.sceneRepository = sceneRepository
     }
+
 
     void withScene(SceneRequest request, Double sizeInBytes = null, Closure closure) {
         try {

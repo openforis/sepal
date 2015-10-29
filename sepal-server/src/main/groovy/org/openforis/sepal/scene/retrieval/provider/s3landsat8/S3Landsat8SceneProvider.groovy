@@ -52,7 +52,7 @@ class S3Landsat8SceneProvider implements SceneProvider {
         executor.executeAllAndWait(jobs)
     }
 
-    private FileStream toFileStream(InputStream entryStream, Entry entry) {
+    private static FileStream toFileStream(InputStream entryStream, Entry entry) {
         new FileStream(entryStream, entry.fileName, entry.sizeInBytes)
     }
 

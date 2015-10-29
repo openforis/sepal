@@ -1,18 +1,27 @@
 package endtoend.dataprovider
 
 import fake.SynchronousJobExecutor
+import org.openforis.sepal.scene.DownloadRequest
 import org.openforis.sepal.scene.SceneReference
 import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.Status
 import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
 import org.openforis.sepal.scene.retrieval.provider.FileSystemSceneContextProvider
 import org.openforis.sepal.scene.retrieval.provider.s3landsat8.S3Landsat8SceneProvider
 import org.openforis.sepal.scene.retrieval.provider.s3landsat8.S3LandsatClient
 import org.openforis.sepal.scene.retrieval.provider.s3landsat8.SceneIndex
+import spock.lang.Specification
 import util.DirectoryStructure
 
 import static org.openforis.sepal.scene.DataSet.LANDSAT_8
 
-class S3Landsat8SceneProviderTest extends SceneProviderTest {
+class S3Landsat8SceneProviderTest extends Specification{
+
+
+    def workingDir = File.createTempDir('workingDir', null)
+    def requestId = 1L
+    def sceneId = 'id'
+
     def provider = new S3Landsat8SceneProvider(
             new FakeS3LandsatClient(),
             new SynchronousJobExecutor(),
@@ -27,7 +36,8 @@ class S3Landsat8SceneProviderTest extends SceneProviderTest {
 
 
     def 'Retrieving a scene downloads the files'() {
-        def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User')
+        def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User', new Date(), Status.REQUESTED, new DownloadRequest(requestId: 1L, status: Status.REQUESTED))
+        request.request.scenes.add(request)
         when:
             provider.retrieve([request])
         then:

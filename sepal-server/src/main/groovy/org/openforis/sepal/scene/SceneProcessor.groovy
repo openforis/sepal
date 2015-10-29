@@ -5,9 +5,9 @@ package org.openforis.sepal.scene
  */
 interface SceneProcessor {
 
-    void processScene(SceneRequest sceneRequest)
+    void process(SceneRequest downloadRequest)
 
-    void processRequest(long requestId, Collection<SceneReference> scenes, String processingScript)
+    void process(DownloadRequest downloadRequest, String processingChain)
 
     void register(SceneRetrievalListener... listeners)
 }

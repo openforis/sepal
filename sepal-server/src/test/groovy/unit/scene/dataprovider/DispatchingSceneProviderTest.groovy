@@ -1,13 +1,8 @@
-package unit.dataprovider
+package unit.scene.dataprovider
 
-import org.openforis.sepal.scene.DataSet
-import org.openforis.sepal.scene.SceneProvider
-import org.openforis.sepal.scene.SceneReference
-import org.openforis.sepal.scene.SceneRequest
+import org.openforis.sepal.scene.*
 import org.openforis.sepal.scene.retrieval.provider.DispatchingSceneProvider
-import spock.lang.Ignore
 import spock.lang.Specification
-
 
 class DispatchingSceneProviderTest extends Specification {
     def requestId = 1L
@@ -22,7 +17,7 @@ class DispatchingSceneProviderTest extends Specification {
         def delegating = new DispatchingSceneProvider([provider1, provider2, provider3, provider4])
         def requests = [
                 request('first', dataSet),
-                request('last', dataSet),
+                request('last', dataSet)
         ]
 
         when:
@@ -39,6 +34,6 @@ class DispatchingSceneProviderTest extends Specification {
     }
 
     SceneRequest request(String sceneId, DataSet dataSet) {
-        new SceneRequest(requestId, new SceneReference(sceneId, dataSet), username)
+        new SceneRequest(requestId, new SceneReference(sceneId, dataSet), username, new Date(), Status.REQUESTED, new DownloadRequest(requestId: 1L, status: Status.REQUESTED))
     }
 }
