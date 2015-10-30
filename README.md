@@ -122,6 +122,9 @@ A free and open source geographic information system.
 **Orfeo ToolBox** -
 Library for remote sensing image processing.
 
+**OpenSARKid** -
+Tools for Autimatic Preprocessing of SAR Imagery.
+
 Build and Release
 -----------------
 The project is under active development, and the build and release process is still in flux, so these
