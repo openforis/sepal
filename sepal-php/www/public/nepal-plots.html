@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nepal</title>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="/css/leaflet.css"/>
+    <link rel="stylesheet" href="/css/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="/css/leaflet-fullscreen.css"/>
+    <link rel="stylesheet" href="/css/bootstrap.css"/>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .leaflet-control-attribution {
+            font-size: 140% !important;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="/js/leaflet.js"></script>
+<script src="/js/leaflet-providers.js"></script>
+<script src="/js/leaflet.awesome-markers.min.js"></script>
+<script src="/js/leaflet-fullscreen.js"></script>
+
+<script>
+
+
+
+    var plots = [
+        {x: 84.79552192, y: 27.68360245, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 84.79546755, y: 27.68630875, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 84.79293388, y: 27.75843798, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 84.79597604, y: 27.75848653, forest: true, damaged: true, damageType: ['liquefaction'], damagedObject: 'Forest'},
+        {x: 84.83654425, y: 27.75825502, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 84.87657732, y: 27.68447785, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 84.91434724, y: 27.72161958, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 84.9177342, y: 27.75504974, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 84.91768269, y: 27.75775622, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 84.95830337, y: 27.75478238, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 85.03910918, y: 27.71811921, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 85.04003072, y: 28.15117686, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Infrastructure'},
+        {x: 85.04000606, y: 28.15253013, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Infrastructure'},
+        {x: 85.03998141, y: 28.1538834, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 85.16113502, y: 27.7546202, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Buildings'},
+        {x: 85.15995229, y: 27.9350489, forest: false, damaged: true, damageType: ['rupture'], damagedObject: 'Buildings'},
+        {x: 85.2009318, y: 27.68209134, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 85.20209532, y: 27.79037608, forest: false, damaged: true, damageType: ['floods'], damagedObject: 'Other'},
+        {x: 85.2021487, y: 28.0777346, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 85.20520057, y: 28.07777456, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 86.13262194, y: 27.77792572, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 86.13260046, y: 27.78063369, forest: true, damaged: true, damageType: ['floods'], damagedObject: 'Other'},
+        {x: 86.13566656, y: 27.7779448, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Other'},
+        {x: 86.17249336, y: 27.74255375, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Infrastructure'},
+        {x: 85.32558452, y: 27.93231908, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 85.32249474, y: 27.93498903, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 85.32251565, y: 27.93363551, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 85.32556365, y: 27.93367261, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 85.36405411, y: 28.00409, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 86.21754947, y: 27.81549301, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Buildings'},
+        {x: 85.4059214, y: 27.86205258, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 85.44488816, y: 27.96989956, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 86.2182821, y: 27.85024071, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 86.21827239, y: 27.85159471, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 86.21901491, y: 27.88498825, forest: true, damaged: true, damageType: ['landslide', 'floods'], damagedObject: 'Forest'},
+        {x: 86.21899548, y: 27.88769623, forest: true, damaged: true, damageType: ['landslide', 'floods'], damagedObject: 'Forest'},
+        {x: 86.25439101, y: 27.77601798, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 86.25438178, y: 27.777372, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 86.25437255, y: 27.77872602, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 86.25743567, y: 27.77603437, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 86.25657862, y: 27.88703128, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Crops'},
+        {x: 84.55111658, y: 28.08161615, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Buildings'},
+        {x: 84.59388548, y: 27.90380387, forest: false, damaged: true, damageType: ['rupture'], damagedObject: 'Buildings'},
+        {x: 84.5914428, y: 28.00929694, forest: false, damaged: true, damageType: ['floods'], damagedObject: 'Crops'},
+        {x: 84.71448295, y: 28.19054533, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Other'},
+        {x: 84.75777351, y: 28.11957797, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Buildings'},
+        {x: 84.75780167, y: 28.11822494, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Buildings'},
+        {x: 84.79618511, y: 28.22622364, forest: false, damaged: true, damageType: ['landslide'], damagedObject: 'Other'},
+        {x: 85.0010784, y: 28.00849637, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 85.24505595, y: 28.00794725, forest: false, damaged: true, damageType: ['rupture'], damagedObject: 'Buildings'},
+        {x: 85.24284314, y: 28.07738927, forest: false, damaged: true, damageType: ['rupture'], damagedObject: 'Buildings'},
+        {x: 85.24585107, y: 28.0801352, forest: false, damaged: true, damageType: ['rupture'], damagedObject: 'Buildings'},
+//        {x: 85.27981219, y: 27.75353001, forest: false, damaged: true, damageType: ['rupture'], damagedObject: 'Buildings'},
+        {x: 84.83695639, y: 28.22464889, forest: false, damaged: true, damageType: ['liquefaction'], damagedObject: 'Buildings'},
+        {x: 84.8369291, y: 28.22600197, forest: false, damaged: true, damageType: ['liquefaction'], damagedObject: 'Buildings'},
+        {x: 84.87437619, y: 27.79270158, forest: false, damaged: true, damageType: ['liquefaction'], damagedObject: 'Buildings'},
+        {x: 84.87767377, y: 28.22576814, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 84.87770054, y: 28.22441502, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 84.87764699, y: 28.22712126, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 84.88075598, y: 28.22446242, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 84.88072924, y: 28.22581554, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 84.88070251, y: 28.22716866, forest: true, damaged: true, damageType: ['landslide'], damagedObject: 'Forest'},
+        {x: 84.91525041, y: 27.82853819, forest: false, damaged: true, damageType: ['liquefaction'], damagedObject: 'Buildings'},
+        {x: 84.91522455, y: 27.82989142, forest: false, damaged: true, damageType: ['liquefaction'], damagedObject: 'Buildings'},
+        {x: 84.91826894, y: 27.82993738, forest: true, damaged: true, damageType: ['liquefaction'], damagedObject: 'Buildings'}
+    ];
+
+    var damagedPlots = L.layerGroup();
+
+    var forestMarkers = markers(true);
+    var otherLandMarkers = markers(false);
+    var numberOfPlots = plots.length;
+    for (var i = 0; i < numberOfPlots; i++) {
+        var plot = plots[i];
+        var m = plot.forest ? forestMarkers : otherLandMarkers;
+        L.marker([plot.y, plot.x], {icon: m[plot.damagedObject]})
+                .bindPopup(popup(plot))
+                .addTo(damagedPlots);
+    }
+
+    createLayer('nepal', 'plots').addTo(damagedPlots);
+
+
+    var epicenterMarker = L.AwesomeMarkers.icon({
+        icon: 'record',
+        markerColor: 'red'
+    });
+
+    var radarAttribution = 'damage percentage with permission from <a href="http://www.mdacorporation.com/">MDA</a>.';
+
+    var baseLayers = {
+        'Blue Marble': L.tileLayer.wms('http://rdc-snsf.org//diss_geoserver/gwc/service/wms', {
+            layers: ['unredd:blue_marble'],
+            format: 'image/png',
+            transparent: true
+        })
+    };
+
+    var overlayLayers = {
+        'OpenStreetMap': L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/{type}/{z}/{x}/{y}.{ext}', {
+            type: 'hyb',
+            ext: 'png',
+            attribution: 'Tiles Courtesy of <a href="http://www.mapquest.com/">MapQuest</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            subdomains: '1234',
+            opacity: 0.9
+        }),
+
+        'Epicenter': L.marker([28.15, 84.71], {icon: epicenterMarker}).bindPopup("Epicenter at 28.15, 84.71"),
+        'Damaged plots': damagedPlots,
+        'Damage 40%': createLayer('nepal', 'dam_perc_L40_fix', radarAttribution),
+        'Damage 55%': createLayer('nepal', 'dam_perc_L55_fix', radarAttribution),
+        'Damage 70%': createLayer('nepal', 'dam_perc_L70_fix', radarAttribution),
+        'Damage 80%': createLayer('nepal', 'dam_perc_L80_fix', radarAttribution)
+    };
+
+
+    var map = L.map('map', {
+        layers: [baseLayers['Blue Marble'], overlayLayers['OpenStreetMap'], overlayLayers['Epicenter'], overlayLayers['Damaged plots']],
+        fullscreenControl: true,
+        fullscreenControlOptions: {
+            position: 'topleft'
+        },
+        minZoom: 7
+    });
+
+    L.control.layers(baseLayers, overlayLayers).addTo(map);
+
+
+    map.fitBounds([[27.4, 86.6], [28.8, 84.5]]);
+
+    function markers(forest) {
+        return {
+            Crops: createMarker(forest, 'Crops'),
+            Forest: createMarker(forest, 'Forest'),
+            Infrastructure: createMarker(forest, 'Infrastructure'),
+            Buildings: createMarker(forest, 'Buildings'),
+            Other: createMarker(forest, 'Other')
+        };
+    }
+    function createMarker(forest, damagedObject) {
+        return L.AwesomeMarkers.icon({
+            icon: markerIcon(damagedObject),
+            markerColor: forest ? 'darkgreen' : 'cadetblue'
+        });
+    }
+
+    function markerIcon(damagedObject) {
+        switch(damagedObject) {
+            case 'Crops': return 'glyphicon glyphicon-grain';
+            case 'Forest': return 'tree-deciduous';
+            case 'Infrastructure': return 'road';
+            case 'Buildings': return 'home';
+            case 'Other': return 'asterisk';
+        }
+    }
+
+
+
+    function createLayer(user, name, attribution) {
+        return L.tileLayer.wms("http://54.171.194.37:8080/geoserver/" + user + "/wms", {
+            layers: user + ':' + name,
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.0',
+            attribution: attribution
+        });
+    }
+
+    function popup(plot) {
+        var popup = '\
+        <table cellpadding="5">\
+            <tr>\
+            <th>\
+            Location\
+            </th>\
+            <td>' + plot.y + ', ' + plot.x + '</td>\
+            </tr>\
+            <tr>\
+            <th>\
+            Forest\
+            </th>\
+            <td>' + (plot.forest ? 'Yes' : 'No') + '</td>\
+            </tr>\
+            <tr>\
+            <th>\
+            Damage type\
+            </th>\
+            <td>' + toLabel(plot.damageType[0]) + '</td>\
+            </tr>\
+            <tr>\
+            <th>\
+            Damaged object\
+            </th>\
+            <td>' + toLabel(plot.damagedObject) + '</td>\
+            </tr>\
+        </table>';
+        console.log(popup);
+        return popup;
+    }
+
+    function toLabel(string) {
+        string = string.replace(new RegExp('_', 'g'), ' ');
+        string = string.charAt(0).toUpperCase() + string.slice(1);
+        return string
+    }
+
+
+</script>
+</body>
+</html>

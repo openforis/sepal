@@ -39,7 +39,7 @@ class SepalSceneProcessorTest extends Specification {
             }
     }
 
-    def 'Processing an atomic requests  executes the script in the scene directory'() {
+    def 'Processing an atomic requests  executes the script in the request directory'() {
         atomicRequest.scenes.add(sceneRequest2)
         sceneRepo.createSceneDir(sceneRequest2)
         when:

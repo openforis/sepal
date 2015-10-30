@@ -106,8 +106,8 @@
     - "sepal:sepal"
     - "ssh-gateway:ssh-gateway"
     volumes:
-    - "{{ '/www/app/controllers:/var/www/html/app/controllers' if local_php else '' }}"
-    - "{{ '/www/app/views:/var/www/html/app/views' if local_php else '' }}"
+    #- "{{ '/www/app/controllers:/var/www/html/app/controllers' if local_php else '' }}"
+    #- "{{ '/www/app/views:/var/www/html/app/views' if local_php else '' }}"
     - "/data/logs/sepal-php:/var/log/apache2"
     - "/data/sepal/data:/data/home/"
     - "/data/sepal/config:/etc/sepal"

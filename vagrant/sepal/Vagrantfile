@@ -5,7 +5,7 @@ Vagrant.configure(2) do |config|
   config.vm.network "private_network", ip: "172.28.128.3"
   config.vm.box = 'ubuntu/trusty64'
   config.vm.synced_folder '../../docker', '/docker'
-  config.vm.synced_folder '../../../sepal-php/www', '/www'
+  config.vm.synced_folder '../../sepal-php/www', '/www'
 
 
   config.vm.provider "virtualbox" do |v|
@@ -20,7 +20,7 @@ Vagrant.configure(2) do |config|
         region: 'eu-central-1',
         deploy_environment: 'Staging',
 	    local_sepal: false,
-	    local_php: true,
+	    local_php: false,
         secret_vars_file: '~/.sepal/secret.yml',
         docker_repository_host: '',
         use_custom_host: true,

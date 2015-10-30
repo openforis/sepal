@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nepal</title>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="/css/leaflet.css"/>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+
+</head>
+<body>
+<div id="map"></div>
+
+<script src="/js/jquery.js"></script>
+<script src="/js/leaflet.js"></script>
+<script src="/js/leaflet-omnivore.min.js"></script>
+<script src="/js/leaflet-providers.js"></script>
+<script src="https://maps.google.com/maps/api/js?v=3&sensor=false"></script>
+<script src="/js/Google.js"></script>
+<script src="/js/Bing.js"></script>
+<script>
+
+
+    var baseLayers = {
+        'Blue Marble': L.tileLayer.wms('http://rdc-snsf.org//diss_geoserver/gwc/service/wms', {
+            layers: ['unredd:blue_marble'],
+            format: 'image/png',
+            transparent: true
+        }),
+
+        'HERE': L.tileLayer('http://{s}.{base}.maps.cit.api.here.com/maptile/2.1/maptile/{mapID}/hybrid.day/{z}/{x}/{y}/256/png8?app_id={app_id}&app_code={app_code}', {
+            attribution: 'Map &copy; 1987-2014 <a href="http://developer.here.com">HERE</a>',
+            subdomains: '1234',
+            mapID: 'newest',
+            app_id: 'Y8m9dK2brESDPGJPdrvs',
+            app_code: 'dq2MYIvjAotR8tHvY8Q_Dg',
+            base: 'aerial',
+            maxZoom: 20
+        }),
+
+        'MapQuestOpen': L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/{type}/{z}/{x}/{y}.{ext}', {
+            type: 'sat',
+            ext: 'jpg',
+            attribution: 'Tiles Courtesy of <a href="http://www.mapquest.com/">MapQuest</a> &mdash; Portions Courtesy NASA/JPL-Caltech and U.S. Depart. of Agriculture, Farm Service Agency',
+            subdomains: '1234'
+        }),
+
+        'Esri World Imagery': L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        }),
+
+        'Bing': new L.BingLayer("ArGcaHOT3g-HTXj6SLU0sd2HR65wY33icZEF1TDphkEcnVfMXmCpoBPeXQs4XgmU"),
+
+        'Google': new L.Google()
+    };
+
+    var overlayLayers = {
+        'OpenStreetMap': L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/{type}/{z}/{x}/{y}.{ext}', {
+            type: 'hyb',
+            ext: 'png',
+            attribution: 'Tiles Courtesy of <a href="http://www.mapquest.com/">MapQuest</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            subdomains: '1234',
+            opacity: 0.9
+        }),
+
+        'PlanetLabs - Before': create('planetlabs-before'),
+        'PlanetLabs - After': create('planetlabs-after'),
+        'Plots (Big - takes time)': omnivore.kml('/plots.kml')
+    };
+
+
+    var map = L.map('map', {
+        layers: [baseLayers['Blue Marble'], overlayLayers['OpenStreetMap']]
+    });
+
+    L.control.layers(baseLayers, overlayLayers).addTo(map);
+    L.marker([28.15, 84.71]).addTo(map)
+    map.fitBounds([[27.4, 86.6], [28.8, 84.5]]);
+
+
+    function create(name) {
+        return L.tileLayer.wms("http://54.171.194.37:8080/geoserver/nepal/wms", {
+            layers: 'nepal:' + name,
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.0'
+        });
+    }
+</script>
+</body>
+</html>

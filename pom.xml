@@ -9,6 +9,7 @@
 
     <modules>
         <module>sepal-server</module>
+        <module>sepal-php</module>
     </modules>
 
 
