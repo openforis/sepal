@@ -96,7 +96,7 @@ The user sandboxes are spaces where users get access to a number of geospatial d
 for provided tools.
 
 
-### Software is deployed on each users sandbox:
+### Software deployed on each users sandbox:
 
 **Open Foris Geospatial Toolkit** -
 A collection of command-line utilities for processing of geospatial data.
