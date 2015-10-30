@@ -12,6 +12,7 @@ class DownloadRequest implements Cloneable{
     Date requestTime
     Boolean groupScenes
     String processingChain
+    DataSet dataSet
     List<SceneRequest> scenes = []
     Status status
 

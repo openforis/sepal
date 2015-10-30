@@ -18,8 +18,8 @@ class SepalSceneProcessorTest extends Specification {
     def processingScript = setupProcessingScript()
     def processor = new SepalSceneProcessor(sceneRepo, new File(workingDir, 'scripts'))
 
-    def request = new DownloadRequest(requestId: 1L, groupScenes: false)
-    def atomicRequest = new DownloadRequest(requestId: 2L, groupScenes: true)
+    def request = new DownloadRequest(requestId: 1L, groupScenes: false, dataSet: LANDSAT_8)
+    def atomicRequest = new DownloadRequest(requestId: 2L, groupScenes: true, dataSet: LANDSAT_8)
     def sceneRequest = new SceneRequest(11L, new SceneReference('L45345', LANDSAT_8), processingScript, new Date(), Status.REQUESTED,request)
     def sceneRequest2 = new SceneRequest(12L, new SceneReference('L45345', LANDSAT_8), processingScript, new Date(), Status.REQUESTED,atomicRequest)
 

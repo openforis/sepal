@@ -20,6 +20,8 @@ interface ScenesDownloadRepository extends SceneRetrievalListener,DownloadReques
 
     Boolean hasStatus(long requestId, Status status)
 
+    Boolean requestNameExist(String userName, String requestName)
+
     List<DownloadRequest> findUserRequests(String username)
 
     void deleteRequest(int requestId)
@@ -53,7 +55,15 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
             WHERE rs.request_id = ?
             AND LOWER(rs.status) <> ?''',[requestId, status.name().toLowerCase()])
         return row?.counter == 0
+    }
 
+    @Override
+    Boolean requestNameExist(String userName, String requestName) {
+        GroovyRowResult row = sql.firstRow('''
+           SELECT COUNT(*) AS counter
+           FROM download_requests dr
+           WHERE username = ? AND lower(request_name) = ?''', [userName,requestName?.toLowerCase()])
+        return row?.counter > 0
     }
 
     @Override
@@ -142,8 +152,11 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
         downloadRequest.requestName = row.request_name
         downloadRequest.status = row.request_status
         downloadRequest.processingChain = row.processing_chain
+
+        def dataSet = DataSet.byId(row.dataset_id)
+        downloadRequest.dataSet = dataSet
         def scene = new SceneRequest(row.id as long,
-                new SceneReference(row.scene_id, DataSet.byId(row.dataset_id)),
+                new SceneReference(row.scene_id, dataSet),
                 row.processing_chain as String,
                 row.last_updated as Date,
                 Status.byValue(row.status as String),downloadRequest)

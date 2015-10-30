@@ -12,18 +12,25 @@ class ScenesDownloadTest extends Specification {
 
     def setupSpec() {
         driver = new SepalDriver()
-                .withUsers(USERNAME)
-                .withActiveDataSets(DATASET_ID)
+
     }
 
     def cleanupSpec() {
         driver.stop()
     }
 
+    def cleanup(){
+        driver.resetDatabase()
+    }
+
+    def setup(){
+        driver.withUsers(USERNAME).withActiveDataSets(DATASET_ID)
+    }
+
     def 'Given a request with a valid request name, the service reply with HTTP Status 200'() {
         given:
         def request = [
-                userId   : USERNAME,
+                username   : USERNAME,
                 dataSetId: DATASET_ID,
                 sceneIds : ["LC12"],
                 groupScenes: true,
@@ -39,15 +46,14 @@ class ScenesDownloadTest extends Specification {
     def 'Given a request with an invalid request name, the service reply with HTTP Status 400'() {
         given:
         def request = [
-                userId   : USERNAME,
+                username   : USERNAME,
                 dataSetId: DATASET_ID,
                 sceneIds : ["LC12"],
                 groupScenes: true,
                 requestName: "Un%validRequestName"
         ]
         when:
-        def response = driver.postDownloadRequests(request)
-
+        driver.postDownloadRequests(request)
         then:
         def e = thrown(FailedRequest)
         e.response.status == 400
@@ -82,7 +88,7 @@ class ScenesDownloadTest extends Specification {
 
     def 'Given a download request with invalid data set, 400 is returned'() {
         def request = [
-                userId   : USERNAME,
+                username   : USERNAME,
                 dataSetId: INVALID_DATASET_ID,
                 sceneIds : ['the scene id']
         ]
@@ -95,7 +101,7 @@ class ScenesDownloadTest extends Specification {
 
     def 'Given a download request without scenes, 400 is returned'() {
         def request = [
-                userId   : USERNAME,
+                username   : USERNAME,
                 dataSetId: DATASET_ID,
                 sceneIds : []
         ]
@@ -105,5 +111,25 @@ class ScenesDownloadTest extends Specification {
             def e = thrown(FailedRequest)
             e.response.status == 400
             e.message.toLowerCase().contains('scene')
+    }
+
+    def 'Trying to post 2 request for the same user having the same RequestName, 400 is returned'(){
+        given:
+        def request = [
+                username   : USERNAME,
+                dataSetId: DATASET_ID,
+                sceneIds : ["LC12"],
+                groupScenes: true,
+                requestName: "validRequestNameTest"
+        ]
+        when:
+        driver.postDownloadRequests(request)
+        //request.requestName = request.requestName.toUpperCase()
+        driver.postDownloadRequests(request)
+        then:
+        def e = thrown(FailedRequest)
+        e.response.status == 400
+        e.message.toLowerCase().contains('requestname')
+
     }
 }

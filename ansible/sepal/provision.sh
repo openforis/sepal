@@ -15,4 +15,4 @@ ansible-playbook ${CONTEXT_DIR}/setup.yml \
 ansible-playbook ${CONTEXT_DIR}/configure-instances.yml \
     -i ${INVENTORY_FILE} \
     --private-key=~/.ssh/sepal/eu-west-1.pem \
-    --extra-vars "deploy_environment=Development use_custom_host=false secret_vars_file=~/.sepal/secret.yml"
+    --extra-vars "local_php=false local_sepal=false deploy_environment=Development use_custom_host=false secret_vars_file=~/.sepal/secret.yml"

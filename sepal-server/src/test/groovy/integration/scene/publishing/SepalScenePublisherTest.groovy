@@ -18,9 +18,9 @@ class SepalScenePublisherTest extends Specification {
     def homeDir = File.createTempDir('homeDir', null)
 
     def sceneRepo = new FileSystemSceneRepository(workingDir, new File(homeDir, "\$user/sdmsRepository").toString())
-    def request = new DownloadRequest(requestId: 1L, username: 'username')
+    def request = new DownloadRequest(requestId: 1L, username: 'username', dataSet: LANDSAT_8)
     def sceneRequest = new SceneRequest(11L, new SceneReference('L45345', LANDSAT_8), 'username', new Date(), Status.REQUESTED,request)
-    def atomicRequest = new DownloadRequest(requestId: 2L, groupScenes: true, requestName: 'reqName', username: 'user')
+    def atomicRequest = new DownloadRequest(requestId: 2L, groupScenes: true, requestName: 'reqName', username: 'user', dataSet: LANDSAT_8)
     def sceneRequest2 = new SceneRequest(12L, new SceneReference('L45345', LANDSAT_8), 'username', new Date(), Status.REQUESTED,atomicRequest)
     def sceneRequest3 = new SceneRequest(13L, new SceneReference('L2', LANDSAT_8), 'username', new Date(), Status.REQUESTED,atomicRequest)
     def publisher = new SepalScenePublisher(sceneRepo)

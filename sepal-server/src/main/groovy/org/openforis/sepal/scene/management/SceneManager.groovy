@@ -43,6 +43,7 @@ class SceneManager implements SceneRetrievalListener,DownloadRequestListener {
             if (request.groupScenes){
                 switch (status) {
                     case REQUESTED:
+                        scenesRepository.requestStatusChanged(request,DOWNLOADING)
                         sceneProvider.retrieve(request.scenes)
                         break
                     case DOWNLOADED:
