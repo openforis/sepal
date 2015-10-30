@@ -55,6 +55,8 @@ flexible deployment. Sandboxes are started when needed, and stopped when not use
 cluster of worker server instances, which can be dynamically scaled up and down based on demand. It also allows the end
 users to use the system independently on their own AWS account.
 
+![alt tag](docs/components.png)
+
 ### Components and services are part of a SEPAL deployment
 
 **HAProxy** -
