@@ -128,8 +128,11 @@ The project is under active development, and the build and release process is st
 instructions will change, and improve, over time.
 
 ### Prerequisites
-A Linux or Windows installation. While it might be possible, with significant effort, to get SEPAL running on
-Windows, it is not supported. In addition to this, the following software is needed:
+In order to build and run the SEPAL system, a Linux or Windows installation is needed. While it might be possible,
+with significant effort, to do this on Windows, it is not supported. The end-users on the other hand, are of course
+free to use whatever Operating system they prefer, including Windows.
+
+In addition to this, the following software must be installed:
 
 [Java](http://www.oracle.com/technetwork/java/javase/downloads/index.html),
 [Maven](https://maven.apache.org/download.cgi), and
