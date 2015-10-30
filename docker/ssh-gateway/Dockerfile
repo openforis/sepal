@@ -1,7 +1,6 @@
 FROM ubuntu:trusty
 MAINTAINER OpenForis
 
-
 ENV ADMIN_USERNAME sepalAdmin
 ENV WEB_ADMIN_USERNAME sepalAdminWeb
 ENV USER_GROUP "sepalUsers"

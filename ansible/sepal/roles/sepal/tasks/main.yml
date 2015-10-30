@@ -21,8 +21,6 @@
 - name: Copy lsat_geoserver_script
   copy: src=lsat_geoserver_fix.sh dest=/data/sepal/config/processing_scripts/ owner=sepal group=sepal mode=u=rwx,g=r,o=r
 
-
-
 - name: Start container
   docker:
     docker_api_version: "1.16"

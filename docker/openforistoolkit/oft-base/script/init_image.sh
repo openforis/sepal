@@ -2,15 +2,35 @@
 
 #install basic tools
 apt-get update && apt-get install -y software-properties-common
-
 apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
-apt-get update && apt-get install -y gdebi-core parallel openssh-server supervisor wget curl  gcc g++ gdal-bin libgdal1-dev libgsl0-dev libgsl0ldbl libproj-dev python-gdal python-scipy python-tk python-qt4 perl otb-bin otb-bin-qt python-otb
+
+apt-get update && apt-get install -y \
+    gdebi-core \
+    parallel \
+    openssh-server \
+    supervisor \
+    wget \
+    curl  \
+    gcc \
+    g++ \
+    gdal-bin \
+    libgdal1-dev \
+    libgsl0-dev \
+    libgsl0ldbl \
+    libproj-dev \
+    python-gdal \
+    python-scipy \
+    python-tk \
+    python-qt4 \
+    perl \
+    otb-bin \
+    otb-bin-qt \
+    python-otb \
+    nano
 
 #install oft
 wget http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
 chmod u+x OpenForisToolkit.run
-
-
 
 # install miniconda(arcsi)
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -30,7 +50,12 @@ apt-get update
 apt-get upgrade
 apt-get install -y r-base
 
-
+#install OpenSARKit
+export OSK_GIT_URL=https://github.com/cdanielw/OpenSARKit
+wget $OSK_GIT_URL/raw/master/install_scripts/install_osk.sh
+chmod u+x install_osk.sh
+./install_osk.sh
+rm ./install_osk.sh
 
 #create ssh deamon folder
 mkdir /var/run/sshd
