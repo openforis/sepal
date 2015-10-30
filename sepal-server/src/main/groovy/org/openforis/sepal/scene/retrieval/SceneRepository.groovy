@@ -80,7 +80,7 @@ class FileSystemSceneRepository implements SceneRepository {
     @Override
     File getDownloadRequestWorkingDirectory(DownloadRequest request) {
         def requestDir = new File(workingDir, "" + request.requestId)
-        new File(requestDir, request.scenes.first().sceneReference.dataSet.name())
+        new File(requestDir, request.dataSet.name())
     }
 
     private File sceneDir(SceneRequest scene) {

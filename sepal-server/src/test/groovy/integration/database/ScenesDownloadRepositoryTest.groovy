@@ -21,6 +21,7 @@ class ScenesDownloadRepositoryTest extends Specification{
     private static final def PROCESSING_CHAIN = "LANDSAT_8/chain.sh"
     private static final def SCENE_IDS = ["one", "two", "three"]
     private static final def USER = "Test.User"
+    private static final def REQ_NAME = "REQUEST"
     private static final def USER2 = "Test.User2"
 
     @Shared SepalDriver driver
@@ -37,13 +38,14 @@ class ScenesDownloadRepositoryTest extends Specification{
         insertRequest()
     }
 
-    private void insertRequest(def userName = USER){
+    private void insertRequest(def userName = USER, def requestName = REQ_NAME){
         RequestScenesDownloadCommand downloadCommand = new RequestScenesDownloadCommand(
                 dataSetId: DATASET_ID,
                 processingChain: PROCESSING_CHAIN,
                 groupScenes: false,
                 sceneIds: SCENE_IDS,
-                username: userName
+                username: userName,
+                requestName: requestName
         )
         scenesDownloadRepository.saveDownloadRequest(downloadCommand)
     }
@@ -63,7 +65,7 @@ class ScenesDownloadRepositoryTest extends Specification{
         then:
         requests.size() == 1
         def request = requests.first()
-        request.requestName == null
+        request.requestName == REQ_NAME
         request.status == REQUESTED
         !request.groupScenes
         request.scenes.size() == 3
@@ -108,7 +110,7 @@ class ScenesDownloadRepositoryTest extends Specification{
         given:
         def userRequestsBefore = scenesDownloadRepository.findUserRequests(USER)
         when:
-        insertRequest()
+        insertRequest(USER,'A req')
         insertRequest(USER2)
         def userRequestsAfter = scenesDownloadRepository.findUserRequests(USER)
         then:
@@ -138,6 +140,20 @@ class ScenesDownloadRepositoryTest extends Specification{
         requestsAfter.size() == 1
         requests.first().scenes.size() == 3
         requestsAfter.first().scenes.size() == 2
+    }
+
+    def 'Trying to insert a request for a user using the same request name, will fail'(){
+        when:
+        insertRequest()
+        then:
+        thrown(Exception)
+    }
+
+    def 'Trying to insert a request for another user using an already existent request name, will succeed'(){
+        when:
+        insertRequest(USER2)
+        then:
+        notThrown(Exception)
     }
 
 

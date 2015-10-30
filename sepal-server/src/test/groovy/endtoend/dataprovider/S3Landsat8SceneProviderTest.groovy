@@ -36,7 +36,7 @@ class S3Landsat8SceneProviderTest extends Specification{
 
 
     def 'Retrieving a scene downloads the files'() {
-        def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User', new Date(), Status.REQUESTED, new DownloadRequest(requestId: 1L, status: Status.REQUESTED))
+        def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User', new Date(), Status.REQUESTED, new DownloadRequest(dataSet: LANDSAT_8, requestId: 1L, status: Status.REQUESTED))
         request.request.scenes.add(request)
         when:
             provider.retrieve([request])

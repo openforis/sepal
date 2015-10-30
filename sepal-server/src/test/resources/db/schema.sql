@@ -207,6 +207,8 @@ CREATE TABLE download_requests (
   PRIMARY KEY (request_id)
 );
 
+ALTER TABLE download_requests ADD CONSTRAINT uc_user_req_name UNIQUE (username,request_name);
+
 
 CREATE TABLE requested_scenes (
   id                   INT(11)      NOT NULL AUTO_INCREMENT,
