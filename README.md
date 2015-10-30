@@ -57,7 +57,7 @@ users to use the system independently on their own AWS account.
 
 ![alt tag](https://raw.githubusercontent.com/openforis/sepal/master/docs/Components.png)
 
-### Components and services are part of a SEPAL deployment
+### Components and services part of a SEPAL deployment
 
 **HAProxy** -
 Off-the-shelf load balancer, allowing SEPAL to be clustered for availability. Run both SSH and HTTPS on port 443,
