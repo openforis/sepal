@@ -10,6 +10,11 @@
   roles:
     - role: prepare-environment
 
+    - role: unattended-upgrades
+      unattended_origins_patterns:
+        - 'origin=Ubuntu,archive=${distro_codename}-security'
+        - 'o=Ubuntu,a=${distro_codename}-updates'
+
     - role: docker.ubuntu
       docker_version: '1.8.1-0~trusty'
       docker_group_members: ['ubuntu','vagrant']
