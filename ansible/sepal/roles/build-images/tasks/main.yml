@@ -36,3 +36,6 @@
 - name: Build ssh-gateway
   docker_image: path="/docker/ssh-gateway" name="openforis/ssh-gateway" state=build
 
+- name: Build haproxy
+  docker_image: path="/docker/haproxy" name="openforis/haproxy" state=build
+

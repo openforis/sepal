@@ -1,0 +1,6 @@
+FROM haproxy:1.6.1
+
+MAINTAINER OpenForis
+
+EXPOSE 80
+EXPOSE 443

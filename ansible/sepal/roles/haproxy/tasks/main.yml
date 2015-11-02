@@ -1,0 +1,36 @@
+---
+- name: Create config dir
+  file:
+    path: "/data/haproxy"
+    state: directory
+
+- name: Copy config file
+  copy: src=haproxy.cfg dest=/data/haproxy
+
+- name: Create log dir
+  file:
+    path: "/data/logs/haproxy"
+    state: directory
+
+- name: Start container
+  docker:
+    docker_api_version: "1.16"
+    name: "haproxy"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'always' if docker_repository_host else 'missing' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/haproxy"
+    state: "reloaded"
+    net: "bridge"
+    restart_policy: "always"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    ports:
+    - "80:80"
+    - "443:443"
+    links:
+    - "nginx:nginx"
+    - "ssh-gateway:ssh-gateway"
+    volumes:
+    - "/data/haproxy:/usr/local/etc/haproxy"
+    - "/dev/log:/dev/log"
