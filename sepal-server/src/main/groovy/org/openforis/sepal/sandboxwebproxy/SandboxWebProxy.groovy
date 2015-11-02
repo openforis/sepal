@@ -5,8 +5,8 @@ import io.undertow.Undertow
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.session.*
-import org.openforis.sepal.sandbox.NonExistingUser
 import org.openforis.sepal.sandbox.SandboxManager
+import org.openforis.sepal.user.NonExistingUser
 
 import static io.undertow.server.session.SessionListener.SessionDestroyedReason
 
@@ -115,7 +115,7 @@ class SandboxWebProxy {
             if (!sandboxHost) {
                 def sandbox
                 try {
-                    sandbox = sandboxManager.obtain(user)
+                    sandbox = sandboxManager.getUserSandbox(user)
                 } catch (NonExistingUser e) {
                     throw new BadRequest(e.getMessage())
                 }

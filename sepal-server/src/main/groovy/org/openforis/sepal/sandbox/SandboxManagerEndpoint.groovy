@@ -6,8 +6,8 @@ import org.openforis.sepal.endpoint.SepalEndpoint
 
 import static groovy.json.JsonOutput.toJson
 
-class SandboxManagerEndpoint extends SepalEndpoint {
 
+class SandboxManagerEndpoint extends SepalEndpoint{
 
     SandboxManagerEndpoint(CommandDispatcher commandDispatcher) {
         super(commandDispatcher)
@@ -16,17 +16,17 @@ class SandboxManagerEndpoint extends SepalEndpoint {
     @Override
     void registerWith(Controller controller) {
         controller.with {
+
             get('sandbox/{user}') {
                 response.contentType = "application/json"
                 def commandResult = commandDispatcher.submit(new ObtainUserSandboxCommand(params.user as String))
                 send(toJson(commandResult))
             }
 
-            delete('sandbox/{user}') {
-                commandDispatcher.submit(new ReleaseUserSandboxCommand(params.user as String))
+            put('container/${id}/alive') {
+                response.status = 204
+                commandDispatcher.submit(new ContainerAliveCommand(params.id as int))
             }
         }
-
-
     }
 }

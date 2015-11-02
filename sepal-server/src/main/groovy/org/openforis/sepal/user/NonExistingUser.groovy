@@ -1,4 +1,4 @@
-package org.openforis.sepal.sandbox
+package org.openforis.sepal.user
 
 final class NonExistingUser extends RuntimeException {
     NonExistingUser(String username) {

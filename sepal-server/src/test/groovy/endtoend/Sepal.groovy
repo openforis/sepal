@@ -29,7 +29,7 @@ class Sepal {
         return this
     }
 
-    void resetDatabase() {
+    static void resetDatabase() {
         database.reset()
     }
 
@@ -50,11 +50,10 @@ class Sepal {
         def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
 
         def daemonURI = SepalConfiguration.instance.dockerDaemonURI
-        def imageName = SepalConfiguration.instance.dockerImageName
-        def sandboxManager = new DockerSandboxManager(
-                new JDBCUserRepository(connectionManager),
-                new DockerRESTClient(daemonURI),
-                imageName
+        def userRepository = new JDBCUserRepository(connectionManager)
+        def sandboxManager = new ConcreteSandboxManager(
+                new DockerContainersProvider(new DockerRESTClient(daemonURI),userRepository),
+                new JDBCSandboxDataRepository(connectionManager)
         )
         def dataSetRepository = new JdbcDataSetRepository(connectionManager)
 
@@ -69,7 +68,8 @@ class Sepal {
                 new RemoveSceneCommandHandler(scenesDownloadRepo),
                 new SandboxManagerEndpoint(commandDispatcher),
                 new ObtainUserSandboxCommandHandler(sandboxManager),
-                new ReleaseUserSandboxCommandHandler(sandboxManager)
+                new ContainerAliveCommandHandler(sandboxManager),
+                userRepository
         )
     }
 

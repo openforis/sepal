@@ -18,15 +18,34 @@ class Main {
 
     def static dataSetRepository
     def static connectionManager
+    def static connectionManagerSandbox
+    def static sandboxManager
+    def static userRepository
 
     static void main(String[] args) {
         def propertiesLocation = args.length == 1 ? args[0] : "/etc/sepal/sepal.properties"
         SepalConfiguration.instance.setConfigFileLocation(propertiesLocation)
 
+        startSandboxManager()
         deployEndpoints()
         startSceneManager()
         startLayerMonitor()
         startCrawling()
+
+    }
+
+    static startSandboxManager(){
+        def config = SepalConfiguration.instance
+        def daemonURI = config.dockerDaemonURI
+        connectionManagerSandbox = new SqlConnectionManager(SepalConfiguration.instance.sandboxDataSource)
+        userRepository = new JDBCUserRepository(connectionManager)
+
+        sandboxManager = new ConcreteSandboxManager(
+                new DockerContainersProvider(new DockerRESTClient(daemonURI),userRepository),
+                new JDBCSandboxDataRepository(connectionManagerSandbox)
+        )
+
+        sandboxManager.start(config.containerInactiveTimeout,config.deadContainersCheckInterval)
     }
 
     static startCrawling() {
@@ -59,16 +78,15 @@ class Main {
 
     static deployEndpoints() {
         connectionManager = new SqlConnectionManager(SepalConfiguration.instance.dataSource)
+
+
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
         def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
 
-        def daemonURI = SepalConfiguration.instance.dockerDaemonURI
-        def imageName = SepalConfiguration.instance.dockerImageName
-        def sandboxManager = new DockerSandboxManager(
-                new JDBCUserRepository(connectionManager),
-                new DockerRESTClient(daemonURI),
-                imageName
-        )
+
+
+
+
 
         new SandboxWebProxy(9191, ['rstudio-server': 8787], sandboxManager).start()
 
@@ -83,7 +101,8 @@ class Main {
                 new RemoveSceneCommandHandler(scenesDownloadRepo),
                 new SandboxManagerEndpoint(commandDispatcher),
                 new ObtainUserSandboxCommandHandler(sandboxManager),
-                new ReleaseUserSandboxCommandHandler(sandboxManager)
+                new ContainerAliveCommandHandler(sandboxManager),
+                userRepository
         )
     }
 

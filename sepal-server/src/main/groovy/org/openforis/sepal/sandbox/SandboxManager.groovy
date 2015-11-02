@@ -1,90 +1,109 @@
 package org.openforis.sepal.sandbox
 
-import org.openforis.sepal.user.UserRepository
+import org.openforis.sepal.util.DateTime
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+
+import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
+
+/**
+ * Created by ottavio on 02/11/15.
+ */
 interface SandboxManager {
 
-    Sandbox obtain(String userName) throws NonExistingUser;
+    SandboxData getUserSandbox ( String username )
 
-    def release(String userName);
+    void aliveSignal( int sandboxId )
+
+    void start( int containerInactiveTimeout, int checkInterval)
+
+    void stop()
+
 }
 
-class DockerSandboxManager implements SandboxManager {
+class ConcreteSandboxManager implements SandboxManager{
 
-    private static final Logger LOG = LoggerFactory.getLogger(this)
+    private final static Logger LOG = LoggerFactory.getLogger(this)
 
-    private final UserRepository userRepository
-    private final DockerClient dockerClient
-    private final String sandboxName
+    private final SandboxContainersProvider sandboxProvider
+    private final SandboxDataRepository dataRepository
 
-    DockerSandboxManager(UserRepository userRepository, DockerClient dockerClient, String sandboxName) {
-        this.userRepository = userRepository
-        this.dockerClient = dockerClient
-        this.sandboxName = sandboxName
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
+
+    ConcreteSandboxManager( SandboxContainersProvider sandboxProvider, SandboxDataRepository dataRepository){
+        this.sandboxProvider = sandboxProvider
+        this.dataRepository = dataRepository
+
     }
 
     @Override
-    Sandbox obtain(String userName) {
-        def sandboxId = getRegisteredSandbox(userName)
-        def sandbox
-        if (sandboxId) {
-            LOG.debug("$userName sandboxId is $sandboxId")
-            sandbox = dockerClient.getSandbox(sandboxId)
-            if (sandbox) {
-                LOG.debug("$sandbox.name detected")
-                if (sandbox.state.running) {
-                    LOG.info("Found a running sandbox for the user $userName. Going to reuse it")
-                    sandbox.uri = userRepository.getSandboxURI(userName)
-                } else {
-                    releaseSandbox(userName, sandboxId)
-                    sandbox = createSandbox(userName)
+    SandboxData getUserSandbox(String username) {
+        def runningSandbox = dataRepository.getUserRunningSandbox(username)
+        if (runningSandbox){
+            LOG.debug("Found data about running sandbox($runningSandbox.containerId) for user $username")
+            def running = sandboxProvider.isRunning(runningSandbox.containerId)
+            if (!running){
+                LOG.info("Stale sandbox data found for $username")
+                dataRepository.terminated(runningSandbox.sandboxId)
+            }
+        }else{
+            LOG.debug("Going to ask a container for $username sandbox")
+            runningSandbox = sandboxProvider.obtain(username)
+        }
+        return runningSandbox
+    }
+
+    @Override
+    void aliveSignal(int sandboxId) { dataRepository.alive(sandboxId) }
+
+    void stop(){ executor.shutdown()  }
+
+    @Override
+    void start( int containerInactiveTimeout, int checkInterval) {
+        executor.scheduleWithFixedDelay(
+            new SandboxManagerUnusedContainerChecker( sandboxProvider, dataRepository, containerInactiveTimeout),
+            0L,checkInterval, TimeUnit.SECONDS
+        )
+     }
+
+
+    private class SandboxManagerUnusedContainerChecker implements Runnable{
+
+        SandboxDataRepository dataRepository
+        SandboxContainersProvider containersProvider
+        int containerInactiveTimeout
+
+        SandboxManagerUnusedContainerChecker( SandboxContainersProvider containersProvider,
+                                              SandboxDataRepository dataRepository, int containerInactiveTimeout ){
+            this.dataRepository = dataRepository
+            this.containerInactiveTimeout = containerInactiveTimeout
+            this.containersProvider = containersProvider
+        }
+
+        @Override
+        void run() {
+            def aliveContainers = dataRepository.getSandboxes(ALIVE)
+            aliveContainers.each { SandboxData sandbox ->
+                doCheck(sandbox)
+            }
+        }
+
+        void doCheck( SandboxData sandbox){
+            try{
+                Date containerExpireDate = DateTime.add(sandbox.statusRefreshedOn,Calendar.SECOND,containerInactiveTimeout)
+                if (new Date().before(containerExpireDate)){
+                    LOG.info(" Container $sandbox.containerId marked as to be terminated. Ttl($containerInactiveTimeout) reached")
+                    containersProvider.release(sandbox.containerId)
+                    dataRepository.terminated(sandbox.sandboxId)
                 }
-            } else {
-                sandbox = createSandbox(userName)
+            } catch (Exception ex) {
+                LOG.error(" Error while checking sandbox $sandbox.sandboxId",ex)
             }
-        } else {
-            sandbox = createSandbox(userName)
-        }
-        return sandbox
-    }
-
-    private String getRegisteredSandbox(String username) {
-        def userExist = userRepository.userExist(username)
-        if (!userExist)
-            throw new NonExistingUser(username)
-        userRepository.getSandboxId(username)
-    }
-
-    private Sandbox createSandbox(String userName) {
-        def userUid = userRepository.getUserUid(userName)
-        LOG.info("A new container is goint to be created for $userName($userUid)")
-
-        Sandbox sandbox = dockerClient.createSandbox(sandboxName, userName, userUid)
-        if (sandbox) {
-            userRepository.update(userName, sandbox.id, sandbox.uri)
-        }
-
-        return sandbox
-    }
-
-    private void releaseSandbox(String userName, String sandboxId) {
-        def dockerSandbox = dockerClient.getSandbox(sandboxId)
-        if (dockerSandbox) {
-            if (dockerSandbox.state.running) {
-                dockerClient.stopSandbox(sandboxId)
-            }
-            dockerClient.releaseSandbox(sandboxId)
-        }
-        userRepository.update(userName, null, null)
-    }
-
-    @Override
-    def release(String userName) {
-        String sandboxId = getRegisteredSandbox(userName)
-        if (sandboxId) {
-            releaseSandbox(userName, sandboxId)
         }
     }
+
 }

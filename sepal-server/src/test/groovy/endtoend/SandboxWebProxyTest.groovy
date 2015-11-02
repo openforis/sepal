@@ -5,14 +5,12 @@ import groovyx.net.http.RESTClient
 import io.undertow.Undertow
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
-import org.openforis.sepal.sandbox.NonExistingUser
-import org.openforis.sepal.sandbox.Sandbox
+import org.openforis.sepal.sandbox.SandboxData
 import org.openforis.sepal.sandbox.SandboxManager
 import org.openforis.sepal.sandboxwebproxy.SandboxWebProxy
-import spock.lang.Ignore
+import org.openforis.sepal.user.NonExistingUser
 import spock.lang.Specification
 import util.Port
-
 
 class SandboxWebProxyTest extends Specification {
     def sandboxManager = Mock(SandboxManager)
@@ -24,7 +22,7 @@ class SandboxWebProxyTest extends Specification {
     def anotherUser = existingUser('another-user')
 
     def setup() {
-        sandboxManager.obtain(_) >> { throw new NonExistingUser(it.first()) }
+        sandboxManager.getUserSandbox(_) >> { throw new NonExistingUser(it.first()) }
         def port = Port.findFree()
         proxy = new SandboxWebProxy(
                 port,
@@ -59,7 +57,7 @@ class SandboxWebProxyTest extends Specification {
 
         then:
             endpoint1.invoked.size() == 2
-            1 * sandboxManager.obtain(user) >> sandbox
+            1 * sandboxManager.getUserSandbox(user) >> sandbox
     }
 
     def 'Multiple proxied endpoint can be invoked, without obtaining sandbox more than once'() {
@@ -70,7 +68,7 @@ class SandboxWebProxyTest extends Specification {
         then:
             endpoint1.invoked.size() == 1
             endpoint2.invoked.size() == 1
-            1 * sandboxManager.obtain(user) >> sandbox
+            1 * sandboxManager.getUserSandbox(user) >> sandbox
     }
 
     def 'Multiple users can invoke the same endpoint, each obtaining its own sandbox'() {
@@ -80,8 +78,8 @@ class SandboxWebProxyTest extends Specification {
 
         then:
             endpoint1.invoked.size() == 2
-            1 * sandboxManager.obtain(user) >> sandbox
-            1 * sandboxManager.obtain(anotherUser) >> sandbox
+            1 * sandboxManager.getUserSandbox(user) >> sandbox
+            1 * sandboxManager.getUserSandbox(anotherUser) >> sandbox
     }
 
     def 'Returns 400 when endpoint is unspecified'() {
@@ -130,12 +128,12 @@ class SandboxWebProxyTest extends Specification {
     }
 
     private String existingUser(String username) {
-        sandboxManager.obtain(username) >> sandbox
+        sandboxManager.getUserSandbox(username) >> sandbox
         return username
     }
 
-    private Sandbox getSandbox() {
-        [uri: 'localhost'] as Sandbox
+    private SandboxData getSandbox() {
+        [uri: 'localhost'] as SandboxData
     }
 
     private static class Endpoint {

@@ -15,5 +15,5 @@ if [ "$i" = 0 ]; then
 	exit 1
 fi
 
-/opt/flyway/flyway migrate -baselineVersion=${SCHEMA_BASELINE_VERSION} -baselineOnMigrate=true -url=jdbc:mysql://${INSTANCE_HOSTNAME}:3306/${MYSQL_DATABASE} -user=${MYSQL_USER} -password=${MYSQL_PASSWORD}
+/opt/flyway/flyway migrate -baselineVersion=${SCHEMA_BASELINE_VERSION} -baselineOnMigrate=true -url=jdbc:mysql://${INSTANCE_HOSTNAME}:3306/${MYSQL_DATABASE} -user=root -password=${MYSQL_ROOT_PASSWORD}
 

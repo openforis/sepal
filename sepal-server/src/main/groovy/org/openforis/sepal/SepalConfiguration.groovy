@@ -40,10 +40,14 @@ class SepalConfiguration {
     public static final String USER_CREDENTIALS_HOME_DIR = "user.credentials.homeDir"
     public static final String PUBLIC_HOME_DIR = "sepal.publicHomeDir"
     public static final String SANBOX_PORTS_TO_CHECK = "sepal.sandbox.healtCheckPorts"
+    public static final String CONTAINER_INACTIVE_TIMEOUT = "sandbox.inactive_timeout"
+    public static final String DEAD_CONTAINERS_CHECK_INTERVAL = "sandbox.garbage_check_interval"
+    public static final String SANDBOX_MANAGER_JDBC_CONN_STRING = "sandbox.jdbc_conn_string"
 
     Properties properties
     String configFileLocation
     DataSource dataSource
+    DataSource sandboxDataSource
 
     def setConfigFileLocation(String configFileLocation) {
 
@@ -64,18 +68,31 @@ class SepalConfiguration {
             LOG = LoggerFactory.getLogger(this.class)
             LOG.info("Using config file $configFileLocation")
             dataSource = connectionPool()
+            sandboxDataSource =connectionPool(getSandboxJdbcConnString())
         }
     }
 
-    private DataSource connectionPool() {
+    private DataSource connectionPool(jdbcUrl = getJdbcConnectionString()) {
         new ComboPooledDataSource(
                 driverClass: getJdbcDriver(),
-                jdbcUrl: getJdbcConnectionString(),
+                jdbcUrl: jdbcUrl,
                 user: getJdbcUser(),
                 password: getJdbcPassword(),
                 testConnectionOnCheckout: true,
 
         )
+    }
+
+    def getContainerInactiveTimeout(){
+        Integer.parseInt(getValue(CONTAINER_INACTIVE_TIMEOUT))
+    }
+
+    def getDeadContainersCheckInterval(){
+        Integer.parseInt(getValue(DEAD_CONTAINERS_CHECK_INTERVAL))
+    }
+
+    def getSandboxJdbcConnString(){
+        getValue(SANDBOX_MANAGER_JDBC_CONN_STRING)
     }
 
     def getSandboxPortsToCheck(){

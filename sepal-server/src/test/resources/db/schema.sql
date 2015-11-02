@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS download_requests;
 DROP TABLE IF EXISTS requested_scenes;
 DROP TABLE IF EXISTS metadata_providers;
 DROP TABLE IF EXISTS metadata_crawling_criteria;
+DROP TABLE IF EXISTS sandboxes;
 
 CREATE TABLE admin_groups (
   id         INT(10)      NOT NULL,
@@ -103,8 +104,6 @@ CREATE TABLE users (
   permissions    TEXT,
   created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP   NULL     DEFAULT NULL,
-  sandbox_id VARCHAR(100) NULL,
-  sandbox_uri VARCHAR(512) NULL,
   user_uid INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
@@ -240,6 +239,17 @@ CREATE TABLE  metadata_crawling_criteria (
   expected_value varchar(255) NOT NULL,
   PRIMARY KEY (`criteria_id`)
 );
+
+CREATE TABLE sandboxes (
+  sandbox_id INT NOT NULL AUTO_INCREMENT,
+  username VARCHAR(255) NOT NULL,
+  status VARCHAR(255) NOT NULL DEFAULT 'CREATED',
+  container_id VARCHAR(255) NOT NULL,
+  uri VARCHAR(255) NOT NULL,
+  created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  terminated_on TIMESTAMP NULL,
+  status_refreshed_on TIMESTAMP NULL,
+  PRIMARY KEY (`sandbox_id`));
 
 
 

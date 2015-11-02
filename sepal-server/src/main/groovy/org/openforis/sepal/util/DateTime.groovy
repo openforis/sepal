@@ -22,6 +22,13 @@ class DateTime {
         return calendar.getTime()
     }
 
+    static Date add(Date date, int field, int amount) {
+        def cal = Calendar.getInstance()
+        cal.setTime(date)
+        cal.add(field,amount)
+        return cal.time
+    }
+
     static Date parseDateString(String dateString) { DATE_ONLY_DATE_FORMAT.parse(dateString) }
 
     static Date parseEarthExplorerDateString(String dateString) { EARTH_EXPLORER_DATE_FORMAT.parse(dateString) }
