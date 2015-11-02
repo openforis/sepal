@@ -9,7 +9,7 @@ Vagrant.configure(2) do |config|
 
 
   config.vm.provider "virtualbox" do |v|
-    v.memory = 2048
+    v.memory = 4096
   end
 
   config.vm.provision "ansible" do |ansible|
@@ -20,7 +20,7 @@ Vagrant.configure(2) do |config|
         region: 'eu-central-1',
         deploy_environment: 'Staging',
 	    local_sepal: false,
-	    local_php: false,
+	    local_php: true,
         secret_vars_file: '~/.sepal/secret.yml',
         docker_repository_host: '',
         use_custom_host: true,
