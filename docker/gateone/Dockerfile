@@ -1,10 +1,8 @@
 FROM liftoff/gateone:latest
 MAINTAINER OpenForis
 
+RUN mkdir -p /keygen/ && ln -s /conf/30api_keys.conf /etc/gateone/conf.d/30api_keys.conf
 
-RUN mkdir -p /keygen/
-
-ADD conf/30api_keys.conf /etc/gateone/conf.d/
 ADD script/keygen.run /keygen/
 ADD script/init_image.sh .
 ADD conf/config /keygen/

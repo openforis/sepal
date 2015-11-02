@@ -4,6 +4,15 @@
     path: "/data/logs/gateone"
     state: directory
 
+- name: Create config dir
+  file:
+    path: "/data/gateone/"
+    state: directory
+
+- name: Create config file
+  template: src=30api_keys.conf dest=/data/gateone/30api_keys.conf mode=0400
+
+
 - name: "Start container"
   docker:
     docker_api_version: "1.16"
@@ -24,3 +33,4 @@
     volumes:
     - "/data/logs/gateone:/gateone/logs"
     - "/data/sepal/home:/home"
+    - "/data/gateone:/conf"
