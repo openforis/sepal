@@ -26,10 +26,6 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
-    expose:
-        - "8000"
-    ports:
-        - "32000:8000"
     volumes:
     - "/data/logs/gateone:/gateone/logs"
     - "/data/sepal/home:/home"
