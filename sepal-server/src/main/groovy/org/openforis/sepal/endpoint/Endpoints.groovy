@@ -48,8 +48,8 @@ final class Endpoints extends AbstractMvcFilter {
                 .build()
 
         controller.with {
-            constrain(RequestScenesDownloadCommand, RequestScenesDownloadCommand.constraints(dataSetRepository,scenesDownloadRepository))
             constrain(ObtainUserSandboxCommand, ObtainUserSandboxCommand.constraints(userRepository))
+            constrain(RequestScenesDownloadCommand, RequestScenesDownloadCommand.constraints(dataSetRepository,scenesDownloadRepository))
 
             error(InvalidRequest) {
                 response?.status = 400

@@ -1,6 +1,7 @@
 package integration.database
 
 import endtoend.SepalDriver
+import org.openforis.sepal.scene.DataSet
 import org.openforis.sepal.scene.DownloadRequest
 import org.openforis.sepal.scene.SceneRequest
 import org.openforis.sepal.scene.management.JdbcScenesDownloadRepository
@@ -140,6 +141,21 @@ class ScenesDownloadRepositoryTest extends Specification{
         requestsAfter.size() == 1
         requests.first().scenes.size() == 3
         requestsAfter.first().scenes.size() == 2
+    }
+
+    def 'Checking wheter reloadRequestData method works'(){
+        given:
+        def request = scenesDownloadRepository.getNewDownloadRequests().first()
+        def reqId = request.requestId
+        when:
+        request.dataSet = null
+        request.processingChain = null
+        scenesDownloadRepository.reloadRequestData(request)
+        then:
+        request.dataSet == DataSet.byId(DATASET_ID)
+        request.processingChain == PROCESSING_CHAIN
+        reqId == request.requestId
+
     }
 
     def 'Trying to insert a request for a user using the same request name, will fail'(){

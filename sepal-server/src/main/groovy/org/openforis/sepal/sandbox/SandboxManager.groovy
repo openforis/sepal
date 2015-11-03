@@ -49,16 +49,25 @@ class ConcreteSandboxManager implements SandboxManager{
             if (!running){
                 LOG.info("Stale sandbox data found for $username")
                 dataRepository.terminated(runningSandbox.sandboxId)
+                runningSandbox = askContainer(username)
             }
         }else{
-            LOG.debug("Going to ask a container for $username sandbox")
-            runningSandbox = sandboxProvider.obtain(username)
+            runningSandbox = askContainer(username)
         }
         return runningSandbox
     }
 
+    private SandboxData askContainer(String username){
+        def data = sandboxProvider.obtain(username)
+        data.sandboxId = dataRepository.created(username,data.containerId,data.uri)
+        return data
+    }
+
     @Override
-    void aliveSignal(int sandboxId) { dataRepository.alive(sandboxId) }
+    void aliveSignal(int sandboxId) {
+        LOG.debug("Alive signal received from sanbox $sandboxId container")
+        dataRepository.alive(sandboxId)
+    }
 
     void stop(){ executor.shutdown()  }
 
@@ -87,7 +96,7 @@ class ConcreteSandboxManager implements SandboxManager{
         @Override
         void run() {
             def aliveContainers = dataRepository.getSandboxes(ALIVE)
-            aliveContainers.each { SandboxData sandbox ->
+            aliveContainers?.each { SandboxData sandbox ->
                 doCheck(sandbox)
             }
         }
@@ -95,8 +104,8 @@ class ConcreteSandboxManager implements SandboxManager{
         void doCheck( SandboxData sandbox){
             try{
                 Date containerExpireDate = DateTime.add(sandbox.statusRefreshedOn,Calendar.SECOND,containerInactiveTimeout)
-                if (new Date().before(containerExpireDate)){
-                    LOG.info(" Container $sandbox.containerId marked as to be terminated. Ttl($containerInactiveTimeout) reached")
+                if (new Date().after(containerExpireDate)){
+                    LOG.info(" Container $sandbox.containerId marked as to be terminated. Inactive Ttl($containerInactiveTimeout seconds) reached")
                     containersProvider.release(sandbox.containerId)
                     dataRepository.terminated(sandbox.sandboxId)
                 }

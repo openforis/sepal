@@ -28,6 +28,9 @@ interface ScenesDownloadRepository extends SceneRetrievalListener,DownloadReques
 
     void deleteScene(int requestId, int sceneId)
 
+
+    void reloadRequestData(DownloadRequest request)
+
 }
 
 class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
@@ -94,6 +97,18 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
         return requests
     }
 
+    @Override
+    void reloadRequestData(DownloadRequest request) {
+        sql.eachRow('''
+                SELECT *
+                FROM download_requests dr
+                JOIN requested_scenes rs
+                ON dr.request_id = rs.request_id
+                WHERE dr.request_id = ?''',[request.requestId]) {
+            map(request,it)
+        }
+    }
+
     int updateSceneStatus(long id, Status status) {
         def now = new Timestamp(Calendar.getInstance().getTime().getTime())
         def query = "UPDATE requested_scenes  SET last_updated = ?, status = ? WHERE id = ?"
@@ -132,7 +147,7 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
         sql.execute(sqlScenes, [requestId, sceneId])
     }
 
-    def map(List<DownloadRequest> downloadRequests, row) {
+    static def map(List<DownloadRequest> downloadRequests, row) {
         int requestId = row.request_id
         def downloadRequest = new DownloadRequest(requestId: requestId)
         def alreadyMappedOne = downloadRequests.find { it.requestId == requestId }
@@ -144,7 +159,7 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
     }
 
 
-    def map(DownloadRequest downloadRequest, row) {
+    static def map(DownloadRequest downloadRequest, row) {
         downloadRequest.requestId = row.request_id
         downloadRequest.username = row.username
         downloadRequest.requestTime = row.request_time

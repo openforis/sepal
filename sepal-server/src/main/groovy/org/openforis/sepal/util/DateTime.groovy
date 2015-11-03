@@ -2,18 +2,17 @@ package org.openforis.sepal.util
 
 import java.text.SimpleDateFormat
 
-
 class DateTime {
 
     static SimpleDateFormat DATE_ONLY_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd")
     static SimpleDateFormat EARTH_EXPLORER_DATE_FORMAT = new SimpleDateFormat("yyyy:DDD:HH:mm:ss")
+    static SimpleDateFormat JSON_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
 
     static String todayDateString() { toDateString(new Date()) }
 
     static String toDateString(Date date) { formatDate(date, DATE_ONLY_DATE_FORMAT) }
 
-    static String toDateString(Date date, int daysToAdd) { toDateString(addDays(date, daysToAdd)) }
-
+    static String toJsonDateString(Date date) { formatDate(date,JSON_DATE_FORMAT) }
 
     static Date addDays(Date date, int days) {
         Calendar calendar = new GregorianCalendar()
@@ -28,6 +27,8 @@ class DateTime {
         cal.add(field,amount)
         return cal.time
     }
+
+    static Date parseJsonDateFormat( String dateString) { JSON_DATE_FORMAT.parse(dateString) }
 
     static Date parseDateString(String dateString) { DATE_ONLY_DATE_FORMAT.parse(dateString) }
 

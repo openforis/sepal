@@ -1,3 +1,5 @@
+USE sdms;
+
 CREATE TABLE admin_groups (
   id         INT(10)      NOT NULL,
   user_id    INT(10)      NOT NULL,

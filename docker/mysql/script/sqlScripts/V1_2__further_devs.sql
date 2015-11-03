@@ -1,3 +1,4 @@
+USE sdms;
 CREATE TABLE  metadata_crawling_criteria (
   criteria_id int(10) unsigned NOT NULL AUTO_INCREMENT,
   metadata_provider_id int(10) unsigned NOT NULL,

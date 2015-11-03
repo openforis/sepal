@@ -47,6 +47,7 @@ class SceneManager implements SceneRetrievalListener,DownloadRequestListener {
                         sceneProvider.retrieve(request.scenes)
                         break
                     case DOWNLOADED:
+                        scenesRepository.reloadRequestData(request)
                         sceneProcessor.process(request,request.processingChain)
                         break
                     case PROCESSED:

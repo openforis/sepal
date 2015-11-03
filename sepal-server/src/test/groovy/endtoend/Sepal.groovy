@@ -8,14 +8,18 @@ import org.openforis.sepal.sandbox.*
 import org.openforis.sepal.scene.management.*
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JDBCUserRepository
+import spock.lang.Ignore
+import spock.lang.Specification
 import util.Port
 
 import static org.openforis.sepal.SepalConfiguration.*
 
-class Sepal {
+@Ignore
+class Sepal extends Specification{
     static Database database
     private static Endpoints endpoints
     private static Boolean started
+    private static SandboxManager sandboxManager
     private SqlConnectionManager connectionManager
 
     public int port
@@ -37,6 +41,8 @@ class Sepal {
         this.connectionManager
     }
 
+    SandboxManager getSandboxManager(){ return sandboxManager }
+
 
     private void start() {
         started = true
@@ -49,10 +55,21 @@ class Sepal {
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
         def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
 
-        def daemonURI = SepalConfiguration.instance.dockerDaemonURI
+
         def userRepository = new JDBCUserRepository(connectionManager)
-        def sandboxManager = new ConcreteSandboxManager(
-                new DockerContainersProvider(new DockerRESTClient(daemonURI),userRepository),
+
+        def stubDockerClient = Stub(DockerClient) {
+            isContainerRunning(_) >> {
+                true
+            }
+            createContainer(_,_) >> {
+                new SandboxData(username: it.get(0), containerId: 'Some.Id', uri: 'Some_URI')
+            }
+        }
+
+
+        sandboxManager = new ConcreteSandboxManager(
+                new DockerContainersProvider(stubDockerClient,userRepository),
                 new JDBCSandboxDataRepository(connectionManager)
         )
         def dataSetRepository = new JdbcDataSetRepository(connectionManager)
