@@ -3,5 +3,7 @@
 USER=$1
 COMMAND=$2
 uri=$(curl -s "http://sepal:1025/data/sandbox/$USER" | jq -r '.uri')
+sandboxId=$(curl -s "http://sepal:1025/data/sandbox/$USER" | jq -r '.sandboxId')
+/alive.sh $sandboxId > /dev/null 2>&1 &
 ssh -i /home/$USER/.ssh/id_rsa -YC $USER@$uri $COMMAND
 

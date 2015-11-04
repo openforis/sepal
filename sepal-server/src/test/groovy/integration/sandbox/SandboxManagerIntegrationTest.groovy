@@ -45,6 +45,7 @@ class SandboxManagerIntegrationTest extends Specification{
 
         driver.withUser(YET_ANOTHER_USERNAME,101)
         driver.withUser(ANOTHER_USERNAME,101)
+        driver.withUser(A_USERNAME,101)
 
         def stubDockerClient = Spy(DockerClient){
             isContainerRunning(A_CONTAINER_ID) >> true
@@ -56,7 +57,7 @@ class SandboxManagerIntegrationTest extends Specification{
         userRepository = Spy(JDBCUserRepository, constructorArgs: [driver.getSQLManager()])
         sandboxDataRepository = Spy(JDBCSandboxDataRepository, constructorArgs: [driver.getSQLManager()])
         containersProvider = Spy(DockerContainersProvider, constructorArgs: [ stubDockerClient, userRepository])
-        sandboxManager = new ConcreteSandboxManager(containersProvider,sandboxDataRepository)
+        sandboxManager = new ConcreteSandboxManager(containersProvider,sandboxDataRepository,userRepository)
 
         sandboxId = sandboxDataRepository.created(A_USERNAME,A_CONTAINER_ID,A_URI)
     }

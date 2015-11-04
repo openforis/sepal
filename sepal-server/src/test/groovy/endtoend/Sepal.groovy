@@ -70,7 +70,8 @@ class Sepal extends Specification{
 
         sandboxManager = new ConcreteSandboxManager(
                 new DockerContainersProvider(stubDockerClient,userRepository),
-                new JDBCSandboxDataRepository(connectionManager)
+                new JDBCSandboxDataRepository(connectionManager),
+                userRepository
         )
         def dataSetRepository = new JdbcDataSetRepository(connectionManager)
 

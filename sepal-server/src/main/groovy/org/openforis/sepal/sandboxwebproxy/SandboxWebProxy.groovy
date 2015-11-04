@@ -8,6 +8,10 @@ import io.undertow.server.session.*
 import org.openforis.sepal.sandbox.SandboxManager
 import org.openforis.sepal.user.NonExistingUser
 
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+
 import static io.undertow.server.session.SessionListener.SessionDestroyedReason
 
 /**
@@ -21,7 +25,16 @@ import static io.undertow.server.session.SessionListener.SessionDestroyedReason
  * </ul>
  */
 class SandboxWebProxy {
+
+
+    private static final String SANDBOX_ID_SESSION_ATTR_NAME = "sepal-sandbox-id"
+
     private final Undertow server
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
+    private final int sessionsCheckInterval
+    private final SandboxManager sandboxManager
+
+    private SessionManager sessionManager
 
     /**
      * Creates the proxy.
@@ -29,7 +42,9 @@ class SandboxWebProxy {
      * @param endpointByPort specifies which port each proxied endpoint run on
      * @param sandboxManager the sandbox manager used to obtain sandboxes.
      */
-    SandboxWebProxy(int port, Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
+    SandboxWebProxy(int port, Map<String, Integer> endpointByPort, SandboxManager sandboxManager, int sessionsCheckInterval = 30) {
+        this.sessionsCheckInterval = sessionsCheckInterval
+        this.sandboxManager = sandboxManager
         this.server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
                 .setHandler(createHandler(endpointByPort, sandboxManager))
@@ -37,7 +52,7 @@ class SandboxWebProxy {
     }
 
     private HttpHandler createHandler(Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
-        def sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
+        sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
         sessionManager.registerSessionListener(new Listener(sandboxManager))
         new ErrorHandler(
                 new SessionAttachmentHandler(
@@ -47,13 +62,21 @@ class SandboxWebProxy {
                                 )
                         ), sessionManager, new SessionCookieConfig())
         )
+
+
     }
 
     void start() {
         server.start()
+        executor.scheduleWithFixedDelay(
+                new WebProxySessionsChecker(sandboxManager,sessionManager,SANDBOX_ID_SESSION_ATTR_NAME),
+                sessionsCheckInterval,
+                sessionsCheckInterval,TimeUnit.SECONDS
+        )
     }
 
     void stop() {
+        executor.shutdown();
         server.stop()
     }
 
@@ -92,7 +115,7 @@ class SandboxWebProxy {
             return uri
         }
 
-        private String determineUser(HttpServerExchange exchange) {
+        private static String determineUser(HttpServerExchange exchange) {
             def user = exchange.requestHeaders.getFirst('sepal-user')
             if (!user)
                 throw new BadRequest('Missing header: sepal-user')
@@ -116,6 +139,7 @@ class SandboxWebProxy {
                 def sandbox
                 try {
                     sandbox = sandboxManager.getUserSandbox(user)
+                    session.setAttribute(SANDBOX_ID_SESSION_ATTR_NAME,sandbox.sandboxId)
                 } catch (NonExistingUser e) {
                     throw new BadRequest(e.getMessage())
                 }
@@ -129,6 +153,8 @@ class SandboxWebProxy {
             return 'sepal-sandbox-host' + user
         }
 
+
+
         private String determineUriSessionKey(String endpoint, String user) {
             return 'sepal-target-uri-' + endpoint + '|' + user
         }
@@ -137,7 +163,7 @@ class SandboxWebProxy {
             SessionManager sessionManager = exchange.getAttachment(SessionManager.ATTACHMENT_KEY)
             SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY)
             return sessionManager.getSession(exchange, sessionConfig) ?:
-                    sessionManager.createSession(exchange, sessionConfig)
+                    (sessionManager.createSession(exchange, sessionConfig))
         }
     }
 }

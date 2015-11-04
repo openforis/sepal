@@ -1,5 +1,7 @@
 package org.openforis.sepal.sandbox
 
+import org.openforis.sepal.user.NonExistingUser
+import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -31,17 +33,22 @@ class ConcreteSandboxManager implements SandboxManager{
 
     private final SandboxContainersProvider sandboxProvider
     private final SandboxDataRepository dataRepository
+    private final UserRepository userRepo
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
 
-    ConcreteSandboxManager( SandboxContainersProvider sandboxProvider, SandboxDataRepository dataRepository){
+    ConcreteSandboxManager( SandboxContainersProvider sandboxProvider, SandboxDataRepository dataRepository, UserRepository userRepo){
         this.sandboxProvider = sandboxProvider
         this.dataRepository = dataRepository
+        this.userRepo = userRepo
 
     }
 
     @Override
     SandboxData getUserSandbox(String username) {
+        if (! (userRepo.userExist(username))){
+            throw new NonExistingUser(username)
+        }
         def runningSandbox = dataRepository.getUserRunningSandbox(username)
         if (runningSandbox){
             LOG.debug("Found data about running sandbox($runningSandbox.containerId) for user $username")

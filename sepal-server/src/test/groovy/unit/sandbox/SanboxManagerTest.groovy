@@ -1,6 +1,7 @@
 package unit.sandbox
 
 import org.openforis.sepal.sandbox.*
+import org.openforis.sepal.user.UserRepository
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
@@ -28,6 +29,7 @@ class SanboxManagerTest extends Specification{
     SandboxManager sandboxManager
     StubContainersProvider containersprovider
     StubSandboxDataRepository dataRepository
+    UserRepository userRepository
 
     def setupSpec(){
         def retroactive = add(new Date(), Calendar.SECOND, -5001)
@@ -49,7 +51,11 @@ class SanboxManagerTest extends Specification{
         dataRepository.add(ALIVE,userSandbox,user2Sandbox)
         dataRepository.add(CREATED,user3Sandbox)
 
-        sandboxManager = new ConcreteSandboxManager(containersprovider,dataRepository)
+        userRepository = Stub(UserRepository) {
+            userExist(_) >> true
+        }
+
+        sandboxManager = new ConcreteSandboxManager(containersprovider,dataRepository,userRepository)
     }
 
 

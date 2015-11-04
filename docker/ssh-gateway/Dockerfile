@@ -11,6 +11,7 @@ ADD script/init_image.sh .
 ADD script/init_container.sh .
 ADD script/ssh-bootstrap .
 ADD script/copyOver.run .
+ADD script/alive.sh .
 
 RUN chmod u+x /init_image.sh
 RUN /init_image.sh
