@@ -4,9 +4,6 @@ import org.openforis.sepal.user.UserRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-/**
- * Created by ottavio on 02/11/15.
- */
 interface SandboxContainersProvider {
 
     SandboxData obtain( String username )

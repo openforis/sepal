@@ -13,9 +13,6 @@ import spock.lang.Specification
 import static org.openforis.sepal.scene.Status.REQUESTED
 import static org.openforis.sepal.scene.Status.UNKNOWN
 
-/**
- * Created by ottavio on 28/10/15.
- */
 class ScenesDownloadRepositoryTest extends Specification{
 
     private static final def DATASET_ID = 1

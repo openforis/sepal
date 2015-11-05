@@ -10,9 +10,6 @@ import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
 import static org.openforis.sepal.sandbox.SandboxStatus.CREATED
 import static org.openforis.sepal.util.DateTime.add
 
-/**
- * Created by ottavio on 03/11/15.
- */
 class SanboxManagerTest extends Specification{
 
     static final A_SANDBOX_ID = 1

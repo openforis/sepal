@@ -12,9 +12,6 @@ import java.util.concurrent.TimeUnit
 
 import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
 
-/**
- * Created by ottavio on 02/11/15.
- */
 interface SandboxManager {
 
     SandboxData getUserSandbox ( String username )
