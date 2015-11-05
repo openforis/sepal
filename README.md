@@ -28,7 +28,8 @@ Data Access, Processing and Analysis for Land Monitoring (SEPAL).
 It  consists of the following components:
 
 1. A powerful, cloud-based computing platform for big data processing and storage.
-2. Facilitated access to remote sensing data sources through a direct-access-interface to earth observation data repositories.
+2. Facilitated access to remote sensing data sources through a direct-access-interface to earth observation data
+   repositories.
 3. A set of open-source software tools, capable of efficient data processing
 4. Related capacity development and technology transfer activities
 
@@ -52,10 +53,39 @@ terminal. Web-based sandbox tools can be accessed over HTTP.
 
 Sandboxes are implemented as Docker containers, which in addition to providing isolation between users, allows for very
 flexible deployment. Sandboxes are started when needed, and stopped when not used. This enables them to be deployed in a
-cluster of worker server instances, which can be dynamically scaled up and down based on demand. It also allows the end
-users to use the system independently on their own AWS account.
+cluster of worker server instances, which can be dynamically scaled up and down based on demand.
 
-![alt tag](https://raw.githubusercontent.com/openforis/sepal/master/docs/Components.png)
+### Default AWS deployment
+There are three types of server instances:
+
+1. SEPAL servers, constantly running, one in each region where SEPAL is deployed. In addition to the features
+   described above, they also are the entry points for user sandboxes. These instances can be
+   fairly small and cheap, and they don’t require very much storage.
+
+2. Worker instances, running user sandboxes and retrieving data (Landsat, Sentinel etc.). These instances are
+   automatically launched when users access their sandboxes, and terminated when users disconnect. Users get to decide
+   which instance type each sandbox session will be running on.
+
+3. Operation server, one single instance. It tests and deploys the software, monitors the health of the deployments,
+   and provides a user interface where user usage can be monitored, and disk/instance use quotas can be configured.
+   This instance can be fairly small.
+
+![SEPAL instances](https://raw.githubusercontent.com/openforis/sepal/master/docs/instances.png)
+
+Users can at times require a lot of processing power and memory for their processing jobs. The large instances
+needed for this type of jobs are quite expensive. For instance, an r3.8xlarge (32 CPUs, 244 GiB memory) costs over 3 USD
+an hour, which adds up to more than 2,300 USD a month. When using such expensive instances, care have to be taken to
+use them efficiently, and not have them sitting idle at any time. To maximize the utility of the worker instances,
+SEPAL will automatically launch them when they are requested, and terminate them when they're not used anymore.
+For instance, if a user run a 10 hours processing job on an r3.8xlarge, the total cost would be 30 USD, with no
+money spent on an idling instance.
+
+To limit the cost of operating SEPAL, each user has a configurable monthly budget to spend on sandbox sessions. For
+instance, given a monthly budget of 100 USD a user might have used 32 hours of r3.8xlarge, or 250 hours r3.large and 450
+hours t2.large.
+
+Another costly component is storage, where 1TB of EFS storage costs 300 USD a month. To limit storage costs, each user
+have configurable disk quota.
 
 ### Components and services part of a SEPAL deployment
 
@@ -95,6 +125,7 @@ manager on session creation and expiry.
 The user sandboxes are spaces where users get access to a number of geospatial data processing tools. See table below
 for provided tools.
 
+![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/Components.png)
 
 ### Software deployed on each users sandbox:
 
