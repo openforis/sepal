@@ -66,7 +66,7 @@ There are three types of server instances:
    automatically launched when users access their sandboxes, and terminated when users disconnect. Users get to decide
    which instance type each sandbox session will be running on.
 
-3. Operation server, one single instance. It tests and deploys the software, monitors the health of the deployments,
+3. Operation server, one single instance. It tests and deploys the software, monitors the health of the system,
    and provides a user interface where user usage can be monitored, and disk/instance use quotas can be configured.
    This instance can be fairly small.
 
