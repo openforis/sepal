@@ -15,9 +15,6 @@
 - name: Build openforistoolkit
   docker_image: path="/docker/openforistoolkit/oft-base" name="openforistoolkit" state=build
 
-- name: Build openforistoolkit-jdk
-  docker_image: path="/docker/openforistoolkit/oft-jdk" name="openforistoolkit" tag="jdk" state=build
-
 - name: Build openforistoolkit-gui-tools
   docker_image: path="/docker/openforistoolkit/oft-gui-tools" name="openforistoolkit" tag="graphical-tools" state=build
 

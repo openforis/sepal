@@ -42,6 +42,8 @@ echo "GDAL_DRIVER_PATH=\"/opt/miniconda3/lib/gdalplugins:$GDAL_DRIVER_PATH\"" >>
 echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
 echo "PATH=\"/opt/miniconda3/bin:$PATH\"" >> /etc/environment
 
+source /etc/environment
+
 #install r-base
 add-apt-repository 'deb http://cran.cnr.Berkeley.edu/bin/linux/ubuntu trusty/'
 gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9

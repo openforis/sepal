@@ -23,7 +23,7 @@ class WebProxySessionsChecker implements Runnable{
     @Override
     void run() {
         LOG.trace("Going to check alive sessions")
-        sessionManager.activeSessions.each { String sessionId ->
+        sessionManager.allSessions.each { String sessionId ->
             def session = sessionManager.getSession(sessionId)
             int sandboxId = session.getAttribute(sandboxIdSessionAttrName) as int
             if (sandboxId){

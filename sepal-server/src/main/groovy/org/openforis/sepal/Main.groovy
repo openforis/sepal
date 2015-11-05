@@ -37,7 +37,10 @@ class Main {
     static startSandboxManager(){
         def config = SepalConfiguration.instance
         def daemonURI = config.dockerDaemonURI
+
+        connectionManager = new SqlConnectionManager(SepalConfiguration.instance.dataSource)
         connectionManagerSandbox = new SqlConnectionManager(SepalConfiguration.instance.sandboxDataSource)
+
         userRepository = new JDBCUserRepository(connectionManager)
 
         sandboxManager = new ConcreteSandboxManager(
@@ -78,18 +81,15 @@ class Main {
     }
 
     static deployEndpoints() {
-        connectionManager = new SqlConnectionManager(SepalConfiguration.instance.dataSource)
-
-
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
         def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
 
 
 
 
+        def proxySessionTimeout = SepalConfiguration.instance.proxySessionTimeout
 
-
-        new SandboxWebProxy(9191, ['rstudio-server': 8787], sandboxManager).start()
+        new SandboxWebProxy(9191, ['rstudio-server': 8787], sandboxManager,30,proxySessionTimeout).start()
 
         dataSetRepository = new JdbcDataSetRepository(connectionManager)
         Endpoints.deploy(
