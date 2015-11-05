@@ -8,10 +8,6 @@ import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
 
-
-/**
- * Created by ottavio on 02/11/15.
- */
 interface SandboxDataRepository {
 
     Boolean alive(int sandboxId)
@@ -22,17 +18,17 @@ interface SandboxDataRepository {
 
     List<SandboxData> getSandboxes(SandboxStatus status)
 
-    SandboxData getUserRunningSandbox( String username)
+    SandboxData getUserRunningSandbox(String username)
 
 }
 
-class JDBCSandboxDataRepository implements SandboxDataRepository{
+class JDBCSandboxDataRepository implements SandboxDataRepository {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final SqlConnectionProvider connectionProvider
 
-    JDBCSandboxDataRepository(SqlConnectionProvider connectionProvider){
+    JDBCSandboxDataRepository(SqlConnectionProvider connectionProvider) {
         super()
         this.connectionProvider = connectionProvider
     }
@@ -41,7 +37,7 @@ class JDBCSandboxDataRepository implements SandboxDataRepository{
     Boolean alive(int sandboxId) {
         def result = sql.executeUpdate('''
           UPDATE  sandboxes SET status = ?, status_refreshed_on = ?
-          WHERE sandbox_id = ?''',[ALIVE.name(), new Date(), sandboxId])
+          WHERE sandbox_id = ?''', [ALIVE.name(), new Date(), sandboxId])
         return result > 0
     }
 
@@ -51,23 +47,23 @@ class JDBCSandboxDataRepository implements SandboxDataRepository{
         def now = new Date()
         sql.executeUpdate('''
             UPDATE sandboxes SET status = ?, status_refreshed_on = ?, terminated_on =?
-            WHERE sandbox_id = ?''',[SandboxStatus.TERMINATED.name(),now,now,sandboxId])
+            WHERE sandbox_id = ?''', [SandboxStatus.TERMINATED.name(), now, now, sandboxId])
     }
 
     @Override
-    int created(String username, String containerId,String sandboxURI) {
+    int created(String username, String containerId, String sandboxURI) {
         def keys = sql.executeInsert('''
             INSERT INTO sandboxes(username,container_id,status,status_refreshed_on,uri)
-            VALUES(?,?,?,?,?)''',[username,containerId,ALIVE.name(),new Date(),sandboxURI])
+            VALUES(?,?,?,?,?)''', [username, containerId, ALIVE.name(), new Date(), sandboxURI])
         return keys[0][0] as int
     }
 
     @Override
     SandboxData getUserRunningSandbox(String username) {
         def returnData = null
-        def rows = sql.rows(' SELECT * FROM sandboxes WHERE username = ? AND status = ? ',[username, ALIVE.name()])
-        if (rows){
-            if (rows.size() > 1){
+        def rows = sql.rows(' SELECT * FROM sandboxes WHERE username = ? AND status = ? ', [username, ALIVE.name()])
+        if (rows) {
+            if (rows.size() > 1) {
                 LOG.warn("Found more than 1 running container for user $username. This may cause problems")
             }
             returnData = map(rows.first())
@@ -81,16 +77,16 @@ class JDBCSandboxDataRepository implements SandboxDataRepository{
     List<SandboxData> getSandboxes(SandboxStatus status) {
         def result = []
         def query = new StringBuilder('SELECT * FROM sandboxes ')
-        if (status){
+        if (status) {
             query.append(' WHERE status = ? ')
         }
         query.append(" ORDER BY created_on ASC")
-        def rawResults = status ? sql.rows(query.toString(),[status?.name()]) : sql.rows(query.toString())
-        result.addAll (rawResults.collect { map(it)  })
+        def rawResults = status ? sql.rows(query.toString(), [status?.name()]) : sql.rows(query.toString())
+        result.addAll(rawResults.collect { map(it) })
         return result
     }
 
-    private SandboxData map( GroovyRowResult row){
+    private SandboxData map(GroovyRowResult row) {
         SandboxData data = new SandboxData()
         data.username = row.username
         data.containerId = row.container_id

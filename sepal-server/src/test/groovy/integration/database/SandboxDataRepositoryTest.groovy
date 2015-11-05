@@ -8,10 +8,6 @@ import spock.lang.Specification
 import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
 import static org.openforis.sepal.sandbox.SandboxStatus.TERMINATED
 
-/**
- * Created by ottavio on 02/11/15.
- */
-
 class SandboxDataRepositoryTest extends Specification{
 
     private static final A_USERNAME = "A_USERNAME"

@@ -3,9 +3,6 @@ package org.openforis.sepal.sandbox
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 
-/**
- * Created by ottavio on 02/11/15.
- */
 class ContainerAliveCommand extends AbstractCommand<Void> {
 
     int sandboxId
