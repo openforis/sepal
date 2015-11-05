@@ -32,6 +32,7 @@ class SandboxWebProxy {
     private final Undertow server
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
     private final int sessionsCheckInterval
+    private final int sessionDefaultTimeout
     private final SandboxManager sandboxManager
 
     private SessionManager sessionManager
@@ -42,8 +43,9 @@ class SandboxWebProxy {
      * @param endpointByPort specifies which port each proxied endpoint run on
      * @param sandboxManager the sandbox manager used to obtain sandboxes.
      */
-    SandboxWebProxy(int port, Map<String, Integer> endpointByPort, SandboxManager sandboxManager, int sessionsCheckInterval = 30) {
+    SandboxWebProxy(int port, Map<String, Integer> endpointByPort, SandboxManager sandboxManager, int sessionsCheckInterval = 30, int sessionDefaultTimeout = 30 * 60) {
         this.sessionsCheckInterval = sessionsCheckInterval
+        this.sessionDefaultTimeout = sessionDefaultTimeout
         this.sandboxManager = sandboxManager
         this.server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
@@ -53,6 +55,7 @@ class SandboxWebProxy {
 
     private HttpHandler createHandler(Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
         sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
+        sessionManager.setDefaultSessionTimeout(sessionDefaultTimeout)
         sessionManager.registerSessionListener(new Listener(sandboxManager))
         new ErrorHandler(
                 new SessionAttachmentHandler(

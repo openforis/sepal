@@ -75,7 +75,8 @@ class DockerRESTClient implements DockerClient{
     @Override
     Boolean isContainerRunning(String containerId) {
         SandboxData data = new SandboxData(containerId: containerId)
-        return getContainerInfo(restClient,data).status == RUNNING
+        getContainerInfo(restClient,data)
+        return data.status == ALIVE
     }
 
     @Override
@@ -139,7 +140,7 @@ class DockerRESTClient implements DockerClient{
         return response.data
     }
 
-    private SandboxData getContainerInfo(RESTClient restClient, SandboxData containerData) {
+    private void getContainerInfo(RESTClient restClient, SandboxData containerData) {
         try {
             def path = "containers/$containerData.containerId/json"
             HttpResponseDecorator response = restClient.get(

@@ -43,6 +43,7 @@ class SepalConfiguration {
     public static final String CONTAINER_INACTIVE_TIMEOUT = "sandbox.inactive_timeout"
     public static final String DEAD_CONTAINERS_CHECK_INTERVAL = "sandbox.garbage_check_interval"
     public static final String SANDBOX_MANAGER_JDBC_CONN_STRING = "sandbox.jdbc_conn_string"
+    public static final String SANBOX_PROXY_SESSION_TIMEOUT = "sandbox.webproxy_session_timeout"
 
     Properties properties
     String configFileLocation
@@ -81,6 +82,10 @@ class SepalConfiguration {
                 testConnectionOnCheckout: true,
 
         )
+    }
+
+    def getProxySessionTimeout(){
+        Integer.parseInt(getValue(SANBOX_PROXY_SESSION_TIMEOUT))
     }
 
     def getContainerInactiveTimeout(){

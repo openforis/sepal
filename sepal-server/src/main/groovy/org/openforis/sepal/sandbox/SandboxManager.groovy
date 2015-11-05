@@ -46,21 +46,28 @@ class ConcreteSandboxManager implements SandboxManager{
 
     @Override
     SandboxData getUserSandbox(String username) {
-        if (! (userRepo.userExist(username))){
-            throw new NonExistingUser(username)
-        }
-        def runningSandbox = dataRepository.getUserRunningSandbox(username)
-        if (runningSandbox){
-            LOG.debug("Found data about running sandbox($runningSandbox.containerId) for user $username")
-            def running = sandboxProvider.isRunning(runningSandbox.containerId)
-            if (!running){
-                LOG.info("Stale sandbox data found for $username")
-                dataRepository.terminated(runningSandbox.sandboxId)
+        def runningSandbox = null
+        try{
+            if (! (userRepo.userExist(username))){
+                throw new NonExistingUser(username)
+            }
+            runningSandbox = dataRepository.getUserRunningSandbox(username)
+            if (runningSandbox){
+                LOG.debug("Found data about running sandbox($runningSandbox.containerId) for user $username")
+                def running = sandboxProvider.isRunning(runningSandbox.containerId)
+                if (!running){
+                    LOG.info("Stale sandbox data found for $username")
+                    dataRepository.terminated(runningSandbox.sandboxId)
+                    runningSandbox = askContainer(username)
+                }
+            }else{
                 runningSandbox = askContainer(username)
             }
-        }else{
-            runningSandbox = askContainer(username)
+        }catch (Exception ex){
+            LOG.error("Error while getting the user sandbox",ex)
+            throw ex
         }
+
         return runningSandbox
     }
 
