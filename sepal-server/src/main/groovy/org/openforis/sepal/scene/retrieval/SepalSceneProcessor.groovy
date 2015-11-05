@@ -13,7 +13,6 @@ import static Status.PROCESSED
 import static Status.PROCESSING
 
 class SepalSceneProcessor implements SceneProcessor {
-
     @Delegate
     @SuppressWarnings("GroovyUnusedDeclaration")
     private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
@@ -31,19 +30,12 @@ class SepalSceneProcessor implements SceneProcessor {
         Is.existingFolder(scriptsHome)
     }
 
-
-    private void notifyRequestStatusChange(DownloadRequest request, Status status){
-        request.scenes.each { notifyListeners(it,status) }
-        notifyDownloadRequestListeners(request,status)
-    }
-
-
-    void process(DownloadRequest downloadRequest, String processingChain){
-        notifyRequestStatusChange(downloadRequest,PROCESSING)
-        if (processingChain){
-            doProcess(processingChain,sceneRepository.getDownloadRequestWorkingDirectory(downloadRequest))
+    void process(DownloadRequest downloadRequest, String processingChain) {
+        notifyRequestStatusChange(downloadRequest, PROCESSING)
+        if (processingChain) {
+            doProcess(processingChain, sceneRepository.getDownloadRequestWorkingDirectory(downloadRequest))
         }
-        notifyRequestStatusChange(downloadRequest,PROCESSED)
+        notifyRequestStatusChange(downloadRequest, PROCESSED)
     }
 
     @Override
@@ -55,7 +47,12 @@ class SepalSceneProcessor implements SceneProcessor {
         notifyListeners(request, PROCESSED)
     }
 
-    private void doProcess(String processingChain, File workingDirectory){
+    private void notifyRequestStatusChange(DownloadRequest request, Status status) {
+        request.scenes.each { notifyListeners(it, status) }
+        notifyDownloadRequestListeners(request, status)
+    }
+
+    private void doProcess(String processingChain, File workingDirectory) {
         File scriptFile = new File(scriptsHome, processingChain)
         Is.existingFile(scriptFile)
         def workingDirPath = workingDirectory.absolutePath

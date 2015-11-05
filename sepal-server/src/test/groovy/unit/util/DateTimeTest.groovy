@@ -1,9 +1,7 @@
 package unit.util
 
 import org.openforis.sepal.util.DateTime
-import spock.lang.Ignore
 import spock.lang.Specification
-
 
 class DateTimeTest extends Specification {
 
@@ -21,7 +19,5 @@ class DateTimeTest extends Specification {
             cal.get(Calendar.HOUR_OF_DAY) == 23
             cal.get(Calendar.MINUTE) == 59
             cal.get(Calendar.SECOND) == 22
-
-
     }
 }

@@ -4,15 +4,14 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 class DeleteRequestTest extends Specification {
+    static final USERNAME = 'Test.User'
+    static final DATASET_ID = 1
+    static final SCENE_ID = 'L8_SCENE_ID'
 
-    private static final USERNAME = 'Test.User'
-    private static final DATASET_ID = 1
-    private static final SCENE_ID = 'L8_SCENE_ID'
-
-    @Shared private SepalDriver driver
-    @Shared private Integer declaredRequestId
-    @Shared private Integer declaredRequestedSceneId
-    @Shared private Integer expectedRequestedSceneId
+    @Shared SepalDriver driver
+    @Shared Integer declaredRequestId
+    @Shared Integer declaredRequestedSceneId
+    @Shared Integer expectedRequestedSceneId
 
 
     def cleanupSpec() {
@@ -29,11 +28,11 @@ class DeleteRequestTest extends Specification {
                 dataSetId: DATASET_ID,
                 sceneIds : [SCENE_ID, SCENE_ID]
         ]
-       driver.postDownloadRequests(request)
-       def downloadRequest =  driver.getDownloadRequests(USERNAME).data[0]
-       declaredRequestId = downloadRequest.requestId
-       declaredRequestedSceneId = downloadRequest.scenes[0].id
-       expectedRequestedSceneId = downloadRequest.scenes[1].id
+        driver.postDownloadRequests(request)
+        def downloadRequest = driver.getDownloadRequests(USERNAME).data[0]
+        declaredRequestId = downloadRequest.requestId
+        declaredRequestedSceneId = downloadRequest.scenes[0].id
+        expectedRequestedSceneId = downloadRequest.scenes[1].id
     }
 
 

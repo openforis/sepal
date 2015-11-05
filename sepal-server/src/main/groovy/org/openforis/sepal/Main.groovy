@@ -15,7 +15,6 @@ import org.openforis.sepal.user.JDBCUserRepository
 import org.openforis.sepal.util.HttpResourceLocator
 
 class Main {
-
     def static dataSetRepository
     def static connectionManager
     def static connectionManagerSandbox
@@ -31,10 +30,9 @@ class Main {
         startSceneManager()
         startLayerMonitor()
         startCrawling()
-
     }
 
-    static startSandboxManager(){
+    static startSandboxManager() {
         def config = SepalConfiguration.instance
         def daemonURI = config.dockerDaemonURI
 
@@ -44,12 +42,12 @@ class Main {
         userRepository = new JDBCUserRepository(connectionManager)
 
         sandboxManager = new ConcreteSandboxManager(
-                new DockerContainersProvider(new DockerRESTClient(daemonURI),userRepository),
+                new DockerContainersProvider(new DockerRESTClient(daemonURI), userRepository),
                 new JDBCSandboxDataRepository(connectionManagerSandbox),
                 userRepository
         )
 
-        sandboxManager.start(config.containerInactiveTimeout,config.deadContainersCheckInterval)
+        sandboxManager.start(config.containerInactiveTimeout, config.deadContainersCheckInterval)
     }
 
     static startCrawling() {
@@ -84,12 +82,9 @@ class Main {
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
         def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
 
-
-
-
         def proxySessionTimeout = SepalConfiguration.instance.proxySessionTimeout
 
-        new SandboxWebProxy(9191, ['rstudio-server': 8787], sandboxManager,30,proxySessionTimeout).start()
+        new SandboxWebProxy(9191, ['rstudio-server': 8787], sandboxManager, 30, proxySessionTimeout).start()
 
         dataSetRepository = new JdbcDataSetRepository(connectionManager)
         Endpoints.deploy(

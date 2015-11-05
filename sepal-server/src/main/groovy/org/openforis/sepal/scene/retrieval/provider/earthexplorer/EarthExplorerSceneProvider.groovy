@@ -53,7 +53,7 @@ class EarthExplorerSceneProvider implements SceneProvider {
         return scenesMap
     }
 
-    Collection<SceneRequest> retrieve(DownloadRequest downloadRequest){
+    Collection<SceneRequest> retrieve(DownloadRequest downloadRequest) {
         retrieve(downloadRequest.scenes)
     }
 

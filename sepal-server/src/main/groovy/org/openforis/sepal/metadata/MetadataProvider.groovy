@@ -23,7 +23,4 @@ class MetadataProvider {
         crawlingCriterias = new HashSet<DataSet>()
     }
 
-
-
-
 }

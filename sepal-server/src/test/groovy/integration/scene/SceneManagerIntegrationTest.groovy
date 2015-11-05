@@ -19,14 +19,12 @@ import java.util.concurrent.Executors
 import static org.openforis.sepal.scene.DataSet.LANDSAT_8
 import static org.openforis.sepal.scene.Status.*
 
-class SceneManagerIntegrationTest extends Specification{
-
-    private static final def WORKING_DIR = File.createTempDir('workingDir', null)
-    private static final def DATASET_ID = 1
-    private static final def PROCESSING_CHAIN = "scripts/LANDSAT_8/test.sh"
-    private static final def SCENE_IDS = ["one", "two", "three"]
-    private static final def USER = "Test.User"
-
+class SceneManagerIntegrationTest extends Specification {
+    static final WORKING_DIR = File.createTempDir('workingDir', null)
+    static final DATASET_ID = 1
+    static final PROCESSING_CHAIN = "scripts/LANDSAT_8/test.sh"
+    static final SCENE_IDS = ["one", "two", "three"]
+    static final USER = "Test.User"
 
     @Shared SepalDriver driver
     ScenesDownloadRepository scenesDownloadRepository
@@ -35,33 +33,27 @@ class SceneManagerIntegrationTest extends Specification{
     ScenePublisher scenePublisher
     SceneProvider sceneProvider
 
-    def setupSpec(){
+    def setupSpec() {
         driver = new SepalDriver()
-
         setupProcessingScript()
     }
 
-    def setup(){
-
+    def setup() {
         scenePublisher = Spy(MockSepalScenePublisher)
-
         sceneProcessor = Spy(MockSceneProcessor)
-
         sceneProvider = Spy(MockSceneProvider)
-
         scenesDownloadRepository = Spy(JdbcScenesDownloadRepository, constructorArgs: [driver.getSQLManager()])
+        sceneManager = new SceneManager(sceneProvider, sceneProcessor, scenePublisher, scenesDownloadRepository)
 
-        sceneManager = new SceneManager(sceneProvider,sceneProcessor,scenePublisher,scenesDownloadRepository)
+        scenePublisher.register(scenesDownloadRepository, sceneManager)
+        sceneProcessor.register(scenesDownloadRepository, sceneManager)
+        sceneProvider.register(scenesDownloadRepository, sceneManager)
 
-        scenePublisher.register(scenesDownloadRepository,sceneManager)
-        sceneProcessor.register(scenesDownloadRepository,sceneManager)
-        sceneProvider.register(scenesDownloadRepository,sceneManager)
-
-        scenePublisher.registerDownloadRequestListener(scenesDownloadRepository,sceneManager)
-        sceneProcessor.registerDownloadRequestListener(scenesDownloadRepository,sceneManager)
+        scenePublisher.registerDownloadRequestListener(scenesDownloadRepository, sceneManager)
+        sceneProcessor.registerDownloadRequestListener(scenesDownloadRepository, sceneManager)
     }
 
-    def cleanupSpec(){
+    def cleanupSpec() {
         driver.stop()
     }
 
@@ -71,29 +63,29 @@ class SceneManagerIntegrationTest extends Specification{
         FileUtils.copyDirectoryToDirectory(scriptFolder, WORKING_DIR)
         def windows = System.getProperty("os.name").toLowerCase().contains("windows")
         File scriptFile = new File("${LANDSAT_8.name()}/${windows ? "test.cmd" : "test.sh"}")
-        File workingScriptFolder = new File(WORKING_DIR,"scripts")
-        new File(workingScriptFolder,scriptFile.toString()).setExecutable(true)
+        File workingScriptFolder = new File(WORKING_DIR, "scripts")
+        new File(workingScriptFolder, scriptFile.toString()).setExecutable(true)
         return scriptFile.toString()
     }
 
 
-    def 'Working with an atomic request, the scene manager behaves correctly'(){
+    def 'Working with an atomic request, the scene manager behaves correctly'() {
         given:
-        insertRequest()
-        DownloadRequest downloadRequest = scenesDownloadRepository.newDownloadRequests.first()
+            insertRequest()
+            DownloadRequest downloadRequest = scenesDownloadRepository.newDownloadRequests.first()
         when:
-        sceneManager.requestStatusChanged(downloadRequest, REQUESTED)
+            sceneManager.requestStatusChanged(downloadRequest, REQUESTED)
         then:
-        driver.eventually{
+            driver.eventually {
                 1 * sceneProvider.retrieve(downloadRequest.scenes)
                 3 * scenesDownloadRepository.hasStatus(1, DOWNLOADED)
                 1 * sceneProcessor.process(_ as DownloadRequest, _ as String)
                 1 * scenePublisher.publish(_ as DownloadRequest)
-        }
+            }
 
     }
 
-    private void insertRequest(def userName = USER){
+    private void insertRequest(def userName = USER) {
         RequestScenesDownloadCommand downloadCommand = new RequestScenesDownloadCommand(
                 dataSetId: DATASET_ID,
                 processingChain: PROCESSING_CHAIN,
@@ -104,17 +96,15 @@ class SceneManagerIntegrationTest extends Specification{
         scenesDownloadRepository.saveDownloadRequest(downloadCommand)
     }
 
-
-    private class MockSceneProvider implements SceneProvider{
-
+    private class MockSceneProvider implements SceneProvider {
         @Delegate
         @SuppressWarnings("GroovyUnusedDeclaration")
         private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
 
         @Override
         Collection<SceneRequest> retrieve(List<SceneRequest> requests) {
-            requests.each{ SceneRequest req ->
-                notifyListeners(req,DOWNLOADED)
+            requests.each { SceneRequest req ->
+                notifyListeners(req, DOWNLOADED)
             }
             return []
         }
@@ -148,7 +138,6 @@ class SceneManagerIntegrationTest extends Specification{
     }
 
     private class MockSepalScenePublisher implements ScenePublisher {
-
         private final JobExecutor executor = new ExecutorServiceBasedJobExecutor(Executors.newSingleThreadExecutor())
 
         @Delegate
@@ -159,16 +148,13 @@ class SceneManagerIntegrationTest extends Specification{
         @SuppressWarnings("GroovyUnusedDeclaration")
         private final DownloadRequestObservable downloadRequestObservable = new DownloadRequestObservable()
 
-        void publish(DownloadRequest request){
+        void publish(DownloadRequest request) {
             executor.execute {
                 notifyDownloadRequestListeners(request, PUBLISHED)
             }
         }
 
-
-        void publish(SceneRequest request){}
-
-
+        void publish(SceneRequest request) {}
     }
 
 }

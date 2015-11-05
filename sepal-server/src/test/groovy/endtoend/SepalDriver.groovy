@@ -9,12 +9,12 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 import spock.util.concurrent.PollingConditions
 
 class SepalDriver {
-    private final system = new Sepal().init()
-    private final RESTClient client = new RESTClient("http://localhost:$system.port/data/")
+    final system = new Sepal().init()
+    final RESTClient client = new RESTClient("http://localhost:$system.port/data/")
 
     final downloadWorkingDir = File.createTempDir('download', null)
     final homeDir = File.createTempDir('home', null)
-    private FakeEarthExplorer fakeEarthExplorer
+    FakeEarthExplorer fakeEarthExplorer
 
     SepalDriver() {
         client.handler.failure = { response, body ->
@@ -39,13 +39,11 @@ class SepalDriver {
     }
 
     HttpResponseDecorator putRequest(def path, def body = null) {
-
-        client.put(path: path,body: body) as HttpResponseDecorator
+        client.put(path: path, body: body) as HttpResponseDecorator
     }
 
     HttpResponseDecorator postRequest(def path, def body = null) {
-
-        client.post(path: path,body: body) as HttpResponseDecorator
+        client.post(path: path, body: body) as HttpResponseDecorator
     }
 
     HttpResponseDecorator postDownloadRequests(Map downloadRequest) {

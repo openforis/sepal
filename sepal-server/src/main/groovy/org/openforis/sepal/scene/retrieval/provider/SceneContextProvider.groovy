@@ -21,14 +21,11 @@ class FileSystemSceneContextProvider implements SceneContextProvider {
     @SuppressWarnings("GroovyUnusedDeclaration")
     private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
 
-
-
     private final SceneRepository sceneRepository
 
     FileSystemSceneContextProvider(SceneRepository sceneRepository) {
         this.sceneRepository = sceneRepository
     }
-
 
     void withScene(SceneRequest request, Double sizeInBytes = null, Closure closure) {
         try {

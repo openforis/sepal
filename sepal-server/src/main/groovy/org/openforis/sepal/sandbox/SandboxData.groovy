@@ -3,10 +3,8 @@ package org.openforis.sepal.sandbox
 import groovy.transform.ToString
 
 
-
 @ToString
-class SandboxData implements Serializable{
-
+class SandboxData implements Serializable {
     int sandboxId
     String username
     SandboxStatus status
@@ -16,14 +14,12 @@ class SandboxData implements Serializable{
     Date terminatedOn
     Date statusRefreshedOn
 
-
-
-    SandboxData(){
+    SandboxData() {
         super()
     }
 
 }
 
 enum SandboxStatus {
-    CREATED,STOPPED,ALIVE,TERMINATED
+    CREATED, STOPPED, ALIVE, TERMINATED
 }

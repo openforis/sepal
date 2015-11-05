@@ -36,11 +36,11 @@ CREATE TABLE config_details (
 );
 
 CREATE TABLE data_set (
-  id             INT(11)     NOT NULL AUTO_INCREMENT,
-  dataset_name   VARCHAR(50) NOT NULL,
-  dataset_value  VARCHAR(50) NOT NULL,
-  dataset_active TINYINT(1)  NOT NULL,
-  metadata_provider INT(11)  NOT NULL DEFAULT 1,
+  id                INT(11)     NOT NULL AUTO_INCREMENT,
+  dataset_name      VARCHAR(50) NOT NULL,
+  dataset_value     VARCHAR(50) NOT NULL,
+  dataset_active    TINYINT(1)  NOT NULL,
+  metadata_provider INT(11)     NOT NULL DEFAULT 1,
   PRIMARY KEY (id)
 );
 
@@ -67,7 +67,7 @@ CREATE TABLE image_log (
   downloaded_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_accessed DATETIME,
   accessed_by   VARCHAR(50),
-  deleted       INT(11) NOT NULL DEFAULT 0,
+  deleted       INT(11)      NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -104,7 +104,7 @@ CREATE TABLE users (
   permissions    TEXT,
   created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP   NULL     DEFAULT NULL,
-  user_uid INTEGER NOT NULL DEFAULT 0,
+  user_uid       INTEGER     NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -197,59 +197,60 @@ CREATE TABLE wrs_points (
 
 
 CREATE TABLE download_requests (
-  request_id   INT(11)      NOT NULL AUTO_INCREMENT,
-  request_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  username     VARCHAR(255) NOT NULL,
-  group_scenes INT(1) NOT NULL DEFAULT 0,
-  request_name VARCHAR(255),
+  request_id     INT(11)      NOT NULL AUTO_INCREMENT,
+  request_time   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  username       VARCHAR(255) NOT NULL,
+  group_scenes   INT(1)       NOT NULL DEFAULT 0,
+  request_name   VARCHAR(255),
   request_status VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
   PRIMARY KEY (request_id)
 );
 
-ALTER TABLE download_requests ADD CONSTRAINT uc_user_req_name UNIQUE (username,request_name);
+ALTER TABLE download_requests ADD CONSTRAINT uc_user_req_name UNIQUE (username, request_name);
 
 
 CREATE TABLE requested_scenes (
-  id                   INT(11)      NOT NULL AUTO_INCREMENT,
-  request_id           INT(11)      NOT NULL,
-  scene_id             VARCHAR(255) NOT NULL,
-  dataset_id           INT(11)      NOT NULL,
-  last_updated         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  status               VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
-  processing_chain     VARCHAR(255) ,
+  id               INT(11)      NOT NULL AUTO_INCREMENT,
+  request_id       INT(11)      NOT NULL,
+  scene_id         VARCHAR(255) NOT NULL,
+  dataset_id       INT(11)      NOT NULL,
+  last_updated     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  status           VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
+  processing_chain VARCHAR(255),
   PRIMARY KEY (`id`)
 );
 
-CREATE TABLE  metadata_providers (
-  id INT(11) unsigned NOT NULL,
-  name VARCHAR(45) NOT NULL,
-  active TINYINT(1) NOT NULL DEFAULT '1',
-  crawling_entrypoint VARCHAR(255) NOT NULL,
-  iterations int(10) default 4,
-  iteration_size int(10) default 18,
-  last_execution_start DATETIME default null,
-  last_execution_end DATETIME default null,
+CREATE TABLE metadata_providers (
+  id                   INT(11) UNSIGNED NOT NULL,
+  name                 VARCHAR(45)      NOT NULL,
+  active               TINYINT(1)       NOT NULL DEFAULT '1',
+  crawling_entrypoint  VARCHAR(255)     NOT NULL,
+  iterations           INT(10)                   DEFAULT 4,
+  iteration_size       INT(10)                   DEFAULT 18,
+  last_execution_start DATETIME                  DEFAULT NULL,
+  last_execution_end   DATETIME                  DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
 
-CREATE TABLE  metadata_crawling_criteria (
-  criteria_id int(10) unsigned NOT NULL AUTO_INCREMENT,
-  metadata_provider_id int(10) unsigned NOT NULL,
-  field_name varchar(255) NOT NULL,
-  expected_value varchar(255) NOT NULL,
+CREATE TABLE metadata_crawling_criteria (
+  criteria_id          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  metadata_provider_id INT(10) UNSIGNED NOT NULL,
+  field_name           VARCHAR(255)     NOT NULL,
+  expected_value       VARCHAR(255)     NOT NULL,
   PRIMARY KEY (`criteria_id`)
 );
 
 CREATE TABLE sandboxes (
-  sandbox_id INT NOT NULL AUTO_INCREMENT,
-  username VARCHAR(255) NOT NULL,
-  status VARCHAR(255) NOT NULL DEFAULT 'CREATED',
-  container_id VARCHAR(255) NOT NULL,
-  uri VARCHAR(255) NOT NULL,
-  created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  terminated_on TIMESTAMP NULL,
-  status_refreshed_on TIMESTAMP NULL,
-  PRIMARY KEY (`sandbox_id`));
+  sandbox_id          INT          NOT NULL AUTO_INCREMENT,
+  username            VARCHAR(255) NOT NULL,
+  status              VARCHAR(255) NOT NULL DEFAULT 'CREATED',
+  container_id        VARCHAR(255) NOT NULL,
+  uri                 VARCHAR(255) NOT NULL,
+  created_on          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  terminated_on       TIMESTAMP    NULL,
+  status_refreshed_on TIMESTAMP    NULL,
+  PRIMARY KEY (`sandbox_id`)
+);
 
 
 

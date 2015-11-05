@@ -13,16 +13,15 @@ import static org.openforis.sepal.scene.DataSet.LANDSAT_8
 
 
 class SepalScenePublisherTest extends Specification {
-
     def workingDir = File.createTempDir('workingDir', null)
     def homeDir = File.createTempDir('homeDir', null)
 
     def sceneRepo = new FileSystemSceneRepository(workingDir, new File(homeDir, "\$user/sdmsRepository").toString())
     def request = new DownloadRequest(requestId: 1L, username: 'username', dataSet: LANDSAT_8)
-    def sceneRequest = new SceneRequest(11L, new SceneReference('L45345', LANDSAT_8), 'username', new Date(), Status.REQUESTED,request)
+    def sceneRequest = new SceneRequest(11L, new SceneReference('L45345', LANDSAT_8), 'username', new Date(), Status.REQUESTED, request)
     def atomicRequest = new DownloadRequest(requestId: 2L, groupScenes: true, requestName: 'reqName', username: 'user', dataSet: LANDSAT_8)
-    def sceneRequest2 = new SceneRequest(12L, new SceneReference('L45345', LANDSAT_8), 'username', new Date(), Status.REQUESTED,atomicRequest)
-    def sceneRequest3 = new SceneRequest(13L, new SceneReference('L2', LANDSAT_8), 'username', new Date(), Status.REQUESTED,atomicRequest)
+    def sceneRequest2 = new SceneRequest(12L, new SceneReference('L45345', LANDSAT_8), 'username', new Date(), Status.REQUESTED, atomicRequest)
+    def sceneRequest3 = new SceneRequest(13L, new SceneReference('L2', LANDSAT_8), 'username', new Date(), Status.REQUESTED, atomicRequest)
     def publisher = new SepalScenePublisher(sceneRepo)
 
     def 'Publishing a scene'() {
@@ -45,16 +44,16 @@ class SepalScenePublisherTest extends Specification {
         def requestPublishingDirectory = sceneRepo.getDownloadRequestHomeDirectory(atomicRequest)
         new File(sceneWorkingDirectory, "image.tif").createNewFile()
         when:
-        publisher.publish(atomicRequest)
+            publisher.publish(atomicRequest)
         then:
-        DirectoryStructure.matches(requestPublishingDirectory.parentFile) {
-            "$atomicRequest.requestName"{
-                "$sceneRequest3.sceneReference.id"()
-                "$sceneRequest2.sceneReference.id"{
-                    'image.tif'()
+            DirectoryStructure.matches(requestPublishingDirectory.parentFile) {
+                "$atomicRequest.requestName" {
+                    "$sceneRequest3.sceneReference.id"()
+                    "$sceneRequest2.sceneReference.id" {
+                        'image.tif'()
+                    }
                 }
             }
-        }
     }
 
 }

@@ -4,21 +4,16 @@ import endtoend.SepalDriver
 import org.openforis.sepal.metadata.JDBCUsgsDataRepository
 import org.openforis.sepal.metadata.UsgsDataRepository
 import org.openforis.sepal.util.DateTime
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
-
 class UsgsDataSetRepositoryTest extends Specification {
-
-    def static final DATASET_ID = 1L
-    def static final SCENE_ID = 'A_SCENE_ID'
-
+    static final DATASET_ID = 1L
+    static final SCENE_ID = 'A_SCENE_ID'
 
     @Shared SepalDriver driver
     UsgsDataRepository usgsRepo
     @Shared def metadataScene
-
 
     def cleanupSpec() {
         driver.stop()
@@ -53,8 +48,6 @@ class UsgsDataSetRepositoryTest extends Specification {
             sceneMetadata
             sceneMetadata.sceneID == sceneId
             DateTime.toDateString(sceneMetadata.acquisitionDate) == acquisitionDate
-
-
     }
 
     def 'trying to update a non existing row fails'() {
@@ -77,10 +70,9 @@ class UsgsDataSetRepositoryTest extends Specification {
             updates == 1
             retrievedScene
             retrievedScene.cloudCover == 666
-
     }
 
-    def private parseXml() {
+    private parseXml() {
         def metadataFile = new XmlSlurper().parse(UsgsDataSetRepositoryTest.getResourceAsStream("/metadata.xml"))
         return metadataFile.depthFirst().findAll { it.name() == 'metaData' }
     }

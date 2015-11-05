@@ -14,7 +14,6 @@ import spock.util.concurrent.PollingConditions
 import util.Port
 
 class SandboxWebProxyTest extends Specification {
-
     StubSandboxManager sandboxManager = Spy(StubSandboxManager)
     RESTClient client
     SandboxWebProxy proxy
@@ -43,13 +42,13 @@ class SandboxWebProxyTest extends Specification {
         endpoint2.stop()
     }
 
-    def 'Session alive notifications works as expected'(){
+    def 'Session alive notifications works as expected'() {
         when:
-        get(endpoint: 'endpoint1', user: user)
+            get(endpoint: 'endpoint1', user: user)
         then:
-        new PollingConditions().eventually {
-            sandboxManager.aliveInvoked
-        }
+            new PollingConditions().eventually {
+                sandboxManager.aliveInvoked
+            }
     }
 
     def 'Proxies an endpoint'() {
@@ -173,28 +172,19 @@ class SandboxWebProxyTest extends Specification {
         }
     }
 
-    private static class StubSandboxManager implements SandboxManager{
-
+    private static class StubSandboxManager implements SandboxManager {
         def aliveInvoked
 
-        @Override
         SandboxData getUserSandbox(String username) {
             throw new NonExistingUser(username)
         }
 
-        @Override
         void aliveSignal(int sandboxId) {
             aliveInvoked = true
         }
 
-        @Override
-        void start(int containerInactiveTimeout, int checkInterval) {
+        void start(int containerInactiveTimeout, int checkInterval) {}
 
-        }
-
-        @Override
-        void stop() {
-
-        }
+        void stop() {}
     }
 }

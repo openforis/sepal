@@ -6,22 +6,22 @@ import org.slf4j.LoggerFactory
 
 interface SandboxContainersProvider {
 
-    SandboxData obtain( String username )
+    SandboxData obtain(String username)
 
-    Boolean isRunning( String containerId )
+    Boolean isRunning(String containerId)
 
-    Boolean release ( String containerId )
+    Boolean release(String containerId)
 
 }
 
-class DockerContainersProvider implements SandboxContainersProvider{
+class DockerContainersProvider implements SandboxContainersProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final DockerClient dockerClient
     private final UserRepository userRepo
 
-    DockerContainersProvider(DockerClient dockerClient, UserRepository userRepo){
+    DockerContainersProvider(DockerClient dockerClient, UserRepository userRepo) {
         this.dockerClient = dockerClient
         this.userRepo = userRepo
     }
@@ -29,16 +29,16 @@ class DockerContainersProvider implements SandboxContainersProvider{
     @Override
     SandboxData obtain(String username) {
         LOG.debug("Going to ask a container for $username sandbox")
-        return dockerClient.createContainer(username,userRepo.getUserUid(username))
+        return dockerClient.createContainer(username, userRepo.getUserUid(username))
     }
 
     @Override
     Boolean release(String containerId) {
         def released = false
-        if( isRunning(containerId)){
+        if (isRunning(containerId)) {
             LOG.debug("Going to terminate container $containerId")
             released = dockerClient.releaseContainer(containerId)
-        }else{
+        } else {
             LOG.warn("Container $containerId is not running. Nothing will be terminated")
         }
         return released

@@ -1,11 +1,9 @@
 package unit.util
 
 import org.openforis.sepal.util.Tar
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.nio.file.Files
-
 
 class TarTest extends Specification {
     File workingDir = File.createTempDir()
