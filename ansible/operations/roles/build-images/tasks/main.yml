@@ -42,6 +42,9 @@
 - name: Build jenkins
   docker_image: path="/opt/sepal/docker/jenkins" name="openforis/jenkins" state="build"
 
+- name: Build haproxy
+  docker_image: path="/opt/sepal/docker/haproxy" name="localhost/openforis/haproxy" state="build"
+
 - name: Pushing the images to the local repo
   shell: "/data/ansible/login_to_repo"
 
