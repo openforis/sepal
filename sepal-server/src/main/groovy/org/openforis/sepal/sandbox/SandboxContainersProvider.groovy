@@ -13,7 +13,7 @@ interface SandboxContainersProvider {
 
     Boolean isRunning( String containerId )
 
-    void release ( String containerId )
+    Boolean release ( String containerId )
 
 }
 
@@ -31,17 +31,20 @@ class DockerContainersProvider implements SandboxContainersProvider{
 
     @Override
     SandboxData obtain(String username) {
+        LOG.debug("Going to ask a container for $username sandbox")
         return dockerClient.createContainer(username,userRepo.getUserUid(username))
     }
 
     @Override
-    void release(String containerId) {
+    Boolean release(String containerId) {
+        def released = false
         if( isRunning(containerId)){
             LOG.debug("Going to terminate container $containerId")
-            dockerClient.releaseContainer(containerId)
+            released = dockerClient.releaseContainer(containerId)
         }else{
             LOG.warn("Container $containerId is not running. Nothing will be terminated")
         }
+        return released
     }
 
     @Override

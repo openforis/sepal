@@ -10,24 +10,27 @@ import org.openforis.sepal.sandbox.SandboxManager
 import org.openforis.sepal.sandboxwebproxy.SandboxWebProxy
 import org.openforis.sepal.user.NonExistingUser
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
 import util.Port
 
 class SandboxWebProxyTest extends Specification {
-    def sandboxManager = Mock(SandboxManager)
+
+    StubSandboxManager sandboxManager = Spy(StubSandboxManager)
     RESTClient client
     SandboxWebProxy proxy
     def endpoint1 = new Endpoint()
     def endpoint2 = new Endpoint()
     def user = existingUser('some-user')
     def anotherUser = existingUser('another-user')
+    def alive = false
 
     def setup() {
-        sandboxManager.getUserSandbox(_) >> { throw new NonExistingUser(it.first()) }
         def port = Port.findFree()
         proxy = new SandboxWebProxy(
                 port,
                 [endpoint1: endpoint1.port, endpoint2: endpoint2.port],
-                sandboxManager
+                sandboxManager,
+                1
         )
         proxy.start()
         client = new RESTClient("http://localhost:$port/")
@@ -38,6 +41,15 @@ class SandboxWebProxyTest extends Specification {
         proxy.stop()
         endpoint1.stop()
         endpoint2.stop()
+    }
+
+    def 'Session alive notifications works as expected'(){
+        when:
+        get(endpoint: 'endpoint1', user: user)
+        then:
+        new PollingConditions().eventually {
+            sandboxManager.aliveInvoked
+        }
     }
 
     def 'Proxies an endpoint'() {
@@ -133,7 +145,7 @@ class SandboxWebProxyTest extends Specification {
     }
 
     private SandboxData getSandbox() {
-        [uri: 'localhost'] as SandboxData
+        [uri: 'localhost', 'sandboxId': 1] as SandboxData
     }
 
     private static class Endpoint {
@@ -158,6 +170,31 @@ class SandboxWebProxyTest extends Specification {
 
         void stop() {
             server.stop()
+        }
+    }
+
+    private static class StubSandboxManager implements SandboxManager{
+
+        def aliveInvoked
+
+        @Override
+        SandboxData getUserSandbox(String username) {
+            throw new NonExistingUser(username)
+        }
+
+        @Override
+        void aliveSignal(int sandboxId) {
+            aliveInvoked = true
+        }
+
+        @Override
+        void start(int containerInactiveTimeout, int checkInterval) {
+
+        }
+
+        @Override
+        void stop() {
+
         }
     }
 }

@@ -10,7 +10,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static groovyx.net.http.ContentType.JSON
-import static org.openforis.sepal.sandbox.SandboxStatus.RUNNING
+import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
 import static org.openforis.sepal.sandbox.SandboxStatus.STOPPED
 
 interface DockerClient {
@@ -93,9 +93,10 @@ class DockerRESTClient implements DockerClient{
             LOG.error("Error while deleting container $containerId", exception)
             throw exception
         }
+        return true
     }
 
-    private Map<String,String> collectSettings(String username){
+    private static Map<String,String> collectSettings(String username){
         SepalConfiguration conf = SepalConfiguration.instance
         def configMap = [
                 portsToCheck: conf.sandboxPortsToCheck,
@@ -146,7 +147,7 @@ class DockerRESTClient implements DockerClient{
             )
             def data = response.data
             containerData.uri = response.data.NetworkSettings.IPAddress
-            containerData.status = data.State.Running ? RUNNING : STOPPED
+            containerData.status = data.State.Running ? ALIVE : STOPPED
         } catch (HttpResponseException responseException) {
             LOG.error("Error while getting container info. $responseException.message")
             releaseContainer(containerData.containerId, restClient)

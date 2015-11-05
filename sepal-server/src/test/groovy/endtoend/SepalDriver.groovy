@@ -31,7 +31,21 @@ class SepalDriver {
     }
 
     HttpResponseDecorator getDownloadRequests(String username) {
-        client.get(path: "downloadRequests/$username") as HttpResponseDecorator
+        getRequest("downloadRequests/$username")
+    }
+
+    HttpResponseDecorator getRequest(def path) {
+        client.get(path: path) as HttpResponseDecorator
+    }
+
+    HttpResponseDecorator putRequest(def path, def body = null) {
+
+        client.put(path: path,body: body) as HttpResponseDecorator
+    }
+
+    HttpResponseDecorator postRequest(def path, def body = null) {
+
+        client.post(path: path,body: body) as HttpResponseDecorator
     }
 
     HttpResponseDecorator postDownloadRequests(Map downloadRequest) {
@@ -58,6 +72,7 @@ class SepalDriver {
 
     SepalDriver withUser(String username, int userUid) {
         system.database.addUser(username, userUid)
+        return this
     }
 
     SepalDriver withUsers(String... usernames) {

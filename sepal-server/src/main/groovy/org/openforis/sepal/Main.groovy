@@ -42,7 +42,8 @@ class Main {
 
         sandboxManager = new ConcreteSandboxManager(
                 new DockerContainersProvider(new DockerRESTClient(daemonURI),userRepository),
-                new JDBCSandboxDataRepository(connectionManagerSandbox)
+                new JDBCSandboxDataRepository(connectionManagerSandbox),
+                userRepository
         )
 
         sandboxManager.start(config.containerInactiveTimeout,config.deadContainersCheckInterval)
