@@ -14,7 +14,7 @@ groupadd -g 9998 ${USER_GROUP}
 #create ssh deamon folder
 mkdir /var/run/sshd
 
-printf '%s\n' 'Match Group sepalUsers' 'ForceCommand /ssh-bootstrap $USER $SSH_ORIGINAL_COMMAND' >> /etc/ssh/sshd_config
+printf '%s\n' 'Match Group sepalUsers' 'ForceCommand /ssh-bootstrap' >> /etc/ssh/sshd_config
 
 echo "root" > /etc/incron.allow
 mkdir -p /var/spool/incron
