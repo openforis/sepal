@@ -65,15 +65,6 @@
                     <artifactId>${project.artifactId}</artifactId>
                     <version>${project.version}</version>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>deploy-tgz</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>deploy-file</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
         </plugins>
