@@ -35,7 +35,6 @@ class DockerRESTClient implements DockerClient{
     @Override
     SandboxData createContainer(String username, int userUid) {
         def sandboxData
-        def userId = 0
         LOG.debug("Going to create a container for $username")
         def settings = collectSettings(username)
         def execResult = exec("gateone", "/keygen/keygen.run", username, "$userUid")
@@ -44,7 +43,7 @@ class DockerRESTClient implements DockerClient{
                 [
                         Image     : settings.imageName,
                         Tty       : true,
-                        Cmd       : ["/init_sandbox.run", username, generatedKey, "$userId"],
+                        Cmd       : ["/init_sandbox.run", username, generatedKey, "$userUid"],
                         HostConfig: [Binds: [settings.homeBinding, settings.shadowBinding, settings.publicFolderBinding]]
                 ]
         )

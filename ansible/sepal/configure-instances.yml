@@ -42,4 +42,5 @@
     - role: ssh-gateway
     - role: sepal-php
     - role: nginx
+    - role: haproxy
     - role: sandbox
