@@ -9,6 +9,11 @@
     path: "/data/gateone/"
     state: directory
 
+- name: Create gateone users dir
+  file:
+    path: "/data/gateone/users"
+    state: directory
+
 - name: Create config file
   template: src=30api_keys.conf dest=/data/gateone/30api_keys.conf mode=0400
 
@@ -30,3 +35,4 @@
     - "/data/logs/gateone:/gateone/logs"
     - "/data/sepal/home:/home"
     - "/data/gateone:/conf"
+    - "/data/gateone/users:/gateone/users"
