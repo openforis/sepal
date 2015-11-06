@@ -15,13 +15,10 @@ import util.DirectoryStructure
 
 import static org.openforis.sepal.scene.DataSet.LANDSAT_8
 
-class S3Landsat8SceneProviderTest extends Specification{
-
-
+class S3Landsat8SceneProviderTest extends Specification {
     def workingDir = File.createTempDir('workingDir', null)
     def requestId = 1L
     def sceneId = 'id'
-
     def provider = new S3Landsat8SceneProvider(
             new FakeS3LandsatClient(),
             new SynchronousJobExecutor(),
@@ -33,7 +30,6 @@ class S3Landsat8SceneProviderTest extends Specification{
     def cleanup() {
         workingDir.deleteDir()
     }
-
 
     def 'Retrieving a scene downloads the files'() {
         def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User', new Date(), Status.REQUESTED, new DownloadRequest(dataSet: LANDSAT_8, requestId: 1L, status: Status.REQUESTED))

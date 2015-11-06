@@ -69,7 +69,7 @@ class SepalConfiguration {
             LOG = LoggerFactory.getLogger(this.class)
             LOG.info("Using config file $configFileLocation")
             dataSource = connectionPool()
-            sandboxDataSource =connectionPool(getSandboxJdbcConnString())
+            sandboxDataSource = connectionPool(getSandboxJdbcConnString())
         }
     }
 
@@ -84,23 +84,23 @@ class SepalConfiguration {
         )
     }
 
-    def getProxySessionTimeout(){
+    def getProxySessionTimeout() {
         Integer.parseInt(getValue(SANBOX_PROXY_SESSION_TIMEOUT))
     }
 
-    def getContainerInactiveTimeout(){
+    def getContainerInactiveTimeout() {
         Integer.parseInt(getValue(CONTAINER_INACTIVE_TIMEOUT))
     }
 
-    def getDeadContainersCheckInterval(){
+    def getDeadContainersCheckInterval() {
         Integer.parseInt(getValue(DEAD_CONTAINERS_CHECK_INTERVAL))
     }
 
-    def getSandboxJdbcConnString(){
+    def getSandboxJdbcConnString() {
         getValue(SANDBOX_MANAGER_JDBC_CONN_STRING)
     }
 
-    def getSandboxPortsToCheck(){
+    def getSandboxPortsToCheck() {
         getValue(SANBOX_PORTS_TO_CHECK)
     }
 

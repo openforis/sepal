@@ -15,20 +15,20 @@ import static org.openforis.sepal.sandbox.SandboxStatus.STOPPED
 
 interface DockerClient {
 
-    Boolean releaseContainer( String containerId )
-    Boolean isContainerRunning ( String containerId)
-    SandboxData createContainer( String username, int userUid)
+    Boolean releaseContainer(String containerId)
 
+    Boolean isContainerRunning(String containerId)
 
+    SandboxData createContainer(String username, int userUid)
 }
 
-class DockerRESTClient implements DockerClient{
+class DockerRESTClient implements DockerClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final String dockerDaemonURI
 
-    DockerRESTClient( String dockerDaemonURI){
+    DockerRESTClient(String dockerDaemonURI) {
         this.dockerDaemonURI = dockerDaemonURI
     }
 
@@ -55,7 +55,7 @@ class DockerRESTClient implements DockerClient{
                     requestContentType: JSON,
                     body: body
             )
-            sandboxData = new SandboxData(containerId:response.data.Id)
+            sandboxData = new SandboxData(containerId: response.data.Id)
             LOG.debug("Sandbox created: $sandboxData.containerId")
             startContainer(restClient, sandboxData.containerId)
             getContainerInfo(restClient, sandboxData)
@@ -68,27 +68,24 @@ class DockerRESTClient implements DockerClient{
     }
 
 
-
-
-
     @Override
     Boolean isContainerRunning(String containerId) {
         SandboxData data = new SandboxData(containerId: containerId)
-        getContainerInfo(restClient,data)
+        getContainerInfo(restClient, data)
         return data.status == ALIVE
     }
 
     @Override
     Boolean releaseContainer(String containerId) {
-        releaseContainer(containerId,restClient)
+        releaseContainer(containerId, restClient)
     }
 
-    Boolean releaseContainer(String containerId, RESTClient restClient){
+    Boolean releaseContainer(String containerId, RESTClient restClient) {
         try {
-            if (isContainerRunning(containerId)){
+            if (isContainerRunning(containerId)) {
                 stopContainer(containerId)
             }
-            restClient.delete(  path: "containers/$containerId" )
+            restClient.delete(path: "containers/$containerId")
         } catch (HttpResponseException exception) {
             LOG.error("Error while deleting container $containerId", exception)
             throw exception
@@ -96,14 +93,14 @@ class DockerRESTClient implements DockerClient{
         return true
     }
 
-    private static Map<String,String> collectSettings(String username){
+    private static Map<String, String> collectSettings(String username) {
         SepalConfiguration conf = SepalConfiguration.instance
         def configMap = [
-                portsToCheck: conf.sandboxPortsToCheck,
-                homeBinding: "$conf.mountingHomeDir/$username:/home/$username",
-                shadowBinding: "$conf.userCredentialsHomeDir/shadow:/etc/shadow",
+                portsToCheck       : conf.sandboxPortsToCheck,
+                homeBinding        : "$conf.mountingHomeDir/$username:/home/$username",
+                shadowBinding      : "$conf.userCredentialsHomeDir/shadow:/etc/shadow",
                 publicFolderBinding: "$conf.publicHomeDir:$conf.publicHomeDir",
-                imageName: conf.dockerImageName
+                imageName          : conf.dockerImageName
         ]
         return configMap
     }
@@ -126,7 +123,7 @@ class DockerRESTClient implements DockerClient{
     }
 
 
-    def private exec(String sandboxId, String... commands) {
+    private exec(String sandboxId, String... commands) {
         def path = "containers/$sandboxId/exec"
         def params = [AttachStdin: false, AttachStdout: true, AttachStderr: true, Tty: false, Cmd: commands]
         def jsonParams = new JsonOutput().toJson(params)

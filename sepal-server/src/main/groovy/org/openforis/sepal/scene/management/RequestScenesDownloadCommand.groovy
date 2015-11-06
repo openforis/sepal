@@ -18,10 +18,10 @@ class RequestScenesDownloadCommand extends AbstractCommand<Void> {
 
     static constraints(DataSetRepository dataSetRepository, ScenesDownloadRepository downloadRepository) {
         [
-                dataSetId: custom { dataSetRepository.containsDataSetWithId(it) },
-                sceneIds : minLength(1),
-                requestName: custom {String reqName, RequestScenesDownloadCommand command ->
-                    reqName != null ? RegExpr.match("^[a-zA-Z0-9]+\$",reqName) && !downloadRepository.requestNameExist(command.username,reqName) : true
+                dataSetId  : custom { dataSetRepository.containsDataSetWithId(it) },
+                sceneIds   : minLength(1),
+                requestName: custom { String reqName, RequestScenesDownloadCommand command ->
+                    reqName != null ? RegExpr.match("^[a-zA-Z0-9]+\$", reqName) && !downloadRepository.requestNameExist(command.username, reqName) : true
                 }
         ]
     }

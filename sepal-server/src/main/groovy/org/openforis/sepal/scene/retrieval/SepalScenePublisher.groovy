@@ -13,7 +13,6 @@ import static Status.PUBLISHED
 import static Status.PUBLISHING
 
 class SepalScenePublisher implements ScenePublisher {
-
     @Delegate
     @SuppressWarnings("GroovyUnusedDeclaration")
     private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
@@ -29,12 +28,7 @@ class SepalScenePublisher implements ScenePublisher {
         this.sceneRepository = sceneRepository
     }
 
-    private void notifyRequestStatusChange(DownloadRequest request, Status status){
-        request.scenes.each { notifyListeners(it,status) }
-        notifyDownloadRequestListeners(request,status)
-    }
-
-    void publish(DownloadRequest downloadRequest){
+    void publish(DownloadRequest downloadRequest) {
         notifyRequestStatusChange(downloadRequest, PUBLISHING)
         doPublish(
                 sceneRepository.getDownloadRequestWorkingDirectory(downloadRequest),
@@ -43,7 +37,6 @@ class SepalScenePublisher implements ScenePublisher {
         notifyRequestStatusChange(downloadRequest, PUBLISHED)
     }
 
-    @Override
     void publish(SceneRequest request) {
         notifyListeners(request, PUBLISHING)
         doPublish(
@@ -53,7 +46,12 @@ class SepalScenePublisher implements ScenePublisher {
         notifyListeners(request, PUBLISHED)
     }
 
-    private void doPublish(File src, File dest){
+    private void notifyRequestStatusChange(DownloadRequest request, Status status) {
+        request.scenes.each { notifyListeners(it, status) }
+        notifyDownloadRequestListeners(request, status)
+    }
+
+    private void doPublish(File src, File dest) {
         FilePermissions.readWritableRecursive(src)
         if (dest.exists()) {
             dest.deleteDir()

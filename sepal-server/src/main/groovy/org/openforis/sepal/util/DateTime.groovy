@@ -12,7 +12,7 @@ class DateTime {
 
     static String toDateString(Date date) { formatDate(date, DATE_ONLY_DATE_FORMAT) }
 
-    static String toJsonDateString(Date date) { formatDate(date,JSON_DATE_FORMAT) }
+    static String toJsonDateString(Date date) { formatDate(date, JSON_DATE_FORMAT) }
 
     static Date addDays(Date date, int days) {
         Calendar calendar = new GregorianCalendar()
@@ -24,11 +24,11 @@ class DateTime {
     static Date add(Date date, int field, int amount) {
         def cal = Calendar.getInstance()
         cal.setTime(date)
-        cal.add(field,amount)
+        cal.add(field, amount)
         return cal.time
     }
 
-    static Date parseJsonDateFormat( String dateString) { JSON_DATE_FORMAT.parse(dateString) }
+    static Date parseJsonDateFormat(String dateString) { JSON_DATE_FORMAT.parse(dateString) }
 
     static Date parseDateString(String dateString) { DATE_ONLY_DATE_FORMAT.parse(dateString) }
 

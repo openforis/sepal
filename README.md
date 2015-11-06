@@ -60,7 +60,7 @@ There are three types of server instances:
 
 1. SEPAL servers, constantly running, one in each region where SEPAL is deployed. In addition to the features
    described above, they also are the entry points for user sandboxes. These instances can be
-   fairly small and cheap, and they don’t require very much storage.
+   fairly small and cheap, and don’t require much storage.
 
 2. Worker instances, running user sandboxes and retrieving data (Landsat, Sentinel etc.). These instances are
    automatically launched when users access their sandboxes, and terminated when users disconnect. Users get to decide
@@ -153,7 +153,7 @@ A free and open source geographic information system.
 **Orfeo ToolBox** -
 Library for remote sensing image processing.
 
-**OpenSARKid** -
+**OpenSARKit** -
 Tools for Autimatic Preprocessing of SAR Imagery.
 
 Build and Release

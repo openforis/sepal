@@ -5,26 +5,16 @@ import org.openforis.sepal.scene.DataSet
 import org.openforis.sepal.scene.management.DataSetRepository
 import org.openforis.sepal.scene.management.JdbcDataSetRepository
 import org.openforis.sepal.util.DateTime
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
-
 class DataSetRepositoryTest extends Specification {
-
-    def static final METADATA_PROVIDER = 1
-    def static final METADATA_PROVIDER_2 = 2
-    def static final SOME_CRITERIA = "SomeCriteria"
-    def static final SOME_CRITERIA_TEST = "12"
-
-    @Shared def SepalDriver driver
-
+    static final METADATA_PROVIDER = 1
+    static final METADATA_PROVIDER_2 = 2
+    static final SOME_CRITERIA = "SomeCriteria"
+    static final SOME_CRITERIA_TEST = "12"
+    @Shared SepalDriver driver
     @Shared DataSetRepository dataSetRepo
-
-
-    def cleanupSpec() {
-        driver.stop()
-    }
 
     def setupSpec() {
         driver = new SepalDriver()
@@ -35,6 +25,9 @@ class DataSetRepositoryTest extends Specification {
         driver.withActiveDataSet(DataSet.LANDSAT_ETM.id, METADATA_PROVIDER)
     }
 
+    def cleanupSpec() {
+        driver.stop()
+    }
 
     def 'Given  an existing dataset, you should be able to retrieve that row'() {
         when:
@@ -99,6 +92,4 @@ class DataSetRepositoryTest extends Specification {
             providers.first().dataSets
             providers.first().dataSets.size() == 8
     }
-
-
 }

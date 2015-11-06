@@ -34,8 +34,6 @@ final class Endpoints extends AbstractMvcFilter {
     private static UserRepository userRepository
 
 
-
-
     Controller bootstrap(ServletContext servletContext) {
         commandDispatcher.register(RequestScenesDownloadCommand, requestScenesDownloadHandler)
         commandDispatcher.register(RemoveRequestCommand, deleteCommandHandler)
@@ -49,7 +47,7 @@ final class Endpoints extends AbstractMvcFilter {
 
         controller.with {
             constrain(ObtainUserSandboxCommand, ObtainUserSandboxCommand.constraints(userRepository))
-            constrain(RequestScenesDownloadCommand, RequestScenesDownloadCommand.constraints(dataSetRepository,scenesDownloadRepository))
+            constrain(RequestScenesDownloadCommand, RequestScenesDownloadCommand.constraints(dataSetRepository, scenesDownloadRepository))
 
             error(InvalidRequest) {
                 response?.status = 400

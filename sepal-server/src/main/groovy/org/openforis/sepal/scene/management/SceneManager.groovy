@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 
 import static org.openforis.sepal.scene.Status.*
 
-class SceneManager implements SceneRetrievalListener,DownloadRequestListener {
+class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final SceneProvider sceneProvider
@@ -39,16 +39,16 @@ class SceneManager implements SceneRetrievalListener,DownloadRequestListener {
 
     @Override
     void requestStatusChanged(DownloadRequest request, Status status) {
-        try{
-            if (request.groupScenes){
+        try {
+            if (request.groupScenes) {
                 switch (status) {
                     case REQUESTED:
-                        scenesRepository.requestStatusChanged(request,DOWNLOADING)
+                        scenesRepository.requestStatusChanged(request, DOWNLOADING)
                         sceneProvider.retrieve(request.scenes)
                         break
                     case DOWNLOADED:
                         scenesRepository.reloadRequestData(request)
-                        sceneProcessor.process(request,request.processingChain)
+                        sceneProcessor.process(request, request.processingChain)
                         break
                     case PROCESSED:
                         scenePublisher.publish(request)
@@ -57,35 +57,35 @@ class SceneManager implements SceneRetrievalListener,DownloadRequestListener {
                         throw new RuntimeException("FAILED signal dispatched. Something went wrong")
                         break;
                 }
-            }else{
+            } else {
                 /* We are not handling overall request status.
                  Each scene is a separate piece of data */
-                scenesRepository.requestStatusChanged(request,UNKNOWN)
+                scenesRepository.requestStatusChanged(request, UNKNOWN)
                 request.scenes.each {
-                    sceneStatusChanged(it,status)
+                    sceneStatusChanged(it, status)
                 }
             }
-        }catch (Exception ex){
-            scenesRepository.requestStatusChanged(request,FAILED)
-            LOG.error("Error while processing request $request",ex)
+        } catch (Exception ex) {
+            scenesRepository.requestStatusChanged(request, FAILED)
+            LOG.error("Error while processing request $request", ex)
         }
     }
 
     @Override
     void sceneStatusChanged(SceneRequest scene, Status status) {
         try {
-            if (scene.request.groupScenes){
+            if (scene.request.groupScenes) {
                 def request = scene.request
                 LOG.debug("$status signal for $request. Working on an atomic download request")
                 switch (status) {
                     case DOWNLOADED:
-                        if (scenesRepository.hasStatus(request.requestId,status)){
-                            scenesRepository.requestStatusChanged(request,status)
-                            requestStatusChanged(request,status)
+                        if (scenesRepository.hasStatus(request.requestId, status)) {
+                            scenesRepository.requestStatusChanged(request, status)
+                            requestStatusChanged(request, status)
                         }
                         break;
                 }
-            }else{
+            } else {
                 switch (status) {
                     case REQUESTED:
                         sceneProvider.retrieve([scene])
@@ -101,7 +101,7 @@ class SceneManager implements SceneRetrievalListener,DownloadRequestListener {
         } catch (Exception ex) {
             scenesRepository.sceneStatusChanged(scene, FAILED)
             LOG.error("Error while processing scene $scene", ex)
-            requestStatusChanged(scene?.request,FAILED)
+            requestStatusChanged(scene?.request, FAILED)
         }
     }
 

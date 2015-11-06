@@ -15,14 +15,14 @@ import util.Port
 import static org.openforis.sepal.SepalConfiguration.*
 
 @Ignore
-class Sepal extends Specification{
+class Sepal extends Specification {
     static Database database
-    private static Endpoints endpoints
-    private static Boolean started
-    private static SandboxManager sandboxManager
-    private SqlConnectionManager connectionManager
+    static Endpoints endpoints
+    static Boolean started
+    static SandboxManager sandboxManager
+    SqlConnectionManager connectionManager
 
-    public int port
+    int port
 
     Sepal init() {
         if (!started) {
@@ -41,15 +41,13 @@ class Sepal extends Specification{
         this.connectionManager
     }
 
-    SandboxManager getSandboxManager(){ return sandboxManager }
+    SandboxManager getSandboxManager() { return sandboxManager }
 
 
     private void start() {
         started = true
         database = new Database()
         configure()
-
-
 
         connectionManager = new SqlConnectionManager(database.dataSource)
         def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
@@ -62,14 +60,13 @@ class Sepal extends Specification{
             isContainerRunning(_) >> {
                 true
             }
-            createContainer(_,_) >> {
+            createContainer(_, _) >> {
                 new SandboxData(username: it.get(0), containerId: 'Some.Id', uri: 'Some_URI')
             }
         }
 
-
         sandboxManager = new ConcreteSandboxManager(
-                new DockerContainersProvider(stubDockerClient,userRepository),
+                new DockerContainersProvider(stubDockerClient, userRepository),
                 new JDBCSandboxDataRepository(connectionManager),
                 userRepository
         )

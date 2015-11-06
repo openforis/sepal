@@ -36,7 +36,6 @@ class FileSystemSceneRepository implements SceneRepository {
         this.homeDir = homeDir
     }
 
-    @Override
     File getSceneHomeDirectory(SceneRequest scene) {
         def userHomeDirectory = userHomeDir(scene.request.username)
         File sceneHomeDir = new File(userHomeDirectory, scene.sceneReference.id)
@@ -44,9 +43,6 @@ class FileSystemSceneRepository implements SceneRepository {
         return sceneHomeDir
     }
 
-
-
-    @Override
     File getDownloadRequestHomeDirectory(DownloadRequest request) {
         def userHomeDirectory = userHomeDir(request.username)
         File requestHomeDir = new File(userHomeDirectory, request.requestName)
@@ -54,7 +50,6 @@ class FileSystemSceneRepository implements SceneRepository {
         return requestHomeDir
     }
 
-    @Override
     File getSceneWorkingDirectory(SceneRequest request) {
         return sceneDir(request)
     }
@@ -70,14 +65,12 @@ class FileSystemSceneRepository implements SceneRepository {
         Tar.unpackTarGz(tarFile)
     }
 
-
     File createSceneDir(request) {
         File sceneDir = sceneDir(request)
         sceneDir.mkdirs()
         return sceneDir
     }
 
-    @Override
     File getDownloadRequestWorkingDirectory(DownloadRequest request) {
         def requestDir = new File(workingDir, "" + request.requestId)
         new File(requestDir, request.dataSet.name())

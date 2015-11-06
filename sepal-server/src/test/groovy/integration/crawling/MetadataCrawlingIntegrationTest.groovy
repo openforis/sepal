@@ -12,7 +12,6 @@ import org.openforis.sepal.scene.DataSet
 import org.openforis.sepal.scene.management.DataSetRepository
 import org.openforis.sepal.scene.management.JdbcDataSetRepository
 import org.openforis.sepal.util.ResourceLocator
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
@@ -21,14 +20,12 @@ import static org.openforis.sepal.util.DateTime.parseEarthExplorerDateString
 import static org.openforis.sepal.util.XmlUtils.getAllNodeWithTagName
 import static org.openforis.sepal.util.XmlUtils.nodeToMap
 
-
 class MetadataCrawlingIntegrationTest extends Specification {
-
-    private static def PROVIDER_ID = 1
-    private static def CRITERIA_FIELD = "DATA_TYPE_L1"
-    private static def FIELD_VALUE = "L1T"
-    private static def CRITERIA_FIELD_2 = "path"
-    private static def FIELD_VALUE_2 = "93"
+    static def PROVIDER_ID = 1
+    static def CRITERIA_FIELD = "DATA_TYPE_L1"
+    static def FIELD_VALUE = "L1T"
+    static def CRITERIA_FIELD_2 = "path"
+    static def FIELD_VALUE_2 = "93"
 
     @Shared
     SepalDriver driver
@@ -42,7 +39,6 @@ class MetadataCrawlingIntegrationTest extends Specification {
     def earthExplorerCrawler
     @Shared
     List<GPathResult> gPathResults
-
 
     def cleanup() {
         driver.stop()

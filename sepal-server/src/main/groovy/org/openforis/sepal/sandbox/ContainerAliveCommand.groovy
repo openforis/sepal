@@ -7,17 +7,17 @@ class ContainerAliveCommand extends AbstractCommand<Void> {
 
     int sandboxId
 
-    ContainerAliveCommand( int sandboxId){
+    ContainerAliveCommand(int sandboxId) {
         this.sandboxId = sandboxId
     }
 
 }
 
-class ContainerAliveCommandHandler implements CommandHandler<Void,ContainerAliveCommand>{
+class ContainerAliveCommandHandler implements CommandHandler<Void, ContainerAliveCommand> {
 
     SandboxManager sandboxManager
 
-    ContainerAliveCommandHandler( SandboxManager sandboxManager ){
+    ContainerAliveCommandHandler(SandboxManager sandboxManager) {
         this.sandboxManager = sandboxManager
     }
 

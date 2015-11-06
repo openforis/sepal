@@ -49,7 +49,6 @@
     </appender>
 
 
-
     <logger name="org.openforis" additivity="false" level="DEBUG">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>

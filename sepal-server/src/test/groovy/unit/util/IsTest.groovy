@@ -1,13 +1,10 @@
 package unit.util
 
 import org.openforis.sepal.util.Is
-import spock.lang.Ignore
 import spock.lang.Specification
 
-
 class IsTest extends Specification {
-
-    private static final String A_FILE_PATH = "/path/to/file"
+    static final String A_FILE_PATH = "/path/to/file"
 
     def 'given a non existing folder the Exception message containt its path'() {
         File folder = new File(A_FILE_PATH)

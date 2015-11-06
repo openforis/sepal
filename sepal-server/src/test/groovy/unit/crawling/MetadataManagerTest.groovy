@@ -11,8 +11,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 class MetadataManagerTest extends Specification {
-
-    def static PROVIDER_ID = 2
+    static PROVIDER_ID = 2
 
     DataSetRepository dataSetRepository
     MetadataProviderManager metadataManager
@@ -20,16 +19,15 @@ class MetadataManagerTest extends Specification {
     MetadataCrawler metadataCrawler2
     @Shared SepalDriver sepalDriver
 
-    def setupSpec(){
+    def setupSpec() {
         sepalDriver = new SepalDriver()
     }
 
-    def cleanupSpec(){
+    def cleanupSpec() {
         sepalDriver.stop()
     }
 
     def setup() {
-
         metadataCrawler = Mock(MetadataCrawler)
         metadataCrawler.getProviderId() >> { PROVIDER_ID }
 
@@ -42,9 +40,7 @@ class MetadataManagerTest extends Specification {
         }
 
         metadataManager = new ConcreteMetadataProviderManager(dataSetRepository)
-
     }
-
 
     def 'registering a crawler for a given dataset The crawl method should be executed'() {
         when:

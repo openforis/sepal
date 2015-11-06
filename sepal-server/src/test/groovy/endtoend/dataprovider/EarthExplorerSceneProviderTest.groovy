@@ -15,11 +15,9 @@ import util.DirectoryStructure
 import static org.openforis.sepal.scene.DataSet.LANDSAT_8
 
 class EarthExplorerSceneProviderTest extends Specification {
-
     def workingDir = File.createTempDir('workingDir', null)
     def requestId = 1L
     def sceneId = 'id'
-
     def provider = new EarthExplorerSceneProvider(
             new FakeEarthExplorerClient(),
             new SynchronousJobExecutor(),
@@ -28,9 +26,8 @@ class EarthExplorerSceneProviderTest extends Specification {
             )
     )
 
-
     def 'retrieve a scene and download/unzip the files'() {
-        def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User',new Date(),Status.REQUESTED, new DownloadRequest(dataSet: LANDSAT_8, requestId: 1L, status: Status.REQUESTED))
+        def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User', new Date(), Status.REQUESTED, new DownloadRequest(dataSet: LANDSAT_8, requestId: 1L, status: Status.REQUESTED))
         request.request.scenes.add(request)
         when:
             provider.retrieve([request])
@@ -47,21 +44,16 @@ class EarthExplorerSceneProviderTest extends Specification {
             }
     }
 
-
     static class FakeEarthExplorerClient implements EarthExplorerClient {
 
-
-        @Override
         void download(SceneRequest sceneRequest, String downloadLink, Closure callback) {
             callback(getClass().getResourceAsStream("/scene.tar.gz"), 0d)
         }
 
-        @Override
         double getSceneSize(String sceneUrl) {
             return 0d
         }
 
-        @Override
         String lookupDownloadLink(SceneRequest sceneRequest) {
             return 'yes'
         }

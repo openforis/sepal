@@ -8,13 +8,13 @@ import org.openforis.sepal.transaction.SqlConnectionProvider
 
 import java.sql.Timestamp
 
-interface ScenesDownloadRepository extends SceneRetrievalListener,DownloadRequestListener {
+interface ScenesDownloadRepository extends SceneRetrievalListener, DownloadRequestListener {
 
     void saveDownloadRequest(RequestScenesDownloadCommand requestScenesDownload)
 
     List<DownloadRequest> getNewDownloadRequests()
 
-    int updateSceneStatus(long sceneId,Status status)
+    int updateSceneStatus(long sceneId, Status status)
 
     int updateRequestStatus(long id, Status status)
 
@@ -42,12 +42,12 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
 
 
     void sceneStatusChanged(SceneRequest sceneRequest, Status status) {
-        this.updateSceneStatus(sceneRequest.id,status)
+        this.updateSceneStatus(sceneRequest.id, status)
     }
 
     @Override
     void requestStatusChanged(DownloadRequest request, Status status) {
-        this.updateRequestStatus(request.requestId,status)
+        this.updateRequestStatus(request.requestId, status)
     }
 
     @Override
@@ -56,7 +56,7 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
             SELECT COUNT(*) AS counter
             FROM requested_scenes rs
             WHERE rs.request_id = ?
-            AND LOWER(rs.status) <> ?''',[requestId, status.name().toLowerCase()])
+            AND LOWER(rs.status) <> ?''', [requestId, status.name().toLowerCase()])
         return row?.counter == 0
     }
 
@@ -65,7 +65,7 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
         GroovyRowResult row = sql.firstRow('''
            SELECT COUNT(*) AS counter
            FROM download_requests dr
-           WHERE username = ? AND lower(request_name) = ?''', [userName,requestName?.toLowerCase()])
+           WHERE username = ? AND lower(request_name) = ?''', [userName, requestName?.toLowerCase()])
         return row?.counter > 0
     }
 
@@ -92,7 +92,7 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
                 ON dr.request_id = rs.request_id
                 WHERE dr.request_status = ?
                 ORDER BY dr.request_time DESC''', [Status.REQUESTED.name()]) {
-            map(requests,it)
+            map(requests, it)
         }
         return requests
     }
@@ -104,8 +104,8 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
                 FROM download_requests dr
                 JOIN requested_scenes rs
                 ON dr.request_id = rs.request_id
-                WHERE dr.request_id = ?''',[request.requestId]) {
-            map(request,it)
+                WHERE dr.request_id = ?''', [request.requestId]) {
+            map(request, it)
         }
     }
 
@@ -115,7 +115,9 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
         sql.executeUpdate(query, [now, status.name(), id])
     }
 
-    int updateRequestStatus(long id, Status status) { sql.executeUpdate("UPDATE download_requests  SET request_status = ? WHERE request_id = ?", [status.name(), id]) }
+    int updateRequestStatus(long id, Status status) {
+        sql.executeUpdate("UPDATE download_requests  SET request_status = ? WHERE request_id = ?", [status.name(), id])
+    }
 
     List<DownloadRequest> findUserRequests(String username) {
         List<DownloadRequest> downloadRequests = []
@@ -174,7 +176,7 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
                 new SceneReference(row.scene_id, dataSet),
                 row.processing_chain as String,
                 row.last_updated as Date,
-                Status.byValue(row.status as String),downloadRequest)
+                Status.byValue(row.status as String), downloadRequest)
         DownloadRequest downloadRequestReference = downloadRequest.clone() as DownloadRequest
         downloadRequestReference.scenes = []
         scene.request = downloadRequestReference

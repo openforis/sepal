@@ -7,7 +7,7 @@ import org.openforis.sepal.endpoint.SepalEndpoint
 
 import static groovy.json.JsonOutput.toJson
 
-class SandboxManagerEndpoint extends SepalEndpoint{
+class SandboxManagerEndpoint extends SepalEndpoint {
 
     SandboxManagerEndpoint(CommandDispatcher commandDispatcher) {
         super(commandDispatcher)

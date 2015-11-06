@@ -25,8 +25,6 @@ import static io.undertow.server.session.SessionListener.SessionDestroyedReason
  * </ul>
  */
 class SandboxWebProxy {
-
-
     private static final String SANDBOX_ID_SESSION_ATTR_NAME = "sepal-sandbox-id"
 
     private final Undertow server
@@ -72,9 +70,9 @@ class SandboxWebProxy {
     void start() {
         server.start()
         executor.scheduleWithFixedDelay(
-                new WebProxySessionsChecker(sandboxManager,sessionManager,SANDBOX_ID_SESSION_ATTR_NAME),
+                new WebProxySessionsChecker(sandboxManager, sessionManager, SANDBOX_ID_SESSION_ATTR_NAME),
                 sessionsCheckInterval,
-                sessionsCheckInterval,TimeUnit.SECONDS
+                sessionsCheckInterval, TimeUnit.SECONDS
         )
     }
 
@@ -142,7 +140,7 @@ class SandboxWebProxy {
                 def sandbox
                 try {
                     sandbox = sandboxManager.getUserSandbox(user)
-                    session.setAttribute(SANDBOX_ID_SESSION_ATTR_NAME,sandbox.sandboxId)
+                    session.setAttribute(SANDBOX_ID_SESSION_ATTR_NAME, sandbox.sandboxId)
                 } catch (NonExistingUser e) {
                     throw new BadRequest(e.getMessage())
                 }
@@ -155,7 +153,6 @@ class SandboxWebProxy {
         private String determineSandboxHostSessionKey(String user) {
             return 'sepal-sandbox-host' + user
         }
-
 
 
         private String determineUriSessionKey(String endpoint, String user) {
