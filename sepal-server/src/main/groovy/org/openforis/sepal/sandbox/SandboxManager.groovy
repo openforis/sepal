@@ -68,7 +68,7 @@ class ConcreteSandboxManager implements SandboxManager{
         return runningSandbox
     }
 
-    private SandboxData askContainer(String username){
+    private synchronized SandboxData askContainer(String username){
         def sandboxId = dataRepository.requested(username)
         def data = sandboxProvider.obtain(username)
         data.sandboxId = sandboxId
