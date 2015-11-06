@@ -7,6 +7,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
+import static org.openforis.sepal.sandbox.SandboxStatus.REQUESTED
 
 interface SandboxDataRepository {
 
@@ -14,7 +15,9 @@ interface SandboxDataRepository {
 
     void terminated(int sandboxId)
 
-    int created(String username, String containerId, String sandboxURI)
+    void created(int sandboxId, String containerId, String sandboxURI)
+
+    int requested(String username)
 
     List<SandboxData> getSandboxes(SandboxStatus status)
 
@@ -51,10 +54,18 @@ class JDBCSandboxDataRepository implements SandboxDataRepository {
     }
 
     @Override
-    int created(String username, String containerId, String sandboxURI) {
+    void created(int sandboxId, String containerId, String sandboxURI) {
+        sql.executeUpdate('''
+            UPDATE sandboxes SET container_id = ?, status = ?, status_refreshed_on = ?, uri = ?
+            WHERE sandbox_id = ?
+            ''',[containerId,ALIVE.name(), new Date(), sandboxURI,sandboxId])
+    }
+
+    @Override
+    int requested(String username) {
         def keys = sql.executeInsert('''
-            INSERT INTO sandboxes(username,container_id,status,status_refreshed_on,uri)
-            VALUES(?,?,?,?,?)''', [username, containerId, ALIVE.name(), new Date(), sandboxURI])
+            INSERT INTO sandboxes(username,status,status_refreshed_on)
+            VALUES(?,?,?)''', [username,REQUESTED.name(), new Date()])
         return keys[0][0] as int
     }
 

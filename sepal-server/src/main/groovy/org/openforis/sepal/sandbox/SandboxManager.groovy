@@ -69,12 +69,16 @@ class ConcreteSandboxManager implements SandboxManager{
     }
 
     private SandboxData askContainer(String username){
+        def sandboxId = dataRepository.requested(username)
         def data = sandboxProvider.obtain(username)
+        data.sandboxId = sandboxId
         try{
-            data.sandboxId = dataRepository.created(username,data.containerId,data.uri)
+            dataRepository.created(data.sandboxId,data.containerId,data.uri)
         }catch (Exception ex){
-            LOG.error("Error while storing sandbox data to the database. Creation will be rollbacked",ex)
+            LOG.warn("Error while storing container informations",ex)
             sandboxProvider.release(data.containerId)
+            dataRepository.terminated(sandboxId)
+            throw ex
         }
         return data
     }

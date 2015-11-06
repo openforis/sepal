@@ -37,6 +37,15 @@ class SandboxDataRepositoryTest extends Specification {
         sandboxId = create()
     }
 
+    def 'notifying the database that a sandbox has been requested works as expected'() {
+        when:
+        def sandboxId = repository.requested(A_USERNAME_2)
+        repository.created(sandboxId,A_CONTAINER_ID,A_URI)
+        then:
+        def sandboxData = repository.getUserRunningSandbox(A_USERNAME_2)
+        sandboxData.sandboxId == sandboxId
+    }
+
     def 'trying to store alive signal for an non existent sandbox fail'() {
         when:
             def stored = repository.alive(new Random().nextInt())
@@ -109,7 +118,9 @@ class SandboxDataRepositoryTest extends Specification {
     }
 
     def private create(username = A_USERNAME, containerId = A_CONTAINER_ID, uri = A_URI) {
-        repository.created(username, containerId, uri)
+        def sandboxId = repository.requested(username)
+        repository.created(sandboxId, containerId, uri)
+        return sandboxId
     }
 
 
