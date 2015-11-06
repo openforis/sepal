@@ -57,7 +57,8 @@ class SandboxManagerIntegrationTest extends Specification {
         containersProvider = Spy(DockerContainersProvider, constructorArgs: [stubDockerClient, userRepository])
         sandboxManager = new ConcreteSandboxManager(containersProvider, sandboxDataRepository, userRepository)
 
-        sandboxId = sandboxDataRepository.created(A_USERNAME, A_CONTAINER_ID, A_URI)
+        sandboxId = sandboxDataRepository.requested(A_USERNAME)
+        sandboxDataRepository.created(sandboxId, A_CONTAINER_ID, A_URI)
     }
 
     def 'given an existing sandbox registered on the database, the sandboxmanager behaves as expected'() {
@@ -77,7 +78,8 @@ class SandboxManagerIntegrationTest extends Specification {
         then:
             0 * containersProvider.isRunning(_)
             1 * containersProvider.obtain(ANOTHER_USERNAME)
-            1 * sandboxDataRepository.created(ANOTHER_USERNAME, _, _)
+            1 * sandboxDataRepository.requested(ANOTHER_USERNAME)
+            1 * sandboxDataRepository.created(_, _, _)
             def userSandbox = sandboxDataRepository.getUserRunningSandbox(ANOTHER_USERNAME)
             userSandbox
             userSandbox.status == ALIVE
@@ -87,14 +89,15 @@ class SandboxManagerIntegrationTest extends Specification {
 
     def 'given stale data on the database, the sandbox manager behaves correctly'() {
         given:
-            def sandboxId = sandboxDataRepository.created(YET_ANOTHER_USERNAME, ANOTHER_CONTAINER_ID, A_URI)
+            def sandboxId = sandboxDataRepository.requested(YET_ANOTHER_USERNAME)
+            sandboxDataRepository.created(sandboxId, ANOTHER_CONTAINER_ID, A_URI)
         when:
             sandboxManager.getUserSandbox(YET_ANOTHER_USERNAME)
         then:
             containersProvider.isRunning(ANOTHER_CONTAINER_ID) >> false
             1 * sandboxDataRepository.terminated(sandboxId)
             1 * containersProvider.obtain(YET_ANOTHER_USERNAME)
-            1 * sandboxDataRepository.created(YET_ANOTHER_USERNAME, A_CONTAINER_ID, A_URI)
+            1 * sandboxDataRepository.created(_ ,A_CONTAINER_ID, A_URI)
             def sandboxData2 = sandboxManager.getUserSandbox(YET_ANOTHER_USERNAME)
             !(sandboxId == sandboxData2.sandboxId)
 

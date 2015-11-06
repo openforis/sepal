@@ -5,7 +5,7 @@ apt-get update && apt-get install -y  supervisor openssh-server curl jq incron
 chmod 700 /create_user
 chmod 700 /init_container.sh
 chmod 700 /copyOver.run
-chmod 700 /alive.sh
+chmod 777 /alive.sh
 chmod 555 /ssh-bootstrap
 
 

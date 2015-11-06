@@ -14,17 +14,18 @@ import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
 
 interface SandboxManager {
 
-    SandboxData getUserSandbox(String username)
+    SandboxData getUserSandbox ( String username )
 
-    void aliveSignal(int sandboxId)
+    void aliveSignal( int sandboxId )
 
-    void start(int containerInactiveTimeout, int checkInterval)
+    void start( int containerInactiveTimeout, int checkInterval)
 
     void stop()
 
 }
 
-class ConcreteSandboxManager implements SandboxManager {
+class ConcreteSandboxManager implements SandboxManager{
+
     private final static Logger LOG = LoggerFactory.getLogger(this)
 
     private final SandboxContainersProvider sandboxProvider
@@ -33,7 +34,7 @@ class ConcreteSandboxManager implements SandboxManager {
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
 
-    ConcreteSandboxManager(SandboxContainersProvider sandboxProvider, SandboxDataRepository dataRepository, UserRepository userRepo) {
+    ConcreteSandboxManager( SandboxContainersProvider sandboxProvider, SandboxDataRepository dataRepository, UserRepository userRepo){
         this.sandboxProvider = sandboxProvider
         this.dataRepository = dataRepository
         this.userRepo = userRepo
@@ -43,33 +44,42 @@ class ConcreteSandboxManager implements SandboxManager {
     @Override
     SandboxData getUserSandbox(String username) {
         def runningSandbox = null
-        try {
-            if (!(userRepo.userExist(username))) {
+        try{
+            if (! (userRepo.userExist(username))){
                 throw new NonExistingUser(username)
             }
             runningSandbox = dataRepository.getUserRunningSandbox(username)
-            if (runningSandbox) {
+            if (runningSandbox){
                 LOG.debug("Found data about running sandbox($runningSandbox.containerId) for user $username")
                 def running = sandboxProvider.isRunning(runningSandbox.containerId)
-                if (!running) {
+                if (!running){
                     LOG.info("Stale sandbox data found for $username")
                     dataRepository.terminated(runningSandbox.sandboxId)
                     runningSandbox = askContainer(username)
                 }
-            } else {
+            }else{
                 runningSandbox = askContainer(username)
             }
-        } catch (Exception ex) {
-            LOG.error("Error while getting the user sandbox", ex)
+        }catch (Exception ex){
+            LOG.error("Error while getting the user sandbox",ex)
             throw ex
         }
 
         return runningSandbox
     }
 
-    private SandboxData askContainer(String username) {
+    private synchronized SandboxData askContainer(String username){
+        def sandboxId = dataRepository.requested(username)
         def data = sandboxProvider.obtain(username)
-        data.sandboxId = dataRepository.created(username, data.containerId, data.uri)
+        data.sandboxId = sandboxId
+        try{
+            dataRepository.created(data.sandboxId,data.containerId,data.uri)
+        }catch (Exception ex){
+            LOG.warn("Error while storing container informations",ex)
+            sandboxProvider.release(data.containerId)
+            dataRepository.terminated(sandboxId)
+            throw ex
+        }
         return data
     }
 
@@ -79,25 +89,25 @@ class ConcreteSandboxManager implements SandboxManager {
         dataRepository.alive(sandboxId)
     }
 
-    void stop() { executor.shutdown() }
+    void stop(){ executor.shutdown()  }
 
     @Override
-    void start(int containerInactiveTimeout, int checkInterval) {
+    void start( int containerInactiveTimeout, int checkInterval) {
         executor.scheduleWithFixedDelay(
-                new SandboxManagerUnusedContainerChecker(sandboxProvider, dataRepository, containerInactiveTimeout),
-                0L, checkInterval, TimeUnit.SECONDS
+            new SandboxManagerUnusedContainerChecker( sandboxProvider, dataRepository, containerInactiveTimeout),
+            0L,checkInterval, TimeUnit.SECONDS
         )
-    }
+     }
 
 
-    private class SandboxManagerUnusedContainerChecker implements Runnable {
+    private class SandboxManagerUnusedContainerChecker implements Runnable{
 
         SandboxDataRepository dataRepository
         SandboxContainersProvider containersProvider
         int containerInactiveTimeout
 
-        SandboxManagerUnusedContainerChecker(SandboxContainersProvider containersProvider,
-                                             SandboxDataRepository dataRepository, int containerInactiveTimeout) {
+        SandboxManagerUnusedContainerChecker( SandboxContainersProvider containersProvider,
+                                              SandboxDataRepository dataRepository, int containerInactiveTimeout ){
             this.dataRepository = dataRepository
             this.containerInactiveTimeout = containerInactiveTimeout
             this.containersProvider = containersProvider
@@ -111,16 +121,16 @@ class ConcreteSandboxManager implements SandboxManager {
             }
         }
 
-        void doCheck(SandboxData sandbox) {
-            try {
-                Date containerExpireDate = DateTime.add(sandbox.statusRefreshedOn, Calendar.SECOND, containerInactiveTimeout)
-                if (new Date().after(containerExpireDate)) {
+        void doCheck( SandboxData sandbox){
+            try{
+                Date containerExpireDate = DateTime.add(sandbox.statusRefreshedOn,Calendar.SECOND,containerInactiveTimeout)
+                if (new Date().after(containerExpireDate)){
                     LOG.info(" Container $sandbox.containerId marked as to be terminated. Inactive Ttl($containerInactiveTimeout seconds) reached")
                     containersProvider.release(sandbox.containerId)
                     dataRepository.terminated(sandbox.sandboxId)
                 }
             } catch (Exception ex) {
-                LOG.error(" Error while checking sandbox $sandbox.sandboxId", ex)
+                LOG.error(" Error while checking sandbox $sandbox.sandboxId",ex)
             }
         }
     }

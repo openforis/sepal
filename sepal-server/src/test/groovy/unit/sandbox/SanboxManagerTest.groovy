@@ -137,7 +137,13 @@ class SanboxManagerTest extends Specification {
             return terminatedInstances
         }
 
-        int created(String username, String containerId, String sandboxURI) {
+        @Override
+        void created(int sandboxId, String containerId, String sandboxURI) {
+
+        }
+
+        @Override
+        int requested(String username) {
             return 0
         }
 

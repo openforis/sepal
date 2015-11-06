@@ -2,6 +2,7 @@ CREATE DATABASE sepal_sandbox;
 
 GRANT ALL PRIVILEGES ON sepal_sandbox.* TO 'sepal'@'%';
 
+
 CREATE TABLE `sepal_sandbox`.`sandboxes` (
   `sandbox_id` INT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(255) NOT NULL,

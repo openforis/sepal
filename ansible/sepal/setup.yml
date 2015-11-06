@@ -25,10 +25,6 @@
             from_port: 443
             to_port: 443
             cidr_ip: 0.0.0.0/0
-          - proto: tcp
-            from_port: 22222
-            to_port: 22222
-            cidr_ip: 0.0.0.0/0
         rules_egress:
           - proto: all
             from_port: 0

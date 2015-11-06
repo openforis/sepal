@@ -12,4 +12,6 @@ RUN ./init_image.sh
 
 EXPOSE 8000
 
-CMD /usr/local/bin/update_and_run_gateone --origins=* --auth=api
+ENV GATEONE_SESSION_TIMEOUT "30m"
+
+CMD /usr/local/bin/update_and_run_gateone --origins=* --auth=api --session_timeout=${GATEONE_SESSION_TIMEOUT}

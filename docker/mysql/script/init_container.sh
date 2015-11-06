@@ -3,7 +3,7 @@
 mysqlWaiting=true
 netstat -ntlp | grep ":3306"  >/dev/null 2>&1 && mysqlWaiting=false
 
-for i in {30..0}; do
+for i in {50..0}; do
     if netstat -ntlp | grep ":3306"  >/dev/null 2>&1; then
 		break
 	fi

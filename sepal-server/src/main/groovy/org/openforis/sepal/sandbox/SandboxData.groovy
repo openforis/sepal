@@ -21,5 +21,5 @@ class SandboxData implements Serializable {
 }
 
 enum SandboxStatus {
-    CREATED, STOPPED, ALIVE, TERMINATED
+    REQUESTED,CREATED, STOPPED, ALIVE, TERMINATED
 }

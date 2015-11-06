@@ -38,3 +38,4 @@
     - role: sepal-php
     - role: nginx
     - role: haproxy
+    - role: sandbox
