@@ -22,7 +22,7 @@
   docker_image: path="/opt/sepal/docker/openforistoolkit/oft-base" name="openforistoolkit" state=build
 
 - name: Build openforistoolkit-gui-tools
-  docker_image: path="/docker/openforistoolkit/oft-gui-tools" name="openforistoolkit-guitools" state=build
+  docker_image: path="/opt/sepal/docker/openforistoolkit/oft-gui-tools" name="openforistoolkit-guitools" state=build
 
 - name: Build sandbox
   docker_image: path="/opt/sepal/docker/sandbox" name="localhost/openforis/sandbox" state=build
