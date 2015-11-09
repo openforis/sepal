@@ -16,7 +16,7 @@
   docker_image: path="/docker/openforistoolkit/oft-base" name="openforistoolkit" state=build
 
 - name: Build openforistoolkit-gui-tools
-  docker_image: path="/docker/openforistoolkit/oft-gui-tools" name="openforistoolkit" tag="graphical-tools" state=build
+  docker_image: path="/docker/openforistoolkit/oft-gui-tools" name="openforistoolkit-guitools" state=build
 
 - name: Build sandbox
   docker_image: path="/docker/sandbox" name="openforis/sandbox" state=build

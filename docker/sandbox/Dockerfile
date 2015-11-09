@@ -1,4 +1,4 @@
-FROM openforistoolkit:graphical-tools
+FROM guitools
 MAINTAINER OpenForis
 
 
