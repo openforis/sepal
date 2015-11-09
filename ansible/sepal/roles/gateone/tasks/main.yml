@@ -31,6 +31,8 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
+    links:
+    - "ssh-gateway:ssh-gateway"
     volumes:
     - "/data/logs/gateone:/gateone/logs"
     - "/data/sepal/home:/home"

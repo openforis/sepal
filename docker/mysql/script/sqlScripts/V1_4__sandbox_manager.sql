@@ -10,8 +10,8 @@ CREATE TABLE `sepal_sandbox`.`sandboxes` (
   `container_id` VARCHAR(255) NULL,
   `uri` VARCHAR(255) NULL,
   `created_on` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `terminated_on` TIMESTAMP NULL,
-  `status_refreshed_on` TIMESTAMP NULL,
+  `terminated_on` TIMESTAMP,
+  `status_refreshed_on` TIMESTAMP,
   PRIMARY KEY (`sandbox_id`));
 
 ALTER TABLE `sdms`.`users`
