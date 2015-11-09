@@ -71,7 +71,11 @@ class DockerRESTClient implements DockerClient {
     @Override
     Boolean isContainerRunning(String containerId) {
         SandboxData data = new SandboxData(containerId: containerId)
-        getContainerInfo(restClient, data)
+        try{
+            getContainerInfo(restClient, data)
+        }catch (Exception ex) {
+            LOG.error("Unable to obtain container info for $containerId",ex)
+        }
         return data.status == ALIVE
     }
 
@@ -147,7 +151,6 @@ class DockerRESTClient implements DockerClient {
             containerData.status = data.State.Running ? ALIVE : STOPPED
         } catch (HttpResponseException responseException) {
             LOG.error("Error while getting container info. $responseException.message")
-            releaseContainer(containerData.containerId, restClient)
             throw responseException
         }
     }
