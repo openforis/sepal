@@ -36,3 +36,5 @@
     - "/data/sepal/home:/home"
     - "/data/gateone:/conf"
     - "/data/gateone/users:/gateone/users"
+    env:
+      GATEONE_SESSION_TIMEOUT: '3m'
