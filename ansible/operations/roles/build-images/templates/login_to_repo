@@ -1,6 +1,6 @@
 #!/usr/bin/expect
 
-#execution
+
 spawn /data/ansible/push_images.sh
 expect "Username"
 send "{{ docker_username }}\n"
