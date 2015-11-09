@@ -6,7 +6,7 @@ ENV FLYWAY_VERSION 3.2.1
 ENV MYSQL_DATABASE sdms
 ENV MYSQL_USER sepal
 ENV SCHEMA_BASELINE_VERSION 1.1
-ENV INSTANCE_HOSTNAME mysql
+ENV INSTANCE_HOSTNAME localhost
 
 ADD script/sqlScripts ./sqlScripts
 ADD config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
