@@ -5,6 +5,7 @@ CONTEXT_DIR=${2:-"."}
 VERSION=${3:-"latest"}
 INVENTORY_FILE_NAME=${4:-"ec2.py"}
 
+
 INVENTORY_FILE_PATH="$CONTEXT_DIR"/"$INVENTORY_FILE_NAME"
 
 ansible-playbook ${CONTEXT_DIR}/setup.yml \
@@ -12,7 +13,7 @@ ansible-playbook ${CONTEXT_DIR}/setup.yml \
     --private-key=~/.ssh/sepal/eu-central-1.pem \
     --extra-vars "region=eu-central-1"
 
-./ec2.py --refresh-cache > /dev/null
+${INVENTORY_FILE_PATH} --refresh-cache > /dev/null
 
 ansible-playbook ${CONTEXT_DIR}/operations.yml \
     -i ${INVENTORY_FILE_PATH} \
