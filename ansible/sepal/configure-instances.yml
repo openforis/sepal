@@ -37,9 +37,9 @@
     - role: prepare-environment
     - role: mysql
     - role: geoserver
-    - role: gateone
     - role: sepal
     - role: ssh-gateway
+    - role: gateone
     - role: sepal-php
     - role: nginx
     - role: haproxy
