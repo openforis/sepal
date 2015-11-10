@@ -2,6 +2,7 @@
 
 
 useradd -m -d "${JENKINS_HOME}"  jenkins
+useradd -m -d /home/github github
 
 chown -R jenkins /usr/share/jenkins/ref
 

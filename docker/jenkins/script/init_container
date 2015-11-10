@@ -4,4 +4,8 @@ if [ ! -z "$JENKINS_PASSWD" ]; then
 echo "jenkins:$JENKINS_PASSWD" | chpasswd
 fi
 
+if [ ! -z "$GITHUB_ACCOUNT_PASSWD" ]; then
+echo "github:$GITHUB_ACCOUNT_PASSWD" | chpasswd
+fi
+
 /jenkins.sh
