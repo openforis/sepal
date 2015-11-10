@@ -5,6 +5,7 @@ CONTEXT_DIR=${2:-"."}
 VERSION=${3:-"latest"}
 INVENTORY_FILE_NAME=${4:-"local_inventory"}
 
+INVENTORY_FILE_PATH="$CONTEXT_DIR"/"$INVENTORY_FILE_NAME"
 
 
 
