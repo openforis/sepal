@@ -1,10 +1,10 @@
 ---
 
 - name: Copy .sepal folder
-  copy: src=~/.sepal dest=~/
+  copy: src=~/.sepal dest=/home/ubuntu
 
 - name: Copy .ssh folder
-  copy: src=~/.ssh/sepal dest=~/.ssh/
+  copy: src=~/.ssh/sepal dest=/home/ubuntu/.ssh/ mode=0400
 
 
 - name: Start jenkins container
@@ -21,8 +21,8 @@
       - "5000:5000"
     volumes:
       - "/data/jenkins:/var/jenkins_home"
-      - "/ubuntu/.sepal:/root/.sepal"
-      - "/ubuntu/.ssh/sepal/:/root/.ssh/sepal"
+      - "/home/ubuntu/.sepal:/root/.sepal"
+      - "/home/ubuntu/.ssh/sepal/:/root/.ssh/sepal"
     env:
       JENKINS_PASSWD: "{{ jenkins_password }}"
       AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
