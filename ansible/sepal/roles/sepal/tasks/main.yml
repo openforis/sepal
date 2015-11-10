@@ -36,7 +36,6 @@
     password: "{{ docker_password }}"
     links:
     - "mysql:mysql"
-    - "geoserver:geoserver"
     volumes:
     - "/data/sepal/downloads:/data/workDir/downloads"
     - "/data/sepal/config:/etc/sepal"
