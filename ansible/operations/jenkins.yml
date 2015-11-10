@@ -10,5 +10,7 @@
   roles:
     - role: pull-images
     - role: build-images
+    - role: tag-images
+    - role: push-images
 
 

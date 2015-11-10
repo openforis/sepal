@@ -22,6 +22,8 @@
     - role: docker-registry
     - role: pull-images
     - role: build-images
+    - role: build-jenkins
+    - role: push-images
     - role: ansible
     - role: jenkins
 

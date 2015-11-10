@@ -1,0 +1,8 @@
+---
+
+- name: Copy the push script
+  copy: src="tag_images.sh" dest="/data/ansible/" mode="u=rwx,g=rx,o=rx"
+
+- name: Pushing the images to the local repo
+  shell: "/data/ansible/tag_images.sh {{ version }}"
+

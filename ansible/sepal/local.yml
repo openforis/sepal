@@ -16,6 +16,15 @@
     - name: Create sepal user
       user: name=sepal uid=9999 group=sepal
 
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        state: directory
+    - name: Copy docker-registry certificate
+      copy:
+        src: ~/.sepal/certificates/docker-registry.crt
+        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:
@@ -28,7 +37,7 @@
       docker_group_members: ['ubuntu','vagrant']
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
 
-    - role: build-images
+   # - role: build-images
     - role: prepare-environment
     - role: mysql
     - role: geoserver

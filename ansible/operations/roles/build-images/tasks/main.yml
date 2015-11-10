@@ -1,16 +1,10 @@
 ---
 
-- name: Copy the push script
-  copy: src="push_images.sh" dest="/data/ansible/" mode="u=rwx,g=rx,o=rx"
-
-- name: Copy the repo login script
-  template: src=login_to_repo dest=/data/ansible/login_to_repo mode=0777
-
 - name: Build mysql
   docker_image: path="/opt/sepal/docker/mysql" name="localhost/openforis/mysql" state=build
 
 - name: Build jdk
-  docker_image: path="/opt/sepal/docker/jdk" name="openforis/jdk" state=build
+  docker_image: path="/opt/sepal/docker/jdk"  name="openforis/jdk" state=build
 
 - name: Build geoserver
   docker_image: path="/opt/sepal/docker/geoserver" name="localhost/openforis/geoserver" state=build
@@ -22,10 +16,10 @@
   docker_image: path="/opt/sepal/docker/openforistoolkit/oft-base" name="openforistoolkit" state=build
 
 - name: Build openforistoolkit-gui-tools
-  docker_image: path="/opt/sepal/docker/openforistoolkit/oft-gui-tools" name="openforistoolkit-guitools" state=build
+  docker_image: path="/opt/sepal/docker/openforistoolkit/oft-gui-tools"  name="openforistoolkit-guitools" state=build
 
 - name: Build sandbox
-  docker_image: path="/opt/sepal/docker/sandbox" name="localhost/openforis/sandbox" state=build
+  docker_image: path="/opt/sepal/docker/sandbox"  name="localhost/openforis/sandbox" state=build
 
 - name: Build sepal
   docker_image: path="/opt/sepal/docker/sepal" name="localhost/openforis/sepal" state=build nocache="{{ skip_cache }}"
@@ -39,12 +33,7 @@
 - name: Build ssh-gateway
   docker_image: path="/opt/sepal/docker/ssh-gateway" name="localhost/openforis/ssh-gateway" state=build
 
-- name: Build jenkins
-  docker_image: path="/opt/sepal/docker/jenkins" name="openforis/jenkins" state="build"
-
 - name: Build haproxy
   docker_image: path="/opt/sepal/docker/haproxy" name="localhost/openforis/haproxy" state="build"
 
-- name: Pushing the images to the local repo
-  shell: "/data/ansible/login_to_repo"
 

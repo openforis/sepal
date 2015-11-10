@@ -22,10 +22,10 @@
   docker_image: path="/docker/sandbox" name="openforis/sandbox" state=build
 
 - name: Build sepal
-  docker_image: path="/docker/sepal" name="openforis/sepal" state=build
+  docker_image: path="/docker/sepal" name="openforis/sepal" state=build nocache="{{ skip_cache }}"
 
 - name: Build sepal-php
-  docker_image: path="/docker/sepal-php" name="openforis/sepal-php" state=build
+  docker_image: path="/docker/sepal-php" name="openforis/sepal-php" state=build nocache="{{ skip_cache }}"
 
 - name: Build nginx
   docker_image: path="/docker/nginx" name="openforis/nginx" state=build
