@@ -1,10 +1,10 @@
 ---
 
 - name: Copy .sepal folder
-  copy: src=~/.sepal dest=/data/ansible/
+  copy: src=~/.sepal dest=~/
 
 - name: Copy .ssh folder
-  copy: src=~/.ssh/sepal dest=/data/ansible/.ssh/
+  copy: src=~/.ssh/sepal dest=~/.ssh/
 
 
 - name: Start jenkins container

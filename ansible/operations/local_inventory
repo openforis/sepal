@@ -1,1 +1,1 @@
-localhost   ansible_connection=local
+operations ansible_port=22 ansible_host=172.17.0.1

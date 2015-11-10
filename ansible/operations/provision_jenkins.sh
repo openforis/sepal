@@ -11,4 +11,5 @@ INVENTORY_FILE_PATH="$CONTEXT_DIR"/"$INVENTORY_FILE_NAME"
 
 ansible-playbook ${CONTEXT_DIR}/jenkins.yml \
     -i ${INVENTORY_FILE_PATH} \
+    --private-key=~/.ssh/sepal/eu-central-1.pem
     --extra-vars "version=$VERSION secret_vars_file=~/.sepal/secret.yml skip_cache=$SKIP_CACHE"
