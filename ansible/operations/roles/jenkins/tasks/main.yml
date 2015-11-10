@@ -1,10 +1,11 @@
 ---
 
 - name: Copy .sepal folder
-  copy: src=~/.sepal dest=/data/ansible.sepal/
+  copy: src=~/.sepal dest=/data/ansible/
 
 - name: Copy .ssh folder
   copy: src=~/.ssh/sepal dest=/data/ansible/.ssh/
+
 
 - name: Start jenkins container
   docker:
@@ -26,3 +27,4 @@
       JENKINS_PASSWD: "{{ jenkins_password }}"
       AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
       AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+      GITHUB_ACCOUNT_PASSWD: "{{ jenkins_github_user_password }}"
