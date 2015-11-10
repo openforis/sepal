@@ -40,6 +40,10 @@
     </com.cloudbees.jenkins.GitHubPushTrigger>
   </triggers>
   <concurrentBuild>false</concurrentBuild>
+  <rootModule>
+    <groupId>org.openforis.sepal</groupId>
+    <artifactId>sepal</artifactId>
+  </rootModule>
   <goals>clean package deploy</goals>
   <aggregatorStyleBuild>true</aggregatorStyleBuild>
   <incrementalBuild>false</incrementalBuild>
@@ -61,16 +65,13 @@
   <prebuilders/>
   <postbuilders>
     <hudson.tasks.Shell>
-      <command>${WORKSPACE}/ansible/operations/provision.sh true</command>
-    </hudson.tasks.Shell>
-    <hudson.tasks.Shell>
-      <command>${WORKSPACE}/ansible/sepal/provision.sh</command>
+      <command>${WORKSPACE}/ansible/operations/provision_jenkins.sh true ${WORKSPACE}/ansible/operations/ &quot;$BUILD_NUMBER&quot;</command>
     </hudson.tasks.Shell>
   </postbuilders>
   <runPostStepsIfResult>
-    <name>SUCCESS</name>
-    <ordinal>0</ordinal>
-    <color>BLUE</color>
+    <name>UNSTABLE</name>
+    <ordinal>1</ordinal>
+    <color>YELLOW</color>
     <completeBuild>true</completeBuild>
   </runPostStepsIfResult>
 </maven2-moduleset>
