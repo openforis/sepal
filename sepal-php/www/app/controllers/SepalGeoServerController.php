@@ -5,6 +5,9 @@ Class SepalGeoServerController extends \BaseController {
 
     public function requestDownload() {
         $requestScene = Input::get('requestScene');
+        $requestName = Input::get('requestName');
+        $groupScenes = Input::get('groupScenes');
+        $groupScenes = ($groupScenes == "yes") ? 'true' : 'false';
         $requestScene = explode(",", $requestScene);
         $dataSetId = 1;
         $userName = Session::get("username");
@@ -21,8 +24,7 @@ Class SepalGeoServerController extends \BaseController {
         }
         $service_url = SdmsConfig::value('sepalURI').'/downloadRequests';
         $curl = curl_init($service_url);
-        $data_string = '{"groupScenes": true, "requestName": "Request2", "username" : ' . $userName . ',"dataSetId": ' . $dataSetId . ',"processingChain":"' . $processingScript . '","sceneIds":[' . implode(",", $scenesId) . ']}';
-        //$data_string = '{"groupScenes": false, "username" : ' . $userName . ',"dataSetId": ' . $dataSetId . ',"processingChain":"' . $processingScript . '","sceneIds":[' . implode(",", $scenesId) . ']}';
+        $data_string = '{"groupScenes": ' . $groupScenes . ', "requestName": "' . $requestName .'", "username" : ' . $userName . ',"dataSetId": ' . $dataSetId . ',"processingChain":"' . $processingScript . '","sceneIds":[' . implode(",", $scenesId) . ']}';
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_POST, true);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
@@ -37,11 +39,11 @@ Class SepalGeoServerController extends \BaseController {
         $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         Logger::debug('Response Status: ', $httpcode);
-        // Then, after your curl_exec call:
         $header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
         $body = substr($result, $header_size);
         Logger::debug('Response: ', $result);
         curl_close($curl);
+        return $result;
     }
 
     public function removeFromDashboard(){

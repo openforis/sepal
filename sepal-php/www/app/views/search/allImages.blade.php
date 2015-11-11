@@ -185,6 +185,8 @@
                 {{--*/ $sensor = ''  /*--}}
                 {{--*/ $selectedSensor = ''  /*--}}
                 {{--*/ $sceneStartTime = ''  /*--}}
+                {{--*/ $requestLabel = ''  /*--}}
+                {{--*/ $groupRequest = 0  /*--}}
                 {{--*/ $sceneStopTime = ''  /*--}}
                 {{--*/ $name = ''  /*--}}
                 {{--*/ $specificMonths = ''  /*--}}
@@ -371,7 +373,7 @@
                                                     'row-desc'=>'&darr;Row',
                                                     'cloudCoverFull-asc'=>'&uarr;Cloud Cover',
                                                     'cloudCoverFull-desc'=>'&darr;Cloud Cover'
-                                                    ), 
+                                                    ),
                                                     $sortby,array('class'=>'form-input sortby','id'=>'sortby')) }}
 
 
@@ -413,19 +415,46 @@
                                             </li>@endforeach
                                         </ul>
                                         <div class="clearboth"></div>
-                                        <div class="clearboth" style="margin:0 15px;">
+                                        <div class="clearboth">
                                             <b style="display : none;color:red;">This wont work for few min from now, Updation in progress</b>
                                             {{--Form::submit('Request Scenes',array('name' => 'submit','class'=>'button right'))--}}
-                                            <div style="margin:0 15px;" class="clearboth">
-                                                {{Form::button('Request Scenes',array('id' => 'requestScenes','name' => 'submit','class'=>'button right'))}}
-                                                <select id="processingScript" style="width: auto; margin: 5px 10px 0 0" class="right">
-                                                    <option value="">No pre-processing</option>
-                                                    @foreach ($processingScripts as $script=>$scriptName)
-                                                    <option value="{{$script}}">{{$scriptName}}</option>
-                                                    @endforeach
-                                                </select>
+                                            <div  class="clearboth"  style="border: 1px dashed; padding: 10px 0px">
+                                                <table style="width:100%">
+                                                    <thead>
+                                                        <tr>
+                                                            <td style="text-align: center;width:25%"><label for="groupRequest">Group Scenes</label></td>
+                                                            <td style="text-align: center;width:25%"><label style="display:block; width: 80%">Request label</label></td>
+                                                            <td style="text-align: center;width:25%"> <label for="processingScript">Processing script</label></td>
+                                                            <td>&nbsp;</td>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr><td colspan="4">&nbsp;</td></tr>
+                                                        <tr style="text-align: center">
+                                                            <td style="text-align: center">
 
+                                                                <input type="checkbox" id="groupRequest" name="groupRequest" />
+                                                            </td>
+                                                            <td style="text-align: center">
+                                                                {{Form::text('requestLabel',$requestLabel, array('style' => 'width:80%','placeholder' => 'Pick up a name','maxlength'=>'20','alt'=>'Label this request','id'=>'requestLabel','class' => 'form-input','autocomplete'=>'off'))}}
+                                                            </td>
+                                                            <td style="text-align: center">
+
+                                                                <select id="processingScript" style="width: auto; display: inline" class="">
+                                                                    <option value="">No pre-processing</option>
+                                                                    @foreach ($processingScripts as $script=>$scriptName)
+                                                                    <option value="{{$script}}">{{$scriptName}}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </td>
+                                                            <td style="text-align: center">
+                                                                {{Form::button('Request Scenes',array('id' => 'requestScenes','name' => 'submit','class'=>'button'))}}
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
                                             </div>
+                                            <p id="errorMsgRequestName" class="error" style="visibility:hidden">Request name invalid(only letter and numbers allowed) or already in use.</p>
                                         </div>
                                         {{Form::close()}}
 
@@ -433,7 +462,7 @@
 
                                         <div class="pagination-wrap">
                                             <span class="pull-left">
-                                            Displaying {{ $pageLink['getFrom'] }} 
+                                            Displaying {{ $pageLink['getFrom'] }}
                                             -
                                             {{ $pageLink['getTo'] }} of {{ number_format($pageLink['getTotalResult']) }} results</span>
                                             <div class="clearboth"></div>

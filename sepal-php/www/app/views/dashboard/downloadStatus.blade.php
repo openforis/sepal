@@ -45,7 +45,7 @@
             var sceneContainer = $('.scenes')
 
             checkSession();
-            setInterval(checkSession, 5000);
+            //setInterval(checkSession, 5000);
 
             function checkSession() {
                 $.get("https://{{SdmsConfig::value('host')}}/downloadstatus")
@@ -57,10 +57,14 @@
                         _.each(requests, function (request) {
                             var html = ''
                             var requestTitle = $.format.date(request.requestTime,'dd/MM/yyyy HH:mm')  + ' UTC';
+                            var removeStatus = getRemoveRequestButtonStatus(request);
                             if (request.groupScenes){
-                                requestTitle = request.requestName + ' | ' + requestTitle
+                                requestTitle = (request.requestName != null ? request.requestName : request.requestId) + " || " + requestTitle;
+                                removeStatus = getRemoveGroupedRequestButtonStatus(request)
                             }
-                            html = '<div class="panel panel-primary"><div class="panel-heading"><h5 class="panel-title"><span style="' + getRemoveRequestButtonStatus(request) +'" onclick="javascript:removeFromDashboard(' + request.requestId + ',\'\')" title="Remove Request" class=" pointer glyphicon glyphicon-trash"></span> &nbsp;&nbsp;' + requestTitle + '</h5></div>'
+
+
+                            html = '<div class="panel panel-primary"><div class="panel-heading"><h5 class="panel-title"><span style="' + removeStatus+'" onclick="javascript:removeFromDashboard(' + request.requestId + ',\'\')" title="Remove Request" class=" pointer glyphicon glyphicon-trash"></span> &nbsp;&nbsp;' + requestTitle + '</h5></div>'
                             html = html + '<div id="panel' + requestIndex +'" class="panel-collapse collapse in"><div class="panel-body">'
                             var i = 0;
                             _.each (request.scenes, function (scene) {
@@ -74,13 +78,18 @@
 
 
                             sceneContainer.append(html + "</div></div></div>")
+
                             requestIndex++
                         })
                     })
             }
 
-            function icon(scene) {
-                switch (scene.status) {
+            function requestIcon(request){
+                return pickUpIcon(request.status)
+            }
+
+            function pickUpIcon(status){
+                switch (status) {
                     case 'FAILED':
                         return '../images/error.png';
                     case 'PUBLISHED':
@@ -90,9 +99,13 @@
                 }
             }
 
-            function getRemoveSceneButtonStatus(scene){
+            function icon(scene) {
+                return pickUpIcon(scene.status)
+            }
+
+            function getRemoveButtonStatus(status){
                 var style="display:none";
-                switch (scene.status) {
+                switch (status) {
                     case 'PUBLISHED':
                     case 'FAILED':
                         style=""
@@ -101,11 +114,19 @@
                 return style;
             }
 
+            function getRemoveSceneButtonStatus(scene){
+                return getRemoveButtonStatus(scene.status)
+            }
+
+            function getRemoveGroupedRequestButtonStatus(request){
+                return getRemoveButtonStatus(request.status)
+            }
+
             function getRemoveRequestButtonStatus(request){
                 var style="";
                 for (index = 0; index < request.scenes.length; index++){
                     var scene = request.scenes[index];
-                    style = getRemoveSceneButtonStatus(scene);
+                    style = getRemoveSceneButtonStatus(scene.status);
                     if (style != ""){
                         break;
                     }
@@ -113,9 +134,8 @@
                 return style;
             }
 
-            function message(scene) {
-
-                switch (scene.status) {
+            function pickMessage(status){
+                switch (status) {
                     case 'REQUESTED':
                     case 'STARTED':
                         return 'Pending...';
@@ -138,6 +158,14 @@
                     default:
                         return 'Failed to download';
                 }
+            }
+
+            function message(scene) {
+                return pickMessage(scene.status)
+            }
+
+            function requestMessage(request){
+                return pickMessage(request.status)
             }
         })
 

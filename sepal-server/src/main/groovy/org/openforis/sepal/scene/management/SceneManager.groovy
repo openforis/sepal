@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit
 
 import static org.openforis.sepal.scene.Status.*
 
+
+// @ TODO Implement more test cases
 class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
@@ -48,7 +50,11 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
                         break
                     case DOWNLOADED:
                         scenesRepository.reloadRequestData(request)
-                        sceneProcessor.process(request, request.processingChain)
+                        if (request.status == FAILED){
+                            throw new RuntimeException("Downloaded signal received from a scene within an already failed request")
+                        }else{
+                            sceneProcessor.process(request, request.processingChain)
+                        }
                         break
                     case PROCESSED:
                         scenePublisher.publish(request)
@@ -66,13 +72,15 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
                 }
             }
         } catch (Exception ex) {
-            scenesRepository.requestStatusChanged(request, FAILED)
             LOG.error("Error while processing request $request", ex)
+            scenesRepository.requestStatusChanged(request, FAILED)
+            request?.scenes?.each {
+                sceneStatusChanged(it, FAILED,false)
+            }
         }
     }
 
-    @Override
-    void sceneStatusChanged(SceneRequest scene, Status status) {
+    void sceneStatusChanged(SceneRequest scene, Status status, Boolean propagateError){
         try {
             if (scene.request.groupScenes) {
                 def request = scene.request
@@ -84,6 +92,12 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
                             requestStatusChanged(request, status)
                         }
                         break;
+                    case FAILED:
+                        if (propagateError){
+                            requestStatusChanged(request,FAILED)
+                        }else{
+                            scenesRepository.sceneStatusChanged(scene, FAILED)
+                        }
                 }
             } else {
                 switch (status) {
@@ -96,13 +110,22 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
                     case PROCESSED:
                         scenePublisher.publish(scene)
                         break
+                    case FAILED:
+                        throw new RuntimeException("Failed signal dispatched for scene $scene.id. Something went wrong")
                 }
             }
         } catch (Exception ex) {
-            scenesRepository.sceneStatusChanged(scene, FAILED)
             LOG.error("Error while processing scene $scene", ex)
-            requestStatusChanged(scene?.request, FAILED)
+            scenesRepository.sceneStatusChanged(scene, FAILED)
+            if (propagateError && scene?.request?.groupScenes){
+                requestStatusChanged(scene?.request, FAILED)
+            }
         }
+    }
+
+    @Override
+    void sceneStatusChanged(SceneRequest scene, Status status) {
+        sceneStatusChanged(scene,status,true)
     }
 
     private class DownloadRequestPoller implements Runnable {

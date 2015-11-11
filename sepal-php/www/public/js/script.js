@@ -6,20 +6,13 @@ var openMigrationStatus = function () {
     var migrationURL = 'migrationstatus';
     var migrationWindow = window.open('', 'Migration Status', 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=no, copyhistory=no,height=300,width=350,fullscreen=no');
 
+
     if (!migrationWindow) {
         alert("A popup blocker was detected. Please Remove popup blocker for this site and try again!");
         return false;
     }
 
     if (migrationWindow.location.href == 'about:blank') {
-
-        $('.sceneName:checked').each(function () {
-            $(this).parent('.parentScreens').removeClass('select');
-            $(this).prop('checked', false);
-            $("#selectAll").attr("value", "Select All");
-        });
-
-
         migrationWindow.location = migrationURL;
     } else {
         // #todo else do nothing
@@ -303,6 +296,10 @@ $(document).ready(function () {
 //onclick function to handle select scenes from search result
     $(document).on("click", "#requestScenes", function () {
         var processingScript = $('#processingScript').val();
+        var requestLabel = $('#requestLabel').val();
+        var groupRequestControl = $('#groupRequest')[0];
+        var groupRequest = groupRequestControl.checked ? "yes" : "no";
+
 
         //get all scene names from search result page
         var $selectedSceneNames = $('.sceneName:checked');
@@ -319,11 +316,26 @@ $(document).ready(function () {
                 sceneName = sceneName + $(this).val() + ",";
             });
 
-            $.post("migrate", {requestScene: sceneName, processingScript: processingScript})
-                .done(function () {
-                    openMigrationStatus();
-                }).fail(function () {
+            $.post("migrate", {requestName: requestLabel, groupScenes: groupRequest, requestScene: sceneName, processingScript: processingScript})
+                .done(function (data) {
+                    if (!data){
+                        $('#errorMsgRequestName')[0].style.visibility = 'hidden';
+                        $('.sceneName:checked').each(function () {
+                            $(this).parent('.parentScreens').removeClass('select');
+                            $(this).prop('checked', false);
+                            $("#selectAll").attr("value", "Select All");
+                        });
+                        var requestLabel = $('#requestLabel').val('');
+                        var groupRequestControl = $('#groupRequest')[0];
+                        var groupRequest = groupRequestControl.checked = false;
+                        openMigrationStatus();
+                    }else{
+                        alert(data);
+                        $('#errorMsgRequestName')[0].style.visibility = 'visible';
+                    }
 
+                }).fail(function () {
+                    alert('An error occurred')
                 });
         } else {
 
