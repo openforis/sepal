@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-SKIP_CACHE=${1:-false}
-CONTEXT_DIR=${2:-"."}
-VERSION=${3:-"latest"}
-INVENTORY_FILE_NAME=${4:-"ec2.py"}
+CONTEXT_DIR=${1:-"."}
+VERSION=${2:-"latest"}
+INVENTORY_FILE_NAME=${3:-"ec2.py"}
 
 
 INVENTORY_FILE_PATH="$CONTEXT_DIR"/"$INVENTORY_FILE_NAME"
@@ -18,4 +17,4 @@ ${INVENTORY_FILE_PATH} --refresh-cache > /dev/null
 ansible-playbook ${CONTEXT_DIR}/operations.yml \
     -i ${INVENTORY_FILE_PATH} \
     --private-key=~/.ssh/sepal/eu-central-1.pem \
-    --extra-vars "region=eu-central-1 version=$VERSION secret_vars_file=~/.sepal/secret.yml skip_cache=$SKIP_CACHE"
+    --extra-vars "region=eu-central-1 version=$VERSION secret_vars_file=~/.sepal/secret.yml"

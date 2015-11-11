@@ -62,7 +62,6 @@
                     <file>target/${project.name}.tar.gz</file>
                     <groupId>${project.groupId}</groupId>
                     <artifactId>${project.artifactId}</artifactId>
-                    <version>${project.version}</version>
                 </configuration>
             </plugin>
 

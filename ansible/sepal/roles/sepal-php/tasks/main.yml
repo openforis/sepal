@@ -69,12 +69,6 @@
     group: "9998"
     state: directory
 
-
-
-
-
-
-
 - name: Create config file
   template: src=config.ini dest=/data/sepal/config/config.ini owner=www-data mode=0400
 
@@ -93,7 +87,7 @@
     name: "sepal-php"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
-    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/sepal-php"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/sepal-php:{{ version }}"
     state: "reloaded"
     net: "bridge"
     restart_policy: "always"
@@ -108,6 +102,8 @@
     volumes:
     #- "{{ '/www/app/controllers:/var/www/html/app/controllers' if local_php else '' }}"
     #- "{{ '/www/app/views:/var/www/html/app/views' if local_php else '' }}"
+    #- "{{ '/www/app/config:/var/www/html/app/config' if local_php else '' }}"
+    #- "{{ '/www/public:/var/www/html/public' if local_php else '' }}"
     - "/data/logs/sepal-php:/var/log/apache2"
     - "/data/sepal/data:/data/home/"
     - "/data/sepal/config:/etc/sepal"
@@ -116,3 +112,4 @@
     - "/data/sepal/public:/data/sepal/public"
     env:
         ADMIN_PWD: "{{ sepal_admin_user_password }}"
+        ARTIFACT_VERSION: "{{ version }"

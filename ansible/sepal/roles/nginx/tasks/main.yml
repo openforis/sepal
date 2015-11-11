@@ -23,7 +23,7 @@
     name: "nginx"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
-    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/nginx"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/nginx:{{ version }}"
     state: "reloaded"
     net: "bridge"
     restart_policy: "always"

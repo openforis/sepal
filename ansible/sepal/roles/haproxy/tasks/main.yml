@@ -18,7 +18,7 @@
     name: "haproxy"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
-    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/haproxy"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/haproxy:{{ version }}"
     state: "reloaded"
     net: "bridge"
     restart_policy: "always"

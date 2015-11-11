@@ -27,7 +27,7 @@
     name: "sepal"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
-    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/sepal"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/sepal:{{ version }}"
     state: "reloaded"
     net: "bridge"
     restart_policy: "always"
@@ -42,3 +42,5 @@
     - "/data/sepal/geoserver:/data/geoserver"
     - "/data/sepal/data:/data/home"
     - "/data/logs/sepal:/var/log/sepal"
+    env:
+    ARTIFACT_VERSION: "{{ version }"

@@ -19,7 +19,7 @@
     name: "mysql"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'always' if docker_repository_host else 'missing' }}"
-    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/mysql"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/mysql:{{ version }}"
     state: "reloaded"
     restart_policy: "always"
     net: "bridge"

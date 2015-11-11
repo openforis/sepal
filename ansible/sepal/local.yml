@@ -5,7 +5,6 @@
   gather_facts: true
 
   vars_files:
-    - vars/vars.yml
     - "{{ secret_vars_file }}"
 
   pre_tasks:
@@ -37,7 +36,7 @@
       docker_group_members: ['ubuntu','vagrant']
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
 
-   # - role: build-images
+    - role: build-images
     - role: prepare-environment
     - role: mysql
     - role: geoserver
