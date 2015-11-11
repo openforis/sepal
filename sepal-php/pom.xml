@@ -5,31 +5,13 @@
     <parent>
         <artifactId>sepal</artifactId>
         <groupId>org.openforis.sepal</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>18-SNAPSHOT</version>
     </parent>
 
-    <groupId>org.openforis.sepal</groupId>
     <artifactId>sepal-php</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>18-SNAPSHOT</version>
     <name>sepal-php</name>
-
-
-    <repositories>
-        <repository>
-            <id>openforis-releases</id>
-            <name>Open Foris Repository</name>
-            <url>http://www.openforis.org/nexus/content/groups/public/</url>
-        </repository>
-    </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>openforis-releases</id>
-            <name>Open Foris Repository</name>
-            <url>http://www.openforis.org/nexus/content/repositories/snapshots/</url>
-        </repository>
-    </distributionManagement>
 
     <build>
         <plugins>

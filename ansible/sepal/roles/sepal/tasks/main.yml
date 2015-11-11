@@ -43,4 +43,4 @@
     - "/data/sepal/data:/data/home"
     - "/data/logs/sepal:/var/log/sepal"
     env:
-    ARTIFACT_VERSION: "{{ version }"
+    ARTIFACT_VERSION: "{{ version }-SNAPSHOT"
