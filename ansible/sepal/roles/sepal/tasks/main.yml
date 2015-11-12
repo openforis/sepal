@@ -44,3 +44,4 @@
     - "/data/logs/sepal:/var/log/sepal"
     env:
     ARTIFACT_VERSION: "{{ version }"
+    ARTIFACT_SUFFIX: "-SNAPSHOT"

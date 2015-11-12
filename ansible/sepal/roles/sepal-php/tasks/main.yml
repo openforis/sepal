@@ -113,3 +113,4 @@
     env:
         ADMIN_PWD: "{{ sepal_admin_user_password }}"
         ARTIFACT_VERSION: "{{ version }"
+        ARTIFACT_SUFFIX: "-SNAPSHOT"
