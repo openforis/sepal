@@ -1,8 +1,7 @@
 #!/usr/bin/expect
 
-VERSION=${1:-"latest"}
 
-spawn /data/ansible/push_images.sh $VERSION
+spawn /data/ansible/push_images.sh
 expect "Username"
 send "{{ docker_username }}\n"
 expect "Password"
