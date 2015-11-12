@@ -112,4 +112,4 @@
     - "/data/sepal/public:/data/sepal/public"
     env:
         ADMIN_PWD: "{{ sepal_admin_user_password }}"
-        ARTIFACT_VERSION: "{{ version }-SNAPSHOT"
+        ARTIFACT_VERSION: "{{ version }"

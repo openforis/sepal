@@ -6,10 +6,9 @@
     <parent>
         <artifactId>sepal</artifactId>
         <groupId>org.openforis.sepal</groupId>
-        <version>18-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>sepal-server</artifactId>
-    <version>18-SNAPSHOT</version>
     <dependencies>
 
         <dependency>

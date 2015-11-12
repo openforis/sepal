@@ -44,7 +44,7 @@
     <groupId>org.openforis.sepal</groupId>
     <artifactId>sepal</artifactId>
   </rootModule>
-  <goals>clean package deploy</goals>
+  <goals>clean package</goals>
   <aggregatorStyleBuild>true</aggregatorStyleBuild>
   <incrementalBuild>false</incrementalBuild>
   <ignoreUpstremChanges>false</ignoreUpstremChanges>
@@ -64,8 +64,22 @@
   <buildWrappers/>
   <prebuilders/>
   <postbuilders>
+    <hudson.tasks.Maven>
+      <targets>versions:set -DnewVersion=${BUILD_NUMBER}-SNAPSHOT</targets>
+      <mavenName>Maven default</mavenName>
+      <usePrivateRepository>false</usePrivateRepository>
+      <settings class="jenkins.mvn.DefaultSettingsProvider"/>
+      <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
+    </hudson.tasks.Maven>
+    <hudson.tasks.Maven>
+      <targets>deploy -DskipTests=true</targets>
+      <mavenName>(Default)</mavenName>
+      <usePrivateRepository>false</usePrivateRepository>
+      <settings class="jenkins.mvn.DefaultSettingsProvider"/>
+      <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
+    </hudson.tasks.Maven>
     <hudson.tasks.Shell>
-      <command>${WORKSPACE}/ansible/operations/provision_jenkins.sh true ${WORKSPACE}/ansible/operations/ &quot;$BUILD_NUMBER&quot;</command>
+      <command>${WORKSPACE}/ansible/operations/provision_jenkins.sh ${WORKSPACE}/ansible/operations/ &quot;$BUILD_NUMBER-SNAPSHOT&quot;</command>
     </hudson.tasks.Shell>
   </postbuilders>
   <runPostStepsIfResult>
