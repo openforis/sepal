@@ -2,6 +2,9 @@
 
 VERSION=${1:-"latest"}
 
+
+echo "Using version $VERSION"
+
 docker login localhost
 docker push localhost/openforis/nginx:${VERSION}
 docker push localhost/openforis/sepal-php:${VERSION}
