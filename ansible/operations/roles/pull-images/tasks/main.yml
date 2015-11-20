@@ -2,10 +2,10 @@
 
 
 - name: Copy jar artifact
-  copy: src=/data/jenkins/workspace/Sepal/sepal-server/docker/binary/sepal.jar remote_src=true force=yes dest=/opt/sepal/sepal-server/docker/binary/sepal.jar
+  copy: src=/var/jenkins_home/workspace/Sepal/sepal-server/docker/binary/sepal.jar  force=yes dest=/opt/sepal/sepal-server/docker/binary/sepal.jar
 
 - name: Copy tar.gz artifact
-  copy: src=/data/jenkins/workspace/Sepal/sepal-php/docker/binary/sepal-php.tar.gz remote_src=true  force=yes dest=/opt/sepal/sepal-php/docker/binary/sepal-php.tar.gz
+  copy: src=/var/jenkins_home//workspace/Sepal/sepal-php/docker/binary/sepal-php.tar.gz remote_src=true  force=yes dest=/opt/sepal/sepal-php/docker/binary/sepal-php.tar.gz
 
 - name: Pull images from github
   git:
