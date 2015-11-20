@@ -25,7 +25,7 @@
   docker_image: path="/opt/sepal/sepal-server/docker" name="localhost/openforis/sepal" state=build
 
 - name: Build sepal-php
-  docker_image: path="/opt/sepal/docker/sepal-php" name="localhost/openforis/sepal-php" state=build
+  docker_image: path="/opt/sepal/sepal-php/docker/sepal-php" name="localhost/openforis/sepal-php" state=build
 
 - name: Build nginx
   docker_image: path="/opt/sepal/docker/nginx" name="localhost/openforis/nginx" state=build
