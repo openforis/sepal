@@ -2,10 +2,10 @@
 
 
 - name: Create jar artifact symlink
-  file: path=/data/jenkins/workspaces/Sepal/sepal-server/docker/binary/sepal.jar state=link src=/opt/sepal/sepal-server/docker/binary/sepal.jar
+  file: src=/data/jenkins/workspaces/Sepal/sepal-server/docker/binary/sepal.jar state=link force=yes dest=/opt/sepal/sepal-server/docker/binary/sepal.jar
 
 - name: Create tar.gz artifact symlink
-  file: path=/data/jenkins/workspaces/Sepal/sepal-server/docker/binary/sepal-php.tar.gz state=link src=/opt/sepal/sepal-server/docker/binary/sepal-php.tar.gz
+  file: src=/data/jenkins/workspaces/Sepal/sepal-server/docker/binary/sepal-php.tar.gz state=link force=yes dest=/opt/sepal/sepal-server/docker/binary/sepal-php.tar.gz
 
 - name: Pull images from github
   git:
