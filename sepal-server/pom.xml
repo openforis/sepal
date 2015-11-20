@@ -167,10 +167,10 @@
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>${project.artifactId}</artifactId>
                                     <version>${project.version}</version>
-                                    <type>tar.gz</type>
+                                    <type>${project.packaging}</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.basedir}/docker/binary</outputDirectory>
-                                    <destFileName>sepal-php.tar.gz</destFileName>
+                                    <destFileName>sepal.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
