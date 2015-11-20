@@ -3,6 +3,7 @@ MAINTAINER OpenForis
 
 ENV ADMIN_PWD sdms-admin
 
+ADD binary/sepal-php.tar.gz .
 ADD script/init_image.sh .
 ADD script/init_container.sh .
 RUN chmod u+x ./init_image.sh

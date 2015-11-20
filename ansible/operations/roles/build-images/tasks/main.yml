@@ -22,7 +22,7 @@
   docker_image: path="/opt/sepal/docker/sandbox"  name="localhost/openforis/sandbox" state=build
 
 - name: Build sepal
-  docker_image: path="/opt/sepal/docker/sepal" name="localhost/openforis/sepal" state=build
+  docker_image: path="/opt/sepal/sepal-server/docker" name="localhost/openforis/sepal" state=build
 
 - name: Build sepal-php
   docker_image: path="/opt/sepal/docker/sepal-php" name="localhost/openforis/sepal-php" state=build

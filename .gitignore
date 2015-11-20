@@ -1,4 +1,6 @@
 *.iml
+*.jar
+*.tar.gz
 target
 .idea
 sepal-server/frontend/dist/*

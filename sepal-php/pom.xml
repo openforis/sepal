@@ -23,6 +23,7 @@
                     <descriptor>dep.xml</descriptor>
                     <finalName>${project.name}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
+                    <outputDirectory>${project.basedir}/docker/binary</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>
@@ -34,17 +35,8 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <url>${project.distributionManagement.repository.url}</url>
-                    <repositoryId>${project.distributionManagement.repository.id}</repositoryId>
-                    <packaging>tgz</packaging>
-                    <file>target/${project.name}.tar.gz</file>
-                    <groupId>${project.groupId}</groupId>
-                    <artifactId>${project.artifactId}</artifactId>
-                </configuration>
-            </plugin>
+
+
 
         </plugins>
     </build>
