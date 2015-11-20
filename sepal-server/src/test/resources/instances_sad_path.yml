@@ -1,0 +1,9 @@
+---
+
+providers:
+  - name: AWS
+    description: AmazonWebServices
+    instances:
+      - id: 'i-werwef'
+        region: 'us-west-2'
+

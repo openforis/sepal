@@ -3,9 +3,11 @@ package endtoend.sandbox
 import endtoend.FailedRequest
 import endtoend.SepalDriver
 import org.openforis.sepal.sandbox.SandboxStatus
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
+@Ignore
 class SanboxEndpointsTest extends Specification {
     static A_USER = "A.User"
 

@@ -4,6 +4,9 @@ import fake.FakeEarthExplorer
 import groovy.json.JsonOutput
 import groovyx.net.http.HttpResponseDecorator
 import groovyx.net.http.RESTClient
+import org.openforis.sepal.instance.DataCenter
+import org.openforis.sepal.instance.Instance
+import org.openforis.sepal.instance.InstanceProvider
 import org.openforis.sepal.scene.management.RequestScenesDownloadCommand
 import org.openforis.sepal.transaction.SqlConnectionManager
 import spock.util.concurrent.PollingConditions
@@ -73,6 +76,8 @@ class SepalDriver {
         return this
     }
 
+
+
     SepalDriver withUsers(String... usernames) {
         usernames.each {
             system.database.addUser(it)
@@ -84,6 +89,35 @@ class SepalDriver {
         requests.each {
             system.database.addDownloadRequest(it)
         }
+        return this
+    }
+
+    SepalDriver withInstance (Instance instance) {
+        instance.id = system.database.addInstance(instance)
+        return this
+    }
+
+    SepalDriver withInstanceProvider(InstanceProvider provider){
+        provider.id = system.database.addInstanceProvider(provider)
+        return this
+    }
+
+    SepalDriver withInstanceProviders(InstanceProvider... providers){
+        providers?.each{
+            withInstanceProvider(it)
+        }
+        return this
+    }
+
+    SepalDriver withDataCenters(DataCenter... dataCenters){
+        dataCenters?.each{
+            withDataCenter(it)
+        }
+        return this
+    }
+
+    SepalDriver withDataCenter(DataCenter dataCenter){
+        dataCenter.id = system.database.addDataCenter(dataCenter)
         return this
     }
 

@@ -2,6 +2,7 @@ package manual
 
 import org.openforis.sepal.sandbox.SandboxData
 import org.openforis.sepal.sandbox.SandboxManager
+import org.openforis.sepal.sandbox.Size
 import org.openforis.sepal.sandboxwebproxy.SandboxWebProxy
 
 class SandboxWebProxySetup {
@@ -19,6 +20,12 @@ class SandboxWebProxySetup {
             SandboxData getUserSandbox(String username) {
                 return null
             }
+
+            @Override
+            SandboxData getUserSandbox(String username, Size sandboxSize) {
+                return null
+            }
+
 
             @Override
             void aliveSignal(int sandboxId) {

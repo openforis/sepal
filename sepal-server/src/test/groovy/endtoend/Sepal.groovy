@@ -4,6 +4,9 @@ import fake.Database
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
+import org.openforis.sepal.instance.ConcreteInstanceManager
+import org.openforis.sepal.instance.JdbcInstanceDataRepository
+import org.openforis.sepal.instance.amazon.AWSInstanceProviderManager
 import org.openforis.sepal.sandbox.*
 import org.openforis.sepal.scene.management.*
 import org.openforis.sepal.transaction.SqlConnectionManager
@@ -65,11 +68,29 @@ class Sepal extends Specification {
             }
         }
 
+        def instanceDataRepository = new JdbcInstanceDataRepository(connectionManager)
+        def config = SepalConfiguration.instance
+
+
+        // @ TODO Implement Stub For AWSClient
+        def awsProvider = new AWSInstanceProviderManager(
+                null
+        )
+
+        def instanceManager = new ConcreteInstanceManager(
+                instanceDataRepository,
+                instanceDataRepository.getDataCenterByName(config.dataCenterName),
+                config.environment,
+                awsProvider
+        )
+
         sandboxManager = new ConcreteSandboxManager(
                 new DockerContainersProvider(stubDockerClient, userRepository),
                 new JDBCSandboxDataRepository(connectionManager),
-                userRepository
+                userRepository,
+                instanceManager
         )
+
         def dataSetRepository = new JdbcDataSetRepository(connectionManager)
 
 
@@ -109,7 +130,7 @@ class Sepal extends Specification {
     private void addShutdownHook() {
         Runtime.addShutdownHook {
             if (started)
-                endpoints.undeploy()
+                endpoints?.undeploy()
         }
     }
 

@@ -1,5 +1,7 @@
 package org.openforis.sepal.sandbox
 
+import org.openforis.sepal.instance.Instance
+import org.openforis.sepal.instance.InstanceManager
 import org.openforis.sepal.user.NonExistingUser
 import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
@@ -10,11 +12,15 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
+import static org.openforis.sepal.instance.Instance.Status.AVAILABLE
 import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
+import static org.openforis.sepal.sandbox.SandboxStatus.REQUESTED
 
 interface SandboxManager {
 
-    SandboxData getUserSandbox ( String username )
+    SandboxData getUserSandbox ( String username, Size sandboxSize )
+
+    SandboxData getUserSandbox ( String username)
 
     void aliveSignal( int sandboxId )
 
@@ -24,6 +30,7 @@ interface SandboxManager {
 
 }
 
+// @ TODO Handle multithreading
 class ConcreteSandboxManager implements SandboxManager{
 
     private final static Logger LOG = LoggerFactory.getLogger(this)
@@ -31,34 +38,59 @@ class ConcreteSandboxManager implements SandboxManager{
     private final SandboxContainersProvider sandboxProvider
     private final SandboxDataRepository dataRepository
     private final UserRepository userRepo
+    private final InstanceManager instanceManager
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
 
-    ConcreteSandboxManager( SandboxContainersProvider sandboxProvider, SandboxDataRepository dataRepository, UserRepository userRepo){
+    ConcreteSandboxManager( SandboxContainersProvider sandboxProvider, SandboxDataRepository dataRepository, UserRepository userRepo, InstanceManager instanceManager){
         this.sandboxProvider = sandboxProvider
         this.dataRepository = dataRepository
         this.userRepo = userRepo
-
+        this.instanceManager = instanceManager
     }
 
+    private SandboxData fetchUserSandbox( String username ){
+        def userSandbox
+        checkUser(username)
+        userSandbox = dataRepository.getUserSandbox(username)
+        if (userSandbox){
+            def instanceRunning = instanceManager.gatherFacts(userSandbox.instance)
+            if (!instanceRunning){
+                LOG.warn("Instance($userSandbox.instance.id) associated with sandbox $userSandbox.sandboxId is not running anymore")
+                dataRepository.terminated(userSandbox.sandboxId)
+                userSandbox = null
+            }
+            def sandboxRunning = sandboxProvider.isRunning(userSandbox)
+            if (!sandboxRunning && instanceRunning.status == AVAILABLE){
+                 LOG.warn("Container $userSandbox.containerId is not running anymore on instance $userSandbox.instance.id")
+                dataRepository.terminated(userSandbox.sandboxId)
+            }
+        }
+        return userSandbox
+    }
+
+    private void checkUser ( String username ) {
+        if (! (userRepo.userExist(username))){
+            throw new NonExistingUser(username)
+        }
+    }
+
+    private static void checkSandboxSize (SandboxData sandbox, Size expectedSize){
+        if (! (sandbox.size == expectedSize)){
+            LOG.warn("Existing sandbox size($sandbox.size.value) doesn't match the requested one($expectedSize.value)")
+        }
+    }
+
+
     @Override
-    SandboxData getUserSandbox(String username) {
+    SandboxData getUserSandbox(String username, Size sandboxSize = Size.SMALL) {
         def runningSandbox = null
         try{
-            if (! (userRepo.userExist(username))){
-                throw new NonExistingUser(username)
-            }
-            runningSandbox = dataRepository.getUserRunningSandbox(username)
+            runningSandbox = fetchUserSandbox(username)
             if (runningSandbox){
-                LOG.debug("Found data about running sandbox($runningSandbox.containerId) for user $username")
-                def running = sandboxProvider.isRunning(runningSandbox.containerId)
-                if (!running){
-                    LOG.info("Stale sandbox data found for $username")
-                    dataRepository.terminated(runningSandbox.sandboxId)
-                    runningSandbox = askContainer(username)
-                }
+                checkSandboxSize(runningSandbox,sandboxSize)
             }else{
-                runningSandbox = askContainer(username)
+                runningSandbox = createContainer (username, sandboxSize)
             }
         }catch (Exception ex){
             LOG.error("Error while getting the user sandbox",ex)
@@ -68,20 +100,42 @@ class ConcreteSandboxManager implements SandboxManager{
         return runningSandbox
     }
 
-    private synchronized SandboxData askContainer(String username){
-        def sandboxId = dataRepository.requested(username)
-        def data = sandboxProvider.obtain(username)
-        data.sandboxId = sandboxId
+    private SandboxData createContainer ( String username, Size sandboxSize) {
+        def sandbox = null
+        Instance instance = instanceManager.reserveSlot(sandboxSize.value,username)
+        if (!instance){
+            throw new RuntimeException('Something went wrong while obtaining the instance where to istantiate the container')
+        }
+        def sandboxId = dataRepository.requested(username, instance.id, sandboxSize)
+        switch (instance.status){
+            case AVAILABLE:
+                doObtainSandbox( username,sandboxId,instance )
+                break
+            default:
+                LOG.info("Sandbox container cannot be instantiated since the host machine is not available yet ($instance.status)")
+                sandbox = new SandboxData(sandboxId: sandboxId, status: REQUESTED)
+                break
+        }
+        return sandbox
+
+    }
+
+
+    private SandboxData doObtainSandbox ( String username,int sandboxRequestId, Instance instance) {
+        LOG.info("Going to request a container for the sandbox $sandboxRequestId")
+        def sandbox = sandboxProvider.obtain(username,instance)
+        sandbox.sandboxId = sandboxRequestId
         try{
-            dataRepository.created(data.sandboxId,data.containerId,data.uri)
+            dataRepository.created(sandbox.sandboxId,sandbox.containerId,sandbox.uri)
         }catch (Exception ex){
-            LOG.warn("Error while storing container informations",ex)
-            sandboxProvider.release(data.containerId)
-            dataRepository.terminated(sandboxId)
+            LOG.warn("Error while storing container info",ex)
+            sandboxProvider.release(sandbox)
+            dataRepository.terminated(sandboxRequestId)
             throw ex
         }
-        return data
+        return sandbox
     }
+
 
     @Override
     void aliveSignal(int sandboxId) {
@@ -94,23 +148,26 @@ class ConcreteSandboxManager implements SandboxManager{
     @Override
     void start( int containerInactiveTimeout, int checkInterval) {
         executor.scheduleWithFixedDelay(
-            new SandboxManagerUnusedContainerChecker( sandboxProvider, dataRepository, containerInactiveTimeout),
+            new SandboxDaemonChecker( sandboxProvider, dataRepository,instanceManager,containerInactiveTimeout),
             0L,checkInterval, TimeUnit.SECONDS
         )
      }
 
 
-    private class SandboxManagerUnusedContainerChecker implements Runnable{
+    // @ TODO Run tasks to catch up running instances
+    private class SandboxDaemonChecker implements Runnable{
 
-        SandboxDataRepository dataRepository
-        SandboxContainersProvider containersProvider
-        int containerInactiveTimeout
+        private final SandboxDataRepository dataRepository
+        private final SandboxContainersProvider containersProvider
+        private final int containerInactiveTimeout
+        private final InstanceManager instanceManager
 
-        SandboxManagerUnusedContainerChecker( SandboxContainersProvider containersProvider,
-                                              SandboxDataRepository dataRepository, int containerInactiveTimeout ){
+        SandboxDaemonChecker(SandboxContainersProvider containersProvider,
+                             SandboxDataRepository dataRepository,InstanceManager instanceManager, int containerInactiveTimeout ){
             this.dataRepository = dataRepository
             this.containerInactiveTimeout = containerInactiveTimeout
             this.containersProvider = containersProvider
+            this.instanceManager = instanceManager
         }
 
         @Override
@@ -126,7 +183,12 @@ class ConcreteSandboxManager implements SandboxManager{
                 Date containerExpireDate = DateTime.add(sandbox.statusRefreshedOn,Calendar.SECOND,containerInactiveTimeout)
                 if (new Date().after(containerExpireDate)){
                     LOG.info(" Container $sandbox.containerId marked as to be terminated. Inactive Ttl($containerInactiveTimeout seconds) reached")
-                    containersProvider.release(sandbox.containerId)
+                    if (instanceManager.gatherFacts(sandbox.instance)){
+                        LOG.debug("Container instance $sandbox.instance.id still running. Going to physically terminated the container ")
+                        containersProvider.release(sandbox)
+                    }else {
+                        LOG.warn("Instance $sandbox.instance.id not running anymore.")
+                    }
                     dataRepository.terminated(sandbox.sandboxId)
                 }
             } catch (Exception ex) {

@@ -3,6 +3,10 @@ package org.openforis.sepal
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.geoserver.GeoServerLayerMonitor
+import org.openforis.sepal.instance.ConcreteInstanceManager
+import org.openforis.sepal.instance.JdbcInstanceDataRepository
+import org.openforis.sepal.instance.amazon.AWSInstanceProviderManager
+import org.openforis.sepal.instance.amazon.RestAWSClient
 import org.openforis.sepal.metadata.ConcreteMetadataProviderManager
 import org.openforis.sepal.metadata.JDBCUsgsDataRepository
 import org.openforis.sepal.metadata.crawling.EarthExplorerMetadataCrawler
@@ -34,17 +38,33 @@ class Main {
 
     static startSandboxManager() {
         def config = SepalConfiguration.instance
-        def daemonURI = config.dockerDaemonURI
+        def daemonURI = config.dockerBaseURI
 
         connectionManager = new SqlConnectionManager(SepalConfiguration.instance.dataSource)
         connectionManagerSandbox = new SqlConnectionManager(SepalConfiguration.instance.sandboxDataSource)
 
         userRepository = new JDBCUserRepository(connectionManager)
 
+        def instanceDataRepository = new JdbcInstanceDataRepository(connectionManagerSandbox)
+
+        def awsProvider = new AWSInstanceProviderManager(
+                new RestAWSClient(config.awsAccessKey, config.awsSecretKey)
+        )
+
+        def instanceManager = new ConcreteInstanceManager(
+                instanceDataRepository,
+                instanceDataRepository.getDataCenterByName(config.dataCenterName),
+                config.environment,
+                awsProvider
+        )
+
+        instanceManager.bootstrap(config.sepalInstancesConfigFile)
+
         sandboxManager = new ConcreteSandboxManager(
                 new DockerContainersProvider(new DockerRESTClient(daemonURI), userRepository),
                 new JDBCSandboxDataRepository(connectionManagerSandbox),
-                userRepository
+                userRepository,
+                instanceManager
         )
 
         sandboxManager.start(config.containerInactiveTimeout, config.deadContainersCheckInterval)

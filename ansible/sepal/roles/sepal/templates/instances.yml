@@ -1,0 +1,11 @@
+---
+
+providers:
+  - name: AWS
+    description: AmazonWebServices
+    instances:
+      - id: 'i-db43cf1f'
+
+
+
+

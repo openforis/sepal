@@ -2,6 +2,8 @@ package org.openforis.sepal.sandbox
 
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
+import org.openforis.sepal.instance.Instance
+import org.openforis.sepal.instance.Instance.Status
 import org.openforis.sepal.transaction.SqlConnectionProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,11 +19,16 @@ interface SandboxDataRepository {
 
     void created(int sandboxId, String containerId, String sandboxURI)
 
-    int requested(String username)
+    int requested(String username,long instanceId, Size sandboxSize)
+
+    List<SandboxData> getSandboxes(SandboxStatus status,String username,  Size sandboxSize)
 
     List<SandboxData> getSandboxes(SandboxStatus status)
 
-    SandboxData getUserRunningSandbox(String username)
+    SandboxData getUserSandbox(String username, Size sandboxSize)
+
+    SandboxData getUserSandbox(String username)
+
 
 }
 
@@ -62,53 +69,58 @@ class JDBCSandboxDataRepository implements SandboxDataRepository {
     }
 
     @Override
-    int requested(String username) {
+    int requested(String username, long instanceId, Size sandboxSize) {
         def keys = sql.executeInsert('''
-            INSERT INTO sandboxes(username,status,status_refreshed_on)
-            VALUES(?,?,?)''', [username,REQUESTED.name(), new Date()])
+            INSERT INTO sandboxes(username,status,status_refreshed_on,instance_id,size )
+            VALUES(?,?,?,?,?)''', [username,REQUESTED.name(), new Date(),instanceId,sandboxSize.value])
         return keys[0][0] as int
     }
 
-    @Override
-    SandboxData getUserRunningSandbox(String username) {
-        def returnData = null
-        def rows = sql.rows(' SELECT * FROM sandboxes WHERE username = ? AND status = ? ', [username, ALIVE.name()])
-        if (rows) {
-            if (rows.size() > 1) {
-                LOG.warn("Found more than 1 running container for user $username. This may cause problems")
-            }
-            returnData = map(rows.first())
-        }
 
-        return returnData
-
+    SandboxData getUserSandbox(String username, Size size = null) {
+        def sandboxes = getSandboxes(null,username,size)
+        return sandboxes ? sandboxes.first() : null
     }
 
-    @Override
-    List<SandboxData> getSandboxes(SandboxStatus status) {
+
+    List<SandboxData> getSandboxes(SandboxStatus status = null,String username = null, Size sandboxSize = null) {
         def result = []
-        def query = new StringBuilder('SELECT * FROM sandboxes ')
-        if (status) {
-            query.append(' WHERE status = ? ')
+        def query = new StringBuilder(buildSelectFromStatement())
+        query.append(' WHERE 1 = 1')
+        def bindings =  []
+        if (username) {
+            query.append(' AND sb.username = ? ')
+            bindings.add(username)
         }
-        query.append(" ORDER BY created_on ASC")
-        def rawResults = status ? sql.rows(query.toString(), [status?.name()]) : sql.rows(query.toString())
+        if (status) {
+            query.append(' AND sb.status = ? ')
+            bindings.add(status.name())
+        }
+        if (sandboxSize) {
+            query.append(' AND sb.size = ? ')
+            bindings.add(sandboxSize.getValue())
+        }
+        query.append(" ORDER BY sb.created_on ASC")
+        def rawResults = sql.rows(query.toString(),bindings)
         result.addAll(rawResults.collect { map(it) })
         return result
     }
 
     private SandboxData map(GroovyRowResult row) {
-        SandboxData data = new SandboxData()
-        data.username = row.username
-        data.containerId = row.container_id
-        data.createdOn = row.created_on
-        data.terminatedOn = row.terminated_on
-        data.sandboxId = row.sandbox_id
-        data.status = SandboxStatus.valueOf(row.status)
-        data.statusRefreshedOn = row.status_refreshed_on
-        data.terminatedOn = row.terminated_on
-        data.uri = row.uri
-        return data
+        new SandboxData(
+                uri: row.sbURI, size: Size.byValue(row.sbSize), status: SandboxStatus.valueOf(row.sbStatus),  username: row.sbUser,
+                containerId: row.sbContId, createdOn: row.sbCreatedOn, terminatedOn: row.sbTerminatedOn, sandboxId: row.sbId, statusRefreshedOn: row.sbRefreshedOn,
+                instance: new Instance(id: row.inId, status: Status.valueOf(row.inStatus), publicIp: row.inPubIP,privateIp: row.inPrvIP, owner: row.inOwner, name: row.inName)
+                )
+    }
+
+    private static String buildSelectFromStatement(){
+        def sb = new StringBuilder('SELECT sb.size AS sbSize, sb.sandbox_id AS sbId, sb.username AS sbUser, sb.status AS sbStatus,sb.container_id AS sbContId, sb.uri AS sbURI,  ')
+        sb.append(' sb.created_on AS sbCreatedOn, sb.terminated_on AS sbTerminatedOn,sb.status_refreshed_on AS sbRefreshedOn, ')
+        sb.append(' in.id AS inId, in.status AS inStatus, in.public_ip  AS inPubIP, in.private_ip AS inPrvIP, in.owner AS inOwner, in.name AS inName, ')
+        sb.append(' in.reserved AS inReserved, in.capacity AS inCapacity ')
+        sb.append(' FROM sandboxes sb INNER JOIN instances in ON sb.instance_id = in.id' )
+        return sb.toString()
     }
 
     private Sql getSql() {

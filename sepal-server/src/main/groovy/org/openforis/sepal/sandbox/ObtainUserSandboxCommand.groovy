@@ -8,8 +8,11 @@ import static groovymvc.validate.Constraints.custom
 
 class ObtainUserSandboxCommand extends AbstractCommand<SandboxData> {
 
-    ObtainUserSandboxCommand(String username) {
+    Size sandboxSize
+
+    ObtainUserSandboxCommand(String username, int sandboxSize) {
         this.username = username
+        this.sandboxSize = Size.byValue(sandboxSize)
     }
 
     static constraints(UserRepository userRepository) {
@@ -28,5 +31,7 @@ class ObtainUserSandboxCommandHandler implements CommandHandler<SandboxData, Obt
     }
 
     @Override
-    SandboxData execute(ObtainUserSandboxCommand command) { manager.getUserSandbox(command.username) }
+    SandboxData execute(ObtainUserSandboxCommand command) {
+        manager.getUserSandbox(command.username)
+    }
 }

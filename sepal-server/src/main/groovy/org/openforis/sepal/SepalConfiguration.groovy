@@ -10,40 +10,46 @@ import javax.sql.DataSource
 class SepalConfiguration {
     private static Logger LOG = null
 
-    public static final String MOUNTING_HOME_DIR_PARAMETER = "mounting.homeDir"
-    public static final String HOME_DIR_PARAMETER = "home.dir"
-    public static final String TARGET_DIR_PARAMETER = "target.dir"
-    public static final String PROCESSING_CHAIN_PARAMETER = "processing.chain"
-    public static final String STYLE_PARAMETER = "style"
-    public static final String LAYER_FOLDER_NAME_PARAMETER = "layer.folder.name"
-    public static final String GEOSERVER_URL_PARAMETER = "geoserver.url"
-    public static final String GEOSERVER_USER_PARAMETER = "geoserver.user"
-    public static final String GEOSERVER_PWD_PARAMETER = "geoserver.pwd"
-    public static final String WEBAPP_PORT_PARAMETER = "webapp.port"
-    public static final String JDBC_CONN_STRING_PARAMETER = "jdbc.conn.string"
-    public static final String JDBC_CONN_USER_PARAMETER = "jdbc.conn.user"
-    public static final String JDBC_CONN_PWD_PARAMETER = "jdbc.conn.pwd"
-    public static final String JDBC_DRIVER_PARAMETER = "jdbc.driver"
-    public static final String MAX_CONCURRENT_DOWNLOADS = "download.maxConcurrent"
-    public static final String DOWNLOAD_CHECK_INTERVAL = "download.checkInterval"
-    public static final String EARTHEXPLORER_REST_ENDPOINT = "earthexplorer.restEndpoint"
-    public static final String EARTHEXPLORER_USERNAME = "earthexplorer.username"
-    public static final String EARTHEXPLORER_PASSWORD = "earthexplorer.password"
-    public static final String DOWNLOADS_WORKING_DIRECTORY = "sepal.downloadWorkingDirectory"
-    public static final String USER_HOME_DIR = "sepal.userHomeDir"
-    public static final String PROCESSING_HOME_DIR = "sepal.processingChain.homeFolder"
-    public static final String DOCKER_IMAGE_NAME = "docker.imageName"
-    public static final String DOCKER_BASE_URI = "docker.baseURI"
-    public static final String DOCKER_DAEMON_PORT = "docker.daemonPort"
-    public static final String DOCKER_REST_ENTRYPOINT = "docker.restEntryPoint"
-    public static final String CRAWLER_RUN_DELAY = "metadata.crawler.delay"
-    public static final String USER_CREDENTIALS_HOME_DIR = "user.credentials.homeDir"
-    public static final String PUBLIC_HOME_DIR = "sepal.publicHomeDir"
-    public static final String SANBOX_PORTS_TO_CHECK = "sepal.sandbox.healtCheckPorts"
-    public static final String CONTAINER_INACTIVE_TIMEOUT = "sandbox.inactive_timeout"
-    public static final String DEAD_CONTAINERS_CHECK_INTERVAL = "sandbox.garbage_check_interval"
-    public static final String SANDBOX_MANAGER_JDBC_CONN_STRING = "sandbox.jdbc_conn_string"
-    public static final String SANBOX_PROXY_SESSION_TIMEOUT = "sandbox.webproxy_session_timeout"
+    public static final String MOUNTING_HOME_DIR_PARAMETER = 'mounting.homeDir'
+    public static final String HOME_DIR_PARAMETER = 'home.dir'
+    public static final String TARGET_DIR_PARAMETER = 'target.dir'
+    public static final String PROCESSING_CHAIN_PARAMETER = 'processing.chain'
+    public static final String STYLE_PARAMETER = 'style'
+    public static final String LAYER_FOLDER_NAME_PARAMETER = 'layer.folder.name'
+    public static final String GEOSERVER_URL_PARAMETER = 'geoserver.url'
+    public static final String GEOSERVER_USER_PARAMETER = 'geoserver.user'
+    public static final String GEOSERVER_PWD_PARAMETER = 'geoserver.pwd'
+    public static final String WEBAPP_PORT_PARAMETER = 'webapp.port'
+    public static final String JDBC_CONN_STRING_PARAMETER = 'jdbc.conn.string'
+    public static final String JDBC_CONN_USER_PARAMETER = 'jdbc.conn.user'
+    public static final String JDBC_CONN_PWD_PARAMETER = 'jdbc.conn.pwd'
+    public static final String JDBC_DRIVER_PARAMETER = 'jdbc.driver'
+    public static final String MAX_CONCURRENT_DOWNLOADS = 'download.maxConcurrent'
+    public static final String DOWNLOAD_CHECK_INTERVAL = 'download.checkInterval'
+    public static final String EARTHEXPLORER_REST_ENDPOINT = 'earthexplorer.restEndpoint'
+    public static final String EARTHEXPLORER_USERNAME = 'earthexplorer.username'
+    public static final String EARTHEXPLORER_PASSWORD = 'earthexplorer.password'
+    public static final String DOWNLOADS_WORKING_DIRECTORY = 'sepal.downloadWorkingDirectory'
+    public static final String USER_HOME_DIR = 'sepal.userHomeDir'
+    public static final String PROCESSING_HOME_DIR = 'sepal.processingChain.homeFolder'
+    public static final String DOCKER_IMAGE_NAME = 'docker.imageName'
+    public static final String DOCKER_BASE_URI = 'docker.baseURI'
+    public static final String DOCKER_DAEMON_TCP_SCHEME = 'docker.tcpScheme'
+    public static final String DOCKER_DAEMON_PORT = 'docker.daemonPort'
+    public static final String DOCKER_REST_ENTRYPOINT = 'docker.restEntryPoint'
+    public static final String CRAWLER_RUN_DELAY = 'metadata.crawler.delay'
+    public static final String USER_CREDENTIALS_HOME_DIR = 'user.credentials.homeDir'
+    public static final String PUBLIC_HOME_DIR = 'sepal.publicHomeDir'
+    public static final String SANBOX_PORTS_TO_CHECK = 'sepal.sandbox.healtCheckPorts'
+    public static final String CONTAINER_INACTIVE_TIMEOUT = 'sandbox.inactive_timeout'
+    public static final String DEAD_CONTAINERS_CHECK_INTERVAL = 'sandbox.garbage_check_interval'
+    public static final String SANDBOX_MANAGER_JDBC_CONN_STRING = 'sandbox.jdbc_conn_string'
+    public static final String SANBOX_PROXY_SESSION_TIMEOUT = 'sandbox.webproxy_session_timeout'
+    public static final String INSTANCE_DATA_CENTER_NAME = 'sepal.instance.datacenter'
+    public static final String AWS_ACCESS_KEY = 'aws.access_key'
+    public static final String AWS_SECRET_KEY = 'aws.secret_key'
+    public static final String ENVIRONMENT = 'environment'
+    public static final String SEPAL_INSTANCES_CONFIG_FILE = 'sepal.instances_config_file'
 
     Properties properties
     String configFileLocation
@@ -83,6 +89,16 @@ class SepalConfiguration {
 
         )
     }
+
+    def getSepalInstancesConfigFile() { getValue(SEPAL_INSTANCES_CONFIG_FILE) }
+
+    def getEnvironment () { getValue(ENVIRONMENT)}
+
+    def getAwsAccessKey () { getValue(AWS_ACCESS_KEY)}
+
+    def getAwsSecretKey () { getValue(AWS_SECRET_KEY) }
+
+    def getDataCenterName () { getValue(INSTANCE_DATA_CENTER_NAME) }
 
     def getProxySessionTimeout() {
         Integer.parseInt(getValue(SANBOX_PROXY_SESSION_TIMEOUT))
@@ -125,6 +141,8 @@ class SepalConfiguration {
         return portValue ? Integer.parseInt(portValue) : 2375
     }
 
+    def getDockerDaemonTcpScheme() { getValue(DOCKER_DAEMON_TCP_SCHEME) }
+
     def getDockerBaseURI() {
         getValue(DOCKER_BASE_URI)
     }
@@ -134,7 +152,7 @@ class SepalConfiguration {
         getValue(DOCKER_IMAGE_NAME)
     }
 
-    def getDockerDaemonURI() { getDockerBaseURI() + ':' + getDockerDaemonPort() + '/' + getDockerRESTEntryPoint() }
+    def getDockerDaemonURI(def baseURI = getDockerBaseURI()) { getDockerDaemonTcpScheme() + "://"  +  baseURI + ':' + getDockerDaemonPort() + '/' + getDockerRESTEntryPoint() }
 
     def getProcessingHomeDir() {
         getValue(PROCESSING_HOME_DIR)

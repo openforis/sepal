@@ -25,4 +25,4 @@ ${INVENTORY_FILE_PATH} --refresh-cache > /dev/null
 ansible-playbook ${CONTEXT_DIR}/configure-instances.yml \
     -i ${INVENTORY_FILE_PATH} \
     --private-key=${PRIVATE_KEY} \
-    --extra-vars "local_php=false local_sepal=false deploy_environment=$ENV version=$VERSION use_custom_host=false secret_vars_file=~/.sepal/secret.yml"
+    --extra-vars " region=$REGION availability_zone=$AV_ZONE local_php=false local_sepal=false deploy_environment=$ENV version=$VERSION use_custom_host=false secret_vars_file=~/.sepal/secret.yml"

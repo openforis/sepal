@@ -6,20 +6,20 @@ import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient
 import org.apache.commons.io.IOUtils
 import org.openforis.sepal.SepalConfiguration
+import org.openforis.sepal.instance.Instance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static groovyx.net.http.ContentType.JSON
 import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
-import static org.openforis.sepal.sandbox.SandboxStatus.STOPPED
 
 interface DockerClient {
 
-    Boolean releaseContainer(String containerId)
+    Boolean releaseContainer(SandboxData sandbox)
 
-    Boolean isContainerRunning(String containerId)
+    Boolean isContainerRunning(SandboxData sandbox)
 
-    SandboxData createContainer(String username, int userUid)
+    SandboxData createContainer(String username, int userUid, Instance instance)
 }
 
 class DockerRESTClient implements DockerClient {
@@ -33,10 +33,11 @@ class DockerRESTClient implements DockerClient {
     }
 
     @Override
-    SandboxData createContainer(String username, int userUid) {
+    SandboxData createContainer(String username, int userUid,Instance instance) {
         def sandboxData
         LOG.debug("Going to create a container for $username")
         def settings = collectSettings(username)
+        def sandboxDockerClient = getRestClient(instance.privateIp)
         def execResult = exec("gateone", "/keygen/keygen.run", username, "$userUid")
         def generatedKey = IOUtils.toString(execResult as InputStream)
         def body = new JsonOutput().toJson(
@@ -54,12 +55,12 @@ class DockerRESTClient implements DockerClient {
                     path: 'containers/create',
                     requestContentType: JSON,
                     body: body
-            )
+            ) as HttpResponseDecorator
             sandboxData = new SandboxData(containerId: response.data.Id)
             LOG.debug("Sandbox created: $sandboxData.containerId")
-            startContainer(restClient, sandboxData.containerId)
-            getContainerInfo(restClient, sandboxData)
-            exec(sandboxData.containerId, "/root/healt_check.sh", "$settings.portsToCheck")
+            startContainer(sandboxDockerClient, sandboxData)
+            getContainerInfo(sandboxDockerClient, sandboxData)
+            exec(sandboxData.containerId,sandboxDockerClient, "/root/healt_check.sh", "$settings.portsToCheck")
         } catch (HttpResponseException exception) {
             LOG.error("Error while creating the sandbox. $exception.message")
             throw exception
@@ -69,29 +70,32 @@ class DockerRESTClient implements DockerClient {
 
 
     @Override
-    Boolean isContainerRunning(String containerId) {
-        SandboxData data = new SandboxData(containerId: containerId)
+    Boolean isContainerRunning(SandboxData data) { isContainerRunning(data,getRestClient(data?.instance?.privateIp))  }
+
+
+    Boolean isContainerRunning(SandboxData data, RESTClient restClient){
         try{
             getContainerInfo(restClient, data)
         }catch (Exception ex) {
-            LOG.error("Unable to obtain container info for $containerId",ex)
+            LOG.error("Unable to obtain container info for $data.containerId",ex)
         }
         return data.status == ALIVE
     }
 
+
     @Override
-    Boolean releaseContainer(String containerId) {
-        releaseContainer(containerId, restClient)
+    Boolean releaseContainer(SandboxData data) {
+        releaseContainer(data, getRestClient(data?.instance?.privateIp))
     }
 
-    Boolean releaseContainer(String containerId, RESTClient restClient) {
+    Boolean releaseContainer(SandboxData data, RESTClient restClient) {
         try {
-            if (isContainerRunning(containerId)) {
-                stopContainer(containerId)
+            if (isContainerRunning(data,restClient)) {
+                stopContainer(data.containerId,restClient)
             }
-            restClient.delete(path: "containers/$containerId")
+            restClient.delete(path: "containers/$data.containerId")
         } catch (HttpResponseException exception) {
-            LOG.error("Error while deleting container $containerId", exception)
+            LOG.error("Error while deleting container $data.containerId", exception)
             throw exception
         }
         return true
@@ -110,8 +114,8 @@ class DockerRESTClient implements DockerClient {
     }
 
 
-    private void startContainer(RESTClient restClient, String containerId) {
-        def startPath = "containers/$containerId/start"
+    private void startContainer(RESTClient restClient, SandboxData sandbox) {
+        def startPath = "containers/$sandbox.containerId/start"
         def body = new JsonOutput().toJson([PublishAllPorts: true])
         try {
             restClient.post(
@@ -121,13 +125,15 @@ class DockerRESTClient implements DockerClient {
             )
         } catch (HttpResponseException exception) {
             LOG.error("Exception while starting the container. Creation will be rollbacked")
-            this.releaseContainer(containerId, restClient)
+            this.releaseContainer(sandbox, restClient)
             throw exception
         }
     }
 
+    private exec(String sandboxId,String... commands) { exec(sandboxId,getRestClient(),commands) }
 
-    private exec(String sandboxId, String... commands) {
+
+    private static exec(String sandboxId,RESTClient restClient, String... commands) {
         def path = "containers/$sandboxId/exec"
         def params = [AttachStdin: false, AttachStdout: true, AttachStderr: true, Tty: false, Cmd: commands]
         def jsonParams = new JsonOutput().toJson(params)
@@ -145,7 +151,7 @@ class DockerRESTClient implements DockerClient {
             def path = "containers/$containerData.containerId/json"
             HttpResponseDecorator response = restClient.get(
                     path: path,
-            )
+            ) as HttpResponseDecorator
             def data = response.data
             containerData.uri = response.data.NetworkSettings.IPAddress
             containerData.status = data.State.Running ? ALIVE : STOPPED
@@ -156,7 +162,7 @@ class DockerRESTClient implements DockerClient {
     }
 
 
-    private void stopContainer(String containerId) {
+    private static  void stopContainer(String containerId,RESTClient restClient) {
         def path = "containers/$containerId/stop"
         try {
             restClient.post(path: path)
@@ -166,7 +172,6 @@ class DockerRESTClient implements DockerClient {
         }
     }
 
-    private RESTClient getRestClient() {
-        return new RESTClient(dockerDaemonURI)
-    }
+    private RESTClient getRestClient( String baseURI = dockerDaemonURI) { new RESTClient(SepalConfiguration.instance.getDockerDaemonURI(baseURI)) }
+
 }

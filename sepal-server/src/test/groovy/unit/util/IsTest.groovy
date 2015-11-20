@@ -27,7 +27,7 @@ class IsTest extends Specification {
     def 'given a null path, the null value is correctly handled and no NullPointerException are thrown'() {
         File file = new File(A_FILE_PATH)
         when:
-            Is.existingFile(null)
+            Is.existingFile(null as String)
             Is.existingFolder(null)
         then:
             thrown(IllegalArgumentException)

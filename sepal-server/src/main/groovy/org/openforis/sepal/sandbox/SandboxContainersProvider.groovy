@@ -1,16 +1,17 @@
 package org.openforis.sepal.sandbox
 
+import org.openforis.sepal.instance.Instance
 import org.openforis.sepal.user.UserRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 interface SandboxContainersProvider {
 
-    SandboxData obtain(String username)
+    SandboxData obtain(String username, Instance instance)
 
-    Boolean isRunning(String containerId)
+    Boolean isRunning(SandboxData sandboxData)
 
-    Boolean release(String containerId)
+    Boolean release(SandboxData sandboxData)
 
 }
 
@@ -27,25 +28,25 @@ class DockerContainersProvider implements SandboxContainersProvider {
     }
 
     @Override
-    SandboxData obtain(String username) {
+    SandboxData obtain(String username, Instance instance) {
         LOG.debug("Going to ask a container for $username sandbox")
-        return dockerClient.createContainer(username, userRepo.getUserUid(username))
+        return dockerClient.createContainer(username, userRepo.getUserUid(username),instance)
     }
 
     @Override
-    Boolean release(String containerId) {
+    Boolean release(SandboxData sandboxData) {
         def released = false
-        if (isRunning(containerId)) {
-            LOG.debug("Going to terminate container $containerId")
-            released = dockerClient.releaseContainer(containerId)
+        if (isRunning(sandboxData)) {
+            LOG.debug("Going to terminate container $sandboxData.containerId")
+            released = dockerClient.releaseContainer(sandboxData)
         } else {
-            LOG.warn("Container $containerId is not running. Nothing will be terminated")
+            LOG.warn("Container $sandboxData.containerId is not running. Nothing will be terminated")
         }
         return released
     }
 
     @Override
-    Boolean isRunning(String containerId) {
-        return dockerClient.isContainerRunning(containerId)
+    Boolean isRunning(SandboxData sandbox) {
+        return dockerClient.isContainerRunning(sandbox)
     }
 }

@@ -20,13 +20,15 @@ class Is {
         }
     }
 
+    static void existingFile ( String string, String errorMessage = DEFAULT_ERROR_MESSAGE)  {
+        existingFile(new File(string?: ''),errorMessage)
+    }
+
     static void existingFile(File file, String errorMessage = DEFAULT_ERROR_MESSAGE) {
-        if (errorMessage == DEFAULT_ERROR_MESSAGE && file != null) {
-            if (file != null) {
-                errorMessage = file.absolutePath + errorMessage
-            }
+        if (errorMessage == DEFAULT_ERROR_MESSAGE && file) {
+            errorMessage = file.absolutePath + errorMessage
         }
-        if (!(file?.exists()) || !(file?.isFile())) {
+        if (! (file?.exists() && file?.isFile())) {
             throw new IllegalArgumentException(errorMessage)
         }
     }

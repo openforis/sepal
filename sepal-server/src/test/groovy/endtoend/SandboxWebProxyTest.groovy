@@ -7,6 +7,7 @@ import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import org.openforis.sepal.sandbox.SandboxData
 import org.openforis.sepal.sandbox.SandboxManager
+import org.openforis.sepal.sandbox.Size
 import org.openforis.sepal.sandboxwebproxy.SandboxWebProxy
 import org.openforis.sepal.user.NonExistingUser
 import spock.lang.Specification
@@ -175,12 +176,19 @@ class SandboxWebProxyTest extends Specification {
     private static class StubSandboxManager implements SandboxManager {
         def aliveInvoked
 
-        SandboxData getUserSandbox(String username) {
+        SandboxData getUserSandbox(String username, Size sandboxSize) {
             throw new NonExistingUser(username)
         }
 
+
+
         void aliveSignal(int sandboxId) {
             aliveInvoked = true
+        }
+
+        @Override
+        SandboxData getUserSandbox(String username) {
+            getUserSandbox(username,null)
         }
 
         void start(int containerInactiveTimeout, int checkInterval) {}
