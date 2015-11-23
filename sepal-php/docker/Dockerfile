@@ -19,7 +19,4 @@ ADD config/default-ssl.conf /etc/apache2/sites-enabled/
 EXPOSE 9090
 EXPOSE 9443
 
-ENV ARTIFACT_VERSION 1.0.0-SNAPSHOT
-ENV ARTIFACT_SUFFIX ''
-
 CMD ["/init_container.sh"]

@@ -19,11 +19,10 @@
       docker_version: '1.8.1-0~trusty'
       docker_group_members: ['ubuntu']
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage'
+
     - role: docker-registry
     - role: pull-images
-    - role: build-images
     - role: build-jenkins
-    - role: push-images
     - role: ansible
-    - role: jenkins
+    - role: run-jenkins
 

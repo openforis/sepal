@@ -112,11 +112,7 @@ under the License.
      |       used together.
      |
     --> 
-	  <server>
-      <id>openforis-releases</id>
-      <username>monzione</username>
-      <password>virgilio</password>
-    </server>
+	
     
 
     <!-- Another sample, using keys to authenticate.

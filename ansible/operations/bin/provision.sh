@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-CONTEXT_DIR=${1:-"."}
+CONTEXT_DIR=${1:-".."}
 VERSION=${2:-"latest"}
-INVENTORY_FILE_NAME=${3:-"ec2.py"}
+INVENTORY_FILE_NAME=${3:-"inventory/ec2.py"}
 
 
 INVENTORY_FILE_PATH="$CONTEXT_DIR"/"$INVENTORY_FILE_NAME"

@@ -11,9 +11,6 @@ RUN /init_image.sh
 
 EXPOSE 1025
 
-ENV ARTIFACT_VERSION LATEST
-ENV ARTIFACT_SUFFIX ''
-
 CMD ["/init_container.sh"]
 
 
