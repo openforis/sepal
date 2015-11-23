@@ -79,7 +79,7 @@
       <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
     </hudson.tasks.Maven>
     <hudson.tasks.Shell>
-      <command>${WORKSPACE}/ansible/operations/bin/provision_jenkins.sh ${WORKSPACE}/ansible/operations/ &quot;$BUILD_NUMBER&quot;</command>
+      <command>${WORKSPACE}/ansible/operations/bin/provision_jenkins.sh ${WORKSPACE}/ansible/ &quot;$BUILD_NUMBER&quot;</command>
     </hudson.tasks.Shell>
   </postbuilders>
   <runPostStepsIfResult>
