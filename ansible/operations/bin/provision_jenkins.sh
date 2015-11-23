@@ -3,12 +3,12 @@
 
 CONTEXT_DIR=${1:-"../.."}
 VERSION=${2:-"latest"}
-INVENTORY_FILE_NAME=${3:-"inventory/local_inventory"}
+INVENTORY_FILE_NAME=${3:-"local_inventory"}
 
-INVENTORY_FILE_PATH="$CONTEXT_DIR"/operations/"$INVENTORY_FILE_NAME"
+INVENTORY_FILE_PATH="$CONTEXT_DIR"/operations/inventory/"$INVENTORY_FILE_NAME"
 
 export ANSIBLE_HOST_KEY_CHECKING=False
-export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible_jenkins.cfg
+export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible.cfg
 
 
 ansible-playbook ${CONTEXT_DIR}/operations/jenkins.yml \

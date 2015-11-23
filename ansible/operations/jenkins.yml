@@ -10,14 +10,14 @@
   roles:
     - role: get-binaries
     - role: pull-images
+    - role: build-oft
+    - role: build-sandbox
     - role: build-gateone
     - role: build-geoserver
     - role: build-haproxy
     #- role: build-ldap
     - role: build-mysql
     - role: build-nginx
-    - role: build-oft
-    - role: build-sandbox
     - role: build-sepal-php
     - role: build-sepal-server
     - role: build-ssh-gateway

@@ -5,8 +5,11 @@ VERSION=${2:-"latest"}
 INVENTORY_FILE_NAME=${3:-"ec2.py"}
 
 
+#to make the provisioning script works locally. Create a symlink from ProjectRoot to /opt/sepal
+
 INVENTORY_FILE_PATH="$CONTEXT_DIR"/operations/inventory/"$INVENTORY_FILE_NAME"
 
+export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible_local.cfg
 
 ansible-playbook ${CONTEXT_DIR}/operations/setup.yml \
