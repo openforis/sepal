@@ -1,0 +1,4 @@
+---
+
+- name: Build geoserver
+  docker_image: path="/opt/sepal/geoserver/docker" name="localhost/openforis/geoserver" state=build

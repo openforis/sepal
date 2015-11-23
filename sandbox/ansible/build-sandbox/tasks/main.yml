@@ -1,0 +1,4 @@
+---
+
+- name: Build sandbox
+  docker_image: path="/opt/sepal/sandbox/docker"  name="localhost/openforis/sandbox" state=build

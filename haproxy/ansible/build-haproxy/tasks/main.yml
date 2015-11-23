@@ -1,0 +1,4 @@
+---
+
+- name: Build haproxy
+  docker_image: path="/opt/sepal/haproxy/docker" name="localhost/openforis/haproxy" state="build"
