@@ -1,7 +1,0 @@
----
-
-- name: Build jenkins
-  docker_image: path="/opt/sepal/docker/jenkins" tag="{{ version }}" name="openforis/jenkins" state="build"
-
-
-
