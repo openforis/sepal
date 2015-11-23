@@ -10,7 +10,7 @@ INVENTORY_FILE_NAME=${3:-"ec2.py"}
 INVENTORY_FILE_PATH="$CONTEXT_DIR"/operations/inventory/"$INVENTORY_FILE_NAME"
 
 export ANSIBLE_HOST_KEY_CHECKING=False
-export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible_local.cfg
+export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible.cfg
 
 ansible-playbook ${CONTEXT_DIR}/operations/setup.yml \
     -i ${INVENTORY_FILE_PATH} \
