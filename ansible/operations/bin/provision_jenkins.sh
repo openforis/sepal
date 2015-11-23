@@ -8,6 +8,7 @@ INVENTORY_FILE_NAME=${3:-"inventory/local_inventory"}
 INVENTORY_FILE_PATH="$CONTEXT_DIR"/"$INVENTORY_FILE_NAME"
 
 export ANSIBLE_HOST_KEY_CHECKING=False
+export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible.cfg
 
 
 ansible-playbook ${CONTEXT_DIR}/jenkins.yml \
