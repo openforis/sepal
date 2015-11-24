@@ -1,0 +1,4 @@
+---
+
+- name: "Run mvn build"
+  shell: mvn clean package -DskipTests=true chdir="/opt/sepal"

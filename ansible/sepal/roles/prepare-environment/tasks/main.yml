@@ -54,3 +54,6 @@
 
 - name: Copy LANDSAT_8 default script
   copy: src=LANDSAT_8/Stack_Images.sh  dest=/data/sepal/config/processing_scripts/LANDSAT_8 owner=sepal group=sepal mode=u=rwx
+
+- name: "Install Maven"
+  apt:  name="maven"

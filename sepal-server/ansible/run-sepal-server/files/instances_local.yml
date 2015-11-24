@@ -1,0 +1,11 @@
+---
+
+providers:
+  - name: Localhost
+    description: Localhost
+    instances:
+      - id: 'localhost'
+
+
+
+

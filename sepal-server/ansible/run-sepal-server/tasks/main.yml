@@ -18,6 +18,12 @@
 - name: Create config file
   template: src=sepal.properties dest=/data/sepal/config/sepal.properties owner=sepal group=sepal mode=0400
 
+- name: Create instances config file
+  template: src=instances.yml dest=/data/sepal/config/instances.yml owner=sepal group=sepal mode=0400
+
+- name: Create instances_local config file
+  copy: src=instances_local.yml dest=/data/sepal/config/instances_local.yml owner=sepal group=sepal mode=0400
+
 - name: Copy lsat_geoserver_script
   copy: src=lsat_geoserver_fix.sh dest=/data/sepal/config/processing_scripts/ owner=sepal group=sepal mode=u=rwx,g=r,o=r
 
@@ -26,7 +32,7 @@
     docker_api_version: "1.16"
     name: "sepal"
     registry: "{{ docker_repository_host }}"
-    pull: "{{ 'always' if docker_repository_host else 'missing' }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/sepal:{{ version }}"
     state: "reloaded"
     net: "bridge"

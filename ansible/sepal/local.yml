@@ -24,6 +24,10 @@
         src: ~/.sepal/certificates/docker-registry.crt
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
+    - name: Set sepal_host var
+      set_fact:
+       sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
+
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:
@@ -36,14 +40,23 @@
       docker_group_members: ['ubuntu','vagrant']
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
 
-    - role: build-images
     - role: prepare-environment
-    - role: mysql
-    - role: geoserver
-    - role: sepal
-    - role: ssh-gateway
-    - role: gateone
-    - role: sepal-php
-    - role: nginx
-    - role: haproxy
-    - role: sandbox
+    - role: compile-binaries
+    - role: build-haproxy
+    - role: build-nginx
+    - role: build-mysql
+    - role: build-gateone
+    - role: build-ssh-gateway
+    - role: build-oft
+    - role: build-sandbox
+    - role: build-geoserver
+    - role: build-sepal-php
+    - role: build-sepal-server
+    - role: run-mysql
+    - role: run-geoserver
+    - role: run-sepal-server
+    - role: run-ssh-gateway
+    - role: run-gateone
+    - role: run-sepal-php
+    - role: run-nginx
+    - role: run-haproxy

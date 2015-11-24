@@ -37,6 +37,10 @@ CREATE TABLE instances (
 );
 
 INSERT INTO instance_providers(name,description)  values('AWS','Amazon Web Services Cloud');
+INSERT INTO instance_providers(name,description) values('Localhost','LocalInstanceProvider');
+
+
+INSERT into datacenters(name,geolocation,description,provider_id) values('Localhost','Localhost','Local DataCenter',(SELECT id FROM instance_providers WHERE name = 'Localhost'));
 
 INSERT INTO datacenters(name,geolocation,description,provider_id) values('us-east-1','us-east-1','US East (N. Virginia)',(SELECT id FROM instance_providers WHERE name = 'AWS'));
 INSERT INTO datacenters(name,geolocation,description,provider_id) values('us-west-2','us-west-2','US West (Oregon)',(SELECT id FROM instance_providers WHERE name = 'AWS'));

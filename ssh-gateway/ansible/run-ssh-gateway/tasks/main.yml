@@ -22,7 +22,7 @@
     docker_api_version: "1.16"
     name: "ssh-gateway"
     registry: "{{ docker_repository_host }}"
-    pull: "{{ 'always' if docker_repository_host else 'missing' }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
     image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/ssh-gateway:{{ version }}"
     state: "reloaded"
     net: "bridge"

@@ -50,6 +50,7 @@ class SepalConfiguration {
     public static final String AWS_SECRET_KEY = 'aws.secret_key'
     public static final String ENVIRONMENT = 'environment'
     public static final String SEPAL_INSTANCES_CONFIG_FILE = 'sepal.instances_config_file'
+    public static final String SEPAL_HOST = 'sepal.host'
 
     Properties properties
     String configFileLocation
@@ -89,6 +90,8 @@ class SepalConfiguration {
 
         )
     }
+
+    def getSepalHost () { getValue(SEPAL_HOST) }
 
     def getSepalInstancesConfigFile() { getValue(SEPAL_INSTANCES_CONFIG_FILE) }
 

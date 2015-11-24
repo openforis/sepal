@@ -7,6 +7,7 @@ import org.openforis.sepal.instance.ConcreteInstanceManager
 import org.openforis.sepal.instance.JdbcInstanceDataRepository
 import org.openforis.sepal.instance.amazon.AWSInstanceProviderManager
 import org.openforis.sepal.instance.amazon.RestAWSClient
+import org.openforis.sepal.instance.local.LocalInstanceProviderManager
 import org.openforis.sepal.metadata.ConcreteMetadataProviderManager
 import org.openforis.sepal.metadata.JDBCUsgsDataRepository
 import org.openforis.sepal.metadata.crawling.EarthExplorerMetadataCrawler
@@ -51,11 +52,14 @@ class Main {
                 new RestAWSClient(config.awsAccessKey, config.awsSecretKey)
         )
 
+        def localProvider = new LocalInstanceProviderManager(config.sepalHost, instanceDataRepository.getDataCenterByName('Localhost'))
+
         def instanceManager = new ConcreteInstanceManager(
                 instanceDataRepository,
                 instanceDataRepository.getDataCenterByName(config.dataCenterName),
                 config.environment,
-                awsProvider
+                awsProvider,
+                localProvider
         )
 
         instanceManager.bootstrap(config.sepalInstancesConfigFile)

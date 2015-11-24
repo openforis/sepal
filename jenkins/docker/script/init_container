@@ -8,6 +8,6 @@ if [ ! -z "$GITHUB_ACCOUNT_PASSWD" ]; then
 echo "github:$GITHUB_ACCOUNT_PASSWD" | chpasswd
 fi
 
-ln -s ${JENKINS_HOME}/workspaces/Sepal /opt/sepal
+ln -s ${JENKINS_HOME}/workspace/Sepal /opt/sepal
 
 /jenkins.sh

@@ -10,7 +10,7 @@ INVENTORY_FILE=${6:-"ec2.py"}
 PRIVATE_KEY=${7:-"~/.ssh/sepal/$REGION.pem"}
 
 
-INVENTORY_FILE_PATH="$CONTEXT_DIR/$INVENTORY_FILE"
+INVENTORY_FILE_PATH="$CONTEXT_DIR/inventory/$INVENTORY_FILE"
 
 echo "using inventory file $INVENTORY_FILE_PATH"
 echo "using private key $PRIVATE_KEY"

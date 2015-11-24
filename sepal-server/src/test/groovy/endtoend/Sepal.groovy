@@ -7,6 +7,7 @@ import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.instance.ConcreteInstanceManager
 import org.openforis.sepal.instance.JdbcInstanceDataRepository
 import org.openforis.sepal.instance.amazon.AWSInstanceProviderManager
+import org.openforis.sepal.instance.local.LocalInstanceProviderManager
 import org.openforis.sepal.sandbox.*
 import org.openforis.sepal.scene.management.*
 import org.openforis.sepal.transaction.SqlConnectionManager
@@ -77,11 +78,14 @@ class Sepal extends Specification {
                 null
         )
 
+        def localProvider = new LocalInstanceProviderManager(config.sepalHost, instanceDataRepository.getDataCenterByName('Localhost'))
+
         def instanceManager = new ConcreteInstanceManager(
                 instanceDataRepository,
                 instanceDataRepository.getDataCenterByName(config.dataCenterName),
                 config.environment,
-                awsProvider
+                awsProvider,
+                localProvider
         )
 
         sandboxManager = new ConcreteSandboxManager(
