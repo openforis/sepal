@@ -24,7 +24,7 @@
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
     - name: Set sepal_host var
       set_fact:
-      	sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
+        sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
 
   roles:
     - role: unattended-upgrades
@@ -40,7 +40,7 @@
     - role: prepare-environment
     - role: run-mysql
     - role: run-geoserver
-    - role: run-sepal
+    - role: run-sepal-server
     - role: run-ssh-gateway
     - role: run-gateone
     - role: run-sepal-php

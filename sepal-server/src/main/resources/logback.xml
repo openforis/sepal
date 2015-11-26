@@ -57,18 +57,27 @@
 
     <logger name="org.openforis.sepal.geoserver" additivity="false" level="DEBUG">
         <appender-ref ref="FILE_GEOSERVER"/>
+        <appender-ref ref="STDOUT"/>
     </logger>
 
     <logger name="org.openforis.sepal.metadata" additivity="false" level="DEBUG">
         <appender-ref ref="FILE_METADATA"/>
+        <appender-ref ref="STDOUT"/>
     </logger>
 
     <logger name="org.openforis.sepal.sandboxwebproxy" additivity="false" level="DEBUG">
         <appender-ref ref="FILE_SANDBOX_PROXY"/>
+        <appender-ref ref="STDOUT"/>
     </logger>
 
     <logger name="org.openforis.sepal.sandbox" additivity="false" level="DEBUG">
         <appender-ref ref="FILE_SANDBOX_MANAGER"/>
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="org.openforis.sepal.instance" additivity="false" level="DEBUG">
+        <appender-ref ref="FILE_SANDBOX_MANAGER"/>
+        <appender-ref ref="STDOUT"/>
     </logger>
 
     <root level="WARN">

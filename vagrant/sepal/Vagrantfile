@@ -24,7 +24,7 @@ Vagrant.configure(2) do |config|
         docker_repository_host: 'localhost',
         version: 'latest',
         use_custom_host: true,
-	region: 'localhost',
+	region: 'Localhost',
         custom_host: '172.28.128.3'
     }
   end
