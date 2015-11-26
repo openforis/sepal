@@ -24,7 +24,7 @@ class AWSInstanceProviderManager implements InstanceProviderManager {
 
     @Override
     Instance gatherFacts(Instance instance, String environment) {
-        awsClient.fetchInstance(instance?.dataCenter,instance?.name,[environment: environment],'owner','reserved','disposable')
+        awsClient.fetchInstance(instance?.dataCenter,instance?.name,[Environment: environment],'owner','reserved','disposable')
     }
 
     @Override

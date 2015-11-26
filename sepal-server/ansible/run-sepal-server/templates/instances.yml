@@ -5,6 +5,7 @@ providers:
     description: AmazonWebServices
     instances:
       - id: 'i-a9c1bb6d'
+        region: 'us-west-2'
 
 
 
