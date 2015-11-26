@@ -74,6 +74,7 @@ class ConcreteInstanceManager implements InstanceManager{
             def instanceFetched = gatherFacts(instance)
             if (instanceFetched){
                 LOG.debug('Instance correctly validated by the providerManager')
+                instanceFetched.id = instance.id
                 instanceFetched.owner = instance.reserved  ? username : null
                 dataRepository.updateInstance(instanceFetched)
                 instance = instanceFetched
