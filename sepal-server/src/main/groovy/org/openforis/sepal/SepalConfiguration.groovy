@@ -155,7 +155,9 @@ class SepalConfiguration {
         getValue(DOCKER_IMAGE_NAME)
     }
 
-    def getDockerDaemonURI(def baseURI = getDockerBaseURI()) { getDockerDaemonTcpScheme() + "://"  +  baseURI + ':' + getDockerDaemonPort() + '/' + getDockerRESTEntryPoint() }
+    def getDockerDaemonURI(def baseURI = getDockerBaseURI()) {
+        getDockerDaemonTcpScheme() + "://"  +  baseURI + ':' + getDockerDaemonPort() + '/' + getDockerRESTEntryPoint()
+    }
 
     def getProcessingHomeDir() {
         getValue(PROCESSING_HOME_DIR)

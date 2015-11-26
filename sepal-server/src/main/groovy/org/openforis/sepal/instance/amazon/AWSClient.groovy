@@ -10,7 +10,7 @@ import com.amazonaws.services.ec2.model.Filter
 import org.openforis.sepal.instance.DataCenter
 import org.openforis.sepal.instance.Instance
 
-import static org.openforis.sepal.instance.Instance.Capacity.fromValue
+import static org.openforis.sepal.instance.Instance.Capacity.XLARGE
 import static org.openforis.sepal.instance.amazon.AWSInstanceProviderManager.AwsInstanceState.fromCode
 import static org.openforis.sepal.instance.amazon.AWSInstanceProviderManager.AwsInstanceType
 import static org.openforis.sepal.instance.amazon.AWSInstanceProviderManager.AwsInstanceType.fromName
@@ -84,11 +84,11 @@ class RestAWSClient implements AWSClient{
         instance.publicIp = awsInstance.publicIpAddress
         instance.launchTime = awsInstance.launchTime
         def awsInstanceType = fromName(awsInstance.instanceType)
-        instance.capacity = fromValue(awsInstanceType.capacity)
+
+        // @ TODO Workaround until EFS is available
+        instance.capacity = XLARGE
         def awsInstanceState = fromCode(awsInstance.state.code)
         instance.status = awsInstanceState.status
-
-        awsInstance.placement.availabilityZone
 
         instance.statusUpdateTime = new Date()
         metadataToFetch?.each { metadata ->

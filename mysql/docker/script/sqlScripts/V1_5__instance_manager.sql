@@ -28,7 +28,7 @@ CREATE TABLE instances (
   name VARCHAR(60) NOT NULL,
   launch_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   termination_time DATETIME NULL,
-  status_update_time DATETIME NOT NULL,
+  status_update_time DATETIME NULL,
   disposable INT(1) NOT NULL DEFAULT 1,
   reserved INT(1) NOT NULL DEFAULT 1,
   data_center_id INT NOT NULL,

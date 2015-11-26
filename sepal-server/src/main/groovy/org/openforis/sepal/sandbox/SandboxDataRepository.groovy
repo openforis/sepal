@@ -78,7 +78,7 @@ class JDBCSandboxDataRepository implements SandboxDataRepository {
 
 
     SandboxData getUserSandbox(String username, Size size = null) {
-        def sandboxes = getSandboxes(null,username,size)
+        def sandboxes = getSandboxes(SandboxStatus.ALIVE,username,size)
         return sandboxes ? sandboxes.first() : null
     }
 
@@ -117,9 +117,9 @@ class JDBCSandboxDataRepository implements SandboxDataRepository {
     private static String buildSelectFromStatement(){
         def sb = new StringBuilder('SELECT sb.size AS sbSize, sb.sandbox_id AS sbId, sb.username AS sbUser, sb.status AS sbStatus,sb.container_id AS sbContId, sb.uri AS sbURI,  ')
         sb.append(' sb.created_on AS sbCreatedOn, sb.terminated_on AS sbTerminatedOn,sb.status_refreshed_on AS sbRefreshedOn, ')
-        sb.append(' in.id AS inId, in.status AS inStatus, in.public_ip  AS inPubIP, in.private_ip AS inPrvIP, in.owner AS inOwner, in.name AS inName, ')
-        sb.append(' in.reserved AS inReserved, in.capacity AS inCapacity ')
-        sb.append(' FROM sandboxes sb INNER JOIN instances in ON sb.instance_id = in.id' )
+        sb.append(' inst.id AS inId, inst.status AS inStatus, inst.public_ip  AS inPubIP, inst.private_ip AS inPrvIP, inst.owner AS inOwner, inst.name AS inName, ')
+        sb.append(' inst.reserved AS inReserved, inst.capacity AS inCapacity ')
+        sb.append(' FROM sandboxes sb INNER JOIN instances inst ON sb.instance_id = inst.id' )
         return sb.toString()
     }
 

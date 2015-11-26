@@ -52,6 +52,7 @@ class ConcreteSandboxManager implements SandboxManager{
     private SandboxData fetchUserSandbox( String username ){
         def userSandbox
         checkUser(username)
+        //@ TODO Deal with requested sandboxes on the next iteration
         userSandbox = dataRepository.getUserSandbox(username)
         if (userSandbox){
             def instanceRunning = instanceManager.gatherFacts(userSandbox.instance)
@@ -107,14 +108,19 @@ class ConcreteSandboxManager implements SandboxManager{
             throw new RuntimeException('Something went wrong while obtaining the instance where to istantiate the container')
         }
         def sandboxId = dataRepository.requested(username, instance.id, sandboxSize)
-        switch (instance.status){
-            case AVAILABLE:
-                doObtainSandbox( username,sandboxId,instance )
-                break
-            default:
-                LOG.info("Sandbox container cannot be instantiated since the host machine is not available yet ($instance.status)")
-                sandbox = new SandboxData(sandboxId: sandboxId, status: REQUESTED)
-                break
+        try{
+            switch (instance.status){
+                case AVAILABLE:
+                    doObtainSandbox( username,sandboxId,instance )
+                    break
+                default:
+                    LOG.info("Sandbox container cannot be instantiated since the host machine is not available yet ($instance.status)")
+                    sandbox = new SandboxData(sandboxId: sandboxId, status: REQUESTED)
+                    break
+            }
+        }catch (Exception ex){
+            LOG.error("Error while creating the container.",ex)
+            dataRepository.terminated(sandboxId)
         }
         return sandbox
 

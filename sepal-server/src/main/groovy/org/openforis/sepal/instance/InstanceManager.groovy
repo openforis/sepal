@@ -42,7 +42,7 @@ class ConcreteInstanceManager implements InstanceManager{
         Instance inst = fetchById(instance?.id)
         LOG.debug("Instance($instance) info found over the repository(db)")
         if (inst && !(inst.status == TERMINATED)){
-            def checkedInstance = fetchProviderManager(instance)?.gatherFacts(inst,environment)
+            def checkedInstance = fetchProviderManager(inst)?.gatherFacts(inst,environment)
             if (checkedInstance){
                 switch(checkedInstance.status){
                     case NA:

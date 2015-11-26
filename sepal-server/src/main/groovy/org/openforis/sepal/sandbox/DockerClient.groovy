@@ -38,7 +38,8 @@ class DockerRESTClient implements DockerClient {
         LOG.debug("Going to create a container for $username")
         def settings = collectSettings(username)
         def sandboxDockerClient = getRestClient(instance.privateIp)
-        def execResult = exec("gateone", "/keygen/keygen.run", username, "$userUid")
+        def sepalDockerClient = getRestClient()
+        def execResult = exec("gateone",sepalDockerClient, "/keygen/keygen.run", username, "$userUid")
         def generatedKey = IOUtils.toString(execResult as InputStream)
         def body = new JsonOutput().toJson(
                 [
@@ -51,18 +52,18 @@ class DockerRESTClient implements DockerClient {
 
         LOG.info("Creating container with: $body")
         try {
-            HttpResponseDecorator response = restClient.post(
+            HttpResponseDecorator response = sepalDockerClient.post(
                     path: 'containers/create',
                     requestContentType: JSON,
                     body: body
             ) as HttpResponseDecorator
             sandboxData = new SandboxData(containerId: response.data.Id)
             LOG.debug("Sandbox created: $sandboxData.containerId")
-            startContainer(sandboxDockerClient, sandboxData)
-            getContainerInfo(sandboxDockerClient, sandboxData)
+            startContainer(sepalDockerClient, sandboxData)
+            getContainerInfo(sepalDockerClient, sandboxData)
             exec(sandboxData.containerId,sandboxDockerClient, "/root/healt_check.sh", "$settings.portsToCheck")
         } catch (HttpResponseException exception) {
-            LOG.error("Error while creating the sandbox. $exception.message")
+            LOG.error("Error while creating the sandbox. $exception.response.data")
             throw exception
         }
         return sandboxData
@@ -70,7 +71,9 @@ class DockerRESTClient implements DockerClient {
 
 
     @Override
-    Boolean isContainerRunning(SandboxData data) { isContainerRunning(data,getRestClient(data?.instance?.privateIp))  }
+    Boolean isContainerRunning(SandboxData data) {
+        isContainerRunning(data,getRestClient(data?.instance?.privateIp))
+    }
 
 
     Boolean isContainerRunning(SandboxData data, RESTClient restClient){
@@ -130,8 +133,6 @@ class DockerRESTClient implements DockerClient {
         }
     }
 
-    private exec(String sandboxId,String... commands) { exec(sandboxId,getRestClient(),commands) }
-
 
     private static exec(String sandboxId,RESTClient restClient, String... commands) {
         def path = "containers/$sandboxId/exec"
@@ -172,6 +173,8 @@ class DockerRESTClient implements DockerClient {
         }
     }
 
-    private RESTClient getRestClient( String baseURI = dockerDaemonURI) { new RESTClient(SepalConfiguration.instance.getDockerDaemonURI(baseURI)) }
+    private RESTClient getRestClient( String baseURI = dockerDaemonURI) {
+        new RESTClient(SepalConfiguration.instance.getDockerDaemonURI(baseURI))
+    }
 
 }

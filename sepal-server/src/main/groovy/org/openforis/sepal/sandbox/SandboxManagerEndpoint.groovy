@@ -18,21 +18,27 @@ class SandboxManagerEndpoint extends SepalEndpoint {
     void registerWith(Controller controller) {
         controller.with {
 
-            get('sandbox/{user}?type={instanceType}') {
+            get('sandbox/{user}') {
                 response.contentType = "application/json"
-                def command = new ObtainUserSandboxCommand(params.user as String, params.instanceType as Integer)
+                def command = new ObtainUserSandboxCommand(params.user as String,1)
                 def errors = validate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
                 def commandResult = commandDispatcher.submit(command)
-                switch (commandResult.instance.status){
+                def status = 200
+                switch (commandResult?.instance?.status){
 
                     case AVAILABLE:
                         send(toJson(commandResult))
-                        break;
+                        break
+                    case null:
+                        status = 500
+                        break
                     default:
-                        response.status = 202
+                        status = 202
                 }
+                response.status = status
+
             }
 
             post('container/{id}/alive') {
