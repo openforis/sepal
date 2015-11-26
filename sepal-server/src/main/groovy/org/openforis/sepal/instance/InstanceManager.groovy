@@ -131,7 +131,12 @@ class ConcreteInstanceManager implements InstanceManager{
     // @ TODO Implement eventually creation of the instance through the provider and update test cases
     private void bootstrapInstance (InstanceProviderManager providerManager, instance) {
         if (instance?.id){
-            def instanceMimic = new Instance(name: instance.id, dataCenter: new DataCenter(name: instance?.region))
+            def dcName =  instance?.region
+            def dataCenter = dataRepository.getDataCenterByName(dcName)
+            if (!dataCenter){
+                throw new IllegalArgumentException("Invalid dataCenter: $dcName")
+            }
+            def instanceMimic = new Instance(name: instance.id, dataCenter: dataCenter)
             def fetchedInstance = providerManager.gatherFacts(instanceMimic,environment)
             if (fetchedInstance){
                 LOG.info("Instance $instance.id detected")
