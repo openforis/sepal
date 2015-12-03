@@ -80,7 +80,7 @@ class DockerRESTClient implements DockerClient {
         try{
             getContainerInfo(restClient, data)
         }catch (Exception ex) {
-            LOG.error("Unable to obtain container info for $data.containerId",ex)
+            LOG.error("Unable to obtain container(sandbox) info for $data.containerId",ex)
         }
         return data.status == ALIVE
     }
