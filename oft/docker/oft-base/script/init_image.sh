@@ -26,7 +26,8 @@ apt-get update && apt-get install -y \
     otb-bin \
     otb-bin-qt \
     python-otb \
-    nano
+    nano \
+    csh
 
 #install oft
 wget http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
