@@ -7,5 +7,5 @@
     remote: "github"
     repo: "https://github.com/openforis/sepal.git"
     update: yes
-    version: "master"
+    version: "Build_66"
     force: no
