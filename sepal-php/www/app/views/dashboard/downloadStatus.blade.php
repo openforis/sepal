@@ -45,7 +45,7 @@
             var sceneContainer = $('.scenes')
 
             checkSession();
-            //setInterval(checkSession, 5000);
+            setInterval(checkSession, 5000);
 
             function checkSession() {
                 $.get("https://{{SdmsConfig::value('host')}}/downloadstatus")
@@ -149,7 +149,7 @@
                         return 'Data transformed...';
                     case 'PROCESSING':
                         return 'Processing image...';
-                    case 'PROCESSING':
+                    case 'PROCESSED':
                         return 'Process phase completed...';
                     case 'PUBLISHING':
                         return 'Publishing';

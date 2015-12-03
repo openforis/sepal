@@ -78,6 +78,7 @@ class UsersController extends \BaseController {
                 exec("sudo mkdir -p -m 770 ".$userHomeDir);
                 exec("sudo mkdir -p -m 770 ".$userHomeDir."/sdmsrepository");
                 exec("sudo mkdir -p -m 770 ".$userHomeDir."/layers");
+                exec("sudo mkdir  -p -m 700 ".$userHomeDir."/.ssh");
                 exec("sudo chmod -R g+s ".$userHomeDir);
                 exec("sudo chown -R ".intval($user->user_uid).":sepal ".$userHomeDir);
                 exec("sudo mkdir ".$publicHomeDir."/".$username);
