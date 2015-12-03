@@ -111,7 +111,7 @@ class ConcreteSandboxManager implements SandboxManager{
         try{
             switch (instance.status){
                 case AVAILABLE:
-                    doObtainSandbox( username,sandboxId,instance )
+                    sandbox = doObtainSandbox( username,sandboxId,instance )
                     break
                 default:
                     LOG.info("Sandbox container cannot be instantiated since the host machine is not available yet ($instance.status)")
