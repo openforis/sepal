@@ -4,23 +4,21 @@ import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.ec2.AmazonEC2Client
-import com.amazonaws.services.ec2.model.DescribeInstancesRequest
-import com.amazonaws.services.ec2.model.DescribeInstancesResult
-import com.amazonaws.services.ec2.model.Filter
+import com.amazonaws.services.ec2.model.*
 import org.openforis.sepal.instance.DataCenter
 import org.openforis.sepal.instance.Instance
+import org.openforis.sepal.instance.InstanceType
 
-import static org.openforis.sepal.instance.Instance.Capacity.XLARGE
 import static org.openforis.sepal.instance.amazon.AWSInstanceProviderManager.AwsInstanceState.fromCode
-import static org.openforis.sepal.instance.amazon.AWSInstanceProviderManager.AwsInstanceType
-import static org.openforis.sepal.instance.amazon.AWSInstanceProviderManager.AwsInstanceType.fromName
 
 interface AWSClient {
 
 
     Instance fetchInstance ( DataCenter dataCenter, String instanceName, Map<String,String> filters, String... metadataToFetch )
 
-    Instance newInstance ( DataCenter dataCenter, AwsInstanceType instanceType ,Map<String,String> tags)
+    Instance newInstance (DataCenter dataCenter, InstanceType instanceType, Map<String,String> tags)
+
+    Boolean applyMetadata (DataCenter dataCenter, String instanceName, Map<String,String> tags)
 }
 
 class RestAWSClient implements AWSClient{
@@ -45,18 +43,34 @@ class RestAWSClient implements AWSClient{
         return client
     }
 
+    public static void main (String... args) {
+        def client = new RestAWSClient('AKIAI6OKVVLHXALUNG3A','clnWzKnWVtTo6Frwrdl8eWiO2EOEJdUNymTuQJE5')
+        def dataCenter = new DataCenter(name: 'us-west-2')
+        client.applyMetadata(dataCenter,'i-a9c1bb6d',['A-Tag':'Tag'])
+    }
+
+
+
     private static Region getDataCenterRegion(DataCenter dataCenter){
         return Region.getRegion(Regions.fromName(dataCenter?.name))
     }
 
-
+    @Override
+    Instance newInstance(DataCenter dataCenter, InstanceType instanceType, Map<String, String> tags) {
+        def instance = null
+        def client = getClient(getDataCenterRegion(dataCenter))
+        RunInstancesRequest request = new RunInstancesRequest()
+        return instance
+    }
 
     @Override
     Instance fetchInstance(DataCenter dataCenter, String instanceName, Map<String, String> tags, String... metadataToFetch) {
         def instance = null
         def client = getClient(getDataCenterRegion(dataCenter))
         DescribeInstancesRequest request = new DescribeInstancesRequest()
-        request.setInstanceIds([instanceName])
+        if (instanceName){
+            request.setInstanceIds([instanceName])
+        }
         def filters = []
         tags?.keySet()?.each {
             filters.add(new Filter("tag:$it",[tags.get(it)]))
@@ -77,16 +91,30 @@ class RestAWSClient implements AWSClient{
         return instance
     }
 
-    private static Instance mapInstance (com.amazonaws.services.ec2.model.Instance awsInstance,String[] metadataToFetch){
+    @Override
+    Boolean applyMetadata(DataCenter dataCenter, String instanceName, Map<String, String> tags) {
+        def instance = fetchInstance(dataCenter,instanceName,null)
+
+        if (instance){
+            def client = getClient(getDataCenterRegion(dataCenter))
+            CreateTagsRequest request = new CreateTagsRequest()
+            request.resources.add(instanceName)
+            tags.keySet().each {
+                request.tags.add(new Tag(it,tags.get(it)))
+            }
+            client.createTags(request)
+        }
+        return instance
+    }
+
+    private static Instance mapInstance (com.amazonaws.services.ec2.model.Instance awsInstance, String[] metadataToFetch){
         def instance = new Instance()
         instance.name = awsInstance.instanceId
         instance.privateIp = awsInstance.privateIpAddress
         instance.publicIp = awsInstance.publicIpAddress
         instance.launchTime = awsInstance.launchTime
-        def awsInstanceType = fromName(awsInstance.instanceType)
+        instance.instanceTypeRaw = awsInstance.instanceType
 
-        // @ TODO Workaround until EFS is available
-        instance.capacity = XLARGE
         def awsInstanceState = fromCode(awsInstance.state.code)
         instance.status = awsInstanceState.status
 
@@ -98,11 +126,10 @@ class RestAWSClient implements AWSClient{
                 }
             }
         }
+
+
         return instance
     }
 
-    @Override
-    Instance newInstance(DataCenter dataCenter, AwsInstanceType instanceType, Map<String, String> tags) {
-        throw new AbstractMethodError("Not implemented yey")
-    }
+
 }

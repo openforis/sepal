@@ -2,16 +2,21 @@ package org.openforis.sepal.user
 
 import groovy.sql.Sql
 import org.openforis.sepal.transaction.SqlConnectionProvider
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 interface UserRepository {
 
-    int getUserUid(String username)
 
-    Boolean userExist(String username)
+    User fetchUser(String username)
+
+    User getUser (String username)
 }
 
 
 class JDBCUserRepository implements UserRepository {
+
+    private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final SqlConnectionProvider connectionProvider
 
@@ -19,17 +24,29 @@ class JDBCUserRepository implements UserRepository {
         this.connectionProvider = connectionProvider
     }
 
-    @Override
-    Boolean userExist(String username) {
-        def row = sql.firstRow('SELECT count(*) as exist FROM users WHERE username = ?', [username])
-        return row?.exist > 0
+    User fetchUser(String username){
+        def user
+        def row = sql.firstRow('SELECT * FROM users WHERE username = ?',[username])
+        if (row){
+            user = mapUser(row)
+        }else{
+            throw new NonExistingUser(username)
+        }
+        return user
     }
 
-    @Override
-    int getUserUid(String username) {
-        def row = sql.firstRow('SELECT user_uid FROM users WHERE username = ?', [username])
-        row?.user_uid
+    User getUser ( String username){
+        def user = null
+        try{
+            user = fetchUser(username)
+        }catch (NonExistingUser neu){
+            LOG.warn("User $neu.username does not exist")
+        }
+        return user
     }
+
+
+    private static User mapUser(row){ new User(id: row.id, username: row.username, monthlyQuota: row.monthly_quota, userUid: row.user_uid) }
 
     private Sql getSql() {
         connectionProvider.sql

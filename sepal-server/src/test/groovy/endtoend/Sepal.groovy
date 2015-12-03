@@ -8,8 +8,18 @@ import org.openforis.sepal.instance.ConcreteInstanceManager
 import org.openforis.sepal.instance.JdbcInstanceDataRepository
 import org.openforis.sepal.instance.amazon.AWSInstanceProviderManager
 import org.openforis.sepal.instance.local.LocalInstanceProviderManager
-import org.openforis.sepal.sandbox.*
 import org.openforis.sepal.scene.management.*
+import org.openforis.sepal.session.ConcreteSepalSessionManager
+import org.openforis.sepal.session.JDBCSepalSessionRepository
+import org.openforis.sepal.session.SepalSessionEndpoint
+import org.openforis.sepal.session.SepalSessionManager
+import org.openforis.sepal.session.command.BindToUserSessionCommandHandler
+import org.openforis.sepal.session.command.GetUserSessionsCommandHandler
+import org.openforis.sepal.session.command.ObtainUserSessionCommandHandler
+import org.openforis.sepal.session.command.SessionAliveCommandHandler
+import org.openforis.sepal.session.docker.DockerClient
+import org.openforis.sepal.session.docker.DockerSessionContainerProvider
+import org.openforis.sepal.session.model.SepalSession
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JDBCUserRepository
 import spock.lang.Ignore
@@ -23,7 +33,7 @@ class Sepal extends Specification {
     static Database database
     static Endpoints endpoints
     static Boolean started
-    static SandboxManager sandboxManager
+    static SepalSessionManager sepalSessionManager
     SqlConnectionManager connectionManager
 
     int port
@@ -45,7 +55,7 @@ class Sepal extends Specification {
         this.connectionManager
     }
 
-    SandboxManager getSandboxManager() { return sandboxManager }
+    SepalSessionManager getSandboxManager() { return sepalSessionManager }
 
 
     private void start() {
@@ -65,7 +75,7 @@ class Sepal extends Specification {
                 true
             }
             createContainer(_, _) >> {
-                new SandboxData(username: it.get(0), containerId: 'Some.Id', uri: 'Some_URI')
+                new SepalSession(username: it.get(0), containerId: 'Some.Id', containerURI: 'Some_URI')
             }
         }
 
@@ -88,9 +98,9 @@ class Sepal extends Specification {
                 localProvider
         )
 
-        sandboxManager = new ConcreteSandboxManager(
-                new DockerContainersProvider(stubDockerClient, userRepository),
-                new JDBCSandboxDataRepository(connectionManager),
+        sepalSessionManager = new ConcreteSepalSessionManager(
+                new DockerSessionContainerProvider(stubDockerClient, userRepository),
+                new JDBCSepalSessionRepository(connectionManager),
                 userRepository,
                 instanceManager
         )
@@ -106,10 +116,12 @@ class Sepal extends Specification {
                 scenesDownloadRepo,
                 new RemoveRequestCommandHandler(scenesDownloadRepo),
                 new RemoveSceneCommandHandler(scenesDownloadRepo),
-                new SandboxManagerEndpoint(commandDispatcher),
-                new ObtainUserSandboxCommandHandler(sandboxManager),
-                new ContainerAliveCommandHandler(sandboxManager),
-                userRepository
+                new SepalSessionEndpoint(commandDispatcher),
+                new ObtainUserSessionCommandHandler(sepalSessionManager),
+                new SessionAliveCommandHandler(sepalSessionManager),
+                userRepository,
+                new GetUserSessionsCommandHandler(sepalSessionManager),
+                new BindToUserSessionCommandHandler(sepalSessionManager)
         )
     }
 

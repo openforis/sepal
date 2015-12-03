@@ -5,7 +5,7 @@ import io.undertow.Undertow
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.session.*
-import org.openforis.sepal.sandbox.SandboxManager
+import org.openforis.sepal.session.SepalSessionManager
 import org.openforis.sepal.user.NonExistingUser
 
 import java.util.concurrent.Executors
@@ -31,7 +31,7 @@ class SandboxWebProxy {
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
     private final int sessionsCheckInterval
     private final int sessionDefaultTimeout
-    private final SandboxManager sandboxManager
+    private final SepalSessionManager sandboxManager
 
     private SessionManager sessionManager
 
@@ -41,7 +41,7 @@ class SandboxWebProxy {
      * @param endpointByPort specifies which port each proxied endpoint run on
      * @param sandboxManager the sandbox manager used to obtain sandboxes.
      */
-    SandboxWebProxy(int port, Map<String, Integer> endpointByPort, SandboxManager sandboxManager, int sessionsCheckInterval = 30, int sessionDefaultTimeout = 30 * 60) {
+    SandboxWebProxy(int port, Map<String, Integer> endpointByPort, SepalSessionManager sandboxManager, int sessionsCheckInterval = 30, int sessionDefaultTimeout = 30 * 60) {
         this.sessionsCheckInterval = sessionsCheckInterval
         this.sessionDefaultTimeout = sessionDefaultTimeout
         this.sandboxManager = sandboxManager
@@ -51,7 +51,7 @@ class SandboxWebProxy {
                 .build()
     }
 
-    private HttpHandler createHandler(Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
+    private HttpHandler createHandler(Map<String, Integer> endpointByPort, SepalSessionManager sandboxManager) {
         sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
         sessionManager.setDefaultSessionTimeout(sessionDefaultTimeout)
         sessionManager.registerSessionListener(new Listener(sandboxManager))
@@ -82,9 +82,9 @@ class SandboxWebProxy {
     }
 
     private static class Listener extends SessionDestroyedListener {
-        private final SandboxManager sandboxManager
+        private final SepalSessionManager sandboxManager
 
-        Listener(SandboxManager sandboxManager) {
+        Listener(SepalSessionManager sandboxManager) {
             this.sandboxManager = sandboxManager
         }
 
@@ -94,9 +94,9 @@ class SandboxWebProxy {
 
     private static class SessionBasedUriProvider implements DynamicProxyClient.UriProvider {
         private final Map<String, Integer> endpointByPort
-        private final SandboxManager sandboxManager
+        private final SepalSessionManager sandboxManager
 
-        SessionBasedUriProvider(Map<String, Integer> endpointByPort, SandboxManager sandboxManager) {
+        SessionBasedUriProvider(Map<String, Integer> endpointByPort, SepalSessionManager sandboxManager) {
             this.endpointByPort = endpointByPort
             this.sandboxManager = sandboxManager
         }

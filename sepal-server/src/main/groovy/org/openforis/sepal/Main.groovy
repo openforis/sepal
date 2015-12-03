@@ -11,19 +11,27 @@ import org.openforis.sepal.instance.local.LocalInstanceProviderManager
 import org.openforis.sepal.metadata.ConcreteMetadataProviderManager
 import org.openforis.sepal.metadata.JDBCUsgsDataRepository
 import org.openforis.sepal.metadata.crawling.EarthExplorerMetadataCrawler
-import org.openforis.sepal.sandbox.*
 import org.openforis.sepal.sandboxwebproxy.SandboxWebProxy
 import org.openforis.sepal.scene.management.*
 import org.openforis.sepal.scene.retrieval.SceneRetrievalComponent
+import org.openforis.sepal.session.ConcreteSepalSessionManager
+import org.openforis.sepal.session.JDBCSepalSessionRepository
+import org.openforis.sepal.session.SepalSessionEndpoint
+import org.openforis.sepal.session.command.BindToUserSessionCommandHandler
+import org.openforis.sepal.session.command.GetUserSessionsCommandHandler
+import org.openforis.sepal.session.command.ObtainUserSessionCommandHandler
+import org.openforis.sepal.session.command.SessionAliveCommandHandler
+import org.openforis.sepal.session.docker.DockerRESTClient
+import org.openforis.sepal.session.docker.DockerSessionContainerProvider
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JDBCUserRepository
 import org.openforis.sepal.util.HttpResourceLocator
 
 class Main {
     def static dataSetRepository
-    def static connectionManager
+    def static SqlConnectionManager connectionManager
     def static connectionManagerSandbox
-    def static sandboxManager
+    def static sepalSessionManager
     def static userRepository
 
     static void main(String[] args) {
@@ -64,14 +72,14 @@ class Main {
 
         instanceManager.bootstrap(config.sepalInstancesConfigFile)
 
-        sandboxManager = new ConcreteSandboxManager(
-                new DockerContainersProvider(new DockerRESTClient(daemonURI), userRepository),
-                new JDBCSandboxDataRepository(connectionManagerSandbox),
+        sepalSessionManager = new ConcreteSepalSessionManager(
+                new DockerSessionContainerProvider(new DockerRESTClient(daemonURI), userRepository),
+                new JDBCSepalSessionRepository(connectionManagerSandbox),
                 userRepository,
                 instanceManager
         )
 
-        sandboxManager.start(config.containerInactiveTimeout, config.deadContainersCheckInterval)
+        sepalSessionManager.start(config.containerInactiveTimeout, config.deadContainersCheckInterval)
     }
 
     static startCrawling() {
@@ -108,7 +116,7 @@ class Main {
 
         def proxySessionTimeout = SepalConfiguration.instance.proxySessionTimeout
 
-        new SandboxWebProxy(9191, ['rstudio-server': 8787], sandboxManager, 30, proxySessionTimeout).start()
+        new SandboxWebProxy(9191, ['rstudio-server': 8787], sepalSessionManager, 30, proxySessionTimeout).start()
 
         dataSetRepository = new JdbcDataSetRepository(connectionManager)
         Endpoints.deploy(
@@ -119,10 +127,12 @@ class Main {
                 scenesDownloadRepo,
                 new RemoveRequestCommandHandler(scenesDownloadRepo),
                 new RemoveSceneCommandHandler(scenesDownloadRepo),
-                new SandboxManagerEndpoint(commandDispatcher),
-                new ObtainUserSandboxCommandHandler(sandboxManager),
-                new ContainerAliveCommandHandler(sandboxManager),
-                userRepository
+                new SepalSessionEndpoint(commandDispatcher),
+                new ObtainUserSessionCommandHandler(sepalSessionManager),
+                new SessionAliveCommandHandler(sepalSessionManager),
+                userRepository,
+                new GetUserSessionsCommandHandler(sepalSessionManager),
+                new BindToUserSessionCommandHandler(sepalSessionManager)
         )
     }
 

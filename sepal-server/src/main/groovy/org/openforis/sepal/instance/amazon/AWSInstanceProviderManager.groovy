@@ -1,10 +1,7 @@
 package org.openforis.sepal.instance.amazon
 
-import org.openforis.sepal.instance.DataCenter
-import org.openforis.sepal.instance.Instance
+import org.openforis.sepal.instance.*
 import org.openforis.sepal.instance.Instance.Status
-import org.openforis.sepal.instance.InstanceProviderManager
-import org.openforis.sepal.instance.ProviderFor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -24,48 +21,22 @@ class AWSInstanceProviderManager implements InstanceProviderManager {
 
     @Override
     Instance gatherFacts(Instance instance, String environment) {
-        awsClient.fetchInstance(instance?.dataCenter,instance?.name,[Environment: environment],'owner','reserved','disposable')
+        awsClient.fetchInstance(instance?.dataCenter,instance?.name,[Environment: environment],'owner')
     }
 
     @Override
-    Instance newInstance(String environment, DataCenter dataCenter, String username, Instance.Capacity instanceCapacity) {
-        awsClient.newInstance(
-                dataCenter,AwsInstanceType.fromCapacity(instanceCapacity.value),[environment: environment, user: username]
-        )
+    Instance newInstance(String environment, DataCenter dataCenter, String username, InstanceType instanceType) {
+        return null
     }
 
-    public static enum AwsInstanceType{
+    public static void main ( String... args){
+        def client = new RestAWSClient('AKIAI6OKVVLHXALUNG3A','clnWzKnWVtTo6Frwrdl8eWiO2EOEJdUNymTuQJE5')
 
-        T2_MICRO(1,'t2.micro'), T2_SMALL(2,'t2.small'),T2_MEDIUM(4,'t2.medium'),
-        T2_LARGE(8,'t2.large'),M4_XLARGE(16,'m4.xlarge'), M4_XXL(32,'m4.2xlarge')
+    }
 
-        long capacity
-        String value
-
-        AwsInstanceType ( long capacity, String value){
-            this.capacity = capacity
-            this.value = value
-        }
-
-        static AwsInstanceType fromCapacity(long capacity){
-            def type = null
-            values().each {
-                if (it.capacity == capacity){
-                    type = it
-                }
-            }
-            return type
-        }
-
-        static AwsInstanceType fromName ( String name) {
-            def type = null
-            values().each {
-                if (it.value == name){
-                    type = it
-                }
-            }
-            return type
-        }
+    @Override
+    Boolean applyMetadata(Instance instance, Map<String, String> metadata) {
+        return awsClient.applyMetadata(instance.dataCenter,instance.name,metadata)
     }
 
     public static enum AwsInstanceState {

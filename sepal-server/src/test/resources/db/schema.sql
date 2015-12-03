@@ -16,11 +16,11 @@ DROP TABLE IF EXISTS download_requests;
 DROP TABLE IF EXISTS requested_scenes;
 DROP TABLE IF EXISTS metadata_providers;
 DROP TABLE IF EXISTS metadata_crawling_criteria;
-DROP VIEW IF EXISTS instances_status;
 DROP TABLE IF EXISTS sandboxes;
 DROP TABLE IF EXISTS instance_providers;
 DROP TABLE IF EXISTS datacenters;
 DROP TABLE IF EXISTS instances;
+DROP TABLE IF EXISTS instance_types;
 
 
 CREATE TABLE admin_groups (
@@ -110,6 +110,7 @@ CREATE TABLE users (
   created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP   NULL     DEFAULT NULL,
   user_uid       INTEGER     NOT NULL DEFAULT 0,
+  monthly_quota  INTEGER     NOT NULL DEFAULT 100,
   PRIMARY KEY (id)
 );
 
@@ -255,7 +256,6 @@ CREATE TABLE sandboxes (
   terminated_on       TIMESTAMP    NULL,
   status_refreshed_on TIMESTAMP    NULL,
   instance_id INT(11) NOT NULL,
-  size INT(2)  NOT NULL,
   PRIMARY KEY (sandbox_id)
 );
 
@@ -277,6 +277,7 @@ CREATE TABLE datacenters (
 
 CREATE TABLE instances (
   id INT NOT NULL AUTO_INCREMENT,
+  instance_type INT NOT NULL,
   status VARCHAR(60) NOT NULL,
   public_ip VARCHAR(60) NOT NULL,
   private_ip VARCHAR(60) NOT NULL,
@@ -288,11 +289,24 @@ CREATE TABLE instances (
   disposable INT(1) NOT NULL DEFAULT 1,
   reserved INT(1) NOT NULL DEFAULT 1,
   data_center_id INT NOT NULL,
-  capacity INT NOT NULL DEFAULT 1,
   PRIMARY KEY (id)
 );
 
-CREATE OR REPLACE VIEW instances_status AS SELECT ic.id AS instanceId, COALESCE((SELECT SUM(size) FROM sandboxes WHERE status <> 'TERMINATED' AND instance_id = ic.id),0) AS totalOccupied,ic.id AS instanceIdentifier,ic.capacity AS instanceCapacity,ic.capacity - COALESCE((SELECT SUM(size) FROM sandboxes WHERE status <> 'TERMINATED' AND instance_id = ic.id),0) AS remaining,ic.data_center_id AS dataCenterId, ic.status AS instanceStatus,ic.reserved AS instanceReserved,ic.owner AS instanceOwner FROM instances ic ORDER BY remaining asc;
+
+CREATE TABLE instance_types (
+  id INT NOT NULL,
+  provider_id INT NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  description VARCHAR(250) NULL,
+  hourly_costs DOUBLE NOT NULL,
+  cpu_count DOUBLE NOT NULL,
+  ram INT(11) NOT NULL,
+  notes VARCHAR(500) NULL,
+  enabled INT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id)
+);
+
+
 
 
 

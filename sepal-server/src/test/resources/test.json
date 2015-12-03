@@ -1,0 +1,22 @@
+{
+  "budget": 45,
+  "instanceTypes": [
+    {
+      "label": "m3.medium",
+      "cpuCount": 4,
+      "ramInGb": 4,
+      "hourlyCost": 1.53,
+      "requestUrl": "http://sepal.org/sandbox/myUser/m3.medium"
+    }
+  ],
+  "sessions": [
+    {
+      "label": "m3.medium",
+      "cpuCount": 4,
+      "ramInGb": 4,
+      "hourlyCost": 1.53,
+      "timeStarted": "2015-05-12T12.43",
+      "requestUrl": "http://sepal.org/sandbox/myUser/session/asdf4sd5v8sd6"
+    }
+  ]
+}

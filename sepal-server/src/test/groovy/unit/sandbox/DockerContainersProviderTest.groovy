@@ -1,8 +1,8 @@
 package unit.sandbox
 
-import org.openforis.sepal.sandbox.DockerClient
-import org.openforis.sepal.sandbox.DockerContainersProvider
-import org.openforis.sepal.sandbox.SandboxData
+import org.openforis.sepal.session.docker.DockerClient
+import org.openforis.sepal.session.docker.DockerSessionContainerProvider
+import org.openforis.sepal.session.model.SepalSession
 import org.openforis.sepal.user.UserRepository
 import spock.lang.Specification
 
@@ -15,14 +15,14 @@ class DockerContainersProviderTest extends Specification {
             def userRepository = Mock(UserRepository)
 
             def dockerClient = Stub(DockerClient) {
-                isContainerRunning(_  as SandboxData) >>> [false,true]
-                releaseContainer(_ as SandboxData) >> true
+                isContainerRunning(_  as SepalSession) >>> [false, true]
+                releaseContainer(_ as SepalSession) >> true
             }
 
-            def dockerContainersProvider = new DockerContainersProvider(dockerClient, userRepository)
+            def dockerContainersProvider = new DockerSessionContainerProvider(dockerClient, userRepository)
         when:
-            def released = dockerContainersProvider.release(new SandboxData(containerId:  A_CONTAINER_ID))
-            def released2 = dockerContainersProvider.release(new SandboxData(containerId:  ANOTHER_CONTAINER_ID))
+            def released = dockerContainersProvider.release(new SepalSession(containerId:  A_CONTAINER_ID))
+            def released2 = dockerContainersProvider.release(new SepalSession(containerId:  ANOTHER_CONTAINER_ID))
         then:
             !released
             released2

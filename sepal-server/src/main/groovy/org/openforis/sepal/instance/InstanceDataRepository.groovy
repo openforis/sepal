@@ -1,30 +1,48 @@
 package org.openforis.sepal.instance
 
 import groovy.sql.Sql
-import org.openforis.sepal.instance.Instance.Capacity
+import org.openforis.sepal.session.InvalidInstance
 import org.openforis.sepal.transaction.SqlConnectionProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.instance.Instance.Status.AVAILABLE
 
-
-
 interface InstanceDataRepository {
 
-    DataCenter getDataCenterByName(String dataCenterName)
+
 
     DataCenter getDataCenterById( long dataCenterId )
+
+
+
+
+
+
+
+    Instance fetchInstanceByNameAndDataCenter(String name, DataCenter dataCenter)
+
+
+    /*
+        New methods
+
+     */
 
     Boolean updateInstance ( Instance instance )
 
     long newInstance ( Instance instance)
 
+    InstanceType fetchInstanceTypeById (Long instanceTypeId)
+
+    Instance findAvailableInstance (DataCenter dataCenter, Long instanceTypeId)
+
+    List<InstanceType> findAvailableInstanceTypes (Long providerId)
+
+    InstanceType fetchInstanceTypeByProviderAndName ( InstanceProvider provider, String name)
+
     Instance fetchInstanceById(long instanceId )
 
-    Instance fetchInstanceByNameAndDataCenter(String name, DataCenter dataCenter)
-
-    Instance findAvailableInstance ( long sandboxSize, DataCenter dataCenter)
+    DataCenter getDataCenterByName(String dataCenterName)
 
 }
 
@@ -39,10 +57,60 @@ class JdbcInstanceDataRepository implements InstanceDataRepository{
     }
 
     @Override
+    List<InstanceType> findAvailableInstanceTypes(Long providerId) {
+        def list = []
+        sql.eachRow('''SELECT type.id AS typeId, type.name AS typeName, type.description AS typeDescription, type.hourly_costs AS typeHourlyCost, type.cpu_count AS typeCpuCount,
+                     type.ram AS typeRam,type.notes AS typeNotes, type.enabled AS typeEnabled FROM instance_types type WHERE type.provider_id = ? ORDER BY type.hourly_costs ASC''',
+                [providerId]){
+            list.add(mapInstanceType(it))
+        }
+        return list
+    }
+
+    @Override
+    InstanceType fetchInstanceTypeById(Long instanceTypeId) {
+        def instance = null
+        sql.firstRow('''SELECT type.id AS typeId, type.name AS typeName, type.description AS typeDescription, type.hourly_costs AS typeHourlyCost, type.cpu_count AS typeCpuCount,
+                    type.ram AS typeRam,type.notes AS typeNotes, type.enabled AS typeEnabled FROM instance_types type WHERE type.typeId = ? ''',
+                [instanceTypeId])
+                {
+                    instance = mapInstanceType(it)
+                }
+        if (!instance){
+            throw new InvalidInstance("Unknow instance typeId $instanceTypeId")
+        }
+        return instance
+    }
+
+    @Override
+    InstanceType fetchInstanceTypeByProviderAndName(InstanceProvider provider, String name) {
+        def instance = null
+        sql.firstRow('''SELECT type.id AS typeId, type.name AS typeName, type.description AS typeDescription, type.hourly_costs AS typeHourlyCost, type.cpu_count AS typeCpuCount,
+                    type.ram AS typeRam,type.notes AS typeNotes, type.enabled AS typeEnabled FROM instance_types type WHERE type.provider_id = ? AND UPPER(typeName) = ? ORDER BY typeHourlyCost ASC''',
+                    [provider?.id,name?.toUpperCase()])
+                {
+                    instance = mapInstanceType(it)
+                }
+        if (!instance){
+            throw new InvalidInstance("Unknow tpye $name for provider $providerId")
+        }
+        return instance
+    }
+
+    @Override
+    Instance fetchInstanceById(long instanceId) {
+        def row = sql.firstRow('SELECT * FROM v_instances WHERE icId = ?',[instanceId])
+        if (!row){
+            throw new InvalidInstance("Instance $instanceId not found on the data repository")
+        }
+        return mapInstance(row)
+    }
+
+    @Override
     DataCenter getDataCenterByName(String dataCenterName) {
-        def sqlQuery = '''SELECT dc.id,dc.name,dc.geolocation,dc.description,
-                          ip.id as ipId,ip.name as ipName,ip.description as ipDescr
-                          FROM datacenters dc INNER JOIN instance_providers ip ON dc.provider_id = ip.id
+        def sqlQuery = '''SELECT dc.id AS dcId, dc.name AS dcName, dc.geolocation AS dcGeoLocation, dc.description AS dcDescription,
+                          pr.id AS prId, pr.name AS prName, pr.description AS prDescription,
+                          FROM datacenters dc INNER JOIN instance_providers pr ON dc.provider_id = pr.id
                           WHERE dc.name = ?'''
         def row = sql.firstRow(sqlQuery,[dataCenterName])
         return row ? mapDataCenter(row) : null
@@ -50,13 +118,30 @@ class JdbcInstanceDataRepository implements InstanceDataRepository{
 
     @Override
     DataCenter getDataCenterById(long dataCenterId) {
-        def sqlQuery = '''SELECT dc.id,dc.name,dc.geolocation,dc.description,
-                          ip.id as ipId,ip.name as ipName,ip.description as ipDescr
-                          FROM datacenters dc INNER JOIN instance_providers ip ON dc.provider_id = ip.id
+        def sqlQuery = '''SELECT dc.id AS dcId, dc.name AS dcName, dc.geolocation AS dcGeoLocation, dc.description AS dcDescription,
+                          pr.id AS prId, pr.name AS prName, pr.description AS prDescription,
+                          FROM datacenters dc INNER JOIN instance_providers pr ON dc.provider_id = pr.id
                           WHERE dc.id = ?'''
         def row = sql.firstRow(sqlQuery,[dataCenterId])
         return row ? mapDataCenter(row) : null
     }
+
+
+
+    @Override
+    Instance findAvailableInstance(DataCenter dataCenter, Long instanceTypeId) {
+        def row = sql.firstRow('SELECT * FROM v_instances WHERE dcId = ? AND typeId = ? AND icOwner IS NULL AND icStatus = ?',[dataCenter?.id, instanceTypeId, AVAILABLE])
+        return row ? mapInstance(row) : null
+    }
+
+    @Override
+    Instance fetchInstanceByNameAndDataCenter(String name, DataCenter dataCenter) {
+        name = name?: ''
+        def row = sql.firstRow('SELECT * FROM v_instances WHERE UPPER(icName) = ? AND dcId = ?',[name.toUpperCase(),dataCenter?.id])
+        return row ? mapInstance(row) : null
+    }
+
+
 
     @Override
     Boolean updateInstance(Instance instance) {
@@ -71,59 +156,40 @@ class JdbcInstanceDataRepository implements InstanceDataRepository{
     @Override
     long newInstance(Instance instance) {
         def results = sql.executeInsert('''
-            INSERT INTO instances (status,public_ip,private_ip,owner,name,launch_time,termination_time,status_update_time,disposable,reserved,data_center_id,capacity)
+            INSERT INTO instances (status,public_ip,private_ip,owner,name,launch_time,termination_time,status_update_time,data_center_id,instance_type_id)
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?)''',
                 [instance?.status?.name(), instance?.publicIp,instance?.privateIp, instance?.owner, instance?.name, instance?.launchTime,
-                 instance?.terminationTime, instance?.statusUpdateTime,instance?.disposable,instance?.reserved, instance?.dataCenter?.id, instance?.capacity?.value])
+                 instance?.terminationTime, instance?.statusUpdateTime,instance?.dataCenter?.id,instance?.instanceType?.id])
         return results[0][0]
     }
 
-    @Override
-    Instance fetchInstanceById(long instanceId) {
-        def row = sql.firstRow(getSelectFromStatement() + ' WHERE ic.id = ?',[instanceId])
-        return row ? mapInstance(row) : null
-    }
 
-    @Override
-    Instance fetchInstanceByNameAndDataCenter(String name, DataCenter dataCenter) {
-        name = name?: ''
-        def row = sql.firstRow(getSelectFromStatement() + ' WHERE UPPER(ic.name) = ? AND dc.id = ?',[name.toUpperCase(),dataCenter?.id])
-        return row ? mapInstance(row) : null
-    }
 
-    @Override
-    Instance findAvailableInstance(long sandboxSize, DataCenter dataCenter) {
-        def row = sql.firstRow(
-                ' SELECT * FROM instances_status WHERE dataCenterId = ? AND remaining >= ? AND (instanceReserved = ? OR instanceOwner IS NULL) AND instanceStatus = ?'
-                ,[dataCenter?.id,sandboxSize,0,AVAILABLE.name()])
-        return row ? fetchInstanceById(row.instanceIdentifier) : null
-    }
 
-    private static String getSelectFromStatement(){
-        def sb = new StringBuilder('SELECT ic.id AS icId, ic.status AS icStatus, ic.public_ip AS icPublicIp, ic.private_ip AS icPrivateIp, ic.owner AS icOwner, ic.name AS icName, ')
-        sb.append('ic.launch_time AS icLaunchTime, ic.termination_time AS icDateEnd, ic.status_update_time AS icUpdateTime, ic.disposable AS icDisposable, ic.reserved AS icReserved,ic.capacity AS icCapacity ')
-        sb.append(',dc.id AS dcId, dc.name AS dcName, dc.geolocation AS dcGeoLocation, dc.description AS dcDescription, ')
-        sb.append('pr.id AS prId, pr.name AS prName, pr.description AS prDescription ')
-        sb.append('FROM instances ic INNER JOIN datacenters dc ON ic.data_center_id = dc.id ')
-        sb.append('INNER JOIN instance_providers pr ON dc.provider_id = pr.id ')
-        return sb.toString()
-    }
 
-    private static Instance mapInstance(def row){
-        def instance = new Instance(
+    private static Instance mapInstance(row){
+       new Instance(
                 id: row.icId,  status: Instance.Status.valueOf(row.icStatus), publicIp: row.icPublicIp, privateIp: row.icPrivateIp,
                 owner: row.icOwner, name: row.icName, launchTime: row.icLaunchTime, terminationTime: row.icDateEnd, statusUpdateTime: row.icUpdateTime,
-                disposable: row.icDisposable, reserved: row.icReserved, capacity: Capacity.fromValue(row.icCapacity))
-        instance.dataCenter = new DataCenter(id: row.dcId, name: row.dcName, geolocation: row.dcGeoLocation, description: row.dcDescription)
-       instance.dataCenter.provider = new InstanceProvider(id: row.prId, name: row.prName, description: row.prDescription)
-        return instance
+                dataCenter: mapDataCenter(row), instanceType: mapInstanceType(row))
     }
 
 
 
-    private static DataCenter mapDataCenter (def row){
-        def provider = new InstanceProvider(id: row.ipId, name: row.ipName, description: row.ipDescr)
-        return new DataCenter( provider: provider, id: row.id, name: row.name, geolocation: row.geolocation, description: row.description )
+    private static DataCenter mapDataCenter (row){
+
+        new DataCenter( provider: mapProvider(row), id: row.dcId, name: row.dcName, geolocation: row.dcGeoLocation, description: row.dcDescription )
+    }
+
+    private static InstanceProvider mapProvider ( def row){
+        new InstanceProvider(id: row.prId, name: row.prName, description: row.prDescription)
+    }
+
+    private static InstanceType mapInstanceType ( def row ){
+        new InstanceType(
+                id: row.typeId, name: row.typeName, description: row.typeDescription, hourlyCosts: row.typeHourlyCost,
+                cpuCount: row.typeCpuCount,ramMemory: row.typeRam, notes: row.typeNotes,enabled: row.typeEnabled
+        )
     }
 
     private Sql getSql() {

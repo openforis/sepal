@@ -2,7 +2,7 @@ package endtoend.sandbox
 
 import endtoend.FailedRequest
 import endtoend.SepalDriver
-import org.openforis.sepal.sandbox.SandboxStatus
+import org.openforis.sepal.session.model.SessionStatus
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
@@ -44,7 +44,7 @@ class SanboxEndpointsTest extends Specification {
             data.sandboxId == data2.sandboxId
             driver.postRequest("container/$data.sandboxId/alive")
             def data3 = driver.getRequest("sandbox/$A_USER").data
-            data3.status == SandboxStatus.ALIVE.name()
+            data3.status == SessionStatus.ALIVE.name()
             data3.sandboxId == data2.sandboxId
     }
 }

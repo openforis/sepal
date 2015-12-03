@@ -6,4 +6,5 @@ class InstanceProvider {
     long id
     String name
     String description
+
 }

@@ -4,14 +4,16 @@ import endtoend.SepalDriver
 import org.openforis.sepal.instance.DataCenter
 import org.openforis.sepal.instance.Instance
 import org.openforis.sepal.instance.InstanceProvider
-import org.openforis.sepal.sandbox.JDBCSandboxDataRepository
+import org.openforis.sepal.session.JDBCSepalSessionRepository
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
-import static org.openforis.sepal.sandbox.SandboxStatus.TERMINATED
-import static org.openforis.sepal.sandbox.Size.*
+import static org.openforis.sepal.session.model.SessionStatus.ALIVE
+import static org.openforis.sepal.session.model.SessionStatus.TERMINATED
 
+
+@Ignore
 class SandboxDataRepositoryTest extends Specification {
     static final A_USERNAME = "A_USERNAME"
     static final A_USERNAME_2 = "A_USERNAME_2"
@@ -28,7 +30,7 @@ class SandboxDataRepositoryTest extends Specification {
     InstanceProvider ip
     DataCenter dc
     Instance instance
-    JDBCSandboxDataRepository repository
+    JDBCSepalSessionRepository repository
 
     def setupSpec() {
         driver = new SepalDriver()
@@ -44,7 +46,7 @@ class SandboxDataRepositoryTest extends Specification {
     }
 
     def setup() {
-        repository = new JDBCSandboxDataRepository(driver.getSQLManager())
+        repository = new JDBCSepalSessionRepository(driver.getSQLManager())
         ip = new InstanceProvider(name: A_INSTANCE_PROVIDER)
         driver.withInstanceProvider(ip)
         dc = new DataCenter(name: A_DATA_CENTER, provider: ip)

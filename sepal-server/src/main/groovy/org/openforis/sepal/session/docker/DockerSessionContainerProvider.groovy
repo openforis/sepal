@@ -1,40 +1,32 @@
-package org.openforis.sepal.sandbox
+package org.openforis.sepal.session.docker
 
 import org.openforis.sepal.instance.Instance
+import org.openforis.sepal.session.SessionContainerProvider
+import org.openforis.sepal.session.model.SepalSession
 import org.openforis.sepal.user.UserRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-interface SandboxContainersProvider {
-
-    SandboxData obtain(String username, Instance instance)
-
-    Boolean isRunning(SandboxData sandboxData)
-
-    Boolean release(SandboxData sandboxData)
-
-}
-
-class DockerContainersProvider implements SandboxContainersProvider {
+class DockerSessionContainerProvider implements SessionContainerProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final DockerClient dockerClient
     private final UserRepository userRepo
 
-    DockerContainersProvider(DockerClient dockerClient, UserRepository userRepo) {
+    DockerSessionContainerProvider(DockerClient dockerClient, UserRepository userRepo) {
         this.dockerClient = dockerClient
         this.userRepo = userRepo
     }
 
     @Override
-    SandboxData obtain(String username, Instance instance) {
+    SepalSession obtain(String username, Instance instance) {
         LOG.debug("Going to ask a container for $username sandbox")
         return dockerClient.createContainer(username, userRepo.getUserUid(username),instance)
     }
 
     @Override
-    Boolean release(SandboxData sandboxData) {
+    Boolean release(SepalSession sandboxData) {
         def released = false
         if (isRunning(sandboxData)) {
             LOG.debug("Going to terminate container $sandboxData.containerId")
@@ -46,7 +38,7 @@ class DockerContainersProvider implements SandboxContainersProvider {
     }
 
     @Override
-    Boolean isRunning(SandboxData sandbox) {
+    Boolean isRunning(SepalSession sandbox) {
         return dockerClient.isContainerRunning(sandbox)
     }
 }

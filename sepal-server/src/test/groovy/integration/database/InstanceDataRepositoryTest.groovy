@@ -2,15 +2,16 @@ package integration.database
 
 import endtoend.SepalDriver
 import org.openforis.sepal.instance.*
-import org.openforis.sepal.sandbox.JDBCSandboxDataRepository
-import org.openforis.sepal.sandbox.SandboxDataRepository
-import org.openforis.sepal.sandbox.Size
+import org.openforis.sepal.session.JDBCSepalSessionRepository
+import org.openforis.sepal.session.SepalSessionRepository
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static org.openforis.sepal.instance.Instance.Capacity.*
-import static org.openforis.sepal.instance.Instance.Status.*
+import static org.openforis.sepal.instance.Instance.Status.AVAILABLE
+import static org.openforis.sepal.instance.Instance.Status.NA
 
+@Ignore
 class InstanceDataRepositoryTest extends Specification{
 
     private static final String PUBLIC_IP_ALTERNATIVE = "A_PUBLIC_IP"
@@ -21,7 +22,7 @@ class InstanceDataRepositoryTest extends Specification{
     @Shared SepalDriver driver
 
     InstanceDataRepository dataRepo
-    SandboxDataRepository sandboxDataRepo
+    SepalSessionRepository sandboxDataRepo
 
     InstanceProvider provider2
     InstanceProvider provider1
@@ -43,7 +44,7 @@ class InstanceDataRepositoryTest extends Specification{
 
     def setup(){
         dataRepo = new JdbcInstanceDataRepository(driver.getSQLManager())
-        sandboxDataRepo = new JDBCSandboxDataRepository(driver.getSQLManager())
+        sandboxDataRepo = new JDBCSepalSessionRepository(driver.getSQLManager())
 
         provider1 = new InstanceProvider(name: 'Provider1', description: 'Provider1')
         provider2 = new InstanceProvider(name: 'Provider2', description: 'Provider2')

@@ -7,6 +7,9 @@
 - name: Copy config file
   copy: src=haproxy.cfg dest=/data/haproxy
 
+- name: Copy certificate file
+  copy: src=~/.sepal/certificates/sepal-https.pem dest=/data/haproxy mode=0400 owner=root
+
 - name: Create log dir
   file:
     path: "/data/logs/haproxy"
@@ -33,4 +36,5 @@
     - "ssh-gateway:ssh-gateway"
     volumes:
     - "/data/haproxy:/usr/local/etc/haproxy"
-    - "/dev/log:/dev/log"
+    - "/data/logs/haproxy:/var/log/haproxy"
+

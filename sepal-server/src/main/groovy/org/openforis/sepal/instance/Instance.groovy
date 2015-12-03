@@ -15,10 +15,11 @@ class Instance {
     Date launchTime
     Date terminationTime
     Date statusUpdateTime
-    Boolean disposable
-    Boolean reserved
+    Long durationInSecs
+    Double costs
     DataCenter dataCenter
-    Capacity capacity
+    InstanceType instanceType
+    String instanceTypeRaw
 
     public void setMetadata(String name, Object value){
         if (this.hasProperty(name)){
@@ -31,32 +32,11 @@ class Instance {
     }
 
     public static enum Status{
-        NA,REQUESTED,CREATED,AVAILABLE,STOPPED,TERMINATED
+        NA,REQUESTED,AVAILABLE,STOPPED,TERMINATED
 
         public String toString(){ this.name() }
 
     }
-
-    public static enum Capacity {
-        TINY(1),SMALL(2),MEDIUM(4),BIG(16),LARGE(32),XLARGE(64)
-
-        long value
-
-        Capacity(long value){
-            this.value = value
-        }
-
-        static Capacity fromValue( long value){
-            def capacity = null
-            if (value) {
-                values().each {
-                    capacity = it.value == value ? it : null
-                }
-            }
-            return capacity
-        }
-    }
-
 
 }
 

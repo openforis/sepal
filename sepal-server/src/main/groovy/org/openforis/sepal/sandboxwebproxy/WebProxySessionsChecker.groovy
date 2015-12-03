@@ -1,7 +1,7 @@
 package org.openforis.sepal.sandboxwebproxy
 
 import io.undertow.server.session.SessionManager
-import org.openforis.sepal.sandbox.SandboxManager
+import org.openforis.sepal.session.SepalSessionManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -10,10 +10,10 @@ class WebProxySessionsChecker implements Runnable {
     private final static Logger LOG = LoggerFactory.getLogger(this)
 
     private final SessionManager sessionManager
-    private final SandboxManager sandboxManager
+    private final SepalSessionManager sandboxManager
     private final String sandboxIdSessionAttrName
 
-    WebProxySessionsChecker(SandboxManager sandboxManager, SessionManager sessionManager, String sandboxIdSessionAttrName) {
+    WebProxySessionsChecker(SepalSessionManager sandboxManager, SessionManager sessionManager, String sandboxIdSessionAttrName) {
         this.sessionManager = sessionManager
         this.sandboxManager = sandboxManager
         this.sandboxIdSessionAttrName = sandboxIdSessionAttrName

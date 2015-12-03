@@ -2,14 +2,16 @@ package integration.sandbox
 
 import endtoend.SepalDriver
 import org.openforis.sepal.instance.InstanceManager
-import org.openforis.sepal.sandbox.*
+import org.openforis.sepal.session.*
+import org.openforis.sepal.session.docker.DockerClient
+import org.openforis.sepal.session.model.SepalSession
 import org.openforis.sepal.user.JDBCUserRepository
 import org.openforis.sepal.user.UserRepository
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
+import static org.openforis.sepal.session.model.SessionStatus.ALIVE
 
 @Ignore
 class SandboxManagerIntegrationTest extends Specification {
@@ -22,10 +24,10 @@ class SandboxManagerIntegrationTest extends Specification {
 
     @Shared SepalDriver driver
 
-    SandboxManager sandboxManager
-    SandboxDataRepository sandboxDataRepository
+    SepalSessionManager sandboxManager
+    SepalSessionRepository sandboxDataRepository
     UserRepository userRepository
-    SandboxContainersProvider containersProvider
+    SessionContainerProvider containersProvider
     InstanceManager instanceManager
 
     def sandboxId
@@ -50,18 +52,18 @@ class SandboxManagerIntegrationTest extends Specification {
         driver.withUser(A_USERNAME, 101)
 
         def stubDockerClient = Spy(DockerClient) {
-            isContainerRunning({SandboxData data -> data.containerId == A_CONTAINER_ID}) >> true
-            isContainerRunning({SandboxData data -> data.containerId == ANOTHER_CONTAINER_ID}) >> false
-            createContainer(YET_ANOTHER_USERNAME, 101,_) >> new SandboxData(uri: A_URI, containerId: A_CONTAINER_ID)
-            createContainer(ANOTHER_USERNAME, 101,_) >> new SandboxData(uri: A_URI, containerId: A_CONTAINER_ID)
+            isContainerRunning({ SepalSession data -> data.containerId == A_CONTAINER_ID}) >> true
+            isContainerRunning({ SepalSession data -> data.containerId == ANOTHER_CONTAINER_ID}) >> false
+            createContainer(YET_ANOTHER_USERNAME, 101,_) >> new SepalSession(containerURI: A_URI, containerId: A_CONTAINER_ID)
+            createContainer(ANOTHER_USERNAME, 101,_) >> new SepalSession(containerURI: A_URI, containerId: A_CONTAINER_ID)
         }
 
 
 
         userRepository = Spy(JDBCUserRepository, constructorArgs: [driver.getSQLManager()])
-        sandboxDataRepository = Spy(JDBCSandboxDataRepository, constructorArgs: [driver.getSQLManager()])
+        sandboxDataRepository = Spy(JDBCSepalSessionRepository, constructorArgs: [driver.getSQLManager()])
         containersProvider = Spy(DockerContainersProvider, constructorArgs: [stubDockerClient, userRepository])
-        sandboxManager = new ConcreteSandboxManager(containersProvider, sandboxDataRepository, userRepository,instanceManager)
+        sandboxManager = new ConcreteSepalSessionManager(containersProvider, sandboxDataRepository, userRepository,instanceManager)
 
         sandboxId = sandboxDataRepository.requested(A_USERNAME)
         sandboxDataRepository.created(sandboxId, A_CONTAINER_ID, A_URI)

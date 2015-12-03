@@ -1,5 +1,6 @@
 package org.openforis.sepal.instance
 
+import org.openforis.sepal.session.InvalidInstance
 import org.openforis.sepal.util.Is
 import org.openforis.sepal.util.YamlUtils
 import org.slf4j.Logger
@@ -9,10 +10,19 @@ import static org.openforis.sepal.instance.Instance.Status.*
 
 interface InstanceManager {
 
-    Instance reserveSlot ( int slotSize,String username, DataCenter dataCenter)
-    Instance reserveSlot ( int slotSize,String username)
-    Instance gatherFacts( Instance instance )
     void bootstrap ( String configFilePath )
+
+    Instance gatherFacts( Instance instance )
+
+    List<InstanceType> getAvailableInstanceTypes ( DataCenter dataCenter )
+
+    List<InstanceType> getAvailableInstanceTypes ()
+
+    Instance reserveInstance (String username, Long containerInstanceType)
+
+    Instance reserveInstance (String username, Long containerInstanceType, DataCenter dataCenter)
+
+    void releaseInstance( Long instanceId)
 
 }
 
@@ -32,66 +42,77 @@ class ConcreteInstanceManager implements InstanceManager{
         this.environment = environment
     }
 
+    @Override
+    List<InstanceType> getAvailableInstanceTypes() { getAvailableInstanceTypes(defaultDataCenter) }
+
+    @Override
+    List<InstanceType> getAvailableInstanceTypes(DataCenter dataCenter) {
+        dataRepository.findAvailableInstanceTypes(dataCenter.provider.id)
+    }
 
     private Instance fetchById(long instanceId) { dataRepository.fetchInstanceById(instanceId) }
 
-
     @Override
     Instance gatherFacts(Instance instance) {
-        def facts = null
-        Instance inst = fetchById(instance?.id)
-        LOG.debug("Instance($instance) info found over the repository(db)")
-        if (inst && !(inst.status == TERMINATED)){
-            def checkedInstance = fetchProviderManager(inst)?.gatherFacts(inst,environment)
-            if (checkedInstance){
-                switch(checkedInstance.status){
-                    case NA:
-                    case STOPPED:
-                    case TERMINATED:
-                        LOG.debug("Instance($checkedInstance) found in a incosistent state: $checkedInstance.status")
-                        break
-                    default:
-                        LOG.debug("Instance($checkedInstance) in status $checkedInstance.status")
-                        facts = checkedInstance
-                        break
-                }
-            }else{
-                LOG.warn("The instance($inst) is not available anymore")
-                inst.status = TERMINATED
-                inst.terminationTime = new Date()
-                dataRepository.updateInstance(inst)
+        def facts
+        def instanceData = fetchById(instance?.id)
+        def instanceProviderManager = fetchProviderManager(instance)
+        facts =  instanceProviderManager.gatherFacts(instanceData,environment)
+        if (facts){
+            facts.id = instanceData.id
+            facts.instanceType = dataRepository.fetchInstanceTypeByProviderAndName(instanceData?.dataCenter?.provider, facts.instanceTypeRaw)
+            dataRepository.updateInstance(facts)
+            switch(facts.status){
+                case NA:
+                case STOPPED:
+                case TERMINATED:
+                    throw new InvalidInstance("Instance($facts) found in a incosistent state: $facts.status")
+                break
+                default:
+                    LOG.debug("Instance($facts) in status $facts.status")
+                break
             }
         }
         return facts
     }
 
     @Override
-    synchronized Instance reserveSlot(int slotSize, String username ,DataCenter dataCenter = defaultDataCenter) {
-        def instance
-        instance = dataRepository.findAvailableInstance(slotSize,dataCenter)
+    Instance reserveInstance(String username, Long containerInstanceType) {
+        reserveInstance(username,containerInstanceType,defaultDataCenter)
+    }
+
+    Instance reserveInstance (String username, Long containerInstanceType, DataCenter dataCenter){
+        Instance instance = dataRepository.findAvailableInstance(dataCenter,containerInstanceType)
         if (instance){
-            LOG.debug("Found a potential available instance to host sandbox container($slotSize) for $username ")
-            def instanceFetched = gatherFacts(instance)
-            if (instanceFetched){
-                LOG.debug('Instance correctly validated by the providerManager')
-                instanceFetched.id = instance.id
-                instanceFetched.owner = instance.reserved  ? username : null
-                dataRepository.updateInstance(instanceFetched)
-                instance = instanceFetched
-            }else{
-                LOG.warn("Found stale data about a running instance.")
-                instance.status = TERMINATED
+            def providerManager = fetchProviderManager(instance)
+            instance.owner = username
+            def instanceFacts = providerManager.gatherFacts(instance,environment)
+            if (!instanceFacts.owner){
                 dataRepository.updateInstance(instance)
-                instance = reserveSlot(slotSize,username,dataCenter)
+                providerManager.applyMetadata(instance,[owner : username])
+            }else{
+                LOG.warn("Instance owner not synchronized")
+                instance.owner = instanceFacts.owner
+                dataRepository.updateInstance(instance)
+                instance = reserveInstance(username,containerInstanceType,dataCenter)
             }
         }else{
-            LOG.info("Going to create a new instance to host container($slotSize) for $username")
-            instance = fetchProviderManager(dataCenter.provider)?.newInstance(environment,dataCenter,username,Instance.Capacity.fromValue(slotSize))
+            LOG.info("Going to create a new instance")
+            def providerManager = fetchProviderManager(dataCenter.provider)
+            instance =providerManager.newInstance(environment,dataCenter,username,dataRepository.fetchInstanceTypeById(containerInstanceType))
             instance.id = dataRepository.newInstance(instance)
-            LOG.info("Instance correctly created. Id $instance.id")
         }
         return instance
+    }
 
+
+
+    @Override
+    void releaseInstance(Long instanceId) {
+        Instance instance = dataRepository.fetchInstanceById(instanceId)
+        fetchProviderManager(instance).applyMetadata(instance,[owner: ''])
+        instance.owner = null
+        dataRepository.updateInstance(instance)
     }
 
     @Override
@@ -124,7 +145,6 @@ class ConcreteInstanceManager implements InstanceManager{
             }catch (Exception ex){
                 LOG.error("Error while bootstrapping provider $provider",ex)
             }
-
         }
     }
 

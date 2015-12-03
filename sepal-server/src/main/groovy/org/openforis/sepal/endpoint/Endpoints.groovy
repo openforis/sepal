@@ -6,8 +6,10 @@ import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
-import org.openforis.sepal.sandbox.*
 import org.openforis.sepal.scene.management.*
+import org.openforis.sepal.session.InvalidSession
+import org.openforis.sepal.session.SepalSessionEndpoint
+import org.openforis.sepal.session.command.*
 import org.openforis.sepal.user.UserRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -25,29 +27,42 @@ final class Endpoints extends AbstractMvcFilter {
     private static RequestScenesDownloadCommandHandler requestScenesDownloadHandler
     private static RemoveRequestCommandHandler deleteCommandHandler
     private static ScenesDownloadEndPoint scenesDownloadEndPoint
-    private static SandboxManagerEndpoint sandboxManagerEndpoint
+    private static SepalSessionEndpoint sandboxManagerEndpoint
     private static ScenesDownloadRepository scenesDownloadRepository
     private static RemoveSceneCommandHandler singleSceneDeleteCommandHandler
 
-    private static ObtainUserSandboxCommandHandler obtainUserSandboxCommandHandler
-    private static ContainerAliveCommandHandler containerAliveCommandHandler
+    private static ObtainUserSessionCommandHandler obtainUserSandboxCommandHandler
+    private static SessionAliveCommandHandler containerAliveCommandHandler
     private static UserRepository userRepository
+
+    private static GetUserSessionsCommandHandler getUserSessionsCommandHandler
+    private static BindToUserSessionCommandHandler bindToUserSessionCommandHandler
 
 
     Controller bootstrap(ServletContext servletContext) {
         commandDispatcher.register(RequestScenesDownloadCommand, requestScenesDownloadHandler)
         commandDispatcher.register(RemoveRequestCommand, deleteCommandHandler)
         commandDispatcher.register(RemoveSceneCommand, singleSceneDeleteCommandHandler)
-        commandDispatcher.register(ObtainUserSandboxCommand, obtainUserSandboxCommandHandler)
-        commandDispatcher.register(ContainerAliveCommand, containerAliveCommandHandler)
+        commandDispatcher.register(ObtainUserSessionCommand, obtainUserSandboxCommandHandler)
+        commandDispatcher.register(SessionAliveCommand, containerAliveCommandHandler)
+        commandDispatcher.register(GetUserSessionsCommand,getUserSessionsCommandHandler)
+        commandDispatcher.register(BindToUserSessionCommand,bindToUserSessionCommandHandler)
 
         def controller = Controller.builder(servletContext)
                 .messageSource('messages')
                 .build()
 
         controller.with {
-            constrain(ObtainUserSandboxCommand, ObtainUserSandboxCommand.constraints(userRepository))
+            constrain(ObtainUserSessionCommand, ObtainUserSessionCommand.constraints(userRepository))
             constrain(RequestScenesDownloadCommand, RequestScenesDownloadCommand.constraints(dataSetRepository, scenesDownloadRepository))
+            constrain(GetUserSessionsCommand, GetUserSessionsCommand.constraints(userRepository))
+            constrain(BindToUserSessionCommand, BindToUserSessionCommand.constraints(userRepository))
+
+            error(InvalidSession) {
+                response?.status = 400
+                response?.setContentType('application/json')
+            }
+
 
             error(InvalidRequest) {
                 response?.status = 400
@@ -79,10 +94,12 @@ final class Endpoints extends AbstractMvcFilter {
             ScenesDownloadRepository scenesDownloadRepository,
             RemoveRequestCommandHandler deleteCommandHandler,
             RemoveSceneCommandHandler singleSceneDeleteCommandHandler,
-            SandboxManagerEndpoint sandboxManagerEndpoint,
-            ObtainUserSandboxCommandHandler obtainUserSandboxCommandHandler,
-            ContainerAliveCommandHandler containerAliveCommandHandler,
-            UserRepository userRepository) {
+            SepalSessionEndpoint sandboxManagerEndpoint,
+            ObtainUserSessionCommandHandler obtainUserSandboxCommandHandler,
+            SessionAliveCommandHandler containerAliveCommandHandler,
+            UserRepository userRepository,
+            GetUserSessionsCommandHandler getUserSessionsCommandHandler,
+            BindToUserSessionCommandHandler bindToUserSessionCommandHandler) {
         this.dataSetRepository = dataSetRepository
         this.commandDispatcher = commandDispatcher
         this.requestScenesDownloadHandler = requestScenesDownloadHandler
@@ -94,6 +111,8 @@ final class Endpoints extends AbstractMvcFilter {
         this.obtainUserSandboxCommandHandler = obtainUserSandboxCommandHandler
         this.containerAliveCommandHandler = containerAliveCommandHandler
         this.userRepository = userRepository
+        this.getUserSessionsCommandHandler = getUserSessionsCommandHandler
+        this.bindToUserSessionCommandHandler = bindToUserSessionCommandHandler
         def webAppPort = SepalConfiguration.instance.webAppPort
         LOG.debug("Deploying SEPAL endpoints on port $webAppPort")
         server.deploy(Endpoints, webAppPort)

@@ -14,7 +14,7 @@ export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible.cfg
 
 #to make the provisioning script works locally. Create a symlink from ProjectRoot to /opt/sepal
 
-INVENTORY_FILE_PATH="$CONTEXT_DIR"/sepal/inventory/"$INVENTORY_FILE_NAME"
+INVENTORY_FILE_PATH="$CONTEXT_DIR"/sepal/inventory/"$INVENTORY_FILE"
 
 echo "using inventory file $INVENTORY_FILE_PATH"
 echo "using private key $PRIVATE_KEY"

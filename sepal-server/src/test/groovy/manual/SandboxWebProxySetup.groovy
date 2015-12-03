@@ -1,15 +1,15 @@
 package manual
 
-import org.openforis.sepal.sandbox.SandboxData
-import org.openforis.sepal.sandbox.SandboxManager
-import org.openforis.sepal.sandbox.Size
 import org.openforis.sepal.sandboxwebproxy.SandboxWebProxy
+import org.openforis.sepal.session.SepalSessionManager
+import org.openforis.sepal.session.model.SepalSession
+import org.openforis.sepal.session.model.UserSessions
 
 class SandboxWebProxySetup {
     public static void main(String[] args) {
-        new SandboxWebProxy(8080, ['rstudio-server': 32772], new SandboxManager() {
-            SandboxData obtain(String userName) {
-                return new SandboxData(uri: '54.93.205.240')
+        new SandboxWebProxy(8080, ['rstudio-server': 32772], new SepalSessionManager() {
+            SepalSession obtain(String userName) {
+                return new SepalSession(containerURI: '54.93.205.240')
             }
 
             def release(String userName) {
@@ -17,18 +17,22 @@ class SandboxWebProxySetup {
             }
 
             @Override
-            SandboxData getUserSandbox(String username) {
+            SepalSession bindToUserSession(String username, Long sessionId) {
                 return null
             }
 
             @Override
-            SandboxData getUserSandbox(String username, Size sandboxSize) {
+            SepalSession generateNewSession(String username, Long containerInstanceType) {
                 return null
             }
 
+            @Override
+            UserSessions getUserSessions(String username) {
+                return null
+            }
 
             @Override
-            void aliveSignal(int sandboxId) {
+            void aliveSignal(int sessionId) {
 
             }
 
