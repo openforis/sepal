@@ -133,6 +133,7 @@ class ConcreteSandboxManager implements SandboxManager{
         LOG.info("Going to request a container for the sandbox $sandboxRequestId")
         def sandbox = sandboxProvider.obtain(username,instance)
         sandbox.sandboxId = sandboxRequestId
+        sandbox.instance = instance
         try{
             dataRepository.created(sandbox.sandboxId,sandbox.containerId,sandbox.uri)
         }catch (Exception ex){
