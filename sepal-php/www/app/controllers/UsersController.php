@@ -81,7 +81,7 @@ class UsersController extends \BaseController {
                 exec("sudo chmod -R g+s ".$userHomeDir);
                 exec("sudo chown -R ".intval($user->user_uid).":sepal ".$userHomeDir);
                 exec("sudo mkdir ".$publicHomeDir."/".$username);
-                exec("sudo chown ".intval($user->user_uid)." /public/".$username);
+                exec("sudo chown ".intval($user->user_uid)." ". $publicHomeDir."/".$username);
                 exec("sudo ln -s ".$publicHomeDir." ".$userHomeDir."/");
                 $logged_in_user = Auth::id();
                 //only admin can assign role. Else role 'user' by default.
