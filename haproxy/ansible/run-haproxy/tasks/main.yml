@@ -33,4 +33,4 @@
     - "ssh-gateway:ssh-gateway"
     volumes:
     - "/data/haproxy:/usr/local/etc/haproxy"
-    - "/dev/log:/dev/log"
+    - "/data/logs/haproxy:/var/log/haproxy"
