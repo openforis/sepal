@@ -5,7 +5,7 @@ pubKey=$2
 uId=$3
 
 userHome="/home/$user"
-userSshHome="/etc/ssh/$user"
+userSshHome="$userHome/.ssh"
 useradd -s /bin/bash -m -d "$userHome" "$user" -u "$uId"
 userGroupExist=false
 cat /etc/group | grep "$user" >/dev/null 2>&1 && userGroupExist=true
@@ -19,11 +19,11 @@ fi
 groupadd -g "${SEPAL_USERS_GID}" ${SEPAL_USERS_GRP_NAME}
 
 mkdir -p "$userSshHome"
-chmod 755 "$userSshHome"
+chmod 700 "$userSshHome"
 touch "$userSshHome/authorized_keys"
 echo $pubKey > "$userSshHome/authorized_keys"
-chmod 644 "$userSshHome/authorized_keys"
-chown -R "$user:$user" "$userSshHome"
+chmod 640 "$userSshHome/authorized_keys"
+chown -R "$user:$user" "$userHome"
 
 cp /etc/skel/.bashrc "$userHome"
 cp /etc/skel/.profile "$userHome"

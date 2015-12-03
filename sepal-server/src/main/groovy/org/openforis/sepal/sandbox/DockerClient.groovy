@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory
 
 import static groovyx.net.http.ContentType.JSON
 import static org.openforis.sepal.sandbox.SandboxStatus.ALIVE
+import static org.openforis.sepal.sandbox.SandboxStatus.TERMINATED
 
 interface DockerClient {
 
@@ -81,6 +82,7 @@ class DockerRESTClient implements DockerClient {
             getContainerInfo(restClient, data)
         }catch (Exception ex) {
             LOG.error("Unable to obtain container(sandbox) info for $data.containerId",ex)
+            data.status = TERMINATED
         }
         return data.status == ALIVE
     }
