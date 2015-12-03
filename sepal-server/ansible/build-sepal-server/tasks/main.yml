@@ -1,4 +1,4 @@
 ---
 
 - name: Build sepal
-  docker_image: path="/opt/sepal/sepal-server/docker" name="localhost/openforis/sepal" state=build
+  docker_image: path="/opt/sepal/sepal-server/docker" nocache="true" name="localhost/openforis/sepal" state=build

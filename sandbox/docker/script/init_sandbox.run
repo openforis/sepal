@@ -23,7 +23,7 @@ chmod 700 "$userSshHome"
 touch "$userSshHome/authorized_keys"
 echo $pubKey > "$userSshHome/authorized_keys"
 chmod 640 "$userSshHome/authorized_keys"
-chown -R "$user:9999" "$userHome"
+chown -R "$user:$user" "$userHome"
 
 cp /etc/skel/.bashrc "$userHome"
 cp /etc/skel/.profile "$userHome"
