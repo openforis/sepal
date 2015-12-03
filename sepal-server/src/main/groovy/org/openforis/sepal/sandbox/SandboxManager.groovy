@@ -62,10 +62,12 @@ class ConcreteSandboxManager implements SandboxManager{
                 userSandbox = null
             }
             def sandboxRunning = sandboxProvider.isRunning(userSandbox)
-            if (!sandboxRunning && instanceRunning.status == AVAILABLE){
-                 LOG.warn("Container $userSandbox.containerId is not running anymore on instance $userSandbox.instance.id")
+            if (!sandboxRunning){
+                LOG.warn("Container $userSandbox.containerId is not running anymore on instance $userSandbox.instance.id")
                 dataRepository.terminated(userSandbox.sandboxId)
+                userSandbox = null
             }
+
         }
         return userSandbox
     }

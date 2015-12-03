@@ -23,15 +23,13 @@ chmod 700 "$userSshHome"
 touch "$userSshHome/authorized_keys"
 echo $pubKey > "$userSshHome/authorized_keys"
 chmod 640 "$userSshHome/authorized_keys"
-chown -R "$user:$user" "$userSshHome"
+chown -R "$user:9999" "$userHome"
 
 cp /etc/skel/.bashrc "$userHome"
 cp /etc/skel/.profile "$userHome"
 cp /etc/skel/.bash_logout "$userHome"
 
-chown -"$user:$user" "$userHome/.bashrc"
-chown -"$user:$user" "$userHome/.profile"
-chown -"$user:$user" "$userHome/.bash_logout"
+
 
 rm -rf /init_image.sh
 

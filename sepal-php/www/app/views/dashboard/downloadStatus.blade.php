@@ -156,7 +156,7 @@
                     case 'PUBLISHED':
                         return 'Completed';
                     default:
-                        return 'Failed to download';
+                        return 'Failed';
                 }
             }
 
