@@ -6,9 +6,12 @@ ALTER TABLE sepal_sandbox.sandbox_sessions  DROP COLUMN size;
 ALTER TABLE sepal_sandbox.sandbox_sessions MODIFY sandbox_id INT NOT NULL;
 ALTER TABLE sepal_sandbox.sandbox_sessions DROP PRIMARY KEY;
 
-ALTER TABLE sepal_sandbox.sandbox_sessions CHANGE sandbox_id session_id INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE sepal_sandbox.sandbox_sessions CHANGE sandbox_id session_id INT NOT NULL;
 ALTER TABLE sepal_sandbox.sandbox_sessions CHANGE uri container_uri VARCHAR(255) NULL;
 ALTER TABLE sepal_sandbox.sandbox_sessions ADD PRIMARY KEY(session_id);
+
+ALTER TABLE sepal_sandbox.sandbox_sessions MODIFY session_id INT NOT NULL AUTO_INCREMENT;
+
 
 
 ALTER TABLE sdms.users ADD monthly_quota INT(11) NULL DEFAULT 100;
@@ -55,7 +58,7 @@ INSERT INTO sepal_sandbox.instance_types (provider_id, name, hourly_costs, cpu_c
 
 INSERT INTO sepal_sandbox.instance_types (provider_id,name,hourly_costs, cpu_count,ram) VALUES((SELECT id FROM instance_providers WHERE name = 'Localhost'),'default',0,1,2048);
 
- # rename instances_dev to instances
+
 CREATE OR REPLACE VIEW sepal_sandbox.v_session_status AS (
   SELECT ss.session_id AS id, ss.username AS username, ss.status AS status,
          ss.created_on AS created_on,ss.status_refreshed_on AS updated_on,ss.terminated_on AS terminated_on,
@@ -76,7 +79,7 @@ CREATE OR REPLACE VIEW sepal_sandbox.v_session_status AS (
   FROM sandbox_sessions ss
     INNER JOIN sepal_sandbox.instances inst ON ss.instance_id = inst.id
     INNER JOIN sepal_sandbox.datacenters dc ON inst.data_center_id = dc.id
-    INNER JOIN sepal_sandbox.instance_types instType ON inst.instance_type_id = instType.id
+    INNER JOIN sepal_sandbox.instance_types instType ON inst.instance_type = instType.id
     INNER JOIN sepal_sandbox.instance_providers pr ON instType.provider_id = pr.id
 );
 
@@ -89,7 +92,7 @@ CREATE OR REPLACE VIEW sepal_sandbox.v_instances AS (
          type.hourly_costs AS typeHourlyCost, type.cpu_count AS typeCpuCount, type.ram AS typeRam,
          type.notes AS typeNotes, type.enabled AS typeEnabled
          FROM instances ic INNER JOIN datacenters dc ON ic.data_center_id = dc.id
-         INNER JOIN instance_types type ON ic.instance_type_id = type.id
+         INNER JOIN instance_types type ON ic.instance_type = type.id
         INNER JOIN instance_providers pr ON dc.provider_id = pr.id
 );
 

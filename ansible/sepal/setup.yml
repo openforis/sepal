@@ -18,16 +18,28 @@
             to_port: 22
             cidr_ip: 168.202.0.0/16
           - proto: tcp
-            from_port: 22
-            to_port: 22
-            cidr_ip: 93.47.199.244/32
-          - proto: tcp
             from_port: 80
             to_port: 80
             cidr_ip: 0.0.0.0/0
           - proto: tcp
             from_port: 443
             to_port: 443
+            cidr_ip: 0.0.0.0/0
+        rules_egress:
+          - proto: all
+            from_port: 0
+            to_port: 65535
+            cidr_ip: 0.0.0.0/0
+
+    - name: Create EFS security group
+      ec2_group:
+        name: EFS
+        description: The EFS Security Group
+        region: "{{ region }}"
+        rules:
+          - proto: tcp
+            from_port: 2049
+            to_port: 2049
             cidr_ip: 0.0.0.0/0
         rules_egress:
           - proto: all
@@ -47,15 +59,14 @@
         exact_count: 1
         count_tag:
           Type: Sepal
+          Environment: "{{ deploy_environment }}"
         instance_tags:
           Name: "Sepal - {{ deploy_environment}}"
           Type: Sepal
           Environment: "{{ deploy_environment }}"
-          disposable: false
-          reserved: false
         volumes:
           - device_name: /dev/sda1
-            volume_size: 300
+            volume_size: 50
       register: ec2
 
     - name: Wait for SSH to be available in Sepal instance

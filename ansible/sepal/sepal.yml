@@ -22,9 +22,10 @@
       copy:
         src: ~/.sepal/certificates/docker-registry.crt
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
-    - name: Set sepal_host var
+    - name: Set sepal_host and ami_id var
       set_fact:
         sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
+        sandbox_ami_id: "{{ ami_ids[region] }}"
 
   roles:
     - role: unattended-upgrades

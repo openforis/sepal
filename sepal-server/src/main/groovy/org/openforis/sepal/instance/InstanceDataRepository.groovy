@@ -109,7 +109,7 @@ class JdbcInstanceDataRepository implements InstanceDataRepository{
     @Override
     DataCenter getDataCenterByName(String dataCenterName) {
         def sqlQuery = '''SELECT dc.id AS dcId, dc.name AS dcName, dc.geolocation AS dcGeoLocation, dc.description AS dcDescription,
-                          pr.id AS prId, pr.name AS prName, pr.description AS prDescription,
+                          pr.id AS prId, pr.name AS prName, pr.description AS prDescription
                           FROM datacenters dc INNER JOIN instance_providers pr ON dc.provider_id = pr.id
                           WHERE dc.name = ?'''
         def row = sql.firstRow(sqlQuery,[dataCenterName])

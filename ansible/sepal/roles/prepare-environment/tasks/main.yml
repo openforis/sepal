@@ -5,6 +5,10 @@
   apt:
     name: "expect"
 
+- name: Install nfs-common
+  apt:
+    name: "nfs-common"
+
 - name: Create data dir
   file:
     path: "/data"

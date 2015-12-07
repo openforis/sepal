@@ -47,6 +47,7 @@ class RestAWSClient implements AWSClient{
         }else{
             client = new AmazonEC2Client(credentials)
             client.setRegion(region)
+
             regionClients.put(region?.name,client)
         }
         return client
@@ -67,6 +68,7 @@ class RestAWSClient implements AWSClient{
         request.withInstanceType(instanceType.name)
         request.withSecurityGroups(securityGroup)
         request.withImageId(amiName)
+
 
         RunInstancesResult result = client.runInstances(request)
         result?.reservation?.each { reservation ->
