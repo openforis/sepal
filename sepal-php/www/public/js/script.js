@@ -330,7 +330,6 @@ $(document).ready(function () {
                         var groupRequest = groupRequestControl.checked = false;
                         openMigrationStatus();
                     }else{
-                        alert(data);
                         $('#errorMsgRequestName')[0].style.visibility = 'visible';
                     }
 

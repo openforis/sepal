@@ -26,7 +26,7 @@
 
         .scenes .glyphicon{
             top:2px;
-            font-size:20;
+            font-size:20px;
         }
 
         .pointer:hover{
@@ -45,7 +45,7 @@
             var sceneContainer = $('.scenes')
 
             checkSession();
-            //setInterval(checkSession, 5000);
+            setInterval(checkSession, 5000);
 
             function checkSession() {
                 $.get("https://{{SdmsConfig::value('host')}}/downloadstatus")

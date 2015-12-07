@@ -26,12 +26,9 @@ class AWSInstanceProviderManager implements InstanceProviderManager {
 
     @Override
     Instance newInstance(String environment, DataCenter dataCenter, String username, InstanceType instanceType) {
-        return null
-    }
-
-    public static void main ( String... args){
-        def client = new RestAWSClient('AKIAI6OKVVLHXALUNG3A','clnWzKnWVtTo6Frwrdl8eWiO2EOEJdUNymTuQJE5')
-
+        def createdInstance = awsClient.newInstance(dataCenter,instanceType,['Type': 'Sandbox', 'Owner': username, 'Environment' : environment])
+        createdInstance.owner = username
+        return createdInstance
     }
 
     @Override

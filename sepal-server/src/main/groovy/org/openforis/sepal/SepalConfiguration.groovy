@@ -51,6 +51,8 @@ class SepalConfiguration {
     public static final String ENVIRONMENT = 'environment'
     public static final String SEPAL_INSTANCES_CONFIG_FILE = 'sepal.instances_config_file'
     public static final String SEPAL_HOST = 'sepal.host'
+    public static final String SANDBOX_AMI_ID = 'sandbox.ami_id'
+    public static final String SANDBOX_INSTANCE_SECURITY_GROUP = 'sandbox.instance_security_group'
 
     Properties properties
     String configFileLocation
@@ -90,6 +92,10 @@ class SepalConfiguration {
 
         )
     }
+
+    def getSandboxAmiId() { getValue (SANDBOX_AMI_ID) }
+
+    def getSandboxInstanceSecurityGroup() { getValue(SANDBOX_INSTANCE_SECURITY_GROUP) }
 
     def getSepalHost () { getValue(SEPAL_HOST) }
 

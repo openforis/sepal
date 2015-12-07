@@ -236,18 +236,24 @@
                 </executions>
             </plugin> -->
 
-            <!-- Clean frontend -->
-           <!-- <plugin>
+            <!-- Clean  -->
+            <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
                 <version>2.6.1</version>
                 <configuration>
                     <filesets>
                         <fileset>
-                            <directory>frontend/dist</directory>
+                            <directory>docker/binary</directory>
+                            <includes>
+                                <include>**/*.jar</include>
+                            </includes>
                         </fileset>
+                       <!-- <fileset>
+                            <directory>frontend/dist</directory>
+                        </fileset> -->
                     </filesets>
                 </configuration>
-            </plugin> -->
+            </plugin>
         </plugins>
     </build>
 

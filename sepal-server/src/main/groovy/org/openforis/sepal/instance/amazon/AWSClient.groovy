@@ -8,6 +8,9 @@ import com.amazonaws.services.ec2.model.*
 import org.openforis.sepal.instance.DataCenter
 import org.openforis.sepal.instance.Instance
 import org.openforis.sepal.instance.InstanceType
+import org.openforis.sepal.session.InvalidInstance
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.instance.amazon.AWSInstanceProviderManager.AwsInstanceState.fromCode
 
@@ -23,12 +26,18 @@ interface AWSClient {
 
 class RestAWSClient implements AWSClient{
 
+    private static final Logger LOG = LoggerFactory.getLogger(this)
+
 
     private Map<String,AmazonEC2Client> regionClients = [:]
     private final BasicAWSCredentials credentials
+    private final String securityGroup
+    private final String amiName
 
-    RestAWSClient(String accessKey, String secretKey){
+    RestAWSClient(String accessKey, String secretKey, String securityGroup, String amiName){
         credentials = new BasicAWSCredentials(accessKey,secretKey)
+        this.securityGroup = securityGroup
+        this.amiName = amiName
     }
 
     private AmazonEC2Client getClient(Region region){
@@ -43,15 +52,7 @@ class RestAWSClient implements AWSClient{
         return client
     }
 
-    public static void main (String... args) {
-        def client = new RestAWSClient('AKIAI6OKVVLHXALUNG3A','clnWzKnWVtTo6Frwrdl8eWiO2EOEJdUNymTuQJE5')
-        def dataCenter = new DataCenter(name: 'us-west-2')
-        client.applyMetadata(dataCenter,'i-a9c1bb6d',['A-Tag':'Tag'])
-    }
-
-
-
-    private static Region getDataCenterRegion(DataCenter dataCenter){
+   private static Region getDataCenterRegion(DataCenter dataCenter){
         return Region.getRegion(Regions.fromName(dataCenter?.name))
     }
 
@@ -60,6 +61,19 @@ class RestAWSClient implements AWSClient{
         def instance = null
         def client = getClient(getDataCenterRegion(dataCenter))
         RunInstancesRequest request = new RunInstancesRequest()
+        request.withKeyName(fetchKeyPairName(dataCenter))
+        request.withMaxCount(1)
+        request.withMinCount(1)
+        request.withInstanceType(instanceType.name)
+        request.withSecurityGroups(securityGroup)
+        request.withImageId(amiName)
+        RunInstancesResult result = client.runInstances(request)
+        result?.reservation?.each { reservation ->
+            reservation?.instances?.each { awsInstance ->
+                    instance = mapInstance(awsInstance)
+                    instance.dataCenter = dataCenter
+            }
+        }
         return instance
     }
 
@@ -94,17 +108,33 @@ class RestAWSClient implements AWSClient{
     @Override
     Boolean applyMetadata(DataCenter dataCenter, String instanceName, Map<String, String> tags) {
         def instance = fetchInstance(dataCenter,instanceName,null)
-
         if (instance){
             def client = getClient(getDataCenterRegion(dataCenter))
             CreateTagsRequest request = new CreateTagsRequest()
-            request.resources.add(instanceName)
-            tags.keySet().each {
-                request.tags.add(new Tag(it,tags.get(it)))
+            def tagsToApply = []
+            request.withResources(instanceName)
+            tags?.keySet()?.each {
+                tagsToApply.add(new Tag(it,tags.get(it)))
             }
+            request.withTags(tagsToApply)
+
             client.createTags(request)
+        }else{
+            LOG.warn("Unable to apply metadata to $instanceName. Instance not found")
         }
         return instance
+    }
+
+    private String fetchKeyPairName ( DataCenter dataCenter ){
+        def client = getClient(getDataCenterRegion(dataCenter))
+        def request = new DescribeKeyPairsRequest()
+        request.withKeyNames(dataCenter.name)
+        def response = client.describeKeyPairs(request)
+        if (!response?.keyPairs){
+            throw new InvalidInstance("Unable to get keyPair for $dataCenter")
+        }
+        def keyPair = response.keyPairs.first()
+        return keyPair.keyName
     }
 
     private static Instance mapInstance (com.amazonaws.services.ec2.model.Instance awsInstance, String[] metadataToFetch){

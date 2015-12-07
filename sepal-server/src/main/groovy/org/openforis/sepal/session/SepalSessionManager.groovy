@@ -32,7 +32,6 @@ interface SepalSessionManager {
 
     SepalSession generateNewSession ( String username, Long containerInstanceType )
 
-
 }
 
 
@@ -110,7 +109,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
             dataRepository.created(session.sessionId,sessionData.containerId,sessionData.containerURI)
         }catch (Exception ex){
             LOG.error("Error during container creation.",ex)
-            instanceManager.releaseInstance(username, instance.id)
+            instanceManager.releaseInstance(instance.id)
             dataRepository.terminated(session.sessionId)
             throw ex
         }
