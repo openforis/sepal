@@ -67,6 +67,7 @@ class RestAWSClient implements AWSClient{
         request.withInstanceType(instanceType.name)
         request.withSecurityGroups(securityGroup)
         request.withImageId(amiName)
+
         RunInstancesResult result = client.runInstances(request)
         result?.reservation?.each { reservation ->
             reservation?.instances?.each { awsInstance ->
@@ -144,6 +145,7 @@ class RestAWSClient implements AWSClient{
         instance.publicIp = awsInstance.publicIpAddress
         instance.launchTime = awsInstance.launchTime
         instance.instanceTypeRaw = awsInstance.instanceType
+
 
         def awsInstanceState = fromCode(awsInstance.state.code)
         instance.status = awsInstanceState.status
