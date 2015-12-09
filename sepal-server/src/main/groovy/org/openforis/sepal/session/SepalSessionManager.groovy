@@ -1,10 +1,13 @@
 package org.openforis.sepal.session
 
+import org.openforis.sepal.SepalConfiguration
+import org.openforis.sepal.SepalWorkingMode
 import org.openforis.sepal.instance.Instance
 import org.openforis.sepal.instance.InstanceManager
 import org.openforis.sepal.instance.InstanceType
 import org.openforis.sepal.session.model.SepalSession
 import org.openforis.sepal.session.model.UserSessions
+import org.openforis.sepal.user.User
 import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
 import org.slf4j.Logger
@@ -55,7 +58,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
 
     @Override
     SepalSession bindToUserSession(String username, Long sessionId) {
-        userRepo.fetchUser(username)
+        def user = userRepo.fetchUser(username)
         def session = dataRepository.fetchUserSession(username,sessionId)
         def instance
         try{
@@ -66,7 +69,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
 
         if (instance.status == AVAILABLE){
             if (session.status == REQUESTED){
-                createContainer(username,session,instance)
+                createContainer(user,session,instance)
                 session = dataRepository.fetchUserSession(username,sessionId)
             }else{
                 if (!sandboxProvider.isRunning(session)){
@@ -80,16 +83,15 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
     @Override
     SepalSession generateNewSession(String username, Long containerInstanceType) {
         def session
-        userRepo.fetchUser(username)
+        def user = userRepo.fetchUser(username)
         def instance = instanceManager.reserveInstance(username,containerInstanceType)
         session = new SepalSession(username: username, instance: instance, status: REQUESTED, createdOn: new Date())
         session.sessionId = dataRepository.requested(username, instance.id)
-        createContainer(username,session,instance)
         if (instance?.status == AVAILABLE){
-            createContainer(username,session,instance)
+            createContainer(user,session,instance)
         }
         session = dataRepository.fetchUserSession(username,session.sessionId)
-
+        session.connectionUrl = getConnectionURL(session)
         return session
     }
 
@@ -103,9 +105,9 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
         )
     }
 
-    private void createContainer(String username,SepalSession session, Instance instance){
+    private void createContainer(User user, SepalSession session, Instance instance){
         try{
-            def sessionData = sandboxProvider.obtain(username,instance)
+            def sessionData = sandboxProvider.obtain(user,instance)
             dataRepository.created(session.sessionId,sessionData.containerId,sessionData.containerURI)
         }catch (Exception ex){
             LOG.error("Error during container creation.",ex)
@@ -115,10 +117,30 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
         }
     }
 
+    private String getConnectionURL(SepalSession session){
+        def connectionURL = session?.instance?.privateIp
+        if (session){
+            def config = SepalConfiguration.instance
+            switch(config.sepalWorkingMode){
+                case SepalWorkingMode.MONOLITICH:
+                    connectionURL = session.containerURI
+                    break
+                case SepalWorkingMode.PUBLIC_WAN:
+                    connectionURL = session.instance?.publicIp
+                    break
+                default:
+                    connectionURL = session.instance?.privateIp
+                    break
+            }
+        }
+        return connectionURL
+    }
+
     private List<SepalSession> fetchActiveSessions(String username){
         def sessions = dataRepository.getSessions(username,REQUESTED,ALIVE)
         sessions?.each{ SepalSession session ->
             session.requestUrl = "/sandbox/$username/session/$session.sessionId"
+            session.connectionUrl = getConnectionURL(session)
         }
         return sessions
     }
@@ -126,7 +148,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
     private List<InstanceType> fetchAvailableInstanceTypes ( String username) {
         def instances = instanceManager.availableInstanceTypes
         instances?.each { InstanceType type ->
-            type.requestUrl = "/sandbox/$username/container/$type.id/"
+            type.requestUrl = "/sandbox/$username/container/$type.id"
 
         }
         return instances

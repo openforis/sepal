@@ -3,6 +3,7 @@ package org.openforis.sepal.session.docker
 import org.openforis.sepal.instance.Instance
 import org.openforis.sepal.session.SessionContainerProvider
 import org.openforis.sepal.session.model.SepalSession
+import org.openforis.sepal.user.User
 import org.openforis.sepal.user.UserRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -20,9 +21,9 @@ class DockerSessionContainerProvider implements SessionContainerProvider {
     }
 
     @Override
-    SepalSession obtain(String username, Instance instance) {
-        LOG.debug("Going to ask a container for $username sandbox")
-        return dockerClient.createContainer(username, userRepo.getUserUid(username),instance)
+    SepalSession obtain(User user, Instance instance) {
+        LOG.debug("Going to ask a container for $user sandbox")
+        return dockerClient.createContainer(user?.username, user?.userUid,instance)
     }
 
     @Override

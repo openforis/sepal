@@ -1,7 +1,23 @@
+
 #!/usr/bin/env bash
 
-uri=$(curl -s "http://sepal:1025/data/sandbox/$USER" | jq -r '.uri')
-sandboxId=$(curl -s "http://sepal:1025/data/sandbox/$USER" | jq -r '.sandboxId')
-/alive.sh $sandboxId > /dev/null 2>&1 &
-ssh -YC -i /home/$USER/.ssh/id_rsa -l $USER $uri ${SSH_ORIGINAL_COMMAND:-}
-
+activeSessionsResponse=$(curl -s  "http://sepal:1025/data/sandbox/$USER")
+activeSessions=$(echo ${activeSessionsResponse} | jq '.activeSessions')
+expectedEmptyValue="[]"
+if [ "$activeSessions" == "$expectedEmptyValue" ]; then
+echo "Going to generate a new session"
+requestUrl=$(echo ${activeSessionsResponse} | jq -r '.availableInstanceTypes[0].requestUrl' )
+postUrl="http://sepal:1025/data$requestUrl"
+sessionResponse=$(curl -X POST -s "$postUrl")
+connectionUrl=$(echo ${sessionResponse} | jq -r '.containerURI')
+sessionId=$(echo ${sessionResponse} | jq -r '.sessionId')
+else
+echo "Reusing an existing session"
+sessionResponse=$(curl -s "http://sepal:1025/data/sandbox/$USER")
+connectionUrl=$(echo ${sessionResponse} | jq -r '.activeSessions[0].containerURI')
+sessionId=$(echo ${sessionResponse} | jq -r '.activeSessions[0].sessionId')
+fi
+echo "Sandox URI is $connectionUrl"
+echo "Session Identifier is $sessionId"
+/alive.sh $sessionId > /dev/null 2>&1 &
+ssh -YC -i /home/$USER/.ssh/id_rsa -l $USER $connectionUrl ${SSH_ORIGINAL_COMMAND:-}

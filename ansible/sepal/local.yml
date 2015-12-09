@@ -5,6 +5,7 @@
   gather_facts: true
 
   vars_files:
+    - vars/vars.yml
     - "{{ secret_vars_file }}"
 
   pre_tasks:
@@ -27,6 +28,7 @@
     - name: Set sepal_host var
       set_fact:
        sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
+       sandbox_ami_id: "{{ ami_ids[region] }}"	
 
   roles:
     - role: unattended-upgrades
@@ -41,7 +43,7 @@
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
 
     - role: prepare-environment
-    - role: compile-binaries
+    #- role: compile-binaries
     - role: build-haproxy
     - role: build-nginx
     - role: build-mysql

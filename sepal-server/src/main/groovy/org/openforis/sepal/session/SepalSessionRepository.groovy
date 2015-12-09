@@ -79,7 +79,7 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
     int requested(String username, long instanceId) {
         def keys = sql.executeInsert('''
             INSERT INTO sandbox_sessions(username,status,status_refreshed_on,instance_id)
-            VALUES(?,?,?,?,?)''', [username,REQUESTED.name(), new Date(),instanceId])
+            VALUES(?,?,?,?)''', [username,REQUESTED.name(), new Date(),instanceId])
         return keys[0][0] as int
     }
 

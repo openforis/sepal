@@ -1,0 +1,26 @@
+- name: Configure Sandbox Image
+  hosts: all
+  user: ubuntu
+  sudo: yes
+  gather_facts: true
+
+  pre_tasks:
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        state: directory
+    - name: Copy docker-registry certificate
+      copy:
+        src: ~/.sepal/certificates/docker-registry.crt
+        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+  roles:
+    - role: unattended-upgrades
+      unattended_origins_patterns:
+        - 'origin=Ubuntu,archive=${distro_codename}-security'
+        - 'o=Ubuntu,a=${distro_codename}-updates'
+
+    - role: docker.ubuntu
+      docker_version: '1.8.1-0~trusty'
+      docker_group_members: ['ubuntu']
+      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage'
+

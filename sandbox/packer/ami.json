@@ -14,6 +14,13 @@
     "source_ami": "{{user `source_ami`}}",
     "instance_type": "t2.micro",
     "ssh_username": "ubuntu",
-    "ami_name": "Sandbox {{user `version`}}"
+    "ami_name": "Sandbox - {{user `version`}}",
+    "tags": {
+      "Build_Number": "{{user `version`}}"
+    }
+  }],
+  "provisioners": [{
+    "type": "ansible",
+    "playbook_file": "../ansible/provision-sandbox/provision.yml"
   }]
 }

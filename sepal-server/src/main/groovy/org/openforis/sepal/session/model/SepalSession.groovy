@@ -17,6 +17,7 @@ class SepalSession implements Serializable {
     Long durationInSecs
     Double costs
     String requestUrl
+    String connectionUrl
 
     SepalSession() {
         super()

@@ -5,8 +5,7 @@
     {{ HTML::style( asset('css/bootstrap.css') ) }}
     {{ HTML::style( asset('css/common.css') ) }}
     {{ HTML::style( asset('css/gateone.css') ) }}
-    {{ HTML::script('js/jquery.js'); }}
-    {{ HTML::script('js/gateone.js'); }}
+    {{ HTML::script('js/jquery.js'); }} {{ HTML::script('js/gateone.js'); }}
     {{ HTML::script('js/script.js'); }}
     {{ HTML::script('js/bootstrap.js'); }}
     {{ HTML::script('js/lodash.js'); }}

@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
 
+import static org.openforis.sepal.SepalWorkingMode.PRIVATE_LAN
+
 @Singleton
 class SepalConfiguration {
     private static Logger LOG = null
@@ -58,6 +60,7 @@ class SepalConfiguration {
     String configFileLocation
     DataSource dataSource
     DataSource sandboxDataSource
+    SepalWorkingMode workingMode = PRIVATE_LAN
 
     def setConfigFileLocation(String configFileLocation) {
 
@@ -92,6 +95,8 @@ class SepalConfiguration {
 
         )
     }
+
+    def getSepalWorkingMode() { workingMode }
 
     def getSandboxAmiId() { getValue (SANDBOX_AMI_ID) }
 
@@ -267,4 +272,8 @@ class SepalConfiguration {
     }
 
 
+}
+
+enum SepalWorkingMode{
+    MONOLITICH,PUBLIC_WAN,PRIVATE_LAN
 }

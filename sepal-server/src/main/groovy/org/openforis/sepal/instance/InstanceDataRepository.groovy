@@ -25,7 +25,6 @@ interface InstanceDataRepository {
 
     /*
         New methods
-
      */
 
     Boolean updateInstance ( Instance instance )
@@ -69,32 +68,25 @@ class JdbcInstanceDataRepository implements InstanceDataRepository{
 
     @Override
     InstanceType fetchInstanceTypeById(Long instanceTypeId) {
-        def instance = null
-        sql.firstRow('''SELECT type.id AS typeId, type.name AS typeName, type.description AS typeDescription, type.hourly_costs AS typeHourlyCost, type.cpu_count AS typeCpuCount,
-                    type.ram AS typeRam,type.notes AS typeNotes, type.enabled AS typeEnabled FROM instance_types type WHERE type.typeId = ? ''',
+        def row = sql.firstRow('''SELECT type.id AS typeId, type.name AS typeName, type.description AS typeDescription, type.hourly_costs AS typeHourlyCost, type.cpu_count AS typeCpuCount,
+                    type.ram AS typeRam,type.notes AS typeNotes, type.enabled AS typeEnabled FROM instance_types type WHERE type.id = ? ''',
                 [instanceTypeId])
-                {
-                    instance = mapInstanceType(it)
-                }
-        if (!instance){
+
+        if (!row){
             throw new InvalidInstance("Unknow instance typeId $instanceTypeId")
         }
-        return instance
+        return mapInstanceType(row)
     }
 
     @Override
     InstanceType fetchInstanceTypeByProviderAndName(InstanceProvider provider, String name) {
-        def instance = null
-        sql.firstRow('''SELECT type.id AS typeId, type.name AS typeName, type.description AS typeDescription, type.hourly_costs AS typeHourlyCost, type.cpu_count AS typeCpuCount,
-                    type.ram AS typeRam,type.notes AS typeNotes, type.enabled AS typeEnabled FROM instance_types type WHERE type.provider_id = ? AND UPPER(typeName) = ? ORDER BY typeHourlyCost ASC''',
+        def row = sql.firstRow('''SELECT type.id AS typeId, type.name AS typeName, type.description AS typeDescription, type.hourly_costs AS typeHourlyCost, type.cpu_count AS typeCpuCount,
+                    type.ram AS typeRam,type.notes AS typeNotes, type.enabled AS typeEnabled FROM instance_types type WHERE type.provider_id = ? AND UPPER(type.name) = ? ORDER BY typeHourlyCost ASC''',
                     [provider?.id,name?.toUpperCase()])
-                {
-                    instance = mapInstanceType(it)
-                }
-        if (!instance){
+        if (!row){
             throw new InvalidInstance("Unknow tpye $name for provider $providerId")
         }
-        return instance
+        return mapInstanceType(row)
     }
 
     @Override
@@ -156,8 +148,8 @@ class JdbcInstanceDataRepository implements InstanceDataRepository{
     @Override
     long newInstance(Instance instance) {
         def results = sql.executeInsert('''
-            INSERT INTO instances (status,public_ip,private_ip,owner,name,launch_time,termination_time,status_update_time,data_center_id,instance_type_id)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?)''',
+            INSERT INTO instances (status,public_ip,private_ip,owner,name,launch_time,termination_time,status_update_time,data_center_id,instance_type)
+            VALUES(?,?,?,?,?,?,?,?,?,?)''',
                 [instance?.status?.name(), instance?.publicIp,instance?.privateIp, instance?.owner, instance?.name, instance?.launchTime,
                  instance?.terminationTime, instance?.statusUpdateTime,instance?.dataCenter?.id,instance?.instanceType?.id])
         return results[0][0]

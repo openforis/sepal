@@ -56,7 +56,7 @@ class ConcreteInstanceManager implements InstanceManager{
     Instance gatherFacts(Instance instance) {
         def facts
         def instanceData = fetchById(instance?.id)
-        def instanceProviderManager = fetchProviderManager(instance)
+        def instanceProviderManager = fetchProviderManager(instanceData)
         facts =  instanceProviderManager.gatherFacts(instanceData,environment)
         if (facts){
             facts.id = instanceData.id

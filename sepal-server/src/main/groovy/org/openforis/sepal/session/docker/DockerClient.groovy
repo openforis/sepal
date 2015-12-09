@@ -21,7 +21,7 @@ interface DockerClient {
 
     Boolean isContainerRunning(SepalSession sandbox)
 
-    SepalSession createContainer(String username, int userUid, Instance instance)
+    SepalSession createContainer(String username, Long userUid, Instance instance)
 }
 
 class DockerRESTClient implements DockerClient {
@@ -35,7 +35,7 @@ class DockerRESTClient implements DockerClient {
     }
 
     @Override
-    SepalSession createContainer(String username, int userUid, Instance instance) {
+    SepalSession createContainer(String username, Long userUid, Instance instance) {
         def sandboxData
         LOG.debug("Going to create a container for $username")
         def settings = collectSettings(username)
@@ -156,7 +156,7 @@ class DockerRESTClient implements DockerClient {
                     path: path,
             ) as HttpResponseDecorator
             def data = response.data
-            containerData.uri = response.data.NetworkSettings.IPAddress
+            containerData.containerURI = response.data.NetworkSettings.IPAddress
             containerData.status = data.State.Running ? ALIVE : STOPPED
         } catch (HttpResponseException responseException) {
             LOG.error("Error while getting container info. $responseException.message")
