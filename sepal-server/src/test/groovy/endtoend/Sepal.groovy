@@ -85,7 +85,8 @@ class Sepal extends Specification {
 
         // @ TODO Implement Stub For AWSClient
         def awsProvider = new AWSInstanceProviderManager(
-                null
+                null,
+                config.availabilityZoneName
         )
 
         def localProvider = new LocalInstanceProviderManager(config.sepalHost, instanceDataRepository.getDataCenterByName('Localhost'))

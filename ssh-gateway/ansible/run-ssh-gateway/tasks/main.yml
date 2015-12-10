@@ -1,17 +1,5 @@
 ---
 
-- name: Create user dir
-  file:
-    path: "/data/sepal/users"
-    state: directory
-
-- name: Create user home dir
-  file:
-    path: "/data/sepal/home"
-    owner: "root"
-    group: "sepal"
-    state: directory
-
 - name: Create log dir
   file:
     path: "/data/logs/ssh-gateway"

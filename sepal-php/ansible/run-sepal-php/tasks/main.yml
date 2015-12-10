@@ -25,17 +25,6 @@
     mode: "u=rwx,g=rwx"
     state: directory
 
-- name: Create admin public repo
-  file:
-    path: "/data/sepal/public/sepalAdminWeb"
-    state: directory
-    owner: 1001
-
-- name: Create symlink for admin public dir
-  file:
-    dest: "/data/sepal/data/sepalAdminWeb/public"
-    src: "/data/sepal/public"
-    state: "link"
 
 - name: Create image dir
   file:
@@ -51,19 +40,18 @@
     group: "sepal"
     state: directory
 
-- name: Create public dir
-  file:
-    path: "/data/sepal/public"
-    group: "9998"
-    mode: "u=rwx,g=rxs,o=rx"
-    state: directory
-
 - name: Create admin public dir
   file:
     path: "/data/sepal/public/sepalAdminWeb"
     owner: "1001"
     group: "9998"
     state: directory
+
+- name: Create symlink for admin public dir
+  file:
+    dest: "/data/sepal/data/sepalAdminWeb/public"
+    src: "/data/sepal/public"
+    state: "link"
 
 - name: Create config file
   template: src=config.ini dest=/data/sepal/config/config.ini owner=www-data mode=0400

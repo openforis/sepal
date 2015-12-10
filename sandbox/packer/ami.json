@@ -6,7 +6,9 @@
     "region": "",
     "version": "",
     "environment": "",
-    "userHome": ""
+    "userHome": "",
+    "efs_id": "",
+    "av_zone": ""
   },
   "builders": [{
     "type": "amazon-ebs",
@@ -16,10 +18,11 @@
     "source_ami": "{{user `source_ami`}}",
     "instance_type": "t2.micro",
     "ssh_username": "ubuntu",
-    "ami_name": "Sandbox - {{user `version`}}",
+    "ami_name": "Sandbox({{user  `av_zone`}}) - {{user `version`}}",
     "tags": {
       "Build_Number": "{{user `version`}}",
-      "Environment": "{{user  `environment`}}"
+      "Environment": "{{user  `environment`}}",
+      "AvailabilityZone": "{{user  `av_zone`}}"
     }
   }],
   "provisioners": [
@@ -52,6 +55,7 @@
     {
     "type": "ansible-local",
     "playbook_file": "/opt/sepal/sandbox/ansible/provision-sandbox/provision.yml",
+    "extra_arguments": [ "--extra-vars \"efs_id={{user `efs_id`}} region={{user `region`}} availability_zone={{user `av_zone`}}\""  ],
     "role_paths": [
       "/opt/sepal/sandbox/ansible/pull-sandbox",
       "/opt/sepal/ansible/roles/docker.ubuntu",

@@ -13,10 +13,12 @@ class AWSInstanceProviderManager implements InstanceProviderManager {
     private final static Logger LOG = LoggerFactory.getLogger(this)
 
 
+    private final String availabilityZone
     private final AWSClient awsClient
 
-    AWSInstanceProviderManager (AWSClient awsClient){
+    AWSInstanceProviderManager (AWSClient awsClient, String availabilityZone){
         this.awsClient = awsClient
+        this.availabilityZone = availabilityZone
     }
 
     @Override
@@ -26,7 +28,7 @@ class AWSInstanceProviderManager implements InstanceProviderManager {
 
     @Override
     Instance newInstance(String environment, DataCenter dataCenter, String username, InstanceType instanceType) {
-        def createdInstance = awsClient.newInstance(dataCenter,instanceType,environment,['Type': 'Sandbox', 'owner': username, 'Environment' : environment, 'Name': "Sandbox-$username($environment)"])
+        def createdInstance = awsClient.newInstance(dataCenter,instanceType,environment,availabilityZone,['Type': 'Sandbox', 'owner': username, 'Environment' : environment, 'Name': "Sandbox-$username($environment)"])
         createdInstance.owner = username
         createdInstance.instanceType = instanceType
         return createdInstance

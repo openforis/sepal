@@ -19,7 +19,7 @@ interface AWSClient {
 
     Instance fetchInstance ( DataCenter dataCenter, String instanceName, Map<String,String> filters, String... metadataToFetch )
 
-    Instance newInstance (DataCenter dataCenter, InstanceType instanceType, String environment, Map<String,String> tags)
+    Instance newInstance (DataCenter dataCenter, InstanceType instanceType, String environment, String availabilityZone, Map<String,String> tags)
 
     Instance applyMetadata (DataCenter dataCenter, String instanceName, Map<String,String> tags)
 }
@@ -48,7 +48,6 @@ class RestAWSClient implements AWSClient{
         }else{
             client = new AmazonEC2Client(credentials)
             client.setRegion(region)
-
             regionClients.put(region?.name,client)
         }
         return client
@@ -59,7 +58,7 @@ class RestAWSClient implements AWSClient{
     }
 
     @Override
-    Instance newInstance(DataCenter dataCenter, InstanceType instanceType, String environment, Map<String, String> tags) {
+    Instance newInstance(DataCenter dataCenter, InstanceType instanceType, String environment, String availabilityZone, Map<String, String> tags) {
         def instance = null
         def client = getClient(getDataCenterRegion(dataCenter))
         RunInstancesRequest request = new RunInstancesRequest()
@@ -69,7 +68,7 @@ class RestAWSClient implements AWSClient{
         request.withImageId(fetchImageId(dataCenter,environment))
         request.withMinCount(1)
         request.withMaxCount(1)
-
+        request.withPlacement(new Placement(availabilityZone: availabilityZone))
         RunInstancesResult result = client.runInstances(request)
         result?.reservation?.each { reservation ->
             reservation?.instances?.each { awsInstance ->

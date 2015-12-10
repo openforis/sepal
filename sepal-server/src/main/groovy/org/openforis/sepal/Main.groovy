@@ -57,7 +57,8 @@ class Main {
         def instanceDataRepository = new JdbcInstanceDataRepository(connectionManagerSandbox)
 
         def awsProvider = new AWSInstanceProviderManager(
-                new RestAWSClient(config.awsAccessKey, config.awsSecretKey, config.sandboxInstanceSecurityGroup, config.sandboxAmiId)
+                new RestAWSClient(config.awsAccessKey, config.awsSecretKey, config.sandboxInstanceSecurityGroup, config.sandboxAmiId),
+                config.availabilityZoneName
         )
 
         def localProvider = new LocalInstanceProviderManager(config.sepalHost, instanceDataRepository.getDataCenterByName('Localhost'))

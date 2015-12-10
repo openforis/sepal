@@ -31,6 +31,12 @@
       file:
         path: "/data/sepal"
         state: directory
+    - name: Mount Efs Sepal Dir
+      mount:
+        name: "/data/sepal/"
+        fstype: "nfs4"
+        state: "mounted"
+        src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/"
     - name: Copy repository login script
       template: src=/tmp/login_to_repo dest=/data/sepal/login_to_repo mode=0777 remote_src=True
     - name: Copy pull sandbox script

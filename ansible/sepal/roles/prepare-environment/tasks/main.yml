@@ -29,13 +29,85 @@
     mode: "u=rwx,g=rwxs"
     state: "directory"
 
+- name: Create temp mount dir
+  file:
+    path: "/efs"
+    state: "directory"
+
+- name: Temporarily Mount Efs Nfs4 For Setting Up Folders
+  mount:
+    name: "/efs"
+    fstype: "nfs4"
+    state: "mounted"
+    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/"
+
+- name: Create public dir
+  file:
+    path: "/efs/data/sepal/public"
+    group: "9998"
+    mode: "u=rwx,g=rxs,o=rx"
+    state: directory
+
 - name: Create data dir
   file:
-    path: "/data/sepal/data"
+    path: "/efs/data/sepal/data"
     owner: "sepal"
     group: "sepal"
     mode: "u=rwx,g=rwxs"
     state: "directory"
+
+- name: Create user home dir
+  file:
+    path: "/efs/data/sepal/home"
+    owner: "root"
+    group: "sepal"
+    state: directory
+
+- name: Create user credentials dir
+  file:
+    path: "/efs/data/sepal/users"
+    state: directory
+
+- name: Unmount Efs Nfs4
+  mount:
+      name: "/efs"
+      fstype: "nfs4"
+      state: "unmounted"
+      src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/"
+
+- name: Delete temp mount dir
+  file:
+      path: "/efs"
+      state: "absent"
+
+- name: Mount Efs Sepal Data Dir
+  mount:
+    name: "/data/sepal/data"
+    fstype: "nfs4"
+    state: "mounted"
+    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/data"
+
+- name: Mount Efs Sepal Home Dir
+  mount:
+    name: "/data/sepal/home"
+    fstype: "nfs4"
+    state: "mounted"
+    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/home"
+
+
+- name: Mount Efs Sepal Public Dir
+  mount:
+    name: "/data/sepal/public"
+    fstype: "nfs4"
+    state: "mounted"
+    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/public"
+
+- name: Mount Efs Sepal User Credentials Dir
+  mount:
+    name: "/data/sepal/users"
+    fstype: "nfs4"
+    state: "mounted"
+    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/users"
 
 - name: Create config dir
   file:

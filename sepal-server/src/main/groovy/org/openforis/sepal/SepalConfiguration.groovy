@@ -48,6 +48,7 @@ class SepalConfiguration {
     public static final String SANDBOX_MANAGER_JDBC_CONN_STRING = 'sandbox.jdbc_conn_string'
     public static final String SANBOX_PROXY_SESSION_TIMEOUT = 'sandbox.webproxy_session_timeout'
     public static final String INSTANCE_DATA_CENTER_NAME = 'sepal.instance.datacenter'
+    public static final String INSTANCE_AV_ZONE_NAME = 'sepal.instance.datacenter.av_zone'
     public static final String AWS_ACCESS_KEY = 'aws.access_key'
     public static final String AWS_SECRET_KEY = 'aws.secret_key'
     public static final String ENVIRONMENT = 'environment'
@@ -56,6 +57,7 @@ class SepalConfiguration {
     public static final String SANDBOX_AMI_ID = 'sandbox.ami_id'
     public static final String SANDBOX_INSTANCE_SECURITY_GROUP = 'sandbox.instance_security_group'
     public static final String SEPAL_WORKING_MODE = "sepal.working_mode"
+
 
     Properties properties
     String configFileLocation
@@ -121,6 +123,8 @@ class SepalConfiguration {
     def getAwsSecretKey () { getValue(AWS_SECRET_KEY) }
 
     def getDataCenterName () { getValue(INSTANCE_DATA_CENTER_NAME) }
+
+    def getAvailabilityZoneName () { getValue(INSTANCE_AV_ZONE_NAME) }
 
     def getProxySessionTimeout() {
         Integer.parseInt(getValue(SANBOX_PROXY_SESSION_TIMEOUT))
