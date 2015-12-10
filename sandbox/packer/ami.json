@@ -4,7 +4,9 @@
     "aws_secret_key": "",
     "source_ami": "",
     "region": "",
-    "version": ""
+    "version": "",
+    "environment": "",
+    "userHome": ""
   },
   "builders": [{
     "type": "amazon-ebs",
@@ -16,11 +18,44 @@
     "ssh_username": "ubuntu",
     "ami_name": "Sandbox - {{user `version`}}",
     "tags": {
-      "Build_Number": "{{user `version`}}"
+      "Build_Number": "{{user `version`}}",
+      "Environment": "{{user  `environment`}}"
     }
   }],
-  "provisioners": [{
-    "type": "ansible",
-    "playbook_file": "../ansible/provision-sandbox/provision.yml"
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": ["sudo add-apt-repository ppa:ansible/ansible && sudo apt-get update && sudo apt-get install -y ansible"]
+    },
+    {
+      "type": "file",
+      "source": "{{user `userHome`}}/.sepal/certificates/docker-registry.crt",
+      "destination": "/tmp/docker-registry.crt"
+    },
+    {
+      "type": "file",
+      "source": "/opt/sepal/sandbox/ansible/pull-sandbox/templates/login_to_repo",
+      "destination": "/tmp/login_to_repo"
+    },
+    {
+      "type": "file",
+      "source": "/opt/sepal/sandbox/ansible/pull-sandbox/templates/pull_sandbox.sh",
+      "destination": "/tmp/pull_sandbox.sh"
+    },
+    {
+      "type": "file",
+      "source": "{{user `userHome`}}/.sepal/secret.yml",
+      "destination": "/tmp/secret.yml"
+    },
+
+
+    {
+    "type": "ansible-local",
+    "playbook_file": "/opt/sepal/sandbox/ansible/provision-sandbox/provision.yml",
+    "role_paths": [
+      "/opt/sepal/sandbox/ansible/pull-sandbox",
+      "/opt/sepal/ansible/roles/docker.ubuntu",
+      "/opt/sepal/ansible/roles/unattended-upgrades"
+    ]
   }]
 }

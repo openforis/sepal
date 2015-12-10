@@ -15,7 +15,7 @@ class BindToUserSessionCommand extends AbstractCommand<SepalSession> {
 
     static constraints(UserRepository userRepository) {
         [
-                username: custom { userRepository.getUser(it) }
+                username: custom { userRepository.getUser(it)  != null}
 
         ]
     }

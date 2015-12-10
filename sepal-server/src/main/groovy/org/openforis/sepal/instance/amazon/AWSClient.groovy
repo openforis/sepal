@@ -19,9 +19,9 @@ interface AWSClient {
 
     Instance fetchInstance ( DataCenter dataCenter, String instanceName, Map<String,String> filters, String... metadataToFetch )
 
-    Instance newInstance (DataCenter dataCenter, InstanceType instanceType, Map<String,String> tags)
+    Instance newInstance (DataCenter dataCenter, InstanceType instanceType, String environment, Map<String,String> tags)
 
-    Boolean applyMetadata (DataCenter dataCenter, String instanceName, Map<String,String> tags)
+    Instance applyMetadata (DataCenter dataCenter, String instanceName, Map<String,String> tags)
 }
 
 class RestAWSClient implements AWSClient{
@@ -30,6 +30,7 @@ class RestAWSClient implements AWSClient{
 
 
     private Map<String,AmazonEC2Client> regionClients = [:]
+    private Map<String,String> regionKeys = [:]
     private final BasicAWSCredentials credentials
     private final String securityGroup
     private final String amiName
@@ -58,23 +59,21 @@ class RestAWSClient implements AWSClient{
     }
 
     @Override
-    Instance newInstance(DataCenter dataCenter, InstanceType instanceType, Map<String, String> tags) {
+    Instance newInstance(DataCenter dataCenter, InstanceType instanceType, String environment, Map<String, String> tags) {
         def instance = null
         def client = getClient(getDataCenterRegion(dataCenter))
         RunInstancesRequest request = new RunInstancesRequest()
         request.withKeyName(fetchKeyPairName(dataCenter))
-        request.withMaxCount(1)
-        request.withMinCount(1)
         request.withInstanceType(instanceType.name)
         request.withSecurityGroups(securityGroup)
-        request.withImageId(amiName)
-
+        request.withImageId(fetchImageId(dataCenter,environment))
+        request.withMinCount(1)
+        request.withMaxCount(1)
 
         RunInstancesResult result = client.runInstances(request)
         result?.reservation?.each { reservation ->
             reservation?.instances?.each { awsInstance ->
-                    instance = mapInstance(awsInstance)
-                    instance.dataCenter = dataCenter
+                    instance = applyMetadata(dataCenter,awsInstance.instanceId,tags)
             }
         }
         return instance
@@ -109,7 +108,7 @@ class RestAWSClient implements AWSClient{
     }
 
     @Override
-    Boolean applyMetadata(DataCenter dataCenter, String instanceName, Map<String, String> tags) {
+    Instance applyMetadata(DataCenter dataCenter, String instanceName, Map<String, String> tags) {
         def instance = fetchInstance(dataCenter,instanceName,null)
         if (instance){
             def client = getClient(getDataCenterRegion(dataCenter))
@@ -125,19 +124,40 @@ class RestAWSClient implements AWSClient{
         }else{
             LOG.warn("Unable to apply metadata to $instanceName. Instance not found")
         }
-        return instance
+        def tagKeysArray = tags.keySet().toArray(new String[tags.keySet().size()])
+        return fetchInstance(dataCenter,instanceName,null, tagKeysArray)
     }
 
     private String fetchKeyPairName ( DataCenter dataCenter ){
-        def client = getClient(getDataCenterRegion(dataCenter))
-        def request = new DescribeKeyPairsRequest()
-        request.withKeyNames(dataCenter.name)
-        def response = client.describeKeyPairs(request)
-        if (!response?.keyPairs){
-            throw new InvalidInstance("Unable to get keyPair for $dataCenter")
+        def region = getDataCenterRegion(dataCenter)
+        def client = getClient(region)
+        def keyName = regionKeys.get(region?.name)
+        if (!keyName){
+            def request = new DescribeKeyPairsRequest()
+            request.withKeyNames(dataCenter.name)
+            def response = client.describeKeyPairs(request)
+            if (!response?.keyPairs){
+                throw new InvalidInstance("Unable to get keyPair for $dataCenter")
+            }
+            def keyPair = response.keyPairs.first()
+            keyName = keyPair.keyName
+            regionKeys.put(region?.name,keyName)
         }
-        def keyPair = response.keyPairs.first()
-        return keyPair.keyName
+
+        return keyName
+
+    }
+
+    private String fetchImageId ( DataCenter dataCenter, String environment ){
+        def client = getClient(getDataCenterRegion(dataCenter))
+        def request = new DescribeImagesRequest()
+        request.withFilters(new Filter("tag:Environment",[environment]))
+        def response = client.describeImages(request)
+        if (!response?.images){
+            throw new InvalidInstance("Unable to get image for $dataCenter in $environment")
+        }
+        def image = response.images.first()
+        return image.imageId
     }
 
     private static Instance mapInstance (com.amazonaws.services.ec2.model.Instance awsInstance, String[] metadataToFetch){

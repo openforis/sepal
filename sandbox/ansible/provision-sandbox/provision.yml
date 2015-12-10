@@ -4,15 +4,38 @@
   sudo: yes
   gather_facts: true
 
+  vars_files:
+    - /tmp/secret.yml
+
   pre_tasks:
+    - name: Set Facts
+      set_fact:
+        version: "latest"
+        docker_repository_host: "54.93.185.137"
     - name: Create docker-registry certificate dir
       file:
         path: "/etc/docker/certs.d/{{ docker_repository_host }}"
         state: directory
     - name: Copy docker-registry certificate
       copy:
-        src: ~/.sepal/certificates/docker-registry.crt
+        src: /tmp/docker-registry.crt
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+        remote_src: True
+    - name: Install nfs-common
+      apt:
+        name: "nfs-common"
+    - name: Install Expect
+      apt:
+        name: "expect"
+    - name: Create /data/sepal directory
+      file:
+        path: "/data/sepal"
+        state: directory
+    - name: Copy repository login script
+      template: src=/tmp/login_to_repo dest=/data/sepal/login_to_repo mode=0777 remote_src=True
+    - name: Copy pull sandbox script
+      template: src=/tmp/pull_sandbox.sh dest=/data/sepal/pull_sandbox.sh mode=0777 remote_src=True
+
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:
@@ -23,4 +46,5 @@
       docker_version: '1.8.1-0~trusty'
       docker_group_members: ['ubuntu']
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage'
+    - role: pull-sandbox
 

@@ -55,12 +55,12 @@ class SepalConfiguration {
     public static final String SEPAL_HOST = 'sepal.host'
     public static final String SANDBOX_AMI_ID = 'sandbox.ami_id'
     public static final String SANDBOX_INSTANCE_SECURITY_GROUP = 'sandbox.instance_security_group'
+    public static final String SEPAL_WORKING_MODE = "sepal.working_mode"
 
     Properties properties
     String configFileLocation
     DataSource dataSource
     DataSource sandboxDataSource
-    SepalWorkingMode workingMode = PRIVATE_LAN
 
     def setConfigFileLocation(String configFileLocation) {
 
@@ -73,6 +73,7 @@ class SepalConfiguration {
                 fis = new FileInputStream(file)
                 properties.load(fis)
                 setEnv()
+
             } finally {
                 if (fis != null) {
                     fis.close()
@@ -96,7 +97,14 @@ class SepalConfiguration {
         )
     }
 
-    def getSepalWorkingMode() { workingMode }
+    def getSepalWorkingMode() {
+        def workingMode = PRIVATE_LAN
+        def workingModeRaw = getValue(SEPAL_WORKING_MODE)
+        if (workingModeRaw){
+            workingMode = SepalWorkingMode.valueOf(workingModeRaw)
+        }
+       return workingMode
+    }
 
     def getSandboxAmiId() { getValue (SANDBOX_AMI_ID) }
 

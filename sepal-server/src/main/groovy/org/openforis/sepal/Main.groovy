@@ -73,7 +73,7 @@ class Main {
         instanceManager.bootstrap(config.sepalInstancesConfigFile)
 
         sepalSessionManager = new ConcreteSepalSessionManager(
-                new DockerSessionContainerProvider(new DockerRESTClient(daemonURI), userRepository),
+                new DockerSessionContainerProvider(new DockerRESTClient(daemonURI,config.sepalWorkingMode), userRepository),
                 new JDBCSepalSessionRepository(connectionManagerSandbox),
                 userRepository,
                 instanceManager

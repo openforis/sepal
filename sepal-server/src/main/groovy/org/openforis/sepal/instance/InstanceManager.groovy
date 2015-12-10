@@ -185,7 +185,7 @@ class ConcreteInstanceManager implements InstanceManager{
                 Class managerClass = it.class
                 ProviderFor providerManager = managerClass.getAnnotation(ProviderFor.class)
                 if (providerManager.value() == providerName){
-                    LOG.debug("Identified $managerClass providerManager for providerName")
+                    LOG.debug("Identified $managerClass providerManager for $providerName")
                     manager = it
                 }
             }

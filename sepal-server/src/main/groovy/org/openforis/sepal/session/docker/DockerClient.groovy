@@ -6,12 +6,14 @@ import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient
 import org.apache.commons.io.IOUtils
 import org.openforis.sepal.SepalConfiguration
+import org.openforis.sepal.SepalWorkingMode
 import org.openforis.sepal.instance.Instance
 import org.openforis.sepal.session.model.SepalSession
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static groovyx.net.http.ContentType.JSON
+import static org.openforis.sepal.SepalWorkingMode.PRIVATE_LAN
 import static org.openforis.sepal.session.model.SessionStatus.ALIVE
 
 
@@ -29,9 +31,11 @@ class DockerRESTClient implements DockerClient {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final String dockerDaemonURI
+    private final SepalWorkingMode workingMode
 
-    DockerRESTClient(String dockerDaemonURI) {
+    DockerRESTClient(String dockerDaemonURI, SepalWorkingMode workingMode) {
         this.dockerDaemonURI = dockerDaemonURI
+        this.workingMode = workingMode
     }
 
     @Override
@@ -39,7 +43,7 @@ class DockerRESTClient implements DockerClient {
         def sandboxData
         LOG.debug("Going to create a container for $username")
         def settings = collectSettings(username)
-        def sandboxDockerClient = getRestClient(instance.privateIp)
+        def sandboxDockerClient = getRestClient(getInstanceIp(instance))
         def sepalDockerClient = getRestClient()
         def execResult = exec("gateone",sepalDockerClient, "/keygen/keygen.run", username, "$userUid")
         def generatedKey = IOUtils.toString(execResult as InputStream)
@@ -74,7 +78,7 @@ class DockerRESTClient implements DockerClient {
 
     @Override
     Boolean isContainerRunning(SepalSession data) {
-        isContainerRunning(data,getRestClient(data?.instance?.privateIp))
+        isContainerRunning(data,getRestClient(getInstanceIp(data?.instance)))
     }
 
 
@@ -173,6 +177,10 @@ class DockerRESTClient implements DockerClient {
             LOG.error("Error while stopping container $containerId", ex)
             throw ex
         }
+    }
+
+    private String getInstanceIp(Instance instance){
+        return workingMode == PRIVATE_LAN ? instance?.privateIp : instance?.publicIp
     }
 
     private RESTClient getRestClient( String baseURI = dockerDaemonURI) {

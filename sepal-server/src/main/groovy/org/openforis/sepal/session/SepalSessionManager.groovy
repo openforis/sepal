@@ -111,13 +111,11 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
             dataRepository.created(session.sessionId,sessionData.containerId,sessionData.containerURI)
         }catch (Exception ex){
             LOG.error("Error during container creation.",ex)
-            instanceManager.releaseInstance(instance.id)
-            dataRepository.terminated(session.sessionId)
             throw ex
         }
     }
 
-    private String getConnectionURL(SepalSession session){
+    private static String getConnectionURL(SepalSession session){
         def connectionURL = session?.instance?.privateIp
         if (session){
             def config = SepalConfiguration.instance

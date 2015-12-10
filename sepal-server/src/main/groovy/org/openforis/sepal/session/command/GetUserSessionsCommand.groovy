@@ -13,7 +13,7 @@ class GetUserSessionsCommand extends AbstractCommand<UserSessions> {
 
     static constraints(UserRepository userRepository) {
         [
-                username: custom { userRepository.getUser(it) }
+                username: custom { userRepository.getUser(it)  != null}
         ]
     }
 
