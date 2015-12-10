@@ -1,0 +1,61 @@
+---
+- name: Create config dir
+  file:
+    path: "/data/ldap/config"
+    state: directory
+
+- name: Create certificates dir
+  file:
+    path: "/data/ldap/certificates"
+    state: directory
+
+- name: Create database dir
+  file:
+    path: "/data/ldap/database"
+    state: directory
+
+- name: Copy config file
+  copy: src=add_content.ldif dest=/data/ldap/
+
+- name: Create log dir
+  file:
+    path: "/data/logs/ldap"
+    state: directory
+
+- copy: src=~/.sepal/certificates/ldap-crt.pem dest=/data/ldap/certificates/ldap-crt.pem
+- copy: src=~/.sepal/certificates/ldap-key.pem dest=/data/ldap/certificates/ldap-key.pem
+- copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/ldap/certificates/ldap-ca.crt.pem
+
+- name: Start container
+  docker:
+    docker_api_version: "1.16"
+    name: "ldap"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/ldap:{{ version }}"
+    state: "reloaded"
+    restart_policy: "always"
+    net: "bridge"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    ports:
+    - "389:389"
+    - "636:636"
+    volumes:
+    - "/data/ldap/database:/var/lib/ldap"
+    - "/data/ldap/config:/etc/ldap/slapd.d"
+    - "/data/ldap/add_content.ldif:/add_content.ldif"
+    - "/data/logs/ldap:/var/log/supervisor"
+    - "/data/ldap/certificates:/container/service/slapd/assets/certs"
+    env:
+      LDAP_ORGANISATION: 'SEPAL'
+      LDAP_DOMAIN: 'sepal.org'
+      LDAP_ADMIN_PASSWORD: "{{ ldap_admin_password }}"
+      LDAP_TLS_CRT_FILENAME: ldap-crt.pem
+      LDAP_TLS_KEY_FILENAME: ldap-key.pem
+      LDAP_TLS_CA_CRT_FILENAME: ldap-ca.crt.pem
+      LDAP_TLS_VERIFY_CLIENT: never
+
+- name: Wait until started
+  wait_for: host=0.0.0.0 port=389 delay=5

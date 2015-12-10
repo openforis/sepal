@@ -2,6 +2,7 @@
 
 
 docker login localhost
+docker push localhost/openforis/ldap:{{ version }}
 docker push localhost/openforis/nginx:{{ version }}
 docker push localhost/openforis/sepal-php:{{ version }}
 docker push localhost/openforis/sepal:{{ version }}

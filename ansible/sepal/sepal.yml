@@ -40,6 +40,7 @@
 
     - role: prepare-environment
     - role: prepare-aws-environment
+    - role: run-ldap
     - role: run-mysql
     - role: run-geoserver
     - role: run-sepal-server

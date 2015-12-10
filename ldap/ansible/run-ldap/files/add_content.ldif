@@ -1,0 +1,7 @@
+dn: ou=People,dc=sepal,dc=org
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Groups,dc=sepal,dc=org
+objectClass: organizationalUnit
+ou: Groups

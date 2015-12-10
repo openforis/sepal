@@ -3,6 +3,7 @@
 VERSION=${1:-"latest"}
 SRC_VER=${2:-"latest"}
 
+docker tag localhost/openforis/ldap:${SRC_VER} localhost/openforis/nginx:${VERSION}
 docker tag localhost/openforis/nginx:${SRC_VER} localhost/openforis/nginx:${VERSION}
 docker tag localhost/openforis/sepal-php:${SRC_VER} localhost/openforis/sepal-php:${VERSION}
 docker tag localhost/openforis/sepal:${SRC_VER} localhost/openforis/sepal:${VERSION}

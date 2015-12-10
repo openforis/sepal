@@ -1,12 +1,11 @@
-FROM openforis/jdk
+FROM osixia/openldap
 
 MAINTAINER OpenForis
 
-
-ADD script/init_image .
-
-RUN chmod +x /init_image
-
-RUN /init_image
-
-CMD ["/bin/bash"]
+ADD config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+ADD script/init_container.sh .
+RUN apt-get update -y -qq && apt-get install -y \
+    supervisor \
+    net-tools \
+    && chmod u+x ./init_container.sh
+CMD ["/usr/bin/supervisord"]

@@ -47,6 +47,7 @@
     - role: prepare-environment
     - role: prepare-local-environment
     #- role: compile-binaries
+    - role: build-ldap
     - role: build-haproxy
     - role: build-nginx
     - role: build-mysql
@@ -57,6 +58,7 @@
     - role: build-geoserver
     - role: build-sepal-php
     - role: build-sepal-server
+    - role: run-ldap
     - role: run-mysql
     - role: run-geoserver
     - role: run-sepal-server

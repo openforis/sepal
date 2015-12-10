@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-mkdir -p /opt/apacheds/
-apt-get update && apt-get install -y wget gdebi-core
-wget -o "apacheds.tar.gz" "http://it.apache.contactlab.it/directory/studio/2.0.0.v20150606-M9/ApacheDirectoryStudio-2.0.0.v20150606-M9-linux.gtk.x86_64.tar.gz"
-tar -zxvf sepal-php.tar.gz -C /opt/apacheds/

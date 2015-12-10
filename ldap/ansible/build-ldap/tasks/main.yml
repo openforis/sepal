@@ -1,1 +1,3 @@
 ---
+- name: Build ldap
+  docker_image: path="/opt/sepal/ldap/docker" name="localhost/openforis/ldap" state=build
