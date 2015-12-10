@@ -1,0 +1,30 @@
+---
+# common tasks
+
+
+- name: Create public dir
+  file:
+    path: "/data/sepal/public"
+    group: "9998"
+    mode: "u=rwx,g=rxs,o=rx"
+    state: directory
+
+- name: Create data dir
+  file:
+    path: "/data/sepal/data"
+    owner: "sepal"
+    group: "sepal"
+    mode: "u=rwx,g=rwxs"
+    state: "directory"
+
+- name: Create user home dir
+  file:
+    path: "/data/sepal/home"
+    owner: "root"
+    group: "sepal"
+    state: directory
+
+- name: Create user credentials dir
+  file:
+    path: "/data/sepal/users"
+    state: directory

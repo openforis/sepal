@@ -39,6 +39,7 @@
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage'
 
     - role: prepare-environment
+    - role: prepare-aws-environment
     - role: run-mysql
     - role: run-geoserver
     - role: run-sepal-server
