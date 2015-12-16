@@ -1,64 +1,10 @@
 ---
+- file: path="/data/sepal-php" state=directory
+- file: path="/data/sepal-php/certificates" state=directory
 
-
-- name: Create www-data user
-  user: name=www-data uid=33 group=sepal
-
-- name: Create admin user dir
-  file:
-    path: "/data/sepal/data/sepalAdminWeb"
-    state: directory
-    owner: "1001"
-    group: "sepal"
-
-- name: Create admin user layers dir
-  file:
-    path: "/data/sepal/data/sepalAdminWeb/layers"
-    owner: "1001"
-    mode: "u=rwx,g=rwxs"
-    state: directory
-
-- name: Create admin user repo dir
-  file:
-    path: "/data/sepal/data/sepalAdminWeb/sdmsrepository"
-    owner: "1001"
-    mode: "u=rwx,g=rwx"
-    state: directory
-
-
-- name: Create image dir
-  file:
-    path: "/data/sepal/images"
-    owner: "www-data"
-    group: "sepal"
-    state: directory
-
-- name: Create thumb dir
-  file:
-    path: "/data/sepal/images/thumbnail"
-    owner: "www-data"
-    group: "sepal"
-    state: directory
-
-- name: Create admin public dir
-  file:
-    path: "/data/sepal/public/sepalAdminWeb"
-    owner: "1001"
-    group: "9998"
-    state: directory
-
-- name: Create symlink for admin public dir
-  file:
-    dest: "/data/sepal/data/sepalAdminWeb/public"
-    src: "/data/sepal/public"
-    state: "link"
-
-- name: Create config file
-  template: src=config.ini dest=/data/sepal/config/config.ini owner=www-data mode=0400
-
-- copy: src=~/.sepal/certificates/sepal-https.key dest=/data/ssl/certificates/sepal-https.key
-- copy: src=~/.sepal/certificates/sepal-https.ca-bundle dest=/data/ssl/certificates/sepal-https.ca-bundle
-- copy: src=~/.sepal/certificates/sepal-https.crt dest=/data/ssl/certificates/sepal-https.crt
+- copy: src=~/.sepal/certificates/sepal-https.key dest=/data/sepal-php/certificates
+- copy: src=~/.sepal/certificates/sepal-https.ca-bundle dest=/data/sepal-php/certificates
+- copy: src=~/.sepal/certificates/sepal-https.crt dest=/data/sepal-php/certificates
 
 - name: Create log dir
   file:
@@ -80,7 +26,6 @@
     password: "{{ docker_password }}"
     links:
     - "mysql:mysql"
-    - "geoserver:geoserver"
     - "sepal:sepal"
     - "ssh-gateway:ssh-gateway"
     volumes:
@@ -88,13 +33,18 @@
     #- "{{ '/www/app/views:/var/www/html/app/views' if local_php else '' }}"
     #- "{{ '/www/app/config:/var/www/html/app/config' if local_php else '' }}"
     #- "{{ '/www/public:/var/www/html/public' if local_php else '' }}"
-    - "/data/logs/sepal-php:/var/log/apache2"
-    - "/data/sepal/data:/data/home/"
-    - "/data/sepal/config:/etc/sepal"
-    - "/data/ssl/certificates:/etc/apache2/ssl"
-    - "/data/sepal/images:/data/sdms-data-repo/scene-image"
-    - "/data/sepal/public:/data/sepal/public"
+    - "/data/sepal-php:/data"
+
+    - "/data/sepal/data:/data/home/" # This path is hard-coded - don't change it. This module will die anyway
+    - "/data/sepal/public:/sepal/public/"
+    - "/data/sepal/processing_scripts:/processing_scripts"
     env:
-        ADMIN_PWD: "{{ sepal_admin_user_password }}"
-        ARTIFACT_VERSION: "{{ version }}"
-        ARTIFACT_SUFFIX: "-SNAPSHOT"
+        SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
+        PLANET_LABS_API_KEY_SEPAL_ENV: "{{ planet_labs_api_key }}"
+        MYSQL_PASSWORD_SEPAL_ENV: "{{ mysql_password }}"
+        GEOSERVER_PASSWORD_SEPAL_ENV: "{{ geoserver_password }}"
+        GATE_ONE_SECRET_SEPAL_ENV: "{{ gate_one_secret }}"
+        GATE_ONE_PUBLIC_SEPAL_ENV: "{{ gate_one_public }}"
+        SEPAL_URI_SEPAL_ENV: "{{ 'http://10.0.2.15:1025/data' if local_sepal == true else 'http://sepal:1025/data' }}"
+        SEPAL_MACHINE_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
+        VERSION_SEPAL_ENV: "{{ version }}"

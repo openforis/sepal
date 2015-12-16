@@ -5,6 +5,7 @@ providers:
     description: Localhost
     instances:
       - id: 'Localhost'
+      - region: 'Localhost'
 
 
 

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+USERNAME=$1
+PASSWORD=$2
+USER_GROUP=$3
+USER_HOME=/home/$USERNAME
+USER_DATA_HOME=/sepal/home/$USERNAME
+PUBLIC_DATA=/sepal/public
+
+logFile=/var/log/supervisor/add-sepal-user.log
+
+if ! ldapid "$USERNAME" >> $logFile 2>&1; then
+    sss_cache -E
+    ldapaddgroup $USERNAME >> $logFile 2>&1
+    ldapadduser $USERNAME $USERNAME >> $logFile 2>&1
+    userId=$(ldapid "$USERNAME" | sed -E "s/.*uid=([0-9]+).*/\\1/") >> $logFile 2>&1
+    groupId=$(ldapgid "$USERNAME" | sed -E "s/.*gid=([0-9]+).*/\\1/") >> $logFile 2>&1
+
+    if [ -n "$PASSWORD" ]; then
+        passwordFile=$(mktemp /tmp/$USERNAME.XXXXXX) >> $logFile 2>&1
+        echo $PASSWORD > $passwordFile
+        sss_seed --domain sepal.org --username $USERNAME --password-file $passwordFile --uid $userId --gid $groupId >> $logFile 2>&1
+        rm $passwordFile >> $logFile 2>&1
+        ldappasswd -p 389 -h ldap -x -D cn=admin,dc=sepal,dc=org -w "$(cat /etc/ldap.secret)" \
+            -s "$PASSWORD" uid=$USERNAME,ou=People,dc=sepal,dc=org -ZZ >> $logFile 2>&1
+    fi
+
+    # TODO: Move home directory creation to sepal-server
+    # When user is a SEPAL user, add user to group and create user home directory structure
+    if [ -n "$USER_GROUP" ]; then
+        ldapaddusertogroup $USERNAME $USER_GROUP >> $logFile 2>&1
+
+        # Create user home directory
+        mkdir -p $USER_DATA_HOME >> $logFile 2>&1
+        mkdir $USER_DATA_HOME/smdsrepository >> $logFile 2>&1
+        # Set permission directory, to directly allow file scanning of the directory
+        mkdir -m 770 $USER_DATA_HOME/layers  >> $logFile 2>&1
+
+        # Create public user directory
+        mkdir -p -m 770 $PUBLIC_DATA/$USERNAME >> $logFile 2>&1
+        chown $userId:$USER_GROUP $PUBLIC_DATA/$USERNAME >> $logFile 2>&1
+        ln -s $PUBLIC_DATA $USER_DATA_HOME/public >> $logFile 2>&1
+
+        sepalGroupId=9999 # sepal group has id 9999
+        chown -R $userId:$sepalGroupId $USER_DATA_HOME >> $logFile 2>&1
+        chmod -R 770 $USER_DATA_HOME >> $logFile 2>&1
+        chmod -R g+s $USER_DATA_HOME >> $logFile 2>&1
+    fi
+
+    mkdir -p $USER_HOME/.ssh >> $logFile 2>&1
+    chmod -R 770 $USER_HOME >> $logFile 2>&1
+
+    ssh-keygen -t rsa -b 4096 -C "Sandbox key for $USERNAME" -f $USER_HOME/.ssh/id_rsa -N "" >> $logFile 2>&1
+    ldapmodify -H ldap://ldap -x -D cn=admin,dc=sepal,dc=org -w "$(cat /etc/ldap.secret)" >> $logFile 2>&1 <<!
+dn: uid=$USERNAME,ou=People,dc=sepal,dc=org
+changetype: modify
+replace: sshpublickey
+sshpublickey: $(cat $USER_HOME/.ssh/id_rsa.pub)
+!
+
+    chown -R $userId:$groupId $USER_HOME >> $logFile 2>&1
+    chmod 400 $USER_HOME/.ssh/* >> $logFile 2>&1 # secure the keys
+
+    echo "Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    LogLevel QUIET" > $USER_HOME/.ssh/config
+fi
+
+echo $(ldapid "$USERNAME" | sed -E "s/.*uid=([0-9]+).*/\\1/")

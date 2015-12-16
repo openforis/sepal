@@ -1,6 +1,6 @@
 <?php
 
-$config = parse_ini_file('/etc/sepal/config.ini');
+$config = parse_ini_file('/etc/sepal-php/config.ini');
 $databasePassword = $config['databasePassword'];
 $databaseHost = $config['databaseHost'];
 $databaseUser = $config['databaseUser'];

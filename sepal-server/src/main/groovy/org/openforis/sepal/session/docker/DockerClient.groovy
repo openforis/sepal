@@ -4,7 +4,6 @@ import groovy.json.JsonOutput
 import groovyx.net.http.HttpResponseDecorator
 import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient
-import org.apache.commons.io.IOUtils
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.SepalWorkingMode
 import org.openforis.sepal.instance.Instance
@@ -16,7 +15,6 @@ import static groovyx.net.http.ContentType.JSON
 import static org.openforis.sepal.SepalWorkingMode.PRIVATE_LAN
 import static org.openforis.sepal.session.model.SessionStatus.ALIVE
 
-
 interface DockerClient {
 
     Boolean releaseContainer(SepalSession sandbox)
@@ -27,8 +25,8 @@ interface DockerClient {
 }
 
 class DockerRESTClient implements DockerClient {
-
     private static final Logger LOG = LoggerFactory.getLogger(this)
+    private static conf = SepalConfiguration.instance
 
     private final String dockerDaemonURI
     private final SepalWorkingMode workingMode
@@ -45,14 +43,12 @@ class DockerRESTClient implements DockerClient {
         def settings = collectSettings(username)
         def sandboxDockerClient = getRestClient(getInstanceIp(instance))
         def sepalDockerClient = getRestClient()
-        def execResult = exec("gateone",sepalDockerClient, "/keygen/keygen.run", username, "$userUid")
-        def generatedKey = IOUtils.toString(execResult as InputStream)
         def body = new JsonOutput().toJson(
                 [
                         Image     : settings.imageName,
                         Tty       : true,
-                        Cmd       : ["/init_sandbox.run", username, generatedKey, "$userUid"],
-                        HostConfig: [Binds: [settings.homeBinding, settings.shadowBinding, settings.publicFolderBinding]]
+                        Cmd       : ["/start", username, conf.ldapHost, conf.ldapPassword],
+                        HostConfig: [Binds: settings.binds]
                 ]
         )
 
@@ -67,7 +63,7 @@ class DockerRESTClient implements DockerClient {
             LOG.debug("Sandbox created: $sandboxData.containerId")
             startContainer(sepalDockerClient, sandboxData)
             getContainerInfo(sepalDockerClient, sandboxData)
-            exec(sandboxData.containerId,sandboxDockerClient, "/root/healt_check.sh", "$settings.portsToCheck")
+            exec(sandboxData.containerId, sandboxDockerClient, "/root/healt_check.sh", "$settings.portsToCheck")
         } catch (HttpResponseException exception) {
             LOG.error("Error while creating the sandbox. $exception.response.data")
             throw exception
@@ -78,15 +74,15 @@ class DockerRESTClient implements DockerClient {
 
     @Override
     Boolean isContainerRunning(SepalSession data) {
-        isContainerRunning(data,getRestClient(getInstanceIp(data?.instance)))
+        isContainerRunning(data, getRestClient(getInstanceIp(data?.instance)))
     }
 
 
-    Boolean isContainerRunning(SepalSession data, RESTClient restClient){
-        try{
+    Boolean isContainerRunning(SepalSession data, RESTClient restClient) {
+        try {
             getContainerInfo(restClient, data)
-        }catch (Exception ex) {
-            LOG.error("Unable to obtain container info for $data.containerId",ex)
+        } catch (Exception ex) {
+            LOG.error("Unable to obtain container info for $data.containerId", ex)
         }
         return data.status == ALIVE
     }
@@ -99,8 +95,8 @@ class DockerRESTClient implements DockerClient {
 
     Boolean releaseContainer(SepalSession data, RESTClient restClient) {
         try {
-            if (isContainerRunning(data,restClient)) {
-                stopContainer(data.containerId,restClient)
+            if (isContainerRunning(data, restClient)) {
+                stopContainer(data.containerId, restClient)
             }
             restClient.delete(path: "containers/$data.containerId")
         } catch (HttpResponseException exception) {
@@ -110,16 +106,16 @@ class DockerRESTClient implements DockerClient {
         return true
     }
 
-    private static Map<String, String> collectSettings(String username) {
-        SepalConfiguration conf = SepalConfiguration.instance
-        def configMap = [
-                portsToCheck       : conf.sandboxPortsToCheck,
-                homeBinding        : "$conf.mountingHomeDir/$username:/home/$username",
-                shadowBinding      : "$conf.userCredentialsHomeDir/shadow:/etc/shadow",
-                publicFolderBinding: "$conf.publicHomeDir:$conf.publicHomeDir",
-                imageName          : conf.dockerImageName
+    private static Map collectSettings(String username) {
+        return [
+                portsToCheck: conf.sandboxPortsToCheck,
+                binds       : [
+                        "$conf.mountingHomeDir/$username:/home/$username",
+                        "$conf.publicHomeDir:$conf.publicHomeDir",
+                        "/data/sepal/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
+                ],
+                imageName   : conf.dockerImageName
         ]
-        return configMap
     }
 
 
@@ -140,7 +136,7 @@ class DockerRESTClient implements DockerClient {
     }
 
 
-    private static exec(String sandboxId,RESTClient restClient, String... commands) {
+    private static exec(String sandboxId, RESTClient restClient, String... commands) {
         def path = "containers/$sandboxId/exec"
         def params = [AttachStdin: false, AttachStdout: true, AttachStderr: true, Tty: false, Cmd: commands]
         def jsonParams = new JsonOutput().toJson(params)
@@ -169,7 +165,7 @@ class DockerRESTClient implements DockerClient {
     }
 
 
-    private static  void stopContainer(String containerId,RESTClient restClient) {
+    private static void stopContainer(String containerId, RESTClient restClient) {
         def path = "containers/$containerId/stop"
         try {
             restClient.post(path: path)
@@ -179,11 +175,11 @@ class DockerRESTClient implements DockerClient {
         }
     }
 
-    private String getInstanceIp(Instance instance){
+    private String getInstanceIp(Instance instance) {
         return workingMode == PRIVATE_LAN ? instance?.privateIp : instance?.publicIp
     }
 
-    private RESTClient getRestClient( String baseURI = dockerDaemonURI) {
+    private RESTClient getRestClient(String baseURI = dockerDaemonURI) {
         new RESTClient(SepalConfiguration.instance.getDockerDaemonURI(baseURI))
     }
 

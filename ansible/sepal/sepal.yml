@@ -9,11 +9,6 @@
     - "{{ secret_vars_file }}"
 
   pre_tasks:
-    - name: Create sepal group
-      group: name=sepal state=present gid=9999
-    - name: Create sepal user
-      user: name=sepal uid=9999 group=sepal
-
     - name: Create docker-registry certificate dir
       file:
         path: "/etc/docker/certs.d/{{ docker_repository_host }}"
@@ -25,6 +20,7 @@
     - name: Set sepal_host and ami_id var
       set_fact:
         sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
+        ldap_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
         sandbox_ami_id: "{{ ami_ids[region] }}"
 
   roles:

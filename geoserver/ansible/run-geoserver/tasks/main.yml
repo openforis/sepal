@@ -1,21 +1,6 @@
 ---
-- name: Create geoserver user
-  user: name=geoserver uid=998 group=sepal
 
-- name: Create data dir
-  file:
-    path: "/data/sepal/geoserver"
-    state: directory
-    owner: geoserver
-    group: sepal
-    mode: 0770
-
-- name: Create log dir
-  file:
-    path: "/data/logs/geoserver"
-    state: directory
-    owner: geoserver
-    group: sepal
+- file: path="/data/geoserver" state=directory
 
 - name: "Start container"
   docker:
@@ -31,7 +16,6 @@
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
     volumes:
-    - "/data/sepal/geoserver:/data/geoserver"
-    - "/data/logs/geoserver:/opt/geoserver/data_dir/logs"
+    - "/data/geoserver:/data"
     env:
       ADMIN_PASSWD: "{{ geoserver_password }}"

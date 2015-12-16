@@ -9,12 +9,9 @@
     - "{{ secret_vars_file }}"
 
   pre_tasks:
-    - name: Create sepal group
-      group: name=sepal state=present gid=9999
-    - name: Add vagrant to sepal group
-      user: name=vagrant append=yes groups=sepal
-    - name: Create sepal user
-      user: name=sepal uid=9999 group=sepal
+#  TODO: Remove?
+#    - name: Add vagrant to sepal group
+#      user: name=vagrant append=yes groups=sepal
 
     - name: Create docker-registry certificate dir
       file:
@@ -27,6 +24,7 @@
 
     - set_fact:
        sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
+       ldap_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
        region: "Localhost"
        aws_access_key_id: ""
        aws_secret_access_key: ""
@@ -45,8 +43,7 @@
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
 
     - role: prepare-environment
-    - role: prepare-local-environment
-    #- role: compile-binaries
+    - role: compile-binaries
     - role: build-ldap
     - role: build-haproxy
     - role: build-nginx

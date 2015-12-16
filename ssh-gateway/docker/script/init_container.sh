@@ -1,83 +1,40 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
+function template {
+    local template=$1
+    local destination=$2
+    local owner=$3
+    local mode=$4
+    envsubst < $template > $destination
+    chown $owner $destination
+    chmod $mode $destination
+}
+
+mkdir -p /var/run/sshd
+mkdir -p /data/logs/supervisor
+mkdir -p /data/home
+
+rm -rf /var/log/supervisor && ln -sf /data/logs/supervisor /var/log/supervisor
+rm -rf /home && ln -sf /data/home /home
+
+ln -sf /script/add-sepal-user /usr/local/bin/add-sepal-user
+chmod 555 /script/ssh-bootstrap
+
+template /config/ldap.conf /etc/ldap.conf root: 0600
+template /config/ldap.conf /etc/ldap/ldap.conf root: 0600
+template /config/ldap.secret /etc/ldap.secret root: 0600
+template /config/ldapscripts.conf /etc/ldapscripts/ldapscripts.conf root: 0600
+template /config/ldapscripts.passwd /etc/ldapscripts/ldapscripts.passwd root: 0600
+template /config/ldapadduser.template /etc/ldapscripts/ldapadduser.template root: 0600
+template /config/sssd.conf /etc/sssd/sssd.conf root: 0600
+template /config/sepalAdmin.passwd /etc/sepalAdmin.passwd root: 0600
+template /config/sepalAdminWeb.passwd /etc/sepalAdminWeb.passwd root: 0600
 
 
-passwdToBeCopied=false
-groupToBeCopied=false
-shadowToBeCopied=false
-gshadowToBeCopied=false
+mkdir -p /etc/ldap/certificates
+cp /data/ldap-ca.crt.pem /etc/ldap/certificates/ldap-ca.crt.pem
 
-if [ -f "/users/passwd" ]; then
-yes | cp -rf /users/passwd /etc/
-else
-passwdToBeCopied=true
-fi
+# Unset all env variables ending with _SEPAL_ENV
+unset $(printenv | grep '_SEPAL_ENV' | sed -E "s/([0-9a-zA-Z]+)=.*/\\1/" | tr '\n' ' ')
 
-if [ -f "/users/group" ]; then
-yes | cp -rf /users/group /etc/
-else
-groupToBeCopied=true
-fi
-
-if [ -f "/users/shadow" ]; then
-yes | cp -rf /users/shadow /etc/
-else
-shadowToBeCopied=true
-fi
-
-if [ -f "/users/gshadow" ]; then
-yes | cp -rf /users/gshadow /etc/
-else
-gshadowToBeCopied=true
-fi
-
-
-adminExist=false
-getent passwd ${ADMIN_USERNAME}  >/dev/null 2>&1 && adminExist=true
-
-if $adminExist; then
-echo "user $ADMIN_USERNAME already exist"
-else
-useradd ${ADMIN_USERNAME} -s /bin/bash -m -d "/home/${ADMIN_USERNAME}"
-fi
-
-webAdminExist=false
-getent passwd ${WEB_ADMIN_USERNAME}  >/dev/null 2>&1 && webAdminExist=true
-
-if $webAdminExist; then
-echo "user $WEB_ADMIN_USERNAME already exist"
-else
-useradd ${WEB_ADMIN_USERNAME} -u 1001 -s /bin/bash -m -d "/home/${WEB_ADMIN_USERNAME}"
-usermod -aG "${USER_GROUP}" "${WEB_ADMIN_USERNAME}"
-fi
-
-echo ${ADMIN_USERNAME}:${ADMIN_PASSWORD} | chpasswd
-echo ${WEB_ADMIN_USERNAME}:${WEB_ADMIN_PASSWORD} | chpasswd
-
-
-if $passwdToBeCopied; then
-yes | cp -rf /etc/passwd /users/
-fi
-
-if $groupToBeCopied; then
-yes | cp -rf /etc/group /users/
-fi
-
-if $shadowToBeCopied; then
-yes | cp -rf /etc/shadow /users/
-fi
-
-if $gshadowToBeCopied; then
-yes | cp -rf /etc/gshadow /users/
-fi
-
-
-
-mv /create_user "/home/${ADMIN_USERNAME}/"
-chown ${ADMIN_USERNAME}:${ADMIN_USERNAME} "/home/${ADMIN_USERNAME}/create_user"
-
-echo "${ADMIN_USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${ADMIN_USERNAME}
-chmod 440 /etc/sudoers.d/${ADMIN_USERNAME}
-
-printf "USER_GROUP=%s" "$USER_GROUP" >> etc/environment
-
-/usr/bin/supervisord
+/usr/bin/supervisord -c /config/supervisord.conf

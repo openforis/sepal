@@ -35,8 +35,7 @@
     - "ssh-gateway:ssh-gateway"
     volumes:
     - "/data/logs/gateone:/gateone/logs"
-    - "/data/sepal/home:/home"
     - "/data/gateone:/conf"
-    - "/data/gateone/users:/gateone/users"
+    - "/data/ssh-gateway/home:/gateone/users"
     env:
       GATEONE_SESSION_TIMEOUT: '3m'

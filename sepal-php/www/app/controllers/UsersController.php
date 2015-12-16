@@ -5,16 +5,16 @@ class UsersController extends \BaseController {
     protected $layout = 'layouts.master';
 
     function __construct() {
-        $this->beforeFilter(function() {
-                    if (Session::get('is_admin') == 'yes') {
-                        
-                    } else if (Session::get('group_admin') == 'yes' && Session::get('group_id') > 0) {
-                        
-                    } else {
-                        return Redirect::to('search')
-                                        ->with('error', 'Permission denied!');
-                    }
-                });
+        $this->beforeFilter(function () {
+            if (Session::get('is_admin') == 'yes') {
+
+            } else if (Session::get('group_admin') == 'yes' && Session::get('group_id') > 0) {
+
+            } else {
+                return Redirect::to('search')
+                    ->with('error', 'Permission denied!');
+            }
+        });
     }
 
     //POST process form inputs from add Roles form
@@ -46,8 +46,8 @@ class UsersController extends \BaseController {
         // Was the validation successful?
         if ($v->fails()) {
             return Redirect::to('adduser')
-                            ->withErrors($v)
-                            ->withInput();
+                ->withErrors($v)
+                ->withInput();
         } else {
 
             $user = new User;
@@ -62,33 +62,23 @@ class UsersController extends \BaseController {
                 $password = Input::get('password');
                 $group_id = Input::get('group');
                 $sshConnection = ssh2_connect(SdmsConfig::value('hostSSH'), 22);
-                $sshAuthConnection=@ssh2_auth_password($sshConnection, SdmsConfig::value('adminUser'), SdmsConfig::value('adminPwd'));
-                $script = "echo sudopw | ".SdmsConfig::value('createUserScript')." ".$username." ". $password. " ".$group_id.PHP_EOL;
+                $sshAuthConnection = @ssh2_auth_password($sshConnection, SdmsConfig::value('adminUser'), SdmsConfig::value('adminPwd'));
+                $script = "sudo add-sepal-user " . $username . " " . $password . " sepalUsers" . PHP_EOL;
                 Logger::debug('Data Script: ', $script);
-                $stream = ssh2_exec($sshConnection,$script);
+                $stream = ssh2_exec($sshConnection, $script);
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
-                $user->user_uid = stream_get_contents($stream_out);
-                Logger::debug('UserCreatedId: ',$user->user_uid);
+                $uid = stream_get_contents($stream_out);
+                Logger::debug('Newly created uid: ', $uid);
+                $user->user_uid = $uid;
+                Logger::debug('UserCreatedId: ', $user->user_uid);
                 $user->save();
-                $homeDir = SdmsConfig::value('dataHome');
-                $userHomeDir = $homeDir."/".$username;
-                $publicHomeDir= SdmsConfig::value('publicHomeDir');
-                Logger::debug('Ownership Flags: ', "sudo chown -R ".intval($user->user_uid).":sepal ".$userHomeDir);
-                exec("sudo mkdir -p -m 770 ".$userHomeDir);
-                exec("sudo mkdir -p -m 770 ".$userHomeDir."/sdmsrepository");
-                exec("sudo mkdir -p -m 770 ".$userHomeDir."/layers");
-                exec("sudo chmod -R g+s ".$userHomeDir);
-                exec("sudo chown -R ".intval($user->user_uid).":sepal ".$userHomeDir);
-                exec("sudo mkdir ".$publicHomeDir."/".$username);
-                exec("sudo chown ".intval($user->user_uid)." ". $publicHomeDir."/".$username);
-                exec("sudo ln -s ".$publicHomeDir." ".$userHomeDir."/");
                 $logged_in_user = Auth::id();
                 //only admin can assign role. Else role 'user' by default.
                 if (Session::get('is_admin') == 'yes') {
                     $role_id = Input::get('role');
                     //if($role_id =="") $role_id =1;
-                }else
+                } else
                     $role_id = "";
                 $group_id = Input::get('group');
                 $group_admin = Input::get('group_admin');
@@ -112,7 +102,7 @@ class UsersController extends \BaseController {
             }
 
             return Redirect::to('users')
-                            ->with('message', 'User added!');
+                ->with('message', 'User added!');
         }
 
         //return View::make('success');
@@ -124,7 +114,7 @@ class UsersController extends \BaseController {
         $access = $this->checkUSerAccess($id);
         if ($access == false)
             return Redirect::to('users')
-                            ->with('error', 'Permission denied!');
+                ->with('error', 'Permission denied!');
         // Validation rules
         $rules = array(
             'firstName' => 'required|min:4|max:50',
@@ -152,10 +142,9 @@ class UsersController extends \BaseController {
         // Was the validation successful?
         if ($v->fails()) {
             return Redirect::to('/users/edit/' . $id)
-                            ->withErrors($v)
-                            ->withInput();
+                ->withErrors($v)
+                ->withInput();
         } else {
-
 
 
             $user = User::find($id);
@@ -211,7 +200,7 @@ class UsersController extends \BaseController {
             }
 
             return Redirect::to('users')
-                            ->with('message', 'User added!');
+                ->with('message', 'User added!');
         }
 
         //return View::make('success');
@@ -254,8 +243,8 @@ class UsersController extends \BaseController {
         if (Session::get('group_admin') == 'yes') {
             $logged_in_userid = Auth::id();
             $userGroupList = Usergroup::where('user_id', '=', $logged_in_userid)
-                    ->where('is_group_admin', '=', 1)
-                    ->get();
+                ->where('is_group_admin', '=', 1)
+                ->get();
             if (isset($userGroupList) && count($userGroupList) > 0) {
                 $groupList = array();
                 $groupList[''] = '-Select a group-';
@@ -277,7 +266,7 @@ class UsersController extends \BaseController {
         $access = $this->checkUSerAccess($id);
         if ($access == false)
             return Redirect::to('users')
-                            ->with('error', 'Permission denied!');
+                ->with('error', 'Permission denied!');
         //get roles
         $rolesListsDB = Role::get();
         $roleList = array();
@@ -314,8 +303,8 @@ class UsersController extends \BaseController {
         if (Session::get('group_admin') == 'yes') {
             $logged_in_userid = Auth::id();
             $userGroupList = Usergroup::where('user_id', '=', $logged_in_userid)
-                    ->where('is_group_admin', '=', 1)
-                    ->get();
+                ->where('is_group_admin', '=', 1)
+                ->get();
             if (isset($userGroupList) && count($userGroupList) > 0) {
                 $groupList = array();
                 $groupList[''] = '-Select a group-';
@@ -365,12 +354,12 @@ class UsersController extends \BaseController {
                             if ((strlen($user->username) > 2) && (strlen($groupid) > 2)) {
                                 //exec("sudo usermod -a -G $groupid $user->username");
 
-                                    $groupFolderPathUser = "../../../../data/home/shared-$groupid/";
-                                    if (!file_exists($groupFolderPathUser)) {
-                                        exec("sudo mkdir $groupFolderPathUser");
-                                        exec("sudo chown -R root:$groupid /data/home/shared-$groupid");
-                                        exec("sudo chmod -R 770 /data/home/shared-$groupid");
-                                    }
+                                $groupFolderPathUser = "../../../../data/home/shared-$groupid/";
+                                if (!file_exists($groupFolderPathUser)) {
+                                    exec("sudo mkdir $groupFolderPathUser");
+                                    exec("sudo chown -R root:$groupid /data/home/shared-$groupid");
+                                    exec("sudo chmod -R 770 /data/home/shared-$groupid");
+                                }
                             }
 
                             $user->groups()->detach($groupid, array());
@@ -414,8 +403,8 @@ class UsersController extends \BaseController {
         if (Session::get('group_admin') == 'yes') {
             $logged_in_userid = Auth::id();
             $userGroupList = Usergroup::where('user_id', '=', $logged_in_userid)
-                    ->where('is_group_admin', '=', 1)
-                    ->get();
+                ->where('is_group_admin', '=', 1)
+                ->get();
             if (isset($userGroupList) && count($userGroupList) > 0) {
                 $groupList = array();
                 $groupList[''] = '-Select a group-';
@@ -438,7 +427,7 @@ class UsersController extends \BaseController {
         $access = $this->checkUSerAccess($userId);
         if ($access == false)
             return Redirect::to('users')
-                            ->with('error', 'Permission denied!');
+                ->with('error', 'Permission denied!');
         $this->layout = '';
 
         $user = User::find($userId);
@@ -448,7 +437,7 @@ class UsersController extends \BaseController {
             $user->roles()->detach();
         }
         return Redirect::to('users')
-                        ->with('message', 'User removed!');
+            ->with('message', 'User removed!');
     }
 
     function removeGroup() {
@@ -489,6 +478,7 @@ class UsersController extends \BaseController {
         echo "false-false";
         exit();
     }
+
     /**
      * Get group ids of logged in user
      *
@@ -502,7 +492,7 @@ class UsersController extends \BaseController {
         if ($groups) {
             $groupIds = $groups->lists('id');
             return $groupIds;
-        }else
+        } else
             return array();
     }
 
@@ -521,7 +511,7 @@ class UsersController extends \BaseController {
             if (in_array(2, $roleIds) || in_array(3, $roleIds)) {
                 return true;
             }
-        }else
+        } else
             return false;
     }
 

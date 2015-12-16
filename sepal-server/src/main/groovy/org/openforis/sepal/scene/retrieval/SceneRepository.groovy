@@ -81,7 +81,7 @@ class FileSystemSceneRepository implements SceneRepository {
     }
 
     private File userHomeDir(String userName) {
-        def userHomeDir = new File(homeDir.replaceAll(Pattern.quote('\$user'), userName))
+        def userHomeDir = new File(homeDir.replaceAll(Pattern.quote('%user%'), userName))
         userHomeDir.mkdirs()
         return userHomeDir
     }

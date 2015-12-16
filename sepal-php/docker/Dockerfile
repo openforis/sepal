@@ -1,22 +1,14 @@
 FROM linode/lamp
 MAINTAINER OpenForis
 
-ENV ADMIN_PWD sdms-admin
-
-ADD binary/sepal-php.tar.gz /var/www/html
-ADD script/init_image.sh .
-ADD script/init_container.sh .
-RUN chmod u+x ./init_image.sh
-RUN chmod u+x ./init_container.sh
-RUN ./init_image.sh
-
-
-ADD config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-ADD config/ports.conf /etc/apache2/
-ADD config/000-default.conf /etc/apache2/sites-enabled/
-ADD config/default-ssl.conf /etc/apache2/sites-enabled/
-
 EXPOSE 9090
 EXPOSE 9443
 
-CMD ["/init_container.sh"]
+ADD binary/sepal-php.tar.gz /var/www/html
+ADD config /config
+ADD script /script
+
+RUN chmod -R u+x /script && \
+    /script/init_image.sh
+
+CMD ["/script/init_container.sh"]

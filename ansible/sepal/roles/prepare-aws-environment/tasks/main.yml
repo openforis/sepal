@@ -28,18 +28,6 @@
     mode: "u=rwx,g=rwxs"
     state: "directory"
 
-- name: Create user home dir
-  file:
-    path: "/efs/data/sepal/home"
-    owner: "root"
-    group: "sepal"
-    state: directory
-
-- name: Create user credentials dir
-  file:
-    path: "/efs/data/sepal/users"
-    state: directory
-
 - name: Unmount Efs Nfs4
   mount:
       name: "/efs"
@@ -59,24 +47,9 @@
     state: "mounted"
     src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/data"
 
-- name: Mount Efs Sepal Home Dir
-  mount:
-    name: "/data/sepal/home"
-    fstype: "nfs4"
-    state: "mounted"
-    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/home"
-
-
 - name: Mount Efs Sepal Public Dir
   mount:
     name: "/data/sepal/public"
     fstype: "nfs4"
     state: "mounted"
     src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/public"
-
-- name: Mount Efs Sepal User Credentials Dir
-  mount:
-    name: "/data/sepal/users"
-    fstype: "nfs4"
-    state: "mounted"
-    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/users"

@@ -5,7 +5,7 @@ class SdmsConfig {
 
     public static function value($name) {
         if (is_null(self::$config)) {
-            self::$config = parse_ini_file('/etc/sepal/config.ini');
+            self::$config = parse_ini_file('/etc/sepal-php/config.ini');
         }
         return self::$config[$name];
     }

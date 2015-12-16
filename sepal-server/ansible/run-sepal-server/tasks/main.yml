@@ -1,33 +1,9 @@
 ---
 
-
-
-- name: Create downloads dir
-  file:
-    path: "/data/sepal/downloads"
-    owner: "sepal"
-    group: "sepal"
-    state: directory
-
-- name: Create log dir
-  file:
-    path: "/data/logs/sepal"
-    mode: "u=rwx,g=rx,o=rx"
-    owner: "sepal"
-    group: "sepal"
-    state: directory
-
-- name: Create config file
-  template: src=sepal.properties dest=/data/sepal/config/sepal.properties owner=sepal group=sepal mode=0400
-
-- name: Create instances config file
-  template: src=instances.yml dest=/data/sepal/config/instances.yml owner=sepal group=sepal mode=0400
-
-- name: Create instances_local config file
-  copy: src=instances_local.yml dest=/data/sepal/config/instances_local.yml owner=sepal group=sepal mode=0400
-
-- name: Copy lsat_geoserver_script
-  copy: src=lsat_geoserver_fix.sh dest=/data/sepal/config/processing_scripts/ owner=sepal group=sepal mode=u=rwx,g=r,o=r
+- file: path="/data/sepal" state=directory
+- file: path="/data/sepal/ldap" state=directory
+- file: path="/data/sepal/certificates" state=directory
+- copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/sepal/certificates/ldap-ca.crt.pem
 
 - name: Start container
   docker:
@@ -45,11 +21,19 @@
     links:
     - "mysql:mysql"
     volumes:
-    - "/data/sepal/downloads:/data/workDir/downloads"
-    - "/data/sepal/config:/etc/sepal"
-    - "/data/sepal/geoserver:/data/geoserver"
-    - "/data/sepal/data:/data/home"
-    - "/data/logs/sepal:/var/log/sepal"
+    - "/data/sepal:/data"
+    - "/data/geoserver/layers:/geoserver"
     env:
-      ARTIFACT_VERSION: "{{ version }}"
-      ARTIFACT_SUFFIX: "-SNAPSHOT"
+      deploy_environment: "{{ deploy_environment }}"
+      region: "{{ region }}"
+      sepal_host: "{{ sepal_host }}"
+      ldap_host: "{{ ldap_host }}"
+      geoserver_password: "{{ geoserver_password }}"
+      ldap_admin_password: "{{ ldap_admin_password }}"
+      mysql_password: "{{ mysql_password }}"
+      instances_config_file: "{{ '/etc/sepal/instances_local.yml' if use_custom_host == true else '/etc/sepal/instances.yml' }}"
+      image_name: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/sandbox:{{ version }}"
+      availability_zone: "{{ availability_zone }}"
+      aws_access_key_id: "{{ aws_access_key_id }}"
+      aws_secret_access_key: "{{ aws_secret_access_key }}"
+      $USGS_PASSWORD_SEPAL_ENV: "{{ usgs_password }}"

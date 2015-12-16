@@ -271,6 +271,13 @@ class SepalConfiguration {
         getValue(GEOSERVER_PWD_PARAMETER)
     }
 
+    String getLdapHost() {
+        getValue('ldap.host')
+    }
+
+    String getLdapPassword() {
+        getValue('ldap.password')
+    }
 
     def getValue(String key) {
         return properties.getProperty(key)
@@ -282,8 +289,6 @@ class SepalConfiguration {
             System.setProperty(key, properties.get(key))
         }
     }
-
-
 }
 
 enum SepalWorkingMode{
