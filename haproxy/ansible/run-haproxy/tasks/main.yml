@@ -4,9 +4,6 @@
     path: "/data/haproxy"
     state: directory
 
-- name: Copy config file
-  copy: src=haproxy.cfg dest=/data/haproxy
-
 - name: Create log dir
   file:
     path: "/data/logs/haproxy"
@@ -32,5 +29,4 @@
     - "nginx:nginx"
     - "ssh-gateway:ssh-gateway"
     volumes:
-    - "/data/haproxy:/usr/local/etc/haproxy"
-    - "/data/logs/haproxy:/var/log/haproxy"
+    - "/data/haproxy:/data"
