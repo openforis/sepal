@@ -1,0 +1,27 @@
+Manual testing
+--------------
+
+SSH as sepalAdminWeb
+	oft-stack
+	arcsi
+rsync
+scp
+XWindows
+	tuivew works
+rstudio server
+
+login to server
+	dashboard
+	search
+		download landsat 8
+		download landsat 7
+		download with processing script
+		download without processing script
+	web terminal
+		verify downloaded files have correct permissions
+	visualiation
+	add user
+
+login as new user
+web terminal as new user
+SSH as new user
