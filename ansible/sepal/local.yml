@@ -43,7 +43,7 @@
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
 
     - role: prepare-environment
-    - role: compile-binaries
+#    - role: compile-binaries
     - role: build-ldap
     - role: build-haproxy
     - role: build-nginx

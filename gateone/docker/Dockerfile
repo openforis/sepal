@@ -1,17 +1,12 @@
 FROM liftoff/gateone:latest
 MAINTAINER OpenForis
-
-RUN mkdir -p /keygen/ && ln -s /conf/30api_keys.conf /etc/gateone/conf.d/30api_keys.conf
-
-ADD script/keygen.run /keygen/
-ADD script/init_image.sh .
-ADD conf/config /keygen/
-
-RUN chmod u+x /init_image.sh
-RUN ./init_image.sh
-
 EXPOSE 8000
 
-ENV GATEONE_SESSION_TIMEOUT "30m"
+ADD config /config
+ADD script /script
 
-CMD /usr/local/bin/update_and_run_gateone --origins=* --auth=api --session_timeout=${GATEONE_SESSION_TIMEOUT}
+RUN chmod -R 500 /script && \
+    chmod -R 400 /config && \
+    /script/init_image.sh
+
+CMD ["/script/init_container.sh"]

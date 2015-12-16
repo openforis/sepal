@@ -17,8 +17,9 @@ mkdir -p /data/home
 rm -rf /var/log/supervisor && ln -sf /data/logs/supervisor /var/log/supervisor
 rm -rf /home && ln -sf /data/home /home
 
-ln -sf /script/add-sepal-user /usr/local/bin/add-sepal-user
-chmod 555 /script/ssh-bootstrap
+cp /script/add-sepal-user /usr/local/bin/add-sepal-user
+cp /script/ssh-bootstrap /usr/local/bin/ssh-bootstrap
+chmod 555 /usr/local/bin/ssh-bootstrap
 
 template /config/ldap.conf /etc/ldap.conf root: 0600
 template /config/ldap.conf /etc/ldap/ldap.conf root: 0600

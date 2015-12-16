@@ -1,4 +1,4 @@
-FROM osixia/openldap
+FROM osixia/openldap:1.0.9
 
 MAINTAINER OpenForis
 

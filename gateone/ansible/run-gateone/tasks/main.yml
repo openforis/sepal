@@ -1,22 +1,9 @@
 ---
-- name: Create log dir
-  file:
-    path: "/data/logs/gateone"
-    state: directory
 
-- name: Create config dir
+- name: Create data dir
   file:
     path: "/data/gateone/"
     state: directory
-
-- name: Create gateone users dir
-  file:
-    path: "/data/gateone/users"
-    state: directory
-
-- name: Create config file
-  template: src=30api_keys.conf dest=/data/gateone/30api_keys.conf mode=0400
-
 
 - name: "Start container"
   docker:
@@ -34,8 +21,9 @@
     links:
     - "ssh-gateway:ssh-gateway"
     volumes:
-    - "/data/logs/gateone:/gateone/logs"
-    - "/data/gateone:/conf"
-    - "/data/ssh-gateway/home:/gateone/users"
+    - "/data/gateone:/data"
+    - "/data/ssh-gateway/home:/ssh-gateway/home"
     env:
-      GATEONE_SESSION_TIMEOUT: '3m'
+      GATEONE_SESSION_TIMEOUT_SEPAL_ENV: '3m'
+      GATE_ONE_PUBLIC_SEPAL_ENV: "{{ gate_one_public }}"
+      GATE_ONE_SECRET_SEPAL_ENV: "{{ gate_one_secret }}"

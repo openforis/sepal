@@ -14,7 +14,7 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     gettext # envsubst for templating
 
 echo "initgroups: files sss" >> /etc/nsswitch.conf
-printf '%s\n' "Match Group $USER_GROUP" 'ForceCommand /script/ssh-bootstrap' >> /etc/ssh/sshd_config
+printf '%s\n' "Match Group $USER_GROUP" 'ForceCommand ssh-bootstrap' >> /etc/ssh/sshd_config
 
 # Use LDAP for authorized keys
 printf '%s\n' 'AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys' 'AuthorizedKeysCommandUser root' >> /etc/ssh/sshd_config
