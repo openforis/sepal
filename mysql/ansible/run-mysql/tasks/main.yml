@@ -1,16 +1,7 @@
 ---
-#- name: Create mysql user
-#  user: name=mysql uid=999
-
 - name: Create data dir
   file:
     path: "/data/mysql"
-    state: directory
-    owner: 999
-
-- name: Create log dir
-  file:
-    path: "/data/logs/mysql"
     state: directory
 
 - name: Start container
@@ -27,8 +18,7 @@
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
     volumes:
-    - "/data/mysql:/var/lib/mysql"
-    - "/data/logs/mysql:/var/log/supervisor"
+    - "/data/mysql:/data"
     ports:
       - "3306:3306"
     env:

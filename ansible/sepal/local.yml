@@ -9,10 +9,6 @@
     - "{{ secret_vars_file }}"
 
   pre_tasks:
-#  TODO: Remove?
-#    - name: Add vagrant to sepal group
-#      user: name=vagrant append=yes groups=sepal
-
     - name: Create docker-registry certificate dir
       file:
         path: "/etc/docker/certs.d/{{ docker_repository_host }}"
