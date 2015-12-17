@@ -6,11 +6,6 @@
 - copy: src=~/.sepal/certificates/sepal-https.ca-bundle dest=/data/sepal-php/certificates
 - copy: src=~/.sepal/certificates/sepal-https.crt dest=/data/sepal-php/certificates
 
-- name: Create log dir
-  file:
-    path: "/data/logs/sepal-php"
-    state: directory
-
 - name: Start container
   docker:
     docker_api_version: "1.16"

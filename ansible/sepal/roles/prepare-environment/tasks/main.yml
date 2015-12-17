@@ -15,10 +15,5 @@
     state: "directory"
     mode: "u=rwx,g=rx"
 
-- name: Create ssl certificates dir
-  file:
-    path: "/data/ssl/certificates"
-    state: directory
-
 - name: "Install Maven"
   apt:  name="maven"

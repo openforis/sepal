@@ -1,7 +1,5 @@
 FROM openforis/jdk
-
 MAINTAINER OpenForis
-
 EXPOSE 8080
 
 ADD script /script

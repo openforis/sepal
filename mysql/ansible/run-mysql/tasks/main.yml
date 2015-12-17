@@ -19,6 +19,8 @@
     password: "{{ docker_password }}"
     volumes:
     - "/data/mysql:/data"
+    # Parent image volume
+    - "/data/mysql/db:/var/lib/mysql"
     ports:
       - "3306:3306"
     env:

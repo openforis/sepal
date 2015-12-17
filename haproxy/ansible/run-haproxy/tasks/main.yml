@@ -4,11 +4,6 @@
     path: "/data/haproxy"
     state: directory
 
-- name: Create log dir
-  file:
-    path: "/data/logs/haproxy"
-    state: directory
-
 - name: Start container
   docker:
     docker_api_version: "1.16"

@@ -1,7 +1,6 @@
 FROM linode/lamp
 MAINTAINER OpenForis
-EXPOSE 9090
-EXPOSE 9443
+EXPOSE 9090 9443
 
 ADD binary/sepal-php.tar.gz /var/www/html
 ADD config /config

@@ -1,7 +1,6 @@
 FROM ubuntu:trusty
 MAINTAINER OpenForis
-EXPOSE 80
-EXPOSE 443
+EXPOSE 80 443
 
 ADD config /config
 ADD script /script

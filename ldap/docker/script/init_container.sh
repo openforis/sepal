@@ -1,19 +1,11 @@
 #!/bin/bash
 
-sleep 10
-ldapWaiting=true
-netstat -ntlp | grep ":389"  >/dev/null 2>&1 && ldapWaiting=false
+mkdir -p /data/logs/supervisor
+rm -rf /var/log/supervisor && ln -sf /data/logs/supervisor /var/log/supervisor
 
-for i in {50..0}; do
-    if netstat -ntlp | grep ":389"  >/dev/null 2>&1; then
-		break
-	fi
-	echo 'Waiting for LDAP...'
-	sleep 1
-done
-if [ "$i" = 0 ]; then
-    echo >&2 'LDAP init process failed.'
-	exit 1
-fi
+mkdir -p /data/logs/sssd
+rm -rf /var/log/sssd && ln -sf /data/logs/sssd /var/log/sssd
 
-ldapadd -x -D cn=admin,dc=sepal,dc=org -w "$LDAP_ADMIN_PASSWORD" -f /add_content.ldif || true
+cp /data/certificates/* /container/service/slapd/assets/certs
+
+/usr/bin/supervisord -c /config/supervisord.conf

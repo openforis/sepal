@@ -9,3 +9,4 @@ mkdir -p /etc/ssl
 cp /data/certificates/* /etc/ssl/
 
 /usr/bin/supervisord -c /config/supervisord.conf
+
