@@ -1,21 +1,10 @@
 ---
-- name: Create config dir
-  file:
-    path: "/data/nginx/sites-enabled"
-    state: directory
+- file: path="/data/nginx" state=directory
+- file: path="/data/nginx/certificates" state=directory
 
-- name: Copy sepal config file
-  copy: src=sepal dest=/data/nginx/sites-enabled/sepal
-
-
-- copy: src=~/.sepal/certificates/sepal-https.key dest=/data/ssl/certificates/sepal-https.key
-- copy: src=~/.sepal/certificates/sepal-https.ca-bundle dest=/data/ssl/certificates/sepal-https.ca-bundle
-- copy: src=~/.sepal/certificates/sepal-https.crt dest=/data/ssl/certificates/sepal-https.crt
-
-- name: Create log dir
-  file:
-    path: "/data/logs/nginx"
-    state: directory
+- copy: src=~/.sepal/certificates/sepal-https.key dest=/data/nginx/certificates/sepal-https.key
+- copy: src=~/.sepal/certificates/sepal-https.ca-bundle dest=/data/nginx/certificates/sepal-https.ca-bundle
+- copy: src=~/.sepal/certificates/sepal-https.crt dest=/data/nginx/certificates/sepal-https.crt
 
 - name: Start container
   docker:
@@ -32,10 +21,8 @@
     password: "{{ docker_password }}"
     links:
     - "gateone:gateone"
-    - "sepal-php:sepal-php"
     - "geoserver:geoserver"
     - "sepal:sepal"
+    - "sepal-php:sepal-php"
     volumes:
-    - "/data/nginx/sites-enabled:/etc/nginx/sites-enabled"
-    - "/data/ssl/certificates:/etc/ssl"
-    - "/data/logs/nginx:/var/log/nginx"
+    - "/data/nginx:/data"
