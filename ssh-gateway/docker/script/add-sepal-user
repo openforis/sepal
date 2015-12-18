@@ -28,7 +28,8 @@ if ! ldapid "$USERNAME" >> $logFile 2>&1; then
     # TODO: Move home directory creation to sepal-server
     # When user is a SEPAL user, add user to group and create user home directory structure
     if [ -n "$USER_GROUP" ]; then
-        ldapaddusertogroup $USERNAME $USER_GROUP >> $logFile 2>&1
+        userGroupId=$(ldapgid "$USER_GROUP" | sed -E "s/.*gid=([0-9]+).*/\\1/") >> $logFile 2>&1
+        ldapaddusertogroup $USERNAME $userGroupId >> $logFile 2>&1
 
         # Create user home directory
         mkdir -p $USER_DATA_HOME >> $logFile 2>&1
@@ -38,7 +39,7 @@ if ! ldapid "$USERNAME" >> $logFile 2>&1; then
 
         # Create public user directory
         mkdir -p -m 770 $PUBLIC_DATA/$USERNAME >> $logFile 2>&1
-        chown $userId:$USER_GROUP $PUBLIC_DATA/$USERNAME >> $logFile 2>&1
+        chown $userId:$userGroupId $PUBLIC_DATA/$USERNAME >> $logFile 2>&1
         ln -s $PUBLIC_DATA $USER_DATA_HOME/public >> $logFile 2>&1
 
         sepalGroupId=9999 # sepal group has id 9999

@@ -9,15 +9,7 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>${sepal.logLocation}/sepal-geoserver.log</file>
-        <append>false</append>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
-    <appender name="FILE_GEOSERVER" class="ch.qos.logback.core.FileAppender">
-        <file>${sepal.logLocation}/sepal-geoserver-monitoring.log</file>
+        <file>${sepal.logLocation}/sepal.log</file>
         <append>false</append>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -25,7 +17,7 @@
     </appender>
 
     <appender name="FILE_METADATA" class="ch.qos.logback.core.FileAppender">
-        <file>${sepal.logLocation}/sepal-geoserver-crawling.log</file>
+        <file>${sepal.logLocation}/sepal-crawling.log</file>
         <append>false</append>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -33,7 +25,7 @@
     </appender>
 
     <appender name="FILE_SANDBOX_PROXY" class="ch.qos.logback.core.FileAppender">
-        <file>${sepal.logLocation}/sepal-geoserver-sandbox_proxy.log</file>
+        <file>${sepal.logLocation}/sepal-sandbox-web-proxy.log</file>
         <append>false</append>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -41,7 +33,7 @@
     </appender>
 
     <appender name="FILE_SANDBOX_MANAGER" class="ch.qos.logback.core.FileAppender">
-        <file>${sepal.logLocation}/sepal-geoserver-sandbox_manager.log</file>
+        <file>${sepal.logLocation}/sepal-sandbox-manager.log</file>
         <append>false</append>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -52,12 +44,6 @@
     <logger name="org.openforis" additivity="false" level="DEBUG">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
-    </logger>
-
-
-    <logger name="org.openforis.sepal.geoserver" additivity="false" level="DEBUG">
-        <appender-ref ref="FILE_GEOSERVER"/>
-        <appender-ref ref="STDOUT"/>
     </logger>
 
     <logger name="org.openforis.sepal.metadata" additivity="false" level="DEBUG">

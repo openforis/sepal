@@ -111,13 +111,12 @@ class DockerRESTClient implements DockerClient {
                 portsToCheck: conf.sandboxPortsToCheck,
                 binds       : [
                         "$conf.mountingHomeDir/$username:/home/$username",
-                        "$conf.publicHomeDir:$conf.publicHomeDir",
+                        "$conf.publicHomeDir:/sepal/public",
                         "/data/sepal/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
                 ],
                 imageName   : conf.dockerImageName
         ]
     }
-
 
     private void startContainer(RESTClient restClient, SepalSession sandbox) {
         def startPath = "containers/$sandbox.containerId/start"

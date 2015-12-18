@@ -78,8 +78,6 @@
                             <li @if(isset($current_page)&& $current_page=='search') class='active' @endif>{{ HTML::link('search', 'Search') }}</li>
                             @endif
 
-                            <li  @if(isset($current_page)&& $current_page=='visualize') class='active' @endif >{{ HTML::link('visualize', 'Visualize') }}</li>
-
                             <li  @if(isset($current_page)&& $current_page=='contact') class='active' @endif >{{ HTML::link('contact', 'Contact us') }}</li>
                         </ul>
                     </div><!--/.nav-collapse -->

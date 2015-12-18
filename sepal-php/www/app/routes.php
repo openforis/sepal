@@ -37,7 +37,6 @@ Route::group(array('before' => 'auth'), function () {
     Route::post('subfolder', 'DashboardController@showSubFolders');
     Route::get('terminal', 'SshController@ssh');
     Route::get('terminalData','SshController@requestSshSession');
-    Route::get('visualize', 'VisualizeController@showVisualization');
     //config
     Route::get('cronsetupbydays', 'DashboardController@cronSetupForm');
     Route::post('cronsetupbydays', 'DashboardController@cronSetupForm');

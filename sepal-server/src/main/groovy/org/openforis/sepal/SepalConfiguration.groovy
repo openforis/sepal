@@ -13,14 +13,8 @@ class SepalConfiguration {
     private static Logger LOG = null
 
     public static final String MOUNTING_HOME_DIR_PARAMETER = 'mounting.homeDir'
-    public static final String HOME_DIR_PARAMETER = 'home.dir'
-    public static final String TARGET_DIR_PARAMETER = 'target.dir'
     public static final String PROCESSING_CHAIN_PARAMETER = 'processing.chain'
-    public static final String STYLE_PARAMETER = 'style'
     public static final String LAYER_FOLDER_NAME_PARAMETER = 'layer.folder.name'
-    public static final String GEOSERVER_URL_PARAMETER = 'geoserver.url'
-    public static final String GEOSERVER_USER_PARAMETER = 'geoserver.user'
-    public static final String GEOSERVER_PWD_PARAMETER = 'geoserver.pwd'
     public static final String WEBAPP_PORT_PARAMETER = 'webapp.port'
     public static final String JDBC_CONN_STRING_PARAMETER = 'jdbc.conn.string'
     public static final String JDBC_CONN_USER_PARAMETER = 'jdbc.conn.user'
@@ -40,7 +34,6 @@ class SepalConfiguration {
     public static final String DOCKER_DAEMON_PORT = 'docker.daemonPort'
     public static final String DOCKER_REST_ENTRYPOINT = 'docker.restEntryPoint'
     public static final String CRAWLER_RUN_DELAY = 'metadata.crawler.delay'
-    public static final String USER_CREDENTIALS_HOME_DIR = 'user.credentials.homeDir'
     public static final String PUBLIC_HOME_DIR = 'sepal.publicHomeDir'
     public static final String SANBOX_PORTS_TO_CHECK = 'sepal.sandbox.healtCheckPorts'
     public static final String CONTAINER_INACTIVE_TIMEOUT = 'sandbox.inactive_timeout'
@@ -103,31 +96,29 @@ class SepalConfiguration {
     def getSepalWorkingMode() {
         def workingMode = PRIVATE_LAN
         def workingModeRaw = getValue(SEPAL_WORKING_MODE)
-        if (workingModeRaw){
+        if (workingModeRaw) {
             workingMode = SepalWorkingMode.valueOf(workingModeRaw)
         }
-       return workingMode
+        return workingMode
     }
 
-
-
-    def getSepalVersion() { getValue(VERSION)}
+    def getSepalVersion() { getValue(VERSION) }
 
     def getSandboxInstanceSecurityGroup() { getValue(SANDBOX_INSTANCE_SECURITY_GROUP) }
 
-    def getSepalHost () { getValue(SEPAL_HOST) }
+    def getSepalHost() { getValue(SEPAL_HOST) }
 
     def getSepalInstancesConfigFile() { getValue(SEPAL_INSTANCES_CONFIG_FILE) }
 
-    def getEnvironment () { getValue(ENVIRONMENT)}
+    def getEnvironment() { getValue(ENVIRONMENT) }
 
-    def getAwsAccessKey () { getValue(AWS_ACCESS_KEY)}
+    def getAwsAccessKey() { getValue(AWS_ACCESS_KEY) }
 
-    def getAwsSecretKey () { getValue(AWS_SECRET_KEY) }
+    def getAwsSecretKey() { getValue(AWS_SECRET_KEY) }
 
-    def getDataCenterName () { getValue(INSTANCE_DATA_CENTER_NAME) }
+    def getDataCenterName() { getValue(INSTANCE_DATA_CENTER_NAME) }
 
-    def getAvailabilityZoneName () { getValue(INSTANCE_AV_ZONE_NAME) }
+    def getAvailabilityZoneName() { getValue(INSTANCE_AV_ZONE_NAME) }
 
     def getProxySessionTimeout() {
         Integer.parseInt(getValue(SANBOX_PROXY_SESSION_TIMEOUT))
@@ -153,10 +144,6 @@ class SepalConfiguration {
         getValue(PUBLIC_HOME_DIR)
     }
 
-    def getUserCredentialsHomeDir() {
-        getValue(USER_CREDENTIALS_HOME_DIR)
-    }
-
     def getCrawlerRunDelay() {
         Long.parseLong(getValue(CRAWLER_RUN_DELAY))
     }
@@ -176,13 +163,12 @@ class SepalConfiguration {
         getValue(DOCKER_BASE_URI)
     }
 
-
     def getDockerImageName() {
         getValue(DOCKER_IMAGE_NAME)
     }
 
     def getDockerDaemonURI(def baseURI = getDockerBaseURI()) {
-        getDockerDaemonTcpScheme() + "://"  +  baseURI + ':' + getDockerDaemonPort() + '/' + getDockerRESTEntryPoint()
+        getDockerDaemonTcpScheme() + "://" + baseURI + ':' + getDockerDaemonPort() + '/' + getDockerRESTEntryPoint()
     }
 
     def getProcessingHomeDir() {
@@ -192,7 +178,6 @@ class SepalConfiguration {
     def getUserHomeDir() {
         getValue(USER_HOME_DIR)
     }
-
 
     def getDownloadWorkingDirectory() {
         getValue(DOWNLOADS_WORKING_DIRECTORY)
@@ -238,40 +223,12 @@ class SepalConfiguration {
         Integer.parseInt(getValue(WEBAPP_PORT_PARAMETER))
     }
 
-    def getHomeDir() {
-        getValue(HOME_DIR_PARAMETER)
-    }
-
     def getMountingHomeDir() {
         getValue(MOUNTING_HOME_DIR_PARAMETER)
     }
 
-    def getTargetDir() {
-        getValue(TARGET_DIR_PARAMETER)
-    }
-
     def getProcessingChain() {
         getValue(PROCESSING_CHAIN_PARAMETER)
-    }
-
-    def getStyle() {
-        getValue(STYLE_PARAMETER)
-    }
-
-    def getLayerFolderName() {
-        getValue(LAYER_FOLDER_NAME_PARAMETER)
-    }
-
-    def getGeoServerUrl() {
-        getValue(GEOSERVER_URL_PARAMETER)
-    }
-
-    def getGeoServerUser() {
-        getValue(GEOSERVER_USER_PARAMETER)
-    }
-
-    def getGeoServerPwd() {
-        getValue(GEOSERVER_PWD_PARAMETER)
     }
 
     String getLdapHost() {
@@ -294,6 +251,6 @@ class SepalConfiguration {
     }
 }
 
-enum SepalWorkingMode{
-    MONOLITICH,PUBLIC_WAN,PRIVATE_LAN
+enum SepalWorkingMode {
+    MONOLITICH, PUBLIC_WAN, PRIVATE_LAN
 }

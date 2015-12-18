@@ -96,10 +96,6 @@ to prevent firewalls from blocking SSH.
 **nginx** -
 Off-the-shelf HTTP and reverse proxy server, proxying all SEPAL HTTP endpoints.
 
-**GeoServer** -
-Off-the-shelf server for viewing and editing geospatial data. Used in SEPAL to visualize user
-generated data products.
-
 **GateOne** -
 Off-the-shelf web-based SSH client. Gives  users SSH access to their Sandbox in a web browser.
 

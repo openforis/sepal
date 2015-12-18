@@ -1,19 +1,28 @@
 #!/bin/bash
 
-sleep 10
-ldapWaiting=true
-netstat -ntlp | grep ":389"  >/dev/null 2>&1 && ldapWaiting=false
+function sepalAvailable()  {
+    ldapsearch \
+        -LLxh localhost \
+        -b dc=sepal,dc=org \
+        -D "cn=admin,dc=sepal,dc=org" \
+        -w "$LDAP_ADMIN_PASSWORD" \
+        | grep "dc=sepal,dc=org" | wc -l
+}
 
 for i in {50..0}; do
-    if netstat -ntlp | grep ":389"  >/dev/null 2>&1; then
-		break
-	fi
-	echo 'Waiting for LDAP...'
-	sleep 1
+    if [ $(sepalAvailable) -eq 0 ]; then
+        echo 'Waiting for LDAP...'
+        sleep 1
+    else
+	    break
+    fi
 done
 if [ "$i" = 0 ]; then
     echo >&2 'LDAP init process failed.'
 	exit 1
 fi
 
-ldapadd -x -D cn=admin,dc=sepal,dc=org -w "$LDAP_ADMIN_PASSWORD" -f /config/add_content.ldif || true
+ldapadd -x -D cn=admin,dc=sepal,dc=org -w "$LDAP_ADMIN_PASSWORD" -f /config/add_content.ldif
+
+touch /data/started
+exit 0

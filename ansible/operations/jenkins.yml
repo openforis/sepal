@@ -14,7 +14,6 @@
     - role: build-oft
     - role: build-sandbox
     - role: build-gateone
-    - role: build-geoserver
     - role: build-haproxy
     - role: build-mysql
     - role: build-nginx
