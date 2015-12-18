@@ -37,7 +37,6 @@
         SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
         PLANET_LABS_API_KEY_SEPAL_ENV: "{{ planet_labs_api_key }}"
         MYSQL_PASSWORD_SEPAL_ENV: "{{ mysql_password }}"
-        GEOSERVER_PASSWORD_SEPAL_ENV: "{{ geoserver_password }}"
         GATE_ONE_SECRET_SEPAL_ENV: "{{ gate_one_secret }}"
         GATE_ONE_PUBLIC_SEPAL_ENV: "{{ gate_one_public }}"
         SEPAL_URI_SEPAL_ENV: "{{ 'http://10.0.2.15:1025/data' if local_sepal == true else 'http://sepal:1025/data' }}"

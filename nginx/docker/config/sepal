@@ -2,13 +2,6 @@ server {
     listen   80;
     access_log                /var/log/nginx/sepal.http.log;
 
-    location /geoserver/ {
-        proxy_set_header X-Real-IP  $remote_addr;
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header Host $host;
-        proxy_pass http://geoserver:8080;
-    }
-
     location ~ ^/user/(?<user>[^/]+)/(?<service>[^/]+) {
         rewrite ^/user/(?<user>[^/]+)/(?<service>[^/]+)\/?(?<relative>.*) /$relative break;
         proxy_set_header X-Real-IP  $remote_addr;

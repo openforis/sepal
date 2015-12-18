@@ -2,7 +2,6 @@ package org.openforis.sepal
 
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.endpoint.Endpoints
-import org.openforis.sepal.geoserver.GeoServerLayerMonitor
 import org.openforis.sepal.instance.ConcreteInstanceManager
 import org.openforis.sepal.instance.JdbcInstanceDataRepository
 import org.openforis.sepal.instance.amazon.AWSInstanceProviderManager
@@ -41,7 +40,6 @@ class Main {
         startSandboxManager()
         deployEndpoints()
         startSceneManager()
-        startLayerMonitor()
         startCrawling()
     }
 
@@ -87,10 +85,6 @@ class Main {
         def metadataProviderManager = new ConcreteMetadataProviderManager(dataSetRepository)
         metadataProviderManager.registerCrawler(new EarthExplorerMetadataCrawler(new JDBCUsgsDataRepository(connectionManager), new HttpResourceLocator()))
         metadataProviderManager.start();
-    }
-
-    static startLayerMonitor() {
-        GeoServerLayerMonitor.start()
     }
 
     static startSceneManager() {

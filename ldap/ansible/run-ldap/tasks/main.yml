@@ -8,6 +8,8 @@
 - copy: src=~/.sepal/certificates/ldap-key.pem dest=/data/ldap/certificates/ldap-key.pem
 - copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/ldap/certificates/ldap-ca.crt.pem
 
+- file: path="/data/ldap/started" state=absent
+
 - name: Start container
   docker:
     docker_api_version: "1.16"
@@ -39,4 +41,4 @@
       LDAP_TLS_VERIFY_CLIENT: never
 
 - name: Wait until started
-  wait_for: host=0.0.0.0 port=389 delay=5
+  wait_for: path=/data/ldap/started

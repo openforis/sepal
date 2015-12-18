@@ -11,6 +11,5 @@ docker tag localhost/openforis/mysql:${SRC_VER} localhost/openforis/mysql:${VERS
 docker tag localhost/openforis/ssh-gateway:${SRC_VER} localhost/openforis/ssh-gateway:${VERSION}
 docker tag localhost/openforis/sandbox:${SRC_VER} localhost/openforis/sandbox:${VERSION}
 docker tag localhost/openforis/gateone:${SRC_VER} localhost/openforis/gateone:${VERSION}
-docker tag localhost/openforis/geoserver:${SRC_VER} localhost/openforis/geoserver:${VERSION}
 docker tag localhost/openforis/haproxy:${SRC_VER} localhost/openforis/haproxy:${VERSION}
 
