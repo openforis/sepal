@@ -7,7 +7,7 @@ apt-get update && apt-get install -y \
     libgstreamer-plugins-base0.10-dev
 
 #installs tuiview
-/opt/miniconda3/bin/conda install -y -c https://conda.binstar.org/osgeo arcsi tuiview
+/opt/miniconda3/bin/conda install -y -n python3_4 -c https://conda.binstar.org/osgeo tuiview
 
 
 #installs /rstudio

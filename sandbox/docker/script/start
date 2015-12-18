@@ -19,4 +19,13 @@ rm /init_image.sh
 
 echo "$ldap_host ldap" >> /etc/hosts
 
+userHome=/home/$1/
+
+
+cp /etc/skel/.bashrc "$userHome"
+cp /etc/skel/.profile "$userHome"
+cp /etc/skel/.bash_logout "$userHome"
+
+source /home/$1/.bashrc
+
 /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

@@ -37,3 +37,4 @@
       AVAILABILITY_ZONE_SEPAL_ENV: "{{ availability_zone }}"
       AWS_ACCESS_KEY_ID_SEPAL_ENV: "{{ aws_access_key_id }}"
       AWS_SECRET_ACCESS_KEY_SEPAL_ENV: "{{ aws_secret_access_key }}"
+      SEPAL_WORKING_MODE_SEPAL_ENV: "{{ sepal_working_mode }}"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cp /config/sepal /etc/nginx/sites-enabled/
+rm -rf /etc/nginx/sites-enabled/* && cp /config/sepal /etc/nginx/sites-enabled/
 
 mkdir -p /data/logs
 rm -rf /var/log/nginx && ln -sf /data/logs /var/log/nginx

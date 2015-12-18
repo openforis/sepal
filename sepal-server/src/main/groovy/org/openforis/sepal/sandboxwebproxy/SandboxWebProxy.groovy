@@ -6,6 +6,7 @@ import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.session.*
 import org.openforis.sepal.session.SepalSessionManager
+import org.openforis.sepal.session.model.SepalSession
 import org.openforis.sepal.user.NonExistingUser
 
 import java.util.concurrent.Executors
@@ -82,10 +83,10 @@ class SandboxWebProxy {
     }
 
     private static class Listener extends SessionDestroyedListener {
-        private final SepalSessionManager sandboxManager
+        private final SepalSessionManager sepalSessionManager
 
         Listener(SepalSessionManager sandboxManager) {
-            this.sandboxManager = sandboxManager
+            this.sepalSessionManager = sandboxManager
         }
 
         void sessionDestroyed(Session session, HttpServerExchange exchange, SessionDestroyedReason reason) {
@@ -94,11 +95,11 @@ class SandboxWebProxy {
 
     private static class SessionBasedUriProvider implements DynamicProxyClient.UriProvider {
         private final Map<String, Integer> endpointByPort
-        private final SepalSessionManager sandboxManager
+        private final SepalSessionManager sepalSessionManager
 
         SessionBasedUriProvider(Map<String, Integer> endpointByPort, SepalSessionManager sandboxManager) {
             this.endpointByPort = endpointByPort
-            this.sandboxManager = sandboxManager
+            this.sepalSessionManager = sandboxManager
         }
 
         URI provide(HttpServerExchange exchange) {
@@ -137,14 +138,21 @@ class SandboxWebProxy {
             def sessionKey = determineSandboxHostSessionKey(user)
             String sandboxHost = session.getAttribute(sessionKey) as String
             if (!sandboxHost) {
-                def sandbox
+                SepalSession sepalSession
                 try {
-                    sandbox = sandboxManager.getUserSandbox(user)
-                    session.setAttribute(SANDBOX_ID_SESSION_ATTR_NAME, sandbox.sandboxId)
+                    def userSepalSessions = sepalSessionManager.getUserSessions(user)
+                    if (userSepalSessions?.activeSessions){
+                        def activeSession = userSepalSessions.activeSessions.first()
+                        sepalSession = sepalSessionManager.bindToUserSession(user,activeSession.sessionId)
+                    }else{
+                        def baseInstanceType = userSepalSessions.availableInstanceTypes.first()
+                        sepalSession = sepalSessionManager.generateNewSession(user, baseInstanceType.id)
+                    }
+                    session.setAttribute(SANDBOX_ID_SESSION_ATTR_NAME, sepalSession.sessionId)
                 } catch (NonExistingUser e) {
                     throw new BadRequest(e.getMessage())
                 }
-                sandboxHost = sandbox.uri
+                sandboxHost = sepalSession.connectionUrl
                 session.setAttribute(sessionKey, sandboxHost)
             }
             sandboxHost

@@ -1,0 +1,1 @@
+ALTER TABLE sepal_sandbox.instances MODIFY public_ip  VARCHAR(60) NULL;

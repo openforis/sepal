@@ -65,10 +65,15 @@ class RestAWSClient implements AWSClient{
         request.withKeyName(fetchKeyPairName(dataCenter))
         request.withInstanceType(instanceType.name)
         request.withSecurityGroups(securityGroup)
-        request.withImageId(fetchImageId(dataCenter,environment))
+        request.withImageId(fetchImageId(dataCenter,environment,availabilityZone))
         request.withMinCount(1)
         request.withMaxCount(1)
         request.withPlacement(new Placement(availabilityZone: availabilityZone))
+        request.withBlockDeviceMappings(new BlockDeviceMapping(deviceName: '/dev/sda1', ebs: new EbsBlockDevice(volumeSize: 15, volumeType: VolumeType.Standard, deleteOnTermination: true)))
+
+
+
+
         RunInstancesResult result = client.runInstances(request)
         result?.reservation?.each { reservation ->
             reservation?.instances?.each { awsInstance ->
@@ -147,10 +152,10 @@ class RestAWSClient implements AWSClient{
 
     }
 
-    private String fetchImageId ( DataCenter dataCenter, String environment ){
+    private String fetchImageId ( DataCenter dataCenter, String environment, String availabilityZone ){
         def client = getClient(getDataCenterRegion(dataCenter))
         def request = new DescribeImagesRequest()
-        request.withFilters(new Filter("tag:Environment",[environment]))
+        request.withFilters(new Filter("tag:Environment",[environment]), new Filter('tag:AvailabilityZone',[availabilityZone]))
         def response = client.describeImages(request)
         if (!response?.images){
             throw new InvalidInstance("Unable to get image for $dataCenter in $environment")

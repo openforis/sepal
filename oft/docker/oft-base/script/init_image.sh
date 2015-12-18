@@ -27,7 +27,8 @@ apt-get update && apt-get install -y \
     otb-bin-qt \
     python-otb \
     nano \
-    csh
+    csh \
+    libgmp3-dev
 
 #install oft
 wget http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
@@ -37,11 +38,17 @@ chmod u+x OpenForisToolkit.run
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 chmod u+x Miniconda3-latest-Linux-x86_64.sh
 ./Miniconda3-latest-Linux-x86_64.sh -b -p /opt/miniconda3
-/opt/miniconda3/bin/conda install -y -c https://conda.binstar.org/osgeo arcsi
+
+# Arcsi need python 3.4 Those lines creates a conda environment which uses Python 3.4
+/opt/miniconda3/bin/conda create -n python3_4 python=3.4
+source activate python3_4
+
+
+/opt/miniconda3/bin/conda install -y -n python3_4 -c https://conda.binstar.org/osgeo arcsi
 rm -rf ./Miniconda3-latest-Linux-x86_64.sh
 echo "GDAL_DRIVER_PATH=\"/opt/miniconda3/lib/gdalplugins:$GDAL_DRIVER_PATH\"" >> /etc/environment
 echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
-echo "PATH=\"/opt/miniconda3/bin:$PATH\"" >> /etc/environment
+echo "PATH=\"/opt/miniconda3/bin:/opt/miniconda3/envs/python3_4/bin:/$PATH\"" >> /etc/environment
 
 source /etc/environment
 

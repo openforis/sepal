@@ -77,6 +77,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
                 }
             }
         }
+        session.connectionUrl = getConnectionURL(session)
         return session
     }
 
