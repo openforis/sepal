@@ -16,17 +16,22 @@
 - name: Create public dir
   file:
     path: "/efs/data/sepal/public"
-    group: "9998"
     mode: "u=rwx,g=rxs,o=rx"
     state: directory
 
 - name: Create data dir
   file:
-    path: "/efs/data/sepal/data"
-    owner: "sepal"
-    group: "sepal"
+    path: "/efs/data/sepal/home"
+    owner: "9999"
+    group: "9999"
     mode: "u=rwx,g=rwxs"
     state: "directory"
+
+- name: Create ssh-gateway home dir
+  file:
+    path: "/efs/data/ssh-gateway/home"
+    mode: "u=rwx,g=rxs,o=rx"
+    state: directory
 
 - name: Unmount Efs Nfs4
   mount:
@@ -42,10 +47,10 @@
 
 - name: Mount Efs Sepal Data Dir
   mount:
-    name: "/data/sepal/data"
+    name: "/data/sepal/home"
     fstype: "nfs4"
     state: "mounted"
-    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/data"
+    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/home"
 
 - name: Mount Efs Sepal Public Dir
   mount:
@@ -53,3 +58,10 @@
     fstype: "nfs4"
     state: "mounted"
     src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/public"
+
+- name: Mount Efs Ssh-gateway Home Dir
+  mount:
+    name: "/data/ssh-gateway/home"
+    fstype: "nfs4"
+    state: "mounted"
+    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/ssh-gateway/home"

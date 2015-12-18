@@ -21,7 +21,6 @@
       set_fact:
         sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
         ldap_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
-        sandbox_ami_id: "{{ ami_ids[region] }}"
         sepal_working_mode: "PRIVATE_LAN"
 
   roles:

@@ -26,20 +26,41 @@
     - name: Install Expect
       apt:
         name: "expect"
-    - name: Create /data/sepal directory
+    - name: Create /data/sepal directory structure
       file:
         path: "/data/sepal"
         state: directory
-    - name: Mount Efs Sepal Dir
+    - name: Create /data/sepal directory structure
+      file:
+        path: "/data/sepal/home"
+        state: directory
+    - name: Create /data/sepal directory structure
+      file:
+        path: "/data/sepal/public"
+        state: directory
+    - name: Create /data/sepal directory structure
+      file:
+        path: "/data/sepal/certificates"
+        state: directory
+
+    - name: Mount Efs Sepal Home Dir
       mount:
-        name: "/data/sepal/"
+        name: "/data/sepal/home"
         fstype: "nfs4"
         state: "mounted"
-        src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/"
+        src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/home"
+    - name: Mount Efs Sepal Public Dir
+      mount:
+        name: "/data/sepal/public"
+        fstype: "nfs4"
+        state: "mounted"
+        src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/public"
     - name: Copy repository login script
       template: src=/tmp/login_to_repo dest=/data/sepal/login_to_repo mode=0777 remote_src=True
     - name: Copy pull sandbox script
       template: src=/tmp/pull_sandbox.sh dest=/data/sepal/pull_sandbox.sh mode=0777 remote_src=True
+    - name: Copy LDAP Certificate
+      copy: src=/tmp/ldap-ca.crt.pem dest=/data/sepal/certificates/ldap-ca.crt.pem
 
   roles:
     - role: unattended-upgrades

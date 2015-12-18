@@ -5,7 +5,6 @@
     "source_ami": "",
     "region": "",
     "version": "",
-    "environment": "",
     "userHome": "",
     "efs_id": "",
     "av_zone": ""
@@ -20,8 +19,7 @@
     "ssh_username": "ubuntu",
     "ami_name": "Sandbox({{user  `av_zone`}}) - {{user `version`}}",
     "tags": {
-      "Build_Number": "{{user `version`}}",
-      "Environment": "{{user  `environment`}}",
+      "Version": "{{user `version`}}",
       "AvailabilityZone": "{{user  `av_zone`}}"
     }
   }],
@@ -50,8 +48,11 @@
       "source": "{{user `userHome`}}/.sepal/secret.yml",
       "destination": "/tmp/secret.yml"
     },
-
-
+    {
+      "type": "file",
+      "source": "{{user `userHome`}}/.sepal/certificates/ldap-ca.crt.pem",
+      "destination": "/tmp/ldap-ca.crt.pem"
+    },
     {
     "type": "ansible-local",
     "playbook_file": "/opt/sepal/sandbox/ansible/provision-sandbox/provision.yml",

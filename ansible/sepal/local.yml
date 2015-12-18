@@ -29,7 +29,6 @@
        aws_access_key_id: ""
        aws_secret_access_key: ""
        availability_zone: ""
-       sandbox_ami_id: ""
        sepal_working_mode: "MONOLITICH"
 
   roles:

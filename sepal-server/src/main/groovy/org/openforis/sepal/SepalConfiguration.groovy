@@ -57,6 +57,7 @@ class SepalConfiguration {
     public static final String SANDBOX_AMI_ID = 'sandbox.ami_id'
     public static final String SANDBOX_INSTANCE_SECURITY_GROUP = 'sandbox.instance_security_group'
     public static final String SEPAL_WORKING_MODE = "sepal.working_mode"
+    public static final String VERSION = "version"
 
 
     Properties properties
@@ -108,7 +109,9 @@ class SepalConfiguration {
        return workingMode
     }
 
-    def getSandboxAmiId() { getValue (SANDBOX_AMI_ID) }
+
+
+    def getSepalVersion() { getValue(VERSION)}
 
     def getSandboxInstanceSecurityGroup() { getValue(SANDBOX_INSTANCE_SECURITY_GROUP) }
 
