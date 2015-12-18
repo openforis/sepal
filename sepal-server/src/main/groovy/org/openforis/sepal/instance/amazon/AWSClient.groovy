@@ -19,7 +19,7 @@ interface AWSClient {
 
     Instance fetchInstance ( DataCenter dataCenter, String instanceName, Map<String,String> filters, String... metadataToFetch )
 
-    Instance newInstance (DataCenter dataCenter, InstanceType instanceType, String environment, String availabilityZone, Map<String,String> tags)
+    Instance newInstance (DataCenter dataCenter, InstanceType instanceType,String availabilityZone, Map<String,String> tags)
 
     Instance applyMetadata (DataCenter dataCenter, String instanceName, Map<String,String> tags)
 }
@@ -33,12 +33,12 @@ class RestAWSClient implements AWSClient{
     private Map<String,String> regionKeys = [:]
     private final BasicAWSCredentials credentials
     private final String securityGroup
-    private final String amiName
+    private final String version
 
-    RestAWSClient(String accessKey, String secretKey, String securityGroup, String amiName){
+    RestAWSClient(String accessKey, String secretKey, String securityGroup, String version){
         credentials = new BasicAWSCredentials(accessKey,secretKey)
         this.securityGroup = securityGroup
-        this.amiName = amiName
+        this.version = version
     }
 
     private AmazonEC2Client getClient(Region region){
@@ -58,14 +58,14 @@ class RestAWSClient implements AWSClient{
     }
 
     @Override
-    Instance newInstance(DataCenter dataCenter, InstanceType instanceType, String environment, String availabilityZone, Map<String, String> tags) {
+    Instance newInstance(DataCenter dataCenter, InstanceType instanceType,String availabilityZone, Map<String, String> tags) {
         def instance = null
         def client = getClient(getDataCenterRegion(dataCenter))
         RunInstancesRequest request = new RunInstancesRequest()
         request.withKeyName(fetchKeyPairName(dataCenter))
         request.withInstanceType(instanceType.name)
         request.withSecurityGroups(securityGroup)
-        request.withImageId(fetchImageId(dataCenter,environment,availabilityZone))
+        request.withImageId(fetchImageId(dataCenter,availabilityZone))
         request.withMinCount(1)
         request.withMaxCount(1)
         request.withPlacement(new Placement(availabilityZone: availabilityZone))
@@ -152,13 +152,13 @@ class RestAWSClient implements AWSClient{
 
     }
 
-    private String fetchImageId ( DataCenter dataCenter, String environment, String availabilityZone ){
+    private String fetchImageId ( DataCenter dataCenter,String availabilityZone ){
         def client = getClient(getDataCenterRegion(dataCenter))
         def request = new DescribeImagesRequest()
-        request.withFilters(new Filter("tag:Environment",[environment]), new Filter('tag:AvailabilityZone',[availabilityZone]))
+        request.withFilters(new Filter("tag:Version",[version]), new Filter('tag:AvailabilityZone',[availabilityZone]))
         def response = client.describeImages(request)
         if (!response?.images){
-            throw new InvalidInstance("Unable to get image for $dataCenter in $environment")
+            throw new InvalidInstance("Unable to get image for $dataCenter having version $version")
         }
         def image = response.images.first()
         return image.imageId

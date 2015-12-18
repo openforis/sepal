@@ -114,7 +114,7 @@ class StubProviderManager implements InstanceProviderManager{
     }
 
     @Override
-    Instance newInstance(String environment, DataCenter dataCenter, String username, InstanceType instanceType) {
+    Instance newInstance(DataCenter dataCenter, String username, InstanceType instanceType) {
         newInstanceInvocations++
         return new Instance()
     }

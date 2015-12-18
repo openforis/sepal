@@ -37,8 +37,8 @@ class LocalInstanceProviderManager implements InstanceProviderManager{
     }
 
     @Override
-    Instance newInstance(String environment, DataCenter dataCenter, String username, InstanceType instType) {
-        gatherFacts(new Instance(owner: username, instanceType: instType),environment)
+    Instance newInstance(DataCenter dataCenter, String username, InstanceType instType) {
+        gatherFacts(new Instance(owner: username, instanceType: instType),'Local')
     }
 
     @Override

@@ -99,7 +99,7 @@ class ConcreteInstanceManager implements InstanceManager{
         }else{
             LOG.info("Going to create a new instance")
             def providerManager = fetchProviderManager(dataCenter.provider)
-            instance =providerManager.newInstance(environment,dataCenter,username,dataRepository.fetchInstanceTypeById(containerInstanceType))
+            instance =providerManager.newInstance(dataCenter,username,dataRepository.fetchInstanceTypeById(containerInstanceType))
             instance.id = dataRepository.newInstance(instance)
         }
         return instance
