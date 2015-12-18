@@ -258,7 +258,7 @@ class UsgstiffController extends \BaseController {
 
     private function copyFromImageLogToUserDir($sceneId, $userName, $processingScript) {
         $sourceDir = "/data/sdms-data-repo/scene-zip/$sceneId";
-        $userRepository = "/data/home/$userName/sdmsrepository";
+        $userRepository = "/data/home/$userName/downloads";
         $this->execAndLog("sudo chown $userName: $userRepository");
         $this->execAndLog("sudo mkdir -p $userRepository");
 

@@ -33,7 +33,7 @@ if ! ldapid "$USERNAME" >> $logFile 2>&1; then
 
         # Create user home directory
         mkdir -p $USER_DATA_HOME >> $logFile 2>&1
-        mkdir $USER_DATA_HOME/smdsrepository >> $logFile 2>&1
+        mkdir $USER_DATA_HOME/downloads >> $logFile 2>&1
         # Set permission directory, to directly allow file scanning of the directory
         mkdir -m 770 $USER_DATA_HOME/layers  >> $logFile 2>&1
 

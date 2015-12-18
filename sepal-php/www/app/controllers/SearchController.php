@@ -499,12 +499,12 @@ Class SearchController extends \BaseController {
             //ssh FTP trigger for file transfer
             $sshFTP = ssh2_sftp($sshConnection);
             //creating the home sdms repository if not created
-            ssh2_sftp_mkdir($sshFTP, '/data/home/' . $userName . '/sdmsrepository');
+            ssh2_sftp_mkdir($sshFTP, '/data/home/' . $userName . '/downloads');
   
             //loopig each image as a unique request
             foreach ($requestScenes as $filenameIn) {
                 //copying and moving file from SEPAL repo to the user home directory sdms repo.
-                ssh2_scp_send($sshConnection, '/var/www/html/public/repository/' . $filenameIn, '/data/home/' . $userName . '/sdmsrepository/' . $filenameIn, 0644);
+                ssh2_scp_send($sshConnection, '/var/www/html/public/repository/' . $filenameIn, '/data/home/' . $userName . '/downloads/' . $filenameIn, 0644);
 
                 //Database activity 
                 $current_date = date("Y-m-d H:i:s ");
