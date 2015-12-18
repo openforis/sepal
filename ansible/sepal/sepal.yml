@@ -45,4 +45,3 @@
     - role: run-sepal-php
     - role: run-nginx
     - role: run-haproxy
-    - role: pull-sandbox

@@ -27,7 +27,7 @@ class AWSInstanceProviderManager implements InstanceProviderManager {
     }
 
     @Override
-    Instance newInstance(DataCenter dataCenter, String username, InstanceType instanceType) {
+    Instance newInstance(String environment,DataCenter dataCenter, String username, InstanceType instanceType) {
         def createdInstance = awsClient.newInstance(dataCenter,instanceType,availabilityZone,['Type': 'Sandbox', 'owner': username, 'Environment' : environment, 'Name': "Sandbox($environment)"])
         createdInstance.owner = username
         createdInstance.instanceType = instanceType
