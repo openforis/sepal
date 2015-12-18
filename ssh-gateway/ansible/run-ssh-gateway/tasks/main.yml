@@ -25,7 +25,7 @@
     volumes:
     - "/data/ssh-gateway:/data"
     # TODO: Remove these mounts once user directories are created by sepal
-    - "/data/sepal/data:/sepal/home"
+    - "/data/sepal/home:/sepal/home"
     - "/data/sepal/public:/sepal/public"
     env:
       SEPAL_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"

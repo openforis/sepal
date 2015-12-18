@@ -30,7 +30,7 @@
     #- "{{ '/www/public:/var/www/html/public' if local_php else '' }}"
     - "/data/sepal-php:/data"
 
-    - "/data/sepal/data:/data/home/" # This path is hard-coded - don't change it. This module will die anyway
+    - "/data/sepal/home:/data/home/" # This path is hard-coded - don't change it. This module will die anyway
     - "/data/sepal/public:/sepal/public/"
     - "/data/sepal/processing_scripts:/processing_scripts"
     env:

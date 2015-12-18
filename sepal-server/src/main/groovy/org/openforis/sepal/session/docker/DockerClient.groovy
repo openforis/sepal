@@ -118,7 +118,6 @@ class DockerRESTClient implements DockerClient {
         ]
     }
 
-
     private void startContainer(RESTClient restClient, SepalSession sandbox) {
         def startPath = "containers/$sandbox.containerId/start"
         def body = new JsonOutput().toJson([PublishAllPorts: true])
