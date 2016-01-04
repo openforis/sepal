@@ -22,7 +22,10 @@ if [ "$i" = 0 ]; then
 	exit 1
 fi
 
+echo "Setting up content..."
 ldapadd -x -D cn=admin,dc=sepal,dc=org -w "$LDAP_ADMIN_PASSWORD" -f /config/add_content.ldif
 
+echo "Content setup"
 touch /data/started
+echo "LDAP started"
 exit 0
