@@ -14,8 +14,6 @@
 
     <build>
         <plugins>
-
-
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.5.3</version>
@@ -50,11 +48,6 @@
                     </filesets>
                 </configuration>
             </plugin>
-
-
-
         </plugins>
     </build>
-
-
 </project>

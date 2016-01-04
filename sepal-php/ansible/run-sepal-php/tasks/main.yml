@@ -1,4 +1,16 @@
 ---
+
+- name: "Determine if binaries should be built"
+  script: ./should-rebuild.sh
+  delegate_to: 127.0.0.1
+  sudo: false
+  register: should_rebuild
+  changed_when: should_rebuild.stdout_lines[0] == 'true'
+
+- name: "Build binaries"
+  shell: mvn clean package -DskipTests=true chdir="/opt/sepal/sepal-php"
+  when: should_rebuild.changed
+
 - file: path="/data/sepal-php" state=directory
 - file: path="/data/sepal-php/certificates" state=directory
 
