@@ -1,0 +1,8 @@
+---
+
+- name: "Run {{ image }}"
+  include: "../../../../{{ image }}/run.yml"
+
+
+
+

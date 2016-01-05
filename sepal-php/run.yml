@@ -1,0 +1,45 @@
+---
+
+- file: path="/data/sepal-php" state=directory
+- file: path="/data/sepal-php/certificates" state=directory
+
+- copy: src=~/.sepal/certificates/sepal-https.key dest=/data/sepal-php/certificates
+- copy: src=~/.sepal/certificates/sepal-https.ca-bundle dest=/data/sepal-php/certificates
+- copy: src=~/.sepal/certificates/sepal-https.crt dest=/data/sepal-php/certificates
+
+- name: "sepal-php | Start container"
+  docker:
+    docker_api_version: "1.16"
+    name: "php"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/sepal-php:{{ version }}"
+    state: "reloaded"
+    net: "bridge"
+    restart_policy: "always"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    links:
+    - "mysql:mysql"
+    - "sepal:sepal"
+    - "ssh-gateway:ssh-gateway"
+    volumes:
+    #- "{{ '/www/app/controllers:/var/www/html/app/controllers' if local_php else '' }}"
+    #- "{{ '/www/app/views:/var/www/html/app/views' if local_php else '' }}"
+    #- "{{ '/www/app/config:/var/www/html/app/config' if local_php else '' }}"
+    #- "{{ '/www/public:/var/www/html/public' if local_php else '' }}"
+    - "/data/sepal-php:/data"
+
+    - "/data/sepal/home:/data/home/" # This path is hard-coded - don't change it. This module will die anyway
+    - "/data/sepal/public:/sepal/public/"
+    - "/data/sepal/processing_scripts:/processing_scripts"
+    env:
+        SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
+        PLANET_LABS_API_KEY_SEPAL_ENV: "{{ planet_labs_api_key }}"
+        MYSQL_PASSWORD_SEPAL_ENV: "{{ mysql_password }}"
+        GATE_ONE_SECRET_SEPAL_ENV: "{{ gate_one_secret }}"
+        GATE_ONE_PUBLIC_SEPAL_ENV: "{{ gate_one_public }}"
+        SEPAL_URI_SEPAL_ENV: "{{ 'http://10.0.2.15:1025/data' if local_sepal == true else 'http://sepal:1025/data' }}"
+        SEPAL_MACHINE_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
+        VERSION_SEPAL_ENV: "{{ version }}"

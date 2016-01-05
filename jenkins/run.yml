@@ -1,0 +1,30 @@
+---
+
+- name: "jenkins | Copy .sepal folder"
+  copy: src=~/.sepal dest=/home/ubuntu
+
+- name: "jenkins | Copy .ssh folder"
+  copy: src=~/.ssh/sepal dest=/home/ubuntu/.ssh/ mode=0400
+
+
+- name: "jenkins | Start jenkins container"
+  docker:
+    docker_api_version: "1.18"
+    name: "jenkins"
+    pull: 'missing'
+    image: "openforis/jenkins"
+    state: "reloaded"
+    net: "bridge"
+    restart_policy: "always"
+    ports:
+      - "8080:8080"
+      - "5000:5000"
+    volumes:
+      - "/data/jenkins:/var/jenkins_home"
+      - "/home/ubuntu/.sepal:/root/.sepal"
+      - "/home/ubuntu/.ssh/sepal/:/root/.ssh/sepal"
+    env:
+      JENKINS_PASSWD: "{{ jenkins_password }}"
+      AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+      AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+      GITHUB_ACCOUNT_PASSWD: "{{ jenkins_github_user_password }}"

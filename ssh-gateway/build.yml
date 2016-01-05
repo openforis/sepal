@@ -1,0 +1,4 @@
+---
+
+- name: "ssh-gateway | Build"
+  docker_image: path="/opt/sepal/ssh-gateway/docker" name="localhost/openforis/ssh-gateway" state=build

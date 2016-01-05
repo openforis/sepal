@@ -1,0 +1,29 @@
+---
+
+- name: "gateone | Create data dir"
+  file:
+    path: "/data/gateone/"
+    state: directory
+
+- name: "gateone | Start container"
+  docker:
+    docker_api_version: "1.16"
+    name: "gateone"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/gateone:{{ version }}"
+    state: "reloaded"
+    restart_policy: always
+    net: "bridge"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    links:
+    - "ssh-gateway:ssh-gateway"
+    volumes:
+    - "/data/gateone:/data"
+    - "/data/ssh-gateway/home:/ssh-gateway/home"
+    env:
+      GATEONE_SESSION_TIMEOUT_SEPAL_ENV: '3m'
+      GATE_ONE_PUBLIC_SEPAL_ENV: "{{ gate_one_public }}"
+      GATE_ONE_SECRET_SEPAL_ENV: "{{ gate_one_secret }}"

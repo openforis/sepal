@@ -1,0 +1,16 @@
+---
+
+- name: "sepal-php | Determine if binaries should be built"
+  script: ../sepal-php/should-rebuild.sh
+  delegate_to: 127.0.0.1
+  sudo: false
+  register: should_rebuild
+  changed_when: should_rebuild.stdout_lines[0] == 'true'
+
+- name: "sepal-php | Build binaries"
+  shell: mvn clean package -DskipTests=true chdir="/opt/sepal/sepal-php"
+  when: should_rebuild.changed
+
+- name: "sepal-php | Build"
+  docker_image: path="/opt/sepal/sepal-php/docker" name="localhost/openforis/sepal-php" state=build
+

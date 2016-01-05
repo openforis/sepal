@@ -1,4 +1,0 @@
----
-
-- name: Build mysql
-  docker_image: path="/opt/sepal/mysql/docker" name="localhost/openforis/mysql" state=build

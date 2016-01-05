@@ -1,0 +1,4 @@
+---
+
+- name: "gateone | Build"
+  docker_image: path="/opt/sepal/gateone/docker/" name="localhost/openforis/gateone" state=build

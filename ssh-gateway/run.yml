@@ -1,0 +1,33 @@
+---
+- name: "ssh-gateway | Create data dir"
+  file:
+    path: "/data/ssh-gateway"
+    state: directory
+
+- copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/ssh-gateway/ldap-ca.crt.pem
+
+- name: "ssh-gateway | Start container"
+  docker:
+    docker_api_version: "1.16"
+    name: "ssh-gateway"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/ssh-gateway:{{ version }}"
+    state: "reloaded"
+    net: "bridge"
+    restart_policy: "always"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    links:
+    - "sepal:sepal"
+    - "ldap:ldap"
+    volumes:
+    - "/data/ssh-gateway:/data"
+    # TODO: Remove these mounts once user directories are created by sepal
+    - "/data/sepal/home:/sepal/home"
+    - "/data/sepal/public:/sepal/public"
+    env:
+      SEPAL_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
+      SEPAL_ADMIN_WEB_PASSWORD_SEPAL_ENV: "{{ sepal_admin_user_password }}"
+      LDAP_ADMIN_PASSWORD_SEPAL_ENV: "{{ ldap_admin_password }}"

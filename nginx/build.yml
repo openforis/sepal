@@ -1,0 +1,4 @@
+---
+
+- name: "nginx | Build"
+  docker_image: path="/opt/sepal/nginx/docker" name="localhost/openforis/nginx" state=build
