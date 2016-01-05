@@ -8,4 +8,4 @@ rm -rf /var/log/sssd && ln -sf /data/logs/sssd /var/log/sssd
 
 cp /data/certificates/* /container/service/slapd/assets/certs
 
-/usr/bin/supervisord -c /config/supervisord.conf
+exec /usr/bin/supervisord -c /config/supervisord.conf

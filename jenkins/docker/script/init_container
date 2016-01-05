@@ -10,4 +10,4 @@ fi
 
 ln -s ${JENKINS_HOME}/workspace/Sepal /opt/sepal
 
-/jenkins.sh
+exec /jenkins.sh

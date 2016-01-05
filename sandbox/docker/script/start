@@ -28,4 +28,4 @@ cp /etc/skel/.bash_logout "$userHome"
 
 source /home/$1/.bashrc
 
-/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

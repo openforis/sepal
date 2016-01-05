@@ -5,4 +5,4 @@ rm -rf /var/log/supervisor && ln -sf /data/logs /var/log/supervisor
 
 cp -R /script/sqlScripts/* /opt/flyway/sql/
 
-/usr/bin/supervisord -c /config/supervisord.conf
+exec /usr/bin/supervisord -c /config/supervisord.conf

@@ -38,4 +38,11 @@ rm -f /var/log/sepal && ln -sf /data/log /var/log/sepal
 # Unset all env variables ending with _SEPAL_ENV
 unset $(printenv | grep '_SEPAL_ENV' | sed -E "s/([0-9a-zA-Z]+)=.*/\\1/" | tr '\n' ' ')
 
-sudo -u sepal java -jar /opt/sepal/bin/sepal.jar > /var/log/sepal/out.log 2>&1
+# http://veithen.github.io/2014/11/16/sigterm-propagation.html
+trap 'kill -TERM $PID' TERM INT
+sudo -u sepal java -jar /opt/sepal/bin/sepal.jar > /var/log/sepal/out.log 2>&1 &
+PID=$!
+wait $PID
+trap - TERM INT
+wait $PID
+EXIT_STATUS=$?
