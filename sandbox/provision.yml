@@ -61,13 +61,16 @@
       template: src=/tmp/pull_sandbox.sh dest=/data/sepal/pull_sandbox.sh mode=0777 remote_src=True
     - name: Copy LDAP Certificate
       copy: src=/tmp/ldap-ca.crt.pem dest=/data/sepal/certificates/ldap-ca.crt.pem
+    - name: Change ssh default port
+      shell: 'echo "Port 2222" >> /etc/ssh/sshd_config'
+
+
 
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:
         - 'origin=Ubuntu,archive=${distro_codename}-security'
         - 'o=Ubuntu,a=${distro_codename}-updates'
-
     - role: docker.ubuntu
       docker_version: '1.8.1-0~trusty'
       docker_group_members: ['ubuntu']

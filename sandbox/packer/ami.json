@@ -21,7 +21,19 @@
     "tags": {
       "Version": "{{user `version`}}",
       "AvailabilityZone": "{{user  `av_zone`}}"
-    }
+    },
+    "ami_block_device_mappings": [{
+      "device_name": "/dev/sda1",
+      "volume_type": "standard",
+      "volume_size": 15,
+      "delete_on_termination": true
+    }],
+    "launch_block_device_mappings": [{
+      "device_name": "/dev/sda1",
+      "volume_type": "standard",
+      "volume_size": 15,
+      "delete_on_termination": true
+    }]
   }],
   "provisioners": [
     {
