@@ -1,6 +1,10 @@
 ---
 # common tasks
 
+- name: Install nfs-common
+  apt:
+    name: "nfs-common"
+
 - name: Create temp mount dir
   file:
     path: "/efs"

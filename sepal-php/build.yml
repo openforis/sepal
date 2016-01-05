@@ -1,5 +1,8 @@
 ---
 
+- name: "sepal-php | Install Maven"
+  apt: name="maven"
+
 - name: "sepal-php | Determine if binaries should be built"
   script: ../sepal-php/should-rebuild.sh
   delegate_to: 127.0.0.1

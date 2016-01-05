@@ -1,3 +1,7 @@
+
+- name: Install Expect
+  apt: name="expect"
+
 - name: Build Operations server
   hosts: "tag_Type_Operations"
   user: ubuntu
@@ -8,8 +12,6 @@
     - "{{ secret_vars_file }}"
 
   roles:
-    - role: prepare-environment
-
     - role: unattended-upgrades
       unattended_origins_patterns:
         - 'origin=Ubuntu,archive=${distro_codename}-security'
