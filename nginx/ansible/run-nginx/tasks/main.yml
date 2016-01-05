@@ -22,6 +22,6 @@
     links:
     - "gateone:gateone"
     - "sepal:sepal"
-    - "sepal-php:sepal-php"
+    - "php:php"
     volumes:
     - "/data/nginx:/data"
