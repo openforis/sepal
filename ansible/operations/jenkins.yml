@@ -10,16 +10,16 @@
   roles:
     - role: get-binaries
     - role: pull-images
-    - role: build-ldap
-    - role: build-oft
-    - role: build-sandbox
-    - role: build-gateone
-    - role: build-haproxy
-    - role: build-mysql
-    - role: build-nginx
-    - role: build-sepal-php
-    - role: build-sepal-server
-    - role: build-ssh-gateway
+    - { role: build-image, image: ldap}
+    - { role: build-image, image: haproxy}
+    - { role: build-image, image: nginx}
+    - { role: build-image, image: mysql}
+    - { role: build-image, image: gateone}
+    - { role: build-image, image: ssh-gateway}
+    - { role: build-image, image: oft}
+    - { role: build-image, image: sandbox}
+    - { role: build-image, image: sepal-php}
+    - { role: build-image, image: sepal-server}
     - role: tag-images
     - role: push-images
 
