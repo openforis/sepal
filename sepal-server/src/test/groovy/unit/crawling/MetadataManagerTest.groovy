@@ -44,12 +44,12 @@ class MetadataManagerTest extends Specification {
 
     def 'registering a crawler for a given dataset The crawl method should be executed'() {
         when:
-            metadataManager.registerCrawler(metadataCrawler).registerCrawler(metadataCrawler2)
-            metadataManager.start()
-            sleep(2000)
+        metadataManager.registerCrawler(metadataCrawler).registerCrawler(metadataCrawler2)
+        metadataManager.start()
+        sleep(2000)
         then:
-            1 * metadataCrawler.crawl(_)
-            0 * metadataCrawler2.crawl(_)
+        1 * metadataCrawler.crawl(_)
+        0 * metadataCrawler2.crawl(_)
     }
 
 

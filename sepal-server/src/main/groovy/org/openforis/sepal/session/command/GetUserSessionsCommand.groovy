@@ -13,17 +13,17 @@ class GetUserSessionsCommand extends AbstractCommand<UserSessions> {
 
     static constraints(UserRepository userRepository) {
         [
-                username: custom { userRepository.getUser(it)  != null}
+                username: custom { userRepository.getUser(it) != null }
         ]
     }
 
 }
 
-class GetUserSessionsCommandHandler implements CommandHandler<UserSessions,GetUserSessionsCommand> {
+class GetUserSessionsCommandHandler implements CommandHandler<UserSessions, GetUserSessionsCommand> {
 
     SepalSessionManager sandboxManager
 
-    GetUserSessionsCommandHandler(SepalSessionManager sandboxManager){
+    GetUserSessionsCommandHandler(SepalSessionManager sandboxManager) {
         this.sandboxManager = sandboxManager
     }
 

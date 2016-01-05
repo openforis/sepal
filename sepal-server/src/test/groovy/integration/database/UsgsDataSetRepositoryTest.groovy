@@ -32,44 +32,44 @@ class UsgsDataSetRepositoryTest extends Specification {
 
     def 'given an empty database, no result are returned from the usgsrepo'() {
         when:
-            def dataset = usgsRepo.getSceneMetadata(DATASET_ID, SCENE_ID)
+        def dataset = usgsRepo.getSceneMetadata(DATASET_ID, SCENE_ID)
         then:
-            !dataset
+        !dataset
     }
 
     def 'storing a row in the metadata(usgsrepo) table. It is retrieved'() {
         given:
-            def sceneId = metadataScene.sceneID
-            def acquisitionDate = metadataScene.acquisitionDate
+        def sceneId = metadataScene.sceneID
+        def acquisitionDate = metadataScene.acquisitionDate
         when:
-            usgsRepo.storeMetadata(DATASET_ID, metadataScene)
+        usgsRepo.storeMetadata(DATASET_ID, metadataScene)
         then:
-            def sceneMetadata = usgsRepo.getSceneMetadata(DATASET_ID, sceneId)
-            sceneMetadata
-            sceneMetadata.sceneID == sceneId
-            DateTime.toDateString(sceneMetadata.acquisitionDate) == acquisitionDate
+        def sceneMetadata = usgsRepo.getSceneMetadata(DATASET_ID, sceneId)
+        sceneMetadata
+        sceneMetadata.sceneID == sceneId
+        DateTime.toDateString(sceneMetadata.acquisitionDate) == acquisitionDate
     }
 
     def 'trying to update a non existing row fails'() {
         when:
-            def updatedRows = usgsRepo.updateMetadata(2, metadataScene)
+        def updatedRows = usgsRepo.updateMetadata(2, metadataScene)
         then:
-            updatedRows == 0
+        updatedRows == 0
     }
 
     def 'updating an existing row. The query would return the updated data'() {
         given:
-            def sceneId = metadataScene.sceneID
+        def sceneId = metadataScene.sceneID
         when:
-            usgsRepo.storeMetadata(DATASET_ID, metadataScene)
-            def retrievedScene = usgsRepo.getSceneMetadata(DATASET_ID, sceneId)
-            metadataScene.cloudCover = 666
-            def updates = usgsRepo.updateMetadata(retrievedScene.id, metadataScene)
-            retrievedScene = usgsRepo.getSceneMetadata(DATASET_ID, sceneId)
+        usgsRepo.storeMetadata(DATASET_ID, metadataScene)
+        def retrievedScene = usgsRepo.getSceneMetadata(DATASET_ID, sceneId)
+        metadataScene.cloudCover = 666
+        def updates = usgsRepo.updateMetadata(retrievedScene.id, metadataScene)
+        retrievedScene = usgsRepo.getSceneMetadata(DATASET_ID, sceneId)
         then:
-            updates == 1
-            retrievedScene
-            retrievedScene.cloudCover == 666
+        updates == 1
+        retrievedScene
+        retrievedScene.cloudCover == 666
     }
 
     private parseXml() {

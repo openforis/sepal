@@ -20,20 +20,20 @@ class SandboxManagerTest extends Specification {
     UserRepository userRepo
     InstanceManager instanceManager
 
-    def setup(){
+    def setup() {
 
         userRepo = Stub(UserRepository)
-        containersProvider = Spy(DockerContainersProvider, constructorArgs: [null,null])
+        containersProvider = Spy(DockerContainersProvider, constructorArgs: [null, null])
         dataRepo = Spy(JDBCSepalSessionRepository, constructorArgs: null)
-        instanceManager = Spy(ConcreteInstanceManager ,constructorArgs: [
+        instanceManager = Spy(ConcreteInstanceManager, constructorArgs: [
                 null as InstanceDataRepository, null as DataCenter, 'commitStage']
         )
 
-        sandboxManager = new ConcreteSepalSessionManager(containersProvider,dataRepo,userRepo,instanceManager)
+        sandboxManager = new ConcreteSepalSessionManager(containersProvider, dataRepo, userRepo, instanceManager)
 
     }
 
-    def 'checking whether the getUserSandbox user check as expected'(){
+    def 'checking whether the getUserSandbox user check as expected'() {
         given:
         userRepo.userExist(_) >> false
         when:
@@ -42,7 +42,7 @@ class SandboxManagerTest extends Specification {
         thrown(NonExistingUser)
     }
 
-    def 'checking whether getUserSandbox() method behaves correctly'(){
+    def 'checking whether getUserSandbox() method behaves correctly'() {
         given:
         userRepo.userExist(_) >> true
         when:
@@ -50,10 +50,10 @@ class SandboxManagerTest extends Specification {
         def case2 = sandboxManager.getUserSandbox('A_USER')
         then:
         2 * dataRepo.getUserSandbox(_) >>> [null]
-        2 * instanceManager.reserveSlot(_,_) >>> [ new Instance(status: CREATED) , new Instance( status:AVAILABLE ) ]
-        2 * dataRepo.requested(_,_,_) >>> [ 1L ]
-        1 * containersProvider.obtain(_,_) >>> [ new SepalSession() ]
-        1 * dataRepo.created(_,_,_) >> {}
+        2 * instanceManager.reserveSlot(_, _) >>> [new Instance(status: CREATED), new Instance(status: AVAILABLE)]
+        2 * dataRepo.requested(_, _, _) >>> [1L]
+        1 * containersProvider.obtain(_, _) >>> [new SepalSession()]
+        1 * dataRepo.created(_, _, _) >> {}
     }
 
 

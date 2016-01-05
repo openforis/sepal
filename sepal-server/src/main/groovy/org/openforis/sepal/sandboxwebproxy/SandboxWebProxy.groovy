@@ -141,10 +141,10 @@ class SandboxWebProxy {
                 SepalSession sepalSession
                 try {
                     def userSepalSessions = sepalSessionManager.getUserSessions(user)
-                    if (userSepalSessions?.activeSessions){
+                    if (userSepalSessions?.activeSessions) {
                         def activeSession = userSepalSessions.activeSessions.first()
-                        sepalSession = sepalSessionManager.bindToUserSession(user,activeSession.sessionId)
-                    }else{
+                        sepalSession = sepalSessionManager.bindToUserSession(user, activeSession.sessionId)
+                    } else {
                         def baseInstanceType = userSepalSessions.availableInstanceTypes.first()
                         sepalSession = sepalSessionManager.generateNewSession(user, baseInstanceType.id)
                     }

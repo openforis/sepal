@@ -23,7 +23,7 @@ class DockerSessionContainerProvider implements SessionContainerProvider {
     @Override
     SepalSession obtain(User user, Instance instance) {
         LOG.debug("Going to ask a container for $user sandbox")
-        return dockerClient.createContainer(user?.username, user?.userUid,instance)
+        return dockerClient.createContainer(user?.username, user?.userUid, instance)
     }
 
     @Override

@@ -24,9 +24,9 @@ interface SepalSessionRepository {
 
     void created(int sessionId, String containerId, String sandboxURI)
 
-    int requested(String username,long instanceId)
+    int requested(String username, long instanceId)
 
-    SepalSession fetchUserSession ( String username, Long sessionId)
+    SepalSession fetchUserSession(String username, Long sessionId)
 
     List<SepalSession> getSessions(SessionStatus... statuses)
 
@@ -72,42 +72,42 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
         sql.executeUpdate('''
             UPDATE sandbox_sessions SET container_id = ?, status = ?, status_refreshed_on = ?, container_uri = ?
             WHERE session_id = ?''',
-            [containerId, ALIVE.name(), new Date(), sandboxURI, sessionId])
+                [containerId, ALIVE.name(), new Date(), sandboxURI, sessionId])
     }
 
     @Override
     int requested(String username, long instanceId) {
         def keys = sql.executeInsert('''
             INSERT INTO sandbox_sessions(username,status,status_refreshed_on,instance_id)
-            VALUES(?,?,?,?)''', [username,REQUESTED.name(), new Date(),instanceId])
+            VALUES(?,?,?,?)''', [username, REQUESTED.name(), new Date(), instanceId])
         return keys[0][0] as int
     }
 
     @Override
-    List<SepalSession> getSessions(String username, SessionStatus... statuses) { getSessions(username,null,statuses) }
+    List<SepalSession> getSessions(String username, SessionStatus... statuses) { getSessions(username, null, statuses) }
 
     @Override
-    List<SepalSession> getSessions(SessionStatus... statuses) { getSessions(null,statuses) }
+    List<SepalSession> getSessions(SessionStatus... statuses) { getSessions(null, statuses) }
 
     @Override
     SepalSession fetchUserSession(String username, Long sessionId) {
-        def sessions = getSessions(username,sessionId,REQUESTED,ALIVE)
-        if (!sessions){
+        def sessions = getSessions(username, sessionId, REQUESTED, ALIVE)
+        if (!sessions) {
             throw new InvalidSession("Unable to fetch session $sessionId for user $username")
         }
         return sessions.first()
     }
 
-    List<SepalSession> getSessions(String username, Long sessionId, SessionStatus[] statuses){
+    List<SepalSession> getSessions(String username, Long sessionId, SessionStatus[] statuses) {
         def sessions = []
         def sBuilder = new StringBuilder(' SELECT * FROM v_session_status')
         def bindings = []
         sBuilder.append(' WHERE 1 = 1 ')
-        if (username){
+        if (username) {
             sBuilder.append(' AND username = ? ')
             bindings.add(username)
         }
-        if (statuses){
+        if (statuses) {
             sBuilder.append(' AND status IN (')
             int count = 0
 
@@ -117,7 +117,7 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
             }
             sBuilder.append(')')
         }
-        if (sessionId){
+        if (sessionId) {
             sBuilder.append(" AND id = ?")
             bindings.add(sessionId)
         }
@@ -133,7 +133,7 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
         def monthlyReport = new MonthlySessionStatusReport(username)
         def sqlQuery = '''SELECT * FROM v_session_status where username = ?
                     AND (cnt_inst_end_time IS NULL OR MONTH(cnt_inst_end_time) = MONTH(NOW()))'''
-        sql.eachRow(sqlQuery,[username]){
+        sql.eachRow(sqlQuery, [username]) {
             monthlyReport.addMonthlySession(map(it))
         }
         return monthlyReport
@@ -150,10 +150,10 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
                 ramMemory: row.cnt_inst_type_ram_count, notes: row.cnt_inst_type_notes, enabled: row.cnt_inst_type_enabled
         )
         def instance = new Instance(
-                id: row.cnt_inst_id, status: Status.valueOf(row.cnt_inst_status),publicIp: row.cnt_inst_pub_ip,
+                id: row.cnt_inst_id, status: Status.valueOf(row.cnt_inst_status), publicIp: row.cnt_inst_pub_ip,
                 privateIp: row.cnt_inst_priv_ip, owner: row.cnt_inst_owner, name: row.cnt_inst_name,
                 launchTime: row.cnt_inst_start_time, terminationTime: row.cnt_inst_end_time, statusUpdateTime: row.cnt_inst_updated_on,
-                dataCenter: dataCenter,instanceType: instanceType, durationInSecs: row.cnt_inst_up_time_secs, costs: row.cnt_inst_costs
+                dataCenter: dataCenter, instanceType: instanceType, durationInSecs: row.cnt_inst_up_time_secs, costs: row.cnt_inst_costs
         )
 
         return new SepalSession(
@@ -163,7 +163,6 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
         )
 
     }
-
 
 
     private Sql getSql() {

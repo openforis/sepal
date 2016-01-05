@@ -77,7 +77,6 @@ class SepalDriver {
     }
 
 
-
     SepalDriver withUsers(String... usernames) {
         usernames.each {
             system.database.addUser(it)
@@ -92,31 +91,31 @@ class SepalDriver {
         return this
     }
 
-    SepalDriver withInstance (Instance instance) {
+    SepalDriver withInstance(Instance instance) {
         instance.id = system.database.addInstance(instance)
         return this
     }
 
-    SepalDriver withInstanceProvider(InstanceProvider provider){
+    SepalDriver withInstanceProvider(InstanceProvider provider) {
         provider.id = system.database.addInstanceProvider(provider)
         return this
     }
 
-    SepalDriver withInstanceProviders(InstanceProvider... providers){
-        providers?.each{
+    SepalDriver withInstanceProviders(InstanceProvider... providers) {
+        providers?.each {
             withInstanceProvider(it)
         }
         return this
     }
 
-    SepalDriver withDataCenters(DataCenter... dataCenters){
-        dataCenters?.each{
+    SepalDriver withDataCenters(DataCenter... dataCenters) {
+        dataCenters?.each {
             withDataCenter(it)
         }
         return this
     }
 
-    SepalDriver withDataCenter(DataCenter dataCenter){
+    SepalDriver withDataCenter(DataCenter dataCenter) {
         dataCenter.id = system.database.addDataCenter(dataCenter)
         return this
     }

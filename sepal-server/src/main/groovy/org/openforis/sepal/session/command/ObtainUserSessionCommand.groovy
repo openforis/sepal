@@ -20,7 +20,7 @@ class ObtainUserSessionCommand extends AbstractCommand<SepalSession> {
 
     static constraints(UserRepository userRepository) {
         [
-                username: custom { userRepository.getUser(it) != null}
+                username: custom { userRepository.getUser(it) != null }
         ]
     }
 }

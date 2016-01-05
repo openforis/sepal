@@ -26,7 +26,7 @@ class SepalSessionEndpoint extends SepalEndpoint {
                 response.contentType = "application/json"
                 def command = new GetUserSessionsCommand(username: params.user as String)
                 def errors = validate(command)
-                if (errors){
+                if (errors) {
                     throw new InvalidRequest(errors)
                 }
                 def commandResult = commandDispatcher.submit(command)
@@ -37,7 +37,7 @@ class SepalSessionEndpoint extends SepalEndpoint {
                 response.contentType = 'application/json'
                 def command = new BindToUserSessionCommand(username: params.user as String, sessionId: params.sessionId as Long)
                 def errors = validate(command)
-                if (errors){
+                if (errors) {
                     throw new InvalidRequest(errors)
                 }
                 def commandResult = commandDispatcher.submit(command)
@@ -47,13 +47,13 @@ class SepalSessionEndpoint extends SepalEndpoint {
             post('sandbox/{user}/container/{instanceType}') {
                 response.contentType = "application/json"
 
-                def command = new ObtainUserSessionCommand(params.user as String,params.instanceType as Long)
+                def command = new ObtainUserSessionCommand(params.user as String, params.instanceType as Long)
                 def errors = validate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
                 def commandResult = commandDispatcher.submit(command)
                 def status = 200
-                switch (commandResult?.status){
+                switch (commandResult?.status) {
 
                     case ALIVE:
                         send(toJson(commandResult))

@@ -30,11 +30,11 @@ class SepalScenePublisherTest extends Specification {
         def scenePublishingDirectory = sceneRepo.getSceneHomeDirectory(sceneRequest)
         new File(sceneWorkingDirectory, "image.tif").createNewFile()
         when:
-            publisher.publish(sceneRequest)
+        publisher.publish(sceneRequest)
         then:
-            DirectoryStructure.matches(scenePublishingDirectory) {
-                'image.tif'()
-            }
+        DirectoryStructure.matches(scenePublishingDirectory) {
+            'image.tif'()
+        }
     }
 
     def 'Publishing a request'() {
@@ -44,16 +44,16 @@ class SepalScenePublisherTest extends Specification {
         def requestPublishingDirectory = sceneRepo.getDownloadRequestHomeDirectory(atomicRequest)
         new File(sceneWorkingDirectory, "image.tif").createNewFile()
         when:
-            publisher.publish(atomicRequest)
+        publisher.publish(atomicRequest)
         then:
-            DirectoryStructure.matches(requestPublishingDirectory.parentFile) {
-                "$atomicRequest.requestName" {
-                    "$sceneRequest3.sceneReference.id"()
-                    "$sceneRequest2.sceneReference.id" {
-                        'image.tif'()
-                    }
+        DirectoryStructure.matches(requestPublishingDirectory.parentFile) {
+            "$atomicRequest.requestName" {
+                "$sceneRequest3.sceneReference.id"()
+                "$sceneRequest2.sceneReference.id" {
+                    'image.tif'()
                 }
             }
+        }
     }
 
 }

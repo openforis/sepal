@@ -27,16 +27,16 @@ class UserRepositoryTest extends Specification {
 
     def 'query the user table with a given username, the user uid is returned properly'() {
         when:
-            def usr = userRepo.fetchUser(USERNAME)
+        def usr = userRepo.fetchUser(USERNAME)
         then:
-            usr.userUid == UID
+        usr.userUid == UID
     }
 
     def 'looking for an existing user, the .fetchUser method will return a positive response'() {
         when:
-            def exist = userRepo.fetchUser(USERNAME)
+        def exist = userRepo.fetchUser(USERNAME)
         then:
-            exist
+        exist
     }
 
     def 'looking for an  non existing user, the .fetchUser method will throw an exception'() {
@@ -46,7 +46,7 @@ class UserRepositoryTest extends Specification {
         thrown(NonExistingUser)
     }
 
-    def 'checking the .getUser method works as expected'(){
+    def 'checking the .getUser method works as expected'() {
         when:
         def usr1 = userRepo.getUser(USERNAME)
         def usr2 = userRepo.getUser('asd')

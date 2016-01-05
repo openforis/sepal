@@ -15,23 +15,23 @@ class BindToUserSessionCommand extends AbstractCommand<SepalSession> {
 
     static constraints(UserRepository userRepository) {
         [
-                username: custom { userRepository.getUser(it)  != null}
+                username: custom { userRepository.getUser(it) != null }
 
         ]
     }
 
 }
 
-class BindToUserSessionCommandHandler implements CommandHandler<SepalSession,BindToUserSessionCommand> {
+class BindToUserSessionCommandHandler implements CommandHandler<SepalSession, BindToUserSessionCommand> {
 
     SepalSessionManager sessionManager
 
-    BindToUserSessionCommandHandler (SepalSessionManager sessionManager){
+    BindToUserSessionCommandHandler(SepalSessionManager sessionManager) {
         this.sessionManager = sessionManager
     }
 
     @Override
     SepalSession execute(BindToUserSessionCommand command) {
-        sessionManager.bindToUserSession(command.username,command.sessionId)
+        sessionManager.bindToUserSession(command.username, command.sessionId)
     }
 }

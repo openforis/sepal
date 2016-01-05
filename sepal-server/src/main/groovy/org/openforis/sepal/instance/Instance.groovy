@@ -21,20 +21,20 @@ class Instance {
     InstanceType instanceType
     String instanceTypeRaw
 
-    public void setMetadata(String name, Object value){
-        if (this.hasProperty(name)){
+    public void setMetadata(String name, Object value) {
+        if (this.hasProperty(name)) {
             def propertyType = this.class.getDeclaredField(name)?.type
-            if (propertyType == Boolean.class){
+            if (propertyType == Boolean.class) {
                 value = Boolean.valueOf(value?.toString())
             }
-            this.setProperty(name,value)
+            this.setProperty(name, value)
         }
     }
 
-    public static enum Status{
-        NA,REQUESTED,AVAILABLE,STOPPED,TERMINATED
+    public static enum Status {
+        NA, REQUESTED, AVAILABLE, STOPPED, TERMINATED
 
-        public String toString(){ this.name() }
+        public String toString() { this.name() }
 
     }
 

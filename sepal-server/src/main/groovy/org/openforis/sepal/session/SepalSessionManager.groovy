@@ -23,22 +23,22 @@ import static org.openforis.sepal.session.model.SessionStatus.REQUESTED
 
 interface SepalSessionManager {
 
-    void aliveSignal( int sessionId )
+    void aliveSignal(int sessionId)
 
-    void start( int containerInactiveTimeout, int checkInterval)
+    void start(int containerInactiveTimeout, int checkInterval)
 
     void stop()
 
-    UserSessions getUserSessions( String username )
+    UserSessions getUserSessions(String username)
 
-    SepalSession bindToUserSession (String username, Long sessionId)
+    SepalSession bindToUserSession(String username, Long sessionId)
 
-    SepalSession generateNewSession ( String username, Long containerInstanceType )
+    SepalSession generateNewSession(String username, Long containerInstanceType)
 
 }
 
 
-class ConcreteSepalSessionManager implements SepalSessionManager{
+class ConcreteSepalSessionManager implements SepalSessionManager {
 
     private final static Logger LOG = LoggerFactory.getLogger(this)
 
@@ -49,7 +49,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
 
-    ConcreteSepalSessionManager(SessionContainerProvider sandboxProvider, SepalSessionRepository dataRepository, UserRepository userRepo, InstanceManager instanceManager){
+    ConcreteSepalSessionManager(SessionContainerProvider sandboxProvider, SepalSessionRepository dataRepository, UserRepository userRepo, InstanceManager instanceManager) {
         this.sandboxProvider = sandboxProvider
         this.dataRepository = dataRepository
         this.userRepo = userRepo
@@ -59,20 +59,20 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
     @Override
     SepalSession bindToUserSession(String username, Long sessionId) {
         def user = userRepo.fetchUser(username)
-        def session = dataRepository.fetchUserSession(username,sessionId)
+        def session = dataRepository.fetchUserSession(username, sessionId)
         def instance
-        try{
+        try {
             instance = instanceManager.gatherFacts(session.instance)
-        }catch (InvalidInstance invalid){
-            throw new InvalidSession("Session container instance not valid",invalid)
+        } catch (InvalidInstance invalid) {
+            throw new InvalidSession("Session container instance not valid", invalid)
         }
 
-        if (instance.status == AVAILABLE){
-            if (session.status == REQUESTED){
-                createContainer(user,session,instance)
-                session = dataRepository.fetchUserSession(username,sessionId)
-            }else{
-                if (!sandboxProvider.isRunning(session)){
+        if (instance.status == AVAILABLE) {
+            if (session.status == REQUESTED) {
+                createContainer(user, session, instance)
+                session = dataRepository.fetchUserSession(username, sessionId)
+            } else {
+                if (!sandboxProvider.isRunning(session)) {
                     throw new InvalidSession("Session container $session.containerId not running anymore")
                 }
             }
@@ -85,20 +85,20 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
     SepalSession generateNewSession(String username, Long containerInstanceType) {
         def session
         def user = userRepo.fetchUser(username)
-        def instance = instanceManager.reserveInstance(username,containerInstanceType)
+        def instance = instanceManager.reserveInstance(username, containerInstanceType)
         session = new SepalSession(username: username, instance: instance, status: REQUESTED, createdOn: new Date())
         session.sessionId = dataRepository.requested(username, instance.id)
-        if (instance?.status == AVAILABLE){
-            createContainer(user,session,instance)
+        if (instance?.status == AVAILABLE) {
+            createContainer(user, session, instance)
         }
-        session = dataRepository.fetchUserSession(username,session.sessionId)
+        session = dataRepository.fetchUserSession(username, session.sessionId)
         session.connectionUrl = getConnectionURL(session)
         return session
     }
 
     @Override
     UserSessions getUserSessions(String username) {
-      new UserSessions(
+        new UserSessions(
                 monthlyCostsReport: dataRepository.getMonthlyCostsReport(username),
                 user: userRepo.fetchUser(username),
                 activeSessions: fetchActiveSessions(username),
@@ -106,21 +106,21 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
         )
     }
 
-    private void createContainer(User user, SepalSession session, Instance instance){
-        try{
-            def sessionData = sandboxProvider.obtain(user,instance)
-            dataRepository.created(session.sessionId,sessionData.containerId,sessionData.containerURI)
-        }catch (Exception ex){
-            LOG.error("Error during container creation.",ex)
+    private void createContainer(User user, SepalSession session, Instance instance) {
+        try {
+            def sessionData = sandboxProvider.obtain(user, instance)
+            dataRepository.created(session.sessionId, sessionData.containerId, sessionData.containerURI)
+        } catch (Exception ex) {
+            LOG.error("Error during container creation.", ex)
             throw ex
         }
     }
 
-    private static String getConnectionURL(SepalSession session){
+    private static String getConnectionURL(SepalSession session) {
         def connectionURL = session?.instance?.privateIp
-        if (session){
+        if (session) {
             def config = SepalConfiguration.instance
-            switch(config.sepalWorkingMode){
+            switch (config.sepalWorkingMode) {
                 case SepalWorkingMode.MONOLITICH:
                     connectionURL = session.containerURI
                     break
@@ -135,16 +135,16 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
         return connectionURL
     }
 
-    private List<SepalSession> fetchActiveSessions(String username){
-        def sessions = dataRepository.getSessions(username,REQUESTED,ALIVE)
-        sessions?.each{ SepalSession session ->
+    private List<SepalSession> fetchActiveSessions(String username) {
+        def sessions = dataRepository.getSessions(username, REQUESTED, ALIVE)
+        sessions?.each { SepalSession session ->
             session.requestUrl = "/sandbox/$username/session/$session.sessionId"
             session.connectionUrl = getConnectionURL(session)
         }
         return sessions
     }
 
-    private List<InstanceType> fetchAvailableInstanceTypes ( String username) {
+    private List<InstanceType> fetchAvailableInstanceTypes(String username) {
         def instances = instanceManager.availableInstanceTypes
         instances?.each { InstanceType type ->
             type.requestUrl = "/sandbox/$username/container/$type.id"
@@ -159,19 +159,18 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
         dataRepository.alive(sessionId)
     }
 
-    void stop(){ executor.shutdown()  }
+    void stop() { executor.shutdown() }
 
     @Override
-    void start( int containerInactiveTimeout, int checkInterval) {
+    void start(int containerInactiveTimeout, int checkInterval) {
         executor.scheduleWithFixedDelay(
-            new SandboxDaemonChecker( sandboxProvider, dataRepository,instanceManager,containerInactiveTimeout),
-            0L,checkInterval, TimeUnit.SECONDS
+                new SandboxDaemonChecker(sandboxProvider, dataRepository, instanceManager, containerInactiveTimeout),
+                0L, checkInterval, TimeUnit.SECONDS
         )
-     }
-
+    }
 
     // @ TODO Run tasks to catch up running instances
-    private class SandboxDaemonChecker implements Runnable{
+    private class SandboxDaemonChecker implements Runnable {
 
         private final SepalSessionRepository dataRepository
         private final SessionContainerProvider containersProvider
@@ -179,7 +178,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
         private final InstanceManager instanceManager
 
         SandboxDaemonChecker(SessionContainerProvider containersProvider,
-                             SepalSessionRepository dataRepository, InstanceManager instanceManager, int containerInactiveTimeout ){
+                             SepalSessionRepository dataRepository, InstanceManager instanceManager, int containerInactiveTimeout) {
             this.dataRepository = dataRepository
             this.containerInactiveTimeout = containerInactiveTimeout
             this.containersProvider = containersProvider
@@ -194,21 +193,21 @@ class ConcreteSepalSessionManager implements SepalSessionManager{
             }
         }
 
-        void doCheck(SepalSession session){
-            try{
-                Date containerExpireDate = DateTime.add(session.statusRefreshedOn,Calendar.SECOND,containerInactiveTimeout)
-                if (new Date().after(containerExpireDate)){
+        void doCheck(SepalSession session) {
+            try {
+                Date containerExpireDate = DateTime.add(session.statusRefreshedOn, Calendar.SECOND, containerInactiveTimeout)
+                if (new Date().after(containerExpireDate)) {
                     LOG.info(" Container $session.containerId marked as to be terminated. Inactive Ttl($containerInactiveTimeout seconds) reached")
-                    if (instanceManager.gatherFacts(session.instance)){
+                    if (instanceManager.gatherFacts(session.instance)) {
                         LOG.debug("Container instance $session.instance.id still running. Going to physically terminated the container ")
                         containersProvider.release(session)
-                    }else {
+                    } else {
                         LOG.warn("Instance $session.instance.id not running anymore.")
                     }
                     dataRepository.terminated(session.sessionId)
                 }
             } catch (Exception ex) {
-                LOG.error(" Error while checking sandbox $session.sessionId",ex)
+                LOG.error(" Error while checking sandbox $session.sessionId", ex)
             }
         }
     }

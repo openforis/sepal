@@ -16,20 +16,20 @@ class TarTest extends Specification {
         def archive = createArchive('archive.tar.gz')
 
         when:
-            Tar.unpackTarGz(archive)
+        Tar.unpackTarGz(archive)
 
         then:
-            workingDir.list() as List == ['1.tif', '2.tif']
+        workingDir.list() as List == ['1.tif', '2.tif']
     }
 
     def 'Unpacking archive with other extension than .tar.gz throws IllegalArgumentException'() {
         def archive = createArchive('archive.tar.gz.another')
 
         when:
-            Tar.unpackTarGz(archive)
+        Tar.unpackTarGz(archive)
 
         then:
-            thrown(IllegalArgumentException)
+        thrown(IllegalArgumentException)
     }
 
     def 'Unpacking invalid archive throws IOException'() {
@@ -37,10 +37,10 @@ class TarTest extends Specification {
         archive.write('Not an archive')
 
         when:
-            Tar.unpackTarGz(archive)
+        Tar.unpackTarGz(archive)
 
         then:
-            thrown(IOException)
+        thrown(IOException)
     }
 
     private File createArchive(String fileName) {

@@ -255,54 +255,54 @@ CREATE TABLE sandboxes (
   created_on          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   terminated_on       TIMESTAMP    NULL,
   status_refreshed_on TIMESTAMP    NULL,
-  instance_id INT(11) NOT NULL,
+  instance_id         INT(11)      NOT NULL,
   PRIMARY KEY (sandbox_id)
 );
 
 CREATE TABLE instance_providers (
-  id            INT NOT NULL AUTO_INCREMENT,
-  name          VARCHAR(60) NOT NULL,
-  description   VARCHAR(255) NOT NULL,
+  id          INT          NOT NULL AUTO_INCREMENT,
+  name        VARCHAR(60)  NOT NULL,
+  description VARCHAR(255) NOT NULL,
   PRIMARY KEY (id)
 );
 
 CREATE TABLE datacenters (
-  id INT NOT NULL AUTO_INCREMENT,
-  name VARCHAR(60) NOT NULL,
-  geolocation VARCHAR(60) NOT NULL,
-  description   VARCHAR(255) NOT NULL,
-  provider_id INT NOT NULL,
+  id          INT          NOT NULL AUTO_INCREMENT,
+  name        VARCHAR(60)  NOT NULL,
+  geolocation VARCHAR(60)  NOT NULL,
+  description VARCHAR(255) NOT NULL,
+  provider_id INT          NOT NULL,
   PRIMARY KEY (id)
 );
 
 CREATE TABLE instances (
-  id INT NOT NULL AUTO_INCREMENT,
-  instance_type INT NOT NULL,
-  status VARCHAR(60) NOT NULL,
-  public_ip VARCHAR(60) NOT NULL,
-  private_ip VARCHAR(60) NOT NULL,
-  owner VARCHAR(255) NULL,
-  name VARCHAR(60) NOT NULL,
-  launch_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  termination_time DATETIME NULL,
-  status_update_time DATETIME NOT NULL,
-  disposable INT(1) NOT NULL DEFAULT 1,
-  reserved INT(1) NOT NULL DEFAULT 1,
-  data_center_id INT NOT NULL,
+  id                 INT          NOT NULL AUTO_INCREMENT,
+  instance_type      INT          NOT NULL,
+  status             VARCHAR(60)  NOT NULL,
+  public_ip          VARCHAR(60)  NOT NULL,
+  private_ip         VARCHAR(60)  NOT NULL,
+  owner              VARCHAR(255) NULL,
+  name               VARCHAR(60)  NOT NULL,
+  launch_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  termination_time   DATETIME     NULL,
+  status_update_time DATETIME     NOT NULL,
+  disposable         INT(1)       NOT NULL DEFAULT 1,
+  reserved           INT(1)       NOT NULL DEFAULT 1,
+  data_center_id     INT          NOT NULL,
   PRIMARY KEY (id)
 );
 
 
 CREATE TABLE instance_types (
-  id INT NOT NULL,
-  provider_id INT NOT NULL,
-  name VARCHAR(100) NOT NULL,
-  description VARCHAR(250) NULL,
-  hourly_costs DOUBLE NOT NULL,
-  cpu_count DOUBLE NOT NULL,
-  ram INT(11) NOT NULL,
-  notes VARCHAR(500) NULL,
-  enabled INT(1) NOT NULL DEFAULT 1,
+  id           INT          NOT NULL,
+  provider_id  INT          NOT NULL,
+  name         VARCHAR(100) NOT NULL,
+  description  VARCHAR(250) NULL,
+  hourly_costs DOUBLE       NOT NULL,
+  cpu_count    DOUBLE       NOT NULL,
+  ram          INT(11)      NOT NULL,
+  notes        VARCHAR(500) NULL,
+  enabled      INT(1)       NOT NULL DEFAULT 1,
   PRIMARY KEY (id)
 );
 

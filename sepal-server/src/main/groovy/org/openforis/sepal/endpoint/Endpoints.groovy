@@ -45,8 +45,8 @@ final class Endpoints extends AbstractMvcFilter {
         commandDispatcher.register(RemoveSceneCommand, singleSceneDeleteCommandHandler)
         commandDispatcher.register(ObtainUserSessionCommand, obtainUserSandboxCommandHandler)
         commandDispatcher.register(SessionAliveCommand, containerAliveCommandHandler)
-        commandDispatcher.register(GetUserSessionsCommand,getUserSessionsCommandHandler)
-        commandDispatcher.register(BindToUserSessionCommand,bindToUserSessionCommandHandler)
+        commandDispatcher.register(GetUserSessionsCommand, getUserSessionsCommandHandler)
+        commandDispatcher.register(BindToUserSessionCommand, bindToUserSessionCommandHandler)
 
         def controller = Controller.builder(servletContext)
                 .messageSource('messages')

@@ -10,7 +10,7 @@ interface UserRepository {
 
     User fetchUser(String username)
 
-    User getUser (String username)
+    User getUser(String username)
 }
 
 
@@ -24,29 +24,31 @@ class JDBCUserRepository implements UserRepository {
         this.connectionProvider = connectionProvider
     }
 
-    User fetchUser(String username){
+    User fetchUser(String username) {
         def user
-        def row = sql.firstRow('SELECT * FROM users WHERE username = ?',[username])
-        if (row){
+        def row = sql.firstRow('SELECT * FROM users WHERE username = ?', [username])
+        if (row) {
             user = mapUser(row)
-        }else{
+        } else {
             throw new NonExistingUser(username)
         }
         return user
     }
 
-    User getUser ( String username){
+    User getUser(String username) {
         def user = null
-        try{
+        try {
             user = fetchUser(username)
-        }catch (NonExistingUser neu){
+        } catch (NonExistingUser neu) {
             LOG.warn("User $neu.username does not exist")
         }
         return user
     }
 
 
-    private static User mapUser(row){ new User(id: row.id, username: row.username, monthlyQuota: row.monthly_quota, userUid: row.user_uid) }
+    private static User mapUser(row) {
+        new User(id: row.id, username: row.username, monthlyQuota: row.monthly_quota, userUid: row.user_uid)
+    }
 
     private Sql getSql() {
         connectionProvider.sql

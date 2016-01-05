@@ -63,7 +63,7 @@ class DockerRESTClient implements DockerClient {
             LOG.debug("Sandbox created: $sandboxData.containerId")
             startContainer(sandboxDockerClient, sandboxData)
             getContainerInfo(sandboxDockerClient, sandboxData)
-            exec(sandboxData.containerId,sandboxDockerClient, "/root/healt_check.sh", "$settings.portsToCheck")
+            exec(sandboxData.containerId, sandboxDockerClient, "/root/healt_check.sh", "$settings.portsToCheck")
         } catch (HttpResponseException exception) {
             LOG.error("Error while creating the sandbox. $exception.response.data")
             throw exception

@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import static org.openforis.sepal.instance.Instance.Status.AVAILABLE
 
 @ProviderFor('Localhost')
-class LocalInstanceProviderManager implements InstanceProviderManager{
+class LocalInstanceProviderManager implements InstanceProviderManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private static final String LOCAL_INSTANCE_NAME = 'LocalInstance'
@@ -16,11 +16,10 @@ class LocalInstanceProviderManager implements InstanceProviderManager{
     private final String ipAddress
     private final DataCenter localDataCenter
 
-    LocalInstanceProviderManager (String ipAddress, DataCenter localDataCenter){
+    LocalInstanceProviderManager(String ipAddress, DataCenter localDataCenter) {
         this.ipAddress = ipAddress
         this.localDataCenter = localDataCenter
     }
-
 
 
     @Override
@@ -37,14 +36,14 @@ class LocalInstanceProviderManager implements InstanceProviderManager{
     }
 
     @Override
-    Instance newInstance(String environment,DataCenter dataCenter, String username, InstanceType instType) {
-        gatherFacts(new Instance(owner: username, instanceType: instType),'Local')
+    Instance newInstance(String environment, DataCenter dataCenter, String username, InstanceType instType) {
+        gatherFacts(new Instance(owner: username, instanceType: instType), 'Local')
     }
 
     @Override
     Boolean applyMetadata(Instance instance, Map<String, String> metadata) {
         metadata.keySet().each {
-            instance.setMetadata(it,metadata.get(it))
+            instance.setMetadata(it, metadata.get(it))
         }
         return true
     }

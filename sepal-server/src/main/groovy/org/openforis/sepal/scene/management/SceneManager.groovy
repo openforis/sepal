@@ -50,9 +50,9 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
                         break
                     case DOWNLOADED:
                         scenesRepository.reloadRequestData(request)
-                        if (request.status == FAILED){
+                        if (request.status == FAILED) {
                             throw new RuntimeException("Downloaded signal received from a scene within an already failed request")
-                        }else{
+                        } else {
                             sceneProcessor.process(request, request.processingChain)
                         }
                         break
@@ -75,12 +75,12 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
             LOG.error("Error while processing request $request", ex)
             scenesRepository.requestStatusChanged(request, FAILED)
             request?.scenes?.each {
-                sceneStatusChanged(it, FAILED,false)
+                sceneStatusChanged(it, FAILED, false)
             }
         }
     }
 
-    void sceneStatusChanged(SceneRequest scene, Status status, Boolean propagateError){
+    void sceneStatusChanged(SceneRequest scene, Status status, Boolean propagateError) {
         try {
             if (scene.request.groupScenes) {
                 def request = scene.request
@@ -93,9 +93,9 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
                         }
                         break;
                     case FAILED:
-                        if (propagateError){
-                            requestStatusChanged(request,FAILED)
-                        }else{
+                        if (propagateError) {
+                            requestStatusChanged(request, FAILED)
+                        } else {
                             scenesRepository.sceneStatusChanged(scene, FAILED)
                         }
                 }
@@ -117,7 +117,7 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
         } catch (Exception ex) {
             LOG.error("Error while processing scene $scene", ex)
             scenesRepository.sceneStatusChanged(scene, FAILED)
-            if (propagateError && scene?.request?.groupScenes){
+            if (propagateError && scene?.request?.groupScenes) {
                 requestStatusChanged(scene?.request, FAILED)
             }
         }
@@ -125,7 +125,7 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
 
     @Override
     void sceneStatusChanged(SceneRequest scene, Status status) {
-        sceneStatusChanged(scene,status,true)
+        sceneStatusChanged(scene, status, true)
     }
 
     private class DownloadRequestPoller implements Runnable {

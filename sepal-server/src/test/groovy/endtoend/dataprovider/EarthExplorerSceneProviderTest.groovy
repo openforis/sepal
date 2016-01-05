@@ -30,18 +30,18 @@ class EarthExplorerSceneProviderTest extends Specification {
         def request = new SceneRequest(requestId, new SceneReference(sceneId, LANDSAT_8), 'Test.User', new Date(), Status.REQUESTED, new DownloadRequest(dataSet: LANDSAT_8, requestId: 1L, status: Status.REQUESTED))
         request.request.scenes.add(request)
         when:
-            provider.retrieve([request])
+        provider.retrieve([request])
         then:
-            DirectoryStructure.matches(workingDir) {
-                "${requestId}" {
-                    "${LANDSAT_8}" {
-                        "$sceneId" {
-                            '1.tif'()
-                            '2.tif'()
-                        }
+        DirectoryStructure.matches(workingDir) {
+            "${requestId}" {
+                "${LANDSAT_8}" {
+                    "$sceneId" {
+                        '1.tif'()
+                        '2.tif'()
                     }
                 }
             }
+        }
     }
 
     static class FakeEarthExplorerClient implements EarthExplorerClient {

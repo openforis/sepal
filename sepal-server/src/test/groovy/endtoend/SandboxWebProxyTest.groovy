@@ -47,85 +47,85 @@ class SandboxWebProxyTest extends Specification {
 
     def 'Session alive notifications works as expected'() {
         when:
-            get(endpoint: 'endpoint1', user: user)
+        get(endpoint: 'endpoint1', user: user)
         then:
-            new PollingConditions().eventually {
-                sandboxManager.aliveInvoked
-            }
+        new PollingConditions().eventually {
+            sandboxManager.aliveInvoked
+        }
     }
 
     def 'Proxies an endpoint'() {
         when:
-            def response = get(endpoint: 'endpoint1', user: user)
+        def response = get(endpoint: 'endpoint1', user: user)
 
         then:
-            response.status == 200
-            endpoint1.invoked
-            !endpoint2.invoked
+        response.status == 200
+        endpoint1.invoked
+        !endpoint2.invoked
     }
 
     def 'Proxied endpoint can be invoked multiple times, without obtaining sandbox more than once'() {
         when:
-            get(endpoint: 'endpoint1', user: user)
-            get(endpoint: 'endpoint1', user: user)
+        get(endpoint: 'endpoint1', user: user)
+        get(endpoint: 'endpoint1', user: user)
 
         then:
-            endpoint1.invoked.size() == 2
-            1 * sandboxManager.getUserSandbox(user) >> sandbox
+        endpoint1.invoked.size() == 2
+        1 * sandboxManager.getUserSandbox(user) >> sandbox
     }
 
     def 'Multiple proxied endpoint can be invoked, without obtaining sandbox more than once'() {
         when:
-            get(endpoint: 'endpoint1', user: user)
-            get(endpoint: 'endpoint2', user: user)
+        get(endpoint: 'endpoint1', user: user)
+        get(endpoint: 'endpoint2', user: user)
 
         then:
-            endpoint1.invoked.size() == 1
-            endpoint2.invoked.size() == 1
-            1 * sandboxManager.getUserSandbox(user) >> sandbox
+        endpoint1.invoked.size() == 1
+        endpoint2.invoked.size() == 1
+        1 * sandboxManager.getUserSandbox(user) >> sandbox
     }
 
     def 'Multiple users can invoke the same endpoint, each obtaining its own sandbox'() {
         when:
-            get(endpoint: 'endpoint1', user: user)
-            get(endpoint: 'endpoint1', user: anotherUser)
+        get(endpoint: 'endpoint1', user: user)
+        get(endpoint: 'endpoint1', user: anotherUser)
 
         then:
-            endpoint1.invoked.size() == 2
-            1 * sandboxManager.getUserSandbox(user) >> sandbox
-            1 * sandboxManager.getUserSandbox(anotherUser) >> sandbox
+        endpoint1.invoked.size() == 2
+        1 * sandboxManager.getUserSandbox(user) >> sandbox
+        1 * sandboxManager.getUserSandbox(anotherUser) >> sandbox
     }
 
     def 'Returns 400 when endpoint is unspecified'() {
         when:
-            def response = get(endpoint: null, user: user)
+        def response = get(endpoint: null, user: user)
 
         then:
-            response.status == 400
+        response.status == 400
     }
 
     def 'Returns 400 when endpoint is invalid'() {
         when:
-            def response = get(endpoint: 'invalid', user: user)
+        def response = get(endpoint: 'invalid', user: user)
 
         then:
-            response.status == 400
+        response.status == 400
     }
 
     def 'Returns 400 when user is unspecified'() {
         when:
-            def response = get(endpoint: 'endpoint1', user: null)
+        def response = get(endpoint: 'endpoint1', user: null)
 
         then:
-            response.status == 400
+        response.status == 400
     }
 
     def 'Returns 400 when user is non-existing'() {
         when:
-            def response = get(endpoint: 'endpoint1', user: 'non-existing')
+        def response = get(endpoint: 'endpoint1', user: 'non-existing')
 
         then:
-            response.status == 400
+        response.status == 400
     }
 
 

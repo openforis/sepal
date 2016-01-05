@@ -82,7 +82,6 @@ class Sepal extends Specification {
         def instanceDataRepository = new JdbcInstanceDataRepository(connectionManager)
         def config = SepalConfiguration.instance
 
-
         // @ TODO Implement Stub For AWSClient
         def awsProvider = new AWSInstanceProviderManager(
                 null,

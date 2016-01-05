@@ -4,9 +4,9 @@ import org.openforis.sepal.util.YamlUtils
 import spock.lang.Specification
 
 
-class YamlUtilsTest extends Specification{
+class YamlUtilsTest extends Specification {
 
-    def 'testing the correct behavior of the method parseYaml'(){
+    def 'testing the correct behavior of the method parseYaml'() {
         given:
         def is = YamlUtilsTest.getResourceAsStream('/instances.yml')
         when:

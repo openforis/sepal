@@ -10,22 +10,21 @@ class MonthlySessionStatusReport {
     private Double totalAmountUsed = 0
     List<SepalSession> monthlySessions = []
 
-    MonthlySessionStatusReport(){
+    MonthlySessionStatusReport() {
 
     }
 
-    MonthlySessionStatusReport( String username ){
+    MonthlySessionStatusReport(String username) {
         this()
         this.username = username
     }
 
-    void addMonthlySession( SepalSession session){
+    void addMonthlySession(SepalSession session) {
         monthlySessions.add(session)
         totalAmountUsed = totalAmountUsed + session?.costs
     }
 
-    Double getTotalAmountUsed(){ totalAmountUsed }
-
+    Double getTotalAmountUsed() { totalAmountUsed }
 
 
 }

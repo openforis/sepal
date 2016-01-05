@@ -28,30 +28,30 @@ class SepalSceneProcessorTest extends Specification {
         sceneRepo.createSceneDir(sceneRequest)
 
         when:
-            processor.process(sceneRequest)
+        processor.process(sceneRequest)
         then:
-            DirectoryStructure.matches(new File(workingDir, "" + request.requestId)) {
-                "${sceneRequest.sceneReference.dataSet.name()}" {
-                    "$sceneRequest.sceneReference.id" {
-                        'file_create_by_script.txt'()
-                    }
+        DirectoryStructure.matches(new File(workingDir, "" + request.requestId)) {
+            "${sceneRequest.sceneReference.dataSet.name()}" {
+                "$sceneRequest.sceneReference.id" {
+                    'file_create_by_script.txt'()
                 }
             }
+        }
     }
 
     def 'Processing an atomic requests  executes the script in the request directory'() {
         atomicRequest.scenes.add(sceneRequest2)
         sceneRepo.createSceneDir(sceneRequest2)
         when:
-            processor.process(atomicRequest, processingScript)
+        processor.process(atomicRequest, processingScript)
         then:
-            DirectoryStructure.matches(new File(workingDir, "" + atomicRequest.requestId)) {
-                "${sceneRequest2.sceneReference.dataSet.name()}" {
-                    'file_create_by_script.txt'()
-                    "$sceneRequest2.sceneReference.id"()
+        DirectoryStructure.matches(new File(workingDir, "" + atomicRequest.requestId)) {
+            "${sceneRequest2.sceneReference.dataSet.name()}" {
+                'file_create_by_script.txt'()
+                "$sceneRequest2.sceneReference.id"()
 
-                }
             }
+        }
     }
 
     private String setupProcessingScript() {

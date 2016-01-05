@@ -33,18 +33,18 @@ class Database {
         sql.executeInsert("INSERT INTO users(username) values($username)")
     }
 
-    long addInstance (Instance instance ){
-        def result = sql.executeInsert('INSERT INTO instances(name,data_center_id,status) VALUES(?,?,?)',instance.name,instance.dataCenter?.id,AVAILABLE.name())
+    long addInstance(Instance instance) {
+        def result = sql.executeInsert('INSERT INTO instances(name,data_center_id,status) VALUES(?,?,?)', instance.name, instance.dataCenter?.id, AVAILABLE.name())
         return result[0][0]
     }
 
-    long addInstanceProvider(InstanceProvider provider){
-        def result = sql.executeInsert('INSERT INTO instance_providers(name,description)  VALUES(?,?)',[provider.name,provider.description])
+    long addInstanceProvider(InstanceProvider provider) {
+        def result = sql.executeInsert('INSERT INTO instance_providers(name,description)  VALUES(?,?)', [provider.name, provider.description])
         return result[0][0]
     }
 
-    long addDataCenter( DataCenter dc ){
-        def result = sql.executeInsert('INSERT INTO datacenters(name,geolocation,description,provider_id) VALUES(?,?,?,?)',[dc.name,dc.geolocation,dc.description,dc.provider.id])
+    long addDataCenter(DataCenter dc) {
+        def result = sql.executeInsert('INSERT INTO datacenters(name,geolocation,description,provider_id) VALUES(?,?,?,?)', [dc.name, dc.geolocation, dc.description, dc.provider.id])
 
         return result[0][0]
     }

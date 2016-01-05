@@ -26,45 +26,45 @@ class SceneManagerTest extends Specification {
 
     def 'When a download request is submitted, the scene provider should be invoked'() {
         when:
-            sceneRequest.request.scenes.add(sceneRequest)
-            manager.sceneStatusChanged(sceneRequest, REQUESTED)
+        sceneRequest.request.scenes.add(sceneRequest)
+        manager.sceneStatusChanged(sceneRequest, REQUESTED)
 
         then:
-            1 * sceneProvider.retrieve([sceneRequest])
+        1 * sceneProvider.retrieve([sceneRequest])
 
     }
 
     def 'When a scene download finish, the processor should be invoked'() {
         when:
-            manager.sceneStatusChanged(sceneRequest, DOWNLOADED)
+        manager.sceneStatusChanged(sceneRequest, DOWNLOADED)
 
         then:
-            1 * processor.process(sceneRequest)
+        1 * processor.process(sceneRequest)
     }
 
     def 'When a scene processing finish inside an atomic request, the publisher should be invoked'() {
         when:
-            manager.requestStatusChanged(atomicRequest, PROCESSED)
+        manager.requestStatusChanged(atomicRequest, PROCESSED)
 
         then:
-            1 * publisher.publish(atomicRequest)
+        1 * publisher.publish(atomicRequest)
     }
 
     def 'When a scene download finish  inside an atomic request, the processor should be invoked'() {
         when:
-            atomicRequest.scenes.add(sceneRequest)
-            manager.requestStatusChanged(atomicRequest, DOWNLOADED)
+        atomicRequest.scenes.add(sceneRequest)
+        manager.requestStatusChanged(atomicRequest, DOWNLOADED)
 
         then:
-            1 * processor.process(_ as DownloadRequest, _ as String)
+        1 * processor.process(_ as DownloadRequest, _ as String)
     }
 
     def 'When a scene processing finish  inside an atomic request, the publisher should be invoked'() {
         when:
-            manager.requestStatusChanged(atomicRequest, PROCESSED)
+        manager.requestStatusChanged(atomicRequest, PROCESSED)
 
         then:
-            1 * publisher.publish(atomicRequest)
+        1 * publisher.publish(atomicRequest)
     }
 
 

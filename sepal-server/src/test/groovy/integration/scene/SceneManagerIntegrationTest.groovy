@@ -71,17 +71,17 @@ class SceneManagerIntegrationTest extends Specification {
 
     def 'Working with an atomic request, the scene manager behaves correctly'() {
         given:
-            insertRequest()
-            DownloadRequest downloadRequest = scenesDownloadRepository.newDownloadRequests.first()
+        insertRequest()
+        DownloadRequest downloadRequest = scenesDownloadRepository.newDownloadRequests.first()
         when:
-            sceneManager.requestStatusChanged(downloadRequest, REQUESTED)
+        sceneManager.requestStatusChanged(downloadRequest, REQUESTED)
         then:
-            driver.eventually {
-                1 * sceneProvider.retrieve(downloadRequest.scenes)
-                3 * scenesDownloadRepository.hasStatus(1, DOWNLOADED)
-                1 * sceneProcessor.process(_ as DownloadRequest, _ as String)
-                1 * scenePublisher.publish(_ as DownloadRequest)
-            }
+        driver.eventually {
+            1 * sceneProvider.retrieve(downloadRequest.scenes)
+            3 * scenesDownloadRepository.hasStatus(1, DOWNLOADED)
+            1 * sceneProcessor.process(_ as DownloadRequest, _ as String)
+            1 * scenePublisher.publish(_ as DownloadRequest)
+        }
 
     }
 
