@@ -1,24 +1,24 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant.configure(2) do |config|
-  config.vm.network "private_network", ip: "172.28.128.4"
-  config.vm.box = 'ubuntu/trusty64'
-  config.vm.synced_folder '../../', '/opt/sepal/'
+project_dir = '../../..'
 
-  config.vm.provider "virtualbox" do |v|
+Vagrant.configure(2) do |config|
+  config.vm.network 'private_network', ip: '172.28.128.4'
+  config.vm.box = 'ubuntu/trusty64'
+  config.vm.synced_folder project_dir, '/opt/sepal/'
+
+  config.vm.provider 'virtualbox' do |v|
     v.memory = 3072
     v.name = 'operations'
   end
 
-  config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "../../ansible/operations/local.yml"
+  config.vm.provision 'ansible' do |ansible|
+    ansible.playbook = 'deploy.yml'
     #ansible.verbose = 'vvvv'
     ansible.extra_vars = {
         ansible_ssh_us2er: 'vagrant',
         secret_vars_file: '~/.sepal/secret.yml'
-
     }
   end
-
 end

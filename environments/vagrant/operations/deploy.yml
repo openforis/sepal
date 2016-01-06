@@ -19,7 +19,9 @@
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage'
      
     - role: docker-registry
-    - role: build-jenkins
     - role: ansible
-    - role: run-jenkins
+
+
+    - { role: build-image, image: jenkins}
+    - { role: run-container, image: jenkins}
 
