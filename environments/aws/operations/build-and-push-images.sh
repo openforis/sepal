@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 
-
-CONTEXT_DIR=${1:-"../.."}
-VERSION=${2:-"latest"}
+VERSION=${1:-"latest"}
+CONTEXT_DIR=${2:-"."}
 INVENTORY_FILE_NAME=${3:-"local_inventory"}
 
-INVENTORY_FILE_PATH="$CONTEXT_DIR"/operations/inventory/"$INVENTORY_FILE_NAME"
+INVENTORY_FILE_PATH="$CONTEXT_DIR"/"$INVENTORY_FILE_NAME"
 
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible.cfg
 
-ansible-playbook ${CONTEXT_DIR}/operations/build-and-push-images.yml \
+ansible-playbook ${CONTEXT_DIR}/build-and-push-images.yml \
     -i ${INVENTORY_FILE_PATH} \
     --private-key=~/.ssh/sepal/eu-central-1.pem \
     --extra-vars "version=$VERSION secret_vars_file=~/.sepal/secret.yml"
