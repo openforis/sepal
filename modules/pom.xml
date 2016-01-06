@@ -12,8 +12,8 @@
     </prerequisites>
 
     <modules>
-        <module>sepal-server</module>
-        <module>sepal-php</module>
+        <module>modules/sepal-server</module>
+        <module>modules/sepal-php</module>
         <module>system-tests</module>
     </modules>
 

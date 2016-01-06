@@ -35,11 +35,11 @@
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage'
 
     - role: prepare-aws-environment
-    - role: run-ldap
-    - role: run-mysql
-    - role: run-sepal-server
-    - role: run-ssh-gateway
-    - role: run-gateone
-    - role: run-sepal-php
-    - role: run-nginx
-    - role: run-haproxy
+    - { role: run-container, image: ldap}
+    - { role: run-container, image: mysql}
+    - { role: run-container, image: sepal-server}
+    - { role: run-container, image: ssh-gateway}
+    - { role: run-container, image: gateone}
+    - { role: run-container, image: sepal-php}
+    - { role: run-container, image: nginx}
+    - { role: run-container, image: haproxy}

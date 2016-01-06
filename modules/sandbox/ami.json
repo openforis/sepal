@@ -47,12 +47,12 @@
     },
     {
       "type": "file",
-      "source": "/opt/sepal/sandbox/ansible/pull-sandbox/templates/login_to_repo",
+      "source": "ansible/pull-sandbox/templates/login_to_repo",
       "destination": "/tmp/login_to_repo"
     },
     {
       "type": "file",
-      "source": "/opt/sepal/sandbox/ansible/pull-sandbox/templates/pull_sandbox.sh",
+      "source": "ansible/pull-sandbox/templates/pull_sandbox.sh",
       "destination": "/tmp/pull_sandbox.sh"
     },
     {
@@ -67,12 +67,12 @@
     },
     {
     "type": "ansible-local",
-    "playbook_file": "/opt/sepal/sandbox/provision.yml",
+    "playbook_file": "provision.yml",
     "extra_arguments": [ "--extra-vars \"efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}} availability_zone={{user `av_zone`}}\""  ],
     "role_paths": [
-      "/opt/sepal/sandbox/ansible/pull-sandbox",
-      "/opt/sepal/ansible/roles/docker.ubuntu",
-      "/opt/sepal/ansible/roles/unattended-upgrades"
+      "ansible/pull-sandbox",
+      "../../ansible/docker.ubuntu",
+      "../../ansible/unattended-upgrades"
     ]
   }]
 }
