@@ -1,0 +1,60 @@
+- name: Configure Local Environment
+  hosts: all
+  user: vagrant
+  sudo: yes
+  gather_facts: true
+
+  vars_files:
+    - "{{ secret_vars_file }}"
+
+  pre_tasks:
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        state: directory
+    - name: Copy docker-registry certificate
+      copy:
+        src: ~/.sepal/certificates/docker-registry.crt
+        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+
+    - set_fact:
+       sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
+       ldap_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
+       region: "Localhost"
+       aws_access_key_id: ""
+       aws_secret_access_key: ""
+       availability_zone: ""
+       sepal_working_mode: "MONOLITICH"
+
+  tasks:
+  roles:
+    - role: unattended-upgrades
+      unattended_origins_patterns:
+        - 'origin=Ubuntu,archive=${distro_codename}-security'
+        - 'o=Ubuntu,a=${distro_codename}-updates'
+
+    - role: docker.ubuntu
+      docker_version: '1.8.1-0~trusty'
+      docker_storage_path: '/data/docker/'
+      docker_group_members: ['ubuntu','vagrant']
+      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
+
+    - { role: build-image, image: ldap}
+    - { role: build-image, image: haproxy}
+    - { role: build-image, image: nginx}
+    - { role: build-image, image: mysql}
+    - { role: build-image, image: gateone}
+    - { role: build-image, image: ssh-gateway}
+    - { role: build-image, image: oft}
+    - { role: build-image, image: sandbox}
+    - { role: build-image, image: sepal-php}
+    - { role: build-image, image: sepal-server}
+
+    - { role: run-container, image: ldap}
+    - { role: run-container, image: mysql}
+    - { role: run-container, image: sepal-server}
+    - { role: run-container, image: ssh-gateway}
+    - { role: run-container, image: gateone}
+    - { role: run-container, image: sepal-php}
+    - { role: run-container, image: nginx}
+    - { role: run-container, image: haproxy}
