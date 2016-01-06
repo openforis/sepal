@@ -1,6 +1,6 @@
 ---
 
-- include: "../../../../{{ image }}/build.yml"
+- include: "../../../modules/{{ image }}/build.yml"
 
 
 

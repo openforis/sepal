@@ -1,18 +1,20 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+projectDir = '../../..'
+
 Vagrant.configure(2) do |config|
   config.vm.network "private_network", ip: "172.28.128.3"
   config.vm.box = 'ubuntu/trusty64'
-  config.vm.synced_folder '../../', '/opt/sepal/'
-  config.vm.synced_folder '../../sepal-php/www', '/www'
+  config.vm.synced_folder projectDir, '/opt/sepal/'
+  config.vm.synced_folder "#{projectDir}/modules/sepal-php/www", '/www'
 
   config.vm.provider "virtualbox" do |v|
     v.memory = 4096
   end
 
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "../../ansible/sepal/local.yml"
+    ansible.playbook = "deploy.yml"
     #ansible.verbose = 'vvvv'
     ansible.extra_vars = {
         ansible_ssh_user: 'vagrant',
