@@ -29,5 +29,16 @@
     - { role: build-image, image: jenkins}
     - { role: run-container, image: jenkins}
 
+  post_tasks:
+    - name: "Clean environment"
+      file:
+        path: "/opt/sepal/"
+        state: "absent"
 
+    - name: "Create symlink to /opt/sepal"
+      file:
+        src: "/data/jenkins/workspace/Sepal"
+        path: "/opt/sepal"
+        state: "link"
+        force: "yes"
 

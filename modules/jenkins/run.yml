@@ -6,6 +6,12 @@
 - name: "jenkins | Copy .ssh folder"
   copy: src=~/.ssh/sepal dest=/home/ubuntu/.ssh/ mode=0400
 
+- name: "Create jenkins volume folder"
+  file:
+    path: "/data/jenkins/"
+    state: directory
+
+
 
 - name: "jenkins | Start jenkins container"
   docker:
