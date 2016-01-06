@@ -26,5 +26,5 @@ class SepalSession implements Serializable {
 }
 
 enum SessionStatus {
-    REQUESTED, ALIVE, TERMINATED
+    REQUESTED, ALIVE, TERMINATED,DIRTY
 }

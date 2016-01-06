@@ -22,6 +22,8 @@ interface SepalSessionRepository {
 
     void terminated(int sessionId)
 
+    Boolean updateStatus(int sessionId, SessionStatus status)
+
     void created(int sessionId, String containerId, String sandboxURI)
 
     int requested(String username, long instanceId)
@@ -51,12 +53,7 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
     }
 
     @Override
-    Boolean alive(int sessionId) {
-        def result = sql.executeUpdate('''
-          UPDATE  sandbox_sessions SET status = ?, status_refreshed_on = ?
-          WHERE session_id = ?''', [ALIVE.name(), new Date(), sessionId])
-        return result > 0
-    }
+    Boolean alive(int sessionId) { updateStatus(sessionId, SessionStatus.ALIVE) }
 
 
     @Override
@@ -65,6 +62,14 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
         sql.executeUpdate('''
             UPDATE sandbox_sessions SET status = ?, status_refreshed_on = ?, terminated_on =?
             WHERE session_id = ?''', [SessionStatus.TERMINATED.name(), now, now, sessionId])
+    }
+
+    @java.lang.Override
+    Boolean updateStatus(int sessionId, SessionStatus status) {
+        def result = sql.executeUpdate('''
+          UPDATE  sandbox_sessions SET status = ?, status_refreshed_on = ?
+          WHERE session_id = ?''', [status?.name(), new Date(), sessionId])
+        return result > 0
     }
 
     @Override

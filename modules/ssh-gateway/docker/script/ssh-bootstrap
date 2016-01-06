@@ -1,19 +1,45 @@
 
 #!/usr/bin/env bash
 
+function requestNewSession {
+	local postUrl="http://sepal:1025/data$1"
+	local resp=$(curl -X POST -s "$postUrl")
+	echo $resp
+}
+
+function isSessionAlive {
+     local sessionAliveUrl="http://sepal:1025/data/sandbox/$USER/session/$1"
+     local statusCode=$(curl -s -o /dev/null -w "%{http_code}" $sessionAliveUrl)
+     echo $statusCode
+}
+
+
 activeSessionsResponse=$(curl -s  "http://sepal:1025/data/sandbox/$USER")
 activeSessions=$(echo ${activeSessionsResponse} | jq '.activeSessions')
 expectedEmptyValue="[]"
+requestUrl=$(echo ${activeSessionsResponse} | jq -r '.availableInstanceTypes[0].requestUrl' )
 if [ "$activeSessions" == "$expectedEmptyValue" ]; then
-    requestUrl=$(echo ${activeSessionsResponse} | jq -r '.availableInstanceTypes[0].requestUrl' )
-    postUrl="http://sepal:1025/data$requestUrl"
-    sessionResponse=$(curl -X POST -s "$postUrl")
+    echo "No active sessions"
+    sessionResponse=$(requestNewSession $requestUrl)
     connectionUrl=$(echo ${sessionResponse} | jq -r '.containerURI')
     sessionId=$(echo ${sessionResponse} | jq -r '.sessionId')
 else
-    sessionResponse=$(curl -s "http://sepal:1025/data/sandbox/$USER")
-    connectionUrl=$(echo ${sessionResponse} | jq -r '.activeSessions[0].containerURI')
+    echo "Active Session found(s)"
+
+    sessionResponse=$activeSessionsResponse
+
     sessionId=$(echo ${sessionResponse} | jq -r '.activeSessions[0].sessionId')
+    sessionStatusCode=$(isSessionAlive $sessionId)
+    echo "SessionStatusCode:$sessionStatusCode"
+    if [ $sessionStatusCode -eq 200 ]; then
+      echo "Session is still valid"
+      connectionUrl=$(echo ${sessionResponse} | jq -r '.activeSessions[0].containerURI')
+    else
+      echo "Invalid session found"
+      sessionResponse=$(requestNewSession $requestUrl)
+      connectionUrl=$(echo ${sessionResponse} | jq -r '.containerURI')
+      sessionId=$(echo ${sessionResponse} | jq -r '.sessionId')
+    fi
 fi
 /script/alive.sh $sessionId > /dev/null 2>&1 &
 ssh -YC \

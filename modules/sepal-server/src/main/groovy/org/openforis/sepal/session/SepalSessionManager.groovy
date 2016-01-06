@@ -6,6 +6,7 @@ import org.openforis.sepal.instance.Instance
 import org.openforis.sepal.instance.InstanceManager
 import org.openforis.sepal.instance.InstanceType
 import org.openforis.sepal.session.model.SepalSession
+import org.openforis.sepal.session.model.SessionStatus
 import org.openforis.sepal.session.model.UserSessions
 import org.openforis.sepal.user.User
 import org.openforis.sepal.user.UserRepository
@@ -64,6 +65,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager {
         try {
             instance = instanceManager.gatherFacts(session.instance)
         } catch (InvalidInstance invalid) {
+            dataRepository.updateStatus(sessionId?.intValue(),SessionStatus.DIRTY)
             throw new InvalidSession("Session container instance not valid", invalid)
         }
 
@@ -73,6 +75,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager {
                 session = dataRepository.fetchUserSession(username, sessionId)
             } else {
                 if (!sandboxProvider.isRunning(session)) {
+                    dataRepository.updateStatus(sessionId?.intValue(),SessionStatus.DIRTY)
                     throw new InvalidSession("Session container $session.containerId not running anymore")
                 }
             }

@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory
 
 import static groovyx.net.http.ContentType.JSON
 import static org.openforis.sepal.SepalWorkingMode.PRIVATE_LAN
-import static org.openforis.sepal.session.model.SessionStatus.ALIVE
+import static org.openforis.sepal.session.model.SessionStatus.*
 
 interface DockerClient {
 
@@ -156,9 +156,10 @@ class DockerRESTClient implements DockerClient {
             ) as HttpResponseDecorator
             def data = response.data
             containerData.containerURI = response.data.NetworkSettings.IPAddress
-            containerData.status = data.State.Running ? ALIVE : STOPPED
+            containerData.status = data.State.Running ? ALIVE : TERMINATED
         } catch (HttpResponseException responseException) {
             LOG.error("Error while getting container info. $responseException.message")
+            containerData.status = DIRTY
             throw responseException
         }
     }
