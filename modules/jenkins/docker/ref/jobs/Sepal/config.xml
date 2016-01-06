@@ -38,6 +38,11 @@
     <com.cloudbees.jenkins.GitHubPushTrigger plugin="github@1.14.0">
       <spec></spec>
     </com.cloudbees.jenkins.GitHubPushTrigger>
+    <org.jvnet.hudson.plugins.triggers.startup.HudsonStartupTrigger plugin="startup-trigger-plugin@2.5">
+      <spec></spec>
+      <label>master</label>
+      <quietPeriod>10</quietPeriod>
+    </org.jvnet.hudson.plugins.triggers.startup.HudsonStartupTrigger>
   </triggers>
   <concurrentBuild>false</concurrentBuild>
   <rootModule>
@@ -64,22 +69,8 @@
   <buildWrappers/>
   <prebuilders/>
   <postbuilders>
-    <hudson.tasks.Maven>
-      <targets>versions:set -DnewVersion=${BUILD_NUMBER}-SNAPSHOT</targets>
-      <mavenName>Maven default</mavenName>
-      <usePrivateRepository>false</usePrivateRepository>
-      <settings class="jenkins.mvn.DefaultSettingsProvider"/>
-      <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
-    </hudson.tasks.Maven>
-    <hudson.tasks.Maven>
-      <targets>deploy -DskipTests=true</targets>
-      <mavenName>(Default)</mavenName>
-      <usePrivateRepository>false</usePrivateRepository>
-      <settings class="jenkins.mvn.DefaultSettingsProvider"/>
-      <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
-    </hudson.tasks.Maven>
     <hudson.tasks.Shell>
-      <command>${WORKSPACE}/ansible/operations/bin/provision_jenkins.sh ${WORKSPACE}/ansible/ &quot;$BUILD_NUMBER&quot;</command>
+      <command>${WORKSPACE}/ansible/operations/bin/provision_jenkins.sh ${WORKSPACE}/ansible &quot;$BUILD_NUMBER&quot;</command>
     </hudson.tasks.Shell>
   </postbuilders>
   <runPostStepsIfResult>

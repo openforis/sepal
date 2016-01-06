@@ -21,14 +21,14 @@ INVENTORY_FILE_PATH="$CONTEXT_DIR"/inventory/"$INVENTORY_FILE"
 echo "using inventory file $INVENTORY_FILE_PATH"
 echo "using private key $PRIVATE_KEY"
 
-ansible-playbook ${CONTEXT_DIR}/sepal/provision.yml \
+ansible-playbook provision.yml \
     -i ${INVENTORY_FILE_PATH} \
     --private-key=${PRIVATE_KEY}  \
     --extra-vars "region=$REGION availability_zone=$AV_ZONE deploy_environment=$ENV"
 
 ${INVENTORY_FILE_PATH} --refresh-cache > /dev/null
 
-ansible-playbook ${CONTEXT_DIR}/sepal/deploy.yml \
+ansible-playbook deploy.yml \
     -i ${INVENTORY_FILE_PATH} \
     --private-key=${PRIVATE_KEY} \
     --extra-vars " region=$REGION efs_id=$EFS_ID availability_zone=$AV_ZONE local_php=false local_sepal=false deploy_environment=$ENV version=$VERSION use_custom_host=false secret_vars_file=~/.sepal/secret.yml"

@@ -11,6 +11,7 @@ matrix-project:1.6
 script-security:1.13
 junit:1.2
 github-api:1.69
+startup-trigger-plugin:2.5
 
 
 

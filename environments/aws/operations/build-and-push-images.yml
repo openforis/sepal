@@ -8,8 +8,6 @@
     - "{{ secret_vars_file }}"
 
   roles:
-    - role: get-binaries
-    - role: pull-images
     - { role: build-image, image: ldap}
     - { role: build-image, image: haproxy}
     - { role: build-image, image: nginx}

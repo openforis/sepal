@@ -1,6 +1,3 @@
-- name: Install Expect
-  apt: name="expect"
-
 - name: Build Operations server
   hosts: "tag_Type_Operations"
   user: ubuntu
@@ -9,6 +6,12 @@
 
   vars_files:
     - "{{ secret_vars_file }}"
+
+  pre_tasks:
+    - name: Install Expect
+      apt: name="expect"
+    - name: Copy Jenkins Image
+      copy: src="../../../modules/jenkins/" dest="/opt/sepal/modules/jenkins/"
 
   roles:
     - role: unattended-upgrades
@@ -22,8 +25,9 @@
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage'
 
     - role: docker-registry
-    - role: pull-images
-    - role: build-jenkins
     - role: ansible
-    - role: run-jenkins
+    - { role: build-image, image: jenkins}
+    - { role: run-container, image: jenkins}
+
+
 

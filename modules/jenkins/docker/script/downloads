@@ -2,6 +2,21 @@
 
 apt-get update && apt-get install -y wget software-properties-common curl unzip git maven python-setuptools apt-transport-https
 
+
+
+#install java-8
+\
+  echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
+  add-apt-repository -y ppa:webupd8team/java && \
+  apt-get update && \
+  apt-get install -y oracle-java8-installer && \
+  rm -rf /var/lib/apt/lists/* && \
+  rm -rf /var/cache/oracle-jdk8-installer
+
+echo "JAVA_HOME=\"/usr/lib/jvm/java-8-oracle\"" >> /etc/environment
+
+
+#install ansible and jenkins
 sudo apt-add-repository ppa:ansible/ansible
 wget -q -O - https://jenkins-ci.org/debian/jenkins-ci.org.key | apt-key add -
 sh -c 'echo deb http://pkg.jenkins-ci.org/debian binary/ > /etc/apt/sources.list.d/jenkins.list'
