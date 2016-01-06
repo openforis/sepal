@@ -4,7 +4,7 @@
 - file: path="/data/sepal/certificates" state=directory
 - copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/sepal/certificates/ldap-ca.crt.pem
 
-- name: Start container
+- name: "sepal | Start container"
   docker:
     docker_api_version: "1.16"
     name: "sepal"
