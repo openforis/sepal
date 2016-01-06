@@ -1,7 +1,7 @@
 ---
 
 - name: "jenkins | Build"
-  docker_image: path="/opt/sepal/jenkins/docker" name="openforis/jenkins" state="build"
+  docker_image: path="/opt/sepal/modules/jenkins/docker" name="openforis/jenkins" state="build"
 
 
 

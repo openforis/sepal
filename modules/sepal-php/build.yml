@@ -11,9 +11,9 @@
   changed_when: should_rebuild.stdout_lines[0] == 'true'
 
 - name: "sepal-php | Build binaries"
-  shell: mvn clean package -DskipTests=true chdir="/opt/sepal/sepal-php"
+  shell: mvn clean package -DskipTests=true chdir="/opt/sepal/modules/sepal-php"
   when: should_rebuild.changed
 
 - name: "sepal-php | Build"
-  docker_image: path="/opt/sepal/sepal-php/docker" name="localhost/openforis/sepal-php" state=build
+  docker_image: path="/opt/sepal/modules/sepal-php/docker" name="localhost/openforis/sepal-php" state=build
 

@@ -1,10 +1,10 @@
 ---
 
 - name: "oft | Build jdk"
-  docker_image: path="/opt/sepal/oft/docker/jdk"  name="openforis/jdk" state=build
+  docker_image: path="/opt/sepal/modules/oft/docker/jdk"  name="openforis/jdk" state=build
 
 - name: "oft | Build openforistoolkit"
-  docker_image: path="/opt/sepal/oft/docker/oft-base" name="openforistoolkit" state=build
+  docker_image: path="/opt/sepal/modules/oft/docker/oft-base" name="openforistoolkit" state=build
 
 - name: "oft | Build openforistoolkit-gui-tools"
-  docker_image: path="/opt/sepal/oft/docker/oft-gui-tools"  name="openforistoolkit-guitools" state=build
+  docker_image: path="/opt/sepal/modules/oft/docker/oft-gui-tools"  name="openforistoolkit-guitools" state=build
