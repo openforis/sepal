@@ -31,9 +31,7 @@
 
   post_tasks:
     - name: "Clean environment"
-      file:
-        path: "/opt/sepal/"
-        state: "absent"
+      shell: 'sudo rm -rf /opt/sepal'
 
     - name: "Create symlink to /opt/sepal"
       file:

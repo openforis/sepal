@@ -10,4 +10,6 @@ fi
 
 ln -s ${JENKINS_HOME}/workspace/Sepal /opt/sepal
 
+rm -rf ${JENKINS_HOME}/jobs/Sepal/config.xml
+
 exec /jenkins.sh

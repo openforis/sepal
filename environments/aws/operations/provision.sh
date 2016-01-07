@@ -12,6 +12,8 @@ INVENTORY_FILE_PATH="$CONTEXT_DIR"/inventory/"$INVENTORY_FILE_NAME"
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible.cfg
 
+source ~/.sepal/export_aws_keys.sh
+
 ansible-playbook provision.yml \
     -i ${INVENTORY_FILE_PATH} \
     --private-key=~/.ssh/sepal/eu-central-1.pem \
