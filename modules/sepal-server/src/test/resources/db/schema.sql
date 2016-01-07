@@ -16,7 +16,9 @@ DROP TABLE IF EXISTS download_requests;
 DROP TABLE IF EXISTS requested_scenes;
 DROP TABLE IF EXISTS metadata_providers;
 DROP TABLE IF EXISTS metadata_crawling_criteria;
-DROP TABLE IF EXISTS sandboxes;
+DROP VIEW IF EXISTS v_session_status;
+DROP VIEW IF EXISTS v_instances;
+DROP TABLE IF EXISTS sandbox_sessions;
 DROP TABLE IF EXISTS instance_providers;
 DROP TABLE IF EXISTS datacenters;
 DROP TABLE IF EXISTS instances;
@@ -246,17 +248,17 @@ CREATE TABLE metadata_crawling_criteria (
   PRIMARY KEY (`criteria_id`)
 );
 
-CREATE TABLE sandboxes (
-  sandbox_id          INT          NOT NULL AUTO_INCREMENT,
+CREATE TABLE sandbox_sessions (
+  session_id          INT          NOT NULL AUTO_INCREMENT,
   username            VARCHAR(255) NOT NULL,
   status              VARCHAR(255) NOT NULL DEFAULT 'CREATED',
   container_id        VARCHAR(255) NULL,
-  uri                 VARCHAR(255) NULL,
+  container_uri       VARCHAR(255) NULL,
   created_on          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   terminated_on       TIMESTAMP    NULL,
   status_refreshed_on TIMESTAMP    NULL,
   instance_id         INT(11)      NOT NULL,
-  PRIMARY KEY (sandbox_id)
+  PRIMARY KEY (session_id)
 );
 
 CREATE TABLE instance_providers (
@@ -279,7 +281,7 @@ CREATE TABLE instances (
   id                 INT          NOT NULL AUTO_INCREMENT,
   instance_type      INT          NOT NULL,
   status             VARCHAR(60)  NOT NULL,
-  public_ip          VARCHAR(60)  NOT NULL,
+  public_ip          VARCHAR(60)  NULL,
   private_ip         VARCHAR(60)  NOT NULL,
   owner              VARCHAR(255) NULL,
   name               VARCHAR(60)  NOT NULL,
@@ -304,6 +306,39 @@ CREATE TABLE instance_types (
   notes        VARCHAR(500) NULL,
   enabled      INT(1)       NOT NULL DEFAULT 1,
   PRIMARY KEY (id)
+);
+
+CREATE OR REPLACE VIEW v_session_status AS (
+  SELECT ss.session_id AS id, ss.username AS username, ss.status AS status,
+         ss.created_on AS created_on,ss.status_refreshed_on AS updated_on,ss.terminated_on AS terminated_on,
+         ss.container_id AS cnt_id, ss.container_uri AS cnt_uri,
+         inst.id AS cnt_inst_id, inst.status AS cnt_inst_status, inst.public_ip as cnt_inst_pub_ip,
+         inst.private_ip as cnt_inst_priv_ip,inst.owner AS cnt_inst_owner,inst.name AS cnt_inst_name,
+         inst.launch_time AS cnt_inst_start_time,inst.termination_time AS cnt_inst_end_time,inst.status_update_time AS cnt_inst_updated_on,
+         dc.id as cnt_inst_dc_id, dc.name AS cnt_inst_dc_name, dc.geolocation AS cnt_inst_dc_location, dc.description AS cnt_inst_dc_description,
+         pr.id AS cnt_inst_prov_id, pr.name AS cnt_inst_prov_name, pr.description AS cnt_inst_prov_descr,
+         instType.id as cnt_inst_type_id, instType.name as cnt_inst_type_name,
+         instType.description AS cnt_inst_type_descr, instType.hourly_costs AS cnt_inst_type_hourly_costs,
+         instType.cpu_count AS cnt_inst_type_cpu_count, instType.ram AS cnt_inst_type_ram_count,
+         instType.notes AS cnt_inst_type_notes, instType.enabled AS cnt_inst_type_enabled
+  FROM sandbox_sessions ss
+    INNER JOIN instances inst ON ss.instance_id = inst.id
+    INNER JOIN datacenters dc ON inst.data_center_id = dc.id
+    INNER JOIN instance_types instType ON inst.instance_type = instType.id
+    INNER JOIN instance_providers pr ON instType.provider_id = pr.id
+);
+
+CREATE OR REPLACE VIEW v_instances AS (
+  SELECT ic.id AS icId, ic.status AS icStatus, ic.public_ip AS icPublicIp, ic.private_ip AS icPrivateIp, ic.owner AS icOwner, ic.name AS icName,
+         ic.launch_time AS icLaunchTime, ic.termination_time AS icDateEnd, ic.status_update_time AS icUpdateTime,
+         dc.id AS dcId, dc.name AS dcName, dc.geolocation AS dcGeoLocation, dc.description AS dcDescription,
+         pr.id AS prId, pr.name AS prName, pr.description AS prDescription,
+         type.id AS typeId, type.name AS typeName, type.description AS typeDescription,
+         type.hourly_costs AS typeHourlyCost, type.cpu_count AS typeCpuCount, type.ram AS typeRam,
+         type.notes AS typeNotes, type.enabled AS typeEnabled
+  FROM instances ic INNER JOIN datacenters dc ON ic.data_center_id = dc.id
+    INNER JOIN instance_types type ON ic.instance_type = type.id
+    INNER JOIN instance_providers pr ON dc.provider_id = pr.id
 );
 
 
