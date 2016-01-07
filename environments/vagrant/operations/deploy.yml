@@ -7,6 +7,10 @@
   vars_files:
     - "{{ secret_vars_file }}"
 
+  pre_tasks:
+    - name: Install Expect
+      apt: name="expect"
+
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:
@@ -20,8 +24,5 @@
 
     - role: docker-registry
     - role: ansible
-
-
     - { role: build-image, image: jenkins}
     - { role: run-container, image: jenkins}
-

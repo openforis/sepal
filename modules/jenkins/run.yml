@@ -6,12 +6,10 @@
 - name: "jenkins | Copy .ssh folder"
   copy: src=~/.ssh/sepal dest=/home/ubuntu/.ssh/ mode=0400
 
-- name: "Create jenkins volume folder"
+- name: "jenkins | Create jenkins volume folder"
   file:
     path: "/data/jenkins/"
     state: directory
-
-
 
 - name: "jenkins | Start jenkins container"
   docker:
@@ -31,6 +29,4 @@
       - "/home/ubuntu/.ssh/sepal/:/root/.ssh/sepal"
     env:
       JENKINS_PASSWD: "{{ jenkins_password }}"
-      AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-      AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
       GITHUB_ACCOUNT_PASSWD: "{{ jenkins_github_user_password }}"
