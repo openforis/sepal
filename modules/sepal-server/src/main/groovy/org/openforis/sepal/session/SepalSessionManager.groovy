@@ -65,7 +65,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager {
         try {
             instance = instanceManager.gatherFacts(session.instance)
         } catch (InvalidInstance invalid) {
-            dataRepository.updateStatus(sessionId?.intValue(),SessionStatus.DIRTY)
+            dataRepository.updateStatus(sessionId?.intValue(), SessionStatus.DIRTY)
             throw new InvalidSession("Session container instance not valid", invalid)
         }
 
@@ -75,7 +75,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager {
                 session = dataRepository.fetchUserSession(username, sessionId)
             } else {
                 if (!sandboxProvider.isRunning(session)) {
-                    dataRepository.updateStatus(sessionId?.intValue(),SessionStatus.DIRTY)
+                    dataRepository.updateStatus(sessionId?.intValue(), SessionStatus.DIRTY)
                     throw new InvalidSession("Session container $session.containerId not running anymore")
                 }
             }
