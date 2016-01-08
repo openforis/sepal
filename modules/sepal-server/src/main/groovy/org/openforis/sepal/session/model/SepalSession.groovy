@@ -10,6 +10,7 @@ class SepalSession implements Serializable {
     SessionStatus status
     String containerId
     String containerURI
+    Integer sshPort
     Date createdOn
     Date terminatedOn
     Date statusRefreshedOn

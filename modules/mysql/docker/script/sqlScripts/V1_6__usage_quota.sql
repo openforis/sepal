@@ -62,7 +62,7 @@ INSERT INTO sepal_sandbox.instance_types (provider_id,name,hourly_costs, cpu_cou
 CREATE OR REPLACE VIEW sepal_sandbox.v_session_status AS (
   SELECT ss.session_id AS id, ss.username AS username, ss.status AS status,
          ss.created_on AS created_on,ss.status_refreshed_on AS updated_on,ss.terminated_on AS terminated_on,
-         ss.container_id AS cnt_id, ss.container_uri AS cnt_uri,
+         ss.container_id AS cnt_id, ss.container_uri AS cnt_uri,ss.ssh_port AS ssh_port,
          inst.id AS cnt_inst_id, inst.status AS cnt_inst_status, inst.public_ip as cnt_inst_pub_ip,
          inst.private_ip as cnt_inst_priv_ip,inst.owner AS cnt_inst_owner,inst.name AS cnt_inst_name,
          inst.launch_time AS cnt_inst_start_time,inst.termination_time AS cnt_inst_end_time,inst.status_update_time AS cnt_inst_updated_on,

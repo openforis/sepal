@@ -46,8 +46,8 @@ class DockerRESTClient implements DockerClient {
                 Image     : settings.imageName,
                 Tty       : true,
                 Cmd       : ["/start", username, conf.ldapHost, conf.ldapPassword],
-                HostConfig: [Binds: settings.binds],
-                PublishAllPorts: true
+                HostConfig: [Binds: settings.binds, PublishAllPorts: true],
+                ExposedPorts: [ '22/tcp': [:] ]
 
         ] as Map<String,String>
         def body = new JsonOutput().toJson(bodyMap)
@@ -90,7 +90,7 @@ class DockerRESTClient implements DockerClient {
 
     @Override
     Boolean releaseContainer(SepalSession data) {
-        releaseContainer(data, getRestClient(data?.instance?.privateIp))
+        releaseContainer(data, getRestClient(getInstanceIp(data?.instance)))
     }
 
     Boolean releaseContainer(SepalSession data, RESTClient restClient) {
@@ -155,7 +155,9 @@ class DockerRESTClient implements DockerClient {
                     path: path,
             ) as HttpResponseDecorator
             def data = response.data
-            containerData.containerURI = response.data.NetworkSettings.IPAddress
+            def netSettings = response.data.NetworkSettings
+            containerData.sshPort = Integer.parseInt(netSettings.Ports["22/tcp"][0].HostPort)
+            containerData.containerURI = netSettings.IPAddress
             containerData.status = data.State.Running ? ALIVE : TERMINATED
         } catch (HttpResponseException responseException) {
             LOG.error("Error while getting container info. $responseException.message")

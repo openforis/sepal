@@ -4,14 +4,11 @@ import endtoend.SepalDriver
 import org.openforis.sepal.instance.*
 import org.openforis.sepal.session.JDBCSepalSessionRepository
 import org.openforis.sepal.session.SepalSessionRepository
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static org.openforis.sepal.instance.Instance.Status.AVAILABLE
-import static org.openforis.sepal.instance.Instance.Status.NA
+import static org.openforis.sepal.instance.Instance.Status.*
 
-@Ignore
 class InstanceDataRepositoryTest extends Specification {
 
     private static final String PUBLIC_IP_ALTERNATIVE = "A_PUBLIC_IP"
@@ -33,6 +30,10 @@ class InstanceDataRepositoryTest extends Specification {
     Instance instance2
     Instance instance3
     Instance instance4
+    InstanceType smallInstanceType
+    InstanceType mediumInstanceType
+    InstanceType bigInstanceType
+    InstanceType xLargeInstanceType
 
     def setupSpec() {
         driver = new SepalDriver()
@@ -52,22 +53,28 @@ class InstanceDataRepositoryTest extends Specification {
         dataCenter2 = new DataCenter(name: 'DC2', geolocation: 'America', description: 'DC2_DESCR', provider: provider1)
         dataCenter3 = new DataCenter(name: 'DC3', geolocation: 'Europe', description: 'DC3_DESCR', provider: provider2)
 
+
+        smallInstanceType = new InstanceType(id: 1L, name: 'SmallInstance')
+        mediumInstanceType = new InstanceType(id: 2L, name: 'MediumInstance')
+        bigInstanceType = new InstanceType(id: 3L, name: 'BigInstance')
+        xLargeInstanceType = new InstanceType(id: 4L, name: 'XLargeInstance')
+
         instance1 = new Instance(
-                status: AVAILABLE, publicIp: 'ip1', privateIp: 'pr1', owner: 'own1', name: 'nm1', launchTime: new Date(), statusUpdateTime: new Date(), disposable: true, reserved: false,
-                capacity: SMALL, dataCenter: dataCenter1, terminationTime: new Date()
+                status: AVAILABLE, publicIp: 'ip1', privateIp: 'pr1', owner: 'own1', name: 'nm1', launchTime: new Date(), statusUpdateTime: new Date(),
+                instanceType: smallInstanceType, dataCenter: dataCenter1, terminationTime: new Date()
         )
         instance2 = new Instance(
-                status: CREATED, publicIp: 'ip2', privateIp: 'pr2', owner: 'own2', name: 'nm2', launchTime: new Date(), statusUpdateTime: new Date(), disposable: false, reserved: true,
-                capacity: MEDIUM, dataCenter: dataCenter2, terminationTime: new Date()
+                status: REQUESTED, publicIp: 'ip2', privateIp: 'pr2', owner: 'own2', name: 'nm2', launchTime: new Date(), statusUpdateTime: new Date(),
+                instanceType: mediumInstanceType, dataCenter: dataCenter2, terminationTime: new Date()
         )
         instance3 = new Instance(
-                status: AVAILABLE, publicIp: 'ip3', privateIp: 'pr3', owner: 'own3', name: 'nm3', launchTime: new Date(), statusUpdateTime: new Date(), disposable: true, reserved: false,
-                capacity: LARGE, dataCenter: dataCenter3, terminationTime: new Date()
+                status: AVAILABLE, publicIp: 'ip3', privateIp: 'pr3', owner: 'own3', name: 'nm3', launchTime: new Date(), statusUpdateTime: new Date(),
+                instanceType: bigInstanceType, dataCenter: dataCenter3, terminationTime: new Date()
         )
 
         instance4 = new Instance(
-                status: AVAILABLE, publicIp: 'ip4', privateIp: 'pr4', owner: 'own4', name: 'nm4', launchTime: new Date(), statusUpdateTime: new Date(), disposable: false, reserved: true,
-                capacity: XLARGE, dataCenter: dataCenter1, terminationTime: new Date()
+                status: AVAILABLE, publicIp: 'ip4', privateIp: 'pr4', owner: 'own4', name: 'nm4', launchTime: new Date(), statusUpdateTime: new Date(),
+                instanceType: xLargeInstanceType, dataCenter: dataCenter1, terminationTime: new Date()
         )
 
 
@@ -160,9 +167,6 @@ class InstanceDataRepositoryTest extends Specification {
         fetchedInstance2.name == instance2.name
         fetchedInstance3.launchTime == instance3.launchTime
         fetchedInstance3.terminationTime == instance3.terminationTime
-        fetchedInstance2.disposable == instance2.disposable
-        fetchedInstance3.reserved == instance3.reserved
-        fetchedInstance4.capacity == instance4.capacity
         fetchedInstanceByName
         !unFetchedInstanceByName
         reFetchedInstance1 && reFetchedInstance2 && reFetchedInstance3 && reFetchedInstance4
@@ -185,32 +189,32 @@ class InstanceDataRepositoryTest extends Specification {
         when:
 
 
-        def instance = dataRepo.findAvailableInstance(Size.SMALL.value, dataCenter1)
+        def instance = dataRepo.findAvailableInstance(dataCenter1, smallInstanceType.id)
 
-        def bigInstance = dataRepo.findAvailableInstance(Size.XLARGE.value, dataCenter1)
+        def bigInstance = dataRepo.findAvailableInstance(dataCenter1, xLargeInstanceType.id)
         instance4.owner = null
         dataRepo.updateInstance(instance4)
-        def bigInstance2 = dataRepo.findAvailableInstance(Size.XLARGE.value, dataCenter1)
+        def bigInstance2 = dataRepo.findAvailableInstance(dataCenter1, xLargeInstanceType.id)
 
-        def sandbox1 = sandboxDataRepo.requested('owner4', instance4.id, Size.LARGE)
-        def largeInstance = dataRepo.findAvailableInstance(Size.LARGE.value, dataCenter1)
-        def sandbox2 = sandboxDataRepo.requested('owner42', instance4.id, Size.LARGE)
-        def largeInstance2 = dataRepo.findAvailableInstance(Size.LARGE.value, dataCenter1)
+        def sandbox1 = sandboxDataRepo.requested('owner4', instance4.id)
+        def largeInstance = dataRepo.findAvailableInstance(dataCenter1,bigInstanceType.id)
+        def sandbox2 = sandboxDataRepo.requested('owner42', instance4.id)
+        def largeInstance2 = dataRepo.findAvailableInstance(dataCenter1,bigInstanceType.id)
 
 
 
-        def sandbox3 = sandboxDataRepo.requested('owner43', instance1.id, Size.SMALL)
-        def smallInstance = dataRepo.findAvailableInstance(Size.SMALL.value, dataCenter1)
+        def sandbox3 = sandboxDataRepo.requested('owner43', instance1.id)
+        def smallInstance = dataRepo.findAvailableInstance(dataCenter1, smallInstanceType.id)
 
         sandboxDataRepo.terminated(sandbox1)
         sandboxDataRepo.terminated(sandbox2)
-        def xLargeInstance = dataRepo.findAvailableInstance(Size.XLARGE.value, dataCenter1)
-        sandboxDataRepo.requested('owner43', instance4.id, Size.LARGE)
-        def smallInstance2 = dataRepo.findAvailableInstance(Size.SMALL.value, dataCenter1)
+        def xLargeInstance = dataRepo.findAvailableInstance(dataCenter1, xLargeInstanceType.id)
+        sandboxDataRepo.requested('owner43', instance4.id)
+        def smallInstance2 = dataRepo.findAvailableInstance(dataCenter1, smallInstanceType.id)
 
 
         sandboxDataRepo.terminated(sandbox3)
-        def smallInstance3 = dataRepo.findAvailableInstance(Size.SMALL.value, dataCenter1)
+        def smallInstance3 = dataRepo.findAvailableInstance(dataCenter1, smallInstanceType.id)
 
         then:
         instance

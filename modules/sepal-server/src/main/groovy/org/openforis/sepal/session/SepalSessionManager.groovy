@@ -112,30 +112,32 @@ class ConcreteSepalSessionManager implements SepalSessionManager {
     private void createContainer(User user, SepalSession session, Instance instance) {
         try {
             def sessionData = sandboxProvider.obtain(user, instance)
-            dataRepository.created(session.sessionId, sessionData.containerId, sessionData.containerURI)
+            dataRepository.created(session.sessionId, sessionData.containerId, sessionData.containerURI,sessionData.sshPort)
         } catch (Exception ex) {
             LOG.error("Error during container creation.", ex)
             throw ex
         }
     }
 
-    private static String getConnectionURL(SepalSession session) {
+    private static void getConnectionURL(SepalSession session) {
         def connectionURL = session?.instance?.privateIp
         if (session) {
             def config = SepalConfiguration.instance
             switch (config.sepalWorkingMode) {
                 case SepalWorkingMode.MONOLITICH:
-                    connectionURL = session.containerURI
+                    session.connectionUrl = session.containerURI
+                    session.sshPort = 22
                     break
                 case SepalWorkingMode.PUBLIC_WAN:
-                    connectionURL = session.instance?.publicIp
+                    session.connectionUrl  = session.instance?.publicIp
                     break
                 default:
-                    connectionURL = session.instance?.privateIp
+                    session.connectionUrl  = session.instance?.privateIp
+                    session.sshPort = 22
                     break
             }
         }
-        return connectionURL
+
     }
 
     private List<SepalSession> fetchActiveSessions(String username) {

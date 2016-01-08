@@ -114,7 +114,7 @@ class JdbcInstanceDataRepository implements InstanceDataRepository {
 
     @Override
     Instance findAvailableInstance(DataCenter dataCenter, Long instanceTypeId) {
-        def row = sql.firstRow('SELECT * FROM v_instances WHERE dcId = ? AND typeId = ? AND icOwner IS NULL AND icStatus = ?', [dataCenter?.id, instanceTypeId, AVAILABLE])
+        def row = sql.firstRow('SELECT * FROM v_instances WHERE dcId = ? AND typeId = ? AND icOwner IS NULL AND icStatus = ?', [dataCenter?.id, instanceTypeId, AVAILABLE.name()])
         return row ? mapInstance(row) : null
     }
 

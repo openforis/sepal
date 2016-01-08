@@ -19,26 +19,27 @@ activeSessions=$(echo ${activeSessionsResponse} | jq '.activeSessions')
 expectedEmptyValue="[]"
 requestUrl=$(echo ${activeSessionsResponse} | jq -r '.availableInstanceTypes[0].requestUrl' )
 if [ "$activeSessions" == "$expectedEmptyValue" ]; then
-    echo "No active sessions"
     sessionResponse=$(requestNewSession $requestUrl)
     connectionUrl=$(echo ${sessionResponse} | jq -r '.containerURI')
     sessionId=$(echo ${sessionResponse} | jq -r '.sessionId')
+    sshPort=$(echo ${sessionResponse} | jq -r '.sshPort')
+
 else
-    echo "Active Session found(s)"
-
     sessionResponse=$activeSessionsResponse
-
     sessionId=$(echo ${sessionResponse} | jq -r '.activeSessions[0].sessionId')
     sessionStatusCode=$(isSessionAlive $sessionId)
     echo "SessionStatusCode:$sessionStatusCode"
     if [ $sessionStatusCode -eq 200 ]; then
-      echo "Session is still valid"
       connectionUrl=$(echo ${sessionResponse} | jq -r '.activeSessions[0].containerURI')
+      sshPort=$(echo ${sessionResponse} | jq -r '.sshPort')
+    elif [ $sessionStatusCode -eq 202 ]; then
+        echo "Your container is gonna to be available soon. Please come back later"
+        exit 202
     else
-      echo "Invalid session found"
       sessionResponse=$(requestNewSession $requestUrl)
       connectionUrl=$(echo ${sessionResponse} | jq -r '.containerURI')
       sessionId=$(echo ${sessionResponse} | jq -r '.sessionId')
+      sshPort=$(echo ${sessionResponse} | jq -r '.sshPort')
     fi
 fi
 /script/alive.sh $sessionId > /dev/null 2>&1 &
@@ -48,4 +49,5 @@ ssh -YC \
     -q  \
     -o StrictHostKeyChecking=no \
     -o UserKnownHostsFile=/dev/null \
+    -p $sshPort \
     $connectionUrl ${SSH_ORIGINAL_COMMAND:-}

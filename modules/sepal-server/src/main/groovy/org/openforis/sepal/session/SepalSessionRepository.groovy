@@ -25,7 +25,7 @@ interface SepalSessionRepository {
 
     Boolean updateStatus(int sessionId, SessionStatus status)
 
-    void created(int sessionId, String containerId, String sandboxURI)
+    void created(int sessionId, String containerId, String sandboxURI, Integer sshPort)
 
     int requested(String username, long instanceId)
 
@@ -74,11 +74,11 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
     }
 
     @Override
-    void created(int sessionId, String containerId, String sandboxURI) {
+    void created(int sessionId, String containerId, String sandboxURI,Integer sshPort) {
         sql.executeUpdate('''
-            UPDATE sandbox_sessions SET container_id = ?, status = ?, status_refreshed_on = ?, container_uri = ?
+            UPDATE sandbox_sessions SET container_id = ?,status = ?, status_refreshed_on = ?, container_uri = ?,ssh_port = ?
             WHERE session_id = ?''',
-                [containerId, ALIVE.name(), new Date(), sandboxURI, sessionId])
+                [containerId, ALIVE.name(), new Date(), sandboxURI,sshPort, sessionId])
     }
 
     @Override
@@ -166,7 +166,7 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
         def session = new SepalSession(
                 sessionId: row.id, username: row.username, status: SessionStatus.valueOf(row.status),
                 createdOn: row.created_on, statusRefreshedOn: row.updated_on, terminatedOn: row.terminated_on,
-                containerId: row.cnt_id, containerURI: row.cnt_uri, instance: instance
+                containerId: row.cnt_id, containerURI: row.cnt_uri,sshPort: row.ssh_port, instance: instance
         )
 
         SandboxUtils.calculateCosts(session)
