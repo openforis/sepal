@@ -28,6 +28,10 @@ class DateTime {
         return cal.time
     }
 
+    static long getDifferenceInSeconds(Date date1, Date date2){
+        return (date1.getTime() - date2.getTime()) / 1000
+    }
+
     static Date parseJsonDateFormat(String dateString) { JSON_DATE_FORMAT.parse(dateString) }
 
     static Date parseDateString(String dateString) { DATE_ONLY_DATE_FORMAT.parse(dateString) }

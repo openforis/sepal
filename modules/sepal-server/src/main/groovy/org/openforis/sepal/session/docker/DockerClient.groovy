@@ -42,19 +42,19 @@ class DockerRESTClient implements DockerClient {
         LOG.debug("Going to create a container for $username")
         def settings = collectSettings(username)
         def sandboxDockerClient = getRestClient(getInstanceIp(instance))
-        def sepalDockerClient = getRestClient()
-        def body = new JsonOutput().toJson(
-                [
-                        Image     : settings.imageName,
-                        Tty       : true,
-                        Cmd       : ["/start", username, conf.ldapHost, conf.ldapPassword],
-                        HostConfig: [Binds: settings.binds]
-                ]
-        )
+        def bodyMap = [
+                Image     : settings.imageName,
+                Tty       : true,
+                Cmd       : ["/start", username, conf.ldapHost, conf.ldapPassword],
+                HostConfig: [Binds: settings.binds],
+                PublishAllPorts: true
+
+        ] as Map<String,String>
+        def body = new JsonOutput().toJson(bodyMap)
 
         LOG.info("Creating container with: $body")
         try {
-            HttpResponseDecorator response = sepalDockerClient.post(
+            HttpResponseDecorator response = sandboxDockerClient.post(
                     path: 'containers/create',
                     requestContentType: JSON,
                     body: body

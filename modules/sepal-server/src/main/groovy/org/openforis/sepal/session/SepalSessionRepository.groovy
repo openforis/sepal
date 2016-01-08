@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.session.model.SessionStatus.ALIVE
 import static org.openforis.sepal.session.model.SessionStatus.REQUESTED
+import static org.openforis.sepal.util.DateTime.getDifferenceInSeconds
 
 interface SepalSessionRepository {
 
@@ -144,27 +145,43 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
         return monthlyReport
     }
 
-    private SepalSession map(row) {
+    private static  SepalSession map(row) {
+        def now = new Date()
+        Double instTypeHourlyCost = row.cnt_inst_type_hourly_costs
+
+        Date sessionTerminatedOn = row.terminated_on
+        Date sessionCreatedOn = row.created_on
+        def sessionUptimeSeconds = getDifferenceInSeconds(sessionTerminatedOn?: now,sessionCreatedOn)
+        def sessionUptimeHours = Math.ceil((sessionUptimeSeconds / 60) / 60)
+        def sessionCosts = sessionUptimeHours * instTypeHourlyCost
+
+        Date instanceCreatedOn = row.cnt_inst_start_time
+        Date instanceTerminatedOn = row.cnt_inst_end_time
+        def instanceUptimeSeconds = getDifferenceInSeconds(instanceTerminatedOn?: now,instanceCreatedOn)
+        def instanceUptimeHours = Math.ceil((instanceUptimeSeconds / 60) / 60)
+        def instanceCosts = instanceUptimeHours * instTypeHourlyCost
+
+
         def provider = new InstanceProvider(id: row.cnt_inst_prov_id, name: row.cnt_inst_prov_name, description: row.cnt_inst_prov_descr)
         def dataCenter = new DataCenter(
-                id: row.cnt_inst_dc_id, name: row.cnt_inst_dc_name, geolocation: row.cnt_inst_dc_location, description: row.cnt_inst_dc_description
+                id: row.cnt_inst_dc_id, name: row.cnt_inst_dc_name, geolocation: row.cnt_inst_dc_location, description: row.cnt_inst_dc_description, provider: provider
         )
         def instanceType = new InstanceType(
                 id: row.cnt_inst_type_id, name: row.cnt_inst_type_name, description: row.cnt_inst_type_descr,
-                hourlyCosts: row.cnt_inst_type_hourly_costs, cpuCount: row.cnt_inst_type_cpu_count,
+                hourlyCosts: instTypeHourlyCost, cpuCount: row.cnt_inst_type_cpu_count,
                 ramMemory: row.cnt_inst_type_ram_count, notes: row.cnt_inst_type_notes, enabled: row.cnt_inst_type_enabled
         )
         def instance = new Instance(
                 id: row.cnt_inst_id, status: Status.valueOf(row.cnt_inst_status), publicIp: row.cnt_inst_pub_ip,
                 privateIp: row.cnt_inst_priv_ip, owner: row.cnt_inst_owner, name: row.cnt_inst_name,
-                launchTime: row.cnt_inst_start_time, terminationTime: row.cnt_inst_end_time, statusUpdateTime: row.cnt_inst_updated_on,
-                dataCenter: dataCenter, instanceType: instanceType, durationInSecs: row.cnt_inst_up_time_secs, costs: row.cnt_inst_costs
+                launchTime: instanceCreatedOn, terminationTime: instanceTerminatedOn, statusUpdateTime: row.cnt_inst_updated_on,
+                dataCenter: dataCenter, instanceType: instanceType, durationInSecs: instanceUptimeSeconds, costs: instanceCosts
         )
 
         return new SepalSession(
                 sessionId: row.id, username: row.username, status: SessionStatus.valueOf(row.status),
-                createdOn: row.created_on, statusRefreshedOn: row.updated_on, terminatedOn: row.terminated_on,
-                containerId: row.cnt_id, containerURI: row.cnt_uri, instance: instance, costs: row.costs, durationInSecs: row.uptime_secs
+                createdOn: sessionCreatedOn, statusRefreshedOn: row.updated_on, terminatedOn: sessionTerminatedOn,
+                containerId: row.cnt_id, containerURI: row.cnt_uri, instance: instance, costs: sessionCosts, durationInSecs: sessionUptimeSeconds
         )
 
     }
