@@ -172,9 +172,6 @@ class JDBCSepalSessionRepository implements SepalSessionRepository {
         SandboxUtils.calculateCosts(session)
 
         return session
-
-
-
     }
 
 
