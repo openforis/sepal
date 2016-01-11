@@ -7,7 +7,7 @@
         <artifactId>sepal</artifactId>
         <groupId>org.openforis.sepal</groupId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../../../pom.xml</relativePath>
     </parent>
     <artifactId>sepal-vagrant</artifactId>
     <dependencies>
