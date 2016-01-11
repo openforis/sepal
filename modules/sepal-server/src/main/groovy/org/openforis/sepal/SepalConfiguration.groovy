@@ -80,6 +80,7 @@ class SepalConfiguration {
             dataSource = connectionPool()
             sandboxDataSource = connectionPool(getSandboxJdbcConnString())
         }
+        return null
     }
 
     private DataSource connectionPool(jdbcUrl = getJdbcConnectionString()) {

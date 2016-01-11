@@ -16,7 +16,7 @@ interface EarthExplorerClient {
 
     String lookupDownloadLink(SceneRequest sceneRequest)
 
-    double getSceneSize(String sceneUrl)
+
 }
 
 class RestfulEarthExplorerClient implements EarthExplorerClient {
@@ -62,23 +62,13 @@ class RestfulEarthExplorerClient implements EarthExplorerClient {
         }
     }
 
-    @Override
-    double getSceneSize(String sceneUrl) {
-        HttpURLConnection.setFollowRedirects(false)
-        HttpURLConnection con =
-                (HttpURLConnection) new URL(sceneUrl).openConnection();
-        con.setRequestMethod("HEAD");
-        def size = con.getHeaderField('Content-Length')
-        return Double.valueOf(size)
-
-    }
 
 
     String login() {
         def authToken
         String qs = "jsonRequest=" + this.urlEncode("{\"username\":\"$loginUsername\",\"password\":\"$loginPassword\"}")
         try {
-            def response = restClient.get(
+            def response = restClient.post(
                     path: 'login',
                     requestContentType: JSON,
                     queryString: qs
