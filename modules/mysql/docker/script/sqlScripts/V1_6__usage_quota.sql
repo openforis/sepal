@@ -1,5 +1,3 @@
-DROP VIEW sepal_sandbox.instances_status;
-
 
 RENAME TABLE sepal_sandbox.sandboxes TO sepal_sandbox.sandbox_sessions;
 ALTER TABLE sepal_sandbox.sandbox_sessions  DROP COLUMN size;
@@ -58,6 +56,10 @@ INSERT INTO sepal_sandbox.instance_types (provider_id, name, hourly_costs, cpu_c
 
 INSERT INTO sepal_sandbox.instance_types (provider_id,name,hourly_costs, cpu_count,ram) VALUES((SELECT id FROM instance_providers WHERE name = 'Localhost'),'default',0,1,2048);
 
+
+
+ALTER TABLE sepal_sandbox.instances MODIFY public_ip  VARCHAR(60) NULL;
+ALTER TABLE sepal_sandbox.sandbox_sessions ADD ssh_port INT(11) NULL;
 
 CREATE OR REPLACE VIEW sepal_sandbox.v_session_status AS (
   SELECT ss.session_id AS id, ss.username AS username, ss.status AS status,

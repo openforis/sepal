@@ -31,7 +31,7 @@ else
     echo "SessionStatusCode:$sessionStatusCode"
     if [ $sessionStatusCode -eq 200 ]; then
       connectionUrl=$(echo ${sessionResponse} | jq -r '.activeSessions[0].containerURI')
-      sshPort=$(echo ${sessionResponse} | jq -r '.sshPort')
+      sshPort=$(echo ${sessionResponse} | jq -r '.activeSessions[0].sshPort')
     elif [ $sessionStatusCode -eq 202 ]; then
         echo "Your container is gonna to be available soon. Please come back later"
         exit 202

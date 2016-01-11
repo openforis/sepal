@@ -53,9 +53,6 @@ INSERT INTO datacenters(name,geolocation,description,provider_id) values('ap-sou
 INSERT INTO datacenters(name,geolocation,description,provider_id) values('sa-east-1','sa-east-1','South America (Sao Paulo)',(SELECT id FROM instance_providers WHERE name = 'AWS'));
 
 
-CREATE OR REPLACE VIEW instances_status AS SELECT ic.id AS instanceId, COALESCE((SELECT SUM(size) FROM sandboxes WHERE status <> 'TERMINATED' AND instance_id = ic.id),0) AS totalOccupied,ic.id AS instanceIdentifier,ic.capacity AS instanceCapacity,ic.capacity - COALESCE((SELECT SUM(size) FROM sandboxes WHERE status <> 'TERMINATED' AND instance_id = ic.id),0) AS remaining,ic.data_center_id AS dataCenterId, ic.status AS instanceStatus,ic.reserved AS instanceReserved,ic.owner AS instanceOwner FROM instances ic ORDER BY remaining asc;
-
-
 
 
 
