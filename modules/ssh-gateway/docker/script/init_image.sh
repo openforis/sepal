@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
+apt-get update && apt-get install -y software-properties-common
+
+apt-add-repository ppa:groovy-dev/groovy
+
+DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     supervisor \
     openssh-server \
     curl \
@@ -11,7 +15,8 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     libnss-ldap \
     ldapscripts \
     sssd-tools \
-    gettext # envsubst for templating
+    gettext \
+    groovy
 
 echo "initgroups: files sss" >> /etc/nsswitch.conf
 printf '%s\n' "Match Group $USER_GROUP" 'ForceCommand ssh-bootstrap' >> /etc/ssh/sshd_config

@@ -1,53 +1,22 @@
-
 #!/usr/bin/env bash
 
-function requestNewSession {
-	local postUrl="http://sepal:1025/data$1"
-	local resp=$(curl -X POST -s "$postUrl")
-	echo $resp
-}
 
-function isSessionAlive {
-     local sessionAliveUrl="http://sepal:1025/data/sandbox/$USER/session/$1"
-     local statusCode=$(curl -s -o /dev/null -w "%{http_code}" $sessionAliveUrl)
-     echo $statusCode
-}
+/usr/local/bin/ssh-bootstrap.groovy $USER
+SESSION_ID=$?
 
-
-activeSessionsResponse=$(curl -s  "http://sepal:1025/data/sandbox/$USER")
-activeSessions=$(echo ${activeSessionsResponse} | jq '.activeSessions')
-expectedEmptyValue="[]"
-requestUrl=$(echo ${activeSessionsResponse} | jq -r '.availableInstanceTypes[0].requestUrl' )
-if [ "$activeSessions" == "$expectedEmptyValue" ]; then
-    sessionResponse=$(requestNewSession $requestUrl)
-    connectionUrl=$(echo ${sessionResponse} | jq -r '.containerURI')
-    sessionId=$(echo ${sessionResponse} | jq -r '.sessionId')
-    sshPort=$(echo ${sessionResponse} | jq -r '.sshPort')
-
-else
-    sessionResponse=$activeSessionsResponse
-    sessionId=$(echo ${sessionResponse} | jq -r '.activeSessions[0].sessionId')
-    sessionStatusCode=$(isSessionAlive $sessionId)
-    echo "SessionStatusCode:$sessionStatusCode"
-    if [ $sessionStatusCode -eq 200 ]; then
-      connectionUrl=$(echo ${sessionResponse} | jq -r '.activeSessions[0].containerURI')
-      sshPort=$(echo ${sessionResponse} | jq -r '.activeSessions[0].sshPort')
-    elif [ $sessionStatusCode -eq 202 ]; then
-        echo "Your container is gonna to be available soon. Please come back later"
-        exit 202
-    else
-      sessionResponse=$(requestNewSession $requestUrl)
-      connectionUrl=$(echo ${sessionResponse} | jq -r '.containerURI')
-      sessionId=$(echo ${sessionResponse} | jq -r '.sessionId')
-      sshPort=$(echo ${sessionResponse} | jq -r '.sshPort')
-    fi
+if [ $SESSION_ID -gt 0 ]; then
+	sessionBindUrl="http://sepal:1025/data/sandbox/$USER/session/$SESSION_ID"
+	session=$(curl -s $sessionBindUrl)
+	connectionUrl=$(echo ${session} | jq -r '.containerURI')
+	sshPort=$(echo ${session} | jq -r '.sshPort')
+	/script/alive.sh $SESSION_ID > /dev/null 2>&1 &
+	ssh -YC \
+	    -i /home/$USER/.ssh/id_rsa \
+	    -l $USER \
+	    -q  \
+	    -o StrictHostKeyChecking=no \
+	    -o UserKnownHostsFile=/dev/null \
+	    -p $sshPort \
+	    $connectionUrl ${SSH_ORIGINAL_COMMAND:-}
 fi
-/script/alive.sh $sessionId > /dev/null 2>&1 &
-ssh -YC \
-    -i /home/$USER/.ssh/id_rsa \
-    -l $USER \
-    -q  \
-    -o StrictHostKeyChecking=no \
-    -o UserKnownHostsFile=/dev/null \
-    -p $sshPort \
-    $connectionUrl ${SSH_ORIGINAL_COMMAND:-}
+

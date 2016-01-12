@@ -19,7 +19,9 @@ rm -rf /home && ln -sf /data/home /home
 
 cp /script/add-sepal-user /usr/local/bin/add-sepal-user
 cp /script/ssh-bootstrap /usr/local/bin/ssh-bootstrap
+cp /script/ssh-bootstrap.groovy /usr/local/bin/ssh-bootstrap.groovy
 chmod 555 /usr/local/bin/ssh-bootstrap
+chmod 555 /usr/local/bin/ssh-bootstrap.groovy
 
 template /config/ldap.conf /etc/ldap.conf root: 0600
 template /config/ldap.conf /etc/ldap/ldap.conf root: 0600

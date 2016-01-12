@@ -143,7 +143,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager {
     private List<SepalSession> fetchActiveSessions(String username) {
         def sessions = dataRepository.getSessions(username, REQUESTED, ALIVE)
         sessions?.each { SepalSession session ->
-            session.requestUrl = "/sandbox/$username/session/$session.sessionId"
+            session.requestUrl = "sandbox/$username/session/$session.sessionId"
             session.connectionUrl = getConnectionURL(session)
         }
         return sessions
@@ -152,7 +152,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager {
     private List<InstanceType> fetchAvailableInstanceTypes(String username) {
         def instances = instanceManager.availableInstanceTypes
         instances?.each { InstanceType type ->
-            type.requestUrl = "/sandbox/$username/container/$type.id"
+            type.requestUrl = "sandbox/$username/container/$type.id"
 
         }
         return instances
