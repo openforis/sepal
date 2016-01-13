@@ -3,6 +3,8 @@
 import groovyx.net.http.RESTClient
 @Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
 import groovyx.net.http.RESTClient
+@Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
+import groovyx.net.http.RESTClient
 
 def user = this.args[0]
 
@@ -100,9 +102,6 @@ class SshBootstrap {
                 def sessionIndex = Integer.parseInt(answer?.trim()) - 1
                 def session = activeSessions[sessionIndex]
                 println "$session.instance.instanceType.name: [ $session.status ]"
-                if (!(session.status == 'ALIVE')) {
-                    this.exit("Session $session.sessionId not available yet. Please try again later", 0)
-                }
                 def sessionStatus = this.isSessionAlive(session.sessionId)
                 switch (sessionStatus) {
                     case 200:
