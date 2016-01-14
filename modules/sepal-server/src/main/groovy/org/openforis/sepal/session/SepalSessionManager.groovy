@@ -80,7 +80,7 @@ class ConcreteSepalSessionManager implements SepalSessionManager {
                 }
             }
         }
-        session.connectionUrl = getConnectionURL(session)
+        getConnectionURL(session)
         return session
     }
 
@@ -120,7 +120,6 @@ class ConcreteSepalSessionManager implements SepalSessionManager {
     }
 
     private static void getConnectionURL(SepalSession session) {
-        def connectionURL = session?.instance?.privateIp
         if (session) {
             def config = SepalConfiguration.instance
             switch (config.sepalWorkingMode) {
@@ -133,7 +132,6 @@ class ConcreteSepalSessionManager implements SepalSessionManager {
                     break
                 default:
                     session.connectionUrl  = session.instance?.privateIp
-                    session.sshPort = 22
                     break
             }
         }

@@ -3,11 +3,10 @@
 
 /usr/local/bin/ssh-bootstrap.groovy $USER
 SESSION_ID=$?
-
 if [ $SESSION_ID -gt 0 ]; then
 	sessionBindUrl="http://sepal:1025/data/sandbox/$USER/session/$SESSION_ID"
 	session=$(curl -s $sessionBindUrl)
-	connectionUrl=$(echo ${session} | jq -r '.containerURI')
+	connectionUrl=$(echo ${session} | jq -r '.connectionUrl')
 	sshPort=$(echo ${session} | jq -r '.sshPort')
 	/script/alive.sh $SESSION_ID > /dev/null 2>&1 &
 	ssh -YC \

@@ -3,6 +3,8 @@
 import groovyx.net.http.RESTClient
 @Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
 import groovyx.net.http.RESTClient
+@Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
+import groovyx.net.http.RESTClient
 
 def user = this.args[0]
 
@@ -62,7 +64,7 @@ class SshBootstrap {
                 def idxReal = idx + 1
                 println "  $idxReal. $session.instance.instanceType.name: [ $session.status ]"
             }
-            println "N. Start a new Session"
+            println "  N. Start a new Session"
             println ''
             println '#########################'
             println ''
@@ -88,7 +90,7 @@ class SshBootstrap {
         if (wait) {
             System.console().readLine(' > Press Enter to exit')
         }
-
+        println 'Exiting with code:' + errorCode
         System.exit(errorCode)
     }
 
