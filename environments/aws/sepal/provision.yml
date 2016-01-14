@@ -18,14 +18,6 @@
             to_port: 22
             cidr_ip: 168.202.0.0/16
           - proto: tcp
-            from_port: 2222
-            to_port: 2222
-            cidr_ip: 168.202.0.0/16
-          - proto: tcp
-            from_port: 2375
-            to_port: 2375
-            cidr_ip: 168.202.0.0/16
-          - proto: tcp
             from_port: 80
             to_port: 80
             cidr_ip: 0.0.0.0/0
@@ -34,9 +26,9 @@
             to_port: 443
             cidr_ip: 0.0.0.0/0
           - proto: tcp
-            from_port: 389
-            to_port: 389
-            cidr_ip: 0.0.0.0/0
+            from_port: 0
+            to_port: 65535
+            cidr_ip: 172.31.0.0/16
         rules_egress:
           - proto: all
             from_port: 0
