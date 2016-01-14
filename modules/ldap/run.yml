@@ -39,8 +39,9 @@
       LDAP_TLS_KEY_FILENAME: ldap-key.pem
       LDAP_TLS_CA_CRT_FILENAME: ldap-ca.crt.pem
       LDAP_TLS_VERIFY_CLIENT: never
-  register: started
+  register: container
+
 
 - name: "ldap | Wait until started"
   wait_for: path=/data/ldap/started
-  when: started.changed
+  when: (container.summary.started > 0 or container.summary.restarted > 0)
