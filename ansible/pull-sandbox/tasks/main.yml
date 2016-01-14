@@ -1,13 +1,8 @@
 ---
 
-- name: Install Expect
-  apt: name="expect"
-
 - name: Copy sandbox pulling script
   template: src=pull_sandbox.sh dest=/data/sepal/pull_sandbox.sh mode=0777
 
-- name: Copy repository login script
-  template: src=login_to_repo dest=/data/sepal/login_to_repo mode=0777
 
 - name: Pulling sandbox image
-  shell: "/data/sepal/login_to_repo"
+  shell: "/data/sepal/pull_sandbox.sh"

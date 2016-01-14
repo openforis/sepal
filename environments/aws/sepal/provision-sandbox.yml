@@ -55,8 +55,6 @@
         fstype: "nfs4"
         state: "mounted"
         src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/public"
-    - name: Copy repository login script
-      template: src=/tmp/login_to_repo dest=/data/sepal/login_to_repo mode=0777 remote_src=True
     - name: Copy pull sandbox script
       template: src=/tmp/pull_sandbox.sh dest=/data/sepal/pull_sandbox.sh mode=0777 remote_src=True
     - name: Copy LDAP Certificate

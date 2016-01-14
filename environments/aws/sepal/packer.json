@@ -47,11 +47,6 @@
     },
     {
       "type": "file",
-      "source": "../../../ansible/pull-sandbox/templates/login_to_repo",
-      "destination": "/tmp/login_to_repo"
-    },
-    {
-      "type": "file",
       "source": "../../../ansible/pull-sandbox/templates/pull_sandbox.sh",
       "destination": "/tmp/pull_sandbox.sh"
     },
