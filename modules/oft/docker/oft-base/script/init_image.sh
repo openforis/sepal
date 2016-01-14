@@ -3,6 +3,8 @@
 #install basic tools
 apt-get update && apt-get install -y software-properties-common
 apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
+apt-add-repository ppa:johanvdw/saga-gis -y
+
 
 apt-get update && apt-get install -y \
     gdebi-core \
@@ -28,7 +30,10 @@ apt-get update && apt-get install -y \
     python-otb \
     nano \
     csh \
-    libgmp3-dev
+    libgmp3-dev \
+    saga \
+    aria2 \
+    xml-twig-tools
 
 #install oft
 wget http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
@@ -45,6 +50,7 @@ source activate python3_4
 
 
 /opt/miniconda3/bin/conda install -y -n python3_4 -c https://conda.binstar.org/osgeo arcsi
+/opt/miniconda3/bin/conda install -y -n python3_4 pandas
 rm -rf ./Miniconda3-latest-Linux-x86_64.sh
 echo "GDAL_DRIVER_PATH=\"/opt/miniconda3/lib/gdalplugins:$GDAL_DRIVER_PATH\"" >> /etc/environment
 echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
@@ -58,7 +64,7 @@ gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 gpg -a --export E084DAB9 | sudo apt-key add -
 apt-get update
 apt-get upgrade
-apt-get install -y r-base
+apt-get install -y r-base sudo r-cran-rcpp
 
 #install OpenSARKit
 export OSK_GIT_URL=https://github.com/cdanielw/OpenSARKit
