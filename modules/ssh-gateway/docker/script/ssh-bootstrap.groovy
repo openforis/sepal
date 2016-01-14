@@ -3,12 +3,10 @@
 import groovyx.net.http.RESTClient
 @Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
 import groovyx.net.http.RESTClient
-@Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
-import groovyx.net.http.RESTClient
 
 def user = this.args[0]
 
-def bootstrap = new SshBootstrap(user).routine()
+new SshBootstrap(user).routine()
 
 
 class SshBootstrap {
@@ -64,6 +62,7 @@ class SshBootstrap {
                 def idxReal = idx + 1
                 println "  $idxReal. $session.instance.instanceType.name: [ $session.status ]"
             }
+            println "N. Start a new Session"
             println ''
             println '#########################'
             println ''
@@ -94,11 +93,12 @@ class SshBootstrap {
     }
 
     def promptSessionSelector(def userSession, def activeSessions) {
-        def answer = System.console().readLine(' > Enter the session number to join it or Press N to start a brand new one: ')
+        def answer = System.console().readLine(' > Select an option(Enter for default): ')
         try {
             if ('N'.equalsIgnoreCase(answer)) {
                 promptSessionCreator(userSession)
             } else {
+                answer = answer?: 1
                 def sessionIndex = Integer.parseInt(answer?.trim()) - 1
                 def session = activeSessions[sessionIndex]
                 println "$session.instance.instanceType.name: [ $session.status ]"
@@ -127,7 +127,7 @@ class SshBootstrap {
             } else {
                 println 'Going to generate a new session'
                 def availableInstance = availableInstances[0]
-                def requestedSession = this.requestSession(availableInstance.requestUrl).data
+                this.requestSession(availableInstance.requestUrl).data
                 println 'Session Created'
                 this.routine()
             }
@@ -139,7 +139,8 @@ class SshBootstrap {
     def promptInstanceTypeSelection(def availableInstances) {
         this.listInstancesType(availableInstances)
         try {
-            def answer = System.console().readLine(' > Select an instance type: ')
+            def answer = System.console().readLine(' > Select an instance type(Enter for default): ')
+            answer = answer?: 1
             def typeIndex = Integer.parseInt(answer.trim()) - 1
             def selectedInstanceType = availableInstances[typeIndex]
             this.requestSession(selectedInstanceType.requestUrl).data
