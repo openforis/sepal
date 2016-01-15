@@ -11,6 +11,8 @@ PRIVATE_KEY=${7:-"~/.ssh/sepal/$REGION.pem"}
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible.cfg
 
+source ~/.sepal/export_aws_keys.sh
+
 ../inventory/ec2.py --refresh-cache > /dev/null
 
 ansible-playbook deploy.yml \
