@@ -60,7 +60,6 @@ class SepalSessionEndpoint extends SepalEndpoint {
                         break
                     case REQUESTED:
                         status = 202
-                        response.writer.write("$commandResult.sessionId")
                         break
                     case TERMINATED:
                     default:

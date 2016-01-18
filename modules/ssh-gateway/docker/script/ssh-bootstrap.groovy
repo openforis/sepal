@@ -7,6 +7,8 @@ import groovyx.net.http.RESTClient
 import groovyx.net.http.RESTClient
 @Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
 import groovyx.net.http.RESTClient
+@Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
+import groovyx.net.http.RESTClient
 
 def user = this.args[0]
 
@@ -128,11 +130,9 @@ class SshBootstrap {
         }
     }
 
-    def waitUntilAvailable(Object session){ waitUntilAvailable(session.sessionId)
 
-    }
-
-    def waitUntilAvailable(int sessionId){
+    def waitUntilAvailable(session){
+        sessionId = session?.sessionId
         Thread.sleep(3000)
         println 'Session not available(yet)'
         def sessionStatus = this.isSessionAlive(sessionId)
@@ -163,9 +163,9 @@ class SshBootstrap {
             } else {
                 println 'Going to generate a new session'
                 def availableInstance = availableInstances[0]
-                def session = this.requestSession(availableInstance.requestUrl).data
+                this.requestSession(availableInstance.requestUrl).data
                 println 'Session Created'
-                this.waitUntilAvailable(session)
+                this.routine()
             }
         } else {
             this.exit('No instance(s) type available', 0)
@@ -182,7 +182,7 @@ class SshBootstrap {
             def sessionId = this.requestSession(selectedInstanceType.requestUrl).data
             waitUntilAvailable(sessionId)
         } catch (Exception ex) {
-            this.exit("Invalid type selected", 0)
+            this.exit("Invalid type selected $ex", 0)
         }
     }
 
