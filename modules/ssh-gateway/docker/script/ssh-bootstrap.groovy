@@ -5,6 +5,8 @@ import groovyx.net.http.RESTClient
 import groovyx.net.http.RESTClient
 @Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
 import groovyx.net.http.RESTClient
+@Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
+import groovyx.net.http.RESTClient
 
 def user = this.args[0]
 
@@ -90,8 +92,7 @@ class SshBootstrap {
         if (wait) {
             System.console().readLine(' > Press Enter to exit')
         }
-        println 'Exiting with code:' + errorCode
-        System.exit(errorCode)
+         System.exit(errorCode)
     }
 
     def promptSessionSelector(def userSession, def activeSessions) {
@@ -100,17 +101,23 @@ class SshBootstrap {
             if ('N'.equalsIgnoreCase(answer)) {
                 promptSessionCreator(userSession)
             } else {
-                answer = answer?: 1
+                answer = answer?: '1'
                 def sessionIndex = Integer.parseInt(answer?.trim()) - 1
                 def session = activeSessions[sessionIndex]
                 println "$session.instance.instanceType.name: [ $session.status ]"
                 def sessionStatus = this.isSessionAlive(session.sessionId)
                 switch (sessionStatus) {
                     case 200:
-                        this.exit("Session $session.sessionId correctly validated", session.sessionId, false)
+                        if (session?.status?.toString()?.toLowerCase() == 'alive'){
+                            this.exit("Session $session.sessionId correctly validated", session.sessionId, false)
+                        }else if (session?.status?.toString()?.toLowerCase() == 'requested'){
+                            waitUntilAvailable(session)
+                        }else{
+                            this.exit("Session $session.sessionId not available",0)
+                        }
                         break
                     case 202:
-                        this.exit("Session $session.sessionId not available yet. Please try again later", 0)
+                        waitUntilAvailable(session)
                         break
                     default:
                         this.exit("Session $session.sessionId not found.", 0)
@@ -121,6 +128,33 @@ class SshBootstrap {
         }
     }
 
+    def waitUntilAvailable(Object session){ waitUntilAvailable(session.sessionId)
+
+    }
+
+    def waitUntilAvailable(int sessionId){
+        Thread.sleep(3000)
+        println 'Session not available(yet)'
+        def sessionStatus = this.isSessionAlive(sessionId)
+        switch (sessionStatus) {
+            case 200:
+                if (sessionStatus?.toString()?.toLowerCase() == 'alive'){
+                    this.exit("Session $sessionId available", sessionId, false)
+                }else if (sessionStatus?.toString()?.toLowerCase() == 'requested'){
+                    waitUntilAvailable(session)
+                }else{
+                    this.exit("Session $sessionId not available",0)
+                }
+                break
+            case 202:
+                waitUntilAvailable(session)
+                break
+            default:
+                this.exit("Session $sessionId not found.", 0)
+        }
+        this.exit("Session $sessionId correctly validated", sessionId, false)
+    }
+
     def promptSessionCreator(def userSession) {
         def availableInstances = userSession?.data?.availableInstanceTypes
         if (availableInstances) {
@@ -129,9 +163,9 @@ class SshBootstrap {
             } else {
                 println 'Going to generate a new session'
                 def availableInstance = availableInstances[0]
-                this.requestSession(availableInstance.requestUrl).data
+                def session = this.requestSession(availableInstance.requestUrl).data
                 println 'Session Created'
-                this.routine()
+                this.waitUntilAvailable(session)
             }
         } else {
             this.exit('No instance(s) type available', 0)
@@ -142,14 +176,13 @@ class SshBootstrap {
         this.listInstancesType(availableInstances)
         try {
             def answer = System.console().readLine(' > Select an instance type(Enter for default): ')
-            answer = answer?: 1
+            answer = answer?: '1'
             def typeIndex = Integer.parseInt(answer.trim()) - 1
             def selectedInstanceType = availableInstances[typeIndex]
-            this.requestSession(selectedInstanceType.requestUrl).data
-            println 'Session Created'
-            this.routine()
+            def sessionId = this.requestSession(selectedInstanceType.requestUrl).data
+            waitUntilAvailable(sessionId)
         } catch (Exception ex) {
-            this.exit("Invalid type selected ", 0)
+            this.exit("Invalid type selected", 0)
         }
     }
 
