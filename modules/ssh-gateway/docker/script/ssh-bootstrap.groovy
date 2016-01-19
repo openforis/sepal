@@ -3,34 +3,31 @@
 import groovyx.net.http.RESTClient
 @Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
 import groovyx.net.http.RESTClient
-@Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
-import groovyx.net.http.RESTClient
-@Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
-import groovyx.net.http.RESTClient
-@Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
-import groovyx.net.http.RESTClient
-@Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7.1')
-import groovyx.net.http.RESTClient
 
 def user = this.args[0]
+def silent = this.args.length == 2 ? Boolean.valueOf(this.args[1]) : false
 
-new SshBootstrap(user).routine()
+new SshBootstrap(user,silent).routine()
 
 
 class SshBootstrap {
 
     def restClient = new RESTClient('http://sepal:1025/data/')
     def user
+    Boolean silent
 
-    SshBootstrap(def user) {
+    SshBootstrap(user,silent) {
         this.user = user
+        this.silent = silent
     }
 
     def routine() {
         def userSession = this.userSessionStatus
         def activeSessions = userSession?.data?.activeSessions
-        this.listSessions(activeSessions)
         if (activeSessions) {
+            if (!silent){
+                this.listSessions(activeSessions)
+            }
             this.promptSessionSelector(userSession, activeSessions)
         } else {
             this.promptSessionCreator(userSession)
@@ -58,68 +55,73 @@ class SshBootstrap {
 
     def listSessions(def sessions) {
         if (sessions) {
-            println '### Active Session(s) ###'
-            println ''
+            printMsg('### Active Session(s) ###\n')
             sessions.eachWithIndex { session, idx ->
                 def idxReal = idx + 1
-                println "  $idxReal. $session.instance.instanceType.name: [ $session.status ]"
+                printMsg("  $idxReal. $session.instance.instanceType.name: [ $session.status ]")
             }
-            println "  N. Start a new Session"
-            println ''
-            println '#########################'
-            println ''
+            printMsg("  N. Start a new Session\n#########################\n")
+
         }
     }
 
     def listInstancesType(def instancesType) {
         if (instancesType) {
-            println '### Available Instances type ###'
-            println ''
-            instancesType.eachWithIndex { iType, idx ->
+            printMsg('### Available Instances type ###\n')
+              instancesType.eachWithIndex { iType, idx ->
                 def idxReal = idx + 1
-                println "  $idxReal. $iType.name"
+                  printMsg("  $idxReal. $iType.name")
             }
-            println ''
-            println '################################'
-            println ''
+            printMsg('\n################################\n')
         }
     }
 
     def exit(def message, def errorCode, def wait = true) {
-        println message
-        if (wait) {
-            System.console().readLine(' > Press Enter to exit')
+        if (!silent){
+            printMsg(message)
+            if (wait) {
+                System.console().readLine(' > Press Enter to exit')
+            }
         }
         System.exit(errorCode)
     }
 
+    def printMsg(message){
+        if (!silent){
+            println(message)
+        }
+    }
+
     def promptSessionSelector(def userSession, def activeSessions) {
-        def answer = System.console().readLine(' > Select an option(1): ')
+        def answer = '1'
         try {
-            if ('N'.equalsIgnoreCase(answer)) {
-                promptSessionCreator(userSession)
-            } else {
-                answer = answer?: '1'
-                def sessionIndex = Integer.parseInt(answer?.trim()) - 1
-                def session = activeSessions[sessionIndex]
-                println "$session.instance.instanceType.name: [ $session.status ]"
-                def sessionStatus = this.isSessionAlive(session.sessionId).status
-                switch (sessionStatus) {
-                    case 200:
-                        if (session?.status?.toString()?.toLowerCase() == 'alive'){
-                            this.exit("Session $session.sessionId correctly validated", session.sessionId, false)
-                        }else if (session?.status?.toString()?.toLowerCase() == 'requested'){
-                            waitUntilAvailable(session.sessionId)
-                        }else{
-                            this.exit("Session $session.sessionId not available",0)
-                        }
-                        break
-                    case 202:
-                        waitUntilAvailable(session.sessionId)
-                        break
-                    default:
-                        this.exit("Session $session.sessionId not found. $sessionStatus", 0)
+            if (!silent){
+                answer = System.console().readLine(' > Select an option(1): ')
+                if ('N'.equalsIgnoreCase(answer)) {
+                    promptSessionCreator(userSession)
+                } else {
+                    answer = answer?: '1'
                 }
+            }
+            def sessionIndex = Integer.parseInt(answer?.trim()) - 1
+            def session = activeSessions[sessionIndex]
+            printMsg("$session.instance.instanceType.name: [ $session.status ]")
+            def sessionStatus = this.isSessionAlive(session.sessionId).status
+            switch (sessionStatus) {
+                case 200:
+                    if (session?.status?.toString()?.toLowerCase() == 'alive'){
+                        this.exit("Session $session.sessionId correctly validated", session.sessionId, false)
+                    }else if (session?.status?.toString()?.toLowerCase() == 'requested'){
+                        waitUntilAvailable(session.sessionId)
+                    }else{
+                        this.exit("Session $session.sessionId not available",0)
+                    }
+                    break
+                case 202:
+                    waitUntilAvailable(session.sessionId)
+                    break
+                default:
+                    this.exit("Session $session.sessionId not found. $sessionStatus", 0)
             }
         } catch (Exception ex) {
             this.exit("Invalid option selected: $answer", 0)
@@ -129,9 +131,10 @@ class SshBootstrap {
 
     def waitUntilAvailable(sessionId){
         Thread.sleep(3000)
-        println 'Session not available(yet)'
-        def sessionInfo = this.isSessionAlive(sessionId)
-        def sessionStatus = sessionInfo.status
+        printMsg('Session not available(yet)')
+        def sessionRawInfo = this.isSessionAlive(sessionId)
+        def sessionStatus = sessionRawInfo.status
+        def sessionInfo = sessionRawInfo.data
         switch (sessionStatus) {
             case 200:
                 if (sessionInfo?.status?.toString()?.toLowerCase() == 'alive'){
@@ -154,13 +157,13 @@ class SshBootstrap {
     def promptSessionCreator(def userSession) {
         def availableInstances = userSession?.data?.availableInstanceTypes
         if (availableInstances) {
-            if (availableInstances.size > 1) {
+            if (availableInstances.size > 1 && !silent) {
                 promptInstanceTypeSelection(availableInstances)
             } else {
-                println 'Going to generate a new session'
+                printMsg('Going to generate a new session')
                 def availableInstance = availableInstances[0]
                 this.requestSession(availableInstance.requestUrl).data
-                println 'Session Created'
+                printMsg('Session Created')
                 this.routine()
             }
         } else {
@@ -169,10 +172,13 @@ class SshBootstrap {
     }
 
     def promptInstanceTypeSelection(def availableInstances) {
-        this.listInstancesType(availableInstances)
+        def answer = '1'
         try {
-            def answer = System.console().readLine(' > Select an instance type(1): ')
-            answer = answer?: '1'
+            if (!silent){
+                this.listInstancesType(availableInstances)
+                answer = System.console().readLine(' > Select an instance type(1): ')
+                answer = answer?: '1'
+            }
             def typeIndex = Integer.parseInt(answer.trim()) - 1
             def selectedInstanceType = availableInstances[typeIndex]
             this.requestSession(selectedInstanceType.requestUrl).data

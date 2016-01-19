@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
-
-/usr/local/bin/ssh-bootstrap.groovy $USER
+SILENT_MODE=true
+if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
+SILENT_MODE=false
+fi
+/usr/local/bin/ssh-bootstrap.groovy $USER $SILENT_MODE
 SESSION_ID=$?
 if [ $SESSION_ID -gt 0 ]; then
 	sessionBindUrl="http://sepal:1025/data/sandbox/$USER/session/$SESSION_ID"
