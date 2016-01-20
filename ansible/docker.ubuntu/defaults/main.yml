@@ -27,7 +27,7 @@ docker_opts: ""
 # Be aware that granted users can easily get full root access on the docker host system!
 docker_group_members: []
 # Versions for the python packages that are installed installed
-pip_version_pip: latest
+pip_version_pip: 7.1.2
 pip_version_setuptools: latest
 pip_version_docker_py: latest
 pip_version_docker_compose: latest
