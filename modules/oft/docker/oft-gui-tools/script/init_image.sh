@@ -13,7 +13,6 @@ apt-get update && apt-get install -y \
 #installs /rstudio
 wget https://download1.rstudio.org/rstudio-0.99.484-amd64.deb
 gdebi -n rstudio-0.99.484-amd64.deb
-rm -f rstudio-*
 
 #installs rstudio-server
 echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
