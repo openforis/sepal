@@ -22,7 +22,11 @@ class DirectoryStructure {
     }
 
     private static void appendToBuilder(File dir, MarkupBuilder builder) {
+        def files = [] as List<File>
         dir.eachFile { file ->
+            files << file
+        }
+        files.sort { it.name }.each { file ->
             delegate = builder
             if (file.isDirectory())
                 "$file.name" {

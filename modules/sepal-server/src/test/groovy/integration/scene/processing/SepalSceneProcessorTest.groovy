@@ -47,8 +47,8 @@ class SepalSceneProcessorTest extends Specification {
         then:
         DirectoryStructure.matches(new File(workingDir, "" + atomicRequest.requestId)) {
             "${sceneRequest2.sceneReference.dataSet.name()}" {
-                'file_create_by_script.txt'()
                 "$sceneRequest2.sceneReference.id"()
+                'file_create_by_script.txt'()
 
             }
         }

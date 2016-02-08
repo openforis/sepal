@@ -50,10 +50,6 @@ class EarthExplorerSceneProviderTest extends Specification {
             callback(getClass().getResourceAsStream("/scene.tar.gz"), 0d)
         }
 
-        double getSceneSize(String sceneUrl) {
-            return 0d
-        }
-
         String lookupDownloadLink(SceneRequest sceneRequest) {
             return 'yes'
         }
