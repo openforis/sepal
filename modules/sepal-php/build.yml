@@ -4,14 +4,14 @@
   apt: name="maven"
 
 - name: "sepal-php | Determine if binaries should be built"
-  script: "../../../modules/sepal-php/should-rebuild.sh"
+  script: "{{ module_dir }}/should-rebuild.sh"
   delegate_to: 127.0.0.1
   sudo: false
   register: should_rebuild
   changed_when: should_rebuild.stdout_lines[0] == 'true'
 
 - name: "sepal-php | Build binaries"
-  shell: mvn clean package -DskipTests=true chdir="/opt/sepal/modules/sepal-php"
+  shell: mvn clean package -DskipTests=true chdir="{{ module_dir }}"
   when: should_rebuild.changed
 
 - name: "sepal-php | Build"
