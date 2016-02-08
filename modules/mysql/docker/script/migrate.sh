@@ -15,4 +15,10 @@ if [ "$i" = 0 ]; then
 	exit 1
 fi
 
-/opt/flyway/flyway migrate -baselineVersion=${SCHEMA_BASELINE_VERSION} -baselineOnMigrate=true -url=jdbc:mysql://${INSTANCE_HOSTNAME}:3306/${MYSQL_DATABASE} -user=root -password=${MYSQL_ROOT_PASSWORD}
+/opt/flyway/flyway migrate \
+    -url=jdbc:mysql://${INSTANCE_HOSTNAME}:3306/${MYSQL_DATABASE} \
+    -user=root \
+    -password=${MYSQL_ROOT_PASSWORD}
+
+touch /data/initialized
+echo "MySQL container initialized"

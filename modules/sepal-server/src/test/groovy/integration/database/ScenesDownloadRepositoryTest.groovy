@@ -1,17 +1,17 @@
 package integration.database
 
 import endtoend.SepalDriver
-import org.openforis.sepal.scene.DataSet
-import org.openforis.sepal.scene.DownloadRequest
-import org.openforis.sepal.scene.SceneRequest
-import org.openforis.sepal.scene.management.JdbcScenesDownloadRepository
-import org.openforis.sepal.scene.management.RequestScenesDownloadCommand
-import org.openforis.sepal.scene.management.ScenesDownloadRepository
+import org.openforis.sepal.component.dataprovider.DataSet
+import org.openforis.sepal.component.dataprovider.DownloadRequest
+import org.openforis.sepal.component.dataprovider.SceneRequest
+import org.openforis.sepal.component.dataprovider.management.JdbcScenesDownloadRepository
+import org.openforis.sepal.component.dataprovider.management.RequestScenesDownloadCommand
+import org.openforis.sepal.component.dataprovider.management.ScenesDownloadRepository
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static org.openforis.sepal.scene.Status.REQUESTED
-import static org.openforis.sepal.scene.Status.UNKNOWN
+import static org.openforis.sepal.component.dataprovider.Status.REQUESTED
+import static org.openforis.sepal.component.dataprovider.Status.UNKNOWN
 
 class ScenesDownloadRepositoryTest extends Specification {
     static final def DATASET_ID = 1
@@ -26,7 +26,7 @@ class ScenesDownloadRepositoryTest extends Specification {
 
     def setupSpec() {
         driver = new SepalDriver()
-        scenesDownloadRepository = new JdbcScenesDownloadRepository(driver.getSQLManager())
+        scenesDownloadRepository = new JdbcScenesDownloadRepository(driver.getConnectionManager())
     }
 
     def setup() {

@@ -13,9 +13,8 @@
 
     <modules>
         <module>modules/sepal-server</module>
+        <module>modules/ssh-gateway</module>
         <module>modules/sepal-php</module>
-        <module>environments/aws/sepal</module>
-        <module>environments/vagrant/sepal</module>
         <module>system-tests</module>
     </modules>
 

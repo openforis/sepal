@@ -2,13 +2,13 @@ package integration.scene
 
 import endtoend.SepalDriver
 import org.apache.commons.io.FileUtils
-import org.openforis.sepal.scene.*
-import org.openforis.sepal.scene.management.JdbcScenesDownloadRepository
-import org.openforis.sepal.scene.management.RequestScenesDownloadCommand
-import org.openforis.sepal.scene.management.SceneManager
-import org.openforis.sepal.scene.management.ScenesDownloadRepository
-import org.openforis.sepal.scene.retrieval.provider.DownloadRequestObservable
-import org.openforis.sepal.scene.retrieval.provider.SceneRetrievalObservable
+import org.openforis.sepal.component.dataprovider.*
+import org.openforis.sepal.component.dataprovider.management.JdbcScenesDownloadRepository
+import org.openforis.sepal.component.dataprovider.management.RequestScenesDownloadCommand
+import org.openforis.sepal.component.dataprovider.management.SceneManager
+import org.openforis.sepal.component.dataprovider.management.ScenesDownloadRepository
+import org.openforis.sepal.component.dataprovider.retrieval.provider.DownloadRequestObservable
+import org.openforis.sepal.component.dataprovider.retrieval.provider.SceneRetrievalObservable
 import org.openforis.sepal.util.ExecutorServiceBasedJobExecutor
 import org.openforis.sepal.util.JobExecutor
 import spock.lang.Shared
@@ -16,8 +16,8 @@ import spock.lang.Specification
 
 import java.util.concurrent.Executors
 
-import static org.openforis.sepal.scene.DataSet.LANDSAT_8
-import static org.openforis.sepal.scene.Status.*
+import static org.openforis.sepal.component.dataprovider.DataSet.LANDSAT_8
+import static org.openforis.sepal.component.dataprovider.Status.*
 
 class SceneManagerIntegrationTest extends Specification {
     static final WORKING_DIR = File.createTempDir('workingDir', null)
@@ -42,7 +42,7 @@ class SceneManagerIntegrationTest extends Specification {
         scenePublisher = Spy(MockSepalScenePublisher)
         sceneProcessor = Spy(MockSceneProcessor)
         sceneProvider = Spy(MockSceneProvider)
-        scenesDownloadRepository = Spy(JdbcScenesDownloadRepository, constructorArgs: [driver.getSQLManager()])
+        scenesDownloadRepository = Spy(JdbcScenesDownloadRepository, constructorArgs: [driver.getConnectionManager()])
         sceneManager = new SceneManager(sceneProvider, sceneProcessor, scenePublisher, scenesDownloadRepository)
 
         scenePublisher.register(scenesDownloadRepository, sceneManager)

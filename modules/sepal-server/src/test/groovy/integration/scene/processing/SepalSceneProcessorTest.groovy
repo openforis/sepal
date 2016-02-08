@@ -1,16 +1,16 @@
 package integration.scene.processing
 
 import org.apache.commons.io.FileUtils
-import org.openforis.sepal.scene.DownloadRequest
-import org.openforis.sepal.scene.SceneReference
-import org.openforis.sepal.scene.SceneRequest
-import org.openforis.sepal.scene.Status
-import org.openforis.sepal.scene.retrieval.FileSystemSceneRepository
-import org.openforis.sepal.scene.retrieval.SepalSceneProcessor
+import org.openforis.sepal.component.dataprovider.DownloadRequest
+import org.openforis.sepal.component.dataprovider.SceneReference
+import org.openforis.sepal.component.dataprovider.SceneRequest
+import org.openforis.sepal.component.dataprovider.Status
+import org.openforis.sepal.component.dataprovider.retrieval.FileSystemSceneRepository
+import org.openforis.sepal.component.dataprovider.retrieval.SepalSceneProcessor
 import spock.lang.Specification
 import util.DirectoryStructure
 
-import static org.openforis.sepal.scene.DataSet.LANDSAT_8
+import static org.openforis.sepal.component.dataprovider.DataSet.LANDSAT_8
 
 class SepalSceneProcessorTest extends Specification {
     def workingDir = File.createTempDir('workingDir', null)

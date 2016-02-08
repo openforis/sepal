@@ -15,13 +15,11 @@ class YamlUtils {
 
 
     public static Map<String, Object> parseYaml(InputStream is) {
-        def ret = null
-        ret = is.withCloseable {
+        return is.withCloseable {
             def objMapper = new ObjectMapper(new YAMLFactory())
             TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {};
             objMapper.readValue(is, typeRef)
         }
-        return ret
     }
 
 }

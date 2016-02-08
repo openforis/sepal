@@ -3,16 +3,11 @@ package fake
 import groovy.sql.BatchingPreparedStatementWrapper
 import groovy.sql.Sql
 import org.h2.jdbcx.JdbcDataSource
-import org.openforis.sepal.instance.DataCenter
-import org.openforis.sepal.instance.Instance
-import org.openforis.sepal.instance.InstanceProvider
-import org.openforis.sepal.scene.management.RequestScenesDownloadCommand
+import org.openforis.sepal.component.dataprovider.management.RequestScenesDownloadCommand
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
-
-import static org.openforis.sepal.instance.Instance.Status.AVAILABLE
 
 class Database {
     private static final Logger LOG = LoggerFactory.getLogger(this.class)
@@ -33,24 +28,8 @@ class Database {
         sql.executeInsert("INSERT INTO users(username) values($username)")
     }
 
-    long addInstance(Instance instance) {
-        def result = sql.executeInsert('INSERT INTO instances(name,data_center_id,status) VALUES(?,?,?)', instance.name, instance.dataCenter?.id, AVAILABLE.name())
-        return result[0][0]
-    }
-
-    long addInstanceProvider(InstanceProvider provider) {
-        def result = sql.executeInsert('INSERT INTO instance_providers(name,description)  VALUES(?,?)', [provider.name, provider.description])
-        return result[0][0]
-    }
-
-    long addDataCenter(DataCenter dc) {
-        def result = sql.executeInsert('INSERT INTO datacenters(name,geolocation,description,provider_id) VALUES(?,?,?,?)', [dc.name, dc.geolocation, dc.description, dc.provider.id])
-
-        return result[0][0]
-    }
-
     void addUser(String username, int userUid) {
-        sql.executeInsert("INSERT INTO users(username,user_uid) values(?,?)", [username, userUid])
+        sql.executeInsert("INSERT INTO users(username,user_uid) VALUES(?,?)", [username, userUid])
     }
 
     def addActiveDataSet(int dataSetId, int metadataProviderId = 1) {

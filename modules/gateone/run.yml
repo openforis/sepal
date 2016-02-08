@@ -24,6 +24,6 @@
     - "/data/gateone:/data"
     - "/data/ssh-gateway/home:/ssh-gateway/home"
     env:
-      GATEONE_SESSION_TIMEOUT_SEPAL_ENV: '3m'
+      GATEONE_SESSION_TIMEOUT_SEPAL_ENV: '0s'
       GATE_ONE_PUBLIC_SEPAL_ENV: "{{ gate_one_public }}"
       GATE_ONE_SECRET_SEPAL_ENV: "{{ gate_one_secret }}"

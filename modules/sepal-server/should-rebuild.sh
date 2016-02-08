@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cd ../../sepal-server
+cd ../../../modules/sepal-server
 rebuild=false
 if [ -f ./docker/binary/sepal.jar ]; then
     found=$(find . \
@@ -14,4 +14,3 @@ else
     rebuild=true
 fi
 echo ${rebuild}
-

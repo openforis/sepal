@@ -1,7 +1,7 @@
 package unit.scene.dataprovider
 
-import org.openforis.sepal.scene.*
-import org.openforis.sepal.scene.retrieval.provider.DispatchingSceneProvider
+import org.openforis.sepal.component.dataprovider.*
+import org.openforis.sepal.component.dataprovider.retrieval.provider.DispatchingSceneProvider
 import spock.lang.Specification
 
 class DispatchingSceneProviderTest extends Specification {

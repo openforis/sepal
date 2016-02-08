@@ -2,26 +2,13 @@ package endtoend
 
 import fake.Database
 import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
+import org.openforis.sepal.component.dataprovider.DataProviderComponent
+import org.openforis.sepal.component.datasearch.DataSearchComponent
+import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.endpoint.Endpoints
-import org.openforis.sepal.instance.ConcreteInstanceManager
-import org.openforis.sepal.instance.JdbcInstanceDataRepository
-import org.openforis.sepal.instance.amazon.AWSInstanceProviderManager
-import org.openforis.sepal.instance.local.LocalInstanceProviderManager
-import org.openforis.sepal.scene.management.*
-import org.openforis.sepal.session.ConcreteSepalSessionManager
-import org.openforis.sepal.session.JDBCSepalSessionRepository
-import org.openforis.sepal.session.SepalSessionEndpoint
-import org.openforis.sepal.session.SepalSessionManager
-import org.openforis.sepal.session.command.BindToUserSessionCommandHandler
-import org.openforis.sepal.session.command.GetUserSessionsCommandHandler
-import org.openforis.sepal.session.command.ObtainUserSessionCommandHandler
-import org.openforis.sepal.session.command.SessionAliveCommandHandler
-import org.openforis.sepal.session.docker.DockerClient
-import org.openforis.sepal.session.docker.DockerSessionContainerProvider
-import org.openforis.sepal.session.model.SepalSession
-import org.openforis.sepal.transaction.SqlConnectionManager
-import org.openforis.sepal.user.JDBCUserRepository
+import org.openforis.sepal.util.SystemClock
+import sandboxmanager.FakeInstanceProvider
+import sandboxmanager.FakeSandboxSessionProvider
 import spock.lang.Ignore
 import spock.lang.Specification
 import util.Port
@@ -30,13 +17,12 @@ import static org.openforis.sepal.SepalConfiguration.*
 
 @Ignore
 class Sepal extends Specification {
-    static Database database
-    static Endpoints endpoints
-    static Boolean started
-    static SepalSessionManager sepalSessionManager
-    SqlConnectionManager connectionManager
+    private static Endpoints endpoints
+    private static Boolean started
 
+    static Database database
     int port
+    SepalConfiguration config
 
     Sepal init() {
         if (!started) {
@@ -51,90 +37,41 @@ class Sepal extends Specification {
         database.reset()
     }
 
-    SqlConnectionManager getConnectionManager() {
-        this.connectionManager
-    }
-
-    SepalSessionManager getSandboxManager() { return sepalSessionManager }
-
-
     private void start() {
         started = true
         database = new Database()
-        configure()
+        config = configure()
 
-        connectionManager = new SqlConnectionManager(database.dataSource)
-        def scenesDownloadRepo = new JdbcScenesDownloadRepository(connectionManager)
-        def commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
-
-
-        def userRepository = new JDBCUserRepository(connectionManager)
-
-        def stubDockerClient = Stub(DockerClient) {
-            isContainerRunning(_) >> {
-                true
-            }
-            createContainer(_, _) >> {
-                new SepalSession(username: it.get(0), containerId: 'Some.Id', containerURI: 'Some_URI')
-            }
-        }
-
-        def instanceDataRepository = new JdbcInstanceDataRepository(connectionManager)
-        def config = SepalConfiguration.instance
-
-        // @ TODO Implement Stub For AWSClient
-        def awsProvider = new AWSInstanceProviderManager(
-                null,
-                config.availabilityZoneName
+        def dataProviderComponent = new DataProviderComponent(config)
+        def dataSearchComponent = new DataSearchComponent(config)
+        def sandboxManagerComponent = new SandboxManagerComponent(
+                database.dataSource,
+                new FakeInstanceProvider(),
+                new FakeSandboxSessionProvider(new SystemClock()),
+                new SystemClock()
         )
-
-        def localProvider = new LocalInstanceProviderManager(config.sepalHost, instanceDataRepository.getDataCenterByName('Localhost'))
-
-        def instanceManager = new ConcreteInstanceManager(
-                instanceDataRepository,
-                instanceDataRepository.getDataCenterByName(config.dataCenterName),
-                config.environment,
-                awsProvider,
-                localProvider
-        )
-
-        sepalSessionManager = new ConcreteSepalSessionManager(
-                new DockerSessionContainerProvider(stubDockerClient, userRepository),
-                new JDBCSepalSessionRepository(connectionManager),
-                userRepository,
-                instanceManager
-        )
-
-        def dataSetRepository = new JdbcDataSetRepository(connectionManager)
-
-
         Endpoints.deploy(
-                dataSetRepository,
-                commandDispatcher,
-                new RequestScenesDownloadCommandHandler(scenesDownloadRepo),
-                new ScenesDownloadEndPoint(commandDispatcher, scenesDownloadRepo),
-                scenesDownloadRepo,
-                new RemoveRequestCommandHandler(scenesDownloadRepo),
-                new RemoveSceneCommandHandler(scenesDownloadRepo),
-                new SepalSessionEndpoint(commandDispatcher),
-                new ObtainUserSessionCommandHandler(sepalSessionManager),
-                new SessionAliveCommandHandler(sepalSessionManager),
-                userRepository,
-                new GetUserSessionsCommandHandler(sepalSessionManager),
-                new BindToUserSessionCommandHandler(sepalSessionManager)
+                port,
+                dataProviderComponent,
+                dataSearchComponent,
+                sandboxManagerComponent
         )
     }
 
-    private void configure() {
+    private SepalConfiguration configure() {
         port = Port.findFree()
-        SepalConfiguration.instance.properties = [
-                (WEBAPP_PORT_PARAMETER)      : port as String,
-                (MAX_CONCURRENT_DOWNLOADS)   : '1',
-                (DOWNLOAD_CHECK_INTERVAL)    : '1000',
+        def config = new SepalConfiguration()
+        config.properties = [
+                (WEBAPP_PORT_PARAMETER): port as String,
+                (MAX_CONCURRENT_DOWNLOADS): '1',
+                (DOWNLOAD_CHECK_INTERVAL): '1000',
                 (DOWNLOADS_WORKING_DIRECTORY): System.getProperty('java.io.tmpdir'),
-                (CRAWLER_RUN_DELAY)          : '12'
+                (CRAWLER_RUN_DELAY): '12',
+                (PROCESSING_HOME_DIR): File.createTempDir().toString()
         ] as Properties
-        SepalConfiguration.instance.dataSource = database.dataSource
+        config.dataSource = database.dataSource
+        config.sandboxDataSource = database.dataSource
+        return config
     }
 
     void stop() {
@@ -151,4 +88,3 @@ class Sepal extends Specification {
     }
 
 }
-

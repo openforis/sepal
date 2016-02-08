@@ -11,6 +11,8 @@ interface UserRepository {
     User fetchUser(String username)
 
     User getUser(String username)
+
+    boolean contains(String username)
 }
 
 
@@ -45,9 +47,12 @@ class JDBCUserRepository implements UserRepository {
         return user
     }
 
+    boolean contains(String username) {
+        return getUser(username) != null
+    }
 
     private static User mapUser(row) {
-        new User(id: row.id, username: row.username, monthlyQuota: row.monthly_quota, userUid: row.user_uid)
+        new User(id: row.id, username: row.username, userUid: row.user_uid)
     }
 
     private Sql getSql() {

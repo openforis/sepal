@@ -1,8 +1,8 @@
 package integration.database
 
 import endtoend.SepalDriver
-import org.openforis.sepal.metadata.JDBCUsgsDataRepository
-import org.openforis.sepal.metadata.UsgsDataRepository
+import org.openforis.sepal.component.datasearch.metadata.JDBCUsgsDataRepository
+import org.openforis.sepal.component.datasearch.metadata.UsgsDataRepository
 import org.openforis.sepal.util.DateTime
 import spock.lang.Shared
 import spock.lang.Specification
@@ -27,7 +27,7 @@ class UsgsDataSetRepositoryTest extends Specification {
     }
 
     def setup() {
-        usgsRepo = new JDBCUsgsDataRepository(driver.getSQLManager())
+        usgsRepo = new JDBCUsgsDataRepository(driver.getConnectionManager())
     }
 
     def 'given an empty database, no result are returned from the usgsrepo'() {

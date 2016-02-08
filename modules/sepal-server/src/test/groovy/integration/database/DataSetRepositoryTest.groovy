@@ -1,9 +1,9 @@
 package integration.database
 
 import endtoend.SepalDriver
-import org.openforis.sepal.scene.DataSet
-import org.openforis.sepal.scene.management.DataSetRepository
-import org.openforis.sepal.scene.management.JdbcDataSetRepository
+import org.openforis.sepal.component.dataprovider.DataSet
+import org.openforis.sepal.component.dataprovider.management.DataSetRepository
+import org.openforis.sepal.component.dataprovider.management.JdbcDataSetRepository
 import org.openforis.sepal.util.DateTime
 import spock.lang.Shared
 import spock.lang.Specification
@@ -18,7 +18,7 @@ class DataSetRepositoryTest extends Specification {
 
     def setupSpec() {
         driver = new SepalDriver()
-        dataSetRepo = new JdbcDataSetRepository(driver.SQLManager)
+        dataSetRepo = new JdbcDataSetRepository(driver.getConnectionManager())
         driver.withMetadataProvider(METADATA_PROVIDER, "TestMetaProvider")
 
         driver.withActiveDataSet(DataSet.LANDSAT_8.id, METADATA_PROVIDER)

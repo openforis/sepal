@@ -1,7 +1,7 @@
 package integration.scene.s3landsat8
 
-import org.openforis.sepal.scene.retrieval.provider.s3landsat8.RestfulS3LandsatClient
-import org.openforis.sepal.scene.retrieval.provider.s3landsat8.SceneIndex
+import org.openforis.sepal.component.dataprovider.retrieval.provider.s3landsat8.RestfulS3LandsatClient
+import org.openforis.sepal.component.dataprovider.retrieval.provider.s3landsat8.SceneIndex
 import spock.lang.Specification
 
 

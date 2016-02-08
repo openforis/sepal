@@ -2,7 +2,7 @@
 
 
 #install base package
-apt-get update && apt-get install  -y software-properties-common
+apt-get update && apt-get install -y software-properties-common
 
 #install java-8
 \

@@ -4,7 +4,7 @@
   apt: name="maven"
 
 - name: "sepal-php | Determine if binaries should be built"
-  script: "/opt/sepal/modules/sepal-php/should-rebuild.sh"
+  script: "../../../modules/sepal-php/should-rebuild.sh"
   delegate_to: 127.0.0.1
   sudo: false
   register: should_rebuild

@@ -1,8 +1,6 @@
 package util
 
 class Port {
-
-
     static int findFree() {
         ServerSocket socket = null
         try {

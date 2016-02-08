@@ -14,14 +14,22 @@ mkdir -p /var/run/sshd
 mkdir -p /data/logs/supervisor
 mkdir -p /data/home
 
+chmod /data/logs/ssh-gateway 777
+
 rm -rf /var/log/supervisor && ln -sf /data/logs/supervisor /var/log/supervisor
+rm -rf /var/log/ssh-gateway && ln -sf /data/logs/supervisor /var/log/ssh-gateway
 rm -rf /home && ln -sf /data/home /home
 
 cp /script/add-sepal-user /usr/local/bin/add-sepal-user
+
 cp /script/ssh-bootstrap /usr/local/bin/ssh-bootstrap
-cp /script/ssh-bootstrap.groovy /usr/local/bin/ssh-bootstrap.groovy
 chmod 555 /usr/local/bin/ssh-bootstrap
+
+cp /script/ssh-bootstrap.groovy /usr/local/bin/ssh-bootstrap.groovy
 chmod 555 /usr/local/bin/ssh-bootstrap.groovy
+
+cp /script/alive.sh /usr/local/bin/alive.sh
+chmod 555 /usr/local/bin/alive.sh
 
 template /config/ldap.conf /etc/ldap.conf root: 0600
 template /config/ldap.conf /etc/ldap/ldap.conf root: 0600

@@ -8,7 +8,7 @@ ADD config/ldap.conf /etc/ldap.conf
 ADD templates/ /templates
 ADD script/start .
 ADD script/init_image.sh .
-ADD script/healt_check.sh /root/healt_check.sh
+ADD script/wait_until_initialized.sh /root/wait_until_initialized.sh
 
 RUN chmod u+x /init_image.sh && ./init_image.sh
 

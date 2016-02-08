@@ -30,7 +30,6 @@ class HandlerRegistryCommandDispatcher implements CommandDispatcher {
         if (handler == null)
             throw new IllegalStateException("No handler registered for commands of type ${command.class.name}")
         LOG.debug("Executing command $command with handler $handler")
-        command.timestamp = new Date()
         try {
             transactionManager.withTransaction {
                 handler.execute(command)

@@ -1,12 +1,12 @@
 package unit.crawling
 
 import endtoend.SepalDriver
-import org.openforis.sepal.metadata.ConcreteMetadataProviderManager
-import org.openforis.sepal.metadata.MetadataProvider
-import org.openforis.sepal.metadata.MetadataProviderManager
-import org.openforis.sepal.metadata.crawling.MetadataCrawler
-import org.openforis.sepal.scene.DataSet
-import org.openforis.sepal.scene.management.DataSetRepository
+import org.openforis.sepal.component.dataprovider.DataSet
+import org.openforis.sepal.component.dataprovider.management.DataSetRepository
+import org.openforis.sepal.component.datasearch.metadata.ConcreteMetadataProviderManager
+import org.openforis.sepal.component.datasearch.metadata.MetadataProvider
+import org.openforis.sepal.component.datasearch.metadata.MetadataProviderManager
+import org.openforis.sepal.component.datasearch.metadata.crawling.MetadataCrawler
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -39,7 +39,7 @@ class MetadataManagerTest extends Specification {
             [new MetadataProvider(id: PROVIDER_ID, active: 1, dataSets: [DataSet.LANDSAT_8])]
         }
 
-        metadataManager = new ConcreteMetadataProviderManager(dataSetRepository)
+        metadataManager = new ConcreteMetadataProviderManager(dataSetRepository, sepalDriver.config.crawlerRunDelay)
     }
 
     def 'registering a crawler for a given dataset The crawl method should be executed'() {

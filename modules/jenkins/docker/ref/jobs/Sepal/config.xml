@@ -70,7 +70,7 @@
   <prebuilders/>
   <postbuilders>
     <hudson.tasks.Shell>
-      <command>${WORKSPACE}/environments/common/operations/build-and-push-images.sh &quot;$BUILD_NUMBER&quot; ${WORKSPACE} </command>
+      <command>${WORKSPACE}/hosting-services/common/operations/build-and-push-images.sh &quot;$BUILD_NUMBER&quot; ${WORKSPACE} </command>
     </hudson.tasks.Shell>
   </postbuilders>
   <runPostStepsIfResult>

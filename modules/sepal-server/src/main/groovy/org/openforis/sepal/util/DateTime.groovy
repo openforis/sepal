@@ -28,7 +28,7 @@ class DateTime {
         return cal.time
     }
 
-    static long getDifferenceInSeconds(Date date1, Date date2){
+    static long getDifferenceInSeconds(Date date1, Date date2) {
         return (date1.getTime() - date2.getTime()) / 1000
     }
 

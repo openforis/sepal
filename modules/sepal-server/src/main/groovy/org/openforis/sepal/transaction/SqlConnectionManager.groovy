@@ -6,7 +6,7 @@ import javax.sql.DataSource
 import java.sql.Connection
 
 class SqlConnectionManager implements SqlConnectionProvider, TransactionManager {
-    private final DataSource dataSource
+    final DataSource dataSource
     private final ThreadLocal<Connection> connectionHolder = new ThreadLocal<Connection>()
     private final ThreadLocal<List<Closure>> afterCommitCallbacksHolder = new ThreadLocal<List<Closure>>() {
         protected List<Closure> initialValue() { [] }

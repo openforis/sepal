@@ -3,6 +3,7 @@ package endtoend
 import spock.lang.Shared
 import spock.lang.Specification
 
+@SuppressWarnings("GroovyAssignabilityCheck")
 class DeleteRequestTest extends Specification {
     static final USERNAME = 'Test.User'
     static final DATASET_ID = 1
@@ -13,10 +14,8 @@ class DeleteRequestTest extends Specification {
     @Shared Integer declaredRequestedSceneId
     @Shared Integer expectedRequestedSceneId
 
-
     def cleanupSpec() {
         driver.stop()
-
     }
 
     def setupSpec() {
@@ -24,9 +23,9 @@ class DeleteRequestTest extends Specification {
                 .withUsers(USERNAME)
                 .withActiveDataSets(DATASET_ID)
         def request = [
-                username : USERNAME,
+                username: USERNAME,
                 dataSetId: DATASET_ID,
-                sceneIds : [SCENE_ID, SCENE_ID]
+                sceneIds: [SCENE_ID, SCENE_ID]
         ]
         driver.postDownloadRequests(request)
         def downloadRequest = driver.getDownloadRequests(USERNAME).data[0]
@@ -35,8 +34,6 @@ class DeleteRequestTest extends Specification {
         expectedRequestedSceneId = downloadRequest.scenes[1].id
     }
 
-
-    @SuppressWarnings("GroovyAssignabilityCheck")
     def 'Given a request with two scenes, once 1 is removed, the DB query should return the remaining one'() {
         when:
         driver.sendDeleteRequestScene(declaredRequestId, declaredRequestedSceneId)
@@ -51,7 +48,6 @@ class DeleteRequestTest extends Specification {
         requestScene.sceneReference.id == SCENE_ID
     }
 
-
     def 'Given a valid requestId, the request is successfully deleted'() {
         when:
         driver.sendDeleteRequest(declaredRequestId)
@@ -59,6 +55,4 @@ class DeleteRequestTest extends Specification {
         then:
         userRequests.data.size == 0
     }
-
-
 }

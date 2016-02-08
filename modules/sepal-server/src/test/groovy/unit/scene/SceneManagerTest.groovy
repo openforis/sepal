@@ -1,12 +1,11 @@
 package unit.scene
 
-import org.openforis.sepal.scene.*
-import org.openforis.sepal.scene.management.SceneManager
-import org.openforis.sepal.scene.management.ScenesDownloadRepository
+import org.openforis.sepal.component.dataprovider.*
+import org.openforis.sepal.component.dataprovider.management.SceneManager
+import org.openforis.sepal.component.dataprovider.management.ScenesDownloadRepository
 import spock.lang.Specification
 
-import static org.openforis.sepal.scene.Status.*
-
+import static org.openforis.sepal.component.dataprovider.Status.*
 
 class SceneManagerTest extends Specification {
     static final USERNAME = 'Test.User'

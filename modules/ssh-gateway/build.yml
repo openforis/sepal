@@ -1,4 +1,20 @@
 ---
 
+- name: "ssh-gateway | Install Maven"
+  apt: name="maven"
+
+- name: "ssh-gateway | Determine if jar should be built"
+  script: "../../../modules/ssh-gateway/should-rebuild.sh"
+  delegate_to: 127.0.0.1
+  sudo: false
+  register: should_rebuild
+  changed_when: should_rebuild.stdout_lines[0] == 'true'
+
+- name: "ssh-gateway | Build jar"
+  shell: mvn clean package -DskipTests=true chdir="../../../modules/ssh-gateway"
+  delegate_to: 127.0.0.1
+  sudo: false
+  when: should_rebuild.changed
+
 - name: "ssh-gateway | Build"
   docker_image: path="/opt/sepal/modules/ssh-gateway/docker" name="localhost/openforis/ssh-gateway" state=build

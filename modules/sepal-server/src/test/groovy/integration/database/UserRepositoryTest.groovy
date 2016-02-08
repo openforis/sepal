@@ -18,7 +18,7 @@ class UserRepositoryTest extends Specification {
         sepalDriver = new SepalDriver()
         sepalDriver.withUser(USERNAME, UID)
 
-        userRepo = new JDBCUserRepository(sepalDriver.getSQLManager())
+        userRepo = new JDBCUserRepository(sepalDriver.getConnectionManager())
     }
 
     def cleanupSpec() {

@@ -1,24 +1,20 @@
 #!/usr/bin/env bash
 
-SILENT_MODE=true
+entryPoint="org.openforis.sepal.sshgateway.NonInteractive"
 if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
-SILENT_MODE=false
+    entryPoint="org.openforis.sepal.sshgateway.Interactive"
 fi
-/usr/local/bin/ssh-bootstrap.groovy $USER $SILENT_MODE
-SESSION_ID=$?
-if [ $SESSION_ID -gt 0 ]; then
-	sessionBindUrl="http://sepal:1025/data/sandbox/$USER/session/$SESSION_ID"
-	session=$(curl -s $sessionBindUrl)
-	connectionUrl=$(echo ${session} | jq -r '.connectionUrl')
-	sshPort=$(echo ${session} | jq -r '.sshPort')
-	/script/alive.sh $SESSION_ID > /dev/null 2>&1 &
-	ssh -YC \
-	    -i /home/$USER/.ssh/id_rsa \
-	    -l $USER \
-	    -q  \
-	    -o StrictHostKeyChecking=no \
-	    -o UserKnownHostsFile=/dev/null \
-	    -p $sshPort \
-	    $connectionUrl ${SSH_ORIGINAL_COMMAND:-}
-fi
+sshScriptFile=$(mktemp /tmp/$USER-ssh.XXXXXX) > /dev/null 2>&1
+chmod +x $sshScriptFile
+java \
+    -cp /opt/sepal/bin/sepal-ssh-gateway.jar \
+    "$entryPoint" \
+    "$USER" \
+    "http://sepal:1025/data/" \
+    "/home/$USER/.ssh/id_rsa" \
+    "$sshScriptFile"
 
+if [ -s $sshScriptFile ]; then
+    eval "$sshScriptFile \"${SSH_ORIGINAL_COMMAND:-}\""
+    rm $sshScriptFile > /dev/null 2>&1
+fi

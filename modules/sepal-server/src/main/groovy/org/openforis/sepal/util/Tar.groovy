@@ -28,7 +28,6 @@ class Tar {
         }
 
         TarArchiveInputStream tarInputStream = new TarArchiveInputStream(new FileInputStream(tarFile))
-        String tarFolderName = archive.getName().substring(0, tarName.lastIndexOf('.'))
         TarArchiveEntry entry
         while ((entry = tarInputStream.getNextTarEntry()) != null) {
             LOG.debug("Unpacking archive entry $entry.name")

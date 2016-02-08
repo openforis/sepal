@@ -8,23 +8,28 @@ import static groovyx.net.http.ContentType.URLENC
 
 class SmokeTest extends Specification {
     @Shared endpoint = 'https://172.28.128.3'
-    @Shared client = new RESTClient(endpoint)
+    @Shared httpClient = new RESTClient(endpoint)
 
     def setupSpec() {
-        client.ignoreSSLIssues()
+        httpClient.ignoreSSLIssues()
         login()
     }
 
     def 'Can access the dashboard'() {
         when:
-        def response = client.get(path: '/dashboard')
+        def response = httpClient.get(path: '/dashboard')
 
         then:
         response.status == 200
     }
 
+    def 'Can ssh into container'() {
+        when: true
+        then: false
+    }
+
     String login() {
-        def response = client.post(
+        def response = httpClient.post(
                 path: "/login",
                 body: [userName: 'sepalAdminWeb', password: 'the admin user 123'],
                 requestContentType: URLENC

@@ -4,6 +4,8 @@
     path: "/data/mysql"
     state: directory
 
+- file: path="/data/mysql/initialized" state=absent
+
 - name: "mysql | Start container"
   docker:
     docker_api_version: "1.16"
@@ -28,3 +30,8 @@
       MYSQL_USER: "sepal"
       MYSQL_PASSWORD: "{{ mysql_password }}"
       MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+  register: container
+
+- name: "mysql | Wait until initialized"
+  wait_for: path=/data/mysql/initialized
+  when: (container.summary.started > 0 or container.summary.restarted > 0)

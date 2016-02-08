@@ -3,14 +3,14 @@ package integration.crawling
 import endtoend.SepalDriver
 import groovy.util.slurpersupport.GPathResult
 import org.apache.commons.io.IOUtils
-import org.openforis.sepal.metadata.ConcreteMetadataProviderManager
-import org.openforis.sepal.metadata.JDBCUsgsDataRepository
-import org.openforis.sepal.metadata.MetadataProviderManager
-import org.openforis.sepal.metadata.UsgsDataRepository
-import org.openforis.sepal.metadata.crawling.EarthExplorerMetadataCrawler
-import org.openforis.sepal.scene.DataSet
-import org.openforis.sepal.scene.management.DataSetRepository
-import org.openforis.sepal.scene.management.JdbcDataSetRepository
+import org.openforis.sepal.component.dataprovider.DataSet
+import org.openforis.sepal.component.dataprovider.management.DataSetRepository
+import org.openforis.sepal.component.dataprovider.management.JdbcDataSetRepository
+import org.openforis.sepal.component.datasearch.metadata.ConcreteMetadataProviderManager
+import org.openforis.sepal.component.datasearch.metadata.JDBCUsgsDataRepository
+import org.openforis.sepal.component.datasearch.metadata.MetadataProviderManager
+import org.openforis.sepal.component.datasearch.metadata.UsgsDataRepository
+import org.openforis.sepal.component.datasearch.metadata.crawling.EarthExplorerMetadataCrawler
 import org.openforis.sepal.util.ResourceLocator
 import spock.lang.Shared
 import spock.lang.Specification
@@ -53,10 +53,10 @@ class MetadataCrawlingIntegrationTest extends Specification {
 
     def setup() {
         driver = new SepalDriver()
-        usgsRepository = new JDBCUsgsDataRepository(driver.SQLManager)
-        dataSetRepository = new JdbcDataSetRepository(driver.SQLManager)
-        metadataManager = new ConcreteMetadataProviderManager(dataSetRepository)
-        earthExplorerCrawler = new EarthExplorerMetadataCrawler(usgsRepository, new MockResourceLocator())
+        usgsRepository = new JDBCUsgsDataRepository(driver.connectionManager)
+        dataSetRepository = new JdbcDataSetRepository(driver.connectionManager)
+        metadataManager = new ConcreteMetadataProviderManager(dataSetRepository, 123)
+        earthExplorerCrawler = new EarthExplorerMetadataCrawler(usgsRepository, new MockResourceLocator(), driver.config.downloadWorkingDirectory)
 
         driver.withActiveDataSet(DataSet.LANDSAT_8.id, PROVIDER_ID)
         driver.withMetadataProvider(PROVIDER_ID, "IntegrationTestMetaProvider")

@@ -35,6 +35,12 @@ class MvcExtension {
         return bean
     }
 
+    static void validateRequest(Controller self, Object bean) throws InvalidRequest {
+        def errors = self.requestContext.validate(bean)
+        if (errors)
+            throw new InvalidRequest(errors)
+    }
+
     /**
      * Reads and returns the request body. This method can only be called once per request.
      * @return the request body

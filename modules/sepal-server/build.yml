@@ -3,15 +3,17 @@
 - name: "sepal | Install Maven"
   apt: name="maven"
 
-- name: "sepal | Determine if binaries should be built"
-  script: "/opt/sepal/modules/sepal-server/should-rebuild.sh"
+- name: "sepal | Determine if jar should be built"
+  script: "../../../modules/sepal-server/should-rebuild.sh"
   delegate_to: 127.0.0.1
   sudo: false
   register: should_rebuild
   changed_when: should_rebuild.stdout_lines[0] == 'true'
 
-- name: "sepal | Build binaries"
-  shell: mvn clean package -DskipTests=true chdir="/opt/sepal/modules/sepal-server"
+- name: "sepal | Build jar"
+  shell: mvn clean package -DskipTests=true chdir="../../../modules/sepal-server"
+  delegate_to: 127.0.0.1
+  sudo: false
   when: should_rebuild.changed
 
 - name: "sepal | Build"

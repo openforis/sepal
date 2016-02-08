@@ -29,9 +29,9 @@ class ScenesDownloadTest extends Specification {
     def 'Given a request with a valid request name, the service reply with HTTP Status 200'() {
         given:
         def request = [
-                username   : USERNAME,
-                dataSetId  : DATASET_ID,
-                sceneIds   : ["LC12"],
+                username: USERNAME,
+                dataSetId: DATASET_ID,
+                sceneIds: ["LC12"],
                 groupScenes: true,
                 requestName: "validRequestName"
         ]
@@ -45,9 +45,9 @@ class ScenesDownloadTest extends Specification {
     def 'Given a request with an invalid request name, the service reply with HTTP Status 400'() {
         given:
         def request = [
-                username   : USERNAME,
-                dataSetId  : DATASET_ID,
-                sceneIds   : ["LC12"],
+                username: USERNAME,
+                dataSetId: DATASET_ID,
+                sceneIds: ["LC12"],
                 groupScenes: true,
                 requestName: "Un%validRequestName"
         ]
@@ -69,9 +69,9 @@ class ScenesDownloadTest extends Specification {
 
     def 'Given a download request, when getting download requests, the request is returned'() {
         def request = [
-                username : USERNAME,
+                username: USERNAME,
                 dataSetId: DATASET_ID,
-                sceneIds : ['the scene id']
+                sceneIds: ['the scene id']
         ]
         driver.postDownloadRequests(request)
 
@@ -87,9 +87,9 @@ class ScenesDownloadTest extends Specification {
 
     def 'Given a download request with invalid data set, 400 is returned'() {
         def request = [
-                username : USERNAME,
+                username: USERNAME,
                 dataSetId: INVALID_DATASET_ID,
-                sceneIds : ['the scene id']
+                sceneIds: ['the scene id']
         ]
         when:
         driver.postDownloadRequests(request)
@@ -100,9 +100,9 @@ class ScenesDownloadTest extends Specification {
 
     def 'Given a download request without scenes, 400 is returned'() {
         def request = [
-                username : USERNAME,
+                username: USERNAME,
                 dataSetId: DATASET_ID,
-                sceneIds : []
+                sceneIds: []
         ]
         when:
         driver.postDownloadRequests(request)
@@ -115,9 +115,9 @@ class ScenesDownloadTest extends Specification {
     def 'Trying to post 2 request for the same user having the same RequestName, 400 is returned'() {
         given:
         def request = [
-                username   : USERNAME,
-                dataSetId  : DATASET_ID,
-                sceneIds   : ["LC12"],
+                username: USERNAME,
+                dataSetId: DATASET_ID,
+                sceneIds: ["LC12"],
                 groupScenes: true,
                 requestName: "validRequestNameTest"
         ]

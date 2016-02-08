@@ -1,11 +1,11 @@
 package unit.crawling
 
 import endtoend.SepalDriver
-import org.openforis.sepal.metadata.MetadataProvider
-import org.openforis.sepal.metadata.UsgsDataRepository
-import org.openforis.sepal.metadata.crawling.EarthExplorerMetadataCrawler
-import org.openforis.sepal.metadata.crawling.MetadataCrawler
-import org.openforis.sepal.scene.DataSet
+import org.openforis.sepal.component.dataprovider.DataSet
+import org.openforis.sepal.component.datasearch.metadata.MetadataProvider
+import org.openforis.sepal.component.datasearch.metadata.UsgsDataRepository
+import org.openforis.sepal.component.datasearch.metadata.crawling.EarthExplorerMetadataCrawler
+import org.openforis.sepal.component.datasearch.metadata.crawling.MetadataCrawler
 import org.openforis.sepal.util.DateTime
 import org.openforis.sepal.util.ResourceLocator
 import org.openforis.sepal.util.XmlUtils
@@ -31,7 +31,7 @@ class EarthExplorerMetadataCrawlerTest extends Specification {
     }
 
     def setup() {
-        metaCrawler = new EarthExplorerMetadataCrawler(usgsRepo, httpDownloader)
+        metaCrawler = new EarthExplorerMetadataCrawler(usgsRepo, httpDownloader, sepalDriver.config.downloadWorkingDirectory)
     }
 
     def 'giving instructions to iterate 0 times, the crawler will not invoke .download(HttpDownloader)'() {
@@ -56,7 +56,7 @@ class EarthExplorerMetadataCrawlerTest extends Specification {
     def 'parsing metadata for the first time. The crawler will try to insert each row and update noOne'() {
         given:
         httpDownloader = new MockResourceLocator()
-        metaCrawler = new EarthExplorerMetadataCrawler(usgsRepo, httpDownloader)
+        metaCrawler = new EarthExplorerMetadataCrawler(usgsRepo, httpDownloader, sepalDriver.config.downloadWorkingDirectory)
         MetadataProvider provider = new MetadataProvider(entrypoint: 'http://some_endpoint.org', id: PROVIDER_ID, active: 1, iterations: 1, iterationSize: 1)
         provider.dataSets = [DataSet.LANDSAT_8]
         def metadataCount = new XmlSlurper().parse(EarthExplorerMetadataCrawlerTest.getResourceAsStream("/metadata.xml")).depthFirst().findAll {
@@ -73,7 +73,7 @@ class EarthExplorerMetadataCrawlerTest extends Specification {
         given:
         httpDownloader = new MockResourceLocator()
         usgsRepo = new UsgsRepositoryBackedByMap()
-        metaCrawler = new EarthExplorerMetadataCrawler(usgsRepo, httpDownloader)
+        metaCrawler = new EarthExplorerMetadataCrawler(usgsRepo, httpDownloader, sepalDriver.config.downloadWorkingDirectory)
         MetadataProvider provider = new MetadataProvider(entrypoint: 'http://some_endpoint.org', id: PROVIDER_ID, active: 1, iterations: 1, iterationSize: 1)
         MetadataProvider provider2 = new MetadataProvider(entrypoint: 'ftp://some_endpoint.org', id: 2, active: 1, iterations: 1, iterationSize: 1)
         provider.dataSets = [DataSet.LANDSAT_8]
@@ -94,7 +94,7 @@ class EarthExplorerMetadataCrawlerTest extends Specification {
     }
 
     def 'parsing a file containing entry with null dates, the parser will not throw any exception'() {
-        metaCrawler = new EarthExplorerMetadataCrawler(usgsRepo, new YAMRL())
+        metaCrawler = new EarthExplorerMetadataCrawler(usgsRepo, new YAMRL(), sepalDriver.config.downloadWorkingDirectory)
         MetadataProvider provider = new MetadataProvider(entrypoint: 'http://some_endpoint.org', id: PROVIDER_ID, active: 1, iterations: 1, iterationSize: 1)
         provider.dataSets = [DataSet.LANDSAT_8]
         when:
