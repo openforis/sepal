@@ -63,8 +63,8 @@ add-apt-repository 'deb http://cran.cnr.Berkeley.edu/bin/linux/ubuntu trusty/'
 gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 gpg -a --export E084DAB9 | sudo apt-key add -
 apt-get update
-apt-get upgrade
-apt-get install -y r-base sudo r-cran-rcpp
+apt-get upgrade -y
+apt-get install -y r-base r-cran-rcpp
 
 #install OpenSARKit
 export OSK_GIT_URL=https://github.com/cdanielw/OpenSARKit
