@@ -15,7 +15,6 @@
         <module>modules/sepal-server</module>
         <module>modules/ssh-gateway</module>
         <module>modules/sepal-php</module>
-        <module>system-tests</module>
     </modules>
 
     <properties>
