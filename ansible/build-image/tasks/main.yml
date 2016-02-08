@@ -2,7 +2,3 @@
 - include: "../../../modules/{{ image }}/build.yml"
   vars:
     module_dir: "{{role_path}}/../../modules/{{ image }}"
-
-
-
-
