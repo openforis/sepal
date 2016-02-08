@@ -1,8 +1,7 @@
 ---
-
 - include: "../../../modules/{{ image }}/build.yml"
   vars:
-    module_dir: "../../../modules/{{ image }}"
+    module_dir: "{{role_path}}/../../modules/{{ image }}"
 
 
 

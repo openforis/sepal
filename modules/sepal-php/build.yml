@@ -12,6 +12,8 @@
 
 - name: "sepal-php | Build binaries"
   shell: mvn clean package -DskipTests=true chdir="{{ module_dir }}"
+  delegate_to: 127.0.0.1
+  sudo: false
   when: should_rebuild.changed
 
 - name: "sepal-php | Build"
