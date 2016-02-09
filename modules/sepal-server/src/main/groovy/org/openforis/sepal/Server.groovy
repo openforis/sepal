@@ -42,7 +42,7 @@ class Server {
     }
 
     void undeploy() {
-        server.stop()
+        server?.stop()
     }
 }
 

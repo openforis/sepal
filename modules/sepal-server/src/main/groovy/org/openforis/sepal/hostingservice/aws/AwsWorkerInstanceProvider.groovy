@@ -35,6 +35,7 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
 
         def credentials = new BasicAWSCredentials(config.accessKey, config.secretKey)
         client = new AmazonEC2Client(credentials)
+        client.endpoint = "https://ec2.${region}.amazonaws.com"
         imageId = fetchImageId(availabilityZone, config.sepalVersion)
     }
 
