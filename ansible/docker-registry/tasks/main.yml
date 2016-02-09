@@ -26,7 +26,7 @@
 
 - name: Start docker registry
   docker:
-    docker_api_version: "1.18"
+    docker_api_version: "1.22"
     name: "registry"
     pull: 'missing'
     image: "registry:2"

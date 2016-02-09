@@ -9,7 +9,7 @@
 
 - name: "sepal-php | Start container"
   docker:
-    docker_api_version: "1.16"
+    docker_api_version: "1.22"
     name: "php"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"

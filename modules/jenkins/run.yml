@@ -13,7 +13,7 @@
 
 - name: "jenkins | Start jenkins container"
   docker:
-    docker_api_version: "1.18"
+    docker_api_version: "1.22"
     name: "jenkins"
     pull: 'missing'
     image: "openforis/jenkins"

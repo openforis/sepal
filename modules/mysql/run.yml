@@ -8,7 +8,7 @@
 
 - name: "mysql | Start container"
   docker:
-    docker_api_version: "1.16"
+    docker_api_version: "1.22"
     name: "mysql"
     registry: "{{ docker_repository_host }}"
     pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
