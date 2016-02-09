@@ -16,7 +16,12 @@ chown -R www-data: /data/sdms-data-repo
 mkdir -p /data/logs -m 770
 mkdir -p /etc/sepal-php -m 700
 
-rm -f /var/log/apache2 && ln -fs /data/logs /var/log/apache2
+if [[ -d /var/log/apache2 ]]; then
+    rm -rf /var/log/apache2
+else
+    rm -f /var/log/apache2
+fi
+ln -fs /data/logs /var/log/apache2
 rm -f /etc/apache2/ssl && ln -fs /data/certificates /etc/apache2/ssl
 
 chown -R www-data: /var/www/html
