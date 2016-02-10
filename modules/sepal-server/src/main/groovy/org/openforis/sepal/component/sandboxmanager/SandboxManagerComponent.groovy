@@ -9,7 +9,7 @@ import org.openforis.sepal.component.sandboxmanager.endpoint.SepalSessionEndpoin
 import org.openforis.sepal.component.sandboxmanager.query.*
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.hostingservice.HostingService
-import org.openforis.sepal.hostingservice.WorkerInstanceProvider
+import org.openforis.sepal.hostingservice.WorkerInstanceManager
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.transaction.SqlConnectionManager
@@ -29,14 +29,14 @@ final class SandboxManagerComponent implements EndpointRegistry {
     SandboxManagerComponent(SepalConfiguration config) {
         this(
                 config.dataSource,
-                instantiateHostingService(config).workerInstanceProvider,
+                instantiateHostingService(config).workerInstanceManager,
                 new DockerSandboxSessionProvider(config, new SystemClock()),
                 new SystemClock()
         )
     }
 
     SandboxManagerComponent(DataSource dataSource,
-                            WorkerInstanceProvider instanceProvider,
+                            WorkerInstanceManager instanceManager,
                             SandboxSessionProvider sessionProvider,
                             Clock clock) {
         connectionManager = new SqlConnectionManager(dataSource)
@@ -45,18 +45,18 @@ final class SandboxManagerComponent implements EndpointRegistry {
         this.clock = clock
 
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
-                .register(CreateSession, new CreateSessionHandler(sessionRepository, instanceProvider, sessionProvider))
-                .register(JoinSession, new JoinSessionHandler(sessionRepository, instanceProvider, sessionProvider, clock))
+                .register(CreateSession, new CreateSessionHandler(sessionRepository, instanceManager, sessionProvider, clock))
+                .register(JoinSession, new JoinSessionHandler(sessionRepository, instanceManager, sessionProvider, clock))
                 .register(CloseSession, new CloseSessionHandler(sessionRepository, sessionProvider))
                 .register(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionRepository, sessionProvider))
-                .register(TerminateRedundantInstances, new TerminateRedundantInstancesHandler(sessionRepository, instanceProvider, sessionProvider))
+                .register(TerminateRedundantInstances, new TerminateRedundantInstancesHandler(sessionRepository, instanceManager, sessionProvider))
                 .register(SessionHeartbeatReceived, new SessionHeartbeatReceivedHandler(sessionRepository, clock))
                 .register(UpdateUserBudget, new UpdateUserBudgetHandler(userBudgetRepository))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
                 .register(FindSessionsPendingDeployment, new FindSessionsPendingDeploymentHandler(sessionRepository))
-                .register(FindInstanceTypes, new FindInstanceTypesHandler(instanceProvider))
-                .register(LoadSandboxInfo, new LoadSandboxInfoHandler(sessionRepository, instanceProvider, userBudgetRepository, clock))
+                .register(FindInstanceTypes, new FindInstanceTypesHandler(instanceManager))
+                .register(LoadSandboxInfo, new LoadSandboxInfoHandler(sessionRepository, instanceManager, userBudgetRepository, clock))
                 .register(LoadSession, new LoadSessionHandler(sessionRepository))
 
         sandboxCleanup = new SandboxCleanup(commandDispatcher)

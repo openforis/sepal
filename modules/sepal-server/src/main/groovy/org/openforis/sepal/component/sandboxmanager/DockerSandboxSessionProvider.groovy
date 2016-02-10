@@ -4,7 +4,6 @@ import groovy.json.JsonOutput
 import groovy.transform.ToString
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.hostingservice.Status
 import org.openforis.sepal.hostingservice.WorkerInstance
 import org.openforis.sepal.util.Clock
 import org.slf4j.Logger
@@ -29,7 +28,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
             createContainer(session, instance)
             startContainer(session, instance)
             def port = determineContainerPort(session, instance)
-            def deployedSession = session.deployed(Status.ACTIVE, instance, port, clock.now())
+            def deployedSession = session.deployed(instance, port, clock.now())
             waitUntilInitialized(deployedSession, instance)
             LOG.info("Deployed $session to $instance")
             return deployedSession

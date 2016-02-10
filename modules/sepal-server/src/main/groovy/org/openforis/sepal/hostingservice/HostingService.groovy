@@ -1,7 +1,9 @@
 package org.openforis.sepal.hostingservice
 
+import org.openforis.sepal.component.sandboxmanager.WorkerInstanceProvider
+
 interface HostingService {
-    WorkerInstanceProvider getWorkerInstanceProvider()
+    WorkerInstanceManager getWorkerInstanceManager()
 
     final class Factory {
         static HostingService create(String name) {

@@ -205,7 +205,7 @@ class Interactive {
         print '\nWaiting for session to terminate...'
         def session = sandboxInfo.sessions.remove(indexOfSessionToTerminate) as Map
         sepalClient.terminate(session)
-        print 'Session successfully terminated.'
+        print '\nSession successfully terminated.'
     }
 
     private String timeSinceCreation(Map session) {

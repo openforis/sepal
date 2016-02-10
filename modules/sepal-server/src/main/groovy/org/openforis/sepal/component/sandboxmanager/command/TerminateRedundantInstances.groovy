@@ -5,7 +5,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
 import org.openforis.sepal.component.sandboxmanager.SessionRepository
-import org.openforis.sepal.hostingservice.WorkerInstanceProvider
+import org.openforis.sepal.hostingservice.WorkerInstanceManager
 
 @ToString
 class TerminateRedundantInstances extends AbstractCommand<Void> {
@@ -15,20 +15,20 @@ class TerminateRedundantInstances extends AbstractCommand<Void> {
 @ToString
 class TerminateRedundantInstancesHandler implements CommandHandler<Void, TerminateRedundantInstances> {
     private final SessionRepository sessionRepository
-    private final WorkerInstanceProvider workerInstances
+    private final WorkerInstanceManager workerInstanceManager
     private final SandboxSessionProvider sandboxes
 
     TerminateRedundantInstancesHandler(SessionRepository sessionRepository,
-                                       WorkerInstanceProvider instanceProvider,
+                                       WorkerInstanceManager workerInstanceManager,
                                        SandboxSessionProvider sandboxes) {
         this.sessionRepository = sessionRepository
-        this.workerInstances = instanceProvider
+        this.workerInstanceManager = workerInstanceManager
         this.sandboxes = sandboxes
     }
 
     Void execute(TerminateRedundantInstances command) {
-        sessionRepository.terminate { String instanceId ->
-            workerInstances.terminate(instanceId)
+        sessionRepository.terminate { String instanceId, String instanceType ->
+            workerInstanceManager.terminate(instanceId, instanceType)
         }
         return null
     }

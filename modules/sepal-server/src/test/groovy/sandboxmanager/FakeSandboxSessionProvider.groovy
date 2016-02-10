@@ -2,6 +2,7 @@ package sandboxmanager
 
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
+import org.openforis.sepal.hostingservice.Status
 import org.openforis.sepal.hostingservice.WorkerInstance
 import org.openforis.sepal.util.Clock
 
@@ -18,7 +19,7 @@ class FakeSandboxSessionProvider implements SandboxSessionProvider {
     SandboxSession deploy(SandboxSession session, WorkerInstance instance) {
         if (fail)
             throw new RuntimeException('A test triggered sandbox deployment failure')
-        def activeSession = session.deployed(instance.state, instance, new Random().nextInt(), clock.now())
+        def activeSession = session.deployed(instance, new Random().nextInt(), clock.now())
         if (!deployed[instance])
             deployed[instance] = []
         deployed[instance] << activeSession

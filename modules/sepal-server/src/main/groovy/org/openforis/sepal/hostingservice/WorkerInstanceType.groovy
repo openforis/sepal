@@ -5,4 +5,8 @@ class WorkerInstanceType {
     String name
     String description
     double hourlyCost
+
+    public String toString() {
+        id
+    }
 }

@@ -7,5 +7,4 @@ class WorkerInstance {
     String id
     String host
     String type
-    Status state
 }

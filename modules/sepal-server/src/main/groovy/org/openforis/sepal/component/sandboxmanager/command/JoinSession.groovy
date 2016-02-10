@@ -7,7 +7,7 @@ import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
 import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider.NotAvailable
 import org.openforis.sepal.component.sandboxmanager.SessionRepository
-import org.openforis.sepal.hostingservice.WorkerInstanceProvider
+import org.openforis.sepal.hostingservice.WorkerInstanceManager
 import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.Clock
 
@@ -30,12 +30,12 @@ class JoinSession extends AbstractCommand<SandboxSession> {
 @ToString
 class JoinSessionHandler implements CommandHandler<SandboxSession, JoinSession> {
     private final SessionRepository sessionRepository
-    private final WorkerInstanceProvider instanceProvider
+    private final WorkerInstanceManager instanceProvider
     private final SandboxSessionProvider sandboxProvider
     private final Clock clock
 
     JoinSessionHandler(SessionRepository sessionRepository,
-                       WorkerInstanceProvider instanceProvider,
+                       WorkerInstanceManager instanceProvider,
                        SandboxSessionProvider sandboxProvider,
                        Clock clock) {
         this.sessionRepository = sessionRepository

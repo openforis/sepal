@@ -9,65 +9,19 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>${sepal.logLocation}/sepal.log</file>
+        <file>/var/log/sepal/sepal.log</file>
         <append>false</append>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="FILE_METADATA" class="ch.qos.logback.core.FileAppender">
-        <file>${sepal.logLocation}/sepal-crawling.log</file>
-        <append>false</append>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
-    <appender name="FILE_SANDBOX_PROXY" class="ch.qos.logback.core.FileAppender">
-        <file>${sepal.logLocation}/sepal-sandbox-web-proxy.log</file>
-        <append>false</append>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
-    <appender name="FILE_SANDBOX_MANAGER" class="ch.qos.logback.core.FileAppender">
-        <file>${sepal.logLocation}/sepal-sandbox-manager.log</file>
-        <append>false</append>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
-
-    <logger name="org.openforis" additivity="false" level="DEBUG">
-        <appender-ref ref="STDOUT"/>
+    <logger name="org.openforis.sepal" additivity="false" level="DEBUG">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="org.openforis.sepal.component.datasearch.metadata" additivity="false" level="DEBUG">
-        <appender-ref ref="FILE_METADATA"/>
-        <appender-ref ref="STDOUT"/>
-    </logger>
-
-    <logger name="org.openforis.sepal.component.sandboxwebproxy" additivity="false" level="DEBUG">
-        <appender-ref ref="FILE_SANDBOX_PROXY"/>
-        <appender-ref ref="STDOUT"/>
-    </logger>
-
-    <logger name="org.openforis.sepal.component.sandboxmanager.session" additivity="false" level="DEBUG">
-        <appender-ref ref="FILE_SANDBOX_MANAGER"/>
-        <appender-ref ref="STDOUT"/>
-    </logger>
-
-    <logger name="org.openforis.sepal.instance" additivity="false" level="DEBUG">
-        <appender-ref ref="FILE_SANDBOX_MANAGER"/>
-        <appender-ref ref="STDOUT"/>
-    </logger>
-
-    <root level="WARN">
-        <appender-ref ref="STDOUT"/>
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
     </root>
 
 </configuration>

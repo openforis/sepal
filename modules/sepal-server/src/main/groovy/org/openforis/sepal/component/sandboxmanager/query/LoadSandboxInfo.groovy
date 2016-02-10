@@ -4,7 +4,7 @@ import groovy.transform.ToString
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.SessionRepository
 import org.openforis.sepal.component.sandboxmanager.UserBudgetRepository
-import org.openforis.sepal.hostingservice.WorkerInstanceProvider
+import org.openforis.sepal.hostingservice.WorkerInstanceManager
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
@@ -30,13 +30,13 @@ class LoadSandboxInfo implements Query<SandboxInfo> {
 @ToString
 class LoadSandboxInfoHandler implements QueryHandler<SandboxInfo, LoadSandboxInfo> {
     private final SessionRepository sessionRepository
-    private final WorkerInstanceProvider instanceProvider
+    private final WorkerInstanceManager instanceProvider
     private final UserBudgetRepository userBudgetRepository
     private final Clock clock
 
     LoadSandboxInfoHandler(
             SessionRepository sessionRepository,
-            WorkerInstanceProvider instanceProvider,
+            WorkerInstanceManager instanceProvider,
             UserBudgetRepository userBudgetRepository,
             Clock clock) {
         this.sessionRepository = sessionRepository

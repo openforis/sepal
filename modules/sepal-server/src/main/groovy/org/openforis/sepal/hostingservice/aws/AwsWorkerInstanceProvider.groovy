@@ -3,30 +3,29 @@ package org.openforis.sepal.hostingservice.aws
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model.*
+import org.openforis.sepal.component.sandboxmanager.SandboxSession
+import org.openforis.sepal.component.sandboxmanager.WorkerInstanceProvider
 import org.openforis.sepal.hostingservice.InvalidInstance
 import org.openforis.sepal.hostingservice.WorkerInstance
-import org.openforis.sepal.hostingservice.WorkerInstanceProvider
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.hostingservice.Status.STARTING
-
 class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private static final String SECURITY_GROUP = 'sepal'
+    private static final String SECURITY_GROUP = 'Sepal'
     private final String region
     private final String availabilityZone
     private final String environment
+    private final AmazonEC2Client client
+    private final String imageId
+
     final List<WorkerInstanceType> instanceTypes = InstanceType.values().collect {
         new WorkerInstanceType(
                 id: it.name(),
                 name: it.toString()
         )
     }
-
-    private final AmazonEC2Client client
-    private final String imageId
 
     AwsWorkerInstanceProvider(Config config) {
         region = config.region
@@ -39,7 +38,15 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         imageId = fetchImageId(availabilityZone, config.sepalVersion)
     }
 
-    WorkerInstance allocate(String instanceType) {
+    List<WorkerInstance> idleInstances(String instanceType) {
+        return null // TODO: Implement...
+    }
+
+    Map<String, Integer> idleCountByType() {
+        return null // TODO: Implement...
+    }
+
+    WorkerInstance launch(String instanceType) {
         def request = new RunInstancesRequest()
                 .withKeyName(region)
                 .withInstanceType(instanceType as InstanceType)
@@ -60,14 +67,24 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
 
         def response = client.runInstances(request)
         def awsInstance = response.reservation.instances.first()
-        tagInstance(awsInstance)
-
+        tagInstance(awsInstance.instanceId,
+                new Tag('Type', 'Sandbox'),
+                new Tag('Environment', environment),
+                new Tag('Name', "Sandbox - $environment")
+        )
         return new WorkerInstance(
                 id: awsInstance.instanceId,
                 host: awsInstance.privateIpAddress,
-                type: instanceType,
-                state: STARTING
+                type: instanceType
         )
+    }
+
+    void reserve(String instanceId, SandboxSession session) {
+        tagInstance(instanceId, new Tag('Status', "reserved - $session.username"))
+    }
+
+    void idle(String instanceId) {
+        tagInstance(instanceId, new Tag('Status', 'idle'))
     }
 
     boolean terminate(String instanceId) {
@@ -78,6 +95,7 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         LOG.info("Terminated instance " + instanceId)
         return true
     }
+
 
     private String fetchImageId(String availabilityZone, String sepalVersion) {
         def request = new DescribeImagesRequest()
@@ -92,14 +110,10 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         return image.imageId
     }
 
-    private void tagInstance(Instance instance) {
+    private void tagInstance(String instanceId, Tag... tags) {
         def request = new CreateTagsRequest()
-                .withResources(instance.instanceId)
-                .withTags(
-                new Tag('Type', 'Sandbox'),
-                new Tag('Environment', 'environment'),
-                new Tag('Name', "Sandbox($environment)")
-        )
+                .withResources(instanceId)
+                .withTags(tags)
         client.createTags(request)
     }
 }

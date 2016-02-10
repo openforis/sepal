@@ -14,10 +14,6 @@ class DeleteRequestTest extends Specification {
     @Shared Integer declaredRequestedSceneId
     @Shared Integer expectedRequestedSceneId
 
-    def cleanupSpec() {
-        driver.stop()
-    }
-
     def setupSpec() {
         driver = new SepalDriver()
                 .withUsers(USERNAME)
@@ -32,6 +28,10 @@ class DeleteRequestTest extends Specification {
         declaredRequestId = downloadRequest.requestId
         declaredRequestedSceneId = downloadRequest.scenes[0].id
         expectedRequestedSceneId = downloadRequest.scenes[1].id
+    }
+
+    def cleanupSpec() {
+        driver.stop()
     }
 
     def 'Given a request with two scenes, once 1 is removed, the DB query should return the remaining one'() {

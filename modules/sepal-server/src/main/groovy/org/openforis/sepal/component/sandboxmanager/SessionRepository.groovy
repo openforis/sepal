@@ -21,13 +21,15 @@ interface SessionRepository {
 
     SandboxSession creating(String username, String instanceType)
 
-    void deployed(SandboxSession session)
+    SandboxSession deployed(SandboxSession session)
 
     void alive(long sessionId, Date lastUpdated)
 
     void terminate(Closure<Boolean> callback)
 
     void updateStatusInNewTransaction(long id, Status status)
+
+    void updateStatus(long id, Status status)
 
     Map<String, Double> hoursByInstanceType(String username, Date since)
 }
@@ -63,18 +65,22 @@ class JdbcSessionRepository implements SessionRepository {
                 AND update_time < ?
                 ''', [ACTIVE.name(), STARTING.name(), updatedBefore]) { row ->
             callback.call(toSession(row))
-            updateStatus(row.id, STOPPED, sql)
+            doUpdateStatus(row.id, STOPPED, sql)
         }
     }
 
     void updateStatusInNewTransaction(long id, Status status) {
         def sql = new Sql(connectionManager.dataSource)
         sql.withTransaction {
-            updateStatus(id, status, sql)
+            doUpdateStatus(id, status, sql)
         }
     }
 
-    private updateStatus(long id, Status status, Sql sql) {
+    void updateStatus(long id, Status status) {
+        doUpdateStatus(id, status, sql)
+    }
+
+    void doUpdateStatus(long id, Status status, Sql sql) {
         sql.executeUpdate('''
                     UPDATE sandbox_session
                     SET status = ?, update_time = ?
@@ -132,11 +138,12 @@ class JdbcSessionRepository implements SessionRepository {
         return session
     }
 
-    void deployed(SandboxSession session) {
+    SandboxSession deployed(SandboxSession session) {
         sql.executeUpdate('''
                 UPDATE sandbox_session
                 SET status = ?, instance_id = ?, host = ?, port = ?, update_time = ?
-                WHERE id = ?''', [session.status.name(), session.instanceId, session.host, session.port, session.updateTime, session.id])
+                WHERE id = ?''', [session.status.name(), session.instanceId, session.host, session.port, clock.now(), session.id])
+        return session
     }
 
     void alive(long sessionId, Date lastUpdated) {
@@ -145,7 +152,7 @@ class JdbcSessionRepository implements SessionRepository {
 
     void terminate(Closure<Boolean> callback) {
         sql.eachRow('''
-                SELECT DISTINCT instance_id
+                SELECT DISTINCT instance_id, instance_type
                 FROM sandbox_session
                 WHERE status = ? AND instance_id NOT IN (
                     SELECT DISTINCT instance_id
@@ -153,7 +160,7 @@ class JdbcSessionRepository implements SessionRepository {
                     WHERE status != ?
                 )''', [STOPPED.name(), STOPPED.name()]) {
             def instanceId = it.instance_id
-            if (callback.call(instanceId))
+            if (callback.call(instanceId, it.instance_type))
                 sql.executeUpdate('''
                         UPDATE sandbox_session
                         SET status = ?, termination_time = ?
@@ -167,10 +174,11 @@ class JdbcSessionRepository implements SessionRepository {
         def rows = sql.rows('''
                 SELECT creation_time, update_time, instance_type, status
                 FROM sandbox_session
-                WHERE status = ? OR (status != ? AND creation_time >= ?)''', [ACTIVE.name(), ACTIVE.name(), since])
+                WHERE status IN (?, ?, ?) OR (status NOT IN (?, ?, ?) AND creation_time >= ?)''',
+                [PENDING.name(), ACTIVE.name(), STARTING.name(), PENDING.name(), ACTIVE.name(), STARTING.name(), since])
         rows.each { row ->
             def from = [since, row.creation_time].max()
-            def to = row.status == ACTIVE.name() ? clock.now() : row.update_time
+            def to = row.status in [PENDING.name(), ACTIVE.name(), STARTING.name()] ? clock.now() : row.update_time
             def duration = Duration.between(from.toInstant(), to.toInstant())
             if (!hoursByInstanceType.containsKey(row.instance_type))
                 hoursByInstanceType[row.instance_type] = 0
