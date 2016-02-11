@@ -12,10 +12,9 @@ import java.util.concurrent.Executors
 final class Aws implements HostingService {
     final WorkerInstanceManager workerInstanceManager = new PoolingWorkerInstanceManager(
             new AwsWorkerInstanceProvider(new Config('/etc/sepal/aws.properties')),
-            ['T2Small': 2],
+            ['T2Small': 1],
             new ExecutorServiceBasedJobExecutor(
                     Executors.newSingleThreadExecutor(NamedThreadFactory.singleThreadFactory('pooled-worker-instance-manager-worker'))
             )
     )
-
 }

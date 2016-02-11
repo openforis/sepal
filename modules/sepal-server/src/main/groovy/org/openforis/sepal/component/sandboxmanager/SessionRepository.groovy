@@ -13,7 +13,7 @@ import static org.openforis.sepal.hostingservice.Status.*
 interface SessionRepository {
     List<SandboxSession> findWithStatus(String username, Collection<Status> statuses)
 
-    List<PendingSession> findPendingDeployment(String username, Date createdBefore)
+    List<SandboxSession> findStartingSessions()
 
     void stopAllTimedOut(Date updatedBefore, Closure callback)
 
@@ -29,7 +29,7 @@ interface SessionRepository {
 
     void updateStatusInNewTransaction(long id, Status status)
 
-    void updateStatus(long id, Status status)
+    void update(SandboxSession sandboxSession)
 
     Map<String, Double> hoursByInstanceType(String username, Date since)
 }
@@ -76,8 +76,15 @@ class JdbcSessionRepository implements SessionRepository {
         }
     }
 
-    void updateStatus(long id, Status status) {
-        doUpdateStatus(id, status, sql)
+    void update(SandboxSession session) {
+        session.with {
+            sql.executeUpdate('''
+                    UPDATE sandbox_session
+                    SET instance_id = ?, instance_type = ?, host = ?, port = ?, status = ?,
+                        creation_time = ?, update_time = ?, termination_time = ?
+                    WHERE id = ?''',
+                    [instanceId, instanceType, host, port, status.name(), creationTime, updateTime, terminationTime, id])
+        }
     }
 
     void doUpdateStatus(long id, Status status, Sql sql) {
@@ -87,20 +94,13 @@ class JdbcSessionRepository implements SessionRepository {
                     WHERE id = ?''', [status.name(), clock.now(), id])
     }
 
-    List<PendingSession> findPendingDeployment(String username, Date createdBefore) {
+    List<SandboxSession> findStartingSessions() {
         sql.rows('''
-                SELECT id, username, instance_type, creation_time
+                SELECT id, username, instance_id, instance_type, host, port, status, creation_time, update_time, termination_time
                 FROM sandbox_session
-                WHERE username = ?
-                AND status = ?
-                AND creation_time < ?
-                ''', [username, PENDING.name(), createdBefore]).collect {
-            new PendingSession(
-                    id: it.id,
-                    username: it.username,
-                    instanceType: it.instance_type,
-                    creationTime: it.creation_time
-            )
+                WHERE status = ?
+                ''', [STARTING.name()]).collect {
+            toSession(it)
         }
     }
 
@@ -160,12 +160,12 @@ class JdbcSessionRepository implements SessionRepository {
                     WHERE status != ?
                 )''', [STOPPED.name(), STOPPED.name()]) {
             def instanceId = it.instance_id
-            if (callback.call(instanceId, it.instance_type))
-                sql.executeUpdate('''
+            callback.call(instanceId, it.instance_type)
+            sql.executeUpdate('''
                         UPDATE sandbox_session
                         SET status = ?, termination_time = ?
                         WHERE instance_id = ?''',
-                        [TERMINATED.name(), clock.now(), instanceId])
+                    [TERMINATED.name(), clock.now(), instanceId])
         }
     }
 

@@ -3,14 +3,18 @@ package sandboxmanager
 import fake.Database
 import fake.SynchronousJobExecutor
 import org.openforis.sepal.command.ExecutionFailed
-import org.openforis.sepal.component.sandboxmanager.PendingSession
 import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.command.*
-import org.openforis.sepal.component.sandboxmanager.query.*
+import org.openforis.sepal.component.sandboxmanager.query.FindInstanceTypes
+import org.openforis.sepal.component.sandboxmanager.query.LoadSandboxInfo
+import org.openforis.sepal.component.sandboxmanager.query.LoadSession
+import org.openforis.sepal.component.sandboxmanager.query.SandboxInfo
 import org.openforis.sepal.hostingservice.PoolingWorkerInstanceManager
+import org.openforis.sepal.hostingservice.WorkerInstance
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.openforis.sepal.query.QueryFailed
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -51,7 +55,7 @@ class SessionManagerTests extends Specification {
         def info = loadSandboxInfo()
 
         then:
-        info.instanceTypes == instanceProvider.instanceTypes
+        info.instanceTypes == instanceProvider.instanceTypes()
     }
 
 
@@ -121,6 +125,8 @@ class SessionManagerTests extends Specification {
     }
 
     def 'When creating a session, the returned session is populated'() {
+        runningIdle()
+
         when:
         def session = createSession(someUserName)
 
@@ -136,19 +142,23 @@ class SessionManagerTests extends Specification {
         !session.terminationTime
     }
 
-    def 'Given no idle instances, when creating a session, the returned session is starting'() {
+    def 'Given no idle instances, when creating a session, the returned session has a host, no port and is starting'() {
         instanceProvider.noIdle()
 
         when:
         def session = createSession(someUserName)
 
         then:
+        session.host
+        !session.port
         session.status == STARTING
         hasNoActiveSessions()
         hasOneStartingSession()
     }
 
     def 'When creating a session, it is added to the active sessions, an instance is allocated, and a sandbox is deployed on that instance'() {
+        runningIdle()
+
         when:
         createSession()
 
@@ -186,6 +196,7 @@ class SessionManagerTests extends Specification {
     }
 
     def 'When loading sandbox info, host and port of active sessions is specified'() {
+        runningIdle()
         def session = createSession()
 
         when:
@@ -197,22 +208,10 @@ class SessionManagerTests extends Specification {
         activeSession.port == session.port
     }
 
-    def 'Given no sessions pending deployment, when finding pending sessions, none are returned'() {
-        createSession()
-
-        expect:
-        findSessionsPendingDeployment(future).empty
-    }
-
-    def 'Given a session been created but failed while deploying, when finding pending sessions, that session is returned'() {
-        createSessionButFailToDeploy()
-
-        expect:
-        findSessionsPendingDeployment(future).size() == 1
-        hasNoActiveSessions()
-    }
+    // TODO: Test failing to reserve, deploy
 
     def 'Given an active session, when joining that session, update timestamp is updated and the session is returned'() {
+        runningIdle()
         def session = createSession()
         Thread.sleep(10)
 
@@ -235,6 +234,7 @@ class SessionManagerTests extends Specification {
     }
 
     def 'When joining another users session, an exception is thrown'() {
+        runningIdle()
         def session = createSession(anotherUserName)
 
         when:
@@ -244,8 +244,8 @@ class SessionManagerTests extends Specification {
         thrown ExecutionFailed
     }
 
-    def 'When joining a non-active session, an exception is thrown'() {
-        def session = createStartingSession()
+    def 'When joining a starting session, an exception is thrown'() {
+        def session = createSession()
 
         when:
         joinSession(session.id)
@@ -255,6 +255,7 @@ class SessionManagerTests extends Specification {
     }
 
     def 'Given a timed out session, when closing timed out sessions, session is undeployed and is no longer active'() {
+        runningIdle()
         createSession()
 
         when:
@@ -278,6 +279,7 @@ class SessionManagerTests extends Specification {
     }
 
     def 'Given an instance with only a stopped session, when terminating redundant instances, the instance is offered for termination'() {
+        runningIdle()
         createSession()
         closeTimedOutSessions(future)
 
@@ -288,8 +290,11 @@ class SessionManagerTests extends Specification {
         instanceProvider.has(terminated: 1)
     }
 
+    // TODO: Should we allow multiple sessions on same instance?
+    @Ignore
     def 'Given an instance with a stopped and active sessions, when terminating redundant instances, the instance is not offered for termination'() {
         instanceProvider.useId('some id')
+        runningIdle()
         createSession()
         closeTimedOutSessions(future)
         createSession()
@@ -302,6 +307,7 @@ class SessionManagerTests extends Specification {
     }
 
     def 'Given an instance with a terminated session, when terminating redundant instances, the instance is not offered for termination'() {
+        runningIdle()
         createSession()
         closeTimedOutSessions(future)
         terminateRedundantInstances()
@@ -314,6 +320,7 @@ class SessionManagerTests extends Specification {
     }
 
     def 'Given a non-available session, when joining that session, an exception is thrown and session can be offered for termination'() {
+        runningIdle()
         def session = createSession()
         sessionProvider.notAvailable()
 
@@ -328,6 +335,7 @@ class SessionManagerTests extends Specification {
     }
 
     def 'Given an active session, when session heartbeat is received, update timestamp is updated'() {
+        runningIdle()
         def session = createSession()
         Thread.sleep(10)
 
@@ -344,10 +352,11 @@ class SessionManagerTests extends Specification {
         def instanceTypes = findInstanceTypes()
 
         then:
-        instanceTypes == instanceProvider.instanceTypes
+        instanceTypes == instanceProvider.instanceTypes()
     }
 
     def 'When closing a session, it is undeployed and is no longer active'() {
+        runningIdle()
         def session = createSession()
 
         when:
@@ -358,8 +367,48 @@ class SessionManagerTests extends Specification {
         hasNoActiveSessions()
     }
 
+    def 'Given no idle instances, when creating session, starting session with host but no port is returned'() {
+        when:
+        def session = createSession()
+
+        then:
+        session.host
+        !session.port
+        session.status == STARTING
+    }
+
+    def 'Given no idle instances, when creating session, instance is reserved, but sandbox is not deployed'() {
+        when:
+        createSession()
+
+        then:
+        sessionProvider.noneDeployed()
+        instanceProvider.has(reserved: 1)
+    }
+
+    def 'Given a starting session with a running instance, when deploying starting sessions, session is deployed'() {
+        def session = createSession()
+        def instance = instanceProvider.started(session.instanceId)
+
+        when:
+        component.submit(new DeployStartingSessions())
+
+        then:
+        sessionProvider.deployedOneTo(instance)
+    }
+
+    def 'Given a starting session without a running instance, when deploying starting sessions, session is not deployed'() {
+        createSession()
+
+        when:
+        component.submit(new DeployStartingSessions())
+
+        then:
+        sessionProvider.noneDeployed()
+    }
+
+
     SandboxSession createSession(String username = someUserName, String instanceType = someInstanceType) {
-        instanceProvider.launchIdle(instanceType)
         component.submit(new CreateSession(username: username, instanceType: instanceType))
     }
 
@@ -405,10 +454,6 @@ class SessionManagerTests extends Specification {
         component.submit(new TerminateRedundantInstances())
     }
 
-    List<PendingSession> findSessionsPendingDeployment(Date createdBefore, String username = someUserName) {
-        component.submit(new FindSessionsPendingDeployment(username: username, createdBefore: createdBefore))
-    }
-
     List<WorkerInstanceType> findInstanceTypes() {
         component.submit(new FindInstanceTypes())
     }
@@ -420,6 +465,10 @@ class SessionManagerTests extends Specification {
 
     void specifyInstanceBudget(String username = someUserName, int budget) {
         component.submit(new UpdateUserBudget(username: username, monthlyInstanceBudget: budget))
+    }
+
+    WorkerInstance runningIdle(String instanceType = someInstanceType) {
+        instanceProvider.runningIdle(instanceType)
     }
 
     SandboxSession firstActiveSession(String username = someUserName) {

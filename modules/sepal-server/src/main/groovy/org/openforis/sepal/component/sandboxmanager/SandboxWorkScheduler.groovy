@@ -4,6 +4,7 @@ import groovy.time.TimeCategory
 import groovy.transform.ToString
 import org.openforis.sepal.command.CommandDispatcher
 import org.openforis.sepal.component.sandboxmanager.command.CloseTimedOutSessions
+import org.openforis.sepal.component.sandboxmanager.command.DeployStartingSessions
 import org.openforis.sepal.component.sandboxmanager.command.TerminateRedundantInstances
 import org.openforis.sepal.util.NamedThreadFactory
 import org.slf4j.Logger
@@ -15,19 +16,20 @@ import java.util.concurrent.ScheduledExecutorService
 import static java.util.concurrent.TimeUnit.SECONDS
 
 @ToString
-class SandboxCleanup {
+class SandboxWorkScheduler {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final CommandDispatcher commandDispatcher
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
             NamedThreadFactory.singleThreadFactory(getClass().name)
     )
 
-    SandboxCleanup(CommandDispatcher commandDispatcher) {
+    SandboxWorkScheduler(CommandDispatcher commandDispatcher) {
         this.commandDispatcher = commandDispatcher
     }
 
     void start() {
         executor.scheduleWithFixedDelay({
+            deployStartingSessions()
             closeTimedOutSessions()
             terminateRedundantInstances()
         }, 0, 10, SECONDS)
@@ -35,6 +37,14 @@ class SandboxCleanup {
 
     void stop() {
         executor.shutdown()
+    }
+
+    private void deployStartingSessions() {
+        try {
+            commandDispatcher.submit(new DeployStartingSessions())
+        } catch (Exception e) {
+            LOG.error("Error deploying starting sessions", e)
+        }
     }
 
     private void closeTimedOutSessions() {

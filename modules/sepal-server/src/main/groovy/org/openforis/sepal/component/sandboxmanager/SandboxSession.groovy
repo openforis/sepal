@@ -4,8 +4,7 @@ import groovy.transform.ToString
 import org.openforis.sepal.hostingservice.Status
 import org.openforis.sepal.hostingservice.WorkerInstance
 
-import static org.openforis.sepal.hostingservice.Status.ACTIVE
-import static org.openforis.sepal.hostingservice.Status.STARTING
+import static org.openforis.sepal.hostingservice.Status.*
 
 @ToString
 class SandboxSession {
@@ -21,6 +20,7 @@ class SandboxSession {
     Date terminationTime
 
     SandboxSession deployed(WorkerInstance instance, int port, Date date) {
+        assert status in [PENDING, STARTING]
         return new SandboxSession(
                 id: id,
                 username: username,
@@ -30,19 +30,21 @@ class SandboxSession {
                 port: port,
                 status: ACTIVE,
                 creationTime: creationTime,
-                updateTime: date,
-                terminationTime: null
+                updateTime: date
         )
     }
 
-    SandboxSession starting(Date date) {
+    SandboxSession starting(WorkerInstance instance) {
+        assert status == PENDING
         return new SandboxSession(
                 id: id,
                 username: username,
+                instanceId: instance.id,
+                host: instance.host,
+                instanceType: instance.type,
                 status: STARTING,
                 creationTime: creationTime,
-                updateTime: date,
-                terminationTime: null
+                updateTime: updateTime
         )
     }
 

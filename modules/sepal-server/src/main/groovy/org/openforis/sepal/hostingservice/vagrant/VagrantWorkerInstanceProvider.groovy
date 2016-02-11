@@ -6,13 +6,19 @@ import org.openforis.sepal.hostingservice.WorkerInstance
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 
 class VagrantWorkerInstanceProvider implements WorkerInstanceProvider {
+    private
     final List<WorkerInstanceType> instanceTypes = [new WorkerInstanceType(id: 'vagrant-box', name: 'Vagrant Box')]
 
     private final WorkerInstance instance = new WorkerInstance(
             id: 'vagrant',
             host: '172.17.0.1',
-            type: instanceTypes.first().id
+            type: instanceTypes.first().id,
+            running: true
     )
+
+    List<WorkerInstanceType> instanceTypes() {
+        return instanceTypes
+    }
 
     List<WorkerInstance> idleInstances(String instanceType) {
         return [instance]
@@ -26,9 +32,13 @@ class VagrantWorkerInstanceProvider implements WorkerInstanceProvider {
         return instance
     }
 
-    void reserve(String instanceId, SandboxSession session) { /* no-op*/ }
+    void reserve(String instanceId, SandboxSession session) { /* no-op */ }
 
-    void idle(String instanceId) { /* no-op*/ }
+    void idle(String instanceId) { /* no-op */ }
 
-    boolean terminate(String instanceId) { false }
+    void terminate(String instanceId) { /* no-op */ }
+
+    List<WorkerInstance> runningInstances(Collection<String> instanceIds) {
+        return [instance]
+    }
 }

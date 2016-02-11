@@ -2,7 +2,6 @@ package sandboxmanager
 
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
-import org.openforis.sepal.hostingservice.Status
 import org.openforis.sepal.hostingservice.WorkerInstance
 import org.openforis.sepal.util.Clock
 
@@ -38,8 +37,10 @@ class FakeSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     SandboxSession deployedOneTo(WorkerInstance instance) {
-        assert deployed[instance].size() == 1
-        return deployed[instance].first()
+        def sessions = deployed[instance]
+        assert sessions, "No sessions deployed to $instance"
+        assert sessions.size() == 1
+        return sessions.first()
     }
 
     void noneDeployed() {

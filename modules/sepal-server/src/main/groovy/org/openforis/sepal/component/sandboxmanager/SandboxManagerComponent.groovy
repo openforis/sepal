@@ -23,7 +23,8 @@ final class SandboxManagerComponent implements EndpointRegistry {
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
     private final SqlConnectionManager connectionManager
-    private final SandboxCleanup sandboxCleanup
+    private final SandboxWorkScheduler sandboxCleanup
+    private final WorkerInstanceManager instanceManager
     private final Clock clock
 
     SandboxManagerComponent(SepalConfiguration config) {
@@ -39,6 +40,7 @@ final class SandboxManagerComponent implements EndpointRegistry {
                             WorkerInstanceManager instanceManager,
                             SandboxSessionProvider sessionProvider,
                             Clock clock) {
+        this.instanceManager = instanceManager
         connectionManager = new SqlConnectionManager(dataSource)
         def sessionRepository = new JdbcSessionRepository(connectionManager, clock)
         def userBudgetRepository = new JdbcUserBudgetRepository(connectionManager)
@@ -52,14 +54,14 @@ final class SandboxManagerComponent implements EndpointRegistry {
                 .register(TerminateRedundantInstances, new TerminateRedundantInstancesHandler(sessionRepository, instanceManager, sessionProvider))
                 .register(SessionHeartbeatReceived, new SessionHeartbeatReceivedHandler(sessionRepository, clock))
                 .register(UpdateUserBudget, new UpdateUserBudgetHandler(userBudgetRepository))
+                .register(DeployStartingSessions, new DeployStartingSessionsHandler(sessionRepository, instanceManager, sessionProvider))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
-                .register(FindSessionsPendingDeployment, new FindSessionsPendingDeploymentHandler(sessionRepository))
                 .register(FindInstanceTypes, new FindInstanceTypesHandler(instanceManager))
                 .register(LoadSandboxInfo, new LoadSandboxInfoHandler(sessionRepository, instanceManager, userBudgetRepository, clock))
                 .register(LoadSession, new LoadSessionHandler(sessionRepository))
 
-        sandboxCleanup = new SandboxCleanup(commandDispatcher)
+        sandboxCleanup = new SandboxWorkScheduler(commandDispatcher)
     }
 
     void registerEndpointsWith(Controller controller) {
@@ -69,11 +71,13 @@ final class SandboxManagerComponent implements EndpointRegistry {
 
     SandboxManagerComponent start() {
         sandboxCleanup.start()
+        instanceManager.start()
         return this
     }
 
     void stop() {
-        sandboxCleanup.stop()
+        sandboxCleanup?.stop()
+        instanceManager?.stop()
     }
 
     def <R> R submit(Command<R> command) {

@@ -7,4 +7,5 @@ class WorkerInstance {
     String id
     String host
     String type
+    boolean running
 }

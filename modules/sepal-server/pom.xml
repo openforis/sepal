@@ -84,7 +84,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-ec2</artifactId>
-            <version>1.10.34</version>
+            <version>1.10.51</version>
         </dependency>
         <!-- Test dependencies-->
         <dependency>

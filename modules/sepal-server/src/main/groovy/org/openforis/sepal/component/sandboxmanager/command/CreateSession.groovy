@@ -38,10 +38,7 @@ class CreateSessionHandler implements CommandHandler<SandboxSession, CreateSessi
             def deployedSession = sessionProvider.deploy(pendingSession, instance)
             return sessionRepository.deployed(deployedSession)
         }
-        if (!session) {
-            session = pendingSession.starting(clock.now())
-            sessionRepository.updateStatus(session.id, session.status)
-        }
+        sessionRepository.update(session)
         return session
         // TODO: Rollback on exception
     }

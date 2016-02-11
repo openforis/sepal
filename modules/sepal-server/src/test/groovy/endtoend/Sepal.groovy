@@ -9,8 +9,8 @@ import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.hostingservice.PoolingWorkerInstanceManager
 import org.openforis.sepal.util.SystemClock
-import sandboxmanager.FakeWorkerInstanceProvider
 import sandboxmanager.FakeSandboxSessionProvider
+import sandboxmanager.FakeWorkerInstanceProvider
 import spock.lang.Ignore
 import spock.lang.Specification
 import util.Port

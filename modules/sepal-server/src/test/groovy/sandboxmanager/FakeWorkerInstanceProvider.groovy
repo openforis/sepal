@@ -11,7 +11,12 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
     private boolean noIdle
     private String useId
     int terminationRequests
+
     List<WorkerInstanceType> instanceTypes = [new WorkerInstanceType(id: 'an-instance-type', hourlyCost: 1)]
+
+    List<WorkerInstanceType> instanceTypes() {
+        return instanceTypes
+    }
 
     List<WorkerInstance> idleInstances(String instanceType) {
         if (noIdle)
@@ -36,7 +41,7 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
         def instance = new WorkerInstance(
                 id: useId ?: UUID.randomUUID().toString(),
                 type: instanceType,
-                host: UUID.randomUUID().toString(),
+                host: UUID.randomUUID().toString()
         )
         instanceById[instance.id] = instance
         statusByInstance[instance] = 'uninitialized'
@@ -51,10 +56,15 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
         changeState(instanceId, 'idle', ['idle', 'terminated'])
     }
 
-    boolean terminate(String instanceId) {
+    void terminate(String instanceId) {
         changeState(instanceId, 'terminated', ['terminated'])
         terminationRequests++
-        return true
+    }
+
+    List<WorkerInstance> runningInstances(Collection<String> instanceIds) {
+        return instanceIds
+                .findAll { instanceById[it]?.running }
+                .collect { instanceById[it] }
     }
 
     void addType(WorkerInstanceType instanceType) {
@@ -106,10 +116,31 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
     WorkerInstance launchIdle(String instanceType) {
         def instance = launch(instanceType)
         idle(instance.id)
+        instance.running = true
+        return instance
+    }
+
+    WorkerInstance launchReserved(String instanceType, SandboxSession session) {
+        def instance = launch(instanceType)
+        reserve(instance.id, session)
+        instance.running = true
         return instance
     }
 
     void useId(String instanceId) {
         useId = instanceId
+    }
+
+    WorkerInstance runningIdle(String instanceType) {
+        def instance = launch(instanceType)
+        idle(instance.id)
+        instance.running = true
+        return instance
+    }
+
+    WorkerInstance started(String instanceId) {
+        def instance = instanceById[instanceId]
+        instance.running = true
+        return instance
     }
 }

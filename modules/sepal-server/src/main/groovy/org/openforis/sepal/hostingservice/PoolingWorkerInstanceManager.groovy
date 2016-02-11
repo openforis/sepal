@@ -2,12 +2,14 @@ package org.openforis.sepal.hostingservice
 
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.WorkerInstanceProvider
+import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.JobExecutor
 
 class PoolingWorkerInstanceManager implements WorkerInstanceManager {
     private final WorkerInstanceProvider provider
     private final Map<String, Integer> expectedIdleCountByType
     private final JobExecutor jobExecutor
+    private final Clock clock
 
     PoolingWorkerInstanceManager(
             WorkerInstanceProvider provider,
@@ -17,44 +19,50 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
         this.provider = provider
         this.expectedIdleCountByType = expectedIdleCountByType
         this.jobExecutor = jobExecutor
+        this.clock = clock
     }
 
     SandboxSession allocate(SandboxSession pendingSession, Closure<SandboxSession> callback) {
         def idleInstances = provider.idleInstances(pendingSession.instanceType)
-        if (idleInstances)
-            return reserveAndNotify(idleInstances.first(), pendingSession, callback)
+        def instance = idleInstances ? firstIdle(idleInstances) : provider.launch(pendingSession.instanceType)
+        return reserveAndNotify(instance, pendingSession, callback)
+    }
 
-        jobExecutor.execute {
-            def instance = provider.launch(pendingSession.instanceType)
-            reserveAndNotify(instance, pendingSession, callback)
-        }
-        return null
+    private WorkerInstance firstIdle(List<WorkerInstance> idleInstances) {
+        idleInstances.sort { !it.running }.first()
     }
 
     private SandboxSession reserveAndNotify(WorkerInstance instance, SandboxSession session, Closure<SandboxSession> callback) {
         provider.reserve(instance.id, session)
-        def result = callback(instance)
+        def result = instance.running ? callback(instance) : session.starting(instance)
         fillIdlePool()
         return result
     }
 
-    boolean terminate(String instanceId, String instanceType) {
+    void terminate(String instanceId, String instanceType) {
         def idleCount = provider.idleInstances(instanceType).size()
         def expectedIdleCount = expectedIdleCountByType[instanceType] ?: 0
-        if (idleCount < expectedIdleCount) {
+        if (idleCount < expectedIdleCount)
             provider.idle(instanceId)
-            return false
-        }
-        return provider.terminate(instanceId)
+        else
+            provider.terminate(instanceId)
     }
 
     List<WorkerInstanceType> getInstanceTypes() {
-        return provider.instanceTypes
+        return provider.instanceTypes()
+    }
+
+    List<WorkerInstance> runningInstances(Collection<String> instanceIds) {
+        return provider.runningInstances(instanceIds)
     }
 
     PoolingWorkerInstanceManager start() {
         fillIdlePool()
         return this
+    }
+
+    void stop() {
+        jobExecutor.stop()
     }
 
     private void fillIdlePool() {
@@ -71,9 +79,5 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
                 }
             }
         }
-    }
-
-    void stop() {
-
     }
 }

@@ -20,12 +20,27 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
     private final AmazonEC2Client client
     private final String imageId
 
-    final List<WorkerInstanceType> instanceTypes = InstanceType.values().collect {
-        new WorkerInstanceType(
-                id: it.name(),
-                name: it.toString()
-        )
-    }
+    private final List<WorkerInstanceType> instanceTypes = [
+            new WorkerInstanceType(id: 'T2Small', name: 't2.small', hourlyCost: 0.026, description: '1 CPU / 2 GiB'),
+            new WorkerInstanceType(id: 'T2Medium', name: 't2.medium', hourlyCost: 0.052, description: '2 CPU / 4 GiB'),
+            new WorkerInstanceType(id: 'T2Large', name: 't2.large', hourlyCost: 0.104, description: '2 CPU / 8 GiB'),
+            new WorkerInstanceType(id: 'M3Medium', name: 'm3.medium', hourlyCost: 0.067, description: '1 CPU / 3.75 GiB'),
+            new WorkerInstanceType(id: 'M4Large', name: 'm4.large', hourlyCost: 0.12, description: '2 CPU / 8 GiB'),
+            new WorkerInstanceType(id: 'M4Xlarge', name: 'm4.xlarge', hourlyCost: 0.239, description: '4 CPU / 16 GiB'),
+            new WorkerInstanceType(id: 'M42xlarge', name: 'm4.2xlarge', hourlyCost: 0.479, description: '8 CPU / 32 GiB'),
+            new WorkerInstanceType(id: 'M44xlarge', name: 'm4.4xlarge', hourlyCost: 0.958, description: '16 CPU / 64 GiB'),
+            new WorkerInstanceType(id: 'M410xlarge', name: 'm4.10xlarge', hourlyCost: 2.394, description: '40 CPU / 160 GiB'),
+            new WorkerInstanceType(id: 'C4Large', name: 'c4.large', hourlyCost: 0.105, description: '2 CPU / 3.75 GiB'),
+            new WorkerInstanceType(id: 'C4Xlarge', name: 'c4.xlarge', hourlyCost: 0.209, description: '4 CPU / 7.5 GiB'),
+            new WorkerInstanceType(id: 'C42xlarge', name: 'c4.2xlarge', hourlyCost: 0.419, description: '8 CPU / 15 GiB'),
+            new WorkerInstanceType(id: 'C44xlarge', name: 'c4.4xlarge', hourlyCost: 0.838, description: '16 CPU / 30 GiB'),
+            new WorkerInstanceType(id: 'C48xlarge', name: 'c4.8xlarge', hourlyCost: 1.675, description: '36 CPU / 60 GiB'),
+            new WorkerInstanceType(id: 'R3Large', name: 'r3.large', hourlyCost: 0.166, description: '2 CPU / 15 GiB'),
+            new WorkerInstanceType(id: 'R3Xlarge', name: 'r3.xlarge', hourlyCost: 0.333, description: '4 CPU / 30.5 GiB'),
+            new WorkerInstanceType(id: 'R32xlarge', name: 'r3.2xlarge', hourlyCost: 0.665, description: '8 CPU / 61 GiB'),
+            new WorkerInstanceType(id: 'R34xlarge', name: 'r3.4xlarge', hourlyCost: 1.33, description: '16 CPU / 122 GiB'),
+            new WorkerInstanceType(id: 'R38xlarge', name: 'r3.8xlarge', hourlyCost: 2.66, description: '32 CPU / 244 GiB')
+    ]
 
     AwsWorkerInstanceProvider(Config config) {
         region = config.region
@@ -38,15 +53,32 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         imageId = fetchImageId(availabilityZone, config.sepalVersion)
     }
 
+    List<WorkerInstanceType> instanceTypes() {
+        return instanceTypes
+    }
+
     List<WorkerInstance> idleInstances(String instanceType) {
-        return null // TODO: Implement...
+        LOG.info("Finding all idle instances of type $instanceType")
+        toWorkerInstances(loadIdleInstances())
     }
 
     Map<String, Integer> idleCountByType() {
-        return null // TODO: Implement...
+        LOG.info("Determining number of idle instances by type")
+        def countByType = [:]
+        List<Reservation> reservations = loadIdleInstances()
+        reservations.each {
+            it.instances.each { Instance awsInstance ->
+                def type = instanceType(awsInstance)
+                if (!countByType.containsKey(type))
+                    countByType[type] = 0
+                countByType[type] = countByType[type] + 1
+            }
+        }
+        return countByType
     }
 
     WorkerInstance launch(String instanceType) {
+        LOG.info("Launching $instanceType")
         def request = new RunInstancesRequest()
                 .withKeyName(region)
                 .withInstanceType(instanceType as InstanceType)
@@ -72,11 +104,20 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
                 new Tag('Environment', environment),
                 new Tag('Name', "Sandbox - $environment")
         )
-        return new WorkerInstance(
-                id: awsInstance.instanceId,
-                host: awsInstance.privateIpAddress,
-                type: instanceType
-        )
+        return toWorkerInstance(awsInstance)
+    }
+
+    List<WorkerInstance> runningInstances(Collection<String> instanceIds) {
+        LOG.info("Finding which instances that are running from $instanceIds")
+        def request = new DescribeInstancesRequest()
+                .withFilters(
+                new Filter('tag:Type', ['Sandbox']),
+                new Filter('tag:Environment', [environment]),
+                new Filter('tag:Status', ['reserved']),
+                new Filter('instance-state-name', ['running']))
+                .withInstanceIds(instanceIds)
+        def response = client.describeInstances(request)
+        return toWorkerInstances(response.reservations)
     }
 
     void reserve(String instanceId, SandboxSession session) {
@@ -87,13 +128,46 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         tagInstance(instanceId, new Tag('Status', 'idle'))
     }
 
-    boolean terminate(String instanceId) {
+    void terminate(String instanceId) {
         LOG.info("Terminating instance " + instanceId)
         def request = new TerminateInstancesRequest()
                 .withInstanceIds(instanceId)
         client.terminateInstances(request)
         LOG.info("Terminated instance " + instanceId)
-        return true
+    }
+
+    private List<Reservation> loadIdleInstances() {
+        def request = new DescribeInstancesRequest().withFilters(
+                new Filter('tag:Type', ['Sandbox']),
+                new Filter('tag:Environment', [environment]),
+                new Filter('tag:Status', ['idle']),
+                new Filter('instance-state-name', ['pending', 'running'])
+        )
+        def response = client.describeInstances(request)
+        return response.reservations
+    }
+
+
+    private WorkerInstance toWorkerInstance(Instance awsInstance) {
+        return new WorkerInstance(
+                id: awsInstance.instanceId,
+                host: awsInstance.privateIpAddress,
+                type: instanceType(awsInstance),
+                running: awsInstance.state.name == 'running'
+        )
+    }
+
+    private List<WorkerInstance> toWorkerInstances(List<Reservation> reservations) {
+        reservations.collect {
+            it.instances.collect { Instance awsInstance ->
+                toWorkerInstance(awsInstance)
+            }
+        }.flatten() as List<WorkerInstance>
+    }
+
+
+    private String instanceType(Instance awsInstance) {
+        InstanceType.fromValue(awsInstance.instanceType).name()
     }
 
 
@@ -111,6 +185,7 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
     }
 
     private void tagInstance(String instanceId, Tag... tags) {
+        LOG.info("Tagging instance $instanceId with $tags")
         def request = new CreateTagsRequest()
                 .withResources(instanceId)
                 .withTags(tags)

@@ -6,6 +6,9 @@ import org.openforis.sepal.hostingservice.PoolingWorkerInstanceManager
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import spock.lang.Specification
 
+import static org.openforis.sepal.hostingservice.Status.ACTIVE
+import static org.openforis.sepal.hostingservice.Status.PENDING
+
 class PoolingWorkerInstanceManagerTest extends Specification {
     def instanceTypes = [
             new WorkerInstanceType(id: 'type0', hourlyCost: 1),
@@ -47,7 +50,7 @@ class PoolingWorkerInstanceManagerTest extends Specification {
         def instanceManager = instanceManager(idleCountByType).start()
 
         when:
-        instanceManager.allocate(new SandboxSession(instanceType: 'type0'), { return null })
+        instanceManager.allocate(new SandboxSession(status: PENDING, instanceType: 'type0'), { return null })
 
         then:
         provider.has 'type0', [idle: 1, reserved: 1]
@@ -77,6 +80,35 @@ class PoolingWorkerInstanceManagerTest extends Specification {
 
         then:
         provider.has 'type0', [idle: 1, terminated: 2]
+    }
+
+    def 'Given not enough idle, When offering termination, instance is turned into an idle session'() {
+        def instanceManager = instanceManager(type0: 1)
+        def instance = provider.launchIdle('type0')
+        def session = new SandboxSession(status: PENDING, instanceId: instance.id, instanceType: instance.type)
+        provider.reserve(instance.id, session)
+
+        when:
+        instanceManager.terminate(session.instanceId, session.instanceType)
+
+        then:
+        provider.has(idle: 1)
+    }
+
+    def 'Given a starting and running idle instance, when allocating an instance, the running instance is used'() {
+        def startingInstance = provider.launchIdle('type0')
+        startingInstance.running = false
+        def runningInstance = provider.launchIdle('type0')
+        runningInstance.running = true
+
+
+        when:
+        def session = instanceManager([:]).allocate(new SandboxSession(status: PENDING)) {
+            new SandboxSession(status: ACTIVE, instanceId: it.id)
+        }
+
+        then:
+        session.instanceId == runningInstance.id
     }
 
     private PoolingWorkerInstanceManager instanceManager(LinkedHashMap<String, Integer> idleInstanceCountByInstanceType) {

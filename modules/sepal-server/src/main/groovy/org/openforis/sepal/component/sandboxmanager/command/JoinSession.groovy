@@ -30,16 +30,16 @@ class JoinSession extends AbstractCommand<SandboxSession> {
 @ToString
 class JoinSessionHandler implements CommandHandler<SandboxSession, JoinSession> {
     private final SessionRepository sessionRepository
-    private final WorkerInstanceManager instanceProvider
+    private final WorkerInstanceManager instanceManager
     private final SandboxSessionProvider sandboxProvider
     private final Clock clock
 
     JoinSessionHandler(SessionRepository sessionRepository,
-                       WorkerInstanceManager instanceProvider,
+                       WorkerInstanceManager instanceManager,
                        SandboxSessionProvider sandboxProvider,
                        Clock clock) {
         this.sessionRepository = sessionRepository
-        this.instanceProvider = instanceProvider
+        this.instanceManager = instanceManager
         this.sandboxProvider = sandboxProvider
         this.clock = clock
     }

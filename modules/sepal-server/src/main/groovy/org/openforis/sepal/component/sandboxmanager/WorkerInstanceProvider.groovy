@@ -4,7 +4,6 @@ import org.openforis.sepal.hostingservice.WorkerInstance
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 
 interface WorkerInstanceProvider {
-    List<WorkerInstance> idleInstances(String instanceType)
 
     WorkerInstance launch(String instanceType)
 
@@ -12,9 +11,13 @@ interface WorkerInstanceProvider {
 
     void idle(String instanceId)
 
-    boolean terminate(String instanceId)
+    void terminate(String instanceId)
 
-    List<WorkerInstanceType> getInstanceTypes()
+    List<WorkerInstanceType> instanceTypes()
+
+    List<WorkerInstance> runningInstances(Collection<String> instanceIds)
+
+    List<WorkerInstance> idleInstances(String instanceType)
 
     Map<String, Integer> idleCountByType()
 }
