@@ -6,8 +6,6 @@ import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
 
-import static org.openforis.sepal.SepalWorkingMode.PRIVATE_LAN
-
 class SepalConfiguration {
     private static Logger LOG = null
 
@@ -27,33 +25,16 @@ class SepalConfiguration {
     public static final String USER_HOME_DIR = 'sepal.userHomeDir'
     public static final String PROCESSING_HOME_DIR = 'sepal.processingChain.homeFolder'
     public static final String DOCKER_IMAGE_NAME = 'docker.imageName'
-    public static final String DOCKER_BASE_URI = 'docker.baseURI'
-    public static final String DOCKER_DAEMON_TCP_SCHEME = 'docker.tcpScheme'
     public static final String DOCKER_DAEMON_PORT = 'docker.daemonPort'
     public static final String DOCKER_REST_ENTRYPOINT = 'docker.restEntryPoint'
     public static final String CRAWLER_RUN_DELAY = 'metadata.crawler.delay'
     public static final String PUBLIC_HOME_DIR = 'sepal.publicHomeDir'
-    public static final String SANBOX_PORTS_TO_CHECK = 'sepal.sandbox.healtCheckPorts'
-    public static final String CONTAINER_INACTIVE_TIMEOUT = 'sandbox.inactive_timeout'
-    public static final String DEAD_CONTAINERS_CHECK_INTERVAL = 'sandbox.garbage_check_interval'
-    public static final String SANDBOX_MANAGER_JDBC_CONN_STRING = 'sandbox.jdbc_conn_string'
+    public static final String SANDBOX_PORTS_TO_CHECK = 'sepal.sandbox.healtCheckPorts'
     public static final String SANBOX_PROXY_SESSION_TIMEOUT = 'sandbox.webproxy_session_timeout'
-    public static final String ENVIRONMENT = 'environment'
-    public static final String SEPAL_INSTANCES_CONFIG_FILE = 'sepal.instances_config_file'
-    public static final String SEPAL_HOST = 'sepal.host'
-    public static final String SANDBOX_INSTANCE_SECURITY_GROUP = 'sandbox.instance_security_group'
-    public static final String SEPAL_WORKING_MODE = "sepal.working_mode"
-    public static final String VERSION = "version"
-
-    public static final String AWS_REGION = 'aws.region'
-    public static final String AWS_AV_ZONE = 'aws.av_zone'
-    public static final String AWS_ACCESS_KEY = 'aws.access_key'
-    public static final String AWS_SECRET_KEY = 'aws.secret_key'
 
     Properties properties
     String configFileLocation
     DataSource dataSource
-    DataSource sandboxDataSource
 
     SepalConfiguration() {}
 
@@ -76,7 +57,6 @@ class SepalConfiguration {
             LOG = LoggerFactory.getLogger(this.class)
             LOG.info("Using config file $configFileLocation")
             dataSource = connectionPool()
-            sandboxDataSource = connectionPool(getSandboxJdbcConnString())
         }
     }
 
@@ -90,43 +70,12 @@ class SepalConfiguration {
         )
     }
 
-    SepalWorkingMode getSepalWorkingMode() {
-        def workingMode = PRIVATE_LAN
-        def workingModeRaw = getValue(SEPAL_WORKING_MODE)
-        if (workingModeRaw) {
-            workingMode = SepalWorkingMode.valueOf(workingModeRaw)
-        }
-        return workingMode
-    }
-
-    String getSepalVersion() { getValue(VERSION) }
-
-    String getSandboxInstanceSecurityGroup() { getValue(SANDBOX_INSTANCE_SECURITY_GROUP) }
-
-    String getSepalHost() { getValue(SEPAL_HOST) }
-
-    String getSepalInstancesConfigFile() { getValue(SEPAL_INSTANCES_CONFIG_FILE) }
-
-    String getEnvironment() { getValue(ENVIRONMENT) }
-
     int getProxySessionTimeout() {
         Integer.parseInt(getValue(SANBOX_PROXY_SESSION_TIMEOUT))
     }
 
-    int getContainerInactiveTimeout() {
-        Integer.parseInt(getValue(CONTAINER_INACTIVE_TIMEOUT))
-    }
-
-    int getDeadContainersCheckInterval() {
-        Integer.parseInt(getValue(DEAD_CONTAINERS_CHECK_INTERVAL))
-    }
-
-    String getSandboxJdbcConnString() {
-        getValue(SANDBOX_MANAGER_JDBC_CONN_STRING)
-    }
-
     String getSandboxPortsToCheck() {
-        getValue(SANBOX_PORTS_TO_CHECK)
+        getValue(SANDBOX_PORTS_TO_CHECK)
     }
 
     String getPublicHomeDir() {
@@ -146,14 +95,8 @@ class SepalConfiguration {
         return portValue ? Integer.parseInt(portValue) : 2375
     }
 
-    String getDockerDaemonTcpScheme() { getValue(DOCKER_DAEMON_TCP_SCHEME) }
-
     String getDockerImageName() {
         getValue(DOCKER_IMAGE_NAME)
-    }
-
-    String getDockerDaemonURI(String baseURI) {
-        getDockerDaemonTcpScheme() + "://" + baseURI + ':' + getDockerDaemonPort() + '/' + getDockerRESTEntryPoint()
     }
 
     String getProcessingHomeDir() {
@@ -215,16 +158,6 @@ class SepalConfiguration {
     String getProcessingChain() {
         getValue(PROCESSING_CHAIN_PARAMETER)
     }
-
-
-    String getAwsAccessKey() { getValue(AWS_ACCESS_KEY) }
-
-    String getAwsSecretKey() { getValue(AWS_SECRET_KEY) }
-
-    String getRegion() { getValue(AWS_REGION) }
-
-    String getAvailabilityZone() { getValue(AWS_AV_ZONE) }
-
 
     String getLdapHost() {
         getValue('ldap.host')

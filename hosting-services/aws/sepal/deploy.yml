@@ -21,7 +21,9 @@
       set_fact:
         sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
         ldap_host: "{{ custom_host if use_custom_host == true else ec2_private_ip_address }}"
-        sepal_working_mode: "PRIVATE_LAN"
+
+    - file: path="/data/sepal" state=directory
+    - template: src="./aws.properties" dest=/data/sepal/aws.properties
 
   roles:
     - role: unattended-upgrades

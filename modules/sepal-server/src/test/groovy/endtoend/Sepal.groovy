@@ -72,7 +72,6 @@ class Sepal extends Specification {
                 (PROCESSING_HOME_DIR): File.createTempDir().toString()
         ] as Properties
         config.dataSource = database.dataSource
-        config.sandboxDataSource = database.dataSource
         return config
     }
 
