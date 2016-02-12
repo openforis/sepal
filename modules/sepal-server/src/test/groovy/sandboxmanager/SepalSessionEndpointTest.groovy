@@ -223,8 +223,13 @@ class SepalSessionEndpointTest extends Specification {
         def response = client.post(path: 'sandbox/some-user/instance-type/some-type')
 
         then:
-        1 * commandDispatcher.submit(_ as CreateSession) >> new SandboxSession(status: STARTING)
+        1 * queryDispatcher.submit(_ as FindInstanceTypes) >> [new WorkerInstanceType()]
+        1 * commandDispatcher.submit(_ as CreateSession) >> startingSession()
         response.status == 202
+    }
+
+    SandboxSession startingSession(String username = 'some-user') {
+        new SandboxSession(id: 999, status: STARTING, creationTime: new Date(), username: username)
     }
 
     SandboxSession activeSession(String username = 'some-user') {
