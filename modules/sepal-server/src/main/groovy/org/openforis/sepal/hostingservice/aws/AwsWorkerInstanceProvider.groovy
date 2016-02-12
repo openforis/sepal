@@ -121,11 +121,19 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
     }
 
     void reserve(String instanceId, SandboxSession session) {
-        tagInstance(instanceId, new Tag('Status', "reserved - $session.username"))
+        tagInstance(instanceId,
+                new Tag('Status', 'reserved'),
+                new Tag('User', session.username),
+                new Tag('Session id', session.id as String),
+        )
     }
 
     void idle(String instanceId) {
-        tagInstance(instanceId, new Tag('Status', 'idle'))
+        tagInstance(instanceId,
+                new Tag('Status', 'idle'),
+                new Tag('User', ''),
+                new Tag('Session id', '')
+        )
     }
 
     void terminate(String instanceId) {
@@ -147,11 +155,11 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         return response.reservations
     }
 
-
     private WorkerInstance toWorkerInstance(Instance awsInstance) {
         return new WorkerInstance(
                 id: awsInstance.instanceId,
-                host: awsInstance.privateIpAddress,
+//                host: awsInstance.privateIpAddress,
+                host: awsInstance.publicIpAddress, // TODO: Switch to private ip?
                 type: instanceType(awsInstance),
                 running: awsInstance.state.name == 'running'
         )

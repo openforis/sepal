@@ -386,7 +386,7 @@ class SessionManagerTests extends Specification {
         instanceProvider.has(reserved: 1)
     }
 
-    def 'Given a starting session with a running instance, when deploying starting sessions, session is deployed'() {
+    def 'Given a starting session with a running instance, when deploying starting sessions, session is deployed and activated'() {
         def session = createSession()
         def instance = instanceProvider.started(session.instanceId)
 
@@ -395,6 +395,8 @@ class SessionManagerTests extends Specification {
 
         then:
         sessionProvider.deployedOneTo(instance)
+        def info = loadSandboxInfo()
+        info.activeSessions.size() == 1
     }
 
     def 'Given a starting session without a running instance, when deploying starting sessions, session is not deployed'() {

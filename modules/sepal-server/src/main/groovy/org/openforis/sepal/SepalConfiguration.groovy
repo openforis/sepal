@@ -25,7 +25,6 @@ class SepalConfiguration {
     public static final String USER_HOME_DIR = 'sepal.userHomeDir'
     public static final String PROCESSING_HOME_DIR = 'sepal.processingChain.homeFolder'
     public static final String DOCKER_IMAGE_NAME = 'docker.imageName'
-    public static final String DOCKER_DAEMON_PORT = 'docker.daemonPort'
     public static final String DOCKER_REST_ENTRYPOINT = 'docker.restEntryPoint'
     public static final String CRAWLER_RUN_DELAY = 'metadata.crawler.delay'
     public static final String PUBLIC_HOME_DIR = 'sepal.publicHomeDir'
@@ -70,6 +69,10 @@ class SepalConfiguration {
         )
     }
 
+    String getVersion() {
+        return getValue('version')
+    }
+
     int getProxySessionTimeout() {
         Integer.parseInt(getValue(SANBOX_PROXY_SESSION_TIMEOUT))
     }
@@ -91,8 +94,7 @@ class SepalConfiguration {
     }
 
     int getDockerDaemonPort() {
-        def portValue = getValue(DOCKER_DAEMON_PORT)
-        return portValue ? Integer.parseInt(portValue) : 2375
+        return 2375
     }
 
     String getDockerImageName() {

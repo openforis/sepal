@@ -23,11 +23,14 @@ class DeployStartingSessionsHandler implements CommandHandler<Void, DeployStarti
 
     Void execute(DeployStartingSessions command) {
         def startingSessions = sessionRepository.findStartingSessions()
+        if (!startingSessions)
+            return null
         def sessionsByInstanceId = startingSessions.groupBy { it.instanceId }
         def runningInstances = instanceManager.runningInstances(sessionsByInstanceId.keySet())
         runningInstances.each { instance ->
             sessionsByInstanceId[instance.id].each { session ->
-                sandboxProvider.deploy(session, instance)
+                def deployedSession = sandboxProvider.deploy(session, instance)
+                sessionRepository.deployed(deployedSession)
             }
         }
         return null

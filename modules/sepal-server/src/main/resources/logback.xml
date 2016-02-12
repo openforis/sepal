@@ -20,6 +20,18 @@
         <appender-ref ref="FILE"/>
     </logger>
 
+    <logger name="org.openforis.sepal" additivity="false" level="DEBUG">
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <logger name="groovyx.net.http" additivity="false" level="DEBUG">
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <logger name="org.apache.http" additivity="false" level="DEBUG">
+        <appender-ref ref="FILE"/>
+    </logger>
+
     <root level="INFO">
         <appender-ref ref="FILE"/>
     </root>

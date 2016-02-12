@@ -106,13 +106,15 @@ class SepalSessionEndpoint {
                 switch (session.status) {
                     case ACTIVE:
                         response.status = 201
-                        def sessionMap = toSessionMap(session, instanceTypesById())
-                        return send(toJson(sessionMap))
+                        break
                     case STARTING:
-                        return response.status = 202
+                        response.status = 202
+                        break
                     default:
                         throw new IllegalStateException("Expected session to be ACTIVE or STARTING after creation: $session")
                 }
+                def sessionMap = toSessionMap(session, instanceTypesById())
+                return send(toJson(sessionMap))
             }
 
             post('sandbox/{user}/session/{sessionId}/alive') {

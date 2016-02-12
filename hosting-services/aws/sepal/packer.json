@@ -15,7 +15,7 @@
     "secret_key": "{{user `aws_secret_key`}}",
     "region": "{{user `region`}}",
     "source_ami": "{{user `source_ami`}}",
-    "instance_type": "t2.micro",
+    "instance_type": "m4.large",
     "ssh_username": "ubuntu",
     "ami_name": "Sandbox({{user  `av_zone`}}) - {{user `version`}}",
     "tags": {

@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory
 
 class SepalClient {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private static final int WAIT_TIME = 10 * 1000
+    private static final int WAIT_TIME = 5 * 1000
     private final String username
     private final RESTClient sepal
 
