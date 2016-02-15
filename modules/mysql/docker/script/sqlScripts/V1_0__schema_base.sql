@@ -197,7 +197,7 @@ CREATE TABLE requested_scenes (
   last_updated     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   status           VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
   processing_chain VARCHAR(255),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE metadata_providers (
@@ -209,7 +209,7 @@ CREATE TABLE metadata_providers (
   iteration_size       INT(10)                   DEFAULT 18,
   last_execution_start DATETIME,
   last_execution_end   DATETIME,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE metadata_crawling_criteria (
@@ -217,33 +217,19 @@ CREATE TABLE metadata_crawling_criteria (
   metadata_provider_id INT(10) UNSIGNED NOT NULL,
   field_name           VARCHAR(255)     NOT NULL,
   expected_value       VARCHAR(255)     NOT NULL,
-  PRIMARY KEY (`criteria_id`)
-);
-
-CREATE TABLE sandbox_sessions (
-  session_id          INT          NOT NULL AUTO_INCREMENT,
-  username            VARCHAR(255) NOT NULL,
-  status              VARCHAR(255) NOT NULL DEFAULT 'CREATED',
-  container_id        VARCHAR(255) NULL,
-  container_uri       VARCHAR(255) NULL,
-  created_on          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  terminated_on       TIMESTAMP    NULL,
-  status_refreshed_on TIMESTAMP    NULL,
-  instance_id         INT(11)      NOT NULL,
-  PRIMARY KEY (session_id)
+  PRIMARY KEY (criteria_id)
 );
 
 CREATE TABLE sandbox_session (
-  id               INT          NOT NULL AUTO_INCREMENT,
-  username         VARCHAR(255) NOT NULL,
-  instance_id      VARCHAR(255),
-  instance_type    VARCHAR(255) NOT NULL,
-  host             VARCHAR(255),
-  port             INT,
-  status           VARCHAR(255) NOT NULL,
-  creation_time    TIMESTAMP    NOT NULL,
-  update_time      TIMESTAMP    NOT NULL,
-  termination_time TIMESTAMP,
+  id            INT          NOT NULL AUTO_INCREMENT,
+  username      VARCHAR(255) NOT NULL,
+  instance_id   VARCHAR(255),
+  instance_type VARCHAR(255) NOT NULL,
+  host          VARCHAR(255),
+  port          INT,
+  status        VARCHAR(255) NOT NULL,
+  creation_time TIMESTAMP    NOT NULL,
+  update_time   TIMESTAMP    NOT NULL,
   PRIMARY KEY (id)
 );
 

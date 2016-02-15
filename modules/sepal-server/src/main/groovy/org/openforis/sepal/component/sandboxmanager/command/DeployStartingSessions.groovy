@@ -30,7 +30,7 @@ class DeployStartingSessionsHandler implements CommandHandler<Void, DeployStarti
         runningInstances.each { instance ->
             sessionsByInstanceId[instance.id].each { session ->
                 def deployedSession = sandboxProvider.deploy(session, instance)
-                sessionRepository.deployed(deployedSession)
+                sessionRepository.update(deployedSession)
             }
         }
         return null

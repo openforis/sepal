@@ -16,13 +16,9 @@ DROP TABLE IF EXISTS download_requests;
 DROP TABLE IF EXISTS requested_scenes;
 DROP TABLE IF EXISTS metadata_providers;
 DROP TABLE IF EXISTS metadata_crawling_criteria;
-DROP VIEW IF EXISTS v_session_status;
-DROP VIEW IF EXISTS v_instances;
-DROP TABLE IF EXISTS sandbox_sessions;
 DROP TABLE IF EXISTS instance_providers;
 DROP TABLE IF EXISTS datacenters;
 DROP TABLE IF EXISTS instances;
-DROP TABLE IF EXISTS instance_types;
 DROP TABLE IF EXISTS sandbox_session;
 DROP TABLE IF EXISTS user_budget;
 
@@ -226,7 +222,7 @@ CREATE TABLE requested_scenes (
   last_updated     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   status           VARCHAR(255) NOT NULL DEFAULT 'REQUESTED',
   processing_chain VARCHAR(255),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE metadata_providers (
@@ -238,7 +234,7 @@ CREATE TABLE metadata_providers (
   iteration_size       INT(10)                   DEFAULT 18,
   last_execution_start DATETIME                  DEFAULT NULL,
   last_execution_end   DATETIME                  DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE metadata_crawling_criteria (
@@ -246,20 +242,7 @@ CREATE TABLE metadata_crawling_criteria (
   metadata_provider_id INT(10) UNSIGNED NOT NULL,
   field_name           VARCHAR(255)     NOT NULL,
   expected_value       VARCHAR(255)     NOT NULL,
-  PRIMARY KEY (`criteria_id`)
-);
-
-CREATE TABLE sandbox_sessions (
-  session_id          INT          NOT NULL AUTO_INCREMENT,
-  username            VARCHAR(255) NOT NULL,
-  status              VARCHAR(255) NOT NULL DEFAULT 'CREATED',
-  container_id        VARCHAR(255) NULL,
-  container_uri       VARCHAR(255) NULL,
-  created_on          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  terminated_on       TIMESTAMP    NULL,
-  status_refreshed_on TIMESTAMP    NULL,
-  instance_id         INT(11)      NOT NULL,
-  PRIMARY KEY (session_id)
+  PRIMARY KEY (criteria_id)
 );
 
 CREATE TABLE instance_providers (
@@ -287,7 +270,6 @@ CREATE TABLE instances (
   owner              VARCHAR(255) NULL,
   name               VARCHAR(60)  NOT NULL,
   launch_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  termination_time   DATETIME     NULL,
   status_update_time DATETIME     NOT NULL,
   disposable         INT(1)       NOT NULL DEFAULT 1,
   reserved           INT(1)       NOT NULL DEFAULT 1,
@@ -296,84 +278,16 @@ CREATE TABLE instances (
 );
 
 
-CREATE TABLE instance_types (
-  id           INT          NOT NULL,
-  provider_id  INT          NOT NULL,
-  name         VARCHAR(100) NOT NULL,
-  description  VARCHAR(250) NULL,
-  hourly_costs DOUBLE       NOT NULL,
-  cpu_count    DOUBLE       NOT NULL,
-  ram          INT(11)      NOT NULL,
-  notes        VARCHAR(500) NULL,
-  enabled      INT(1)       NOT NULL DEFAULT 1,
-  PRIMARY KEY (id)
-);
-
-CREATE OR REPLACE VIEW v_session_status AS (
-  SELECT
-    ss.session_id           AS id,
-    ss.username             AS username,
-    ss.status               AS status,
-    ss.created_on           AS created_on,
-    ss.status_refreshed_on  AS updated_on,
-    ss.terminated_on        AS terminated_on,
-    ss.container_id         AS cnt_id,
-    ss.container_uri        AS cnt_uri,
-    inst.id                 AS cnt_inst_id,
-    inst.status             AS cnt_inst_status,
-    inst.public_ip          AS cnt_inst_pub_ip,
-    inst.private_ip         AS cnt_inst_priv_ip,
-    inst.owner              AS cnt_inst_owner,
-    inst.name               AS cnt_inst_name,
-    inst.launch_time        AS cnt_inst_start_time,
-    inst.termination_time   AS cnt_inst_end_time,
-    inst.status_update_time AS cnt_inst_updated_on
-  FROM sandbox_sessions ss
-    INNER JOIN instances inst ON ss.instance_id = inst.id
-);
-
-CREATE OR REPLACE VIEW v_instances AS (
-  SELECT
-    ic.id                 AS icId,
-    ic.status             AS icStatus,
-    ic.public_ip          AS icPublicIp,
-    ic.private_ip         AS icPrivateIp,
-    ic.owner              AS icOwner,
-    ic.name               AS icName,
-    ic.launch_time        AS icLaunchTime,
-    ic.termination_time   AS icDateEnd,
-    ic.status_update_time AS icUpdateTime,
-    dc.id                 AS dcId,
-    dc.name               AS dcName,
-    dc.geolocation        AS dcGeoLocation,
-    dc.description        AS dcDescription,
-    pr.id                 AS prId,
-    pr.name               AS prName,
-    pr.description        AS prDescription,
-    type.id               AS typeId,
-    type.name             AS typeName,
-    type.description      AS typeDescription,
-    type.hourly_costs     AS typeHourlyCost,
-    type.cpu_count        AS typeCpuCount,
-    type.ram              AS typeRam,
-    type.notes            AS typeNotes,
-    type.enabled          AS typeEnabled
-  FROM instances ic INNER JOIN datacenters dc ON ic.data_center_id = dc.id
-    INNER JOIN instance_types type ON ic.instance_type = type.id
-    INNER JOIN instance_providers pr ON dc.provider_id = pr.id
-);
-
 CREATE TABLE sandbox_session (
-  id               INT          NOT NULL AUTO_INCREMENT,
-  username         VARCHAR(255) NOT NULL,
-  instance_id      VARCHAR(255),
-  instance_type    VARCHAR(255) NOT NULL,
-  host             VARCHAR(255),
-  port             INT,
-  status           VARCHAR(255) NOT NULL,
-  creation_time    TIMESTAMP    NOT NULL,
-  update_time      TIMESTAMP    NOT NULL,
-  termination_time TIMESTAMP,
+  id            INT          NOT NULL AUTO_INCREMENT,
+  username      VARCHAR(255) NOT NULL,
+  instance_id   VARCHAR(255),
+  instance_type VARCHAR(255) NOT NULL,
+  host          VARCHAR(255),
+  port          INT,
+  status        VARCHAR(255) NOT NULL,
+  creation_time TIMESTAMP    NOT NULL,
+  update_time   TIMESTAMP    NOT NULL,
   PRIMARY KEY (id)
 );
 

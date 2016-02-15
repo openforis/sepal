@@ -26,8 +26,8 @@ import spock.lang.Specification
 import util.Port
 
 import static groovy.json.JsonOutput.prettyPrint
-import static org.openforis.sepal.hostingservice.Status.ACTIVE
-import static org.openforis.sepal.hostingservice.Status.STARTING
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
 
 @SuppressWarnings("GroovyAssignabilityCheck")
 class SepalSessionEndpointTest extends Specification {

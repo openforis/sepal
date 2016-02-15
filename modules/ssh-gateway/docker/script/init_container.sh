@@ -25,9 +25,6 @@ cp /script/add-sepal-user /usr/local/bin/add-sepal-user
 cp /script/ssh-bootstrap /usr/local/bin/ssh-bootstrap
 chmod 555 /usr/local/bin/ssh-bootstrap
 
-cp /script/ssh-bootstrap.groovy /usr/local/bin/ssh-bootstrap.groovy
-chmod 555 /usr/local/bin/ssh-bootstrap.groovy
-
 cp /script/alive.sh /usr/local/bin/alive.sh
 chmod 555 /usr/local/bin/alive.sh
 

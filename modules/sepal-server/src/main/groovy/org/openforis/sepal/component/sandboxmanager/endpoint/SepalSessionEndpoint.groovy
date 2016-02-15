@@ -20,8 +20,8 @@ import org.openforis.sepal.util.Clock
 import java.time.Duration
 
 import static groovy.json.JsonOutput.toJson
-import static org.openforis.sepal.hostingservice.Status.ACTIVE
-import static org.openforis.sepal.hostingservice.Status.STARTING
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
 
 class SepalSessionEndpoint {
     private final QueryDispatcher queryDispatcher

@@ -14,8 +14,8 @@ import org.openforis.sepal.util.Clock
 import java.time.ZoneId
 
 import static groovymvc.validate.Constraints.custom
-import static org.openforis.sepal.hostingservice.Status.ACTIVE
-import static org.openforis.sepal.hostingservice.Status.STARTING
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
 
 @ToString
 class LoadSandboxInfo implements Query<SandboxInfo> {

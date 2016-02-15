@@ -33,7 +33,8 @@ apt-get update && apt-get install -y \
     libgmp3-dev \
     saga \
     aria2 \
-    xml-twig-tools
+    xml-twig-tools \
+    dans-gdal-scripts
 
 #install oft
 wget http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run

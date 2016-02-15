@@ -1,7 +1,6 @@
 package sandboxmanager
 
 import fake.Database
-import fake.SynchronousJobExecutor
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
@@ -14,14 +13,13 @@ import org.openforis.sepal.hostingservice.PoolingWorkerInstanceManager
 import org.openforis.sepal.hostingservice.WorkerInstance
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.openforis.sepal.query.QueryFailed
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
 import static java.util.concurrent.TimeUnit.HOURS
-import static org.openforis.sepal.hostingservice.Status.ACTIVE
-import static org.openforis.sepal.hostingservice.Status.STARTING
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
 
 class SessionManagerTests extends Specification {
     def someUserName = 'some-username'
@@ -30,11 +28,11 @@ class SessionManagerTests extends Specification {
     def future = new Date() + 10
 
     def clock = new FakeClock()
-    def instanceProvider = new FakeWorkerInstanceProvider()
+    def instanceProvider = new FakeWorkerInstanceProvider(clock: clock)
     def sessionProvider = new FakeSandboxSessionProvider(clock)
     def component = new SandboxManagerComponent(
             new Database().dataSource,
-            new PoolingWorkerInstanceManager(instanceProvider, [:], new SynchronousJobExecutor()),
+            new PoolingWorkerInstanceManager(instanceProvider, [:], clock),
             sessionProvider, clock
     )
 
@@ -139,21 +137,6 @@ class SessionManagerTests extends Specification {
         session.status == ACTIVE
         session.creationTime
         session.updateTime
-        !session.terminationTime
-    }
-
-    def 'Given no idle instances, when creating a session, the returned session has a host, no port and is starting'() {
-        instanceProvider.noIdle()
-
-        when:
-        def session = createSession(someUserName)
-
-        then:
-        session.host
-        !session.port
-        session.status == STARTING
-        hasNoActiveSessions()
-        hasOneStartingSession()
     }
 
     def 'When creating a session, it is added to the active sessions, an instance is allocated, and a sandbox is deployed on that instance'() {
@@ -278,51 +261,55 @@ class SessionManagerTests extends Specification {
         hasNoActiveSessions()
     }
 
-    def 'Given an instance with only a stopped session, when terminating redundant instances, the instance is offered for termination'() {
+    def 'Given an instance with a stopped session and 5 minutes is left until instance is charged, when updating instances, the instance is terminated'() {
+        clock.set('2016-01-01', '00:00:00')
         runningIdle()
         createSession()
         closeTimedOutSessions(future)
+        clock.set('2016-01-01', '00:55:00')
 
         when:
-        terminateRedundantInstances()
+        updateInstances()
 
         then:
         instanceProvider.has(terminated: 1)
     }
 
-    // TODO: Should we allow multiple sessions on same instance?
-    @Ignore
-    def 'Given an instance with a stopped and active sessions, when terminating redundant instances, the instance is not offered for termination'() {
-        instanceProvider.useId('some id')
+    def 'Given an instance with a stopped session and 5 minutes is left until instance is charged, when updating instances, the instance is idle'() {
+        clock.set('2016-01-01', '00:00:00')
         runningIdle()
         createSession()
         closeTimedOutSessions(future)
-        createSession()
+        clock.set('2016-01-01', '00:54:59')
 
         when:
-        terminateRedundantInstances()
+        updateInstances()
 
         then:
-        instanceProvider.has(reserved: 1)
+        instanceProvider.has(idle: 1)
     }
 
-    def 'Given an instance with a terminated session, when terminating redundant instances, the instance is not offered for termination'() {
+    def 'Given an instance that already been terminated, when updating instances, a second attempt to terminate is not made'() {
+        clock.set('2016-01-01', '00:00:00')
         runningIdle()
         createSession()
         closeTimedOutSessions(future)
-        terminateRedundantInstances()
+        clock.set('2016-01-01', '00:55:00')
+        updateInstances()
 
         when:
-        terminateRedundantInstances()
+        updateInstances()
 
         then:
         instanceProvider.terminationRequests == 1
     }
 
-    def 'Given a non-available session, when joining that session, an exception is thrown and session can be offered for termination'() {
+    def 'Given a non-available session, when joining that session, an exception is thrown and instance is terminated'() {
+        clock.set('2016-01-01', '00:00:00')
         runningIdle()
         def session = createSession()
         sessionProvider.notAvailable()
+        clock.set('2016-01-01', '00:55:00')
 
         when:
         joinSession(session.id)
@@ -330,7 +317,11 @@ class SessionManagerTests extends Specification {
         then:
         thrown ExecutionFailed
         hasNoActiveSessions()
-        terminateRedundantInstances()
+
+        when:
+        updateInstances()
+
+        then:
         instanceProvider.has(terminated: 1)
     }
 
@@ -367,14 +358,16 @@ class SessionManagerTests extends Specification {
         hasNoActiveSessions()
     }
 
-    def 'Given no idle instances, when creating session, starting session with host but no port is returned'() {
+    def 'Given no idle instances, when creating a session, the returned session has a host, no port and is starting'() {
         when:
-        def session = createSession()
+        def session = createSession(someUserName)
 
         then:
         session.host
         !session.port
         session.status == STARTING
+        hasNoActiveSessions()
+        hasOneStartingSession()
     }
 
     def 'Given no idle instances, when creating session, instance is reserved, but sandbox is not deployed'() {
@@ -452,8 +445,8 @@ class SessionManagerTests extends Specification {
         component.submit(new CloseSession(username: session.username, sessionId: session.id))
     }
 
-    void terminateRedundantInstances() {
-        component.submit(new TerminateRedundantInstances())
+    void updateInstances() {
+        component.submit(new UpdateInstances())
     }
 
     List<WorkerInstanceType> findInstanceTypes() {

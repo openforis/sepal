@@ -4,10 +4,13 @@ import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.WorkerInstanceProvider
 import org.openforis.sepal.hostingservice.WorkerInstance
 import org.openforis.sepal.hostingservice.WorkerInstanceType
+import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.SystemClock
 
 class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
     private final Map<String, WorkerInstance> instanceById = [:]
     private final Map<WorkerInstance, String> statusByInstance = [:]
+    private Clock clock = new SystemClock()
     private boolean noIdle
     private String useId
     int terminationRequests
@@ -41,7 +44,9 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
         def instance = new WorkerInstance(
                 id: useId ?: UUID.randomUUID().toString(),
                 type: instanceType,
-                host: UUID.randomUUID().toString()
+                host: UUID.randomUUID().toString(),
+                idle: true,
+                launchTime: clock.now()
         )
         instanceById[instance.id] = instance
         statusByInstance[instance] = 'uninitialized'
@@ -57,7 +62,7 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
     }
 
     void terminate(String instanceId) {
-        changeState(instanceId, 'terminated', ['terminated'])
+        changeState(instanceId, 'terminated', ['pending'])
         terminationRequests++
     }
 
@@ -65,6 +70,12 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
         return instanceIds
                 .findAll { instanceById[it]?.running }
                 .collect { instanceById[it] }
+    }
+
+    List<WorkerInstance> allInstances() {
+        return statusByInstance
+                .findAll { it.value != 'terminated' }
+                .collect { it.key }
     }
 
     void addType(WorkerInstanceType instanceType) {
@@ -107,6 +118,7 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
         if (statusByInstance[instance] in disallowedStates)
             throw new IllegalStateException("Unexpected instance state: ${statusByInstance[instance]}")
         statusByInstance[instance] = state
+        instance.idle = state == 'idle'
     }
 
     void noIdle() {
@@ -116,13 +128,6 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
     WorkerInstance launchIdle(String instanceType) {
         def instance = launch(instanceType)
         idle(instance.id)
-        instance.running = true
-        return instance
-    }
-
-    WorkerInstance launchReserved(String instanceType, SandboxSession session) {
-        def instance = launch(instanceType)
-        reserve(instance.id, session)
         instance.running = true
         return instance
     }

@@ -13,7 +13,9 @@ class VagrantWorkerInstanceProvider implements WorkerInstanceProvider {
             id: 'vagrant',
             host: '172.17.0.1',
             type: instanceTypes.first().id,
-            running: true
+            running: true,
+            idle: true,
+            launchTime: new Date()
     )
 
     List<WorkerInstanceType> instanceTypes() {
@@ -21,6 +23,10 @@ class VagrantWorkerInstanceProvider implements WorkerInstanceProvider {
     }
 
     List<WorkerInstance> idleInstances(String instanceType) {
+        return [instance]
+    }
+
+    List<WorkerInstance> allInstances() {
         return [instance]
     }
 

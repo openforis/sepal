@@ -25,9 +25,9 @@ class CloseTimedOutSessionsHandler implements CommandHandler<Void, CloseTimedOut
     }
 
     Void execute(CloseTimedOutSessions command) {
-        sessionRepository.stopAllTimedOut(command.updatedBefore) { SandboxSession session ->
+        sessionRepository.closeAllTimedOut(command.updatedBefore) { SandboxSession session ->
             if (session.host)
-                sessionProvider.undeploy(session)
+                sessionProvider.close(session)
         }
         return null
     }

@@ -28,7 +28,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
             createContainer(session, instance)
             startContainer(session, instance)
             def port = determineContainerPort(session, instance)
-            def deployedSession = session.deployed(instance, port, clock.now())
+            def deployedSession = session.active(instance, port, clock.now())
             waitUntilInitialized(deployedSession, instance)
             LOG.info("Deployed $session to $instance")
             return deployedSession
@@ -39,8 +39,9 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
         }
     }
 
-    void undeploy(SandboxSession session) {
+    SandboxSession close(SandboxSession session) {
         removeContainer(session, session.host)
+        return session.closed(clock.now())
     }
 
     void assertAvailable(SandboxSession session) throws SandboxSessionProvider.NotAvailable {
@@ -66,7 +67,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
         ])
         LOG.debug("Deploying session $session to $instance.")
         def response = client(instance).post(
-                path: "containers/create",
+                path: "containers/pending",
                 query: [name: containerName(session)],
                 body: request,
                 requestContentType: JSON

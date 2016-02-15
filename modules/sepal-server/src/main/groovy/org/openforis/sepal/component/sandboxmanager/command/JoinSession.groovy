@@ -12,8 +12,7 @@ import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.Clock
 
 import static groovymvc.validate.Constraints.min
-import static org.openforis.sepal.hostingservice.Status.ACTIVE
-import static org.openforis.sepal.hostingservice.Status.STOPPED
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
 
 @ToString
 class JoinSession extends AbstractCommand<SandboxSession> {
@@ -25,7 +24,6 @@ class JoinSession extends AbstractCommand<SandboxSession> {
         ]
     }
 }
-
 
 @ToString
 class JoinSessionHandler implements CommandHandler<SandboxSession, JoinSession> {
@@ -60,7 +58,7 @@ class JoinSessionHandler implements CommandHandler<SandboxSession, JoinSession> 
         try {
             sandboxProvider.assertAvailable(session)
         } catch (NotAvailable e) {
-            sessionRepository.updateStatusInNewTransaction(session.id, STOPPED)
+            sessionRepository.close(session.closed(clock.now()))
             throw e
         }
     }

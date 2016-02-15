@@ -18,17 +18,18 @@ class FakeSandboxSessionProvider implements SandboxSessionProvider {
     SandboxSession deploy(SandboxSession session, WorkerInstance instance) {
         if (fail)
             throw new RuntimeException('A test triggered sandbox deployment failure')
-        def activeSession = session.deployed(instance, new Random().nextInt(), clock.now())
+        def activeSession = session.active(instance, new Random().nextInt(), clock.now())
         if (!deployed[instance])
             deployed[instance] = []
         deployed[instance] << activeSession
         return activeSession
     }
 
-    void undeploy(SandboxSession session) {
+    SandboxSession close(SandboxSession session) {
         deployed.values().each { sessions ->
             sessions.removeIf { it.id == session.id }
         }
+        session.closed()
     }
 
     void assertAvailable(SandboxSession sandboxSession) throws SandboxSessionProvider.NotAvailable {

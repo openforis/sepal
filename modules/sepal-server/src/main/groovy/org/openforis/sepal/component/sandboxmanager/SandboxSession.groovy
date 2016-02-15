@@ -1,10 +1,9 @@
 package org.openforis.sepal.component.sandboxmanager
 
 import groovy.transform.ToString
-import org.openforis.sepal.hostingservice.Status
 import org.openforis.sepal.hostingservice.WorkerInstance
 
-import static org.openforis.sepal.hostingservice.Status.*
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.*
 
 @ToString
 class SandboxSession {
@@ -14,12 +13,36 @@ class SandboxSession {
     String instanceType
     String host
     Integer port
-    Status status
+    SessionStatus status
     Date creationTime
     Date updateTime
-    Date terminationTime
 
-    SandboxSession deployed(WorkerInstance instance, int port, Date date) {
+    static pending(long id, String username, String instanceType, Date date) {
+        return new SandboxSession(id: id,
+                username: username,
+                instanceType: instanceType,
+                status: PENDING,
+                creationTime: date,
+                updateTime: date
+        )
+    }
+
+    SandboxSession starting(WorkerInstance instance) {
+        assert status in [PENDING]
+        return new SandboxSession(
+                id: id,
+                username: username,
+                instanceId: instance.id,
+                instanceType: instance.type,
+                host: instance.host,
+                port: port,
+                status: STARTING,
+                creationTime: creationTime,
+                updateTime: updateTime
+        )
+    }
+
+    SandboxSession active(WorkerInstance instance, int port, Date date) {
         assert status in [PENDING, STARTING]
         return new SandboxSession(
                 id: id,
@@ -34,17 +57,17 @@ class SandboxSession {
         )
     }
 
-    SandboxSession starting(WorkerInstance instance) {
-        assert status == PENDING
+    SandboxSession closed(Date date) {
         return new SandboxSession(
                 id: id,
                 username: username,
-                instanceId: instance.id,
-                host: instance.host,
-                instanceType: instance.type,
-                status: STARTING,
+                instanceId: instanceId,
+                instanceType: instanceType,
+                host: host,
+                port: port,
+                status: CLOSED,
                 creationTime: creationTime,
-                updateTime: updateTime
+                updateTime: date
         )
     }
 
@@ -58,8 +81,7 @@ class SandboxSession {
                 port: port,
                 status: status,
                 creationTime: creationTime,
-                updateTime: date,
-                terminationTime: null
+                updateTime: date
         )
     }
 }

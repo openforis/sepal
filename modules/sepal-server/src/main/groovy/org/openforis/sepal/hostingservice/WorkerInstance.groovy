@@ -8,4 +8,6 @@ class WorkerInstance {
     String host
     String type
     boolean running
+    boolean idle
+    Date launchTime
 }

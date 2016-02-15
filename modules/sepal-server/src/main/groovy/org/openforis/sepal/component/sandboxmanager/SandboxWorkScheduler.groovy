@@ -5,7 +5,7 @@ import groovy.transform.ToString
 import org.openforis.sepal.command.CommandDispatcher
 import org.openforis.sepal.component.sandboxmanager.command.CloseTimedOutSessions
 import org.openforis.sepal.component.sandboxmanager.command.DeployStartingSessions
-import org.openforis.sepal.component.sandboxmanager.command.TerminateRedundantInstances
+import org.openforis.sepal.component.sandboxmanager.command.UpdateInstances
 import org.openforis.sepal.util.NamedThreadFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -31,7 +31,7 @@ class SandboxWorkScheduler {
         executor.scheduleWithFixedDelay({
             deployStartingSessions()
             closeTimedOutSessions()
-            terminateRedundantInstances()
+            updateInstances()
         }, 0, 10, SECONDS)
     }
 
@@ -55,11 +55,11 @@ class SandboxWorkScheduler {
         }
     }
 
-    private void terminateRedundantInstances() {
+    private void updateInstances() {
         try {
-            commandDispatcher.submit(new TerminateRedundantInstances())
+            commandDispatcher.submit(new UpdateInstances())
         } catch (Exception e) {
-            LOG.error("Error terminating redundant instances", e)
+            LOG.error("Error updating instances", e)
         }
     }
 

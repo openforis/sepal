@@ -51,7 +51,7 @@ final class SandboxManagerComponent implements EndpointRegistry {
                 .register(JoinSession, new JoinSessionHandler(sessionRepository, instanceManager, sessionProvider, clock))
                 .register(CloseSession, new CloseSessionHandler(sessionRepository, sessionProvider))
                 .register(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionRepository, sessionProvider))
-                .register(TerminateRedundantInstances, new TerminateRedundantInstancesHandler(sessionRepository, instanceManager, sessionProvider))
+                .register(UpdateInstances, new UpdateInstancesHandler(sessionRepository, instanceManager, sessionProvider))
                 .register(SessionHeartbeatReceived, new SessionHeartbeatReceivedHandler(sessionRepository, clock))
                 .register(UpdateUserBudget, new UpdateUserBudgetHandler(userBudgetRepository))
                 .register(DeployStartingSessions, new DeployStartingSessionsHandler(sessionRepository, instanceManager, sessionProvider))

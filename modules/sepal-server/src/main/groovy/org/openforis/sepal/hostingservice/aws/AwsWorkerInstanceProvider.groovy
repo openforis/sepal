@@ -120,6 +120,17 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         return toWorkerInstances(response.reservations)
     }
 
+    List<WorkerInstance> allInstances() {
+        LOG.info("Finding all instances")
+        def request = new DescribeInstancesRequest()
+                .withFilters(
+                new Filter('tag:Type', ['Sandbox']),
+                new Filter('tag:Environment', [environment])
+        )
+        def response = client.describeInstances(request)
+        return toWorkerInstances(response.reservations)
+    }
+
     void reserve(String instanceId, SandboxSession session) {
         tagInstance(instanceId,
                 new Tag('Status', 'reserved'),
@@ -161,7 +172,9 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
 //                host: awsInstance.privateIpAddress,
                 host: awsInstance.publicIpAddress, // TODO: Switch to private ip?
                 type: instanceType(awsInstance),
-                running: awsInstance.state.name == 'running'
+                running: awsInstance.state.name == 'running',
+                idle: awsInstance.tags.find { it.key == 'Status' && it.value == 'idle' },
+                launchTime: awsInstance.launchTime
         )
     }
 

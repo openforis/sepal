@@ -1,7 +1,6 @@
 package endtoend
 
 import fake.Database
-import fake.SynchronousJobExecutor
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.component.dataprovider.DataProviderComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
@@ -48,7 +47,7 @@ class Sepal extends Specification {
         def dataSearchComponent = new DataSearchComponent(config)
         def sandboxManagerComponent = new SandboxManagerComponent(
                 database.dataSource,
-                new PoolingWorkerInstanceManager(new FakeWorkerInstanceProvider(), [:], new SynchronousJobExecutor()),
+                new PoolingWorkerInstanceManager(new FakeWorkerInstanceProvider(clock: new SystemClock()), [:], new SystemClock()),
                 new FakeSandboxSessionProvider(new SystemClock()),
                 new SystemClock()
         )

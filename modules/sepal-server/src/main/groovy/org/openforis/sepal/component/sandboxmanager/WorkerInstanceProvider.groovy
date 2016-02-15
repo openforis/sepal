@@ -17,6 +17,8 @@ interface WorkerInstanceProvider {
 
     List<WorkerInstance> runningInstances(Collection<String> instanceIds)
 
+    List<WorkerInstance> allInstances()
+
     List<WorkerInstance> idleInstances(String instanceType)
 
     Map<String, Integer> idleCountByType()

@@ -33,10 +33,9 @@ class CreateSessionHandler implements CommandHandler<SandboxSession, CreateSessi
     }
 
     SandboxSession execute(CreateSession command) {
-        def pendingSession = sessionRepository.creating(command.username, command.instanceType)
+        def pendingSession = sessionRepository.create(command.username, command.instanceType)
         def session = workerInstances.allocate(pendingSession) { WorkerInstance instance ->
-            def deployedSession = sessionProvider.deploy(pendingSession, instance)
-            return sessionRepository.deployed(deployedSession)
+            sessionProvider.deploy(pendingSession, instance)
         }
         sessionRepository.update(session)
         return session

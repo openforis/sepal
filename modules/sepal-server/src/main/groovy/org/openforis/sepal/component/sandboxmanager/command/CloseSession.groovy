@@ -5,7 +5,6 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
 import org.openforis.sepal.component.sandboxmanager.SessionRepository
-import org.openforis.sepal.hostingservice.Status
 
 @ToString
 class CloseSession extends AbstractCommand<Void> {
@@ -15,18 +14,18 @@ class CloseSession extends AbstractCommand<Void> {
 @ToString
 class CloseSessionHandler implements CommandHandler<Void, CloseSession> {
     private final SessionRepository sessionRepository
-    private final SandboxSessionProvider sandboxes
+    private final SandboxSessionProvider sessionManager
 
     CloseSessionHandler(SessionRepository sessionRepository,
-                        SandboxSessionProvider sandboxes) {
+                        SandboxSessionProvider sessionManager) {
         this.sessionRepository = sessionRepository
-        this.sandboxes = sandboxes
+        this.sessionManager = sessionManager
     }
 
     Void execute(CloseSession command) {
         def session = sessionRepository.getById(command.sessionId)
-        sandboxes.undeploy(session)
-        sessionRepository.updateStatusInNewTransaction(session.id, Status.STOPPED)
+        def closedSession = sessionManager.close(session)
+        sessionRepository.update(closedSession)
         return null
     }
 }
