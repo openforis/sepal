@@ -175,8 +175,8 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         def reservedTime = reservedTimeString ? Date.parse('yyyy-MM-dd HH:mm:ss', reservedTimeString) : null
         return new WorkerInstance(
                 id: awsInstance.instanceId,
-//                host: awsInstance.privateIpAddress,
-                host: awsInstance.publicIpAddress, // TODO: Switch to private ip?
+                host: awsInstance.privateIpAddress,
+//                host: awsInstance.publicIpAddress, // TODO: User public or private ip?
                 type: instanceType(awsInstance),
                 running: awsInstance.state.name == 'running',
                 idle: idle,

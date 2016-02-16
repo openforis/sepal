@@ -11,7 +11,7 @@
         <appender-ref ref="FILE"/>
     </logger>
 
-    <root level="DEBUG">
+    <root level="WARN">
         <appender-ref ref="FILE"/>
     </root>
 </configuration>

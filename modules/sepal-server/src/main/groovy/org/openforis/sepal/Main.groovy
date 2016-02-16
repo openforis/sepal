@@ -43,6 +43,7 @@ class Main {
         dataProviderComponent?.stop()
         dataSearchComponent?.stop()
         sandboxManagerComponent?.stop()
+        sandboxWebProxyComponent?.stop()
         Endpoints.undeploy()
     }
 }

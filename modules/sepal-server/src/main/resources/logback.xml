@@ -1,5 +1,4 @@
 <configuration>
-
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>/var/log/sepal/sepal.log</file>
         <append>false</append>
@@ -8,12 +7,19 @@
         </encoder>
     </appender>
 
-    <logger name="org.openforis.sepal" additivity="false" level="INFO">
-        <appender-ref ref="FILE"/>
-    </logger>
+    <!--<logger name="org.openforis.sepal" additivity="false" level="DEBUG">-->
+        <!--<appender-ref ref="FILE"/>-->
+    <!--</logger>-->
 
-    <root level="WARN">
+    <!--<logger name="groovyx.net.http" additivity="false" level="DEBUG">-->
+        <!--<appender-ref ref="FILE"/>-->
+    <!--</logger>-->
+
+    <!--<logger name="org.apache.http" additivity="false" level="DEBUG">-->
+        <!--<appender-ref ref="FILE"/>-->
+    <!--</logger>-->
+
+    <root level="INFO">
         <appender-ref ref="FILE"/>
     </root>
-
 </configuration>

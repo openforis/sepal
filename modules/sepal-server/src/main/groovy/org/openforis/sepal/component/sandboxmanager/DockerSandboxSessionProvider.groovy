@@ -52,7 +52,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
 
     private void createContainer(SandboxSession session, WorkerInstance instance) {
         def request = new JsonOutput().toJson([
-                Image: "$config.dockerImageName:$config.version",
+                Image: "$config.dockerImageName",
                 Tty: true,
                 Cmd: ["/start", session.username, config.ldapHost, config.ldapPassword],
                 HostConfig: [
