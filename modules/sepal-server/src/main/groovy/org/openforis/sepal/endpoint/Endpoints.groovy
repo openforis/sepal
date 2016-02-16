@@ -63,6 +63,6 @@ final class Endpoints extends AbstractMvcFilter {
     }
 
     static void undeploy() {
-        server.undeploy()
+        server?.undeploy()
     }
 }

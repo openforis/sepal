@@ -125,7 +125,8 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         def request = new DescribeInstancesRequest()
                 .withFilters(
                 new Filter('tag:Type', ['Sandbox']),
-                new Filter('tag:Environment', [environment])
+                new Filter('tag:Environment', [environment]),
+                new Filter('instance-state-name', ['pending', 'running'])
         )
         def response = client.describeInstances(request)
         return toWorkerInstances(response.reservations)
@@ -136,6 +137,7 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
                 new Tag('Status', 'reserved'),
                 new Tag('User', session.username),
                 new Tag('Session id', session.id as String),
+                new Tag('Reserved time', new Date().format('yyyy-MM-dd HH:mm:ss')),
         )
     }
 
@@ -143,7 +145,8 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         tagInstance(instanceId,
                 new Tag('Status', 'idle'),
                 new Tag('User', ''),
-                new Tag('Session id', '')
+                new Tag('Session id', ''),
+                new Tag('Reserved time', ''),
         )
     }
 
@@ -167,14 +170,18 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
     }
 
     private WorkerInstance toWorkerInstance(Instance awsInstance) {
+        def idle = awsInstance.tags.find { it.key == 'Status' && it.value == 'idle' } != null
+        def reservedTimeString = awsInstance.tags.find { it.key == 'Reserved time' }?.value
+        def reservedTime = reservedTimeString ? Date.parse('yyyy-MM-dd HH:mm:ss', reservedTimeString) : null
         return new WorkerInstance(
                 id: awsInstance.instanceId,
 //                host: awsInstance.privateIpAddress,
                 host: awsInstance.publicIpAddress, // TODO: Switch to private ip?
                 type: instanceType(awsInstance),
                 running: awsInstance.state.name == 'running',
-                idle: awsInstance.tags.find { it.key == 'Status' && it.value == 'idle' },
-                launchTime: awsInstance.launchTime
+                idle: idle,
+                launchTime: awsInstance.launchTime,
+                reservedTime: reservedTime
         )
     }
 
@@ -190,7 +197,6 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
     private String instanceType(Instance awsInstance) {
         InstanceType.fromValue(awsInstance.instanceType).name()
     }
-
 
     private String fetchImageId(String availabilityZone, String sepalVersion) {
         def request = new DescribeImagesRequest()

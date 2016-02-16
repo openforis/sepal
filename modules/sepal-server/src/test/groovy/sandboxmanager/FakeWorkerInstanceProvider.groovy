@@ -46,7 +46,8 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
                 type: instanceType,
                 host: UUID.randomUUID().toString(),
                 idle: true,
-                launchTime: clock.now()
+                launchTime: clock.now(),
+                reservedTime: clock.now()
         )
         instanceById[instance.id] = instance
         statusByInstance[instance] = 'uninitialized'

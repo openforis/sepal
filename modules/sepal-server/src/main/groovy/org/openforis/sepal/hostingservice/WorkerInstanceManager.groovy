@@ -11,7 +11,5 @@ interface WorkerInstanceManager {
 
     void updateInstances(Collection<SandboxSession> sandboxSessions)
 
-    WorkerInstanceManager start()
-
-    void stop()
+    void deallocate(String instanceId)
 }

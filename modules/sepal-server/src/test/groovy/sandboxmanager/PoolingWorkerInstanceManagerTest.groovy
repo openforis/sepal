@@ -19,11 +19,11 @@ class PoolingWorkerInstanceManagerTest extends Specification {
     def provider = new FakeWorkerInstanceProvider(instanceTypes: instanceTypes, clock: clock)
 
 
-    def 'Given no idle instances, when starting provider, the idle instances is allocated'() {
+    def 'Given no idle instances, when updating instances, the idle instances is allocated'() {
         def idleCountByType = [type0: 2, type1: 1]
 
         when:
-        instanceManager(idleCountByType).start()
+        instanceManager(idleCountByType).updateInstances([])
 
         then:
         provider.has 'type0', [idle: 2]
@@ -31,13 +31,13 @@ class PoolingWorkerInstanceManagerTest extends Specification {
         provider.has 'type2', [:]
     }
 
-    def 'Given already idle instances, when starting provider, no instance is allocated'() {
+    def 'Given already idle instances, when updating instances, no instance is allocated'() {
         def idleCountByType = [type0: 2, type1: 1]
         2.times { provider.launchIdle('type0') }
         1.times { provider.launchIdle('type1') }
 
         when:
-        instanceManager(idleCountByType).start()
+        instanceManager(idleCountByType).updateInstances([])
 
         then:
         provider.has 'type0', [idle: 2]
@@ -46,7 +46,8 @@ class PoolingWorkerInstanceManagerTest extends Specification {
     }
 
     def 'When instance is reserved, a new idle instance is started'() {
-        def instanceManager = instanceManager(type0: 1).start()
+        def instanceManager = instanceManager(type0: 1)
+        instanceManager.updateInstances([])
         provider.launchIdle('type0')
 
         when:
@@ -56,15 +57,30 @@ class PoolingWorkerInstanceManagerTest extends Specification {
         provider.has 'type0', [idle: 1, reserved: 1]
     }
 
-    def 'Given fewer idle instances than expected and one reserved but unused, when updating instances, reserved instance is turned idle'() {
+    def 'Given fewer idle instances than expected and one reserved but unused for 5 minutes, when updating instances, reserved instance is turned idle'() {
+        clock.set('2016-01-01', '00:00:00')
         def instanceManager = instanceManager(type0: 1)
         launchReserved()
+        clock.set('2016-01-01', '00:05:00')
 
         when:
         instanceManager.updateInstances([])
 
         then:
         provider.has(idle: 1)
+    }
+
+    def 'Given fewer idle instances than expected and one reserved but unused less than 5 minutes, when updating instances, reserved instance says reserved'() {
+        clock.set('2016-01-01', '00:00:00')
+        def instanceManager = instanceManager(type0: 1)
+        launchReserved()
+        clock.set('2016-01-01', '00:04:59')
+
+        when:
+        instanceManager.updateInstances([])
+
+        then:
+        provider.has(idle: 1, reserved: 1, )
     }
 
     def 'Given fewer idle instances than expected and one reserved, when updating instances, there still is one reserved instance and an idle is launched'() {
@@ -75,10 +91,7 @@ class PoolingWorkerInstanceManagerTest extends Specification {
         instanceManager.updateInstances([session])
 
         then:
-        provider.has(
-                idle: 1,
-                reserved: 1
-        )
+        provider.has(idle: 1, reserved: 1)
     }
 
     def 'Given a starting and running idle instance, when allocating an instance, the running instance is used'() {

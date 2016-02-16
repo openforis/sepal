@@ -10,4 +10,5 @@ class WorkerInstance {
     boolean running
     boolean idle
     Date launchTime
+    Date reservedTime
 }

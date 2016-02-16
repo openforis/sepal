@@ -49,10 +49,9 @@ final class SandboxManagerComponent implements EndpointRegistry {
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
                 .register(CreateSession, new CreateSessionHandler(sessionRepository, instanceManager, sessionProvider, clock))
                 .register(JoinSession, new JoinSessionHandler(sessionRepository, instanceManager, sessionProvider, clock))
-                .register(CloseSession, new CloseSessionHandler(sessionRepository, sessionProvider))
+                .register(CloseSession, new CloseSessionHandler(sessionRepository, sessionProvider, instanceManager))
                 .register(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionRepository, sessionProvider))
                 .register(UpdateInstances, new UpdateInstancesHandler(sessionRepository, instanceManager, sessionProvider))
-                .register(SessionHeartbeatReceived, new SessionHeartbeatReceivedHandler(sessionRepository, clock))
                 .register(UpdateUserBudget, new UpdateUserBudgetHandler(userBudgetRepository))
                 .register(DeployStartingSessions, new DeployStartingSessionsHandler(sessionRepository, instanceManager, sessionProvider))
 
@@ -71,13 +70,11 @@ final class SandboxManagerComponent implements EndpointRegistry {
 
     SandboxManagerComponent start() {
         sandboxCleanup.start()
-        instanceManager.start()
         return this
     }
 
     void stop() {
         sandboxCleanup?.stop()
-        instanceManager?.stop()
     }
 
     def <R> R submit(Command<R> command) {

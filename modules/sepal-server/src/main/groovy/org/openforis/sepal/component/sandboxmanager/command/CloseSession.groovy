@@ -5,6 +5,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
 import org.openforis.sepal.component.sandboxmanager.SessionRepository
+import org.openforis.sepal.hostingservice.WorkerInstanceManager
 
 @ToString
 class CloseSession extends AbstractCommand<Void> {
@@ -15,17 +16,19 @@ class CloseSession extends AbstractCommand<Void> {
 class CloseSessionHandler implements CommandHandler<Void, CloseSession> {
     private final SessionRepository sessionRepository
     private final SandboxSessionProvider sessionManager
+    private final WorkerInstanceManager workerInstanceManager
 
-    CloseSessionHandler(SessionRepository sessionRepository,
-                        SandboxSessionProvider sessionManager) {
+    CloseSessionHandler(SessionRepository sessionRepository, SandboxSessionProvider sessionManager, WorkerInstanceManager workerInstanceManager) {
         this.sessionRepository = sessionRepository
         this.sessionManager = sessionManager
+        this.workerInstanceManager = workerInstanceManager
     }
 
     Void execute(CloseSession command) {
         def session = sessionRepository.getById(command.sessionId)
         def closedSession = sessionManager.close(session)
         sessionRepository.update(closedSession)
+        workerInstanceManager.deallocate(closedSession.instanceId)
         return null
     }
 }

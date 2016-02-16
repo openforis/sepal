@@ -25,8 +25,15 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
         return reserveAndNotify(instance, sessionPendingInstanceAllocation, callback)
     }
 
+    void deallocate(String instanceId) {
+        provider.idle(instanceId)
+    }
+
     private WorkerInstance firstIdle(List<WorkerInstance> idleInstances) {
-        idleInstances.sort { !it.running }.first()
+        idleInstances.sort(false, new OrderBy([
+                { !it.running },
+                { minutesUntilCharged(it.launchTime) }
+        ])).first()
     }
 
     private SandboxSession reserveAndNotify(WorkerInstance instance, SandboxSession session, Closure<SandboxSession> callback) {
@@ -50,10 +57,10 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
 
         allInstances.each { instance ->
             def used = sessionsByInstanceId.containsKey(instance.id)
-            if (!used && !instance.idle)
+            if (!used && !instance.idle && (!instance.reservedTime || minutesSince(instance.reservedTime) >= 5))  // TODO: Log warning?
                 provider.idle(instance.id)
             if (used && instance.idle)
-                provider.reserve(instance.id, sessionsByInstanceId[instance.id].first())
+                provider.reserve(instance.id, sessionsByInstanceId[instance.id].first()) // TODO: Log warning
         }
 
         def unusedInstancesByType = allInstances
@@ -67,8 +74,6 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
                     provider.terminate(it.id)
                 }
             }
-
-            // TODO: Take start time into account - terminate if close to the end of an even hour
         }
 
         fillIdlePool()
@@ -76,25 +81,20 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
 
     List<WorkerInstance> potentiallyTerminatable(List<WorkerInstance> workerInstances) {
         workerInstances.findAll {
-            def minutesUntilCharged = minutesUntilEvenHourSinceLaunch(it.launchTime)
+            def minutesUntilCharged = minutesUntilCharged(it.launchTime)
             minutesUntilCharged <= 5
-        }
+        }.sort { minutesUntilCharged(it.launchTime) }
     }
 
-    int minutesUntilEvenHourSinceLaunch(Date launchTime) {
-        def minutesSinceLanuch = Duration.between(launchTime.toInstant(), clock.now().toInstant()).toMinutes()
-        return 60 - minutesSinceLanuch % 60
+    int minutesUntilCharged(Date launchTime) {
+        return 60 - minutesSince(launchTime) % 60
     }
 
-    PoolingWorkerInstanceManager start() {
-        fillIdlePool()
-        return this
+    int minutesSince(Date launchTime) {
+        Duration.between(launchTime.toInstant(), clock.now().toInstant()).toMinutes()
     }
 
-    void stop() {
-    }
 
-    // TODO: Remove this, and make it a command?
     private void fillIdlePool() {
         def idleCountByType = provider.idleCountByType()
         expectedIdleCountByType.each { type, expectedIdleCount ->

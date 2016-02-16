@@ -227,14 +227,14 @@ class SessionManagerTests extends Specification {
         thrown ExecutionFailed
     }
 
-    def 'When joining a starting session, an exception is thrown'() {
+    def 'When joining a starting session, session status is STARTING'() {
         def session = createSession()
 
         when:
-        joinSession(session.id)
+        def joinedSession = joinSession(session.id)
 
         then:
-        thrown ExecutionFailed
+        joinedSession.status == STARTING
     }
 
     def 'Given a timed out session, when closing timed out sessions, session is undeployed and is no longer active'() {
@@ -325,18 +325,6 @@ class SessionManagerTests extends Specification {
         instanceProvider.has(terminated: 1)
     }
 
-    def 'Given an active session, when session heartbeat is received, update timestamp is updated'() {
-        runningIdle()
-        def session = createSession()
-        Thread.sleep(10)
-
-        when:
-        sendHeartbeat(session.id)
-
-        then:
-        def updatedSession = firstActiveSession()
-        updatedSession.updateTime > session.updateTime
-    }
 
     def 'When finding instance types, the instance types from the instance provider are returned'() {
         when:
@@ -346,7 +334,7 @@ class SessionManagerTests extends Specification {
         instanceTypes == instanceProvider.instanceTypes()
     }
 
-    def 'When closing a session, it is undeployed and is no longer active'() {
+    def 'When closing a session, it is undeployed, instance is returned to idle, and is no longer active'() {
         runningIdle()
         def session = createSession()
 
@@ -355,6 +343,7 @@ class SessionManagerTests extends Specification {
 
         then:
         sessionProvider.noneDeployed()
+        instanceProvider.has(idle: 1)
         hasNoActiveSessions()
     }
 
@@ -427,10 +416,6 @@ class SessionManagerTests extends Specification {
 
     SandboxSession joinSession(long sessionId, String username = someUserName) {
         component.submit(new JoinSession(username: username, sessionId: sessionId))
-    }
-
-    void sendHeartbeat(long sessionId, String username = someUserName) {
-        component.submit(new SessionHeartbeatReceived(username: username, sessionId: sessionId))
     }
 
     SandboxInfo loadSandboxInfo(String username = someUserName) {

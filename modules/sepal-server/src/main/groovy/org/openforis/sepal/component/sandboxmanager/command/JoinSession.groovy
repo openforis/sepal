@@ -13,6 +13,7 @@ import org.openforis.sepal.util.Clock
 
 import static groovymvc.validate.Constraints.min
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
 
 @ToString
 class JoinSession extends AbstractCommand<SandboxSession> {
@@ -53,8 +54,9 @@ class JoinSessionHandler implements CommandHandler<SandboxSession, JoinSession> 
     private void validate(JoinSession command, SandboxSession session) {
         if (session.username != command.username)
             throw new WrongUser("$command.sessionId: Session belongs to user $session.username. $command.username tries to join")
-        if (session.status != ACTIVE)
-            throw new NotActive("$command.sessionId: session not $ACTIVE but $session.status")
+        if (![ACTIVE, STARTING].contains(session.status))
+            throw new NotActiveOrStarting("$command.sessionId: session not $ACTIVE or $STARTING but $session.status")
+//        if () TODO: Only assert if ACTIVE
         try {
             sandboxProvider.assertAvailable(session)
         } catch (NotAvailable e) {
@@ -69,8 +71,8 @@ class JoinSessionHandler implements CommandHandler<SandboxSession, JoinSession> 
         }
     }
 
-    static class NotActive extends RuntimeException {
-        NotActive(String message) {
+    static class NotActiveOrStarting extends RuntimeException {
+        NotActiveOrStarting(String message) {
             super(message)
         }
     }

@@ -30,10 +30,9 @@ class SepalClient {
     Map joinSession(Map session, Closure waitingCallback = {}) {
         LOG.debug("Waiting for session to become active: $session")
         while (!Thread.interrupted() && session.status == 'STARTING') {
-            sepal.post(path: session.alivePath)
             Thread.sleep(WAIT_TIME)
             waitingCallback.call()
-            session = sepal.get(path: session.path).data
+            session = sepal.post(path: session.path).data
         }
         LOG.info("Jointing session $session")
         sepal.post(path: session.path).data

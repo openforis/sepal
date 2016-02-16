@@ -103,7 +103,6 @@ class SepalSessionEndpointTest extends Specification {
                         host: "some-host",
                         port: 123,
                         username: "some-user",
-                        alivePath: "sandbox/some-user/session/1/alive",
                         status: 'ACTIVE',
                         instanceType: [
                                 id: 'some_instance_type',
@@ -119,7 +118,6 @@ class SepalSessionEndpointTest extends Specification {
                         host: "some-host",
                         port: 123,
                         username: "some-user",
-                        alivePath: "sandbox/some-user/session/2/alive",
                         status: 'STARTING',
                         instanceType: [
                                 id: 'another_instance_type',
@@ -187,6 +185,16 @@ class SepalSessionEndpointTest extends Specification {
         response.status == 404
     }
 
+    def 'POST sandbox/{user}/session/{sessionId} for starting session returns 202'() {
+        when:
+        def response = client.post(path: 'sandbox/some-user/session/999')
+
+        then:
+        1 * queryDispatcher.submit(_ as FindInstanceTypes) >> [new WorkerInstanceType()]
+        1 * commandDispatcher.submit(_ as JoinSession) >> startingSession()
+        response.status == 202
+    }
+
     def 'DELETE sandbox/{user}/session/{sessionId} closes session and returns 201'() {
         when:
         def response = client.delete(path: 'sandbox/some-user/session/999')
@@ -196,16 +204,6 @@ class SepalSessionEndpointTest extends Specification {
         response.status == 201
     }
 
-    def 'Given existing session, GET sandbox/{user}/session/{sessionId} returns the session'() {
-        when:
-        def response = client.get(path: 'sandbox/some-user/session/999')
-
-        then:
-        1 * queryDispatcher.submit(_ as FindInstanceTypes) >> [new WorkerInstanceType()]
-        1 * queryDispatcher.submit(_ as LoadSession) >> activeSession('some-user')
-        response.status == 200
-        response.data.path == 'sandbox/some-user/session/999'
-    }
 
     def 'POST sandbox/{user}/instance-type/{instanceType} creates a session, returns the session and status of 201, if ACTIVE'() {
         when:

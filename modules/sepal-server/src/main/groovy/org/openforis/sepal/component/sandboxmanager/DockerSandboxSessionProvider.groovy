@@ -67,7 +67,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
         ])
         LOG.debug("Deploying session $session to $instance.")
         def response = client(instance).post(
-                path: "containers/pending",
+                path: "containers/create",
                 query: [name: containerName(session)],
                 body: request,
                 requestContentType: JSON

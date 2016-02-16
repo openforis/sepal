@@ -8,10 +8,8 @@ import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
 import org.openforis.sepal.component.sandboxmanager.command.CloseSession
 import org.openforis.sepal.component.sandboxmanager.command.CreateSession
 import org.openforis.sepal.component.sandboxmanager.command.JoinSession
-import org.openforis.sepal.component.sandboxmanager.command.SessionHeartbeatReceived
 import org.openforis.sepal.component.sandboxmanager.query.FindInstanceTypes
 import org.openforis.sepal.component.sandboxmanager.query.LoadSandboxInfo
-import org.openforis.sepal.component.sandboxmanager.query.LoadSession
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.openforis.sepal.query.QueryDispatcher
 import org.openforis.sepal.user.UserRepository
@@ -75,19 +73,25 @@ class SepalSessionEndpoint {
                 send(toJson(responseBodyMap))
             }
 
-            get('sandbox/{user}/session/{sessionId}') {
-                response.contentType = 'application/json'
-                def query = new LoadSession(username: params.user, sessionId: params.required('sessionId', long))
-                def session = queryDispatcher.submit(query)
-                def sessionMap = toSessionMap(session, instanceTypesById())
-                send(toJson(sessionMap))
-            }
+//            get('sandbox/{user}/session/{sessionId}') {
+//                response.contentType = 'application/json'
+//                def query = new LoadSession(username: params.user, sessionId: params.required('sessionId', long))
+//                def session = queryDispatcher.submit(query)
+//                def sessionMap = toSessionMap(session, instanceTypesById())
+//                send(toJson(sessionMap))
+//            }
 
             post('sandbox/{user}/session/{sessionId}') {
                 response.contentType = 'application/json'
                 def command = new JoinSession(username: params.user, sessionId: params.required('sessionId', long))
                 validateRequest(command)
                 def session = commandDispatcher.submit(command)
+                if (session.status == ACTIVE)
+                    response.status = 201
+                else if (session.status == STARTING)
+                    response.status = 202
+                else
+                    throw new IllegalStateException("Expected session to be ACTIVE or STARTING after joining: $session")
                 def sessionMap = toSessionMap(session, instanceTypesById())
                 send(toJson(sessionMap))
             }
@@ -103,23 +107,14 @@ class SepalSessionEndpoint {
                 def command = new CreateSession(username: params.user, instanceType: params.instanceType)
                 validateRequest(command)
                 def session = commandDispatcher.submit(command) as SandboxSession
-                switch (session.status) {
-                    case ACTIVE:
-                        response.status = 201
-                        break
-                    case STARTING:
-                        response.status = 202
-                        break
-                    default:
-                        throw new IllegalStateException("Expected session to be ACTIVE or STARTING after creation: $session")
-                }
+                if (session.status == ACTIVE)
+                    response.status = 201
+                else if (session.status == STARTING)
+                    response.status = 202
+                else
+                    throw new IllegalStateException("Expected session to be ACTIVE or STARTING after creation: $session")
                 def sessionMap = toSessionMap(session, instanceTypesById())
                 return send(toJson(sessionMap))
-            }
-
-            post('sandbox/{user}/session/{sessionId}/alive') {
-                commandDispatcher.submit(new SessionHeartbeatReceived(username: params.user, sessionId: params.sessionId as long))
-                response.status = 204
             }
         }
     }
@@ -138,7 +133,6 @@ class SepalSessionEndpoint {
                 host: session.host,
                 port: session.port,
                 username: session.username,
-                alivePath: "sandbox/$session.username/session/$session.id/alive",
                 status: session.status.name(),
                 instanceType: [
                         id: instanceType.id,

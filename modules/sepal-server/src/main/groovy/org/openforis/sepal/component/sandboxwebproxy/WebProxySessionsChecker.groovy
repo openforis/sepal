@@ -2,7 +2,7 @@ package org.openforis.sepal.component.sandboxwebproxy
 
 import io.undertow.server.session.SessionManager
 import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
-import org.openforis.sepal.component.sandboxmanager.command.SessionHeartbeatReceived
+import org.openforis.sepal.component.sandboxmanager.command.JoinSession
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -36,7 +36,7 @@ class WebProxySessionsChecker implements Runnable {
 
     private void sendHeartbeat(long sandboxSessionId) {
         sandboxManagerComponent.submit(
-                new SessionHeartbeatReceived(sessionId: sandboxSessionId)
+                new JoinSession(sessionId: sandboxSessionId)
         )
     }
 }

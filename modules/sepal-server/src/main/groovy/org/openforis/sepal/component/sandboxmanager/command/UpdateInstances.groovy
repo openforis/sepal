@@ -7,7 +7,8 @@ import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
 import org.openforis.sepal.component.sandboxmanager.SessionRepository
 import org.openforis.sepal.hostingservice.WorkerInstanceManager
 
-import static org.openforis.sepal.component.sandboxmanager.SessionStatus.*
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
 
 @ToString
 class UpdateInstances extends AbstractCommand<Void> {
