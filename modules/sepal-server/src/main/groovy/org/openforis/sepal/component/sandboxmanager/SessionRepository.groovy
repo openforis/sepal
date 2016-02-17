@@ -23,7 +23,7 @@ interface SessionRepository {
     SandboxSession create(String username, String instanceType)
 
     void update(SandboxSession sandboxSession)
-    
+
     void close(SandboxSession sandboxSession)
 
     void alive(long sessionId, Date lastUpdated)
@@ -70,9 +70,9 @@ class JdbcSessionRepository implements SessionRepository {
         sql.eachRow('''
                 SELECT id, username, instance_id, instance_type, host, port, status, creation_time, update_time
                 FROM sandbox_session
-                WHERE status IN (?, ?)
+                WHERE status IN (?, ?, ?)
                 AND update_time < ?
-                ''', [STARTING.name(), ACTIVE.name(), updatedBefore]) { row ->
+                ''', [PENDING.name(), STARTING.name(), ACTIVE.name(), updatedBefore]) { row ->
             callback.call(toSession(row))
             updateStatus(row.id, CLOSED, sql)
         }
@@ -124,13 +124,18 @@ class JdbcSessionRepository implements SessionRepository {
     }
 
     SandboxSession create(String username, String instanceType) {
-        def now = clock.now()
-        def status = PENDING
-        def generated = sql.executeInsert('''
+        def session = null
+        def sql = new Sql(connectionManager.dataSource)
+        sql.withTransaction {
+            def now = clock.now()
+            def status = PENDING
+            def generated = sql.executeInsert('''
                 INSERT INTO sandbox_session(username, instance_type, status, creation_time, update_time)
                 VALUES(?, ?, ?, ?, ?)''', [username, instanceType, status.name(), now, now])
-        def id = generated[0][0] as long
-        return SandboxSession.pending(id, username, instanceType, now)
+            def id = generated[0][0] as long
+            session = SandboxSession.pending(id, username, instanceType, now)
+        }
+        return session
     }
 
     void alive(long sessionId, Date lastUpdated) {
@@ -142,8 +147,8 @@ class JdbcSessionRepository implements SessionRepository {
         def rows = sql.rows('''
                 SELECT creation_time, update_time, instance_type, status
                 FROM sandbox_session
-                WHERE status IN (?, ?, ?) OR (status NOT IN (?, ?, ?) AND creation_time >= ?)''',
-                [STARTING.name(), ACTIVE.name(), STARTING.name(), STARTING.name(), ACTIVE.name(), STARTING.name(), since])
+                WHERE username = ? AND (status IN (?, ?, ?) OR creation_time >= ?)''',
+                [username, PENDING.name(), STARTING.name(), ACTIVE.name(), since])
         rows.each { row ->
             def from = [since, row.creation_time].max()
             def to = row.status in [STARTING.name(), ACTIVE.name(), STARTING.name()] ? clock.now() : row.update_time

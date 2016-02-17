@@ -41,15 +41,16 @@ class Interactive {
                 sessions << it
                 printSessionOptionLine(sessions.size(), it)
             }
+            println()
         }
         if (startingSessions) {
-            println '\nSessions starting up:'
+            println 'Sessions starting up:'
             startingSessions.each {
                 sessions << it
                 printSessionOptionLine(sessions.size(), it)
             }
+            println()
         }
-        println()
         println 'c'.padRight(6) + 'Create new session'
         println 't'.padRight(6) + 'Terminate session'
         println()

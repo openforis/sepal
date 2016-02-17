@@ -18,8 +18,7 @@ import org.openforis.sepal.util.Clock
 import java.time.Duration
 
 import static groovy.json.JsonOutput.toJson
-import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
-import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.*
 
 class SepalSessionEndpoint {
     private final QueryDispatcher queryDispatcher
@@ -133,7 +132,7 @@ class SepalSessionEndpoint {
                 host: session.host,
                 port: session.port,
                 username: session.username,
-                status: session.status.name(),
+                status: toStatus(session),
                 instanceType: [
                         id: instanceType.id,
                         name: instanceType.name,
@@ -143,6 +142,13 @@ class SepalSessionEndpoint {
                 creationTime: session.creationTime.format("yyyy-MM-dd'T'HH:mm:ss"),
                 costSinceCreation: (instanceType.hourlyCost * hoursSince(session.creationTime)).round(2)
         ]
+    }
+
+    private String toStatus(SandboxSession session) {
+        def status = session.status
+        if (session.status == PENDING)
+            status = STARTING
+        return status.name()
     }
 
     int hoursSince(Date date) {

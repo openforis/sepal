@@ -65,7 +65,7 @@ class SandboxWorkScheduler {
 
     private Date updatedBefore() {
         use(TimeCategory) {
-            new Date() - 1.minute
+            new Date() - 5.minute
         }
     }
 
