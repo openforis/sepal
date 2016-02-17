@@ -13,5 +13,5 @@ interface WorkerInstanceManager {
 
     List<WorkerInstance> runningInstances(Collection<String> instanceIds)
 
-    boolean isInstanceAvailable(SandboxSession session)
+    boolean isSessionInstanceAvailable(long sessionId)
 }

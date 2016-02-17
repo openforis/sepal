@@ -26,11 +26,12 @@ class CloseSessionHandler implements CommandHandler<Void, CloseSession> {
 
     Void execute(CloseSession command) {
         def session = sessionRepository.getById(command.sessionId)
-        sessionRepository.close(session)
-        if (workerInstanceManager.isInstanceAvailable(session)) {
+        if (workerInstanceManager.isSessionInstanceAvailable(session.id)) {
             sessionManager.close(session)
-            workerInstanceManager.deallocate(session.instanceId)
+            if (session.instanceId)
+                workerInstanceManager.deallocate(session.instanceId)
         }
+        sessionRepository.close(session)
         return null
     }
 }

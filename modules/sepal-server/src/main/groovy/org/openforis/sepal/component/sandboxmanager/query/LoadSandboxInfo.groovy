@@ -46,7 +46,7 @@ class LoadSandboxInfoHandler implements QueryHandler<SandboxInfo, LoadSandboxInf
 
     SandboxInfo execute(LoadSandboxInfo query) {
         def info = new SandboxInfo()
-        def sessions = sessionRepository.findWithStatus(query.username, [PENDING, STARTING, ACTIVE])
+        def sessions = sessionRepository.findWithStatus(query.username, [STARTING, ACTIVE])
         sessions.findAll { it.status == ACTIVE }.each {
             info.activeSessions.add(it)
         }

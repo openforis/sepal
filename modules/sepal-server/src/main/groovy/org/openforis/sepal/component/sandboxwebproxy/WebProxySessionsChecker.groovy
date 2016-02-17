@@ -21,22 +21,26 @@ class WebProxySessionsChecker implements Runnable {
 
     @Override
     void run() {
-        LOG.trace("Going to check alive sessions")
-        sessionManager.allSessions.each { String sessionId ->
-            def session = sessionManager.getSession(sessionId)
-            int sandboxSessionId = session.getAttribute(sandboxIdSessionAttrName) as int
-            if (sandboxSessionId) {
-                LOG.info("Going to send alive signal for  $sandboxSessionId")
-                sendHeartbeat(sandboxSessionId)
-            } else {
-                LOG.warn("Found an active session which doesn't contain $sandboxIdSessionAttrName attribute")
+        try {
+            LOG.trace("Going to check alive sessions")
+            sessionManager.allSessions.each { String sessionId ->
+                def session = sessionManager.getSession(sessionId)
+                int sandboxSessionId = session.getAttribute(sandboxIdSessionAttrName) as int
+                if (sandboxSessionId) {
+                    LOG.info("Going to send alive signal for  $sandboxSessionId")
+                    sendHeartbeat(sandboxSessionId, session.getAttribute('sepal-user') as String)
+                } else {
+                    LOG.warn("Found an active session which doesn't contain $sandboxIdSessionAttrName attribute")
+                }
             }
+        } catch (Exception e) {
+            LOG.error("Failed to send heartbeat", e)
         }
     }
 
-    private void sendHeartbeat(long sandboxSessionId) {
+    private void sendHeartbeat(long sandboxSessionId, String username) {
         sandboxManagerComponent.submit(
-                new JoinSession(sessionId: sandboxSessionId)
+                new JoinSession(sessionId: sandboxSessionId, username: username)
         )
     }
 }

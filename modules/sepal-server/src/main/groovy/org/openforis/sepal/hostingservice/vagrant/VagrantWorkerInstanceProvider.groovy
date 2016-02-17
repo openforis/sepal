@@ -30,7 +30,11 @@ class VagrantWorkerInstanceProvider implements WorkerInstanceProvider {
         return [instance]
     }
 
-    boolean isInstanceAvailable(SandboxSession session) {
+    boolean isSessionInstanceAvailable(long sessionId) {
+        return true
+    }
+
+    boolean isInstanceAvailable(String instanceId) {
         return true
     }
 

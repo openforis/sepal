@@ -103,32 +103,33 @@ class SandboxWebProxy {
         URI provide(HttpServerExchange exchange) {
             def session = getOrCreateSession(exchange)
             def endpoint = determineEndpoint(exchange)
-            def user = determineUser(exchange)
-            def sandboxHost = determineUri(user, session)
+            def username = determineUsername(exchange)
 
-            def uriSessionKey = determineUriSessionKey(endpoint, user)
+
+            def uriSessionKey = determineUriSessionKey(endpoint, username)
             def uri = session.getAttribute(uriSessionKey) as URI
             if (!uri) {
+                def sandboxHost = determineUri(username, session)
                 uri = URI.create("http://$sandboxHost:${endpointByPort[endpoint]}")
                 session.setAttribute(uriSessionKey, uri)
+                session.setAttribute('sepal-user', username)
             }
             return uri
         }
 
-        private static String determineUser(HttpServerExchange exchange) {
-            def user = exchange.requestHeaders.getFirst('sepal-user')
-            if (!user)
+        private static String determineUsername(HttpServerExchange exchange) {
+            def username = exchange.requestHeaders.getFirst('sepal-user')
+            if (!username)
                 throw new BadRequest('Missing header: sepal-user')
-            return user
+            return username
         }
 
         private String determineEndpoint(HttpServerExchange exchange) {
             def endpoint = exchange.requestHeaders.getFirst('sepal-endpoint')
-            String endpoint1 = endpoint
-            if (!endpoint1)
+            if (!endpoint)
                 throw new BadRequest('Missing header: sepal-endpoint')
-            if (!endpointByPort.containsKey(endpoint1))
-                throw new BadRequest("Non-existing sepal-endpoint: ${endpoint1}")
+            if (!endpointByPort.containsKey(endpoint))
+                throw new BadRequest("Non-existing sepal-endpoint: ${endpoint}")
             return endpoint
         }
 
@@ -144,13 +145,15 @@ class SandboxWebProxy {
                         sepalSession = joinSession(user, sepalSessions)
                     else
                         sepalSession = createSession(user)
-                    session.setAttribute(SANDBOX_ID_SESSION_ATTR_NAME, sepalSession.id)
                 } catch (NonExistingUser e) {
                     throw new BadRequest(e.getMessage())
                 }
+                // TODO: What if this isn't an active session? Redirect to a page?
+                session.setAttribute(SANDBOX_ID_SESSION_ATTR_NAME, sepalSession.id)
                 session.setAttribute(sessionKey, sepalSession.host)
+                sandboxHost = sepalSession.host
             }
-            sandboxHost
+            return sandboxHost
         }
 
         private List<SandboxSession> findActiveSepalSessions(String user) {
@@ -190,7 +193,7 @@ class SandboxWebProxy {
             SessionManager sessionManager = exchange.getAttachment(SessionManager.ATTACHMENT_KEY)
             SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY)
             return sessionManager.getSession(exchange, sessionConfig) ?:
-                    (sessionManager.createSession(exchange, sessionConfig))
+                    sessionManager.createSession(exchange, sessionConfig)
         }
     }
 }

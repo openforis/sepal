@@ -10,9 +10,9 @@ import org.openforis.sepal.util.SystemClock
 class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
     private final Map<String, WorkerInstance> instanceById = [:]
     private final Map<WorkerInstance, String> statusByInstance = [:]
+    private final Map<Long, String> instanceIdBySessionId = [:]
     private Clock clock = new SystemClock()
     private boolean noIdle
-    private String useId
     int terminationRequests
 
     List<WorkerInstanceType> instanceTypes = [new WorkerInstanceType(id: 'an-instance-type', hourlyCost: 1)]
@@ -38,18 +38,17 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
         return countByType
     }
 
-    boolean isInstanceAvailable(SandboxSession session) {
-        def instance = instanceById[session.instanceId]
-        if (!instance)
-            return false
-        return statusByInstance[instance] != 'terminated'
+    boolean isSessionInstanceAvailable(long sessionId) {
+        return instanceIdBySessionId.containsKey(sessionId)
+    }
+
+    boolean isInstanceAvailable(String instanceId) {
+        return instanceById[instanceId].running
     }
 
     WorkerInstance launch(String instanceType) {
-        if (instanceById.containsKey(useId))
-            return instanceById[useId]
         def instance = new WorkerInstance(
-                id: useId ?: UUID.randomUUID().toString(),
+                id: UUID.randomUUID().toString(),
                 type: instanceType,
                 host: UUID.randomUUID().toString(),
                 idle: true,
@@ -62,14 +61,18 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
     }
 
     void reserve(String instanceId, SandboxSession session) {
+        instanceIdBySessionId[session.id] = instanceId
         changeState(instanceId, 'reserved', ['terminated', 'reserved'])
     }
 
     void idle(String instanceId) {
+        instanceIdBySessionId.values().remove(instanceId)
         changeState(instanceId, 'idle', ['idle', 'terminated'])
     }
 
     void terminate(String instanceId) {
+        instanceById[instanceId].running = false
+        instanceIdBySessionId.values().remove(instanceId)
         changeState(instanceId, 'terminated', ['pending'])
         terminationRequests++
     }
@@ -138,10 +141,6 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
         idle(instance.id)
         instance.running = true
         return instance
-    }
-
-    void useId(String instanceId) {
-        useId = instanceId
     }
 
     WorkerInstance runningIdle(String instanceType) {

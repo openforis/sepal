@@ -14,6 +14,7 @@ import static groovyx.net.http.ContentType.JSON
 @ToString
 class DockerSandboxSessionProvider implements SandboxSessionProvider {
     private static final Logger LOG = LoggerFactory.getLogger(this)
+    private static final int SSH_PORT = 222
     private final SepalConfiguration config
     private final Clock clock
 
@@ -23,21 +24,21 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     SandboxSession deploy(SandboxSession session, WorkerInstance instance) {
+        LOG.info("Checking if Docker is initialize on $instance")
         try {
-            LOG.info("Checking if Docker is initialize on $instance")
             if (!isDockerInitialized(instance))
                 return session
             LOG.info("Deploying $session to $instance")
             createContainer(session, instance)
             startContainer(session, instance)
-            def port = determineContainerPort(session, instance)
+//            def port = determineContainerPort(session, instance)
+            def port = SSH_PORT
             def deployedSession = session.active(instance, port, clock.now())
             waitUntilInitialized(deployedSession, instance)
             LOG.info("Deployed $session to $instance")
             return deployedSession
         } catch (Exception e) {
-            LOG.error("Failed to deploy $session to $instance. Rolling back", e)
-            rollbackFailedDeployment(session, instance)
+            close(session)
             throw e
         }
     }
@@ -56,7 +57,8 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     SandboxSession close(SandboxSession session) {
-        removeContainer(session, session.host)
+        if (session.host)
+            removeContainer(session, session.host)
         return session.closed(clock.now())
     }
 
@@ -76,9 +78,12 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
                                 "$config.mountingHomeDir/$session.username:/home/$session.username",
                                 "$config.publicHomeDir:/sepal/public",
                                 "/data/sepal/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
-                        ],
-                        PublishAllPorts: true],
-                ExposedPorts: ['22/tcp': [:]]
+                        ]
+                ],
+                ExposedPorts: [
+                        '22/tcp': [:],
+                        '8787/tcp': [:]
+                ]
 
         ])
         LOG.debug("Deploying session $session to $instance.")
@@ -96,7 +101,11 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     private void startContainer(SandboxSession session, WorkerInstance instance) {
-        def request = new JsonOutput().toJson([PublishAllPorts: true])
+        def request = new JsonOutput().toJson(
+                PortBindings: [
+                        "22/tcp": [[HostPort: "$SSH_PORT"]],
+                        '8787/tcp': [[HostPort: '8787']],
+                ])
         withClient(instance) {
             post(
                     path: "containers/${containerName(session)}/start",
@@ -131,11 +140,11 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
         }
     }
 
-    @SuppressWarnings("GroovyAssignabilityCheck")
-    private int determineContainerPort(SandboxSession session, WorkerInstance instance) {
-        def data = loadContainerInfo(session, instance.host)
-        return Integer.parseInt(data.NetworkSettings.Ports["22/tcp"][0].HostPort)
-    }
+//    @SuppressWarnings("GroovyAssignabilityCheck")
+//    private int determineContainerPort(SandboxSession session, WorkerInstance instance) {
+//        def data = loadContainerInfo(session, instance.host)
+//        return Integer.parseInt(data.NetworkSettings.Ports["22/tcp"][0].HostPort)
+//    }
 
     private void removeContainer(SandboxSession session, String host) {
         LOG.info("Removing container for session on host $host. Session: $session")
@@ -166,14 +175,6 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
             return callback.call()
         } finally {
             client.shutdown()
-        }
-    }
-
-    private void rollbackFailedDeployment(SandboxSession session, WorkerInstance instance) {
-        try {
-            removeContainer(session, instance.host)
-        } catch (Exception ignore) {
-            LOG.warn("Failed to rollback container after failed deployment of session $session to instance $instance")
         }
     }
 }

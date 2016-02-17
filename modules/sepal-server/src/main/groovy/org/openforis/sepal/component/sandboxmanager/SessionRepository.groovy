@@ -31,6 +31,10 @@ interface SessionRepository {
     Map<String, Double> hoursByInstanceType(String username, Date since)
 }
 
+/**
+ * JDBC backed repository managing sandbox sessions.
+ * All operations happens in separate transactions, since this is used in conjunction with non-transactional resources.
+ */
 @ToString
 class JdbcSessionRepository implements SessionRepository {
     private final SqlConnectionManager connectionManager
@@ -90,10 +94,7 @@ class JdbcSessionRepository implements SessionRepository {
     }
 
     void close(SandboxSession session) {
-        def sql = new Sql(connectionManager.dataSource)
-        sql.withTransaction {
-            updateStatus(session.id, CLOSED, sql)
-        }
+        updateStatus(session.id, CLOSED, sql)
     }
 
     private void updateStatus(long id, SessionStatus status, Sql sql) {
@@ -175,7 +176,7 @@ class JdbcSessionRepository implements SessionRepository {
     }
 
     private Sql getSql() {
-        connectionManager.sql
+        new Sql(connectionManager.dataSource)
     }
 
     class NotFound extends RuntimeException {

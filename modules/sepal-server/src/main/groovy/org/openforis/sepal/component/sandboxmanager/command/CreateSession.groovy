@@ -18,7 +18,7 @@ class CreateSession extends AbstractCommand<SandboxSession> {
 @ToString
 class CreateSessionHandler implements CommandHandler<SandboxSession, CreateSession> {
     private final SessionRepository sessionRepository
-    private final WorkerInstanceManager workerInstances
+    private final WorkerInstanceManager workerInstanceManager
     private final SandboxSessionProvider sessionProvider
     private final Clock clock
 
@@ -27,18 +27,31 @@ class CreateSessionHandler implements CommandHandler<SandboxSession, CreateSessi
                          SandboxSessionProvider sessionProvider,
                          Clock clock) {
         this.sessionRepository = sessionRepository
-        this.workerInstances = instanceProvider
+        this.workerInstanceManager = instanceProvider
         this.sessionProvider = sessionProvider
         this.clock = clock
     }
 
     SandboxSession execute(CreateSession command) {
         def pendingSession = sessionRepository.create(command.username, command.instanceType)
-        def session = workerInstances.allocate(pendingSession) { WorkerInstance instance ->
-            sessionProvider.deploy(pendingSession, instance)
+        def session = workerInstanceManager.allocate(pendingSession) { WorkerInstance instance ->
+            deploySandbox(pendingSession, instance)
         }
         sessionRepository.update(session)
         return session
-        // TODO: Rollback on exception
+    }
+
+    private SandboxSession deploySandbox(SandboxSession pendingSession, WorkerInstance instance) {
+        try {
+            return sessionProvider.deploy(pendingSession, instance)
+        } catch (Exception e) {
+            deallocateInstance(instance.id)
+            throw e
+        }
+    }
+
+    private void deallocateInstance(String instanceId) {
+        if (instanceId)
+            workerInstanceManager.deallocate(instanceId)
     }
 }

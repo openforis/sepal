@@ -26,7 +26,9 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
     }
 
     void deallocate(String instanceId) {
-        provider.idle(instanceId)
+        assert instanceId != null
+        if (provider.isInstanceAvailable(instanceId))
+            provider.idle(instanceId)
     }
 
     private WorkerInstance firstIdle(List<WorkerInstance> idleInstances) {
@@ -38,8 +40,8 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
 
     private SandboxSession reserveAndNotify(WorkerInstance instance, SandboxSession session, Closure<SandboxSession> callback) {
         provider.reserve(instance.id, session)
-        def result = instance.running ? callback(instance) : session.starting(instance)
         fillIdlePool()
+        def result = instance.running ? callback(instance) : session.starting(instance)
         return result
     }
 
@@ -51,8 +53,8 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
         return provider.runningInstances(instanceIds)
     }
 
-    boolean isInstanceAvailable(SandboxSession session) {
-        return provider.isInstanceAvailable(session)
+    boolean isSessionInstanceAvailable(long sessionId) {
+        return provider.isSessionInstanceAvailable(sessionId)
     }
 
     void updateInstances(Collection<SandboxSession> sessions) {

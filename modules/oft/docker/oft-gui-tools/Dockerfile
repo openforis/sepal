@@ -1,12 +1,11 @@
 FROM openforistoolkit
 MAINTAINER OpenForis
+EXPOSE 22, 8787
 
 ADD script/init_image.sh .
-
 
 RUN chmod u+x /init_image.sh
 RUN /init_image.sh
 
-EXPOSE 8787
 
 CMD ["/usr/bin/supervisord"]

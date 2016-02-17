@@ -62,9 +62,22 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         toWorkerInstances(loadIdleInstances(instanceType))
     }
 
-    boolean isInstanceAvailable(SandboxSession session) {
+    boolean isSessionInstanceAvailable(long sessionId) {
         def request = new DescribeInstancesRequest()
-                .withInstanceIds(session.instanceId)
+                .withFilters(
+                new Filter('tag:Type', ['Sandbox']),
+                new Filter('tag:Environment', [environment]),
+                new Filter('tag:Session_id', [sessionId as String]),
+                new Filter('tag:Status', ['reserved']),
+                new Filter('instance-state-name', ['pending', 'running'])
+        )
+        def response = client.describeInstances(request)
+        return !toWorkerInstances(response.reservations).empty
+    }
+
+    boolean isInstanceAvailable(String instanceId) {
+        def request = new DescribeInstancesRequest()
+                .withInstanceIds(instanceId)
                 .withFilters(
                 new Filter('tag:Type', ['Sandbox']),
                 new Filter('tag:Environment', [environment]),
@@ -149,8 +162,8 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         tagInstance(instanceId,
                 new Tag('Status', 'reserved'),
                 new Tag('User', session.username),
-                new Tag('Session id', session.id as String),
-                new Tag('Reserved time', new Date().format('yyyy-MM-dd HH:mm:ss')),
+                new Tag('Session_id', session.id as String),
+                new Tag('Reserved_time', new Date().format('yyyy-MM-dd HH:mm:ss')),
         )
     }
 
@@ -158,8 +171,8 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         tagInstance(instanceId,
                 new Tag('Status', 'idle'),
                 new Tag('User', ''),
-                new Tag('Session id', ''),
-                new Tag('Reserved time', ''),
+                new Tag('Session_id', ''),
+                new Tag('Reserved_time', ''),
         )
     }
 
@@ -196,7 +209,7 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
 
     private WorkerInstance toWorkerInstance(Instance awsInstance) {
         def idle = awsInstance.tags.find { it.key == 'Status' && it.value == 'idle' } != null
-        def reservedTimeString = awsInstance.tags.find { it.key == 'Reserved time' }?.value
+        def reservedTimeString = awsInstance.tags.find { it.key == 'Reserved_time' }?.value
         def reservedTime = reservedTimeString ? Date.parse('yyyy-MM-dd HH:mm:ss', reservedTimeString) : null
         return new WorkerInstance(
                 id: awsInstance.instanceId,

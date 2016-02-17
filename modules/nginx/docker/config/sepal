@@ -1,6 +1,6 @@
 server {
-    listen   80;
-    access_log                /var/log/nginx/sepal.http.log;
+    listen 80;
+    access_log /var/log/nginx/sepal.http.log;
 
     location ~ ^/user/(?<user>[^/]+)/(?<service>[^/]+) {
         rewrite ^/user/(?<user>[^/]+)/(?<service>[^/]+)\/?(?<relative>.*) /$relative break;
@@ -15,7 +15,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header sepal-endpoint $service;
         proxy_set_header sepal-user $user;
-        proxy_pass  http://sepal:9191;
+        proxy_pass http://sepal:9191;
         proxy_redirect ~^https?://[^/]+/?(.*)$ /user/$user/$service/$1;
     }
 
