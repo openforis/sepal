@@ -24,7 +24,7 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
     List<WorkerInstance> idleInstances(String instanceType) {
         if (noIdle)
             return []
-        instanceById.values().findAll { statusByInstance[it] == 'idle' }
+        instanceById.values().findAll { statusByInstance[it] == 'idle' && it.type == instanceType}
     }
 
     Map<String, Integer> idleCountByType() {

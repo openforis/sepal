@@ -56,13 +56,13 @@ class JoinSessionHandler implements CommandHandler<SandboxSession, JoinSession> 
             throw new WrongUser("$command.sessionId: Session belongs to user $session.username. $command.username tries to join")
         if (![ACTIVE, STARTING].contains(session.status))
             throw new NotActiveOrStarting("$command.sessionId: session not $ACTIVE or $STARTING but $session.status")
-//        if () TODO: Only assert if ACTIVE
-        try {
-            sandboxProvider.assertAvailable(session)
-        } catch (NotAvailable e) {
-            sessionRepository.close(session.closed(clock.now()))
-            throw e
-        }
+        if (session.status == ACTIVE)
+            try {
+                sandboxProvider.assertAvailable(session)
+            } catch (NotAvailable e) {
+                sessionRepository.close(session.closed(clock.now()))
+                throw e
+            }
     }
 
     static class WrongUser extends RuntimeException {

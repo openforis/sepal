@@ -14,8 +14,7 @@ import org.openforis.sepal.util.Clock
 import java.time.ZoneId
 
 import static groovymvc.validate.Constraints.custom
-import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
-import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.*
 
 @ToString
 class LoadSandboxInfo implements Query<SandboxInfo> {
@@ -47,11 +46,11 @@ class LoadSandboxInfoHandler implements QueryHandler<SandboxInfo, LoadSandboxInf
 
     SandboxInfo execute(LoadSandboxInfo query) {
         def info = new SandboxInfo()
-        def sessions = sessionRepository.findWithStatus(query.username, [STARTING, ACTIVE])
+        def sessions = sessionRepository.findWithStatus(query.username, [PENDING, STARTING, ACTIVE])
         sessions.findAll { it.status == ACTIVE }.each {
             info.activeSessions.add(it)
         }
-        sessions.findAll { it.status == STARTING }.each {
+        sessions.findAll { it.status == STARTING || it.status == PENDING }.each {
             info.startingSessions.add(it)
         }
         info.instanceTypes = instanceProvider.instanceTypes

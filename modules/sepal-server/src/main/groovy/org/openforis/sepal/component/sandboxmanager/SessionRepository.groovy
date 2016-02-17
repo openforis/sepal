@@ -23,7 +23,7 @@ interface SessionRepository {
     SandboxSession create(String username, String instanceType)
 
     void update(SandboxSession sandboxSession)
-
+    
     void close(SandboxSession sandboxSession)
 
     void alive(long sessionId, Date lastUpdated)

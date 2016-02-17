@@ -24,6 +24,9 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
 
     SandboxSession deploy(SandboxSession session, WorkerInstance instance) {
         try {
+            LOG.info("Checking if Docker is initialize on $instance")
+            if (!isDockerInitialized(instance))
+                return session
             LOG.info("Deploying $session to $instance")
             createContainer(session, instance)
             startContainer(session, instance)
@@ -36,6 +39,19 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
             LOG.error("Failed to deploy $session to $instance. Rolling back", e)
             rollbackFailedDeployment(session, instance)
             throw e
+        }
+    }
+
+    private boolean isDockerInitialized(WorkerInstance instance) {
+        withClient(instance) {
+            client.params.setParameter('http.connection.timeout', new Integer(5 * 1000))
+            client.params.setParameter('http.socket.timeout', new Integer(5 * 1000))
+            try {
+                get(path: 'containers/json')
+                return true
+            } catch (Exception ignore) {
+                return false
+            }
         }
     }
 
@@ -66,47 +82,53 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
 
         ])
         LOG.debug("Deploying session $session to $instance.")
-        def response = client(instance).post(
-                path: "containers/create",
-                query: [name: containerName(session)],
-                body: request,
-                requestContentType: JSON
-        )
-        LOG.debug("Deployed session $session to $instance.")
-        if (response.data.Warnings)
-            LOG.warn("Warning when creating docker container for session $session in $instance: $response.data.Warnings")
+        withClient(instance) {
+            def response = post(
+                    path: "containers/create",
+                    query: [name: containerName(session)],
+                    body: request,
+                    requestContentType: JSON
+            )
+            LOG.debug("Deployed session $session to $instance.")
+            if (response.data.Warnings)
+                LOG.warn("Warning when creating docker container for session $session in $instance: $response.data.Warnings")
+        }
     }
 
     private void startContainer(SandboxSession session, WorkerInstance instance) {
         def request = new JsonOutput().toJson([PublishAllPorts: true])
-        client(instance).post(
-                path: "containers/${containerName(session)}/start",
-                body: request,
-                requestContentType: JSON
-        )
+        withClient(instance) {
+            post(
+                    path: "containers/${containerName(session)}/start",
+                    body: request,
+                    requestContentType: JSON
+            )
+        }
     }
 
     private void waitUntilInitialized(SandboxSession session, WorkerInstance instance) {
         LOG.debug("Waiting for session to be initialized on ports $config.sandboxPortsToCheck. " +
                 "Session: $session, WorkerInstance: $instance")
-        def response = client(instance).post(
-                path: "containers/${containerName(session)}/exec",
-                body: new JsonOutput().toJson([
-                        AttachStdin: false,
-                        AttachStdout: true,
-                        AttachStderr: true,
-                        Tty: false,
-                        Cmd: ["/root/wait_until_initialized.sh", config.sandboxPortsToCheck]
-                ]),
-                requestContentType: JSON
-        )
-        def execId = response.data.Id
-        client(instance).post(
-                path: "exec/$execId/start",
-                body: new JsonOutput().toJson([Detach: false, Tty: true]),
-                requestContentType: JSON
-        )
-        LOG.debug("Session initialized. Session: $session, WorkerInstance: $instance.")
+        withClient(instance) {
+            def response = post(
+                    path: "containers/${containerName(session)}/exec",
+                    body: new JsonOutput().toJson([
+                            AttachStdin: false,
+                            AttachStdout: true,
+                            AttachStderr: true,
+                            Tty: false,
+                            Cmd: ["/root/wait_until_initialized.sh", config.sandboxPortsToCheck]
+                    ]),
+                    requestContentType: JSON
+            )
+            def execId = response.data.Id
+            post(
+                    path: "exec/$execId/start",
+                    body: new JsonOutput().toJson([Detach: false, Tty: true]),
+                    requestContentType: JSON
+            )
+            LOG.debug("Session initialized. Session: $session, WorkerInstance: $instance.")
+        }
     }
 
     @SuppressWarnings("GroovyAssignabilityCheck")
@@ -117,7 +139,9 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
 
     private void removeContainer(SandboxSession session, String host) {
         LOG.info("Removing container for session on host $host. Session: $session")
-        client(host).delete(path: "containers/${containerName(session)}", query: [force: true])
+        withClient(host) {
+            delete(path: "containers/${containerName(session)}", query: [force: true])
+        }
         LOG.info("Removed container for session on host $host. Session: $session")
     }
 
@@ -126,15 +150,23 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     private Map loadContainerInfo(SandboxSession session, String host) {
-        client(host).get(path: "containers/${containerName(session)}/json").data
+        withClient(host) {
+            get(path: "containers/${containerName(session)}/json").data
+        }
     }
 
-    private RESTClient client(WorkerInstance instance) {
-        client(instance.host)
+    private <T> T withClient(WorkerInstance instance, @DelegatesTo(RESTClient) Closure<T> callback) {
+        withClient(instance.host, callback)
     }
 
-    private RESTClient client(String host) {
-        new RESTClient("http://$host:$config.dockerDaemonPort/$config.dockerRESTEntryPoint/")
+    private <T> T withClient(String host, @DelegatesTo(RESTClient) Closure<T> callback) {
+        def client = new RESTClient("http://$host:$config.dockerDaemonPort/$config.dockerRESTEntryPoint/")
+        try {
+            callback.delegate = client
+            return callback.call()
+        } finally {
+            client.shutdown()
+        }
     }
 
     private void rollbackFailedDeployment(SandboxSession session, WorkerInstance instance) {

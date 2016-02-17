@@ -58,12 +58,12 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
     }
 
     List<WorkerInstance> idleInstances(String instanceType) {
-        LOG.info("Finding all idle instances of type $instanceType")
-        toWorkerInstances(loadIdleInstances())
+        LOG.debug("Finding all idle instances of type $instanceType")
+        toWorkerInstances(loadIdleInstances(instanceType))
     }
 
     Map<String, Integer> idleCountByType() {
-        LOG.info("Determining number of idle instances by type")
+        LOG.debug("Determining number of idle instances by type")
         def countByType = [:]
         List<Reservation> reservations = loadIdleInstances()
         reservations.each {
@@ -169,14 +169,26 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         return response.reservations
     }
 
+    private List<Reservation> loadIdleInstances(String instanceType) {
+        def request = new DescribeInstancesRequest().withFilters(
+                new Filter('tag:Type', ['Sandbox']),
+                new Filter('tag:Environment', [environment]),
+                new Filter('tag:Status', ['idle']),
+                new Filter('instance-state-name', ['pending', 'running']),
+                new Filter('instance-type', [(instanceType as InstanceType).toString()])
+        )
+        def response = client.describeInstances(request)
+        return response.reservations
+    }
+
     private WorkerInstance toWorkerInstance(Instance awsInstance) {
         def idle = awsInstance.tags.find { it.key == 'Status' && it.value == 'idle' } != null
         def reservedTimeString = awsInstance.tags.find { it.key == 'Reserved time' }?.value
         def reservedTime = reservedTimeString ? Date.parse('yyyy-MM-dd HH:mm:ss', reservedTimeString) : null
         return new WorkerInstance(
                 id: awsInstance.instanceId,
-                host: awsInstance.privateIpAddress,
-//                host: awsInstance.publicIpAddress, // TODO: User public or private ip?
+//                host: awsInstance.privateIpAddress,
+                host: awsInstance.publicIpAddress, // TODO: User public or private ip?
                 type: instanceType(awsInstance),
                 running: awsInstance.state.name == 'running',
                 idle: idle,
