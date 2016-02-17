@@ -4,6 +4,7 @@ import fake.Database
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
+import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
 import org.openforis.sepal.component.sandboxmanager.command.*
 import org.openforis.sepal.component.sandboxmanager.query.FindInstanceTypes
 import org.openforis.sepal.component.sandboxmanager.query.LoadSandboxInfo
@@ -391,6 +392,46 @@ class SessionManagerTests extends Specification {
         sessionProvider.noneDeployed()
     }
 
+    def 'Given a session on a terminated instance, when joining, SandboxSessionProvider.NotAvailable is thrown and session is not available anymore'() {
+        runningIdle()
+        def session = createSession()
+        instanceProvider.terminate(session.instanceId)
+
+        when:
+        joinSession(session.id)
+
+        then:
+        def e = thrown ExecutionFailed
+        e.cause.class == SandboxSessionProvider.NotAvailable
+        def info = loadSandboxInfo()
+        info.activeSessions.size() == 0
+    }
+
+    def 'Given a session on a terminated instance, when closing, session is not available anymore'() {
+        runningIdle()
+        def session = createSession()
+        instanceProvider.terminate(session.instanceId)
+
+        when:
+        closeSession(session)
+
+        then:
+        def info = loadSandboxInfo()
+        info.activeSessions.size() == 0
+    }
+
+    def 'Given a session on a terminated instance, when closing timed out sessions, session is not available anymore'() {
+        runningIdle()
+        def session = createSession()
+        instanceProvider.terminate(session.instanceId)
+
+        when:
+        closeTimedOutSessions(future)
+
+        then:
+        def info = loadSandboxInfo()
+        info.activeSessions.size() == 0
+    }
 
     SandboxSession createSession(String username = someUserName, String instanceType = someInstanceType) {
         component.submit(new CreateSession(username: username, instanceType: instanceType))

@@ -30,6 +30,10 @@ class VagrantWorkerInstanceProvider implements WorkerInstanceProvider {
         return [instance]
     }
 
+    boolean isInstanceAvailable(SandboxSession session) {
+        return true
+    }
+
     Map<String, Integer> idleCountByType() {
         return [(instanceTypes.first().id): 1]
     }

@@ -62,6 +62,19 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         toWorkerInstances(loadIdleInstances(instanceType))
     }
 
+    boolean isInstanceAvailable(SandboxSession session) {
+        def request = new DescribeInstanceStatusRequest()
+                .withInstanceIds(session.instanceId)
+                .withFilters(
+                new Filter('tag:Type', ['Sandbox']),
+                new Filter('tag:Environment', [environment]),
+                new Filter('tag:Status', ['reserved']),
+                new Filter('instance-state-name', ['pending', 'running'])
+        )
+        def response = client.describeInstanceStatus(request)
+        return !response.instanceStatuses.empty
+    }
+
     Map<String, Integer> idleCountByType() {
         LOG.debug("Determining number of idle instances by type")
         def countByType = [:]

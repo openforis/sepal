@@ -51,6 +51,10 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
         return provider.runningInstances(instanceIds)
     }
 
+    boolean isInstanceAvailable(SandboxSession session) {
+        return provider.isInstanceAvailable(session)
+    }
+
     void updateInstances(Collection<SandboxSession> sessions) {
         def sessionsByInstanceId = sessions.groupBy { it.instanceId }
         def allInstances = provider.allInstances()

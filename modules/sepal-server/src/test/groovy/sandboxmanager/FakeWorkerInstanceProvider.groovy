@@ -24,7 +24,7 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
     List<WorkerInstance> idleInstances(String instanceType) {
         if (noIdle)
             return []
-        instanceById.values().findAll { statusByInstance[it] == 'idle' && it.type == instanceType}
+        instanceById.values().findAll { statusByInstance[it] == 'idle' && it.type == instanceType }
     }
 
     Map<String, Integer> idleCountByType() {
@@ -36,6 +36,13 @@ class FakeWorkerInstanceProvider implements WorkerInstanceProvider {
             countByType[it.type] = countByType[it.type] + 1
         }
         return countByType
+    }
+
+    boolean isInstanceAvailable(SandboxSession session) {
+        def instance = instanceById[session.instanceId]
+        if (!instance)
+            return false
+        return statusByInstance[instance] != 'terminated'
     }
 
     WorkerInstance launch(String instanceType) {

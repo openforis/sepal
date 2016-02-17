@@ -21,5 +21,7 @@ interface WorkerInstanceProvider {
 
     List<WorkerInstance> idleInstances(String instanceType)
 
+    boolean isInstanceAvailable(SandboxSession session)
+
     Map<String, Integer> idleCountByType()
 }

@@ -28,7 +28,7 @@ class CloseTimedOutSessionsHandler implements CommandHandler<Void, CloseTimedOut
 
     Void execute(CloseTimedOutSessions command) {
         sessionRepository.closeAllTimedOut(command.updatedBefore) { SandboxSession session ->
-            if (session.host) {
+            if (session.host && workerInstanceManager.isInstanceAvailable(session)) {
                 sessionProvider.close(session)
                 workerInstanceManager.deallocate(session.instanceId)
             }

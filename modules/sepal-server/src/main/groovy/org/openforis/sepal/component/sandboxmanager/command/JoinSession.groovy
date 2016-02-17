@@ -30,16 +30,16 @@ class JoinSession extends AbstractCommand<SandboxSession> {
 class JoinSessionHandler implements CommandHandler<SandboxSession, JoinSession> {
     private final SessionRepository sessionRepository
     private final WorkerInstanceManager instanceManager
-    private final SandboxSessionProvider sandboxProvider
+    private final SandboxSessionProvider sessionProvider
     private final Clock clock
 
     JoinSessionHandler(SessionRepository sessionRepository,
                        WorkerInstanceManager instanceManager,
-                       SandboxSessionProvider sandboxProvider,
+                       SandboxSessionProvider sessionProvider,
                        Clock clock) {
         this.sessionRepository = sessionRepository
         this.instanceManager = instanceManager
-        this.sandboxProvider = sandboxProvider
+        this.sessionProvider = sessionProvider
         this.clock = clock
     }
 
@@ -56,11 +56,15 @@ class JoinSessionHandler implements CommandHandler<SandboxSession, JoinSession> 
             throw new WrongUser("$command.sessionId: Session belongs to user $session.username. $command.username tries to join")
         if (![ACTIVE, STARTING].contains(session.status))
             throw new NotActiveOrStarting("$command.sessionId: session not $ACTIVE or $STARTING but $session.status")
+        if (!instanceManager.isInstanceAvailable(session)) {
+            sessionRepository.close(session)
+            throw new NotAvailable(session.id, "Instance not available for session $session")
+        }
         if (session.status == ACTIVE)
             try {
-                sandboxProvider.assertAvailable(session)
+                sessionProvider.assertAvailable(session)
             } catch (NotAvailable e) {
-                sessionRepository.close(session.closed(clock.now()))
+                sessionRepository.close(session)
                 throw e
             }
     }
