@@ -45,13 +45,14 @@ class CreateSessionHandler implements CommandHandler<SandboxSession, CreateSessi
         try {
             return sessionProvider.deploy(pendingSession, instance)
         } catch (Exception e) {
-            deallocateInstance(instance.id)
+            closeSession(pendingSession, instance.id)
             throw e
         }
     }
 
-    private void deallocateInstance(String instanceId) {
+    private void closeSession(SandboxSession session, String instanceId) {
         if (instanceId)
             workerInstanceManager.deallocate(instanceId)
+        sessionRepository.close(session)
     }
 }
