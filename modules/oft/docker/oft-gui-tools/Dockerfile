@@ -1,6 +1,6 @@
 FROM openforistoolkit
 MAINTAINER OpenForis
-EXPOSE 22, 8787
+EXPOSE 22 8787
 
 ADD script/init_image.sh .
 
