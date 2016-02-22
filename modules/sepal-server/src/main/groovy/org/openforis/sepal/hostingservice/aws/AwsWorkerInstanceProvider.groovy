@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory
 
 class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private static final String SECURITY_GROUP = 'Sepal'
+    private static final String SECURITY_GROUP = 'Sandbox'
     private final String region
     private final String availabilityZone
     private final String environment

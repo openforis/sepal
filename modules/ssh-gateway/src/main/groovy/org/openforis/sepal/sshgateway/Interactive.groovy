@@ -1,6 +1,12 @@
 package org.openforis.sepal.sshgateway
 
 import com.ocpsoft.pretty.time.PrettyTime
+import com.ocpsoft.pretty.time.units.Day
+import com.ocpsoft.pretty.time.units.Hour
+import com.ocpsoft.pretty.time.units.Minute
+import com.ocpsoft.pretty.time.units.Month
+import com.ocpsoft.pretty.time.units.Second
+import com.ocpsoft.pretty.time.units.Week
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -210,7 +216,16 @@ class Interactive {
     }
 
     private String timeSinceCreation(Map session) {
-        new PrettyTime().format(Date.parse("yyyy-MM-dd'T'HH:mm:ss", session.creationTime as String))
+        def locale = Locale.getDefault()
+        def prettyTime = new PrettyTime(units: [
+                new Second(locale),
+                new Minute(locale),
+                new Hour(locale),
+                new Day(locale),
+                new Week(locale),
+                new Month(locale)
+        ])
+        prettyTime.format(Date.parse("yyyy-MM-dd'T'HH:mm:ss", session.creationTime as String))
     }
 
     private String readLine(String prompt) {

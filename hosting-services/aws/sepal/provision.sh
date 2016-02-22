@@ -21,6 +21,11 @@ ansible-playbook provision.yml \
 
 ../inventory/ec2.py --refresh-cache > /dev/null
 
+ansible-playbook provision-security-groups.yml \
+    -i ../inventory/ec2.py \
+    --private-key=${PRIVATE_KEY}  \
+    --extra-vars "region=$REGION availability_zone=$AV_ZONE deploy_environment=$ENV"
+
 packer build \
     --var "source_ami=ami-8ee605bd" \
     --var "region=$REGION" \
