@@ -2,6 +2,7 @@ package org.openforis.sepal.component.sandboxmanager
 
 import groovy.json.JsonOutput
 import groovy.transform.ToString
+import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.hostingservice.WorkerInstance
@@ -26,8 +27,10 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     SandboxSession deploy(SandboxSession session, WorkerInstance instance) {
         LOG.info("Checking if Docker is initialize on $instance")
         try {
-            if (!isDockerInitialized(instance))
-                return session
+            def containers = deployedContainers(instance)
+            if (containers == null) // Docker client not available
+                return session.starting(instance)
+            removeAlreadyDeployedContainers(instance, containers)
             LOG.info("Deploying $session to $instance")
             createContainer(session, instance)
             startContainer(session, instance)
@@ -38,28 +41,53 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
             LOG.info("Deployed $session to $instance")
             return deployedSession
         } catch (Exception e) {
-            close(session)
-            throw e
+            try {
+                close(session)
+            } catch (Exception ex) {
+                LOG.error("Failed to rollback deployment. Session: $session, Instance: $instance", ex)
+            }
+            throw new DockerSandboxSessionProviderException("Failed to deploy sandbox. Session: $session, Instance: $instance", e)
         }
     }
 
-    private boolean isDockerInitialized(WorkerInstance instance) {
+    void removeAlreadyDeployedContainers(WorkerInstance instance, List<Map> containers) {
+        if (containers.empty)
+            return
+        LOG.warn("Containers already present on instance when trying to deploy a new one. Removing them. Instance: $instance")
+        try {
+            withClient(instance) {
+                containers.each {
+                    delete(path: "containers/$it.Id", query: [force: true])
+                }
+
+            }
+        } catch (Exception e) {
+            throw new DockerSandboxSessionProviderException("Failed to delete container from instance. Instance: $instance", e)
+        }
+    }
+
+    @SuppressWarnings("GrDeprecatedAPIUsage")
+    private List<Map> deployedContainers(WorkerInstance instance) {
         withClient(instance) {
             client.params.setParameter('http.connection.timeout', new Integer(5 * 1000))
             client.params.setParameter('http.socket.timeout', new Integer(5 * 1000))
             try {
-                get(path: 'containers/json')
-                return true
+                def response = get(path: 'containers/json')
+                return response.data
             } catch (Exception ignore) {
-                return false
+                return null // Not available
             }
         }
     }
 
     SandboxSession close(SandboxSession session) {
-        if (session.host)
-            removeContainer(session, session.host)
-        return session.closed(clock.now())
+        try {
+            if (session.host)
+                removeContainer(session, session.host)
+            return session.closed(clock.now())
+        } catch (Exception e) {
+            throw new DockerSandboxSessionProviderException('Failed to close session', e)
+        }
     }
 
     void assertAvailable(SandboxSession session) throws SandboxSessionProvider.NotAvailable {
@@ -159,8 +187,12 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     private Map loadContainerInfo(SandboxSession session, String host) {
-        withClient(host) {
-            get(path: "containers/${containerName(session)}/json").data
+        try {
+            withClient(host) {
+                get(path: "containers/${containerName(session)}/json").data
+            }
+        } catch (Exception e) {
+            throw new DockerSandboxSessionProviderException("Failed to load sandbox info. Host: $host, session: $session", e)
         }
     }
 
@@ -175,6 +207,12 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
             return callback.call()
         } finally {
             client.shutdown()
+        }
+    }
+
+    private static class DockerSandboxSessionProviderException extends RuntimeException {
+        DockerSandboxSessionProviderException(String message, Exception e) {
+            super(e instanceof HttpResponseException ? message += ": $e.response.data" : message, e)
         }
     }
 }

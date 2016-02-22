@@ -28,7 +28,7 @@ class SandboxSession {
     }
 
     SandboxSession starting(WorkerInstance instance) {
-        assert status in [PENDING]
+        verifyStatus([PENDING, STARTING])
         return new SandboxSession(
                 id: id,
                 username: username,
@@ -43,7 +43,7 @@ class SandboxSession {
     }
 
     SandboxSession active(WorkerInstance instance, int port, Date date) {
-        assert status in [PENDING, STARTING]
+        verifyStatus([PENDING, STARTING])
         return new SandboxSession(
                 id: id,
                 username: username,
@@ -55,6 +55,11 @@ class SandboxSession {
                 creationTime: creationTime,
                 updateTime: date
         )
+    }
+
+    private void verifyStatus(ArrayList<SessionStatus> expectedStatuses) {
+        if (!expectedStatuses.contains(status))
+            throw new IllegalStateException()
     }
 
     SandboxSession closed(Date date) {

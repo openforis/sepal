@@ -105,7 +105,7 @@ class SepalSessionEndpoint {
                 response.contentType = "application/json"
                 def command = new CreateSession(username: params.user, instanceType: params.instanceType)
                 validateRequest(command)
-                def session = commandDispatcher.submit(command) as SandboxSession
+                def session = commandDispatcher.submit(command)
                 if (session.status == ACTIVE)
                     response.status = 201
                 else if (session.status == STARTING)

@@ -4,6 +4,7 @@ import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.SessionStatus
 import org.openforis.sepal.component.sandboxmanager.WorkerInstanceProvider
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.Is
 
 import java.time.Duration
 
@@ -19,14 +20,15 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
     }
 
     SandboxSession allocate(SandboxSession sessionPendingInstanceAllocation, Closure<SandboxSession> callback) {
-        assert sessionPendingInstanceAllocation.status == SessionStatus.PENDING
+        if (sessionPendingInstanceAllocation.status != SessionStatus.PENDING)
+            throw new IllegalStateException("Expected status to be $SessionStatus.PENDING")
         def idleInstances = provider.idleInstances(sessionPendingInstanceAllocation.instanceType)
         def instance = idleInstances ? firstIdle(idleInstances) : provider.launch(sessionPendingInstanceAllocation.instanceType)
         return reserveAndNotify(instance, sessionPendingInstanceAllocation, callback)
     }
 
     void deallocate(String instanceId) {
-        assert instanceId != null
+        Is.notNull(instanceId)
         if (provider.isInstanceAvailable(instanceId))
             provider.idle(instanceId)
     }
