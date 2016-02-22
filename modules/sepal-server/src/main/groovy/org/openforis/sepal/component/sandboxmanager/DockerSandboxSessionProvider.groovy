@@ -27,7 +27,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     SandboxSession deploy(SandboxSession session, WorkerInstance instance) {
         LOG.info("Checking if Docker is initialize on $instance")
         try {
-            def containers = deployedContainers(instance)
+            def containers = sandboxContainers(instance)
             if (containers == null) // Docker client not available
                 return session.starting(instance)
             removeAlreadyDeployedContainers(instance, containers)
@@ -67,13 +67,16 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     @SuppressWarnings("GrDeprecatedAPIUsage")
-    private List<Map> deployedContainers(WorkerInstance instance) {
+    private List<Map> sandboxContainers(WorkerInstance instance) {
         withClient(instance) {
             client.params.setParameter('http.connection.timeout', new Integer(5 * 1000))
             client.params.setParameter('http.socket.timeout', new Integer(5 * 1000))
             try {
                 def response = get(path: 'containers/json')
-                return response.data
+                def allContainers = response.data
+                return allContainers.findAll {
+                    it.Names.find { String name -> name.startsWith('sandbox-') }
+                }
             } catch (Exception ignore) {
                 return null // Not available
             }
@@ -212,7 +215,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
 
     private static class DockerSandboxSessionProviderException extends RuntimeException {
         DockerSandboxSessionProviderException(String message, Exception e) {
-            super(e instanceof HttpResponseException ? message += ": $e.response.data" : message, e)
+            super(e instanceof HttpResponseException ? message + ": $e.response.data" : message, e)
         }
     }
 }
