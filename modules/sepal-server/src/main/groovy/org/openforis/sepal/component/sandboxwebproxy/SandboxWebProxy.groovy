@@ -20,8 +20,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-import static io.undertow.server.session.SessionListener.SessionDestroyedReason
-
 /**
  * Proxy for web endpoints on user sandboxes. It provides the user a single, static url for each endpoint.
  * The proxy will make sure a sandbox is obtained, delegates requests to it.
@@ -34,16 +32,16 @@ import static io.undertow.server.session.SessionListener.SessionDestroyedReason
  */
 class SandboxWebProxy {
     private final static Logger LOG = LoggerFactory.getLogger(this)
-    static final String SANDBOX_ID_KEY = "sepal-sandbox-id"
+    static final String SANDBOX_SESSION_ID_KEY = "sepal-sandbox-id"
     static final String USERNAME_KEY = "sepal-user"
 
     private final Undertow server
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
     private final int sessionHeartbeatInterval
-    private final int sessionDefaultTimeout
 
-    private SessionManager sessionManager
+    private final SessionManager sessionManager
     private final SandboxManagerComponent sandboxManagerComponent
+    private final WebProxySessionMonitor sessionMonitor
 
     /**
      * Creates the proxy.
@@ -55,23 +53,22 @@ class SandboxWebProxy {
                     int sessionHeartbeatInterval, int sessionDefaultTimeout) {
         LOG.info("Creating SandboxWebProxy [port: $port. Endpoints: $endpointByPort, sessionHeartbeatInterval: $sessionHeartbeatInterval, sessionDefaultTimeout: ${sessionDefaultTimeout}]")
         this.sessionHeartbeatInterval = sessionHeartbeatInterval
-        this.sessionDefaultTimeout = sessionDefaultTimeout
         this.sandboxManagerComponent = sandboxManagerComponent
+        sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
+        sessionManager.setDefaultSessionTimeout(sessionDefaultTimeout)
+        this.sessionMonitor = new WebProxySessionMonitor(sandboxManagerComponent, sessionManager)
         this.server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
-                .setHandler(createHandler(endpointByPort))
+                .setHandler(createHandler(endpointByPort, sessionMonitor))
                 .build()
     }
 
-    private HttpHandler createHandler(Map<String, Integer> endpointByPort) {
-        sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
-        sessionManager.setDefaultSessionTimeout(sessionDefaultTimeout)
-        sessionManager.registerSessionListener(new Listener())
+    private HttpHandler createHandler(Map<String, Integer> endpointByPort, WebProxySessionMonitor monitor) {
         new SepalHttpHandler(
                 new SessionAttachmentHandler(
                         Handlers.proxyHandler(
                                 new DynamicProxyClient(
-                                        new SessionBasedUriProvider(endpointByPort, sandboxManagerComponent)
+                                        new SessionBasedUriProvider(endpointByPort, sandboxManagerComponent, monitor)
                                 )
                         ), sessionManager, new SessionCookieConfig())
         )
@@ -80,7 +77,7 @@ class SandboxWebProxy {
     void start() {
         server.start()
         executor.scheduleWithFixedDelay(
-                new WebProxySessionMonitor(sandboxManagerComponent, sessionManager),
+                sessionMonitor,
                 sessionHeartbeatInterval,
                 sessionHeartbeatInterval, TimeUnit.SECONDS
         )
@@ -91,27 +88,23 @@ class SandboxWebProxy {
         server.stop()
     }
 
-    static Long sandboxSessionId(Session session) {
-        session.getAttribute(SANDBOX_ID_KEY) as Long
-    }
-
     static String username(Session session) {
         session.getAttribute(USERNAME_KEY) as String
-    }
-
-    private static class Listener extends SessionDestroyedListener {
-        void sessionDestroyed(Session session, HttpServerExchange exchange, SessionDestroyedReason reason) {
-            LOG.info("HTTP session closed for user ${username(session)}. Reason: $reason")
-        }
     }
 
     private static class SessionBasedUriProvider implements DynamicProxyClient.UriProvider {
         private final Map<String, Integer> endpointByPort
         private final SandboxManagerComponent sandboxManagerComponent
+        private final WebProxySessionMonitor sessionMonitor
 
-        SessionBasedUriProvider(Map<String, Integer> endpointByPort, SandboxManagerComponent sandboxManagerComponent) {
+        SessionBasedUriProvider(
+                Map<String, Integer> endpointByPort,
+                SandboxManagerComponent sandboxManagerComponent,
+                WebProxySessionMonitor sessionMonitor
+        ) {
             this.endpointByPort = endpointByPort
             this.sandboxManagerComponent = sandboxManagerComponent
+            this.sessionMonitor = sessionMonitor
         }
 
         URI provide(HttpServerExchange exchange) {
@@ -120,16 +113,19 @@ class SandboxWebProxy {
             def username = determineUsername(exchange)
 
 
+            def sandboxSessionId = session.getAttribute(SANDBOX_SESSION_ID_KEY)
             def uriSessionKey = determineUriSessionKey(endpoint, username)
-            def uri = session.getAttribute(uriSessionKey) as URI
-            if (!uri) {
-                def sandboxHost = determineUri(username, session)
+            URI uri
+            if (!sandboxSessionId) {
+                def sandboxSession = sandboxSession(username)
+                def sandboxHost = determineUri(session, sandboxSession)
                 uri = URI.create("http://$sandboxHost:${endpointByPort[endpoint]}")
+                session.setAttribute(SANDBOX_SESSION_ID_KEY, sandboxSession.id)
                 session.setAttribute(uriSessionKey, uri)
                 session.setAttribute(USERNAME_KEY, username)
-            }
-//            return uri
-            return URI.create('http://52.37.34.242:8787')
+            } else
+                uri = session.getAttribute(uriSessionKey) as URI
+            return uri
         }
 
         private static String determineUsername(HttpServerExchange exchange) {
@@ -148,27 +144,25 @@ class SandboxWebProxy {
             return endpoint
         }
 
-        private String determineUri(String user, Session session) {
-            def sessionKey = determineSandboxHostSessionKey(user)
-            String sandboxHost = session.getAttribute(sessionKey) as String
-            if (!sandboxHost) {
-                // TODO: Redirect to sandbox/instance creation/selection GUI
-                SandboxSession sepalSession
-                try {
-                    def sepalSessions = findActiveSepalSessions(user)
-                    if (sepalSessions)
-                        sepalSession = joinSession(user, sepalSessions)
-                    else
-                        sepalSession = createSession(user)
-                } catch (NonExistingUser e) {
-                    throw new BadRequest(e.getMessage())
-                }
-                // TODO: What if this isn't an active session?
-                session.setAttribute(SANDBOX_ID_KEY, sepalSession.id)
-                session.setAttribute(sessionKey, sepalSession.host)
-                sandboxHost = sepalSession.host
+        private String determineUri(Session session, SandboxSession sandboxSession) {
+            def sessionKey = determineSandboxHostSessionKey(sandboxSession.username)
+            sessionMonitor.sandboxSessionBound(session, sandboxSession)
+            session.setAttribute(sessionKey, sandboxSession.host)
+            return sandboxSession.host
+        }
+
+        private SandboxSession sandboxSession(String user) {
+            SandboxSession sandboxSession
+            try {
+                def sepalSessions = findActiveSepalSessions(user)
+                if (sepalSessions)
+                    sandboxSession = joinSession(user, sepalSessions)
+                else
+                    sandboxSession = createSession(user)
+            } catch (NonExistingUser e) {
+                throw new BadRequest(e.getMessage())
             }
-            return sandboxHost
+            sandboxSession
         }
 
         private List<SandboxSession> findActiveSepalSessions(String username) {
@@ -196,7 +190,7 @@ class SandboxWebProxy {
         }
 
         private String determineSandboxHostSessionKey(String username) {
-            return 'sepal-sandbox-host' + username
+            return 'sepal-sandbox-host-' + username
         }
 
 

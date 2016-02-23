@@ -10,6 +10,7 @@ import org.openforis.sepal.component.sandboxmanager.query.*
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.EventHandler
+import org.openforis.sepal.event.EventSource
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.hostingservice.HostingService
 import org.openforis.sepal.hostingservice.WorkerInstanceManager
@@ -22,7 +23,7 @@ import org.openforis.sepal.util.SystemClock
 
 import javax.sql.DataSource
 
-final class SandboxManagerComponent implements EndpointRegistry {
+final class SandboxManagerComponent implements EndpointRegistry, EventSource {
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
     private final SqlConnectionManager connectionManager

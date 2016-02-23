@@ -20,7 +20,7 @@ class HandlerRegistryEventDispatcher implements EventDispatcher, EventSource {
         }
     }
 
-    def <E extends Event> void register(Class<E> eventType, EventHandler<E> handler) {
+    def <E extends Event> HandlerRegistryEventDispatcher register(Class<E> eventType, EventHandler<E> handler) {
         Is.notNull(eventType)
         Is.notNull(handler)
         def handlers = handlersByType[eventType]
@@ -29,5 +29,6 @@ class HandlerRegistryEventDispatcher implements EventDispatcher, EventSource {
             handlersByType[eventType] = handlers
         }
         handlers.add(handler)
+        return this
     }
 }
