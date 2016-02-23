@@ -46,7 +46,6 @@ class WebProxySessionMonitor implements Runnable {
             placeholder = new SessionPlaceholder(SandboxWebProxy.username(session), SandboxWebProxy.sandboxSessionId(session))
             placeholderBySessionId[sessionId] = placeholder
         }
-        a
         if (placeholder.sandboxSessionId) {
             LOG.debug("Sending heartbeat for session id $placeholder.sandboxSessionId")
             sendHeartbeat(session, placeholder)

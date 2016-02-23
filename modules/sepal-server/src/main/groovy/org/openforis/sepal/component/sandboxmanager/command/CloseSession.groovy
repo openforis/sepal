@@ -3,9 +3,8 @@ package org.openforis.sepal.component.sandboxmanager.command
 import groovy.transform.ToString
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
-import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
-import org.openforis.sepal.component.sandboxmanager.SessionRepository
-import org.openforis.sepal.hostingservice.WorkerInstanceManager
+import org.openforis.sepal.component.sandboxmanager.SandboxSession
+import org.openforis.sepal.component.sandboxmanager.SessionManager
 
 @ToString
 class CloseSession extends AbstractCommand<Void> {
@@ -14,25 +13,28 @@ class CloseSession extends AbstractCommand<Void> {
 
 @ToString
 class CloseSessionHandler implements CommandHandler<Void, CloseSession> {
-    private final SessionRepository sessionRepository
-    private final SandboxSessionProvider sessionManager
-    private final WorkerInstanceManager workerInstanceManager
+    private final SessionManager sessionManager
 
-    CloseSessionHandler(SessionRepository sessionRepository, SandboxSessionProvider sessionManager, WorkerInstanceManager workerInstanceManager) {
-        this.sessionRepository = sessionRepository
+    CloseSessionHandler(SessionManager sessionManager) {
         this.sessionManager = sessionManager
-        this.workerInstanceManager = workerInstanceManager
     }
 
     Void execute(CloseSession command) {
-        def session = sessionRepository.getById(command.sessionId)
-        if (workerInstanceManager.isSessionInstanceAvailable(session.id)) {
-            sessionManager.close(session)
-            if (session.instanceId)
-                workerInstanceManager.deallocate(session.instanceId)
-        }
-        sessionRepository.close(session)
+        def session = sessionManager.load(command.sessionId)
+        assertSessionOwner(session, command.username)
+        sessionManager.close(session)
         return null
+    }
+
+    private void assertSessionOwner(SandboxSession session, String username) {
+        if (session.username != username)
+            throw new BadRequest("$session.id: Session belongs to user $session.username. $username tries to join")
+    }
+
+    static class BadRequest extends RuntimeException {
+        BadRequest(String message) {
+            super(message)
+        }
     }
 }
 

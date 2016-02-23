@@ -4,18 +4,25 @@ import fake.Database
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
-import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
+import org.openforis.sepal.component.sandboxmanager.SessionFailed
 import org.openforis.sepal.component.sandboxmanager.command.*
+import org.openforis.sepal.component.sandboxmanager.event.SessionAlive
+import org.openforis.sepal.component.sandboxmanager.event.SessionClosed
+import org.openforis.sepal.component.sandboxmanager.event.SessionCreated
+import org.openforis.sepal.component.sandboxmanager.event.SessionDeployed
 import org.openforis.sepal.component.sandboxmanager.query.FindInstanceTypes
 import org.openforis.sepal.component.sandboxmanager.query.LoadSandboxInfo
 import org.openforis.sepal.component.sandboxmanager.query.LoadSession
 import org.openforis.sepal.component.sandboxmanager.query.SandboxInfo
+import org.openforis.sepal.event.Event
+import org.openforis.sepal.event.EventHandler
 import org.openforis.sepal.hostingservice.PoolingWorkerInstanceManager
 import org.openforis.sepal.hostingservice.WorkerInstance
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.openforis.sepal.query.QueryFailed
 import spock.lang.Specification
 
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
 import static java.util.concurrent.TimeUnit.HOURS
@@ -39,6 +46,11 @@ class SessionManagerTests extends Specification {
 
     def cheapType = new WorkerInstanceType(id: 'cheap', hourlyCost: 1)
     def expensiveType = new WorkerInstanceType(id: 'expensive', hourlyCost: 2)
+    def eventHandler = new CollectingEventHandler()
+
+    def setup() {
+        component.register(Event, eventHandler)
+    }
 
     def 'Given no sandbox sessions have been created, when loading sandbox info, no sessions are included'() {
         when:
@@ -115,12 +127,6 @@ class SessionManagerTests extends Specification {
 
         then:
         info.monthlyInstanceSpending == 24 * cheapType.hourlyCost
-    }
-
-    void runSession(WorkerInstanceType instanceType, int time, TimeUnit timeUnit) {
-        createSession(instanceType)
-        clock.forward(time, timeUnit)
-        closeTimedOutSessions(clock.now())
     }
 
     def 'When creating a session, the returned session is populated'() {
@@ -215,17 +221,63 @@ class SessionManagerTests extends Specification {
 
         then:
         thrown ExecutionFailed
+        eventHandler.eventTypes == []
     }
 
-    def 'When joining another users session, an exception is thrown'() {
+    def 'When joining another users session, an exception is thrown, but session is not closed'() {
         runningIdle()
         def session = createSession(anotherUserName)
+        eventHandler.clear()
 
         when:
         joinSession(session.id, someUserName)
 
         then:
         thrown ExecutionFailed
+        instanceProvider.has(reserved: 1)
+        eventHandler.eventTypes == []
+    }
+
+    def 'When joining a closed session, an exception is thrown'() {
+        runningIdle()
+        def session = createSession()
+        closeTimedOutSessions(future)
+        eventHandler.clear()
+
+        when:
+        joinSession(session.id)
+
+        then:
+        thrown ExecutionFailed
+        eventHandler.eventTypes == []
+    }
+
+    def 'When joining an active session without an available instance, an exception is thrown and session is closed'() {
+        runningIdle()
+        def session = createSession()
+        instanceProvider.terminate(session.instanceId)
+        eventHandler.clear()
+
+        when:
+        joinSession(session.id)
+
+        then:
+        thrown ExecutionFailed
+        hasNoActiveSessions(anotherUserName)
+        eventHandler.eventTypes == [SessionClosed]
+    }
+
+    def 'When joining an active session without an available sandbox, an exception is thrown and session is closed'() {
+        runningIdle()
+        def session = createSession()
+        sessionProvider.undeploy(session)
+
+        when:
+        joinSession(session.id)
+
+        then:
+        thrown ExecutionFailed
+        hasNoActiveSessions(anotherUserName)
     }
 
     def 'When joining a starting session, session status is STARTING'() {
@@ -248,6 +300,20 @@ class SessionManagerTests extends Specification {
         then:
         sessionProvider.noneDeployed()
         hasNoActiveSessions()
+    }
+
+    def 'Given a timed out session, when sending heartbeat, session is no longer timed out'() {
+        clock.set('2016-01-01', '00:00:00')
+        runningIdle()
+        def session = createSession()
+        clock.set('2016-01-01', '01:00:00')
+
+        when:
+        joinSession(session.id)
+
+        then:
+        closeTimedOutSessions(clock.now())
+        hasOneActiveSessions()
     }
 
 
@@ -374,7 +440,7 @@ class SessionManagerTests extends Specification {
         def instance = instanceProvider.started(session.instanceId)
 
         when:
-        component.submit(new DeployStartingSessions())
+        deployStartingSessions()
 
         then:
         sessionProvider.deployedOneTo(instance)
@@ -402,7 +468,7 @@ class SessionManagerTests extends Specification {
 
         then:
         def e = thrown ExecutionFailed
-        e.cause.class == SandboxSessionProvider.NotAvailable
+        e.cause instanceof SessionFailed
         def info = loadSandboxInfo()
         info.activeSessions.size() == 0
     }
@@ -433,6 +499,76 @@ class SessionManagerTests extends Specification {
         info.activeSessions.size() == 0
     }
 
+    def 'Given no idle instances, when session is created, create event is published'() {
+        when:
+        createSession()
+
+        then:
+        eventHandler.eventTypes == [SessionCreated]
+    }
+
+    def 'Given an idle instance, when session is created, create and deploy event is published'() {
+        runningIdle()
+
+        when:
+        createSession()
+
+        then:
+        eventHandler.eventTypes == [SessionCreated, SessionDeployed]
+    }
+
+    def 'When starting session is deployed, event is published'() {
+        def session = createSession()
+        eventHandler.clear()
+        instanceProvider.started(session.instanceId)
+
+        when:
+        deployStartingSessions()
+
+        then:
+        eventHandler.eventTypes == [SessionDeployed]
+    }
+
+    def 'When sending heartbeat, event is published'() {
+        def session = createSession()
+        eventHandler.clear()
+
+        when:
+        joinSession(session.id)
+
+        then:
+        eventHandler.eventTypes == [SessionAlive]
+    }
+
+    def 'When session is closed, event is published'() {
+        def session = createSession()
+        eventHandler.clear()
+
+        when:
+        closeSession(session)
+
+        then:
+        eventHandler.eventTypes == [SessionClosed]
+    }
+
+    def 'When timed out session is closed, event is published'() {
+        createSession()
+        createSession()
+        eventHandler.clear()
+
+        when:
+        closeTimedOutSessions(future)
+
+        then:
+        eventHandler.eventTypes == [SessionClosed, SessionClosed]
+    }
+
+    void runSession(WorkerInstanceType instanceType, int time, TimeUnit timeUnit) {
+        createSession(instanceType)
+        clock.forward(time, timeUnit)
+        closeTimedOutSessions(clock.now())
+    }
+
     SandboxSession createSession(String username = someUserName, String instanceType = someInstanceType) {
         component.submit(new CreateSession(username: username, instanceType: instanceType))
     }
@@ -445,6 +581,10 @@ class SessionManagerTests extends Specification {
     SandboxSession createSession(String username = someUserName, WorkerInstanceType instanceType) {
         instanceProvider.addType(instanceType)
         component.submit(new CreateSession(username: username, instanceType: instanceType.id))
+    }
+
+    private void deployStartingSessions() {
+        component.submit(new DeployStartingSessions())
     }
 
 
@@ -472,7 +612,7 @@ class SessionManagerTests extends Specification {
     }
 
     void updateInstances() {
-        component.submit(new UpdateInstances())
+        component.submit(new UpdateInstanceStates())
     }
 
     List<WorkerInstanceType> findInstanceTypes() {
@@ -512,6 +652,22 @@ class SessionManagerTests extends Specification {
     void hasOneStartingSession(String username = someUserName) {
         def startingSessions = loadSandboxInfo(username).startingSessions
         assert startingSessions.size() == 1
+    }
+
+    static class CollectingEventHandler implements EventHandler<Event> {
+        List<Event> events = new CopyOnWriteArrayList<>()
+
+        void handle(Event event) {
+            events << event
+        }
+
+        List<Class<Event>> getEventTypes() {
+            events.collect { it.class }
+        }
+
+        void clear() {
+            events.clear()
+        }
     }
 }
 

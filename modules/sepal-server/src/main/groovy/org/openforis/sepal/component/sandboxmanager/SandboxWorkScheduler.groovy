@@ -5,7 +5,7 @@ import groovy.transform.ToString
 import org.openforis.sepal.command.CommandDispatcher
 import org.openforis.sepal.component.sandboxmanager.command.CloseTimedOutSessions
 import org.openforis.sepal.component.sandboxmanager.command.DeployStartingSessions
-import org.openforis.sepal.component.sandboxmanager.command.UpdateInstances
+import org.openforis.sepal.component.sandboxmanager.command.UpdateInstanceStates
 import org.openforis.sepal.util.NamedThreadFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -57,7 +57,7 @@ class SandboxWorkScheduler {
 
     private void updateInstances() {
         try {
-            commandDispatcher.submit(new UpdateInstances())
+            commandDispatcher.submit(new UpdateInstanceStates())
         } catch (Exception e) {
             LOG.error("Error updating instances", e)
         }

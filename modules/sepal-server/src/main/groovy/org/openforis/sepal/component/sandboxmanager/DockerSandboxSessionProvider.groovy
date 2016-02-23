@@ -42,7 +42,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
             return deployedSession
         } catch (Exception e) {
             try {
-                close(session)
+                undeploy(session)
             } catch (Exception ex) {
                 LOG.error("Failed to rollback deployment. Session: $session, Instance: $instance", ex)
             }
@@ -83,7 +83,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
         }
     }
 
-    SandboxSession close(SandboxSession session) {
+    SandboxSession undeploy(SandboxSession session) {
         try {
             if (session.host)
                 removeContainer(session, session.host)

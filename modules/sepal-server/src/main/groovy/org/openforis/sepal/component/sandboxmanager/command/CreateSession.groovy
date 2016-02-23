@@ -4,11 +4,8 @@ import groovy.transform.ToString
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
-import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
-import org.openforis.sepal.component.sandboxmanager.SessionRepository
-import org.openforis.sepal.hostingservice.WorkerInstance
-import org.openforis.sepal.hostingservice.WorkerInstanceManager
-import org.openforis.sepal.util.Clock
+import org.openforis.sepal.component.sandboxmanager.SessionManager
+import org.openforis.sepal.event.EventDispatcher
 
 @ToString
 class CreateSession extends AbstractCommand<SandboxSession> {
@@ -17,42 +14,13 @@ class CreateSession extends AbstractCommand<SandboxSession> {
 
 @ToString
 class CreateSessionHandler implements CommandHandler<SandboxSession, CreateSession> {
-    private final SessionRepository sessionRepository
-    private final WorkerInstanceManager workerInstanceManager
-    private final SandboxSessionProvider sessionProvider
-    private final Clock clock
+    private final SessionManager sessionManager
 
-    CreateSessionHandler(SessionRepository sessionRepository,
-                         WorkerInstanceManager instanceProvider,
-                         SandboxSessionProvider sessionProvider,
-                         Clock clock) {
-        this.sessionRepository = sessionRepository
-        this.workerInstanceManager = instanceProvider
-        this.sessionProvider = sessionProvider
-        this.clock = clock
+    CreateSessionHandler(SessionManager sessionManager) {
+        this.sessionManager = sessionManager
     }
 
     SandboxSession execute(CreateSession command) {
-        def pendingSession = sessionRepository.create(command.username, command.instanceType)
-        def session = workerInstanceManager.allocate(pendingSession) { WorkerInstance instance ->
-            deploySandbox(pendingSession, instance)
-        }
-        sessionRepository.update(session)
-        return session
-    }
-
-    private SandboxSession deploySandbox(SandboxSession pendingSession, WorkerInstance instance) {
-        try {
-            return sessionProvider.deploy(pendingSession, instance)
-        } catch (Exception e) {
-            closeSession(pendingSession, instance.id)
-            throw e
-        }
-    }
-
-    private void closeSession(SandboxSession session, String instanceId) {
-        if (instanceId)
-            workerInstanceManager.deallocate(instanceId)
-        sessionRepository.close(session)
+        sessionManager.create(command.username, command.instanceType)
     }
 }

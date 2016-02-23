@@ -25,16 +25,20 @@ class FakeSandboxSessionProvider implements SandboxSessionProvider {
         return activeSession
     }
 
-    SandboxSession close(SandboxSession session) {
+    SandboxSession undeploy(SandboxSession session) {
         deployed.values().each { sessions ->
             sessions.removeIf { it.id == session.id }
         }
-        session.closed()
+        session.closed(clock.now())
     }
 
     void assertAvailable(SandboxSession sandboxSession) throws SandboxSessionProvider.NotAvailable {
-        if (notAvailable)
+        def available = deployed.values().find {
+            it.find { it.id == sandboxSession.id }
+        } != null
+        if (notAvailable || !available)
             throw new SandboxSessionProvider.NotAvailable(sandboxSession.id, 'Sandbox is not available')
+
     }
 
     SandboxSession deployedOneTo(WorkerInstance instance) {

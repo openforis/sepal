@@ -8,6 +8,9 @@ import org.openforis.sepal.component.sandboxmanager.command.*
 import org.openforis.sepal.component.sandboxmanager.endpoint.SepalSessionEndpoint
 import org.openforis.sepal.component.sandboxmanager.query.*
 import org.openforis.sepal.endpoint.EndpointRegistry
+import org.openforis.sepal.event.Event
+import org.openforis.sepal.event.EventHandler
+import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.hostingservice.HostingService
 import org.openforis.sepal.hostingservice.WorkerInstanceManager
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
@@ -26,6 +29,7 @@ final class SandboxManagerComponent implements EndpointRegistry {
     private final SandboxWorkScheduler sandboxCleanup
     private final WorkerInstanceManager instanceManager
     private final Clock clock
+    private final HandlerRegistryEventDispatcher eventDispatcher
 
     SandboxManagerComponent(SepalConfiguration config) {
         this(
@@ -42,18 +46,20 @@ final class SandboxManagerComponent implements EndpointRegistry {
                             Clock clock) {
         this.instanceManager = instanceManager
         connectionManager = new SqlConnectionManager(dataSource)
+        eventDispatcher = new HandlerRegistryEventDispatcher()
         def sessionRepository = new JdbcSessionRepository(connectionManager, clock)
         def userBudgetRepository = new JdbcUserBudgetRepository(connectionManager)
         this.clock = clock
+        def sessionManager = new SessionManager(sessionRepository, instanceManager, sessionProvider, eventDispatcher, clock)
 
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
-                .register(CreateSession, new CreateSessionHandler(sessionRepository, instanceManager, sessionProvider, clock))
-                .register(JoinSession, new JoinSessionHandler(sessionRepository, instanceManager, sessionProvider, clock))
-                .register(CloseSession, new CloseSessionHandler(sessionRepository, sessionProvider, instanceManager))
-                .register(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionRepository, sessionProvider, instanceManager))
-                .register(UpdateInstances, new UpdateInstancesHandler(sessionRepository, instanceManager, sessionProvider))
+                .register(CreateSession, new CreateSessionHandler(sessionManager))
+                .register(JoinSession, new JoinSessionHandler(sessionManager))
+                .register(CloseSession, new CloseSessionHandler(sessionManager))
+                .register(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionManager))
+                .register(UpdateInstanceStates, new UpdateInstanceStatesHandler(sessionManager))
                 .register(UpdateUserBudget, new UpdateUserBudgetHandler(userBudgetRepository))
-                .register(DeployStartingSessions, new DeployStartingSessionsHandler(sessionRepository, instanceManager, sessionProvider))
+                .register(DeployStartingSessions, new DeployStartingSessionsHandler(sessionManager))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
                 .register(FindInstanceTypes, new FindInstanceTypesHandler(instanceManager))
@@ -83,6 +89,11 @@ final class SandboxManagerComponent implements EndpointRegistry {
 
     def <R> R submit(Query<R> query) {
         queryDispatcher.submit(query)
+    }
+
+    def <E extends Event> SandboxManagerComponent register(Class<E> eventType, EventHandler<E> handler) {
+        eventDispatcher.register(eventType, handler)
+        return this
     }
 
     private static HostingService instantiateHostingService(SepalConfiguration config) {

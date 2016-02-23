@@ -5,7 +5,7 @@ import org.openforis.sepal.hostingservice.WorkerInstance
 interface SandboxSessionProvider {
     SandboxSession deploy(SandboxSession session, WorkerInstance workerInstance)
 
-    SandboxSession close(SandboxSession session)
+    SandboxSession undeploy(SandboxSession session)
 
     void assertAvailable(SandboxSession sandboxSession) throws NotAvailable
 

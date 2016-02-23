@@ -128,7 +128,8 @@ class SandboxWebProxy {
                 session.setAttribute(uriSessionKey, uri)
                 session.setAttribute(USERNAME_KEY, username)
             }
-            return uri
+//            return uri
+            return URI.create('http://52.37.34.242:8787')
         }
 
         private static String determineUsername(HttpServerExchange exchange) {
