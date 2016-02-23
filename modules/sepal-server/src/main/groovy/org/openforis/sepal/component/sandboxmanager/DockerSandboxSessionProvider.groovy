@@ -205,6 +205,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
 
     private <T> T withClient(String host, @DelegatesTo(RESTClient) Closure<T> callback) {
         def client = new RESTClient("http://$host:$config.dockerDaemonPort/$config.dockerRESTEntryPoint/")
+        client.parser.'application/vnd.docker.raw-stream' = client.parser.'text/plain'
         try {
             callback.delegate = client
             return callback.call()
