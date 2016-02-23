@@ -42,7 +42,7 @@ class EarthExplorerMetadataCrawler extends XmlMetadataCrawler {
             crawlerInfo.dataSets.each { dataSet ->
                 def baseDownloadURL = "$crawlerInfo.entrypoint?sensor=$dataSet&start_path=1&start_row=1&end_path=233&end_row=248"
                 def downloadUrl = "$baseDownloadURL&start_date=$start&end_date=$end"
-                LOG.info("Going to request metadata through $downloadUrl")
+                LOG.info("Downloading Earth Explorer metadata. dataSet: $dataSet, url: $downloadUrl")
                 downloader.download(downloadUrl) { InputStream inputStream ->
                     def storedFile = store(inputStream)
                     process(dataSet, storedFile, crawlerInfo)

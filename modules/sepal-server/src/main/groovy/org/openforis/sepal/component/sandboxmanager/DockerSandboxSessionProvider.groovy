@@ -75,7 +75,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
                 def response = get(path: 'containers/json')
                 def allContainers = response.data
                 return allContainers.findAll {
-                    it.Names.find { String name -> name.startsWith('sandbox-') }
+                    it.Names.find { String name -> name.startsWith('/sandbox-') }
                 }
             } catch (Exception ignore) {
                 return null // Not available

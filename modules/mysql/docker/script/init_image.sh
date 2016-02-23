@@ -12,7 +12,7 @@ wget --no-check-certificate \
 tar -zxvf "flyway.tar.gz"  -C /opt/
 ln -s "/opt/flyway-${FLYWAY_VERSION}" "/opt/flyway"
 
-wget "http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.36/mysql-connector-java-5.1.36.jar"
-mv "mysql-connector-java-5.1.36.jar" "/opt/flyway/drivers"
+wget "http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.38/mysql-connector-java-5.1.38.jar"
+mv "mysql-connector-java-5.1.38.jar" "/opt/flyway/drivers"
 
 mkdir -p /home/mysql

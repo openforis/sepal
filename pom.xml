@@ -21,7 +21,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <slf4j.version>1.7.12</slf4j.version>
+        <slf4j.version>1.7.16</slf4j.version>
         <groovy-eclipse-compiler.version>2.9.2-01</groovy-eclipse-compiler.version>
     </properties>
 

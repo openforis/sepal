@@ -147,7 +147,7 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
     }
 
     List<WorkerInstance> allInstances() {
-        LOG.info("Finding all instances")
+        LOG.debug("Finding all pending or running instances")
         def request = new DescribeInstancesRequest()
                 .withFilters(
                 new Filter('tag:Type', ['Sandbox']),

@@ -13,6 +13,8 @@ import org.openforis.sepal.component.sandboxmanager.query.FindInstanceTypes
 import org.openforis.sepal.component.sandboxmanager.query.LoadSandboxInfo
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.openforis.sepal.user.NonExistingUser
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -31,11 +33,13 @@ import static io.undertow.server.session.SessionListener.SessionDestroyedReason
  * </ul>
  */
 class SandboxWebProxy {
-    private static final String SANDBOX_ID_SESSION_ATTR_NAME = "sepal-sandbox-id"
+    private final static Logger LOG = LoggerFactory.getLogger(this)
+    static final String SANDBOX_ID_KEY = "sepal-sandbox-id"
+    static final String USERNAME_KEY = "sepal-user"
 
     private final Undertow server
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
-    private final int sessionsCheckInterval
+    private final int sessionHeartbeatInterval
     private final int sessionDefaultTimeout
 
     private SessionManager sessionManager
@@ -47,8 +51,10 @@ class SandboxWebProxy {
      * @param endpointByPort specifies which port each proxied endpoint run on
      * @param sandboxManager the sandbox manager used to obtain sandboxes.
      */
-    SandboxWebProxy(int port, Map<String, Integer> endpointByPort, SandboxManagerComponent sandboxManagerComponent, int sessionsCheckInterval = 30, int sessionDefaultTimeout = 30 * 60) {
-        this.sessionsCheckInterval = sessionsCheckInterval
+    SandboxWebProxy(int port, Map<String, Integer> endpointByPort, SandboxManagerComponent sandboxManagerComponent,
+                    int sessionHeartbeatInterval, int sessionDefaultTimeout) {
+        LOG.info("Creating SandboxWebProxy [port: $port. Endpoints: $endpointByPort, sessionHeartbeatInterval: $sessionHeartbeatInterval, sessionDefaultTimeout: ${sessionDefaultTimeout}]")
+        this.sessionHeartbeatInterval = sessionHeartbeatInterval
         this.sessionDefaultTimeout = sessionDefaultTimeout
         this.sandboxManagerComponent = sandboxManagerComponent
         this.server = Undertow.builder()
@@ -74,9 +80,9 @@ class SandboxWebProxy {
     void start() {
         server.start()
         executor.scheduleWithFixedDelay(
-                new WebProxySessionsChecker(sandboxManagerComponent, sessionManager, SANDBOX_ID_SESSION_ATTR_NAME),
-                sessionsCheckInterval,
-                sessionsCheckInterval, TimeUnit.SECONDS
+                new WebProxySessionMonitor(sandboxManagerComponent, sessionManager),
+                sessionHeartbeatInterval,
+                sessionHeartbeatInterval, TimeUnit.SECONDS
         )
     }
 
@@ -85,9 +91,17 @@ class SandboxWebProxy {
         server.stop()
     }
 
+    static Long sandboxSessionId(Session session) {
+        session.getAttribute(SANDBOX_ID_KEY) as Long
+    }
+
+    static String username(Session session) {
+        session.getAttribute(USERNAME_KEY) as String
+    }
+
     private static class Listener extends SessionDestroyedListener {
         void sessionDestroyed(Session session, HttpServerExchange exchange, SessionDestroyedReason reason) {
-            // TODO: Trigger cleanup of session
+            LOG.info("HTTP session closed for user ${username(session)}. Reason: $reason")
         }
     }
 
@@ -112,15 +126,15 @@ class SandboxWebProxy {
                 def sandboxHost = determineUri(username, session)
                 uri = URI.create("http://$sandboxHost:${endpointByPort[endpoint]}")
                 session.setAttribute(uriSessionKey, uri)
-                session.setAttribute('sepal-user', username)
+                session.setAttribute(USERNAME_KEY, username)
             }
             return uri
         }
 
         private static String determineUsername(HttpServerExchange exchange) {
-            def username = exchange.requestHeaders.getFirst('sepal-user')
+            def username = exchange.requestHeaders.getFirst(USERNAME_KEY)
             if (!username)
-                throw new BadRequest('Missing header: sepal-user')
+                throw new BadRequest("Missing header: $USERNAME_KEY")
             return username
         }
 
@@ -148,17 +162,17 @@ class SandboxWebProxy {
                 } catch (NonExistingUser e) {
                     throw new BadRequest(e.getMessage())
                 }
-                // TODO: What if this isn't an active session? Redirect to a page?
-                session.setAttribute(SANDBOX_ID_SESSION_ATTR_NAME, sepalSession.id)
+                // TODO: What if this isn't an active session?
+                session.setAttribute(SANDBOX_ID_KEY, sepalSession.id)
                 session.setAttribute(sessionKey, sepalSession.host)
                 sandboxHost = sepalSession.host
             }
             return sandboxHost
         }
 
-        private List<SandboxSession> findActiveSepalSessions(String user) {
+        private List<SandboxSession> findActiveSepalSessions(String username) {
             sandboxManagerComponent.submit(
-                    new LoadSandboxInfo(username: user)
+                    new LoadSandboxInfo(username: username)
             ).activeSessions
         }
 
@@ -168,9 +182,9 @@ class SandboxWebProxy {
             )
         }
 
-        private SandboxSession createSession(String user) {
+        private SandboxSession createSession(String username) {
             sandboxManagerComponent.submit(
-                    new CreateSession(username: user, instanceType: defaultInstanceType())
+                    new CreateSession(username: username, instanceType: defaultInstanceType())
             )
         }
 
@@ -180,20 +194,25 @@ class SandboxWebProxy {
             ).first()
         }
 
-        private String determineSandboxHostSessionKey(String user) {
-            return 'sepal-sandbox-host' + user
+        private String determineSandboxHostSessionKey(String username) {
+            return 'sepal-sandbox-host' + username
         }
 
 
-        private String determineUriSessionKey(String endpoint, String user) {
-            return 'sepal-target-uri-' + endpoint + '|' + user
+        private String determineUriSessionKey(String endpoint, String username) {
+            return 'sepal-target-uri-' + endpoint + '|' + username
         }
 
         private Session getOrCreateSession(HttpServerExchange exchange) {
             SessionManager sessionManager = exchange.getAttachment(SessionManager.ATTACHMENT_KEY)
             SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY)
-            return sessionManager.getSession(exchange, sessionConfig) ?:
-                    sessionManager.createSession(exchange, sessionConfig)
+            def session = sessionManager.getSession(exchange, sessionConfig)
+            if (!session) {
+                session = sessionManager.createSession(exchange, sessionConfig)
+                LOG.info("Creating HTTP session. Username: ${determineUsername(exchange)}")
+            }
+            return session
+
         }
     }
 }

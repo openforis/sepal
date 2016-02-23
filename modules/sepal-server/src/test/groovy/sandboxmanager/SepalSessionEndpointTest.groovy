@@ -140,8 +140,8 @@ class SepalSessionEndpointTest extends Specification {
                         description: 'Another description',
                         hourlyCost: 0.2
                 ]],
-                monthlyInstanceBudget: 123,
-                monthlyInstanceSpending: 5
+                monthlyInstanceBudget: 123d,
+                monthlyInstanceSpending: 5d
         ]
 
         when:
