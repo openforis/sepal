@@ -162,7 +162,7 @@ class SandboxWebProxy {
             } catch (NonExistingUser e) {
                 throw new BadRequest(e.getMessage())
             }
-            sandboxSession
+            return sandboxSession
         }
 
         private List<SandboxSession> findActiveSepalSessions(String username) {

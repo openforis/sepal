@@ -5,9 +5,9 @@ import groovy.transform.ToString
 import org.openforis.sepal.transaction.SqlConnectionManager
 
 interface UserBudgetRepository {
-    void update(String username, int monthlyInstanceBudget)
+    void update(String username, Budget budget)
 
-    Budget byUsername(String s)
+    Budget byUsername(String username)
 }
 
 @ToString
@@ -18,22 +18,26 @@ class JdbcUserBudgetRepository implements UserBudgetRepository {
         this.connectionManager = connectionManager
     }
 
-    void update(String username, int monthlyInstanceBudget) {
+    void update(String username, Budget budget) {
         def rowsUpdated = sql.executeUpdate('''
                 UPDATE user_budget
-                SET monthly_instance = ?
-                WHERE username = ?''', [monthlyInstanceBudget, username])
+                SET monthly_instance = ?, monthly_storage = ?, storage_quota = ?
+                WHERE username = ?''', [budget.monthlyInstance, budget.monthlyStorage, budget.storageQuota, username])
         if (!rowsUpdated)
-            sql.executeInsert('INSERT INTO user_budget(monthly_instance, username) VALUES(?, ?)',
-                    [monthlyInstanceBudget, username])
+            sql.executeInsert('''
+                    INSERT INTO user_budget(monthly_instance, monthly_storage, storage_quota, username)
+                    VALUES(?, ?, ?, ?)''',
+                    [budget.monthlyInstance, budget.monthlyStorage, budget.storageQuota, username])
     }
 
     Budget byUsername(String username) {
-        def row = sql.firstRow('SELECT monthly_instance FROM user_budget WHERE username = ?', [username])
+        def row = sql.firstRow('SELECT monthly_instance, monthly_storage, storage_quota FROM user_budget WHERE username = ?', [username])
         if (!row)
             return new Budget()
         return new Budget(
-                monthlyInstance: row.monthly_instance
+                monthlyInstance: row.monthly_instance,
+                monthlyStorage: row.monthly_storage,
+                storageQuota: row.storage_quota
         )
 
     }

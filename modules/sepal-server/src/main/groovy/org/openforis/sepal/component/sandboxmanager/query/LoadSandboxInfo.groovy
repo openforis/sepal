@@ -3,15 +3,13 @@ package org.openforis.sepal.component.sandboxmanager.query
 import groovy.transform.ToString
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.SessionRepository
+import org.openforis.sepal.component.sandboxmanager.ResourceUsageService
 import org.openforis.sepal.component.sandboxmanager.UserBudgetRepository
 import org.openforis.sepal.hostingservice.WorkerInstanceManager
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 import org.openforis.sepal.user.UserRepository
-import org.openforis.sepal.util.Clock
-
-import java.time.ZoneId
 
 import static groovymvc.validate.Constraints.custom
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.*
@@ -31,17 +29,18 @@ class LoadSandboxInfoHandler implements QueryHandler<SandboxInfo, LoadSandboxInf
     private final SessionRepository sessionRepository
     private final WorkerInstanceManager instanceProvider
     private final UserBudgetRepository userBudgetRepository
-    private final Clock clock
+    private final ResourceUsageService resourceUsageService
+
 
     LoadSandboxInfoHandler(
             SessionRepository sessionRepository,
             WorkerInstanceManager instanceProvider,
             UserBudgetRepository userBudgetRepository,
-            Clock clock) {
+            ResourceUsageService resourceUsageService) {
         this.sessionRepository = sessionRepository
         this.instanceProvider = instanceProvider
-        this.clock = clock
         this.userBudgetRepository = userBudgetRepository
+        this.resourceUsageService = resourceUsageService
     }
 
     SandboxInfo execute(LoadSandboxInfo query) {
@@ -54,22 +53,14 @@ class LoadSandboxInfoHandler implements QueryHandler<SandboxInfo, LoadSandboxInf
             info.startingSessions.add(it)
         }
         info.instanceTypes = instanceProvider.instanceTypes
-
-        def firstOfMonth = firstOfMonth(clock.now())
-        def hoursPerInstanceType = sessionRepository.hoursByInstanceType(query.username, firstOfMonth)
-        info.monthlyInstanceSpending = instanceProvider.instanceTypes.sum {
-            def hours = hoursPerInstanceType[it.id] ?: 0d
-            return hours * it.hourlyCost
-        } as double
+        info.monthlyInstanceSpending = resourceUsageService.monthlyInstanceSpending(query.username, info.instanceTypes)
         def budget = userBudgetRepository.byUsername(query.username)
         info.monthlyInstanceBudget = budget.monthlyInstance
+        info.storageQuota = budget.storageQuota
+        info.storageUsed = resourceUsageService.storageUsed(query.username)
+        info.monthlyStorageSpending = resourceUsageService.monthlyStorageSpending(query.username)
+        info.monthlyStorageBudget = budget.monthlyStorage
         return info
-    }
-
-    private Date firstOfMonth(Date date) {
-        def zone = ZoneId.systemDefault()
-        def local = date.toInstant().atZone(zone).withDayOfMonth(1).toLocalDate().atStartOfDay(zone).toInstant()
-        return Date.from(local)
     }
 }
 
@@ -79,4 +70,8 @@ class SandboxInfo {
     List<WorkerInstanceType> instanceTypes
     double monthlyInstanceBudget
     double monthlyInstanceSpending
+    double monthlyStorageBudget
+    double monthlyStorageSpending
+    double storageQuota
+    double storageUsed
 }

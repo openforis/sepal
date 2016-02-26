@@ -27,47 +27,57 @@ final class SandboxManagerComponent implements EndpointRegistry, EventSource {
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
     private final SqlConnectionManager connectionManager
-    private final SandboxWorkScheduler sandboxCleanup
+    private final SandboxWorkScheduler sandboxWorkScheduler
     private final WorkerInstanceManager instanceManager
     private final Clock clock
     private final HandlerRegistryEventDispatcher eventDispatcher
+    private BudgetCheckScheduler storageUsageCheckScheduler
 
     SandboxManagerComponent(SepalConfiguration config) {
         this(
                 config.dataSource,
-                instantiateHostingService(config).workerInstanceManager,
+                instantiateHostingService(config),
                 new DockerSandboxSessionProvider(config, new SystemClock()),
+                new StorageUsageFileChecker(config.userHomeDirTemplate()),
                 new SystemClock()
         )
     }
 
     SandboxManagerComponent(DataSource dataSource,
-                            WorkerInstanceManager instanceManager,
+                            HostingService hostingService,
                             SandboxSessionProvider sessionProvider,
+                            StorageUsageChecker storageUsageChecker,
                             Clock clock) {
-        this.instanceManager = instanceManager
+        this.instanceManager = hostingService.workerInstanceManager
         connectionManager = new SqlConnectionManager(dataSource)
         eventDispatcher = new HandlerRegistryEventDispatcher()
         def sessionRepository = new JdbcSessionRepository(connectionManager, clock)
         def userBudgetRepository = new JdbcUserBudgetRepository(connectionManager)
         this.clock = clock
         def sessionManager = new SessionManager(sessionRepository, instanceManager, sessionProvider, eventDispatcher, clock)
+        def storageUsageRepository = new JdbcStorageUsageRepository(connectionManager, clock)
+        def resourceUsageService = new ResourceUsageService(storageUsageChecker, sessionRepository, storageUsageRepository, clock, hostingService.storageCostPerGbMonth)
+        def userRepository = new JDBCUserRepository(connectionManager)
+        def budgetCheck = new BudgetCheck(resourceUsageService, userBudgetRepository, instanceManager, sessionManager)
 
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
-                .register(CreateSession, new CreateSessionHandler(sessionManager))
+                .register(CreateSession, new CreateSessionHandler(sessionManager, budgetCheck))
                 .register(JoinSession, new JoinSessionHandler(sessionManager))
                 .register(CloseSession, new CloseSessionHandler(sessionManager))
                 .register(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionManager))
                 .register(UpdateInstanceStates, new UpdateInstanceStatesHandler(sessionManager))
                 .register(UpdateUserBudget, new UpdateUserBudgetHandler(userBudgetRepository))
                 .register(DeployStartingSessions, new DeployStartingSessionsHandler(sessionManager))
+                .register(UpdateStorageUsage, new UpdateStorageUsageHandler(userRepository, resourceUsageService))
+                .register(CheckBudget, new CheckBudgetHandler(userRepository, budgetCheck))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
                 .register(FindInstanceTypes, new FindInstanceTypesHandler(instanceManager))
-                .register(LoadSandboxInfo, new LoadSandboxInfoHandler(sessionRepository, instanceManager, userBudgetRepository, clock))
+                .register(LoadSandboxInfo, new LoadSandboxInfoHandler(sessionRepository, instanceManager, userBudgetRepository, resourceUsageService))
                 .register(LoadSession, new LoadSessionHandler(sessionRepository))
 
-        sandboxCleanup = new SandboxWorkScheduler(commandDispatcher)
+        sandboxWorkScheduler = new SandboxWorkScheduler(commandDispatcher)
+        storageUsageCheckScheduler = new BudgetCheckScheduler(commandDispatcher)
     }
 
     void registerEndpointsWith(Controller controller) {
@@ -76,12 +86,14 @@ final class SandboxManagerComponent implements EndpointRegistry, EventSource {
     }
 
     SandboxManagerComponent start() {
-        sandboxCleanup.start()
+        sandboxWorkScheduler.start()
+        storageUsageCheckScheduler.start()
         return this
     }
 
     void stop() {
-        sandboxCleanup?.stop()
+        sandboxWorkScheduler?.stop()
+        storageUsageCheckScheduler?.stop()
     }
 
     def <R> R submit(Command<R> command) {

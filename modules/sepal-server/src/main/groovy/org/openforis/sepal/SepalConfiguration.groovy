@@ -105,8 +105,12 @@ class SepalConfiguration {
         getValue(PROCESSING_HOME_DIR)
     }
 
-    String getUserHomeDir() {
-        getValue(USER_HOME_DIR)
+    String userDownloadDirTemplate() {
+        getValue('sepal.userDownloadDir')
+    }
+
+    String userHomeDirTemplate() {
+        getValue('sepal.userHomeDir')
     }
 
     String getDownloadWorkingDirectory() {

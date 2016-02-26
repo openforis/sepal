@@ -67,18 +67,14 @@ class SepalSessionEndpoint {
                             ]
                         },
                         monthlyInstanceBudget: info.monthlyInstanceBudget,
-                        monthlyInstanceSpending: info.monthlyInstanceSpending
+                        monthlyInstanceSpending: info.monthlyInstanceSpending,
+                        monthlyStorageBudget: info.monthlyStorageBudget,
+                        monthlyStorageSpending: info.monthlyStorageSpending,
+                        storageQuota: info.storageQuota,
+                        storageUsed: info.storageUsed
                 ]
                 send(toJson(responseBodyMap))
             }
-
-//            get('sandbox/{user}/session/{sessionId}') {
-//                response.contentType = 'application/json'
-//                def query = new LoadSession(username: params.user, sessionId: params.required('sessionId', long))
-//                def session = queryDispatcher.submit(query)
-//                def sessionMap = toSessionMap(session, instanceTypesById())
-//                send(toJson(sessionMap))
-//            }
 
             post('sandbox/{user}/session/{sessionId}') {
                 response.contentType = 'application/json'

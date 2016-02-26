@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS datacenters;
 DROP TABLE IF EXISTS instances;
 DROP TABLE IF EXISTS sandbox_session;
 DROP TABLE IF EXISTS user_budget;
+DROP TABLE IF EXISTS user_monthly_storage;
 
 CREATE TABLE admin_groups (
   id         INT(10)      NOT NULL,
@@ -277,7 +278,6 @@ CREATE TABLE instances (
   PRIMARY KEY (id)
 );
 
-
 CREATE TABLE sandbox_session (
   id            INT          NOT NULL AUTO_INCREMENT,
   username      VARCHAR(255) NOT NULL,
@@ -293,5 +293,20 @@ CREATE TABLE sandbox_session (
 
 CREATE TABLE user_budget (
   username         VARCHAR(255) NOT NULL,
-  monthly_instance INT          NOT NULL
+  monthly_instance INT          NOT NULL,
+  monthly_storage  INT          NOT NULL,
+  storage_quota    INT          NOT NULL,
+  PRIMARY KEY (username)
 );
+
+CREATE TABLE user_monthly_storage (
+  username     VARCHAR(255) NOT NULL,
+  year         INT          NOT NULL,
+  month        INT          NOT NULL,
+  gb_hours     DOUBLE       NOT NULL,
+  storage_used DOUBLE       NOT NULL,
+  update_time  TIMESTAMP    NOT NULL,
+  PRIMARY KEY (username, year, month)
+);
+
+CREATE INDEX idx_user_monthly_storage_1 ON user_monthly_storage (username, year, month);

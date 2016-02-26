@@ -124,8 +124,6 @@ class PoolingWorkerInstanceManagerTest extends Specification {
         new SandboxSession(status: PENDING, instanceType: instanceType)
     }
 
-    // TODO: Terminate the ones closed to being charged
-
     @Unroll
     def 'Launched #launchTime and updated #updateTime is #terminated'(String launchTime, String updateTime, String terminated) {
         def instanceManager = instanceManager([type0: 0])

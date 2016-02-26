@@ -7,12 +7,13 @@ import org.slf4j.LoggerFactory
 
 interface UserRepository {
 
-
     User fetchUser(String username)
 
     User getUser(String username)
 
     boolean contains(String username)
+
+    void eachUsername(Closure closure)
 }
 
 
@@ -49,6 +50,12 @@ class JDBCUserRepository implements UserRepository {
 
     boolean contains(String username) {
         return getUser(username) != null
+    }
+
+    void eachUsername(Closure closure) {
+        sql.eachRow('SELECT username FROM users') {
+            closure.call(it.username)
+        }
     }
 
     private static User mapUser(row) {

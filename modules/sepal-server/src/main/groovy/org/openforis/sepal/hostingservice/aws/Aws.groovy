@@ -12,4 +12,6 @@ final class Aws implements HostingService {
             ['T2Small': 1],
             new SystemClock()
     )
+
+    final double storageCostPerGbMonth = 0.3
 }

@@ -4,5 +4,7 @@ import groovy.transform.ToString
 
 @ToString
 class Budget {
-    int monthlyInstance
+    double monthlyInstance
+    double monthlyStorage
+    double storageQuota
 }

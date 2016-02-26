@@ -1,5 +1,6 @@
 package sandboxmanager
 
+import fake.FakeUserRepository
 import groovy.json.JsonOutput
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.command.Command
@@ -14,14 +15,11 @@ import org.openforis.sepal.component.sandboxmanager.command.JoinSession
 import org.openforis.sepal.component.sandboxmanager.endpoint.SepalSessionEndpoint
 import org.openforis.sepal.component.sandboxmanager.query.FindInstanceTypes
 import org.openforis.sepal.component.sandboxmanager.query.LoadSandboxInfo
-import org.openforis.sepal.component.sandboxmanager.query.LoadSession
 import org.openforis.sepal.component.sandboxmanager.query.SandboxInfo
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.openforis.sepal.query.QueryDispatcher
-import org.openforis.sepal.user.User
-import org.openforis.sepal.user.UserRepository
 import spock.lang.Specification
 import util.Port
 
@@ -93,7 +91,11 @@ class SepalSessionEndpointTest extends Specification {
                         )
                 ],
                 monthlyInstanceBudget: 123,
-                monthlyInstanceSpending: 5
+                monthlyInstanceSpending: 5,
+                monthlyStorageBudget: 9d,
+                monthlyStorageSpending: 8d,
+                storageQuota: 7d,
+                storageUsed: 6d,
         )
 
         def expectation = [
@@ -141,7 +143,12 @@ class SepalSessionEndpointTest extends Specification {
                         hourlyCost: 0.2
                 ]],
                 monthlyInstanceBudget: 123d,
-                monthlyInstanceSpending: 5d
+                monthlyInstanceSpending: 5d,
+                monthlyStorageBudget: 9d,
+                monthlyStorageSpending: 8d,
+                storageQuota: 7d,
+                storageUsed: 6d,
+
         ]
 
         when:
@@ -258,18 +265,3 @@ class SepalSessionEndpointTest extends Specification {
 
 }
 
-class FakeUserRepository implements UserRepository {
-    private boolean containsUser = true
-
-    User fetchUser(String username) { throw new UnsupportedOperationException('Not implemented in fake') }
-
-    User getUser(String username) { throw new UnsupportedOperationException('Not implemented in fake') }
-
-    boolean contains(String username) {
-        return containsUser
-    }
-
-    void doesNotContainUser() {
-        containsUser = false;
-    }
-}

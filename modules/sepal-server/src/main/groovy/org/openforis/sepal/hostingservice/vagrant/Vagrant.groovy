@@ -12,4 +12,7 @@ class Vagrant implements HostingService {
             ['vagrant-box': 1],
             new SystemClock()
     )
+
+    final double storageCostPerGbMonth = 0.3
+
 }

@@ -1,18 +1,21 @@
 package org.openforis.sepal.util
 
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoField
+
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR
+import static java.time.temporal.ChronoField.YEAR
 
 class DateTime {
 
     static SimpleDateFormat DATE_ONLY_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd")
     static SimpleDateFormat EARTH_EXPLORER_DATE_FORMAT = new SimpleDateFormat("yyyy:DDD:HH:mm:ss")
-    static SimpleDateFormat JSON_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
 
     static String todayDateString() { toDateString(new Date()) }
 
     static String toDateString(Date date) { formatDate(date, DATE_ONLY_DATE_FORMAT) }
-
-    static String toJsonDateString(Date date) { formatDate(date, JSON_DATE_FORMAT) }
 
     static Date addDays(Date date, int days) {
         Calendar calendar = new GregorianCalendar()
@@ -28,17 +31,42 @@ class DateTime {
         return cal.time
     }
 
-    static long getDifferenceInSeconds(Date date1, Date date2) {
-        return (date1.getTime() - date2.getTime()) / 1000
-    }
-
-    static Date parseJsonDateFormat(String dateString) { JSON_DATE_FORMAT.parse(dateString) }
-
     static Date parseDateString(String dateString) { DATE_ONLY_DATE_FORMAT.parse(dateString) }
 
     static Date parseEarthExplorerDateString(String dateString) { EARTH_EXPLORER_DATE_FORMAT.parse(dateString) }
 
+    static Date firstOfMonth(Date date) {
+        def zone = ZoneId.systemDefault()
+        def local = date.toInstant().atZone(zone).withDayOfMonth(1).toLocalDate().atStartOfDay(zone).toInstant()
+        return Date.from(local)
+    }
+
+    static hoursBetween = { Date from, Date to ->
+        return (to.time - from.time) / 1000 / 60 / 60
+    }
+
+    static int monthOfYear(Date date) {
+        get(date, MONTH_OF_YEAR)
+    }
+
+    static int year(Date date) {
+        get(date, YEAR)
+    }
+
+    private static LocalDate toLocalDate(Date from) {
+        def zone = ZoneId.systemDefault()
+        from.toInstant().atZone(zone).toLocalDate()
+    }
+
+    private static int get(Date date, ChronoField field) {
+        def zone = ZoneId.systemDefault()
+        date.toInstant().atZone(zone).toLocalDate().get(field)
+    }
+
+
     private static String formatDate(Date date, SimpleDateFormat format) { format.format(date) }
 
-
+    static boolean sameYearAndMonth(Date date1, Date date2) {
+        year(date1) == year(date2) && monthOfYear(date1) == monthOfYear(date2)
+    }
 }

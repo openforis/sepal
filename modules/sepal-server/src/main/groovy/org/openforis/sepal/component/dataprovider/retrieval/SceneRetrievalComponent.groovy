@@ -22,7 +22,7 @@ class SceneRetrievalComponent {
 
     SceneRetrievalComponent(SepalConfiguration config) {
         def downloadWorkingDirectory = new File(config.downloadWorkingDirectory)
-        def userHomePath = config.userHomeDir
+        def userHomePath = config.userDownloadDirTemplate()
 
         def sceneRepository = new FileSystemSceneRepository(downloadWorkingDirectory, userHomePath)
         coordinator = new FileSystemSceneContextProvider(sceneRepository)

@@ -1,57 +1,19 @@
 package sandboxmanager
 
-import fake.Database
 import org.openforis.sepal.command.ExecutionFailed
-import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
-import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.SessionFailed
-import org.openforis.sepal.component.sandboxmanager.command.*
+import org.openforis.sepal.component.sandboxmanager.command.DeployStartingSessions
 import org.openforis.sepal.component.sandboxmanager.event.SessionAlive
 import org.openforis.sepal.component.sandboxmanager.event.SessionClosed
 import org.openforis.sepal.component.sandboxmanager.event.SessionCreated
 import org.openforis.sepal.component.sandboxmanager.event.SessionDeployed
-import org.openforis.sepal.component.sandboxmanager.query.FindInstanceTypes
-import org.openforis.sepal.component.sandboxmanager.query.LoadSandboxInfo
-import org.openforis.sepal.component.sandboxmanager.query.LoadSession
-import org.openforis.sepal.component.sandboxmanager.query.SandboxInfo
-import org.openforis.sepal.event.Event
-import org.openforis.sepal.event.EventHandler
-import org.openforis.sepal.hostingservice.PoolingWorkerInstanceManager
-import org.openforis.sepal.hostingservice.WorkerInstance
-import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.openforis.sepal.query.QueryFailed
-import spock.lang.Specification
-
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
 
 import static java.util.concurrent.TimeUnit.HOURS
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
 
-class SessionManagerTests extends Specification {
-    def someUserName = 'some-username'
-    def anotherUserName = 'another-username'
-    def someInstanceType = 'some-instance-type'
-    def future = new Date() + 10
-
-    def clock = new FakeClock()
-    def instanceProvider = new FakeWorkerInstanceProvider(clock: clock)
-    def sessionProvider = new FakeSandboxSessionProvider(clock)
-    def component = new SandboxManagerComponent(
-            new Database().dataSource,
-            new PoolingWorkerInstanceManager(instanceProvider, [:], clock),
-            sessionProvider, clock
-    )
-
-    def cheapType = new WorkerInstanceType(id: 'cheap', hourlyCost: 1)
-    def expensiveType = new WorkerInstanceType(id: 'expensive', hourlyCost: 2)
-    def eventHandler = new CollectingEventHandler()
-
-    def setup() {
-        component.register(Event, eventHandler)
-    }
-
+class SessionManagerTests extends AbstractSandboxManagerTests {
     def 'Given no sandbox sessions have been created, when loading sandbox info, no sessions are included'() {
         when:
         def info = loadSandboxInfo()
@@ -197,8 +159,6 @@ class SessionManagerTests extends Specification {
         activeSession.host == session.host
         activeSession.port == session.port
     }
-
-    // TODO: Test failing to reserve, deploy
 
     def 'Given an active session, when joining that session, update timestamp is updated and the session is returned'() {
         runningIdle()
@@ -561,113 +521,6 @@ class SessionManagerTests extends Specification {
 
         then:
         eventHandler.eventTypes == [SessionClosed, SessionClosed]
-    }
-
-    void runSession(WorkerInstanceType instanceType, int time, TimeUnit timeUnit) {
-        createSession(instanceType)
-        clock.forward(time, timeUnit)
-        closeTimedOutSessions(clock.now())
-    }
-
-    SandboxSession createSession(String username = someUserName, String instanceType = someInstanceType) {
-        component.submit(new CreateSession(username: username, instanceType: instanceType))
-    }
-
-    SandboxSession createStartingSession(String username = someUserName, String instanceType = someInstanceType) {
-        instanceProvider.noIdle()
-        component.submit(new CreateSession(username: username, instanceType: instanceType))
-    }
-
-    SandboxSession createSession(String username = someUserName, WorkerInstanceType instanceType) {
-        instanceProvider.addType(instanceType)
-        component.submit(new CreateSession(username: username, instanceType: instanceType.id))
-    }
-
-    private void deployStartingSessions() {
-        component.submit(new DeployStartingSessions())
-    }
-
-
-    void createSessionButFailToDeploy(String username = someUserName) {
-        sessionProvider.failing()
-        try {
-            createSession(username)
-        } catch (ExecutionFailed ignore) {}
-    }
-
-    SandboxSession joinSession(long sessionId, String username = someUserName) {
-        component.submit(new JoinSession(username: username, sessionId: sessionId))
-    }
-
-    SandboxInfo loadSandboxInfo(String username = someUserName) {
-        component.submit(new LoadSandboxInfo(username: username))
-    }
-
-    void closeTimedOutSessions(Date updatedBefore) {
-        component.submit(new CloseTimedOutSessions(updatedBefore: updatedBefore))
-    }
-
-    def closeSession(SandboxSession session) {
-        component.submit(new CloseSession(username: session.username, sessionId: session.id))
-    }
-
-    void updateInstances() {
-        component.submit(new UpdateInstanceStates())
-    }
-
-    List<WorkerInstanceType> findInstanceTypes() {
-        component.submit(new FindInstanceTypes())
-    }
-
-    SandboxSession loadSession(String username = someUserName, long sessionId) {
-        component.submit(new LoadSession(username: username, sessionId: sessionId))
-    }
-
-
-    void specifyInstanceBudget(String username = someUserName, int budget) {
-        component.submit(new UpdateUserBudget(username: username, monthlyInstanceBudget: budget))
-    }
-
-    WorkerInstance runningIdle(String instanceType = someInstanceType) {
-        instanceProvider.runningIdle(instanceType)
-    }
-
-    SandboxSession firstActiveSession(String username = someUserName) {
-        def activeSessions = loadSandboxInfo(username).activeSessions
-        assert !activeSessions.empty
-        return activeSessions.first()
-    }
-
-    void hasNoActiveSessions(String username = someUserName) {
-        def activeSessions = loadSandboxInfo(username).activeSessions
-        assert activeSessions.empty
-    }
-
-    void hasOneActiveSessions(String username = someUserName) {
-        def activeSessions = loadSandboxInfo(username).activeSessions
-        assert activeSessions.size() == 1
-    }
-
-
-    void hasOneStartingSession(String username = someUserName) {
-        def startingSessions = loadSandboxInfo(username).startingSessions
-        assert startingSessions.size() == 1
-    }
-
-    static class CollectingEventHandler implements EventHandler<Event> {
-        List<Event> events = new CopyOnWriteArrayList<>()
-
-        void handle(Event event) {
-            events << event
-        }
-
-        List<Class<Event>> getEventTypes() {
-            events.collect { it.class }
-        }
-
-        void clear() {
-            events.clear()
-        }
     }
 }
 

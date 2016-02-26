@@ -11,8 +11,7 @@ import org.openforis.sepal.util.Clock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
-import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
+import static org.openforis.sepal.component.sandboxmanager.SessionStatus.*
 
 class SessionManager {
     private static final Logger LOG = LoggerFactory.getLogger(this)
@@ -72,6 +71,13 @@ class SessionManager {
     void closeTimedOut(Date updatedBefore) {
         sessionRepository.closeAllTimedOut(updatedBefore) { SandboxSession session ->
             closeSilently(session)
+        }
+    }
+
+    void closeAll(String username) {
+        def sessions = sessionRepository.findWithStatus(username, [PENDING, STARTING, ACTIVE])
+        sessions.each {
+            close(it)
         }
     }
 

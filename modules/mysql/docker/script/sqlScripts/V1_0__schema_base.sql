@@ -235,9 +235,23 @@ CREATE TABLE sandbox_session (
 
 CREATE TABLE user_budget (
   username         VARCHAR(255) NOT NULL,
-  monthly_instance INT          NOT NULL
+  monthly_instance INT          NOT NULL,
+  monthly_storage  INT          NOT NULL,
+  storage_quota    INT          NOT NULL,
+  PRIMARY KEY (username)
 );
 
+CREATE TABLE user_monthly_storage (
+  username     VARCHAR(255) NOT NULL,
+  year         INT          NOT NULL,
+  month        INT          NOT NULL,
+  gb_hours     DOUBLE       NOT NULL,
+  storage_used DOUBLE       NOT NULL,
+  update_time  TIMESTAMP    NOT NULL,
+  PRIMARY KEY (username, year, month)
+);
+
+CREATE INDEX idx_user_monthly_storage_1 ON user_monthly_storage (username, year, month);
 
 INSERT INTO config_details VALUES ('cron_delay_days', '50');
 
@@ -263,6 +277,7 @@ INSERT INTO roles (role_name, role_desc) VALUES ('application_admin', 'Applicati
 
 INSERT INTO users (username, full_name, user_uid) VALUES ('sepalAdminWeb', 'sepalAdminWeb', 1001);
 INSERT INTO users_roles (user_id, role_id, created_by) VALUES (1, 1, 1);
+INSERT INTO user_budget (username, monthly_instance, storage_quota) VALUES ('sepalAdminWeb', 20, 10);
 
 INSERT INTO metadata_providers
 VALUES (1, 'EarthExplorer', 1, 'http://earthexplorer.usgs.gov/EE/InventoryStream/pathrow', 150, 10, NULL, NULL);
