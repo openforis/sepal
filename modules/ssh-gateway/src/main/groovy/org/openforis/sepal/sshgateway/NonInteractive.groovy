@@ -15,6 +15,7 @@ class NonInteractive {
 
     void start() {
         def sandboxInfo = sepalClient.loadSandboxInfo()
+        BudgetChecker.assertWithinBudget(sandboxInfo)
         def sessions = sandboxInfo.sessions as List<Map>
         def activeSession = sessions.find { it.status == 'ACTIVE' }
         if (activeSession) {

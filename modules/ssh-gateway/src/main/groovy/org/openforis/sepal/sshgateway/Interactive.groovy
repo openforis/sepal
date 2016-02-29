@@ -25,6 +25,7 @@ class Interactive {
         def sandboxInfo = sepalClient.loadSandboxInfo()
 
         printUsageBudget(sandboxInfo)
+        BudgetChecker.assertWithinBudget(sandboxInfo)
         if (sandboxInfo.sessions)
             promptJoin(sandboxInfo)
         else
