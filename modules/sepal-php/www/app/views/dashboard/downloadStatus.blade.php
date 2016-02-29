@@ -1,4 +1,5 @@
 <!-- Bootstrap -->
+<!--suppress JSAnnotator -->
 <html lang="en" class="no-js">
 <!--<![endif]-->
 <head>
@@ -24,18 +25,19 @@
             padding: 4px
         }
 
-        .scenes .glyphicon{
-            top:2px;
-            font-size:20px;
+        .scenes .glyphicon {
+            top: 2px;
+            font-size: 20px;
         }
 
-        .pointer:hover{
-            cursor:pointer;
+        .pointer:hover {
+            cursor: pointer;
         }
 
 
     </style>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-dateFormat/1.0/jquery.dateFormat.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery-dateFormat/1.0/jquery.dateFormat.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
 
@@ -56,18 +58,18 @@
                         var requestIndex = 0
                         _.each(requests, function (request) {
                             var html = ''
-                            var requestTitle = $.format.date(request.requestTime,'dd/MM/yyyy HH:mm')  + ' UTC';
+                            var requestTitle = $.format.date(request.requestTime, 'dd/MM/yyyy HH:mm') + ' UTC';
                             var removeStatus = getRemoveRequestButtonStatus(request);
-                            if (request.groupScenes){
+                            if (request.groupScenes) {
                                 requestTitle = (request.requestName != null ? request.requestName : request.requestId) + " || " + requestTitle;
                                 removeStatus = getRemoveGroupedRequestButtonStatus(request)
                             }
 
 
-                            html = '<div class="panel panel-primary"><div class="panel-heading"><h5 class="panel-title"><span style="' + removeStatus+'" onclick="javascript:removeFromDashboard(' + request.requestId + ',\'\')" title="Remove Request" class=" pointer glyphicon glyphicon-trash"></span> &nbsp;&nbsp;' + requestTitle + '</h5></div>'
-                            html = html + '<div id="panel' + requestIndex +'" class="panel-collapse collapse in"><div class="panel-body">'
+                            html = '<div class="panel panel-primary"><div class="panel-heading"><h5 class="panel-title"><span style="' + removeStatus + '" onclick="javascript:removeFromDashboard(' + request.requestId + ',\'\')" title="Remove Request" class=" pointer glyphicon glyphicon-trash"></span> &nbsp;&nbsp;' + requestTitle + '</h5></div>'
+                            html = html + '<div id="panel' + requestIndex + '" class="panel-collapse collapse in"><div class="panel-body">'
                             var i = 0;
-                            _.each (request.scenes, function (scene) {
+                            _.each(request.scenes, function (scene) {
                                 scene.i = i;
                                 scene.icon = icon(scene);
                                 scene.message = message(scene);
@@ -84,11 +86,11 @@
                     })
             }
 
-            function requestIcon(request){
+            function requestIcon(request) {
                 return pickUpIcon(request.status)
             }
 
-            function pickUpIcon(status){
+            function pickUpIcon(status) {
                 switch (status) {
                     case 'FAILED':
                         return '../images/error.png';
@@ -103,38 +105,38 @@
                 return pickUpIcon(scene.status)
             }
 
-            function getRemoveButtonStatus(status){
-                var style="display:none";
+            function getRemoveButtonStatus(status) {
+                var style = "display:none";
                 switch (status) {
                     case 'PUBLISHED':
                     case 'FAILED':
-                        style=""
+                        style = ""
                         break;
                 }
                 return style;
             }
 
-            function getRemoveSceneButtonStatus(scene){
+            function getRemoveSceneButtonStatus(scene) {
                 return getRemoveButtonStatus(scene.status)
             }
 
-            function getRemoveGroupedRequestButtonStatus(request){
+            function getRemoveGroupedRequestButtonStatus(request) {
                 return getRemoveButtonStatus(request.status)
             }
 
-            function getRemoveRequestButtonStatus(request){
-                var style="";
-                for (index = 0; index < request.scenes.length; index++){
+            function getRemoveRequestButtonStatus(request) {
+                var style = "";
+                for (index = 0; index < request.scenes.length; index++) {
                     var scene = request.scenes[index];
                     style = getRemoveSceneButtonStatus(scene.status);
-                    if (style != ""){
+                    if (style != "") {
                         break;
                     }
                 }
                 return style;
             }
 
-            function pickMessage(status){
+            function pickMessage(status) {
                 switch (status) {
                     case 'REQUESTED':
                     case 'STARTED':
@@ -164,17 +166,17 @@
                 return pickMessage(scene.status)
             }
 
-            function requestMessage(request){
+            function requestMessage(request) {
                 return pickMessage(request.status)
             }
         })
 
-        function removeFromDashboard(requestId, sceneId){
-             var url = "https://{{SdmsConfig::value('host')}}/removeFromDashboard?requestId=" + requestId + "&sceneId=" + sceneId
-             $.get(url).done (function (data){
+        function removeFromDashboard(requestId, sceneId) {
+            var url = "https://{{SdmsConfig::value('host')}}/removeFromDashboard?requestId=" + requestId + "&sceneId=" + sceneId
+            $.get(url).done(function (data) {
                 window.location.reload();
-             });
-         }
+            });
+        }
 
     </script>
 </head>
@@ -193,20 +195,22 @@
 <script type="text/template" class="template">
     <ol class="img-up-section">
         <li data="<%=id%>" datasetId="<%=sceneReference.dataSet%>">
-                <p><%=sceneReference.id%></p>
+            <p><%=sceneReference.id%></p>
 
-                <div class="info-img">
-                    <span><img src="../images/info.png"></span>
+            <div class="info-img">
+                <span><img src="../images/info.png"></span>
 
-                    <div class="arrow_box_info">
-                        <%=message%>
-                    </div>
+                <div class="arrow_box_info">
+                    <%=message%>
                 </div>
-                <span style="<%=buttonStyle%>" title="Remove Scene" onclick="javascript:removeFromDashboard(<%=request.requestId%>,<%=id%>)" class="pointer glyphicon glyphicon-trash"></span>
+            </div>
+            <span style="<%=buttonStyle%>" title="Remove Scene"
+                  onclick="javascript:removeFromDashboard(<%=request.requestId%>,<%=id%>)"
+                  class="pointer glyphicon glyphicon-trash"></span>
                 <span class="action">
                 <img class="<%=id%>" src="<%=icon%>">
                 </span>
-            </li>
+        </li>
     </ol>
 
 </script>

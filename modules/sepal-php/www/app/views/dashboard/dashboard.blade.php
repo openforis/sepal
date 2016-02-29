@@ -1,5 +1,3 @@
-
-
 @section('content')
 <!--header wrap start-->
 @include('includes.menu',array('current_page'=>'dashboard'))
@@ -9,7 +7,7 @@
 {{ HTML::script('js/tooltip.js'); }}
 {{ HTML::script('js/jquery.argonbox.js'); }}
 <script type="text/javascript">
-    $(document).ready(function() {
+    $(document).ready(function () {
 
         $('.tooltip-hide').tooltip('hide');
     });
@@ -20,22 +18,29 @@
     <div class="container">
         <ul class="bread-crumb left">
             <li>{{ HTML::link('dashboard', 'Dashboard') }}</li>
-        </ul>                
+        </ul>
         <div class="help-div right">
             <a href="javascript:void(0)" id="help-button" class="sprite help-icon"></a>
         </div>
         <ul class="bread-crumb right" style="padding-right: 10px">
             <li><a href="javascript:void(0)" onclick="openMigrationStatus();">Downloads</a></li>
-            </ul>
+        </ul>
     </div>
 </section>
 <!--popup loading div start here -->
 <div class="popup-wrap" id="help-popup-wrap" style="display: none;">
     <div class="popup-container">
         <a class="close close-btn" id="help-close-button" href="#">x</a>
-         <div class="popup-heading"><h5 class="text-left">Dashboard</h5></div>
-        <p class="text-left marg-no">Welcome to SEPAL. SEPAL is a pilot program to assess the ability of a cloud based system to provide the necessary infrastructure to allow countries without reliable internet access to remotely store and process satellite data and thereby significantly reduce the required volume of data that must be downloaded by the user.</p>
-        <p class="text-left marg-no">Below is a navigation panel which displays the content of your working directory. Navigation is possible through all folders inside your working directory but only non-tiff image files will be viewable within the interface. To view an image at full resolution, click on the desired image. To download the image, click on the down arrow icon in the upper right hand corner. The file size is shown in the upper left hand corner of the icon.</p>
+        <div class="popup-heading"><h5 class="text-left">Dashboard</h5></div>
+        <p class="text-left marg-no">Welcome to SEPAL. Welcome to SEPAL. SEPAL is a cloud computing platform for
+            geographical data
+            processing. It enables users to quickly process large amount of data without high network bandwidth
+            requirements or need to invest in high-performance computing infrastructure.</p>
+        <p class="text-left marg-no">Below is a navigation panel which displays the content of your working directory.
+            Navigation is possible through all folders inside your working directory but only non-tiff image files will
+            be viewable within the interface. To view an image at full resolution, click on the desired image. To
+            download the image, click on the down arrow icon in the upper right hand corner. The file size is shown in
+            the upper left hand corner of the icon.</p>
     </div>
 </div>
 <!--popup loading div end here -->
@@ -54,14 +59,14 @@
 
                         </ul>
                     </div>
-                </div>                    	
+                </div>
             </header>
             <div class="clearfix"></div>
 
             <div class="folder-main-wrap">
                 <div class="left-side-folder">
                     <div class="location-wrap">
-                        <div class="location"> 
+                        <div class="location">
                             @if (isset($userFolder) && count($userFolder)>0)
 
 
@@ -73,34 +78,34 @@
                                 {{-- */$validextensions = array("jpeg", "jpg", "png","gif","tif");/* --}}
                                 {{-- */$file_ext =pathinfo($folderValue,PATHINFO_EXTENSION);/* --}}
                                 {{-- */$isdirectory = exec("sudo file -L ".$folderwithpath);/* --}}
-                                {{-- */$isdir = substr_compare($isdirectory, "directory", strlen($isdirectory)-strlen("directory"), strlen("directory")) === 0;/* --}}
+                                {{-- */$isdir = substr_compare($isdirectory, "directory",
+                                strlen($isdirectory)-strlen("directory"), strlen("directory")) === 0;/* --}}
                                 @if(!$isdir)
 
                                 @else
                                 <li class="folderclose">
-                                    <article style="cursor: pointer;" @if ($i == 0)      @endif>
-                                             <span class="pull-left sprite right-arrow subarrow"></span>
+                                    <article style="cursor: pointer;" @if ($i== 0) @endif>
+                                        <span class="pull-left sprite right-arrow subarrow"></span>
                                         <span class="sprite folder-sml pull-left"></span>
-                                        <div  class="folderPath" path="{{ $folderwithpath }}"> {{ $folderValue }}</div>
+                                        <div class="folderPath" path="{{ $folderwithpath }}"> {{ $folderValue }}</div>
                                     </article>
-                                    <div class="subfolder" ></div>
-                                </li>@endif
+                                    <div class="subfolder"></div>
+                                </li>
+                                @endif
 
 
                                 {{-- */$i++;/* --}}
                                 @endforeach
 
                             </ul>
-                            @endif	
+                            @endif
                         </div>
                     </div>
                 </div>
-                <div class="folder-content" >
+                <div class="folder-content">
                     <div class="folder-view" id="fileFolder">
 
                         <div class="argonbox">
-
-
 
 
                             <ul class="row">
@@ -112,7 +117,8 @@
                                 {{-- */$folderwithpath =$folderPath.'/'.$folderValue;/* --}}
                                 {{-- */$file_ext =pathinfo($folderwithpath,PATHINFO_EXTENSION)/* --}}
                                 {{-- */$isdirectory = exec("sudo file -L ".$folderwithpath);/* --}}
-                                {{-- */$isdir = substr_compare($isdirectory, "directory", strlen($isdirectory)-strlen("directory"), strlen("directory")) === 0;/* --}}
+                                {{-- */$isdir = substr_compare($isdirectory, "directory",
+                                strlen($isdirectory)-strlen("directory"), strlen("directory")) === 0;/* --}}
                                 {{-- */$validextensionstif = array("TIF","tif");/* --}}
                                 {{-- */$validextensionstxt = array("txt","TXT");/* --}}
                                 {{-- */$validextensionsgtf = array("GTF","gtf");/* --}}
@@ -125,10 +131,13 @@
                                 @if(!$isdir)
                                 @if(in_array($file_ext,$validextensionstif))
                                 <li>
-                                    <div  style="background-image: url('images/icons/ico-tiff.png');cursor:inherit;background-repeat: no-repeat;height:20px;min-width:20px;text-align:center;padding-top:66px;background-position: center 14px;">
+                                    <div
+                                        style="background-image: url('images/icons/ico-tiff.png');cursor:inherit;background-repeat: no-repeat;height:20px;min-width:20px;text-align:center;padding-top:66px;background-position: center 14px;">
                                         <span class="file-size">{{ $userFolderSize[$folderValue] }} KB</span>
-                                        <span class="download_icon tooltip-hide" data-toggle="tooltip" data-placement="top" title="Click to download">
-                                            <a class="downloadData" href="downloadfile/{{ base64_encode($folderwithpath) }}" border="0">
+                                        <span class="download_icon tooltip-hide" data-toggle="tooltip"
+                                              data-placement="top" title="Click to download">
+                                            <a class="downloadData"
+                                               href="downloadfile/{{ base64_encode($folderwithpath) }}" border="0">
                                                 <img src="images/download-icon.png">
                                             </a>
                                         </span>
@@ -137,10 +146,13 @@
                                     @elseif(in_array($file_ext,$validextensionstxt))
 
                                 <li>
-                                    <div  style="background-image: url('images/icons/ico-txt.png');cursor:inherit;background-repeat: no-repeat;height:20px;min-width:20px;text-align:center;padding-top:66px;background-position: center 14px;">
+                                    <div
+                                        style="background-image: url('images/icons/ico-txt.png');cursor:inherit;background-repeat: no-repeat;height:20px;min-width:20px;text-align:center;padding-top:66px;background-position: center 14px;">
                                         <span class="file-size">{{ $userFolderSize[$folderValue] }} KB</span>
-                                        <span class="download_icon tooltip-hide" data-toggle="tooltip" data-placement="top" title="Click to download">
-                                            <a class="downloadData" href="downloadfile/{{ base64_encode($folderwithpath) }}" border="0">
+                                        <span class="download_icon tooltip-hide" data-toggle="tooltip"
+                                              data-placement="top" title="Click to download">
+                                            <a class="downloadData"
+                                               href="downloadfile/{{ base64_encode($folderwithpath) }}" border="0">
                                                 <img src="images/download-icon.png">
                                             </a>
                                         </span>
@@ -149,22 +161,29 @@
                                     @elseif(in_array($file_ext,$validextensionsgtf))
 
                                 <li>
-                                    <div  style="background-image: url('images/icons/ico-gtf.png');cursor:inherit;background-repeat: no-repeat;height:20px;min-width:20px;text-align:center;padding-top:66px;background-position: center 14px;">
+                                    <div
+                                        style="background-image: url('images/icons/ico-gtf.png');cursor:inherit;background-repeat: no-repeat;height:20px;min-width:20px;text-align:center;padding-top:66px;background-position: center 14px;">
                                         <span class="file-size">{{ $userFolderSize[$folderValue] }} KB</span>
-                                        <span class="download_icon tooltip-hide" data-toggle="tooltip" data-placement="top" title="Click to download">
-                                            <a class="downloadData" href="downloadfile/{{ base64_encode($folderwithpath) }}" border="0">
+                                        <span class="download_icon tooltip-hide" data-toggle="tooltip"
+                                              data-placement="top" title="Click to download">
+                                            <a class="downloadData"
+                                               href="downloadfile/{{ base64_encode($folderwithpath) }}" border="0">
                                                 <img src="images/download-icon.png">
                                             </a>
                                         </span>
                                         <pre class="folder-name">{{ $folderValue }}</pre>
                                     </div>
-                                    @elseif(in_array($file_ext,$validextensionspng) || in_array($file_ext,$validextensionsgif) || in_array($file_ext,$validextensionsjpg) || in_array($file_ext,$validextensionsjpeg))
+                                    @elseif(in_array($file_ext,$validextensionspng) ||
+                                    in_array($file_ext,$validextensionsgif) || in_array($file_ext,$validextensionsjpg)
+                                    || in_array($file_ext,$validextensionsjpeg))
                                 <li>
 
                                     <div>
                                         <span class="file-size">{{ $userFolderSize[$folderValue] }} KB</span>
-                                        <span class="download_icon tooltip-hide" data-toggle="tooltip" data-placement="top" title="Click to download">
-                                            <a class="downloadData" href="downloadfile/{{ base64_encode($folderwithpath) }}" border="0">
+                                        <span class="download_icon tooltip-hide" data-toggle="tooltip"
+                                              data-placement="top" title="Click to download">
+                                            <a class="downloadData"
+                                               href="downloadfile/{{ base64_encode($folderwithpath) }}" border="0">
                                                 <img src="images/download-icon.png">
                                             </a>
                                         </span>
@@ -174,17 +193,21 @@
 
                                         {{-- */$currentImageType = pathinfo($imageRepoPath, PATHINFO_EXTENSION);/* --}}
                                         {{-- */$imageData = file_get_contents($imageRepoPath);/* --}}
-                                        {{-- */$srcDataBase64 = 'data:image/' . $currentImageType . ';base64,' . base64_encode($imageData);/* --}}
+                                        {{-- */$srcDataBase64 = 'data:image/' . $currentImageType . ';base64,' .
+                                        base64_encode($imageData);/* --}}
 
-                                        <a  style="text-align: center; display: inline-block; width: 100%;" href="{{$srcDataBase64}}" title="{{ $folderValue }}">
-                                            <img src="{{$srcDataBase64}}"  alt="{{ $folderValue }}" style="max-height: 68px;" />
+                                        <a style="text-align: center; display: inline-block; width: 100%;"
+                                           href="{{$srcDataBase64}}" title="{{ $folderValue }}">
+                                            <img src="{{$srcDataBase64}}" alt="{{ $folderValue }}"
+                                                 style="max-height: 68px;"/>
                                         </a>
 
                                         <pre class="folder-name"> {{ $folderValue }}</pre>
                                     </div>
                                     @else
                                 <li>
-                                    <div  style="background-image: url('images/icons/ico-global.png');cursor:inherit;background-repeat: no-repeat;height:20px;min-width:20px;text-align:center;padding-top:66px;background-position: center 14px;">
+                                    <div
+                                        style="background-image: url('images/icons/ico-global.png');cursor:inherit;background-repeat: no-repeat;height:20px;min-width:20px;text-align:center;padding-top:66px;background-position: center 14px;">
                                         <span class="file-size">{{ $userFolderSize[$folderValue] }} KB</span>
                                         <pre class="folder-name">{{ $folderValue }}</pre>
                                     </div>
@@ -192,24 +215,27 @@
                                     @else
                                 <li class="folder-download"> 
                                     <span>    
-                                        <span class="download_icon tooltip-hide" data-toggle="tooltip" data-placement="top" title="Click to download">
-                                            <span class="downloadData zipFolder" link="{{ base64_encode($folderwithpath) }}" border="0">
+                                        <span class="download_icon tooltip-hide" data-toggle="tooltip"
+                                              data-placement="top" title="Click to download">
+                                            <span class="downloadData zipFolder"
+                                                  link="{{ base64_encode($folderwithpath) }}" border="0">
                                                 <img src="images/download-icon.png">
                                             </span>
                                         </span> 
-                                    </span> 
+                                    </span>
                                     <div class="folderPath" path="{{ $folderPath.'/'.$folderValue }}">
 
                                         <span class="file-size">{{ $userFolderSize[$folderValue] }} KB</span>
 
                                         <span class="sprite folder-icon"></span>
-                                        <pre style="cursor: pointer;" class="folder-name folderPath" path="{{ $folderPath.'/'.$folderValue }}">{{ $folderValue }}</pre>
+                                        <pre style="cursor: pointer;" class="folder-name folderPath"
+                                             path="{{ $folderPath.'/'.$folderValue }}">{{ $folderValue }}</pre>
                                     </div>
                                     @endif
                                 </li>
                                 @endforeach
 
-                                @endif  
+                                @endif
                             </ul>
 
                         </div>
@@ -227,8 +253,8 @@
 <!--content wrap end-->
 
 
-{{ HTML::style( asset('css/style.argonbox.css') ) }}  
-{{ HTML::script('js/jquery.argonbox.js'); }} 
+{{ HTML::style( asset('css/style.argonbox.css') ) }}
+{{ HTML::script('js/jquery.argonbox.js'); }}
 
 
 @stop 

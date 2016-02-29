@@ -32,6 +32,10 @@
                     </div>
                     <div class="navbar-collapse collapse">
                         <ul class="nav navbar-nav">
+                            <li @if(isset($current_page) && $current_page=='account') class='active' @endif>{{
+                                HTML::link('account', 'Account') }}
+                            </li>
+                            
                             <li @if(isset($current_page) && $current_page=='dashboard') class='active' @endif>{{
                                 HTML::link('dashboard', 'Dashboard') }}
                             </li>
