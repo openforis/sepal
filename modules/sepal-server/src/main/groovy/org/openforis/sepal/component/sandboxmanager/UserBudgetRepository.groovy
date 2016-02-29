@@ -13,6 +13,7 @@ interface UserBudgetRepository {
 @ToString
 class JdbcUserBudgetRepository implements UserBudgetRepository {
     private final SqlConnectionManager connectionManager
+    private final Budget defaultBudget = new Budget(monthlyInstance: 10, monthlyStorage: 10, storageQuota: 100)
 
     JdbcUserBudgetRepository(SqlConnectionManager connectionManager) {
         this.connectionManager = connectionManager
@@ -33,7 +34,7 @@ class JdbcUserBudgetRepository implements UserBudgetRepository {
     Budget byUsername(String username) {
         def row = sql.firstRow('SELECT monthly_instance, monthly_storage, storage_quota FROM user_budget WHERE username = ?', [username])
         if (!row)
-            return new Budget()
+            return defaultBudget
         return new Budget(
                 monthlyInstance: row.monthly_instance,
                 monthlyStorage: row.monthly_storage,
