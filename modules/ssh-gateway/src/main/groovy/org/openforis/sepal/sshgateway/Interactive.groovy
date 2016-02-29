@@ -1,14 +1,11 @@
 package org.openforis.sepal.sshgateway
 
 import com.ocpsoft.pretty.time.PrettyTime
-import com.ocpsoft.pretty.time.units.Day
-import com.ocpsoft.pretty.time.units.Hour
-import com.ocpsoft.pretty.time.units.Minute
-import com.ocpsoft.pretty.time.units.Month
-import com.ocpsoft.pretty.time.units.Second
-import com.ocpsoft.pretty.time.units.Week
+import com.ocpsoft.pretty.time.units.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import java.text.DecimalFormat
 
 class Interactive {
     private static final Logger LOG = LoggerFactory.getLogger(this)
@@ -26,10 +23,27 @@ class Interactive {
 
     void start() {
         def sandboxInfo = sepalClient.loadSandboxInfo()
+
+        printUsageBudget(sandboxInfo)
         if (sandboxInfo.sessions)
             promptJoin(sandboxInfo)
         else
             promptCreate(sandboxInfo)
+    }
+
+    private printUsageBudget(info) {
+        println '\n' +
+                '------------------\n' +
+                '- Monthly budget -\n' +
+                '------------------\n'
+        println("Instance spending/budget:".padRight(26) + "${budget(info.monthlyInstanceSpending, info.monthlyInstanceBudget)} USD")
+        println("Storage spending/budget:".padRight(26) + "${budget(info.monthlyStorageSpending, info.monthlyStorageBudget)} USD")
+        println("Storage used/quota:".padRight(26) + "${budget(info.storageUsed, info.storageQuota)} GB")
+    }
+
+    private String budget(Number spending, Number budget) {
+        def format = new DecimalFormat('##,###.##')
+        return "${format.format(spending)}/${format.format(budget)}"
     }
 
     private void promptJoin(Map sandboxInfo) {
