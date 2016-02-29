@@ -1,7 +1,7 @@
 Manual testing
 --------------
 
-SSH as sepalAdminWeb
+SSH as admin
 	oft-stack
 	arcsi
 rsync

@@ -31,7 +31,7 @@ class SmokeTest extends Specification {
     String login() {
         def response = httpClient.post(
                 path: "/login",
-                body: [userName: 'sepalAdminWeb', password: 'the admin user 123'],
+                body: [userName: 'admin', password: 'the admin user 123'],
                 requestContentType: URLENC
         )
         if (response.status != 302)

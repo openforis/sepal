@@ -10,6 +10,6 @@ add-sepal-user sepalAdmin "$(cat /etc/sepalAdmin.passwd)"
     echo "sepalAdmin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/sepalAdmin && \
     chmod 440 /etc/sudoers.d/sepalAdmin
 
-# Add sepalAdminWeb user
-add-sepal-user sepalAdminWeb "$(cat /etc/sepalAdminWeb.passwd)" $USER_GROUP
+# Add admin user
+add-sepal-user admin "$(cat /etc/admin.passwd)" $USER_GROUP
 

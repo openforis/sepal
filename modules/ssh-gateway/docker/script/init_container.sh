@@ -36,7 +36,7 @@ template /config/ldapscripts.passwd /etc/ldapscripts/ldapscripts.passwd root: 06
 template /config/ldapadduser.template /etc/ldapscripts/ldapadduser.template root: 0600
 template /config/sssd.conf /etc/sssd/sssd.conf root: 0600
 template /config/sepalAdmin.passwd /etc/sepalAdmin.passwd root: 0600
-template /config/sepalAdminWeb.passwd /etc/sepalAdminWeb.passwd root: 0600
+template /config/admin.passwd /etc/admin.passwd root: 0600
 
 
 mkdir -p /etc/ldap/certificates
