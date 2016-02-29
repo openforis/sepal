@@ -107,7 +107,6 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
                 HostConfig: [
                         Binds: [
                                 "$config.mountingHomeDir/$session.username:/home/$session.username",
-                                "$config.publicHomeDir:/sepal/public",
                                 "/data/sepal/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
                         ]
                 ],

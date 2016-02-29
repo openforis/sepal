@@ -22,12 +22,10 @@ class SepalConfiguration {
     public static final String EARTHEXPLORER_USERNAME = 'earthexplorer.username'
     public static final String EARTHEXPLORER_PASSWORD = 'earthexplorer.password'
     public static final String DOWNLOADS_WORKING_DIRECTORY = 'sepal.downloadWorkingDirectory'
-    public static final String USER_HOME_DIR = 'sepal.userHomeDir'
     public static final String PROCESSING_HOME_DIR = 'sepal.processingChain.homeFolder'
     public static final String DOCKER_IMAGE_NAME = 'docker.imageName'
     public static final String DOCKER_REST_ENTRYPOINT = 'docker.restEntryPoint'
     public static final String CRAWLER_RUN_DELAY = 'metadata.crawler.delay'
-    public static final String PUBLIC_HOME_DIR = 'sepal.publicHomeDir'
     public static final String SANDBOX_PORTS_TO_CHECK = 'sepal.sandbox.healtCheckPorts'
     public static final String SANBOX_PROXY_SESSION_TIMEOUT = 'sandbox.webproxy_session_timeout'
 
@@ -79,10 +77,6 @@ class SepalConfiguration {
 
     String getSandboxPortsToCheck() {
         getValue(SANDBOX_PORTS_TO_CHECK)
-    }
-
-    String getPublicHomeDir() {
-        getValue(PUBLIC_HOME_DIR)
     }
 
     long getCrawlerRunDelay() {

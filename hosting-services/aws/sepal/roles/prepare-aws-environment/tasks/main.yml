@@ -17,12 +17,6 @@
     state: "mounted"
     src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/"
 
-- name: Create public dir
-  file:
-    path: "/efs/data/sepal/public"
-    mode: "u=rwx,g=rxs,o=rx"
-    state: directory
-
 - name: Create data dir
   file:
     path: "/efs/data/sepal/home"
@@ -55,13 +49,6 @@
     fstype: "nfs4"
     state: "mounted"
     src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/home"
-
-- name: Mount Efs Sepal Public Dir
-  mount:
-    name: "/data/sepal/public"
-    fstype: "nfs4"
-    state: "mounted"
-    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/public"
 
 - name: Mount Efs Ssh-gateway Home Dir
   mount:

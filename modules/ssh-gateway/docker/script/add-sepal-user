@@ -5,7 +5,6 @@ PASSWORD=$2
 USER_GROUP=$3
 USER_HOME=/home/$USERNAME
 USER_DATA_HOME=/sepal/home/$USERNAME
-PUBLIC_DATA=/sepal/public
 
 logFile=/var/log/supervisor/add-sepal-user.log
 
@@ -36,11 +35,6 @@ if ! ldapid "$USERNAME" >> $logFile 2>&1; then
         mkdir $USER_DATA_HOME/downloads >> $logFile 2>&1
         # Set permission directory, to directly allow file scanning of the directory
         mkdir -m 770 $USER_DATA_HOME/layers  >> $logFile 2>&1
-
-        # Create public user directory
-        mkdir -p -m 770 $PUBLIC_DATA/$USERNAME >> $logFile 2>&1
-        chown $userId:$userGroupId $PUBLIC_DATA/$USERNAME >> $logFile 2>&1
-        ln -s $PUBLIC_DATA $USER_DATA_HOME/public >> $logFile 2>&1
 
         sepalGroupId=9999 # sepal group has id 9999
         chown -R $userId:$sepalGroupId $USER_DATA_HOME >> $logFile 2>&1

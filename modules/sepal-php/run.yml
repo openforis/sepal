@@ -32,7 +32,6 @@
     - "/data/sepal-php:/data"
 
     - "/data/sepal/home:/data/home/" # This path is hard-coded - don't change it. This module will die anyway
-    - "/data/sepal/public:/sepal/public/"
     - "/data/sepal/processing_scripts:/processing_scripts"
     env:
         SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
