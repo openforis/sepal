@@ -4,7 +4,8 @@ username=$1
 
 logFile=/var/log/supervisor/delete-sepal-user.log
 
+ldapdeleteuserfromgroup $username sepalUsers >> $logFile 2>&1
 ldapdeleteuser $username >> $logFile 2>&1
 ldapdeletegroup $username >> $logFile 2>&1
-ldapdeleteuserfromgroup $username $USER_GROUP >> $logFile 2>&1
+
 rm -rf /home/$username >> $logFile 2>&1

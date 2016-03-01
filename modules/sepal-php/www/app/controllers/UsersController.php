@@ -189,7 +189,10 @@ class UsersController extends \BaseController {
         $this->layout = '';
 
         $user = User::find($userId);
-        $this->sshDeleteUser($user->username);
+        $username = $user->username;
+        $this->sshDeleteUser($username);
+        $homeDir = "/data/home/" . $username;
+        exec("sudo rm -rf " . $homeDir);
         if ($user->delete()) {
             $user->roles()->detach();
         }
