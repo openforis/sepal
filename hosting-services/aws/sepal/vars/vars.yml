@@ -1,8 +1,8 @@
 ---
 ami_ids:
-  eu-central-1: 'ami-46272b5b'
-  eu-west-1: 'ami-37360a40'
-  us-west-2: 'ami-8ee605bd'
+  eu-central-1: 'ami-9b9c86f7'
+  eu-west-1: 'ami-abc579d8'
+  us-west-2: 'ami-3d2cce5d'
   Localhost: 'n/a'
 
 docker_repository_host: '54.93.185.137'
