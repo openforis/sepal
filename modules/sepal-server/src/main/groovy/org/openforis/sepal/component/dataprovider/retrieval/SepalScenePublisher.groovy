@@ -12,16 +12,12 @@ import org.openforis.sepal.util.FilePermissions
 import static org.openforis.sepal.component.dataprovider.Status.PUBLISHED
 import static org.openforis.sepal.component.dataprovider.Status.PUBLISHING
 
+@SuppressWarnings("GroovyUnusedDeclaration")
 class SepalScenePublisher implements ScenePublisher {
     @Delegate
-    @SuppressWarnings("GroovyUnusedDeclaration")
     private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
-
     @Delegate
-    @SuppressWarnings("GroovyUnusedDeclaration")
     private final DownloadRequestObservable downloadRequestObservable = new DownloadRequestObservable()
-
-
     private final SceneRepository sceneRepository
 
     SepalScenePublisher(SceneRepository sceneRepository) {
@@ -52,12 +48,9 @@ class SepalScenePublisher implements ScenePublisher {
     }
 
     private void doPublish(File src, File dest) {
-        FilePermissions.readWritableRecursive(src)
-        if (dest.exists()) {
+        if (dest.exists())
             dest.deleteDir()
-        }
         FileUtils.moveDirectory(src, dest)
+        FilePermissions.readWritableRecursive(dest)
     }
-
-
 }

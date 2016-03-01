@@ -5,7 +5,6 @@ class FilePermissions {
     static void readWritableRecursive(File dir) {
         readWritable(dir)
         dir.eachFileRecurse { file ->
-            println file
             readWritable(file)
         }
     }
