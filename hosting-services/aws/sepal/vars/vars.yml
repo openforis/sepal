@@ -8,4 +8,4 @@ ami_ids:
 docker_repository_host: '54.93.185.137'
 hosting_service: "aws"
 
-# https://cloud-images.ubuntu.com/locator/ec2/
+# https://cloud-images.ubuntu.com/locator/ec2/ - search for 'trusty hvm ssd'
