@@ -20,7 +20,9 @@ rm -rf /var/log/supervisor && ln -sf /data/logs/supervisor /var/log/supervisor
 rm -rf /var/log/ssh-gateway && ln -sf /data/logs/supervisor /var/log/ssh-gateway
 rm -rf /home && ln -sf /data/home /home
 
-cp /script/add-sepal-user /usr/local/bin/add-sepal-user
+cp /script/add-sepal-user /usr/local/bin/
+cp /script/change-sepal-user-password /usr/local/bin/
+cp /script/delete-sepal-user /usr/local/bin/
 
 cp /script/ssh-bootstrap /usr/local/bin/ssh-bootstrap
 chmod 555 /usr/local/bin/ssh-bootstrap

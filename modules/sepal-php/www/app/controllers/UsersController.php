@@ -115,9 +115,8 @@ class UsersController extends \BaseController {
 
             /* Resetting password linux user */
             $password = Input::get('password');
-            if (strlen(trim($password)) > 3) {
-                // TODO: Change password
-            }
+            if (strlen(trim($password)) > 3)
+                $this->sshChangePassword($user->username, $password);
             $date = new \DateTime;
             //if success, add role to the user only if logged in user has admin access
             if (Session::get('is_admin') == 'yes') {
@@ -190,8 +189,7 @@ class UsersController extends \BaseController {
         $this->layout = '';
 
         $user = User::find($userId);
-        //delete the user and corresponding user group ids and roles
-        // TODO: SSH delete
+        $this->sshDeleteUser($user->username);
         if ($user->delete()) {
             $user->roles()->detach();
         }
@@ -226,15 +224,32 @@ class UsersController extends \BaseController {
     }
 
     private function sshCreateUser($username, $password) {
+        $stream_out = $this->sshExecute("sudo add-sepal-user " . $username . " " . $password . " sepalUsers" . PHP_EOL);
+        $uid = stream_get_contents($stream_out);
+        return $uid;
+    }
+
+    private function sshDeleteUser($username) {
+        $stream_out = $this->sshExecute("sudo delete-sepal-user " . $username . PHP_EOL);
+        $uid = stream_get_contents($stream_out);
+        return $uid;
+    }
+
+    private function sshChangePassword($username, $password) {
+        $this->sshExecute("sudo change-sepal-user-password " . $username . " " . $password . PHP_EOL);
+    }
+
+    /**
+     * @param $script
+     * @return resource
+     */
+    private function sshExecute($script) {
         $sshConnection = ssh2_connect(SdmsConfig::value('hostSSH'), 22);
         @ssh2_auth_password($sshConnection, SdmsConfig::value('adminUser'), SdmsConfig::value('adminPwd'));
-        $script = "sudo add-sepal-user " . $username . " " . $password . " sepalUsers" . PHP_EOL;
-        Logger::debug('Data Script: ', $script);
         $stream = ssh2_exec($sshConnection, $script);
         stream_set_blocking($stream, true);
         $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
-        $uid = stream_get_contents($stream_out);
-        return $uid;
+        return $stream_out;
     }
 }
 

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+username=$1
+
+ldapdeleteuser $username
+ldapdeletegroup $username
+ldapdeleteuserfromgroup $username $USER_GROUP
