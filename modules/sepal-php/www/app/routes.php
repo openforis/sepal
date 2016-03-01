@@ -32,9 +32,6 @@ Route::group(array('before' => 'auth'), function () {
     Route::post('subfolder', 'DashboardController@showSubFolders');
     Route::get('terminal', 'SshController@ssh');
     Route::get('terminalData', 'SshController@requestSshSession');
-    //config
-    Route::get('cronsetupbydays', 'DashboardController@cronSetupForm');
-    Route::post('cronsetupbydays', 'DashboardController@cronSetupForm');
     //search routes
     Route::get('search', 'SearchController@showForm');
     Route::get('searchresults', 'SearchController@searchDatabase');
@@ -54,12 +51,6 @@ Route::group(array('before' => 'auth'), function () {
     Route::post('migrate', 'SepalGeoServerController@requestDownload');
     Route::get('migrate', 'SepalGeoServerController@requestDownload');
     Route::get('logout', 'LoginController@logout');
-    //Routes for groups
-    Route::resource('groups', 'GroupsController');
-    Route::post('groups', 'GroupsController@create');
-    Route::get('groups/edit/{id}', 'GroupsController@edit');
-    Route::post('groups/edit/{id}', 'GroupsController@update');
-    Route::get('groups/del/{id}', 'GroupsController@removeGroup');
     //download data
     Route::get('downloadfile/{filePath}', 'DashboardController@downloadFileFromDashboard');
     Route::post('compressfolder', 'DashboardController@createZipFromDashboard');
@@ -69,15 +60,11 @@ Route::group(array('before' => 'auth'), function () {
     Route::get('downloadstatus', 'SepalGeoServerController@loadDownloadStatus');
     Route::post('migrationchecker', 'DashboardController@migrationChecker'); //make it as post
     Route::get('removeFromDashboard', 'SepalGeoServerController@removeFromDashboard');
-    //Manage groups
-    Route::post('disablegroup', 'GroupsController@insert');
-    Route::post('enablegroup', 'GroupsController@delete');
     //Routes for users
     Route::resource('users', 'UsersController');
     Route::post('users', 'UsersController@index');
     Route::get('adduser', 'UsersController@add');
     Route::post('createuser', 'UsersController@create');
-    Route::post('removegroup', 'UsersController@removeGroup');
     Route::get('users/edit/{id}', 'UsersController@edit');
     Route::post('users/edit/{id}', 'UsersController@update');
     Route::get('users/del/{id}', 'UsersController@removeUser');

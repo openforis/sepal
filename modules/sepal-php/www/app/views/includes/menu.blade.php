@@ -35,46 +35,17 @@
                             <li @if(isset($current_page) && $current_page=='account') class='active' @endif>{{
                                 HTML::link('account', 'Account') }}
                             </li>
-                            
+
                             <li @if(isset($current_page) && $current_page=='dashboard') class='active' @endif>{{
                                 HTML::link('dashboard', 'Dashboard') }}
                             </li>
                             @if(Session::get('is_admin')=='yes')
-                            <li @if(isset($current_page) && $current_page=='users') class='active' @endif
-                                @if(isset($current_page) && $current_page=='group') class='active' @endif>
-
-                                <a href="#">Manage</a>
-                                <ul class="nav drop-menu">
-                                    <li><a href="#">User</a>
-                                        <ul class="nav sub">
-                                            <li>{{ HTML::link('adduser', 'Add User') }}</a></li>
-                                            <li>{{ HTML::link('users', 'List Users') }}</a></li>
-                                        </ul>
-                                    </li>
-                                    <li><a href="#">Group</a>
-                                        <ul class="nav sub">
-                                            <li>{{ HTML::link('groups', 'List Groups') }}</li>
-                                        </ul>
-                                    </li>
-                                    <li><a href="#">System Utilities</a>
-                                        <ul class="nav sub">
-                                            <li>{{ HTML::link('cronsetupbydays', 'Age of System Data') }}</li>
-                                        </ul>
-                                    </li>
-                                </ul>
-                            </li>
-                            @elseif(Session::get('group_admin')=='yes' && (Session::get('group_id')>0))
                             <li @if(isset($current_page) && $current_page=='users') class='active' @endif>
 
                                 <a href="#">Manage</a>
                                 <ul class="nav drop-menu">
-                                    <li><a href="#">User</a>
-                                        <ul class="nav sub">
-                                            <li>{{ HTML::link('adduser', 'Add User') }}</a></li>
-                                            <li>{{ HTML::link('users', 'List Users') }}</a></li>
-                                        </ul>
-                                    </li>
-
+                                    <li>{{ HTML::link('adduser', 'Add User') }}</a></li>
+                                    <li>{{ HTML::link('users', 'List Users') }}</a></li>
                                 </ul>
                             </li>
                             @endif

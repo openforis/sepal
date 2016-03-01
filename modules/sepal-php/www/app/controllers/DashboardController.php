@@ -2,51 +2,13 @@
 
 Class DashboardController extends \BaseController {
 
-//uses layout views/layouts/sdmsdashboard.blade.phhp
+    //uses layout views/layouts/sdmsdashboard.blade.phhp
     protected $layout = 'layouts.master';
 
-    public function cronSetupForm() {
-
-
-        if (Session::get('is_admin') != 'yes') {
-            Redirect::to('dashboard');
-        }
-        //configDetails
-        if (Request::isMethod('post')) {
-            // Validation rules
-            $rules = array(
-                'cronDate' => 'required|integer|between:1,120',
-            );
-
-            // Validate the inputs
-            $v = Validator::make(Input::all(), $rules);
-
-            // Setting attribute for readable format   
-            $attributeNames = array(
-                'cronDate' => 'cron date'
-            );
-            $v->setAttributeNames($attributeNames);
-
-            // Was the validation successful?
-            if ($v->fails()) {
-                return Redirect::to('/cronsetupbydays')
-                    ->withErrors($v)
-                    ->withInput();
-            } else {
-
-                $cronDate = Input::get('cronDate');
-                ConfigDetails::where('name', '=', 'cron_delay_days')->update(array('value' => $cronDate));
-            }
-        }
-        $data['cronDetailDb'] = ConfigDetails::where('name', '=', 'cron_delay_days')->get();
-        $this->layout->content = View::make('dashboard.cronSetupForm', $data);
-    }
-
-//shows the dashboard
+    //shows the dashboard
     public function showDashboard() {
 
         $userName = Session::get('username');
-        //exec("sudo ls /data/home/".$userName,$userFolder);
 
         $fullFolderPath = "/data/home/" . $userName;
         exec("sudo ls " . $fullFolderPath, $userFolder);
@@ -76,7 +38,6 @@ Class DashboardController extends \BaseController {
     public function clearTempDownloadRepo() {
         $this->layout = '';
         $expiryDate = mktime(date("H") - 5, date("i"), date("s"), date("m"), date("d"), date("Y"));
-        //$expiryDate =mktime(date("H"), date("i"), date("s"), date("m"),   date("d"),   date("Y"));
         $expiryDate = date("Y-m-d H:i:s", $expiryDate);
 
         $logDatas = DownloadLog::where('created_at', '<=', $expiryDate)->get();
@@ -121,7 +82,7 @@ Class DashboardController extends \BaseController {
             echo 'no';
         }
     }
-    
+
 
     public function migratecheck() {
         $this->layout = '';
@@ -299,7 +260,7 @@ Class DashboardController extends \BaseController {
         $this->layout = '';
         $folderPath = Input::get('folderPath');
         $userName = Session::get('username');
-        exec("sudo ls ".$folderPath, $userFolder);
+        exec("sudo ls " . $folderPath, $userFolder);
 
 
         $data['userName'] = $userName;
@@ -368,7 +329,7 @@ Class DashboardController extends \BaseController {
                 //bypassing authentication with username alone instead of password to relate user
                 Auth::login($userAuth); //Authentication progress
                 Session::put('username', $user['username']);
-                return Redirect::to('dashboard');
+                return Redirect::to('account');
                 // The user is active, not suspended, and exists.
             }
         }
