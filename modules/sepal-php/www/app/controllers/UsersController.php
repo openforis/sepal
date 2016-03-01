@@ -125,7 +125,10 @@ class UsersController extends \BaseController {
                 if ($role_id > 0) {
                     $user->roles()->detach();
                     $user->roles()->attach($role_id, array('created_by' => $logged_in_user, 'created_at' => $date, 'updated_at' => $date));
+                } else {
+                    $user->roles()->detach();
                 }
+                $user->save();
             }
         }
 
