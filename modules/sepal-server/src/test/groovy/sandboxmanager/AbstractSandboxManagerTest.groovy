@@ -21,7 +21,7 @@ import spock.lang.Specification
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
-abstract class AbstractSandboxManagerTests extends Specification {
+abstract class AbstractSandboxManagerTest extends Specification {
     def someUserName = 'some-username'
     def anotherUserName = 'another-username'
     def someInstanceType = 'some-instance-type'

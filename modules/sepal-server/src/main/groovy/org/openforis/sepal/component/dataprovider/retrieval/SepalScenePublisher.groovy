@@ -9,8 +9,8 @@ import org.openforis.sepal.component.dataprovider.retrieval.provider.DownloadReq
 import org.openforis.sepal.component.dataprovider.retrieval.provider.SceneRetrievalObservable
 import org.openforis.sepal.util.FilePermissions
 
-import static Status.PUBLISHED
-import static Status.PUBLISHING
+import static org.openforis.sepal.component.dataprovider.Status.PUBLISHED
+import static org.openforis.sepal.component.dataprovider.Status.PUBLISHING
 
 class SepalScenePublisher implements ScenePublisher {
     @Delegate

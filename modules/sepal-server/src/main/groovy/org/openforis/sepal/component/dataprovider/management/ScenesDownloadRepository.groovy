@@ -28,7 +28,6 @@ interface ScenesDownloadRepository extends SceneRetrievalListener, DownloadReque
 
     void deleteScene(int requestId, int sceneId)
 
-
     void reloadRequestData(DownloadRequest request)
 
 }
@@ -39,7 +38,6 @@ class JdbcScenesDownloadRepository implements ScenesDownloadRepository {
     JdbcScenesDownloadRepository(SqlConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider
     }
-
 
     void sceneStatusChanged(SceneRequest sceneRequest, Status status) {
         this.updateSceneStatus(sceneRequest.id, status)

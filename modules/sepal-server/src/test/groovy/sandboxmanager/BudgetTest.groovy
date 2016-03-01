@@ -5,7 +5,7 @@ import org.openforis.sepal.component.sandboxmanager.BudgetCheck
 
 import static java.time.temporal.ChronoUnit.SECONDS
 
-class BudgetTests extends AbstractSandboxManagerTests {
+class BudgetTest extends AbstractSandboxManagerTest {
     def 'When getting sandbox info, storage quota is set'() {
         specifyStorageQuota(123)
 
@@ -26,12 +26,12 @@ class BudgetTests extends AbstractSandboxManagerTests {
         info.monthlyStorageBudget == 123d
     }
 
-    def 'Given storage usage not checked, when loading info, storage used is 0'() {
+    def 'Given storage quota not specified, when loading info, storage quota is default'() {
         when:
         def info = loadSandboxInfo()
 
         then:
-        info.storageQuota == 0d
+        info.storageQuota == 100d
     }
 
     def 'Given storage usage checked, when loading info, storage usage is set'() {

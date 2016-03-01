@@ -3,7 +3,7 @@ package sandboxmanager
 import org.openforis.sepal.component.sandboxmanager.StorageUsageFileChecker
 import spock.lang.Specification
 
-class StorageUsageFileCheckerTests extends Specification {
+class StorageUsageFileCheckerTest extends Specification {
     def workingDir = File.createTempDir()
     def checker = new StorageUsageFileChecker(workingDir.absolutePath + '/%user%')
     def userHome = new File(workingDir, 'some-username')
