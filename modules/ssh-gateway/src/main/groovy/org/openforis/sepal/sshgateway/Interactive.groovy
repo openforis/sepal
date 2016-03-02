@@ -115,7 +115,8 @@ class Interactive {
         def joinedSession = sepalClient.joinSession(session) {
             print '.'
         }
-        println('\n')
+        if (session.status == 'STARTING')
+            println('\n')
         sessionCommand.write(joinedSession)
     }
 
