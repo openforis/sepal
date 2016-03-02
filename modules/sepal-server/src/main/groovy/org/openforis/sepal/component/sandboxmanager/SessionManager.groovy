@@ -138,6 +138,8 @@ class SessionManager {
     }
 
     private void deallocate(SandboxSession session) {
+        if (!session.instanceId)
+            return
         try {
             instanceManager.deallocate(session.instanceId)
         } catch (Exception e) {

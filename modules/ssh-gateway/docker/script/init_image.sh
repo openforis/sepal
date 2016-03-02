@@ -20,6 +20,11 @@ DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
 
 echo "initgroups: files sss" >> /etc/nsswitch.conf
 
+# Disable message of the day by commenting out configuration lines refering to pam_motd.so
+sed -e '/.*pam_motd\.so.*/ s/^#*/#/' -i /etc/pam.d/sshd
+sed -e '/.*pam_motd\.so.*/ s/^#*/#/' -i /etc/pam.d/login
+sed -e '/PrintMotd / s/^#*/#/' -i /etc/ssh/sshd_config
+sed -e '/PrintLastLog / s/^#*/#/' -i /etc/ssh/sshd_config
 
 # Make sure SSH connections to gateway doesn't time out
 # Setup SSH authentication
@@ -29,6 +34,8 @@ printf '%s\n' \
     'ClientAliveCountMax 100000' \
     'AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys' \
     'AuthorizedKeysCommandUser root' \
+    'PrintMotd no' \
+    'PrintLastLog no' \
     "Match Group $USER_GROUP" \
     '    ForceCommand ssh-bootstrap' \
     >> /etc/ssh/sshd_config

@@ -31,18 +31,13 @@
         - 'origin=Ubuntu,archive=${distro_codename}-security'
         - 'o=Ubuntu,a=${distro_codename}-updates'
 
-    - role: docker.ubuntu
-      docker_version: '1.8.1-0~trusty'
-      docker_group_members: ['ubuntu']
-      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage --storage-opt dm.basesize=10G'
-      # Using dm.basesize=10G to speed up container removal. See https://github.com/docker/docker/issues/18314
-
-    - role: prepare-aws-environment
-    - { role: run-container, image: ldap}
-    - { role: run-container, image: mysql}
-    - { role: run-container, image: sepal-server}
-    - { role: run-container, image: ssh-gateway}
-    - { role: run-container, image: gateone}
-    - { role: run-container, image: sepal-php}
-    - { role: run-container, image: nginx}
-    - { role: run-container, image: haproxy}
+    - { role: docker, users: ['ubuntu'] }
+    - { role: prepare-aws-environment }
+    - { role: run-container, image: ldap }
+    - { role: run-container, image: mysql }
+    - { role: run-container, image: sepal-server }
+    - { role: run-container, image: ssh-gateway }
+    - { role: run-container, image: gateone }
+    - { role: run-container, image: sepal-php }
+    - { role: run-container, image: nginx }
+    - { role: run-container, image: haproxy }

@@ -29,29 +29,23 @@
         - 'origin=Ubuntu,archive=${distro_codename}-security'
         - 'o=Ubuntu,a=${distro_codename}-updates'
 
-    - role: docker.ubuntu
-      docker_version: '1.8.1-0~trusty'
-      docker_storage_path: '/data/docker/'
-      docker_group_members: ['ubuntu','vagrant']
-      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --storage-opt dm.basesize=10G'
-      # Using dm.basesize=10G to speed up container removal. See https://github.com/docker/docker/issues/18314
+    - { role: docker, users: ['ubuntu', 'vagrant'] }
+    - { role: build-image, image: ldap }
+    - { role: build-image, image: haproxy }
+    - { role: build-image, image: nginx }
+    - { role: build-image, image: mysql }
+    - { role: build-image, image: gateone }
+    - { role: build-image, image: ssh-gateway }
+    - { role: build-image, image: oft }
+    - { role: build-image, image: sandbox }
+    - { role: build-image, image: sepal-php }
+    - { role: build-image, image: sepal-server }
 
-    - { role: build-image, image: ldap}
-    - { role: build-image, image: haproxy}
-    - { role: build-image, image: nginx}
-    - { role: build-image, image: mysql}
-    - { role: build-image, image: gateone}
-    - { role: build-image, image: ssh-gateway}
-    - { role: build-image, image: oft}
-    - { role: build-image, image: sandbox}
-    - { role: build-image, image: sepal-php}
-    - { role: build-image, image: sepal-server}
-
-    - { role: run-container, image: ldap}
-    - { role: run-container, image: mysql}
-    - { role: run-container, image: sepal-server}
-    - { role: run-container, image: ssh-gateway}
-    - { role: run-container, image: gateone}
-    - { role: run-container, image: sepal-php}
-    - { role: run-container, image: nginx}
-    - { role: run-container, image: haproxy}
+    - { role: run-container, image: ldap }
+    - { role: run-container, image: mysql }
+    - { role: run-container, image: sepal-server }
+    - { role: run-container, image: ssh-gateway }
+    - { role: run-container, image: gateone }
+    - { role: run-container, image: sepal-php }
+    - { role: run-container, image: nginx }
+    - { role: run-container, image: haproxy }

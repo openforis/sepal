@@ -12,15 +12,15 @@ function template {
 template /templates/ldap.secret /etc/ldap.secret
 template /templates/sssd.conf /etc/sssd/sssd.conf
 
+
 ln -sf /etc/ldap.conf /etc/ldap/ldap.conf
 
+rm -rf /templates
 rm /init_image.sh
-#rm -rf /template
 
 echo "$ldap_host ldap" >> /etc/hosts
 
-userHome=/home/$1/
-
+userHome=/home/$1
 
 cp /etc/skel/.bashrc "$userHome"
 cp /etc/skel/.profile "$userHome"

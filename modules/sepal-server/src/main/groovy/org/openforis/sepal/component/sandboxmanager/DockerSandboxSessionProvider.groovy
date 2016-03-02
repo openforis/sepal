@@ -103,7 +103,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
         def request = new JsonOutput().toJson([
                 Image: "$config.dockerImageName",
                 Tty: true,
-                Cmd: ["/start", session.username, config.ldapHost, config.ldapPassword],
+                Cmd: ["/init_container.sh", session.username, config.ldapHost, config.ldapPassword],
                 HostConfig: [
                         Binds: [
                                 "$config.mountingHomeDir/$session.username:/home/$session.username",

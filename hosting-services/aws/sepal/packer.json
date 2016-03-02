@@ -9,36 +9,44 @@
     "efs_id": "",
     "av_zone": ""
   },
-  "builders": [{
-    "type": "amazon-ebs",
-    "access_key": "{{user `aws_access_key`}}",
-    "secret_key": "{{user `aws_secret_key`}}",
-    "region": "{{user `region`}}",
-    "source_ami": "{{user `source_ami`}}",
-    "instance_type": "m4.large",
-    "ssh_username": "ubuntu",
-    "ami_name": "Sandbox({{user  `av_zone`}}) - {{user `version`}}",
-    "tags": {
-      "Version": "{{user `version`}}",
-      "AvailabilityZone": "{{user  `av_zone`}}"
-    },
-    "ami_block_device_mappings": [{
-      "device_name": "/dev/sda1",
-      "volume_type": "standard",
-      "volume_size": 15,
-      "delete_on_termination": true
-    }],
-    "launch_block_device_mappings": [{
-      "device_name": "/dev/sda1",
-      "volume_type": "standard",
-      "volume_size": 15,
-      "delete_on_termination": true
-    }]
-  }],
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "{{user `aws_access_key`}}",
+      "secret_key": "{{user `aws_secret_key`}}",
+      "region": "{{user `region`}}",
+      "source_ami": "{{user `source_ami`}}",
+      "instance_type": "m4.large",
+      "ssh_username": "ubuntu",
+      "ami_name": "Sandbox({{user  `av_zone`}}) - {{user `version`}}",
+      "tags": {
+        "Version": "{{user `version`}}",
+        "AvailabilityZone": "{{user  `av_zone`}}"
+      },
+      "ami_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "volume_type": "standard",
+          "volume_size": 15,
+          "delete_on_termination": true
+        }
+      ],
+      "launch_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "volume_type": "standard",
+          "volume_size": 15,
+          "delete_on_termination": true
+        }
+      ]
+    }
+  ],
   "provisioners": [
     {
       "type": "shell",
-      "inline": ["sudo add-apt-repository ppa:ansible/ansible && sudo apt-get update && sudo apt-get install -y ansible"]
+      "inline": [
+        "sudo add-apt-repository ppa:ansible/ansible && sudo apt-get update && sudo apt-get install -y ansible"
+      ]
     },
     {
       "type": "file",
@@ -61,13 +69,17 @@
       "destination": "/tmp/ldap-ca.crt.pem"
     },
     {
-    "type": "ansible-local",
-    "playbook_file": "provision-sandbox.yml",
-    "extra_arguments": [ "--extra-vars \"efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}} availability_zone={{user `av_zone`}}\""  ],
-    "role_paths": [
-      "../../../ansible/pull-sandbox",
-      "../../../ansible/docker.ubuntu",
-      "../../../ansible/unattended-upgrades"
-    ]
-  }]
+      "type": "ansible-local",
+      "playbook_file": "provision-sandbox.yml",
+      "extra_arguments": [
+        "--extra-vars \"efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}} availability_zone={{user `av_zone`}}\""
+      ],
+      "role_paths": [
+        "../../../ansible/pull-sandbox",
+        "../../../ansible/docker",
+        "../../../ansible/docker.ubuntu",
+        "../../../ansible/unattended-upgrades"
+      ]
+    }
+  ]
 }
