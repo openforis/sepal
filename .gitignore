@@ -1,11 +1,13 @@
-/modules/sepal-php/docker/binary/sepal-php.tar.gz
+
+-php.tar.gz
 /modules/sepal-server/docker/binary/sepal.jar
 /modules/ssh-gateway/docker/binary/sepal-ssh-gateway.jar
 *.iml
 target
 .idea/
-sepal-server/frontend/dist/*
-sepal-server/frontend/node/*
-sepal-server/frontend/node_modules/*
+/modules/sepal-php/docker/binary/sepal
+/modules/sepal-server/frontend/dist/*
+/modules/sepal-server/frontend/node/*
+/modules/sepal-server/frontend/node_modules/*
 .vagrant
 
