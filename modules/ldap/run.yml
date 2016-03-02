@@ -41,7 +41,6 @@
       LDAP_TLS_VERIFY_CLIENT: never
   register: container
 
-
 - name: "ldap | Wait until started"
   wait_for: path=/data/ldap/started
   when: (container.summary.started > 0 or container.summary.restarted > 0)

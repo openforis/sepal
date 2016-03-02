@@ -115,7 +115,7 @@ class Interactive {
         def joinedSession = sepalClient.joinSession(session) {
             print '.'
         }
-        println()
+        println('\n')
         sessionCommand.write(joinedSession)
     }
 
@@ -173,7 +173,7 @@ class Interactive {
         def session = sepalClient.createSession(instanceType) {
             print '.'
         }
-        println()
+        println('\n')
         sessionCommand.write(session)
     }
 

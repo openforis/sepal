@@ -34,7 +34,6 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
             LOG.info("Deploying $session to $instance")
             createContainer(session, instance)
             startContainer(session, instance)
-//            def port = determineContainerPort(session, instance)
             def port = SSH_PORT
             def deployedSession = session.active(instance, port, clock.now())
             waitUntilInitialized(deployedSession, instance)
@@ -156,7 +155,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
                             AttachStdout: true,
                             AttachStderr: true,
                             Tty: false,
-                            Cmd: ["/root/wait_until_initialized.sh", config.sandboxPortsToCheck]
+                            Cmd: ["/root/wait_until_initialized.sh", config.sandboxPortsToCheck, session.username]
                     ]),
                     requestContentType: JSON
             )
@@ -169,12 +168,6 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
             LOG.debug("Session initialized. Session: $session, WorkerInstance: $instance.")
         }
     }
-
-//    @SuppressWarnings("GroovyAssignabilityCheck")
-//    private int determineContainerPort(SandboxSession session, WorkerInstance instance) {
-//        def data = loadContainerInfo(session, instance.host)
-//        return Integer.parseInt(data.NetworkSettings.Ports["22/tcp"][0].HostPort)
-//    }
 
     private void removeContainer(SandboxSession session, String host) {
         LOG.info("Removing container for session on host $host. Session: $session")
