@@ -22,6 +22,8 @@ class StorageUsageFileChecker implements StorageUsageChecker {
         if (!storageUsedFile.exists())
             return 0
         def lines = storageUsedFile.readLines()
+        if (!lines)
+            return 0
         def size = lines.last().find('[0-9]*') as int
         return size / 1000 / 1000
     }
