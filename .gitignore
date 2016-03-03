@@ -1,7 +1,7 @@
 
--php.tar.gz
-/modules/sepal-server/docker/binary/sepal.jar
 /modules/ssh-gateway/docker/binary/sepal-ssh-gateway.jar
+/modules/sepal-php/docker/binary/sepal-php.tar.gz
+/modules/sepal-server/docker/binary/sepal.jar
 *.iml
 target
 .idea/
