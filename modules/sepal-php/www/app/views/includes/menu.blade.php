@@ -67,7 +67,7 @@
 
 
                             <li @if(isset($current_page)&& $current_page=='rstudio') class='active' @endif>{{
-                                HTML::link('http://'.$_SERVER['SERVER_NAME'].'/user/'.Session::get('username').'/rstudio-server',
+                                HTML::link('http://'.$_SERVER['SERVER_NAME'].'/user/'.Session::get('username').'/rstudio-server/',
                                 'RStudio') }}
                             </li>
 
