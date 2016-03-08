@@ -131,7 +131,8 @@ Class SearchController extends \BaseController {
                             $searchSql = $searchSql . " `dataset_id` = $sensor";
                         }
                         //If any row/path pair is specified
-                        if (($identifier != '' && $identifier == 1) && (($beginRow && $beginPath) || ($endRow && $endPath))) {
+                        $searchByRowPath = $identifier != '' && $identifier == 1;
+                        if ($searchByRowPath && (($beginRow && $beginPath) || ($endRow && $endPath))) {
 
                             if ($beginRow && $beginPath && $endRow && $endPath) {
                                 //Searching all records for row>=start row value
@@ -199,7 +200,10 @@ Class SearchController extends \BaseController {
                             $searchSql = $searchSql . ")";
                         }
                         //If latitude,longitude values of top left and bottom right of the area chosen are specified
-                        if ($identifier != '' && $identifier == 2 && $topLeftLatitude1 != '' && $topLeftLongitude1 != '' && $bottomRightLatitude1 != '' && $bottomRightLongitude1 != '' && (($topLeftLatitude1 != $bottomRightLatitude1) || ($topLeftLongitude1 != $bottomRightLongitude1))) {
+                        $searchByLatLng = $identifier != '' && $identifier == 2;
+                        $boxSpecified = $topLeftLatitude1 != '' && $topLeftLongitude1 != '' && $bottomRightLatitude1 != '' && $bottomRightLongitude1 != '';
+                        $notSinglePoint = ($topLeftLatitude1 != $bottomRightLatitude1) || ($topLeftLongitude1 != $bottomRightLongitude1);
+                        if ($searchByLatLng && $boxSpecified && $notSinglePoint) {
                             $searchSql = $searchSql . " AND (
                         ST_Intersects(
                         GEOMETRY, GEOMFROMTEXT( 'POLYGON(($topLeftLatitude1 $topLeftLongitude1, $topLeftLatitude1 $bottomRightLongitude1, $bottomRightLatitude1 $bottomRightLongitude1, $bottomRightLatitude1 $topLeftLongitude1, $topLeftLatitude1 $topLeftLongitude1))' )
@@ -212,7 +216,7 @@ Class SearchController extends \BaseController {
                         )
                         ) AND row <= 122";
 
-                        } else if ($identifier != '' && $identifier == 2 && (($topLeftLatitude != '' && $topLeftLongitude != '') || ($bottomRightLatitude != '' && $bottomRightLongitude != ''))) {
+                        } else if ($searchByLatLng && (($topLeftLatitude != '' && $topLeftLongitude != '') || ($bottomRightLatitude != '' && $bottomRightLongitude != ''))) {
                             if ($topLeftLatitude != '' && $topLeftLongitude != '') {
                                 $latitude = $topLeftLatitude;
                                 $longitude = $topLeftLongitude;
@@ -279,6 +283,7 @@ Class SearchController extends \BaseController {
 
 
                         $searchSqlWithLimit = $searchSql . " LIMIT $fromPage,$toPage";
+                        Logger::debug('Searching for scenes:' . $searchSelectSqlForLimit . $searchSqlWithLimit);
                         $searchResults = DB::select($searchSelectSqlForLimit . $searchSqlWithLimit);
                         $searchResultCount = DB::select($searchSelectSqlForCount . $searchSql);
                         if (isset($searchResultCount) && count($searchResultCount)) {
@@ -500,7 +505,7 @@ Class SearchController extends \BaseController {
             $sshFTP = ssh2_sftp($sshConnection);
             //creating the home sdms repository if not created
             ssh2_sftp_mkdir($sshFTP, '/data/home/' . $userName . '/downloads');
-  
+
             //loopig each image as a unique request
             foreach ($requestScenes as $filenameIn) {
                 //copying and moving file from SEPAL repo to the user home directory sdms repo.

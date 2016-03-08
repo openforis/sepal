@@ -136,12 +136,12 @@ class EarthExplorerMetadataCrawlerTest extends Specification {
         }
 
         @Override
-        def storeMetadata(Object dataSetId, Object metadata) {
+        def storeMetadata(Object dataSetId, Map metadata) {
             map.put(map.size() + 1, [dateUpdated: DateTime.parseDateString(metadata.dateUpdated), sceneID: metadata.sceneID])
         }
 
         @Override
-        def updateMetadata(Object rowId, Object metadata) {
+        def updateMetadata(Object rowId, Map metadata) {
             map.get(rowId).dateUpdated = DateTime.parseDateString(metadata.dateUpdated)
         }
     }
