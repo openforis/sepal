@@ -94,6 +94,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.orbisgis</groupId>
+            <artifactId>h2spatial-ext</artifactId>
+            <version>1.2.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>cglib</groupId>
             <artifactId>cglib-nodep</artifactId>
             <version>3.2.0</version>

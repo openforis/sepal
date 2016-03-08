@@ -72,6 +72,10 @@ class Database {
             long time = System.currentTimeMillis()
             dataSource = new JdbcDataSource(url: URL,
                     user: 'sa', password: 'sa')
+            sql.execute('''
+                CREATE ALIAS IF NOT EXISTS SPATIAL_INIT FOR
+                    "org.h2gis.h2spatialext.CreateSpatialExtension.initSpatialExtension";
+                CALL SPATIAL_INIT();''')
             setupSchema()
             LOG.info("Setup database in ${System.currentTimeMillis() - time} millis.")
         } else reset()
