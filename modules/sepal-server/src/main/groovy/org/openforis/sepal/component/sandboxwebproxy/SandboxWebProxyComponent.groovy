@@ -7,7 +7,7 @@ class SandboxWebProxyComponent {
     private SandboxWebProxy sandboxWebProxy
 
     SandboxWebProxyComponent(SepalConfiguration config, SandboxManagerComponent sandboxManagerComponent) {
-        sandboxWebProxy = new SandboxWebProxy(9191, ['rstudio-server': 8787], sandboxManagerComponent, 30, config.proxySessionTimeout)
+        sandboxWebProxy = new SandboxWebProxy(9191, config.portByProxiedEndpoint, sandboxManagerComponent, 30, config.proxySessionTimeout)
     }
 
     SandboxWebProxyComponent start() {

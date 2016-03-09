@@ -99,21 +99,20 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     private void createContainer(SandboxSession session, WorkerInstance instance) {
+        def exposedPorts = config.portByProxiedEndpoint.values().toList() << 22
         def request = new JsonOutput().toJson([
                 Image: "$config.dockerImageName",
                 Tty: true,
-                Cmd: ["/init_container.sh", session.username, config.ldapHost, config.ldapPassword],
+                Cmd: ["/init_container.sh", session.username, config.sepalHost, config.ldapHost, config.ldapPassword],
                 HostConfig: [
                         Binds: [
                                 "$config.mountingHomeDir/$session.username:/home/$session.username",
                                 "/data/sepal/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
                         ]
                 ],
-                ExposedPorts: [
-                        '22/tcp': [:],
-                        '8787/tcp': [:]
-                ]
-
+                ExposedPorts: exposedPorts.collectEntries {
+                    ["$it/tcp", [:]]
+                }
         ])
         LOG.debug("Deploying session $session to $instance.")
         withClient(instance) {
@@ -130,11 +129,11 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     private void startContainer(SandboxSession session, WorkerInstance instance) {
-        def request = new JsonOutput().toJson(
-                PortBindings: [
-                        "22/tcp": [[HostPort: "$SSH_PORT"]],
-                        '8787/tcp': [[HostPort: '8787']],
-                ])
+        def portBindings = config.portByProxiedEndpoint.values().collectEntries {
+            ["$it/tcp", [[HostPort: "$it"]]]
+        }
+        portBindings["22/tcp"] = [[HostPort: "$SSH_PORT"]]
+        def request = new JsonOutput().toJson(PortBindings: portBindings);
         withClient(instance) {
             post(
                     path: "containers/${containerName(session)}/start",
@@ -145,7 +144,8 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     private void waitUntilInitialized(SandboxSession session, WorkerInstance instance) {
-        LOG.debug("Waiting for session to be initialized on ports $config.sandboxPortsToCheck. " +
+        def portsToWaitFor = config.portByProxiedEndpoint.values().toList() << 22
+        LOG.debug("Waiting for session to be initialized on ports $portsToWaitFor. " +
                 "Session: $session, WorkerInstance: $instance")
         withClient(instance) {
             def response = post(
@@ -155,7 +155,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
                             AttachStdout: true,
                             AttachStderr: true,
                             Tty: false,
-                            Cmd: ["/root/wait_until_initialized.sh", config.sandboxPortsToCheck, session.username]
+                            Cmd: ["/root/wait_until_initialized.sh", portsToWaitFor.join(';'), session.username]
                     ]),
                     requestContentType: JSON
             )

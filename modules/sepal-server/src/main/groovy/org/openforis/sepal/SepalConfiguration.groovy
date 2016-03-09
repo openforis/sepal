@@ -26,7 +26,6 @@ class SepalConfiguration {
     public static final String DOCKER_IMAGE_NAME = 'docker.imageName'
     public static final String DOCKER_REST_ENTRYPOINT = 'docker.restEntryPoint'
     public static final String CRAWLER_RUN_DELAY = 'metadata.crawler.delay'
-    public static final String SANDBOX_PORTS_TO_CHECK = 'sepal.sandbox.healtCheckPorts'
     public static final String SANBOX_PROXY_SESSION_TIMEOUT = 'sandbox.webproxy_session_timeout'
 
     Properties properties
@@ -73,10 +72,6 @@ class SepalConfiguration {
 
     int getProxySessionTimeout() {
         Integer.parseInt(getValue(SANBOX_PROXY_SESSION_TIMEOUT))
-    }
-
-    String getSandboxPortsToCheck() {
-        getValue(SANDBOX_PORTS_TO_CHECK)
     }
 
     long getCrawlerRunDelay() {
@@ -159,6 +154,10 @@ class SepalConfiguration {
         getValue(PROCESSING_CHAIN_PARAMETER)
     }
 
+    String getSepalHost() {
+        getValue('sepal.host')
+    }
+
     String getLdapHost() {
         getValue('ldap.host')
     }
@@ -169,6 +168,12 @@ class SepalConfiguration {
 
     String getValue(String key) {
         return properties.getProperty(key)
+    }
+
+    Map<String, Integer> getPortByProxiedEndpoint() {
+        [
+                'rstudio-server': 8787
+        ]
     }
 
     void setEnv() {

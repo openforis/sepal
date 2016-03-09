@@ -217,7 +217,7 @@ Class DashboardController extends \BaseController {
     public function showFolders() {
         $this->layout = '';
         $folderPath = Input::get('folderPath');
-
+        Logger::debug('showFolders: ' . $folderPath);
         $userName = Session::get('username');
         exec("sudo ls " . $folderPath, $userFolder);
         exec("sudo du -aL " . $folderPath, $sizeArray);

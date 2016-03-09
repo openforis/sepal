@@ -46,12 +46,12 @@ class SandboxWebProxy {
     /**
      * Creates the proxy.
      * @param port the port the proxy run on
-     * @param endpointByPort specifies which port each proxied endpoint run on
+     * @param portByEndpoint specifies which port each proxied endpoint run on
      * @param sandboxManager the sandbox manager used to obtain sandboxes.
      */
-    SandboxWebProxy(int port, Map<String, Integer> endpointByPort, SandboxManagerComponent sandboxManagerComponent,
+    SandboxWebProxy(int port, Map<String, Integer> portByEndpoint, SandboxManagerComponent sandboxManagerComponent,
                     int sessionHeartbeatInterval, int sessionDefaultTimeout) {
-        LOG.info("Creating SandboxWebProxy [port: $port. Endpoints: $endpointByPort, sessionHeartbeatInterval: $sessionHeartbeatInterval, sessionDefaultTimeout: ${sessionDefaultTimeout}]")
+        LOG.info("Creating SandboxWebProxy [port: $port. Endpoints: $portByEndpoint, sessionHeartbeatInterval: $sessionHeartbeatInterval, sessionDefaultTimeout: ${sessionDefaultTimeout}]")
         this.sessionHeartbeatInterval = sessionHeartbeatInterval
         this.sandboxManagerComponent = sandboxManagerComponent
         sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
@@ -59,16 +59,16 @@ class SandboxWebProxy {
         this.sessionMonitor = new WebProxySessionMonitor(sandboxManagerComponent, sessionManager)
         this.server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
-                .setHandler(createHandler(endpointByPort, sessionMonitor))
+                .setHandler(createHandler(portByEndpoint, sessionMonitor))
                 .build()
     }
 
-    private HttpHandler createHandler(Map<String, Integer> endpointByPort, WebProxySessionMonitor monitor) {
+    private HttpHandler createHandler(Map<String, Integer> portByEndpoint, WebProxySessionMonitor monitor) {
         new SepalHttpHandler(
                 new SessionAttachmentHandler(
                         Handlers.proxyHandler(
                                 new DynamicProxyClient(
-                                        new SessionBasedUriProvider(endpointByPort, sandboxManagerComponent, monitor)
+                                        new SessionBasedUriProvider(portByEndpoint, sandboxManagerComponent, monitor)
                                 )
                         ), sessionManager, new SessionCookieConfig())
         )
@@ -93,16 +93,16 @@ class SandboxWebProxy {
     }
 
     private static class SessionBasedUriProvider implements DynamicProxyClient.UriProvider {
-        private final Map<String, Integer> endpointByPort
+        private final Map<String, Integer> portByEndpoint
         private final SandboxManagerComponent sandboxManagerComponent
         private final WebProxySessionMonitor sessionMonitor
 
         SessionBasedUriProvider(
-                Map<String, Integer> endpointByPort,
+                Map<String, Integer> portByEndpoint,
                 SandboxManagerComponent sandboxManagerComponent,
                 WebProxySessionMonitor sessionMonitor
         ) {
-            this.endpointByPort = endpointByPort
+            this.portByEndpoint = portByEndpoint
             this.sandboxManagerComponent = sandboxManagerComponent
             this.sessionMonitor = sessionMonitor
         }
@@ -112,19 +112,19 @@ class SandboxWebProxy {
             def endpoint = determineEndpoint(exchange)
             def username = determineUsername(exchange)
 
-
             def sandboxSessionId = session.getAttribute(SANDBOX_SESSION_ID_KEY)
             def uriSessionKey = determineUriSessionKey(endpoint, username)
-            URI uri
-            if (!sandboxSessionId) {
+            URI uri = null
+            if (sandboxSessionId)
+                uri = session.getAttribute(uriSessionKey) as URI
+            if (!uri) {
                 def sandboxSession = sandboxSession(username)
                 def sandboxHost = determineUri(session, sandboxSession)
-                uri = URI.create("http://$sandboxHost:${endpointByPort[endpoint]}")
+                uri = URI.create("http://$sandboxHost:${portByEndpoint[endpoint]}")
                 session.setAttribute(SANDBOX_SESSION_ID_KEY, sandboxSession.id)
                 session.setAttribute(uriSessionKey, uri)
                 session.setAttribute(USERNAME_KEY, username)
-            } else
-                uri = session.getAttribute(uriSessionKey) as URI
+            }
             return uri
         }
 
@@ -139,7 +139,7 @@ class SandboxWebProxy {
             def endpoint = exchange.requestHeaders.getFirst('sepal-endpoint')
             if (!endpoint)
                 throw new BadRequest('Missing header: sepal-endpoint')
-            if (!endpointByPort.containsKey(endpoint))
+            if (!portByEndpoint.containsKey(endpoint))
                 throw new BadRequest("Non-existing sepal-endpoint: ${endpoint}")
             return endpoint
         }

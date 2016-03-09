@@ -283,7 +283,6 @@ Class SearchController extends \BaseController {
 
 
                         $searchSqlWithLimit = $searchSql . " LIMIT $fromPage,$toPage";
-                        Logger::debug('Searching for scenes:' . $searchSelectSqlForLimit . $searchSqlWithLimit);
                         $searchResults = DB::select($searchSelectSqlForLimit . $searchSqlWithLimit);
                         $searchResultCount = DB::select($searchSelectSqlForCount . $searchSql);
                         if (isset($searchResultCount) && count($searchResultCount)) {
