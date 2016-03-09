@@ -1,4 +1,4 @@
-FROM openforistoolkit
+FROM openforis/geospatial-toolkit
 MAINTAINER OpenForis
 EXPOSE 1025
 

@@ -36,7 +36,7 @@
     - { role: build-image, image: mysql }
     - { role: build-image, image: gateone }
     - { role: build-image, image: ssh-gateway }
-    - { role: build-image, image: oft }
+    - { role: build-image, image: geospatial-toolkit }
     - { role: build-image, image: sandbox }
     - { role: build-image, image: sepal-php }
     - { role: build-image, image: sepal-server }

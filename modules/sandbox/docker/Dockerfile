@@ -1,4 +1,4 @@
-FROM openforistoolkit-guitools
+FROM openforis/geospatial-toolkit
 MAINTAINER OpenForis
 
 ENV SEPAL_USERS_GRP_NAME sepalUsers

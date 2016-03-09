@@ -4,7 +4,9 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     sssd \
     libpam-sss \
     libnss-sss \
-    libnss-ldap
+    libnss-ldap \
+    supervisor \
+    gettext
 
 # Disable message of the day by commenting out configuration lines refering to pam_motd.so
 sed -e '/.*pam_motd\.so.*/ s/^#*/#/' -i /etc/pam.d/sshd
