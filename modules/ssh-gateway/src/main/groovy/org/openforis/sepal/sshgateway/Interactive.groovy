@@ -111,7 +111,7 @@ class Interactive {
 
     private void joinSession(Map session) {
         if (session.status == 'STARTING')
-            print '\nSession is starting. This might require a new server to be started, which will take several minutes.\nPlease wait...'
+            print '\nSession is starting. This might start a new server, which would take several minutes.\nPlease wait...'
         def joinedSession = sepalClient.joinSession(session) {
             print '.'
         }
@@ -170,7 +170,7 @@ class Interactive {
     }
 
     private void createSession(Map instanceType) {
-        print '\nSession is starting. This might require a new server to be started, which will take several minutes.\nPlease wait...'
+        print '\nSession is starting. This might start a new server, which would take several minutes.\nPlease wait...'
         def session = sepalClient.createSession(instanceType) {
             print '.'
         }
