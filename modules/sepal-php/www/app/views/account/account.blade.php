@@ -80,7 +80,7 @@
             <tr class="sandbox-session">
                 <td>{{ DateFormatter::since(DateTime::createFromFormat('Y-m-d\TH:i:s', $session['creationTime'])) }}</td>
                 <td>{{ $session['instanceType']['name'] }}</td>
-                <td>{{ $session['costSinceCreation'] }}</td>
+                <td>{{ number_format($session['costSinceCreation'], 2) }} USD</td>
                 <td class="text-danger">
                     <a class="text-danger close-session" href="{{ $session['path'] }}">
                         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
