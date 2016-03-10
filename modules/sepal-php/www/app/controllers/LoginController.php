@@ -118,7 +118,7 @@ class LoginController extends \BaseController {
 
                 }
 
-			    return Redirect::to('dashboard');
+			    return Redirect::to('account');
 			    // The user is active, not suspended, and exists.
 		}
 	} 
