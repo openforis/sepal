@@ -46,7 +46,6 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         region = config.region
         availabilityZone = config.availabilityZone
         environment = config.environment
-
         def credentials = new BasicAWSCredentials(config.accessKey, config.secretKey)
         client = new AmazonEC2Client(credentials)
         client.endpoint = "https://ec2.${region}.amazonaws.com"
@@ -246,6 +245,7 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         if (!response?.images)
             throw new InvalidInstance("Unable to get image for $region having version $sepalVersion")
         def image = response.images.first()
+        LOG.info("Using sandbox image $image.imageId")
         return image.imageId
     }
 

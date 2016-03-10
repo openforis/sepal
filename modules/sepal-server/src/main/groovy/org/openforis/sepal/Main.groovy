@@ -32,7 +32,7 @@ class Main {
                     sandboxManagerComponent,
             )
             addShutdownHook { stop() }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOG.error("Failed setting up Sepal", e)
             stop()
             System.exit(1)

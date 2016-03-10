@@ -1,5 +1,8 @@
 package org.openforis.sepal.hostingservice.aws
 
+import groovy.transform.ToString
+
+@ToString
 class Config {
     String region
     String availabilityZone
