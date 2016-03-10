@@ -36,7 +36,7 @@ class JDBCUsgsDataRepository implements UsgsDataRepository {
             lowerRightCornerLongitude,sceneCenterLatitude,sceneCenterLongitude,cloudCover,cloudCoverFull,
             dayOrNight,sunElevation,sunAzimuth,receivingStation,sceneStartTime,sceneStopTime,imageQuality1,
             DATA_TYPE_L1,cartURL,GEOMETRIC_RMSE_MODEL_X,GEOMETRIC_RMSE_MODEL_Y,FULL_PARTIAL_SCENE, geometry)
-             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,ST_GEOMFROMTEXT(?))
              ''',
                 [dataSetId, metadata.browseAvailable, metadata.browseURL, metadata.sceneID, metadata.sensor,
                         metadata.acquisitionDate, metadata.dateUpdated, metadata.path, metadata.row, metadata.upperLeftCornerLatitude,
@@ -60,7 +60,7 @@ class JDBCUsgsDataRepository implements UsgsDataRepository {
             sceneCenterLatitude = ?, sceneCenterLongitude = ?, cloudCover = ?, cloudCoverFull = ?,
             dayOrNight = ?, sunElevation = ?, sunAzimuth = ?, receivingStation = ?, sceneStartTime = ?,
             sceneStopTime = ?, imageQuality1 = ?, DATA_TYPE_L1 = ?, cartURL = ?, GEOMETRIC_RMSE_MODEL_X = ?,
-            GEOMETRIC_RMSE_MODEL_Y = ?, FULL_PARTIAL_SCENE = ?, geometry = ? WHERE id = ?
+            GEOMETRIC_RMSE_MODEL_Y = ?, FULL_PARTIAL_SCENE = ?, geometry = ST_GEOMFROMTEXT(?) WHERE id = ?
             ''',
                 [metadata.browseAvailable, metadata.browseURL, metadata.sensor, metadata.dateUpdated, metadata.path,
                         metadata.row, metadata.upperLeftCornerLatitude, metadata.upperLeftCornerLongitude,
