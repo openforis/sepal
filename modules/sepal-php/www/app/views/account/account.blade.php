@@ -52,18 +52,18 @@
             </tr>
             <tr>
                 <td>Instance budget</td>
-                <td>{{ number_format($info['monthlyInstanceSpending']) }} USD</td>
-                <td>{{ number_format($info['monthlyInstanceBudget']) }} USD</td>
+                <td>{{ number_format($info['monthlyInstanceSpending'], 2) }} USD</td>
+                <td>{{ number_format($info['monthlyInstanceBudget'], 2) }} USD</td>
             </tr>
             <tr>
                 <td>Storage budget</td>
-                <td>{{ number_format($info['monthlyStorageSpending']) }} USD</td>
-                <td>{{ number_format($info['monthlyStorageBudget']) }} USD</td>
+                <td>{{ number_format($info['monthlyStorageSpending'], 2) }} USD</td>
+                <td>{{ number_format($info['monthlyStorageBudget'], 2) }} USD</td>
             </tr>
             <tr>
                 <td>Storage usage</td>
-                <td>{{ number_format($info['storageUsed']) }} GB</td>
-                <td>{{ number_format($info['storageQuota']) }} GB</td>
+                <td>{{ number_format($info['storageUsed'], 2) }} GB</td>
+                <td>{{ number_format($info['storageQuota'], 2) }} GB</td>
             </tr>
         </table>
 
@@ -71,14 +71,14 @@
         <i id="no-sandbox-sessions" class="hidden">You have no sessions.</i>
         <table id="sandbox-sessions" class="table hidden">
             <tr>
-                <th class="text-left">Creation date</th>
+                <th class="text-left">Time since creation</th>
                 <th class="text-left">Instance type</th>
                 <th class="text-left">Cost since creation</th>
                 <th class="text-left"></th>
             </tr>
             @foreach ($info['sessions'] as $session)
             <tr class="sandbox-session">
-                <td>{{ $session['creationTime'] }}</td>
+                <td>{{ DateFormatter::since(DateTime::createFromFormat('Y-m-d\TH:i:s', $session['creationTime'])) }}</td>
                 <td>{{ $session['instanceType']['name'] }}</td>
                 <td>{{ $session['costSinceCreation'] }}</td>
                 <td class="text-danger">
@@ -117,3 +117,4 @@
 </script>
 <!--content wrap end-->
 @stop
+
