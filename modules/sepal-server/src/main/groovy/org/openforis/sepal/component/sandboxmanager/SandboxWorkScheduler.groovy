@@ -20,7 +20,7 @@ class SandboxWorkScheduler {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final CommandDispatcher commandDispatcher
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-            NamedThreadFactory.singleThreadFactory(getClass().name)
+            NamedThreadFactory.singleThreadFactory('sandboxWork')
     )
 
     SandboxWorkScheduler(CommandDispatcher commandDispatcher) {

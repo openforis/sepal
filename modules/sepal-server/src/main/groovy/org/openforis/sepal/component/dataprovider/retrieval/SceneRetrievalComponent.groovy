@@ -9,6 +9,7 @@ import org.openforis.sepal.component.dataprovider.retrieval.provider.earthexplor
 import org.openforis.sepal.component.dataprovider.retrieval.provider.s3landsat8.RestfulS3LandsatClient
 import org.openforis.sepal.component.dataprovider.retrieval.provider.s3landsat8.S3Landsat8SceneProvider
 import org.openforis.sepal.util.ExecutorServiceBasedJobExecutor
+import org.openforis.sepal.util.NamedThreadFactory
 
 import java.util.concurrent.Executors
 
@@ -31,7 +32,7 @@ class SceneRetrievalComponent {
                 new S3Landsat8SceneProvider(
                         new RestfulS3LandsatClient('http://landsat-pds.s3.amazonaws.com/'),
                         new ExecutorServiceBasedJobExecutor(
-                                Executors.newFixedThreadPool(100)
+                                Executors.newFixedThreadPool(100, NamedThreadFactory.singleThreadFactory('s3Landsat8Provider'))
                         ),
                         this.coordinator
                 ),
@@ -43,7 +44,7 @@ class SceneRetrievalComponent {
                         ),
                         new ExecutorServiceBasedJobExecutor(
                                 Executors.newFixedThreadPool(
-                                        config.maxConcurrentDownloads
+                                        config.maxConcurrentDownloads, NamedThreadFactory.singleThreadFactory('earthExplorerProvider')
                                 )
                         ),
                         this.coordinator

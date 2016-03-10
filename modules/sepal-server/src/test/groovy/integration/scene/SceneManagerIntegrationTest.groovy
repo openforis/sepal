@@ -11,6 +11,7 @@ import org.openforis.sepal.component.dataprovider.retrieval.provider.DownloadReq
 import org.openforis.sepal.component.dataprovider.retrieval.provider.SceneRetrievalObservable
 import org.openforis.sepal.util.ExecutorServiceBasedJobExecutor
 import org.openforis.sepal.util.JobExecutor
+import org.openforis.sepal.util.NamedThreadFactory
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -138,7 +139,9 @@ class SceneManagerIntegrationTest extends Specification {
     }
 
     private class MockSepalScenePublisher implements ScenePublisher {
-        private final JobExecutor executor = new ExecutorServiceBasedJobExecutor(Executors.newSingleThreadExecutor())
+        private final JobExecutor executor = new ExecutorServiceBasedJobExecutor(Executors.newSingleThreadExecutor(
+                NamedThreadFactory.singleThreadFactory('fakeScenePublisher')
+        ))
 
         @Delegate
         @SuppressWarnings("GroovyUnusedDeclaration")

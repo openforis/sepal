@@ -2,6 +2,7 @@ package org.openforis.sepal.component.datasearch.metadata
 
 import org.openforis.sepal.component.dataprovider.management.DataSetRepository
 import org.openforis.sepal.component.datasearch.metadata.crawling.MetadataCrawler
+import org.openforis.sepal.util.NamedThreadFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -18,7 +19,9 @@ interface MetadataProviderManager {
 }
 
 class ConcreteMetadataProviderManager implements MetadataProviderManager {
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
+            NamedThreadFactory.singleThreadFactory('sceneMetadataCrawler')
+    )
     private final static Logger LOG = LoggerFactory.getLogger(this)
 
     private final DataSetRepository dataSetRepository

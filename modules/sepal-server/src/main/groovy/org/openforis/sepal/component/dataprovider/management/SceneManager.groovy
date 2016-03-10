@@ -1,6 +1,7 @@
 package org.openforis.sepal.component.dataprovider.management
 
 import org.openforis.sepal.component.dataprovider.*
+import org.openforis.sepal.util.NamedThreadFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -18,7 +19,9 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
     private final SceneProcessor sceneProcessor
     private final ScenePublisher scenePublisher
     private final ScenesDownloadRepository scenesRepository
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
+            NamedThreadFactory.singleThreadFactory('sceneDownloadRequestPoller')
+    )
 
     int downloadCheckInterval = 5
 

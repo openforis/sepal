@@ -13,6 +13,7 @@ import org.openforis.sepal.component.sandboxmanager.query.FindInstanceTypes
 import org.openforis.sepal.component.sandboxmanager.query.LoadSandboxInfo
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import org.openforis.sepal.user.NonExistingUser
+import org.openforis.sepal.util.NamedThreadFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -36,7 +37,9 @@ class SandboxWebProxy {
     static final String USERNAME_KEY = "sepal-user"
 
     private final Undertow server
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
+            NamedThreadFactory.singleThreadFactory('httpSessionMonitor')
+    )
     private final int sessionHeartbeatInterval
 
     private final SessionManager sessionManager
@@ -51,7 +54,6 @@ class SandboxWebProxy {
      */
     SandboxWebProxy(int port, Map<String, Integer> portByEndpoint, SandboxManagerComponent sandboxManagerComponent,
                     int sessionHeartbeatInterval, int sessionDefaultTimeout) {
-        LOG.info("Creating SandboxWebProxy [port: $port. Endpoints: $portByEndpoint, sessionHeartbeatInterval: $sessionHeartbeatInterval, sessionDefaultTimeout: ${sessionDefaultTimeout}]")
         this.sessionHeartbeatInterval = sessionHeartbeatInterval
         this.sandboxManagerComponent = sandboxManagerComponent
         sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
