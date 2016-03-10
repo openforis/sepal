@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cd ../../../modules/sepal-php
+cd $1
 rebuild=false
 if [ -f ./docker/binary/sepal-php.tar.gz ]; then
     found=$(find . \

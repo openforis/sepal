@@ -4,7 +4,7 @@
   apt: name="maven"
 
 - name: "ssh-gateway | Determine if jar should be built"
-  script: "{{ module_dir }}/should-rebuild.sh"
+  script: "{{ module_dir }}/should-rebuild.sh {{ module_dir }}"
   delegate_to: 127.0.0.1
   sudo: false
   register: should_rebuild

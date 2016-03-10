@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cd ../../../modules/ssh-gateway
+cd $1
 rebuild=false
 if [ -f ./docker/binary/sepal-ssh-gateway.jar ]; then
     found=$(find . \
