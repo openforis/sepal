@@ -67,7 +67,6 @@ class User extends Eloquent implements UserInterface, RemindableInterface {
 		
 		$queryBuilder=User::with('groups','roles');
 		$queryBuilder=$queryBuilder->orderBy('id', 'DESC');
-		//$queryBuilder=$queryBuilder->leftJoin('users_roles', 'users.id', '=', 'users_roles.user_id');
 		$queryResult=$queryBuilder->paginate(20);
 		return $queryResult;
 	}
