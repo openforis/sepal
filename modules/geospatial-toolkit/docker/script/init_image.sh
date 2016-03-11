@@ -36,6 +36,7 @@ apt-get install -y \
     otb-bin-qt \
     python-otb \
     parallel \
+    rsync \
     saga \
 	wget \
     xml-twig-tools
@@ -105,7 +106,7 @@ echo "PATH=\"/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/b
 echo "JAVA_HOME=\"/usr/lib/jvm/java-8-oracle\"" >> /etc/environment
 
 # Remove redundant files
-conda clean -ytp
+#conda clean -ytp
 rm -rf /var/lib/apt/lists/*
 rm -rf /var/cache/*
 rm -rf /tmp/*
