@@ -40,6 +40,12 @@ template /config/sssd.conf /etc/sssd/sssd.conf root: 0600
 template /config/sepalAdmin.passwd /etc/sepalAdmin.passwd root: 0600
 template /config/admin.passwd /etc/admin.passwd root: 0600
 
+# Keep /etc/ssh in a mounted volume, so host keys are reused between upgrades
+if [ ! -f /data/ssh ]; then
+    mkdir /data/ssh
+    cp -rf /etc/ssh/* /data/ssh
+fi
+rm -rf /etc/ssh && ln -sf /data/ssh /etc/ssh
 
 mkdir -p /etc/ldap/certificates
 cp /data/ldap-ca.crt.pem /etc/ldap/certificates/ldap-ca.crt.pem
