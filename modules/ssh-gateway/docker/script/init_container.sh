@@ -37,11 +37,11 @@ template /config/ldapscripts.conf /etc/ldapscripts/ldapscripts.conf root: 0600
 template /config/ldapscripts.passwd /etc/ldapscripts/ldapscripts.passwd root: 0600
 template /config/ldapadduser.template /etc/ldapscripts/ldapadduser.template root: 0600
 template /config/sssd.conf /etc/sssd/sssd.conf root: 0600
-template /config/sepalAdmin.passwd /etc/sepalAdmin.passwd root: 0600
+template /config/sepalAdmin.passwd /etc/sepalAdmin.passwd root: 0644
 template /config/admin.passwd /etc/admin.passwd root: 0600
 
 # Keep /etc/ssh in a mounted volume, so host keys are reused between upgrades
-if [ ! -f /data/ssh ]; then
+if [ ! -d /data/ssh ]; then
     mkdir /data/ssh
     cp -rf /etc/ssh/* /data/ssh
 fi
