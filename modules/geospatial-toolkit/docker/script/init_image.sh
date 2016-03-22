@@ -22,6 +22,7 @@ apt-get -y update && apt-get -y upgrade
 # Install misc  utilities
 apt-get install -y \
     aria2 \
+    bc \
     csh \
     curl  \
     dans-gdal-scripts \
@@ -104,9 +105,8 @@ mkdir /var/run/sshd
 echo "PATH=\"/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/miniconda3/envs/arcsi/bin\"" \
     > /etc/environment
 echo "JAVA_HOME=\"/usr/lib/jvm/java-8-oracle\"" >> /etc/environment
+echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
 
 # Remove redundant files
-#conda clean -ytp
 rm -rf /var/lib/apt/lists/*
-rm -rf /var/cache/*
 rm -rf /tmp/*
