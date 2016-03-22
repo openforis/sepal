@@ -3,6 +3,7 @@ package org.openforis.sepal.endpoint
 import groovymvc.AbstractMvcFilter
 import groovymvc.Controller
 import groovymvc.ParamsException
+import groovymvc.security.PathRestrictions
 import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.component.sandboxmanager.SessionFailed
@@ -16,10 +17,12 @@ import static groovy.json.JsonOutput.toJson
 final class Endpoints extends AbstractMvcFilter {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private static final Server server = new Server()
+    private static PathRestrictions pathRestrictions
     private static List<EndpointRegistry> endpointRegistries = []
 
     Controller bootstrap(ServletContext servletContext) {
         def controller = Controller.builder(servletContext)
+                .pathRestrictions(pathRestrictions)
                 .messageSource('messages')
                 .build()
 
@@ -56,8 +59,9 @@ final class Endpoints extends AbstractMvcFilter {
         return controller
     }
 
-    static void deploy(int port, EndpointRegistry... endpointRegistries) {
-        this.endpointRegistries = endpointRegistries.toList()
+    static void deploy(int port, PathRestrictions pathRestrictions, EndpointRegistry... endpointRegistries) {
+        Endpoints.pathRestrictions = pathRestrictions
+        Endpoints.endpointRegistries = endpointRegistries
         LOG.debug("Deploying SEPAL endpoints on port $port")
         server.deploy(Endpoints, port)
     }
@@ -66,3 +70,4 @@ final class Endpoints extends AbstractMvcFilter {
         server?.undeploy()
     }
 }
+

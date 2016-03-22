@@ -11,8 +11,8 @@ l<html lang="en" class="no-js">
         <title>SEPAL :: {{{ isset($title) ? $title : 'Space Data Management System' }}} {{{ SdmsConfig::value('version')  }}}</title>
         <meta name="keywords" content="Space Data Management System">
         <meta name="description" content="Space Data Management System">
-        {{ HTML::style( asset('css/bootstrap.css') ) }}  
-        {{ HTML::style( asset('css/login.css') ) }}  
+        {{ HTML::style( asset('css/bootstrap.css') ) }}
+        {{ HTML::style( asset('css/login.css') ) }}
           <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
         <!--[if lt IE 9]>
@@ -21,6 +21,6 @@ l<html lang="en" class="no-js">
         <![endif]-->
     </head>
     <body>
-        @yield('content')      	
+        @yield('content')
     </body>
 </html>

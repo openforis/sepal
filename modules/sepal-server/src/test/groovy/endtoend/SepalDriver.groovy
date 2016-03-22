@@ -18,6 +18,8 @@ class SepalDriver {
         client.handler.failure = { response, body ->
             throw new FailedRequest(response, body)
         }
+
+        client.auth.basic 'some-user', 'some-password'
     }
 
     SepalConfiguration config = system.config

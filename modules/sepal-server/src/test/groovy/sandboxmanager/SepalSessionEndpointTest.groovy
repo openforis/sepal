@@ -1,7 +1,11 @@
 package sandboxmanager
 
 import fake.FakeUserRepository
+import fake.FakeUsernamePasswordVerifier
 import groovy.json.JsonOutput
+import groovymvc.security.BasicRequestAuthenticator
+import groovymvc.security.PathRestrictions
+import groovyx.net.http.HttpResponseDecorator
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.command.CommandDispatcher
@@ -26,6 +30,7 @@ import util.Port
 import static groovy.json.JsonOutput.prettyPrint
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
+import static org.openforis.sepal.security.Roles.ADMIN
 
 @SuppressWarnings("GroovyAssignabilityCheck")
 class SepalSessionEndpointTest extends Specification {
@@ -34,6 +39,7 @@ class SepalSessionEndpointTest extends Specification {
     def queryDispatcher = Mock(QueryDispatcher)
     def commandDispatcher = Mock(CommandDispatcher)
     def userRepository = new FakeUserRepository()
+    def passwordVerifier = new FakeUsernamePasswordVerifier()
     def clock = new FakeClock()
 
     def client = new RESTClient("http://localhost:$port/data/")
@@ -43,8 +49,10 @@ class SepalSessionEndpointTest extends Specification {
             new SepalSessionEndpoint(queryDispatcher, commandDispatcher, userRepository, clock)
                     .registerWith(it)
         }
-        Endpoints.deploy(port, registry)
+        Endpoints.deploy(port, new PathRestrictions(userRepository, new BasicRequestAuthenticator('Sepal', passwordVerifier)), registry)
         client.handler.failure = { resp -> return resp }
+        client.auth.basic 'some-user', 'some-password'
+        userRepository.addRole(ADMIN)
     }
 
     def cleanup() {
@@ -152,7 +160,7 @@ class SepalSessionEndpointTest extends Specification {
         ]
 
         when:
-        def response = client.get(path: 'sandbox/some-user')
+        def response = get(path: 'sandbox/some-user')
 
         then:
         1 * queryDispatcher.submit(_ as LoadSandboxInfo) >> info
@@ -165,7 +173,7 @@ class SepalSessionEndpointTest extends Specification {
         userRepository.doesNotContainUser()
 
         when:
-        def response = client.get(path: 'sandbox/some-user')
+        def response = get(path: 'sandbox/some-user')
 
         then:
         0 * queryDispatcher.submit(_)
@@ -174,7 +182,7 @@ class SepalSessionEndpointTest extends Specification {
 
     def 'POST sandbox/{user}/session/{sessionId} returns 400 for non-numeric sessionId'() {
         when:
-        def response = client.post(path: 'sandbox/some-user/session/non-numeric-sessionId')
+        def response = post(path: 'sandbox/some-user/session/non-numeric-sessionId')
 
         then:
         0 * commandDispatcher.submit(_)
@@ -183,7 +191,7 @@ class SepalSessionEndpointTest extends Specification {
 
     def 'POST sandbox/{user}/session/{sessionId} returns 404 for non-existing sessionId'() {
         when:
-        def response = client.post(path: 'sandbox/some-user/session/999')
+        def response = post(path: 'sandbox/some-user/session/999')
 
         then:
         1 * commandDispatcher.submit(_ as JoinSession) >> {
@@ -194,7 +202,7 @@ class SepalSessionEndpointTest extends Specification {
 
     def 'POST sandbox/{user}/session/{sessionId} for starting session returns 202'() {
         when:
-        def response = client.post(path: 'sandbox/some-user/session/999')
+        def response = post(path: 'sandbox/some-user/session/999')
 
         then:
         1 * queryDispatcher.submit(_ as FindInstanceTypes) >> [new WorkerInstanceType()]
@@ -204,7 +212,7 @@ class SepalSessionEndpointTest extends Specification {
 
     def 'DELETE sandbox/{user}/session/{sessionId} closes session and returns 201'() {
         when:
-        def response = client.delete(path: 'sandbox/some-user/session/999')
+        def response = delete(path: 'sandbox/some-user/session/999')
 
         then:
         1 * commandDispatcher.submit(_ as CloseSession)
@@ -214,7 +222,7 @@ class SepalSessionEndpointTest extends Specification {
 
     def 'POST sandbox/{user}/instance-type/{instanceType} creates a session, returns the session and status of 201, if ACTIVE'() {
         when:
-        def response = client.post(path: 'sandbox/some-user/instance-type/some-type')
+        def response = post(path: 'sandbox/some-user/instance-type/some-type')
 
         then:
         1 * queryDispatcher.submit(_ as FindInstanceTypes) >> [new WorkerInstanceType()]
@@ -225,12 +233,56 @@ class SepalSessionEndpointTest extends Specification {
 
     def 'POST sandbox/{user}/instance-type/{instanceType} creates a session and returns 202 if STARTING'() {
         when:
-        def response = client.post(path: 'sandbox/some-user/instance-type/some-type')
+        def response = post(path: 'sandbox/some-user/instance-type/some-type')
 
         then:
         1 * queryDispatcher.submit(_ as FindInstanceTypes) >> [new WorkerInstanceType()]
         1 * commandDispatcher.submit(_ as CreateSession) >> startingSession()
         response.status == 202
+    }
+
+    def 'Given non-admin user, GET sandbox/{user} returns 403'() {
+        nonAdmin()
+
+        when:
+        def response = get(path: 'sandbox/some-user')
+
+        then:
+        response.status == 403
+    }
+
+    def 'Given non-admin user, POST /sandbox/{user}/session/{sessionId} returns 403'() {
+        nonAdmin()
+
+        when:
+        def response = post(path: 'sandbox/some-user/session/123')
+
+        then:
+        response.status == 403
+    }
+
+    def 'Given non-admin user, DELETE /sandbox/{user}/session/{sessionId} returns 403'() {
+        nonAdmin()
+
+        when:
+        def response = delete(path: 'sandbox/some-user/session/123')
+
+        then:
+        response.status == 403
+    }
+
+    def 'Given non-admin user, POST /sandbox/{user}/instance-type/{instanceType} returns 403'() {
+        nonAdmin()
+
+        when:
+        def response = post(path: 'sandbox/some-user/instance-type/some-instance-type')
+
+        then:
+        response.status == 403
+    }
+
+    private nonAdmin() {
+        userRepository.noRole()
     }
 
     SandboxSession startingSession(String username = 'some-user') {
@@ -243,6 +295,18 @@ class SepalSessionEndpointTest extends Specification {
 
     def failExecution(Exception e) {
         throw new ExecutionFailed({} as CommandHandler, {} as Command, e)
+    }
+
+    private HttpResponseDecorator get(Map args) {
+        return client.get(args)
+    }
+
+    private HttpResponseDecorator post(Map args) {
+        return client.post(args)
+    }
+
+    private HttpResponseDecorator delete(Map args) {
+        return client.delete(args)
     }
 
     private void sameJson(Map result, Map expectation) {

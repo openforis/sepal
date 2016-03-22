@@ -1,14 +1,16 @@
 package fake
 
+import groovymvc.security.UserProvider
 import org.openforis.sepal.user.User
 import org.openforis.sepal.user.UserRepository
 
-class FakeUserRepository implements UserRepository {
+class FakeUserRepository implements UserRepository, UserProvider<User> {
     private boolean containsUser = true
+    private final Set<String> roles = new HashSet<>()
 
-    User fetchUser(String username) { throw new UnsupportedOperationException('Not implemented in fake') }
+    User getUserByUsername(String username) { new User(username: username, roles: roles) }
 
-    User getUser(String username) { throw new UnsupportedOperationException('Not implemented in fake') }
+    User lookup(String username) { new User(username: username, roles: roles) }
 
     boolean contains(String username) {
         return containsUser
@@ -20,5 +22,13 @@ class FakeUserRepository implements UserRepository {
 
     void eachUsername(Closure closure) {
 
+    }
+
+    def addRole(String role) {
+        roles << role
+    }
+
+    def noRole() {
+        roles.clear()
     }
 }

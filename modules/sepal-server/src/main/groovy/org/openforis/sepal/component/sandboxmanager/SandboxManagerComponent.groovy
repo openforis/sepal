@@ -17,7 +17,7 @@ import org.openforis.sepal.hostingservice.WorkerInstanceManager
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.transaction.SqlConnectionManager
-import org.openforis.sepal.user.JDBCUserRepository
+import org.openforis.sepal.user.JdbcUserRepository
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
 
@@ -57,7 +57,7 @@ final class SandboxManagerComponent implements EndpointRegistry, EventSource {
         def sessionManager = new SessionManager(sessionRepository, instanceManager, sessionProvider, eventDispatcher, clock)
         def storageUsageRepository = new JdbcStorageUsageRepository(connectionManager, clock)
         def resourceUsageService = new ResourceUsageService(storageUsageChecker, sessionRepository, storageUsageRepository, clock, hostingService.storageCostPerGbMonth)
-        def userRepository = new JDBCUserRepository(connectionManager)
+        def userRepository = new JdbcUserRepository(connectionManager)
         def budgetCheck = new BudgetCheck(resourceUsageService, userBudgetRepository, instanceManager, sessionManager)
 
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
@@ -81,7 +81,7 @@ final class SandboxManagerComponent implements EndpointRegistry, EventSource {
     }
 
     void registerEndpointsWith(Controller controller) {
-        new SepalSessionEndpoint(queryDispatcher, commandDispatcher, new JDBCUserRepository(connectionManager), clock)
+        new SepalSessionEndpoint(queryDispatcher, commandDispatcher, new JdbcUserRepository(connectionManager), clock)
                 .registerWith(controller)
     }
 

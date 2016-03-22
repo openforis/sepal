@@ -8,8 +8,8 @@ class NonInteractive {
     private final SepalClient sepalClient
     private final SshSessionCommand sessionCommand
 
-    NonInteractive(String username, String sepalEndpoint, File privateKey, File output) {
-        sepalClient = new SepalClient(username, sepalEndpoint)
+    NonInteractive(String username, String sepalEndpoint, File privateKey, File output, String password) {
+        sepalClient = new SepalClient(username, sepalEndpoint, password)
         sessionCommand = new SshSessionCommand(privateKey, output)
     }
 
@@ -35,11 +35,11 @@ class NonInteractive {
     }
 
     static void main(String[] args) {
-        if (args.size() != 4)
-            throw new IllegalArgumentException("Expects four arguments: username, sepal-server REST endpoint, " +
-                    "private key path, and output path")
+        if (args.size() != 5)
+            throw new IllegalArgumentException("Expects five arguments: username, sepal-server REST endpoint, " +
+                    "private key path, output path, and sepalAdmin password")
         try {
-            new NonInteractive(args[0], args[1], new File(args[2]), new File(args[3])).start()
+            new NonInteractive(args[0], args[1], new File(args[2]), new File(args[3]), args[4]).start()
         } catch (Exception e) {
             LOG.error("NonInteractive failed", e)
             System.err.println("Something went wrong, please try again")

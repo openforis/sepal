@@ -85,6 +85,7 @@ CREATE TABLE users (
   created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP   NULL,
   user_uid       INTEGER     NOT NULL DEFAULT 0,
+  is_system_user TINYINT(4),
   PRIMARY KEY (id)
 );
 
@@ -274,9 +275,10 @@ INSERT INTO groups_system (id, group_name) VALUES (46, 'admin');
 
 INSERT INTO roles (role_name, role_desc) VALUES ('application_admin', 'Application Administrator');
 
-
-INSERT INTO users (username, full_name, user_uid) VALUES ('admin', 'admin', 1001);
+INSERT INTO users (id, username, full_name, user_uid) VALUES (1, 'admin', 'admin', 1001);
+INSERT INTO users (id, username, full_name, user_uid, is_system_user) VALUES (2, 'sepalAdmin', 'Administrator', 1002, 1);
 INSERT INTO users_roles (user_id, role_id, created_by) VALUES (1, 1, 1);
+INSERT INTO users_roles (user_id, role_id, created_by) VALUES (2, 1, 1);
 INSERT INTO user_budget (username, monthly_instance, monthly_storage, storage_quota) VALUES ('admin', 10, 10, 100);
 
 INSERT INTO metadata_providers

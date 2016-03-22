@@ -110,7 +110,7 @@ CREATE TABLE users (
   created_at     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP   NULL     DEFAULT NULL,
   user_uid       INTEGER     NOT NULL DEFAULT 0,
-  monthly_quota  INTEGER     NOT NULL DEFAULT 100,
+  is_system_user TINYINT(4),
   PRIMARY KEY (id)
 );
 

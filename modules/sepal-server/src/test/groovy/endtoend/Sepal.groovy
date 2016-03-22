@@ -2,13 +2,15 @@ package endtoend
 
 import fake.Database
 import fake.FakeStorageUsageChecker
+import fake.FakeUserRepository
+import fake.FakeUsernamePasswordVerifier
+import groovymvc.security.BasicRequestAuthenticator
+import groovymvc.security.PathRestrictions
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.component.dataprovider.DataProviderComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.endpoint.Endpoints
-import org.openforis.sepal.hostingservice.PoolingWorkerInstanceManager
-import org.openforis.sepal.util.SystemClock
 import sandboxmanager.FakeClock
 import sandboxmanager.FakeHostingService
 import sandboxmanager.FakeSandboxSessionProvider
@@ -18,6 +20,7 @@ import spock.lang.Specification
 import util.Port
 
 import static org.openforis.sepal.SepalConfiguration.*
+import static org.openforis.sepal.security.Roles.getADMIN
 
 @Ignore
 class Sepal extends Specification {
@@ -56,8 +59,12 @@ class Sepal extends Specification {
                 new FakeStorageUsageChecker(),
                 clock
         )
+
+        def userRepository = new FakeUserRepository()
+        userRepository.addRole(ADMIN)
         Endpoints.deploy(
                 port,
+                new PathRestrictions(userRepository, new BasicRequestAuthenticator('Sepal', new FakeUsernamePasswordVerifier())),
                 dataProviderComponent,
                 dataSearchComponent,
                 sandboxManagerComponent

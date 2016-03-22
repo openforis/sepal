@@ -29,12 +29,16 @@ Class SepalGeoServerController extends \BaseController {
         curl_setopt($curl, CURLOPT_POST, true);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($curl, CURLOPT_POSTFIELDS, $data_string);
+        curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($curl, CURLOPT_USERPWD, SdmsConfig::value('adminUser') . ":" . SdmsConfig::value('adminPwd'));
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_HTTPHEADER, array(
                 'Content-Type: application/json',
                 'Content-Length: ' . strlen($data_string))
         );
         Logger::debug('Data String: ', $data_string);
+        curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($curl, CURLOPT_USERPWD, SdmsConfig::value('adminUser') . ":" . SdmsConfig::value('adminPwd'));
         $result = curl_exec($curl);
         $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
@@ -56,7 +60,9 @@ Class SepalGeoServerController extends \BaseController {
         $curl = curl_init($service_url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-        $result = curl_exec($curl);
+        curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($curl, CURLOPT_USERPWD, SdmsConfig::value('adminUser') . ":" . SdmsConfig::value('adminPwd'));
+        curl_exec($curl);
     }
 
     public function showDownloadStatus() {
@@ -67,8 +73,9 @@ Class SepalGeoServerController extends \BaseController {
         $userName = Session::get("username");
         $url = SdmsConfig::value('sepalURI')."/downloadRequests/${userName}";
         $curl = curl_init($url);
-        $result = curl_exec($curl);
-//        return $result;
+        curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($curl, CURLOPT_USERPWD, SdmsConfig::value('adminUser') . ":" . SdmsConfig::value('adminPwd'));
+        curl_exec($curl);
     }
 
 }

@@ -12,8 +12,8 @@ class Interactive {
     private final SepalClient sepalClient
     private final SshSessionCommand sessionCommand
 
-    Interactive(String username, String sepalEndpoint, File privateKey, File output) {
-        sepalClient = new SepalClient(username, sepalEndpoint)
+    Interactive(String username, String sepalEndpoint, File privateKey, File output, String password) {
+        sepalClient = new SepalClient(username, sepalEndpoint, password)
         sessionCommand = new SshSessionCommand(privateKey, output)
         if (!privateKey.exists())
             throw new IllegalArgumentException("Non-existing private key: $privateKey")
@@ -253,11 +253,11 @@ class Interactive {
     }
 
     static void main(String[] args) {
-        if (args.size() != 4)
-            throw new IllegalArgumentException("Expects four arguments: username, sepal-server REST endpoint, " +
-                    "private key path, and output path")
+        if (args.size() != 5)
+            throw new IllegalArgumentException("Expects five arguments: username, sepal-server REST endpoint, " +
+                    "private key path, and output path, and sepalAdmin password")
         try {
-            new Interactive(args[0], args[1], new File(args[2]), new File(args[3])).start()
+            new Interactive(args[0], args[1], new File(args[2]), new File(args[3]), args[4]).start()
         } catch (Exception e) {
             LOG.error("Interactive failed", e)
             System.err.println("\nSomething went wrong, please try again")

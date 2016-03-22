@@ -53,16 +53,10 @@ class DateTime {
         get(date, YEAR)
     }
 
-    private static LocalDate toLocalDate(Date from) {
-        def zone = ZoneId.systemDefault()
-        from.toInstant().atZone(zone).toLocalDate()
-    }
-
     private static int get(Date date, ChronoField field) {
         def zone = ZoneId.systemDefault()
         date.toInstant().atZone(zone).toLocalDate().get(field)
     }
-
 
     private static String formatDate(Date date, SimpleDateFormat format) { format.format(date) }
 

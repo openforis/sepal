@@ -10,10 +10,11 @@ class SepalClient {
     private final String username
     private final RESTClient sepal
 
-    SepalClient(String username, String sepalEndpoint) {
+    SepalClient(String username, String sepalEndpoint, String password) {
         LOG.debug("Creating Sepal Client for $username at $sepalEndpoint")
         this.username = username
         this.sepal = new RESTClient(sepalEndpoint)
+        sepal.auth.basic 'sepalAdmin', password
     }
 
     Map loadSandboxInfo() {

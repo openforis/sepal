@@ -9,20 +9,23 @@ Class AccountController extends \BaseController {
     public function showAccount() {
         $username = Session::get('username');
         $curl = curl_init();
-        $url = "http://sepal:1025/data/sandbox/$username";
-        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_URL, "http://sepal:1025/data/sandbox/$username");
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($curl, CURLOPT_USERPWD, SdmsConfig::value('adminUser') . ":" . SdmsConfig::value('adminPwd'));
         $result = curl_exec($curl);
         $data['info'] = json_decode($result, true);
         $this->layout->content = View::make('account.account', $data);
     }
 
     public function closeSession() {
-        $path = Input::get('path');
+        $username = Session::get('username');
+        $sessionId = Input::get('path');
         $curl = curl_init();
-        $url = "http://sepal:1025/data/$path";
-        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_URL, "http://sepal:1025/data/sandbox/$username/session/$sessionId");
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+        curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($curl, CURLOPT_USERPWD, SdmsConfig::value('adminUser') . ":" . SdmsConfig::value('adminPwd'));
         curl_exec($curl);
         http_response_code(201);
     }

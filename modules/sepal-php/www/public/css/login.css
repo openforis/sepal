@@ -2781,7 +2781,6 @@ width: 82.938%; (700px(div width) / 844px(container) = 0.82938)*/
   width: 480px;
   height: auto;
   min-height: 275px;
-  background: url(../images/login-bg-img.png) no-repeat left top;
   margin-left: -240px;
   margin-top: -137px;
   position: absolute;

@@ -19,6 +19,7 @@ import java.time.Duration
 
 import static groovy.json.JsonOutput.toJson
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.*
+import static org.openforis.sepal.security.Roles.ADMIN
 
 class SepalSessionEndpoint {
     private final QueryDispatcher queryDispatcher
@@ -47,7 +48,7 @@ class SepalSessionEndpoint {
                 send(toJson(sessionId: it.sessionId, message: "sessionId $it.sessionId not available"))
             }
 
-            get('sandbox/{user}') {
+            get('sandbox/{user}', [ADMIN]) {
                 response.contentType = "application/json"
                 def query = new LoadSandboxInfo(username: params.user)
                 validateRequest(query)
@@ -76,7 +77,7 @@ class SepalSessionEndpoint {
                 send(toJson(responseBodyMap))
             }
 
-            post('sandbox/{user}/session/{sessionId}') {
+            post('sandbox/{user}/session/{sessionId}', [ADMIN]) {
                 response.contentType = 'application/json'
                 def command = new JoinSession(username: params.user, sessionId: params.required('sessionId', long))
                 validateRequest(command)
@@ -91,13 +92,13 @@ class SepalSessionEndpoint {
                 send(toJson(sessionMap))
             }
 
-            delete('sandbox/{user}/session/{sessionId}') {
+            delete('sandbox/{user}/session/{sessionId}', [ADMIN]) {
                 response.status = 201
                 def command = new CloseSession(username: params.user, sessionId: params.required('sessionId', long))
                 commandDispatcher.submit(command)
             }
 
-            post('sandbox/{user}/instance-type/{instanceType}') {
+            post('sandbox/{user}/instance-type/{instanceType}', [ADMIN]) {
                 response.contentType = "application/json"
                 def command = new CreateSession(username: params.user, instanceType: params.instanceType)
                 validateRequest(command)

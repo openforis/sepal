@@ -82,7 +82,7 @@
                 <td>{{ $session['instanceType']['name'] }}</td>
                 <td>{{ number_format($session['costSinceCreation'], 2) }} USD</td>
                 <td class="text-danger">
-                    <a class="text-danger close-session" href="{{ $session['path'] }}">
+                    <a class="text-danger close-session" href="{{ $session['id'] }}">
                         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                         close</a>
                 </td>
@@ -105,8 +105,8 @@
         }
         $('.close-session').click(function () {
             var anchor = $(this)
-            var path = anchor.attr('href')
-            $.post('closesession', {path: path}, function () {
+            var sessionId = anchor.attr('href')
+            $.post('closesession', {sessionId: sessionId}, function () {
                 anchor.closest('tr').remove()
                 initSessions()
             })

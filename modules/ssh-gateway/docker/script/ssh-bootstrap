@@ -6,13 +6,15 @@ if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
 fi
 sshScriptFile=$(mktemp /tmp/$USER-ssh.XXXXXX) > /dev/null 2>&1
 chmod +x $sshScriptFile
+password=$(cat /etc/sepalAdmin.passwd)
 java \
     -cp /opt/sepal/bin/sepal-ssh-gateway.jar \
     "$entryPoint" \
     "$USER" \
     "http://sepal:1025/data/" \
     "/home/$USER/.ssh/id_rsa" \
-    "$sshScriptFile"
+    "$sshScriptFile" \
+    "$password"
 
 if [ -s $sshScriptFile ]; then
     eval "$sshScriptFile \"${SSH_ORIGINAL_COMMAND:-}\""

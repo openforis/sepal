@@ -1,15 +1,16 @@
 package org.openforis.sepal.user
 
 import groovy.sql.Sql
+import groovymvc.security.UserProvider
 import org.openforis.sepal.transaction.SqlConnectionProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 interface UserRepository {
 
-    User fetchUser(String username)
+    User getUserByUsername(String username)
 
-    User getUser(String username)
+    User lookup(String username)
 
     boolean contains(String username)
 
@@ -17,31 +18,44 @@ interface UserRepository {
 }
 
 
-class JDBCUserRepository implements UserRepository {
+class JdbcUserRepository implements UserRepository, UserProvider<User> {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final SqlConnectionProvider connectionProvider
 
-    JDBCUserRepository(SqlConnectionProvider connectionProvider) {
+    JdbcUserRepository(SqlConnectionProvider connectionProvider) {
         this.connectionProvider = connectionProvider
     }
 
-    User fetchUser(String username) {
-        def user
+    User getUserByUsername(String username) {
         def row = sql.firstRow('SELECT * FROM users WHERE username = ?', [username])
-        if (row) {
-            user = mapUser(row)
-        } else {
+        if (!row)
             throw new NonExistingUser(username)
-        }
-        return user
+
+        return new User(
+                id: row.id,
+                username: row.username,
+                name: row.full_name,
+                email: row.email,
+                userUid: row.user_uid,
+                roles: loadRoles(row.id)
+        )
     }
 
-    User getUser(String username) {
+    private Set<String> loadRoles(long userId) {
+        sql.rows('''
+                SELECT role_name
+                FROM users_roles
+                JOIN roles ON role_id = roles.id
+                WHERE user_id = ? ''', [userId])
+                .collect { it.role_name }.toSet()
+    }
+
+    User lookup(String username) {
         def user = null
         try {
-            user = fetchUser(username)
+            user = getUserByUsername(username)
         } catch (NonExistingUser neu) {
             LOG.warn("User $neu.username does not exist")
         }
@@ -49,18 +63,15 @@ class JDBCUserRepository implements UserRepository {
     }
 
     boolean contains(String username) {
-        return getUser(username) != null
+        return lookup(username) != null
     }
 
     void eachUsername(Closure closure) {
-        sql.eachRow('SELECT username FROM users') {
+        sql.eachRow('SELECT username FROM users WHERE is_system_user IS NULL') {
             closure.call(it.username)
         }
     }
 
-    private static User mapUser(row) {
-        new User(id: row.id, username: row.username, userUid: row.user_uid)
-    }
 
     private Sql getSql() {
         connectionProvider.sql
