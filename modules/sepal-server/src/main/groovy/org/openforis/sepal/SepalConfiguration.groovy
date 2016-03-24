@@ -38,22 +38,22 @@ class SepalConfiguration {
         this.configFileLocation = configFileLocation
         properties = new Properties()
         File file = new File(configFileLocation)
-        if (file.exists()) {
-            FileInputStream fis = null
-            try {
-                fis = new FileInputStream(file)
-                properties.load(fis)
-                setEnv()
+        if (!file.exists())
+            throw new IllegalArgumentException("configFileLocation must be an existing properties file. $configFileLocation doesn't exist")
+        FileInputStream fis = null
+        try {
+            fis = new FileInputStream(file)
+            properties.load(fis)
+            setEnv()
 
-            } finally {
-                if (fis != null) {
-                    fis.close()
-                }
+        } finally {
+            if (fis != null) {
+                fis.close()
             }
-            LOG = LoggerFactory.getLogger(this.class)
-            LOG.info("Using config file $configFileLocation")
-            dataSource = connectionPool()
         }
+        LOG = LoggerFactory.getLogger(this.class)
+        LOG.info("Using config file $configFileLocation")
+        dataSource = connectionPool()
     }
 
     private DataSource connectionPool(jdbcUrl = getJdbcConnectionString()) {

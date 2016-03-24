@@ -8,11 +8,15 @@ import org.openforis.sepal.component.dataprovider.retrieval.provider.DownloadReq
 import org.openforis.sepal.component.dataprovider.retrieval.provider.SceneRetrievalObservable
 import org.openforis.sepal.util.Is
 import org.openforis.sepal.util.Terminal
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import static Status.PROCESSED
 import static Status.PROCESSING
 
 class SepalSceneProcessor implements SceneProcessor {
+    private static Logger LOG = LoggerFactory.getLogger(this)
+
     @Delegate
     @SuppressWarnings("GroovyUnusedDeclaration")
     private final SceneRetrievalObservable sceneRetrievalObservable = new SceneRetrievalObservable()
@@ -40,6 +44,7 @@ class SepalSceneProcessor implements SceneProcessor {
 
     @Override
     void process(SceneRequest request) {
+        LOG.debug("Processing request: $request")
         notifyListeners(request, PROCESSING)
         if (request.processingChain) {
             doProcess(request.processingChain, sceneRepository.getSceneWorkingDirectory(request))
@@ -56,6 +61,7 @@ class SepalSceneProcessor implements SceneProcessor {
         File scriptFile = new File(scriptsHome, processingChain)
         Is.existingFile(scriptFile)
         def workingDirPath = workingDirectory.absolutePath
+        LOG.debug("Executing processing script: $scriptFile.absolutePath, workingDir: $workingDirPath ")
         Terminal.execute(workingDirectory, scriptFile.absolutePath, workingDirPath, workingDirPath)
     }
 
