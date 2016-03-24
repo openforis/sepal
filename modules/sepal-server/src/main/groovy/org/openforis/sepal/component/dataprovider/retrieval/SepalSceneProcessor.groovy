@@ -44,7 +44,6 @@ class SepalSceneProcessor implements SceneProcessor {
 
     @Override
     void process(SceneRequest request) {
-        LOG.debug("Processing request: $request")
         notifyListeners(request, PROCESSING)
         if (request.processingChain) {
             doProcess(request.processingChain, sceneRepository.getSceneWorkingDirectory(request))
