@@ -1,5 +1,6 @@
 package sandboxmanager
 
+import fake.SynchronousJobExecutor
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.hostingservice.PoolingWorkerInstanceManager
 import org.openforis.sepal.hostingservice.WorkerInstance
@@ -164,6 +165,6 @@ class PoolingWorkerInstanceManagerTest extends Specification {
     }
 
     private PoolingWorkerInstanceManager instanceManager(LinkedHashMap<String, Integer> idleInstanceCountByInstanceType) {
-        new PoolingWorkerInstanceManager(provider, idleInstanceCountByInstanceType, clock)
+        new PoolingWorkerInstanceManager(provider, idleInstanceCountByInstanceType, new SynchronousJobExecutor(), clock)
     }
 }

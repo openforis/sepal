@@ -1,5 +1,6 @@
 package sandboxmanager
 
+import fake.SynchronousJobExecutor
 import org.openforis.sepal.component.sandboxmanager.WorkerInstanceProvider
 import org.openforis.sepal.hostingservice.HostingService
 import org.openforis.sepal.hostingservice.PoolingWorkerInstanceManager
@@ -11,7 +12,7 @@ class FakeHostingService implements HostingService {
     final double storageCostPerGbMonth
 
     FakeHostingService(WorkerInstanceProvider instanceProvider, Clock clock, storageCostPerGbMonth) {
-        workerInstanceManager = new PoolingWorkerInstanceManager(instanceProvider, [:], clock)
+        workerInstanceManager = new PoolingWorkerInstanceManager(instanceProvider, [:], new SynchronousJobExecutor(), clock)
         this.storageCostPerGbMonth = storageCostPerGbMonth
     }
 }

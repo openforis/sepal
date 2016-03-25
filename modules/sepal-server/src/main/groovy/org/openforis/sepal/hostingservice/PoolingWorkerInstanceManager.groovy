@@ -5,15 +5,23 @@ import org.openforis.sepal.component.sandboxmanager.SessionStatus
 import org.openforis.sepal.component.sandboxmanager.WorkerInstanceProvider
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.Is
+import org.openforis.sepal.util.JobExecutor
 
 import java.time.Duration
 
 class PoolingWorkerInstanceManager implements WorkerInstanceManager {
     private final WorkerInstanceProvider provider
     private final Map<String, Integer> expectedIdleCountByType
+    private final JobExecutor executor
     private final Clock clock
 
-    PoolingWorkerInstanceManager(WorkerInstanceProvider provider, Map<String, Integer> expectedIdleCountByType, Clock clock) {
+    PoolingWorkerInstanceManager(
+            WorkerInstanceProvider provider,
+            Map<String, Integer> expectedIdleCountByType,
+            JobExecutor executor,
+            Clock clock
+    ) {
+        this.executor = executor
         this.provider = provider
         this.expectedIdleCountByType = expectedIdleCountByType
         this.clock = clock
@@ -102,14 +110,14 @@ class PoolingWorkerInstanceManager implements WorkerInstanceManager {
         Duration.between(launchTime.toInstant(), clock.now().toInstant()).toMinutes()
     }
 
-
     private void fillIdlePool() {
-        def idleCountByType = provider.idleCountByType()
-        expectedIdleCountByType.each { type, expectedIdleCount ->
-            def actualIdleCount = idleCountByType[type] ?: 0
-            def instancesToStart = expectedIdleCount - actualIdleCount
-            if (instancesToStart > 0) {
-                launchIdle(instancesToStart, type)
+        executor.execute {
+            def idleCountByType = provider.idleCountByType()
+            expectedIdleCountByType.each { type, expectedIdleCount ->
+                def actualIdleCount = idleCountByType[type] ?: 0
+                def instancesToStart = expectedIdleCount - actualIdleCount
+                if (instancesToStart > 0)
+                    launchIdle(instancesToStart, type)
             }
         }
     }
