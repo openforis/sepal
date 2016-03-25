@@ -99,6 +99,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
     }
 
     private void createContainer(SandboxSession session, WorkerInstance instance) {
+        LOG.debug("Creating container for session $session on $instance.")
         def exposedPorts = config.portByProxiedEndpoint.values().toList() << 22
         def request = new JsonOutput().toJson([
                 Image: "$config.dockerImageName",
@@ -114,7 +115,6 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
                     ["$it/tcp", [:]]
                 }
         ])
-        LOG.debug("Deploying session $session to $instance.")
         withClient(instance) {
             def response = post(
                     path: "containers/create",
@@ -122,13 +122,14 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
                     body: request,
                     requestContentType: JSON
             )
-            LOG.debug("Deployed session $session to $instance.")
+            LOG.debug("Created container for session $session on $instance.")
             if (response.data.Warnings)
                 LOG.warn("Warning when creating docker container for session $session in $instance: $response.data.Warnings")
         }
     }
 
     private void startContainer(SandboxSession session, WorkerInstance instance) {
+        LOG.debug("Starting container for session $session on $instance.")
         def portBindings = config.portByProxiedEndpoint.values().collectEntries {
             ["$it/tcp", [[HostPort: "$it"]]]
         }
@@ -141,6 +142,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
                     requestContentType: JSON
             )
         }
+        LOG.debug("Started container for session $session on $instance.")
     }
 
     private void waitUntilInitialized(SandboxSession session, WorkerInstance instance) {

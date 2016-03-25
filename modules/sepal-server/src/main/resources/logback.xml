@@ -7,6 +7,10 @@
         </encoder>
     </appender>
 
+    <logger name="org.openforis.sepal.component.sandboxmanager.DockerSandboxSessionProvider" additivity="false" level="DEBUG">
+        <appender-ref ref="FILE"/>
+    </logger>
+
     <!--<logger name="org.openforis.sepal" additivity="false" level="DEBUG">-->
         <!--<appender-ref ref="FILE"/>-->
     <!--</logger>-->

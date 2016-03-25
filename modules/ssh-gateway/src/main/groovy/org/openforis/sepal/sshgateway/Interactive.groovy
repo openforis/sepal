@@ -249,7 +249,7 @@ class Interactive {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in))
         def result = br.readLine()
         println()
-        return result.trim().toLowerCase()
+        return result?.trim()?.toLowerCase()
     }
 
     static void main(String[] args) {

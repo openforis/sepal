@@ -110,3 +110,8 @@ echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
 # Remove redundant files
 rm -rf /var/lib/apt/lists/*
 rm -rf /tmp/*
+
+# Warmup tools
+arcsi.py --version
+gdalinfo --version
+oft-stack
