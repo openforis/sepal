@@ -45,10 +45,29 @@
         fstype: "nfs4"
         state: "mounted"
         src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/home"
+
     - name: Copy pull sandbox script
       template: src=/tmp/pull_sandbox.sh dest=/data/sepal/pull_sandbox.sh mode=0777 remote_src=True
     - name: Copy LDAP Certificate
       copy: src=/tmp/ldap-ca.crt.pem dest=/data/sepal/certificates/ldap-ca.crt.pem
+
+  tasks:
+    - name: "Warming up sandbox image"
+      docker:
+        docker_api_version: "1.22"
+        name: "warmup"
+        image: "{{ docker_repository_host }}/openforis/sandbox:{{ version }}"
+        state: "started"
+        net: "bridge"
+        command: 'bash -c "arcsi.py --version; gdalinfo --version; oft-stack"'
+
+    - name: "Removing sandbox image warmup container"
+      docker:
+        docker_api_version: "1.22"
+        name: "warmup"
+        image: "{{ docker_repository_host }}/openforis/sandbox:{{ version }}"
+        state: "absent"
+        net: "bridge"
 
   roles:
     - role: unattended-upgrades

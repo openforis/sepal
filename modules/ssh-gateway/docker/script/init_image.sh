@@ -36,6 +36,8 @@ printf '%s\n' \
     'AuthorizedKeysCommandUser root' \
     'PrintMotd no' \
     'PrintLastLog no' \
+    'UseDNS no' \
+    'GSSAPIAuthentication no' \
     "Match Group $USER_GROUP" \
     '    ForceCommand ssh-bootstrap' \
     >> /etc/ssh/sshd_config
