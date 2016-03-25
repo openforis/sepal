@@ -112,6 +112,8 @@ rm -rf /var/lib/apt/lists/*
 rm -rf /tmp/*
 
 # Warmup tools
-/opt/miniconda3/envs/arcsi/bin/arcsi.py --version
-/opt/miniconda3/bingdalinfo --version
-oft-stack
+/opt/miniconda3/envs/arcsi/bin/arcsi.py --version || true
+/opt/miniconda3/bingdalinfo --version || true
+oft-stack || true
+
+echo "Image Initialized"
