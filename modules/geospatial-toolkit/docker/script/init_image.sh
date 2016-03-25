@@ -112,6 +112,6 @@ rm -rf /var/lib/apt/lists/*
 rm -rf /tmp/*
 
 # Warmup tools
-arcsi.py --version
-gdalinfo --version
+/opt/miniconda3/envs/arcsi/bin/arcsi.py --version
+/opt/miniconda3/bingdalinfo --version
 oft-stack
