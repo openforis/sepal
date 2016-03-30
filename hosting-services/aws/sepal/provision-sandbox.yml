@@ -11,29 +11,36 @@
     - name: Set Facts
       set_fact:
         docker_repository_host: "54.93.185.137"
+
     - name: Create docker-registry certificate dir
       file:
         path: "/etc/docker/certs.d/{{ docker_repository_host }}"
         state: directory
+
     - name: Copy docker-registry certificate
       copy:
         src: /tmp/docker-registry.crt
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
         remote_src: True
+
     - name: Install nfs-common
       apt:
         name: "nfs-common"
+
     - name: Install Expect
       apt:
         name: "expect"
+
     - name: Create /data/sepal directory structure
       file:
         path: "/data/sepal"
         state: directory
+
     - name: Create /data/sepal directory structure
       file:
         path: "/data/sepal/home"
         state: directory
+
     - name: Create /data/sepal directory structure
       file:
         path: "/data/sepal/certificates"
@@ -48,8 +55,18 @@
 
     - name: Copy pull sandbox script
       template: src=/tmp/pull_sandbox.sh dest=/data/sepal/pull_sandbox.sh mode=0777 remote_src=True
+
     - name: Copy LDAP Certificate
       copy: src=/tmp/ldap-ca.crt.pem dest=/data/sepal/certificates/ldap-ca.crt.pem
+
+    - name: Create Docker LVM Volume Group
+      lvg: vg=vg-docker pvs=/dev/xvdf
+
+    - name: Create Docker LVM Data Volume
+      lvol: vg=vg-docker lv=data size=12g
+
+    - name: Create Docker LVM Metadata Volume
+      lvol: vg=vg-docker lv=metadata size=100%FREE
 
   tasks:
     - name: "Warming up sandbox image"
@@ -74,6 +91,9 @@
       unattended_origins_patterns:
         - 'origin=Ubuntu,archive=${distro_codename}-security'
         - 'o=Ubuntu,a=${distro_codename}-updates'
-    - { role: docker, users: ['ubuntu'] }
+
+    - role: docker
+      users: ['ubuntu']
+      opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --storage-driver=devicemapper --storage-opt dm.datadev=/dev/vg-docker/data --storage-opt dm.metadatadev=/dev/vg-docker/metadata'
     - role: pull-sandbox
 

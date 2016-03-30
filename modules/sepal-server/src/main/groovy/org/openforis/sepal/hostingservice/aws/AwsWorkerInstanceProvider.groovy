@@ -119,6 +119,14 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
                                 volumeType: VolumeType.Standard,
                                 deleteOnTermination: true
                         )
+                ),
+                new BlockDeviceMapping(
+                        deviceName: '/dev/sdf',
+                        ebs: new EbsBlockDevice(
+                                volumeSize: 15,
+                                volumeType: VolumeType.Standard,
+                                deleteOnTermination: true
+                        )
                 )
         )
 

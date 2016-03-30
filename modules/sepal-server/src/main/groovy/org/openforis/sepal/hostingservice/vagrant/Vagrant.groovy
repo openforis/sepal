@@ -15,7 +15,7 @@ class Vagrant implements HostingService {
             new VagrantWorkerInstanceProvider(),
             ['vagrant-box': 1],
             new ExecutorServiceBasedJobExecutor(
-                    newSingleThreadExecutor(NamedThreadFactory.singleThreaded('workerInstanceManager'))
+                    newSingleThreadExecutor(NamedThreadFactory.singleThreadFactory('workerInstanceManager'))
             ),
             new SystemClock()
     )

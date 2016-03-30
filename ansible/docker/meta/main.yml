@@ -4,6 +4,6 @@ dependencies:
       role: docker.ubuntu,
       docker_version: '1.8.1-0~trusty',
       docker_group_members: '{{ users }}',
-      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage --storage-opt dm.basesize=10G'
+      docker_opts: "{{ opts if opts else '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage --storage-opt dm.basesize=10G' }}"
   }
   # Using dm.basesize=10G to speed up container removal. See https://github.com/docker/docker/issues/18314
