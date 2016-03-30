@@ -19,7 +19,7 @@ class TarTest extends Specification {
         Tar.unpackTarGz(archive)
 
         then:
-        workingDir.list() as List == ['1.tif', '2.tif']
+        workingDir.list() as Set == ['1.tif', '2.tif'].toSet()
     }
 
     def 'Unpacking archive with other extension than .tar.gz throws IllegalArgumentException'() {
