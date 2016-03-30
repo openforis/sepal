@@ -9,11 +9,17 @@ Class AccountController extends \BaseController {
     public function showAccount() {
         $username = Session::get('username');
         $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, "http://sepal:1025/data/sandbox/$username");
+        $url = "http://sepal:1025/data/sandbox/$username";
+        curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_setopt($curl, CURLOPT_USERPWD, SdmsConfig::value('adminUser') . ":" . SdmsConfig::value('adminPwd'));
         $result = curl_exec($curl);
+        if($result === false) {
+            $errorMessage = 'Failed to load account from ' . $url . ': ' . curl_error($curl);
+            Logger::error($errorMessage);
+            throw new Exception($errorMessage);
+        }
         $data['info'] = json_decode($result, true);
         $this->layout->content = View::make('account.account', $data);
     }
@@ -22,11 +28,17 @@ Class AccountController extends \BaseController {
         $username = Session::get('username');
         $sessionId = Input::get('path');
         $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, "http://sepal:1025/data/sandbox/$username/session/$sessionId");
+        $url = "http://sepal:1025/data/sandbox/$username/session/$sessionId";
+        curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_setopt($curl, CURLOPT_USERPWD, SdmsConfig::value('adminUser') . ":" . SdmsConfig::value('adminPwd'));
-        curl_exec($curl);
+
+        if(curl_exec($curl) === false) {
+            $errorMessage = 'Failed to close session on url ' . $url . ': ' . curl_error($curl);
+            Logger::error($errorMessage);
+            throw new Exception($errorMessage);
+        }
         http_response_code(201);
     }
 }
