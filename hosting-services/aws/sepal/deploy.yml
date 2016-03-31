@@ -19,7 +19,7 @@
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
     - name: Set sepal_host and ami_id var
       set_fact:
-        sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
+        sepal_host: "{{ custom_host if use_custom_host == true else ec2_ip_address }}"
         ldap_host: "{{ custom_host if use_custom_host == true else ec2_private_ip_address }}"
 
     - file: path="/data/docker/storage/devicemapper/metadata" state=directory

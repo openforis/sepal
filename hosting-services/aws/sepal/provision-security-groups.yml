@@ -21,35 +21,10 @@
           - proto: tcp
             from_port: 0
             to_port: 65535
-            cidr_ip: "{{inventory_hostname}}/32"
+            cidr_ip: "{{ec2_ip_address}}/32"
         rules_egress:
           - proto: all
             from_port: 0
             to_port: 65535
             cidr_ip: 0.0.0.0/0
       delegate_to: localhost
-#
-#    - name: Create EFS Security Group
-#      ec2_group:
-#        name: EFS
-#        description: The EFS Security Group
-#        region: "{{ region }}"
-#        rules:
-#          - proto: tcp
-#            from_port: 2049
-#            to_port: 2049
-#            cidr_ip: 168.202.0.0/16
-#          - proto: tcp
-#            from_port: 2049
-#            to_port: 2049
-#            cidr_ip: "{{inventory_hostname}}/32"
-#        rules_egress:
-#          - proto: all
-#            from_port: 0
-#            to_port: 65535
-#            cidr_ip: 0.0.0.0/0
-#      delegate_to: localhost
-
-# TODO Allocate and associate elastic IP, once Ansible 2.0 is released
-# https://github.com/ansible/ansible-modules-core/pull/1015 needed to make it idempotent
-# TODO Route 53 resources
