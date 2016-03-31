@@ -1,7 +1,7 @@
 - name: Configure Local Environment
   hosts: all
   user: vagrant
-  sudo: yes
+  become: yes
   gather_facts: true
 
   vars_files:

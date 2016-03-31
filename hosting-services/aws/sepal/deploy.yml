@@ -1,7 +1,7 @@
 - name: Configure Sepal instance
   hosts: "tag_Type_Sepal:&tag_Environment_{{ deploy_environment }}"
   user: ubuntu
-  sudo: yes
+  become: yes
   gather_facts: true
 
   vars_files:

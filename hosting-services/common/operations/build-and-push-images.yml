@@ -1,7 +1,7 @@
 - name: Build and push images
   hosts: all
   user: ubuntu
-  sudo: yes
+  become: yes
   gather_facts: true
 
   vars_files:
