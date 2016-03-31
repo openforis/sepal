@@ -4,5 +4,6 @@ dependencies:
       role: docker.ubuntu,
       docker_version: '1.8.1-0~trusty',
       docker_group_members: '{{ users }}',
-      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --storage-driver=devicemapper --storage-opt dm.datadev=/dev/vg-docker/data --storage-opt dm.metadatadev=/dev/vg-docker/metadata'
+      docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --storage-driver=devicemapper --storage-opt dm.datadev=/dev/vg-docker/data --storage-opt dm.metadatadev=/dev/vg-docker/metadata',
+      install_kernel_extras: true
   }
