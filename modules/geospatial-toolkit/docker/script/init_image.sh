@@ -111,4 +111,9 @@ echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
 rm -rf /var/lib/apt/lists/*
 rm -rf /tmp/*
 
+# Warmup tools
+/opt/miniconda3/envs/arcsi/bin/arcsi.py --version || true
+/opt/miniconda3/bin/gdalinfo --version || true
+oft-stack || true
+
 echo "*** Image Initialized ***"
