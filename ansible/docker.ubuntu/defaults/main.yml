@@ -1,11 +1,10 @@
 ---
-# lxc-docker is the default
+# docker-engine is the default package name
 docker_pkg_name: docker-engine
-# docker_pkg_name: docker.io
+docker_apt_cache_valid_time: 600
 
 # docker dns path for docker.io package ( changed at ubuntu 14.04 from docker to docker.io )
-docker_defaults_file_path: /etc/default/docker 
-#docker_defaults_file_path: /etc/default/docker.io
+docker_defaults_file_path: /etc/default/docker
 
 # Important if running Ubuntu 12.04-13.10 and ssh on a non-standard port
 ssh_port: 22
@@ -27,7 +26,7 @@ docker_opts: ""
 # Be aware that granted users can easily get full root access on the docker host system!
 docker_group_members: []
 # Versions for the python packages that are installed installed
-pip_version_pip: 7.1.2
+pip_version_pip: latest
 pip_version_setuptools: latest
 pip_version_docker_py: latest
 pip_version_docker_compose: latest

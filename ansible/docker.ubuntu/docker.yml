@@ -1,10 +1,9 @@
 ---
 - hosts: all
-  fsudo: true
+  become: yes
   roles:
     - { role: ./,
-        docker_opts: "-H tcp://127.0.0.1:4243 -H unix:///var/run/docker.sock --dns 8.8.8.8 --dns 8.8.4.4 --storage-opt dm.basesize=10G"
-        # Using dm.basesize=10G to speed up container removal. See https://github.com/docker/docker/issues/18314
+        docker_opts: "-H tcp://127.0.0.1:4243 -H unix:///var/run/docker.sock --dns 8.8.8.8 --dns 8.8.4.4"
       }
 
 #- include: integration-tests.yml
