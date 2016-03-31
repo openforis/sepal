@@ -27,6 +27,14 @@
       apt:
         name: "nfs-common"
 
+    - name: Install nfs-common
+      apt:
+        name: "nfs-common"
+
+    - name: Install lvm
+      apt:
+        name: "lvm2"
+
     - name: Install Expect
       apt:
         name: "expect"

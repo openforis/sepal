@@ -111,24 +111,6 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
                 .withImageId(imageId)
                 .withMinCount(1).withMaxCount(1)
                 .withPlacement(new Placement(availabilityZone: availabilityZone))
-                .withBlockDeviceMappings(
-                new BlockDeviceMapping(
-                        deviceName: '/dev/sda1',
-                        ebs: new EbsBlockDevice(
-                                volumeSize: 15,
-                                volumeType: VolumeType.Standard,
-                                deleteOnTermination: true
-                        )
-                ),
-                new BlockDeviceMapping(
-                        deviceName: '/dev/sdf',
-                        ebs: new EbsBlockDevice(
-                                volumeSize: 15,
-                                volumeType: VolumeType.Standard,
-                                deleteOnTermination: true
-                        )
-                )
-        )
 
         def response = client.runInstances(request)
         def awsInstance = response.reservation.instances.first()
@@ -220,8 +202,7 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
         def reservedTime = reservedTimeString ? Date.parse('yyyy-MM-dd HH:mm:ss', reservedTimeString) : null
         return new WorkerInstance(
                 id: awsInstance.instanceId,
-//                host: awsInstance.privateIpAddress,
-                host: awsInstance.publicIpAddress, // TODO: User public or private ip?
+                host: awsInstance.publicIpAddress,
                 type: instanceType(awsInstance),
                 running: awsInstance.state.name == 'running',
                 idle: idle,
@@ -237,7 +218,6 @@ class AwsWorkerInstanceProvider implements WorkerInstanceProvider {
             }
         }.flatten() as List<WorkerInstance>
     }
-
 
     private String instanceType(Instance awsInstance) {
         InstanceType.fromValue(awsInstance.instanceType).name()
