@@ -7,7 +7,7 @@
     {{ HTML::script('js/gateone.js'); }}
     <title>SEPAL - Terminal</title>
     <style>
-        #go_default_noticecontainer {
+        #go_default_noticecontainer, #go_default_controlsContainer, #go_default_infocontainer {
             display: none !important;
         }
     </style>
