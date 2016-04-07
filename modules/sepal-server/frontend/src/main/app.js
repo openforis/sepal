@@ -1,10 +1,6 @@
-import './main-app.tag'
-import dependencies from 'dependencies'
+require('bootstrap')
+var template = require('./app.html')
+var $ = require('jquery')
 
-
-
-riot.mount('*')
-
-const route = filter => dependencies.dispatcher.trigger('todo:filter', filter)
-riot.route((ignore, filter) => route(filter))
-riot.route.exec((ignore, filter) => route(filter))
+var html = template({name: 'World'})
+$('.app').html(html)

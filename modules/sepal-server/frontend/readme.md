@@ -1,35 +1,19 @@
-# Framework Name • [TodoMVC](http://todomvc.com)
+# Sepal Frontend
 
-> Official description of the framework (from its website)
+## Build optimized version
 
+> $ ./build
 
-## Resources
+This builds an optimized version in ./dist
 
-- [Website]()
-- [Documentation]()
-- [Used by]()
-- [Blog]()
-- [FAQ]()
+## Run dev server
 
-### Articles
+> $ ./serve
 
-- [Interesting article]()
+This runs a dev server on http://localhost:8888/
 
-### Support
+## Add javascript dependency
 
-- [StackOverflow](http://stackoverflow.com/questions/tagged/__)
-- [Google Groups]()
-- [Twitter](http://twitter.com/__)
-- [Google+]()
-
-*Let us [know](https://github.com/tastejs/todomvc/issues) if you discover anything worth sharing.*
+> $ npm install <pkg> --save (or --save-dev if not a runtime dependency)
 
 
-## Implementation
-
-How was the app created? Anything worth sharing about the process of creating the app? Any spec violations?
-
-
-## Credit
-
-Created by [Your Name](http://your-website.com)
