@@ -8,7 +8,7 @@ module.exports = {
         'font-awesome-loader',
         'bootstrap-loader/extractStyles',
         'tether',
-        './src/main/app.js'
+        './src/components/main/app.js'
     ],
     output: {
         path: __dirname + '/dist',
