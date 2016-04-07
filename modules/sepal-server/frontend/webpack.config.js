@@ -52,9 +52,9 @@ module.exports = {
 
     devServer: {
         contentBase: './dist'
-        // ,
-        // proxy: {
-        //     '*': {target: 'http://localhost:9999'}
-        // }
+        ,
+        proxy: {
+            '*': {target: 'http://localhost:9999'}
+        }
     }
 }
