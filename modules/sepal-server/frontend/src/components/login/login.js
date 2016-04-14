@@ -11,45 +11,49 @@ var EventBus	= require( '../event-bus/event-bus' );
 var template = require( './login.html' )
 var html = $( template( {} ) )
 
-$("body").find( '.app' ).append( html )
+var addLoginForm = function(){
 
-var form = html.find('form')
+    $("body").find( '.app' ).append( html )
 
-form.submit( function(e){
-    e.preventDefault()
+    var form = html.find('form')
 
-    var params = {
-        url         : form.attr( 'action' )
-        , method    : form.attr( 'method' )
-        , data      : form.serialize()
-        , complete  : function ( object , status ) {
+    form.submit( function(e){
+        e.preventDefault()
 
-            switch ( status ){
-                case 'error' :
+        var params = {
+            url         : form.attr( 'action' )
+            , method    : form.attr( 'method' )
+            , data      : form.serialize()
+            , error     : null
+            , complete  : function ( object , status ) {
 
-                    console.log( arguments )
-                    console.log('error')
+                switch ( status ){
+                    case 'error' :
 
-                    form.find( 'fieldset' ).addClass('has-danger')
-                    form.find( 'input' ).addClass('form-control-danger')
+                        form.find( 'fieldset' ).addClass('has-danger')
+                        form.find( 'input' ).addClass('form-control-danger')
 
-                    break;
-                case 'success' :
-                    console.log( arguments )
-                    console.log('logged')
+                        break;
+                    case 'success' :
 
+                        var user = object.responseJSON
 
-                    var user = object.responseJSON
-                    EventBus.dispatch( 'user.logged' , this , user )
-                    break;
+                        html.fadeOut( function(){
+                            html.remove()
+                        })
+                        EventBus.dispatch( 'user.logged' , this , user )
+
+                        break;
+                }
+
             }
-
         }
-    }
 
-    EventBus.dispatch( 'ajax' , this , params )
-})
+        EventBus.dispatch( 'ajax' , this , params )
+    })
+}
 
+addLoginForm()
 
 
 
