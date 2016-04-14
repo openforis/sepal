@@ -8,7 +8,7 @@ target
 #Eclipse
 .classpath
 .project
-.settings/
+.settings
 
 #Sepal binaries
 /modules/ssh-gateway/docker/binary/sepal-ssh-gateway.jar

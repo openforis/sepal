@@ -17,7 +17,7 @@ class Server {
 
     void deploy(Class<? extends AbstractMvcFilter> appClass, int port,
                 List<Class<? extends EventListener>> listeners = []) {
-        def contextPath = '/data'
+        def contextPath = '/api'
         LOG.info("Deploying server on port $port")
         def servletBuilder = deployment()
                 .setClassLoader(appClass.classLoader)

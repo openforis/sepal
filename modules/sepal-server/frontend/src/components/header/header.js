@@ -1,4 +1,4 @@
-var EventBus	= require( '../event-bus/event-bus' );
+// var EventBus	= require( '../event-bus/event-bus' );
 
 var template = require('./header.html')
 var html = template({});

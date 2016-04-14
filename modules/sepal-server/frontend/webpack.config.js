@@ -51,8 +51,7 @@ module.exports = {
     postcss: [autoprefixer],
 
     devServer: {
-        contentBase: './dist'
-        ,
+        contentBase: './dist',
         proxy: {
             '*': {target: 'http://localhost:9999'}
         }

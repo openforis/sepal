@@ -1,20 +1,20 @@
-require('bootstrap')
+require( 'bootstrap' )
+require( '../ajax/ajax' )
+require( '../login/login' )
 
 var EventBus	= require( '../event-bus/event-bus' );
 
-var template = require('./app.html')
-var $ = require('jquery')
+// global app variables
+var User = {}
 
-var html = template({name: 'World'});
-var app = $('.app');
-app.html(html);
+// event handlers
+EventBus.addEventListener( 'user.logged' , function(e , user){
+    User = user
 
-var header = require('../header/header');
-app.find('.header').html(header.html);
+    console.log( user )
+})
 
-
-
-$('.app').click(function(){
-	//app.find( '.container' ).fadeOut()
-	EventBus.dispatch( 'app.loaded' );
-});
+// exposed global app variables
+module.exports = {
+    User : User
+}
