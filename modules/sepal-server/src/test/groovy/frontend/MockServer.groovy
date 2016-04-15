@@ -31,6 +31,8 @@ class MockServer extends AbstractMvcFilter {
 
         controller.with {
             post('/login') {
+                response.contentType = 'application/json'
+
                 if (params.password == 'demo')
                     send toJson(authenticator.users.values().first())
                 else
@@ -38,9 +40,44 @@ class MockServer extends AbstractMvcFilter {
             }
 
 
-            get( '/')
+            get('/data/sceneareas') {
+                response.contentType = 'application/json'
 
+                params.countryIso
+//                params.polygon
 
+                // coordinates:[lat , long ]
+                send toJson([
+                        [
+                                sceneAreaId           : '192_45'
+                                , lowerLeftCoordinate : [43.95287, -73.38717]
+                                , upperLeftCoordinate : [45.66895, -72.81323]
+                                , upperRightCoordinate: [45.24376, -70.44335]
+                                , lowerRightCoordinate: [43.53155, -71.0851]
+                        ]
+                ])
+            }
+
+            get('/data/sceneareas/{sceneAreaId}') {
+                response.contentType = 'application/json'
+
+                params.targetDay //MM-dd
+                params.startDate //YYYY-MM-dd
+                params.endDate  //YYYY-MM-dd
+
+                send toJson([
+                        [
+                                sceneId        : 'LC80130292014100LGN00',
+                                sensor         : "L8",
+                                browseUrl      : 'http://',
+                                acquisitionDate: '2014-04-10',
+                                sunAzimuth     : 149.68956135,
+                                cloudCover     : 12.3,
+                                score          : "0.1"
+
+                        ]
+                ])
+            }
 
 
 
