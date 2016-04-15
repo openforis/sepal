@@ -36,6 +36,17 @@ class MockServer extends AbstractMvcFilter {
                 else
                     halt(401)
             }
+
+
+            get( '/')
+
+
+
+
+
+
+
+
             get('/foo/{name}') {
 
                 LOG.info("adasdasdfasfas")

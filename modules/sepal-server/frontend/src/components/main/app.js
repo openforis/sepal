@@ -2,7 +2,7 @@ require( 'bootstrap' )
 require( '../ajax/ajax' )
 require( '../login/login' )
 
-var EventBus	= require( '../event-bus/event-bus' );
+var EventBus	= require( '../event/event-bus' );
 
 // global app variables
 var User = null

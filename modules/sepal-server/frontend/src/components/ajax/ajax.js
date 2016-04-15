@@ -1,10 +1,11 @@
 /**
- * 
+ *
  * Module for handling ajax calls
- * 
+ *
  * @author Mino Togna
  */
-var EventBus	= require( '../event-bus/event-bus' );
+var EventBus = require('../event/event-bus');
+var Events = require('../event/events');
 
 // ajax common parameters:
 
@@ -12,7 +13,7 @@ var EventBus	= require( '../event-bus/event-bus' );
 //     beforeSend  : function
 //     complete    : function
 //     success: success,
-//     type: "POST",
+//     type | method: The HTTP method to use for the request (e.g. "POST", "GET", "PUT"),
 //     url: url,
 //     data: Type: PlainObject or String or Array,
 //     dataType (default: Intelligent Guess (xml, json, script, or html)),
@@ -23,28 +24,27 @@ var EventBus	= require( '../event-bus/event-bus' );
 
 // initialize global ajax setup
 $.ajaxSetup({
-    
-    dataType    : "json" 
 
-    , type      : "GET"
-    
-    , error     :function (xhr, ajaxOptions, thrownError){
+    dataType: "json"
+
+    , type: "GET"
+
+    , error: function (xhr, ajaxOptions, thrownError) {
         switch (xhr.status) {
             case 401 :
                 console.log("no access");
                 break;
 
             default :
-                console.log( 'Error on javascript call')
-                console.log( arguments )
+                console.log('Error on javascript call')
+                console.log(arguments)
         }
     }
 
-
 })
 
-var ajaxRequest = function ( e , params ) {
-    $.ajax( params )
+var ajaxRequest = function (e, params) {
+    $.ajax(params)
 }
 
-EventBus.addEventListener( 'ajax' , ajaxRequest )
+EventBus.addEventListener(Events.AJAX.REQUEST, ajaxRequest)
