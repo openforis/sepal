@@ -21,6 +21,7 @@
     password: "{{ docker_password }}"
     links:
     - "gateone:gateone"
+#    - "google-earth-engine:google-earth-engine"
     - "sepal:sepal"
     - "php:php"
     volumes:

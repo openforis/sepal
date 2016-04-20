@@ -1,0 +1,22 @@
+---
+- name: "google-earth-engine | Create config dir"
+  file:
+    path: "/data/google-earth-engine"
+    state: directory
+
+- name: "google-earth-engine | Start container"
+  docker:
+    docker_api_version: "1.22"
+    name: "google-earth-engine"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/google-earth-engine:{{ version }}"
+    state: "reloaded"
+    net: "bridge"
+    restart_policy: "always"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    env:
+      EE_ACCOUNT_SEPAL_ENV: "{{ google_earth_engine_account }}"
+      EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"

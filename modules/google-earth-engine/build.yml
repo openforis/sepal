@@ -1,0 +1,4 @@
+---
+
+- name: "google-earth-engine | Build"
+  docker_image: path="/opt/sepal/modules/google-earth-engine/docker" name="localhost/openforis/google-earth-engine" state="build"

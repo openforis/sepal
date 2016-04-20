@@ -17,6 +17,7 @@
     - { role: build-image, image: geospatial-toolkit}
     - { role: build-image, image: sandbox}
     - { role: build-image, image: sepal-php}
+#    - { role: build-image, image: google-earth-engine}
     - { role: build-image, image: sepal-server}
     - role: tag-images
     - role: push-images

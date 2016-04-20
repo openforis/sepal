@@ -40,9 +40,11 @@
     - { role: build-image, image: sandbox }
     - { role: build-image, image: sepal-php }
     - { role: build-image, image: sepal-server }
+#    - { role: build-image, image: google-earth-engine}
 
     - { role: run-container, image: ldap }
     - { role: run-container, image: mysql }
+#    - { role: run-container, image: google-earth-engine }
     - { role: run-container, image: sepal-server }
     - { role: run-container, image: ssh-gateway }
     - { role: run-container, image: gateone }
