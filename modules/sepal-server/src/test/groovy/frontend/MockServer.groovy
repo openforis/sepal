@@ -21,8 +21,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class MockServer extends AbstractMvcFilter {
-
     private static final Logger LOG = LoggerFactory.getLogger(this)
+    private static final bounds = new Wrs2Bounds()
 
     Controller bootstrap(ServletContext servletContext) {
         def authenticator = new FakeAuthenticator()
@@ -47,15 +47,10 @@ class MockServer extends AbstractMvcFilter {
 //                params.polygon
 
                 // coordinates:[lat , long ]
-                send toJson([
-                        [
-                                sceneAreaId           : '192_45'
-                                , lowerLeftCoordinate : [43.95287, -73.38717]
-                                , upperLeftCoordinate : [45.66895, -72.81323]
-                                , upperRightCoordinate: [45.24376, -70.44335]
-                                , lowerRightCoordinate: [43.53155, -71.0851]
-                        ]
-                ])
+                def sceneAreas = bounds.forSceneAreaIds([
+                        '187_32', '187_33', '187_34', '188_31', '188_32', '188_33', '188_34', '189_31', '189_32',
+                        '189_34', '190_30', '190_31', '190_34', '191_29', '191_30', '191_31', '192_29', '192_30'])
+                send toJson(sceneAreas)
             }
 
             get('/data/sceneareas/{sceneAreaId}') {
