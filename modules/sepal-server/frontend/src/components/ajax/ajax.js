@@ -4,8 +4,8 @@
  *
  * @author Mino Togna
  */
-var EventBus = require('../event/event-bus');
-var Events = require('../event/events');
+var EventBus = require( '../event/event-bus' );
+var Events   = require( '../event/events' );
 
 // ajax common parameters:
 
@@ -23,28 +23,28 @@ var Events = require('../event/events');
 // }
 
 // initialize global ajax setup
-$.ajaxSetup({
+$.ajaxSetup( {
 
     dataType: "json"
 
     , type: "GET"
 
-    , error: function (xhr, ajaxOptions, thrownError) {
-        switch (xhr.status) {
+    , error: function ( xhr, ajaxOptions, thrownError ) {
+        switch ( xhr.status ) {
             case 401 :
-                console.log("no access");
+                console.log( "no access" );
                 break;
 
             default :
-                console.log('Error on javascript call')
-                console.log(arguments)
+                console.log( 'Error on javascript call' )
+                console.log( arguments )
         }
     }
 
-})
+} )
 
-var ajaxRequest = function (e, params) {
-    $.ajax(params)
+var ajaxRequest = function ( e, params ) {
+    $.ajax( params )
 }
 
-EventBus.addEventListener(Events.AJAX.REQUEST, ajaxRequest)
+EventBus.addEventListener( Events.AJAX.REQUEST, ajaxRequest )

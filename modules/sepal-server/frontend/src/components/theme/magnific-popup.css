@@ -1,0 +1,72 @@
+/* magnific popup */
+/* popup effect */
+.mfp-effect.mfp-bg, .mfp-effect.mfp-wrap .mfp-content {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    perspective: 1000;
+}
+
+.mfp-effect.mfp-bg, .mfp-effect.mfp-wrap .mfp-content {
+    -webkit-transition: 0.3s ease-in-out;
+    -o-transition: 0.3s ease-in-out;
+    transition: 0.3s ease-in-out;
+}
+
+.mfp-effect.mfp-bg {
+    /* overlay at start */
+    -webkit-transition-property: opacity;
+    -o-transition-property: opacity;
+    transition-property: opacity;
+    opacity: 0;
+}
+
+.mfp-effect.mfp-bg.mfp-ready {
+    /* overlay animate in */
+    opacity: .8;
+}
+
+.mfp-effect.mfp-bg.mfp-removing {
+    /* overlay animate out */
+    opacity: 0;
+}
+
+.mfp-effect.mfp-wrap .mfp-content {
+    /* content at start */
+    -webkit-transition-property: -webkit-transform opacity;
+    -o-transition-property: -o-transform opacity;
+    transition-property: transform opacity;
+    -webkit-transform: translateY(30px);
+    -ms-transform: translateY(30px);
+    -o-transform: translateY(30px);
+    transform: translateY(30px);
+    opacity: 0;
+}
+
+.mfp-effect.mfp-wrap.mfp-ready .mfp-content {
+    /* content animate it */
+    -webkit-transform: translateY(0);
+    -ms-transform: translateY(0);
+    -o-transform: translateY(0);
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.mfp-effect.mfp-wrap.mfp-removing .mfp-content {
+    /* content animate out */
+    -webkit-transform: translateY(-30px);
+    -ms-transform: translateY(-30px);
+    -o-transform: translateY(-30px);
+    transform: translateY(-30px);
+    opacity: 0;
+}
+
+.mfp-wrap {
+    overflow: hidden !important;
+}
+
+.mfp-container {
+    overflow-y: auto;
+}

@@ -1,0 +1,46 @@
+#search-form .form-label {
+    padding-bottom: 35px;
+    border-bottom: 1px dotted rgba(255, 255, 255, .3);
+}
+
+#search-form .from-label,
+#search-form .to-label,
+#search-form .target-day-label {
+    cursor: pointer;
+}
+
+#search-form .form-group-buttons {
+    margin-top: 20px;
+}
+
+#search-form button > i {
+    font-size: 1.2rem;
+}
+
+.autocomplete-suggestions {
+    /*border: 1px solid #999;*/
+    /*background: #FFF;*/
+    /*overflow: auto;*/
+    background-color: rgba(19, 19, 20, 0.91);
+    max-height: 60% !important;
+    overflow: auto;
+    padding: 5px 5px;
+}
+
+.autocomplete-suggestion {
+    padding: 2px 5px;
+    /*white-space: nowrap;*/
+    /*overflow: hidden;*/
+}
+.autocomplete-suggestion:hover ,
+.autocomplete-suggestion.autocomplete-selected {
+    cursor: pointer;
+    /*background-color: rgba(28, 28, 28, 0.95);*/
+    background-color: rgba(101, 101, 104, 0.6);
+
+}
+
+/*.autocomplete-selected { background: #F0F0F0; }*/
+/*.autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }*/
+/*.autocomplete-group { padding: 2px 5px; }*/
+/*.autocomplete-group strong { display: block; border-bottom: 1px solid #000; }*/

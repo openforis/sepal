@@ -22,7 +22,10 @@
   },
   "dependencies": {
     "bootstrap": "^4.0.0-alpha.2",
+    "d3": "^3.5.16",
+    "devbridge-autocomplete": "^1.2.24",
     "font-awesome": "^4.5.0",
+    "google-maps": "^3.2.1",
     "jquery": "^2.1.4",
     "tether": "^1.2.0",
     "webpack": "^1.9.10",

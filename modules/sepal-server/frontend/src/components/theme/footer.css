@@ -1,0 +1,112 @@
+.site-footer {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: none;
+    z-index: 800;
+    height: 80px;
+}
+
+.border-on .site-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.site-footer > .container {
+    position: relative;
+    height: inherit;
+}
+
+.site-footer > .container > .row {
+    height: inherit;
+}
+
+.site-footer > .container > .row > .col-xs-12 {
+    height: inherit;
+}
+
+@media (min-width: 992px) {
+    .site-footer {
+        display: none;
+    }
+}
+
+@media (min-width: 992px) {
+    .site-footer {
+        position: fixed;
+        display: block;
+    }
+}
+
+.site-footer-inner {
+    height: inherit;
+}
+
+/* copyright */
+.site-footer-copyright {
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
+    position: relative;
+    top: 50%;
+    float: left;
+    line-height: 1;
+    font-size: 13px;
+    font-weight: 400;
+    color: #999;
+}
+
+.site-footer-copyright a {
+    -webkit-transition: none;
+    -o-transition: none;
+    transition: none;
+    color: inherit;
+}
+
+.site-footer-copyright a:hover {
+    border-bottom: 1px dashed #999;
+}
+
+.site-footer-links {
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
+    position: relative;
+    top: 50%;
+    float: right;
+    line-height: 1;
+    text-align: right;
+    margin-bottom: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.site-footer-links li {
+    float: left;
+    margin-right: 40px;
+}
+
+.site-footer-links li:last-child {
+    margin-right: 0;
+}
+
+.site-footer-links a {
+    -webkit-transition: none;
+    -o-transition: none;
+    transition: none;
+    font-size: 13px;
+    font-weight: 400;
+    color: #999;
+}
+
+.site-footer-links a:hover {
+    border-bottom: 1px dashed #999;
+}
+
+@media (max-width: 991px) {
+    .site-footer-links {
+        display: none;
+    }
+}

@@ -1,0 +1,90 @@
+/* carousel */
+.carousel-prev,
+.carousel-next {
+    -webkit-transition: 0.3s ease-in-out;
+    -o-transition: 0.3s ease-in-out;
+    transition: 0.3s ease-in-out;
+    -webkit-transition-property: opacity;
+    -o-transition-property: opacity;
+    transition-property: opacity;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-appearance: none;
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    font-size: 35px;
+    opacity: .65;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.carousel-prev:before,
+.carousel-next:before {
+    border-top-width: 21px;
+    border-bottom-width: 21px;
+}
+
+.carousel-prev:after,
+.carousel-next:after {
+    top: 8px;
+    border-top-width: 13px;
+    border-bottom-width: 13px;
+}
+
+.carousel-prev:active,
+.carousel-next:active {
+    bottom: -1px;
+}
+
+.carousel-prev:hover,
+.carousel-next:hover {
+    opacity: 1;
+}
+
+.carousel-prev.disabled,
+.carousel-next.disabled {
+    opacity: .5;
+}
+
+.carousel-prev {
+    margin-right: 10px;
+}
+
+.carousel-prev:before {
+    content: "\f2ca";
+    display: inline-block;
+    font-family: "Ionicons";
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    text-rendering: auto;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.carousel-next {
+    margin-left: 10px;
+}
+
+.carousel-next:before {
+    content: "\f30f";
+    display: inline-block;
+    font-family: "Ionicons";
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    text-rendering: auto;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

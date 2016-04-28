@@ -1,19 +1,126 @@
-<div class="row height100">
+<div class="row height100" id="sectionLogin">
 
     <div class="col-md-12 height100">
 
-        <form action="/api/login" method="POST">
-            <fieldset class="form-group">
-                <label for="user">User</label>
-                <input type="text" class="form-control form-control-lg" id="user" name="user" placeholder="Enter your user name">
-            </fieldset>
-            <fieldset class="form-group">
-                <label for="password">Password</label>
-                <input type="password" class="form-control form-control-lg" id="password" name="password" placeholder="Password">
-            </fieldset>
 
-            <button type="submit" class="btn btn-primary">Login</button>
-        </form>
+        <div class="site-bg">
+            <div class="site-bg-img"></div>
+            <div class="site-bg-overlay"></div>
+            <canvas class="site-bg-canvas layer" data-depth=".30"></canvas>
+        </div>
+
+        <div id="login" class="section">
+            <div class="section-table">
+                <div class="section-cell">
+                    <div class="container">
+
+                        <!-- section heading -->
+                        <div class="section-heading row">
+                            <div class="col-xs-12 col-sm-5">
+                                <div class="overflow-hidden">
+                                    <div class="animation-item"
+                                         data-animation-in="fadeInUp"
+                                         data-animation-in-delay="1000"
+                                         data-animation-out="fadeOutDown"
+                                         data-animation-out-delay="600">
+                                        <p class="section-caption">
+                                            System for earth observations, data access, processing & analysis for land monitoring
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xs-12 col-sm-6 col-sm-offset-1">
+                                <div class="overflow-hidden">
+                                    <div class="animation-item"
+                                    data-animation-in="fadeInUp"
+                                    data-animation-in-delay="0"
+                                    data-animation-out="fadeOutDown"
+                                    data-animation-out-delay="400">
+                                        <h2 class="section-title">
+                                            SEPAL
+                                        </h2>
+                                        <div class="hr"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /section heading -->
+
+                        <!-- section content -->
+                        <div class="row">
+                            <div class="col-xs-12 col-sm-5 col-md-4">
+                                <div class="overflow-hidden">
+                                    <div class="animation-item"
+                                         data-animation-in="fadeInLeft"
+                                         data-animation-in-delay="100"
+                                         data-animation-out="fadeOutLeft"
+                                         data-animation-out-delay="100">
+                                        <div class="login-info_item">
+                                            <i class="fa fa-globe bg-search" aria-hidden="true"></i>
+                                            <h3 class="">Search online data</h3>
+                                            <p>blabla bla bla </p>
+                                        </div>
+                                        <div class="login-info_item">
+                                            <i class="fa fa-folder-open bg-browse" aria-hidden="true"></i>
+                                            <h3 class="">Browse your data</h3>
+                                            <p>blabla bla bla </p>
+                                        </div>
+                                        <div class="login-info_item">
+                                            <i class="fa fa-space-shuttle bg-process" aria-hidden="true"></i>
+                                            <h3 class="">Process your data</h3>
+                                            <p>blabla bla bla </p>
+                                        </div>
+                                        <div class="login-info_item">
+                                            <i class="fa fa-terminal bg-terminal" aria-hidden="true"></i>
+                                            <h3 class="">Terminal</h3>
+                                            <p>blabla bla bla </p>
+                                            <p></p>
+                                            <p></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xs-12 col-sm-6 col-sm-offset-1 col-md-offset-2">
+                                <!-- contact form -->
+                                <div class="overflow-hidden">
+                                    <div class="animation-item"
+                                         data-animation-in="fadeInRight"
+                                         data-animation-in-delay="1500"
+                                         data-animation-out="fadeOutRight"
+                                         data-animation-out-delay="500">
+                                        <form class="form-theme" id="formLogin" novalidate="novalidate"  action="/api/login" method="POST">
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="user">Username</label>
+                                                        <input type="text" class="form-control form-control-lg" id="user" name="user" placeholder="Enter your user name">
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-12">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="password">Password</label>
+                                                        <input type="password" class="form-control form-control-lg" id="password" name="password" placeholder="Password">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-theme circle icon">
+                                                <i class="fa fa-sign-in" aria-hidden="true"></i>
+                                                Login
+                                            </button>
+                                            <div class="form-notify"></div>
+                                        </form>
+                                    </div>
+                                </div>
+                                <!-- contact form -->
+                            </div>
+                        </div>
+                        <!-- /section content -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
     </div>
 
