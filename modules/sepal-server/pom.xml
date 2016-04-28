@@ -199,10 +199,10 @@
 
 
             <!-- Install node, npm, bower, and gulp locally. Trigger gulp build. -->
-            <!--<plugin>
+            <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>0.0.23</version>
+                <version>0.0.29</version>
                 <configuration>
                     <workingDirectory>frontend</workingDirectory>
                 </configuration>
@@ -214,8 +214,8 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <nodeVersion>v0.12.4</nodeVersion>
-                            <npmVersion>2.11.2</npmVersion>
+                            <nodeVersion>v5.10.1</nodeVersion>
+                            <npmVersion>3.8.3</npmVersion>
                         </configuration>
                     </execution>
                     <execution>
@@ -229,10 +229,10 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
 
             <!-- Build frontend -->
-            <!--<plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.4.0</version>
@@ -244,7 +244,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${basedir}/frontend/node_modules/.bin/webpack${command.extension}</executable>
+                            <executable>${basedir}/frontend/node_modules/.bin/webpack</executable>
                             <arguments>
                                 <argument>-p</argument>
                             </arguments>
@@ -252,7 +252,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin> -->
+            </plugin>
 
             <!-- Clean  -->
             <plugin>
@@ -266,9 +266,9 @@
                                 <include>**/*.jar</include>
                             </includes>
                         </fileset>
-                        <!-- <fileset>
-                             <directory>frontend/dist</directory>
-                         </fileset> -->
+                        <fileset>
+                            <directory>frontend/dist</directory>
+                        </fileset>
                     </filesets>
                 </configuration>
             </plugin>
