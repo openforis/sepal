@@ -101,20 +101,16 @@ Class DashboardController extends \BaseController {
         Session::put('sceneRequest', $sceneRequest);
     }
 
-//shows the dashboard
     public function downloadFileFromDashboard($filePath = NULL) {
-
         $userName = Session::get('username');
-
         $filePath = base64_decode($filePath);
-        $file = "/data/home/$userName$filePath";
-
-        Logger::debug("Downloading $file");
-        Logger::debug("/: " . file_exists('/'));
-        Logger::debug("/data: " . file_exists('/data'));
-        Logger::debug("/data/home: " . file_exists('/data/home'));
-        Logger::debug("/data/home/Daniel.Wiell: " . file_exists('/data/home/Daniel.Wiell'));
-        Logger::debug("/data/home/Daniel.Wiell/test.txt: " . file_exists('/data/home/Daniel.Wiell/test.txt'));
+        $file = $filePath;
+        Logger::debug("Downloading file. User: '$userName', Path: '$filePath', File: '$file'");
+        if (!starts_with($file, "/data/home/$userName/")) {
+            Logger::warn("Trying to download file outside of homeDir. Username: '$userName', File: '$file'");
+            echo 'Sorry, file not available for download now. Please go back to <a href="https://fao-dm.org/dashboard">Dashboard</a>';
+            exit;
+        }
 
         if (file_exists($file)) {
             Logger::debug("File exists $file");
@@ -129,7 +125,7 @@ Class DashboardController extends \BaseController {
             readfile($file);
             exit;
         } else {
-            Logger::debug("File not found $file");
+            Logger::warn("File not found $file");
             echo 'Sorry, file not available for download now. Please go back to <a href="https://fao-dm.org/dashboard">Dashboard</a>';
             exit;
         }
@@ -176,10 +172,8 @@ Class DashboardController extends \BaseController {
             $downloadLogModel->filepath = $compFilePath;
             $downloadLogModel->save();
         } else {
-
             echo 'error';
         }
-
     }
 
     public function downloadZipFromDashboard($filePath = NULL) {
