@@ -172,7 +172,8 @@ class SepalConfiguration {
 
     Map<String, Integer> getPortByProxiedEndpoint() {
         [
-                'rstudio-server': 8787
+                'rstudio-server': 8787,
+                'shiny-server': 3838,
         ]
     }
 
