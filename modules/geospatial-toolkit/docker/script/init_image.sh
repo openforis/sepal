@@ -28,6 +28,7 @@ apt-get install -y \
     dans-gdal-scripts \
     gdebi-core \
     gettext \
+    libdbd-xbase-perl \
     libgmp3-dev \
     libgstreamer0.10-dev \
     libgstreamer-plugins-base0.10-dev \
@@ -94,6 +95,11 @@ export LANG=en_US.UTF-8
 wget https://download2.rstudio.org/rstudio-server-0.99.484-amd64.deb
 gdebi -n rstudio-server-0.99.484-amd64.deb
 rm -f rstudio-*
+
+# Install Shiny Server
+R -e "install.packages('shiny', repos='https://cran.rstudio.com/')"
+wget https://download3.rstudio.org/ubuntu-12.04/x86_64/shiny-server-1.4.2.786-amd64.deb
+gdebi -n shiny-server-1.4.2.786-amd64.deb
 
 # Install QGIS
 apt-get -y -qq install qgis
