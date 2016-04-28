@@ -11,7 +11,7 @@ java \
     -cp /opt/sepal/bin/sepal-ssh-gateway.jar \
     "$entryPoint" \
     "$USER" \
-    "http://sepal:1025/data/" \
+    "http://sepal:1025/api/" \
     "/home/$USER/.ssh/id_rsa" \
     "$sshScriptFile" \
     "$password"

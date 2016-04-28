@@ -39,6 +39,6 @@
         MYSQL_PASSWORD_SEPAL_ENV: "{{ mysql_password }}"
         GATE_ONE_SECRET_SEPAL_ENV: "{{ gate_one_secret }}"
         GATE_ONE_PUBLIC_SEPAL_ENV: "{{ gate_one_public }}"
-        SEPAL_URI_SEPAL_ENV: "{{ 'http://10.0.2.15:1025/data' if local_sepal == true else 'http://sepal:1025/data' }}"
+        SEPAL_URI_SEPAL_ENV: "{{ 'http://10.0.2.15:1025/data' if local_sepal == true else 'http://sepal:1025/api' }}"
         SEPAL_MACHINE_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
         VERSION_SEPAL_ENV: "{{ version }}"

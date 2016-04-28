@@ -42,7 +42,7 @@ class SepalSessionEndpointTest extends Specification {
     def passwordVerifier = new FakeUsernamePasswordVerifier()
     def clock = new FakeClock()
 
-    def client = new RESTClient("http://localhost:$port/data/")
+    def client = new RESTClient("http://localhost:$port/api/")
 
     def setup() {
         EndpointRegistry registry = {

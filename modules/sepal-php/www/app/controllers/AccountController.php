@@ -9,7 +9,7 @@ Class AccountController extends \BaseController {
     public function showAccount() {
         $username = Session::get('username');
         $curl = curl_init();
-        $url = "http://sepal:1025/data/sandbox/$username";
+        $url = "http://sepal:1025/api/sandbox/$username";
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
@@ -28,7 +28,7 @@ Class AccountController extends \BaseController {
         $username = Session::get('username');
         $sessionId = Input::get('path');
         $curl = curl_init();
-        $url = "http://sepal:1025/data/sandbox/$username/session/$sessionId";
+        $url = "http://sepal:1025/api/sandbox/$username/session/$sessionId";
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);

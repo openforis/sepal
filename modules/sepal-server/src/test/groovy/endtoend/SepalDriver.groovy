@@ -10,7 +10,7 @@ import spock.util.concurrent.PollingConditions
 
 class SepalDriver {
     final system = new Sepal().init()
-    final RESTClient client = new RESTClient("http://localhost:$system.port/data/")
+    final RESTClient client = new RESTClient("http://localhost:$system.port/api/")
     FakeEarthExplorer fakeEarthExplorer
     def connectionManager = new SqlConnectionManager(system.database.dataSource)
 
