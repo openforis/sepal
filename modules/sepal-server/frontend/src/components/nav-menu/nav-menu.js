@@ -35,36 +35,32 @@ var show = function () {
     Animation.animateIn( btnProcess )
     Animation.animateIn( btnTerminal )
 
+    var showSection = function ( btn, section ) {
+        collapseMenu( $( btn ) )
+        EventBus.dispatch( Events.SECTION.SHOW, null, section )
+    }
+
     btnSearch.click( function ( e ) {
         e.preventDefault()
-        collapseMenu( $( this ) )
-        // EventBus.dispatch( Events.SECTION.CLOSE_ALL )
-        EventBus.dispatch( Events.SECTION.SEARCH.SHOW )
+        showSection( this , 'search' )
     } )
     btnBrowse.click( function ( e ) {
         e.preventDefault()
-        collapseMenu( $( this ) )
-        // EventBus.dispatch( Events.SECTION.CLOSE_ALL )
-        EventBus.dispatch( Events.SECTION.BROWSE.SHOW )
+        showSection( this , 'browse' )
     } )
     btnProcess.click( function ( e ) {
         e.preventDefault()
-        collapseMenu( $( this ) )
-        // EventBus.dispatch( Events.SECTION.CLOSE_ALL )
-        EventBus.dispatch( Events.SECTION.PROCESS.SHOW )
+        showSection( this , 'process' )
     } )
     btnTerminal.click( function ( e ) {
         e.preventDefault()
-        collapseMenu( $( this ) )
-        // EventBus.dispatch( Events.SECTION.CLOSE_ALL )
-        EventBus.dispatch( Events.SECTION.TERMINAL.SHOW )
+        showSection( this , 'terminal   ' )
     } )
 
 }
 
 var collapseMenu = function ( button ) {
     if ( button.hasClass( 'expanded' ) ) {
-
 
         Animation.removeAnimation( btnSearch )
         Animation.removeAnimation( btnBrowse )
@@ -94,20 +90,20 @@ var collapseMenu = function ( button ) {
             btnProcess.empty().removeClass( 'expanded' ).append( '<i class="fa fa-space-shuttle" aria-hidden="true"></i>' )
             btnTerminal.empty().removeClass( 'expanded' ).append( '<i class="fa fa-terminal" aria-hidden="true"></i>' )
 
-            setTimeout(function (  ) {
+            setTimeout( function () {
                 Animation.animateIn( btnSearch )
                 Animation.animateIn( btnBrowse )
                 Animation.animateIn( btnProcess )
                 Animation.animateIn( btnTerminal )
-            } , 250 )
+            }, 250 )
 
             setTimeout( function () {
 
                 // $( '#sepal-logo' ).velocity( { 'left': '42%' }, {
-                $( '#sepal-logo' ).velocity( { 'top': '0%' , 'left' :'0%' , 'opacity':'0.7'}, {
+                $( '#sepal-logo' ).velocity( { 'top': '0%', 'left': '0%', 'opacity': '0.7' }, {
                     duration: 1500,
-                    easing  : 'swing',
-                    queue   : false
+                    easing: 'swing',
+                    queue: false
                 } )
             }, 1500 )
 

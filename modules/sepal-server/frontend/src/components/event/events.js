@@ -26,32 +26,27 @@ Events = {
 
     , SECTION: {
         CLOSE_ALL: 'section.close-all'
-        
+        , SHOW: 'section.show'
+
         , REDUCE: 'section.reduce'
-        
+
         , SEARCH: {
-            SHOW: 'section.search.show'
-            , GET_SCENE_AREA: 'section.search.get-scene-area'
+            SHOW_SCENE_AREA: 'section.search.show-scene-area'
         }
-        
-        , BROWSE: {
-            SHOW: 'section.browse.show'
-        }
-        
-        , PROCESS: {
-            SHOW: 'section.process.show'
-        }
-        
-        , TERMINAL: {
-            SHOW: 'section.terminal.show'
-        }
+
+        , BROWSE: {}
+
+        , PROCESS: {}
+
+        , TERMINAL: {}
     }
-    
+
     , MAP: {
         ZOOM_TO: 'map.zoom-to'
-        , LOAD_SCENES: 'map.load-scenes'
+        , LOAD_SCENE_AREAS: 'map.load-scene-areas'
+        , SCENE_AREA_CLICK: 'map.scene-area-click'
     }
-    
+
 }
 
 module.exports = Events

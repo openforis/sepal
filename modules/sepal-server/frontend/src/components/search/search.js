@@ -12,7 +12,7 @@ var DatePicker = require( '../date-picker/date-picker' )
 
 var countries = require( './countries.js' )
 
-var SearchRequest = require( './search-request' )
+var SceneAreasRequest = require( './scenea-areas-request' )
 
 var template = require( './search.html' )
 var html     = $( template( {} ) )
@@ -22,20 +22,22 @@ var searchSection  = null
 var resultsSection = null
 var loaded         = false
 
-var show = function () {
+var show = function ( e, type ) {
 
-    var appSection = $( '#app-section' ).find( '.bg-search-l' )
-    if ( appSection.children().length <= 0 ) {
-        appSection.append( html )
+    if ( type == 'search' ) {
+        var appSection = $( '#app-section' ).find( '.bg-search-l' )
+        if ( appSection.children().length <= 0 ) {
+            appSection.append( html )
 
-        section        = appSection.find( '#search' )
-        searchSection  = section.find( '.search-section' )
-        resultsSection = section.find( '.results-section' )
+            section        = appSection.find( '#search' )
+            searchSection  = section.find( '.search-section' )
+            resultsSection = section.find( '.results-section' )
 
-        showSearchSection()
+            showSearchSection()
 
-        loaded = true
-        initForm()
+            loaded = true
+            initForm()
+        }
     }
 
 }
@@ -44,6 +46,7 @@ var showSearchSection  = function () {
     searchSection.velocity( 'slideDown', { delay: 100, duration: 500 } )
     resultsSection.velocity( 'slideUp', { delay: 100, duration: 500 } )
 }
+
 var showResultsSection = function () {
     searchSection.velocity( 'slideUp', { delay: 100, duration: 500 } )
     resultsSection.velocity( 'slideDown', { delay: 100, duration: 500 } )
@@ -53,33 +56,31 @@ var initForm = function () {
     var form = section.find( 'form' )
 
     var country = form.find( '#search-form-country' )
-    // var autocomplete = function () {
     country.autocomplete( {
         lookup: countries
         , minChars: 0
         , onSelect: function ( selection ) {
-            // console.log( selection )
             if ( selection ) {
                 var cCode = selection.data
                 var cName = selection.value
 
-                SearchRequest.countryCode = cCode
+                SceneAreasRequest.countryCode = cCode
 
                 EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
             }
         }
         , tabDisabled: true
     } )
-    // }
-    // country.focusin( function ( e ) {
-    //     e.preventDefault()
-    //     autocomplete()
-    // } )
 
-    var fromDate = DatePicker.newInstance( form.find( '.from' ) )
-    var toDate   = DatePicker.newInstance( form.find( '.to' ) )
+    var fromDate      = DatePicker.newInstance( form.find( '.from' ) )
+    fromDate.onChange = $.proxy( SceneAreasRequest.fromChange, SceneAreasRequest )
+
+    var toDate      = DatePicker.newInstance( form.find( '.to' ) )
+    toDate.onChange = $.proxy( SceneAreasRequest.toChange, SceneAreasRequest )
     toDate.hide()
-    var targetDay = DatePicker.newInstance( form.find( '.target-day' ), true )
+
+    var targetDay      = DatePicker.newInstance( form.find( '.target-day' ), true )
+    targetDay.onChange = $.proxy( SceneAreasRequest.targetDayChange, SceneAreasRequest )
     targetDay.hide()
 
     form.find( '.from-label' ).click( function () {
@@ -100,99 +101,63 @@ var initForm = function () {
 
     form.submit( function ( e ) {
         e.preventDefault()
-
-        var params = {
-            url: '/api/data/sceneareas'
-            , beforeSend: function () {
-                Loader.show()
-                setTimeout( function () {
-                    EventBus.dispatch( Events.SECTION.REDUCE, null )
-                }, 1000 )
-            }
-            , success: function ( response ) {
-
-                EventBus.dispatch( Events.MAP.LOAD_SCENES, null, response )
-
-                setTimeout( function () {
-                    Loader.hide()
-                }, 1500 )
-
-            }
-        }
-        EventBus.dispatch( Events.AJAX.REQUEST, null, params )
-
+        SceneAreasRequest.requestSceneAreas()
     } )
+
 }
 
-var getSceneArea = function ( e, sceneAreaId ) {
-    console.log( sceneAreaId )
+// var getSceneArea = function ( e, sceneAreaId ) {
+//     console.log( sceneAreaId )
 
-    var loadSceneArea = function ( sceneAreas ) {
-        console.log( sceneAreas )
+var showSceneArea = function ( sceneAreas ) {
+    console.log( sceneAreas )
 
-        EventBus.dispatch( Events.SECTION.SEARCH.SHOW )
+    EventBus.dispatch( Events.SECTION.SHOW, null, 'search' )
 
-        showResultsSection()
+    showResultsSection()
 
-        var details   = resultsSection.find( '.details' )
-        var selection = resultsSection.find( '.selection' )
-        var summary   = resultsSection.find( '.summary' )
+    var details   = resultsSection.find( '.details' )
+    var selection = resultsSection.find( '.selection' )
+    var summary   = resultsSection.find( '.summary' )
 
-        var carousel      = selection.find( '.carousel' )
-        var carouselInner = carousel.find( '.carousel-inner' )
-        $.each( sceneAreas, function ( i, sceneArea ) {
-            var carouselItem = $( '<div class="carousel-item" />' )
-            // carouselItem.data( 'scene-area', sceneArea )
-            carouselInner.append( carouselItem )
-            if ( i == 0 ) {
-                carouselItem.addClass( 'active' )
-            }
+    var carousel      = selection.find( '.carousel' )
+    var carouselInner = carousel.find( '.carousel-inner' )
+    $.each( sceneAreas, function ( i, sceneArea ) {
+        var carouselItem = $( '<div class="carousel-item" />' )
+        // carouselItem.data( 'scene-area', sceneArea )
+        carouselInner.append( carouselItem )
+        if ( i == 0 ) {
+            carouselItem.addClass( 'active' )
+        }
 
-            var img = $( ' <img width="100%"/>' )
-            img.attr( 'src', sceneArea.browseUrl )
-            carouselItem.append( img )
+        var img = $( ' <img width="100%"/>' )
+        img.attr( 'src', sceneArea.browseUrl )
+        carouselItem.append( img )
 
-            var carouselCaption = $( '<div class="carousel-caption">' )
-            carouselItem.append( carouselCaption )
+        var carouselCaption = $( '<div class="carousel-caption">' )
+        carouselItem.append( carouselCaption )
 
-            var addBtn = $( '<button type="button" class="btn btn-base circle icon">/' )
-            addBtn.append( '<i class="fa fa-plus-circle" aria-hidden="true"></i>' )
-            addBtn.append( ' Add' )
-            addBtn.click( function ( e ) {
-                e.preventDefault()
-                console.log( sceneArea )
-            } )
-            carouselCaption.append( addBtn )
+        var addBtn = $( '<button type="button" class="btn btn-base circle icon">/' )
+        addBtn.append( '<i class="fa fa-plus-circle" aria-hidden="true"></i>' )
+        addBtn.append( ' Add' )
+        addBtn.click( function ( e ) {
+            e.preventDefault()
+            console.log( sceneArea )
         } )
-        carousel.carousel()
-        // carousel.on( 'slide.bs.carousel', function ( evt ) {
-        //     // console.log( evt.direction)
-        //     // console.log( evt.relatedTarget)
-        //
-        //     var carouselItem = $( evt.relatedTarget )
-        //     var sceneArea    = carouselItem.data( 'scene-area' )
-        //     console.log( carouselItem )
-        //     console.log( sceneArea )
-        // } )
+        carouselCaption.append( addBtn )
+    } )
+    carousel.carousel()
+    // carousel.on( 'slide.bs.carousel', function ( evt ) {
+    //     // console.log( evt.direction)
+    //     // console.log( evt.relatedTarget)
+    //
+    //     var carouselItem = $( evt.relatedTarget )
+    //     var sceneArea    = carouselItem.data( 'scene-area' )
+    //     console.log( carouselItem )
+    //     console.log( sceneArea )
+    // } )
 
-    }
-
-    var params = {
-        url: '/api/data/sceneareas/' + sceneAreaId
-        , beforeSend: function () {
-            Loader.show()
-        }
-        , success: function ( response ) {
-
-            loadSceneArea( response )
-
-            setTimeout( function () {
-                Loader.hide()
-            }, 500 )
-        }
-    }
-    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-EventBus.addEventListener( Events.SECTION.SEARCH.SHOW, show )
-EventBus.addEventListener( Events.SECTION.SEARCH.GET_SCENE_AREA, getSceneArea )
+EventBus.addEventListener( Events.SECTION.SHOW, show )
+EventBus.addEventListener( Events.SECTION.SEARCH.SHOW_SCENE_AREA, null, showSceneArea )

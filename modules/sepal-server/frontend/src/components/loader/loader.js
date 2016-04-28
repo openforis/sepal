@@ -16,21 +16,27 @@ var Loader = function () {
     } );
 }
 
-Loader.prototype.show = function () {
-    this.container.velocity( 'fadeIn', {
+Loader.prototype.show = function ( options ) {
+    var defaultOptions =  {
         queue   : false,
         delay   : 0,
         duration: 500
-    } );
+    }
+    defaultOptions = $.extend( defaultOptions , options )
 
+    this.container.velocity( 'fadeIn', defaultOptions );
 }
 
-Loader.prototype.hide = function () {
-    this.container.velocity( 'fadeOut', {
+Loader.prototype.hide = function ( options ) {
+
+    var defaultOptions =  {
         queue   : false,
         delay   : 0,
-        duration: 800
-    } );
+        duration: 500
+    }
+    defaultOptions = $.extend( defaultOptions , options )
+
+    this.container.velocity( 'fadeOut', defaultOptions);
 
 }
 

@@ -27,15 +27,16 @@ carousel.carousel( { interval: 0 } )
 var closeBtn = section.find( '.btn-close' )
 closeBtn.click( function ( e ) {
     e.preventDefault()
+    
     if ( section.hasClass( 'opened' ) ) {
-        reduce()
+        EventBus.dispatch( Events.SECTION.REDUCE )
     } else {
-        show()
+        EventBus.dispatch( Events.SECTION.SHOW )
     }
+    
 } )
-var lastOpenEvent = null
 
-var show = function ( e ) {
+var show = function ( e, type ) {
     if ( !section.hasClass( 'opened' ) ) {
 
         section
@@ -46,7 +47,7 @@ var show = function ( e ) {
                     , queue: false
                     , delay: 300
                     , complete: function () {
-                        showSection( e.type )
+                        showSection( type )
                     }
                 }
             )
@@ -62,52 +63,34 @@ var show = function ( e ) {
 
     } else {
 
-        showSection( e.type )
+        showSection( type )
 
     }
 }
 
-var showSection = function ( eventType ) {
-    if ( eventType !== lastOpenEvent ) {
-
-        var idx = -1
-        switch ( eventType ) {
-            case Events.SECTION.SEARCH.SHOW:
-                idx = 0
-                break
-
-            case Events.SECTION.BROWSE.SHOW:
-                idx = 1
-                break
-
-            case Events.SECTION.PROCESS.SHOW:
-                idx = 2
-                break
-
-            case Events.SECTION.TERMINAL.SHOW:
-                idx = 3
-                break
-        }
-
-        carousel.carousel( idx )
+var showSection = function ( type ) {
+    var carouselItem = carousel.find( '.carousel-item.' + type )
+    if ( !carouselItem.hasClass( 'active' ) ) {
+        carousel.carousel( carouselItem.index() )
     }
 }
 
-var hide = function () {
-    if ( !section.hasClass( 'closed' ) ) {
-
-        section
-            .velocity( { left: '120%' }
-                , {
-                    duration: 1000
-                    , easing: 'swing'
-                    , queue: false
-                    , delay: 500
-                }
-            )
-        section.addClass( 'closed' ).removeClass( 'opened' ).removeClass( 'reduced' )
-    }
-}
+// TODO: CHECK IF NEEDED
+// var hide = function () {
+//     if ( !section.hasClass( 'closed' ) ) {
+//
+//         section
+//             .velocity( { left: '120%' }
+//                 , {
+//                     duration: 1000
+//                     , easing: 'swing'
+//                     , queue: false
+//                     , delay: 500
+//                 }
+//             )
+//         section.addClass( 'closed' ).removeClass( 'opened' ).removeClass( 'reduced' )
+//     }
+// }
 
 var reduce = function () {
     if ( section.hasClass( 'opened' ) ) {
@@ -118,7 +101,7 @@ var reduce = function () {
                     duration: 1000
                     , easing: 'swing'
                     , queue: false
-                    , delay: 500
+                    , delay: 100
                 }
             )
 
@@ -133,10 +116,6 @@ var reduce = function () {
     }
 }
 
-EventBus.addEventListener( Events.SECTION.SEARCH.SHOW, show )
-EventBus.addEventListener( Events.SECTION.BROWSE.SHOW, show )
-EventBus.addEventListener( Events.SECTION.PROCESS.SHOW, show )
-EventBus.addEventListener( Events.SECTION.TERMINAL.SHOW, show )
-
-EventBus.addEventListener( Events.SECTION.CLOSE_ALL, hide )
+EventBus.addEventListener( Events.SECTION.SHOW, show )
+// EventBus.addEventListener( Events.SECTION.CLOSE_ALL, hide )
 EventBus.addEventListener( Events.SECTION.REDUCE, reduce )

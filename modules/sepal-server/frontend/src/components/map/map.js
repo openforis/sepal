@@ -14,9 +14,9 @@ var html     = $( template( {} ) )
 
 var mapStyle = require( './map-style.js' )
 
-var map             = null
-var scenesGridLayer = null
-
+var map                 = null
+var sceneAreasGridLayer = null
+var appReduced          = false
 
 // Natural Earth Fusion Table data . see : https://www.google.com/fusiontables/DataSource?dsrcid=394713#rows:id=1
 // Name:	10m_admin_0_countries
@@ -112,7 +112,7 @@ var zoomTo = function ( e, address ) {
     } )
 }
 
-var loadScenes = function ( e, scenes ) {
+var loadSceneAreas = function ( e, scenes ) {
     // console.log( scenes )
     GoogleMapsLoader.load( function ( google ) {
 
@@ -176,8 +176,8 @@ var loadScenes = function ( e, scenes ) {
             // }
 
             var center = bounds.getCenter()
-            console.log( "=============" )
-            console.log( center.lat() + " , " + center.lng() )
+            // console.log( "=============" )
+            // console.log( center.lat() + " , " + center.lng() )
 
             var item     = {}
             item.center  = center
@@ -190,7 +190,7 @@ var loadScenes = function ( e, scenes ) {
 
         // Add the container when the overlay is added to the map.
         sceneAreasOverlay.onAdd = function () {
-            scenesGridLayer = d3
+            sceneAreasGridLayer = d3
                 .select( this.getPanes().overlayMouseTarget )
                 .append( "div" )
                 .attr( "class", "scene" );
@@ -200,7 +200,7 @@ var loadScenes = function ( e, scenes ) {
                 var projection = this.getProjection(),
                     padding    = 15 * 2;
 
-                var markers = scenesGridLayer.selectAll( "svg" )
+                var markers = sceneAreasGridLayer.selectAll( "svg" )
                     .data( d3.entries( array ) )
                     .each( transform ) // update existing markers
                     .enter().append( "svg" )
@@ -225,60 +225,34 @@ var loadScenes = function ( e, scenes ) {
                     .attr( "cy", padding )
 
                     .on( 'click', function ( d ) {
-
-                        var sceneArea   = d.value.scene
-                        var sceneAreaId = sceneArea.sceneAreaId
-                        console.log( sceneAreaId )
-
-
-                        if ( scenesGridLayer ) {
-                            scenesGridLayer
-                                .selectAll( "svg" )
-                                .transition()
-                                .duration( 500 )
-                                .style( 'fill-opacity', '.05' )
-
-                            scenesGridLayer
-                                .selectAll( "circle" )
-                                .transition()
-                                .duration( 500 )
-                                .style( 'stroke-opacity', '.02' )
-                                .style( 'fill-opacity', '.01' )
-
+                        if ( appReduced ) {
+                            var sceneArea   = d.value.scene
+                            var sceneAreaId = sceneArea.sceneAreaId
+                            EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneAreaId )
                         }
-
-                        EventBus.dispatch( Events.SECTION.SEARCH.GET_SCENE_AREA, null, sceneAreaId )
                     } )
                     .on( 'mouseover', function ( d ) {
-                        // console.log('hover')
-                        d3.select( this )
-                            // .select('circle')
-                            .transition()
-                            .duration( 200 )
-                            .style( "fill-opacity", '.5' )
+                        if ( appReduced ) {
 
-                        console.log( d )
-                        var polygon = d.value.polygon
-                        polygon.setMap( map )
+                            d3.select( this )
+                                .transition()
+                                .duration( 200 )
+                                .style( "fill-opacity", '.5' )
+
+                            var polygon = d.value.polygon
+                            polygon.setMap( map )
+                        }
                     } )
                     .on( 'mouseout', function ( d ) {
-                        // console.log('out')
-                        d3.select( this )
-                            // .select('circle')
-                            .transition()
-                            .duration( 200 )
-                            // .attr( "r", '1.5rem' )
-                            .style( "fill-opacity", '.1' )
-                        console.log( d )
-                        var polygon = d.value.polygon
-                        polygon.setMap( null )
-                        // if (scenesGridLayer) {
-                        //     scenesGridLayer
-                        //         .selectAll("svg")
-                        //         .transition()
-                        //         .duration( 500 )
-                        //         .style('fill-opacity' , '1')
-                        // }
+                        if ( appReduced ) {
+                            d3.select( this )
+                                .transition()
+                                .duration( 200 )
+                                .style( "fill-opacity", '.1' )
+
+                            var polygon = d.value.polygon
+                            polygon.setMap( null )
+                        }
 
                     } )
                     ;
@@ -318,6 +292,63 @@ var loadScenes = function ( e, scenes ) {
     // } )
 }
 
+var showApplicationSection = function ( e ) {
+    appReduced = false
+    if ( sceneAreasGridLayer ) {
+
+        // sceneAreasGridLayer
+        //     .selectAll( "svg" )
+        //     .transition()
+        //     .duration( 500 )
+        //     .style( 'fill-opacity', '.05' )
+
+        sceneAreasGridLayer
+            .selectAll( "circle" )
+            .transition()
+            .duration( 500 )
+            .style( 'stroke-opacity', '.02' )
+            .style( 'fill-opacity', '.01' )
+
+        sceneAreasGridLayer
+            .selectAll( "text" )
+            .transition()
+            .duration( 500 )
+            .style( 'fill-opacity', '.05' )
+    }
+}
+
+var reduceApplicationSection = function ( e ) {
+    appReduced = true
+    if ( sceneAreasGridLayer ) {
+
+        // sceneAreasGridLayer
+        //     .selectAll( "svg" )
+        //     .transition()
+        //     .delay( 800 )
+        //     .duration( 500 )
+        //     .style( 'stroke-opacity', '.4' )
+        //     .style( 'fill-opacity', '.1' )
+
+        sceneAreasGridLayer
+            .selectAll( "circle" )
+            .transition()
+            .delay( 100 )
+            .duration( 800 )
+            .style( 'stroke-opacity', '.4' )
+            .style( 'fill-opacity', '.1' )
+
+        sceneAreasGridLayer
+            .selectAll( "text" )
+            .transition()
+            .delay( 100 )
+            .duration( 800 )
+            .style( 'fill-opacity', '1' )
+    }
+}
+
 EventBus.addEventListener( Events.APP.LOAD, show )
 EventBus.addEventListener( Events.MAP.ZOOM_TO, zoomTo )
-EventBus.addEventListener( Events.MAP.LOAD_SCENES, loadScenes )
+EventBus.addEventListener( Events.MAP.LOAD_SCENE_AREAS, loadSceneAreas )
+
+EventBus.addEventListener( Events.SECTION.SHOW, showApplicationSection )
+EventBus.addEventListener( Events.SECTION.REDUCE, reduceApplicationSection )
