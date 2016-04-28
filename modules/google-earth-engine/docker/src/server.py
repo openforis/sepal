@@ -1,8 +1,10 @@
 import json
+import re
 import sys
 from datetime import date
 
 import ee
+from dateutil.parser import parse
 from ee.oauthinfo import OAuthInfo
 from flask import Flask
 from flask import render_template
@@ -16,18 +18,18 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    countries = ee.FeatureCollection('ft:1tdSwUL7MVpOauSgRzqVTOwdfy17KDbw-1d9omPw')
-    countryNames = countries.aggregate_array('Country').getInfo()
+    countries = ee.FeatureCollection('ft:16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ')
+    countryNames = countries.sort('admin').aggregate_array('admin').getInfo()
     return render_template('index.html', countryNames=countryNames)
 
 
 @app.route('/map')
-def map():
+def createMap():
     country = request.args.get('country')
     bands = request.args.get('bands')
-    countries = ee.FeatureCollection('ft:1tdSwUL7MVpOauSgRzqVTOwdfy17KDbw-1d9omPw')
+    countries = ee.FeatureCollection('ft:16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ')
     aoi = countries \
-        .filterMetadata('Country', 'equals', country)
+        .filterMetadata('admin', 'equals', country)
 
     bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     mosaic = landsat8.mosaic(
@@ -55,6 +57,88 @@ def map():
         'bounds': bounds
     })
 
+
+@app.route('/sceneareas')
+def sceneareas():
+    countryIso = request.args.get('countryIso')
+    countries = ee.FeatureCollection('ft:16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ')
+    aoi = countries \
+        .filterMetadata('sov_a3', 'equals', countryIso)
+
+    wrs = ee.FeatureCollection('ft:1_RZgjlcqixp-L9hyS6NYGqLaKOlnhSC35AB5M5Ll')  # WRS-2 polygons
+    spatialFilter = ee.Filter.intersects(
+        leftField='.geo',
+        rightField='.geo',
+        maxError=10
+    )
+    saveAllJoin = ee.Join.saveAll(matchesKey='scenes')
+    intersectJoined = saveAllJoin.apply(aoi, wrs, spatialFilter)
+    intersected = ee.FeatureCollection(ee.List(intersectJoined.first().get('scenes')))
+    sceneAreas = []
+    for sceneArea in intersected.getInfo()['features']:
+        polygon = map(lambda lnglat: list(reversed(lnglat)), sceneArea['geometry']['coordinates'][0])
+        sceneAreas.append({
+            'sceneAreaId': str(int(sceneArea['properties']['PATH'])) + '_' + str(int(sceneArea['properties']['ROW'])),
+            'polygon': polygon,
+        })
+
+    return json.dumps(sceneAreas)
+
+
+@app.route('/sceneareas/<sceneAreaId>')
+def scenearea(sceneAreaId):
+    targetDay = request.args.get('targetDay')
+    startDate = request.args.get('startDate')
+    endDate = request.args.get('endDate')
+
+    m = re.search('(...)_(.*)', sceneAreaId)
+    path = int(m.group(1))
+    row = int(m.group(2))
+
+    input = ee.ImageCollection('LC8_L1T_TOA') \
+        .filter(ee.Filter.date(startDate, endDate)) \
+        .filterMetadata('WRS_PATH', 'equals', path) \
+        .filterMetadata('WRS_ROW', 'equals', row)
+
+    sceneIds = input.aggregate_array('LANDSAT_SCENE_ID').getInfo()
+    cloudCovers = input.aggregate_array('CLOUD_COVER').getInfo()
+    acquisitionDates = input.aggregate_array('DATE_ACQUIRED').getInfo()
+    sunAzimuths = input.aggregate_array('SUN_AZIMUTH').getInfo()
+    sunElevations = input.aggregate_array('SUN_ELEVATION').getInfo()
+    daysFromTarget = map(lambda acquisitionDate: _daysFromTarget(targetDay, acquisitionDate), acquisitionDates)
+    scores = map(
+        lambda vals: vals[0] / (365. / 2.) + vals[1] / 10.,
+        zip(daysFromTarget, cloudCovers)
+    )
+    browseUrls = map(
+        lambda vals: 'http://earthexplorer.usgs.gov/browse/landsat_8/' + str(parse(vals[1]).year) + '/' +
+                     str(path).zfill(3) + '/' + str(row).zfill(3) + '/' + vals[0] + '.jpg',
+        zip(sceneIds, acquisitionDates)
+    )
+    sensors = ['LC8'] * len(sceneIds)
+
+    scenes = sorted(
+        map(
+            lambda vals: dict(
+                zip(['sceneId', 'cloudCover', 'acquisitionDate', 'sunAzimuth', 'sunElevation', 'daysFromTarget',
+                     'score', 'browseUrl', 'sensor'], vals)
+            ),
+            zip(sceneIds, cloudCovers, acquisitionDates, sunAzimuths, sunElevations, daysFromTarget, scores, browseUrls,
+                sensors)
+        ),
+        key=lambda k: k['score']
+    )
+    return json.dumps(scenes)
+
+
+def _daysFromTarget(targetDay, date):
+    theDate = parse(date)
+    return min(map(lambda n: abs((theDate - parse(str(theDate.year + n) + '-' + targetDay)).days), [-1, 0, 1]))
+
+
+def _toBrowseUrl(targetDay, date):
+    theDate = parse(date)
+    return min(map(lambda n: abs((theDate - parse(str(theDate.year + n) + '-' + targetDay)).days), [-1, 0, 1]))
 
 
 if __name__ == '__main__':
