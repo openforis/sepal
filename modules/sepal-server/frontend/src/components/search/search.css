@@ -17,6 +17,11 @@
     font-size: 1.2rem;
 }
 
+#search-form .form-notify {
+    display: block;
+    opacity: 0;
+}
+
 .autocomplete-suggestions {
     /*border: 1px solid #999;*/
     /*background: #FFF;*/
