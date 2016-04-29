@@ -1,9 +1,10 @@
 package org.openforis.sepal.component.sandboxwebproxy
 
-import io.undertow.Handlers
 import io.undertow.Undertow
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
+import io.undertow.server.handlers.ResponseCodeHandler
+import io.undertow.server.handlers.proxy.PatchedProxyHandler
 import io.undertow.server.session.*
 import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
@@ -68,10 +69,11 @@ class SandboxWebProxy {
     private HttpHandler createHandler(Map<String, Integer> portByEndpoint, WebProxySessionMonitor monitor) {
         new SepalHttpHandler(
                 new SessionAttachmentHandler(
-                        Handlers.proxyHandler(
+                        new PatchedProxyHandler(
                                 new DynamicProxyClient(
                                         new SessionBasedUriProvider(portByEndpoint, sandboxManagerComponent, monitor)
-                                )
+                                ),
+                                ResponseCodeHandler.HANDLE_404
                         ), sessionManager, new SessionCookieConfig())
         )
     }
