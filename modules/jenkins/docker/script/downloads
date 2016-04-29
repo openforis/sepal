@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 
-apt-get update && apt-get install -y wget software-properties-common curl unzip git maven python-setuptools apt-transport-https
-
-
+apt-get update && apt-get install -y \
+    wget \
+    software-properties-common \
+    curl \
+    unzip \
+    git \
+    maven \
+    python-setuptools \
+    apt-transport-https
 
 #install java-8
 \
@@ -15,12 +21,10 @@ apt-get update && apt-get install -y wget software-properties-common curl unzip 
 
 echo "JAVA_HOME=\"/usr/lib/jvm/java-8-oracle\"" >> /etc/environment
 
-
 #install ansible and jenkins
 sudo apt-add-repository ppa:ansible/ansible
 wget -q -O - https://jenkins-ci.org/debian/jenkins-ci.org.key | apt-key add -
 sh -c 'echo deb http://pkg.jenkins-ci.org/debian binary/ > /etc/apt/sources.list.d/jenkins.list'
-
 
 apt-get update && apt-get install -y jenkins ansible
 

@@ -11,7 +11,8 @@ class VagrantWorkerInstanceProvider implements WorkerInstanceProvider {
 
     private final WorkerInstance instance = new WorkerInstance(
             id: 'vagrant',
-            host: '172.17.0.1',
+            host: '172.28.128.3',
+//            host: '172.17.0.1',
             type: instanceTypes.first().id,
             running: true,
             idle: true,
