@@ -9,31 +9,3 @@
     position: absolute !important;
 }
 
-.scene, .scene svg {
-    position: absolute;
-}
-
-.scene svg {
-    /* 	width: 180px; */
-    /*   	height: 180px; */
-    /*   width: 80px; */
-    /*   height: 80px; */
-    /*   padding-right: 100px; */
-    /*   padding-top: 40px; */
-    /*font: 1.3em 'Source Sans Pro', sans-serif !important;*/
-    color: #dadaed;
-}
-
-svg.scene-area-marker {
-    width: 60px;
-    height: 60px;
-    /*padding: 15px;*/
-}
-
-.scene circle {
-    fill: #E1E1E6;
-    fill-opacity: .1;
-    stroke: #EBEBCD;
-    stroke-width: 2px;
-    stroke-opacity: .4;
-}

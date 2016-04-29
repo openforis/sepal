@@ -1,0 +1,17 @@
+.scene, .scene svg {
+    position: absolute;
+    color: #dadaed;
+}
+
+svg.scene-area-marker {
+    width: 60px;
+    height: 60px;
+}
+
+.scene circle {
+    fill: #E1E1E6;
+    fill-opacity: .1;
+    stroke: #EBEBCD;
+    stroke-width: 2px;
+    stroke-opacity: .4;
+}

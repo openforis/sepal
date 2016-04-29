@@ -2,7 +2,7 @@
 require( 'bootstrap' )
 require( '../ajax/ajax' )
 
-// styles
+// application styles
 require( '../theme/base.css' )
 require( '../theme/button.css' )
 require( '../theme/form.css' )
@@ -19,17 +19,19 @@ require( '../nav-menu/nav-menu' )
 
 require( '../app-section/app-section' )
 
+// event bus
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
+// loader
 var Loader = require( '../loader/loader' )
 
 // global app variables
-var User = null
+var Sepal = require( './sepal' )
 
 // functions
 var userLogged = function ( e, user ) {
-    User = user
+    Sepal.User = user
 
     Loader.show()
 
@@ -52,9 +54,3 @@ var loadApp = function () {
 
 // event handlers
 EventBus.addEventListener( Events.USER.LOGGED, userLogged )
-
-
-// exposed global app variables
-module.exports = {
-    User: User
-}

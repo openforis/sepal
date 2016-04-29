@@ -9,14 +9,19 @@ var Events           = require( '../event/events' )
 var GoogleMapsLoader = require( 'google-maps' )
 // GoogleMapsLoader.KEY = 'qwertyuiopasdfghjklzxcvbnm'
 
+var Sepal = require( '../main/sepal' )
+// additional map components
+require( './scene-areas' )
+
+// html template
 var template = require( './map.html' )
 var html     = $( template( {} ) )
 
+// google map style
 var mapStyle = require( './map-style.js' )
 
-var map                 = null
-var sceneAreasGridLayer = null
-var appReduced          = false
+// instance variables
+var map = null
 
 // Natural Earth Fusion Table data . see : https://www.google.com/fusiontables/DataSource?dsrcid=394713#rows:id=1
 // Name:	10m_admin_0_countries
@@ -67,12 +72,6 @@ var zoomTo = function ( e, address ) {
             if ( status == google.maps.GeocoderStatus.OK ) {
                 map.panTo( results[ 0 ].geometry.location )
                 map.fitBounds( results[ 0 ].geometry.viewport )
-                // map.panToBounds( results[ 0 ].geometry.viewport )
-
-                // map.setZoom( 5 )
-                // map.setCenter( results[ 0 ].geometry.location )
-                // panTo
-                // map.panTo( results[ 0 ].geometry.location )
 
                 var FT_Query   = "SELECT 'kml_4326' FROM " + FT_TableID + " WHERE 'name_0' = '" + address + "';"
                 var FT_Options = {
@@ -112,243 +111,12 @@ var zoomTo = function ( e, address ) {
     } )
 }
 
-var loadSceneAreas = function ( e, scenes ) {
-    // console.log( scenes )
-    GoogleMapsLoader.load( function ( google ) {
-
-
-        var array = new Array()
-        $.each( scenes, function ( i, scene ) {
-
-            // NOT WORKING
-            // var northeast = new google.maps.LatLng( Number( scene.upperRightCoordinate[ 0 ] ), Number( scene.upperRightCoordinate[ 1 ] ) )
-            // var southwest = new google.maps.LatLng( Number( scene.lowerLeftCoordinate[ 0 ] ), Number( scene.lowerLeftCoordinate[ 1 ] ) )
-            // var bounds    = new google.maps.LatLngBounds( northeast, southwest )
-            // var center    = bounds.getCenter()
-            // console.log( center.lat() )
-            // console.log( center.lng() )
-
-            // RECTANGLE EXAMPLE
-            // var rectangle = new google.maps.Rectangle( {
-            //     strokeColor  : '#FF0000',
-            //     strokeOpacity: 0.1,
-            //     strokeWeight : 2,
-            //     fillColor    : '#FF0000',
-            //     fillOpacity  : 0.05,
-            //     map          : map,
-            //     bounds       : {
-            //         north: Number( scene.upperLeftCoordinate[ 0 ] ),
-            //         south: Number( scene.lowerLeftCoordinate[ 0 ] ),
-            //         east : Number( scene.upperRightCoordinate[ 1 ] ),
-            //         west : Number( scene.lowerLeftCoordinate[ 1 ] )
-            //     }
-            // } )
-
-            var bounds       = new google.maps.LatLngBounds()
-            var polygonPaths = new Array()
-            var polygon      = scene.polygon
-            for ( var j = 0; j < polygon.length; j++ ) {
-                var latLong  = polygon[ j ]
-                var gLatLong = new google.maps.LatLng( Number( latLong[ 0 ] ), Number( latLong[ 1 ] ) )
-                bounds.extend( gLatLong )
-
-                polygonPaths.push( gLatLong )
-            }
-
-            var gPolygon = new google.maps.Polygon( {
-                paths: polygonPaths,
-                strokeColor: '#EBEBCD',
-                strokeOpacity: 0.4,
-                strokeWeight: 2,
-                fillColor: '#E1E1E6',
-                fillOpacity: 0.1
-            } )
-            // var bounds        = new google.maps.LatLngBounds()
-            // var polygonCoords = [
-            //     new google.maps.LatLng( Number( scene.upperLeftCoordinate[ 0 ] ), Number( scene.upperLeftCoordinate[ 1 ] ) ),
-            //     new google.maps.LatLng( Number( scene.upperRightCoordinate[ 0 ] ), Number( scene.upperRightCoordinate[ 1 ] ) ),
-            //     new google.maps.LatLng( Number( scene.lowerLeftCoordinate[ 0 ] ), Number( scene.lowerLeftCoordinate[ 1 ] ) ),
-            //     new google.maps.LatLng( Number( scene.lowerRightCoordinate[ 0 ] ), Number( scene.lowerRightCoordinate[ 1 ] ) )
-            // ]
-            //
-            // for ( var j = 0; j < polygonCoords.length; j++ ) {
-            //     bounds.extend( polygonCoords[ j ] )
-            // }
-
-            var center = bounds.getCenter()
-            // console.log( "=============" )
-            // console.log( center.lat() + " , " + center.lng() )
-
-            var item     = {}
-            item.center  = center
-            item.scene   = scene
-            item.polygon = gPolygon
-            array.push( item )
-        } )
-
-        var sceneAreasOverlay = new google.maps.OverlayView();
-
-        // Add the container when the overlay is added to the map.
-        sceneAreasOverlay.onAdd = function () {
-            sceneAreasGridLayer = d3
-                .select( this.getPanes().overlayMouseTarget )
-                .append( "div" )
-                .attr( "class", "scene" );
-
-            // Draw each marker as a separate SVG element.
-            sceneAreasOverlay.draw = function () {
-                var projection = this.getProjection(),
-                    padding    = 15 * 2;
-
-                var markers = sceneAreasGridLayer.selectAll( "svg" )
-                    .data( d3.entries( array ) )
-                    .each( transform ) // update existing markers
-                    .enter().append( "svg" )
-                    .each( transform )
-                    .attr( "class", "scene-area-marker" );
-// Add a label.
-                markers.append( "text" )
-                    .attr( "x", padding - 3 )
-                    .attr( "y", padding )
-                    .attr( "dy", ".31em" )
-                    .attr( "fill", "#FFFFFF" )
-                    .text( function ( d ) {
-                        // var feature = d.value;
-                        // return feature.properties.name;
-                        return '0'
-                    } )
-
-                // Add a circle.
-                var circle = markers.append( "circle" )
-                    .attr( "r", '25px' )
-                    .attr( "cx", padding )
-                    .attr( "cy", padding )
-
-                    .on( 'click', function ( d ) {
-                        if ( appReduced ) {
-                            var sceneArea   = d.value.scene
-                            var sceneAreaId = sceneArea.sceneAreaId
-                            EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneAreaId )
-                        }
-                    } )
-                    .on( 'mouseover', function ( d ) {
-                        if ( appReduced ) {
-
-                            d3.select( this )
-                                .transition()
-                                .duration( 200 )
-                                .style( "fill-opacity", '.5' )
-
-                            var polygon = d.value.polygon
-                            polygon.setMap( map )
-                        }
-                    } )
-                    .on( 'mouseout', function ( d ) {
-                        if ( appReduced ) {
-                            d3.select( this )
-                                .transition()
-                                .duration( 200 )
-                                .style( "fill-opacity", '.1' )
-
-                            var polygon = d.value.polygon
-                            polygon.setMap( null )
-                        }
-
-                    } )
-                    ;
-//	    	      layer.selectAll("circle").on('click',function(d){
-//	    	    	 console.log( d );
-//	    	      });
-//	    	      this.getPanes().overlayMouseTarget.appendChild( )
-
-
-                // setTimeout( function () {
-                //     markers.selectAll( "circle" )
-                //         .transition()
-                //         // .duration( 1000 )
-                //         // .attr( "r", '2rem' )
-                //         // .transition()
-                //         .duration( 1500 )
-                //         .attr( "r", '1.5rem' );
-                //
-                // }, 1500 )
-
-                function transform( d ) {
-                    var item = d.value;
-                    d        = new google.maps.LatLng( item.center.lat(), item.center.lng() );
-                    d        = projection.fromLatLngToDivPixel( d );
-                    return d3.select( this )
-                        .style( "left", (d.x - padding) + "px" )
-                        .style( "top", (d.y - padding) + "px" );
-                }
-            };
-        };
-
-        // Bind our overlay to the map…
-        sceneAreasOverlay.setMap( map )
-    } )
-    // })
-
-    // } )
-}
-
-var showApplicationSection = function ( e ) {
-    appReduced = false
-    if ( sceneAreasGridLayer ) {
-
-        // sceneAreasGridLayer
-        //     .selectAll( "svg" )
-        //     .transition()
-        //     .duration( 500 )
-        //     .style( 'fill-opacity', '.05' )
-
-        sceneAreasGridLayer
-            .selectAll( "circle" )
-            .transition()
-            .duration( 500 )
-            .style( 'stroke-opacity', '.02' )
-            .style( 'fill-opacity', '.01' )
-
-        sceneAreasGridLayer
-            .selectAll( "text" )
-            .transition()
-            .duration( 500 )
-            .style( 'fill-opacity', '.05' )
-    }
-}
-
-var reduceApplicationSection = function ( e ) {
-    appReduced = true
-    if ( sceneAreasGridLayer ) {
-
-        // sceneAreasGridLayer
-        //     .selectAll( "svg" )
-        //     .transition()
-        //     .delay( 800 )
-        //     .duration( 500 )
-        //     .style( 'stroke-opacity', '.4' )
-        //     .style( 'fill-opacity', '.1' )
-
-        sceneAreasGridLayer
-            .selectAll( "circle" )
-            .transition()
-            .delay( 100 )
-            .duration( 800 )
-            .style( 'stroke-opacity', '.4' )
-            .style( 'fill-opacity', '.1' )
-
-        sceneAreasGridLayer
-            .selectAll( "text" )
-            .transition()
-            .delay( 100 )
-            .duration( 800 )
-            .style( 'fill-opacity', '1' )
+var addLayer = function ( e, layer ) {
+    if ( layer ) {
+        layer.setMap( map )
     }
 }
 
 EventBus.addEventListener( Events.APP.LOAD, show )
 EventBus.addEventListener( Events.MAP.ZOOM_TO, zoomTo )
-EventBus.addEventListener( Events.MAP.LOAD_SCENE_AREAS, loadSceneAreas )
-
-EventBus.addEventListener( Events.SECTION.SHOW, showApplicationSection )
-EventBus.addEventListener( Events.SECTION.REDUCE, reduceApplicationSection )
+EventBus.addEventListener( Events.MAP.ADD_LAYER, addLayer )
