@@ -69,12 +69,12 @@ DatePicker.prototype._bindEvents = function ( property ) {
                 }
 
                 var inner = aGroup.siblings( '.inner' )
-                inner.fadeIn( 1000 )
+                inner.fadeIn( 700 )
                 inner.addClass( 'opened' )
 
-                var delay = 400
+                var delay = 60
                 $.each( inner.find( 'a' ), function ( i, a ) {
-                    delay += 100
+                    delay += 60
                     a = $( a )
                     a.velocity( { opacity: 1 }, {
                         duration: 500

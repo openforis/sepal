@@ -4,12 +4,14 @@
 var EventBus   = require( '../event/event-bus' )
 var Events     = require( '../event/events' )
 var Loader     = require( '../loader/loader' )
+var Animation  = require( '../animation/animation' )
 var DatePicker = require( '../date-picker/date-picker' )
 var countries  = require( './countries.js' )
 
 var SceneAreasSearch = function () {
 
-    this.form = null
+    this.form       = null
+    this.formNotify = null
 
     this.Request = {
 
@@ -38,8 +40,9 @@ var SceneAreasSearch = function () {
 }
 
 SceneAreasSearch.prototype.setForm = function ( form ) {
-    var $this = this
-    this.form = $( form )
+    var $this       = this
+    this.form       = $( form )
+    this.formNotify = this.form.find( '.form-notify' )
 
     var country = form.find( '#search-form-country' )
     country.autocomplete( {
@@ -104,26 +107,63 @@ SceneAreasSearch.prototype.setForm = function ( form ) {
 }
 
 SceneAreasSearch.prototype.requestSceneAreas = function () {
-    var data   = { countryIso: this.Request.countryCode }
-    var params = {
-        url: '/api/data/sceneareas'
-        , data: data
-        , beforeSend: function () {
-            Loader.show()
-            EventBus.dispatch( Events.SECTION.REDUCE, null )
-        }
-        , success: function ( response ) {
-            EventBus.dispatch( Events.MAP.LOAD_SCENE_AREAS, null, response )
-            Loader.hide( { delay: 300 } )
-        }
+    var $this = this
+
+    if ( $.trim( this.Request.countryCode ) == '' ) {
+        this.formNotify.html( 'Please select a valid COUNTRY' )
+        Animation.animateIn( this.formNotify )
     }
-    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+    else if ( this.Request.from.year <= 0 || this.Request.from.month <= 0 || this.Request.from.day <= 0 ) {
+        this.formNotify.html( 'Please select a valid FROM date' )
+        Animation.animateIn( this.formNotify )
+    }
+    else if ( this.Request.to.year <= 0 || this.Request.to.month <= 0 || this.Request.to.day <= 0 ) {
+        this.formNotify.html( 'Please select a valid TO date' )
+        Animation.animateIn( this.formNotify )
+    }
+
+    else {
+
+        // if valid, form gets submitted
+
+        var data   = { countryIso: this.Request.countryCode }
+        var params = {
+            url: '/api/data/sceneareas'
+            , data: data
+            , beforeSend: function () {
+                Animation.animateOut( $this.formNotify )
+                $this.formNotify.html( '' )
+
+                Loader.show()
+                EventBus.dispatch( Events.SECTION.REDUCE, null )
+            }
+            , success: function ( response ) {
+                EventBus.dispatch( Events.MAP.LOAD_SCENE_AREAS, null, response )
+                Loader.hide( { delay: 300 } )
+            }
+        }
+        EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+
+    }
 }
 
+
 SceneAreasSearch.prototype.getSceneArea = function ( sceneAreaId ) {
+    // get('/data/sceneareas/{sceneAreaId}') 
+
+    // params.targetDay //MM-dd
+    // params.startDate //YYYY-MM-dd
+    // params.endDate  //YYYY-MM-dd
+    var SEP  = '-'
+    var data = {
+        startDate: this.Request.from.year + SEP + this.Request.from.month + SEP + this.Request.from.day
+        , endDate: this.Request.to.year + SEP + this.Request.to.month + SEP + this.Request.to.day
+        , targetDay: this.Request.targetDay.month + SEP + this.Request.targetDay.day
+    }
 
     var params = {
         url: '/api/data/sceneareas/' + sceneAreaId
+        , data: data
         , beforeSend: function () {
             Loader.show()
         }
@@ -131,8 +171,6 @@ SceneAreasSearch.prototype.getSceneArea = function ( sceneAreaId ) {
 
             EventBus.dispatch( Events.SECTION.SEARCH.SHOW_SCENE_AREA, null, response )
 
-            // loadSceneArea( response )
-            console.log( response )
             Loader.hide( { delay: 500 } )
         }
     }

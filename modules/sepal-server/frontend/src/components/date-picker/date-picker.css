@@ -11,11 +11,12 @@
 }
 
 .date-picker .row.year,
-/*.date-picker .row.month,*/
+    /*.date-picker .row.month,*/
 .date-picker .row.day {
     /*margin-bottom: 2.5rem;*/
 }
-.date-picker .row.month .buttons{
+
+.date-picker .row.month .buttons {
     padding-top: 0.5rem;
 }
 
@@ -36,7 +37,7 @@
     padding: 5px 5px;
     position: absolute;
     /* left: 55px; */
-    top: 2rem;
+    top: 2.3rem;
     background-color: rgba(226, 210, 210, 0.06);
     border-radius: 15px;
 }

@@ -100,12 +100,12 @@ var loadSceneAreas = function ( e, scenes ) {
                     .enter().append( "svg" )
                     .each( transform )
                     .attr( "class", function ( d ) {
-                        var sceneArea   = d.value.scene
+                        var sceneArea = d.value.scene
                         // EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneArea.sceneAreaId )
-                        var cls = "scene-area-marker "+ sceneArea.sceneAreaId
+                        var cls       = "scene-area-marker " + sceneArea.sceneAreaId
                         return cls
-                    }  )
-                
+                    } )
+
 
                 // Add a label.
                 markers.append( "text" )
@@ -126,7 +126,7 @@ var loadSceneAreas = function ( e, scenes ) {
                     .on( 'click', function ( d ) {
                         if ( Sepal.isSectionClosed() ) {
 
-                            var sceneArea   = d.value.scene
+                            var sceneArea = d.value.scene
                             EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneArea.sceneAreaId )
 
                         }
@@ -173,8 +173,11 @@ var loadSceneAreas = function ( e, scenes ) {
         }
 
         sceneAreasLayer.onRemove = function () {
-            $( 'div.scene' ).remove()
-            sceneAreasDiv = null
+            // $( 'div.scene-areas-section' ).remove()
+            if ( sceneAreasDiv ) {
+                sceneAreasDiv.remove()
+                sceneAreasDiv = null
+            }
         }
 
         EventBus.dispatch( Events.MAP.ADD_LAYER, null, sceneAreasLayer )
