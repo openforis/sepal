@@ -87,7 +87,7 @@ var loadSceneAreas = function ( e, scenes ) {
             sceneAreasDiv = d3
                 .select( this.getPanes().overlayMouseTarget )
                 .append( "div" )
-                .attr( "class", "scene" )
+                .attr( "class", "scene-areas-section" )
 
             // Draw each marker as a separate SVG element.
             sceneAreasLayer.draw = function () {
@@ -99,7 +99,13 @@ var loadSceneAreas = function ( e, scenes ) {
                     .each( transform ) // update existing markers
                     .enter().append( "svg" )
                     .each( transform )
-                    .attr( "class", "scene-area-marker" )
+                    .attr( "class", function ( d ) {
+                        var sceneArea   = d.value.scene
+                        // EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneArea.sceneAreaId )
+                        var cls = "scene-area-marker "+ sceneArea.sceneAreaId
+                        return cls
+                    }  )
+                
 
                 // Add a label.
                 markers.append( "text" )
@@ -119,9 +125,10 @@ var loadSceneAreas = function ( e, scenes ) {
 
                     .on( 'click', function ( d ) {
                         if ( Sepal.isSectionClosed() ) {
+
                             var sceneArea   = d.value.scene
-                            var sceneAreaId = sceneArea.sceneAreaId
-                            EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneAreaId )
+                            EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneArea.sceneAreaId )
+
                         }
                     } )
 
@@ -135,7 +142,6 @@ var loadSceneAreas = function ( e, scenes ) {
                                 .style( "fill-opacity", '.5' )
 
                             var polygon = d.value.polygon
-                            // polygon.setMap( map )
                             EventBus.dispatch( Events.MAP.ADD_LAYER, null, polygon )
                         }
 
