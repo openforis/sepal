@@ -19,11 +19,17 @@ var show = function () {
 
     $( '.app' ).append( html )
 
+    var showSection = function ( e ) {
+        var btn = $( this )
+        collapseMenu( btn )
+        EventBus.dispatch( Events.SECTION.SHOW, null, btn.data('section-target') )
+    }
+
     // init style
-    btnSearch.addClass( 'expanded' ).css( 'opacity', '0' )
-    btnBrowse.addClass( 'expanded' ).css( 'opacity', '0' )
-    btnProcess.addClass( 'expanded' ).css( 'opacity', '0' )
-    btnTerminal.addClass( 'expanded' ).css( 'opacity', '0' )
+    btnSearch.addClass( 'expanded' ).css( 'opacity', '0' ).click( showSection )
+    btnBrowse.addClass( 'expanded' ).css( 'opacity', '0' ).click( showSection )
+    btnProcess.addClass( 'expanded' ).css( 'opacity', '0' ).click( showSection )
+    btnTerminal.addClass( 'expanded' ).css( 'opacity', '0' ).click( showSection )
 
     btnSearch.empty().append( '<i class="fa fa-globe" aria-hidden="true"></i> Search' )
     btnBrowse.empty().append( '<i class="fa fa-folder-open" aria-hidden="true"></i> Browse' )
@@ -34,28 +40,6 @@ var show = function () {
     Animation.animateIn( btnBrowse )
     Animation.animateIn( btnProcess )
     Animation.animateIn( btnTerminal )
-
-    var showSection = function ( btn, section ) {
-        collapseMenu( $( btn ) )
-        EventBus.dispatch( Events.SECTION.SHOW, null, section )
-    }
-
-    btnSearch.click( function ( e ) {
-        e.preventDefault()
-        showSection( this , 'search' )
-    } )
-    btnBrowse.click( function ( e ) {
-        e.preventDefault()
-        showSection( this , 'browse' )
-    } )
-    btnProcess.click( function ( e ) {
-        e.preventDefault()
-        showSection( this , 'process' )
-    } )
-    btnTerminal.click( function ( e ) {
-        e.preventDefault()
-        showSection( this , 'terminal   ' )
-    } )
 
 }
 
@@ -97,15 +81,14 @@ var collapseMenu = function ( button ) {
                 Animation.animateIn( btnTerminal )
             }, 250 )
 
-            setTimeout( function () {
 
-                // $( '#sepal-logo' ).velocity( { 'left': '42%' }, {
-                $( '#sepal-logo' ).velocity( { 'top': '0%', 'left': '0%', 'opacity': '0.7' }, {
-                    duration: 1500,
-                    easing: 'swing',
-                    queue: false
-                } )
-            }, 1500 )
+            // $( '#sepal-logo' ).velocity( { 'left': '42%' }, {
+            $( '#sepal-logo' ).velocity( { 'top': '0%', 'left': '0%', 'opacity': '0.7' }, {
+                duration: 1500,
+                easing: 'swing',
+                delay : 1500,
+                queue: false
+            } )
 
         }, delay )
 

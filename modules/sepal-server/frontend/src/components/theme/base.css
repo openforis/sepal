@@ -483,6 +483,9 @@ img {
 .height100 {
     height: 100% !important;
 }
+.height50 {
+    height: 50% !important;
+}
 
 /* align */
 .text-align-right {

@@ -169,7 +169,8 @@ SceneAreasSearch.prototype.getSceneArea = function ( sceneAreaId ) {
         }
         , success: function ( response ) {
 
-            EventBus.dispatch( Events.SECTION.SEARCH.SHOW_SCENE_AREA, null, response )
+            EventBus.dispatch( Events.SECTION.SHOW, null, 'scene-images-selection' )
+            EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.UPDATE, null, response )
 
             Loader.hide( { delay: 500 } )
         }

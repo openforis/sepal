@@ -126,6 +126,9 @@ var loadSceneAreas = function ( e, scenes ) {
                     .on( 'click', function ( d ) {
                         if ( Sepal.isSectionClosed() ) {
 
+                            var polygon = d.value.polygon
+                            polygon.setMap( null )
+
                             var sceneArea = d.value.scene
                             EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneArea.sceneAreaId )
 
@@ -173,7 +176,6 @@ var loadSceneAreas = function ( e, scenes ) {
         }
 
         sceneAreasLayer.onRemove = function () {
-            // $( 'div.scene-areas-section' ).remove()
             if ( sceneAreasDiv ) {
                 sceneAreasDiv.remove()
                 sceneAreasDiv = null
@@ -207,7 +209,7 @@ var reduceApplicationSection = function ( e ) {
         sceneAreasDiv
             .selectAll( "circle" )
             .transition()
-            .delay( 100 )
+            .delay( 400 )
             .duration( 800 )
             .style( 'stroke-opacity', '.4' )
             .style( 'fill-opacity', '.1' )
@@ -215,7 +217,7 @@ var reduceApplicationSection = function ( e ) {
         sceneAreasDiv
             .selectAll( "text" )
             .transition()
-            .delay( 100 )
+            .delay( 400 )
             .duration( 800 )
             .style( 'fill-opacity', '1' )
     }

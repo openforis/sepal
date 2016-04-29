@@ -56,7 +56,8 @@ var show = function ( e, type ) {
 
         var icon = closeBtn.find( 'i' )
         icon.fadeOut( 600, function () {
-            var newIcon = $( '<i class="fa fa-times-circle" aria-hidden="true"></i>' ).hide()
+            var newIcon = $( '<i class="fa fa-chevron-circle-right" aria-hidden="true"></i>' ).hide()
+            // var newIcon = $( '<i class="fa fa-times-circle" aria-hidden="true"></i>' ).hide()
             closeBtn.empty().append( newIcon )
             newIcon.fadeIn( 700 )
         } )

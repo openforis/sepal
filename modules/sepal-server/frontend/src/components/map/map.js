@@ -44,7 +44,7 @@ var show = function () {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             zoomControl: true,
             zoomControlOptions: {
-                position: google.maps.ControlPosition.RIGHT_TOP
+                position: google.maps.ControlPosition.RIGHT_CENTER
                 , style: google.maps.ZoomControlStyle.LARGE
             },
             mapTypeControl: false,
@@ -54,9 +54,9 @@ var show = function () {
             fullscreenControl: false,
             backgroundColor: '#131314'
 
-        } );
+        } )
 
-        map.setOptions( { styles: mapStyle } );
+        map.setOptions( { styles: mapStyle } )
     } )
 }
 

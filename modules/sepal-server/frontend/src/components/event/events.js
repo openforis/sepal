@@ -31,7 +31,7 @@ Events = {
         , REDUCE: 'section.reduce'
 
         , SEARCH: {
-            SHOW_SCENE_AREA: 'section.search.show-scene-area'
+            // SHOW_SCENE_AREA: 'section.search.show-scene-area'
         }
 
         , BROWSE: {}
@@ -39,6 +39,10 @@ Events = {
         , PROCESS: {}
 
         , TERMINAL: {}
+
+        , SCENE_IMAGES_SELECTION: {
+            UPDATE: 'section.scenes-selection-update'
+        }
     }
 
     , MAP: {
