@@ -48,7 +48,7 @@ class MockServer extends AbstractMvcFilter {
                 params.endDate  //YYYY-MM-dd
 
                 send toJson([
-                        [sceneId: 'LC81900302015079LGN00', sensor: 'LC8', browseUrl: 'http://earthexplorer.usgs.gov/browse/landsat_8/2015/190/030/LC81900302015079LGN00.jpg', acquisitionDate: '2015-03-20', cloudCover: 0.08, sunAzimuth: 150.48942477, sunElevation: 42.80026465],
+                        [sceneId: 'LC81900302015079LGN00', sensor: 'LC8', browseUrl: 'http://earthexplorer.usgs.gov/browse/landsat_8/2015/190/030/LC81900302015079LGN00.jpg', acquisitionDate: '2015-03-20', cloudCover: 0.08, sunAzimuth: 150.48942477, sunElevation: 42.80026465 , daysFromTargetDay : 5],
                         [sceneId: 'LC81900302015079LGN00', sensor: 'LC8', browseUrl: 'http://earthexplorer.usgs.gov/browse/landsat_8/2015/190/030/LC81900302015079LGN00.jpg', acquisitionDate: '2015-03-20', cloudCover: 0.08, sunAzimuth: 150.48942477, sunElevation: 42.80026465],
                         [sceneId: 'LE71900302015183NSG00', sensor: 'LE7', browseUrl: 'http://earthexplorer.usgs.gov/browse/etm/190/30/2015/LE71900302015183NSG00.jpg', acquisitionDate: '2015-07-02', cloudCover: 0.09, sunAzimuth: 133.80200195, sunElevation: 63.82229996],
                         [sceneId: 'LE71900302015183NSG00', sensor: 'LE7', browseUrl: 'http://earthexplorer.usgs.gov/browse/etm/190/30/2015/LE71900302015183NSG00.jpg', acquisitionDate: '2015-07-02', cloudCover: 0.09, sunAzimuth: 133.80200195, sunElevation: 63.82229996],

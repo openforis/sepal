@@ -438,6 +438,13 @@ img {
     margin-left: 40px;
 }
 
+.no-margin {
+    margin: 0px !important;
+}
+.no-padding {
+    padding: 0px !important;
+}
+
 /* float */
 .clearfix:before,
 .clearfix:after {
@@ -480,14 +487,26 @@ img {
     width: 100% !important;
 }
 
-.height100 {
-    height: 100% !important;
+.height10 {
+    height: 10% !important;
+}
+.height20 {
+    height: 20% !important;
 }
 .height50 {
     height: 50% !important;
 }
+.height80 {
+    height: 80% !important;
+}
+.height90 {
+    height: 90% !important;
+}
+.height100 {
+    height: 100% !important;
+}
 
-/* align */
+/* text align */
 .text-align-right {
     text-align: right;
 }
