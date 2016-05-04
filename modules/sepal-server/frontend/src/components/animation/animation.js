@@ -55,7 +55,7 @@ var animateOut = function ( element, callback ) {
             animationOutDelay = $this.data( 'animation-out-delay' )
         }
 
-        $this.removeClass( animationIn ).addClass( animationOut )
+        $this.removeClass( animationIn ).addClass( 'animated' ).addClass( animationOut )
 
         if ( $this.data( 'animation-out-delay' ) ) {
             $this.css( 'animation-delay', animationOutDelay + 'ms' )
@@ -90,13 +90,13 @@ var removeAnimation = function ( element ) {
             animationOut = $this.data( 'animation-out' )
         }
 
-        $this.removeClass( animationIn ).removeClass( animationOut ).removeClass( 'is-active' )
+        $this.removeClass( animationIn ).removeClass( animationOut ).removeClass( 'is-active' ).removeClass( 'animated' )
     } )
 
 }
 
 module.exports = {
-    animateIn        : animateIn
-    , animateOut     : animateOut
+    animateIn: animateIn
+    , animateOut: animateOut
     , removeAnimation: removeAnimation
 }

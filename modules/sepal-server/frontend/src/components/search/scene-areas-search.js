@@ -48,6 +48,7 @@ SceneAreasSearch.prototype.setForm = function ( form ) {
     country.autocomplete( {
         lookup: countries
         , minChars: 0
+        , autoSelectFirst: true
         , onSelect: function ( selection ) {
             if ( selection ) {
                 var cCode = selection.data

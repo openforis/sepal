@@ -35,7 +35,6 @@
     position: relative;
 }
 
-
 #scene-images-selection .image-section {
     /* padding: 1rem; */
     font-size: 0.6rem;
@@ -43,6 +42,7 @@
     text-align: center;
     height: 220px;
     margin-right: 10px;
+    position: relative;
 }
 
 #scene-images-selection .image-section-container {
@@ -57,16 +57,61 @@
     width: 140px;
 }
 
+#scene-images-selection .image-section img:hover {
+    cursor: pointer;
+}
+
+#scene-images-selection .image-section .img-hover {
+    height: 150px;
+    width: 140px;
+    left: 15px;
+    position: absolute;
+    top: 6px;
+    /* background-color: rgba(16, 16, 16, 0.15); */
+    display: none;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+#scene-images-selection .image-section .img-hover i {
+    position: absolute;
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.9);
+    top: 60px;
+    left: 50px;
+}
+
 #scene-images-selection .image-section .image-attributes {
     margin: 7.5px 20px 0px 20px;
-    border: 1px solid rgba(255,255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.10);
     /* background-color: rgba(0, 0, 0, 0.2); */
     height: 40px;
-    background-color: rgba(255,255,255,0.05);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 #scene-images-selection .image-section .image-attributes > div {
+    padding-left: 10px;
+}
 
+#scene-images-selection .image-section .image-attributes .btn-add {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    padding: 0px;
+    top: -34px;
+    right: -40px;
+    /* border: 1px solid rgba(255, 255, 255, 0.1); */
+    border: none;
+    /* background-color: rgb(24, 24, 25); */
+    /* color: black; */
+    text-align: center;
+    padding-top: 7px;
+}
+
+#scene-images-selection .image-section .image-attributes .btn-add i {
+    position: relative;
+    /*top: .21rem;*/
+    font-size: 1.1rem;
 }
 
 #scene-images-selection .image-section.expanded {
@@ -83,6 +128,7 @@
     background-color: rgba(19, 19, 20, 0.97);
     /*transition: all 1s ease;*/
 }
+
 #scene-images-selection .expanded-image-section {
     width: 100% !important;
     height: 100% !important;
@@ -94,11 +140,12 @@
     /*background-color: rgba(19, 19, 20, 0.97);*/
     /*border: 1px solid rgba(19, 19, 20, 0.1);*/
 }
+
 #scene-images-selection .expanded-image-section .image-section-container {
     background-color: rgba(19, 19, 20, 0.97);
     border: 1px solid rgba(19, 19, 20, 0.1);
 }
 
-#scene-images-selection .expanded-image-section .image img{
+#scene-images-selection .expanded-image-section .image img {
     max-width: 60%;
 }
