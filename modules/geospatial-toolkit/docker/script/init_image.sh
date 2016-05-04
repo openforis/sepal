@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo
+echo "**********************"
+echo "*** Setting up APT ***"
+echo "**********************"
 # Needed for apt-add-repository command
 apt-get -y update && apt-get install -y software-properties-common
 
@@ -9,17 +13,15 @@ apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
 # Repository for Java
 add-apt-repository -y ppa:webupd8team/java
 
-# Repository for R
-add-apt-repository 'deb http://cran.cnr.Berkeley.edu/bin/linux/ubuntu trusty/'
-gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
-gpg -a --export E084DAB9 | sudo apt-key add -
-
 # Repository for Saga - System for Automated Geoscientific Analyses (http://www.saga-gis.org/en/index.html)
 apt-add-repository ppa:johanvdw/saga-gis -y
 
 apt-get -y update && apt-get -y upgrade
 
-# Install misc  utilities
+echo
+echo "*********************************"
+echo "*** Installing misc utilities ***"
+echo "*********************************"
 apt-get install -y \
     aria2 \
     bc \
@@ -28,10 +30,13 @@ apt-get install -y \
     dans-gdal-scripts \
     gdebi-core \
     gettext \
+    libcairo2-dev \
     libdbd-xbase-perl \
     libgmp3-dev \
     libgstreamer0.10-dev \
     libgstreamer-plugins-base0.10-dev \
+	libproj-dev \
+    libxt-dev \
     nano \
     openssh-server \
     otb-bin \
@@ -40,14 +45,14 @@ apt-get install -y \
     parallel \
     rsync \
     saga \
+    unzip \
 	wget \
     xml-twig-tools
 
-# Install Java
-echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
-apt-get install -y oracle-java8-installer
-
-# Install Open Foris Geospatial Toolkit
+echo
+echo "************************************************"
+echo "*** Installing Open Foris Geospatial Toolkit ***"
+echo "************************************************"
 apt-get install -y \
 	 gcc \
 	 g++ \
@@ -55,7 +60,6 @@ apt-get install -y \
 	 libgdal1-dev \
 	 libgsl0-dev \
 	 libgsl0ldbl \
-	 libproj-dev \
 	 make \
 	 python-gdal \
 	 python-scipy \
@@ -68,25 +72,82 @@ chmod u+x OpenForisToolkit.run
 1 | ./OpenForisToolkit.run
 rm OpenForisToolkit.run
 
-# Install Miniconda
+echo
+echo "***********************"
+echo "*** Installing Java ***"
+echo "***********************"
+echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
+apt-get install -y oracle-java8-installer
+
+echo
+echo "****************************"
+echo "*** Installing Miniconda ***"
+echo "****************************"
 wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 chmod u+x Miniconda3-latest-Linux-x86_64.sh
 ./Miniconda3-latest-Linux-x86_64.sh -b -p /opt/miniconda3
 rm ./Miniconda3-latest-Linux-x86_64.sh
 
-# Install GDAL
+echo
+echo "***********************"
+echo "*** Installing GDAL ***"
+echo "***********************"
 /opt/miniconda3/bin/conda install -y gdal
 
-# Install ARCSI - command line tool for the atmospheric correction of Earth Observation imagery )http://rsgislib.org/arcsi/)
+echo
+echo "************************"
+echo "*** Installing ARCSI ***"
+echo "************************"
 # (ARCSI requires older GDAL and OpenSSL versions, so a separate environment is created for ARCSI)
 /opt/miniconda3/bin/conda create -y -n arcsi python=3.4
 /opt/miniconda3/bin/conda install -y -n arcsi -c https://conda.binstar.org/osgeo arcsi
 /opt/miniconda3/bin/conda install -y -n arcsi krb5
 
-# Install R
-apt-get install -y r-base r-cran-rcpp
+echo
+echo "*****************************************"
+echo "*** Installing R and related packages ***"
+echo "*****************************************"
+/opt/miniconda3/bin/conda install -y -c r r
+/opt/miniconda3/bin/conda install -y -c r r-essentials
+/opt/miniconda3/bin/conda install -y -c r r-rcpp
 
-# Install RStudio Server
+printf '%s\n' \
+    'GDAL_DATA=/opt/miniconda3/share/gdal/' \
+    'PROJ_LIB=/usr/share/proj/' \
+    >> /opt/miniconda3/lib64/R/etc/Renviron
+
+printf '%s\n' \
+    'R_LIBS_SITE="$R_LIBS_SITE:/opt/miniconda3/lib/R/library"' \
+    >> /usr/lib/R/etc/Renviron
+
+apt-get install -y \
+    r-cran-rjava \
+    r-cran-rmpi
+
+export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
+export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/jre/lib/amd64/server:${JAVA_HOME}/jre/lib/amd64
+/opt/miniconda3/bin/R CMD javareconf
+
+/opt/miniconda3/bin/R -e "install.packages('dismo', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('DT', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('ggplot2', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('leaflet', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('plyr', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('raster', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('RColorBrewer', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('rgdal', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('rgeos', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('rmarkdown', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('shiny', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('shinydashboard', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('snow', dependencies=TRUE, repos='http://cran.rstudio.com/')" # Fails
+/opt/miniconda3/bin/R -e "install.packages('stringr', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('xtable', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+
+echo
+echo "*********************************"
+echo "*** Installing RStudio Server ***"
+echo "*********************************"
 echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
 	&& locale-gen en_US.utf8 \
 	&& /usr/sbin/update-locale LANG=en_US.UTF-8
@@ -96,15 +157,25 @@ wget https://download2.rstudio.org/rstudio-server-0.99.484-amd64.deb
 gdebi -n rstudio-server-0.99.484-amd64.deb
 rm -f rstudio-*
 
-# Install Shiny Server
-R -e "install.packages('shiny', repos='https://cran.rstudio.com/')"
-R -e "install.packages('rmarkdown', repos='https://cran.rstudio.com/')"
+echo
+echo "*******************************"
+echo "*** Installing Shiny Server ***"
+echo "*******************************"
 wget https://download3.rstudio.org/ubuntu-12.04/x86_64/shiny-server-1.4.2.786-amd64.deb
 gdebi -n shiny-server-1.4.2.786-amd64.deb
+chown shiny:root /opt/miniconda3/lib/R/library
+rm shiny-server-1.4.2.786-amd64.deb
 
-# Install QGIS
+echo
+echo "***********************"
+echo "*** Installing QGIS ***"
+echo "***********************"
 apt-get -y -qq install qgis
 
+echo
+echo "******************************"
+echo "*** Setting up environment ***"
+echo "******************************"
 # Create ssh deamon folder
 mkdir /var/run/sshd
 
@@ -123,4 +194,7 @@ rm -rf /tmp/*
 /opt/miniconda3/bin/gdalinfo --version || true
 oft-stack || true
 
+echo
+echo "*************************"
 echo "*** Image Initialized ***"
+echo "*************************"
