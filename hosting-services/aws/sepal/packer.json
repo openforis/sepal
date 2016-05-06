@@ -82,7 +82,7 @@
     },
     {
       "type": "ansible-local",
-      "playbook_file": "provision-sandbox.yml",
+      "playbook_file": "sandbox-ami.yml",
       "extra_arguments": [
         "--extra-vars \"efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}} availability_zone={{user `av_zone`}}\""
       ],

@@ -78,8 +78,3 @@
                     port=22
                     state="started"
       with_items: ec2.instances
-
-
-# TODO Allocate and associate elastic IP, once Ansible 2.0 is released
-# https://github.com/ansible/ansible-modules-core/pull/1015 needed to make it idempotent
-# TODO Route 53 resources

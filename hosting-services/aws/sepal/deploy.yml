@@ -35,7 +35,7 @@
         - 'o=Ubuntu,a=${distro_codename}-updates'
 
     - { role: docker, users: ['ubuntu'] }
-    - { role: prepare-aws-environment }
+    - { role: aws-mount-efs }
     - { role: run-container, image: ldap }
     - { role: run-container, image: mysql }
 #    - { role: run-container, image: google-earth-engine}

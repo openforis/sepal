@@ -1,0 +1,59 @@
+- name: Configure Sepal instance
+  hosts: "tag_Type_Sepal:&tag_Environment_{{ deploy_environment }}"
+  user: ubuntu
+  become: yes
+  gather_facts: true
+
+  vars_files:
+    - vars/vars.yml
+
+  tasks:
+    - name: Install nfs-common
+      apt:
+        name: "nfs-common"
+
+    - name: Create temp mount dir
+      file:
+        path: "/efs"
+        state: "directory"
+
+    - name: Temporarily Mount EFS Nfs4 For Setting Up Folders
+      mount:
+        name: "/efs"
+        fstype: "nfs4"
+        state: "mounted"
+        src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/"
+
+    - name: Create sepal home dir on EFS
+      file:
+        path: "/efs/data/sepal/home"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
+
+    - name: Create sepal shiny dir on EFS
+      file:
+        path: "/efs/data/sepal/shiny"
+        owner: "9999"
+        group: "9999"
+        mode: "u=rwx,g=rwxs"
+        state: "directory"
+
+    - name: Create ssh-gateway home dir
+      file:
+        path: "/efs/data/ssh-gateway/home"
+        mode: "u=rwx,g=rxs,o=rx"
+        state: directory
+
+    - name: Unmount EFS Nfs4
+      mount:
+          name: "/efs"
+          fstype: "nfs4"
+          state: "unmounted"
+          src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/"
+
+    - name: Delete temp mount dir
+      file:
+          path: "/efs"
+          state: "absent"
