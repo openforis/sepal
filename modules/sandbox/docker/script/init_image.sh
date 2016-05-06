@@ -29,5 +29,3 @@ printf '%s\n' \
     "PS1='${debian_chroot:+($debian_chroot)}\u@sepal:\w\$ '" \
     >> /etc/bash.bashrc
 
-chmod u+x /init_container.sh
-chmod u+x /root/wait_until_initialized.sh

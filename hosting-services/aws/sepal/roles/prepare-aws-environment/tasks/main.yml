@@ -10,16 +10,24 @@
     path: "/efs"
     state: "directory"
 
-- name: Temporarily Mount Efs Nfs4 For Setting Up Folders
+- name: Temporarily Mount EFS Nfs4 For Setting Up Folders
   mount:
     name: "/efs"
     fstype: "nfs4"
     state: "mounted"
     src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/"
 
-- name: Create data dir
+- name: Create sepal home dir on EFS
   file:
     path: "/efs/data/sepal/home"
+    owner: "9999"
+    group: "9999"
+    mode: "u=rwx,g=rwxs"
+    state: "directory"
+
+- name: Create sepal shiny dir on EFS
+  file:
+    path: "/efs/data/sepal/shiny"
     owner: "9999"
     group: "9999"
     mode: "u=rwx,g=rwxs"
@@ -31,7 +39,7 @@
     mode: "u=rwx,g=rxs,o=rx"
     state: directory
 
-- name: Unmount Efs Nfs4
+- name: Unmount EFS Nfs4
   mount:
       name: "/efs"
       fstype: "nfs4"
@@ -43,12 +51,19 @@
       path: "/efs"
       state: "absent"
 
-- name: Mount Efs Sepal Data Dir
+- name: Mount EFS Sepal Home Dir
   mount:
     name: "/data/sepal/home"
     fstype: "nfs4"
     state: "mounted"
     src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/home"
+
+- name: Mount EFS Sepal Shiny Dir
+  mount:
+    name: "/data/sepal/shiny"
+    fstype: "nfs4"
+    state: "mounted"
+    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/shiny"
 
 - name: Mount Efs Ssh-gateway Home Dir
   mount:

@@ -1,15 +1,13 @@
 FROM openforis/geospatial-toolkit
 MAINTAINER OpenForis
-
 ENV SEPAL_USERS_GRP_NAME sepalUsers
 
-ADD config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-ADD config/ldap.conf /etc/ldap.conf
-ADD templates/ /templates
-ADD script/init_container.sh .
-ADD script/init_image.sh .
-ADD script/wait_until_initialized.sh /root/wait_until_initialized.sh
+ADD config /config
+ADD script /script
+ADD templates /templates
 
-RUN chmod u+x /init_image.sh && ./init_image.sh
+RUN chmod -R 500 /script && \
+    chmod -R 400 /config && \
+    /script/init_image.sh
 
-CMD ["/usr/bin/supervisord"]
+CMD ["/script/init_container.sh"]
