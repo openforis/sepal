@@ -14,7 +14,8 @@ template /templates/ldap.secret /etc/ldap.secret 0600
 template /templates/sssd.conf /etc/sssd/sssd.conf 0600
 template /templates/shiny-server.conf /etc/shiny-server/shiny-server.conf 0644
 template /templates/supervisord.conf /etc/supervisor/conf.d/supervisord.conf 0600
-#rm -rf /templates
+
+rm -rf /templates
 
 ln -sf /conf/ldap.conf /etc/ldap.conf
 ln -sf /conf/ldap.conf /etc/ldap/ldap.conf
