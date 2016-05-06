@@ -104,10 +104,11 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
         def request = new JsonOutput().toJson([
                 Image: "$config.dockerImageName",
                 Tty: true,
-                Cmd: ["/init_container.sh", session.username, config.sepalHost, config.ldapHost, config.ldapPassword],
+                Cmd: ["/script/init_container.sh", session.username, config.sepalHost, config.ldapHost, config.ldapPassword],
                 HostConfig: [
                         Binds: [
                                 "$config.mountingHomeDir/$session.username:/home/$session.username",
+                                "/data/sepal/shiny:/shiny",
                                 "/data/sepal/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
                         ]
                 ],
@@ -157,7 +158,7 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
                             AttachStdout: true,
                             AttachStderr: true,
                             Tty: false,
-                            Cmd: ["/root/wait_until_initialized.sh", portsToWaitFor.join(';'), session.username]
+                            Cmd: ["/script/wait_until_initialized.sh", portsToWaitFor.join(';'), session.username]
                     ]),
                     requestContentType: JSON
             )
