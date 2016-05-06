@@ -35,15 +35,15 @@ var showLogin = function () {
 
         var params = {
 
-            url           : form.attr( 'action' )
-            , method      : form.attr( 'method' )
-            , data        : form.serialize()
-            , error       : null
+            url         : form.attr( 'action' )
+            , method    : form.attr( 'method' )
+            , data      : form.serialize()
+            , error     : null
             , beforeSend: function () {
                 formNotify.html( '' ).hide()
                 form.find( '.form-group' ).removeClass( 'error' )
             }
-            , complete    : function ( object, status ) {
+            , complete  : function ( object, status ) {
 
                 switch ( status ) {
                     case 'error' :
@@ -81,9 +81,12 @@ var showLogin = function () {
         $login.find( '.container' ).addClass( 'login-container' )
     } )
 
-    // start bg slideshow
-    siteBgSlideshow()
-    siteBgStar()
+    setTimeout( function (  ) {
+        // start bg slideshow
+        siteBgSlideshow()
+        siteBgStar()
+
+    } , 100 )
 
 }
 
@@ -94,19 +97,19 @@ var hideLogin = function () {
 }
 
 var siteBgSlideshow = function siteBgSlideshow() {
-    var bgImg = $( '.site-bg-img' );
+    var bgImg = $( '.site-bg-img' )
 
-    for ( var i = 1; i <= 2; i++ ) {
-        var img = $( '<img/>' )
-        img.attr( 'src', eval( 'bg0' + i ) )
-        bgImg.append( img )
-    }
+    var img = $( '<img src="' + bg01 + '"/>' )
+    bgImg.append( img )
+
+    img = $( '<img src="' + bg02 + '"/>' )
+    bgImg.append( img )
 
     bgImg.kenburnsy( {
         fullscreen    : true,
-        duration      : 9000,
+        duration      : 5000,
         fadeInDuration: 1500
-    } );
+    } )
 }
 
 var star_color = 'rgba(255, 255, 255, .5)';// rgba format - star color
@@ -310,7 +313,7 @@ var siteBgStar = function () {
 
 showLogin()
 
-EventBus.addEventListener( Events.LOGIN.SHOW , showLogin ,  this )
-EventBus.addEventListener( Events.LOGIN.HIDE , hideLogin ,  this )
+EventBus.addEventListener( Events.LOGIN.SHOW, showLogin, this )
+EventBus.addEventListener( Events.LOGIN.HIDE, hideLogin, this )
 
 
