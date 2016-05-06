@@ -9,17 +9,17 @@ var html     = $( template( {} ) )
 var DatePicker = function ( parentContainer, disableYear ) {
     this.parentContainer = parentContainer
     this.disableYear     = disableYear
-
+    
     this.year  = ''
     this.month = ''
     this.day   = ''
-
+    
     this.opened = false
-
+    
     this.onChange = function ( datePicked ) {
-
+        
     }
-
+    
     this.init()
 }
 
@@ -31,26 +31,26 @@ DatePicker.prototype.init = function () {
         this.html.find( '.year-label-separatpr' ).hide()
     }
     this.parentContainer.append( this.html )
-
+    
     this._bindEvents( 'year' )
     this._bindEvents( 'month' )
     this._bindEvents( 'day' )
-
+    
     this.opened = true
 }
 
 DatePicker.prototype._bindEvents = function ( property ) {
     var $this     = this;
     var container = this.html.find( '.' + property )
-
+    
     var aGroups = container.find( '.buttons a.group' )
     $.each( aGroups, function ( i, aGroup ) {
         aGroup = $( aGroup )
         aGroup.click( function ( e ) {
             e.preventDefault()
-
+            
             var value = $( this ).attr( 'value' )
-
+            
             if ( value == $this[ property ] ) {
                 // var opened = container.find('.inner.opened')
                 // opened.find('a').css({opacity: 0})
@@ -67,36 +67,36 @@ DatePicker.prototype._bindEvents = function ( property ) {
                     opened.hide()
                     opened.removeClass( 'opened' )
                 }
-
+                
                 var inner = aGroup.siblings( '.inner' )
                 inner.fadeIn( 700 )
                 inner.addClass( 'opened' )
-
+                
                 var delay = 60
                 $.each( inner.find( 'a' ), function ( i, a ) {
                     delay += 60
                     a = $( a )
                     a.velocity( { opacity: 1 }, {
                         duration: 500
-                        , delay: delay
+                        , delay : delay
                     } )
                 } )
-
+                
             }
-
+            
         } )
     } )
-
+    
     container.find( 'a' ).click( function ( e ) {
         e.preventDefault()
-
+        
         var value = $( this ).attr( 'value' )
         if ( $this[ property ] != value ) {
             container.find( 'a' ).removeClass( 'active' )
             $this[ property ] = value
             $this.html.find( '.' + property + '-label' ).html( value )
             $( this ).addClass( 'active' )
-
+            
             $this.onChange( $this )
         }
     } )
@@ -115,7 +115,7 @@ DatePicker.prototype.show = function () {
     }
 }
 
-DatePicker.prototype.getYear  = function () {
+DatePicker.prototype.getYear = function () {
     return this.year
 }
 
@@ -123,8 +123,18 @@ DatePicker.prototype.getMonth = function () {
     return this.month
 }
 
-DatePicker.prototype.getDay   = function () {
+DatePicker.prototype.getDay = function () {
     return this.day
+}
+
+DatePicker.prototype.value = function () {
+    var val = ''
+    var SEP = '-'
+    if ( this.disableYear !== true ) {
+        val = this.year + SEP
+    }
+    val = val + this.month + SEP + this.day
+    return val
 }
 
 var newInstance = function ( parentContainer, disableYear ) {

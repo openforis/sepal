@@ -46,10 +46,10 @@ var show = function () {
 var collapseMenu = function ( button ) {
     if ( button.hasClass( 'expanded' ) ) {
 
-        Animation.removeAnimation( btnSearch )
-        Animation.removeAnimation( btnBrowse )
-        Animation.removeAnimation( btnProcess )
-        Animation.removeAnimation( btnTerminal )
+        // Animation.removeAnimation( btnSearch )
+        // Animation.removeAnimation( btnBrowse )
+        // Animation.removeAnimation( btnProcess )
+        // Animation.removeAnimation( btnTerminal )
 
         Animation.animateOut( button )
 
