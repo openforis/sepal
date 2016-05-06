@@ -63,13 +63,13 @@
 /*}*/
 
 #nav-menu a.expanded {
-    opacity: 1;
+    /*opacity: 1;*/
     animation-delay: 100ms;
     border-radius: 50%;
     position: fixed;
     height: 15rem;
     width: 15rem;
-    display: block;
+    /*display: block;*/
     float: left;
     text-align: center;
     padding-top: 8rem;
@@ -129,17 +129,13 @@
 /*logo */
 #sepal-logo {
     position: fixed;
-    /*top: 10%;*/
-    top: 5%;
+    top: 7%;
     left: -20%;
     width: 20%;
     text-align: center;
-    /*background-color: rgba(232, 237, 240, 0.05);*/
-    padding: 0.5rem 1.5rem;
-    /*border-radius: 3rem;*/
-    opacity: 0;
-    /*background: url("./logo-bg.png");*/
+    padding: 1.5rem 1.5rem 0.5rem 1.5rem;
 }
+
 #sepal-logo h2 {
     font-size: 17px;
     font-weight: 300;

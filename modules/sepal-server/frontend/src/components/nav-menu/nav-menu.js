@@ -26,7 +26,7 @@ var show = function () {
     }
 
     // init style
-    btnSearch.addClass( 'expanded' ).css( 'opacity', '0' ).click( showSection )
+    btnSearch.addClass( 'expanded' ).click( showSection )
     btnBrowse.addClass( 'expanded' ).css( 'opacity', '0' ).click( showSection )
     btnProcess.addClass( 'expanded' ).css( 'opacity', '0' ).click( showSection )
     btnTerminal.addClass( 'expanded' ).css( 'opacity', '0' ).click( showSection )

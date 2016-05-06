@@ -10,13 +10,10 @@ Events = {
         REQUEST: 'ajax'
     }
     
-    , USER: {
-        LOGGED: 'user.logged'
-    }
-    
     , APP: {
         LOAD     : 'app.load'
         , DESTROY: 'app.destroy'
+        , USER_LOGGED_IN :'app.user-logged-in'
     }
     
     , LOGIN: {
@@ -42,7 +39,8 @@ Events = {
         , TERMINAL: {}
         
         , SCENE_IMAGES_SELECTION: {
-            UPDATE    : 'section.scenes-selection.update'
+            RESET     : 'section.scenes-selection.reset'
+            , UPDATE  : 'section.scenes-selection.update'
             , SELECT  : 'section.scenes-selection.select'
             , DESELECT: 'section.scenes-selection.deselect'
         }
@@ -53,6 +51,13 @@ Events = {
         , LOAD_SCENE_AREAS: 'map.load-scene-areas'
         , SCENE_AREA_CLICK: 'map.scene-area-click'
         , ADD_LAYER       : 'map.add-layer'
+    }
+
+    // events that occur when a model changes
+    , MODEL: {
+        SCENE_AREA: {
+            CHANGE: 'model.scene-area-change'
+        }
     }
     
 }

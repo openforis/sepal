@@ -48,12 +48,15 @@ var init = function () {
 var reset = function () {
     imagesSelectionSection.empty()
     selectedSectionTableContent.empty()
+    selectedSectionTableHeader.hide()
+
+    imagesSelectionSection.velocity( 'scroll', { duration: 0 } )
 }
 
 // Functions for selection section
-var addToSelection = function ( sceneImage ) {
+var add = function ( sceneImage ) {
     var imgSection = getImageSectionForSelection( sceneImage )
-    imgSection.addClass( sceneImage.sceneId )
+    
     imagesSelectionSection.append( imgSection )
     imgSection.show()
 }
@@ -66,11 +69,24 @@ var hideFromSelection = function ( sceneImage ) {
     setTimeout( function ( e ) {
         Animation.removeAnimation( imgSection )
         imgSection.hide()
-    }, 500 )
+    }, 600 )
+}
+
+var showInSelection = function ( sceneImage ) {
+    var imgSection = imagesSelectionSection.find( '.' + sceneImage.sceneId )
+    
+    imgSection.velocity( 'scroll', {
+        container : imagesSelectionSection
+        , duration: 600
+        , delay   : 100
+    } )
+    
+    Animation.animateIn( imgSection )
 }
 
 var getImageSectionForSelection = function ( sceneImage ) {
     var imgSection = imageSelectionSection.clone()
+    imgSection.addClass( sceneImage.sceneId )
     
     var img = imgSection.find( 'img' )
     img.attr( 'src', sceneImage.browseUrl )
@@ -99,7 +115,7 @@ var getImageSectionForSelection = function ( sceneImage ) {
             duration: 500
         } )
     } )
-
+    
     //TODO : add daysFromTargetDay
     imgSection.find( '.cloud-cover' ).append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + sceneImage.cloudCover )
     imgSection.find( '.sensor' ).append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + sceneImage.sensor )
@@ -113,27 +129,66 @@ var getImageSectionForSelection = function ( sceneImage ) {
 
 var addToSelectedSection = function ( sceneImage ) {
     var imgSection = selectedSectionTableRow.clone()
+    imgSection.addClass( sceneImage.sceneId )
     
     var img = imgSection.find( 'img' )
     img.attr( 'src', sceneImage.browseUrl )
     
     imgSection.find( '.cloud-cover' ).append( sceneImage.cloudCover )
     imgSection.find( '.sensor' ).append( sceneImage.sensor )
+    imgSection.find( '.btn-remove' ).click( function ( e ) {
+        e.preventDefault()
+        EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.DESELECT, null, sceneImage )
+    } )
     
     selectedSectionTableContent.append( imgSection )
     
     Animation.animateIn( imgSection )
+    
     imgSection.velocity( 'scroll', {
         container : selectedSectionTableContent
         , duration: 600
         , delay   : 100
     } )
+
+    updateSelectedSectionHeader()
+}
+
+var removeFromSelectedSection = function ( sceneImage ) {
+    var imgSection = selectedSectionTableContent.find( '.' + sceneImage.sceneId )
+    
+    setTimeout( function () {
+        imgSection.hide()
+    }, 600 )
+    
+    Animation.animateOut( imgSection, function () {
+        imgSection.remove()
+        updateSelectedSectionHeader()
+    } )
+
+}
+
+var updateSelectedSectionHeader = function (  ) {
+    if( selectedSectionTableContent.children().length > 0 ){
+        selectedSectionTableHeader.show()
+    } else {
+        selectedSectionTableHeader.hide()
+    }
+}
+
+var select   = function ( sceneImage ) {
+    hideFromSelection( sceneImage )
+    addToSelectedSection( sceneImage )
+}
+var deselect = function ( sceneImage ) {
+    removeFromSelectedSection( sceneImage )
+    showInSelection( sceneImage )
 }
 
 module.exports = {
-    init                  : init
-    , reset               : reset
-    , addToSelection      : addToSelection
-    , hideFromSelection   : hideFromSelection
-    , addToSelectedSection: addToSelectedSection
+    init      : init
+    , reset   : reset
+    , add     : add
+    , select  : select
+    , deselect: deselect
 }

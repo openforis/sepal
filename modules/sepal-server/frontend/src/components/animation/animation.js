@@ -1,6 +1,7 @@
 /**
  * @author Mino Togna
  */
+var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend'
 
 var animateIn = function ( element, callback ) {
     // element.find( '[data-animation-in]' ).css( 'opacity', '0' )
@@ -27,7 +28,17 @@ var animateIn = function ( element, callback ) {
 
         $this.removeClass( animationOut ).css( 'animation-delay', animationInDelay + 'ms' ).addClass( 'animated' ).addClass( animationIn )
     } )
-    element.addClass( 'is-active' )
+    // element.addClass( 'is-active' )
+
+
+    element.find( '[data-animation-in]' ).andSelf().one( animationEnd, function () {
+        var $this = $( this )
+        $this.show()
+
+        // if ( callback ) {
+        //     callback()
+        // }
+    } )
 
     setTimeout( function () {
         // element.find( '[data-animation-in]' ).andSelf().show()
@@ -40,6 +51,8 @@ var animateIn = function ( element, callback ) {
 }
 
 var animateOut = function ( element, callback ) {
+    // element.find( '[data-animation-out]' ).andSelf().hide()
+    // var functx = callback
     element.find( '[data-animation-out]' ).andSelf().each( function () {
         var $this             = $( this )
         var animationIn       = 'fadeIn'
@@ -67,11 +80,20 @@ var animateOut = function ( element, callback ) {
         }
     } )
 
+    element.find( '[data-animation-out]' ).andSelf().one( animationEnd, function () {
+        var $this = $( this )
+        $this.hide()
+
+        // if ( functx ) {
+        //     functx()
+        // }
+        // $this.css( 'opacity', '1' )
+    } )
 
     setTimeout( function () {
-        element.find( '[data-animation-out]' ).andSelf().hide()
+        // element.find( '[data-animation-out]' ).andSelf().hide()
         // element.find( '[data-animation-out]' ).andSelf().css( 'opacity', '0' )
-        element.removeClass( 'is-active' )
+        // element.removeClass( 'is-active' )
         if ( callback ) {
             callback()
         }
@@ -100,7 +122,7 @@ var removeAnimation = function ( element ) {
 }
 
 module.exports = {
-    animateIn: animateIn
-    , animateOut: animateOut
+    animateIn        : animateIn
+    , animateOut     : animateOut
     , removeAnimation: removeAnimation
 }

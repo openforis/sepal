@@ -8,6 +8,8 @@ var EventBus         = require( '../event/event-bus' )
 var Events           = require( '../event/events' )
 var GoogleMapsLoader = require( 'google-maps' )
 
+var SceneAreaModel = require( '../search/scene-images-selection-m' )
+
 var Sepal = require( '../main/sepal' )
 
 // map layer
@@ -16,16 +18,16 @@ var sceneAreasLayer = null
 var sceneAreasDiv   = null
 
 var loadSceneAreas = function ( e, scenes ) {
-
+    
     if ( sceneAreasLayer ) {
         sceneAreasLayer.setMap( null )
     }
-
+    
     GoogleMapsLoader.load( function ( google ) {
-
+        
         var array = new Array()
         $.each( scenes, function ( i, scene ) {
-
+            
             // RECTANGLE EXAMPLE
             // var rectangle = new google.maps.Rectangle( {
             //     strokeColor  : '#FF0000',
@@ -41,7 +43,7 @@ var loadSceneAreas = function ( e, scenes ) {
             //         west : Number( scene.lowerLeftCoordinate[ 1 ] )
             //     }
             // } )
-
+            
             var bounds       = new google.maps.LatLngBounds()
             var polygonPaths = new Array()
             var polygon      = scene.polygon
@@ -49,17 +51,17 @@ var loadSceneAreas = function ( e, scenes ) {
                 var latLong  = polygon[ j ]
                 var gLatLong = new google.maps.LatLng( Number( latLong[ 0 ] ), Number( latLong[ 1 ] ) )
                 bounds.extend( gLatLong )
-
+                
                 polygonPaths.push( gLatLong )
             }
-
+            
             var gPolygon = new google.maps.Polygon( {
-                paths: polygonPaths,
-                strokeColor: '#EBEBCD',
+                paths        : polygonPaths,
+                strokeColor  : '#EBEBCD',
                 strokeOpacity: 0.4,
-                strokeWeight: 2,
-                fillColor: '#E1E1E6',
-                fillOpacity: 0.1
+                strokeWeight : 2,
+                fillColor    : '#E1E1E6',
+                fillOpacity  : 0.1
             } )
             // var bounds        = new google.maps.LatLngBounds()
             // var polygonCoords = [
@@ -72,28 +74,28 @@ var loadSceneAreas = function ( e, scenes ) {
             // for ( var j = 0; j < polygonCoords.length; j++ ) {
             //     bounds.extend( polygonCoords[ j ] )
             // }
-
+            
             var item     = {}
             item.center  = bounds.getCenter()
             item.scene   = scene
             item.polygon = gPolygon
             array.push( item )
         } )
-
+        
         sceneAreasLayer = new google.maps.OverlayView()
-
+        
         // Add the container when the overlay is added to the map.
         sceneAreasLayer.onAdd = function () {
             sceneAreasDiv = d3
                 .select( this.getPanes().overlayMouseTarget )
                 .append( "div" )
                 .attr( "class", "scene-areas-section" )
-
+            
             // Draw each marker as a separate SVG element.
             sceneAreasLayer.draw = function () {
                 var projection = this.getProjection(),
                     padding    = 15 * 2
-
+                
                 var markers = sceneAreasDiv.selectAll( "svg" )
                     .data( d3.entries( array ) )
                     .each( transform ) // update existing markers
@@ -102,11 +104,11 @@ var loadSceneAreas = function ( e, scenes ) {
                     .attr( "class", function ( d ) {
                         var sceneArea = d.value.scene
                         // EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneArea.sceneAreaId )
-                        var cls       = "scene-area-marker " + sceneArea.sceneAreaId
+                        var cls       = "scene-area-marker _" + sceneArea.sceneAreaId
                         return cls
                     } )
-
-
+                
+                
                 // Add a label.
                 markers.append( "text" )
                     .attr( "x", padding - 3 )
@@ -116,54 +118,54 @@ var loadSceneAreas = function ( e, scenes ) {
                     .text( function ( d ) {
                         return '0'
                     } )
-
+                
                 // Add a circle.
                 var circle = markers.append( "circle" )
                     .attr( "r", '25px' )
                     .attr( "cx", padding )
                     .attr( "cy", padding )
-
+                    
                     .on( 'click', function ( d ) {
                         if ( Sepal.isSectionClosed() ) {
-
+                            
                             var polygon = d.value.polygon
                             polygon.setMap( null )
-
+                            
                             var sceneArea = d.value.scene
                             EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneArea.sceneAreaId )
-
+                            
                         }
                     } )
-
+                    
                     .on( 'mouseover', function ( d ) {
-
+                        
                         if ( Sepal.isSectionClosed() ) {
-
+                            
                             d3.select( this )
                                 .transition()
                                 .duration( 200 )
                                 .style( "fill-opacity", '.5' )
-
+                            
                             var polygon = d.value.polygon
                             EventBus.dispatch( Events.MAP.ADD_LAYER, null, polygon )
                         }
-
+                        
                     } )
-
+                    
                     .on( 'mouseout', function ( d ) {
-
+                        
                         if ( Sepal.isSectionClosed() ) {
                             d3.select( this )
                                 .transition()
                                 .duration( 200 )
                                 .style( "fill-opacity", '.1' )
-
+                            
                             var polygon = d.value.polygon
                             polygon.setMap( null )
                         }
-
+                        
                     } )
-
+                
                 function transform( d ) {
                     var item = d.value;
                     d        = new google.maps.LatLng( item.center.lat(), item.center.lng() );
@@ -174,17 +176,17 @@ var loadSceneAreas = function ( e, scenes ) {
                 }
             }
         }
-
+        
         sceneAreasLayer.onRemove = function () {
             if ( sceneAreasDiv ) {
                 sceneAreasDiv.remove()
                 sceneAreasDiv = null
             }
         }
-
+        
         EventBus.dispatch( Events.MAP.ADD_LAYER, null, sceneAreasLayer )
     } )
-
+    
 }
 
 var showApplicationSection = function ( e ) {
@@ -195,7 +197,7 @@ var showApplicationSection = function ( e ) {
             .duration( 500 )
             .style( 'stroke-opacity', '.02' )
             .style( 'fill-opacity', '.01' )
-
+        
         sceneAreasDiv
             .selectAll( "text" )
             .transition()
@@ -213,7 +215,7 @@ var reduceApplicationSection = function ( e ) {
             .duration( 800 )
             .style( 'stroke-opacity', '.4' )
             .style( 'fill-opacity', '.1' )
-
+        
         sceneAreasDiv
             .selectAll( "text" )
             .transition()
@@ -223,6 +225,37 @@ var reduceApplicationSection = function ( e ) {
     }
 }
 
+var sceneAreaChange = function ( e, sceneAreaId ) {
+    // sceneAreasDiv.selectAll("."+sceneAreaId)
+    var images = SceneAreaModel.getSceneAreaSelectedImages( sceneAreaId )
+    var length = Object.keys( images ).length
+    // console.log( images )
+
+    sceneAreasDiv
+        .select( "._" + sceneAreaId +" text")
+        // .selectAll( "text" )
+        .transition()
+        .delay( 400 )
+        .duration( 800 )
+        .text( function ( d ) {
+            return length
+        } )
+
+    var bgColor = '#818181'
+    if( length > 0 ){
+        bgColor = '#9CEBB5'
+    }
+        sceneAreasDiv
+            .select( "._" + sceneAreaId +" circle")
+            .transition()
+            .delay( 400 )
+            .duration( 800 )
+            .style( 'fill', bgColor )
+            .style( 'stroke', bgColor )
+}
+
 EventBus.addEventListener( Events.MAP.LOAD_SCENE_AREAS, loadSceneAreas )
 EventBus.addEventListener( Events.SECTION.SHOW, showApplicationSection )
 EventBus.addEventListener( Events.SECTION.REDUCE, reduceApplicationSection )
+
+EventBus.addEventListener( Events.MODEL.SCENE_AREA.CHANGE, sceneAreaChange )

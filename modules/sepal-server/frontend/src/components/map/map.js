@@ -83,11 +83,13 @@ var zoomTo = function ( e, address ) {
                     },
                     styles: [ {
                         polygonOptions: {
-                            fillColor: "#FBFAF2",
+                            fillColor: "#fff7b5",
+                            // fillColor: "#FBFAF2",
                             fillOpacity: 0.02,
-                            strokeOpacity: 0.25,
+                            strokeOpacity: 0.05,
                             strokeWeight: 1,
-                            strokeColor: '#FBFAF2'
+                            strokeColor: '#fff7b5'
+                            // strokeColor: '#FBFAF2'
                         }
                     } ]
                 }

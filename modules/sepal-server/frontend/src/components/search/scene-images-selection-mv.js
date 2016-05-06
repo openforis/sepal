@@ -12,36 +12,44 @@ var SearchForm = require( './search-form' )
 
 var show = function ( e, type ) {
     if ( type == 'scene-images-selection' ) {
-        
-        // var appSection = $( '#app-section' ).find( '.scene-images-selection' )
-        // if ( appSection.children().length <= 0 ) {
         View.init()
-        // }
-        
     }
 }
 
-var update = function ( e, sceneImages ) {
-    Model.setAvailableImages( sceneImages )
+var reset = function ( e ) {
+    Model.reset()
+}
+
+var update = function ( e, sceneAreaId, sceneImages ) {
+    Model.setSceneArea( sceneAreaId, sceneImages )
     View.reset()
     
-    $.each( Model.getAvailableImages(), function ( id, sceneImage ) {
-        View.addToSelection( sceneImage )
+    $.each( Model.getSceneAreaImages(), function ( id, sceneImage ) {
+        View.add( sceneImage )
     } )
     
+    $.each( Model.getSceneAreaSelectedImages( Model.getSceneAreaId() ), function ( id, sceneImage ) {
+        View.select( sceneImage )
+    } )
+
 }
 
 var selectImage = function ( e, sceneImage ) {
-    View.hideFromSelection( sceneImage )
     Model.select( sceneImage )
-    View.addToSelectedSection( sceneImage )
+    View.select( sceneImage )
+
+    EventBus.dispatch( Events.MODEL.SCENE_AREA.CHANGE, null, Model.getSceneAreaId() )
+}
+
+var deselectImage = function ( e, sceneImage ) {
+    Model.deselect( sceneImage )
+    View.deselect( sceneImage )
+
+    EventBus.dispatch( Events.MODEL.SCENE_AREA.CHANGE, null, Model.getSceneAreaId() )
 }
 
 var loadSceneImages = function ( e, sceneAreaId ) {
-    Model.sceneAreaId = sceneAreaId
-    console.log( Model )
-
-    // get('/data/sceneareas/{sceneAreaId}') 
+    // get('/data/sceneareas/{sceneAreaId}')
     
     // params.targetDay //MM-dd
     // params.startDate //YYYY-MM-dd
@@ -62,7 +70,7 @@ var loadSceneImages = function ( e, sceneAreaId ) {
         , success   : function ( response ) {
             
             EventBus.dispatch( Events.SECTION.SHOW, null, 'scene-images-selection' )
-            EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.UPDATE, null, response )
+            EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.UPDATE, null, sceneAreaId, response )
             
             Loader.hide( { delay: 500 } )
         }
@@ -74,6 +82,8 @@ var loadSceneImages = function ( e, sceneAreaId ) {
 EventBus.addEventListener( Events.MAP.SCENE_AREA_CLICK, loadSceneImages )
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
+EventBus.addEventListener( Events.SECTION.SCENE_IMAGES_SELECTION.RESET, reset )
 EventBus.addEventListener( Events.SECTION.SCENE_IMAGES_SELECTION.UPDATE, update )
 EventBus.addEventListener( Events.SECTION.SCENE_IMAGES_SELECTION.SELECT, selectImage )
+EventBus.addEventListener( Events.SECTION.SCENE_IMAGES_SELECTION.DESELECT, deselectImage )
 

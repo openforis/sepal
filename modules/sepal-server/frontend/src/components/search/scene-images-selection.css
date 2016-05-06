@@ -180,14 +180,12 @@ Selected scene images section
     border: 1px solid rgba(255, 255, 255, 0.10);
     background-color: rgba(255, 255, 255, 0.05);
 }
-#scene-images-selection .selected-section .table-row > div:not(.image) {
-    padding-top: 10px;
-}
-#scene-images-selection .selected-section .table-row > div:not(.button) {
+
+#scene-images-selection .selected-section .table-row > div {
     font-size: .8rem;
 }
 
 #scene-images-selection .selected-section .table-row img {
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 55px;
 }

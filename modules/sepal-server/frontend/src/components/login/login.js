@@ -64,7 +64,7 @@ var showLogin = function () {
                         // html.fadeOut( function () {
                         //     html.remove()
                         // } )
-                        EventBus.dispatch( Events.USER.LOGGED, this, user )
+                        EventBus.dispatch( Events.APP.USER_LOGGED_IN, this, user )
 
                         break;
                 }

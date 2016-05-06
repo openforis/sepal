@@ -30,7 +30,7 @@ var Loader = require( '../loader/loader' )
 var Sepal = require( './sepal' )
 
 // functions
-var userLogged = function ( e, user ) {
+var userLoggedIn = function ( e, user ) {
     Sepal.User = user
 
     Loader.show()
@@ -53,4 +53,4 @@ var loadApp = function () {
 }
 
 // event handlers
-EventBus.addEventListener( Events.USER.LOGGED, userLogged )
+EventBus.addEventListener( Events.APP.USER_LOGGED_IN, userLoggedIn )
