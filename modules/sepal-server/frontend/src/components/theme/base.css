@@ -486,7 +486,9 @@ img {
 .width100 {
     width: 100% !important;
 }
-
+.height5 {
+    height: 5% !important;
+}
 .height10 {
     height: 10% !important;
 }

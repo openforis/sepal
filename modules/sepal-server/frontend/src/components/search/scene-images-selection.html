@@ -30,32 +30,41 @@
     </div>
 
     <div class="col-sm-6 height100 selected-section">
-        <!--<div class="row">-->
-            <!--<div class="col-sm-12 text-align-center"><h4>Selected Images</h4></div>-->
-        <!--</div>-->
+        <div class="row section-header height5">
+            <div class="col-sm-12 text-align-center"><h4>Selected Images</h4></div>
+        </div>
 
-        <!--<div class="row table-header">-->
-            <!--<div class="col-sm-4"></div>-->
-            <!--<div class="col-sm-4 cloud-cover text-align-center"><i class="fa fa-cloud" aria-hidden="true"></i></div>-->
-            <!--<div class="col-sm-4 sensor text-align-center"><i class="fa fa-rocket" aria-hidden="true"></i></div>-->
-        <!--</div>-->
+        <div class="row table-header height5">
+            <div class="col-sm-4"></div>
+            <div class="col-sm-3 cloud-cover text-align-center"><i class="fa fa-cloud" aria-hidden="true"></i></div>
+            <div class="col-sm-3 sensor text-align-center"><i class="fa fa-rocket" aria-hidden="true"></i></div>
+            <div class="col-sm-2 remove"></div>
+        </div>
 
-        <!--<div class="row table-content">-->
-            <!--<div class="col-sm-12">-->
+        <div class="row height90">
+            <div class="col-sm-12 table-content">
+            </div>
+        </div>
 
-                <!--<div class="row">-->
-                    <!--<div class="col-sm-4"></div>-->
-                    <!--<div class="col-sm-4 cloud-cover text-align-center"><i class="fa fa-cloud" aria-hidden="true"></i></div>-->
-                    <!--<div class="col-sm-4 sensor text-align-center"><i class="fa fa-rocket" aria-hidden="true"></i></div>-->
-                <!--</div>-->
-
-            <!--</div>-->
-        <!--</div>-->
+        <div class="row table-row m-b-10" style="display: none"
+             data-animation-in="bounceInLeft"
+             data-animation-out="bounceOutLeft"
+             data-animation-in-delay="100"
+             data-animation-out-delay="50">
+            <div class="col-sm-4 image text-align-center"><img/></div>
+            <div class="col-sm-3 cloud-cover text-align-center"></div>
+            <div class="col-sm-3 sensor text-align-center"></div>
+            <div class="col-sm-2 button text-align-center">
+                <a class="btn btn-base circle btn-remove"><i class="fa fa-minus-circle" aria-hidden="true"></i></a>
+            </div>
+        </div>
 
     </div>
 
     <div class="image-section" style="display: none"
+         data-animation-in="bounceInRight"
          data-animation-out="bounceOutRight"
+         data-animation-in-delay="50"
          data-animation-out-delay="50"
     >
         <div class="image-section-container">

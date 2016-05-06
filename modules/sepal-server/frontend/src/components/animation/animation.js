@@ -3,7 +3,9 @@
  */
 
 var animateIn = function ( element, callback ) {
-    element.find( '[data-animation-in]' ).css( 'opacity', '0' )
+    // element.find( '[data-animation-in]' ).css( 'opacity', '0' )
+    element.find( '[data-animation-in]' ).andSelf().show()
+    element.find( '[data-animation-in]' ).andSelf().css( 'opacity', '1' )
 
     element.find( '[data-animation-in]' ).andSelf().each( function () {
         var $this            = $( this )
@@ -28,12 +30,13 @@ var animateIn = function ( element, callback ) {
     element.addClass( 'is-active' )
 
     setTimeout( function () {
-        element.find( '[data-animation-in]' ).andSelf().css( 'opacity', '1' )
+        // element.find( '[data-animation-in]' ).andSelf().show()
+        // element.find( '[data-animation-in]' ).andSelf().css( 'opacity', '1' )
 
         if ( callback ) {
             callback()
         }
-    }, 1250 )
+    }, 1150 )
 }
 
 var animateOut = function ( element, callback ) {
@@ -66,12 +69,13 @@ var animateOut = function ( element, callback ) {
 
 
     setTimeout( function () {
-        element.find( '[data-animation-out]' ).andSelf().css( 'opacity', '0' )
+        element.find( '[data-animation-out]' ).andSelf().hide()
+        // element.find( '[data-animation-out]' ).andSelf().css( 'opacity', '0' )
         element.removeClass( 'is-active' )
         if ( callback ) {
             callback()
         }
-    }, 1250 )
+    }, 1150 )
 
 }
 

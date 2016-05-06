@@ -4,7 +4,7 @@
 
 require( './app-section.css' )
 
-require( '../search/search' )
+require( '../search/search-mv' )
 
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )

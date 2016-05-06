@@ -70,7 +70,8 @@
     /* background-color: rgba(16, 16, 16, 0.15); */
     display: none;
     cursor: pointer;
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 #scene-images-selection .image-section .img-hover i {
@@ -93,26 +94,29 @@
     padding-left: 10px;
 }
 
-#scene-images-selection .image-section .image-attributes .btn-add {
+#scene-images-selection .btn.circle {
     position: relative;
     width: 30px;
     height: 30px;
     padding: 0px;
-    top: -34px;
-    right: -40px;
-    /* border: 1px solid rgba(255, 255, 255, 0.1); */
     border: none;
-    /* background-color: rgb(24, 24, 25); */
-    /* color: black; */
     text-align: center;
     padding-top: 7px;
 }
 
-#scene-images-selection .image-section .image-attributes .btn-add i {
+#scene-images-selection  .btn.circle i {
     position: relative;
-    /*top: .21rem;*/
     font-size: 1.1rem;
 }
+
+#scene-images-selection .image-section .image-attributes .btn-add {
+    top: -34px;
+    right: -40px;
+    /* border: 1px solid rgba(255, 255, 255, 0.1); */
+    /* background-color: rgb(24, 24, 25); */
+    /* color: black; */
+}
+
 
 #scene-images-selection .image-section.expanded {
     width: 100% !important;
@@ -148,4 +152,42 @@
 
 #scene-images-selection .expanded-image-section .image img {
     max-width: 60%;
+}
+
+/*
+========
+Selected scene images section
+========
+*/
+#scene-images-selection .selected-section {
+
+}
+
+#scene-images-selection .selected-section .table-header {
+    padding: 0 2rem;
+}
+
+#scene-images-selection .selected-section .table-content {
+    padding: .5rem 2rem;
+    overflow: auto;
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#scene-images-selection .selected-section .table-row {
+    /*margin-bottom: 10px;*/
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+#scene-images-selection .selected-section .table-row > div:not(.image) {
+    padding-top: 10px;
+}
+#scene-images-selection .selected-section .table-row > div:not(.button) {
+    font-size: .8rem;
+}
+
+#scene-images-selection .selected-section .table-row img {
+    width: 60px;
+    height: 60px;
 }
