@@ -254,6 +254,24 @@ CREATE TABLE user_monthly_storage (
 
 CREATE INDEX idx_user_monthly_storage_1 ON user_monthly_storage (username, year, month);
 
+CREATE TABLE scene_meta_data (
+  id               VARCHAR(255) NOT NULL,
+  meta_data_source VARCHAR(255) NOT NULL,
+  sensor_id        VARCHAR(255) NOT NULL,
+  scene_area_id    VARCHAR(255) NOT NULL,
+  acquisition_date DATETIME     NOT NULL,
+  cloud_cover      DOUBLE       NOT NULL,
+  sun_azimuth      DOUBLE       NOT NULL,
+  sun_elevation    DOUBLE       NOT NULL,
+  browse_url       VARCHAR(255) NOT NULL,
+  update_time      TIMESTAMP    NOT NULL,
+  PRIMARY KEY (id, meta_data_source)
+);
+
+CREATE INDEX idx_scene_meta_data_1 ON scene_meta_data (meta_data_source, scene_area_id, acquisition_date);
+CREATE INDEX idx_scene_meta_data_2 ON scene_meta_data (meta_data_source, update_time);
+
+
 INSERT INTO config_details VALUES ('cron_delay_days', '50');
 
 INSERT INTO data_set (dataset_name, dataset_value, dataset_active) VALUES ('Landsat 8 OLI/TIRS', 'LANDSAT_8', 1);

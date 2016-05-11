@@ -1,21 +1,21 @@
 package org.openforis.sepal.util
 
+import groovy.time.TimeCategory
+
 import java.text.SimpleDateFormat
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoField
 
 import static java.time.temporal.ChronoField.MONTH_OF_YEAR
-import static java.time.temporal.ChronoField.YEAR
+import static java.util.Calendar.YEAR
 
 class DateTime {
-
-    static SimpleDateFormat DATE_ONLY_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd")
-    static SimpleDateFormat EARTH_EXPLORER_DATE_FORMAT = new SimpleDateFormat("yyyy:DDD:HH:mm:ss")
+    private static final DATE_ONLY_DATE_FORMAT = 'yyyy-MM-dd'
+    private static final EARTH_EXPLORER_DATE_FORMAT = 'yyyy:DDD:HH:mm:ss'
 
     static String todayDateString() { toDateString(new Date()) }
 
-    static String toDateString(Date date) { formatDate(date, DATE_ONLY_DATE_FORMAT) }
+    static String toDateString(Date date) { formatDate(date, new SimpleDateFormat(DATE_ONLY_DATE_FORMAT)) }
 
     static Date addDays(Date date, int days) {
         Calendar calendar = new GregorianCalendar()
@@ -31,13 +31,23 @@ class DateTime {
         return cal.time
     }
 
-    static Date parseDateString(String dateString) { DATE_ONLY_DATE_FORMAT.parse(dateString) }
+    static Date parseDateString(String dateString) {
+        new SimpleDateFormat(DATE_ONLY_DATE_FORMAT).parse(dateString)
+    }
 
-    static Date parseEarthExplorerDateString(String dateString) { EARTH_EXPLORER_DATE_FORMAT.parse(dateString) }
+    static Date parseEarthExplorerDateString(String dateString) {
+        new SimpleDateFormat(EARTH_EXPLORER_DATE_FORMAT).parse(dateString)
+    }
 
     static Date firstOfMonth(Date date) {
         def zone = ZoneId.systemDefault()
         def local = date.toInstant().atZone(zone).withDayOfMonth(1).toLocalDate().atStartOfDay(zone).toInstant()
+        return Date.from(local)
+    }
+
+    static Date startOfDay(Date date) {
+        def zone = ZoneId.systemDefault()
+        def local = date.toInstant().atZone(zone).toLocalDate().atStartOfDay(zone).toInstant()
         return Date.from(local)
     }
 
@@ -50,7 +60,25 @@ class DateTime {
     }
 
     static int year(Date date) {
-        get(date, YEAR)
+        get(date, ChronoField.YEAR)
+    }
+
+    /**
+     * Determines the number of dates between the date and the provided day of year ('MM-dd')
+     * @param date the date
+     * @param dayOfYear the day of the year ('MM-dd')
+     * @return the days between the date and the day of year.
+     */
+    static int daysFromDayOfYear(Date date, String dayOfYear) {
+        [-1, 0, 1].collect {
+            daysBetween(date, parseDateString("${date[YEAR] + it}-$dayOfYear"))
+        }.min()
+    }
+
+    private static daysBetween(Date date1, Date date2) {
+        use(TimeCategory) {
+            return Math.abs((startOfDay(date1) - startOfDay(date2)).days)
+        }
     }
 
     private static int get(Date date, ChronoField field) {

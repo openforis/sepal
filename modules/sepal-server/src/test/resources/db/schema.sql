@@ -22,6 +22,7 @@ DROP TABLE IF EXISTS instances;
 DROP TABLE IF EXISTS sandbox_session;
 DROP TABLE IF EXISTS user_budget;
 DROP TABLE IF EXISTS user_monthly_storage;
+DROP TABLE IF EXISTS scene_meta_data;
 
 CREATE TABLE admin_groups (
   id         INT(10)      NOT NULL,
@@ -138,66 +139,66 @@ CREATE TABLE users_roles (
 CREATE TABLE usgs_data_repo (
   id                        INT(50) NOT NULL AUTO_INCREMENT,
   dataset_id                INT(50) NOT NULL,
-  browseAvailable           VARCHAR(50)      DEFAULT NULL,
-  browseURL                 VARCHAR(256)     DEFAULT NULL,
-  sceneID                   VARCHAR(256)     DEFAULT NULL,
+  browseavailable           VARCHAR(50)      DEFAULT NULL,
+  browseurl                 VARCHAR(256)     DEFAULT NULL,
+  sceneid                   VARCHAR(256)     DEFAULT NULL,
   sensor                    VARCHAR(50)      DEFAULT NULL,
-  acquisitionDate           DATE             DEFAULT NULL,
-  dateUpdated               DATE             DEFAULT NULL,
+  acquisitiondate           DATE             DEFAULT NULL,
+  dateupdated               DATE             DEFAULT NULL,
   path                      INT(11) NOT NULL,
   row                       INT(11) NOT NULL,
   geometry                  GEOMETRY         DEFAULT NULL,
-  upperLeftCornerLatitude   DECIMAL(15, 12)  DEFAULT NULL,
-  upperLeftCornerLongitude  DECIMAL(15, 12)  DEFAULT NULL,
-  upperRightCornerLatitude  DECIMAL(15, 12)  DEFAULT NULL,
-  upperRightCornerLongitude DECIMAL(15, 12)  DEFAULT NULL,
-  lowerLeftCornerLatitude   DECIMAL(15, 12)  DEFAULT NULL,
-  lowerLeftCornerLongitude  DECIMAL(15, 12)  DEFAULT NULL,
-  lowerRightCornerLatitude  DECIMAL(15, 12)  DEFAULT NULL,
-  lowerRightCornerLongitude DECIMAL(15, 12)  DEFAULT NULL,
-  sceneCenterLatitude       DECIMAL(15, 12)  DEFAULT NULL,
-  sceneCenterLongitude      DECIMAL(15, 12)  DEFAULT NULL,
-  cloudCover                INT(11)          DEFAULT NULL,
-  cloudCoverFull            FLOAT            DEFAULT NULL,
-  dayOrNight                VARCHAR(50)      DEFAULT NULL,
-  sunElevation              VARCHAR(256)     DEFAULT NULL,
-  sunAzimuth                VARCHAR(256)     DEFAULT NULL,
-  receivingStation          VARCHAR(256)     DEFAULT NULL,
-  sceneStartTime            DATETIME         DEFAULT NULL,
-  sceneStopTime             DATETIME         DEFAULT NULL,
-  imageQuality1             INT(11)          DEFAULT NULL,
-  DATA_TYPE_L1              VARCHAR(256)     DEFAULT NULL,
-  cartURL                   VARCHAR(256)     DEFAULT NULL,
-  GEOMETRIC_RMSE_MODEL_X    VARCHAR(256)     DEFAULT NULL,
-  GEOMETRIC_RMSE_MODEL_Y    VARCHAR(256)     DEFAULT NULL,
-  FULL_PARTIAL_SCENE        VARCHAR(256)     DEFAULT NULL,
+  upperleftcornerlatitude   DECIMAL(15, 12)  DEFAULT NULL,
+  upperleftcornerlongitude  DECIMAL(15, 12)  DEFAULT NULL,
+  upperrightcornerlatitude  DECIMAL(15, 12)  DEFAULT NULL,
+  upperrightcornerlongitude DECIMAL(15, 12)  DEFAULT NULL,
+  lowerleftcornerlatitude   DECIMAL(15, 12)  DEFAULT NULL,
+  lowerleftcornerlongitude  DECIMAL(15, 12)  DEFAULT NULL,
+  lowerrightcornerlatitude  DECIMAL(15, 12)  DEFAULT NULL,
+  lowerrightcornerlongitude DECIMAL(15, 12)  DEFAULT NULL,
+  scenecenterlatitude       DECIMAL(15, 12)  DEFAULT NULL,
+  scenecenterlongitude      DECIMAL(15, 12)  DEFAULT NULL,
+  cloudcover                INT(11)          DEFAULT NULL,
+  cloudcoverfull            FLOAT            DEFAULT NULL,
+  dayornight                VARCHAR(50)      DEFAULT NULL,
+  sunelevation              VARCHAR(256)     DEFAULT NULL,
+  sunazimuth                VARCHAR(256)     DEFAULT NULL,
+  receivingstation          VARCHAR(256)     DEFAULT NULL,
+  scenestarttime            DATETIME         DEFAULT NULL,
+  scenestoptime             DATETIME         DEFAULT NULL,
+  imagequality1             INT(11)          DEFAULT NULL,
+  data_type_l1              VARCHAR(256)     DEFAULT NULL,
+  carturl                   VARCHAR(256)     DEFAULT NULL,
+  geometric_rmse_model_x    VARCHAR(256)     DEFAULT NULL,
+  geometric_rmse_model_y    VARCHAR(256)     DEFAULT NULL,
+  full_partial_scene        VARCHAR(256)     DEFAULT NULL,
   tiffavailability          VARCHAR(256)     DEFAULT NULL,
   tiffverification          VARCHAR(256)     DEFAULT NULL,
   PRIMARY KEY (id)
 );
 
 CREATE INDEX idx_usgs_data_repo_1 ON usgs_data_repo (dataset_id);
-CREATE INDEX idx_usgs_data_repo_2 ON usgs_data_repo (sceneID);
+CREATE INDEX idx_usgs_data_repo_2 ON usgs_data_repo (sceneid);
 CREATE INDEX idx_usgs_data_repo_3 ON usgs_data_repo (sensor);
 CREATE INDEX idx_usgs_data_repo_4 ON usgs_data_repo (path);
 CREATE INDEX idx_usgs_data_repo_5 ON usgs_data_repo (row);
-CREATE INDEX idx_usgs_data_repo_6 ON usgs_data_repo (cloudCoverFull);
-CREATE INDEX idx_usgs_data_repo_7 ON usgs_data_repo (dataset_id, acquisitionDate);
+CREATE INDEX idx_usgs_data_repo_6 ON usgs_data_repo (cloudcoverfull);
+CREATE INDEX idx_usgs_data_repo_7 ON usgs_data_repo (dataset_id, acquisitiondate);
 
 CREATE TABLE wrs_points (
   id                  INT(11)         NOT NULL AUTO_INCREMENT,
   path                INT(11)         NOT NULL,
   row                 INT(11)         NOT NULL,
-  centreLongitude     DECIMAL(15, 12) NOT NULL,
-  centreLatitude      DECIMAL(15, 12) NOT NULL,
-  upperLeftLongitude  DECIMAL(15, 12) NOT NULL,
-  upperLeftLatitude   DECIMAL(15, 12) NOT NULL,
-  lowerLeftLongitude  DECIMAL(15, 12) NOT NULL,
-  lowerLeftLatitude   DECIMAL(15, 12) NOT NULL,
-  lowerRightLongitude DECIMAL(15, 12) NOT NULL,
-  lowerRightLatitude  DECIMAL(15, 12) NOT NULL,
-  upperRightLongitude DECIMAL(15, 12) NOT NULL,
-  upperRightLatitude  DECIMAL(15, 12) NOT NULL,
+  centrelongitude     DECIMAL(15, 12) NOT NULL,
+  centrelatitude      DECIMAL(15, 12) NOT NULL,
+  upperleftlongitude  DECIMAL(15, 12) NOT NULL,
+  upperleftlatitude   DECIMAL(15, 12) NOT NULL,
+  lowerleftlongitude  DECIMAL(15, 12) NOT NULL,
+  lowerleftlatitude   DECIMAL(15, 12) NOT NULL,
+  lowerrightlongitude DECIMAL(15, 12) NOT NULL,
+  lowerrightlatitude  DECIMAL(15, 12) NOT NULL,
+  upperrightlongitude DECIMAL(15, 12) NOT NULL,
+  upperrightlatitude  DECIMAL(15, 12) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -212,7 +213,8 @@ CREATE TABLE download_requests (
   PRIMARY KEY (request_id)
 );
 
-ALTER TABLE download_requests ADD CONSTRAINT uc_user_req_name UNIQUE (username, request_name);
+ALTER TABLE download_requests
+  ADD CONSTRAINT uc_user_req_name UNIQUE (username, request_name);
 
 
 CREATE TABLE requested_scenes (
@@ -310,3 +312,20 @@ CREATE TABLE user_monthly_storage (
 );
 
 CREATE INDEX idx_user_monthly_storage_1 ON user_monthly_storage (username, year, month);
+
+CREATE TABLE scene_meta_data (
+  id               VARCHAR(255) NOT NULL,
+  meta_data_source VARCHAR(255) NOT NULL,
+  sensor_id        VARCHAR(255) NOT NULL,
+  scene_area_id    VARCHAR(255) NOT NULL,
+  acquisition_date DATETIME     NOT NULL,
+  cloud_cover      DOUBLE       NOT NULL,
+  sun_azimuth      DOUBLE       NOT NULL,
+  sun_elevation    DOUBLE       NOT NULL,
+  browse_url       VARCHAR(255) NOT NULL,
+  update_time      TIMESTAMP    NOT NULL,
+  PRIMARY KEY (id, meta_data_source)
+);
+
+CREATE INDEX idx_scene_meta_data_1 ON scene_meta_data (meta_data_source, scene_area_id, acquisition_date);
+CREATE INDEX idx_scene_meta_data_2 ON scene_meta_data (meta_data_source, update_time);

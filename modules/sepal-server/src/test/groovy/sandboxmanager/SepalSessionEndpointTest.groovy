@@ -1,16 +1,6 @@
 package sandboxmanager
 
-import fake.FakeUserRepository
-import fake.FakeUsernamePasswordVerifier
-import groovy.json.JsonOutput
-import groovymvc.security.BasicRequestAuthenticator
-import groovymvc.security.PathRestrictions
-import groovyx.net.http.HttpResponseDecorator
-import groovyx.net.http.RESTClient
-import org.openforis.sepal.command.Command
-import org.openforis.sepal.command.CommandDispatcher
-import org.openforis.sepal.command.CommandHandler
-import org.openforis.sepal.command.ExecutionFailed
+import groovymvc.Controller
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
 import org.openforis.sepal.component.sandboxmanager.command.CloseSession
@@ -20,43 +10,19 @@ import org.openforis.sepal.component.sandboxmanager.endpoint.SepalSessionEndpoin
 import org.openforis.sepal.component.sandboxmanager.query.FindInstanceTypes
 import org.openforis.sepal.component.sandboxmanager.query.LoadSandboxInfo
 import org.openforis.sepal.component.sandboxmanager.query.SandboxInfo
-import org.openforis.sepal.endpoint.EndpointRegistry
-import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.hostingservice.WorkerInstanceType
-import org.openforis.sepal.query.QueryDispatcher
-import spock.lang.Specification
-import util.Port
+import util.AbstractEndpointTest
 
-import static groovy.json.JsonOutput.prettyPrint
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
-import static org.openforis.sepal.security.Roles.ADMIN
 
 @SuppressWarnings("GroovyAssignabilityCheck")
-class SepalSessionEndpointTest extends Specification {
-    def port = Port.findFree()
-
-    def queryDispatcher = Mock(QueryDispatcher)
-    def commandDispatcher = Mock(CommandDispatcher)
-    def userRepository = new FakeUserRepository()
-    def passwordVerifier = new FakeUsernamePasswordVerifier()
+class SepalSessionEndpointTest extends AbstractEndpointTest {
     def clock = new FakeClock()
 
-    def client = new RESTClient("http://localhost:$port/api/")
-
-    def setup() {
-        EndpointRegistry registry = {
-            new SepalSessionEndpoint(queryDispatcher, commandDispatcher, userRepository, clock)
-                    .registerWith(it)
-        }
-        Endpoints.deploy(port, new PathRestrictions(userRepository, new BasicRequestAuthenticator('Sepal', passwordVerifier)), registry)
-        client.handler.failure = { resp -> return resp }
-        client.auth.basic 'some-user', 'some-password'
-        userRepository.addRole(ADMIN)
-    }
-
-    def cleanup() {
-        Endpoints.undeploy()
+    void registerEndpoint(Controller controller) {
+        new SepalSessionEndpoint(queryDispatcher, commandDispatcher, userRepository, clock)
+                .registerWith(controller)
     }
 
     def 'GET sandbox/{user} submits LoadSandboxInfo command and returns expected JSON'() {
@@ -281,50 +247,12 @@ class SepalSessionEndpointTest extends Specification {
         response.status == 403
     }
 
-    private nonAdmin() {
-        userRepository.noRole()
-    }
-
     SandboxSession startingSession(String username = 'some-user') {
         new SandboxSession(id: 999, status: STARTING, creationTime: new Date(), username: username)
     }
 
     SandboxSession activeSession(String username = 'some-user') {
         new SandboxSession(id: 999, status: ACTIVE, creationTime: new Date(), username: username)
-    }
-
-    def failExecution(Exception e) {
-        throw new ExecutionFailed({} as CommandHandler, {} as Command, e)
-    }
-
-    private HttpResponseDecorator get(Map args) {
-        return client.get(args)
-    }
-
-    private HttpResponseDecorator post(Map args) {
-        return client.post(args)
-    }
-
-    private HttpResponseDecorator delete(Map args) {
-        return client.delete(args)
-    }
-
-    private void sameJson(Map result, Map expectation) {
-        def expectationString = prettyPrint(JsonOutput.toJson(recursiveSort(expectation)))
-        def resultString = prettyPrint(JsonOutput.toJson(recursiveSort(result)))
-        assert resultString == expectationString
-    }
-
-    private <T> T recursiveSort(T t) {
-        if (t instanceof Map)
-            t = t.each {
-                t[it.key] = recursiveSort(it.value)
-            }.sort()
-        else if (t instanceof List)
-            t.eachWithIndex { item, i ->
-                t.set(i, recursiveSort(item))
-            }
-        return t
     }
 
 }
