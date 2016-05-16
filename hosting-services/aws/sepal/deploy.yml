@@ -38,7 +38,7 @@
     - { role: aws-mount-efs }
     - { role: run-container, image: ldap }
     - { role: run-container, image: mysql }
-#    - { role: run-container, image: google-earth-engine}
+    - { role: run-container, image: google-earth-engine}
     - { role: run-container, image: sepal-server }
     - { role: run-container, image: ssh-gateway }
     - { role: run-container, image: gateone }

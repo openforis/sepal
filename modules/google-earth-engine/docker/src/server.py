@@ -7,6 +7,7 @@ import ee
 from dateutil.parser import parse
 from ee.oauthinfo import OAuthInfo
 from flask import Flask
+from flask import Response
 from flask import render_template
 from flask import request
 from oauth2client.service_account import ServiceAccountCredentials
@@ -60,12 +61,12 @@ def createMap():
 
 @app.route('/sceneareas')
 def sceneareas():
-    countryIso = request.args.get('countryIso')
+    countryIso = request.args.get('aoiId')
     countries = ee.FeatureCollection('ft:16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ')
     aoi = countries \
         .filterMetadata('sov_a3', 'equals', countryIso)
 
-    wrs = ee.FeatureCollection('ft:1_RZgjlcqixp-L9hyS6NYGqLaKOlnhSC35AB5M5Ll')  # WRS-2 polygons
+    wrs = ee.FeatureCollection('ft:1EJjaOloQD5NL7ReC5aVtn8cX05xbdEbZthUiCFB6')  # WRS-2 polygons
     spatialFilter = ee.Filter.intersects(
         leftField='.geo',
         rightField='.geo',
@@ -73,16 +74,19 @@ def sceneareas():
     )
     saveAllJoin = ee.Join.saveAll(matchesKey='scenes')
     intersectJoined = saveAllJoin.apply(aoi, wrs, spatialFilter)
-    intersected = ee.FeatureCollection(ee.List(intersectJoined.first().get('scenes')))
+    # intersected = ee.FeatureCollection(ee.List(intersectJoined.first().get('scenes')))
+    intersected = intersectJoined.aggregate_array('scenes').getInfo()
     sceneAreas = []
-    for sceneArea in intersected.getInfo()['features']:
-        polygon = map(lambda lnglat: list(reversed(lnglat)), sceneArea['geometry']['coordinates'][0])
-        sceneAreas.append({
-            'sceneAreaId': str(int(sceneArea['properties']['PATH'])) + '_' + str(int(sceneArea['properties']['ROW'])),
-            'polygon': polygon,
-        })
+    for featureScenes in intersected:
+        for sceneArea in featureScenes:
+            polygon = map(lambda lnglat: list(reversed(lnglat)), sceneArea['geometry']['coordinates'][0])
+            sceneAreas.append({
+                'sceneAreaId': sceneArea['properties']['name'],
+                'polygon': polygon,
+            })
 
-    return json.dumps(sceneAreas)
+    # TODO: Remove duplicates - multiple features can have the same scene-area (e.g. China)
+    return Response(json.dumps(sceneAreas), mimetype='application/json')
 
 
 @app.route('/sceneareas/<sceneAreaId>')
@@ -142,10 +146,10 @@ def _toBrowseUrl(targetDay, date):
 
 
 if __name__ == '__main__':
-    # credentials = ServiceAccountCredentials.from_json_keyfile_name(sys.argv[1], OAuthInfo.SCOPE)
+    # credentials = ee.ServiceAccountCredentials(sys.argv[1], sys.argv[2])
     credentials = ServiceAccountCredentials.from_p12_keyfile(sys.argv[1], sys.argv[2], 'notasecret', OAuthInfo.SCOPE)
     ee.Initialize(credentials)
     if len(sys.argv) > 3 and sys.argv[3] == 'debug':
         app.run(debug=True)
     else:
-        app.run()
+        app.run(host= '0.0.0.0')

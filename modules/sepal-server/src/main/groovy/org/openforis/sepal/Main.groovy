@@ -7,6 +7,7 @@ import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
 import org.openforis.sepal.endpoint.Endpoints
+import org.openforis.sepal.security.AuthenticationEndpoint
 import org.openforis.sepal.security.LdapUsernamePasswordVerifier
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JdbcUserRepository
@@ -29,17 +30,18 @@ class Main {
             dataSearchComponent = new DataSearchComponent(config).start()
             sandboxManagerComponent = new SandboxManagerComponent(config).start()
             sandboxWebProxyComponent = new SandboxWebProxyComponent(config, sandboxManagerComponent).start()
-
+            def usernamePasswordVerifier = new LdapUsernamePasswordVerifier(config.ldapHost)
+            def userProvider = new JdbcUserRepository(new SqlConnectionManager(config.dataSource))
             def pathRestrictions = new PathRestrictions(
-                    new JdbcUserRepository(new SqlConnectionManager(config.dataSource)),
-                    new BasicRequestAuthenticator(
-                            'Sepal',
-                            new LdapUsernamePasswordVerifier(config.ldapHost)
-                    )
+                    userProvider,
+                    new BasicRequestAuthenticator('Sepal', usernamePasswordVerifier)
             )
+
+            def authenticationEndpoint = new AuthenticationEndpoint(userProvider, usernamePasswordVerifier)
             Endpoints.deploy(
                     config.webAppPort,
                     pathRestrictions,
+                    authenticationEndpoint,
                     dataProviderComponent,
                     dataSearchComponent,
                     sandboxManagerComponent,

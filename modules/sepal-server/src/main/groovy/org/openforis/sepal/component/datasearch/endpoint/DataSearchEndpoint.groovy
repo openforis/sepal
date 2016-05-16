@@ -12,9 +12,6 @@ import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
 
 import static groovy.json.JsonOutput.toJson
-import static org.openforis.sepal.util.DateTime.daysFromDayOfYear
-import static org.openforis.sepal.util.DateTime.parseDateString
-import static org.openforis.sepal.util.DateTime.toDateString
 
 class DataSearchEndpoint {
     private final QueryDispatcher queryDispatcher
@@ -31,10 +28,11 @@ class DataSearchEndpoint {
 
     void registerWith(Controller controller) {
         controller.with {
+
             get('/data/sceneareas') {
                 response.contentType = "application/json"
                 def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(aoiId: params.countryIso))
-                def data = sceneAreas.collect { [id: it.id, polygon: polygonData(it)] }
+                def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
                 send(toJson(data))
             }
 
@@ -42,8 +40,8 @@ class DataSearchEndpoint {
                 response.contentType = "application/json"
                 def query = new SceneQuery(
                         sceneAreaId: params.sceneAreaId,
-                        fromDate: parseDateString(params.startDate as String),
-                        toDate: parseDateString(params.endDate as String),
+                        fromDate: DateTime.parseDateString(params.startDate as String),
+                        toDate: DateTime.parseDateString(params.endDate as String),
                         targetDay: params.targetDay
                 )
                 def scenes = queryDispatcher.submit(new FindScenesForSceneArea(query))
@@ -58,11 +56,11 @@ class DataSearchEndpoint {
                 sceneId: scene.id,
                 sensor: scene.sensorId,
                 browseUrl: scene.browseUrl as String,
-                acquisitionDate:  toDateString(scene.acquisitionDate),
+                acquisitionDate: DateTime.toDateString(scene.acquisitionDate),
                 cloudCover: scene.cloudCover,
                 sunAzimuth: scene.sunAzimuth,
                 sunElevation: scene.sunElevation,
-                daysFromTargetDay: daysFromDayOfYear(scene.acquisitionDate, query.targetDay)
+                daysFromTargetDay: DateTime.daysFromDayOfYear(scene.acquisitionDate, query.targetDay)
         ]
     }
 

@@ -118,6 +118,10 @@ class SepalConfiguration {
         getValue(EARTHEXPLORER_REST_ENDPOINT)
     }
 
+    String getGoogleEarthEngineEndpoint() {
+        getValue('gee.endpoint')
+    }
+
     long getDownloadCheckInterval() {
         Long.parseLong(getValue(DOWNLOAD_CHECK_INTERVAL))
     }

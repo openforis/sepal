@@ -62,7 +62,7 @@ var loadSceneImages = function ( e, sceneAreaId ) {
     }
     
     var params = {
-        url         : '/api/data/sceneareas/' + Model.sceneAreaId
+        url         : '/api/data/sceneareas/' + sceneAreaId
         , data      : data
         , beforeSend: function () {
             Loader.show()

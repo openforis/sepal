@@ -3,7 +3,7 @@ package org.openforis.sepal.component.dataprovider.retrieval
 import org.openforis.sepal.component.dataprovider.DownloadRequest
 import org.openforis.sepal.component.dataprovider.SceneRequest
 import org.openforis.sepal.component.dataprovider.retrieval.provider.FileStream
-import org.openforis.sepal.util.Tar
+import org.openforis.sepal.util.Decompress
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -62,7 +62,7 @@ class FileSystemSceneRepository implements SceneRepository {
 
     void addArchiveToScene(SceneRequest request, FileStream fileStream) {
         def tarFile = addFileToScene(request, fileStream)
-        Tar.unpackTarGz(tarFile)
+        Decompress.tarGz(tarFile)
     }
 
     File createSceneDir(request) {

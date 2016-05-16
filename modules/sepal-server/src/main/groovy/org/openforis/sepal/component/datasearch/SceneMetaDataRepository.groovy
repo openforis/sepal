@@ -4,7 +4,7 @@ import groovy.sql.Sql
 import org.openforis.sepal.transaction.SqlConnectionManager
 
 interface SceneMetaDataRepository extends SceneMetaDataProvider {
-    Date lastUpdate(MetaDataSource source)
+    Map<String, Date> lastUpdateBySensor(MetaDataSource source)
 
     void updateAll(Collection<SceneMetaData> scenes)
 }
@@ -74,11 +74,17 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
         }
     }
 
-    Date lastUpdate(MetaDataSource source) {
-        return sql.firstRow('''
-                SELECT MAX(update_time) last_update
+
+    Map<String, Date> lastUpdateBySensor(MetaDataSource source) {
+        def lastUpdates = [:]
+         sql.rows('''
+                SELECT sensor_id, MAX(update_time) last_update
                 FROM scene_meta_data
-                WHERE meta_data_source = ?''', [source.name()]).last_update ?: new Date(Long.MIN_VALUE)
+                WHERE meta_data_source = ?
+                GROUP BY sensor_id''', [source.name()]).each {
+            lastUpdates[it.sensor_id] = it.last_update
+        }
+        return lastUpdates
     }
 
     private getSql() {

@@ -1,11 +1,14 @@
 package org.openforis.sepal.component.datasearch.usgs
 
-import groovy.util.slurpersupport.GPathResult
-import groovyx.net.http.HttpResponseDecorator
-import groovyx.net.http.RESTClient
 import org.openforis.sepal.component.datasearch.SceneMetaData
+import org.openforis.sepal.util.CsvReader
+import org.openforis.sepal.util.CsvUriReader
+import org.openforis.sepal.util.GzCsvUriReader
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.component.datasearch.MetaDataSource.USGS
+import static org.openforis.sepal.util.DateTime.parseDateString
 import static org.openforis.sepal.util.DateTime.startOfDay
 
 interface UsgsGateway {
@@ -15,83 +18,152 @@ interface UsgsGateway {
      * @param date scene updated before this date will not be included
      * @param callback invoked with list of SceneMetaData instances
      */
-    void eachSceneUpdatedSince(Date date, Closure callback) throws SceneMetaDataRetrievalFailed
+    void eachSceneUpdatedSince(Map<String, Date> lastUpdateBySensor, Closure callback) throws SceneMetaDataRetrievalFailed
 
-    class SceneMetaDataRetrievalFailed extends RuntimeException {
+    static class SceneMetaDataRetrievalFailed extends RuntimeException {
         SceneMetaDataRetrievalFailed(String message) {
             super(message)
         }
     }
 }
 
-class RestBasedUsgsGateway implements UsgsGateway {
-    private final int daysPerRequest = 1
-    private final usgs = new RESTClient('http://earthexplorer.usgs.gov/EE/InventoryStream/')
-    private final sensors = [
-            'LANDSAT_8',
-            'LANDSAT_ETM_SLC_OFF',
-            'LANDSAT_ETM',
-            'LANDSAT_TM',
-            'LANDSAT_MSS',
-            'LANDSAT_COMBINED',
-            'LANDSAT_COMBINED78'
-    ]
-    private final pathRowRestriction = [
-            start_path: 1,
-            start_row: 1,
-            end_path: 233,
-            end_row: 248
-    ] as Map<String, Object>
+class CsvBackedUsgsGateway implements UsgsGateway {
+    private static final Logger LOG = LoggerFactory.getLogger(this)
+    private final File initCompletedFile
+    private final Map<String, List<CsvReader>> initCsvSourcesBySensor
+    private final Map<String, List<CsvReader>> updateCsvSourcesBySensor
 
-    RestBasedUsgsGateway() {
-        usgs.handler.failure = { resp -> return resp }
+    CsvBackedUsgsGateway(
+            File initCompletedFile,
+            Map<String, List<CsvReader>> initCsvSourcesBySensor,
+            Map<String, List<CsvReader>> updateCsvSourcesBySensor) {
+        this.initCompletedFile = initCompletedFile
+        this.initCsvSourcesBySensor = initCsvSourcesBySensor
+        this.updateCsvSourcesBySensor = updateCsvSourcesBySensor
     }
 
-    void eachSceneUpdatedSince(Date date, Closure callback) {
-        def today = startOfDay(new Date())
-        def startDate = date
-        def endDate = [date + daysPerRequest, today].min()
-        while (!Thread.interrupted()) {
-            sensors.each { sensor ->
-                def query = pathRowRestriction + [start_date: startDate.format('yyyy-MM-dd'), end_date: endDate.format('yyyy-MM-dd'), sensor: sensor]
-                def response = usgs.get(path: 'pathrow', query: query) as HttpResponseDecorator
-                veryfyResponse(response)
-                def scenes = response.data.metaData
-                        .findAll { it.DATA_TYPE_L1.text() == 'L1T' }
-                        .collect { toSceneMetaData(sensor, it) }
+    void eachSceneUpdatedSince(Map<String, Date> lastUpdateBySensor, Closure callback) throws UsgsGateway.SceneMetaDataRetrievalFailed {
+        if (initCompletedFile.exists())
+            updatedSince(lastUpdateBySensor, callback)
+        else
+            init(callback)
+    }
+
+    private void init(Closure callback) {
+        initCsvSourcesBySensor.each { sensor, readers ->
+            def scenes = []
+            readers.each { reader ->
+                reader.eachLine {
+                    def scene = toSceneMetaData(sensor, it)
+                    if (scene)
+                        scenes << scene
+                    if (scenes.size() >= 10000) {
+                        LOG.info("Initializing scene meta-data: Providing batch of ${scenes.size()} scenes from $sensor")
+                        callback.call(scenes)
+                        scenes.clear()
+                    }
+                }
+            }
+            if (scenes) {
+                LOG.info("Initializing scene meta-data: Providing last ${scenes.size()} scenes from $sensor")
                 callback.call(scenes)
             }
-            if (endDate >= today)
-                return
-            startDate = endDate + 1
-            endDate = [startDate + daysPerRequest, today].min()
+        }
+        initCompletedFile.createNewFile()
+    }
+
+    private void updatedSince(Map<String, Date> lastUpdateBySensor, Closure callback) {
+        updateCsvSourcesBySensor.each { sensor, readers ->
+            def lastUpdate = lastUpdateBySensor[sensor]
+            def scenes = []
+            readers.each { reader ->
+                reader.eachLine {
+                    def scene = toSceneMetaData(sensor, it)
+                    if (scene && scene.acquisitionDate < startOfDay(lastUpdate))
+                        return false
+                    if (scene)
+                        scenes << scene
+                }
+            }
+            if (scenes)
+                callback.call(scenes)
         }
     }
 
-    private void veryfyResponse(HttpResponseDecorator response) {
-        def data = response.data
-        if (response.status != 200)
-            throw new UsgsGateway.SceneMetaDataRetrievalFailed("Unexpected response status: $response.status: ${response.statusLine?.reasonPhrase}")
-        if (!(data instanceof GPathResult))
-            throw new UsgsGateway.SceneMetaDataRetrievalFailed(new XmlSlurper().parseText(data.text).returnStatus.text())
+    private SceneMetaData toSceneMetaData(String sensor, data) {
+        try {
+            if (data.DATA_TYPE_L1 == 'L1T' && data.dayOrNight == 'DAY' && data.cloudCoverFull.toDouble() >= 0d)
+                return new SceneMetaData(
+                        id: data.sceneID,
+                        source: USGS,
+                        sceneAreaId: "${data.path}_${data.row}",
+                        sensorId: sensor,
+                        acquisitionDate: parseDateString(data.acquisitionDate),
+                        cloudCover: data.cloudCoverFull.toDouble(),
+                        sunAzimuth: data.sunAzimuth.toDouble(),
+                        sunElevation: data.sunElevation.toDouble(),
+                        browseUrl: URI.create(data.browseURL),
+                        updateTime: parseDateString(data.dateUpdated)
+                )
+        } catch (Exception ignore) {
+        }
+        return null
     }
 
-    @SuppressWarnings(["GroovyAssignabilityCheck"])
-    private SceneMetaData toSceneMetaData(String sensor, metaData) {
-        def acquisitionDate = Date.parse('yyyy-MM-dd', metaData.acquisitionDate.text())
-        // Update time can sometimes be earlier than a acquisition date, which doesn't make sense.
-        def updateTime = [Date.parse('yyyy-MM-dd', metaData.dateUpdated.text()), acquisitionDate].max()
-        return new SceneMetaData(
-                id: metaData.sceneID,
-                source: USGS,
-                sceneAreaId: "${metaData.path}_${metaData.row}",
-                sensorId: sensor,
-                acquisitionDate: acquisitionDate,
-                cloudCover: metaData.cloudCoverFull.toDouble(),
-                sunAzimuth: metaData.sunAzimuth.toDouble(),
-                sunElevation: metaData.sunElevation.toDouble(),
-                browseUrl: URI.create(metaData.browseURL.text()),
-                updateTime: updateTime
-        )
+
+    static UsgsGateway create(File workingDir) {
+        new CsvBackedUsgsGateway(new File(workingDir, 'bootstrap-completed'), [
+                LANDSAT_8: [
+                        new GzCsvUriReader(
+                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_8.csv.gz',
+                                workingDir,
+                                'LANDSAT_8')],
+                LANDSAT_ETM: [
+                        new GzCsvUriReader(
+                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM.csv.gz',
+                                workingDir,
+                                'LANDSAT_ETM')],
+                LANDSAT_ETM_SLC_OFF: [
+                        new GzCsvUriReader(
+                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM_SLC_OFF.csv.gz',
+                                workingDir,
+                                'LANDSAT_ETM_SLC_OFF')],
+                LANDSAT_TM: [
+                        new GzCsvUriReader(
+                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_TM-1980-1989.csv.gz',
+                                workingDir,
+                                'LANDSAT_TM-1980-1989'),
+                        new GzCsvUriReader(
+                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_TM-1990-1999.csv.gz',
+                                workingDir,
+                                'LANDSAT_TM-1990-1999'),
+                        new GzCsvUriReader(
+                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_TM-2000-2009.csv.gz',
+                                workingDir,
+                                'LANDSAT_TM-2000-2009'),
+                        new GzCsvUriReader(
+                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_TM-2010-2012.csv.gz',
+                                workingDir,
+                                'LANDSAT_TM-2010-2012')],
+                LANDSAT_MSS: [
+                        new GzCsvUriReader(
+                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_MSS2.csv.gz',
+                                workingDir,
+                                'LANDSAT_MSS2'),
+                        new GzCsvUriReader(
+                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_MSS1.csv.gz',
+                                workingDir,
+                                'LANDSAT_MSS1')]
+        ], [
+                LANDSAT_8: [
+                        new CsvUriReader('http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_8.csv')
+                ],
+                LANDSAT_ETM: [
+                        new CsvUriReader('http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM.csv')
+                ],
+                LANDSAT_ETM_SLC_OFF: [
+                        new CsvUriReader('http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM_SLC_OFF.csv')
+                ]
+        ])
     }
 }

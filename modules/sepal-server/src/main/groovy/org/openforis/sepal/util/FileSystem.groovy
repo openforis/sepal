@@ -43,6 +43,10 @@ class FileSystem {
         }
     }
 
+    public static String removeFileExtension(String fileName) {
+        fileName.replaceFirst('[.][^.]+$', '')
+    }
+
     private static void illegalArgument(String error) {
         LOG.error(error)
     }

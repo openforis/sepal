@@ -7,16 +7,18 @@ import org.openforis.sepal.command.Command
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaDataHandler
-import org.openforis.sepal.component.datasearch.metadata.MetadataProviderManager
+import org.openforis.sepal.component.datasearch.endpoint.DataSearchEndpoint
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoiHandler
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneAreaHandler
+import org.openforis.sepal.component.datasearch.usgs.CsvBackedUsgsGateway
 import org.openforis.sepal.component.datasearch.usgs.UsgsGateway
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.user.JdbcUserRepository
 
 import javax.sql.DataSource
 
@@ -25,13 +27,19 @@ final class DataSearchComponent implements EndpointRegistry {
     private final HandlerRegistryQueryDispatcher queryDispatcher
     private final SceneAreaProvider sceneAreaProvider
     private final SceneMetaDataRepository sceneMetaDataRepository
-    private final MetadataProviderManager metadataProviderManager
+    private final SqlConnectionManager connectionManager
+    private SceneMetaDataUpdateScheduler sceneMetaDataUpdateScheduler
 
     DataSearchComponent(SepalConfiguration config) {
-        this(config.dataSource, null, null, new Config(
-                crawlerRunDelayHours: config.crawlerRunDelay,
-                downloadWorkingDirectory: config.downloadWorkingDirectory
-        ))
+        this(
+                config.dataSource,
+                new SceneAreaProviderHttpGateway(config.googleEarthEngineEndpoint),
+                CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
+                new Config(
+                        crawlerRunDelayHours: config.crawlerRunDelay,
+                        downloadWorkingDirectory: config.downloadWorkingDirectory
+                )
+        )
     }
 
     DataSearchComponent(
@@ -41,25 +49,16 @@ final class DataSearchComponent implements EndpointRegistry {
             Config config
     ) {
         this.sceneAreaProvider = sceneAreaProvider
-        def connectionManager = new SqlConnectionManager(dataSource)
-        this.sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
-//        def dataSetRepository = new JdbcDataSetRepository(connectionManager)
-//        def crawlerRunDelayHours = config.crawlerRunDelayHours
-//        metadataProviderManager = new ConcreteMetadataProviderManager(dataSetRepository, crawlerRunDelayHours)
-//        this.metadataProviderManager.registerCrawler(
-//                new EarthExplorerMetadataCrawler(
-//                        new JDBCUsgsDataRepository(connectionManager),
-//                        new HttpResourceLocator(),
-//                        config.downloadWorkingDirectory
-//                )
-//        )
-
-        commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
+        connectionManager = new SqlConnectionManager(dataSource)
+        this.sceneMetaDataRepository = new JdbcSceneMetaDataRepository(this.connectionManager)
+        commandDispatcher = new HandlerRegistryCommandDispatcher(this.connectionManager)
                 .register(UpdateUsgsSceneMetaData, new UpdateUsgsSceneMetaDataHandler(usgs, sceneMetaDataRepository))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
                 .register(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(sceneAreaProvider))
                 .register(FindScenesForSceneArea, new FindScenesForSceneAreaHandler(sceneMetaDataRepository))
+
+        sceneMetaDataUpdateScheduler = new SceneMetaDataUpdateScheduler(commandDispatcher)
     }
 
     def <R> R submit(Command<R> command) {
@@ -71,16 +70,17 @@ final class DataSearchComponent implements EndpointRegistry {
     }
 
     DataSearchComponent start() {
-        metadataProviderManager.start();
+        sceneMetaDataUpdateScheduler.start()
         return this
     }
 
     void stop() {
-        metadataProviderManager.stop()
+        sceneMetaDataUpdateScheduler.stop()
     }
 
     void registerEndpointsWith(Controller controller) {
-
+        new DataSearchEndpoint(queryDispatcher, commandDispatcher, new JdbcUserRepository(connectionManager))
+                .registerWith(controller)
     }
 
     @Immutable

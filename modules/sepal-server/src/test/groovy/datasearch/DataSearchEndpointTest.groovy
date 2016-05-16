@@ -29,7 +29,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         ]
         sameJson(response.data, [
                 [
-                        id: 'scene area id',
+                        sceneAreaId: 'scene area id',
                         polygon: [[1d, 1d], [2d, 2d], [3d, 3d], [1d, 1d]]
                 ]
         ])

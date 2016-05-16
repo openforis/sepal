@@ -7,6 +7,7 @@ import groovymvc.security.PathRestrictions
 import org.openforis.sepal.Server
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.component.sandboxmanager.SessionFailed
+import org.openforis.sepal.security.AuthenticationEndpoint
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

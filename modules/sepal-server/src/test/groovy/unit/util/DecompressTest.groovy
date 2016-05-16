@@ -1,11 +1,11 @@
 package unit.util
 
-import org.openforis.sepal.util.Tar
+import org.openforis.sepal.util.Decompress
 import spock.lang.Specification
 
 import java.nio.file.Files
 
-class TarTest extends Specification {
+class DecompressTest extends Specification {
     File workingDir = File.createTempDir()
 
     def cleanup() {
@@ -16,7 +16,7 @@ class TarTest extends Specification {
         def archive = createArchive('archive.tar.gz')
 
         when:
-        Tar.unpackTarGz(archive)
+        Decompress.tarGz(archive)
 
         then:
         workingDir.list() as Set == ['1.tif', '2.tif'].toSet()
@@ -26,7 +26,7 @@ class TarTest extends Specification {
         def archive = createArchive('archive.tar.gz.another')
 
         when:
-        Tar.unpackTarGz(archive)
+        Decompress.tarGz(archive)
 
         then:
         thrown(IllegalArgumentException)
@@ -37,7 +37,7 @@ class TarTest extends Specification {
         archive.write('Not an archive')
 
         when:
-        Tar.unpackTarGz(archive)
+        Decompress.tarGz(archive)
 
         then:
         thrown(IOException)

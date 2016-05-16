@@ -22,6 +22,7 @@
     password: "{{ docker_password }}"
     links:
     - "mysql:mysql"
+    - "google-earth-engine:google-earth-engine"
     volumes:
     - "/data/sepal:/data"
     env:

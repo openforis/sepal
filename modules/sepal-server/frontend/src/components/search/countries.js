@@ -5,47 +5,47 @@
 var countries = [
     {
         "value":"Afghanistan",
-        "data":"AF"
+        "data":"AFG"
     },
     {
         "value":"Albania",
-        "data":"AL"
+        "data":"ALB"
     },
     {
         "value":"Algeria",
-        "data":"DZ"
+        "data":"DZA"
     },
     {
         "value":"Andorra",
-        "data":"AD"
+        "data":"ADD"
     },
     {
         "value":"Angola",
-        "data":"AO"
+        "data":"AGO"
     },
     {
         "value":"Antigua and Barbuda",
-        "data":"AG"
+        "data":"ATG"
     },
     {
         "value":"Argentina",
-        "data":"AR"
+        "data":"ARG"
     },
     {
         "value":"Armenia",
-        "data":"AM"
+        "data":"ARM"
     },
     {
         "value":"Australia",
-        "data":"AU"
+        "data":"AU1"
     },
     {
         "value":"Austria",
-        "data":"AT"
+        "data":"ATT"
     },
     {
         "value":"Azerbaijan",
-        "data":"AZ"
+        "data":"AZE"
     },
     {
         "value":"Bahamas, The",
@@ -57,7 +57,7 @@ var countries = [
     },
     {
         "value":"Bangladesh",
-        "data":"BD"
+        "data":"BGD"
     },
     {
         "value":"Barbados",
@@ -69,7 +69,7 @@ var countries = [
     },
     {
         "value":"Belgium",
-        "data":"BE"
+        "data":"BEL"
     },
     {
         "value":"Belize",
@@ -81,7 +81,7 @@ var countries = [
     },
     {
         "value":"Bhutan",
-        "data":"BT"
+        "data":"BTN"
     },
     {
         "value":"Bolivia",
@@ -97,7 +97,7 @@ var countries = [
     },
     {
         "value":"Brazil",
-        "data":"BR"
+        "data":"BRA"
     },
     {
         "value":"Brunei",
@@ -145,7 +145,7 @@ var countries = [
     },
     {
         "value":"China, People's Republic of",
-        "data":"CN"
+        "data":"CH1"
     },
     {
         "value":"Colombia",
@@ -241,7 +241,7 @@ var countries = [
     },
     {
         "value":"France",
-        "data":"FR"
+        "data":"FRA"
     },
     {
         "value":"Gabon",
@@ -257,7 +257,7 @@ var countries = [
     },
     {
         "value":"Germany",
-        "data":"DE"
+        "data":"DEU"
     },
     {
         "value":"Ghana",
@@ -329,7 +329,7 @@ var countries = [
     },
     {
         "value":"Italy",
-        "data":"IT"
+        "data":"ITA"
     },
     {
         "value":"Jamaica",
@@ -517,7 +517,7 @@ var countries = [
     },
     {
         "value":"Norway",
-        "data":"NO"
+        "data":"NOR"
     },
     {
         "value":"Oman",
@@ -569,7 +569,7 @@ var countries = [
     },
     {
         "value":"Russia",
-        "data":"RU"
+        "data":"RUS"
     },
     {
         "value":"Rwanda",
@@ -665,7 +665,7 @@ var countries = [
     },
     {
         "value":"Sweden",
-        "data":"SE"
+        "data":"SWE"
     },
     {
         "value":"Switzerland",
@@ -681,7 +681,7 @@ var countries = [
     },
     {
         "value":"Tanzania",
-        "data":"TZ"
+        "data":"TZA"
     },
     {
         "value":"Thailand",
@@ -733,11 +733,11 @@ var countries = [
     },
     {
         "value":"United Kingdom",
-        "data":"GB"
+        "data":"GB1"
     },
     {
         "value":"United States",
-        "data":"US"
+        "data":"US1"
     },
     {
         "value":"Uruguay",

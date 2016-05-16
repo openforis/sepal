@@ -63,14 +63,15 @@ class DataSearchTest extends Specification {
 
     def 'Given old and new scenes, when updating USGS scenes, only scenes after last update are requested'() {
         def date = new Date() - 10
-        usgs.appendScenes([sceneUpdatedAt(date)])
+        def scene = sceneUpdatedAt(date)
+        usgs.appendScenes([scene])
         updateUsgsSceneMetaData()
 
         when:
         updateUsgsSceneMetaData()
 
         then:
-        usgs.lastRequestDate() == date
+        usgs.lastUpdateBySensor() == [(scene.sensorId): date]
     }
 
     def 'When finding scenes from one scene area, scenes from other scene areas are excluded'() {
@@ -160,11 +161,11 @@ class DataSearchTest extends Specification {
 
 class FakeUsgsGateway implements UsgsGateway {
     final List<SceneMetaData> scenes = []
-    private Date lastRequestDate
+    private Map<String, Date> lastUpdateBySensor
 
-    void eachSceneUpdatedSince(Date date, Closure callback) {
-        this.lastRequestDate = date
-        def scenes = scenes.findAll { it.acquisitionDate > date }
+    void eachSceneUpdatedSince(Map<String, Date> lastUpdateBySensor, Closure callback) throws UsgsGateway.SceneMetaDataRetrievalFailed {
+        this.lastUpdateBySensor = lastUpdateBySensor
+        def scenes = scenes.findAll { it.acquisitionDate > lastUpdateBySensor[it.sensorId] }
         callback.call(scenes)
     }
 
@@ -172,7 +173,7 @@ class FakeUsgsGateway implements UsgsGateway {
         this.scenes.addAll(scenes)
     }
 
-    Date lastRequestDate() {
-        lastRequestDate
+    Map<String, Date> lastUpdateBySensor() {
+        lastUpdateBySensor
     }
 }
