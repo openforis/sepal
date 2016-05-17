@@ -20,6 +20,31 @@ class MockServer extends AbstractMvcFilter {
                 .build()
 
         controller.with {
+            get('/user') {
+                response.contentType = 'application/json'
+                send toJson(authenticator.users.values().first())
+//                    halt(401)
+            }
+
+            get('/user/files') {
+                response.contentType = 'application/json'
+
+                def homeDir = new File(System.getProperty("user.home"))
+                def path = params.path
+                def dir = new File(homeDir.absolutePath + path).canonicalFile
+                def files = []
+                dir.eachFile {file ->
+                    files << [name: file.name, isDirectory: file.directory, size: file.size()]
+                }
+                send toJson(files)
+            }
+
+            get('/user/files/download') {
+                //TODO
+                def path = params.path
+
+            }
+
             post('/login') {
                 response.contentType = 'application/json'
 

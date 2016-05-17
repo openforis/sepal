@@ -58,7 +58,9 @@ module.exports = {
         contentBase: './dist',
         host: '0.0.0.0',
         proxy      : {
-            '*': { target: 'http://localhost:1025' }
+            // '*': { target: 'http://localhost:1025' }
+            '*': { target: 'http://localhost:9999' }
+
         }
     }
 }

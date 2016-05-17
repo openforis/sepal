@@ -103,17 +103,27 @@ var getImageSectionForSelection = function ( sceneImage ) {
     
     imgHover.click( function () {
         expandedImageSelectionSection.find( 'img' ).attr( 'src', sceneImage.browseUrl ).click( function () {
-            expandedImageSelectionSection.velocity( "stop" ).velocity( 'fadeOut', {
-                delay   : 20,
-                duration: 500
-            } )
+            // expandedImageSelectionSection.velocity( "stop" ).velocity( 'fadeOut', {
+            //     delay   : 20,
+            //     duration: 500
+            // } )
+            Animation.animateOut( expandedImageSelectionSection )
         } )
         expandedImageSelectionSection.find( '.cloud-cover' ).empty().append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + sceneImage.cloudCover )
         expandedImageSelectionSection.find( '.sensor' ).empty().append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + sceneImage.sensor )
-        expandedImageSelectionSection.velocity( "stop" ).velocity( 'fadeIn', {
-            delay   : 20,
-            duration: 500
-        } )
+        expandedImageSelectionSection.find( '.acquisition-date' ).empty().append( '<i class="fa fa-calendar" aria-hidden="true"></i> ' + sceneImage.acquisitionDate )
+        expandedImageSelectionSection.find( '.target-day' ).empty().append( '<i class="fa fa-calendar-minus-o" aria-hidden="true"></i> ' + sceneImage.daysFromTargetDay )
+        expandedImageSelectionSection.find( '.sun-azimuth' ).empty()
+            .append( '<span class="fa-stack"><i class="fa fa-sun-o fa-stack-2x" aria-hidden="true"></i><i class="fa fa-ellipsis-h fa-stack-1x" aria-hidden="true"></i></span> ' + sceneImage.sunAzimuth.toFixed(2) )
+        expandedImageSelectionSection.find( '.sun-elevation' ).empty()
+            .append( '<span class="fa-stack"><i class="fa fa-sun-o fa-stack-2x" aria-hidden="true"></i><i class="fa fa-ellipsis-v fa-stack-1x" aria-hidden="true"></i></span> ' + sceneImage.sunElevation.toFixed(2) )
+
+        // acquisitionDate: '2015-03-20', cloudCover: 0.08, sunAzimuth: 150.48942477, sunElevation: 42.80026465 , daysFromTargetDay : 5
+        // expandedImageSelectionSection.velocity( "stop" ).velocity( 'fadeIn', {
+        //     delay   : 20,
+        //     duration: 500
+        // } )
+        Animation.animateIn( expandedImageSelectionSection )
     } )
     
     //TODO : add daysFromTargetDay
