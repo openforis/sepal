@@ -5,6 +5,7 @@ import org.openforis.sepal.component.datasearch.*
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
+import org.openforis.sepal.component.datasearch.usgs.LandsatSensor
 import org.openforis.sepal.component.datasearch.usgs.UsgsGateway
 import spock.lang.Specification
 
@@ -71,7 +72,7 @@ class DataSearchTest extends Specification {
         updateUsgsSceneMetaData()
 
         then:
-        usgs.lastUpdateBySensor() == [(scene.sensorId): date]
+        usgs.lastUpdateBySensor() == [(scene.sensorId as LandsatSensor): date]
     }
 
     def 'When finding scenes from one scene area, scenes from other scene areas are excluded'() {
@@ -161,11 +162,11 @@ class DataSearchTest extends Specification {
 
 class FakeUsgsGateway implements UsgsGateway {
     final List<SceneMetaData> scenes = []
-    private Map<String, Date> lastUpdateBySensor
+    private Map<LandsatSensor, Date> lastUpdateBySensor
 
-    void eachSceneUpdatedSince(Map<String, Date> lastUpdateBySensor, Closure callback) throws UsgsGateway.SceneMetaDataRetrievalFailed {
+    void eachSceneUpdatedSince(Map<LandsatSensor, Date> lastUpdateBySensor, Closure callback) throws UsgsGateway.SceneMetaDataRetrievalFailed {
         this.lastUpdateBySensor = lastUpdateBySensor
-        def scenes = scenes.findAll { it.acquisitionDate > lastUpdateBySensor[it.sensorId] }
+        def scenes = scenes.findAll { it.acquisitionDate > lastUpdateBySensor[it.sensorId as LandsatSensor] }
         callback.call(scenes)
     }
 
@@ -173,7 +174,7 @@ class FakeUsgsGateway implements UsgsGateway {
         this.scenes.addAll(scenes)
     }
 
-    Map<String, Date> lastUpdateBySensor() {
+    Map<LandsatSensor, Date> lastUpdateBySensor() {
         lastUpdateBySensor
     }
 }

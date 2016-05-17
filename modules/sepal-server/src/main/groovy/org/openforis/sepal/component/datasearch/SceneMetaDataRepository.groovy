@@ -82,7 +82,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                 FROM scene_meta_data
                 WHERE meta_data_source = ?
                 GROUP BY sensor_id''', [source.name()]).each {
-            lastUpdates[it.sensor_id as LandsatSensor] = it.last_update
+            lastUpdates[it.sensor_id as LandsatSensor] = new Date(it.last_update.time as long)
         }
         return lastUpdates
     }
