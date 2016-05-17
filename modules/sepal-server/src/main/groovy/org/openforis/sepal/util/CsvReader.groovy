@@ -96,6 +96,7 @@ class GzCsvUriReader implements CsvReader {
                 LOG.info("Decompressing " + gzFile)
                 Decompress.gz(gzFile)
                 readCsvFile(callback)
+                csvFile.delete()
             }
 
             response.failure = { resp ->

@@ -1,10 +1,11 @@
 package org.openforis.sepal.component.datasearch
 
 import groovy.sql.Sql
+import org.openforis.sepal.component.datasearch.usgs.LandsatSensor
 import org.openforis.sepal.transaction.SqlConnectionManager
 
 interface SceneMetaDataRepository extends SceneMetaDataProvider {
-    Map<String, Date> lastUpdateBySensor(MetaDataSource source)
+    Map<LandsatSensor, Date> lastUpdateBySensor(MetaDataSource source)
 
     void updateAll(Collection<SceneMetaData> scenes)
 }
@@ -74,15 +75,14 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
         }
     }
 
-
-    Map<String, Date> lastUpdateBySensor(MetaDataSource source) {
+    Map<LandsatSensor, Date> lastUpdateBySensor(MetaDataSource source) {
         def lastUpdates = [:]
          sql.rows('''
                 SELECT sensor_id, MAX(update_time) last_update
                 FROM scene_meta_data
                 WHERE meta_data_source = ?
                 GROUP BY sensor_id''', [source.name()]).each {
-            lastUpdates[it.sensor_id] = it.last_update
+            lastUpdates[it.sensor_id as LandsatSensor] = it.last_update
         }
         return lastUpdates
     }
