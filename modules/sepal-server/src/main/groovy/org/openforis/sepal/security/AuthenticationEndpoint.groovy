@@ -28,6 +28,11 @@ class AuthenticationEndpoint implements EndpointRegistry {
                 request.session.setAttribute(CURRENT_USER_SESSION_ATTRIBUTE, user)
                 send toJson(user)
             }
+
+            get('/user') {
+                response.contentType = 'application/json'
+                send toJson(currentUser)
+            }
         }
     }
 }
