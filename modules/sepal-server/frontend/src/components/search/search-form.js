@@ -20,8 +20,8 @@ var endDate     = null
 var targetDay   = null
 
 var init = function ( formSelector ) {
-    form = $( formSelector )
-    
+
+    form       = $( formSelector )
     formNotify = form.find( '.form-notify' )
     
     var country = form.find( '#search-form-country' )
@@ -34,7 +34,6 @@ var init = function ( formSelector ) {
                 var cCode = selection.data
                 var cName = selection.value
                 
-                // SceneAreasSearch.countryCode = cCode
                 countryCode = cCode
                 EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
             }

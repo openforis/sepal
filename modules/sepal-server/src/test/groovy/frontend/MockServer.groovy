@@ -33,7 +33,7 @@ class MockServer extends AbstractMvcFilter {
                 def path = params.path
                 def dir = new File(homeDir.absolutePath + path).canonicalFile
                 def files = []
-                dir.eachFile {file ->
+                dir.eachFile { file ->
                     files << [name: file.name, isDirectory: file.directory, size: file.size()]
                 }
                 send toJson(files)
@@ -43,6 +43,59 @@ class MockServer extends AbstractMvcFilter {
                 //TODO
                 def path = params.path
 
+            }
+
+
+            post('/data/scenes/retrieve') {
+//  { countryIso:ITA, scenes:[ {sceneId: 'LC81900302015079LGN00', sensor: 'LC8'}, ... ] }
+                params.selection
+            }
+            post('/data/scenes/mosaic') {
+//  { countryIso:ITA, scenes:[ {sceneId: 'LC81900302015079LGN00', sensor: 'LC8'}, ... ] }
+                params.selection
+            }
+
+            get('/tasks') {
+                response.contentType = 'application/json'
+
+                def tasks = [
+                        [
+                                id: 1,
+                                name: 'ciao',
+                                status: 'ACTIVE|FAILED|COMPLETED|PENDING',
+                                statusDescription: 'currently downloading something from somewhere'
+                        ]
+                        , [id: 2, name: 'ciao2', status: 'ACTIVE|FAILED|COMPLETED|PENDING', statusDescription: 'currently downloading something from somewhere']
+                ]
+                send toJson(tasks)
+            }
+
+            /**
+             * Valid when status is ACTIVE or PENDING.
+             */
+            post('/tasks/task/{id}/cancel') {
+                response.status = 204
+            }
+
+            /**
+             * Valid when status is COMPLETED or FAILED.
+             */
+            post('/tasks/task/{id}/remove') {
+                response.status = 204
+            }
+
+            /**
+             * Valid when status is COMPLETED or FAILED.
+             */
+            post('/tasks/task/{id}/execute') {
+                response.status = 204
+            }
+
+            /**
+             * Removes all COMPLETED or FAILED tasks.
+             */
+            post('/tasks/remove') {
+                response.status = 204
             }
 
             post('/login') {
@@ -73,7 +126,7 @@ class MockServer extends AbstractMvcFilter {
                 params.endDate  //YYYY-MM-dd
 
                 send toJson([
-                        [sceneId: 'LC81900302015079LGN00', sensor: 'LC8', browseUrl: 'http://earthexplorer.usgs.gov/browse/landsat_8/2015/190/030/LC81900302015079LGN00.jpg', acquisitionDate: '2015-03-20', cloudCover: 0.08, sunAzimuth: 150.48942477, sunElevation: 42.80026465 , daysFromTargetDay : 5],
+                        [sceneId: 'LC81900302015079LGN00', sensor: 'LC8', browseUrl: 'http://earthexplorer.usgs.gov/browse/landsat_8/2015/190/030/LC81900302015079LGN00.jpg', acquisitionDate: '2015-03-20', cloudCover: 0.08, sunAzimuth: 150.48942477, sunElevation: 42.80026465, daysFromTargetDay: 5],
                         [sceneId: 'LC81900302015079LGN00', sensor: 'LC8', browseUrl: 'http://earthexplorer.usgs.gov/browse/landsat_8/2015/190/030/LC81900302015079LGN00.jpg', acquisitionDate: '2015-03-20', cloudCover: 0.08, sunAzimuth: 150.48942477, sunElevation: 42.80026465],
                         [sceneId: 'LE71900302015183NSG00', sensor: 'LE7', browseUrl: 'http://earthexplorer.usgs.gov/browse/etm/190/30/2015/LE71900302015183NSG00.jpg', acquisitionDate: '2015-07-02', cloudCover: 0.09, sunAzimuth: 133.80200195, sunElevation: 63.82229996],
                         [sceneId: 'LE71900302015183NSG00', sensor: 'LE7', browseUrl: 'http://earthexplorer.usgs.gov/browse/etm/190/30/2015/LE71900302015183NSG00.jpg', acquisitionDate: '2015-07-02', cloudCover: 0.09, sunAzimuth: 133.80200195, sunElevation: 63.82229996],
