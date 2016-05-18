@@ -10,6 +10,7 @@ import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.security.AuthenticationEndpoint
 import org.openforis.sepal.security.LdapUsernamePasswordVerifier
+import org.openforis.sepal.security.SessionAwareAuthenticator
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JdbcUserRepository
 import org.slf4j.Logger
@@ -37,7 +38,7 @@ class Main {
             def userProvider = new JdbcUserRepository(connectionManager)
             def pathRestrictions = new PathRestrictions(
                     userProvider,
-                    new BasicRequestAuthenticator('Sepal', usernamePasswordVerifier)
+                    new SessionAwareAuthenticator(new BasicRequestAuthenticator('Sepal', usernamePasswordVerifier))
             )
 
             def authenticationEndpoint = new AuthenticationEndpoint(userProvider, usernamePasswordVerifier)
