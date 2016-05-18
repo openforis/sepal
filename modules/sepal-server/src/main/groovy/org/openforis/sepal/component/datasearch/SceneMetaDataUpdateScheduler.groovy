@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
+import static java.util.concurrent.TimeUnit.DAYS
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class SceneMetaDataUpdateScheduler {
@@ -25,7 +26,7 @@ class SceneMetaDataUpdateScheduler {
     void start() {
         executor.scheduleWithFixedDelay({
             updateSceneMetaData()
-        }, 0, 10, SECONDS)
+        }, 0, 1, DAYS)
     }
 
     private void updateSceneMetaData() {

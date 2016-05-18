@@ -117,6 +117,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
                         updateTime: parseDateString(data.dateUpdated)
                 )
         } catch (Exception ignore) {
+            ignore.printStackTrace()
         }
         return null
     }
