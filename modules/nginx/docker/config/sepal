@@ -2,25 +2,9 @@ server {
     listen 80;
     access_log /var/log/nginx/sepal.http.log;
 
-    location ~ ^/user/(?<user>[^/]+)/(?<service>[^/]+) {
-        rewrite ^/user/(?<user>[^/]+)/(?<service>[^/]+)\/?(?<relative>.*) /$relative break;
-        proxy_set_header X-Real-IP  $remote_addr;
-
-        # WebSocket support (nginx 1.4)
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_set_header Host $host;
-        proxy_set_header sepal-endpoint $service;
-        proxy_set_header sepal-user $user;
-        proxy_pass http://sepal:9191;
-        proxy_redirect ~^https?://[^/]+/?(.*)$ /user/$user/$service/$1;
-    }
 
    location / {
-        return 301 https://$server_name$request_uri;
+        return 301 https://$host$request_uri;
     }
 
     location ~ /\.ht {
@@ -38,6 +22,23 @@ server {
     ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;
     ssl_ciphers HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;
     ssl_prefer_server_ciphers on;
+
+    location ~ ^/user/(?<user>[^/]+)/(?<service>[^/]+) {
+        rewrite ^/user/(?<user>[^/]+)/(?<service>[^/]+)\/?(?<relative>.*) /$relative break;
+        proxy_set_header X-Real-IP  $remote_addr;
+
+        # WebSocket support (nginx 1.4)
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header sepal-endpoint $service;
+        proxy_set_header sepal-user $user;
+        proxy_pass http://sepal:9191;
+        proxy_redirect ~^https?://[^/]+/?(.*)$ /user/$user/$service/$1;
+    }
 
     location /gateone/ws {
         # switch off logging
