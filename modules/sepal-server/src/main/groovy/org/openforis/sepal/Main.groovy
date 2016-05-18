@@ -1,5 +1,6 @@
 package org.openforis.sepal
 
+import com.mchange.v2.c3p0.ComboPooledDataSource
 import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.component.dataprovider.DataProviderComponent
@@ -20,6 +21,7 @@ class Main {
     private static DataSearchComponent dataSearchComponent
     private static SandboxManagerComponent sandboxManagerComponent
     private static SandboxWebProxyComponent sandboxWebProxyComponent
+    private static SqlConnectionManager connectionManager
 
     static void main(String[] args) {
         try {
@@ -30,8 +32,9 @@ class Main {
             dataSearchComponent = new DataSearchComponent(config).start()
             sandboxManagerComponent = new SandboxManagerComponent(config).start()
             sandboxWebProxyComponent = new SandboxWebProxyComponent(config, sandboxManagerComponent).start()
+            connectionManager = new SqlConnectionManager(config.dataSource)
             def usernamePasswordVerifier = new LdapUsernamePasswordVerifier(config.ldapHost)
-            def userProvider = new JdbcUserRepository(new SqlConnectionManager(config.dataSource))
+            def userProvider = new JdbcUserRepository(connectionManager)
             def pathRestrictions = new PathRestrictions(
                     userProvider,
                     new BasicRequestAuthenticator('Sepal', usernamePasswordVerifier)
@@ -55,10 +58,11 @@ class Main {
     }
 
     private static void stop() {
+        Endpoints.undeploy()
         dataProviderComponent?.stop()
         dataSearchComponent?.stop()
         sandboxManagerComponent?.stop()
         sandboxWebProxyComponent?.stop()
-        Endpoints.undeploy()
+        connectionManager.close()
     }
 }

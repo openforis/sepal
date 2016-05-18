@@ -64,4 +64,12 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager 
         def connection = connectionHolder.get()
         connection ? new Sql(connection) : new Sql(dataSource)
     }
+
+    void close() {
+        def connection = connectionHolder.get()
+        if (connection) {
+            connection.rollback()
+            connection.close()
+        }
+    }
 }
