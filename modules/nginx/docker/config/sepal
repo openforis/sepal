@@ -63,13 +63,42 @@ server {
         proxy_set_header X-Real-IP  $remote_addr;
     }
 
+    location = / {
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        proxy_pass              http://sepal:1025/;
+        proxy_read_timeout      90;
+    }
+
+    location /api/ {
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        proxy_pass              http://sepal:1025/api;
+        proxy_read_timeout      90;
+    }
+
+    location /static/ {
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        proxy_pass              http://sepal:1025;
+        proxy_read_timeout      90;
+        expires                 1y;
+        add_header              Cache-Control "public";
+        add_header              ETag "1"
+    }
+
     location / {
         proxy_set_header        Host $host;
         proxy_set_header        X-Real-IP $remote_addr;
         proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header        X-Forwarded-Proto $scheme;
-        # proxy_pass              https://php:9443;
-        proxy_pass              http://sepal:1025;
+        proxy_pass              https://php:9443/;
         proxy_read_timeout      90;
     }
 }

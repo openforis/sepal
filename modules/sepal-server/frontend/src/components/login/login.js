@@ -19,8 +19,8 @@ var Animation = require( '../animation/animation' )
 var template = require( './login.html' )
 var html     = $( template( {} ) )
 
-var bg01 = require( '../img/bg/bg-01.jpg' )
-var bg02 = require( '../img/bg/bg-02.jpg' )
+var bg01 = require( './bg-01.jpg' )
+var bg02 = require( './bg-02.jpg' )
 
 var showLogin = function () {
 
