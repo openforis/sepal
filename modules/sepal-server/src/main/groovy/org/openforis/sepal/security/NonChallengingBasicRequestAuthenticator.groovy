@@ -1,4 +1,5 @@
 package org.openforis.sepal.security
+
 import groovymvc.RequestContext
 import groovymvc.security.RequestAuthenticator
 import groovymvc.security.UsernamePasswordVerifier
@@ -7,11 +8,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import javax.servlet.http.HttpServletRequest
-
 import javax.servlet.http.HttpServletResponse
 
 class NonChallengingBasicRequestAuthenticator implements RequestAuthenticator {
     private static final String AUTHORIZATION_HEADER = "Authorization"
+    private static final String AUTHENTICATE_HEADER = "WWW-Authenticate"
+    private static final String NO_CHALLENGE_HEADER = "No-auth-challenge"
     private final String realm
     private final UsernamePasswordVerifier verifier
 
@@ -70,6 +72,12 @@ class NonChallengingBasicRequestAuthenticator implements RequestAuthenticator {
 
         private void challenge() {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
+
+            if (!request.headerNames.find { it.equalsIgnoreCase(NO_CHALLENGE_HEADER) }) {
+                def header = $/$HttpServletRequest.BASIC_AUTH realm="$realm"/$
+                response.setHeader(AUTHENTICATE_HEADER, header)
+            }
+
             halt(401)
         }
 

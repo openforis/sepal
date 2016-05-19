@@ -1,17 +1,12 @@
 package org.openforis.sepal
 
-import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.component.dataprovider.DataProviderComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
 import org.openforis.sepal.endpoint.Endpoints
-import org.openforis.sepal.security.AuthenticationEndpoint
-import org.openforis.sepal.security.GateOneAuthEndpoint
-import org.openforis.sepal.security.LdapUsernamePasswordVerifier
-import org.openforis.sepal.security.NonChallengingBasicRequestAuthenticator
-import org.openforis.sepal.security.SessionAwareAuthenticator
+import org.openforis.sepal.security.*
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JdbcUserRepository
 import org.slf4j.Logger
