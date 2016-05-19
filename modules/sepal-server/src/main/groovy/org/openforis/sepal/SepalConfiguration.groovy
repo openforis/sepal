@@ -170,6 +170,15 @@ class SepalConfiguration {
         getValue('ldap.password')
     }
 
+    String getGateOnePublicKey() {
+        getValue('gateone.publicKey')
+    }
+
+    String getGateOnePrivateKey() {
+        getValue('gateone.privateKey')
+    }
+
+
     String getValue(String key) {
         return properties.getProperty(key)
     }

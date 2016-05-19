@@ -1,6 +1,5 @@
 package org.openforis.sepal
 
-import com.mchange.v2.c3p0.ComboPooledDataSource
 import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.component.dataprovider.DataProviderComponent
@@ -9,6 +8,7 @@ import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.security.AuthenticationEndpoint
+import org.openforis.sepal.security.GateOneAuthEndpoint
 import org.openforis.sepal.security.LdapUsernamePasswordVerifier
 import org.openforis.sepal.security.SessionAwareAuthenticator
 import org.openforis.sepal.transaction.SqlConnectionManager
@@ -42,10 +42,12 @@ class Main {
             )
 
             def authenticationEndpoint = new AuthenticationEndpoint(userProvider, usernamePasswordVerifier)
+            def gateOneAuthEndpoint = new GateOneAuthEndpoint(config.gateOnePublicKey, config.gateOnePrivateKey)
             Endpoints.deploy(
                     config.webAppPort,
                     pathRestrictions,
                     authenticationEndpoint,
+                    gateOneAuthEndpoint,
                     dataProviderComponent,
                     dataSearchComponent,
                     sandboxManagerComponent,
