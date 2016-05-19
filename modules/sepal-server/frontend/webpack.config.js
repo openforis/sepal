@@ -45,7 +45,7 @@ module.exports = {
                 loader: 'file'
             },
             // inline base64 URLs for <=8k images, direct URLs for the rest
-            { test: /\.(png|jpg)$/, loader: 'url-loader?limit=8192&name=/static/[name]-[hash].[ext]' },
+            { test: /\.(png|jpg)$/, loader: 'url-loader?limit=8192&name=/static/[name].[ext]' },
             { test: /bootstrap\/dist\/js\/umd\//, loader: 'imports?jQuery=jquery' },
             { test: /\.html$/, loader: "underscore-template-loader" }
         ]
