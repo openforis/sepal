@@ -35,6 +35,6 @@
       DEPLOY_ENVIRONMENT_SEPAL_ENV: "{{ deploy_environment }}"
       INSTANCES_CONFIG_FILE_SEPAL_ENV: "{{ '/etc/sepal/instances_local.yml' if use_custom_host == true else '/etc/sepal/instances.yml' }}"
       SEPAL_VERSION_SEPAL_ENV: "{{ version }}"
-      HOSTING_SERVICE_SEPAL_ENV: "{{ gate_one_secret }}"
+      HOSTING_SERVICE_SEPAL_ENV: "{{ hosting_service }}"
       GATE_ONE_PUBLIC_SEPAL_ENV: "{{ gate_one_public }}"
       GATE_ONE_SECRET_SEPAL_ENV: "{{ gate_one_secret }}"
