@@ -27,6 +27,8 @@ $.ajaxSetup( {
 
     dataType: "json"
 
+    , headers: { 'No-auth-challenge': 'true' }
+
     , type: "GET"
 
     , error: function ( xhr, ajaxOptions, thrownError ) {

@@ -61,7 +61,6 @@ module.exports = {
         proxy: {
             // '*': { target: 'http://localhost:9999' }
             '*': { target: 'https://172.28.128.3' } // Vagrant box
-
         }
     }
 }
