@@ -28,7 +28,7 @@ var showLogin = function () {
 
     // init form
     var form       = html.find( 'form' )
-    var formNotify = form.find( '.form-notify' );
+    var formNotify = form.find( '.form-notify' )
 
     form.submit( function ( e ) {
         e.preventDefault()
@@ -79,14 +79,16 @@ var showLogin = function () {
     var $login = $( "#login" );
     Animation.animateIn( $login, function () {
         $login.find( '.container' ).addClass( 'login-container' )
+        //TODO
+        $login.find( 'input[name=user]' ).focusin()
     } )
 
-    setTimeout( function (  ) {
+    setTimeout( function () {
         // start bg slideshow
         siteBgSlideshow()
         siteBgStar()
 
-    } , 100 )
+    }, 100 )
 
 }
 
@@ -311,7 +313,7 @@ var siteBgStar = function () {
 }
 
 
-showLogin()
+// showLogin()
 
 EventBus.addEventListener( Events.LOGIN.SHOW, showLogin, this )
 EventBus.addEventListener( Events.LOGIN.HIDE, hideLogin, this )

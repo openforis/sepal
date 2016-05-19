@@ -52,5 +52,18 @@ var loadApp = function () {
 
 }
 
+var checkUser = function (  ) {
+    var params = {
+        url : '/api/user'
+        , success : function ( response ) {
+            // console.log( response )
+            EventBus.dispatch( Events.APP.USER_LOGGED_IN, null,  response )
+        }
+    }
+    EventBus.dispatch( Events.AJAX.REQUEST , null , params )
+}
+
+checkUser()
+
 // event handlers
 EventBus.addEventListener( Events.APP.USER_LOGGED_IN, userLoggedIn )
