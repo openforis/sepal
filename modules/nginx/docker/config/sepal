@@ -92,6 +92,8 @@ server {
         expires                 1y;
         add_header              Cache-Control "public";
         add_header              ETag "1";
+        gzip_types              text/plain text/css application/json application/javascript application/x-javascript
+                                text/xml application/xml application/xml+rss text/javascript;
     }
 
     location / {
