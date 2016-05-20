@@ -29,42 +29,25 @@ var init = function () {
 }
 
 var initTerminal = function ( response ) {
-    var terminalUri             = "ssh-gateway"
-    var authObject              = response.authObject
-    var registeredCloseCallback = false
-    
-    function initGateOne() {
-        var terminalCount = GateOne.Terminal.terminals.count()
-        for ( var i = 0; i < terminalCount; i++ )
-            GateOne.Terminal.closeTerminal( i )
-        GateOne.Terminal.newTerminal()
-    }
-    
+    var terminalUri = "ssh-gateway"
+    var authObject  = response.authObject
+    GateOne.Utils.deleteCookie( 'gateone_user', '/', '' ); // Deletes the 'gateone_user' cookie
     GateOne.Events.on( "go:js_loaded", function () {
-        if ( !registeredCloseCallback ) {
+        if ( GateOne.Terminal.closeTermCallbacks.length == 0 )
             GateOne.Terminal.closeTermCallbacks.push( function () {
-                initGateOne()
+                GateOne.Terminal.newTerminal()
             } )
-            registeredCloseCallback = true
-        }
-
-        initGateOne()
+        GateOne.Terminal.newTerminal()
     } )
-
-    GateOne.Utils.deleteCookie( 'gateone_user', '/', '' ) // Deletes the 'gateone_user' cookie
     GateOne.init( {
-        audibleBell           : false,
-        auth                  : authObject,
-        autoConnectURL        : 'ssh://' + Sepal.User.username + '@' + terminalUri + '?identities=id_rsa',
-        disableTermTransitions: true,
-        embedded              : true,
-        url                   : 'https://172.28.128.3/gateone',
-        // url                   : 'https://' + window.location.host + '/gateone',
-        showTitle             : false,
-        showToolbar           : false,
-        style                 : {}
+        url     : 'https://' + window.location.host + '/gateone',
+        // url           : 'https://172.28.128.3/gateone',
+        autoConnectURL: 'ssh://' + Sepal.User.username + '@' + terminalUri + '?identities=id_rsa',
+        auth          : authObject,
+        embedded      : true,
     } )
 }
-module.exports   = {
+
+module.exports = {
     init: init
 }

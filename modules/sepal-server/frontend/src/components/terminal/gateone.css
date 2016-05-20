@@ -1,16 +1,7 @@
-/*
-NOTE: All of Gate One's dynamically-loaded CSS uses relative font sizes (e.g. 1em or 100%).  The general font size of the document also controls the size of the SVG graphics.
-*/
-html, body {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    font-size: 1em;
-    min-height:100%;
+#go_default_noticecontainer, #go_default_controlsContainer, #go_default_infocontainer {
+    display: none !important;
 }
-/* html, body { min-height:100%; } */
-body {
-    padding: 0 0 0px;
-    background-color: #333;
-    color: #fff;
+
+.✈terminal_pre {
+    background-color: rgba(0, 0, 0, 0) !important;
 }
