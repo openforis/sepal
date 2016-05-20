@@ -24,20 +24,25 @@ var init = function () {
             , success: initTerminal
         }
         EventBus.dispatch( Events.AJAX.REQUEST, null, params )
-        
-    }
+    } else
+        window.setTimeout( function () {
+            focusTerminal()
+        }, 1000 )
 }
 
 function initTerminal( response ) {
     purgeUserPrefs()
     onTerminalInitialized( function () {
-        GateOne.Storage.clearDatabase('terminal')
+        GateOne.Storage.clearDatabase( 'terminal' )
         onTerminalClosed( function () { GateOne.Terminal.newTerminal() } )
         GateOne.Terminal.newTerminal()
+        window.setTimeout( function () {
+            focusTerminal()
+        }, 1000 )
     } )
     GateOne.init( {
-        url     : 'https://' + window.location.host + '/gateone',
-        // url           : 'https://172.28.128.3/gateone',
+        // url     : 'https://' + window.location.host + '/gateone',
+        url           : 'https://172.28.128.3/gateone',
         autoConnectURL: 'ssh://' + Sepal.User.username + '@ssh-gateway?identities=id_rsa',
         auth          : response.authObject,
         embedded      : true
@@ -56,6 +61,11 @@ function onTerminalInitialized( callback ) {
 function purgeUserPrefs() {
     if ( typeof(Storage) !== "undefined" )
         window.localStorage.removeItem( 'go_default_prefs' )
+}
+
+function focusTerminal() {
+    GateOne.Terminal.Input.capture()
+    $( '.✈terminal' ).click()
 }
 
 module.exports = {
