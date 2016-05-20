@@ -29,6 +29,12 @@ class AuthenticationEndpoint implements EndpointRegistry {
                 send toJson(user)
             }
 
+            post('/logout') {
+                request.session.removeAttribute(CURRENT_USER_SESSION_ATTRIBUTE)
+                request.session.invalidate()
+                response.status = 204
+            }
+
             get('/user') {
                 response.contentType = 'application/json'
                 send toJson(currentUser)
