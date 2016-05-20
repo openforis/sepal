@@ -33,7 +33,7 @@ var show = function () {
 
     btnSearch.empty().append( '<i class="fa fa-globe" aria-hidden="true"></i> Search' )
     btnBrowse.empty().append( '<i class="fa fa-folder-open" aria-hidden="true"></i> Browse' )
-    btnProcess.empty().append( '<i class="fa fa-space-shuttle" aria-hidden="true"></i> Process' )
+    btnProcess.empty().append( '<i class="fa fa-wrench" aria-hidden="true"></i> Process' )
     btnTerminal.empty().append( '<i class="fa fa-terminal" aria-hidden="true"></i> Terminal' )
 
     Animation.animateIn( btnSearch )
@@ -71,7 +71,7 @@ var collapseMenu = function ( button ) {
 
             btnSearch.empty().removeClass( 'expanded' ).append( '<i class="fa fa-globe" aria-hidden="true"></i>' )
             btnBrowse.empty().removeClass( 'expanded' ).append( '<i class="fa fa-folder-open" aria-hidden="true"></i>' )
-            btnProcess.empty().removeClass( 'expanded' ).append( '<i class="fa fa-space-shuttle" aria-hidden="true"></i>' )
+            btnProcess.empty().removeClass( 'expanded' ).append( '<i class="fa fa-wrench" aria-hidden="true"></i>' )
             btnTerminal.empty().removeClass( 'expanded' ).append( '<i class="fa fa-terminal" aria-hidden="true"></i>' )
 
             setTimeout( function () {
