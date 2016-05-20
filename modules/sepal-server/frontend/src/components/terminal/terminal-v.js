@@ -41,8 +41,8 @@ function initTerminal( response ) {
         }, 1000 )
     } )
     GateOne.init( {
-        // url     : 'https://' + window.location.host + '/gateone',
-        url           : 'https://172.28.128.3/gateone',
+        url     : 'https://' + window.location.host + '/gateone',
+        // url           : 'https://172.28.128.3/gateone',
         autoConnectURL: 'ssh://' + Sepal.User.username + '@ssh-gateway?identities=id_rsa',
         auth          : response.authObject,
         embedded      : true
