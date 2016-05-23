@@ -26,8 +26,7 @@ class SessionManager {
             WorkerInstanceManager instanceManager,
             SandboxSessionProvider sessionProvider,
             EventDispatcher eventDispatcher,
-            Clock clock
-    ) {
+            Clock clock) {
         this.sessionRepository = sessionRepository
         this.instanceManager = instanceManager
         this.sessionProvider = sessionProvider

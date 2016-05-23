@@ -23,6 +23,7 @@ DROP TABLE IF EXISTS sandbox_session;
 DROP TABLE IF EXISTS user_budget;
 DROP TABLE IF EXISTS user_monthly_storage;
 DROP TABLE IF EXISTS scene_meta_data;
+DROP TABLE IF EXISTS task;
 
 CREATE TABLE admin_groups (
   id         INT(10)      NOT NULL,
@@ -325,6 +326,15 @@ CREATE TABLE scene_meta_data (
   browse_url       VARCHAR(255) NOT NULL,
   update_time      TIMESTAMP    NOT NULL,
   PRIMARY KEY (id, meta_data_source)
+);
+
+CREATE TABLE task (
+  id        INT          NOT NULL AUTO_INCREMENT,
+  username  VARCHAR(255) NOT NULL,
+  state     VARCHAR(255) NOT NULL,
+  operation VARCHAR(255) NOT NULL,
+  data      VARCHAR(255) NOT NULL,
+  PRIMARY KEY (id)
 );
 
 CREATE INDEX idx_scene_meta_data_1 ON scene_meta_data (meta_data_source, scene_area_id, acquisition_date);

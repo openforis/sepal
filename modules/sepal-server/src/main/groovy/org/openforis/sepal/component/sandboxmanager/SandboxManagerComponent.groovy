@@ -43,13 +43,14 @@ final class SandboxManagerComponent implements EndpointRegistry, EventSource {
         )
     }
 
-    SandboxManagerComponent(DataSource dataSource,
-                            HostingService hostingService,
-                            SandboxSessionProvider sessionProvider,
-                            StorageUsageChecker storageUsageChecker,
-                            Clock clock) {
-        this.instanceManager = hostingService.workerInstanceManager
+    SandboxManagerComponent(
+            DataSource dataSource,
+            HostingService hostingService,
+            SandboxSessionProvider sessionProvider,
+            StorageUsageChecker storageUsageChecker,
+            Clock clock) {
         connectionManager = new SqlConnectionManager(dataSource)
+        instanceManager = hostingService.workerInstanceManager
         eventDispatcher = new HandlerRegistryEventDispatcher()
         def sessionRepository = new JdbcSessionRepository(connectionManager, clock)
         def userBudgetRepository = new JdbcUserBudgetRepository(connectionManager)
@@ -94,6 +95,7 @@ final class SandboxManagerComponent implements EndpointRegistry, EventSource {
     void stop() {
         sandboxWorkScheduler?.stop()
         storageUsageCheckScheduler?.stop()
+
     }
 
     def <R> R submit(Command<R> command) {

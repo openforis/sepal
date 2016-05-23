@@ -51,6 +51,7 @@ abstract class AbstractSandboxManagerTest extends Specification {
         component.register(Event, eventHandler)
     }
 
+
     private void insertUser(long userId, String username) {
         // TODO: Ugly setup of users
         def sql = new Sql(database.dataSource)
