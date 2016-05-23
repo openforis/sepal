@@ -329,11 +329,12 @@ CREATE TABLE scene_meta_data (
 );
 
 CREATE TABLE task (
-  id        INT          NOT NULL AUTO_INCREMENT,
-  username  VARCHAR(255) NOT NULL,
-  state     VARCHAR(255) NOT NULL,
-  operation VARCHAR(255) NOT NULL,
-  data      VARCHAR(255) NOT NULL,
+  id          INT          NOT NULL AUTO_INCREMENT,
+  username    VARCHAR(255) NOT NULL,
+  state       VARCHAR(255) NOT NULL,
+  instance_id VARCHAR(255) NOT NULL,
+  operation   VARCHAR(255) NOT NULL,
+  data        VARCHAR(255) NOT NULL,
   PRIMARY KEY (id)
 );
 

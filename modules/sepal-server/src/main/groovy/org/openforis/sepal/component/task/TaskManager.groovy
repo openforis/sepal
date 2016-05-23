@@ -1,95 +1,125 @@
 package org.openforis.sepal.component.task
 
-import org.openforis.sepal.component.sandboxmanager.SandboxSession
-import org.openforis.sepal.component.sandboxmanager.SandboxSessionProvider
-import org.openforis.sepal.component.sandboxmanager.SessionRepository
-import org.openforis.sepal.component.sandboxmanager.event.SessionClosed
-import org.openforis.sepal.component.sandboxmanager.event.SessionCreated
-import org.openforis.sepal.component.sandboxmanager.event.SessionDeployed
-import org.openforis.sepal.event.EventDispatcher
-import org.openforis.sepal.hostingservice.WorkerInstance
-import org.openforis.sepal.hostingservice.WorkerInstanceManager
+import groovy.transform.Immutable
 import org.openforis.sepal.util.Clock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
+import static org.openforis.sepal.component.task.Instance.Role.TASK_EXECUTOR
+import static org.openforis.sepal.component.task.State.*
 
 class TaskManager {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private final SessionRepository sessionRepository
-    private final WorkerInstanceManager instanceManager
-    private final SandboxSessionProvider sessionProvider
-    private final EventDispatcher eventDispatcher
+    private final TaskRepository taskRepository
+    private final InstanceProvider instanceProvider
     private final Clock clock
 
     TaskManager(
-            SessionRepository sessionRepository,
-            WorkerInstanceManager instanceManager,
-            SandboxSessionProvider sessionProvider,
-            EventDispatcher eventDispatcher,
+            TaskRepository taskRepository,
+            InstanceProvider instanceProvider,
             Clock clock) {
-        this.sessionRepository = sessionRepository
-        this.instanceManager = instanceManager
-        this.sessionProvider = sessionProvider
-        this.eventDispatcher = eventDispatcher
+        this.taskRepository = taskRepository
+        this.instanceProvider = instanceProvider
         this.clock = clock
     }
 
-    SandboxSession submit(Task task, String username, String instanceType) {
-        def pendingSession = sessionRepository.create(username, instanceType)
-        def session = instanceManager.allocate(pendingSession) { WorkerInstance instance ->
-            deploy(pendingSession, instance)
-        }
-        sessionRepository.update(session)
-        eventDispatcher.publish(new SessionCreated(session))
-        if (session.status == ACTIVE)
-            eventDispatcher.publish(new SessionDeployed(session))
-        return session
+    TaskStatus submitTask(String username, Task task, String instanceType) {
+        def instancesWithCorrectType = instanceProvider.allInstances()
+                .findAll { it.type == instanceType }
 
+        def taskExecutorInstance = instancesWithCorrectType.find { it.role == TASK_EXECUTOR && it.username == username }
+        if (taskExecutorInstance)
+            return submitTaskToExistingInstance(username, task, taskExecutorInstance)
+
+        def idleInstance = instancesWithCorrectType.find { it.idle }
+        if (idleInstance)
+            return deployToIdleInstance(username, task, idleInstance)
+
+        return launchInstance(username, task, instanceType)
     }
 
-    private SandboxSession deploy(SandboxSession pendingSession, WorkerInstance instance) {
-        try {
-            return sessionProvider.deploy(pendingSession, instance)
-        } catch (Exception e) {
-            closeSilently(pendingSession.starting(instance))
-            throw e
-        }
+    void cancel(long taskId) {
+        def status = updateTaskStateInRepository(taskId, CANCELED)
+        instanceProvider.release(status.instanceId)
     }
 
-    private void closeSilently(SandboxSession session) {
-        if (instanceManager.isSessionInstanceAvailable(session.id)) {
-            undeploy(session)
-            deallocate(session)
-        }
-        markAsClosedInRepository(session)
-        eventDispatcher.publish(new SessionClosed(session))
+    private TaskStatus launchInstance(String username, Task task, String instanceType) {
+        def instance = instanceProvider.launchReserved(username, TASK_EXECUTOR, instanceType)
+        return insertTaskInRepository(username, task, STARTING_INSTANCE, instance)
     }
 
-    private void undeploy(SandboxSession session) {
-        try {
-            sessionProvider.undeploy(session)
-        } catch (Exception e) {
-            LOG.warn("Closing session - Failed to undeploy session. Session: $session", e)
+    private TaskStatus submitTaskToExistingInstance(String username, Task task, Instance instance) {
+        switch (instance.state) {
+            case Instance.State.STARTING:
+                return insertTaskInRepository(username, task, STARTING_INSTANCE, instance)
+            case Instance.State.DEPLOYING:
+                return insertTaskInRepository(username, task, DEPLOYING, instance)
+            case Instance.State.ACTIVE:
+                return submitTaskToInstance(username, task, instance)
         }
+        throw new IllegalStateException("Unexpected instance state: $instance.state")
     }
 
-    private void deallocate(SandboxSession session) {
-        if (!session.instanceId)
-            return
-        try {
-            instanceManager.deallocate(session.instanceId)
-        } catch (Exception e) {
-            LOG.warn("Closing session - Failed to deallocate instance. Session: $session", e)
-        }
+    private TaskStatus deployToIdleInstance(String username, Task task, Instance instance) {
+        instanceProvider.reserve(instance, username, TASK_EXECUTOR, Instance.State.DEPLOYING)
+        return insertTaskInRepository(username, task, DEPLOYING, instance)
     }
 
-    private markAsClosedInRepository(SandboxSession session) {
-        try {
-            sessionRepository.close(session)
-        } catch (Exception e) {
-            LOG.warn("Closing session - Failed to mark session as closed in repository. Session: $session", e)
-        }
+    private TaskStatus submitTaskToInstance(String username, Task task, Instance instance) {
+        return insertTaskInRepository(username, task, SUBMITTED, instance)
+    }
+
+    private TaskStatus insertTaskInRepository(String username, Task task, State state, Instance instance) {
+        return taskRepository.insert(new TaskStatus(
+                username: username,
+                state: state,
+                instanceId: instance.id,
+                task: task
+        ))
+    }
+
+    private TaskStatus updateTaskStateInRepository(long taskId, State state) {
+        taskRepository.updateState(taskId, state)
+    }
+}
+
+interface InstanceProvider {
+    Instance launchReserved(String username, Instance.Role role, String instanceType)
+
+    Instance launchIdle(String instanceType)
+
+    void reserve(Instance idleInstance, String username, Instance.Role role, Instance.State state)
+
+    List<Instance> allInstances()
+
+    void release(String instanceId)
+}
+
+@Immutable
+class Instance {
+    String id
+    String host
+    String type
+    String username
+    Role role
+    State state
+    boolean idle
+
+    Instance toReserved(String username, Role role, State state) {
+        assert idle, 'Expected instance to be idle before reserving it'
+        new Instance(id: id, host: host, type: type, username: username, role: role, state: state, idle: false)
+    }
+
+    Instance toIdle() {
+        assert !idle, 'Did not expect instance to be idle before making it idle'
+        new Instance(id: id, host: host, type: type, username: null, role: null, state: null, idle: true)
+    }
+
+    enum Role {
+        SANDBOX, TASK_EXECUTOR
+    }
+
+    enum State {
+        STARTING, DEPLOYING, ACTIVE
     }
 }
