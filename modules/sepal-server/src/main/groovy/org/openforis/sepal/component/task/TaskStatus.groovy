@@ -20,8 +20,18 @@ class TaskStatus {
                 task: task
         )
     }
+
+    TaskStatus toActive() {
+        new TaskStatus(
+                id: id,
+                username: username,
+                state: State.ACTIVE,
+                instanceId: instanceId,
+                task: task
+        )
+    }
 }
 
 enum State {
-    STARTING_INSTANCE, DEPLOYING, SUBMITTED, CANCELED
+    INSTANCE_STARTING, PROVISIONING, ACTIVE, CANCELED
 }

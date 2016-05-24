@@ -20,7 +20,7 @@ class TaskStatuses_TaskComponentTest extends AbstractTaskComponentTest {
         then:
         def status = hasOneStatus()
         status.username == someUserName
-        status.state == STARTING_INSTANCE
+        status.state == INSTANCE_STARTING
         status.task == task
     }
 
@@ -32,7 +32,7 @@ class TaskStatuses_TaskComponentTest extends AbstractTaskComponentTest {
         then:
         def statuses = hasStatuses(2)
         statuses.each {
-            assert it.state == STARTING_INSTANCE
+            assert it.state == INSTANCE_STARTING
         }
     }
 
@@ -44,7 +44,7 @@ class TaskStatuses_TaskComponentTest extends AbstractTaskComponentTest {
 
         then:
         def status = hasOneStatus()
-        status.state == DEPLOYING
+        status.state == PROVISIONING
     }
 
     def 'Given a submitted task, when cancelling task, status has state CANCELED'() {
@@ -58,24 +58,75 @@ class TaskStatuses_TaskComponentTest extends AbstractTaskComponentTest {
         status.state == CANCELED
     }
 
-    final List<TaskStatus> listTaskStatuses(String username = someUserName) {
+    def 'Given two submitted task on same instance, when cancelling task, only first task is CANCELED'() {
+        submit task()
+        def taskId = submit(task()).id
+
+        when:
+        cancel(taskId)
+
+        then:
+        def statuses = hasStatuses(2)
+        statuses.first().state == INSTANCE_STARTING
+        statuses.last().state == CANCELED
+    }
+
+    def 'Given a submitted task, when instance has started, task is PROVISIONING'() {
+        def status = submit task()
+
+        when:
+        instanceStarted(status.instanceId)
+
+        then:
+        def provisioningStatus = hasOneStatus()
+        provisioningStatus.state == PROVISIONING
+    }
+
+    def 'Given a provisioning task, when submitting another task, task is PROVISIONING'() {
+        def status = submit task()
+        instanceStarted(status.instanceId)
+
+        when:
+        submit task()
+
+        then:
+        def statuses = hasStatuses(2)
+        statuses.each {
+            assert it.state == PROVISIONING
+        }
+    }
+
+    def 'Given a provisioning task, when provisioning is completed, task is ACTIVE'() {
+        def status = submit task()
+        instanceStarted(status.instanceId)
+
+        when:
+        instanceProvisioned(status)
+
+        then:
+        def activeStatus = hasOneStatus()
+        activeStatus.state == ACTIVE
+    }
+
+
+    List<TaskStatus> listTaskStatuses(String username = someUserName) {
         component.submit(new ListTaskStatuses(username: username))
     }
 
-    final void hasNoStatuses() {
+    void hasNoStatuses() {
         String username = someUserName
         def statuses = component.submit(new ListTaskStatuses(username: username))
         assert statuses.empty, "Expected no task statuses, got ${statuses.size()}: $statuses"
     }
 
-    final TaskStatus hasOneStatus() {
+    TaskStatus hasOneStatus() {
         String username = someUserName
         def statuses = component.submit(new ListTaskStatuses(username: username))
         assert statuses.size() == 1, "Expected one task statuses, got ${statuses.size()}: $statuses"
         return statuses.first()
     }
 
-    final List<TaskStatus> hasStatuses(int count) {
+    List<TaskStatus> hasStatuses(int count) {
         String username = someUserName
         def statuses = component.submit(new ListTaskStatuses(username: username))
         assert statuses.size() == count, "Expected $count task statuses, got ${statuses.size()}: $statuses"

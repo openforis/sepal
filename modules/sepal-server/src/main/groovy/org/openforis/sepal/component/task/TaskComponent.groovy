@@ -2,12 +2,12 @@ package org.openforis.sepal.component.task
 
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
-import org.openforis.sepal.component.task.command.CancelTask
-import org.openforis.sepal.component.task.command.CancelTaskHandler
-import org.openforis.sepal.component.task.command.SubmitTask
-import org.openforis.sepal.component.task.command.SubmitTaskHandler
+import org.openforis.sepal.component.task.command.*
+import org.openforis.sepal.component.task.event.TaskExecutorProvisioned
+import org.openforis.sepal.component.task.event.TaskExecutorStarted
 import org.openforis.sepal.component.task.query.ListTaskStatuses
 import org.openforis.sepal.component.task.query.ListTaskStatusesHandler
+import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.transaction.SqlConnectionManager
@@ -15,25 +15,36 @@ import org.openforis.sepal.util.Clock
 
 import javax.sql.DataSource
 
-class TaskComponent {
+final class TaskComponent {
+    private final SqlConnectionManager connectionManager
+    private final HandlerRegistryEventDispatcher eventDispatcher
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
-    private final SqlConnectionManager connectionManager
 
     TaskComponent(
             DataSource dataSource,
             InstanceProvider instanceProvider,
+            InstanceProvisioner instanceProvisioner,
+            TaskExecutorGateway taskExecutorGateway,
+            HandlerRegistryEventDispatcher eventDispatcher,
             Clock clock) {
         connectionManager = new SqlConnectionManager(dataSource)
+        this.eventDispatcher = eventDispatcher
+
         def taskRepository = new JdbcTaskRepository(connectionManager)
-        def taskManager = new TaskManager(taskRepository, instanceProvider, clock)
 
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
-                .register(SubmitTask, new SubmitTaskHandler(taskManager))
-                .register(CancelTask, new CancelTaskHandler(taskManager))
+                .register(SubmitTask, new SubmitTaskHandler(taskRepository, instanceProvider, eventDispatcher))
+                .register(CancelTask, new CancelTaskHandler(taskRepository, instanceProvider, eventDispatcher))
+                .register(ProvisionTaskExecutor, new ProvisionTaskExecutorHandler(taskRepository, instanceProvisioner))
+                .register(SubmitTasksToTaskExecutor, new SubmitTasksToTaskExecutorHandler(taskRepository, instanceProvider, taskExecutorGateway))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
                 .register(ListTaskStatuses, new ListTaskStatusesHandler(taskRepository))
+
+        eventDispatcher
+                .register(TaskExecutorStarted) { submit(new ProvisionTaskExecutor(instance: it.instance)) }
+                .register(TaskExecutorProvisioned) { submit(new SubmitTasksToTaskExecutor(instance: it.instance)) }
     }
 
     def <R> R submit(Command<R> command) {
