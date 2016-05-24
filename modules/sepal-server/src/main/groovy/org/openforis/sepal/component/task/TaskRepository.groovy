@@ -9,17 +9,17 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 import static org.openforis.sepal.component.task.State.*
 
 interface TaskRepository {
-    List<TaskStatus> userTasks(String username)
+    List<Task> userTasks(String username)
 
-    TaskStatus insert(TaskStatus status)
+    Task insert(Task task)
 
-    TaskStatus updateStateAndReturnIt(long taskId, State state)
+    Task updateStateAndReturnIt(long taskId, State state)
 
     void updateStateForInstance(String instanceId, State state)
 
-    boolean isInstanceIdle(String instanceId)
+    void eachPendingTask(List<Instance> instances, Closure taskCallback)
 
-    List<TaskStatus> instanceActive(String instanceId)
+    List<Instance> unusedInstances(List<Instance> instances)
 }
 
 class JdbcTaskRepository implements TaskRepository {
@@ -29,27 +29,27 @@ class JdbcTaskRepository implements TaskRepository {
         this.connectionManager = connectionManager
     }
 
-    List<TaskStatus> userTasks(String username) {
+    List<Task> userTasks(String username) {
         sql.rows('''
                 SELECT id, username, state, instance_id, operation, data
                 FROM task
                 WHERE username = ?
                 ORDER BY id
-        ''', [username]).collect { toTaskStatus(it) }
+        ''', [username]).collect { toTask(it) }
     }
 
-    TaskStatus insert(TaskStatus status) {
-        def data = JsonOutput.toJson(status.task.data)
+    Task insert(Task task) {
+        def data = JsonOutput.toJson(task.operation.data)
         def result = sql.executeInsert('''
                 INSERT INTO task (username, state, instance_id, operation, data)
                 VALUES(?, ?, ?, ?, ?)''', [
-                status.username, status.state.name(), status.instanceId, status.task.operation, data
+                task.username, task.state.name(), task.instanceId, task.operation.name, data
         ])
         def id = result[0][0] as long
-        return status.withId(id)
+        return task.withId(id)
     }
 
-    TaskStatus updateStateAndReturnIt(long taskId, State state) {
+    Task updateStateAndReturnIt(long taskId, State state) {
         updateState(taskId, state)
         def row = sql.firstRow('''
                 SELECT id, username, state, instance_id, operation, data
@@ -57,35 +57,46 @@ class JdbcTaskRepository implements TaskRepository {
                 WHERE id = ?''', [taskId])
         if (!row)
             throw new IllegalStateException("Unable to find task with id $taskId")
-        return toTaskStatus(row)
+        return toTask(row)
     }
 
     void updateStateForInstance(String instanceId, State state) {
         sql.executeUpdate('UPDATE task SET state = ? WHERE instance_id = ?', [state.name(), instanceId])
     }
 
-    boolean isInstanceIdle(String instanceId) {
-        def count = sql.firstRow('''
-                SELECT count(*) count
+    void eachPendingTask(List<Instance> instances, Closure callback) {
+        def instanceById = instances.collectEntries {
+            [(it.id): it]
+        }
+        def query = """
+                SELECT  id, username, state, instance_id, operation, data
                 FROM task
-                WHERE instance_id = ?
-                AND state IN (?, ?, ?)''', [instanceId, INSTANCE_STARTING.name(), PROVISIONING.name(), ACTIVE.name()]).count
-        return count == 0
-    }
-
-    List<TaskStatus> instanceActive(String instanceId) {
-        sql.rows('''
-                    SELECT id, username, state, instance_id, operation, data
-                    FROM task
-                    WHERE instance_id = ?
-                    AND state = ?
-                    ''', [instanceId, PROVISIONING.name()]).collect {
-            def status = toTaskStatus(it)
-            updateState(status.id, ACTIVE)
-            status.toActive()
+                WHERE instance_id in (${placeholders(instanceById.size())})
+                AND state IN (?, ?)""" as String
+        def params = [instanceById.keySet(), INSTANCE_STARTING.name(), PROVISIONING.name()].flatten() as List<Object>
+        sql.rows(query, params).each {
+            def task = toTask(it)
+            def instance = instanceById[task.instanceId]
+            callback(task, instance)
+            updateState(task.id, ACTIVE)
         }
     }
 
+    List<Instance> unusedInstances(List<Instance> instances) {
+        def instanceIds = instances.collect { it.id }
+        def query = """
+                SELECT DISTINCT instance_id
+                FROM task
+                WHERE instance_id in (${placeholders(instances.size())})
+                AND state in (?, ?, ?)""" as String
+        def params = [instanceIds, INSTANCE_STARTING.name(), PROVISIONING.name(), ACTIVE.name()].flatten() as List<Object>
+        def usedInstanceIds = sql.rows(query, params).collect { it.instance_id }.toSet()
+        return instances.findAll { !usedInstanceIds.contains(it.id) }
+    }
+
+    private String placeholders(int count) {
+        (['?'] * count).join(', ')
+    }
 
     private void updateState(long taskId, State state) {
         def updated = sql.executeUpdate('UPDATE task SET state = ? WHERE id = ?', [state.name(), taskId])
@@ -93,14 +104,14 @@ class JdbcTaskRepository implements TaskRepository {
             throw new IllegalStateException("Unable to find task with id $taskId")
     }
 
-    private TaskStatus toTaskStatus(GroovyRowResult row) {
-        new TaskStatus(
+    private Task toTask(GroovyRowResult row) {
+        new Task(
                 id: row.id,
                 username: row.username,
                 state: row.state as State,
                 instanceId: row.instance_id,
-                task: new Task(
-                        operation: row.operation,
+                operation: new Operation(
+                        name: row.operation,
                         data: new JsonSlurper().parseText(row.data) as Map
                 )
         )

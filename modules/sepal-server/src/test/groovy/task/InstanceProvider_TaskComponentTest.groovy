@@ -1,6 +1,7 @@
 package task
 
 import org.openforis.sepal.component.task.Instance
+import spock.lang.Ignore
 
 import static org.openforis.sepal.component.task.Instance.Role.TASK_EXECUTOR
 import static org.openforis.sepal.component.task.Instance.State.ACTIVE
@@ -8,17 +9,17 @@ import static org.openforis.sepal.component.task.Instance.State.ACTIVE
 class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
     def 'When submitting a task, an instance is launched'() {
         when:
-        submit task()
+        submit operation()
 
         then:
         instanceProvider.launchedOne()
     }
 
     def 'Given a submitted task, when submitting a second task, no new instance instance has been launched'() {
-        submit task()
+        submit operation()
 
         when:
-        submit task()
+        submit operation()
 
         then:
         instanceProvider.launchedOne()
@@ -28,7 +29,7 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
         def idleInstance = launchIdle()
 
         when:
-        submit task()
+        submit operation()
 
         then:
         def instance = instanceProvider.launchedOne()
@@ -36,7 +37,7 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
     }
 
     def 'Given a submitted task, when cancelling task, instance is made idle'() {
-        def taskId = submit(task()).id
+        def taskId = submit(operation()).id
 
         when:
         cancel(taskId)
@@ -49,8 +50,8 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
     }
 
     def 'Given two submitted task on same instance, when cancelling task, instance is still active'() {
-        submit task()
-        def taskId = submit(task()).id
+        submit operation()
+        def taskId = submit(operation()).id
 
         when:
         cancel(taskId)
@@ -64,7 +65,7 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
         launchIdle()
 
         when:
-        submitForInstanceType(task(), 'another-instance-type')
+        submitForInstanceType(operation(), 'another-instance-type')
 
         then:
         def instances = instanceProvider.launched(2)
@@ -73,10 +74,10 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
     }
 
     def 'Given a submitted task, when submitting a task for another instance type, a new instance is launched'() {
-        submit task()
+        submit operation()
 
         when:
-        submitForInstanceType(task(), 'another-instance-type')
+        submitForInstanceType(operation(), 'another-instance-type')
 
         then:
         def instances = instanceProvider.launched(2)
@@ -85,10 +86,10 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
     }
 
     def 'Given a submitted task, when submitting a task for another user, a new instance is launched'() {
-        submit task()
+        submit operation()
 
         when:
-        submitForUser(task(), 'another-username')
+        submitForUser(operation(), 'another-username')
 
         then:
         instanceProvider.launched(2)
@@ -96,11 +97,11 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
 
 
     def 'Given a provisioning task, when provisioning is completed, instance is ACTIVE'() {
-        def status = submit task()
-        instanceStarted(status.instanceId)
+        def task = submit operation()
+        instanceStarted(task.instanceId)
 
         when:
-        instanceProvisioned(status)
+        instanceProvisioned(task)
 
         then:
         def instance = instanceProvider.launchedOne()

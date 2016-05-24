@@ -9,7 +9,11 @@ interface InstanceProvider {
 
     void instanceActive(Instance instance)
 
+    void release(String instanceId)
+
     List<Instance> allInstances()
 
-    void release(String instanceId)
+    List<Instance> allTaskExecutors()
+
+    Instance getInstance(String instanceId)
 }

@@ -23,7 +23,7 @@ final class Instance {
     }
 
     Instance toActive() {
-        new Instance(id: id, host: host, type: type, username: username, role: Role.IDLE, state: ACTIVE)
+        new Instance(id: id, host: host, type: type, username: username, role: role, state: ACTIVE)
     }
 
     Instance toIdle() {

@@ -2,23 +2,23 @@ package org.openforis.sepal.component.task.query
 
 import groovy.transform.Immutable
 import org.openforis.sepal.component.task.TaskRepository
-import org.openforis.sepal.component.task.TaskStatus
+import org.openforis.sepal.component.task.Task
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 
 @Immutable
-class ListTaskStatuses implements Query<List<TaskStatus>> {
+class ListTaskTasks implements Query<List<Task>> {
     String username
 }
 
-class ListTaskStatusesHandler implements QueryHandler<List<TaskStatus>, ListTaskStatuses> {
+class ListTasksHandler implements QueryHandler<List<Task>, ListTaskTasks> {
     private final TaskRepository taskRepository
 
-    ListTaskStatusesHandler(TaskRepository taskRepository) {
+    ListTasksHandler(TaskRepository taskRepository) {
         this.taskRepository = taskRepository
     }
 
-    List<TaskStatus> execute(ListTaskStatuses query) {
+    List<Task> execute(ListTaskTasks query) {
         return taskRepository.userTasks(query.username)
     }
 }

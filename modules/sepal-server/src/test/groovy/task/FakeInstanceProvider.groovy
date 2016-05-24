@@ -53,6 +53,16 @@ class FakeInstanceProvider implements InstanceProvider {
         return instanceById.values().toList()
     }
 
+    List<Instance> allTaskExecutors() {
+        return allInstances().findAll { it.role == Instance.Role.TASK_EXECUTOR }
+    }
+
+    Instance getInstance(String instanceId) {
+        def instance = instanceById[instanceId]
+        assert instance, "No instance with id $instanceId: ${allInstances()}"
+        return instance
+    }
+
     Instance instanceStarted(String instanceId) {
         def instance = instanceById[instanceId]
         assert instance, "No instance with id $instanceId: ${allInstances()}"

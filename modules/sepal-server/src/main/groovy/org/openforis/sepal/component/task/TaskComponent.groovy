@@ -3,10 +3,11 @@ package org.openforis.sepal.component.task
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.component.task.command.*
+import org.openforis.sepal.component.task.event.TaskCanceled
 import org.openforis.sepal.component.task.event.TaskExecutorProvisioned
 import org.openforis.sepal.component.task.event.TaskExecutorStarted
-import org.openforis.sepal.component.task.query.ListTaskStatuses
-import org.openforis.sepal.component.task.query.ListTaskStatusesHandler
+import org.openforis.sepal.component.task.query.ListTaskTasks
+import org.openforis.sepal.component.task.query.ListTasksHandler
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
@@ -34,17 +35,23 @@ final class TaskComponent {
         def taskRepository = new JdbcTaskRepository(connectionManager)
 
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
-                .register(SubmitTask, new SubmitTaskHandler(taskRepository, instanceProvider, eventDispatcher))
-                .register(CancelTask, new CancelTaskHandler(taskRepository, instanceProvider, eventDispatcher))
+                .register(SubmitTask, new SubmitTaskHandler(taskRepository, instanceProvider, taskExecutorGateway))
+                .register(CancelTask, new CancelTaskHandler(taskRepository, instanceProvider, taskExecutorGateway))
                 .register(ProvisionTaskExecutor, new ProvisionTaskExecutorHandler(taskRepository, instanceProvisioner))
-                .register(SubmitTasksToTaskExecutor, new SubmitTasksToTaskExecutorHandler(taskRepository, instanceProvider, taskExecutorGateway))
+                .register(ActivateInstance, new ActivateInstanceHandler(instanceProvider))
+                .register(ExecutePendingTasks, new ExecutePendingTasksHandler(taskRepository, instanceProvider, taskExecutorGateway))
+                .register(ReleasedUnusedInstances, new ReleasedUnusedInstancesHandler(taskRepository, instanceProvider, instanceProvisioner))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
-                .register(ListTaskStatuses, new ListTaskStatusesHandler(taskRepository))
+                .register(ListTaskTasks, new ListTasksHandler(taskRepository))
 
         eventDispatcher
                 .register(TaskExecutorStarted) { submit(new ProvisionTaskExecutor(instance: it.instance)) }
-                .register(TaskExecutorProvisioned) { submit(new SubmitTasksToTaskExecutor(instance: it.instance)) }
+                .register(TaskExecutorProvisioned, {
+            submit(new ActivateInstance(instance: it.instance))
+            submit(new ExecutePendingTasks())
+        })
+                .register(TaskCanceled) { submit(new ReleasedUnusedInstances()) }
     }
 
     def <R> R submit(Command<R> command) {

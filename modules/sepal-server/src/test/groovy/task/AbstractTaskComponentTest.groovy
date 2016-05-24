@@ -2,9 +2,9 @@ package task
 
 import fake.Database
 import org.openforis.sepal.component.task.Instance
-import org.openforis.sepal.component.task.Task
+import org.openforis.sepal.component.task.Operation
 import org.openforis.sepal.component.task.TaskComponent
-import org.openforis.sepal.component.task.TaskStatus
+import org.openforis.sepal.component.task.Task
 import org.openforis.sepal.component.task.command.CancelTask
 import org.openforis.sepal.component.task.command.SubmitTask
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
@@ -19,7 +19,7 @@ abstract class AbstractTaskComponentTest extends Specification {
     final eventDispatcher = new HandlerRegistryEventDispatcher()
     final instanceProvider = new FakeInstanceProvider(eventDispatcher)
     final instanceProvisioner = new FakeInstanceProvisioner(eventDispatcher)
-    final tasxExecutorGateway = new FakeTaskExecutorGateway()
+    final tasxExecutorGateway = new FakeTaskExecutorGateway(eventDispatcher)
     final database = new Database()
     final component = new TaskComponent(
             database.dataSource,
@@ -34,15 +34,15 @@ abstract class AbstractTaskComponentTest extends Specification {
         component.stop()
     }
 
-    final TaskStatus submit(Task task) {
+    final Task submit(Operation task) {
         return component.submit(new SubmitTask(task: task, username: someUserName, instanceType: someInstanceType))
     }
 
-    final TaskStatus submitForInstanceType(Task task, String instanceType) {
+    final Task submitForInstanceType(Operation task, String instanceType) {
         return component.submit(new SubmitTask(task: task, username: someUserName, instanceType: instanceType))
     }
 
-    final TaskStatus submitForUser(Task task, String username) {
+    final Task submitForUser(Operation task, String username) {
         return component.submit(new SubmitTask(task: task, username: username, instanceType: someInstanceType))
     }
 
@@ -50,8 +50,8 @@ abstract class AbstractTaskComponentTest extends Specification {
         component.submit(new CancelTask(taskId: taskId, username: someUserName))
     }
 
-    final Task task() {
-        new Task(operation: 'someTask', data: [some: 'argument'])
+    final Operation operation() {
+        new Operation(name: 'someTask', data: [some: 'argument'])
     }
 
     final Instance launchIdle(String instanceType = someInstanceType) {
@@ -62,7 +62,7 @@ abstract class AbstractTaskComponentTest extends Specification {
         instanceProvider.instanceStarted(instanceId)
     }
 
-    Instance instanceProvisioned(TaskStatus status) {
-        instanceProvisioner.instanceProvisioned(status.instanceId)
+    Instance instanceProvisioned(Task task) {
+        instanceProvisioner.instanceProvisioned(task.instanceId)
     }
 }
