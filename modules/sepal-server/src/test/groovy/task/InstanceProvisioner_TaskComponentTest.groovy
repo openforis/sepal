@@ -12,7 +12,7 @@ class InstanceProvisioner_TaskComponentTest extends AbstractTaskComponentTest {
         def instance = instanceStarted(task.instanceId)
 
         then:
-        def provisioningInstance = provisioningOne()
+        def provisioningInstance = provisionedOne()
         provisioningInstance == instance.toProvisioning()
     }
 
@@ -24,15 +24,26 @@ class InstanceProvisioner_TaskComponentTest extends AbstractTaskComponentTest {
         cancel(task.id)
 
         then:
-        provisioningNone()
-    }
- // TODO: Make sure used instances are not undeployed
-
-    Instance provisioningOne() {
-        instanceProvisioner.provisioningOne(TASK_EXECUTOR)
+        provisionedNone()
     }
 
-    void provisioningNone() {
-        instanceProvisioner.provisioningNone(TASK_EXECUTOR)
+    def 'Given two submitted task on same instance, when cancelling one task, instance is not undeployed'() {
+        submit operation()
+        def task = submit(operation())
+        instanceStarted(task.instanceId)
+
+        when:
+        cancel(task.id)
+
+        then:
+        provisionedOne()
+    }
+
+    Instance provisionedOne() {
+        instanceProvisioner.provisionedOne(TASK_EXECUTOR)
+    }
+
+    void provisionedNone() {
+        instanceProvisioner.provisionedNone(TASK_EXECUTOR)
     }
 }

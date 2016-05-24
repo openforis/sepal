@@ -66,7 +66,6 @@ class FakeInstanceProvider implements InstanceProvider {
     Instance instanceStarted(String instanceId) {
         def instance = instanceById[instanceId]
         assert instance, "No instance with id $instanceId: ${allInstances()}"
-        // TODO: Handle startup of instances in other roles
         if (instance.role == Instance.Role.TASK_EXECUTOR) {
             def provisioningInstance = instance.toProvisioning()
             instanceById[instanceId] = provisioningInstance

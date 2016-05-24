@@ -21,14 +21,14 @@ class FakeInstanceProvisioner implements InstanceProvisioner {
         instanceById.remove(instance.id)
     }
 
-    Instance provisioningOne(Instance.Role role) {
+    Instance provisionedOne(Instance.Role role) {
         def provisionedInRole = allInstances().findAll { it.role == role }
         assert provisionedInRole.size() == 1, "Expected one instance of role $role to be provisioned. " +
                 "Actually provisioned ${provisionedInRole.size()}: $provisionedInRole"
         return provisionedInRole.first()
     }
 
-    void provisioningNone(Instance.Role role) {
+    void provisionedNone(Instance.Role role) {
         def provisionedInRole = allInstances().findAll { it.role == role }
         assert provisionedInRole.empty, "Expected no instance of role $role to be provisioned. " +
                 "Actually provisioned ${provisionedInRole.size()}: $provisionedInRole"
