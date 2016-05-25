@@ -1,6 +1,7 @@
 package task
 
 import org.openforis.sepal.component.task.Task
+import org.openforis.sepal.component.task.Timeout
 import org.openforis.sepal.component.task.query.ListTaskTasks
 
 import static org.openforis.sepal.component.task.State.*
@@ -43,8 +44,7 @@ class TaskList_TaskComponentTest extends AbstractTaskComponentTest {
         submit operation()
 
         then:
-        def task = hasOneTask()
-        task.state == PROVISIONING
+        hasOneTask().state == PROVISIONING
     }
 
     def 'Given a submitted task, when cancelling task, task has state CANCELED'() {
@@ -54,8 +54,7 @@ class TaskList_TaskComponentTest extends AbstractTaskComponentTest {
         cancel(taskId)
 
         then:
-        def task = hasOneTask()
-        task.state == CANCELED
+        hasOneTask().state == CANCELED
     }
 
     def 'Given two submitted task on same instance, when cancelling task, only first task is CANCELED'() {
@@ -75,38 +74,75 @@ class TaskList_TaskComponentTest extends AbstractTaskComponentTest {
         def submittedTask = submit operation()
 
         when:
-        instanceStarted(submittedTask.instanceId)
+        instanceStarted(submittedTask)
 
         then:
-        def task = hasOneTask()
-        task.state == PROVISIONING
+        hasOneTask().state == PROVISIONING
     }
 
     def 'Given a provisioning task, when submitting another task, task is PROVISIONING'() {
         def submittedTask = submit operation()
-        instanceStarted(submittedTask.instanceId)
+        instanceStarted(submittedTask)
 
         when:
         submit operation()
 
         then:
-        def tasks = hasTasks(2)
-        tasks.each {
+        hasTasks(2).each {
             assert it.state == PROVISIONING
         }
     }
 
     def 'Given a provisioning task, when provisioning is completed, task is ACTIVE'() {
         def submittedTask = submit operation()
-        instanceStarted(submittedTask.instanceId)
+        instanceStarted(submittedTask)
 
         when:
         instanceProvisioned(submittedTask)
 
         then:
-        def task = hasOneTask()
-        task.state == ACTIVE
+        hasOneTask().state == ACTIVE
     }
+
+    def 'Given a timed out startup, when locating timed out task, task is FAILED'() {
+        clock.set()
+        submit operation()
+        wait(Timeout.INSTANCE_STARTING)
+
+        when:
+        handleTimedOutTasks()
+
+        then:
+        hasOneTask().state == FAILED
+    }
+
+    def 'Given a timed out provisioning, when locating timed out task, task is FAILED'() {
+        clock.set()
+        def submittedTask = submit operation()
+        instanceStarted(submittedTask)
+        wait(Timeout.PROVISIONING)
+
+        when:
+        handleTimedOutTasks()
+
+        then:
+        hasOneTask().state == FAILED
+    }
+
+    def 'Given a timed out submission, when locating timed out task, task is FAILED'() {
+        clock.set()
+        def submittedTask = submit operation()
+        instanceStarted(submittedTask)
+        instanceProvisioned(submittedTask)
+        wait(Timeout.ACTIVE)
+
+        when:
+        handleTimedOutTasks()
+
+        then:
+        hasOneTask().state == FAILED
+    }
+
 
     List<Task> listTasks(String username = someUserName) {
         component.submit(new ListTaskTasks(username: username))
@@ -132,4 +168,7 @@ class TaskList_TaskComponentTest extends AbstractTaskComponentTest {
         return tasks
     }
 
+    private Date wait(Timeout timeout) {
+        clock.forward(timeout.time, timeout.timeUnit)
+    }
 }

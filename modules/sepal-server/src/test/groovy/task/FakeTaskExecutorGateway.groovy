@@ -25,15 +25,20 @@ class FakeTaskExecutorGateway implements TaskExecutorGateway {
         eventDispatcher.publish(new TaskCanceled(task: task, instance: instance))
     }
 
+    void executedNone() {
+        assert executed.empty,
+                "Expected no task to be executed. Actually executed ${executed.size()}: ${executed}"
+    }
+
     ExecutionRequest executedOne() {
         assert executed.size() == 1,
-                "Expected one task to be executed. Actually executed aunched ${executed.size()}: ${executed}"
+                "Expected one task to be executed. Actually executed ${executed.size()}: ${executed}"
         return executed.first()
     }
 
     List<ExecutionRequest> executed(int count) {
         assert executed.size() == count,
-                "Expected $count tasks to be executed. Actually executed aunched ${executed.size()}: ${executed}"
+                "Expected $count tasks to be executed. Actually executed ${executed.size()}: ${executed}"
         return executed.asImmutable()
     }
 

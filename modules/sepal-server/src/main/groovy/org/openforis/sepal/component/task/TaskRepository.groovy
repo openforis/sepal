@@ -5,6 +5,7 @@ import groovy.json.JsonSlurper
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.util.Clock
 
 import static org.openforis.sepal.component.task.State.*
 
@@ -20,18 +21,22 @@ interface TaskRepository {
     void eachPendingTask(List<Instance> instances, Closure taskCallback)
 
     List<Instance> unusedInstances(List<Instance> instances)
+
+    List<Task> timedOutTasks()
 }
 
 class JdbcTaskRepository implements TaskRepository {
     private final SqlConnectionManager connectionManager
+    private final Clock clock
 
-    JdbcTaskRepository(SqlConnectionManager connectionManager) {
+    JdbcTaskRepository(SqlConnectionManager connectionManager, Clock clock) {
         this.connectionManager = connectionManager
+        this.clock = clock
     }
 
     List<Task> userTasks(String username) {
         sql.rows('''
-                SELECT id, username, state, instance_id, operation, data
+                SELECT id, username, state, instance_id, operation, data, creation_time, update_time
                 FROM task
                 WHERE username = ?
                 ORDER BY id
@@ -39,11 +44,12 @@ class JdbcTaskRepository implements TaskRepository {
     }
 
     Task insert(Task task) {
+        def now = clock.now()
         def data = JsonOutput.toJson(task.operation.data)
         def result = sql.executeInsert('''
-                INSERT INTO task (username, state, instance_id, operation, data)
-                VALUES(?, ?, ?, ?, ?)''', [
-                task.username, task.state.name(), task.instanceId, task.operation.name, data
+                INSERT INTO task (username, state, instance_id, operation, data, creation_time, update_time)
+                VALUES(?, ?, ?, ?, ?, ?, ?)''', [
+                task.username, task.state.name(), task.instanceId, task.operation.name, data, now, now
         ])
         def id = result[0][0] as long
         return task.withId(id)
@@ -52,7 +58,7 @@ class JdbcTaskRepository implements TaskRepository {
     Task updateStateAndReturnIt(long taskId, State state) {
         updateState(taskId, state)
         def row = sql.firstRow('''
-                SELECT id, username, state, instance_id, operation, data
+                SELECT id, username, state, instance_id, operation, data, creation_time, update_time
                 FROM task
                 WHERE id = ?''', [taskId])
         if (!row)
@@ -61,7 +67,8 @@ class JdbcTaskRepository implements TaskRepository {
     }
 
     void updateStateForInstance(String instanceId, State state) {
-        sql.executeUpdate('UPDATE task SET state = ? WHERE instance_id = ?', [state.name(), instanceId])
+        sql.executeUpdate('UPDATE task SET state = ?, update_time = ? WHERE instance_id = ?',
+                [state.name(), clock.now(), instanceId])
     }
 
     void eachPendingTask(List<Instance> instances, Closure callback) {
@@ -69,7 +76,7 @@ class JdbcTaskRepository implements TaskRepository {
             [(it.id): it]
         }
         def query = """
-                SELECT  id, username, state, instance_id, operation, data
+                SELECT  id, username, state, instance_id, operation, data, creation_time, update_time
                 FROM task
                 WHERE instance_id in (${placeholders(instanceById.size())})
                 AND state IN (?, ?)""" as String
@@ -94,12 +101,30 @@ class JdbcTaskRepository implements TaskRepository {
         return instances.findAll { !usedInstanceIds.contains(it.id) }
     }
 
+    List<Task> timedOutTasks() {
+        sql.rows('''
+                SELECT id, username, state, instance_id, operation, data, creation_time, update_time
+                FROM task
+                WHERE (state = ? AND update_time < ?)
+                OR (state = ? AND update_time < ?)
+                OR (state = ? AND update_time < ?)
+            ''', [
+                INSTANCE_STARTING.name(), Timeout.INSTANCE_STARTING.get(clock),
+                PROVISIONING.name(), Timeout.PROVISIONING.get(clock),
+                ACTIVE.name(), Timeout.ACTIVE.get(clock),
+        ]).collect {
+            updateState(it.id, FAILED)
+            toTask(it)
+        }
+    }
+
     private String placeholders(int count) {
         (['?'] * count).join(', ')
     }
 
     private void updateState(long taskId, State state) {
-        def updated = sql.executeUpdate('UPDATE task SET state = ? WHERE id = ?', [state.name(), taskId])
+        def updated = sql.executeUpdate('UPDATE task SET state = ?, update_time = ? WHERE id = ?',
+                [state.name(), clock.now(), taskId])
         if (!updated)
             throw new IllegalStateException("Unable to find task with id $taskId")
     }
@@ -113,7 +138,9 @@ class JdbcTaskRepository implements TaskRepository {
                 operation: new Operation(
                         name: row.operation,
                         data: new JsonSlurper().parseText(row.data) as Map
-                )
+                ),
+                creationTime: row.creation_time,
+                updateTime: row.update_time
         )
     }
 

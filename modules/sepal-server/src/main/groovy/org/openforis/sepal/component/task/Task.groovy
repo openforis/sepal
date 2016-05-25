@@ -10,6 +10,8 @@ class Task {
     State state
     String instanceId
     Operation operation
+    Date creationTime
+    Date updateTime
 
     Task withId(long id) {
         new Task(
@@ -17,11 +19,13 @@ class Task {
                 username: username,
                 state: state,
                 instanceId: instanceId,
-                operation: operation
+                operation: operation,
+                creationTime: creationTime,
+                updateTime: updateTime
         )
     }
 }
 
 enum State {
-    INSTANCE_STARTING, PROVISIONING, ACTIVE, CANCELED
+    INSTANCE_STARTING, PROVISIONING, ACTIVE, CANCELED, FAILED
 }

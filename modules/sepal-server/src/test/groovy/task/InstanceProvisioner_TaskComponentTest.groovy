@@ -9,7 +9,7 @@ class InstanceProvisioner_TaskComponentTest extends AbstractTaskComponentTest {
         def task = submit operation()
 
         when:
-        def instance = instanceStarted(task.instanceId)
+        def instance = instanceStarted(task)
 
         then:
         def provisioningInstance = provisionedOne()
@@ -18,7 +18,7 @@ class InstanceProvisioner_TaskComponentTest extends AbstractTaskComponentTest {
 
     def 'Given a submitted task, when cancelling task, instance is undeployed'() {
         def task = submit(operation())
-        instanceStarted(task.instanceId)
+        instanceStarted(task)
 
         when:
         cancel(task.id)
@@ -30,7 +30,7 @@ class InstanceProvisioner_TaskComponentTest extends AbstractTaskComponentTest {
     def 'Given two submitted task on same instance, when cancelling one task, instance is not undeployed'() {
         submit operation()
         def task = submit(operation())
-        instanceStarted(task.instanceId)
+        instanceStarted(task)
 
         when:
         cancel(task.id)

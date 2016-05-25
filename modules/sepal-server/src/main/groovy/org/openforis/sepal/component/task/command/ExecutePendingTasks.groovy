@@ -25,10 +25,8 @@ class ExecutePendingTasksHandler implements CommandHandler<Void, ExecutePendingT
         def activeInstances = instanceProvider.allTaskExecutors().findAll {
             it.state == Instance.State.ACTIVE
         }
-
-        // TODO: Test for this case and enable
-//        if (activeInstances.empty)
-//            return
+        if (activeInstances == null)
+            return null
         taskRepository.eachPendingTask(activeInstances) { Task task, Instance instance ->
             taskExecutorGateway.execute(task, instance)
         }

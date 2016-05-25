@@ -28,11 +28,15 @@ class FakeClock implements Clock {
     }
 
     Date advance(long amount, TemporalUnit timeUnit) {
+        if (!currentDate)
+            set()
         def next = currentDate.toInstant().plus(amount, timeUnit)
         currentDate = Date.from(next)
     }
 
     Date forward(int time, TimeUnit timeUnit) {
+        if (!currentDate)
+            set()
         currentDate = new Date(currentDate.time + timeUnit.toMillis(time))
     }
 }

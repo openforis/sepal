@@ -98,7 +98,7 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
 
     def 'Given a provisioning task, when provisioning is completed, instance is ACTIVE'() {
         def task = submit operation()
-        instanceStarted(task.instanceId)
+        instanceStarted(task)
 
         when:
         instanceProvisioned(task)

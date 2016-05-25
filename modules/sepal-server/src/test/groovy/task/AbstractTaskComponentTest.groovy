@@ -3,9 +3,11 @@ package task
 import fake.Database
 import org.openforis.sepal.component.task.Instance
 import org.openforis.sepal.component.task.Operation
-import org.openforis.sepal.component.task.TaskComponent
 import org.openforis.sepal.component.task.Task
+import org.openforis.sepal.component.task.TaskComponent
 import org.openforis.sepal.component.task.command.CancelTask
+import org.openforis.sepal.component.task.command.ExecutePendingTasks
+import org.openforis.sepal.component.task.command.HandleTimedOutTasks
 import org.openforis.sepal.component.task.command.SubmitTask
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import sandboxmanager.FakeClock
@@ -46,8 +48,16 @@ abstract class AbstractTaskComponentTest extends Specification {
         return component.submit(new SubmitTask(task: task, username: username, instanceType: someInstanceType))
     }
 
+    final void executePendingTasks() {
+        component.submit(new ExecutePendingTasks())
+    }
+
     final void cancel(long taskId) {
         component.submit(new CancelTask(taskId: taskId, username: someUserName))
+    }
+
+    final void handleTimedOutTasks() {
+        component.submit(new HandleTimedOutTasks())
     }
 
     final Operation operation() {
@@ -58,8 +68,8 @@ abstract class AbstractTaskComponentTest extends Specification {
         instanceProvider.launchIdle(instanceType)
     }
 
-    Instance instanceStarted(String instanceId) {
-        instanceProvider.instanceStarted(instanceId)
+    Instance instanceStarted(Task task) {
+        instanceProvider.instanceStarted(task.instanceId)
     }
 
     Instance instanceProvisioned(Task task) {

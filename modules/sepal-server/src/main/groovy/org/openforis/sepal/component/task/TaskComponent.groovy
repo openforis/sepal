@@ -32,7 +32,7 @@ final class TaskComponent {
         connectionManager = new SqlConnectionManager(dataSource)
         this.eventDispatcher = eventDispatcher
 
-        def taskRepository = new JdbcTaskRepository(connectionManager)
+        def taskRepository = new JdbcTaskRepository(connectionManager, clock)
 
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
                 .register(SubmitTask, new SubmitTaskHandler(taskRepository, instanceProvider, taskExecutorGateway))
@@ -41,6 +41,7 @@ final class TaskComponent {
                 .register(ActivateInstance, new ActivateInstanceHandler(instanceProvider))
                 .register(ExecutePendingTasks, new ExecutePendingTasksHandler(taskRepository, instanceProvider, taskExecutorGateway))
                 .register(ReleasedUnusedInstances, new ReleasedUnusedInstancesHandler(taskRepository, instanceProvider, instanceProvisioner))
+                .register(HandleTimedOutTasks, new HandleTimedOutTasksHandler(taskRepository, instanceProvider))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
                 .register(ListTaskTasks, new ListTasksHandler(taskRepository))
