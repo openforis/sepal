@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+add-apt-repository "deb http://ppa.launchpad.net/natecarlson/maven3/ubuntu precise main"
+apt-get update -y && apt-get install -y --force-yes maven3
 
 useradd -m -d "${JENKINS_HOME}"  jenkins
 useradd -m -d /home/github github
@@ -10,7 +12,5 @@ chmod +x /downloads
 chmod +x /init_container
 chmod +x /jenkins.sh
 chmod +x /usr/local/bin/plugins.sh
-
-
 
 
