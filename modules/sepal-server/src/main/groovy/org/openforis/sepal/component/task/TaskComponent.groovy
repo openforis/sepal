@@ -6,6 +6,7 @@ import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.event.TaskCanceled
 import org.openforis.sepal.component.task.event.TaskExecutorProvisioned
 import org.openforis.sepal.component.task.event.TaskExecutorStarted
+import org.openforis.sepal.component.task.event.TasksTimedOut
 import org.openforis.sepal.component.task.query.ListTaskTasks
 import org.openforis.sepal.component.task.query.ListTasksHandler
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
@@ -41,18 +42,19 @@ final class TaskComponent {
                 .register(ActivateInstance, new ActivateInstanceHandler(instanceProvider))
                 .register(ExecutePendingTasks, new ExecutePendingTasksHandler(taskRepository, instanceProvider, taskExecutorGateway))
                 .register(ReleasedUnusedInstances, new ReleasedUnusedInstancesHandler(taskRepository, instanceProvider, instanceProvisioner))
-                .register(HandleTimedOutTasks, new HandleTimedOutTasksHandler(taskRepository, instanceProvider))
+                .register(HandleTimedOutTasks, new HandleTimedOutTasksHandler(taskRepository, eventDispatcher))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
                 .register(ListTaskTasks, new ListTasksHandler(taskRepository))
 
         eventDispatcher
                 .register(TaskExecutorStarted) { submit(new ProvisionTaskExecutor(instance: it.instance)) }
+                .register(TaskCanceled) { submit(new ReleasedUnusedInstances()) }
+                .register(TasksTimedOut) { submit(new ReleasedUnusedInstances()) }
                 .register(TaskExecutorProvisioned, {
             submit(new ActivateInstance(instance: it.instance))
             submit(new ExecutePendingTasks())
         })
-                .register(TaskCanceled) { submit(new ReleasedUnusedInstances()) }
     }
 
     def <R> R submit(Command<R> command) {

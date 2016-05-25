@@ -5,6 +5,7 @@ import org.openforis.sepal.component.task.Instance
 import org.openforis.sepal.component.task.Operation
 import org.openforis.sepal.component.task.Task
 import org.openforis.sepal.component.task.TaskComponent
+import org.openforis.sepal.component.task.Timeout
 import org.openforis.sepal.component.task.command.CancelTask
 import org.openforis.sepal.component.task.command.ExecutePendingTasks
 import org.openforis.sepal.component.task.command.HandleTimedOutTasks
@@ -74,5 +75,9 @@ abstract class AbstractTaskComponentTest extends Specification {
 
     Instance instanceProvisioned(Task task) {
         instanceProvisioner.instanceProvisioned(task.instanceId)
+    }
+
+    void wait(Timeout timeout) {
+        clock.forward(timeout.time, timeout.timeUnit)
     }
 }

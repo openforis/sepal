@@ -1,8 +1,10 @@
 package task
 
 import org.openforis.sepal.component.task.Instance
+import org.openforis.sepal.component.task.Timeout
 
 import static org.openforis.sepal.component.task.Instance.Role.TASK_EXECUTOR
+import static org.openforis.sepal.component.task.State.FAILED
 
 class InstanceProvisioner_TaskComponentTest extends AbstractTaskComponentTest {
     def 'Given a submitted task, when instance has started, it is provisioned'() {
@@ -37,6 +39,20 @@ class InstanceProvisioner_TaskComponentTest extends AbstractTaskComponentTest {
 
         then:
         provisionedOne()
+    }
+
+    def 'Given a timed out submission, when locating timed out task, instance is undeployed'() {
+        clock.set()
+        def submittedTask = submit operation()
+        instanceStarted(submittedTask)
+        instanceProvisioned(submittedTask)
+        wait(Timeout.ACTIVE)
+
+        when:
+        handleTimedOutTasks()
+
+        then:
+        provisionedNone()
     }
 
     Instance provisionedOne() {

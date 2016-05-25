@@ -167,8 +167,4 @@ class TaskList_TaskComponentTest extends AbstractTaskComponentTest {
         assert tasks.size() == count, "Expected $count tasks, got ${tasks.size()}: $tasks"
         return tasks
     }
-
-    private Date wait(Timeout timeout) {
-        clock.forward(timeout.time, timeout.timeUnit)
-    }
 }

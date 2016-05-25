@@ -1,8 +1,8 @@
 package task
 
-import org.openforis.sepal.component.task.Instance
-import spock.lang.Ignore
+import org.openforis.sepal.component.task.Timeout
 
+import static org.openforis.sepal.component.task.Instance.Role.IDLE
 import static org.openforis.sepal.component.task.Instance.Role.TASK_EXECUTOR
 import static org.openforis.sepal.component.task.Instance.State.ACTIVE
 
@@ -44,7 +44,7 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
 
         then:
         def instance = instanceProvider.launchedOne()
-        instance.role == Instance.Role.IDLE
+        instance.role == IDLE
         !instance.username
         !instance.state
     }
@@ -58,7 +58,7 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
 
         then:
         def instance = instanceProvider.launchedOne()
-        instance.role != Instance.Role.IDLE
+        instance.role != IDLE
     }
 
     def 'Given an idle instance, when submitting a task for another instance type, a new instance is launched'() {
@@ -95,7 +95,6 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
         instanceProvider.launched(2)
     }
 
-
     def 'Given a provisioning task, when provisioning is completed, instance is ACTIVE'() {
         def task = submit operation()
         instanceStarted(task)
@@ -104,7 +103,19 @@ class InstanceProvider_TaskComponentTest extends AbstractTaskComponentTest {
         instanceProvisioned(task)
 
         then:
-        def instance = instanceProvider.launchedOne()
-        instance.state == ACTIVE
+        instanceProvider.launchedOne().state == ACTIVE
+    }
+
+    def 'Given a timed out provisioning, when locating timed out task, instance is IDLE'() {
+        clock.set()
+        def submittedTask = submit operation()
+        instanceStarted(submittedTask)
+        wait(Timeout.PROVISIONING)
+
+        when:
+        handleTimedOutTasks()
+
+        then:
+        instanceProvider.launchedOne().role == IDLE
     }
 }
