@@ -3,6 +3,7 @@ package org.openforis.sepal.component.task.command
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.task.*
+import org.openforis.sepal.event.EventDispatcher
 
 import static org.openforis.sepal.component.task.Instance.Role.TASK_EXECUTOR
 import static org.openforis.sepal.component.task.State.ACTIVE
@@ -17,14 +18,17 @@ class SubmitTaskHandler implements CommandHandler<Task, SubmitTask> {
     private final TaskRepository taskRepository
     private final InstanceProvider instanceProvider
     private final TaskExecutorGateway taskExecutorGateway
+    private final EventDispatcher eventDispatcher
 
     SubmitTaskHandler(
             TaskRepository taskRepository,
             InstanceProvider instanceProvider,
-            TaskExecutorGateway taskExecutorGateway) {
+            TaskExecutorGateway taskExecutorGateway,
+            EventDispatcher eventDispatcher) {
         this.taskRepository = taskRepository
         this.instanceProvider = instanceProvider
         this.taskExecutorGateway = taskExecutorGateway
+        this.eventDispatcher = eventDispatcher
     }
 
     Task execute(SubmitTask command) {

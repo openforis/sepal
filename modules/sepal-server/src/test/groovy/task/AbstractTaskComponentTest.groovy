@@ -20,7 +20,7 @@ abstract class AbstractTaskComponentTest extends Specification {
 
     final clock = new FakeClock()
     final eventDispatcher = new HandlerRegistryEventDispatcher()
-    final instanceProvider = new FakeInstanceProvider(eventDispatcher)
+    def instanceProvider = new FakeInstanceProvider(eventDispatcher)
     final instanceProvisioner = new FakeInstanceProvisioner(eventDispatcher)
     final tasxExecutorGateway = new FakeTaskExecutorGateway(eventDispatcher)
     final database = new Database()

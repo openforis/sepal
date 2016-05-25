@@ -10,11 +10,9 @@ class HandlerRegistryEventDispatcher implements EventDispatcher, EventSource {
 
     void publish(Event event) {
         Is.notNull(event)
-        def handlers = handlersByType[event.class]
-        if (handlers == null)
-            handlers = handlersByType.find { type, potentialHandlers ->
-                type.isAssignableFrom(event.class)
-            }?.value
+        def handlers = handlersByType.findAll { type, potentialHandlers ->
+            type.isAssignableFrom(event.class)
+        }.collect { it.value }.flatten()
         handlers.each {
             it.handle(event)
         }

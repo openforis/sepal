@@ -4,7 +4,6 @@ import org.openforis.sepal.component.task.Instance
 import org.openforis.sepal.component.task.Timeout
 
 import static org.openforis.sepal.component.task.Instance.Role.TASK_EXECUTOR
-import static org.openforis.sepal.component.task.State.FAILED
 
 class InstanceProvisioner_TaskComponentTest extends AbstractTaskComponentTest {
     def 'Given a submitted task, when instance has started, it is provisioned'() {

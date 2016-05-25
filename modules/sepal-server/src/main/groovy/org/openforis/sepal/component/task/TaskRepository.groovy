@@ -52,7 +52,7 @@ class JdbcTaskRepository implements TaskRepository {
                 task.username, task.state.name(), task.instanceId, task.operation.name, data, now, now
         ])
         def id = result[0][0] as long
-        return task.withId(id)
+        return task.withId(id, now)
     }
 
     Task updateStateAndReturnIt(long taskId, State state) {

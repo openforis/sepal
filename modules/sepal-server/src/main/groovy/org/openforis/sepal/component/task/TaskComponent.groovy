@@ -9,6 +9,8 @@ import org.openforis.sepal.component.task.event.TaskExecutorStarted
 import org.openforis.sepal.component.task.event.TasksTimedOut
 import org.openforis.sepal.component.task.query.ListTaskTasks
 import org.openforis.sepal.component.task.query.ListTasksHandler
+import org.openforis.sepal.event.Event
+import org.openforis.sepal.event.EventHandler
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
@@ -36,7 +38,7 @@ final class TaskComponent {
         def taskRepository = new JdbcTaskRepository(connectionManager, clock)
 
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
-                .register(SubmitTask, new SubmitTaskHandler(taskRepository, instanceProvider, taskExecutorGateway))
+                .register(SubmitTask, new SubmitTaskHandler(taskRepository, instanceProvider, taskExecutorGateway, eventDispatcher))
                 .register(CancelTask, new CancelTaskHandler(taskRepository, instanceProvider, taskExecutorGateway))
                 .register(ProvisionTaskExecutor, new ProvisionTaskExecutorHandler(taskRepository, instanceProvisioner))
                 .register(ActivateInstance, new ActivateInstanceHandler(instanceProvider))
@@ -64,6 +66,12 @@ final class TaskComponent {
     def <R> R submit(Query<R> query) {
         queryDispatcher.submit(query)
     }
+
+    def <E extends Event> TaskComponent register(Class<E> eventType, EventHandler<E> handler) {
+        eventDispatcher.register(eventType, handler)
+        return this
+    }
+
 
     void stop() {
         connectionManager.close()

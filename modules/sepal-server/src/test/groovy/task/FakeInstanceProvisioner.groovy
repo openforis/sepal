@@ -8,16 +8,19 @@ import org.openforis.sepal.event.EventDispatcher
 class FakeInstanceProvisioner implements InstanceProvisioner {
     private final EventDispatcher eventDispatcher
     private final Map<String, Instance> instanceById = [:]
+    private final failureByMethod = [:] as Map<String, Closure>
 
     FakeInstanceProvisioner(EventDispatcher eventDispatcher) {
         this.eventDispatcher = eventDispatcher
     }
 
     void provision(Instance instance) {
+        maybeFail('provision')
         instanceById[instance.id] = instance
     }
 
     void reset(Instance instance) {
+        maybeFail('reset')
         instanceById.remove(instance.id)
     }
 
@@ -41,7 +44,17 @@ class FakeInstanceProvisioner implements InstanceProvisioner {
         return instance
     }
 
+    void fail(String method, Closure failure) {
+        failureByMethod[method] = failure
+    }
+
     private List<Instance> allInstances() {
         instanceById.values().toList()
+    }
+
+    private void maybeFail(String method) {
+        def failure = failureByMethod[method]
+        if (failure)
+            failure.call()
     }
 }

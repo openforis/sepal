@@ -1,5 +1,6 @@
 package task
 
+import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.component.task.Task
 import org.openforis.sepal.component.task.Timeout
 import org.openforis.sepal.component.task.query.ListTaskTasks
@@ -143,6 +144,31 @@ class TaskList_TaskComponentTest extends AbstractTaskComponentTest {
         hasOneTask().state == FAILED
     }
 
+    def 'Given a failing instance provider, when submitting a task, no task is stored'() {
+        instanceProvider.fail('launchReserved') { throw new IllegalStateException('Launch failed') }
+
+        when:
+        submit operation()
+
+        then:
+        def e = thrown ExecutionFailed
+        e.cause.message == 'Launch failed'
+        hasNoTasks()
+    }
+
+    def 'Given a failing instance provisioner, when submitting a task, task is FAILED'() {
+        instanceProvisioner.fail('provision') { throw new IllegalStateException('Provisioning failed') }
+
+        def submittedTask = submit operation()
+
+        when:
+        instanceStarted(submittedTask)
+
+        then:
+        def e = thrown ExecutionFailed
+        e.cause.message == 'Provisioning failed'
+        hasOneTask().state == FAILED
+    }
 
     List<Task> listTasks(String username = someUserName) {
         component.submit(new ListTaskTasks(username: username))

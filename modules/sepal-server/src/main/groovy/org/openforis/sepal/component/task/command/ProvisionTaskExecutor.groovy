@@ -5,8 +5,10 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.task.Instance
 import org.openforis.sepal.component.task.InstanceProvisioner
-import org.openforis.sepal.component.task.State
 import org.openforis.sepal.component.task.TaskRepository
+
+import static org.openforis.sepal.component.task.State.FAILED
+import static org.openforis.sepal.component.task.State.PROVISIONING
 
 @Immutable
 class ProvisionTaskExecutor extends AbstractCommand<Void> {
@@ -23,8 +25,13 @@ class ProvisionTaskExecutorHandler implements CommandHandler<Void, ProvisionTask
     }
 
     Void execute(ProvisionTaskExecutor command) {
-        instanceProvisioner.provision(command.instance)
-        taskRepository.updateStateForInstance(command.instance.id, State.PROVISIONING)
+        try {
+            instanceProvisioner.provision(command.instance)
+            taskRepository.updateStateForInstance(command.instance.id, PROVISIONING)
+        } catch (Exception e) {
+            taskRepository.updateStateForInstance(command.instance.id, FAILED)
+            throw e
+        }
         return null
     }
 }
