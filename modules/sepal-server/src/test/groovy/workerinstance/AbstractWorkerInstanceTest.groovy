@@ -16,7 +16,6 @@ abstract class AbstractWorkerInstanceTest extends Specification {
     final eventDispatcher = new HandlerRegistryEventDispatcher()
     final instanceProvider = new FakeInstanceProvider()
     final instanceProvisioner = new FakeInstanceProvisioner()
-    final budgetChecker = new FakeBudgetChecker()
     final clock = new FakeClock()
     final component = new WorkerInstanceComponent(
             database.dataSource,
