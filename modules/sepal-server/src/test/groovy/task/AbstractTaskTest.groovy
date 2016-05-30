@@ -13,7 +13,7 @@ import spock.lang.Specification
 abstract class AbstractTaskTest extends Specification {
     final database = new Database()
     final eventDispatcher = new HandlerRegistryEventDispatcher()
-    def sessionManager = new FakeWorkerSessionManager()
+    final sessionManager = new FakeWorkerSessionManager()
     final workerGateway = new FakeWorkerGateway()
     final clock = new FakeClock()
     final component = new TaskComponent(

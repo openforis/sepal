@@ -59,7 +59,7 @@ abstract class AbstractComponent implements Component {
         return this
     }
 
-    final void stop() {
+    void stop() {
         connectionManager.close()
     }
 }
