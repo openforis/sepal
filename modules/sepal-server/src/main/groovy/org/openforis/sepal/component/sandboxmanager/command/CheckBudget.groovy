@@ -31,5 +31,4 @@ class CheckBudgetHandler implements CommandHandler<Void, CheckBudget> {
         }
         return null
     }
-
 }

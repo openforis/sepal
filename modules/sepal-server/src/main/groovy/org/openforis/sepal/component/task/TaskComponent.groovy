@@ -1,79 +1,41 @@
 package org.openforis.sepal.component.task
 
-import org.openforis.sepal.command.Command
-import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
+import org.openforis.sepal.component.AbstractComponent
+import org.openforis.sepal.component.task.adapter.JdbcTaskRepository
+import org.openforis.sepal.component.task.api.WorkerGateway
+import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.component.task.command.*
-import org.openforis.sepal.component.task.event.TaskCanceled
-import org.openforis.sepal.component.task.event.TaskExecutorProvisioned
-import org.openforis.sepal.component.task.event.TaskExecutorStarted
-import org.openforis.sepal.component.task.event.TasksTimedOut
-import org.openforis.sepal.component.task.query.ListTaskTasks
-import org.openforis.sepal.component.task.query.ListTasksHandler
-import org.openforis.sepal.event.Event
-import org.openforis.sepal.event.EventHandler
+import org.openforis.sepal.component.task.query.UserTasks
+import org.openforis.sepal.component.task.query.UserTasksHandler
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
-import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
-import org.openforis.sepal.query.Query
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 
 import javax.sql.DataSource
 
-final class TaskComponent {
-    private final SqlConnectionManager connectionManager
-    private final HandlerRegistryEventDispatcher eventDispatcher
-    private final HandlerRegistryCommandDispatcher commandDispatcher
-    private final HandlerRegistryQueryDispatcher queryDispatcher
-
+class TaskComponent extends AbstractComponent {
     TaskComponent(
             DataSource dataSource,
-            InstanceProvider instanceProvider,
-            InstanceProvisioner instanceProvisioner,
-            TaskExecutorGateway taskExecutorGateway,
             HandlerRegistryEventDispatcher eventDispatcher,
+            WorkerSessionManager sessionManager,
+            WorkerGateway workerGateway,
             Clock clock) {
-        connectionManager = new SqlConnectionManager(dataSource)
-        this.eventDispatcher = eventDispatcher
-
+        super(dataSource, eventDispatcher)
+        def connectionManager = new SqlConnectionManager(dataSource)
         def taskRepository = new JdbcTaskRepository(connectionManager, clock)
 
-        commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
-                .register(SubmitTask, new SubmitTaskHandler(taskRepository, instanceProvider, taskExecutorGateway, eventDispatcher))
-                .register(CancelTask, new CancelTaskHandler(taskRepository, instanceProvider, taskExecutorGateway))
-                .register(ProvisionTaskExecutor, new ProvisionTaskExecutorHandler(taskRepository, instanceProvisioner))
-                .register(ActivateInstance, new ActivateInstanceHandler(instanceProvider))
-                .register(ExecutePendingTasks, new ExecutePendingTasksHandler(taskRepository, instanceProvider, taskExecutorGateway))
-                .register(ReleasedUnusedInstances, new ReleasedUnusedInstancesHandler(taskRepository, instanceProvider, instanceProvisioner))
-                .register(HandleTimedOutTasks, new HandleTimedOutTasksHandler(taskRepository, eventDispatcher))
+        command(SubmitTask, new SubmitTaskHandler(taskRepository, sessionManager, workerGateway, clock))
+        command(ExecuteTasksInSession, new ExecuteTasksInSessionHandler(taskRepository, workerGateway))
+        command(CancelTask, new CancelTaskHandler(taskRepository, sessionManager, workerGateway))
+        command(CancelTimedOutTasks, new CancelTimedOutTasksHandler(taskRepository, sessionManager, workerGateway))
+        command(CancelUserTasks, new CancelUserTasksHandler(taskRepository, sessionManager, workerGateway))
+        command(UpdateTaskProgress, new UpdateTaskProgressHandler(taskRepository, sessionManager))
+        command(RemoveTask, new RemoveTaskHandler(taskRepository))
+        command(RemoveUserTasks, new RemoveUserTasksHandler(taskRepository))
 
-        queryDispatcher = new HandlerRegistryQueryDispatcher()
-                .register(ListTaskTasks, new ListTasksHandler(taskRepository))
+        query(UserTasks, new UserTasksHandler(taskRepository))
 
-        eventDispatcher
-                .register(TaskExecutorStarted) { submit(new ProvisionTaskExecutor(instance: it.instance)) }
-                .register(TaskCanceled) { submit(new ReleasedUnusedInstances()) }
-                .register(TasksTimedOut) { submit(new ReleasedUnusedInstances()) }
-                .register(TaskExecutorProvisioned, {
-            submit(new ActivateInstance(instance: it.instance))
-            submit(new ExecutePendingTasks())
-        })
-    }
-
-    def <R> R submit(Command<R> command) {
-        commandDispatcher.submit(command)
-    }
-
-    def <R> R submit(Query<R> query) {
-        queryDispatcher.submit(query)
-    }
-
-    def <E extends Event> TaskComponent register(Class<E> eventType, EventHandler<E> handler) {
-        eventDispatcher.register(eventType, handler)
-        return this
-    }
-
-
-    void stop() {
-        connectionManager.close()
+        sessionManager.onSessionActivated { submit(new ExecuteTasksInSession(session: it)) }
+        sessionManager.onSessionClosed { submit(new ExecuteTasksInSession(session: it)) }
     }
 }

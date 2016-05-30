@@ -8,35 +8,39 @@ import java.util.concurrent.TimeUnit
 
 class FakeClock implements Clock {
     def systemClock = new SystemClock()
-    private Date currentDate
+    private Date currentTime
 
     Date now() {
-        return currentDate ?: systemClock.now()
+        return currentTime ?: systemClock.now()
     }
 
     Date set() {
-        currentDate = new Date()
+        currentTime = new Date()
+    }
+
+    Date set(Date date) {
+        currentTime = date
     }
 
     Date set(String date) {
-        currentDate = Date.parse('yyyy-MM-dd', date)
+        currentTime = Date.parse('yyyy-MM-dd', date)
     }
 
 
     Date set(String date, String time) {
-        currentDate = Date.parse('yyyy-MM-dd HH:mm:ss', "$date $time")
+        currentTime = Date.parse('yyyy-MM-dd HH:mm:ss', "$date $time")
     }
 
     Date advance(long amount, TemporalUnit timeUnit) {
-        if (!currentDate)
+        if (!currentTime)
             set()
-        def next = currentDate.toInstant().plus(amount, timeUnit)
-        currentDate = Date.from(next)
+        def next = currentTime.toInstant().plus(amount, timeUnit)
+        currentTime = Date.from(next)
     }
 
     Date forward(int time, TimeUnit timeUnit) {
-        if (!currentDate)
+        if (!currentTime)
             set()
-        currentDate = new Date(currentDate.time + timeUnit.toMillis(time))
+        currentTime = new Date(currentTime.time + timeUnit.toMillis(time))
     }
 }
