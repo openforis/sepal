@@ -6,13 +6,4 @@ import groovy.transform.Immutable
 class WorkerInstance {
     String id
     String host
-    State state
-
-    WorkerInstance activate() {
-        new WorkerInstance(id: id, host: host, state: State.ACTIVE)
-    }
-
-    enum State {
-        PENDING, ACTIVE
-    }
 }

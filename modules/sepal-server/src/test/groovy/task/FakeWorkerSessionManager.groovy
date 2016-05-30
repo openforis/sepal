@@ -9,7 +9,6 @@ class FakeWorkerSessionManager implements WorkerSessionManager {
     private final Map<String, WorkerSession> sessionById = [:]
     private final List<WorkerSession> closedSessions = []
     private final List<Closure> sessionActivatedListeners = []
-    private final List<Closure> sessionClosedListeners = []
     private final List<String> heartbeats = []
 
     WorkerSession requestSession(String username, String instanceType) {
@@ -18,15 +17,14 @@ class FakeWorkerSessionManager implements WorkerSessionManager {
         return session
     }
 
-    WorkerSession findOrRequestSession(String username, String instanceType) {
-        return allSessions()
+    WorkerSession findPendingOrActiveSession(String username, String instanceType) {
+        allSessions()
                 .findAll { it.state != WorkerSession.State.CLOSED }
                 .findAll { it.instanceType == instanceType }
-        .find { it.username == username } ?:
-                requestSession(username, instanceType)
+                .find { it.username == username }
     }
 
-    WorkerSession findSession(String sessionId) {
+    WorkerSession findSessionById(String sessionId) {
         sessionById[sessionId]
     }
 
@@ -40,10 +38,6 @@ class FakeWorkerSessionManager implements WorkerSessionManager {
 
     void onSessionActivated(Closure listener) {
         sessionActivatedListeners << listener
-    }
-
-    void onSessionClosed(Closure listener) {
-        sessionClosedListeners << listener
     }
 
     WorkerSession activate(String sessionId) {

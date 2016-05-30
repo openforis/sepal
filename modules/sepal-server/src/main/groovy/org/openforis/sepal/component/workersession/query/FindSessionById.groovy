@@ -7,19 +7,18 @@ import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 
 @Immutable
-class UserWorkerSessions implements Query<List<WorkerSession>> {
-    String username
-    List<WorkerSession.State> states = []
+class FindSessionById implements Query<WorkerSession> {
+    String sessionId
 }
 
-class UserWorkerSessionsHandler implements QueryHandler<List<WorkerSession>, UserWorkerSessions> {
+class FindSessionByIdHandler implements QueryHandler<WorkerSession, FindSessionById> {
     private final WorkerSessionRepository sessionRepository
 
-    UserWorkerSessionsHandler(WorkerSessionRepository sessionRepository) {
+    FindSessionByIdHandler(WorkerSessionRepository sessionRepository) {
         this.sessionRepository = sessionRepository
     }
 
-    List<WorkerSession> execute(UserWorkerSessions command) {
-        sessionRepository.userSessions(command.username, command.states)
+    WorkerSession execute(FindSessionById query) {
+        return sessionRepository.getSession(query.sessionId)
     }
 }

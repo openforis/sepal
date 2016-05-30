@@ -7,12 +7,12 @@ import static org.openforis.sepal.component.workersession.api.WorkerSession.Stat
 class RequestSession_Test extends AbstractWorkerSessionTest {
     def 'When requesting sandbox session, budget is checked, instance is requested, a generated session id is returned, and session is pending'() {
         when:
-        def sessionId = requestSession()
+        def session = requestSession()
 
         then:
         budgetChecker.budgetChecked
         instanceManager.requestedOne()
-        sessionId
+        session
         oneSessionIs PENDING
     }
 

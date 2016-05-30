@@ -37,6 +37,5 @@ class TaskComponent extends AbstractComponent {
         query(UserTasks, new UserTasksHandler(taskRepository))
 
         sessionManager.onSessionActivated { submit(new ExecuteTasksInSession(session: it)) }
-        sessionManager.onSessionClosed { submit(new ExecuteTasksInSession(session: it)) }
     }
 }

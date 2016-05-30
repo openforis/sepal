@@ -26,4 +26,15 @@ class CloseSession_Test extends AbstractWorkerSessionTest {
         noSessionIs CLOSED
         thrown ExecutionFailed
     }
+
+    def 'Given a session, when closing the session without a specified user, session is closed and instance is released'() {
+        def session = requestSession()
+
+        when:
+        closeSession(session, [username: null])
+
+        then:
+        oneSessionIs CLOSED
+        instanceManager.releasedOne()
+    }
 }

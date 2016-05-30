@@ -15,8 +15,7 @@ class FakeInstanceManager implements InstanceManager {
         if (fail) throw new IllegalStateException('Failed to request instance')
         def instance = new WorkerInstance(
                 id: UUID.randomUUID().toString(),
-                host: UUID.randomUUID().toString(),
-                state: WorkerInstance.State.PENDING
+                host: UUID.randomUUID().toString()
         )
         instanceById[instance.id] = instance
         return instance
@@ -61,7 +60,6 @@ class FakeInstanceManager implements InstanceManager {
 
     WorkerInstance activate(String instanceId) {
         def instance = instanceById[instanceId]
-        instanceById[instanceId] = instance.activate()
         instanceActivatedListener*.call(instance)
     }
 

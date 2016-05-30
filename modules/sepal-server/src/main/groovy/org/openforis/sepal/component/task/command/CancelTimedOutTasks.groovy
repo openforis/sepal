@@ -27,7 +27,7 @@ class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutT
             taskRepository.update(it.fail())
         }
         def sessionById = timedOutTasks.findAll { it.sessionId }.unique().collectEntries() {
-            [(it.sessionId): sessionManager.findSession(it.sessionId)]
+            [(it.sessionId): sessionManager.findSessionById(it.sessionId)]
         } as Map<String, WorkerSession>
 
         timedOutTasks

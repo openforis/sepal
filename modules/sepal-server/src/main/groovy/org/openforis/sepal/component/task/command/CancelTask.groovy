@@ -27,7 +27,7 @@ class CancelTaskHandler implements CommandHandler<Void, CancelTask> {
         if (task.username && task.username != command.username)
             throw new UnauthorizedExecution("Task not owned by user: $task", command)
         taskRepository.update(task.cancel())
-        def session = sessionManager.findSession(task.sessionId)
+        def session = sessionManager.findSessionById(task.sessionId)
         if (task.active)
             workerGateway.cancel(command.taskId, session)
         def tasksInSession = taskRepository.pendingOrActiveTasksInSession(session.id)

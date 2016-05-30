@@ -9,6 +9,8 @@ import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 
+import java.sql.Timestamp
+
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
 
@@ -48,7 +50,7 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
         toSession(row)
     }
 
-    List<WorkerSession> userSessions(String username, List<WorkerSession.State> states) {
+    List<WorkerSession> userSessions(String username, List<WorkerSession.State> states, String instanceType = null) {
         def query = '''
                 SELECT id, state, username, worker_type, instance_type, instance_id, host, creation_time, update_time
                 FROM worker_session
@@ -56,8 +58,13 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
         if (states)
             query += """
                 AND state IN (${(['?'] * states.size()).join(', ')})"""
-        sql.rows(query as String, [username] + states.collect { it.name() }
-        ).collect { toSession(it) }
+        def params = [username] + states.collect { it.name() }
+        if (instanceType) {
+            query += """
+                AND instance_type = ?"""
+            params << instanceType
+        }
+        sql.rows(query as String, params).collect { toSession(it) }
     }
 
     List<WorkerSession> pendingOrActiveSessions() {
@@ -98,9 +105,13 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
                 workerType: row.worker_type,
                 instanceType: row.instance_type,
                 instance: new WorkerInstance(id: row.instance_id, host: row.host),
-                creationTime: row.creation_time,
-                updateTime: row.update_time
+                creationTime: toDate(row.creation_time),
+                updateTime: toDate(row.update_time)
         )
+    }
+
+    private Date toDate(date) {
+        new Date((date as Timestamp).time)
     }
 
     private Sql getSql() {

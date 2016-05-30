@@ -32,7 +32,8 @@ class SubmitTaskHandler implements CommandHandler<Task, SubmitTask> {
     }
 
     Task execute(SubmitTask command) {
-        def session = sessionManager.findOrRequestSession(command.username, command.instanceType)
+        def session = sessionManager.findPendingOrActiveSession(command.username, command.instanceType) ?:
+                sessionManager.requestSession(command.username, command.instanceType)
         def now = clock.now()
         def task = new Task(
                 id: UUID.randomUUID().toString(),

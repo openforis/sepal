@@ -1,0 +1,29 @@
+package org.openforis.sepal.component.workersession.query
+
+import groovy.transform.Immutable
+import org.openforis.sepal.component.workersession.api.WorkerSession
+import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
+import org.openforis.sepal.query.Query
+import org.openforis.sepal.query.QueryHandler
+
+import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
+import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
+
+@Immutable
+class FindPendingOrActiveSession implements Query<WorkerSession> {
+    String username
+    String instanceType
+}
+
+class FindPendingOrActiveSessionHandler implements QueryHandler<WorkerSession, FindPendingOrActiveSession> {
+    private final WorkerSessionRepository sessionRepository
+
+    FindPendingOrActiveSessionHandler(WorkerSessionRepository sessionRepository) {
+        this.sessionRepository = sessionRepository
+    }
+
+    WorkerSession execute(FindPendingOrActiveSession query) {
+        def sessions = sessionRepository.userSessions(query.username, [PENDING, ACTIVE], query.instanceType)
+        sessions.find { it.active } ?: sessions.find { it.pending }
+    }
+}

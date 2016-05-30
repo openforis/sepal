@@ -26,7 +26,7 @@ class CancelUserTasksHandler implements CommandHandler<Void, CancelUserTasks> {
         tasks.each { taskRepository.update(it.cancel()) }
 
         def sessionById = tasks.findAll { it.sessionId }.unique().collectEntries() {
-            [(it.sessionId): sessionManager.findSession(it.sessionId)]
+            [(it.sessionId): sessionManager.findSessionById(it.sessionId)]
         } as Map<String, WorkerSession>
 
         tasks.findAll { it.active }

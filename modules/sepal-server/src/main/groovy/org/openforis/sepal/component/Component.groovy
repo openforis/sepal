@@ -13,7 +13,16 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 
 import javax.sql.DataSource
 
-abstract class AbstractComponent {
+interface Component {
+
+    def <R> R submit(Command<R> command)
+
+    def <R> R submit(Query<R> query)
+
+    def <E extends Event> AbstractComponent on(Class<E> eventType, EventHandler<E> handler)
+}
+
+abstract class AbstractComponent implements Component {
     private final SqlConnectionManager connectionManager
     private final HandlerRegistryEventDispatcher eventDispatcher
     private final HandlerRegistryCommandDispatcher commandDispatcher
@@ -35,7 +44,7 @@ abstract class AbstractComponent {
         queryDispatcher.submit(query)
     }
 
-    final <E extends Event> AbstractComponent event(Class<E> eventType, EventHandler<E> handler) {
+    final <E extends Event> AbstractComponent on(Class<E> eventType, EventHandler<E> handler) {
         eventDispatcher.register(eventType, handler)
         return this
     }

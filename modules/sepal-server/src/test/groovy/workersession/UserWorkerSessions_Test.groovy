@@ -1,6 +1,7 @@
 package workersession
 
-import static org.openforis.sepal.component.workersession.api.WorkerInstance.State.PENDING
+import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
+
 
 class UserWorkerSessions_Test extends AbstractWorkerSessionTest {
     def 'Given a pending session, when listing sessions, session is returned'() {

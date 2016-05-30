@@ -1,21 +1,14 @@
 package org.openforis.sepal.component.workersession
 
 import org.openforis.sepal.component.AbstractComponent
-import org.openforis.sepal.component.workersession.command.CloseUserSessions
-import org.openforis.sepal.component.workersession.command.CloseUserSessionsHandler
-import org.openforis.sepal.component.workersession.command.ReleaseUnusedInstances
-import org.openforis.sepal.component.workersession.command.ReleaseUnusedInstancesHandler
 import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository
 import org.openforis.sepal.component.workersession.api.BudgetChecker
 import org.openforis.sepal.component.workersession.api.InstanceManager
-import org.openforis.sepal.component.workersession.command.ActivatePendingSessionOnInstance
-import org.openforis.sepal.component.workersession.command.ActivatePendingSessionOnInstanceHandler
-import org.openforis.sepal.component.workersession.command.CloseTimedOutSessions
-import org.openforis.sepal.component.workersession.command.CloseTimedOutSessionsHandler
-import org.openforis.sepal.component.workersession.command.CloseSession
-import org.openforis.sepal.component.workersession.command.CloseSessionHandler
-import org.openforis.sepal.component.workersession.command.RequestSession
-import org.openforis.sepal.component.workersession.command.RequestSessionHandler
+import org.openforis.sepal.component.workersession.command.*
+import org.openforis.sepal.component.workersession.query.FindPendingOrActiveSession
+import org.openforis.sepal.component.workersession.query.FindPendingOrActiveSessionHandler
+import org.openforis.sepal.component.workersession.query.FindSessionById
+import org.openforis.sepal.component.workersession.query.FindSessionByIdHandler
 import org.openforis.sepal.component.workersession.query.UserWorkerSessions
 import org.openforis.sepal.component.workersession.query.UserWorkerSessionsHandler
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
@@ -41,9 +34,12 @@ class WorkerSessionComponent extends AbstractComponent {
         command(ActivatePendingSessionOnInstance, new ActivatePendingSessionOnInstanceHandler(sessionRepository, eventDispatcher))
         command(CloseUserSessions, new CloseUserSessionsHandler(sessionRepository, instanceManager))
         command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(sessionRepository, instanceManager))
+        command(Heartbeat, new HeartbeatHandler(sessionRepository))
 
         query(UserWorkerSessions, new UserWorkerSessionsHandler(sessionRepository))
+        query(FindSessionById, new FindSessionByIdHandler(sessionRepository))
+        query(FindPendingOrActiveSession, new FindPendingOrActiveSessionHandler(sessionRepository))
 
-        instanceManager.onInstanceActivated { submit(new ActivatePendingSessionOnInstance(instance: it))}
+        instanceManager.onInstanceActivated { submit(new ActivatePendingSessionOnInstance(instance: it)) }
     }
 }
