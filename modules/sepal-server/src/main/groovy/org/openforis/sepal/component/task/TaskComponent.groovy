@@ -25,6 +25,7 @@ class TaskComponent extends AbstractComponent {
         def taskRepository = new JdbcTaskRepository(connectionManager, clock)
 
         command(SubmitTask, new SubmitTaskHandler(taskRepository, sessionManager, workerGateway, clock))
+        command(ResubmitTask, new ResubmitTaskHandler(taskRepository, sessionManager, workerGateway, clock))
         command(ExecuteTasksInSession, new ExecuteTasksInSessionHandler(taskRepository, workerGateway))
         command(CancelTask, new CancelTaskHandler(taskRepository, sessionManager, workerGateway))
         command(CancelTimedOutTasks, new CancelTimedOutTasksHandler(taskRepository, sessionManager, workerGateway))

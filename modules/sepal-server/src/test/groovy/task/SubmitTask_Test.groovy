@@ -4,14 +4,14 @@ import static org.openforis.sepal.component.task.api.Task.State.ACTIVE
 import static org.openforis.sepal.component.task.api.Task.State.PENDING
 
 class SubmitTask_Test extends AbstractTaskTest {
-    def 'When submitting task, task is pending, session is requested, and a generated task id is returned'() {
+    def 'When submitting task, task is pending, session is requested, and a generated task is returned'() {
         when:
-        def taskId = submitTask()
+        def task = submitTask()
 
         then:
         oneTaskIs PENDING
         sessionManager.requestedOne()
-        taskId
+        task
     }
 
     def 'Given a submitted task, when submitting another, two tasks are pending, and another session is not requested'() {

@@ -32,11 +32,19 @@ abstract class AbstractTaskTest extends Specification {
     final Task submitTask(Map args = [:]) {
         component.submit(
                 new SubmitTask(
-                        username: args.username ?: testUsername,
+                        username: username(args),
                         instanceType: args.instanceType ?: testInstanceType,
                         operation: args.operation ?: testOperation,
                         params: args.params ?: testParams
                 ))
+    }
+
+    final Task resubmitTask(Task task, Map args = [:]) {
+        component.submit(new ResubmitTask(
+                username: username(args),
+                instanceType: args.instanceType ?: testInstanceType,
+                taskId: task.id
+        ))
     }
 
     final Task pendingTask(Map args = [:]) {
