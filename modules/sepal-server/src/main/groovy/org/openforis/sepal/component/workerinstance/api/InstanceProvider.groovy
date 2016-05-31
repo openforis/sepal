@@ -10,4 +10,8 @@ interface InstanceProvider {
     void release(String instanceId)
 
     List<WorkerInstance> idleInstances(String instanceType)
+
+    List<WorkerInstance> reservedInstances()
+
+    WorkerInstance getInstance(String instanceId)
 }

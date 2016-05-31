@@ -1,15 +1,20 @@
 package workerinstance
 
+import org.openforis.sepal.component.workerinstance.event.InstanceReleased
+
 class ReleaseInstance_Test extends AbstractWorkerInstanceTest {
 
-    def 'When releasing an instance, it is released'() {
-        def instance = requestInstance()
+    def 'When releasing an instance, it is undeployed, released, and event is published'() {
+        def instance = provisionedInstance()
 
         when:
         releaseInstance(instance)
 
         then:
+        instanceProvisioner.noneProvisioned()
         instanceProvider.oneIdle() == instance.release()
+        def event = published InstanceReleased
+        event.instance == instance.release()
     }
 }
 

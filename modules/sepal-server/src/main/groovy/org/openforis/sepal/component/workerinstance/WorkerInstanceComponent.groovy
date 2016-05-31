@@ -3,10 +3,8 @@ package org.openforis.sepal.component.workerinstance
 import org.openforis.sepal.component.AbstractComponent
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
-import org.openforis.sepal.component.workerinstance.command.ReleaseInstance
-import org.openforis.sepal.component.workerinstance.command.ReleaseInstanceHandler
-import org.openforis.sepal.component.workerinstance.command.RequestInstance
-import org.openforis.sepal.component.workerinstance.command.RequestInstanceHandler
+import org.openforis.sepal.component.workerinstance.command.*
+import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.util.Clock
 
@@ -21,7 +19,15 @@ class WorkerInstanceComponent extends AbstractComponent {
             Clock clock) {
         super(dataSource, eventDispatcher)
 
-        command(RequestInstance, new RequestInstanceHandler(instanceProvider))
-        command(ReleaseInstance, new ReleaseInstanceHandler(instanceProvider))
+        command(RequestInstance, new RequestInstanceHandler(instanceProvider, eventDispatcher))
+        command(ReleaseInstance, new ReleaseInstanceHandler(instanceProvider, instanceProvisioner, eventDispatcher))
+        command(ProvisionInstance, new ProvisionInstanceHandler(instanceProvisioner, eventDispatcher))
+        command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceProvider, instanceProvisioner, eventDispatcher))
+
+        on(InstancePendingProvisioning) {
+            submit(new ProvisionInstance(
+                    username: it.instance.reservation.username,
+                    instance: it.instance))
+        }
     }
 }

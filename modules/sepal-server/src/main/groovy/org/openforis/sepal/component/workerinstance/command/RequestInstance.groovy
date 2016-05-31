@@ -5,6 +5,9 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.Reservation
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
+import org.openforis.sepal.component.workerinstance.event.InstanceLaunched
+import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
+import org.openforis.sepal.event.EventDispatcher
 
 class RequestInstance extends AbstractCommand<WorkerInstance> {
     String workerType
@@ -13,9 +16,11 @@ class RequestInstance extends AbstractCommand<WorkerInstance> {
 
 class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestInstance> {
     private final InstanceProvider instanceProvider
+    private final EventDispatcher eventDispatcher
 
-    RequestInstanceHandler(InstanceProvider instanceProvider) {
+    RequestInstanceHandler(InstanceProvider instanceProvider, EventDispatcher eventDispatcher) {
         this.instanceProvider = instanceProvider
+        this.eventDispatcher = eventDispatcher
     }
 
     WorkerInstance execute(RequestInstance command) {
@@ -29,6 +34,7 @@ class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestIn
     private WorkerInstance reserveIdle(WorkerInstance idleInstance, Reservation reservation) {
         def instance = idleInstance.reserve(reservation)
         instanceProvider.reserve(instance)
+        eventDispatcher.publish(new InstancePendingProvisioning(instance))
         return instance
     }
 
@@ -39,6 +45,7 @@ class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestIn
                 type: command.instanceType
         )
         instanceProvider.launchReserved(instance)
+        eventDispatcher.publish(new InstanceLaunched(instance))
         return instance
     }
 

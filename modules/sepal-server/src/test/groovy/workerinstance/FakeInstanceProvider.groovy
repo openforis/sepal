@@ -24,17 +24,28 @@ class FakeInstanceProvider implements InstanceProvider {
         assert idleById.remove(instance.id),
                 "Instance must be idle before it can be reserved"
         reservedById[instance.id] = instance
+        launchedById[instance.id] = instance
     }
 
     void release(String instanceId) {
         def instance = reservedById.remove(instanceId)
         assert instance,
-                "Instance must be reserved before it can be idle. Reserved instances: $reservedInstances"
-        idleById[instanceId] = instance.release()
+                "Instance must be reserved before it can be idle. Reserved instances: ${reservedById.values()}"
+        def releasedInstance = instance.release()
+        idleById[instanceId] = releasedInstance
+        launchedById[instanceId] = releasedInstance
     }
 
     List<WorkerInstance> idleInstances(String instanceType) {
-        idleById.values().toList()
+        idleById.values().findAll { it.type == instanceType }
+    }
+
+    List<WorkerInstance> reservedInstances() {
+        reservedById.values().toList()
+    }
+
+    WorkerInstance getInstance(String instanceId) {
+        launchedById[instanceId]
     }
 
     WorkerInstance launchedOne() {
@@ -47,6 +58,11 @@ class FakeInstanceProvider implements InstanceProvider {
         assert reservedById.size() == 1,
                 "Expected one instance to have been reserved. Actually reserved ${reservedById.size()}: ${reservedById.values()}"
         return reservedById.values().first()
+    }
+
+    void noIdle() {
+        assert idleById.isEmpty(),
+                "Expected no instance to be idle. Actually has ${idleById.size()} idle: ${idleById.values()}"
     }
 
     WorkerInstance oneIdle() {
