@@ -24,7 +24,7 @@ class CloseSessionHandler implements CommandHandler<Void, CloseSession> {
         if (command.username && command.username != session.username)
             throw new UnauthorizedExecution("Session not owned by user: $session", command)
         repository.update(session.close())
-        instanceManager.release(session.instance.id)
+        instanceManager.releaseInstance(session.instance.id)
         return null
     }
 }

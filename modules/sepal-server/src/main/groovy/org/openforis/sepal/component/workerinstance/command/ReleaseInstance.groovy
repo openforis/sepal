@@ -4,6 +4,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
+import org.openforis.sepal.component.workerinstance.event.FailedToReleaseInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceReleased
 import org.openforis.sepal.event.EventDispatcher
 
@@ -23,10 +24,15 @@ class ReleaseInstanceHandler implements CommandHandler<Void, ReleaseInstance> {
     }
 
     Void execute(ReleaseInstance command) {
-        def instance = instanceProvider.getInstance(command.instanceId)
-        instanceProvisioner.undeploy(instance)
-        instanceProvider.release(command.instanceId)
-        eventDispatcher.publish(new InstanceReleased(instance.release()))
+        try {
+            def instance = instanceProvider.getInstance(command.instanceId)
+            instanceProvisioner.undeploy(instance)
+            instanceProvider.release(command.instanceId)
+            eventDispatcher.publish(new InstanceReleased(instance.release()))
+        } catch (Exception e) {
+            eventDispatcher.publish(new FailedToReleaseInstance(command.instanceId, e))
+            instanceProvider.terminate(command.instanceId)
+        }
         return null
     }
 }

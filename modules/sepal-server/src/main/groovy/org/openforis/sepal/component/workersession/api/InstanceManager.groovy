@@ -3,9 +3,9 @@ package org.openforis.sepal.component.workersession.api
 interface InstanceManager {
     WorkerInstance requestInstance(WorkerSession session)
 
-    void release(String instanceId)
+    void releaseInstance(String instanceId)
+
+    void releaseUnusedInstances(List<WorkerSession> pendingOrActiveSessions)
 
     void onInstanceActivated(Closure listener)
-
-    void releaseUnused(List<WorkerSession> pendingOrActiveSessions)
 }

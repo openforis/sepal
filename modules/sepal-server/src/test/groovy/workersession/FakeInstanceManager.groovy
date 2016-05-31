@@ -21,7 +21,7 @@ class FakeInstanceManager implements InstanceManager {
         return instance
     }
 
-    void release(String instanceId) {
+    void releaseInstance(String instanceId) {
         def instance = instanceById[instanceId]
         assert instance, "Instance with id $instanceId not requested. Got ${instanceById.values()}"
         released << instance
@@ -31,7 +31,7 @@ class FakeInstanceManager implements InstanceManager {
         instanceActivatedListener << listener
     }
 
-    void releaseUnused(List<WorkerSession> pendingOrActiveSessions) {
+    void releaseUnusedInstances(List<WorkerSession> pendingOrActiveSessions) {
         this.pendingOrActiveSessions.clear()
         this.pendingOrActiveSessions.addAll(pendingOrActiveSessions)
     }

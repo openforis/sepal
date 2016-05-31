@@ -7,16 +7,25 @@ class FakeInstanceProvider implements InstanceProvider {
     private final Map<String, WorkerInstance> launchedById = [:]
     private final Map<String, WorkerInstance> reservedById = [:]
     private final Map<String, WorkerInstance> idleById = [:]
+    private final List<WorkerInstance> terminated = []
 
     void launchReserved(WorkerInstance instance) {
         launchedById[instance.id] = instance
         reservedById[instance.id] = instance
     }
 
+    void launchIdle(List<WorkerInstance> instances) {
+        instances.each {
+            launchedById[it.id] = it
+            idleById[it.id] = it
+        }
+    }
+
     void terminate(String instanceId) {
-        launchedById.remove(instanceId)
+        def instance = launchedById.remove(instanceId)
         reservedById.remove(instanceId)
         idleById.remove(instanceId)
+        terminated << instance
     }
 
     void reserve(WorkerInstance instance) {
@@ -37,7 +46,11 @@ class FakeInstanceProvider implements InstanceProvider {
     }
 
     List<WorkerInstance> idleInstances(String instanceType) {
-        idleById.values().findAll { it.type == instanceType }
+        idleInstances().findAll { it.type == instanceType }
+    }
+
+    List<WorkerInstance> idleInstances() {
+        idleById.values().toList()
     }
 
     List<WorkerInstance> reservedInstances() {
@@ -69,6 +82,12 @@ class FakeInstanceProvider implements InstanceProvider {
         assert idleById.size() == 1,
                 "Expected one instance to be idle. Actually has ${idleById.size()} idle: ${idleById.values()}"
         return idleById.values().first()
+    }
+
+    WorkerInstance terminatedOne() {
+        assert terminated.size() == 1,
+                "Expected one instance to be terminated. Actually terminated ${terminated.size()}: ${terminated}"
+        return terminated.first()
     }
 
     private List<WorkerInstance> allInstances() {

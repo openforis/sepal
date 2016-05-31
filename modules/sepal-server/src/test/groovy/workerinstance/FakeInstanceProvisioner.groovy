@@ -5,12 +5,17 @@ import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 
 class FakeInstanceProvisioner implements InstanceProvisioner {
     private final List<WorkerInstance> provisioned = []
+    private boolean failing
 
     void provisionInstance(WorkerInstance instance) {
+        if (failing)
+            throw new IllegalStateException("Instance provider failed to provision instance")
         provisioned << instance
     }
 
     void undeploy(WorkerInstance instance) {
+        if (failing)
+            throw new IllegalStateException("Instance provider failed to undeploy instance")
         provisioned.remove(instance)
     }
 
@@ -24,4 +29,9 @@ class FakeInstanceProvisioner implements InstanceProvisioner {
                 "Expected one instance to have been provisioned. Actually provisioned ${provisioned.size()}: $provisioned"
         return provisioned.first()
     }
+
+    void fail() {
+        failing = true
+    }
+
 }

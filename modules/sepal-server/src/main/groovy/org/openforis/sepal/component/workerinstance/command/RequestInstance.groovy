@@ -8,6 +8,7 @@ import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceLaunched
 import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
 import org.openforis.sepal.event.EventDispatcher
+import org.openforis.sepal.util.Clock
 
 class RequestInstance extends AbstractCommand<WorkerInstance> {
     String workerType
@@ -17,10 +18,12 @@ class RequestInstance extends AbstractCommand<WorkerInstance> {
 class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestInstance> {
     private final InstanceProvider instanceProvider
     private final EventDispatcher eventDispatcher
+    private final Clock clock
 
-    RequestInstanceHandler(InstanceProvider instanceProvider, EventDispatcher eventDispatcher) {
+    RequestInstanceHandler(InstanceProvider instanceProvider, EventDispatcher eventDispatcher, Clock clock) {
         this.instanceProvider = instanceProvider
         this.eventDispatcher = eventDispatcher
+        this.clock = clock
     }
 
     WorkerInstance execute(RequestInstance command) {
@@ -42,6 +45,7 @@ class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestIn
         def instance = new WorkerInstance(
                 id: UUID.randomUUID().toString(),
                 reservation: reservation,
+                launchTime: clock.now(),
                 type: command.instanceType
         )
         instanceProvider.launchReserved(instance)

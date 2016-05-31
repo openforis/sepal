@@ -24,7 +24,7 @@ class CloseUserSessionsHandler implements CommandHandler<Void, CloseUserSessions
     Void execute(CloseUserSessions command) {
         def sessions = repository.userSessions(command.username, [PENDING, ACTIVE])
         sessions.each { repository.update(it.close()) }
-        sessions.each { instanceManager.release(it.instance.id) }
+        sessions.each { instanceManager.releaseInstance(it.instance.id) }
         return null
     }
 }

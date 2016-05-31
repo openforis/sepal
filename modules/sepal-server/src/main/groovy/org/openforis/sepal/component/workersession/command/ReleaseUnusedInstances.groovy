@@ -22,7 +22,7 @@ class ReleaseUnusedInstancesHandler implements CommandHandler<Void, ReleaseUnuse
 
     Void execute(ReleaseUnusedInstances command) {
         def sessions = repository.pendingOrActiveSessions()
-        instanceManager.releaseUnused(sessions)
+        instanceManager.releaseUnusedInstances(sessions)
         return null
     }
 }

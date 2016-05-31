@@ -21,7 +21,7 @@ class CloseTimedOutSessionsHandler implements CommandHandler<Void, CloseTimedOut
     Void execute(CloseTimedOutSessions command) {
         def timedOutSessions = repository.timedOutSessions()
         timedOutSessions.each { repository.update(it.close()) }
-        timedOutSessions.each { instanceManager.release(it.instance.id) }
+        timedOutSessions.each { instanceManager.releaseInstance(it.instance.id) }
         return null
     }
 }

@@ -19,10 +19,11 @@ class WorkerInstanceComponent extends AbstractComponent {
             Clock clock) {
         super(dataSource, eventDispatcher)
 
-        command(RequestInstance, new RequestInstanceHandler(instanceProvider, eventDispatcher))
+        command(RequestInstance, new RequestInstanceHandler(instanceProvider, eventDispatcher, clock))
         command(ReleaseInstance, new ReleaseInstanceHandler(instanceProvider, instanceProvisioner, eventDispatcher))
         command(ProvisionInstance, new ProvisionInstanceHandler(instanceProvisioner, eventDispatcher))
         command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceProvider, instanceProvisioner, eventDispatcher))
+        command(SizeIdlePool, new SizeIdlePoolHandler(instanceProvider, eventDispatcher, clock))
 
         on(InstancePendingProvisioning) {
             submit(new ProvisionInstance(

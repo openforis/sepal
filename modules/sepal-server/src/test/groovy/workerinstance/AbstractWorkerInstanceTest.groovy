@@ -7,6 +7,7 @@ import org.openforis.sepal.component.workerinstance.command.ProvisionInstance
 import org.openforis.sepal.component.workerinstance.command.ReleaseInstance
 import org.openforis.sepal.component.workerinstance.command.ReleaseUnusedInstances
 import org.openforis.sepal.component.workerinstance.command.RequestInstance
+import org.openforis.sepal.component.workerinstance.command.SizeIdlePool
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import sandboxmanager.FakeClock
@@ -65,6 +66,10 @@ abstract class AbstractWorkerInstanceTest extends Specification {
         def instance = requestInstance(args)
         releaseInstance(instance)
         return instance
+    }
+
+    final void sizeIdlePool(Map<String, Integer> targetIdleCountByInstanceType) {
+        component.submit(new SizeIdlePool(targetIdleCountByInstanceType: targetIdleCountByInstanceType))
     }
 
     final <E extends Event> E published(Class<E> eventType) {

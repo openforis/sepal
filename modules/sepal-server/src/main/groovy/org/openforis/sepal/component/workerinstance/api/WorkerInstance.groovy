@@ -6,15 +6,16 @@ import groovy.transform.Immutable
 class WorkerInstance {
     String id
     String type
+    Date launchTime
     Reservation reservation
 
     WorkerInstance release() {
         assert reservation, "Instance is already idle"
-        new WorkerInstance(id: id, type: type, reservation: null)
+        new WorkerInstance(id: id, type: type, launchTime: launchTime, reservation: null)
     }
 
     WorkerInstance reserve(Reservation reservation) {
         assert !this.reservation, "Instance is already reserved: ${this.reservation}"
-        new WorkerInstance(id: id, type: type, reservation: reservation)
+        new WorkerInstance(id: id, type: type, launchTime: launchTime, reservation: reservation)
     }
 }
