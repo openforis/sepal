@@ -8,9 +8,12 @@ import org.openforis.sepal.event.EventDispatcher
 import org.openforis.sepal.util.Clock
 
 import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 class SizeIdlePool extends AbstractCommand<Void> {
     Map<String, Integer> targetIdleCountByInstanceType
+    int timeBeforeChargeToTerminate
+    TimeUnit timeUnit
 }
 
 class SizeIdlePoolHandler implements CommandHandler<Void, SizeIdlePool> {
@@ -25,6 +28,7 @@ class SizeIdlePoolHandler implements CommandHandler<Void, SizeIdlePool> {
     }
 
     Void execute(SizeIdlePool command) {
+        def minutesBeforeChargeToTerminate = command.timeUnit.toMinutes(command.timeBeforeChargeToTerminate) as int
         def idleInstancesByType = instanceProvider.idleInstances().groupBy { it.type }
         command.targetIdleCountByInstanceType.keySet()
                 .findAll { !idleInstancesByType.containsKey(it) }
@@ -37,14 +41,14 @@ class SizeIdlePoolHandler implements CommandHandler<Void, SizeIdlePool> {
             if (idleCount < targetCount)
                 launch(targetCount - idleCount, instanceType)
             else if (idleCount > targetCount)
-                potentiallyForTermination(idleCount - targetCount, idleInstances)
+                potentiallyForTermination(idleCount - targetCount, idleInstances, minutesBeforeChargeToTerminate)
         }
         return null
     }
 
-    private void potentiallyForTermination(int count, List<WorkerInstance> instances) {
+    private void potentiallyForTermination(int count, List<WorkerInstance> instances, int minutesBeforeChargeToTerminate) {
         instances
-                .findAll { minutesUntilCharged(it.launchTime) <= 5 }
+                .findAll { minutesUntilCharged(it.launchTime) <= minutesBeforeChargeToTerminate }
                 .sort(false, new OrderBy([{ minutesUntilCharged(it.launchTime) }]))
                 .take(count)
                 .each { terminate(it) }

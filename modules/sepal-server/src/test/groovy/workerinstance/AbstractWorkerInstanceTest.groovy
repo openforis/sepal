@@ -3,15 +3,13 @@ package workerinstance
 import fake.Database
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
-import org.openforis.sepal.component.workerinstance.command.ProvisionInstance
-import org.openforis.sepal.component.workerinstance.command.ReleaseInstance
-import org.openforis.sepal.component.workerinstance.command.ReleaseUnusedInstances
-import org.openforis.sepal.component.workerinstance.command.RequestInstance
-import org.openforis.sepal.component.workerinstance.command.SizeIdlePool
+import org.openforis.sepal.component.workerinstance.command.*
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import sandboxmanager.FakeClock
 import spock.lang.Specification
+
+import java.util.concurrent.TimeUnit
 
 abstract class AbstractWorkerInstanceTest extends Specification {
     final database = new Database()
@@ -68,8 +66,12 @@ abstract class AbstractWorkerInstanceTest extends Specification {
         return instance
     }
 
-    final void sizeIdlePool(Map<String, Integer> targetIdleCountByInstanceType) {
-        component.submit(new SizeIdlePool(targetIdleCountByInstanceType: targetIdleCountByInstanceType))
+    final void sizeIdlePool(Map<String, Integer> targetIdleCountByInstanceType, int timeBeforeChargeToTerminate = 5, TimeUnit timeUnit = TimeUnit.MINUTES) {
+        component.submit(new SizeIdlePool(
+                targetIdleCountByInstanceType: targetIdleCountByInstanceType,
+                timeBeforeChargeToTerminate: timeBeforeChargeToTerminate,
+                timeUnit: timeUnit
+        ))
     }
 
     final <E extends Event> E published(Class<E> eventType) {
