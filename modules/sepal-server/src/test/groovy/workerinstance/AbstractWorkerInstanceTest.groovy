@@ -11,6 +11,8 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
+import static java.util.concurrent.TimeUnit.MINUTES
+
 abstract class AbstractWorkerInstanceTest extends Specification {
     final database = new Database()
     final eventDispatcher = new HandlerRegistryEventDispatcher()
@@ -56,8 +58,12 @@ abstract class AbstractWorkerInstanceTest extends Specification {
         component.submit(new ProvisionInstance(username: instance.reservation.username, instance: instance))
     }
 
-    final void releaseUnusedInstances(List<String> usedInstanceIds) {
-        component.submit(new ReleaseUnusedInstances(usedInstanceIds: usedInstanceIds))
+    final void releaseUnusedInstances(List<String> usedInstanceIds, int minAge = 1, TimeUnit timeUnit = MINUTES) {
+        component.submit(new ReleaseUnusedInstances(
+                usedInstanceIds: usedInstanceIds,
+                minAge: minAge,
+                timeUnit: timeUnit
+        ))
     }
 
     final WorkerInstance idleInstance(Map args = [:]) {
@@ -66,7 +72,10 @@ abstract class AbstractWorkerInstanceTest extends Specification {
         return instance
     }
 
-    final void sizeIdlePool(Map<String, Integer> targetIdleCountByInstanceType, int timeBeforeChargeToTerminate = 5, TimeUnit timeUnit = TimeUnit.MINUTES) {
+    final void sizeIdlePool(
+            Map<String, Integer> targetIdleCountByInstanceType,
+            int timeBeforeChargeToTerminate = 5,
+            TimeUnit timeUnit = MINUTES) {
         component.submit(new SizeIdlePool(
                 targetIdleCountByInstanceType: targetIdleCountByInstanceType,
                 timeBeforeChargeToTerminate: timeBeforeChargeToTerminate,

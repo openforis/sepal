@@ -22,7 +22,7 @@ class WorkerInstanceComponent extends AbstractComponent {
         command(RequestInstance, new RequestInstanceHandler(instanceProvider, eventDispatcher, clock))
         command(ReleaseInstance, new ReleaseInstanceHandler(instanceProvider, instanceProvisioner, eventDispatcher))
         command(ProvisionInstance, new ProvisionInstanceHandler(instanceProvisioner, eventDispatcher))
-        command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceProvider, instanceProvisioner, eventDispatcher))
+        command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceProvider, instanceProvisioner, eventDispatcher, clock))
         command(SizeIdlePool, new SizeIdlePoolHandler(instanceProvider, eventDispatcher, clock))
 
         on(InstancePendingProvisioning) {
