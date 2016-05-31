@@ -7,6 +7,7 @@ class WorkerSession {
     String id
     String instanceType
     String username
+    String host
     State state
 
     boolean isActive() {
@@ -14,7 +15,12 @@ class WorkerSession {
     }
 
     WorkerSession activate() {
-        return new WorkerSession(id: id, instanceType: instanceType, username: username, state: State.ACTIVE)
+        return new WorkerSession(
+                id: id,
+                instanceType: instanceType,
+                username: username,
+                host: host,
+                state: State.ACTIVE)
     }
 
     enum State {

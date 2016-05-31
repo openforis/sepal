@@ -56,6 +56,7 @@ class SessionComponentAdapter implements WorkerSessionManager {
                 id: session.id,
                 instanceType: session.instanceType,
                 username: session.username,
+                host: session.instance.host,
                 state: session.state.name() as WorkerSession.State)
     }
 }

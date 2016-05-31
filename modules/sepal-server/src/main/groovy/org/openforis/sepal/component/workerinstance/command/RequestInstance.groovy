@@ -48,9 +48,10 @@ class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestIn
                 launchTime: clock.now(),
                 type: command.instanceType
         )
-        instanceProvider.launchReserved(instance)
-        eventDispatcher.publish(new InstanceLaunched(instance))
-        return instance
+        def host = instanceProvider.launchReserved(instance)
+        def launchedInstance = instance.withHost(host)
+        eventDispatcher.publish(new InstanceLaunched(launchedInstance))
+        return launchedInstance
     }
 
     private WorkerInstance idleInstance(String instanceType) {
