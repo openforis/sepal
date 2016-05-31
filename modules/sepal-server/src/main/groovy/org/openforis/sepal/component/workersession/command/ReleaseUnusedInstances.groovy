@@ -6,9 +6,12 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
 
+import java.util.concurrent.TimeUnit
+
 @Immutable
 class ReleaseUnusedInstances extends AbstractCommand<Void> {
-
+    int minAge
+    TimeUnit timeUnit
 }
 
 class ReleaseUnusedInstancesHandler implements CommandHandler<Void, ReleaseUnusedInstances> {
@@ -22,7 +25,7 @@ class ReleaseUnusedInstancesHandler implements CommandHandler<Void, ReleaseUnuse
 
     Void execute(ReleaseUnusedInstances command) {
         def sessions = repository.pendingOrActiveSessions()
-        instanceManager.releaseUnusedInstances(sessions)
+        instanceManager.releaseUnusedInstances(sessions, command.minAge, command.timeUnit)
         return null
     }
 }

@@ -14,6 +14,8 @@ import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import sandboxmanager.FakeClock
 import spock.lang.Specification
 
+import java.util.concurrent.TimeUnit
+
 abstract class AbstractWorkerSessionTest extends Specification {
     final database = new Database()
     final eventDispatcher = new HandlerRegistryEventDispatcher()
@@ -102,8 +104,8 @@ abstract class AbstractWorkerSessionTest extends Specification {
                 states: args.states ?: []))
     }
 
-    final releaseUnusedInstances() {
-        component.submit(new ReleaseUnusedInstances())
+    final releaseUnusedInstances(int minAge, TimeUnit timeUnit) {
+        component.submit(new ReleaseUnusedInstances(minAge, timeUnit))
     }
 
     final <E extends Event> E published(Class<E> eventType) {
@@ -135,5 +137,11 @@ abstract class AbstractWorkerSessionTest extends Specification {
 
     private String username(Map args) {
         args.containsKey('username') ? args.username : testUsername
+    }
+
+    final <T> T ago(int time, TimeUnit timeUnit, Closure<T> callback) {
+        def result = callback.call()
+        clock.forward(time, timeUnit)
+        return result
     }
 }

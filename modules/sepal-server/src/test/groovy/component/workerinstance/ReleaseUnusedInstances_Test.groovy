@@ -59,10 +59,4 @@ class ReleaseUnusedInstances_Test extends AbstractWorkerInstanceTest {
         published FailedToReleaseInstance
         instanceProvider.terminatedOne()
     }
-
-    def <T> T ago(int time, TimeUnit timeUnit, Closure<T> callback) {
-        def result = callback.call()
-        clock.forward(time, timeUnit)
-        return result
-    }
 }

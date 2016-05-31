@@ -92,4 +92,10 @@ abstract class AbstractWorkerInstanceTest extends Specification {
     final String username(Map args) {
         args.username ?: testUsername
     }
+
+    final <T> T ago(int time, TimeUnit timeUnit, Closure<T> callback) {
+        def result = callback.call()
+        clock.forward(time, timeUnit)
+        return result
+    }
 }

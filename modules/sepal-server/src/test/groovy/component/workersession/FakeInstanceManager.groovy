@@ -4,6 +4,8 @@ import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.WorkerInstance
 import org.openforis.sepal.component.workersession.api.WorkerSession
 
+import java.util.concurrent.TimeUnit
+
 class FakeInstanceManager implements InstanceManager {
     private final Map<String, WorkerInstance> instanceById = [:]
     private final List<WorkerInstance> released = []
@@ -31,7 +33,7 @@ class FakeInstanceManager implements InstanceManager {
         instanceActivatedListener << listener
     }
 
-    void releaseUnusedInstances(List<WorkerSession> pendingOrActiveSessions) {
+    void releaseUnusedInstances(List<WorkerSession> pendingOrActiveSessions, int minAge, TimeUnit timeUnit) {
         this.pendingOrActiveSessions.clear()
         this.pendingOrActiveSessions.addAll(pendingOrActiveSessions)
     }
