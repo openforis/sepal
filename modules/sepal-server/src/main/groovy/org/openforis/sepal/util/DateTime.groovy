@@ -51,8 +51,8 @@ class DateTime {
         return Date.from(local)
     }
 
-    static hoursBetween = { Date from, Date to ->
-        return (to.time - from.time) / 1000 / 60 / 60
+    static double hoursBetween(Date from, Date to) {
+        return (to.time - from.time) / 1000d / 60d / 60d
     }
 
     static int monthOfYear(Date date) {

@@ -1,6 +1,7 @@
 package org.openforis.sepal.component.workersession
 
 import org.openforis.sepal.component.AbstractComponent
+import org.openforis.sepal.component.budget.api.InstanceTypes
 import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository
 import org.openforis.sepal.component.workersession.api.BudgetChecker
 import org.openforis.sepal.component.workersession.api.InstanceManager
@@ -23,6 +24,7 @@ class WorkerSessionComponent extends AbstractComponent {
             HandlerRegistryEventDispatcher eventDispatcher,
             BudgetChecker budgetChecker,
             InstanceManager instanceManager,
+            InstanceTypes instanceTypes,
             Clock clock) {
         super(dataSource, eventDispatcher)
         def connectionManager = new SqlConnectionManager(dataSource)

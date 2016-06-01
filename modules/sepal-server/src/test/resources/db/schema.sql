@@ -1,3 +1,5 @@
+DROP VIEW IF EXISTS instance_use;
+
 DROP TABLE IF EXISTS admin_groups;
 DROP TABLE IF EXISTS config_details;
 DROP TABLE IF EXISTS data_set;
@@ -21,12 +23,14 @@ DROP TABLE IF EXISTS datacenters;
 DROP TABLE IF EXISTS instances;
 DROP TABLE IF EXISTS sandbox_session;
 DROP TABLE IF EXISTS user_budget;
+DROP TABLE IF EXISTS default_user_budget;
 DROP TABLE IF EXISTS user_monthly_storage;
 DROP TABLE IF EXISTS scene_meta_data;
 DROP TABLE IF EXISTS old_task;
 
 DROP TABLE IF EXISTS worker_session;
 DROP TABLE IF EXISTS task;
+
 
 CREATE TABLE admin_groups (
   id         INT(10)      NOT NULL,
@@ -305,6 +309,14 @@ CREATE TABLE user_budget (
   PRIMARY KEY (username)
 );
 
+CREATE TABLE default_user_budget (
+  monthly_instance INT          NOT NULL,
+  monthly_storage  INT          NOT NULL,
+  storage_quota    INT          NOT NULL
+);
+
+INSERT INTO default_user_budget (monthly_instance, monthly_storage, storage_quota) VALUES (111, 222, 333);
+
 CREATE TABLE user_monthly_storage (
   username     VARCHAR(255) NOT NULL,
   year         INT          NOT NULL,
@@ -330,6 +342,9 @@ CREATE TABLE scene_meta_data (
   update_time      TIMESTAMP    NOT NULL,
   PRIMARY KEY (id, meta_data_source)
 );
+
+CREATE INDEX idx_scene_meta_data_1 ON scene_meta_data (meta_data_source, scene_area_id, acquisition_date);
+CREATE INDEX idx_scene_meta_data_2 ON scene_meta_data (meta_data_source, update_time);
 
 CREATE TABLE old_task (
   id            INT          NOT NULL AUTO_INCREMENT,
@@ -370,6 +385,11 @@ CREATE TABLE task (
   PRIMARY KEY (id)
 );
 
-
-CREATE INDEX idx_scene_meta_data_1 ON scene_meta_data (meta_data_source, scene_area_id, acquisition_date);
-CREATE INDEX idx_scene_meta_data_2 ON scene_meta_data (meta_data_source, update_time);
+CREATE VIEW instance_use AS
+  SELECT
+    username,
+    state,
+    instance_type,
+    creation_time,
+    update_time
+  FROM worker_session;

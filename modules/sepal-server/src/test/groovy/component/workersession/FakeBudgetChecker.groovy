@@ -6,7 +6,6 @@ class FakeBudgetChecker implements BudgetChecker {
     private boolean exceeded
     private boolean checked
 
-
     void check(String username) {
         checked = true
         if (exceeded)
