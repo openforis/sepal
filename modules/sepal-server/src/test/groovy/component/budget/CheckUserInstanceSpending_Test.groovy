@@ -7,12 +7,13 @@ import org.openforis.sepal.component.budget.event.UserInstanceBudgetNotExceeded
 class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
     def 'Given no usage, when checking instance usage, instance usage is not exceeded'() {
         when:
-        def usage = checkUserInstanceUsage()
+        def spending = checkUserInstanceSpending()
 
         then:
-        published UserInstanceBudgetNotExceeded
-        usage.instanceSpending == 0
-        usage.instanceBudget == defaultBudget.instanceSpending
+        def event = published UserInstanceBudgetNotExceeded
+        event.userInstanceSpending == spending
+        spending.instanceSpending == 0
+        spending.instanceBudget == defaultBudget.instanceSpending
     }
 
     def 'Given spending exceeding budget, when checking instance usage, instance usage is exceeded'() {
@@ -20,12 +21,13 @@ class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
         session(start: '2016-01-01', hours: 1, hourlyCost: 101)
 
         when:
-        def usage = checkUserInstanceUsage()
+        def spending = checkUserInstanceSpending()
 
         then:
-        published UserInstanceBudgetExceeded
-        usage.instanceSpending == 101
-        usage.instanceBudget == 100
+        def event = published UserInstanceBudgetExceeded
+        event.userInstanceSpending == spending
+        spending.instanceSpending == 101
+        spending.instanceBudget == 100
     }
 
     def 'Given spending same as budget, when checking instance usage, instance usage is not exceeded'() {
@@ -33,11 +35,12 @@ class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
         session(start: '2016-01-01', hours: 1, hourlyCost: 100)
 
         when:
-        def usage = checkUserInstanceUsage()
+        def spending = checkUserInstanceSpending()
 
         then:
-        published UserInstanceBudgetNotExceeded
-        usage.instanceSpending == 100
-        usage.instanceBudget == 100
+        def event = published UserInstanceBudgetNotExceeded
+        event.userInstanceSpending == spending
+        spending.instanceSpending == 100
+        spending.instanceBudget == 100
     }
 }

@@ -18,7 +18,10 @@ class GenerateUserSpendingReportHandler implements QueryHandler<UserSpendingRepo
     private final InstanceTypes instanceTypes
     private final Clock clock
 
-    GenerateUserSpendingReportHandler(BudgetRepository budgetRepository, InstanceTypes instanceTypes, Clock clock) {
+    GenerateUserSpendingReportHandler(
+            BudgetRepository budgetRepository,
+            InstanceTypes instanceTypes,
+            Clock clock) {
         this.budgetRepository = budgetRepository
         this.instanceTypes = instanceTypes
         this.clock = clock
@@ -31,9 +34,7 @@ class GenerateUserSpendingReportHandler implements QueryHandler<UserSpendingRepo
         def instanceUses = budgetRepository.userInstanceUses(query.username, year, month)
         def instanceSpending = new InstanceSpendingCalculator(instanceTypes.hourCostByInstanceType())
                 .calculate(year, month, instanceUses)
-
         def budget = budgetRepository.userBudget(query.username)
-
         new UserSpendingReport(
                 username: query.username,
                 instanceSpending: instanceSpending,

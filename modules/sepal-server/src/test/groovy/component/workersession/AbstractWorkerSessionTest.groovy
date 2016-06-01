@@ -1,6 +1,7 @@
 package component.workersession
 
 import fake.Database
+import org.openforis.sepal.component.budget.api.InstanceTypes
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.workersession.api.Timeout
 import org.openforis.sepal.component.workersession.api.WorkerSession
@@ -22,11 +23,13 @@ abstract class AbstractWorkerSessionTest extends Specification {
     final instanceManager = new FakeInstanceManager()
     final budgetChecker = new FakeBudgetChecker()
     final clock = new FakeClock()
+    final instanceTypes = Mock(InstanceTypes)
     final component = new WorkerSessionComponent(
             database.dataSource,
             eventDispatcher,
             budgetChecker,
             instanceManager,
+            instanceTypes,
             clock)
 
     final events = [] as List<Event>

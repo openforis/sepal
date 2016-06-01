@@ -45,7 +45,7 @@ class CheckUserInstanceSpendingHandler implements CommandHandler<UserInstanceSpe
                 instanceSpending: instanceSpending,
                 instanceBudget: budget.instanceSpending
         )
-        //noinspection GroovyConditionalWithIdenticalBranches - TODO: Remove once Intellij IDEA bug resolved
+        //noinspection GroovyConditionalWithIdenticalBranches - TODO: Remove when IDEA-152085 is resolved
         def event = instanceSpending > budget.instanceSpending ?
                 new UserInstanceBudgetExceeded(userInstanceSpending) :
                 new UserInstanceBudgetNotExceeded(userInstanceSpending)

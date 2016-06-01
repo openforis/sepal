@@ -64,7 +64,7 @@ abstract class AbstractBudgetTest extends Specification {
         recievedEvent as E
     }
 
-    final UserInstanceSpending checkUserInstanceUsage(Map args = [:]) {
+    final UserInstanceSpending checkUserInstanceSpending(Map args = [:]) {
         component.submit(new CheckUserInstanceSpending(username: username(args)))
     }
 
