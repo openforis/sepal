@@ -16,6 +16,7 @@ import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.util.DateTime
 import sandboxmanager.FakeClock
 import spock.lang.Specification
 
@@ -116,12 +117,16 @@ abstract class AbstractBudgetTest extends Specification {
     final void storage(Map args) {
         double gb = args.gb
         Date start = args.start ? parseDateString(args.start) : clock.now()
-        double hours = args.days * 24d
+        double hours = (args.days ?: 0) * 24d
+        if (!hours && args.end)
+            hours = DateTime.hoursBetween(start, parseDateString(args.end))
 
-        hostingService.gbStorageUsed(username(args), gb)
         clock.set(start)
+        hostingService.gbStorageUsed(username(args), gb)
         determineStorageUsage()
-        clock.forward((hours * 60d * 60d * 1000d) as int, TimeUnit.MILLISECONDS)
-        determineStorageUsage()
+        if (hours) {
+            clock.forward((hours * 60d * 60d) as long, TimeUnit.SECONDS)
+            determineStorageUsage()
+        }
     }
 }

@@ -38,7 +38,7 @@ class FakeClock implements Clock {
         currentTime = Date.from(next)
     }
 
-    Date forward(int time, TimeUnit timeUnit) {
+    Date forward(long time, TimeUnit timeUnit) {
         if (!currentTime)
             set()
         currentTime = new Date(currentTime.time + timeUnit.toMillis(time))

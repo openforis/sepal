@@ -59,7 +59,37 @@ class GenerateUserSpendingReport_Test extends AbstractBudgetTest {
         def report = userSpendingReport()
 
         then:
-        report.storageSpending as int == 53
+        Math.round(report.storageSpending) == 53
         report.storageUsage == 250
     }
+
+    def 'Given 200 GB measured after 15 days then 250 GB for 16 days, and cost is 0.3 USD per GB-Month, 53.10 USD is spent'() {
+        storageCost(0.3)
+        storage(gb: 0, start: '2016-01-01')
+        storage(gb: 200, start: '2016-01-16')
+        storage(gb: 250, days: 15.9999)
+
+        when:
+        def report = userSpendingReport()
+
+        then:
+        Math.round(report.storageSpending) == 53
+        report.storageUsage == 250
+    }
+
+    def 'Given 150 GB for several months, 50 GB 15 days into the month, then 250 GB for 16 days, and cost is 0.3 USD per GB-Month, 53.10 USD is spent'() {
+        storageCost(0.3)
+        storage(gb: 150, start: '2015-06-01')
+        storage(gb: 50, start: '2016-01-16')
+        storage(gb: 250, days: 15.9999)
+
+        when:
+        def report = userSpendingReport()
+
+        then:
+        Math.round(report.storageSpending) == 53
+        report.storageUsage == 250
+    }
+
+
 }
