@@ -63,6 +63,11 @@ class DateTime {
         get(date, ChronoField.YEAR)
     }
 
+    static int daysInMonth(int year, int month) {
+        Calendar calendar = new GregorianCalendar(year, month - 1, 1)
+        calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+    }
+
     /**
      * Determines the number of dates between the date and the provided day of year ('MM-dd')
      * @param date the date

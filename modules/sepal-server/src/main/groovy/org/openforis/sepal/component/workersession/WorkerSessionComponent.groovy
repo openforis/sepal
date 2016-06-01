@@ -24,7 +24,6 @@ class WorkerSessionComponent extends AbstractComponent {
             HandlerRegistryEventDispatcher eventDispatcher,
             BudgetChecker budgetChecker,
             InstanceManager instanceManager,
-            InstanceTypes instanceTypes,
             Clock clock) {
         super(dataSource, eventDispatcher)
         def connectionManager = new SqlConnectionManager(dataSource)

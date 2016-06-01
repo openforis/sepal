@@ -5,10 +5,10 @@ import component.workersession.FakeInstanceManager
 import fake.Database
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.budget.api.Budget
-import org.openforis.sepal.component.budget.api.InstanceTypes
 import org.openforis.sepal.component.budget.api.UserInstanceSpending
 import org.openforis.sepal.component.budget.api.UserSpendingReport
 import org.openforis.sepal.component.budget.command.CheckUserInstanceSpending
+import org.openforis.sepal.component.budget.command.DetermineUserStorageUsage
 import org.openforis.sepal.component.budget.command.UpdateBudget
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
@@ -21,10 +21,12 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
+import static org.openforis.sepal.util.DateTime.parseDateString
+
 abstract class AbstractBudgetTest extends Specification {
     final database = new Database()
     final eventDispatcher = new HandlerRegistryEventDispatcher()
-    final instanceTypes = Mock(InstanceTypes)
+    final hostingService = new FakeHostingService()
     final clock = new FakeClock()
 
     final defaultBudget = new Budget(
@@ -35,7 +37,7 @@ abstract class AbstractBudgetTest extends Specification {
 
     final component = new BudgetComponent(
             database.dataSource,
-            instanceTypes,
+            hostingService,
             eventDispatcher,
             clock
     )
@@ -44,7 +46,6 @@ abstract class AbstractBudgetTest extends Specification {
             eventDispatcher,
             new FakeBudgetChecker(),
             new FakeInstanceManager(),
-            instanceTypes,
             clock)
 
     final events = [] as List<Event>
@@ -86,15 +87,19 @@ abstract class AbstractBudgetTest extends Specification {
         return budget
     }
 
+    final void determineStorageUsage(Map args = [:]) {
+        component.submit(new DetermineUserStorageUsage(username: username(args)))
+    }
+
     private String username(Map args) {
         args.containsKey('username') ? args.username : testUsername
     }
 
-    final session(Map args) {
+    final void session(Map args) {
         String start = args.start
         double hours = args.hours
         double hourlyCost = args.hourlyCost
-        instanceTypes.hourCostByInstanceType() >> [(testInstanceType): hourlyCost]
+        hostingService.instanceTypeCost(testInstanceType, hourlyCost)
         clock.set(start)
         def session = sessionComponent.submit(new RequestSession(
                 username: username(args),
@@ -102,5 +107,21 @@ abstract class AbstractBudgetTest extends Specification {
                 instanceType: args.instanceType ?: testInstanceType))
         clock.forward((hours * 60d * 60d * 1000d) as int, TimeUnit.MILLISECONDS)
         sessionComponent.submit(new CloseSession(sessionId: session.id))
+    }
+
+    final void storageCost(double gbMonthCost) {
+        hostingService.storageCostPerGbMonth(gbMonthCost)
+    }
+
+    final void storage(Map args) {
+        double gb = args.gb
+        Date start = args.start ? parseDateString(args.start) : clock.now()
+        double hours = args.days * 24d
+
+        hostingService.gbStorageUsed(username(args), gb)
+        clock.set(start)
+        determineStorageUsage()
+        clock.forward((hours * 60d * 60d * 1000d) as int, TimeUnit.MILLISECONDS)
+        determineStorageUsage()
     }
 }

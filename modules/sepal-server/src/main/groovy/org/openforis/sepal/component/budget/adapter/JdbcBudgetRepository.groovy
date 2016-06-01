@@ -5,8 +5,10 @@ import groovy.sql.Sql
 import org.openforis.sepal.component.budget.api.Budget
 import org.openforis.sepal.component.budget.api.BudgetRepository
 import org.openforis.sepal.component.budget.api.InstanceUse
+import org.openforis.sepal.component.budget.api.StorageUse
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.DateTime
 
 class JdbcBudgetRepository implements BudgetRepository {
     private final SqlConnectionManager connectionManager
@@ -27,58 +29,100 @@ class JdbcBudgetRepository implements BudgetRepository {
                 AND (YEAR(creation_time) != :year OR MONTH(creation_time) <= :month)
                 AND (YEAR(update_time) != :year OR MONTH(update_time) >= :month)
         ''', [username: username, year: year, month: month]).collect {
-        def state = it.state
-        Date to = state == 'CLOSED' ? it.update_time : clock.now()
-        new InstanceUse(
-                instanceType: it.instance_type,
-                from: it.creation_time,
-                to: to
-        )
+            def state = it.state
+            Date to = state == 'CLOSED' ? it.update_time : clock.now()
+            new InstanceUse(
+                    instanceType: it.instance_type,
+                    from: it.creation_time,
+                    to: to
+            )
+        }
     }
-}
 
-Budget userBudget(String username) {
-    def row = sql.firstRow('''
+    StorageUse userStorageUse(String username, int year, int month) {
+        def row = sql.firstRow('''
+                SELECT gb_hours, storage_used, update_time
+                FROM user_monthly_storage
+                WHERE username = ? AND year = ? AND month = ?''', [username, year, month])
+        toStorageUse(row)
+    }
+
+    StorageUse lastUserStorageUse(String username) {
+        def row = sql.firstRow('''
+                SELECT gb_hours, storage_used, update_time
+                FROM user_monthly_storage
+                WHERE username = ?
+                ORDER BY year DESC, month DESC
+                LIMIT 1''', [username])
+        toStorageUse(row)
+    }
+
+
+    void updateUserStorageUse(String username, StorageUse storageUse) {
+        def updateTime = storageUse.updateTime
+        def year = DateTime.year(updateTime)
+        def month = DateTime.monthOfYear(updateTime)
+        def params = [storageUse.gbHours, storageUse.gb, updateTime, username, year, month]
+        def updated = sql.executeUpdate('''
+                UPDATE user_monthly_storage
+                SET gb_hours = ?, storage_used = ?, update_time = ?
+                WHERE username = ? AND year = ? AND month = ?''', params)
+        if (!updated)
+            sql.executeInsert('''
+                    INSERT INTO user_monthly_storage(gb_hours, storage_used, update_time, username, year, month)
+                    VALUES(?, ?, ?, ?, ?, ?)''', params)
+    }
+
+
+    Budget userBudget(String username) {
+        def row = sql.firstRow('''
                 SELECT monthly_instance, monthly_storage, storage_quota
                 FROM user_budget
                 WHERE username = ?''', username)
-    if (!row)
-        row = sql.firstRow('''
+        if (!row)
+            row = sql.firstRow('''
                 SELECT monthly_instance, monthly_storage, storage_quota
                 FROM default_user_budget''')
-    return toBudget(row)
-}
+        return toBudget(row)
+    }
 
-private Budget toBudget(GroovyRowResult row) {
-    new Budget(
-            instanceSpending: row.monthly_instance,
-            storageSpending: row.monthly_storage,
-            storageQuota: row.storage_quota
-    )
-}
+    private StorageUse toStorageUse(GroovyRowResult row) {
+        new StorageUse(
+                gbHours: row?.gb_hours ?: 0,
+                gb: row?.storage_used ?: 0,
+                updateTime: row?.update_time ?: clock.now())
+    }
 
-void updateDefaultBudget(Budget budget) {
-    def params = [budget.instanceSpending, budget.storageSpending, budget.storageQuota]
-    def updated = sql.executeUpdate('''
+    private Budget toBudget(GroovyRowResult row) {
+        new Budget(
+                instanceSpending: row.monthly_instance,
+                storageSpending: row.monthly_storage,
+                storageQuota: row.storage_quota
+        )
+    }
+
+    void updateDefaultBudget(Budget budget) {
+        def params = [budget.instanceSpending, budget.storageSpending, budget.storageQuota]
+        def updated = sql.executeUpdate('''
                 UPDATE default_user_budget
                 SET monthly_instance = ?, monthly_storage = ?, storage_quota = ?''', params)
-    if (!updated)
-        sql.executeInsert('''
+        if (!updated)
+            sql.executeInsert('''
                     INSERT INTO default_user_budget(monthly_instance, monthly_storage, storage_quota)
                     VALUES(?, ?, ?) ''', params)
-}
+    }
 
-void updateBudget(String username, Budget budget) {
-    def params = [budget.instanceSpending, budget.storageSpending, budget.storageQuota, username]
-    def updated = sql.executeUpdate('''
+    void updateBudget(String username, Budget budget) {
+        def params = [budget.instanceSpending, budget.storageSpending, budget.storageQuota, username]
+        def updated = sql.executeUpdate('''
                 UPDATE user_budget
                 SET monthly_instance = ?, monthly_storage = ?, storage_quota = ?
                 WHERE username = ?''', params)
-    if (!updated)
-        sql.executeInsert('''
+        if (!updated)
+            sql.executeInsert('''
                     INSERT INTO user_budget(monthly_instance, monthly_storage, storage_quota, username)
                     VALUES(?, ?, ?, ?) ''', params)
-}
+    }
 
     private Sql getSql() {
         connectionManager.sql

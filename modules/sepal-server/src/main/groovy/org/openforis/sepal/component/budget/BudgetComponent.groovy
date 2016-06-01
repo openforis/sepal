@@ -2,11 +2,10 @@ package org.openforis.sepal.component.budget
 
 import org.openforis.sepal.component.AbstractComponent
 import org.openforis.sepal.component.budget.adapter.JdbcBudgetRepository
-import org.openforis.sepal.component.budget.api.InstanceTypes
-import org.openforis.sepal.component.budget.command.CheckUserInstanceSpending
-import org.openforis.sepal.component.budget.command.CheckUserInstanceSpendingHandler
-import org.openforis.sepal.component.budget.command.UpdateBudget
-import org.openforis.sepal.component.budget.command.UpdateBudgetHandler
+import org.openforis.sepal.component.budget.api.HostingService
+import org.openforis.sepal.component.budget.command.*
+import org.openforis.sepal.component.budget.internal.InstanceSpendingService
+import org.openforis.sepal.component.budget.internal.StorageUseService
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReportHandler
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
@@ -18,17 +17,22 @@ import javax.sql.DataSource
 class BudgetComponent extends AbstractComponent {
     BudgetComponent(
             DataSource dataSource,
-            InstanceTypes instanceTypes,
+            HostingService hostingService,
             HandlerRegistryEventDispatcher eventDispatcher,
             Clock clock) {
         super(dataSource, eventDispatcher)
 
         def connectionManager = new SqlConnectionManager(dataSource)
         def budgetRepository = new JdbcBudgetRepository(connectionManager, clock)
+        def instanceSpendingService = new InstanceSpendingService(budgetRepository, hostingService, clock)
+        def storageUseService = new StorageUseService(budgetRepository, hostingService, clock)
 
-        command(CheckUserInstanceSpending, new CheckUserInstanceSpendingHandler(budgetRepository, instanceTypes, eventDispatcher, clock))
+        command(CheckUserInstanceSpending,
+                new CheckUserInstanceSpendingHandler(instanceSpendingService, budgetRepository, eventDispatcher))
         command(UpdateBudget, new UpdateBudgetHandler(budgetRepository))
+        command(DetermineUserStorageUsage, new DetermineUserStorageUsageHandler(storageUseService))
 
-        query(GenerateUserSpendingReport, new GenerateUserSpendingReportHandler(budgetRepository, instanceTypes, clock))
+        query(GenerateUserSpendingReport,
+                new GenerateUserSpendingReportHandler(instanceSpendingService, storageUseService, budgetRepository))
     }
 }
