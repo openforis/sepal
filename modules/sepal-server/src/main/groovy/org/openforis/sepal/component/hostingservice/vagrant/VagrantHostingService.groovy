@@ -1,20 +1,21 @@
 package org.openforis.sepal.component.hostingservice.vagrant
 
-import org.openforis.sepal.component.budget.api.HostingService
+import org.openforis.sepal.component.hostingservice.internal.AbstractHostingService
+import org.openforis.sepal.component.hostingservice.internal.InstanceType
+import org.openforis.sepal.component.hostingservice.internal.UserStorageUseChecker
 
-class VagrantHostingService implements HostingService {
-    private final double storageCostPerGbMonth = 0.3d
+class VagrantHostingService extends AbstractHostingService {
+    private final UserStorageUseChecker userStorageUseChecker
 
-    Map<String, Double> hourlyCostByInstanceType() {
-        return null
-    }
-
-
-    double storageCostPerGbMonth() {
-        return storageCostPerGbMonth
+    VagrantHostingService(
+            List<InstanceType> instanceTypes,
+            double storageCostPerGbMonth,
+            String userHomeDirTemplate) {
+        super(instanceTypes, storageCostPerGbMonth)
+        userStorageUseChecker = new UserStorageUseChecker(userHomeDirTemplate)
     }
 
     double gbStorageUsed(String username) {
-        return 0
+        userStorageUseChecker.determineUsage(username)
     }
 }

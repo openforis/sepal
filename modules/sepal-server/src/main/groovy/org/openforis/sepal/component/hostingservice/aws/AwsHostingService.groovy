@@ -1,17 +1,18 @@
 package org.openforis.sepal.component.hostingservice.aws
 
-import org.openforis.sepal.component.budget.api.HostingService
+import org.openforis.sepal.component.hostingservice.internal.AbstractHostingService
+import org.openforis.sepal.component.hostingservice.internal.InstanceType
+import org.openforis.sepal.component.hostingservice.internal.UserStorageUseChecker
 
-class AwsHostingService implements HostingService {
-    Map<String, Double> hourlyCostByInstanceType() {
-        return null
-    }
+class AwsHostingService extends AbstractHostingService {
+    private final UserStorageUseChecker userStorageUseChecker
 
-    double storageCostPerGbMonth() {
-        return 0
+    AwsHostingService(List<InstanceType> instanceTypes, double storageCostPerGbMonth, String userHomeDirTemplate) {
+        super(instanceTypes, storageCostPerGbMonth)
+        userStorageUseChecker = new UserStorageUseChecker(userHomeDirTemplate)
     }
 
     double gbStorageUsed(String username) {
-        return 0
+        userStorageUseChecker.determineUsage(username)
     }
 }

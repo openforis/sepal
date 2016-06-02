@@ -60,7 +60,7 @@ class SizeIdlePoolHandler implements CommandHandler<Void, SizeIdlePool> {
 
     private void launch(int count, String instanceType) {
         def instances = (0..<count).collect {
-            new WorkerInstance(id: UUID.randomUUID().toString(), type: instanceType, launchTime: clock.now())
+            new WorkerInstance(id: UUID.randomUUID().toString(), type: instanceType)
         }
         instanceProvider.launchIdle(instances)
     }

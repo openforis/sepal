@@ -3,7 +3,7 @@ package org.openforis.sepal.component.workerinstance.api
 import groovy.transform.Immutable
 
 @Immutable
-class Reservation {
+class WorkerReservation {
     String username
     String workerType
 }

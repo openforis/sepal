@@ -7,8 +7,6 @@ import org.openforis.sepal.util.ExecutorServiceBasedJobExecutor
 import org.openforis.sepal.util.NamedThreadFactory
 import org.openforis.sepal.util.SystemClock
 
-import java.util.concurrent.Executors
-
 import static java.util.concurrent.Executors.newSingleThreadExecutor
 
 @SuppressWarnings("GroovyUnusedDeclaration")

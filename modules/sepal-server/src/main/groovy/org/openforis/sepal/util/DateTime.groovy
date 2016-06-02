@@ -11,11 +11,14 @@ import static java.util.Calendar.YEAR
 
 class DateTime {
     private static final DATE_ONLY_DATE_FORMAT = 'yyyy-MM-dd'
+    private static final DATE_TIME_DATE_FORMAT = 'yyyy-MM-dd HH:mm:ss'
     private static final EARTH_EXPLORER_DATE_FORMAT = 'yyyy:DDD:HH:mm:ss'
 
     static String todayDateString() { toDateString(new Date()) }
 
     static String toDateString(Date date) { formatDate(date, new SimpleDateFormat(DATE_ONLY_DATE_FORMAT)) }
+
+    static String toDateTimeString(Date date) { formatDate(date, new SimpleDateFormat(DATE_TIME_DATE_FORMAT)) }
 
     static Date addDays(Date date, int days) {
         Calendar calendar = new GregorianCalendar()
@@ -33,6 +36,10 @@ class DateTime {
 
     static Date parseDateString(String dateString) {
         new SimpleDateFormat(DATE_ONLY_DATE_FORMAT).parse(dateString)
+    }
+
+    static Date parseDateTimeString(String dateTimeString) {
+        new SimpleDateFormat(DATE_TIME_DATE_FORMAT).parse(dateTimeString)
     }
 
     static Date parseEarthExplorerDateString(String dateString) {

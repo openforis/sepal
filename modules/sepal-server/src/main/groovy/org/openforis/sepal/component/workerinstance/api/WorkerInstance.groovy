@@ -7,20 +7,25 @@ class WorkerInstance {
     String id
     String type
     String host
+    boolean running
     Date launchTime
-    Reservation reservation
+    WorkerReservation reservation
 
     WorkerInstance release() {
         assert reservation, "Instance is already idle"
-        new WorkerInstance(id: id, type: type, host: host, launchTime: launchTime, reservation: null)
+        new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: null)
     }
 
-    WorkerInstance reserve(Reservation reservation) {
+    WorkerInstance reserve(WorkerReservation reservation) {
         assert !this.reservation, "Instance is already reserved: ${this.reservation}"
-        new WorkerInstance(id: id, type: type, host: host, launchTime: launchTime, reservation: reservation)
+        new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: reservation)
     }
 
-    WorkerInstance withHost(String host) {
-        new WorkerInstance(id: id, type: type, host: host, launchTime: launchTime, reservation: reservation)
+    WorkerInstance launched(String host, Date launchTime) {
+        new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: reservation)
+    }
+
+    WorkerInstance running() {
+        new WorkerInstance(id: id, type: type, host: host, running: true, launchTime: launchTime, reservation: reservation)
     }
 }

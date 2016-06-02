@@ -22,7 +22,8 @@
        ldap_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
        hosting_service: "vagrant"
 
-  tasks:
+    - template: src="./vagrant.properties" dest=/data/sepal/vagrant.properties
+
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:

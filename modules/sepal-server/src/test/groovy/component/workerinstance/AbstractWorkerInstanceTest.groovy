@@ -16,9 +16,9 @@ import static java.util.concurrent.TimeUnit.MINUTES
 abstract class AbstractWorkerInstanceTest extends Specification {
     final database = new Database()
     final eventDispatcher = new HandlerRegistryEventDispatcher()
-    final instanceProvider = new FakeInstanceProvider()
-    final instanceProvisioner = new FakeInstanceProvisioner()
     final clock = new FakeClock()
+    final instanceProvider = new FakeInstanceProvider(clock)
+    final instanceProvisioner = new FakeInstanceProvisioner()
     final component = new WorkerInstanceComponent(
             database.dataSource,
             eventDispatcher,

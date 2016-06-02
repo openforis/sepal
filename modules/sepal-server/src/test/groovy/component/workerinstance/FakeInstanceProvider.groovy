@@ -2,23 +2,29 @@ package component.workerinstance
 
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
+import org.openforis.sepal.util.Clock
 
 class FakeInstanceProvider implements InstanceProvider {
+    private final Clock clock
     private final Map<String, WorkerInstance> launchedById = [:]
     private final Map<String, WorkerInstance> reservedById = [:]
     private final Map<String, WorkerInstance> idleById = [:]
     private final List<WorkerInstance> terminated = []
 
-    String launchReserved(WorkerInstance instance) {
-        def launchedInstance = instance.withHost(UUID.randomUUID().toString())
+    FakeInstanceProvider(Clock clock) {
+        this.clock = clock
+    }
+
+    WorkerInstance launchReserved(WorkerInstance instance) {
+        def launchedInstance = instance.launched(UUID.randomUUID().toString(), clock.now())
         launchedById[instance.id] = launchedInstance
         reservedById[instance.id] = launchedInstance
-        return launchedInstance.host
+        return launchedInstance
     }
 
     void launchIdle(List<WorkerInstance> instances) {
         instances.each {
-            def launchedInstance = it.withHost(UUID.randomUUID().toString())
+            def launchedInstance = it.launched(UUID.randomUUID().toString(), clock.now())
             launchedById[it.id] = launchedInstance
             idleById[it.id] = launchedInstance
         }

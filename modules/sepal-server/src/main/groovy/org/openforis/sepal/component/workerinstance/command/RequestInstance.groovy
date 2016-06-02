@@ -3,7 +3,7 @@ package org.openforis.sepal.component.workerinstance.command
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
-import org.openforis.sepal.component.workerinstance.api.Reservation
+import org.openforis.sepal.component.workerinstance.api.WorkerReservation
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceLaunched
 import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
@@ -27,29 +27,27 @@ class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestIn
     }
 
     WorkerInstance execute(RequestInstance command) {
-        def reservation = new Reservation(username: command.username, workerType: command.workerType)
+        def reservation = new WorkerReservation(username: command.username, workerType: command.workerType)
         def idleInstance = idleInstance(command.instanceType)
         if (idleInstance)
             return reserveIdle(idleInstance, reservation)
         return launchInstance(reservation, command)
     }
 
-    private WorkerInstance reserveIdle(WorkerInstance idleInstance, Reservation reservation) {
+    private WorkerInstance reserveIdle(WorkerInstance idleInstance, WorkerReservation reservation) {
         def instance = idleInstance.reserve(reservation)
         instanceProvider.reserve(instance)
         eventDispatcher.publish(new InstancePendingProvisioning(instance))
         return instance
     }
 
-    private WorkerInstance launchInstance(Reservation reservation, RequestInstance command) {
+    private WorkerInstance launchInstance(WorkerReservation reservation, RequestInstance command) {
         def instance = new WorkerInstance(
                 id: UUID.randomUUID().toString(),
                 reservation: reservation,
-                launchTime: clock.now(),
                 type: command.instanceType
         )
-        def host = instanceProvider.launchReserved(instance)
-        def launchedInstance = instance.withHost(host)
+        def launchedInstance = instanceProvider.launchReserved(instance)
         eventDispatcher.publish(new InstanceLaunched(launchedInstance))
         return launchedInstance
     }
