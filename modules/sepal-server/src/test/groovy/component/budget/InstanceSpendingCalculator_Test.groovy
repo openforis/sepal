@@ -22,6 +22,20 @@ class InstanceSpendingCalculator_Test extends Specification {
         ) == 6
     }
 
+    def 'Given 0.1 hours use for 3 USD, cost is 3'() {
+        expect:
+        calculate(2016, 1,
+                use(start: '2016-01-01', duration: 0.1, cost: 3)
+        ) == 3
+    }
+
+    def 'Given 1.1 hours use for 3 USD, cost is 6'() {
+        expect:
+        calculate(2016, 1,
+                use(start: '2016-01-01', duration: 1.1, cost: 3)
+        ) == 6
+    }
+
     def 'Given 2 hours use for 3 USD and 4 hours use for 7 USD, cost is 34'() {
         expect:
         calculate(2016, 1,

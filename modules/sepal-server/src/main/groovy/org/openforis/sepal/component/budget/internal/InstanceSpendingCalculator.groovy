@@ -26,6 +26,6 @@ class InstanceSpendingCalculator {
         def to = [instanceUse.to, endOfMonth].min()
         if (from > to)
             return 0
-        DateTime.hoursBetween(from, to)
+        Math.ceil(DateTime.hoursBetween(from, to))
     }
 }
