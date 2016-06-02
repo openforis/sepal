@@ -31,8 +31,8 @@ class CheckUserInstanceSpendingHandler implements CommandHandler<UserInstanceSpe
         def budget = budgetRepository.userBudget(command.username)
         def userInstanceSpending = new UserInstanceSpending(
                 username: command.username,
-                instanceSpending: instanceSpending,
-                instanceBudget: budget.instanceSpending
+                spending: instanceSpending,
+                budget: budget.instanceSpending
         )
         //noinspection GroovyConditionalWithIdenticalBranches - TODO: Remove when IDEA-152085 is resolved
         def event = instanceSpending > budget.instanceSpending ?

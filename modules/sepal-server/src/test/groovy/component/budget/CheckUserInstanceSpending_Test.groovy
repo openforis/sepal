@@ -12,8 +12,8 @@ class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
         then:
         def event = published UserInstanceBudgetNotExceeded
         event.userInstanceSpending == spending
-        spending.instanceSpending == 0
-        spending.instanceBudget == defaultBudget.instanceSpending
+        spending.spending == 0
+        spending.budget == defaultBudget.instanceSpending
     }
 
     def 'Given spending exceeding budget, when checking instance usage, instance usage is exceeded'() {
@@ -26,8 +26,8 @@ class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
         then:
         def event = published UserInstanceBudgetExceeded
         event.userInstanceSpending == spending
-        spending.instanceSpending == 101
-        spending.instanceBudget == 100
+        spending.spending == 101
+        spending.budget == 100
     }
 
     def 'Given spending same as budget, when checking instance usage, instance usage is not exceeded'() {
@@ -40,7 +40,7 @@ class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
         then:
         def event = published UserInstanceBudgetNotExceeded
         event.userInstanceSpending == spending
-        spending.instanceSpending == 100
-        spending.instanceBudget == 100
+        spending.spending == 100
+        spending.budget == 100
     }
 }

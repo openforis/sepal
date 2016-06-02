@@ -27,8 +27,8 @@ class BudgetComponent extends AbstractComponent {
         def instanceSpendingService = new InstanceSpendingService(budgetRepository, hostingService, clock)
         def storageUseService = new StorageUseService(budgetRepository, hostingService, clock)
 
-        command(CheckUserInstanceSpending,
-                new CheckUserInstanceSpendingHandler(instanceSpendingService, budgetRepository, eventDispatcher))
+        command(CheckUserInstanceSpending, new CheckUserInstanceSpendingHandler(instanceSpendingService, budgetRepository, eventDispatcher))
+        command(CheckUserStorageUse, new CheckUserStorageUseHandler(storageUseService, budgetRepository, eventDispatcher))
         command(UpdateBudget, new UpdateBudgetHandler(budgetRepository))
         command(DetermineUserStorageUsage, new DetermineUserStorageUsageHandler(storageUseService))
 
