@@ -11,10 +11,20 @@ import org.openforis.sepal.component.budget.query.GenerateUserSpendingReportHand
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.SystemClock
 
 import javax.sql.DataSource
 
 class BudgetComponent extends AbstractComponent {
+    BudgetComponent(HostingService hostingService, DataSource dataSource) {
+        this(
+                dataSource,
+                hostingService,
+                new HandlerRegistryEventDispatcher(),
+                new SystemClock()
+        )
+    }
+
     BudgetComponent(
             DataSource dataSource,
             HostingService hostingService,

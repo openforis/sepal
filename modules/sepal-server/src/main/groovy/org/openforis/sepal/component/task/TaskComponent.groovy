@@ -1,6 +1,7 @@
 package org.openforis.sepal.component.task
 
 import org.openforis.sepal.component.AbstractComponent
+import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
 import org.openforis.sepal.component.task.adapter.JdbcTaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
@@ -10,10 +11,21 @@ import org.openforis.sepal.component.task.query.UserTasksHandler
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.SystemClock
 
 import javax.sql.DataSource
 
 class TaskComponent extends AbstractComponent {
+    TaskComponent(WorkerSessionManager sessionManager, DataSource dataSource) {
+        this(
+                dataSource,
+                new HandlerRegistryEventDispatcher(),
+                sessionManager,
+                new HttpWorkerGateway(),
+                new SystemClock()
+        )
+    }
+
     TaskComponent(
             DataSource dataSource,
             HandlerRegistryEventDispatcher eventDispatcher,

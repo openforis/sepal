@@ -1,16 +1,28 @@
 package org.openforis.sepal.component.workerinstance
 
 import org.openforis.sepal.component.AbstractComponent
+import org.openforis.sepal.component.workerinstance.adapter.DockerInstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.command.*
 import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.SystemClock
 
 import javax.sql.DataSource
 
 class WorkerInstanceComponent extends AbstractComponent {
+    WorkerInstanceComponent(InstanceProvider instanceProvider, DataSource dataSource) {
+        this(
+                dataSource,
+                new HandlerRegistryEventDispatcher(),
+                instanceProvider,
+                new DockerInstanceProvisioner(),
+                new SystemClock()
+        )
+    }
+
     WorkerInstanceComponent(
             DataSource dataSource,
             HandlerRegistryEventDispatcher eventDispatcher,
