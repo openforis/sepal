@@ -9,4 +9,12 @@ class UserStorageUse {
     double use
     double budget
     double quota
+
+    boolean isBudgetExceeded() {
+        spending > budget
+    }
+
+    boolean isQuotaExceeded() {
+        use > quota
+    }
 }

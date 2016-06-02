@@ -7,4 +7,8 @@ class UserInstanceSpending {
     String username
     double spending
     double budget
+
+    boolean isBudgetExceeded() {
+        spending > budget
+    }
 }
