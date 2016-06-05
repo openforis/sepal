@@ -5,9 +5,8 @@
 //scene area selection
 var sceneAreaId     = null
 var sceneAreaImages = {}
-// var sceneAreaSelectedImages = {}
 // selection
-var selectedImages = {}
+var selectedImages  = {}
 
 var key = function ( image ) {
     return image.sceneId
@@ -35,27 +34,34 @@ var getSceneAreaSelectedImages = function ( sceneAreaId ) {
 }
 
 var select = function ( image ) {
-    var k = key( image )
-    // sceneAreaSelectedImages[ k ] = image
-    
     if ( !selectedImages[ sceneAreaId ] ) {
         selectedImages[ sceneAreaId ] = {}
     }
+    
+    var k                              = key( image )
     selectedImages[ sceneAreaId ][ k ] = image
-    // console.log( selectedImages )
 }
 
 var deselect = function ( image ) {
-    var k                              = key( image )
-    // sceneAreaSelectedImages[ k ]       = null
+    var k = key( image )
     delete selectedImages[ sceneAreaId ][ k ]
+    if( Object.keys( selectedImages[ sceneAreaId ] ).length <= 0 ){
+        delete selectedImages[ sceneAreaId ]
+    }
 }
 
 var reset = function () {
     sceneAreaImages = {}
-    // sceneAreaSelectedImages = {}
     selectedImages  = {}
 }
+
+var areasSelection = function () {
+    return Object.keys( selectedImages )
+}
+
+// var areasSelectionLength = function () {
+//     return Object.keys( selectedImages ).length
+// }
 
 module.exports = {
     setSceneArea                : setSceneArea
@@ -65,4 +71,5 @@ module.exports = {
     , reset                     : reset
     , getSceneAreaId            : getSceneAreaId
     , getSceneAreaSelectedImages: getSceneAreaSelectedImages
+    , areasSelection            : areasSelection
 }

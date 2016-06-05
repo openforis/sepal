@@ -59,8 +59,8 @@ module.exports = {
         contentBase: './dist',
         host: '0.0.0.0',
         proxy: {
-            // '*': { target: 'http://localhost:9999' }
-            '*': { target: 'https://172.28.128.3' } // Vagrant box
+            '*': { target: 'http://localhost:9999' }
+            // '*': { target: 'https://172.28.128.3' } // Vagrant box
         }
     }
 }

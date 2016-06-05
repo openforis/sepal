@@ -228,11 +228,11 @@ var reduceApplicationSection = function ( e ) {
 var sceneAreaChange = function ( e, sceneAreaId ) {
     // sceneAreasDiv.selectAll("."+sceneAreaId)
     var images = SceneAreaModel.getSceneAreaSelectedImages( sceneAreaId )
-    var length = Object.keys( images ).length
+    var length = images ? Object.keys( images ).length : 0
     // console.log( images )
-
+    
     sceneAreasDiv
-        .select( "._" + sceneAreaId +" text")
+        .select( "._" + sceneAreaId + " text" )
         // .selectAll( "text" )
         .transition()
         .delay( 400 )
@@ -240,18 +240,18 @@ var sceneAreaChange = function ( e, sceneAreaId ) {
         .text( function ( d ) {
             return length
         } )
-
+    
     var bgColor = '#818181'
-    if( length > 0 ){
+    if ( length > 0 ) {
         bgColor = '#9CEBB5'
     }
-        sceneAreasDiv
-            .select( "._" + sceneAreaId +" circle")
-            .transition()
-            .delay( 400 )
-            .duration( 800 )
-            .style( 'fill', bgColor )
-            .style( 'stroke', bgColor )
+    sceneAreasDiv
+        .select( "._" + sceneAreaId + " circle" )
+        .transition()
+        .delay( 400 )
+        .duration( 800 )
+        .style( 'fill', bgColor )
+        .style( 'stroke', bgColor )
 }
 
 EventBus.addEventListener( Events.MAP.LOAD_SCENE_AREAS, loadSceneAreas )

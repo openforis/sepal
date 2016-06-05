@@ -507,6 +507,15 @@ img {
 }
 
 /* width and height */
+.width50 {
+    width: 50% !important;
+}
+.width80 {
+    width: 80% !important;
+}
+.width90 {
+    width: 90% !important;
+}
 .width100 {
     width: 100% !important;
 }

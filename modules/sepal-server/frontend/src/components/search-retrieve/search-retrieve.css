@@ -1,0 +1,15 @@
+#search-retrieve {
+    position: absolute;
+    z-index: 3;
+    background-color: rgba(28, 28, 28, 0.85);
+    margin-left: 0;
+    width: 60%;
+    left: 20%;
+}
+
+#search-retrieve > div {
+    padding: .5rem 0;
+    float: left;
+}
+
+

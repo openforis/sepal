@@ -10,6 +10,7 @@ var Loader   = require( '../loader/loader' )
 var View = require( './search-v' )
 
 require( './scene-images-selection-mv' )
+require( '../search-retrieve/search-retrieve-mv' )
 
 var show = function ( e, type ) {
     if ( type == 'search' ) {
@@ -19,13 +20,12 @@ var show = function ( e, type ) {
 
 var requestSceneAreas = function () {
     
-    var data   = { countryIso: View.Form.countryCode() }
+    var data = { countryIso: View.Form.countryCode() }
     
     var params = {
         url         : '/api/data/sceneareas'
         , data      : data
         , beforeSend: function () {
-            
             Loader.show()
             EventBus.dispatch( Events.SECTION.REDUCE, null )
         }
@@ -35,7 +35,7 @@ var requestSceneAreas = function () {
             Loader.hide( { delay: 300 } )
         }
     }
- 
+    
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 

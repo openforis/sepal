@@ -22,8 +22,8 @@ class MockServer extends AbstractMvcFilter {
         controller.with {
             get('/user') {
                 response.contentType = 'application/json'
-                send toJson(authenticator.users.values().first())
-//                    halt(401)
+//                send toJson(authenticator.users.values().first())
+                    halt(401)
             }
 
             get('/user/files') {
@@ -48,11 +48,15 @@ class MockServer extends AbstractMvcFilter {
 
             post('/data/scenes/retrieve') {
 //  { countryIso:ITA, scenes:[ {sceneId: 'LC81900302015079LGN00', sensor: 'LC8'}, ... ] }
-                params.selection
+//                params.selection
+
+                send toJson("[status:OK]")
             }
             post('/data/scenes/mosaic') {
 //  { countryIso:ITA, scenes:[ {sceneId: 'LC81900302015079LGN00', sensor: 'LC8'}, ... ] }
-                params.selection
+//                params.selection
+
+                send toJson("[status:OK]")
             }
 
             get('/tasks') {

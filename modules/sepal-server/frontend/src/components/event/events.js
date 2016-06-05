@@ -11,9 +11,9 @@ Events = {
     }
     
     , APP: {
-        LOAD     : 'app.load'
-        , DESTROY: 'app.destroy'
-        , USER_LOGGED_IN :'app.user-logged-in'
+        LOAD            : 'app.load'
+        , DESTROY       : 'app.destroy'
+        , USER_LOGGED_IN: 'app.user-logged-in'
     }
     
     , LOGIN: {
@@ -30,6 +30,8 @@ Events = {
         , SEARCH: {
             // SHOW_SCENE_AREA: 'section.search.show-scene-area'
             REQUEST_SCENE_AREAS: 'section.search.request-scene-areas'
+            , RETRIEVE         : 'section.search.retrieve'
+            , MOSAIC           : 'section.search.mosaic'
         }
         
         , BROWSE: {}
@@ -52,7 +54,7 @@ Events = {
         , SCENE_AREA_CLICK: 'map.scene-area-click'
         , ADD_LAYER       : 'map.add-layer'
     }
-
+    
     // events that occur when a model changes
     , MODEL: {
         SCENE_AREA: {
