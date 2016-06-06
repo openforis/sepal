@@ -9,7 +9,7 @@ class AwsConfig {
     final String availabilityZone
     final String accessKey
     final String secretKey
-    final String sepalVersion
+    final int sepalVersion
     final String environment
     final String userHomeDirTemplate
 
@@ -19,7 +19,7 @@ class AwsConfig {
         availabilityZone = c.get('availabilityZone')
         accessKey = c.get('accessKey')
         secretKey = c.get('secretKey')
-        sepalVersion = c.get('sepalVersion')
+        sepalVersion = c.getInt('sepalVersion')
         environment = c.get('environment')
         userHomeDirTemplate = c.get('userHomeDirTemplate')
     }

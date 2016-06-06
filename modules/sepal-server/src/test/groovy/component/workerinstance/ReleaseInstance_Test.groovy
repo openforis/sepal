@@ -11,7 +11,7 @@ class ReleaseInstance_Test extends AbstractWorkerInstanceTest {
         releaseInstance(instance)
 
         then:
-        instanceProvisioner.noneProvisioned()
+        instanceProvisioner.provisionedNone()
         instanceProvider.oneIdle() == instance.release()
         def event = published InstanceReleased
         event.instance == instance.release()

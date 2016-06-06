@@ -50,4 +50,5 @@ class TaskComponent extends AbstractComponent {
 
         sessionManager.onSessionActivated { submit(new ExecuteTasksInSession(session: it)) }
     }
+
 }

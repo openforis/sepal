@@ -11,6 +11,10 @@ class WorkerInstance {
     Date launchTime
     WorkerReservation reservation
 
+    boolean isReserved() {
+        reservation != null
+    }
+
     WorkerInstance release() {
         assert reservation, "Instance is already idle"
         new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: null)

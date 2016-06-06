@@ -14,4 +14,22 @@ class ProvisionInstance_Test extends AbstractWorkerInstanceTest {
         def event = published InstanceProvisioned
         event.instance == instance
     }
+
+    def 'When reserved instance is launched, it is provisioned'() {
+        def instance = requestInstance()
+        when:
+        instanceProvider.signalLaunched(instance)
+
+        then:
+        instanceProvisioner.provisionedOne()
+    }
+
+    def 'When idle instance is launched, it is not provisioned'() {
+        def instance = idleInstance()
+        when:
+        instanceProvider.signalLaunched(instance)
+
+        then:
+        instanceProvisioner.provisionedNone()
+    }
 }

@@ -59,7 +59,16 @@ abstract class AbstractComponent implements Component {
         return this
     }
 
-    void stop() {
-        connectionManager.close()
+    final void start() {
+        onStart()
     }
+
+    final void stop() {
+        connectionManager.close()
+        onStop()
+    }
+
+    void onStart() {}
+
+    void onStop() {}
 }

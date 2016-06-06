@@ -8,6 +8,7 @@ class VagrantInstanceProvider implements InstanceProvider {
     private static final HOST = '172.28.128.3'
     private final InstanceType instanceType
     private WorkerInstance instance
+    private final List<Closure> launchListeners = []
 
     VagrantInstanceProvider(InstanceType instanceType) {
         this.instanceType = instanceType
@@ -15,6 +16,7 @@ class VagrantInstanceProvider implements InstanceProvider {
 
     WorkerInstance launchReserved(WorkerInstance instance) {
         this.instance = instance.launched(HOST, new Date()).reserve(instance.reservation).running()
+        launchListeners*.call(this.instance)
         return this.instance
     }
 
@@ -56,5 +58,17 @@ class VagrantInstanceProvider implements InstanceProvider {
 
     WorkerInstance getInstance(String instanceId) {
         instance.id == instanceId ? instance : null
+    }
+
+    void onInstanceLaunched(Closure listener) {
+        launchListeners << listener
+    }
+
+    void start() {
+        // Nothing to start
+    }
+
+    void stop() {
+        // Nothing to stop
     }
 }
