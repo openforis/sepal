@@ -36,7 +36,7 @@ Loader.prototype.hide = function ( options ) {
     }
     defaultOptions = $.extend( defaultOptions , options )
 
-    this.container.velocity( 'fadeOut', defaultOptions);
+    this.container.velocity( 'fadeOut', defaultOptions );
 
 }
 

@@ -34,7 +34,10 @@ Events = {
             , MOSAIC           : 'section.search.mosaic'
         }
         
-        , BROWSE: {}
+        , BROWSE: {
+            NAV_ITEM_CLICK : 'section.browse.nav-item-click'
+            , DOWNLOAD_ITEM: 'section.browse.download-item'
+        }
         
         , PROCESS: {}
         

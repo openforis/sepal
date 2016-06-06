@@ -33,14 +33,13 @@ var getRequestData = function () {
     } )
     data.scenes = scenes
     
-    // console.log( data )
     return data
 }
 
-var getRequestParams = function ( path ) {
+var getRequestParams = function ( url ) {
     var data   = getRequestData()
     var params = {
-        url         : path
+        url         : url
         , data      : data
         , type    : "POST"
         , beforeSend: function () {
@@ -57,7 +56,6 @@ var retrieve = function () {
     // '/data/scenes/retrieve') 
 //  { countryIso:ITA, scenes:[ {sceneId: 'LC81900302015079LGN00', sensor: 'LC8'}, ... ] }
     var params = getRequestParams( '/api/data/scenes/retrieve' )
-    // console.log(params)
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 

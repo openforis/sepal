@@ -1,0 +1,38 @@
+#browse .btn-download {
+    padding-top: 1rem;
+    display: none;
+    padding-bottom: 1rem;
+    text-transform: none;
+}
+
+#browse .browse-content-row {
+    overflow-y: hidden;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+#browse .browse-content-row > .level {
+    display: inline-block;
+    padding: 0px 16px;
+    border-right: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+#browse .dir-header > div {
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.03);
+    padding-top: .4rem;
+}
+
+#browse .row.dir-child {
+
+}
+
+#browse .row.dir-child:hover,
+#browse .row.dir-child.active {
+    background-color: rgba(255, 255, 255, .2);
+}
+
+#browse .row.dir-child:hover {
+    cursor: pointer;
+}
+

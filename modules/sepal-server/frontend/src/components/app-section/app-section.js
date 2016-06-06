@@ -6,6 +6,7 @@ require( './app-section.css' )
 
 require( '../search/search-mv' )
 require( '../terminal/terminal-mv' )
+require( '../browse/browse-mv' )
 
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
@@ -39,22 +40,22 @@ closeBtn.click( function ( e ) {
 
 var show = function ( e, type ) {
     if ( !section.hasClass( 'opened' ) ) {
-
+        
         section
             .velocity( { left: '10%' }
                 , {
-                    duration: 1000
-                    , easing: 'swing'
-                    , queue: false
-                    , delay: 300
+                    duration  : 1000
+                    , easing  : 'swing'
+                    , queue   : false
+                    , delay   : 300
                     , complete: function () {
                         showSection( type )
                     }
                 }
             )
-
+        
         section.removeClass( 'closed' ).removeClass( 'reduced' ).addClass( 'opened' )
-
+        
         var icon = closeBtn.find( 'i' )
         icon.fadeOut( 600, function () {
             var newIcon = $( '<i class="fa fa-chevron-circle-right" aria-hidden="true"></i>' ).hide()
@@ -62,11 +63,11 @@ var show = function ( e, type ) {
             closeBtn.empty().append( newIcon )
             newIcon.fadeIn( 700 )
         } )
-
+        
     } else {
-
+        
         showSection( type )
-
+        
     }
 }
 
@@ -96,19 +97,19 @@ var showSection = function ( type ) {
 
 var reduce = function () {
     if ( section.hasClass( 'opened' ) ) {
-
+        
         section
             .velocity( { left: '95%' }
                 , {
                     duration: 1000
                     , easing: 'swing'
-                    , queue: false
-                    , delay: 100
+                    , queue : false
+                    , delay : 100
                 }
             )
-
+        
         section.addClass( 'reduced' ).removeClass( 'opened' ).removeClass( 'closed' )
-
+        
         var icon = closeBtn.find( 'i' )
         icon.fadeOut( 600, function () {
             var newIcon = $( '<i class="fa fa-chevron-circle-left" aria-hidden="true"></i>' ).hide()

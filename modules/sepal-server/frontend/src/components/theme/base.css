@@ -269,6 +269,10 @@ img {
     overflow: hidden;
 }
 
+.overflow-auto {
+    overflow: auto;
+}
+
 /* border radius */
 .border-radius-base {
     -webkit-border-top-left-radius: 0;
@@ -460,6 +464,7 @@ img {
     padding-right: 0.5rem !important;
     padding-left: 0.5rem !important;
 }
+
 .p-y-0-5 {
     padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
@@ -510,12 +515,15 @@ img {
 .width50 {
     width: 50% !important;
 }
+
 .width80 {
     width: 80% !important;
 }
+
 .width90 {
     width: 90% !important;
 }
+
 .width100 {
     width: 100% !important;
 }

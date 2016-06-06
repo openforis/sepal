@@ -22,8 +22,8 @@ class MockServer extends AbstractMvcFilter {
         controller.with {
             get('/user') {
                 response.contentType = 'application/json'
-//                send toJson(authenticator.users.values().first())
-                    halt(401)
+                send toJson(authenticator.users.values().first())
+//                    halt(401)
             }
 
             get('/user/files') {
