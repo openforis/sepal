@@ -1,6 +1,7 @@
 package org.openforis.sepal.component.workersession
 
 import org.openforis.sepal.component.AbstractComponent
+import org.openforis.sepal.component.workerinstance.command.SizeIdlePool
 import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository
 import org.openforis.sepal.component.workersession.api.BudgetChecker
 import org.openforis.sepal.component.workersession.api.InstanceManager
@@ -12,6 +13,9 @@ import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
 
 import javax.sql.DataSource
+
+import static java.util.concurrent.TimeUnit.MINUTES
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class WorkerSessionComponent extends AbstractComponent {
     WorkerSessionComponent(BudgetChecker budgetChecker, InstanceManager instanceManager, DataSource dataSource) {
@@ -47,5 +51,13 @@ class WorkerSessionComponent extends AbstractComponent {
         query(FindPendingOrActiveSession, new FindPendingOrActiveSessionHandler(sessionRepository))
 
         instanceManager.onInstanceActivated { submit(new ActivatePendingSessionOnInstance(instance: it)) }
+    }
+
+    void onStart() {
+        schedule(10, SECONDS,
+                new CloseTimedOutSessions(),
+                new ReleaseUnusedInstances(5, MINUTES),
+                new SizeIdlePool()
+        )
     }
 }

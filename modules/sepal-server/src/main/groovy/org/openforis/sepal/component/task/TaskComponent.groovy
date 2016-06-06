@@ -1,13 +1,16 @@
 package org.openforis.sepal.component.task
 
+import groovymvc.Controller
 import org.openforis.sepal.component.AbstractComponent
 import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
 import org.openforis.sepal.component.task.adapter.JdbcTaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.component.task.command.*
+import org.openforis.sepal.component.task.endpoint.TaskEndpoint
 import org.openforis.sepal.component.task.query.UserTasks
 import org.openforis.sepal.component.task.query.UserTasksHandler
+import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
@@ -15,7 +18,9 @@ import org.openforis.sepal.util.SystemClock
 
 import javax.sql.DataSource
 
-class TaskComponent extends AbstractComponent {
+import static java.util.concurrent.TimeUnit.SECONDS
+
+class TaskComponent extends AbstractComponent implements EndpointRegistry {
     TaskComponent(WorkerSessionManager sessionManager, DataSource dataSource) {
         this(
                 dataSource,
@@ -51,4 +56,11 @@ class TaskComponent extends AbstractComponent {
         sessionManager.onSessionActivated { submit(new ExecuteTasksInSession(session: it)) }
     }
 
+    void registerEndpointsWith(Controller controller) {
+        new TaskEndpoint(this).registerWith(controller)
+    }
+
+    void onStart() {
+        schedule(10, SECONDS, new CancelTimedOutTasks())
+    }
 }

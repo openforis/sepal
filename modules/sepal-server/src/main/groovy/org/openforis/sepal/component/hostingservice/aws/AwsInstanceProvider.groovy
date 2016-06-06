@@ -98,11 +98,19 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     void start() {
         jobScheduler.schedule(0, 10, TimeUnit.SECONDS) {
-            def instances = findInstances(running(), taggedWith('Starting', 'true'))
-            instances.each {
-                tagInstance(it.id, [tag('Starting', '')])
-                launchListeners*.call(it)
+            try {
+                notifyAboutStartedInstance()
+            } catch (Exception e) {
+                LOG.error('Failed to notify about started instances', e)
             }
+        }
+    }
+
+    private void notifyAboutStartedInstance() {
+        def instances = findInstances(running(), taggedWith('Starting', 'true'))
+        instances.each {
+            tagInstance(it.id, [tag('Starting', '')])
+            launchListeners*.call(it)
         }
     }
 

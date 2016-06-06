@@ -2,7 +2,7 @@ package org.openforis.sepal.component.task.command
 
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
-import org.openforis.sepal.command.UnauthorizedExecution
+import org.openforis.sepal.command.Unauthorized
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
@@ -30,7 +30,7 @@ class ResubmitTaskHandler implements CommandHandler<Task, ResubmitTask> {
     Task execute(ResubmitTask command) {
         def task = taskRepository.getTask(command.taskId)
         if (task.username != command.username)
-            throw new UnauthorizedExecution("Task not owned by user: $task", command)
+            throw new Unauthorized("Task not owned by user: $task", command)
         taskRepository.remove(task)
         def resubmittedTask = submitTaskHandler.execute(new SubmitTask(
                 username: command.username,

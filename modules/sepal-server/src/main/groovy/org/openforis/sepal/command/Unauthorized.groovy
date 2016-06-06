@@ -1,9 +1,9 @@
 package org.openforis.sepal.command
 
-class UnauthorizedExecution extends RuntimeException {
+class Unauthorized extends RuntimeException {
     final Command command
 
-    UnauthorizedExecution(String message, Command command) {
+    Unauthorized(String message, Command command) {
         super(message)
         this.command = command
     }

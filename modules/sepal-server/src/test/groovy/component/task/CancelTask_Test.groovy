@@ -76,4 +76,14 @@ class CancelTask_Test extends AbstractTaskTest {
         noTaskIs CANCELED
         thrown ExecutionFailed
     }
+
+    def 'Given a canceled task, when canceling task, execution fails'() {
+        def task = canceledTask()
+
+        when:
+        cancelTask(task)
+
+        then:
+        thrown ExecutionFailed
+    }
 }
