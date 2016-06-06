@@ -19,4 +19,8 @@ class User implements groovymvc.security.User {
     boolean hasRole(String role) {
         role in roles
     }
+    
+    enum Role {
+        ADMIN, TASK_EXECUTOR
+    }
 }

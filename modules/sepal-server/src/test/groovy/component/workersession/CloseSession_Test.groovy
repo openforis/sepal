@@ -37,4 +37,14 @@ class CloseSession_Test extends AbstractWorkerSessionTest {
         oneSessionIs CLOSED
         instanceManager.releasedOne()
     }
+
+    def 'Given a closed session, when closing the session, execution fails'() {
+        def session = closedSession()
+
+        when:
+        closeSession(session)
+
+        then:
+        thrown ExecutionFailed
+    }
 }

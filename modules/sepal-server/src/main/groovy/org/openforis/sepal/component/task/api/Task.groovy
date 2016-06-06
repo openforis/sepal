@@ -52,10 +52,6 @@ class Task {
         update(FAILED, statusDescription)
     }
 
-    boolean isNotPendingOrActive() {
-        !pending && !active
-    }
-
     Task update(State state) {
         update(state, state.description)
     }

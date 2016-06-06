@@ -8,6 +8,9 @@ import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 
+import static org.openforis.sepal.component.task.api.Task.State.ACTIVE
+import static org.openforis.sepal.component.task.api.Task.State.PENDING
+
 class CancelTask extends AbstractCommand<Void> {
     String taskId
 }
@@ -25,10 +28,10 @@ class CancelTaskHandler implements CommandHandler<Void, CancelTask> {
 
     Void execute(CancelTask command) {
         def task = taskRepository.getTask(command.taskId)
-        if (task.notPendingOrActive)
-            throw new InvalidCommand("Trying to cancel a non-pending or active task", command)
         if (task.username && task.username != command.username)
             throw new Unauthorized("Task not owned by user: $task", command)
+        if (![PENDING, ACTIVE].contains(task.state))
+            throw new InvalidCommand("Only pending and active tasks can be canceled", command)
         taskRepository.update(task.cancel())
         def session = sessionManager.findSessionById(task.sessionId)
         if (task.active)

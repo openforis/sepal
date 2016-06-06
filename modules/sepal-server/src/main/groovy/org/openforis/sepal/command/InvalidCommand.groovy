@@ -4,7 +4,7 @@ class InvalidCommand extends RuntimeException {
     final Command command
 
     InvalidCommand(String message, Command command) {
-        super(message)
+        super(message + ". Command: $command")
         this.command = command
     }
 }

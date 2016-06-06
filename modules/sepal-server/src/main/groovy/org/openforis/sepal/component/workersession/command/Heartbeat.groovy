@@ -2,8 +2,12 @@ package org.openforis.sepal.component.workersession.command
 
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
+import org.openforis.sepal.command.InvalidCommand
 import org.openforis.sepal.command.Unauthorized
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
+
+import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
+import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
 
 class Heartbeat extends AbstractCommand<Void> {
     String sessionId
@@ -20,6 +24,8 @@ class HeartbeatHandler implements CommandHandler<Void, Heartbeat> {
         def session = sessionRepository.getSession(command.sessionId)
         if (command.username && command.username != session.username)
             throw new Unauthorized("Session not owned by user: $session", command)
+        if (![ACTIVE, PENDING].contains(session.state))
+            throw new InvalidCommand('Only active and pending sessions can receive heartbeats', command)
         sessionRepository.update(session)
         return null
     }

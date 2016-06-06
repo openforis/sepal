@@ -2,12 +2,17 @@ package org.openforis.sepal.component.task.command
 
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
+import org.openforis.sepal.command.InvalidCommand
 import org.openforis.sepal.command.Unauthorized
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.util.Clock
+
+import static org.openforis.sepal.component.task.api.Task.State.CANCELED
+import static org.openforis.sepal.component.task.api.Task.State.COMPLETED
+import static org.openforis.sepal.component.task.api.Task.State.FAILED
 
 class ResubmitTask extends AbstractCommand<Task> {
     String instanceType
@@ -31,6 +36,8 @@ class ResubmitTaskHandler implements CommandHandler<Task, ResubmitTask> {
         def task = taskRepository.getTask(command.taskId)
         if (task.username != command.username)
             throw new Unauthorized("Task not owned by user: $task", command)
+        if (![CANCELED, FAILED, COMPLETED].contains(task.state))
+            throw new InvalidCommand("Only canceled, failed, and completed tasks can be resubmitted", command)
         taskRepository.remove(task)
         def resubmittedTask = submitTaskHandler.execute(new SubmitTask(
                 username: command.username,

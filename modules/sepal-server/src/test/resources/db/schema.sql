@@ -310,9 +310,9 @@ CREATE TABLE user_budget (
 );
 
 CREATE TABLE default_user_budget (
-  monthly_instance INT          NOT NULL,
-  monthly_storage  INT          NOT NULL,
-  storage_quota    INT          NOT NULL
+  monthly_instance INT NOT NULL,
+  monthly_storage  INT NOT NULL,
+  storage_quota    INT NOT NULL
 );
 
 INSERT INTO default_user_budget (monthly_instance, monthly_storage, storage_quota) VALUES (111, 222, 333);

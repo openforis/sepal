@@ -3,13 +3,13 @@ package org.openforis.sepal.component.task.endpoint
 import groovymvc.Controller
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.component.Component
-import org.openforis.sepal.component.task.command.CancelTask
-import org.openforis.sepal.component.task.command.RemoveTask
-import org.openforis.sepal.component.task.command.RemoveUserTasks
-import org.openforis.sepal.component.task.command.SubmitTask
+import org.openforis.sepal.component.task.api.Task
+import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.query.UserTasks
+import org.openforis.sepal.user.User
 
 import static groovy.json.JsonOutput.toJson
+import static org.openforis.sepal.user.User.Role.TASK_EXECUTOR
 
 class TaskEndpoint {
     private final Component component
@@ -34,6 +34,16 @@ class TaskEndpoint {
                 send toJson(tasks)
             }
 
+            post('/tasks') {
+                submit(new SubmitTask(
+                        instanceType: params.required('instanceType'),
+                        operation: params.required('operation'),
+                        params: params.required('params', Map),
+                        username: currentUser.username
+                ))
+                response.status = 204
+            }
+
             post('/tasks/task/{id}/cancel') {
                 submit(new CancelTask(taskId: params.required('id', int), username: currentUser.username))
                 response.status = 204
@@ -45,10 +55,9 @@ class TaskEndpoint {
             }
 
             post('/tasks/task/{id}/execute') {
-                submit(new SubmitTask(
+                submit(new ResubmitTask(
                         instanceType: params.required('instanceType'),
-                        operation: params.required('operation'),
-                        params: params.required('params', Map),
+                        taskId: params.required('id', int),
                         username: currentUser.username
                 ))
                 response.status = 204
@@ -56,6 +65,16 @@ class TaskEndpoint {
 
             post('/tasks/remove') {
                 submit(new RemoveUserTasks(username: currentUser.username))
+                response.status = 204
+            }
+            
+            post('/tasks/task/{id}/progress', [TASK_EXECUTOR.name()]) {
+                submit(new UpdateTaskProgress(
+                        taskId: params.required('id', int),
+                        state: params.required('state', Task.State),
+                        statusDescription: params.required('statusDescription'),
+                        username: currentUser.username
+                ))
                 response.status = 204
             }
         }
