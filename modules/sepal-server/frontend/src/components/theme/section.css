@@ -31,11 +31,11 @@
     vertical-align: middle;
 }
 
-@media (max-width: 991px) {
-    .section-cell {
-        padding: 100px 0 80px;
-    }
-}
+/*@media (max-width: 991px) {*/
+    /*.section-cell {*/
+        /*padding: 100px 0 80px;*/
+    /*}*/
+/*}*/
 
 
 .section-heading {

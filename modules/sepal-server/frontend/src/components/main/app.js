@@ -18,6 +18,7 @@ require( '../map/map' )
 require( '../nav-menu/nav-menu' )
 
 require( '../app-section/app-section' )
+require( '../tasks/tasks-vm' )
 
 // event bus
 var EventBus = require( '../event/event-bus' )
@@ -32,35 +33,35 @@ var Sepal = require( './sepal' )
 // functions
 var userLoggedIn = function ( e, user ) {
     Sepal.User = user
-
+    
     Loader.show()
-
+    
     loadApp()
-
+    
 }
 
 var loadApp = function () {
-
+    
     setTimeout( function () {
-
+        
         EventBus.dispatch( Events.LOGIN.HIDE )
         EventBus.dispatch( Events.APP.LOAD )
-
+        
         Loader.hide()
-
+        
     }, 2000 )
-
+    
 }
 
-var checkUser = function (  ) {
+var checkUser = function () {
     var params = {
-        url : '/api/user'
-        , success : function ( response ) {
+        url      : '/api/user'
+        , success: function ( response ) {
             // console.log( response )
-            EventBus.dispatch( Events.APP.USER_LOGGED_IN, null,  response )
+            EventBus.dispatch( Events.APP.USER_LOGGED_IN, null, response )
         }
     }
-    EventBus.dispatch( Events.AJAX.REQUEST , null , params )
+    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
 checkUser()

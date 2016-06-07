@@ -6,7 +6,7 @@
 #nav-menu.collapsed {
     width: 10%;
     height: 50%;
-    top: 20%;
+    top: 12%;
     left: 0%;
     padding-left: .5rem;
     padding-top: 1.5rem;
@@ -179,4 +179,9 @@
     width:22%;
     border: 1px dotted rgba(255,255,255,.3);
     background-color: transparent;
+}
+
+
+#nav-menu a i.fa.fa-spin {
+    top: 1.1rem;
 }

@@ -61,15 +61,32 @@ class MockServer extends AbstractMvcFilter {
 
             get('/tasks') {
                 response.contentType = 'application/json'
-
+//'ACTIVE|FAILED|COMPLETED|PENDING',
                 def tasks = [
                         [
-                                id: 1,
-                                name: 'ciao',
-                                status: 'ACTIVE|FAILED|COMPLETED|PENDING',
+                                id               : 1,
+                                name             : 'ciao',
+                                status           : 'ACTIVE',
                                 statusDescription: 'currently downloading something from somewhere'
                         ]
-                        , [id: 2, name: 'ciao2', status: 'ACTIVE|FAILED|COMPLETED|PENDING', statusDescription: 'currently downloading something from somewhere']
+                        , [
+                                id               : 2,
+                                name             : 'ciao2',
+                                status           : 'PENDING',
+                                statusDescription: 'currently downloading something from somewhere'
+                        ]
+                        , [
+                                id               : 3,
+                                name             : 'ciao3',
+                                status           : 'COMPLETED',
+                                statusDescription: 'currently downloading something from somewhere'
+                        ]
+                        , [
+                                id               : 4,
+                                name             : 'ciao4',
+                                status           : 'FAILED',
+                                statusDescription: 'currently downloading something from somewhere'
+                        ]
                 ]
                 send toJson(tasks)
             }
