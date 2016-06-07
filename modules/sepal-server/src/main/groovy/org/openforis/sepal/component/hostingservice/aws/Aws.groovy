@@ -2,13 +2,17 @@ package org.openforis.sepal.component.hostingservice.aws
 
 import org.openforis.sepal.component.budget.api.HostingService
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
-import org.openforis.sepal.component.hostingservice.internal.InstanceType
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
+import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.util.ExecutorServiceBasedJobScheduler
+import org.openforis.sepal.util.NamedThreadFactory
+
+import java.util.concurrent.Executors
 
 class Aws implements HostingServiceAdapter {
     private final config = new AwsConfig('/data/aws.properties')
     private final double storageCostPerGbMonth = 0.3d
-    private final List<InstanceType> instanceTypes = [
+    final List<InstanceType> instanceTypes = [
             new InstanceType(id: 'T2Small', name: 't2.small', hourlyCost: 0.026, description: '1 CPU / 2 GiB'),
             new InstanceType(id: 'T2Medium', name: 't2.medium', hourlyCost: 0.052, description: '2 CPU / 4 GiB'),
             new InstanceType(id: 'T2Large', name: 't2.large', hourlyCost: 0.104, description: '2 CPU / 8 GiB'),
@@ -28,14 +32,20 @@ class Aws implements HostingServiceAdapter {
             new InstanceType(id: 'R32xlarge', name: 'r3.2xlarge', hourlyCost: 0.665, description: '8 CPU / 61 GiB'),
             new InstanceType(id: 'R34xlarge', name: 'r3.4xlarge', hourlyCost: 1.33, description: '16 CPU / 122 GiB'),
             new InstanceType(id: 'R38xlarge', name: 'r3.8xlarge', hourlyCost: 2.66, description: '32 CPU / 244 GiB')
-    ]
-
+    ].asImmutable()
 
     HostingService getHostingService() {
-        return new AwsHostingService(instanceTypes, storageCostPerGbMonth)
+        return new AwsHostingService(instanceTypes, storageCostPerGbMonth, config.userHomeDirTemplate)
     }
 
     InstanceProvider getInstanceProvider() {
-        return new AwsInstanceProvider()
+        return new AwsInstanceProvider(
+                new ExecutorServiceBasedJobScheduler(
+                        Executors.newSingleThreadScheduledExecutor(
+                                NamedThreadFactory.singleThreadFactory('aws.instanceLaunchMonitor')
+                        )
+                ),
+                config
+        )
     }
 }

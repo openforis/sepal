@@ -1,11 +1,10 @@
 package component.budget
 
-import component.workersession.FakeBudgetChecker
+import component.workersession.FakeBudgetManager
 import component.workersession.FakeInstanceManager
 import fake.Database
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.budget.api.Budget
-import org.openforis.sepal.component.budget.api.StorageUse
 import org.openforis.sepal.component.budget.api.UserInstanceSpending
 import org.openforis.sepal.component.budget.api.UserSpendingReport
 import org.openforis.sepal.component.budget.api.UserStorageUse
@@ -19,6 +18,7 @@ import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
 import sandboxmanager.FakeClock
 import spock.lang.Specification
@@ -31,6 +31,7 @@ abstract class AbstractBudgetTest extends Specification {
     final database = new Database()
     final eventDispatcher = new HandlerRegistryEventDispatcher()
     final hostingService = new FakeHostingService()
+    final userRepository = Mock(UserRepository)
     final clock = new FakeClock()
 
     final defaultBudget = new Budget(
@@ -42,13 +43,14 @@ abstract class AbstractBudgetTest extends Specification {
     final component = new BudgetComponent(
             database.dataSource,
             hostingService,
+            userRepository,
             eventDispatcher,
             clock
     )
     final sessionComponent = new WorkerSessionComponent(
             database.dataSource,
             eventDispatcher,
-            new FakeBudgetChecker(),
+            new FakeBudgetManager(),
             new FakeInstanceManager(),
             clock)
 
@@ -60,6 +62,7 @@ abstract class AbstractBudgetTest extends Specification {
 
 
     def setup() {
+        userRepository.eachUsername(_ as Closure) >> { it[0].call(testUsername) }
         component.on(Event) { events << it }
     }
 
@@ -91,12 +94,12 @@ abstract class AbstractBudgetTest extends Specification {
     }
 
     final Budget updateDefaultBudget(Budget budget, Map args = [:]) {
-        component.submit(new UpdateBudget(budget: budget))
+        component.submit(new UpdateBudget(username: username(args), budget: budget))
         return budget
     }
 
-    final void determineStorageUsage(Map args = [:]) {
-        component.submit(new DetermineUserStorageUsage(username: username(args)))
+    final void determineStorageUsage() {
+        component.submit(new DetermineUserStorageUsage())
     }
 
     private String username(Map args) {

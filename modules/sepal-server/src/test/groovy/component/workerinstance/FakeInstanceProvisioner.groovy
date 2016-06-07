@@ -19,7 +19,7 @@ class FakeInstanceProvisioner implements InstanceProvisioner {
         provisioned.remove(instance)
     }
 
-    void noneProvisioned() {
+    void provisionedNone() {
         assert provisioned.empty,
                 "Expected no provisioned instances. Actually has ${provisioned.size()}: $provisioned"
     }

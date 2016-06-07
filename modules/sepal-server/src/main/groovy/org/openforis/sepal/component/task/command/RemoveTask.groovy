@@ -2,11 +2,14 @@ package org.openforis.sepal.component.task.command
 
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
-import org.openforis.sepal.command.UnauthorizedExecution
+import org.openforis.sepal.command.InvalidCommand
+import org.openforis.sepal.command.Unauthorized
 import org.openforis.sepal.component.task.api.TaskRepository
+import org.openforis.sepal.util.annotation.Data
 
 import static org.openforis.sepal.component.task.api.Task.State.*
 
+@Data(callSuper = true)
 class RemoveTask extends AbstractCommand<Void> {
     String taskId
 }
@@ -21,9 +24,9 @@ class RemoveTaskHandler implements CommandHandler<Void, RemoveTask> {
     Void execute(RemoveTask command) {
         def task = taskRepository.getTask(command.taskId)
         if (task.username != command.username)
-            throw new UnauthorizedExecution("Task not owned by user: $task", command)
+            throw new Unauthorized("Task not owned by user: $task", command)
         if (![CANCELED, FAILED, COMPLETED].contains(task.state))
-            throw new IllegalStateException("Only canceled, failed and completed tasks can be removed")
+            throw new InvalidCommand("Only canceled, failed, and completed tasks can be removed", command)
         taskRepository.remove(task)
         return null
     }

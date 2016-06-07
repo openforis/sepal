@@ -102,10 +102,10 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
         LOG.debug("Creating container for session $session on $instance.")
         def exposedPorts = config.portByProxiedEndpoint.values().toList() << 22
         def request = new JsonOutput().toJson([
-                Image: "$config.dockerImageName",
-                Tty: true,
-                Cmd: ["/script/init_container.sh", session.username, config.sepalHost, config.ldapHost, config.ldapPassword],
-                HostConfig: [
+                Image       : "$config.dockerImageName",
+                Tty         : true,
+                Cmd         : ["/script/init_container.sh", session.username, config.sepalHost, config.ldapHost, config.ldapPassword],
+                HostConfig  : [
                         Binds: [
                                 "$config.mountingHomeDir/$session.username:/home/$session.username",
                                 "/data/sepal/shiny:/shiny",
@@ -154,11 +154,11 @@ class DockerSandboxSessionProvider implements SandboxSessionProvider {
             def response = post(
                     path: "containers/${containerName(session)}/exec",
                     body: new JsonOutput().toJson([
-                            AttachStdin: false,
+                            AttachStdin : false,
                             AttachStdout: true,
                             AttachStderr: true,
-                            Tty: false,
-                            Cmd: ["/script/wait_until_initialized.sh", portsToWaitFor.join(';'), session.username]
+                            Tty         : false,
+                            Cmd         : ["/script/wait_until_initialized.sh", portsToWaitFor.join(';'), session.username]
                     ]),
                     requestContentType: JSON
             )

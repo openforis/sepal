@@ -10,8 +10,15 @@ import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.util.ExecutorServiceBasedJobScheduler
+import org.openforis.sepal.util.JobScheduler
+import org.openforis.sepal.util.NamedThreadFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 interface Component {
 
@@ -19,14 +26,20 @@ interface Component {
 
     def <R> R submit(Query<R> query)
 
-    def <E extends Event> AbstractComponent on(Class<E> eventType, EventHandler<E> handler)
+    def <E extends Event> Component on(Class<E> eventType, EventHandler<E> handler)
+
+    void start()
+
+    void stop()
 }
 
 abstract class AbstractComponent implements Component {
+    private static final Logger LOG = LoggerFactory.getLogger(this)
     private final SqlConnectionManager connectionManager
     private final HandlerRegistryEventDispatcher eventDispatcher
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
+    private final List<JobScheduler> schedulers = []
 
     AbstractComponent(DataSource dataSource, HandlerRegistryEventDispatcher eventDispatcher) {
         connectionManager = new SqlConnectionManager(dataSource)
@@ -59,7 +72,34 @@ abstract class AbstractComponent implements Component {
         return this
     }
 
-    void stop() {
-        connectionManager.close()
+    final schedule(long delay, TimeUnit timeUnit, Command... commands) {
+        commands.each { command ->
+            schedulers <<
+                    new ExecutorServiceBasedJobScheduler(
+                            Executors.newSingleThreadScheduledExecutor(
+                                    NamedThreadFactory.singleThreadFactory(command.class.name)
+                            )
+                    ).schedule(0, delay, timeUnit) {
+                        try {
+                            submit(command)
+                        } catch (Exception e) {
+                            LOG.error("Error executing scheduled command: $command", e)
+                        }
+                    }
+        }
     }
+
+    final void start() {
+        onStart()
+    }
+
+    final void stop() {
+        connectionManager.close()
+        schedulers*.stop()
+        onStop()
+    }
+
+    void onStart() {}
+
+    void onStop() {}
 }

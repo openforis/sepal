@@ -16,7 +16,7 @@ class SessionComponentAdapter_IntegrationTest extends AbstractWorkerSessionTest 
         def session = adapter.requestSession(testUsername, testInstanceType)
 
         then:
-        budgetChecker.budgetChecked
+        budgetManager.budgetChecked
         def requestedInstance = instanceManager.requestedOne()
         def workerSession = oneSessionIs PENDING
         session == new WorkerSession(

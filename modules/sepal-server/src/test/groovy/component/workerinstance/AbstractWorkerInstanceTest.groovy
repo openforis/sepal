@@ -50,8 +50,9 @@ abstract class AbstractWorkerInstanceTest extends Specification {
         return instance
     }
 
-    final void releaseInstance(WorkerInstance instance) {
+    final WorkerInstance releaseInstance(WorkerInstance instance) {
         component.submit(new ReleaseInstance(instanceId: instance.id))
+        return instance.release()
     }
 
     final void provisionInstance(WorkerInstance instance) {
@@ -69,7 +70,6 @@ abstract class AbstractWorkerInstanceTest extends Specification {
     final WorkerInstance idleInstance(Map args = [:]) {
         def instance = requestInstance(args)
         releaseInstance(instance)
-        return instance
     }
 
     final void sizeIdlePool(

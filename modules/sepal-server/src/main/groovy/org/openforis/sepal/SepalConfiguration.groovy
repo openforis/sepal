@@ -190,6 +190,7 @@ class SepalConfiguration {
         ]
     }
 
+    @SuppressWarnings("GroovyAssignabilityCheck")
     void setEnv() {
         Set<String> keySet = properties.keySet()
         for (String key : keySet)
@@ -201,6 +202,3 @@ class SepalConfiguration {
     }
 }
 
-enum SepalWorkingMode {
-    MONOLITICH, PUBLIC_WAN, PRIVATE_LAN
-}

@@ -1,13 +1,13 @@
 package org.openforis.sepal.component.task.command
 
-import groovy.transform.Immutable
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSession
+import org.openforis.sepal.util.annotation.Data
 
-@Immutable
+@Data(callSuper = true)
 class ExecuteTasksInSession extends AbstractCommand<Void> {
     WorkerSession session
 }

@@ -27,4 +27,14 @@ class ResubmitTask_Test extends AbstractTaskTest {
         oneTaskIs COMPLETED
         noTaskIs PENDING
     }
+
+    def 'Given an active task, when resubmitting, execution fails'() {
+        def task = activeTask()
+
+        when:
+        resubmitTask(task)
+
+        then:
+        thrown ExecutionFailed
+    }
 }

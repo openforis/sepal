@@ -39,4 +39,14 @@ class Heartbeat_Test extends AbstractWorkerSessionTest {
         closeTimedOutSessions()
         oneSessionIs PENDING
     }
+
+    def 'Given a closed session, when sending a heartbeat, execution fails'() {
+        def session = closedSession()
+
+        when:
+        sendHeartbeat(session)
+
+        then:
+        thrown ExecutionFailed
+    }
 }

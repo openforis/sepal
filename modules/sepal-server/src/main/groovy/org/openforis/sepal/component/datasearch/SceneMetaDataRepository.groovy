@@ -29,7 +29,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
     private void update(SceneMetaData scene, Sql sql) {
         def params = scene.with {
             [sensorId, sceneAreaId, acquisitionDate, cloudCover, sunAzimuth, sunElevation, browseUrl.toString(),
-                    scene.updateTime, id, source.name()]
+             scene.updateTime, id, source.name()]
         }
 
         def rowsUpdated = sql.executeUpdate('''
@@ -77,7 +77,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
 
     Map<LandsatSensor, Date> lastUpdateBySensor(MetaDataSource source) {
         def lastUpdates = [:]
-         sql.rows('''
+        sql.rows('''
                 SELECT sensor_id, MAX(update_time) last_update
                 FROM scene_meta_data
                 WHERE meta_data_source = ?

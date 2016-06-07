@@ -1,14 +1,14 @@
 package org.openforis.sepal.component.workersession.command
 
-import groovy.transform.Immutable
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workersession.api.WorkerInstance
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
 import org.openforis.sepal.component.workersession.event.WorkerSessionActivated
 import org.openforis.sepal.event.EventDispatcher
+import org.openforis.sepal.util.annotation.Data
 
-@Immutable
+@Data(callSuper = true)
 class ActivatePendingSessionOnInstance extends AbstractCommand<Void> {
     WorkerInstance instance
 }
@@ -33,5 +33,3 @@ class ActivatePendingSessionOnInstanceHandler implements CommandHandler<Void, Ac
         return null
     }
 }
-
-

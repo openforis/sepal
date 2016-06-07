@@ -1,4 +1,4 @@
-package org.openforis.sepal.component.hostingservice.internal
+package org.openforis.sepal.component.workersession.api
 
 import groovy.transform.Immutable
 

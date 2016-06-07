@@ -6,7 +6,9 @@ import org.openforis.sepal.component.budget.internal.InstanceSpendingService
 import org.openforis.sepal.component.budget.internal.StorageUseService
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
+import org.openforis.sepal.util.annotation.ImmutableData
 
+@ImmutableData
 class GenerateUserSpendingReport implements Query<UserSpendingReport> {
     String username
 }

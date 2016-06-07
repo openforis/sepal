@@ -7,7 +7,9 @@ import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.event.FailedToReleaseInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceReleased
 import org.openforis.sepal.event.EventDispatcher
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class ReleaseInstance extends AbstractCommand<Void> {
     String instanceId
 }

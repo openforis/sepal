@@ -32,7 +32,6 @@ var requestTasks = function () {
         url      : '/api/tasks'
         , success: function ( tasks ) {
             Model.setTasks( tasks )
-            // console.log( Model.getTasks() )
             
             if ( Model.isEmpty() ) {
                 Animation.animateOut( navMenuButton )
@@ -46,7 +45,7 @@ var requestTasks = function () {
                     navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
                 }
 
-                View.addTasks( Model.getTasks() )
+                View.setTasks( Model.getTasks() )
             }
         }
     }

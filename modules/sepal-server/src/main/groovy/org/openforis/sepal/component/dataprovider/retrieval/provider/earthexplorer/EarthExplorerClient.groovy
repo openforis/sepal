@@ -86,10 +86,10 @@ class RestfulEarthExplorerClient implements EarthExplorerClient {
         SceneReference sceneReference = sceneRequest.sceneReference
         def mapParams = [
                 datasetName: sceneReference.dataSet.name(),
-                entityIds: [sceneReference.id],
-                apiKey: token,
-                products: ['STANDARD'],
-                node: 'EE'
+                entityIds  : [sceneReference.id],
+                apiKey     : token,
+                products   : ['STANDARD'],
+                node       : 'EE'
         ]
         String jsonRequest = new JsonOutput().toJson(mapParams)
         String qs = "jsonRequest=" + urlEncode(jsonRequest)

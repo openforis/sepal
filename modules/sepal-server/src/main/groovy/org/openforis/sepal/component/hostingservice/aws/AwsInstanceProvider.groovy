@@ -8,26 +8,34 @@ import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.api.WorkerReservation
 import org.openforis.sepal.hostingservice.InvalidInstance
 import org.openforis.sepal.util.DateTime
+import org.openforis.sepal.util.JobScheduler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class AwsInstanceProvider implements InstanceProvider {
+import java.util.concurrent.TimeUnit
+
+final class AwsInstanceProvider implements InstanceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private static final String SECURITY_GROUP = 'Sandbox'
+    private final JobScheduler jobScheduler
+    private final int sepalVersion
     private final String region
     private final String availabilityZone
     private final String environment
     private final AmazonEC2Client client
     private final String imageId
+    private final List<Closure> launchListeners = []
 
-    AwsInstanceProvider(AwsConfig config) {
+    AwsInstanceProvider(JobScheduler jobScheduler, AwsConfig config) {
+        this.jobScheduler = jobScheduler
+        sepalVersion = config.sepalVersion
         region = config.region
         availabilityZone = config.availabilityZone
         environment = config.environment
         def credentials = new BasicAWSCredentials(config.accessKey, config.secretKey)
         client = new AmazonEC2Client(credentials)
         client.endpoint = "https://ec2.${region}.amazonaws.com"
-        imageId = fetchImageId(availabilityZone, config.sepalVersion)
+        imageId = fetchImageId(availabilityZone)
     }
 
     WorkerInstance launchReserved(WorkerInstance instance) {
@@ -80,15 +88,43 @@ class AwsInstanceProvider implements InstanceProvider {
 
     WorkerInstance getInstance(String instanceId) {
         findInstances(
-                taggedWith('InstanceId', 'instanceId')
+                taggedWith('InstanceId', instanceId)
         ).first()
+    }
+
+    void onInstanceLaunched(Closure listener) {
+        launchListeners << listener
+    }
+
+    void start() {
+        jobScheduler.schedule(0, 10, TimeUnit.SECONDS) {
+            try {
+                notifyAboutStartedInstance()
+            } catch (Exception e) {
+                LOG.error('Failed to notify about started instances', e)
+            }
+        }
+    }
+
+    private void notifyAboutStartedInstance() {
+        def instances = findInstances(running(), taggedWith('Starting', 'true'))
+        instances.each {
+            tagInstance(it.id, [tag('Starting', '')])
+            launchListeners*.call(it)
+        }
+    }
+
+    void stop() {
+        jobScheduler.stop()
     }
 
     private List<Tag> launchTags(WorkerInstance instance) {
         [
                 tag('Environment', environment),
                 tag('Type', 'Worker'),
+                tag('Version', sepalVersion as String),
                 tag('InstanceId', instance.id),
+                tag('Starting', 'true')
         ]
     }
 
@@ -122,6 +158,10 @@ class AwsInstanceProvider implements InstanceProvider {
         new Filter("tag:$tagName", [value])
     }
 
+    private Filter running() {
+        new Filter('instance-state-name', ['running'])
+    }
+
     private Filter ofInstanceType(String instanceType) {
         new Filter('instance-type', [(instanceType as InstanceType).toString()])
     }
@@ -133,7 +173,12 @@ class AwsInstanceProvider implements InstanceProvider {
                         taggedWith('Environment', environment),
                         new Filter('instance-state-name', ['pending', 'running'])
                 ])
-        toWorkerInstances(client.describeInstances(request).reservations)
+        def awsInstances = client.describeInstances(request).reservations
+                .collect { it.instances }.flatten() as List<Instance>
+        def instancesWithValidVersion = awsInstances.findAll {
+            (tagValue(it, 'Version') as int) >= sepalVersion
+        }
+        return instancesWithValidVersion.collect { toWorkerInstance(it) }
     }
 
     private Instance launch(WorkerInstance instance) {
@@ -148,14 +193,13 @@ class AwsInstanceProvider implements InstanceProvider {
                 .withPlacement(new Placement(availabilityZone: availabilityZone))
 
         def response = client.runInstances(request)
-        def awsInstance = response.reservation.instances.first()
-        awsInstance
+        response.reservation.instances.first()
     }
 
-    private String fetchImageId(String availabilityZone, String sepalVersion) {
+    private String fetchImageId(String availabilityZone) {
         def request = new DescribeImagesRequest()
         request.withFilters(
-                new Filter("tag:Version", [sepalVersion]),
+                new Filter("tag:Version", [sepalVersion as String]),
                 new Filter('tag:AvailabilityZone', [availabilityZone])
         )
         def response = client.describeImages(request)
@@ -173,14 +217,6 @@ class AwsInstanceProvider implements InstanceProvider {
                 .withResources(instanceId)
                 .withTags(tags)
         client.createTags(request)
-    }
-
-    private List<WorkerInstance> toWorkerInstances(List<Reservation> reservations) {
-        reservations.collect {
-            it.instances.collect { Instance awsInstance ->
-                toWorkerInstance(awsInstance)
-            }
-        }.flatten() as List<WorkerInstance>
     }
 
     private WorkerInstance toWorkerInstance(Instance awsInstance) {

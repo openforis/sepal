@@ -61,7 +61,7 @@ class MockServer extends AbstractMvcFilter {
 
             get('/tasks') {
                 response.contentType = 'application/json'
-//'ACTIVE|FAILED|COMPLETED|PENDING',
+                //'ACTIVE|FAILED|COMPLETED|PENDING',
                 def tasks = [
                         [
                                 id               : 1,

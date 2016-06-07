@@ -18,4 +18,10 @@ interface InstanceProvider {
     List<WorkerInstance> reservedInstances()
 
     WorkerInstance getInstance(String instanceId)
+
+    void onInstanceLaunched(Closure listener)
+
+    void start()
+
+    void stop()
 }

@@ -4,7 +4,9 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class CloseTimedOutSessions extends AbstractCommand<Void> {
 
 }

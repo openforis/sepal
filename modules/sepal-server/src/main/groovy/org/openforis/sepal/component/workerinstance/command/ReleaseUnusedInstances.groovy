@@ -7,9 +7,11 @@ import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.event.EventDispatcher
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.annotation.Data
 
 import java.util.concurrent.TimeUnit
 
+@Data(callSuper = true)
 class ReleaseUnusedInstances extends AbstractCommand<Void> {
     List<String> usedInstanceIds
     int minAge

@@ -46,7 +46,7 @@ class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
 
     @Override
     void requestStatusChanged(DownloadRequest request, Status status) {
-        LOG.debug("Request status change. request: $request, status: $status" )
+        LOG.debug("Request status change. request: $request, status: $status")
         try {
             if (request.groupScenes) {
                 switch (status) {

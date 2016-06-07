@@ -25,7 +25,7 @@ var reset = function () {
     container.find( '.task' ).remove()
 }
 
-var addTasks = function ( tasks ) {
+var setTasks = function ( tasks ) {
     $.each( tasks, function ( i, task ) {
         var row = getTaskRow( i, task )
         row.find( '.status' ).html( task.status )
@@ -51,5 +51,5 @@ var getTaskRow = function ( index, task ) {
 module.exports = {
     init      : init
     , reset   : reset
-    , addTasks: addTasks
+    , setTasks: setTasks
 } 

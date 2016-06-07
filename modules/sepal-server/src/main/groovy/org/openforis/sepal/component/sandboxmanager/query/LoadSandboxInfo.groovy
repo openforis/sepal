@@ -1,9 +1,9 @@
 package org.openforis.sepal.component.sandboxmanager.query
 
 import groovy.transform.ToString
+import org.openforis.sepal.component.sandboxmanager.ResourceUsageService
 import org.openforis.sepal.component.sandboxmanager.SandboxSession
 import org.openforis.sepal.component.sandboxmanager.SessionRepository
-import org.openforis.sepal.component.sandboxmanager.ResourceUsageService
 import org.openforis.sepal.component.sandboxmanager.UserBudgetRepository
 import org.openforis.sepal.hostingservice.WorkerInstanceManager
 import org.openforis.sepal.hostingservice.WorkerInstanceType

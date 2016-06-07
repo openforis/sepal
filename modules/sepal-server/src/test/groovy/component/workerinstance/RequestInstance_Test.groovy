@@ -22,7 +22,7 @@ class RequestInstance_Test extends AbstractWorkerInstanceTest {
         def instance = requestInstance()
 
         then:
-        instance == idleInstance
+        instance.id == idleInstance.id
         instanceProvider.reservedOne()
         instanceProvider.launchedOne()
         def event = published InstancePendingProvisioning

@@ -10,6 +10,7 @@ class FakeInstanceProvider implements InstanceProvider {
     private final Map<String, WorkerInstance> reservedById = [:]
     private final Map<String, WorkerInstance> idleById = [:]
     private final List<WorkerInstance> terminated = []
+    private final List<Closure> launchListeners = []
 
     FakeInstanceProvider(Clock clock) {
         this.clock = clock
@@ -70,6 +71,10 @@ class FakeInstanceProvider implements InstanceProvider {
         launchedById[instanceId]
     }
 
+    void signalLaunched(WorkerInstance instance) {
+        launchListeners*.call(instance)
+    }
+
     WorkerInstance launchedOne() {
         assert allInstances().size() == 1,
                 "Expected one instance to have been launched. Actually launched ${allInstances().size()}: ${allInstances()}"
@@ -97,6 +102,18 @@ class FakeInstanceProvider implements InstanceProvider {
         assert terminated.size() == 1,
                 "Expected one instance to be terminated. Actually terminated ${terminated.size()}: ${terminated}"
         return terminated.first()
+    }
+
+    void onInstanceLaunched(Closure listener) {
+        launchListeners << listener
+    }
+
+    void start() {
+
+    }
+
+    void stop() {
+
     }
 
     private List<WorkerInstance> allInstances() {

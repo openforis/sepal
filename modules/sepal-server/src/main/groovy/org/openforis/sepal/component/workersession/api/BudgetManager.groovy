@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.workersession.api
 
-interface BudgetChecker {
+interface BudgetManager {
     void check(String username)
+
+    Spending userSpending(String username)
 }

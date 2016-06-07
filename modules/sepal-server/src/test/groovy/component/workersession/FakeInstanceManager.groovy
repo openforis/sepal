@@ -1,6 +1,7 @@
 package component.workersession
 
 import org.openforis.sepal.component.workersession.api.InstanceManager
+import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.workersession.api.WorkerInstance
 import org.openforis.sepal.component.workersession.api.WorkerSession
 
@@ -12,6 +13,7 @@ class FakeInstanceManager implements InstanceManager {
     private boolean fail
     private List<Closure> instanceActivatedListener = []
     private List<WorkerSession> pendingOrActiveSessions = []
+    List<InstanceType> instanceTypes = []
 
     WorkerInstance requestInstance(WorkerSession session) {
         if (fail) throw new IllegalStateException('Failed to request instance')

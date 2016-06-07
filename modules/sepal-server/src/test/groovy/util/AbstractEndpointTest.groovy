@@ -30,12 +30,14 @@ abstract class AbstractEndpointTest extends Specification {
     final passwordVerifier = new FakeUsernamePasswordVerifier()
 
     final client = new RESTClient("http://localhost:$port/api/")
+    final testUsername = 'some-user'
 
     def setup() {
         EndpointRegistry registry = { registerEndpoint(it) }
         Endpoints.deploy(port, new PathRestrictions(userRepository, new BasicRequestAuthenticator('Sepal', passwordVerifier)), registry)
         client.handler.failure = { resp -> return resp }
-        client.auth.basic 'some-user', 'some-password'
+
+        client.auth.basic testUsername, 'some-password'
         userRepository.addRole(ADMIN)
     }
 
@@ -43,7 +45,7 @@ abstract class AbstractEndpointTest extends Specification {
         Endpoints.undeploy()
     }
 
-     abstract void registerEndpoint(Controller controller);
+    abstract void registerEndpoint(Controller controller);
 
     final nonAdmin() {
         userRepository.noRole()

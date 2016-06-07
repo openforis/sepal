@@ -1,12 +1,12 @@
 package org.openforis.sepal.component.task.query
 
-import groovy.transform.Immutable
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
+import org.openforis.sepal.util.annotation.ImmutableData
 
-@Immutable
+@ImmutableData
 class UserTasks implements Query<List<Task>> {
     String username
 }

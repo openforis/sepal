@@ -5,14 +5,13 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.DateTime
 
-import static ResourceUsageService.MonthlyUsage
 import static org.openforis.sepal.util.DateTime.monthOfYear
 import static org.openforis.sepal.util.DateTime.year
 
 interface StorageUsageRepository {
-    MonthlyUsage lastMonthlyUsage(String username)
+    ResourceUsageService.MonthlyUsage lastMonthlyUsage(String username)
 
-    void updateMonthlyUsage(MonthlyUsage monthlyUsage)
+    void updateMonthlyUsage(ResourceUsageService.MonthlyUsage monthlyUsage)
 }
 
 class JdbcStorageUsageRepository implements StorageUsageRepository {
@@ -24,7 +23,7 @@ class JdbcStorageUsageRepository implements StorageUsageRepository {
         this.clock = clock
     }
 
-    MonthlyUsage lastMonthlyUsage(String username) {
+    ResourceUsageService.MonthlyUsage lastMonthlyUsage(String username) {
         def row = sql.firstRow('''
                 SELECT gb_hours, storage_used, update_time
                 FROM user_monthly_storage
@@ -33,11 +32,11 @@ class JdbcStorageUsageRepository implements StorageUsageRepository {
                 LIMIT 1''', [username])
         if (row == null)
             row = [gb_hours: 0, storage_used: 0, update_time: DateTime.firstOfMonth(clock.now())]
-        return new MonthlyUsage(username, row.gb_hours, row.storage_used, row.update_time)
+        return new ResourceUsageService.MonthlyUsage(username, row.gb_hours, row.storage_used, row.update_time)
     }
 
 
-    void updateMonthlyUsage(MonthlyUsage monthlyUsage) {
+    void updateMonthlyUsage(ResourceUsageService.MonthlyUsage monthlyUsage) {
         monthlyUsage.with {
             def rowsUpdated = sql.executeUpdate('''
                 UPDATE user_monthly_storage

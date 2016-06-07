@@ -56,23 +56,23 @@ class SepalSessionEndpoint {
                 def instanceTypes = info.instanceTypes
                 def instanceTypeById = instanceTypesById(instanceTypes)
                 def responseBodyMap = [
-                        sessions: info.activeSessions.collect { toSessionMap(it, instanceTypeById) }
+                        sessions               : info.activeSessions.collect { toSessionMap(it, instanceTypeById) }
                                 + info.startingSessions.collect { toSessionMap(it, instanceTypeById) },
-                        instanceTypes: instanceTypes.collect {
+                        instanceTypes          : instanceTypes.collect {
                             [
-                                    path: "sandbox/$query.username/instance-type/$it.id",
-                                    id: it.id,
-                                    name: it.name,
+                                    path       : "sandbox/$query.username/instance-type/$it.id",
+                                    id         : it.id,
+                                    name       : it.name,
                                     description: it.description,
-                                    hourlyCost: it.hourlyCost
+                                    hourlyCost : it.hourlyCost
                             ]
                         },
-                        monthlyInstanceBudget: info.monthlyInstanceBudget,
+                        monthlyInstanceBudget  : info.monthlyInstanceBudget,
                         monthlyInstanceSpending: info.monthlyInstanceSpending,
-                        monthlyStorageBudget: info.monthlyStorageBudget,
-                        monthlyStorageSpending: info.monthlyStorageSpending,
-                        storageQuota: info.storageQuota,
-                        storageUsed: info.storageUsed
+                        monthlyStorageBudget   : info.monthlyStorageBudget,
+                        monthlyStorageSpending : info.monthlyStorageSpending,
+                        storageQuota           : info.storageQuota,
+                        storageUsed            : info.storageUsed
                 ]
                 send(toJson(responseBodyMap))
             }
@@ -124,19 +124,19 @@ class SepalSessionEndpoint {
     private Map toSessionMap(SandboxSession session, Map<String, WorkerInstanceType> instanceTypeById) {
         def instanceType = instanceTypeById[session.instanceType]
         return [
-                id: session.id,
-                path: "sandbox/$session.username/session/$session.id",
-                host: session.host,
-                port: session.port,
-                username: session.username,
-                status: toStatus(session),
-                instanceType: [
-                        id: instanceType.id,
-                        name: instanceType.name,
+                id               : session.id,
+                path             : "sandbox/$session.username/session/$session.id",
+                host             : session.host,
+                port             : session.port,
+                username         : session.username,
+                status           : toStatus(session),
+                instanceType     : [
+                        id         : instanceType.id,
+                        name       : instanceType.name,
                         description: instanceType.description,
-                        hourlyCost: instanceType.hourlyCost
+                        hourlyCost : instanceType.hourlyCost
                 ],
-                creationTime: session.creationTime.format("yyyy-MM-dd'T'HH:mm:ss"),
+                creationTime     : session.creationTime.format("yyyy-MM-dd'T'HH:mm:ss"),
                 costSinceCreation: (instanceType.hourlyCost * hoursSince(session.creationTime)).round(2)
         ]
     }
