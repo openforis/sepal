@@ -3,13 +3,15 @@ package org.openforis.sepal.workertype
 import groovy.transform.Immutable
 
 final class WorkerTypes {
+    static final String SANDBOX = 'sandbox'
+    static final String TASK_EXECUTOR = 'task-executor'
     private final Map<String, WorkerType> workerTypeByName = [:]
 
     WorkerTypes() {
-        workerTypeByName['TASK_EXECUTOR'] = new WorkerType('task-executor', 'openforis/task-executor',
+        workerTypeByName[TASK_EXECUTOR] = new WorkerType(TASK_EXECUTOR, "openforis/$TASK_EXECUTOR",
                 new WorkerType.Endpoint(endpoint: 'task-executor', exposedPort: 80, publishedPort: 1234)
         )
-        workerTypeByName['SANDBOX'] = new WorkerType('sandbox', 'openforis/sandbox',
+        workerTypeByName[SANDBOX] = new WorkerType(SANDBOX, "openforis/$SANDBOX",
                 new WorkerType.Endpoint(endpoint: 'rstudio-server', exposedPort: 8787, publishedPort: 8787),
                 new WorkerType.Endpoint(endpoint: 'shiny-server', exposedPort: 3838, publishedPort: 3838)
         )

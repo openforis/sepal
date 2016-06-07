@@ -2,13 +2,15 @@ package component.workersession.integration
 
 import component.workerinstance.AbstractWorkerInstanceTest
 import org.openforis.sepal.component.workersession.adapter.InstanceComponentAdapter
+import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.workersession.api.WorkerInstance
 import org.openforis.sepal.component.workersession.api.WorkerSession
 
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class InstanceComponentAdapter_IntegerationTest extends AbstractWorkerInstanceTest {
-    def adapter = new InstanceComponentAdapter(component)
+    def instanceTypes = []
+    def adapter = new InstanceComponentAdapter(instanceTypes, component)
 
     def 'When requesting instance, instance is requested'() {
         when:
@@ -51,6 +53,13 @@ class InstanceComponentAdapter_IntegerationTest extends AbstractWorkerInstanceTe
 
         then:
         activatedInstance == new WorkerInstance(id: instance.id, host: instance.host)
+    }
+
+    def 'When getting instance types, instance types are returned'() {
+        instanceTypes << new InstanceType(id: 'some-instance-type')
+
+        expect:
+        adapter.instanceTypes == instanceTypes
     }
 
     private WorkerSession session(Map args = [:]) {

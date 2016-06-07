@@ -1,7 +1,7 @@
 package org.openforis.sepal.component.hostingservice.vagrant
 
 import org.openforis.sepal.component.hostingservice.internal.AbstractHostingService
-import org.openforis.sepal.component.hostingservice.internal.InstanceType
+import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.hostingservice.internal.UserStorageUseChecker
 
 class VagrantHostingService extends AbstractHostingService {

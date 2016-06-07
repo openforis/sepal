@@ -2,12 +2,15 @@ package component.workersession
 
 import fake.Database
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
+import org.openforis.sepal.component.workersession.api.Spending
 import org.openforis.sepal.component.workersession.api.Timeout
+import org.openforis.sepal.component.workersession.api.UserSessionReport
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSession.State
 import org.openforis.sepal.component.workersession.command.*
 import org.openforis.sepal.component.workersession.query.FindPendingOrActiveSession
 import org.openforis.sepal.component.workersession.query.FindSessionById
+import org.openforis.sepal.component.workersession.query.GenerateUserSessionReport
 import org.openforis.sepal.component.workersession.query.UserWorkerSessions
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
@@ -20,12 +23,12 @@ abstract class AbstractWorkerSessionTest extends Specification {
     final database = new Database()
     final eventDispatcher = new HandlerRegistryEventDispatcher()
     final instanceManager = new FakeInstanceManager()
-    final budgetChecker = new FakeBudgetChecker()
+    final budgetManager = new FakeBudgetManager()
     final clock = new FakeClock()
     final component = new WorkerSessionComponent(
             database.dataSource,
             eventDispatcher,
-            budgetChecker,
+            budgetManager,
             instanceManager,
             clock)
 
@@ -104,9 +107,21 @@ abstract class AbstractWorkerSessionTest extends Specification {
                 states: args.states ?: []))
     }
 
+    final UserSessionReport generateUserSessionReport(Map args = [:]) {
+        component.submit(new GenerateUserSessionReport(
+                username: username(args),
+                workerType: args.workerType ?: testWorkerType
+        ))
+    }
+
     final releaseUnusedInstances(int minAge, TimeUnit timeUnit) {
         component.submit(new ReleaseUnusedInstances(minAge, timeUnit))
     }
+
+    final Spending specifyUserSpending(Spending spending, Map args = [:]) {
+        budgetManager.specifyUserSpending(username(args), spending)
+    }
+
 
     final <E extends Event> E published(Class<E> eventType) {
         def recievedEvent = events.find { it.class.isAssignableFrom(eventType) }

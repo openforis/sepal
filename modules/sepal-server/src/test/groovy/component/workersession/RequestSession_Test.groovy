@@ -1,23 +1,24 @@
 package component.workersession
 
 import org.openforis.sepal.command.ExecutionFailed
+import spock.lang.Ignore
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
 
 class RequestSession_Test extends AbstractWorkerSessionTest {
-    def 'When requesting sandbox session, budget is checked, instance is requested, a generated session id is returned, and session is pending'() {
+    def 'When requesting session, budget is checked, instance is requested, a generated session id is returned, and session is pending'() {
         when:
         def session = requestSession()
 
         then:
-        budgetChecker.budgetChecked
+        budgetManager.budgetChecked
         instanceManager.requestedOne()
         session
         oneSessionIs PENDING
     }
 
     def 'Given an exceeded budget, when requesting sandbox session, exception is thrown, user has no sessions, and no instance is requested'() {
-        budgetChecker.exceeded()
+        budgetManager.exceeded()
 
         when:
         requestSession()

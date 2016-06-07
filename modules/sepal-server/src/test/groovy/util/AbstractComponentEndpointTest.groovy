@@ -17,7 +17,6 @@ import org.openforis.sepal.endpoint.Endpoints
 import spock.lang.Specification
 
 import static groovy.json.JsonOutput.prettyPrint
-import static org.openforis.sepal.security.Roles.getADMIN
 
 @SuppressWarnings("GroovyAssignabilityCheck")
 abstract class AbstractComponentEndpointTest extends Specification {
@@ -27,7 +26,7 @@ abstract class AbstractComponentEndpointTest extends Specification {
     final userRepository = new FakeUserRepository()
     final passwordVerifier = new FakeUsernamePasswordVerifier()
     final testUsername = 'some-user'
-    private HttpResponseDecorator response
+    HttpResponseDecorator response
 
     final client = new RESTClient("http://localhost:$port/api/")
 

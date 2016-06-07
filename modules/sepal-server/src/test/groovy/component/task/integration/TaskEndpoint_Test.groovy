@@ -20,8 +20,7 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
 
     def 'Given no tasks, GET /tasks, submits UserTasks returns empty array'() {
         when:
-        def response = get(path: 'tasks')
-        println response
+        get(path: 'tasks')
 
         then:
         1 * component.submit(new UserTasks(username: testUsername)) >> []

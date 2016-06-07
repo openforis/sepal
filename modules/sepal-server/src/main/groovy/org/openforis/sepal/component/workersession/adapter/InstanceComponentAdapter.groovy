@@ -6,15 +6,18 @@ import org.openforis.sepal.component.workerinstance.command.ReleaseUnusedInstanc
 import org.openforis.sepal.component.workerinstance.command.RequestInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceProvisioned
 import org.openforis.sepal.component.workersession.api.InstanceManager
+import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.workersession.api.WorkerInstance
 import org.openforis.sepal.component.workersession.api.WorkerSession
 
 import java.util.concurrent.TimeUnit
 
 class InstanceComponentAdapter implements InstanceManager {
+    final List<InstanceType> instanceTypes
     private final Component instanceComponent
 
-    InstanceComponentAdapter(Component instanceComponent) {
+    InstanceComponentAdapter(List<InstanceType> instanceTypes, Component instanceComponent) {
+        this.instanceTypes = instanceTypes
         this.instanceComponent = instanceComponent
     }
 
@@ -23,7 +26,7 @@ class InstanceComponentAdapter implements InstanceManager {
                 workerType: session.workerType,
                 instanceType: session.instanceType
         ))
-        return new WorkerInstance(instance.id, instance.host)
+        return new WorkerInstance(id: instance.id, host: instance.host)
     }
 
     void releaseInstance(String instanceId) {

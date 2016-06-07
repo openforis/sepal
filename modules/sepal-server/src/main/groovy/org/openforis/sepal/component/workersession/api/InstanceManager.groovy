@@ -9,5 +9,7 @@ interface InstanceManager {
 
     void releaseUnusedInstances(List<WorkerSession> pendingOrActiveSessions, int minAge, TimeUnit timeUnit)
 
+    List<InstanceType> getInstanceTypes()
+
     void onInstanceActivated(Closure listener)
 }

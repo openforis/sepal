@@ -70,6 +70,25 @@ class BudgetComponentAdapter_IntegrationTest extends AbstractBudgetTest {
         thrown StorageQuotaExceeded
     }
 
+    def 'When getting user spending, budget and spending is returned'() {
+        updateUserBudget(new Budget(instanceSpending: 1, storageSpending: 2, storageQuota: 3))
+        session(start: '2016-01-01', hours: 1, hourlyCost: 4)
+        storageCost(5)
+        storage(gb: 2, start: '2016-01-01', days: 30)
+
+
+        when:
+        def spending = adapter.userSpending(testUsername)
+
+        then:
+        spending.monthlyInstanceBudget == 1
+        spending.monthlyInstanceSpending == 4
+        spending.monthlyStorageBudget == 2
+        spending.monthlyStorageSpending.round() == 10
+        spending.storageUsed == 2
+        spending.storageQuota == 3
+    }
+
 
     private void exceededInstanceBudget() {
         updateUserBudget(new Budget(instanceSpending: 100))

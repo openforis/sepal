@@ -47,7 +47,8 @@ class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestIn
         def instance = new WorkerInstance(
                 id: UUID.randomUUID().toString(),
                 reservation: reservation,
-                type: command.instanceType
+                type: command.instanceType,
+                running: false
         )
         def launchedInstance = instanceProvider.launchReserved(instance)
         eventDispatcher.publish(new InstanceLaunched(launchedInstance))

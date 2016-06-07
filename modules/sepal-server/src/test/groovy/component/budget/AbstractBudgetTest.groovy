@@ -1,6 +1,6 @@
 package component.budget
 
-import component.workersession.FakeBudgetChecker
+import component.workersession.FakeBudgetManager
 import component.workersession.FakeInstanceManager
 import fake.Database
 import org.openforis.sepal.component.budget.BudgetComponent
@@ -50,7 +50,7 @@ abstract class AbstractBudgetTest extends Specification {
     final sessionComponent = new WorkerSessionComponent(
             database.dataSource,
             eventDispatcher,
-            new FakeBudgetChecker(),
+            new FakeBudgetManager(),
             new FakeInstanceManager(),
             clock)
 

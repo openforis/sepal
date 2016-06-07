@@ -3,7 +3,7 @@ package org.openforis.sepal.component.workersession.command
 import groovy.transform.ToString
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
-import org.openforis.sepal.component.workersession.api.BudgetChecker
+import org.openforis.sepal.component.workersession.api.BudgetManager
 import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
@@ -19,23 +19,23 @@ class RequestSession extends AbstractCommand<WorkerSession> {
 @ToString
 class RequestSessionHandler implements CommandHandler<WorkerSession, RequestSession> {
     private final WorkerSessionRepository repository
-    private final BudgetChecker budgetChecker
+    private final BudgetManager budgetManager
     private final InstanceManager instanceManager
     private final Clock clock
 
     RequestSessionHandler(
             WorkerSessionRepository repository,
-            BudgetChecker budgetChecker,
+            BudgetManager budgetManager,
             InstanceManager instanceManager,
             Clock clock) {
         this.repository = repository
-        this.budgetChecker = budgetChecker
+        this.budgetManager = budgetManager
         this.instanceManager = instanceManager
         this.clock = clock
     }
 
     WorkerSession execute(RequestSession command) {
-        budgetChecker.check(command.username)
+        budgetManager.check(command.username)
         def now = clock.now()
         def session = new WorkerSession(
                 id: UUID.randomUUID().toString(),
