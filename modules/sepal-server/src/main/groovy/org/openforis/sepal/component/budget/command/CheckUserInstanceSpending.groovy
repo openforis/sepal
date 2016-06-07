@@ -8,7 +8,9 @@ import org.openforis.sepal.component.budget.event.UserInstanceBudgetExceeded
 import org.openforis.sepal.component.budget.event.UserInstanceBudgetNotExceeded
 import org.openforis.sepal.component.budget.internal.InstanceSpendingService
 import org.openforis.sepal.event.EventDispatcher
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class CheckUserInstanceSpending extends AbstractCommand<UserInstanceSpending> {
 }
 

@@ -3,7 +3,6 @@ package org.openforis.sepal.component
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
-import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.EventHandler
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
@@ -27,7 +26,7 @@ interface Component {
 
     def <R> R submit(Query<R> query)
 
-    def <E extends Event> AbstractComponent on(Class<E> eventType, EventHandler<E> handler)
+    def <E extends Event> Component on(Class<E> eventType, EventHandler<E> handler)
 
     void start()
 

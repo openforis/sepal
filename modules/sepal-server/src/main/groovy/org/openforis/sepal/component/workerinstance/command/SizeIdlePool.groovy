@@ -6,10 +6,12 @@ import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.event.EventDispatcher
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.annotation.Data
 
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
+@Data(callSuper = true)
 class SizeIdlePool extends AbstractCommand<Void> {
     Map<String, Integer> targetIdleCountByInstanceType
     int timeBeforeChargeToTerminate

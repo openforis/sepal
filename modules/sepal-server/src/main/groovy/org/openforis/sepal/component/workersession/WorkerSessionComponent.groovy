@@ -1,12 +1,15 @@
 package org.openforis.sepal.component.workersession
 
+import groovymvc.Controller
 import org.openforis.sepal.component.AbstractComponent
 import org.openforis.sepal.component.workerinstance.command.SizeIdlePool
 import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository
 import org.openforis.sepal.component.workersession.api.BudgetChecker
 import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.command.*
+import org.openforis.sepal.component.workersession.endpoint.WorkerSessionEndpoint
 import org.openforis.sepal.component.workersession.query.*
+import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
@@ -17,7 +20,7 @@ import javax.sql.DataSource
 import static java.util.concurrent.TimeUnit.MINUTES
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class WorkerSessionComponent extends AbstractComponent {
+class WorkerSessionComponent extends AbstractComponent implements EndpointRegistry {
     WorkerSessionComponent(BudgetChecker budgetChecker, InstanceManager instanceManager, DataSource dataSource) {
         this(
                 dataSource,
@@ -51,6 +54,10 @@ class WorkerSessionComponent extends AbstractComponent {
         query(FindPendingOrActiveSession, new FindPendingOrActiveSessionHandler(sessionRepository))
 
         instanceManager.onInstanceActivated { submit(new ActivatePendingSessionOnInstance(instance: it)) }
+    }
+
+    void registerEndpointsWith(Controller controller) {
+        new WorkerSessionEndpoint(this).registerWith(controller)
     }
 
     void onStart() {

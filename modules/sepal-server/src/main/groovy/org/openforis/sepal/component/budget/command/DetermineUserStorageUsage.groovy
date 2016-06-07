@@ -4,7 +4,9 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.budget.internal.StorageUseService
 import org.openforis.sepal.user.UserRepository
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class DetermineUserStorageUsage extends AbstractCommand<Void> {
 }
 

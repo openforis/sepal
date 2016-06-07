@@ -6,7 +6,9 @@ import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSession
 import org.openforis.sepal.component.task.api.WorkerSessionManager
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class CancelTimedOutTasks extends AbstractCommand<Void> {
 }
 

@@ -7,7 +7,9 @@ import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class SubmitTask extends AbstractCommand<Task> {
     String instanceType
     String operation

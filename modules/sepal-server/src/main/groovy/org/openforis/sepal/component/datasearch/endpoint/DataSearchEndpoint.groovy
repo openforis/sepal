@@ -53,13 +53,13 @@ class DataSearchEndpoint {
 
     Map sceneData(SceneMetaData scene, SceneQuery query) {
         [
-                sceneId: scene.id,
-                sensor: scene.sensorId,
-                browseUrl: scene.browseUrl as String,
-                acquisitionDate: DateTime.toDateString(scene.acquisitionDate),
-                cloudCover: scene.cloudCover,
-                sunAzimuth: scene.sunAzimuth,
-                sunElevation: scene.sunElevation,
+                sceneId          : scene.id,
+                sensor           : scene.sensorId,
+                browseUrl        : scene.browseUrl as String,
+                acquisitionDate  : DateTime.toDateString(scene.acquisitionDate),
+                cloudCover       : scene.cloudCover,
+                sunAzimuth       : scene.sunAzimuth,
+                sunElevation     : scene.sunElevation,
                 daysFromTargetDay: DateTime.daysFromDayOfYear(scene.acquisitionDate, query.targetDay)
         ]
     }

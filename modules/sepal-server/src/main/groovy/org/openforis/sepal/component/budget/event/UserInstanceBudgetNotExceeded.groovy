@@ -1,10 +1,10 @@
 package org.openforis.sepal.component.budget.event
 
-import groovy.transform.Immutable
 import org.openforis.sepal.component.budget.api.UserInstanceSpending
 import org.openforis.sepal.event.Event
+import org.openforis.sepal.util.annotation.ImmutableData
 
-@Immutable
+@ImmutableData
 class UserInstanceBudgetNotExceeded implements Event {
     UserInstanceSpending userInstanceSpending
 }

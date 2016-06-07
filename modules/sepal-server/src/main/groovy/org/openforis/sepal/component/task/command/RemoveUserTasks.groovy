@@ -3,7 +3,9 @@ package org.openforis.sepal.component.task.command
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.task.api.TaskRepository
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class RemoveUserTasks extends AbstractCommand<Void> {
 
 }

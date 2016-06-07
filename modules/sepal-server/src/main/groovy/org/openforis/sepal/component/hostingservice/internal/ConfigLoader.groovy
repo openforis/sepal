@@ -21,7 +21,7 @@ final class ConfigLoader {
             throw new MissingProperty("missing required property: $key")
         try {
             return value as int
-        } catch(Exception ignore) {
+        } catch (Exception ignore) {
             throw new InvalidConfig("Expected $key to be an int: $value")
         }
     }

@@ -1,12 +1,12 @@
 package org.openforis.sepal.component.workersession.query
 
-import groovy.transform.Immutable
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
+import org.openforis.sepal.util.annotation.ImmutableData
 
-@Immutable
+@ImmutableData
 class FindSessionById implements Query<WorkerSession> {
     String sessionId
 }

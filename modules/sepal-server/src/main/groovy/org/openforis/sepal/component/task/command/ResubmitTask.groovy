@@ -9,11 +9,11 @@ import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.annotation.Data
 
-import static org.openforis.sepal.component.task.api.Task.State.CANCELED
-import static org.openforis.sepal.component.task.api.Task.State.COMPLETED
-import static org.openforis.sepal.component.task.api.Task.State.FAILED
+import static org.openforis.sepal.component.task.api.Task.State.*
 
+@Data(callSuper = true)
 class ResubmitTask extends AbstractCommand<Task> {
     String instanceType
     String taskId

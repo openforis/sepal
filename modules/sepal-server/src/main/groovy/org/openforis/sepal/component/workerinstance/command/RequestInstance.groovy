@@ -3,13 +3,15 @@ package org.openforis.sepal.component.workerinstance.command
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
-import org.openforis.sepal.component.workerinstance.api.WorkerReservation
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
+import org.openforis.sepal.component.workerinstance.api.WorkerReservation
 import org.openforis.sepal.component.workerinstance.event.InstanceLaunched
 import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
 import org.openforis.sepal.event.EventDispatcher
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class RequestInstance extends AbstractCommand<WorkerInstance> {
     String workerType
     String instanceType

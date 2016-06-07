@@ -1,14 +1,15 @@
 package org.openforis.sepal.component.workersession.command
 
-import groovy.transform.Immutable
+import groovy.transform.Canonical
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
+import org.openforis.sepal.util.annotation.Data
 
 import java.util.concurrent.TimeUnit
 
-@Immutable
+@Data(callSuper = true)
 class ReleaseUnusedInstances extends AbstractCommand<Void> {
     int minAge
     TimeUnit timeUnit

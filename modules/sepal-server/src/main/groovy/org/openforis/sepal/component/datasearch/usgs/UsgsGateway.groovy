@@ -123,12 +123,12 @@ class CsvBackedUsgsGateway implements UsgsGateway {
 
     static UsgsGateway create(File workingDir) {
         new CsvBackedUsgsGateway(workingDir, [
-                (LANDSAT_8): [
+                (LANDSAT_8)          : [
                         new GzCsvUriReader(
                                 'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_8.csv.gz',
                                 workingDir,
                                 'LANDSAT_8')],
-                (LANDSAT_ETM): [
+                (LANDSAT_ETM)        : [
                         new GzCsvUriReader(
                                 'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM.csv.gz',
                                 workingDir,
@@ -138,7 +138,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
                                 'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM_SLC_OFF.csv.gz',
                                 workingDir,
                                 'LANDSAT_ETM_SLC_OFF')],
-                (LANDSAT_TM): [
+                (LANDSAT_TM)         : [
                         new GzCsvUriReader(
                                 'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_TM-1980-1989.csv.gz',
                                 workingDir,
@@ -155,7 +155,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
                                 'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_TM-2010-2012.csv.gz',
                                 workingDir,
                                 'LANDSAT_TM-2010-2012')],
-                (LANDSAT_MSS): [
+                (LANDSAT_MSS)        : [
                         new GzCsvUriReader(
                                 'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_MSS2.csv.gz',
                                 workingDir,
@@ -165,10 +165,10 @@ class CsvBackedUsgsGateway implements UsgsGateway {
                                 workingDir,
                                 'LANDSAT_MSS1')]
         ], [
-                (LANDSAT_8): [
+                (LANDSAT_8)          : [
                         new CsvUriReader('http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_8.csv')
                 ],
-                (LANDSAT_ETM): [
+                (LANDSAT_ETM)        : [
                         new CsvUriReader('http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM.csv')
                 ],
                 (LANDSAT_ETM_SLC_OFF): [

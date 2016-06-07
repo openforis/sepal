@@ -4,7 +4,9 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.budget.api.Budget
 import org.openforis.sepal.component.budget.api.BudgetRepository
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class UpdateBudget extends AbstractCommand<Void> {
     Budget budget
 }

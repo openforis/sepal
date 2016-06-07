@@ -31,7 +31,6 @@ class SessionDeployed extends SessionEvent {
 }
 
 
-
 class SessionAlive extends SessionEvent {
     SessionAlive(SandboxSession session) {
         super(session)

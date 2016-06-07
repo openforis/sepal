@@ -1,12 +1,12 @@
 package org.openforis.sepal.component.task.endpoint
 
+import groovy.json.JsonSlurper
 import groovymvc.Controller
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.query.UserTasks
-import org.openforis.sepal.user.User
 
 import static groovy.json.JsonOutput.toJson
 import static org.openforis.sepal.user.User.Role.TASK_EXECUTOR
@@ -38,7 +38,7 @@ class TaskEndpoint {
                 submit(new SubmitTask(
                         instanceType: params.required('instanceType'),
                         operation: params.required('operation'),
-                        params: params.required('params', Map),
+                        params: fromJson(params.required('params', String)),
                         username: currentUser.username
                 ))
                 response.status = 204
@@ -67,7 +67,7 @@ class TaskEndpoint {
                 submit(new RemoveUserTasks(username: currentUser.username))
                 response.status = 204
             }
-            
+
             post('/tasks/task/{id}/progress', [TASK_EXECUTOR.name()]) {
                 submit(new UpdateTaskProgress(
                         taskId: params.required('id', int),
@@ -78,6 +78,10 @@ class TaskEndpoint {
                 response.status = 204
             }
         }
+    }
+
+    private Map fromJson(String json) {
+        new JsonSlurper().parseText(json) as Map
     }
 
     private void submit(Command command) {

@@ -8,7 +8,9 @@ import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class RequestSession extends AbstractCommand<WorkerSession> {
     String workerType
     String instanceType

@@ -10,7 +10,9 @@ import org.openforis.sepal.component.budget.event.UserStorageSpendingExceeded
 import org.openforis.sepal.component.budget.event.UserStorageSpendingNotExceeded
 import org.openforis.sepal.component.budget.internal.StorageUseService
 import org.openforis.sepal.event.EventDispatcher
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class CheckUserStorageUse extends AbstractCommand<UserStorageUse> {
 }
 

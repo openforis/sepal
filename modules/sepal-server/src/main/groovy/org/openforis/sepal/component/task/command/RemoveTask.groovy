@@ -5,9 +5,11 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.command.InvalidCommand
 import org.openforis.sepal.command.Unauthorized
 import org.openforis.sepal.component.task.api.TaskRepository
+import org.openforis.sepal.util.annotation.Data
 
 import static org.openforis.sepal.component.task.api.Task.State.*
 
+@Data(callSuper = true)
 class RemoveTask extends AbstractCommand<Void> {
     String taskId
 }

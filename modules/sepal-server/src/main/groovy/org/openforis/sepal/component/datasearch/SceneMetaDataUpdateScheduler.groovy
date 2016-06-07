@@ -10,7 +10,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
 import static java.util.concurrent.TimeUnit.DAYS
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class SceneMetaDataUpdateScheduler {
     private static final Logger LOG = LoggerFactory.getLogger(this)
