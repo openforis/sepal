@@ -1,4 +1,30 @@
+#tasks .row-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+
 #tasks .row.task {
     border: 1px solid rgba(255, 255, 255, 0.10);
     background-color: rgba(255, 255, 255, 0.05);
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+}
+
+#tasks .row.task i {
+    font-size: 1.2rem;
+}
+
+#tasks .fa-pending {
+    color : rgba(255, 255, 255, 0.90);
+}
+
+#tasks .fa-active {
+    color : rgba(184, 204, 166, 0.90);
+}
+
+#tasks .fa-completed {
+    color : rgba(184, 204, 166, 0.90);
+}
+
+#tasks .fa-failed {
+    color : rgba(204, 62, 67, 0.9);
 }

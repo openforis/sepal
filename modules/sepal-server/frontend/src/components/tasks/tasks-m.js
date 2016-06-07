@@ -16,20 +16,28 @@ var isEmpty = function () {
     return tasks.length <= 0
 }
 
-var isActive = function (  ) {
+var isActive = function () {
     var running = false
-    $.each( tasks , function ( i,task ) {
-        if( task.status === 'ACTIVE' ){
+    $.each( tasks, function ( i, task ) {
+        if ( task.status === STATUS.ACTIVE ) {
             running = true
+            return false
         }
-        return
-    })
+    } )
     return running
+}
+
+var STATUS = {
+    ACTIVE     : 'ACTIVE'
+    , PENDING  : 'PENDING'
+    , COMPLETED: 'COMPLETED'
+    , FAILED   : 'FAILED'
 }
 
 module.exports = {
     setTasks  : setTasks
     , getTasks: getTasks
     , isEmpty : isEmpty
-    , isActive : isActive
+    , isActive: isActive
+    , STATUS  : STATUS
 }

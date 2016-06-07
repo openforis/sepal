@@ -6,9 +6,11 @@ require( './tasks.css' )
 var EventBus  = require( '../event/event-bus' )
 var Events    = require( '../event/events' )
 var Animation = require( '../animation/animation' )
+var Model     = require( './tasks-m' )
+
 // html
-var template  = require( './tasks.html' )
-var html      = $( template( {} ) )
+var template = require( './tasks.html' )
+var html     = $( template( {} ) )
 
 var rowTask   = html.find( '.row.task' )
 var rowHeader = html.find( '.row.row-header' )
@@ -28,7 +30,7 @@ var reset = function () {
 var setTasks = function ( tasks ) {
     $.each( tasks, function ( i, task ) {
         var row = getTaskRow( i, task )
-        row.find( '.status' ).html( task.status )
+        row.find( '.status' ).html( getTaskStatus( task.status ).tooltip() )
     } )
 }
 
@@ -52,4 +54,29 @@ module.exports = {
     init      : init
     , reset   : reset
     , setTasks: setTasks
-} 
+}
+
+var getTaskStatus = function ( status ) {
+    var icon = ''
+    switch ( status ) {
+
+        case Model.STATUS.ACTIVE:
+            icon = '<i class="fa fa-refresh fa-spin fa-active" aria-hidden="true"' +
+                'data-toggle="tooltip" data-placement="top" title="Active"></i>'
+            break;
+        case Model.STATUS.PENDING:
+            icon = '<i class="fa fa-hand-paper-o fa-pending" aria-hidden="true"' +
+                'data-toggle="tooltip" data-placement="top" title="Pending"></i>'
+            break;
+        case Model.STATUS.FAILED:
+            icon = '<i class="fa fa-exclamation-triangle fa-failed" aria-hidden="true"' +
+                'data-toggle="tooltip" data-placement="top" title="Failed"></i>'
+            break;
+        case Model.STATUS.COMPLETED:
+            icon = '<i class="fa fa-thumbs-up fa-completed" aria-hidden="true"' +
+                'data-toggle="tooltip" data-placement="top" title="Completed"></i>'
+            break;
+    }
+
+    return $( icon )
+}
