@@ -3,13 +3,13 @@ package component.task.integration
 import groovy.json.JsonSlurper
 import groovymvc.Controller
 import org.openforis.sepal.component.task.api.Task
-import org.openforis.sepal.component.task.command.CancelTask
-import org.openforis.sepal.component.task.command.SubmitTask
+import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.endpoint.TaskEndpoint
 import org.openforis.sepal.component.task.query.UserTasks
 import util.AbstractComponentEndpointTest
 
 import static groovy.json.JsonOutput.toJson
+import static org.openforis.sepal.security.Roles.TASK_EXECUTOR
 
 @SuppressWarnings("GroovyAssignabilityCheck")
 class TaskEndpoint_Test extends AbstractComponentEndpointTest {
@@ -36,6 +36,7 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
         println response
 
         then:
+        status == 200
         1 * component.submit(new UserTasks(username: testUsername)) >> [task]
 
         sameJson(response.data, [
@@ -58,6 +59,7 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
         post(path: 'tasks', query: query)
 
         then:
+        status == 204
         1 * component.submit(new SubmitTask(
                 instanceType: query.instanceType,
                 operation: query.operation,
@@ -73,7 +75,82 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
         post(path: "tasks/task/$taskId/cancel")
 
         then:
+        status == 204
         1 * component.submit(new CancelTask(taskId: taskId, username: testUsername))
+    }
+
+    def 'POST /tasks/task/{id}/remove, submits RemoveTask'() {
+        def taskId = 123
+
+        when:
+        post(path: "tasks/task/$taskId/remove")
+
+        then:
+        status == 204
+        1 * component.submit(new RemoveTask(taskId: taskId, username: testUsername))
+    }
+
+    def 'POST /tasks/task/{id}/execute, submits ResubmitTask'() {
+        def taskId = 123
+        def instanceType = 'some-instance-type'
+
+
+        when:
+        post(path: "tasks/task/$taskId/execute", query: [instanceType: instanceType])
+
+        then:
+        status == 204
+        1 * component.submit(new ResubmitTask(
+                taskId: taskId,
+                instanceType: instanceType,
+                username: testUsername))
+    }
+
+    def 'POST /tasks/remove, submits RemoveUserTasks'() {
+        when:
+        post(path: "tasks/remove")
+
+        then:
+        status == 204
+        1 * component.submit(new RemoveUserTasks(username: testUsername))
+    }
+
+    def 'Given TASK_EXECUTOR, POST /tasks/task/{id}/progress, submits UpdateTaskProgress'() {
+        inRole(TASK_EXECUTOR)
+        def taskId = 123
+        def query = [
+                instanceType     : 'some-instance-type',
+                state            : 'PENDING',
+                statusDescription: 'some-status-description'
+        ]
+
+
+        when:
+        post(path: "tasks/task/$taskId/progress", query: query)
+
+        then:
+        status == 204
+        1 * component.submit(new UpdateTaskProgress(
+                taskId: taskId,
+                state: query.state as Task.State,
+                statusDescription: query.statusDescription,
+                username: testUsername))
+    }
+
+    def 'Given not TASK_EXECUTOR, POST /tasks/task/{id}/progress, return 403'() {
+        def taskId = 123
+        def query = [
+                instanceType     : 'some-instance-type',
+                state            : 'PENDING',
+                statusDescription: 'some-status-description'
+        ]
+
+
+        when:
+        post(path: "tasks/task/$taskId/progress", query: query)
+
+        then:
+        status == 403
     }
 
     Task task() {

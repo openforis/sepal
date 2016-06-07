@@ -9,7 +9,7 @@ import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.query.UserTasks
 
 import static groovy.json.JsonOutput.toJson
-import static org.openforis.sepal.user.User.Role.TASK_EXECUTOR
+import static org.openforis.sepal.security.Roles.TASK_EXECUTOR
 
 class TaskEndpoint {
     private final Component component
@@ -68,7 +68,7 @@ class TaskEndpoint {
                 response.status = 204
             }
 
-            post('/tasks/task/{id}/progress', [TASK_EXECUTOR.name()]) {
+            post('/tasks/task/{id}/progress', [TASK_EXECUTOR]) {
                 submit(new UpdateTaskProgress(
                         taskId: params.required('id', int),
                         state: params.required('state', Task.State),
