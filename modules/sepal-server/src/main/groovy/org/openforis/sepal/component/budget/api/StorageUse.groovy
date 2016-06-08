@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.budget.api
 
-import groovy.transform.Immutable
+import org.openforis.sepal.util.annotation.ImmutableData
 
-@Immutable
+@ImmutableData
 class StorageUse {
     double gbHours
     double gb

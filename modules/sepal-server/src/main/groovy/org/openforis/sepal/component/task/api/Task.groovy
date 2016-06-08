@@ -1,10 +1,10 @@
 package org.openforis.sepal.component.task.api
 
-import groovy.transform.Immutable
+import org.openforis.sepal.util.annotation.ImmutableData
 
 import static org.openforis.sepal.component.task.api.Task.State.*
 
-@Immutable
+@ImmutableData
 class Task {
     String id
     State state

@@ -25,12 +25,12 @@ class GateOneAuthObjectTest extends Specification {
         sameJson(json, [
                 authObject:
                         [
-                                api_key: 'somePublicKey',
-                                upn: 'someUsername',
-                                timestamp: timestamp,
+                                api_key         : 'somePublicKey',
+                                upn             : 'someUsername',
+                                timestamp       : timestamp,
                                 signature_method: 'HMAC-SHA1',
-                                api_version: '1.0',
-                                signature: 'c2e1ff8a4a68f3c4e227a4906c7fc4081262bd58'
+                                api_version     : '1.0',
+                                signature       : 'c2e1ff8a4a68f3c4e227a4906c7fc4081262bd58'
                         ]
         ])
     }

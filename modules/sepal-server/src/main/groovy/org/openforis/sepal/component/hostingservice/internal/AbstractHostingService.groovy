@@ -10,7 +10,7 @@ abstract class AbstractHostingService implements HostingService {
 
     AbstractHostingService(List<InstanceType> instanceTypes, double storageCostPerGbMonth) {
         hourlyCostByInstanceType = instanceTypes.collectEntries {
-            [(it.name): it.hourlyCost]
+            [(it.id): it.hourlyCost]
         }
         this.storageCostPerGbMonth = storageCostPerGbMonth
     }

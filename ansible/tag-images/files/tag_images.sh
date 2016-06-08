@@ -8,6 +8,7 @@ docker tag localhost/openforis/nginx:${SRC_VER} localhost/openforis/nginx:${VERS
 docker tag localhost/openforis/sepal-php:${SRC_VER} localhost/openforis/sepal-php:${VERSION}
 docker tag localhost/openforis/sepal:${SRC_VER} localhost/openforis/sepal:${VERSION}
 docker tag localhost/openforis/mysql:${SRC_VER} localhost/openforis/mysql:${VERSION}
+docker tag localhost/openforis/google-earth-engine:${SRC_VER} localhost/openforis/google-earth-engine:${VERSION}
 docker tag localhost/openforis/ssh-gateway:${SRC_VER} localhost/openforis/ssh-gateway:${VERSION}
 docker tag localhost/openforis/sandbox:${SRC_VER} localhost/openforis/sandbox:${VERSION}
 docker tag localhost/openforis/gateone:${SRC_VER} localhost/openforis/gateone:${VERSION}

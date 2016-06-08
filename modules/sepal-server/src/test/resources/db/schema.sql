@@ -26,7 +26,6 @@ DROP TABLE IF EXISTS user_budget;
 DROP TABLE IF EXISTS default_user_budget;
 DROP TABLE IF EXISTS user_monthly_storage;
 DROP TABLE IF EXISTS scene_meta_data;
-DROP TABLE IF EXISTS old_task;
 
 DROP TABLE IF EXISTS worker_session;
 DROP TABLE IF EXISTS task;
@@ -346,17 +345,6 @@ CREATE TABLE scene_meta_data (
 CREATE INDEX idx_scene_meta_data_1 ON scene_meta_data (meta_data_source, scene_area_id, acquisition_date);
 CREATE INDEX idx_scene_meta_data_2 ON scene_meta_data (meta_data_source, update_time);
 
-CREATE TABLE old_task (
-  id            INT          NOT NULL AUTO_INCREMENT,
-  username      VARCHAR(255) NOT NULL,
-  state         VARCHAR(255) NOT NULL,
-  instance_id   VARCHAR(255) NOT NULL,
-  operation     VARCHAR(255) NOT NULL,
-  data          VARCHAR(255) NOT NULL,
-  creation_time TIMESTAMP    NOT NULL,
-  update_time   TIMESTAMP    NOT NULL,
-  PRIMARY KEY (id)
-);
 
 CREATE TABLE worker_session (
   id            VARCHAR(255) NOT NULL,

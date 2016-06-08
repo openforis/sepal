@@ -4,13 +4,16 @@ import groovymvc.Controller
 import org.openforis.sepal.component.AbstractComponent
 import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
 import org.openforis.sepal.component.task.adapter.JdbcTaskRepository
+import org.openforis.sepal.component.task.adapter.SessionComponentAdapter
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.endpoint.TaskEndpoint
 import org.openforis.sepal.component.task.query.UserTasks
 import org.openforis.sepal.component.task.query.UserTasksHandler
+import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.endpoint.EndpointRegistry
+import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
@@ -21,11 +24,11 @@ import javax.sql.DataSource
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class TaskComponent extends AbstractComponent implements EndpointRegistry {
-    TaskComponent(WorkerSessionManager sessionManager, DataSource dataSource) {
+    TaskComponent(WorkerSessionComponent workerSessionComponent, DataSource dataSource) {
         this(
                 dataSource,
-                new HandlerRegistryEventDispatcher(),
-                sessionManager,
+                new AsynchronousEventDispatcher(),
+                new SessionComponentAdapter(workerSessionComponent),
                 new HttpWorkerGateway(),
                 new SystemClock()
         )

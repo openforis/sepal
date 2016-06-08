@@ -81,7 +81,7 @@ class PoolingWorkerWorkerInstanceManagerTest extends Specification {
         instanceManager.updateInstances([])
 
         then:
-        provider.has(idle: 1, reserved: 1, )
+        provider.has(idle: 1, reserved: 1,)
     }
 
     def 'Given fewer idle instances than expected and one reserved, when updating instances, there still is one reserved instance and an idle is launched'() {

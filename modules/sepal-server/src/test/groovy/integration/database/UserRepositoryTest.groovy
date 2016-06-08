@@ -11,8 +11,10 @@ class UserRepositoryTest extends Specification {
     static USERNAME = "Test.User"
     static UID = 12356
 
-    @Shared SepalDriver sepalDriver
-    @Shared UserRepository userRepo
+    @Shared
+    SepalDriver sepalDriver
+    @Shared
+    UserRepository userRepo
 
     def setupSpec() {
         sepalDriver = new SepalDriver()

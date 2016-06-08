@@ -10,10 +10,10 @@ import org.openforis.sepal.util.NamedThreadFactory
 import java.util.concurrent.Executors
 
 class Aws implements HostingServiceAdapter {
-    private final config = new AwsConfig('/data/aws.properties')
+    private final config = new AwsConfig()
     private final double storageCostPerGbMonth = 0.3d
     final List<InstanceType> instanceTypes = [
-            new InstanceType(id: 'T2Small', name: 't2.small', hourlyCost: 0.026, description: '1 CPU / 2 GiB'),
+            new InstanceType(id: 'T2Small', name: 't2.small', hourlyCost: 0.026, description: '1 CPU / 2 GiB', idleCount: 1),
             new InstanceType(id: 'T2Medium', name: 't2.medium', hourlyCost: 0.052, description: '2 CPU / 4 GiB'),
             new InstanceType(id: 'T2Large', name: 't2.large', hourlyCost: 0.104, description: '2 CPU / 8 GiB'),
             new InstanceType(id: 'M3Medium', name: 'm3.medium', hourlyCost: 0.067, description: '1 CPU / 3.75 GiB'),

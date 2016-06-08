@@ -2,6 +2,7 @@ package org.openforis.sepal.component.dataprovider.management
 
 import org.openforis.sepal.component.dataprovider.*
 import org.openforis.sepal.util.NamedThreadFactory
+import org.openforis.sepal.util.lifecycle.Lifecycle
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -12,7 +13,7 @@ import java.util.concurrent.TimeUnit
 import static org.openforis.sepal.component.dataprovider.Status.*
 
 // @ TODO Implement more test cases
-class SceneManager implements SceneRetrievalListener, DownloadRequestListener {
+class SceneManager implements SceneRetrievalListener, DownloadRequestListener, Lifecycle {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final SceneProvider sceneProvider

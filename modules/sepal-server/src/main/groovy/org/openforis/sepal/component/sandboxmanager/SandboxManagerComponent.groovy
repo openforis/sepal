@@ -11,6 +11,7 @@ import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.EventHandler
 import org.openforis.sepal.event.EventSource
+import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.hostingservice.HostingService
 import org.openforis.sepal.hostingservice.WorkerInstanceManager
@@ -39,6 +40,7 @@ final class SandboxManagerComponent implements EndpointRegistry, EventSource {
                 instantiateHostingService(config),
                 new DockerSandboxSessionProvider(config, new SystemClock()),
                 new StorageUsageFileChecker(config.userHomeDirTemplate()),
+                new AsynchronousEventDispatcher(),
                 new SystemClock()
         )
     }
@@ -48,12 +50,13 @@ final class SandboxManagerComponent implements EndpointRegistry, EventSource {
             HostingService hostingService,
             SandboxSessionProvider sessionProvider,
             StorageUsageChecker storageUsageChecker,
+            HandlerRegistryEventDispatcher eventDispatcher,
             Clock clock) {
         connectionManager = new SqlConnectionManager(dataSource)
         instanceManager = hostingService.workerInstanceManager
-        eventDispatcher = new HandlerRegistryEventDispatcher()
         def sessionRepository = new JdbcSessionRepository(connectionManager, clock)
         def userBudgetRepository = new JdbcUserBudgetRepository(connectionManager)
+        this.eventDispatcher = eventDispatcher
         this.clock = clock
         def sessionManager = new SessionManager(sessionRepository, instanceManager, sessionProvider, eventDispatcher, clock)
         def storageUsageRepository = new JdbcStorageUsageRepository(connectionManager, clock)
@@ -95,6 +98,7 @@ final class SandboxManagerComponent implements EndpointRegistry, EventSource {
     void stop() {
         sandboxWorkScheduler?.stop()
         storageUsageCheckScheduler?.stop()
+        eventDispatcher?.stop()
 
     }
 

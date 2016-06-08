@@ -10,21 +10,21 @@ class FileSystem {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
-    public static File toDir(String path) {
+    static File toDir(String path) {
         def dir = toFile(path)
         if (!dir.isDirectory())
             illegalArgument("$dir is not a directory")
         return dir
     }
 
-    public static File toFile(String path) {
+    static File toFile(String path) {
         def file = new File(path)
         if (!file.exists())
             illegalArgument("$file does not exist")
         return file
     }
 
-    public static void mkDirs(File dir) {
+    static void mkDirs(File dir) {
         if (!(dir.exists())) {
             boolean created = dir.mkdirs()
             if (!(created)) {
@@ -33,7 +33,7 @@ class FileSystem {
         }
     }
 
-    public static void deleteDirContent(File dir, Boolean recursive = true) {
+    static void deleteDirContent(File dir, Boolean recursive = true) {
         dir.eachFile {
             if (it.isDirectory() && recursive) {
                 FileUtils.deleteDirectory(it)
@@ -43,7 +43,7 @@ class FileSystem {
         }
     }
 
-    public static String removeFileExtension(String fileName) {
+    static String removeFileExtension(String fileName) {
         fileName.replaceFirst('[.][^.]+$', '')
     }
 
@@ -51,10 +51,13 @@ class FileSystem {
         LOG.error(error)
     }
 
-    public static Double getFileSize(File file) {
+    static Double getFileSize(File file) {
         Is.notNull(file)
         return file.isFile() ? Files.size(file.toPath()) : FileUtils.sizeOfDirectory(file)
     }
 
+    static File configDir() {
+        new File(System.getProperty('configDir') ?: '/etc/sepal/')
+    }
 
 }

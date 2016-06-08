@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.task.api
 
-import groovy.transform.Immutable
+import org.openforis.sepal.util.annotation.ImmutableData
 
-@Immutable
+@ImmutableData
 class WorkerSession {
     String id
     String instanceType

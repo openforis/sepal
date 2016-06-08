@@ -11,6 +11,7 @@ import org.openforis.sepal.component.dataprovider.DataProviderComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
 import org.openforis.sepal.endpoint.Endpoints
+import org.openforis.sepal.event.SynchronousEventDispatcher
 import sandboxmanager.FakeClock
 import sandboxmanager.FakeHostingService
 import sandboxmanager.FakeSandboxSessionProvider
@@ -57,6 +58,7 @@ class Sepal extends Specification {
                 new FakeHostingService(new FakeWorkerInstanceProvider(), clock, 0.3),
                 new FakeSandboxSessionProvider(clock),
                 new FakeStorageUsageChecker(),
+                new SynchronousEventDispatcher(),
                 clock
         )
 
@@ -73,15 +75,16 @@ class Sepal extends Specification {
 
     private SepalConfiguration configure() {
         port = Port.findFree()
-        def config = new SepalConfiguration()
-        config.properties = [
-                (WEBAPP_PORT_PARAMETER): port as String,
-                (MAX_CONCURRENT_DOWNLOADS): '1',
-                (DOWNLOAD_CHECK_INTERVAL): '1000',
+
+        def properties = [
+                (WEBAPP_PORT_PARAMETER)      : port as String,
+                (MAX_CONCURRENT_DOWNLOADS)   : '1',
+                (DOWNLOAD_CHECK_INTERVAL)    : '1000',
                 (DOWNLOADS_WORKING_DIRECTORY): System.getProperty('java.io.tmpdir'),
-                (CRAWLER_RUN_DELAY): '12',
-                (PROCESSING_HOME_DIR): File.createTempDir().toString()
+                (CRAWLER_RUN_DELAY)          : '12',
+                (PROCESSING_HOME_DIR)        : File.createTempDir().toString()
         ] as Properties
+        def config = new SepalConfiguration(properties)
         config.dataSource = database.dataSource
         return config
     }

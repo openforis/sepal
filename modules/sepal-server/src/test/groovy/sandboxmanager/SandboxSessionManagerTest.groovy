@@ -13,7 +13,7 @@ import static java.util.concurrent.TimeUnit.HOURS
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.ACTIVE
 import static org.openforis.sepal.component.sandboxmanager.SessionStatus.STARTING
 
-class SessionManagerTest extends AbstractSandboxManagerTest {
+class SandboxSessionManagerTest extends AbstractSandboxManagerTest {
     def 'Given no sandbox sessions have been created, when loading sandbox info, no sessions are included'() {
         when:
         def info = loadSandboxInfo()

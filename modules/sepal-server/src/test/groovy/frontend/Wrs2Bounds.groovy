@@ -16,7 +16,7 @@ class Wrs2Bounds {
             def sceneAreaId = placemark.name.text()
             pathRows[sceneAreaId] = [
                     sceneAreaId: sceneAreaId,
-                    polygon: polygon
+                    polygon    : polygon
             ]
         }
         this.pathRows = pathRows

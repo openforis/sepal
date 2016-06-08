@@ -27,7 +27,8 @@ class SceneManagerIntegrationTest extends Specification {
     static final SCENE_IDS = ["one", "two", "three"]
     static final USER = "Test.User"
 
-    @Shared SepalDriver driver
+    @Shared
+    SepalDriver driver
     ScenesDownloadRepository scenesDownloadRepository
     SceneManager sceneManager
     SceneProcessor sceneProcessor

@@ -1,11 +1,12 @@
 package org.openforis.sepal.component.workersession.api
 
-import groovy.transform.Immutable
+import org.openforis.sepal.util.annotation.ImmutableData
 
-@Immutable
+@ImmutableData
 class InstanceType {
     String id
     String name
     String description
     double hourlyCost
+    int idleCount
 }

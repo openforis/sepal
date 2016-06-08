@@ -2,6 +2,7 @@ package org.openforis.sepal.component.hostingservice.aws
 
 import groovy.transform.ToString
 import org.openforis.sepal.component.hostingservice.internal.ConfigLoader
+import org.openforis.sepal.util.FileSystem
 
 @ToString
 class AwsConfig {
@@ -13,8 +14,8 @@ class AwsConfig {
     final String environment
     final String userHomeDirTemplate
 
-    AwsConfig(String propertiesFile) {
-        def c = new ConfigLoader(propertiesFile)
+    AwsConfig() {
+        def c = new ConfigLoader(new File(FileSystem.configDir(), 'aws.properties'))
         region = c.get('region')
         availabilityZone = c.get('availabilityZone')
         accessKey = c.get('accessKey')

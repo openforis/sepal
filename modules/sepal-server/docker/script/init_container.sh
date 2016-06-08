@@ -20,6 +20,7 @@ chmod -R 770 /etc/sepal
 template /config/instances.yml /etc/sepal/instances.yml sepal: 0400
 template /config/instances_local.yml /etc/sepal/instances_local.yml sepal: 0400
 template /config/sepal.properties /etc/sepal/sepal.properties sepal: 0400
+template /config/workerInstance.properties /etc/sepal/workerInstance.properties sepal: 0400
 
 rm -rf /data/processing_scripts && cp -R /config/processing_scripts /data/
 chmod -R 775 /data/processing_scripts

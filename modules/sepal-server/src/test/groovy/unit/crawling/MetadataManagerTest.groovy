@@ -17,7 +17,8 @@ class MetadataManagerTest extends Specification {
     MetadataProviderManager metadataManager
     MetadataCrawler metadataCrawler
     MetadataCrawler metadataCrawler2
-    @Shared SepalDriver sepalDriver
+    @Shared
+    SepalDriver sepalDriver
 
     def setupSpec() {
         sepalDriver = new SepalDriver()

@@ -2,9 +2,12 @@ package org.openforis.sepal.component.workerinstance
 
 import groovy.transform.ToString
 import org.openforis.sepal.component.hostingservice.internal.ConfigLoader
+import org.openforis.sepal.util.FileSystem
+import org.openforis.sepal.util.annotation.Data
 import org.openforis.sepal.workertype.WorkerType
+import org.openforis.sepal.workertype.WorkerTypes
 
-@ToString
+@Data
 class WorkerInstanceConfig {
     int sepalVersion
     String sepalHost
@@ -12,17 +15,20 @@ class WorkerInstanceConfig {
     String ldapPassword
     File userHomes
     int dockerPort
-    String dockerEntrypoint
+    String dockerEntryPoint
+    String dockerRegistryHost
     Map<String, WorkerType> workerTypeByName
 
-    WorkerInstanceConfig(String propertiesFile, Map<String, WorkerType> workerTypeByName) {
-        def c = new ConfigLoader(propertiesFile)
+    WorkerInstanceConfig() {
+        def c = new ConfigLoader(new File(FileSystem.configDir(), 'workerInstance.properties'))
         sepalVersion = c.getInt('sepalVersion')
         sepalHost = c.get('sepalHost')
         ldapHost = c.get('ldapHost')
         ldapPassword = c.get('ldapPassword')
+        userHomes = c.getFile('userHomes')
         dockerPort = c.getInt('dockerPort')
-        dockerEntrypoint = c.get('dockerEntrypoint')
-        this.workerTypeByName = workerTypeByName
+        dockerEntryPoint = c.get('dockerEntryPoint')
+        dockerRegistryHost = c.get('dockerRegistryHost')
+        this.workerTypeByName = new WorkerTypes().workerTypeByName()
     }
 }

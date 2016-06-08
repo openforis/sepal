@@ -13,7 +13,7 @@ import org.openforis.sepal.component.workersession.query.FindSessionById
 import org.openforis.sepal.component.workersession.query.GenerateUserSessionReport
 import org.openforis.sepal.component.workersession.query.UserWorkerSessions
 import org.openforis.sepal.event.Event
-import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.event.SynchronousEventDispatcher
 import sandboxmanager.FakeClock
 import spock.lang.Specification
 
@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 
 abstract class AbstractWorkerSessionTest extends Specification {
     final database = new Database()
-    final eventDispatcher = new HandlerRegistryEventDispatcher()
+    final eventDispatcher = new SynchronousEventDispatcher()
     final instanceManager = new FakeInstanceManager()
     final budgetManager = new FakeBudgetManager()
     final clock = new FakeClock()

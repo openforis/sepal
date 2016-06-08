@@ -39,7 +39,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     private void createContainer(WorkerInstance instance, WorkerType workerType) {
         def username = instance.reservation.username
         def request = toJson([
-                Image       : "$workerType.imageName",
+                Image       : "$config.dockerRegistryHost/$workerType.imageName:$config.sepalVersion",
                 Tty         : true,
                 Cmd         : ["/script/init_container.sh", username, config.sepalHost, config.ldapHost, config.ldapPassword],
                 HostConfig  : [
@@ -164,7 +164,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private <T> T withClient(String host, @DelegatesTo(RESTClient) Closure<T> callback) {
-        def client = new RESTClient("http://$host:$config.dockerPort/$config.dockerEntrypoint/")
+        def client = new RESTClient("http://$host:$config.dockerPort/$config.dockerEntryPoint/")
         client.parser.'application/vnd.docker.raw-stream' = client.parser.'text/plain'
         try {
             callback.delegate = client

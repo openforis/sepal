@@ -7,8 +7,9 @@ import org.openforis.sepal.component.dataprovider.management.*
 import org.openforis.sepal.component.dataprovider.retrieval.SceneRetrievalComponent
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.util.lifecycle.Lifecycle
 
-final class DataProviderComponent implements EndpointRegistry {
+final class DataProviderComponent implements EndpointRegistry, Lifecycle {
     private final SceneManager sceneManager
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final SqlConnectionManager connectionManager
@@ -34,9 +35,8 @@ final class DataProviderComponent implements EndpointRegistry {
                 .register(RemoveSceneCommand, new RemoveSceneCommandHandler(scenesDownloadRepo))
     }
 
-    DataProviderComponent start() {
+    void start() {
         sceneManager.start()
-        return this
     }
 
     void stop() {

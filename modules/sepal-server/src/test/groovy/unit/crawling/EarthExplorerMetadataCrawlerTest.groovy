@@ -20,7 +20,8 @@ class EarthExplorerMetadataCrawlerTest extends Specification {
     ResourceLocator httpDownloader = Mock(ResourceLocator)
     def usgsRepo = Mock(UsgsDataRepository)
     MetadataCrawler metaCrawler
-    @Shared SepalDriver sepalDriver
+    @Shared
+    SepalDriver sepalDriver
 
     def setupSpec() {
         sepalDriver = new SepalDriver()

@@ -1,8 +1,8 @@
 package component.task.integration
 
+import component.workersession.AbstractWorkerSessionTest
 import org.openforis.sepal.component.task.adapter.SessionComponentAdapter
 import org.openforis.sepal.component.task.api.WorkerSession
-import component.workersession.AbstractWorkerSessionTest
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.CLOSED
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
@@ -87,6 +87,6 @@ class SessionComponentAdapter_IntegrationTest extends AbstractWorkerSessionTest 
         def sessionId = activeSession().id
 
         then:
-        activatedSession.id == sessionId
+        activatedSession?.id == sessionId
     }
 }

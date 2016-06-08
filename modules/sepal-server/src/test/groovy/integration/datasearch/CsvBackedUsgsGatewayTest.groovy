@@ -137,17 +137,17 @@ class CsvBackedUsgsGatewayTest extends Specification {
 
         private Map metaData(String id, Date acquisitionDate) {
             [
-                    sceneID: id,
-                    path: '123',
-                    row: '123',
+                    sceneID        : id,
+                    path           : '123',
+                    row            : '123',
                     acquisitionDate: toDateString(acquisitionDate),
-                    cloudCoverFull: 1.2,
-                    sunAzimuth: 100.2,
-                    sunElevation: 40.2,
-                    browseURL: 'http://browse.url',
-                    dateUpdated: toDateString(acquisitionDate),
-                    DATA_TYPE_L1: 'L1T',
-                    dayOrNight: 'DAY'
+                    cloudCoverFull : 1.2,
+                    sunAzimuth     : 100.2,
+                    sunElevation   : 40.2,
+                    browseURL      : 'http://browse.url',
+                    dateUpdated    : toDateString(acquisitionDate),
+                    DATA_TYPE_L1   : 'L1T',
+                    dayOrNight     : 'DAY'
             ]
         }
     }

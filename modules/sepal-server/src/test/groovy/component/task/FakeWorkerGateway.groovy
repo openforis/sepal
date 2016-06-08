@@ -1,9 +1,9 @@
 package component.task
 
-import groovy.transform.Immutable
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSession
+import org.openforis.sepal.util.annotation.ImmutableData
 
 class FakeWorkerGateway implements WorkerGateway {
     private final Map<String, ExecutionRequest> requestByTaskId = [:]
@@ -49,7 +49,7 @@ class FakeWorkerGateway implements WorkerGateway {
     }
 }
 
-@Immutable
+@ImmutableData
 class ExecutionRequest {
     Task task
     WorkerSession session

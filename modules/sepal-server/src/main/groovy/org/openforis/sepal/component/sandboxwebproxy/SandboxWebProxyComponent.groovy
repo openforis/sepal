@@ -1,18 +1,24 @@
 package org.openforis.sepal.component.sandboxwebproxy
 
 import org.openforis.sepal.SepalConfiguration
-import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
+import org.openforis.sepal.component.sandboxwebproxy.adapter.WorkerSessionComponentAdapter
+import org.openforis.sepal.component.workersession.WorkerSessionComponent
+import org.openforis.sepal.util.lifecycle.Lifecycle
 
-class SandboxWebProxyComponent {
+class SandboxWebProxyComponent implements Lifecycle {
     private SandboxWebProxy sandboxWebProxy
 
-    SandboxWebProxyComponent(SepalConfiguration config, SandboxManagerComponent sandboxManagerComponent) {
-        sandboxWebProxy = new SandboxWebProxy(9191, config.portByProxiedEndpoint, sandboxManagerComponent, 30, config.proxySessionTimeout)
+    SandboxWebProxyComponent(SepalConfiguration config, WorkerSessionComponent workerSessionComponent) {
+        sandboxWebProxy = new SandboxWebProxy(
+                9191,
+                config.portByProxiedEndpoint,
+                new WorkerSessionComponentAdapter(workerSessionComponent),
+                30,
+                config.proxySessionTimeout)
     }
 
-    SandboxWebProxyComponent start() {
+    void start() {
         sandboxWebProxy.start()
-        return this
     }
 
     void stop() {

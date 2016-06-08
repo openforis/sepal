@@ -73,55 +73,55 @@ class SepalSessionEndpointTest extends AbstractEndpointTest {
         )
 
         def expectation = [
-                sessions: [[
-                        id: 1,
-                        path: "sandbox/some-user/session/1",
-                        host: "some-host",
-                        port: 123,
-                        username: "some-user",
-                        status: 'ACTIVE',
-                        instanceType: [
-                                id: 'some_instance_type',
-                                name: 'Some instance type',
-                                description: 'Some description',
-                                hourlyCost: 0.1,
-                        ],
-                        creationTime: '2015-01-01T00:00:00',
-                        costSinceCreation: 0.1 * 2 * 24
-                ], [
-                        id: 2,
-                        path: "sandbox/some-user/session/2",
-                        host: "some-host",
-                        port: 123,
-                        username: "some-user",
-                        status: 'STARTING',
-                        instanceType: [
-                                id: 'another_instance_type',
-                                name: 'Another instance type',
-                                description: 'Another description',
-                                hourlyCost: 0.2,
-                        ],
-                        creationTime: '2015-01-02T00:00:00',
-                        "costSinceCreation": 4.8
-                ]],
-                instanceTypes: [[
-                        path: "sandbox/some-user/instance-type/some_instance_type",
-                        id: 'some_instance_type',
-                        name: 'Some instance type',
-                        description: 'Some description',
-                        hourlyCost: 0.1
-                ], [path: "sandbox/some-user/instance-type/another_instance_type",
-                        id: 'another_instance_type',
-                        name: 'Another instance type',
-                        description: 'Another description',
-                        hourlyCost: 0.2
-                ]],
-                monthlyInstanceBudget: 123d,
+                sessions               : [[
+                                                  id               : 1,
+                                                  path             : "sandbox/some-user/session/1",
+                                                  host             : "some-host",
+                                                  port             : 123,
+                                                  username         : "some-user",
+                                                  status           : 'ACTIVE',
+                                                  instanceType     : [
+                                                          id         : 'some_instance_type',
+                                                          name       : 'Some instance type',
+                                                          description: 'Some description',
+                                                          hourlyCost : 0.1,
+                                                  ],
+                                                  creationTime     : '2015-01-01T00:00:00',
+                                                  costSinceCreation: 0.1 * 2 * 24
+                                          ], [
+                                                  id                 : 2,
+                                                  path               : "sandbox/some-user/session/2",
+                                                  host               : "some-host",
+                                                  port               : 123,
+                                                  username           : "some-user",
+                                                  status             : 'STARTING',
+                                                  instanceType       : [
+                                                          id         : 'another_instance_type',
+                                                          name       : 'Another instance type',
+                                                          description: 'Another description',
+                                                          hourlyCost : 0.2,
+                                                  ],
+                                                  creationTime       : '2015-01-02T00:00:00',
+                                                  "costSinceCreation": 4.8
+                                          ]],
+                instanceTypes          : [[
+                                                  path       : "sandbox/some-user/instance-type/some_instance_type",
+                                                  id         : 'some_instance_type',
+                                                  name       : 'Some instance type',
+                                                  description: 'Some description',
+                                                  hourlyCost : 0.1
+                                          ], [path       : "sandbox/some-user/instance-type/another_instance_type",
+                                              id         : 'another_instance_type',
+                                              name       : 'Another instance type',
+                                              description: 'Another description',
+                                              hourlyCost : 0.2
+                                          ]],
+                monthlyInstanceBudget  : 123d,
                 monthlyInstanceSpending: 5d,
-                monthlyStorageBudget: 9d,
-                monthlyStorageSpending: 8d,
-                storageQuota: 7d,
-                storageUsed: 6d,
+                monthlyStorageBudget   : 9d,
+                monthlyStorageSpending : 8d,
+                storageQuota           : 7d,
+                storageUsed            : 6d,
 
         ]
 

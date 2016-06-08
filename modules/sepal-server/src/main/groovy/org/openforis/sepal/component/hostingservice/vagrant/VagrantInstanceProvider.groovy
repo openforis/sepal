@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.hostingservice.vagrant
 
-import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
+import org.openforis.sepal.component.workersession.api.InstanceType
 
 class VagrantInstanceProvider implements InstanceProvider {
     private static final HOST = '172.28.128.3'
@@ -12,10 +12,14 @@ class VagrantInstanceProvider implements InstanceProvider {
 
     VagrantInstanceProvider(InstanceType instanceType) {
         this.instanceType = instanceType
+        launchIdle([new WorkerInstance(
+                id: 'vagrant-box',
+                type: instanceType.id
+        )])
     }
 
     WorkerInstance launchReserved(WorkerInstance instance) {
-        this.instance = instance.launched(HOST, new Date()).reserve(instance.reservation).running()
+        this.instance = instance.release().launched(HOST, new Date()).reserve(instance.reservation).running()
         launchListeners*.call(this.instance)
         return this.instance
     }

@@ -1,12 +1,12 @@
 package org.openforis.sepal.security
 
 import groovy.json.JsonOutput
-import groovy.transform.Immutable
+import org.openforis.sepal.util.annotation.ImmutableData
 
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-@Immutable
+@ImmutableData
 class GateOneAuthObject {
     private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1"
     String publicKey
@@ -26,12 +26,12 @@ class GateOneAuthObject {
         def data = publicKey + username + timestamp as String
         def signature = sign(data, privateKey)
         def authObject = [
-                api_key: publicKey,
-                upn: username,
-                timestamp: timestamp,
+                api_key         : publicKey,
+                upn             : username,
+                timestamp       : timestamp,
                 signature_method: 'HMAC-SHA1',
-                api_version: '1.0',
-                signature: signature
+                api_version     : '1.0',
+                signature       : signature
         ]
 
         JsonOutput.toJson([authObject: authObject])

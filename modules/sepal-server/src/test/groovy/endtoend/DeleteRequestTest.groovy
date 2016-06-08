@@ -9,19 +9,23 @@ class DeleteRequestTest extends Specification {
     static final DATASET_ID = 1
     static final SCENE_ID = 'L8_SCENE_ID'
 
-    @Shared SepalDriver driver
-    @Shared Integer declaredRequestId
-    @Shared Integer declaredRequestedSceneId
-    @Shared Integer expectedRequestedSceneId
+    @Shared
+    SepalDriver driver
+    @Shared
+    Integer declaredRequestId
+    @Shared
+    Integer declaredRequestedSceneId
+    @Shared
+    Integer expectedRequestedSceneId
 
     def setupSpec() {
         driver = new SepalDriver()
                 .withUsers(USERNAME)
                 .withActiveDataSets(DATASET_ID)
         def request = [
-                username: USERNAME,
+                username : USERNAME,
                 dataSetId: DATASET_ID,
-                sceneIds: [SCENE_ID, SCENE_ID]
+                sceneIds : [SCENE_ID, SCENE_ID]
         ]
         driver.postDownloadRequests(request)
         def downloadRequest = driver.getDownloadRequests(USERNAME).data[0]

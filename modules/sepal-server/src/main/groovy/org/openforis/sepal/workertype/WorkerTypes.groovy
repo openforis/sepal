@@ -1,6 +1,6 @@
 package org.openforis.sepal.workertype
 
-import groovy.transform.Immutable
+import org.openforis.sepal.util.annotation.ImmutableData
 
 final class WorkerTypes {
     static final String SANDBOX = 'sandbox'
@@ -29,6 +29,8 @@ final class WorkerType {
     private final Map<Integer, Integer> exposedPortByPublishedPort
 
     WorkerType(String id, String imageName, Endpoint... endpoints) {
+        this.id = id
+        this.imageName = imageName
         this.publishedPortByEndpoint = endpoints.collectEntries {
             [(it.endpoint): it.publishedPort]
         }
@@ -49,7 +51,7 @@ final class WorkerType {
         Collections.unmodifiableMap(exposedPortByPublishedPort)
     }
 
-    @Immutable
+    @ImmutableData
     static class Endpoint {
         String endpoint
         int publishedPort

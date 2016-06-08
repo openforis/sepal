@@ -1,8 +1,8 @@
 package component.workersession
 
 import org.openforis.sepal.command.ExecutionFailed
-import spock.lang.Ignore
 
+import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
 
 class RequestSession_Test extends AbstractWorkerSessionTest {

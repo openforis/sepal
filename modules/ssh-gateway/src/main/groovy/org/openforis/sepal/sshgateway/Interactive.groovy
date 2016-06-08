@@ -37,9 +37,9 @@ class Interactive {
                 '------------------\n' +
                 '- Monthly budget -\n' +
                 '------------------\n'
-        println("Instance spending/budget:".padRight(26) + "${budget(info.monthlyInstanceSpending, info.monthlyInstanceBudget)} USD")
-        println("Storage spending/budget:".padRight(26) + "${budget(info.monthlyStorageSpending, info.monthlyStorageBudget)} USD")
-        println("Storage used/quota:".padRight(26) + "${budget(info.storageUsed, info.storageQuota)} GB")
+        println("Instance spending/budget:".padRight(26) + "${budget(info.spending.monthlyInstanceSpending, info.spending.monthlyInstanceBudget)} USD")
+        println("Storage spending/budget:".padRight(26) + "${budget(info.spending.monthlyStorageSpending, info.spending.monthlyStorageBudget)} USD")
+        println("Storage used/quota:".padRight(26) + "${budget(info.spending.storageUsed, info.spending.storageQuota)} GB")
     }
 
     private String budget(Number spending, Number budget) {
@@ -255,11 +255,12 @@ class Interactive {
     static void main(String[] args) {
         if (args.size() != 5)
             throw new IllegalArgumentException("Expects five arguments: username, sepal-server REST endpoint, " +
-                    "private key path, and output path, and sepalAdmin password")
+                    "private key path, output path, and sepalAdmin password")
         try {
             new Interactive(args[0], args[1], new File(args[2]), new File(args[3]), args[4]).start()
         } catch (Exception e) {
             LOG.error("Interactive failed", e)
+            e.printStackTrace()
             System.err.println("\nSomething went wrong, please try again")
             System.exit(1)
         }
