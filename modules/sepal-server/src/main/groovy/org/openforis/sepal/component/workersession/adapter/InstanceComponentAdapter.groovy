@@ -24,7 +24,8 @@ class InstanceComponentAdapter implements InstanceManager {
     WorkerInstance requestInstance(WorkerSession session) {
         def instance = instanceComponent.submit(new RequestInstance(
                 workerType: session.workerType,
-                instanceType: session.instanceType
+                instanceType: session.instanceType,
+                username: session.username
         ))
         return new WorkerInstance(id: instance.id, host: instance.host)
     }
@@ -43,7 +44,7 @@ class InstanceComponentAdapter implements InstanceManager {
 
     void onInstanceActivated(Closure listener) {
         instanceComponent.on(InstanceProvisioned) {
-            listener(new WorkerInstance(it.instance.id, it.instance.host))
+            listener(new WorkerInstance(id: it.instance.id, host: it.instance.host))
         }
     }
 }

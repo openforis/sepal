@@ -5,7 +5,8 @@ import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.command.*
 import org.openforis.sepal.event.Event
-import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.event.AsynchronousEventDispatcher
+import org.openforis.sepal.event.SynchronousEventDispatcher
 import sandboxmanager.FakeClock
 import spock.lang.Specification
 
@@ -15,7 +16,7 @@ import static java.util.concurrent.TimeUnit.MINUTES
 
 abstract class AbstractWorkerInstanceTest extends Specification {
     final database = new Database()
-    final eventDispatcher = new HandlerRegistryEventDispatcher()
+    final eventDispatcher = new SynchronousEventDispatcher()
     final clock = new FakeClock()
     final instanceProvider = new FakeInstanceProvider(clock)
     final instanceProvisioner = new FakeInstanceProvisioner()
@@ -23,6 +24,7 @@ abstract class AbstractWorkerInstanceTest extends Specification {
             database.dataSource,
             eventDispatcher,
             instanceProvider,
+            [],
             instanceProvisioner,
             clock)
 

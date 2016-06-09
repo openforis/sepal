@@ -10,7 +10,7 @@ class InvalidRequest extends RuntimeException {
         this.errors = errors.collectEntries { String property, propertyErrors ->
             [property, propertyErrors.collect { error ->
                 [
-                        value: error.invalidValue,
+                        value  : error.invalidValue,
                         message: error.message
                 ]
             }]

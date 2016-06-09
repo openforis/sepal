@@ -110,7 +110,16 @@
     -webkit-border-bottom-right-radius: 50px;
     border-bottom-right-radius: 50px;
 }
-
+.btn.square {
+    -webkit-border-top-left-radius: 0px;
+    border-top-left-radius: 0px;
+    -webkit-border-top-right-radius: 0px;
+    border-top-right-radius: 0px;
+    -webkit-border-bottom-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    -webkit-border-bottom-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
 /* button with icon */
 .btn.icon > i {
     -webkit-transform: translateY(-50%);

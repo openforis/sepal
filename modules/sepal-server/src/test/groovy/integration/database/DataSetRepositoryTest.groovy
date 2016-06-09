@@ -13,8 +13,10 @@ class DataSetRepositoryTest extends Specification {
     static final METADATA_PROVIDER_2 = 2
     static final SOME_CRITERIA = "SomeCriteria"
     static final SOME_CRITERIA_TEST = "12"
-    @Shared SepalDriver driver
-    @Shared DataSetRepository dataSetRepo
+    @Shared
+    SepalDriver driver
+    @Shared
+    DataSetRepository dataSetRepo
 
     def setupSpec() {
         driver = new SepalDriver()

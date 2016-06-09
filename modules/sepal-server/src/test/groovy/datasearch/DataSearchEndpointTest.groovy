@@ -30,7 +30,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         sameJson(response.data, [
                 [
                         sceneAreaId: 'scene area id',
-                        polygon: [[1d, 1d], [2d, 2d], [3d, 3d], [1d, 1d]]
+                        polygon    : [[1d, 1d], [2d, 2d], [3d, 3d], [1d, 1d]]
                 ]
         ])
         response.status == 200
@@ -53,13 +53,13 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         1 * queryDispatcher.submit({ it.sceneQuery == expectedSceneQuery } as FindScenesForSceneArea) >> [expectedScene]
         sameJson(response.data, [
                 [
-                        sceneId: expectedScene.id,
-                        sensor: expectedScene.sensorId,
-                        browseUrl: expectedScene.browseUrl as String,
-                        acquisitionDate: DateTime.toDateString(expectedScene.acquisitionDate),
-                        cloudCover: expectedScene.cloudCover,
-                        sunAzimuth: expectedScene.sunAzimuth,
-                        sunElevation: expectedScene.sunElevation,
+                        sceneId          : expectedScene.id,
+                        sensor           : expectedScene.sensorId,
+                        browseUrl        : expectedScene.browseUrl as String,
+                        acquisitionDate  : DateTime.toDateString(expectedScene.acquisitionDate),
+                        cloudCover       : expectedScene.cloudCover,
+                        sunAzimuth       : expectedScene.sunAzimuth,
+                        sunElevation     : expectedScene.sunElevation,
                         daysFromTargetDay: 1
                 ]
         ])

@@ -1,7 +1,5 @@
 package org.openforis.sepal.util
 
-import groovy.transform.Immutable
-
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 

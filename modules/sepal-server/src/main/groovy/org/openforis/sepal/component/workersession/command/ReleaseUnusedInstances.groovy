@@ -1,6 +1,5 @@
 package org.openforis.sepal.component.workersession.command
 
-import groovy.transform.Canonical
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workersession.api.InstanceManager

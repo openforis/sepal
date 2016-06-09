@@ -22,9 +22,8 @@
        ldap_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
        hosting_service: "vagrant"
 
-    - file: path="/data/sepal" state=directory
-
-    - template: src="./vagrant.properties" dest=/data/sepal/vagrant.properties
+    - file: path="/data/sepal/etc" state=directory
+    - template: src="./vagrant.properties" dest=/data/sepal/etc/vagrant.properties
 
   roles:
     - role: unattended-upgrades
@@ -44,6 +43,8 @@
     - { role: build-image, image: sepal-php }
     - { role: build-image, image: sepal-server }
     - { role: build-image, image: google-earth-engine}
+
+    - { role: tag-images }
 
     - { role: run-container, image: ldap }
     - { role: run-container, image: mysql }

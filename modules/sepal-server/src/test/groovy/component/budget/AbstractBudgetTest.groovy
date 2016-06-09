@@ -17,7 +17,8 @@ import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.event.Event
-import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.event.AsynchronousEventDispatcher
+import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
 import sandboxmanager.FakeClock
@@ -29,7 +30,7 @@ import static org.openforis.sepal.util.DateTime.parseDateString
 
 abstract class AbstractBudgetTest extends Specification {
     final database = new Database()
-    final eventDispatcher = new HandlerRegistryEventDispatcher()
+    final eventDispatcher = new SynchronousEventDispatcher()
     final hostingService = new FakeHostingService()
     final userRepository = Mock(UserRepository)
     final clock = new FakeClock()

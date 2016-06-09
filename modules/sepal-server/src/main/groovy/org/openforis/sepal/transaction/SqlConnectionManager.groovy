@@ -1,11 +1,12 @@
 package org.openforis.sepal.transaction
 
 import groovy.sql.Sql
+import org.openforis.sepal.util.lifecycle.Stoppable
 
 import javax.sql.DataSource
 import java.sql.Connection
 
-class SqlConnectionManager implements SqlConnectionProvider, TransactionManager {
+class SqlConnectionManager implements SqlConnectionProvider, TransactionManager, Stoppable {
     final DataSource dataSource
     private final ThreadLocal<Connection> connectionHolder = new ThreadLocal<Connection>()
     private final ThreadLocal<List<Closure>> afterCommitCallbacksHolder = new ThreadLocal<List<Closure>>() {
@@ -65,7 +66,7 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager 
         connection ? new Sql(connection) : new Sql(dataSource)
     }
 
-    void close() {
+    void stop() {
         def connection = connectionHolder.get()
         if (connection) {
             connection.rollback()

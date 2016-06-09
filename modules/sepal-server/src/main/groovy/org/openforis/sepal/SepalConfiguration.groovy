@@ -1,6 +1,7 @@
 package org.openforis.sepal
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
+import org.openforis.sepal.util.FileSystem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -29,17 +30,18 @@ class SepalConfiguration {
     public static final String SANBOX_PROXY_SESSION_TIMEOUT = 'sandbox.webproxy_session_timeout'
 
     Properties properties
-    String configFileLocation
     DataSource dataSource
 
-    SepalConfiguration() {}
+    SepalConfiguration(Properties props) {
+        this.properties = props
+        setEnv()
+    }
 
-    SepalConfiguration(String configFileLocation) {
-        this.configFileLocation = configFileLocation
+    SepalConfiguration() {
         properties = new Properties()
-        File file = new File(configFileLocation)
+        File file = new File(FileSystem.configDir(), 'sepal.properties')
         if (!file.exists())
-            throw new IllegalArgumentException("configFileLocation must be an existing properties file. $configFileLocation doesn't exist")
+            throw new IllegalArgumentException("configFileLocation must be an existing properties file. $file doesn't exist")
         FileInputStream fis = null
         try {
             fis = new FileInputStream(file)
@@ -52,7 +54,7 @@ class SepalConfiguration {
             }
         }
         LOG = LoggerFactory.getLogger(this.class)
-        LOG.info("Using config file $configFileLocation")
+        LOG.info("Using config file $file")
         dataSource = connectionPool()
     }
 

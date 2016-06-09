@@ -8,6 +8,8 @@ import org.openforis.sepal.component.budget.internal.InstanceSpendingService
 import org.openforis.sepal.component.budget.internal.StorageUseService
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReportHandler
+import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
+import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JdbcUserRepository
@@ -20,12 +22,12 @@ import javax.sql.DataSource
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class BudgetComponent extends AbstractComponent {
-    BudgetComponent(HostingService hostingService, DataSource dataSource) {
+    BudgetComponent(HostingServiceAdapter hostingServiceAdapter, DataSource dataSource) {
         this(
                 dataSource,
-                hostingService,
+                hostingServiceAdapter.hostingService,
                 new JdbcUserRepository(new SqlConnectionManager(dataSource)),
-                new HandlerRegistryEventDispatcher(),
+                new AsynchronousEventDispatcher(),
                 new SystemClock()
         )
     }

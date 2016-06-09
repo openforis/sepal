@@ -75,42 +75,42 @@ class CsvUriReader implements CsvReader {
     }
 }
 
-    class GzCsvUriReader implements CsvReader {
-        private static final Logger LOG = LoggerFactory.getLogger(this)
-        private final String uri
-        private final File workingDir
-        private final File gzFile
-        private final File csvFile
+class GzCsvUriReader implements CsvReader {
+    private static final Logger LOG = LoggerFactory.getLogger(this)
+    private final String uri
+    private final File workingDir
+    private final File gzFile
+    private final File csvFile
 
-        GzCsvUriReader(String uri, File workingDir, String gzFileName) {
-            this.uri = uri
-            this.workingDir = workingDir
-            this.gzFile = new File(workingDir, gzFileName.endsWith('.gz') ? gzFileName : gzFileName + ".gz")
-            this.csvFile = new File(workingDir, FileSystem.removeFileExtension(gzFile.name))
-            workingDir.mkdirs()
-        }
+    GzCsvUriReader(String uri, File workingDir, String gzFileName) {
+        this.uri = uri
+        this.workingDir = workingDir
+        this.gzFile = new File(workingDir, gzFileName.endsWith('.gz') ? gzFileName : gzFileName + ".gz")
+        this.csvFile = new File(workingDir, FileSystem.removeFileExtension(gzFile.name))
+        workingDir.mkdirs()
+    }
 
-        void eachLine(Closure callback) {
-            LOG.info("Downloading $uri to $workingDir")
-            new HTTPBuilder(uri).request(GET) { req ->
-                response.success = { resp, InputStream input ->
-                    new FileOutputStream(gzFile).withStream {
-                        it << input
-                        it.flush()
-                    }
-                    LOG.info("Decompressing " + gzFile)
-                    Decompress.gz(gzFile)
-                    readCsvFile(callback)
-                    csvFile.delete()
+    void eachLine(Closure callback) {
+        LOG.info("Downloading $uri to $workingDir")
+        new HTTPBuilder(uri).request(GET) { req ->
+            response.success = { resp, InputStream input ->
+                new FileOutputStream(gzFile).withStream {
+                    it << input
+                    it.flush()
                 }
+                LOG.info("Decompressing " + gzFile)
+                Decompress.gz(gzFile)
+                readCsvFile(callback)
+                csvFile.delete()
+            }
 
-                response.failure = { resp ->
-                    throw new IOException("Failed to retrieve $uri. Response status: $resp.status")
-                }
+            response.failure = { resp ->
+                throw new IOException("Failed to retrieve $uri. Response status: $resp.status")
             }
         }
-
-        private readCsvFile(Closure callback) {
-            new CsvInputStreamReader(new FileInputStream(csvFile)).eachLine(callback)
-        }
     }
+
+    private readCsvFile(Closure callback) {
+        new CsvInputStreamReader(new FileInputStream(csvFile)).eachLine(callback)
+    }
+}

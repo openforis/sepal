@@ -25,8 +25,8 @@
     - file: path="/data/docker/storage/devicemapper/metadata" state=directory
     - file: path="/data/docker/storage/tmp" state=directory
 
-    - file: path="/data/sepal" state=directory
-    - template: src="./aws.properties" dest=/data/sepal/aws.properties
+    - file: path="/data/sepal/etc" state=directory
+    - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
 
   roles:
     - role: unattended-upgrades

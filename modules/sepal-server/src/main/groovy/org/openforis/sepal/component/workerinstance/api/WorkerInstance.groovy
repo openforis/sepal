@@ -1,14 +1,13 @@
 package org.openforis.sepal.component.workerinstance.api
 
-import groovy.transform.Immutable
+import org.openforis.sepal.util.annotation.ImmutableData
 
-@Immutable
+@ImmutableData
 class WorkerInstance {
     String id
     String type
     String host
     boolean running
-    boolean active
     Date launchTime
     WorkerReservation reservation
 
@@ -17,20 +16,18 @@ class WorkerInstance {
     }
 
     WorkerInstance release() {
-        assert reservation, "Instance is already idle"
-        new WorkerInstance(id: id, type: type, host: host, running: running, active: active, launchTime: launchTime, reservation: null)
+        new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: null)
     }
 
     WorkerInstance reserve(WorkerReservation reservation) {
-        assert !this.reservation, "Instance is already reserved: ${this.reservation}"
-        new WorkerInstance(id: id, type: type, host: host, running: running, active: active, launchTime: launchTime, reservation: reservation)
+        new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: reservation)
     }
 
     WorkerInstance launched(String host, Date launchTime) {
-        new WorkerInstance(id: id, type: type, host: host, running: running, active: active, launchTime: launchTime, reservation: reservation)
+        new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: reservation)
     }
 
     WorkerInstance running() {
-        new WorkerInstance(id: id, type: type, host: host, running: true, active: active, launchTime: launchTime, reservation: reservation)
+        new WorkerInstance(id: id, type: type, host: host, running: true, launchTime: launchTime, reservation: reservation)
     }
 }

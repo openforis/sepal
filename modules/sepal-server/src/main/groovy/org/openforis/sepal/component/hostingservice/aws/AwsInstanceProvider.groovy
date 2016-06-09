@@ -221,6 +221,7 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private WorkerInstance toWorkerInstance(Instance awsInstance) {
         def idle = tagValue(awsInstance, 'State') == 'idle'
+        def running = awsInstance.state.name == 'running'
         def reservation = idle ? null :
                 new WorkerReservation(
                         username: tagValue(awsInstance, 'Username'),
@@ -230,7 +231,7 @@ final class AwsInstanceProvider implements InstanceProvider {
                 id: awsInstance.instanceId,
                 type: instanceType(awsInstance),
                 host: awsInstance.publicIpAddress,
-                running: awsInstance.state.name == 'running',
+                running: running,
                 launchTime: awsInstance.launchTime,
                 reservation: reservation
         )

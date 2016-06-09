@@ -187,7 +187,8 @@ CREATE TABLE download_requests (
   PRIMARY KEY (request_id)
 );
 
-ALTER TABLE download_requests ADD CONSTRAINT uc_user_req_name UNIQUE (username, request_name);
+ALTER TABLE download_requests
+  ADD CONSTRAINT uc_user_req_name UNIQUE (username, request_name);
 
 
 CREATE TABLE requested_scenes (
@@ -234,6 +235,13 @@ CREATE TABLE sandbox_session (
   PRIMARY KEY (id)
 );
 
+
+CREATE TABLE default_user_budget (
+  monthly_instance INT NOT NULL,
+  monthly_storage  INT NOT NULL,
+  storage_quota    INT NOT NULL
+);
+
 CREATE TABLE user_budget (
   username         VARCHAR(255) NOT NULL,
   monthly_instance INT          NOT NULL,
@@ -272,6 +280,43 @@ CREATE INDEX idx_scene_meta_data_1 ON scene_meta_data (meta_data_source, scene_a
 CREATE INDEX idx_scene_meta_data_2 ON scene_meta_data (meta_data_source, update_time);
 
 
+CREATE TABLE worker_session (
+  id            VARCHAR(255) NOT NULL,
+  state         VARCHAR(255) NOT NULL,
+  username      VARCHAR(255) NOT NULL,
+  worker_type   VARCHAR(255) NOT NULL,
+  instance_type VARCHAR(255) NOT NULL,
+  instance_id   VARCHAR(255) NOT NULL,
+  host          VARCHAR(255) NOT NULL,
+  creation_time TIMESTAMP    NOT NULL,
+  update_time   TIMESTAMP    NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE task (
+  id                 VARCHAR(255)  NOT NULL,
+  state              VARCHAR(255)  NOT NULL,
+  username           VARCHAR(255)  NOT NULL,
+  session_id         VARCHAR(255)  NOT NULL,
+  operation          VARCHAR(255)  NOT NULL,
+  params             VARCHAR(2048) NOT NULL,
+  status_description VARCHAR(255)  NOT NULL,
+  creation_time      TIMESTAMP     NOT NULL,
+  update_time        TIMESTAMP     NOT NULL,
+  removed            BOOLEAN       NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE VIEW instance_use AS
+  SELECT
+    username,
+    state,
+    instance_type,
+    creation_time,
+    update_time
+  FROM worker_session;
+
+
 INSERT INTO config_details VALUES ('cron_delay_days', '50');
 
 INSERT INTO data_set (dataset_name, dataset_value, dataset_active) VALUES ('Landsat 8 OLI/TIRS', 'LANDSAT_8', 1);
@@ -294,10 +339,12 @@ INSERT INTO groups_system (id, group_name) VALUES (46, 'admin');
 INSERT INTO roles (role_name, role_desc) VALUES ('application_admin', 'Application Administrator');
 
 INSERT INTO users (id, username, full_name, user_uid) VALUES (1, 'admin', 'admin', 1001);
-INSERT INTO users (id, username, full_name, user_uid, is_system_user) VALUES (2, 'sepalAdmin', 'Administrator', 1002, 1);
+INSERT INTO users (id, username, full_name, user_uid, is_system_user)
+VALUES (2, 'sepalAdmin', 'Administrator', 1002, 1);
 INSERT INTO users_roles (user_id, role_id, created_by) VALUES (1, 1, 1);
 INSERT INTO users_roles (user_id, role_id, created_by) VALUES (2, 1, 1);
 INSERT INTO user_budget (username, monthly_instance, monthly_storage, storage_quota) VALUES ('admin', 10, 10, 100);
+INSERT INTO default_user_budget (monthly_instance, monthly_storage, storage_quota) VALUES (10, 10, 100);
 
 INSERT INTO metadata_providers
 VALUES (1, 'EarthExplorer', 1, 'http://earthexplorer.usgs.gov/EE/InventoryStream/pathrow', 150, 10, NULL, NULL);

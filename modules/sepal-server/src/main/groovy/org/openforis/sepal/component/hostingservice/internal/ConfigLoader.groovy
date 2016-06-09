@@ -3,9 +3,9 @@ package org.openforis.sepal.component.hostingservice.internal
 final class ConfigLoader {
     private final Properties config
 
-    ConfigLoader(String propertiesFile) {
+    ConfigLoader(File propertiesFile) {
         config = new Properties()
-        config.load(new FileReader(new File(propertiesFile)))
+        config.load(new FileReader(propertiesFile))
     }
 
     final String get(String key) {
@@ -15,10 +15,12 @@ final class ConfigLoader {
         return value
     }
 
+    final File getFile(String key) {
+        return new File(get(key))
+    }
+
     final int getInt(String key) {
-        def value = config.getProperty(key)
-        if (value == null)
-            throw new MissingProperty("missing required property: $key")
+        def value = get(key)
         try {
             return value as int
         } catch (Exception ignore) {

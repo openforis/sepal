@@ -16,7 +16,8 @@ import static groovyx.net.http.ContentType.JSON
 @ToString
 class DockerInstanceProvisioner implements InstanceProvisioner {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private static final int SSH_PORT = 222
+    private static final int EXPOSED_SSH_PORT = 22
+    private static final int PUBLISHED_SSH_PORT = 222
     private final WorkerInstanceConfig config
 
     DockerInstanceProvisioner(WorkerInstanceConfig config) {
@@ -37,19 +38,22 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void createContainer(WorkerInstance instance, WorkerType workerType) {
+        def exposedPorts = workerType.exposedPortByPublishedPort().values() + EXPOSED_SSH_PORT
         def username = instance.reservation.username
+        def mountedDirByHostDir = [
+                "$config.userHomes/${username}": "/home/${username}",
+                "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"
+        ] + workerType.mountedDirByHostDir
         def request = toJson([
-                Image       : "$workerType.imageName",
-                Tty         : true,
-                Cmd         : ["/script/init_container.sh", username, config.sepalHost, config.ldapHost, config.ldapPassword],
-                HostConfig  : [
-                        Binds: [
-                                "$config.userHomes/${username}:/home/${username}",
-                                "/data/sepal/$workerType.id:/$workerType.id",
-                                "/data/sepal/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
-                        ]
+                Image: "$config.dockerRegistryHost/$workerType.imageName:$config.sepalVersion",
+                Tty: true,
+                Cmd: ["/script/init_container.sh", username, config.sepalHost, config.ldapHost, config.ldapPassword],
+                HostConfig: [
+                        Binds: mountedDirByHostDir.collect { hostDir, mountedDir ->
+                            "$hostDir:$mountedDir"
+                        }
                 ],
-                ExposedPorts: workerType.exposedPortByPublishedPort().values().collectEntries {
+                ExposedPorts: exposedPorts.collectEntries {
                     ["$it/tcp", [:]]
                 }
         ])
@@ -67,31 +71,31 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void startContainer(WorkerInstance instance, WorkerType workerType) {
-        def portBindings = workerType.exposedPortByPublishedPort().collectEntries { publishedPort, exposedPort ->
+        def portBindings = workerType.exposedPortByPublishedPort() + [(PUBLISHED_SSH_PORT): EXPOSED_SSH_PORT]
+        def request = toJson(PortBindings: portBindings.collectEntries { publishedPort, exposedPort ->
             ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
-        } as Map
-        portBindings['22/tcp'] = [[HostPort: "$SSH_PORT"]]
+        })
         withClient(instance) {
             post(
                     path: "containers/${containerName(instance)}/start",
-                    body: toJson(PortBindings: portBindings),
+                    body: request,
                     requestContentType: JSON
             )
         }
     }
 
     private void waitUntilInitialized(WorkerInstance instance, WorkerType workerType) {
-        def portsToWaitFor = workerType.exposedPortByPublishedPort().values().toList() << 22
+        def portsToWaitFor = workerType.exposedPortByPublishedPort().values().toList() << EXPOSED_SSH_PORT
         LOG.debug("Waiting for container to be initialized on ports $portsToWaitFor. Instance: $instance")
         withClient(instance) {
             def response = post(
                     path: "containers/${containerName(instance)}/exec",
                     body: new JsonOutput().toJson([
-                            AttachStdin : false,
+                            AttachStdin: false,
                             AttachStdout: true,
                             AttachStderr: true,
-                            Tty         : false,
-                            Cmd         : ["/script/wait_until_initialized.sh", portsToWaitFor.join(';'), instance.reservation.username]
+                            Tty: false,
+                            Cmd: ["/script/wait_until_initialized.sh", portsToWaitFor.join(';'), instance.reservation.username]
                     ]),
                     requestContentType: JSON
             )
@@ -164,7 +168,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private <T> T withClient(String host, @DelegatesTo(RESTClient) Closure<T> callback) {
-        def client = new RESTClient("http://$host:$config.dockerPort/$config.dockerEntrypoint/")
+        def client = new RESTClient("http://$host:$config.dockerPort/$config.dockerEntryPoint/")
         client.parser.'application/vnd.docker.raw-stream' = client.parser.'text/plain'
         try {
             callback.delegate = client

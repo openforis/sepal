@@ -13,6 +13,7 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.ExecutorServiceBasedJobScheduler
 import org.openforis.sepal.util.JobScheduler
 import org.openforis.sepal.util.NamedThreadFactory
+import org.openforis.sepal.util.lifecycle.Lifecycle
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -20,7 +21,7 @@ import javax.sql.DataSource
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-interface Component {
+interface Component extends Lifecycle {
 
     def <R> R submit(Command<R> command)
 
@@ -73,6 +74,7 @@ abstract class AbstractComponent implements Component {
     }
 
     final schedule(long delay, TimeUnit timeUnit, Command... commands) {
+        def schedulers = this.schedulers
         commands.each { command ->
             schedulers <<
                     new ExecutorServiceBasedJobScheduler(
@@ -94,8 +96,9 @@ abstract class AbstractComponent implements Component {
     }
 
     final void stop() {
-        connectionManager.close()
+        eventDispatcher?.stop()
         schedulers*.stop()
+        connectionManager.stop()
         onStop()
     }
 

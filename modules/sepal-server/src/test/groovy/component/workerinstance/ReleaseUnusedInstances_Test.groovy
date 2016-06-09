@@ -2,8 +2,6 @@ package component.workerinstance
 
 import org.openforis.sepal.component.workerinstance.event.FailedToReleaseInstance
 
-import java.util.concurrent.TimeUnit
-
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class ReleaseUnusedInstances_Test extends AbstractWorkerInstanceTest {

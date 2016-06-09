@@ -11,9 +11,11 @@ class UsgsDataSetRepositoryTest extends Specification {
     static final DATASET_ID = 1L
     static final SCENE_ID = 'A_SCENE_ID'
 
-    @Shared SepalDriver driver
+    @Shared
+    SepalDriver driver
     UsgsDataRepository usgsRepo
-    @Shared def metadataScene
+    @Shared
+    def metadataScene
 
     def cleanupSpec() {
         driver.stop()

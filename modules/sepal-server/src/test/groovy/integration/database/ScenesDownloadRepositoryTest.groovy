@@ -21,8 +21,10 @@ class ScenesDownloadRepositoryTest extends Specification {
     static final def REQ_NAME = "REQUEST"
     static final def USER2 = "Test.User2"
 
-    @Shared SepalDriver driver
-    @Shared ScenesDownloadRepository scenesDownloadRepository
+    @Shared
+    SepalDriver driver
+    @Shared
+    ScenesDownloadRepository scenesDownloadRepository
 
     def setupSpec() {
         driver = new SepalDriver()

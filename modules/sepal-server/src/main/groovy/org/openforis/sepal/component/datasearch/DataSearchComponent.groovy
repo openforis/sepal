@@ -19,10 +19,11 @@ import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JdbcUserRepository
+import org.openforis.sepal.util.lifecycle.Lifecycle
 
 import javax.sql.DataSource
 
-final class DataSearchComponent implements EndpointRegistry {
+final class DataSearchComponent implements EndpointRegistry, Lifecycle {
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
     private final SceneAreaProvider sceneAreaProvider
@@ -69,9 +70,8 @@ final class DataSearchComponent implements EndpointRegistry {
         queryDispatcher.submit(query)
     }
 
-    DataSearchComponent start() {
+    void start() {
         sceneMetaDataUpdateScheduler.start()
-        return this
     }
 
     void stop() {

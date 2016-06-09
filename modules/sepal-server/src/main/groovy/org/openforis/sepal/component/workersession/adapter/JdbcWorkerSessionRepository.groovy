@@ -98,9 +98,10 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
     }
 
     private WorkerSession toSession(GroovyRowResult row) {
+        def state = row.state as WorkerSession.State
         new WorkerSession(
                 id: row.id,
-                state: row.state,
+                state: state,
                 username: row.username,
                 workerType: row.worker_type,
                 instanceType: row.instance_type,

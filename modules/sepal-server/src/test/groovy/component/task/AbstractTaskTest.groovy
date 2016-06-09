@@ -6,13 +6,14 @@ import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.Timeout
 import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.query.UserTasks
-import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.event.AsynchronousEventDispatcher
+import org.openforis.sepal.event.SynchronousEventDispatcher
 import sandboxmanager.FakeClock
 import spock.lang.Specification
 
 abstract class AbstractTaskTest extends Specification {
     final database = new Database()
-    final eventDispatcher = new HandlerRegistryEventDispatcher()
+    final eventDispatcher = new SynchronousEventDispatcher()
     final sessionManager = new FakeWorkerSessionManager()
     final workerGateway = new FakeWorkerGateway()
     final clock = new FakeClock()

@@ -14,6 +14,7 @@ import org.openforis.sepal.component.sandboxmanager.query.LoadSession
 import org.openforis.sepal.component.sandboxmanager.query.SandboxInfo
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.EventHandler
+import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.hostingservice.WorkerInstance
 import org.openforis.sepal.hostingservice.WorkerInstanceType
 import spock.lang.Specification
@@ -38,6 +39,7 @@ abstract class AbstractSandboxManagerTest extends Specification {
             hostingService,
             sessionProvider,
             storageUsageChecker,
+            new SynchronousEventDispatcher(),
             clock
     )
 
@@ -105,7 +107,8 @@ abstract class AbstractSandboxManagerTest extends Specification {
         sessionProvider.failing()
         try {
             createSession(username)
-        } catch (ExecutionFailed ignore) {}
+        } catch (ExecutionFailed ignore) {
+        }
     }
 
     SandboxSession joinSession(long sessionId, String username = someUserName) {

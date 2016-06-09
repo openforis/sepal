@@ -1,67 +1,91 @@
 package org.openforis.sepal
 
 import groovymvc.security.PathRestrictions
+import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.dataprovider.DataProviderComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
-import org.openforis.sepal.component.sandboxmanager.SandboxManagerComponent
+import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
+import org.openforis.sepal.component.task.TaskComponent
+import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
+import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.security.*
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JdbcUserRepository
+import org.openforis.sepal.util.lifecycle.Lifecycle
+import org.openforis.sepal.util.lifecycle.Stoppable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class Main {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private static DataProviderComponent dataProviderComponent
-    private static DataSearchComponent dataSearchComponent
-    private static SandboxManagerComponent sandboxManagerComponent
-    private static SandboxWebProxyComponent sandboxWebProxyComponent
-    private static SqlConnectionManager connectionManager
+    private final List<Stoppable> toStop = []
+
+    Main() {
+        def config = new SepalConfiguration()
+        def hostingServiceAdapter = HostingServiceAdapter.Factory.create(config.hostingService)
+        def dataSource = config.dataSource
+
+        def dataProviderComponent = start new DataProviderComponent(config)
+        def dataSearchComponent = start new DataSearchComponent(config)
+        def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, dataSource)
+        def budgetComponent = start new BudgetComponent(hostingServiceAdapter, dataSource)
+        def workerSessionComponent = start new WorkerSessionComponent(
+                budgetComponent,
+                workerInstanceComponent,
+                hostingServiceAdapter,
+                dataSource
+        )
+        def taskComponent = start new TaskComponent(workerSessionComponent, dataSource)
+        start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
+
+        def connectionManager = stoppable new SqlConnectionManager(dataSource)
+        def userProvider = new JdbcUserRepository(connectionManager)
+        def usernamePasswordVerifier = new LdapUsernamePasswordVerifier(config.ldapHost)
+        def pathRestrictions = new PathRestrictions(
+                userProvider,
+                new SessionAwareAuthenticator(new NonChallengingBasicRequestAuthenticator('Sepal', usernamePasswordVerifier))
+        )
+
+        def authenticationEndpoint = new AuthenticationEndpoint(userProvider, usernamePasswordVerifier)
+        def gateOneAuthEndpoint = new GateOneAuthEndpoint(config.gateOnePublicKey, config.gateOnePrivateKey)
+        Endpoints.deploy(
+                config.webAppPort,
+                pathRestrictions,
+                authenticationEndpoint,
+                gateOneAuthEndpoint,
+                dataProviderComponent,
+                dataSearchComponent,
+                workerSessionComponent,
+                taskComponent
+        )
+        addShutdownHook { stop() }
+    }
+
+    private <T extends Lifecycle> T start(T lifecycle) {
+        lifecycle.start()
+        toStop << lifecycle
+        return lifecycle
+    }
+
+    private <T extends Stoppable> T stoppable(T stoppable) {
+        toStop << stoppable
+        return stoppable
+    }
+
+
+    private void stop() {
+        Endpoints.undeploy()
+        toStop.reverse()*.stop()
+    }
 
     static void main(String[] args) {
         try {
-            def propertiesLocation = args.length > 0 ? args[0] : "/etc/sepal/sepal.properties"
-            def config = new SepalConfiguration(propertiesLocation)
-
-            dataProviderComponent = new DataProviderComponent(config).start()
-            dataSearchComponent = new DataSearchComponent(config).start()
-            sandboxManagerComponent = new SandboxManagerComponent(config).start()
-            sandboxWebProxyComponent = new SandboxWebProxyComponent(config, sandboxManagerComponent).start()
-            connectionManager = new SqlConnectionManager(config.dataSource)
-            def usernamePasswordVerifier = new LdapUsernamePasswordVerifier(config.ldapHost)
-            def userProvider = new JdbcUserRepository(connectionManager)
-            def pathRestrictions = new PathRestrictions(
-                    userProvider,
-                    new SessionAwareAuthenticator(new NonChallengingBasicRequestAuthenticator('Sepal', usernamePasswordVerifier))
-            )
-
-            def authenticationEndpoint = new AuthenticationEndpoint(userProvider, usernamePasswordVerifier)
-            def gateOneAuthEndpoint = new GateOneAuthEndpoint(config.gateOnePublicKey, config.gateOnePrivateKey)
-            Endpoints.deploy(
-                    config.webAppPort,
-                    pathRestrictions,
-                    authenticationEndpoint,
-                    gateOneAuthEndpoint,
-                    dataProviderComponent,
-                    dataSearchComponent,
-                    sandboxManagerComponent,
-            )
-            addShutdownHook { stop() }
-        } catch (Throwable e) {
-            LOG.error("Failed setting up Sepal", e)
-            stop()
+            new Main()
+        } catch (Exception e) {
+            LOG.error('Failed to start Sepal', e)
             System.exit(1)
         }
-    }
-
-    private static void stop() {
-        Endpoints.undeploy()
-        dataProviderComponent?.stop()
-        dataSearchComponent?.stop()
-        sandboxManagerComponent?.stop()
-        sandboxWebProxyComponent?.stop()
-        connectionManager.close()
     }
 }
