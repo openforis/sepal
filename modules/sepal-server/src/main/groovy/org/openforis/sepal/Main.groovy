@@ -38,7 +38,7 @@ class Main {
                 dataSource
         )
         def taskComponent = start new TaskComponent(workerSessionComponent, dataSource)
-        start new SandboxWebProxyComponent(config, workerSessionComponent)
+        start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
 
         def connectionManager = stoppable new SqlConnectionManager(dataSource)
         def userProvider = new JdbcUserRepository(connectionManager)

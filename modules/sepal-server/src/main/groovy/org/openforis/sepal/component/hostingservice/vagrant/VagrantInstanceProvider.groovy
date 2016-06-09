@@ -36,12 +36,12 @@ class VagrantInstanceProvider implements InstanceProvider {
 
     void reserve(WorkerInstance instance) {
         if (this.instance.id == instance.id)
-            this.instance.reserve(instance.reservation).running()
+            this.instance.reserve(instance.reservation)
     }
 
     void release(String instanceId) {
         if (instance.id == instanceId)
-            instance = instance.release().running()
+            instance = instance.release()
     }
 
     List<WorkerInstance> idleInstances(String instanceType) {

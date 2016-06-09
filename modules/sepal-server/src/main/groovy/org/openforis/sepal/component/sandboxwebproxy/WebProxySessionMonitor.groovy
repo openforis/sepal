@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
+import static org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxy.SANDBOX_SESSION_ID_KEY
+
 class WebProxySessionMonitor extends AbstractSessionListener implements Runnable {
     private final static Logger LOG = LoggerFactory.getLogger(this)
 
@@ -52,11 +54,11 @@ class WebProxySessionMonitor extends AbstractSessionListener implements Runnable
             sessionIdsBySandboxSessionId[sandboxSession.id]?.remove(httpSession.id)
     }
 
-    void sandboxSessionClosed(SandboxSession sandboxSession) {
-        def httpSessionIds = sessionIdsBySandboxSessionId.remove(sandboxSession.id)
+    void sandboxSessionClosed(String sandboxSessionId) {
+        def httpSessionIds = sessionIdsBySandboxSessionId.remove(sandboxSessionId)
         httpSessionIds?.each { httpSessionId ->
             sandboxSessionByHttpSessionId.remove(httpSessionId)
-            httpSessionManager.getSession(httpSessionId)?.removeAttribute(SandboxWebProxy.SANDBOX_SESSION_ID_KEY)
+            httpSessionManager.getSession(httpSessionId)?.removeAttribute(SANDBOX_SESSION_ID_KEY)
         }
     }
 
@@ -80,7 +82,7 @@ class WebProxySessionMonitor extends AbstractSessionListener implements Runnable
         try {
             sandboxSessionManager.heartbeat(sandboxSession.id, sandboxSession.username)
         } catch (Exception e) {
-            session.removeAttribute(SandboxWebProxy.SANDBOX_SESSION_ID_KEY)
+            session.removeAttribute(SANDBOX_SESSION_ID_KEY)
             throw e
         }
     }

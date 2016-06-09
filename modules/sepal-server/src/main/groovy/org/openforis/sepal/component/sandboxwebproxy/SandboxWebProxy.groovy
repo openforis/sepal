@@ -154,12 +154,21 @@ class SandboxWebProxy {
             SandboxSession sandboxSession
             try {
                 def sepalSessions = sandboxSessionManager.findActiveSessions(username)
-                if (sepalSessions)
-                    sandboxSession = sandboxSessionManager.heartbeat(sepalSessions.first().id, username)
-                else
+                if (sepalSessions) {
+                    sandboxSession = sepalSessions.first()
+                    sandboxSessionManager.heartbeat(sandboxSession.id, username)
+                } else
                     sandboxSession = sandboxSessionManager.requestSession(username)
             } catch (NonExistingUser e) {
                 throw new BadRequest(e.getMessage())
+            }
+            return waitForSessionToActivate(sandboxSession)
+        }
+
+        private SandboxSession waitForSessionToActivate(SandboxSession sandboxSession) {
+            while (!sandboxSession.active) {
+                Thread.sleep(5000)
+                sandboxSession = sandboxSessionManager.heartbeat(sandboxSession.id, sandboxSession.username)
             }
             return sandboxSession
         }

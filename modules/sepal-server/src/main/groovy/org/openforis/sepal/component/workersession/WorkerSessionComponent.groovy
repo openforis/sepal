@@ -54,10 +54,10 @@ class WorkerSessionComponent extends AbstractComponent implements EndpointRegist
         def sessionRepository = new JdbcWorkerSessionRepository(connectionManager, clock)
 
         command(RequestSession, new RequestSessionHandler(sessionRepository, budgetManager, instanceManager, clock))
-        command(CloseSession, new CloseSessionHandler(sessionRepository, instanceManager))
-        command(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionRepository, instanceManager))
+        command(CloseSession, new CloseSessionHandler(sessionRepository, instanceManager, eventDispatcher))
+        command(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionRepository, instanceManager, eventDispatcher))
         command(ActivatePendingSessionOnInstance, new ActivatePendingSessionOnInstanceHandler(sessionRepository, eventDispatcher))
-        command(CloseUserSessions, new CloseUserSessionsHandler(sessionRepository, instanceManager))
+        command(CloseUserSessions, new CloseUserSessionsHandler(sessionRepository, instanceManager, eventDispatcher))
         command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(sessionRepository, instanceManager))
         command(Heartbeat, new HeartbeatHandler(sessionRepository))
 

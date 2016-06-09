@@ -4,7 +4,7 @@ interface SandboxSessionManager {
 
     SandboxSession requestSession(String username)
 
-    void heartbeat(String sessionId, String username)
+    SandboxSession heartbeat(String sessionId, String username)
 
     List<SandboxSession> findActiveSessions(String username)
 

@@ -16,7 +16,8 @@ import static groovyx.net.http.ContentType.JSON
 @ToString
 class DockerInstanceProvisioner implements InstanceProvisioner {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private static final int SSH_PORT = 222
+    private static final int EXPOSED_SSH_PORT = 22
+    private static final int PUBLISHED_SSH_PORT = 222
     private final WorkerInstanceConfig config
 
     DockerInstanceProvisioner(WorkerInstanceConfig config) {
@@ -37,6 +38,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void createContainer(WorkerInstance instance, WorkerType workerType) {
+        def exposedPorts = workerType.exposedPortByPublishedPort().values() + EXPOSED_SSH_PORT
         def username = instance.reservation.username
         def request = toJson([
                 Image       : "$config.dockerRegistryHost/$workerType.imageName:$config.sepalVersion",
@@ -49,7 +51,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                                 "/data/sepal/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
                         ]
                 ],
-                ExposedPorts: workerType.exposedPortByPublishedPort().values().collectEntries {
+                ExposedPorts: exposedPorts.collectEntries {
                     ["$it/tcp", [:]]
                 }
         ])
@@ -67,21 +69,21 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void startContainer(WorkerInstance instance, WorkerType workerType) {
-        def portBindings = workerType.exposedPortByPublishedPort().collectEntries { publishedPort, exposedPort ->
+        def portBindings = workerType.exposedPortByPublishedPort() + [(PUBLISHED_SSH_PORT): EXPOSED_SSH_PORT]
+        def request = toJson(PortBindings: portBindings.collectEntries {publishedPort, exposedPort ->
             ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
-        } as Map
-        portBindings['22/tcp'] = [[HostPort: "$SSH_PORT"]]
+        })
         withClient(instance) {
             post(
                     path: "containers/${containerName(instance)}/start",
-                    body: toJson(PortBindings: portBindings),
+                    body: request,
                     requestContentType: JSON
             )
         }
     }
 
     private void waitUntilInitialized(WorkerInstance instance, WorkerType workerType) {
-        def portsToWaitFor = workerType.exposedPortByPublishedPort().values().toList() << 22
+        def portsToWaitFor = workerType.exposedPortByPublishedPort().values().toList() << EXPOSED_SSH_PORT
         LOG.debug("Waiting for container to be initialized on ports $portsToWaitFor. Instance: $instance")
         withClient(instance) {
             def response = post(

@@ -7,4 +7,5 @@ class SandboxSession {
     String id
     String username
     String host
+    boolean active
 }

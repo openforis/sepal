@@ -16,12 +16,10 @@ class WorkerInstance {
     }
 
     WorkerInstance release() {
-        assert reservation, "Instance is already idle"
         new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: null)
     }
 
     WorkerInstance reserve(WorkerReservation reservation) {
-        assert !this.reservation, "Instance is already reserved: ${this.reservation}"
         new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: reservation)
     }
 

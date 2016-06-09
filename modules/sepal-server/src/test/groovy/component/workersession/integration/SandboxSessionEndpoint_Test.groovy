@@ -1,10 +1,7 @@
 package component.workersession.integration
 
 import groovymvc.Controller
-import org.openforis.sepal.component.workersession.api.InstanceType
-import org.openforis.sepal.component.workersession.api.Spending
-import org.openforis.sepal.component.workersession.api.UserSessionReport
-import org.openforis.sepal.component.workersession.api.WorkerSession
+import org.openforis.sepal.component.workersession.api.*
 import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.Heartbeat
 import org.openforis.sepal.component.workersession.command.RequestSession
@@ -33,6 +30,8 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
                 sessions: [
                         new WorkerSession(
                                 id: 'some-session',
+                                username: testUsername,
+                                instance: new WorkerInstance(host: 'some-host'),
                                 state: PENDING,
                                 instanceType: 'some-instance-type',
                                 creationTime: DateTime.parseDateString('2016-01-01')
@@ -63,33 +62,36 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
         1 * component.submit(new GenerateUserSessionReport(username: testUsername, workerType: SANDBOX)) >> report
 
         sameJson(response.data, [
-                sessions     : [[
-                                        path             : 'sandbox/session/some-session',
-                                        status           : 'STARTING',
-                                        instanceType     : [
-                                                path       : "sandbox/instance-type/some-instance-type",
-                                                id         : 'some-instance-type',
-                                                name       : 'Some instance type',
-                                                description: 'Some instance type description',
-                                                hourlyCost : 0.1
-                                        ],
-                                        creationTime     : '2016-01-01T00:00:00',
-                                        costSinceCreation: 0.1 * 2 * 24 // hourly cost * two days
-                                ]],
+                sessions: [[
+                        id: 'some-session',
+                        path: 'sandbox/session/some-session',
+                        username: testUsername,
+                        status: 'STARTING',
+                        host: 'some-host',
+                        instanceType: [
+                                path: "sandbox/instance-type/some-instance-type",
+                                id: 'some-instance-type',
+                                name: 'Some instance type',
+                                description: 'Some instance type description',
+                                hourlyCost: 0.1
+                        ],
+                        creationTime: '2016-01-01T00:00:00',
+                        costSinceCreation: 0.1 * 2 * 24 // hourly cost * two days
+                ]],
                 instanceTypes: [[
-                                        path       : "sandbox/instance-type/some-instance-type",
-                                        id         : 'some-instance-type',
-                                        name       : 'Some instance type',
-                                        description: 'Some instance type description',
-                                        hourlyCost : 0.1
-                                ]],
-                spending     : [
-                        monthlyInstanceBudget  : 1d,
+                        path: "sandbox/instance-type/some-instance-type",
+                        id: 'some-instance-type',
+                        name: 'Some instance type',
+                        description: 'Some instance type description',
+                        hourlyCost: 0.1
+                ]],
+                spending: [
+                        monthlyInstanceBudget: 1d,
                         monthlyInstanceSpending: 2d,
-                        monthlyStorageBudget   : 3d,
-                        monthlyStorageSpending : 4d,
-                        storageQuota           : 5d,
-                        storageUsed            : 6d
+                        monthlyStorageBudget: 3d,
+                        monthlyStorageSpending: 4d,
+                        storageQuota: 5d,
+                        storageUsed: 6d
                 ]
         ])
     }
@@ -97,6 +99,7 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
     def 'POST /sandbox/instance-type/{instanceType}, session is requested and requested session is returned'() {
         def session = new WorkerSession(
                 id: 'some-session',
+                instance: new WorkerInstance(host: 'some-host'),
                 instanceType: 'some-instance-type',
                 state: PENDING
         )
@@ -111,19 +114,23 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
         )) >> session
         status == 201
         sameJson(response.data, [
-                path  : "sandbox/session/$session.id",
-                status: 'STARTING'
+                id: 'some-session',
+                path: 'sandbox/session/some-session',
+                username: testUsername,
+                status: 'STARTING',
+                host: 'some-host'
         ])
     }
 
     def 'POST /sandbox/session/{sessionId}, heartbeat is sent and session is returned'() {
         def session = new WorkerSession(
                 id: 'some-session',
+                instance: new WorkerInstance(host: 'some-host'),
                 instanceType: 'some-instance-type',
                 state: ACTIVE
         )
         when:
-        post(path: "sandbox/session/$session.id")
+        post(path: "sandbox/session/some-session")
 
         then:
         1 * component.submit(new Heartbeat(
@@ -132,8 +139,11 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
         )) >> session
         status == 200
         sameJson(response.data, [
-                path  : "sandbox/session/$session.id",
-                status: 'ACTIVE'
+                id: 'some-session',
+                path: "sandbox/session/some-session",
+                username: testUsername,
+                status: 'ACTIVE',
+                host: 'some-host'
         ])
     }
 

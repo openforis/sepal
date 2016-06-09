@@ -59,13 +59,19 @@ abstract class AbstractWorkerSessionTest extends Specification {
         return findSessionById(session.id)
     }
 
-    final WorkerSession timedOutSession(Map args = [:]) {
+    final WorkerSession timedOutActiveSession(Map args = [:]) {
+        clock.set()
+        def session = activeSession(args)
+        clock.set(Timeout.ACTIVE.willTimeout(clock.now()))
+        return findSessionById(session.id)
+    }
+
+    final WorkerSession timedOutPendingSession(Map args = [:]) {
         clock.set()
         def session = pendingSession(args)
         clock.set(Timeout.PENDING.willTimeout(clock.now()))
         return findSessionById(session.id)
     }
-
 
     final WorkerSession closedSession(Map args = [:]) {
         def session = pendingSession(args)

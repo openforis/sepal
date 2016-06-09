@@ -4,7 +4,7 @@ import static org.openforis.sepal.component.workersession.api.WorkerSession.Stat
 
 class CloseTimedOutSessions_Test extends AbstractWorkerSessionTest {
     def 'Given a timed out session, when closing timed out sessions, session is closed and instance is released'() {
-        timedOutSession()
+        timedOutActiveSession()
 
         when:
         closeTimedOutSessions()

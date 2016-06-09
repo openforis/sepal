@@ -19,7 +19,7 @@ class SepalClient {
 
     Map loadSandboxInfo() {
         LOG.debug("Loading sandbox info for $username")
-        sepal.get(path: "sandbox/report").data
+        sepal.get(path: "sandbox/$username/report").data
     }
 
     Map createSession(Map instanceType, Closure waitingCallback = {}) {

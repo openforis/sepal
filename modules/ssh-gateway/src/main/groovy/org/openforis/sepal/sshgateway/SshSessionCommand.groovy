@@ -19,7 +19,7 @@ class SshSessionCommand {
                 "-q " +
                 "-o StrictHostKeyChecking=no " +
                 "-o UserKnownHostsFile=/dev/null " +
-                "-p $session.port " +
+                "-p 222 " +
                 "$session.host \$1", 'UTF-8')
     }
 }
