@@ -12,7 +12,6 @@ import static groovy.json.JsonOutput.toJson
 
 class MockServer extends AbstractMvcFilter {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private static final bounds = new Wrs2Bounds()
 
     Controller bootstrap(ServletContext servletContext) {
         def authenticator = new FakeAuthenticator()

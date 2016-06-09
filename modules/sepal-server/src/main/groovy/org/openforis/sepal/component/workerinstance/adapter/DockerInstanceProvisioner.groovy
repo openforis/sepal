@@ -41,10 +41,10 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         def exposedPorts = workerType.exposedPortByPublishedPort().values() + EXPOSED_SSH_PORT
         def username = instance.reservation.username
         def request = toJson([
-                Image       : "$config.dockerRegistryHost/$workerType.imageName:$config.sepalVersion",
-                Tty         : true,
-                Cmd         : ["/script/init_container.sh", username, config.sepalHost, config.ldapHost, config.ldapPassword],
-                HostConfig  : [
+                Image: "$config.dockerRegistryHost/$workerType.imageName:$config.sepalVersion",
+                Tty: true,
+                Cmd: ["/script/init_container.sh", username, config.sepalHost, config.ldapHost, config.ldapPassword],
+                HostConfig: [
                         Binds: [
                                 "$config.userHomes/${username}:/home/${username}",
                                 "/data/sepal/$workerType.id:/$workerType.id",
@@ -70,7 +70,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
 
     private void startContainer(WorkerInstance instance, WorkerType workerType) {
         def portBindings = workerType.exposedPortByPublishedPort() + [(PUBLISHED_SSH_PORT): EXPOSED_SSH_PORT]
-        def request = toJson(PortBindings: portBindings.collectEntries {publishedPort, exposedPort ->
+        def request = toJson(PortBindings: portBindings.collectEntries { publishedPort, exposedPort ->
             ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
         })
         withClient(instance) {
@@ -89,11 +89,11 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             def response = post(
                     path: "containers/${containerName(instance)}/exec",
                     body: new JsonOutput().toJson([
-                            AttachStdin : false,
+                            AttachStdin: false,
                             AttachStdout: true,
                             AttachStderr: true,
-                            Tty         : false,
-                            Cmd         : ["/script/wait_until_initialized.sh", portsToWaitFor.join(';'), instance.reservation.username]
+                            Tty: false,
+                            Cmd: ["/script/wait_until_initialized.sh", portsToWaitFor.join(';'), instance.reservation.username]
                     ]),
                     requestContentType: JSON
             )
