@@ -2,7 +2,7 @@
  * @author Mino Togna
  */
 
-require('./search-retrieve.css')
+require( './search-retrieve.css' )
 
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
@@ -33,9 +33,13 @@ var init = function () {
 module.exports = {
     init  : init
     , show: function () {
-        html.fadeIn()
+        // html.fadeIn()
+        html.velocity( 'slideDown', { delay: 200, duration: 1000 } )
     }
-    , hide: function () {
-        html.hide()
+    , hide: function ( opts ) {
+        // html.hide()
+        var options = { delay: 200, duration: 1000 }
+        options     = $.extend( options, opts )
+        html.velocity( 'slideUp', options )
     }
 }

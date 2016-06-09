@@ -10,7 +10,7 @@ var SceneAreaModel = require( '../search/scene-images-selection-m' )
 var SearchForm     = require( '../search/search-form' )
 
 View.init()
-View.hide()
+View.hide({delay:0,duration:0})
 
 var appShow   = function ( e, section ) {
     View.hide()
