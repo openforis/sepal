@@ -2,6 +2,8 @@
  * @author Mino Togna
  */
 require( './tasks.css' )
+// require( './task-loader.less' )
+require( './task-loader.scss' )
 
 var EventBus  = require( '../event/event-bus' )
 var Events    = require( '../event/events' )
@@ -30,7 +32,29 @@ var reset = function () {
 var setTasks = function ( tasks ) {
     $.each( tasks, function ( i, task ) {
         var row = getTaskRow( i, task )
-        row.find( '.status' ).html( getTaskStatus( task.status ).tooltip() )
+        // row.find( '.status' ).html( getTaskStatus( task.status ).tooltip() )
+
+        switch ( task.status ) {
+
+            case Model.STATUS.ACTIVE:
+                row.find( '.task-loader' ).show()
+                break
+            case Model.STATUS.PENDING:
+                row.find( '.task-loader' ).hide()
+                // row.find( '.btn-execute' ).hide()
+                // row.find( '.btn-remove' ).hide()
+                // row.find( '.btn-cancel' ).show()
+                break
+            case Model.STATUS.FAILED:
+                row.find( '.task-loader' ).hide()
+            case Model.STATUS.COMPLETED:
+                row.find( '.task-loader' ).hide()
+                // row.find( '.btn-cancel' ).hide()
+                // row.find( '.btn-execute' ).show()
+                // row.find( '.btn-remove' ).show()
+                break
+        }
+
     } )
 }
 

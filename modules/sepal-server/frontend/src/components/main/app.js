@@ -1,5 +1,5 @@
 // common modules
-require( 'tether' )
+// require( 'tether' )
 require( 'bootstrap' )
 require( '../ajax/ajax' )
 

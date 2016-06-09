@@ -20,11 +20,12 @@ module.exports = {
             hash: true
         } ),
         new ExtractTextPlugin( 'static/app.css', { allChunks: true } ),
-        new Webpack.ProvidePlugin( { "window.Tether": "tether" } ),
+        // new Webpack.ProvidePlugin( { "window.Tether": "tether" } ),
         new Webpack.ProvidePlugin( {
             $: "jquery",
             jQuery: "jquery",
-            "window.jQuery": "jquery"
+            "window.jQuery": "jquery",
+            "window.Tether": "tether"
         } )
     ],
     resolve: { extensions: [ '', '.js' ] },
@@ -43,6 +44,10 @@ module.exports = {
             {
                 test: /\.(ttf|eot|svg)(\?[\s\S]+)?$/,
                 loader: 'file'
+            },
+            {
+                test: /\.less$/,
+                loader: "style!css!less"
             },
             // inline base64 URLs for <=8k images, direct URLs for the rest
             { test: /\.(png|jpg)$/, loader: 'url-loader?limit=8192&name=/static/[name].[ext]' },
