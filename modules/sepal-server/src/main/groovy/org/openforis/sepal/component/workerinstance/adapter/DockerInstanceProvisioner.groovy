@@ -40,16 +40,18 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     private void createContainer(WorkerInstance instance, WorkerType workerType) {
         def exposedPorts = workerType.exposedPortByPublishedPort().values() + EXPOSED_SSH_PORT
         def username = instance.reservation.username
+        def mountedDirByHostDir = [
+                "$config.userHomes/${username}": "/home/${username}",
+                "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"
+        ] + workerType.mountedDirByHostDir
         def request = toJson([
                 Image: "$config.dockerRegistryHost/$workerType.imageName:$config.sepalVersion",
                 Tty: true,
                 Cmd: ["/script/init_container.sh", username, config.sepalHost, config.ldapHost, config.ldapPassword],
                 HostConfig: [
-                        Binds: [
-                                "$config.userHomes/${username}:/home/${username}",
-                                "/data/sepal/$workerType.id:/$workerType.id",
-                                "/data/sepal/certificates/ldap-ca.crt.pem:/etc/ldap/certificates/ldap-ca.crt.pem"
-                        ]
+                        Binds: mountedDirByHostDir.collect { hostDir, mountedDir ->
+                            "$hostDir:$mountedDir"
+                        }
                 ],
                 ExposedPorts: exposedPorts.collectEntries {
                     ["$it/tcp", [:]]
