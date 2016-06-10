@@ -64,7 +64,7 @@ class MockServer extends AbstractMvcFilter {
                 def tasks = [
                         [
                                 id               : 1,
-                                name             : 'ciao',
+                                name             : 'downloading scene LC81900302015079LGN00 from some part of hte universe',
                                 status           : 'ACTIVE',
                                 statusDescription: 'currently downloading something from somewhere'
                         ]

@@ -27,6 +27,26 @@ var isActive = function () {
     return running
 }
 
+// var getTaskIndex = function ( taskId ) {
+//     var idx = -1
+//     $.each( tasks, function ( i, task ) {
+//         if ( task.id === taskId ) {
+//             idx = i
+//             return false
+//         }
+//     } )
+//     return idx
+// }
+//
+// var removeTask   = function ( taskId ) {
+//     var idx = getTaskIndex( taskId )
+//     console.log( "===== BEFORE SPLICE " + idx )
+//     console.log( tasks )
+//     tasks.splice( idx, 1 )
+//     console.log( "===== AFTER SPLICE " + idx )
+//     console.log( tasks )
+// }
+
 var STATUS = {
     ACTIVE     : 'ACTIVE'
     , PENDING  : 'PENDING'
@@ -35,9 +55,10 @@ var STATUS = {
 }
 
 module.exports = {
-    setTasks  : setTasks
-    , getTasks: getTasks
-    , isEmpty : isEmpty
-    , isActive: isActive
-    , STATUS  : STATUS
+    setTasks    : setTasks
+    , getTasks  : getTasks
+    , isEmpty   : isEmpty
+    , isActive  : isActive
+    // , removeTask: removeTask
+    , STATUS    : STATUS
 }

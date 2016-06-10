@@ -49,6 +49,12 @@ Events = {
             , SELECT  : 'section.scenes-selection.select'
             , DESELECT: 'section.scenes-selection.deselect'
         }
+        
+        , TASK_MANAGER: {
+            REMOVE_TASK   : 'section.task-manager.remove-task'
+            , CANCEL_TASK : 'section.task-manager.cancel-task'
+            , EXECUTE_TASK: 'section.task-manager.execute-task'
+        }
     }
     
     , MAP: {

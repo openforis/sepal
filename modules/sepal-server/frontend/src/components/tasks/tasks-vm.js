@@ -27,7 +27,7 @@ var init = function ( e ) {
     }
 }
 
-var requestTasks = function () {
+var requestTasks = function ( callback ) {
     var params = {
         url      : '/api/tasks'
         , success: function ( tasks ) {
@@ -47,10 +47,67 @@ var requestTasks = function () {
 
                 View.setTasks( Model.getTasks() )
             }
+
+            if ( callback )
+                callback()
         }
     }
     
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
+var postTaskAction = function ( url, callback ) {
+    var params = {
+        url         : url
+        , type      : 'POST'
+        , beforeSend: function () {
+            Loader.show()
+        }
+        , success   : function () {
+
+            requestTasks( function () {
+                Loader.hide( { delay: 200 } )
+                
+                if ( callback ) {
+                    callback()
+                }
+            } )
+
+        }
+    }
+
+    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+}
+
+var taskAction = function ( evt, taskId ) {
+    var callback = null
+    var op       = ''
+
+    switch ( evt.type ) {
+        case Events.SECTION.TASK_MANAGER.CANCEL_TASK:
+            op = 'cancel'
+            break
+        case Events.SECTION.TASK_MANAGER.EXECUTE_TASK:
+            op = 'execute'
+            break
+        case Events.SECTION.TASK_MANAGER.REMOVE_TASK:
+            op       = 'remove'
+            callback = function () {
+                // from model is not necessary, because all tasks have been reloaded from server
+                // Model.removeTask( taskId )
+                View.removeTask( taskId )
+            }
+            break
+    }
+
+    var url = '/api/tasks/task/' + taskId + '/' + op
+
+    postTaskAction( url, callback )
+}
+
+
 EventBus.addEventListener( Events.SECTION.SHOW, init )
+
+EventBus.addEventListener( Events.SECTION.TASK_MANAGER.CANCEL_TASK, taskAction )
+EventBus.addEventListener( Events.SECTION.TASK_MANAGER.REMOVE_TASK, taskAction )
+EventBus.addEventListener( Events.SECTION.TASK_MANAGER.EXECUTE_TASK, taskAction )

@@ -63,7 +63,7 @@ var init = function ( formSelector ) {
             }
             
             // for debugging
-            // TODO : REMOVE
+            // TODO : REMOVE_TASK
             valid = true
             if ( valid ) {
                 Animation.animateOut( formNotify )
