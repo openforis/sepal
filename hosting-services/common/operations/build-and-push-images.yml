@@ -8,17 +8,18 @@
     - "{{ secret_vars_file }}"
 
   roles:
-    - { role: build-image, image: ldap}
-    - { role: build-image, image: haproxy}
-    - { role: build-image, image: nginx}
-    - { role: build-image, image: mysql}
-    - { role: build-image, image: gateone}
-    - { role: build-image, image: ssh-gateway}
-    - { role: build-image, image: geospatial-toolkit}
-    - { role: build-image, image: sandbox}
-    - { role: build-image, image: sepal-php}
-    - { role: build-image, image: google-earth-engine}
-    - { role: build-image, image: sepal-server}
+    - { role: build-image, image: ldap }
+    - { role: build-image, image: haproxy }
+    - { role: build-image, image: nginx }
+    - { role: build-image, image: mysql }
+    - { role: build-image, image: gateone }
+    - { role: build-image, image: ssh-gateway }
+    - { role: build-image, image: geospatial-toolkit }
+    - { role: build-image, image: sandbox }
+    - { role: build-image, image: sepal-php }
+    - { role: build-image, image: google-earth-engine }
+    - { role: build-image, image: sepal-server }
+    - { role: build-image, image: task-executor }
     - role: tag-images
     - role: push-images
 

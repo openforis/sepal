@@ -1,10 +1,10 @@
 FROM ubuntu:trusty
 MAINTAINER OpenForis
-EXPOSE 1025
 
 ADD config /config
 ADD script /script
-ADD binary/sepal.jar /opt/sepal/bin/sepal.jar
+ADD templates /templates
+ADD binary/task-executor.jar /opt/sepal/bin/task-executor.jar
 
 RUN chmod -R 500 /script && \
     chmod -R 400 /config && \

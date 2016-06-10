@@ -11,14 +11,15 @@ target
 .settings
 
 #Sepal binaries
+/modules/task-executor/docker/binary/task-executor.jar
 /modules/ssh-gateway/docker/binary/sepal-ssh-gateway.jar
 /modules/sepal-php/docker/binary/sepal-php.tar.gz
 /modules/sepal-server/docker/binary/sepal.jar
 
 #Sepal frontend
-/modules/sepal-server/frontend/dist/*
-/modules/sepal-server/frontend/node/*
-/modules/sepal-server/frontend/node_modules/*
+/modules/sepal-server/frontend/dist/
+/modules/sepal-server/frontend/node/
+/modules/sepal-server/frontend/node_modules/
 
 #Vagrant
 .vagrant

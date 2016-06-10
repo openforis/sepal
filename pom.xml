@@ -13,6 +13,7 @@
 
     <modules>
         <module>modules/sepal-server</module>
+        <module>modules/task-executor</module>
         <module>modules/ssh-gateway</module>
         <module>modules/sepal-php</module>
     </modules>

@@ -42,7 +42,8 @@
     - { role: build-image, image: sandbox }
     - { role: build-image, image: sepal-php }
     - { role: build-image, image: sepal-server }
-    - { role: build-image, image: google-earth-engine}
+    - { role: build-image, image: task-executor }
+    - { role: build-image, image: google-earth-engine }
 
     - { role: tag-images }
 
