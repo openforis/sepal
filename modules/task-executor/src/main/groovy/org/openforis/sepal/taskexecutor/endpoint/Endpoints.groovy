@@ -1,11 +1,9 @@
-package org.openforis.sepal.endpoint
+package org.openforis.sepal.taskexecutor.endpoint
 
 import groovymvc.AbstractMvcFilter
 import groovymvc.Controller
 import groovymvc.ParamsException
 import groovymvc.security.PathRestrictions
-import org.openforis.sepal.command.ExecutionFailed
-import org.openforis.sepal.component.sandboxmanager.SessionFailed
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -22,7 +20,6 @@ final class Endpoints extends AbstractMvcFilter {
     Controller bootstrap(ServletContext servletContext) {
         def controller = Controller.builder(servletContext)
                 .pathRestrictions(pathRestrictions)
-                .messageSource('messages')
                 .build()
 
         endpointRegistries.each {
@@ -33,30 +30,12 @@ final class Endpoints extends AbstractMvcFilter {
 
             restrict('/**', [])
 
-            error(SessionFailed) {
-                response?.status = 400
-                response?.setContentType('application/json')
-            }
-
-            error(InvalidRequest) {
-                response?.status = 400
-                response?.setContentType('application/json')
-                send(toJson(it?.errors))
-            }
-
             error(ParamsException) {
                 response?.status = 400
                 response?.setContentType('application/json')
                 send(toJson([param: it.message]))
             }
 
-            error(ExecutionFailed) {
-                response.status = 500
-                response.setContentType('application/json')
-                send(toJson([
-                        command: it.command.class.simpleName
-                ]))
-            }
         }
         return controller
     }
@@ -72,4 +51,5 @@ final class Endpoints extends AbstractMvcFilter {
         server?.undeploy()
     }
 }
+
 

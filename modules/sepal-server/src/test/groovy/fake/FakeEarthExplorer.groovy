@@ -3,7 +3,7 @@ package fake
 import groovy.json.JsonSlurper
 import groovymvc.AbstractMvcFilter
 import groovymvc.Controller
-import org.openforis.sepal.Server
+import org.openforis.sepal.endpoint.Server
 import org.spockframework.util.IoUtil
 import util.Port
 

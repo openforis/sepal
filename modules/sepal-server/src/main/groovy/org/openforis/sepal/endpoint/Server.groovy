@@ -1,4 +1,4 @@
-package org.openforis.sepal
+package org.openforis.sepal.endpoint
 
 import groovymvc.AbstractMvcFilter
 import io.undertow.Undertow

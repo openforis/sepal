@@ -2,7 +2,7 @@ package frontend
 
 import groovymvc.AbstractMvcFilter
 import groovymvc.Controller
-import org.openforis.sepal.Server
+import org.openforis.sepal.endpoint.Server
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
