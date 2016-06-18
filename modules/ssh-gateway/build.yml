@@ -16,5 +16,4 @@
   become: no
   when: should_rebuild.changed
 
-- name: "ssh-gateway | Build"
-  docker_image: path="/opt/sepal/modules/ssh-gateway/docker" name="localhost/openforis/ssh-gateway" state=build
+- include: "{{ build_image_task }}"

@@ -1,4 +1,1 @@
----
-
-- name: "sandbox | Build"
-  docker_image: path="/opt/sepal/modules/sandbox/docker"  name="localhost/openforis/sandbox" state=build
+- include: "{{ build_image_task }}"

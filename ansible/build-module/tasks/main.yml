@@ -1,0 +1,5 @@
+---
+- include: "../../../modules/{{ module }}/build.yml"
+  vars:
+    module_dir: "{{role_path}}/../../modules/{{ module }}"
+    build_image_task: "{{role_path}}/../build-image/tasks/main.yml"

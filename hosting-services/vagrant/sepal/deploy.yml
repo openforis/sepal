@@ -32,27 +32,25 @@
         - 'o=Ubuntu,a=${distro_codename}-updates'
 
     - { role: docker, users: ['ubuntu', 'vagrant'] }
-    - { role: build-image, image: ldap }
-    - { role: build-image, image: haproxy }
-    - { role: build-image, image: nginx }
-    - { role: build-image, image: mysql }
-    - { role: build-image, image: gateone }
-    - { role: build-image, image: ssh-gateway }
-    - { role: build-image, image: geospatial-toolkit }
-    - { role: build-image, image: sandbox }
-    - { role: build-image, image: sepal-php }
-    - { role: build-image, image: sepal-server }
-    - { role: build-image, image: task-executor }
-    - { role: build-image, image: google-earth-engine }
+    - { role: build-module, module: ldap }
+    - { role: build-module, module: haproxy }
+    - { role: build-module, module: nginx }
+    - { role: build-module, module: mysql }
+    - { role: build-module, module: gateone }
+    - { role: build-module, module: ssh-gateway }
+    - { role: build-module, module: geospatial-toolkit }
+    - { role: build-module, module: sandbox }
+    - { role: build-module, module: sepal-php }
+    - { role: build-module, module: sepal-server }
+    - { role: build-module, module: task-executor }
+    - { role: build-module, module: google-earth-engine }
 
-    - { role: tag-images }
-
-    - { role: run-container, image: ldap }
-    - { role: run-container, image: mysql }
-    - { role: run-container, image: google-earth-engine }
-    - { role: run-container, image: sepal-server }
-    - { role: run-container, image: ssh-gateway }
-    - { role: run-container, image: gateone }
-    - { role: run-container, image: sepal-php }
-    - { role: run-container, image: nginx }
-    - { role: run-container, image: haproxy }
+    - { role: run-module, module: ldap }
+    - { role: run-module, module: mysql }
+    - { role: run-module, module: google-earth-engine }
+    - { role: run-module, module: sepal-server }
+    - { role: run-module, module: ssh-gateway }
+    - { role: run-module, module: gateone }
+    - { role: run-module, module: sepal-php }
+    - { role: run-module, module: nginx }
+    - { role: run-module, module: haproxy }

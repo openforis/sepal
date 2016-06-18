@@ -1,4 +1,1 @@
----
-
-- name: "gateone | Build"
-  docker_image: path="/opt/sepal/modules/gateone/docker/" name="localhost/openforis/gateone" state=build
+- include: "{{ build_image_task }}"

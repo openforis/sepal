@@ -1,4 +1,3 @@
----
-
-- name: "geospatial-toolkit | Build Geospatial Toolkit"
-  docker_image: path="/opt/sepal/modules/geospatial-toolkit/docker" name="openforis/geospatial-toolkit" state=build
+- include: "{{ build_image_task }}"
+  vars:
+    image_name: "openforis/geospatial-toolkit"

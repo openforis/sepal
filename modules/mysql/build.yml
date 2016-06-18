@@ -1,4 +1,1 @@
----
-
-- name: "mysql | Build"
-  docker_image: path="/opt/sepal/modules/mysql/docker" name="localhost/openforis/mysql" state=build
+- include: "{{ build_image_task }}"

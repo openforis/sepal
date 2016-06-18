@@ -1,4 +1,6 @@
 ---
-- include: "../../../modules/{{ image }}/build.yml"
-  vars:
-    module_dir: "{{role_path}}/../../modules/{{ image }}"
+- name: "{{ module }} | Building Docker Image: {{ image_name if image_name is defined else 'localhost/openforis/' + module }}"
+  command: "docker build -t {{ image_name if image_name is defined else 'localhost/openforis/' + module }} /opt/sepal/modules/{{ module }}/docker"
+
+- name: "{{ module }} | Tagging Docker Image: {{ image_name if image_name is defined else 'localhost/openforis/' + module }}"
+  command: "docker tag {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:latest {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:{{ version }}"

@@ -16,5 +16,6 @@
   become: no
   when: should_rebuild.changed
 
-- name: "sepal | Build"
-  docker_image: path="/opt/sepal/modules/sepal-server/docker" name="localhost/openforis/sepal" state=build
+- include: "{{ build_image_task }}"
+  vars:
+    image_name: "localhost/openforis/sepal"

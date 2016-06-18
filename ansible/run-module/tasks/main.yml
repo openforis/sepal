@@ -1,0 +1,8 @@
+---
+
+- name: "Run {{ module }}"
+  include: "../../../modules/{{ module }}/run.yml"
+
+
+
+

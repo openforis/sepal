@@ -23,8 +23,8 @@
     - { role: docker, users: ['ubuntu'] }
     - { role: docker-registry }
     - { role: ansible }
-    - { role: build-image, image: jenkins }
-    - { role: run-container, image: jenkins }
+    - { role: build-module, module: jenkins }
+    - { role: run-module, module: jenkins }
 
   post_tasks:
     - name: "Clean environment"

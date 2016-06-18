@@ -1,6 +1,5 @@
----
-- name: "jenkins | Build"
-  docker_image: path="/opt/sepal/modules/jenkins/docker" name="openforis/jenkins" state=build
-
+- include: "{{ build_image_task }}"
+  vars:
+    image_name: "openforis/jenkins"
 
 

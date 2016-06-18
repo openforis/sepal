@@ -1,4 +1,1 @@
----
-
-- name: "nginx | Build"
-  docker_image: path="/opt/sepal/modules/nginx/docker" name="localhost/openforis/nginx" state=build
+- include: "{{ build_image_task }}"

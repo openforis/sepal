@@ -16,5 +16,4 @@
   become: no
   when: should_rebuild.changed
 
-- name: "task-executor | Build"
-  docker_image: path="/opt/sepal/modules/task-executor/docker"  name="localhost/openforis/task-executor" state=build
+- include: "{{ build_image_task }}"
