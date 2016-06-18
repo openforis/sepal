@@ -4,6 +4,7 @@ import groovymvc.AbstractMvcFilter
 import groovymvc.Controller
 import groovymvc.ParamsException
 import groovymvc.security.PathRestrictions
+import org.openforis.sepal.taskexecutor.api.InvalidTask
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -34,6 +35,12 @@ final class Endpoints extends AbstractMvcFilter {
                 response?.status = 400
                 response?.setContentType('application/json')
                 send(toJson([param: it.message]))
+            }
+
+            error(InvalidTask) {
+                response?.status = 400
+                response?.setContentType('application/json')
+                send(toJson([message: it.message, task: it.task]))
             }
 
         }

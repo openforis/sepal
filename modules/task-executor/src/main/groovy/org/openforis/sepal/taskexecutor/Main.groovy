@@ -6,7 +6,7 @@ import org.openforis.sepal.taskexecutor.endpoint.Endpoints
 import org.openforis.sepal.taskexecutor.endpoint.LdapUsernamePasswordVerifier
 import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorEndpoint
 import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorUserProvider
-import org.openforis.sepal.taskexecutor.manager.FooTaskManager
+import org.openforis.sepal.taskexecutor.manager.BackgroundExecutingTaskManager
 import org.openforis.sepal.taskexecutor.util.Stoppable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -23,7 +23,7 @@ class Main {
                 userProvider,
                 new BasicRequestAuthenticator('Sepal-Task-Executor', usernamePasswordVerifier)
         )
-        def taskManager = stoppable new FooTaskManager()
+        def taskManager = stoppable new BackgroundExecutingTaskManager()
         def endpoint = new TaskExecutorEndpoint(taskManager)
         Endpoints.deploy(config.webAppPort, pathRestrictions, endpoint)
         addShutdownHook { stop() }
