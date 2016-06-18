@@ -2,16 +2,11 @@ package org.openforis.sepal.taskexecutor.endpoint
 
 import groovymvc.AbstractMvcFilter
 import io.undertow.Undertow
-import io.undertow.server.handlers.resource.ClassPathResourceManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static io.undertow.Handlers.path
-import static io.undertow.Handlers.resource
-import static io.undertow.servlet.Servlets.defaultContainer
-import static io.undertow.servlet.Servlets.deployment
-import static io.undertow.servlet.Servlets.filter
-import static io.undertow.servlet.Servlets.listener
+import static io.undertow.servlet.Servlets.*
 import static javax.servlet.DispatcherType.REQUEST
 
 class Server {
