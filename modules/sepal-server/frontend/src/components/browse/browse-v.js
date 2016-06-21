@@ -79,7 +79,7 @@ var addDir = function ( dir ) {
         
         if ( child.isDirectory === true ) {
             childDivC.addClass( 'col-sm-11' )
-            var childDivL = $( '<div class"col-sm-1"/>' )
+            var childDivL = $( '<div class="col-sm-1 no-padding"/>' )
             childDivL.append( '<i class="fa fa-caret-right" aria-hidden="true"></i>' )
             childDivR.append( childDivL )
         } else {
