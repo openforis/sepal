@@ -35,17 +35,30 @@ var setSessions = function ( sessions ) {
     
     $.each( sessions, function ( i, session ) {
         var row = rowSessionSection.clone()
-        row.removeClass( 'row-session-placeholder' ).addClass( 'row-session' )
+        row.removeClass( 'row-session-placeholder' ).addClass( 'row-session ' + session.id )
         
         row.find( '.type' ).html( session.instanceType.name )
         var creationTimeFromNow = moment( session.creationTime, "YYYY-MM-DD[T]HH:mm:ss" ).fromNow()
         row.find( '.time' ).html( creationTimeFromNow )
         row.find( '.cost' ).html( session.costSinceCreation + " USD " )
-        
+
+        row.find( '.btn-remove' ).click( function ( e ) {
+            EventBus.dispatch( Events.SECTION.USER.REMOVE_SESSION, null, session.id )
+        } )
+
         sessionsSection.append( row )
         setTimeout( function () {
             row.fadeIn( 200 )
         }, i * 100 )
+    } )
+}
+
+var removeSession = function ( sessionId ) {
+    var sessionRow = sessionsSection.find( '.' + sessionId )
+    sessionRow.fadeOut( {
+        complete: function () {
+            sessionRow.remove()
+        }
     } )
 }
 
@@ -59,7 +72,8 @@ var setSpending = function ( spending ) {
 }
 
 module.exports = {
-    init         : init
-    , setSessions: setSessions
-    , setSpending: setSpending
+    init           : init
+    , setSessions  : setSessions
+    , setSpending  : setSpending
+    , removeSession: removeSession
 }

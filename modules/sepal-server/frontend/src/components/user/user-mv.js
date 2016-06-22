@@ -31,4 +31,24 @@ var show = function ( e, type ) {
     }
 }
 
+var removeSession = function ( evt, sessionId ) {
+    var session = Model.getSessionById( sessionId )
+
+    var params = {
+        url         : '/api/' + session.path
+        , method    : 'DELETE'
+        , beforeSend: function () {
+            Loader.show()
+        }
+        , success   : function ( response ) {
+            View.removeSession( sessionId )
+            // requestSandboxReport()
+            Loader.hide( { delay: 200 } )
+        }
+    }
+
+    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+}
+
 EventBus.addEventListener( Events.SECTION.SHOW, show )
+EventBus.addEventListener( Events.SECTION.USER.REMOVE_SESSION, removeSession )

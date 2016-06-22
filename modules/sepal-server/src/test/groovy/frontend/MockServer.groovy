@@ -45,7 +45,11 @@ class MockServer extends AbstractMvcFilter {
             }
 
             delete('/sandbox/session/{sessionId}') {
+                response.contentType = 'application/json'
+
                 response.status = 200
+
+                send toJson("[status:OK]")
             }
 
 
