@@ -1,4 +1,4 @@
-package fake.endpoint
+package fake.server
 
 import fake.FakeUserProvider
 import fake.FakeUsernamePasswordVerifier
@@ -20,6 +20,7 @@ import static javax.servlet.DispatcherType.REQUEST
 abstract class TestServer extends AbstractMvcFilter {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private Undertow server
+    private int port
 
     final Controller bootstrap(ServletContext servletContext) {
         def controller = Controller.builder(servletContext)
@@ -35,10 +36,9 @@ abstract class TestServer extends AbstractMvcFilter {
 
     abstract void register(Controller controller)
 
-    final void start() {
-//        def port = Port.findFree()
-        def port = 55260
-        LOG.info("Deploying server on port $port")
+    final TestServer start() {
+        port = Port.findFree()
+        LOG.info("Deploying server on port ${port}")
         def servletBuilder = deployment()
                 .setClassLoader(this.class.classLoader)
                 .setContextPath('/')
@@ -58,6 +58,11 @@ abstract class TestServer extends AbstractMvcFilter {
                 .build()
         addShutdownHook { stop() }
         server.start()
+        return this
+    }
+
+    final URI getHost() {
+        URI.create("http://localhost:$port/")
     }
 
     final void stop() {

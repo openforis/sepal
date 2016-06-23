@@ -15,9 +15,9 @@ class ExecutorBackedBackgroundExecutor implements BackgroundExecutor, Stoppable 
             NamedThreadFactory.multipleThreadFactory('BackgroundExecutor')
     )
 
-    TaskExecution execute(Task task, TaskExecutor taskExecutor) {
+    TaskExecution execute(TaskExecutor taskExecutor) {
         def future = executor.submit {
-            taskExecutor.execute(task)
+            taskExecutor.execute()
         }
         return new FutureBackedTaskExecution(taskExecutor, future)
     }

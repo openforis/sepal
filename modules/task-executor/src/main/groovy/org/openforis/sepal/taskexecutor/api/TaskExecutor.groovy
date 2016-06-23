@@ -1,7 +1,9 @@
 package org.openforis.sepal.taskexecutor.api
 
 interface TaskExecutor {
-    void execute(Task task)
+    void execute()
 
     void cancel()
+
+    Progress progress()
 }

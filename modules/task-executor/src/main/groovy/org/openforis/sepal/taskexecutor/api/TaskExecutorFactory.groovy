@@ -1,5 +1,5 @@
 package org.openforis.sepal.taskexecutor.api
 
 interface TaskExecutorFactory {
-    TaskExecutor create()
+    TaskExecutor create(Task task)
 }

@@ -1,15 +1,13 @@
-package fake.endpoint
+package fake.server
 
 import groovy.xml.MarkupBuilder
 import groovymvc.Controller
 
-class S3Landsat extends TestServer {
+class S3LandsatServer extends TestServer {
+    private static String failFile
+
     void register(Controller controller) {
         controller.with {
-            get('/test') {
-                send "Working"
-            }
-
             get('/{sensor}/{path}/{row}/{sceneId}/index.html') {
                 def sceneId = params.required('sceneId', String)
                 def writer = new StringWriter()
@@ -31,15 +29,18 @@ class S3Landsat extends TestServer {
                         }
                     }
                 }
+                response.contentType = 'text/html'
                 send writer.toString()
             }
 
-            get('/{sensor}/{path}/{row}/{sceneId}/{file}') {
-                def sceneId = params.required('sceneId', String)
+            get('/L8/{path}/{row}/{sceneId}/{file}') {
                 def file = params.required('file', String)
+                if (file == failFile)
+                    return halt(500)
+                def sceneId = params.required('sceneId', String)
                 def fileSuffix = file.substring(sceneId.length())
                 if (!fileSuffixes.containsKey(fileSuffix))
-                    halt(404)
+                    return halt(404)
                 response.contentType = 'application/octet-stream'
                 response.outputStream.write(file.bytes)
             }
@@ -53,7 +54,12 @@ class S3Landsat extends TestServer {
         }
     }
 
-    def fileSuffixes = [
+    void fail(String file) {
+        failFile = file
+    }
+
+
+    private final fileSuffixes = [
             '_B3.TIF.ovr' : '6.8MB',
             '_BQA.TIF'    : '2.6MB',
             '_B1.TIF.ovr' : '5.7MB',
@@ -93,8 +99,9 @@ class S3Landsat extends TestServer {
             '_B8.TIF.ovr' : '27.1MB'
     ]
 //    http://landsat-pds.s3.amazonaws.com/L8/191/031/LC81910312015182LGN00/index.html
+//    http://landsat-pds.s3.amazonaws.com/L8/001/003/LC80010032014272LGN00/index.html
     public static void main(String[] args) {
-        new S3Landsat().start()
+        new S3LandsatServer().start()
     }
 
 }

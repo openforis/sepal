@@ -25,9 +25,9 @@ class BackgroundExecutingTaskManager implements TaskManager, Stoppable {
         def factory = factoryByOperation[task.operation]
         if (!factory)
             throw new InvalidTask(task, "Unsupported operation: ${task.operation}. Expects one of ${taskExecutionByTaskId.keySet()}")
-        def taskExecutor = factory.create()
+        def taskExecutor = factory.create(task)
         def previousExecution = taskExecutionByTaskId.putIfAbsent(task.id,
-                backgroundExecutor.execute(task, taskExecutor)
+                backgroundExecutor.execute(taskExecutor)
         )
         if (previousExecution)
             previousExecution.cancel()

@@ -14,10 +14,10 @@ class BackgroundExecutingTaskManager_Test extends Specification {
     def taskExecutor = Mock(TaskExecutor)
     def taskExecution = Mock(TaskExecution)
     def backgroundExecutor = Mock(BackgroundExecutor) {
-        execute(_ as Task, taskExecutor) >> taskExecution
+        execute(taskExecutor) >> taskExecution
     }
     def taskExecutorFactory = Mock(TaskExecutorFactory) {
-        create() >> taskExecutor
+        create(_ as Task) >> taskExecutor
     }
     def testId = 'some-id'
     def testOperation = 'some-operation'
@@ -45,8 +45,8 @@ class BackgroundExecutingTaskManager_Test extends Specification {
         taskManager(testOperation).execute(task)
 
         then:
-        1 * taskExecutorFactory.create() >> taskExecutor
-        1 * backgroundExecutor.execute(task, taskExecutor) >> taskExecution
+        1 * taskExecutorFactory.create(task) >> taskExecutor
+        1 * backgroundExecutor.execute(taskExecutor) >> taskExecution
     }
 
     def 'When canceling a non-existing task, no exception is thrown'() {
