@@ -4,6 +4,9 @@ import org.openforis.sepal.taskexecutor.util.BZip
 import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
 import org.openforis.sepal.taskexecutor.util.download.Download
 
+import static org.openforis.sepal.taskexecutor.landsatscene.ExecutionResult.failure
+import static org.openforis.sepal.taskexecutor.landsatscene.ExecutionResult.success
+
 class GoogleLandsatDownload {
     private final URI endpoint
     private final BackgroundDownloader downloader
@@ -17,13 +20,22 @@ class GoogleLandsatDownload {
         def uri = URI.create("$endpoint${scenePath(sceneId)}")
         def sceneFile = new File(sceneDir, "${sceneId}.tar.bz")
         def download = downloader.download(uri, new FileOutputStream(sceneFile)) { Download download ->
-            if (download.hasFailed())
-                return onCompletion.call(download)
-            BZip.decompress(sceneFile) // TODO: If this fails, everything blocks and nothing is logged
-            // TODO: Catch exception, and pass reason for failure to callback.
-            onCompletion.call(null)
+            onDownloadCompleted(sceneId, download, sceneFile, onCompletion)
         }
         return download
+    }
+
+    private void onDownloadCompleted(String sceneId, Download download, File sceneFile, Closure onCompletion) {
+        try {
+            if (download.hasFailed()) {
+                onCompletion(failure(download.message))
+                return
+            }
+            BZip.decompress(sceneFile)
+            onCompletion(success("Downloaded $sceneId"))
+        } catch (Exception e) {
+            onCompletion(failure(e.message))
+        }
     }
 
     @SuppressWarnings("GroovyAssignabilityCheck")

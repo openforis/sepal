@@ -13,7 +13,7 @@ class LandsatSceneDownload implements TaskExecutor {
     private final File workingDir
     private final S3Landsat8Download s3Landsat8Download
     private final GoogleLandsatDownload googleLandsatDownload
-    private final BlockingQueue sceneCompletionQueue
+    private final BlockingQueue<ExecutionResult> sceneResults
     private final AtomicInteger completedSceneCount = new AtomicInteger()
     private final List<String> sceneIds
     private final Map<String, List<Download>> downloadsBySceneId = new ConcurrentHashMap<>()
@@ -28,7 +28,7 @@ class LandsatSceneDownload implements TaskExecutor {
         this.s3Landsat8Download = s3Landsat8Download
         this.googleLandsatDownload = googleLandsatDownload
         sceneIds = task.params.sceneIds
-        sceneCompletionQueue = new ArrayBlockingQueue(sceneIds.size())
+        sceneResults = new ArrayBlockingQueue(sceneIds.size())
     }
 
     void execute() {
@@ -56,18 +56,18 @@ class LandsatSceneDownload implements TaskExecutor {
     private waitUntilScenesAreDownloaded() {
         def sceneCount = sceneIds.size()
         sceneCount.times {
-            def failedDownload = sceneCompletionQueue.take() // Wait until scene is completed
+            def executionResult = sceneResults.take() // Wait until scene is completed
             completedSceneCount.incrementAndGet()
-            if (failedDownload instanceof Download)
-                throw new TaskFailed(task, failedDownload.message)
+            if (executionResult.failure)
+                throw new TaskFailed(task, executionResult.message)
         }
     }
 
     private void downloadSceneInBackground(String sceneId) {
         def sceneDir = new File(workingDir, sceneId)
         sceneDir.mkdir()
-        def onCompletion = { Download failedDownload ->
-            sceneCompletionQueue.add(failedDownload ?: false)
+        def onCompletion = { ExecutionResult result ->
+            sceneResults.add(result)
         }
 
         def downloads = null

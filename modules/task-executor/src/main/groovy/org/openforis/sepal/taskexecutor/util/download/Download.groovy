@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory
 import static org.openforis.sepal.taskexecutor.util.download.Download.State.*
 
 interface Download {
+    URI getUri()
+
     void cancel()
 
     String getMessage()

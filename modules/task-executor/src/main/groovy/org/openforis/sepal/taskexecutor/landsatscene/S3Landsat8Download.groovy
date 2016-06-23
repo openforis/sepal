@@ -6,6 +6,9 @@ import org.openforis.sepal.taskexecutor.util.download.BatchDownloader
 import org.openforis.sepal.taskexecutor.util.download.Download
 import org.openforis.sepal.taskexecutor.util.download.DownloadRequest
 
+import static org.openforis.sepal.taskexecutor.landsatscene.ExecutionResult.failure
+import static org.openforis.sepal.taskexecutor.landsatscene.ExecutionResult.success
+
 class S3Landsat8Download {
     private final URI endpoint
     private final RESTClient http
@@ -23,9 +26,12 @@ class S3Landsat8Download {
         if (!downloadRequests)
             []
         def downloads = downloader.downloadBatch(sceneId, downloadRequests) { Download failedDownload ->
-            onCompletion.call(failedDownload)
+            if (failedDownload)
+                onCompletion(failure(failedDownload.message))
+            else
+                onCompletion(success("Downloaded $sceneId"))
         }
-        downloads
+        return downloads
     }
 
     void cancel() {
