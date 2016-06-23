@@ -1,11 +1,6 @@
 package org.openforis.sepal.taskexecutor.manager
 
-import org.openforis.sepal.taskexecutor.api.BackgroundExecutor
-import org.openforis.sepal.taskexecutor.api.InvalidTask
-import org.openforis.sepal.taskexecutor.api.Task
-import org.openforis.sepal.taskexecutor.api.TaskExecution
-import org.openforis.sepal.taskexecutor.api.TaskExecutorFactory
-import org.openforis.sepal.taskexecutor.api.TaskManager
+import org.openforis.sepal.taskexecutor.api.*
 import org.openforis.sepal.taskexecutor.util.Stoppable
 
 import java.util.concurrent.ConcurrentHashMap
@@ -14,10 +9,18 @@ class BackgroundExecutingTaskManager implements TaskManager, Stoppable {
     private final Map<String, TaskExecutorFactory> factoryByOperation
     private final BackgroundExecutor backgroundExecutor
     private final ConcurrentHashMap<String, TaskExecution> taskExecutionByTaskId = new ConcurrentHashMap()
+    private final TaskProgressMonitor progressMonitor
 
-    BackgroundExecutingTaskManager(Map<String, TaskExecutorFactory> factoryByOperation, BackgroundExecutor backgroundExecutor) {
+    BackgroundExecutingTaskManager(
+            Map<String, TaskExecutorFactory> factoryByOperation,
+            BackgroundExecutor backgroundExecutor,
+            TaskProgressMonitor progressMonitor) {
         this.factoryByOperation = factoryByOperation
         this.backgroundExecutor = backgroundExecutor
+        backgroundExecutor.onCompleted {
+            taskExecutionByTaskId.remove(it)
+        }
+        this.progressMonitor = progressMonitor.start(taskExecutionByTaskId.values())
     }
 
     void execute(Task task) {

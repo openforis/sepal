@@ -31,6 +31,10 @@ class LandsatSceneDownload implements TaskExecutor {
         sceneResults = new ArrayBlockingQueue(sceneIds.size())
     }
 
+    String getTaskId() {
+        return task.id
+    }
+
     void execute() {
         sceneIds.each { sceneId ->
             downloadSceneInBackground(sceneId)

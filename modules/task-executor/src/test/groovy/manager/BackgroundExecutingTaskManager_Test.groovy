@@ -1,12 +1,8 @@
 package manager
 
-import org.openforis.sepal.taskexecutor.api.BackgroundExecutor
-import org.openforis.sepal.taskexecutor.api.InvalidTask
-import org.openforis.sepal.taskexecutor.api.Task
-import org.openforis.sepal.taskexecutor.api.TaskExecution
-import org.openforis.sepal.taskexecutor.api.TaskExecutor
-import org.openforis.sepal.taskexecutor.api.TaskExecutorFactory
+import org.openforis.sepal.taskexecutor.api.*
 import org.openforis.sepal.taskexecutor.manager.BackgroundExecutingTaskManager
+import org.openforis.sepal.taskexecutor.manager.TaskProgressMonitor
 import spock.lang.Specification
 
 @SuppressWarnings("GroovyAssignabilityCheck")
@@ -16,6 +12,7 @@ class BackgroundExecutingTaskManager_Test extends Specification {
     def backgroundExecutor = Mock(BackgroundExecutor) {
         execute(taskExecutor) >> taskExecution
     }
+    def progressMonitor = Mock(TaskProgressMonitor)
     def taskExecutorFactory = Mock(TaskExecutorFactory) {
         create(_ as Task) >> taskExecutor
     }
@@ -96,7 +93,7 @@ class BackgroundExecutingTaskManager_Test extends Specification {
         def factoryByOperation = operations.collectEntries {
             [(it): taskExecutorFactory]
         }
-        new BackgroundExecutingTaskManager(factoryByOperation, backgroundExecutor)
+        new BackgroundExecutingTaskManager(factoryByOperation, backgroundExecutor, progressMonitor)
     }
 
     private Task task(String operation = testOperation) {

@@ -11,6 +11,7 @@ import org.openforis.sepal.taskexecutor.landsatscene.LandsatSceneDownload
 import org.openforis.sepal.taskexecutor.landsatscene.S3Landsat8Download
 import org.openforis.sepal.taskexecutor.manager.BackgroundExecutingTaskManager
 import org.openforis.sepal.taskexecutor.manager.ExecutorBackedBackgroundExecutor
+import org.openforis.sepal.taskexecutor.manager.SepalNotifyingTaskProgressMonitor
 import org.openforis.sepal.taskexecutor.util.Stoppable
 import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
 import org.slf4j.Logger
@@ -21,7 +22,7 @@ class Main {
     private final List<Stoppable> toStop = []
 
     Main() {
-        def config = [:]
+        def config = [:] // TODO: Read configuration from somewhere
         def userProvider = new TaskExecutorUserProvider()
         def usernamePasswordVerifier = new LdapUsernamePasswordVerifier(config.ldapHost)
         def pathRestrictions = new PathRestrictions(
@@ -29,6 +30,7 @@ class Main {
                 new BasicRequestAuthenticator('Sepal-Task-Executor', usernamePasswordVerifier)
         )
         def backgroundExecutor = stoppable new ExecutorBackedBackgroundExecutor()
+        def progressMonitor = stoppable new SepalNotifyingTaskProgressMonitor(config.sepalEndpoint)
         def backgroundDownloader = new BackgroundDownloader()
         def taskManager = stoppable new BackgroundExecutingTaskManager([
                 'landsat-scene-download': new LandsatSceneDownload.Factory(
@@ -36,7 +38,7 @@ class Main {
                         new S3Landsat8Download(config.s3Endpoint, backgroundDownloader),
                         new GoogleLandsatDownload(config.googleEndpoint, backgroundDownloader)
                 )
-        ], backgroundExecutor)
+        ], backgroundExecutor, progressMonitor)
         def endpoint = new TaskExecutorEndpoint(taskManager)
         Endpoints.deploy(config.webAppPort, pathRestrictions, endpoint)
         addShutdownHook { stop() }
