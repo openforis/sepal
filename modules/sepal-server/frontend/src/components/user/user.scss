@@ -1,0 +1,49 @@
+#user {
+  //padding: 2rem 1rem;
+  overflow: hidden;
+
+  .sessions {
+    padding: 2rem 2rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-right: 3px solid rgba(255, 255, 255, 0.1);
+
+    .row-session {
+      margin-top: .5rem;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 1rem;
+      font-size: .9rem;
+
+      .btn-remove{
+        width: 1.5rem;
+        height: 1.5rem;
+        padding: .14rem 0 0 0rem;
+        font-size: 1.3rem;
+        border: none;
+      }
+    }
+
+  }
+
+  .resources {
+    padding: 2rem 2rem;
+
+    .row-resources {
+      margin-top: 1rem;
+      padding: 1.5rem 2rem;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 1rem;
+      font-size: .9rem;
+
+      .row > div {
+        padding-top: .25rem;
+        padding-bottom: .25rem;
+      }
+    }
+  }
+
+}

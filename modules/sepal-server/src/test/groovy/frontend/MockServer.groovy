@@ -44,6 +44,52 @@ class MockServer extends AbstractMvcFilter {
 
             }
 
+            delete('/sandbox/session/{sessionId}') {
+                response.contentType = 'application/json'
+
+                response.status = 200
+
+                send toJson("[status:OK]")
+            }
+
+
+            get('/sandbox/report'){
+                response.contentType = 'application/json'
+
+                send toJson(
+                        sessions: [[
+                                           id: 'some-session',
+                                           path: 'sandbox/session/some-session',
+                                           username: authenticator.users.values().first().username,
+                                           status: 'STARTING',
+                                           host: 'some-host',
+                                           instanceType: [
+                                                   path: "sandbox/instance-type/some-instance-type",
+                                                   id: 'some-instance-type',
+                                                   name: 'Some instance type',
+                                                   description: 'Some instance type description',
+                                                   hourlyCost: 0.1
+                                           ],
+                                           creationTime: '2016-01-01T00:00:00',
+                                           costSinceCreation: 0.1 * 2 * 24 // hourly cost * two days
+                                   ]],
+                        instanceTypes: [[
+                                                path: "sandbox/instance-type/some-instance-type",
+                                                id: 'some-instance-type',
+                                                name: 'Some instance type',
+                                                description: 'Some instance type description',
+                                                hourlyCost: 0.1
+                                        ]],
+                        spending: [
+                                monthlyInstanceBudget: 1d,
+                                monthlyInstanceSpending: 2d,
+                                monthlyStorageBudget: 3d,
+                                monthlyStorageSpending: 4d,
+                                storageQuota: 5d,
+                                storageUsed: 6d
+                        ]
+                )
+            }
 
             post('/data/scenes/retrieve') {
 //  { countryIso:ITA, scenes:[ {sceneId: 'LC81900302015079LGN00', sensor: 'LC8'}, ... ] }

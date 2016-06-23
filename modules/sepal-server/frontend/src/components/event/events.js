@@ -55,6 +55,10 @@ Events = {
             , CANCEL_TASK : 'section.task-manager.cancel-task'
             , EXECUTE_TASK: 'section.task-manager.execute-task'
         }
+        
+        , USER: {
+            REMOVE_SESSION: 'section.user.remove-session'
+        }
     }
     
     , MAP: {

@@ -19,7 +19,7 @@ require( '../map/map' )
 require( '../nav-menu/nav-menu' )
 
 require( '../app-section/app-section' )
-require( '../tasks/tasks-vm' )
+require( '../tasks/tasks-mv' )
 
 // event bus
 var EventBus = require( '../event/event-bus' )
