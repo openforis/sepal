@@ -56,9 +56,11 @@ class SandboxSessionEndpoint {
 
             delete('/sandbox/session/{sessionId}') {
                 currentUser(requestContext).closeSession()
+                send toJson(status: 'OK')
             }
             delete('/sandbox/{username}/session/{sessionId}', [ADMIN]) {
                 otherUser(requestContext).closeSession()
+                send toJson(status: 'OK')
             }
         }
     }
@@ -103,11 +105,11 @@ class SandboxSessionEndpoint {
                         username: username
                 ))
                 send toJson([
-                        id: session.id,
-                        path: "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
+                        id      : session.id,
+                        path    : "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
                         username: username,
-                        status: sessionStatus(session),
-                        host: session.instance.host
+                        status  : sessionStatus(session),
+                        host    : session.instance.host
                 ])
             }
         }
@@ -120,11 +122,11 @@ class SandboxSessionEndpoint {
                         username: username
                 ))
                 send toJson([
-                        id: session.id,
-                        path: "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
+                        id      : session.id,
+                        path    : "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
                         username: username,
-                        status: sessionStatus(session),
-                        host: session.instance.host
+                        status  : sessionStatus(session),
+                        host    : session.instance.host
                 ])
             }
         }
@@ -144,43 +146,43 @@ class SandboxSessionEndpoint {
                 [(it.id): it]
             } as Map<String, InstanceType>
             [
-                    sessions: report.sessions.collect { sessionAsMap(it, instanceTypeById[it.instanceType]) },
+                    sessions     : report.sessions.collect { sessionAsMap(it, instanceTypeById[it.instanceType]) },
                     instanceTypes: report.instanceTypes.collect { instanceTypeAsMap(it) },
-                    spending: spendingAsMap(report.spending)
+                    spending     : spendingAsMap(report.spending)
             ]
         }
 
         private Map sessionAsMap(WorkerSession session, InstanceType instanceType) {
             [
-                    id: session.id,
-                    path: "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
-                    username: username,
-                    status: sessionStatus(session),
-                    host: session.instance.host,
-                    instanceType: instanceTypeAsMap(instanceType),
-                    creationTime: session.creationTime.format("yyyy-MM-dd'T'HH:mm:ss"),
+                    id               : session.id,
+                    path             : "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
+                    username         : username,
+                    status           : sessionStatus(session),
+                    host             : session.instance.host,
+                    instanceType     : instanceTypeAsMap(instanceType),
+                    creationTime     : session.creationTime.format("yyyy-MM-dd'T'HH:mm:ss"),
                     costSinceCreation: (instanceType.hourlyCost * hoursSince(session.creationTime)).round(2)
             ]
         }
 
         private Map instanceTypeAsMap(InstanceType instanceType) {
             [
-                    id: instanceType.id,
-                    path: "sandbox/${forCurrentUser ? '' : "$username/"}instance-type/$instanceType.id",
-                    name: instanceType.name,
+                    id         : instanceType.id,
+                    path       : "sandbox/${forCurrentUser ? '' : "$username/"}instance-type/$instanceType.id",
+                    name       : instanceType.name,
                     description: instanceType.description,
-                    hourlyCost: instanceType.hourlyCost
+                    hourlyCost : instanceType.hourlyCost
             ]
         }
 
         private Map spendingAsMap(Spending spending) {
             [
-                    monthlyInstanceBudget: spending.monthlyInstanceBudget,
+                    monthlyInstanceBudget  : spending.monthlyInstanceBudget,
                     monthlyInstanceSpending: spending.monthlyInstanceSpending,
-                    monthlyStorageBudget: spending.monthlyStorageBudget,
-                    monthlyStorageSpending: spending.monthlyStorageSpending,
-                    storageQuota: spending.storageQuota,
-                    storageUsed: spending.storageUsed
+                    monthlyStorageBudget   : spending.monthlyStorageBudget,
+                    monthlyStorageSpending : spending.monthlyStorageSpending,
+                    storageQuota           : spending.storageQuota,
+                    storageUsed            : spending.storageUsed
             ]
         }
 
