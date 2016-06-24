@@ -7,6 +7,7 @@ var Events     = require( '../event/events' )
 var Animation  = require( '../animation/animation' )
 var DatePicker = require( '../date-picker/date-picker' )
 var countries  = require( './countries.js' )
+var moment     = require( 'moment' )
 
 require( 'devbridge-autocomplete' )
 
@@ -15,9 +16,10 @@ var form        = null
 var formNotify  = null
 //
 var countryCode = null
-var startDate   = null
-var endDate     = null
-var targetDay   = null
+var targetDate  = null
+// var startDate   = null
+// var endDate     = null
+// var targetDay   = null
 
 var init = function ( formSelector ) {
 
@@ -41,9 +43,20 @@ var init = function ( formSelector ) {
         , tabDisabled    : true
     } )
     
-    startDate = DatePicker.newInstance( form.find( '.from' ) )
-    endDate   = DatePicker.newInstance( form.find( '.to' ) )
-    targetDay = DatePicker.newInstance( form.find( '.target-day' ), true )
+    targetDate = DatePicker.newInstance( form.find( '.target-date' ) )
+    var now    = moment( new Date() )
+    targetDate.select( 'year', now.format( 'YYYY' ) )
+    targetDate.select( 'month', now.format( 'MM' ) )
+    targetDate.select( 'day', now.format( 'DD' ) )
+
+    // endDate   = DatePicker.newInstance( form.find( '.to' ) )
+    // targetDay = DatePicker.newInstance( form.find( '.target-day' ), true )
+    
+    bindEvents()
+    
+}
+
+var bindEvents = function () {
     
     form.submit( function ( e ) {
             e.preventDefault()
@@ -53,14 +66,15 @@ var init = function ( formSelector ) {
                 formNotify.html( 'Please select a valid COUNTRY' )
                 valid = false
             }
-            else if ( startDate.getYear() <= 0 || startDate.getMonth() <= 0 || startDate.getDay() <= 0 ) {
-                formNotify.html( 'Please select a valid FROM date' )
+            else if ( !targetDate.asMoment().isValid() ) {
+                // targetDate.year <= 0 || targetDate.month <= 0 || targetDate.day <= 0 
+                formNotify.html( 'Please select a valid TARGET DATE' )
                 valid = false
             }
-            else if ( endDate.getYear() <= 0 || endDate.getMonth() <= 0 || endDate.getDay() <= 0 ) {
-                formNotify.html( 'Please select a valid TO date' )
-                valid = false
-            }
+            // else if ( endDate.getYear() <= 0 || endDate.getMonth() <= 0 || endDate.getDay() <= 0 ) {
+            //     formNotify.html( 'Please select a valid TO date' )
+            //     valid = false
+            // }
             
             // for debugging
             // TODO : REMOVE_TASK
@@ -88,14 +102,17 @@ module.exports = {
     , countryCode: function () {
         return countryCode
     }
-    , startDate  : function () {
-        return startDate
+    , targetDate : function () {
+        return targetDate
     }
-    , endDate    : function () {
-        return endDate
-    }
-    , targetDay  : function () {
-        return targetDay
-    }
+    // , startDate  : function () {
+    //     return startDate
+    // }
+    // , endDate    : function () {
+    //     return endDate
+    // }
+    // , targetDay  : function () {
+    //     return targetDay
+    // }
     , find       : find
 }

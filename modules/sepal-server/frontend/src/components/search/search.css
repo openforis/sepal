@@ -3,11 +3,11 @@
     border-bottom: 1px dotted rgba(255, 255, 255, .3);
 }
 
-#search-form .from-label,
-#search-form .to-label,
-#search-form .target-day-label {
-    cursor: pointer;
-}
+/*#search-form .from-label,*/
+/*#search-form .to-label,*/
+/*#search-form .target-day-label {*/
+    /*cursor: pointer;*/
+/*}*/
 
 #search-form .form-group-buttons {
     margin-top: 20px;

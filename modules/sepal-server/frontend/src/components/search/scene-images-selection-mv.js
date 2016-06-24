@@ -10,6 +10,8 @@ var Model      = require( './scene-images-selection-m' )
 var View       = require( './scene-images-selection-v' )
 var SearchForm = require( './search-form' )
 
+var targetDateYearOffset = 1
+
 var show = function ( e, type ) {
     if ( type == 'scene-images-selection' ) {
         View.init()
@@ -31,20 +33,20 @@ var update = function ( e, sceneAreaId, sceneImages ) {
     $.each( Model.getSceneAreaSelectedImages( Model.getSceneAreaId() ), function ( id, sceneImage ) {
         View.select( sceneImage )
     } )
-
+    
 }
 
 var selectImage = function ( e, sceneImage ) {
     Model.select( sceneImage )
     View.select( sceneImage )
-
+    
     EventBus.dispatch( Events.MODEL.SCENE_AREA.CHANGE, null, Model.getSceneAreaId() )
 }
 
 var deselectImage = function ( e, sceneImage ) {
     Model.deselect( sceneImage )
     View.deselect( sceneImage )
-
+    
     EventBus.dispatch( Events.MODEL.SCENE_AREA.CHANGE, null, Model.getSceneAreaId() )
 }
 
@@ -54,13 +56,16 @@ var loadSceneImages = function ( e, sceneAreaId ) {
     // params.targetDay //MM-dd
     // params.startDate //YYYY-MM-dd
     // params.endDate  //YYYY-MM-dd
-    var SEP  = '-'
+    var DATE_FORMAT = "YYYY-MM-DD"
+    var targetDay = SearchForm.targetDate().asMoment()
+    console.log( targetDay.format( DATE_FORMAT ) )
     var data = {
-        startDate  : SearchForm.startDate().value()
-        , endDate  : SearchForm.endDate().value()
-        , targetDay: SearchForm.targetDay().value()
+        startDate  : targetDay.clone().subtract( targetDateYearOffset / 2 , 'years' ).format( DATE_FORMAT )
+        , endDate  : targetDay.clone().add( targetDateYearOffset / 2 , 'years' ).format( DATE_FORMAT )
+        , targetDay: targetDay.format( "MM-DD" )
     }
-    
+    console.log( data )
+
     var params = {
         url         : '/api/data/sceneareas/' + sceneAreaId
         , data      : data

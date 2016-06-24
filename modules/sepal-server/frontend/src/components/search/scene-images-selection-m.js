@@ -3,22 +3,30 @@
  */
 
 //scene area selection
-var sceneAreaId     = null
-var sceneAreaImages = {}
+var sceneAreaId      = null
+var sceneAreaImages  = {}
+var sceneAreaSensors = []
 // selection
-var selectedImages  = {}
+var selectedImages   = {}
 
 var key = function ( image ) {
     return image.sceneId
 }
 
 var setSceneArea = function ( id, images ) {
-    sceneAreaId     = id
-    sceneAreaImages = {}
+    sceneAreaId      = id
+    sceneAreaImages  = {}
+    sceneAreaSensors = []
     
     $.each( images, function ( i, image ) {
         sceneAreaImages[ key( image ) ] = image
+        
+        if ( sceneAreaSensors.indexOf( image.sensor ) < 0 ) {
+            sceneAreaSensors.push( image.sensor )
+        }
+        
     } )
+    console.log( sceneAreaSensors )
 }
 
 var getSceneAreaImages = function () {
@@ -45,14 +53,16 @@ var select = function ( image ) {
 var deselect = function ( image ) {
     var k = key( image )
     delete selectedImages[ sceneAreaId ][ k ]
-    if( Object.keys( selectedImages[ sceneAreaId ] ).length <= 0 ){
+    if ( Object.keys( selectedImages[ sceneAreaId ] ).length <= 0 ) {
         delete selectedImages[ sceneAreaId ]
     }
 }
 
 var reset = function () {
-    sceneAreaImages = {}
-    selectedImages  = {}
+    sceneAreaImages  = {}
+    sceneAreaId      = null
+    sceneAreaSensors = []
+    selectedImages   = {}
 }
 
 var areasSelection = function () {

@@ -512,8 +512,23 @@ img {
 }
 
 /* width and height */
+.width10 {
+    width: 10% !important;
+}
+.width15 {
+    width: 10% !important;
+}
+.width20 {
+    width: 20% !important;
+}
 .width50 {
     width: 50% !important;
+}
+.width60 {
+    width: 60% !important;
+}
+.width70 {
+    width: 70% !important;
 }
 
 .width80 {
@@ -547,7 +562,9 @@ img {
 .height80 {
     height: 80% !important;
 }
-
+.height85 {
+    height: 85% !important;
+}
 .height90 {
     height: 90% !important;
 }

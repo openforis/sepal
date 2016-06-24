@@ -8,9 +8,9 @@ a.bg-search:active:focus,
 a.bg-search:focus,
 a.bg-search:hover {
 
-    border-color: rgba(236, 240, 231, 0.7);
+    border-color: rgba(252, 199, 123, 0.7);
 
-    background-color: rgba(236, 240, 231, .1);
+    background-color: rgba(252, 199, 123, .1);
     /*border-color: rgba(118, 129, 135, .8);*/
     /*background-color: rgba(118, 129, 135, .4);*/
     border-width: 2px;
@@ -18,12 +18,12 @@ a.bg-search:hover {
 }
 
 .bg-search {
-    background-color: rgba(236, 240, 231, .4);
+    background-color: rgba(252, 199, 123, .4);
     /*background-color: rgba(118, 129, 135, .8);*/
     color: #fff;
 }
 .bg-search-l {
-    background-color: rgba(236, 240, 231, .035);
+    background-color: rgba(252, 199, 123, .035);
     /*background-color: rgba(118, 129, 135, .8);*/
     color: #fff;
     transition: background-color 800ms ease-in;
@@ -41,21 +41,21 @@ a.bg-browse:active,
 a.bg-browse:active:focus,
 a.bg-browse:focus,
 a.bg-browse:hover {
-    border-color: rgba(184, 204, 166, 0.7);
+    border-color: rgba(126, 141, 118, 0.7);
     /*border-color: rgba(62, 69, 74, .8);*/
-    background-color: rgba(184, 204, 166, .1);
+    background-color: rgba(126, 141, 118, .1);
     /*background-color: rgba(62, 69, 74, .4);*/
     border-width: 2px;
     color: #fff;
 }
 
 .bg-browse {
-    background-color: rgba(184, 204, 166, .4);
+    background-color: rgba(126, 141, 118, .4);
     /*background-color: rgba(62, 69, 74, .8);*/
     color: #fff;
 }
 .bg-browse-l {
-    background-color: rgba(184, 204, 166, .035);
+    background-color: rgba(126, 141, 118, .035);
     /*background-color: rgba(62, 69, 74, .8);*/
     color: #fff;
     transition: background-color 800ms ease-in;
@@ -73,21 +73,21 @@ a.bg-process:active,
 a.bg-process:active:focus,
 a.bg-process:focus,
 a.bg-process:hover {
-    border-color: rgba(92, 77, 81, 0.7);
+    border-color: rgba(96, 71, 90, 0.7);
     /*border-color: rgba(120, 88, 79, .8);*/
-    background-color: rgba(92, 77, 81, .1);
+    background-color: rgba(96, 71, 90, .1);
     /*background-color: rgba(120, 88, 79, .4);*/
     border-width: 2px;
     color: #fff;
 }
 
 .bg-process {
-    background-color: rgba(92, 77, 81, 0.4);
+    background-color: rgba(96, 71, 90, 0.4);
     /*background-color: rgba(120, 88, 79, .8);*/
     color: #fff;
 }
 .bg-process-l {
-    background-color: rgba(92, 77, 81, .035);
+    background-color: rgba(96, 71, 90, .035);
     /*background-color: rgba(120, 88, 79, .8);*/
     color: #fff;
     transition: background-color 800ms ease-in;
@@ -139,20 +139,20 @@ a.bg-user:active,
 a.bg-user:active:focus,
 a.bg-user:focus,
 a.bg-user:hover {
-    border-color: rgba(142, 167, 194, 0.7);
-    background-color: rgba(142, 167, 194, .1);
+    border-color: rgba(223, 224, 206, 0.7);
+    background-color: rgba(223, 224, 206, .1);
     border-width: 2px;
     color: #fff;
 }
 
 .bg-user {
-    background-color: rgba(142, 167, 194, .4);
+    background-color: rgba(223, 224, 206, .4);
     /*background-color: rgba(176, 149, 130, .8);*/
     color: #fff;
 }
 
 .bg-user-l {
-    background-color: rgba(142, 167, 194, .035);
+    background-color: rgba(223, 224, 206, .035);
     /*background-color: rgba(176, 149, 130, .8);*/
     color: #fff;
     transition: background-color 800ms ease-in;

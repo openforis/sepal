@@ -3,6 +3,8 @@
  */
 require( './date-picker.css' )
 
+var moment = require( 'moment' )
+
 var template = require( './date-picker.html' )
 var html     = $( template( {} ) )
 
@@ -27,8 +29,8 @@ DatePicker.prototype.init = function () {
     this.html = html.clone()
     if ( this.disableYear === true ) {
         this.html.find( '.year' ).hide()
-        this.html.find( '.year-separatpr' ).hide()
-        this.html.find( '.year-label-separatpr' ).hide()
+        this.html.find( '.year-separator' ).hide()
+        this.html.find( '.year-label-separator' ).hide()
     }
     this.parentContainer.append( this.html )
     
@@ -58,29 +60,8 @@ DatePicker.prototype._bindEvents = function ( property ) {
                 //
                 // container.velocity({height: "*=0.5"}, {duration: 1000})
             } else {
-                // hide ohter
-                var opened = container.find( '.inner.opened' )
-                if ( opened.length == 0 ) {
-                    container.velocity( { height: "*=2" }, { duration: 1000 } )
-                } else {
-                    opened.find( 'a' ).css( { opacity: 0 } )
-                    opened.hide()
-                    opened.removeClass( 'opened' )
-                }
                 
-                var inner = aGroup.siblings( '.inner' )
-                inner.fadeIn( 700 )
-                inner.addClass( 'opened' )
-                
-                var delay = 60
-                $.each( inner.find( 'a' ), function ( i, a ) {
-                    delay += 60
-                    a = $( a )
-                    a.velocity( { opacity: 1 }, {
-                        duration: 500
-                        , delay : delay
-                    } )
-                } )
+                $this.expandGroup( property, aGroup )
                 
             }
             
@@ -115,26 +96,48 @@ DatePicker.prototype.show = function () {
     }
 }
 
-DatePicker.prototype.getYear = function () {
-    return this.year
+DatePicker.prototype.asMoment = function () {
+    return moment( this.year + '' + this.month + '' + this.day, "YYYYMMDD" )
 }
 
-DatePicker.prototype.getMonth = function () {
-    return this.month
-}
-
-DatePicker.prototype.getDay = function () {
-    return this.day
-}
-
-DatePicker.prototype.value = function () {
-    var val = ''
-    var SEP = '-'
-    if ( this.disableYear !== true ) {
-        val = this.year + SEP
+DatePicker.prototype.select = function ( property, value ) {
+    var container = this.html.find( '.' + property )
+    var a         = container.find( "a[value='" + value + "']" )
+    a.click()
+    
+    var parent = a.parent()
+    if ( parent.hasClass( 'inner' ) ) {
+        var aGroup = parent.parent().find( 'a.group' )
+        // console.log( aGroup.length )
+        this.expandGroup( property, aGroup )
     }
-    val = val + this.month + SEP + this.day
-    return val
+}
+
+DatePicker.prototype.expandGroup = function ( property, aGroup ) {
+    var container = this.html.find( '.' + property )
+    // hide ohter
+    var opened    = container.find( '.inner.opened' )
+    if ( opened.length == 0 ) {
+        container.velocity( { height: "*=2" }, { duration: 1000 } )
+    } else {
+        opened.find( 'a' ).css( { opacity: 0 } )
+        opened.hide()
+        opened.removeClass( 'opened' )
+    }
+    
+    var inner = aGroup.siblings( '.inner' )
+    inner.fadeIn( 700 )
+    inner.addClass( 'opened' )
+    
+    var delay = 60
+    $.each( inner.find( 'a' ), function ( i, a ) {
+        delay += 60
+        a = $( a )
+        a.velocity( { opacity: 1 }, {
+            duration: 500
+            , delay : delay
+        } )
+    } )
 }
 
 var newInstance = function ( parentContainer, disableYear ) {
