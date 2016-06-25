@@ -1,6 +1,7 @@
 package org.openforis.sepal.taskexecutor.landsatscene
 
 import org.openforis.sepal.taskexecutor.util.BZip
+import org.openforis.sepal.taskexecutor.util.FileOwner
 import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
 import org.openforis.sepal.taskexecutor.util.download.Download
 
@@ -10,16 +11,19 @@ import static org.openforis.sepal.taskexecutor.landsatscene.ExecutionResult.succ
 class GoogleLandsatDownload {
     private final URI endpoint
     private final BackgroundDownloader downloader
+    private final String username
 
-    GoogleLandsatDownload(URI endpoint, BackgroundDownloader downloader) {
+    GoogleLandsatDownload(URI endpoint, BackgroundDownloader downloader, String username) {
         this.endpoint = endpoint
         this.downloader = downloader
+        this.username = username
     }
 
     Download downloadInBackground(String sceneId, File sceneDir, Closure onCompletion) {
         def uri = URI.create("$endpoint${scenePath(sceneId)}")
         def sceneFile = new File(sceneDir, "${sceneId}.tar.bz")
-        def download = downloader.download(uri, new FileOutputStream(sceneFile)) { Download download ->
+        FileOwner.set(sceneFile, this.username)
+        def download = downloader.download(uri, sceneFile) { Download download ->
             onDownloadCompleted(sceneId, download, sceneFile, onCompletion)
         }
         return download
@@ -31,7 +35,7 @@ class GoogleLandsatDownload {
                 onCompletion(failure(download.message))
                 return
             }
-            BZip.decompress(sceneFile)
+            BZip.decompress(sceneFile, username)
             onCompletion(success("Downloaded $sceneId"))
         } catch (Exception e) {
             onCompletion(failure(e.message))

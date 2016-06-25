@@ -1,6 +1,7 @@
 package org.openforis.sepal.taskexecutor.landsatscene
 
 import org.openforis.sepal.taskexecutor.api.*
+import org.openforis.sepal.taskexecutor.util.FileOwner
 import org.openforis.sepal.taskexecutor.util.download.Download
 
 import java.util.concurrent.ArrayBlockingQueue
@@ -17,16 +18,19 @@ class LandsatSceneDownload implements TaskExecutor {
     private final AtomicInteger completedSceneCount = new AtomicInteger()
     private final List<String> sceneIds
     private final Map<String, List<Download>> downloadsBySceneId = new ConcurrentHashMap<>()
+    private final String username
 
     LandsatSceneDownload(
             Task task,
             File workingDir,
             S3Landsat8Download s3Landsat8Download,
-            GoogleLandsatDownload googleLandsatDownload) {
+            GoogleLandsatDownload googleLandsatDownload,
+            String username) {
         this.task = task
         this.workingDir = workingDir
         this.s3Landsat8Download = s3Landsat8Download
         this.googleLandsatDownload = googleLandsatDownload
+        this.username = username
         sceneIds = task.params.sceneIds
         sceneResults = new ArrayBlockingQueue(sceneIds.size())
     }
@@ -70,6 +74,7 @@ class LandsatSceneDownload implements TaskExecutor {
     private void downloadSceneInBackground(String sceneId) {
         def sceneDir = new File(workingDir, sceneId)
         sceneDir.mkdir()
+        FileOwner.set(sceneDir, username)
         def onCompletion = { ExecutionResult result ->
             sceneResults.add(result)
         }
@@ -84,22 +89,27 @@ class LandsatSceneDownload implements TaskExecutor {
 
     void cancel() {
         s3Landsat8Download.cancel()
-        googleLandsatDownload.cancel()
     }
 
     static class Factory implements TaskExecutorFactory {
         private final File workingDir
         private final S3Landsat8Download s3Landsat8Download
         private final GoogleLandsatDownload gsLandsatDownload
+        private final String username
 
-        Factory(File workingDir, S3Landsat8Download s3Landsat8Download, GoogleLandsatDownload gsLandsatDownload) {
+        Factory(
+                File workingDir,
+                S3Landsat8Download s3Landsat8Download,
+                GoogleLandsatDownload gsLandsatDownload,
+                String username) {
             this.workingDir = workingDir
             this.s3Landsat8Download = s3Landsat8Download
             this.gsLandsatDownload = gsLandsatDownload
+            this.username = username
         }
 
         TaskExecutor create(Task task) {
-            return new LandsatSceneDownload(task, workingDir, s3Landsat8Download, gsLandsatDownload)
+            return new LandsatSceneDownload(task, workingDir, s3Landsat8Download, gsLandsatDownload, username)
         }
     }
 }

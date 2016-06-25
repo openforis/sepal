@@ -10,8 +10,8 @@ class BackgroundDownloader {
      * Requeststhe provided URI and writes it to the provided output stream. When completed, callback is called
      * with Download instance.
      */
-    Download download(URI uri, OutputStream out, Closure completionCallback) {
-        def download = new ExecutableDownload(uri, out)
+    Download download(URI uri, File file, Closure completionCallback) {
+        def download = new ExecutableDownload(uri, file)
         executor.submit {
             executeDownload(download, completionCallback)
         }
@@ -30,10 +30,10 @@ class BackgroundDownloader {
 
 class DownloadRequest {
     final URI uri
-    final OutputStream out
+    final File file
 
-    DownloadRequest(URI uri, OutputStream out) {
+    DownloadRequest(URI uri, File file) {
         this.uri = uri
-        this.out = out
+        this.file = file
     }
 }

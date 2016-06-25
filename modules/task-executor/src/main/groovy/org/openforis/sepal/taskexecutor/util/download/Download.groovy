@@ -38,9 +38,9 @@ final class ExecutableDownload implements Download {
     private String message
     private long downloadedBytes
 
-    ExecutableDownload(URI uri, OutputStream out) {
+    ExecutableDownload(URI uri, File file) {
         this.uri = uri
-        this.out = out
+        this.out = new FileOutputStream(file)
     }
 
     void execute() {
@@ -120,9 +120,6 @@ final class ExecutableDownload implements Download {
         request?.abort()
     }
 
-    synchronized Download.State getState() {
-        return state
-    }
 
     private synchronized void setState(Download.State state) {
         this.state = state

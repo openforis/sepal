@@ -27,22 +27,11 @@ class BatchDownloader {
         downloadRequests.collect {
             if (canceled.get())
                 throw new DownloadCanceled()
-            def download = backgroundDownloader.download(it.uri, it.out) { Download download ->
+            def download = backgroundDownloader.download(it.uri, it.file) { Download download ->
                 batchRequest.downloadCompleted(download)
             }
             downloads[download] = true
             return download
-        }
-    }
-
-    void waitForBatches(int numberOfBatches) {
-        numberOfBatches.times {
-            def batch = completedBatches.take()
-            def failedDownload = batch.getFailedDownload()
-            if (failedDownload) {
-                cancel()
-                throw new DownloadFailed(failedDownload)
-            }
         }
     }
 

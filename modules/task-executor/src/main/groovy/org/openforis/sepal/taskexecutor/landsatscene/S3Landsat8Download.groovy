@@ -1,6 +1,7 @@
 package org.openforis.sepal.taskexecutor.landsatscene
 
 import groovyx.net.http.RESTClient
+import org.openforis.sepal.taskexecutor.util.FileOwner
 import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
 import org.openforis.sepal.taskexecutor.util.download.BatchDownloader
 import org.openforis.sepal.taskexecutor.util.download.Download
@@ -13,12 +14,14 @@ class S3Landsat8Download {
     private final URI endpoint
     private final RESTClient http
     private final BatchDownloader downloader
+    private final String username
 
-    S3Landsat8Download(URI endpoint, BackgroundDownloader downloader) {
+    S3Landsat8Download(URI endpoint, BackgroundDownloader downloader, String username) {
         this.endpoint = endpoint
         http = new RESTClient(endpoint)
         http.handler.failure = { resp -> return resp }
         this.downloader = new BatchDownloader(downloader)
+        this.username = username
     }
 
     List<Download> downloadInBackground(String sceneId, File sceneDir, Closure onCompletion) {
@@ -44,8 +47,9 @@ class S3Landsat8Download {
             return []
         response.data.BODY.UL.LI.collect {
             def uri = URI.create("$endpoint${scenePath(sceneId)}${it.A.@href.text()}")
-            def out = new FileOutputStream(new File(sceneDir, it.A.text()))
-            new DownloadRequest(uri, out)
+            def file = new File(sceneDir, it.A.text())
+            FileOwner.set(file, this.username)
+            new DownloadRequest(uri, file)
         }
     }
 

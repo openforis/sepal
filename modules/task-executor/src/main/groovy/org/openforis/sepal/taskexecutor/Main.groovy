@@ -41,8 +41,9 @@ class Main {
         def taskManager = new BackgroundExecutingTaskManager([
                 'landsat-scene-download': new LandsatSceneDownload.Factory(
                         config.workingDir,
-                        new S3Landsat8Download(config.s3Endpoint, backgroundDownloader),
-                        new GoogleLandsatDownload(config.googleEndpoint, backgroundDownloader)
+                        new S3Landsat8Download(config.s3Endpoint, backgroundDownloader, config.username),
+                        new GoogleLandsatDownload(config.googleEndpoint, backgroundDownloader, config.username),
+                        config.username
                 )
         ], backgroundExecutor)
         def endpoint = new TaskExecutorEndpoint(taskManager)
@@ -70,13 +71,6 @@ class Main {
             LOG.error('Failed to start Task-Executor', e)
             System.exit(1)
         }
-    }
-
-    static String get(String key, Map<String, String> m) {
-        def value = m[key]
-        if (!value)
-            throw new IllegalArgumentException("Configuration requires '$key'")
-        return value
     }
 
     @ImmutableData(knownImmutableClasses = [File])

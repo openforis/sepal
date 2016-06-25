@@ -29,7 +29,7 @@ class Main_Test extends Specification {
             s3Endpoint          : "http://localhost:$s3Server.port/" as String,
             googleEndpoint      : "http://localhost:$googleLandsatServer.port/" as String,
             workingDir          : workingDir.absolutePath,
-            username            : 'admin',
+            username            : System.getProperty('user.name'),
             userDownloadDir     : downloadDir.absolutePath,
             port                : port as String,
     ]
