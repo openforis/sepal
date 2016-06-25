@@ -25,7 +25,8 @@ class LandsatSceneDownload_Test extends Specification {
     def factory = new LandsatSceneDownload.Factory(
             workingDir,
             new S3Landsat8Download(s3Server.host, downloader, username),
-            new GoogleLandsatDownload(googleLandsatServer.host, downloader, username)
+            new GoogleLandsatDownload(googleLandsatServer.host, downloader, username),
+            username
     )
 
     def cleanup() {
@@ -57,7 +58,8 @@ class LandsatSceneDownload_Test extends Specification {
         def factory = new LandsatSceneDownload.Factory(
                 workingDir,
                 new S3Landsat8Download(URI.create('http://landsat-pds.s3.amazonaws.com/'), downloader, username),
-                new GoogleLandsatDownload(URI.create('http://storage.googleapis.com/'), downloader, username)
+                new GoogleLandsatDownload(URI.create('http://storage.googleapis.com/'), downloader, username),
+                username
         )
         def sceneIds = ['LE70010032000146KIS00', 'LC81910312015182LGN00']
         def task = new Task('some-id', 'landsat-scene-download', [sceneIds: sceneIds])
