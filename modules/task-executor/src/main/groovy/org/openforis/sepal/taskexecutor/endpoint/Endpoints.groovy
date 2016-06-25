@@ -28,8 +28,7 @@ final class Endpoints extends AbstractMvcFilter {
         }
 
         controller.with {
-
-            restrict('/**', [])
+            restrict('/**', ['ADMIN'])
 
             error(ParamsException) {
                 response?.status = 400

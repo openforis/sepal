@@ -1,9 +1,9 @@
 package org.openforis.sepal.taskexecutor.api
 
 interface BackgroundExecutor {
-    TaskExecution execute(TaskExecutor taskExecutor)
+    void execute(TaskExecutor taskExecutor)
 
-    void onCompleted(Closure listener)
+    void cancel(String taskId)
 
     void stop()
 }

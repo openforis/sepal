@@ -20,7 +20,7 @@ import static javax.servlet.DispatcherType.REQUEST
 abstract class TestServer extends AbstractMvcFilter {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private Undertow server
-    private int port
+    int port
 
     final Controller bootstrap(ServletContext servletContext) {
         def controller = Controller.builder(servletContext)

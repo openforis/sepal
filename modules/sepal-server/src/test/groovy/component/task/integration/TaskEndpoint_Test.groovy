@@ -114,7 +114,7 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
         1 * component.submit(new RemoveUserTasks(username: testUsername))
     }
 
-    def 'Given TASK_EXECUTOR, POST /tasks/task/{id}/progress, submits UpdateTaskProgress'() {
+    def 'Given TASK_EXECUTOR, POST /tasks/task/{id}/state-updated, submits UpdateTaskProgress'() {
         inRole(TASK_EXECUTOR)
         def taskId = 123
         def query = [
@@ -125,7 +125,7 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
 
 
         when:
-        post(path: "tasks/task/$taskId/progress", query: query)
+        post(path: "tasks/task/$taskId/state-updated", query: query)
 
         then:
         status == 204
@@ -136,7 +136,7 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
                 username: testUsername))
     }
 
-    def 'Given not TASK_EXECUTOR, POST /tasks/task/{id}/progress, return 403'() {
+    def 'Given not TASK_EXECUTOR, POST /tasks/task/{id}/state-updated, return 403'() {
         def taskId = 123
         def query = [
                 instanceType     : 'some-instance-type',
@@ -146,7 +146,7 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
 
 
         when:
-        post(path: "tasks/task/$taskId/progress", query: query)
+        post(path: "tasks/task/$taskId/state-updated", query: query)
 
         then:
         status == 403

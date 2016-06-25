@@ -9,6 +9,7 @@ import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.component.workersession.event.WorkerSessionActivated
 import org.openforis.sepal.component.workersession.query.FindPendingOrActiveSession
 import org.openforis.sepal.component.workersession.query.FindSessionById
+import org.openforis.sepal.workertype.WorkerTypes
 
 class SessionComponentAdapter implements WorkerSessionManager {
     private final Component sessionComponent
@@ -20,7 +21,7 @@ class SessionComponentAdapter implements WorkerSessionManager {
     WorkerSession requestSession(String username, String instanceType) {
         def session = sessionComponent.submit(new RequestSession(
                 username: username,
-                workerType: 'TASK_EXECUTOR',
+                workerType: WorkerTypes.TASK_EXECUTOR,
                 instanceType: instanceType))
         return toTaskSession(session)
     }

@@ -29,7 +29,7 @@ class JdbcTaskRepository implements TaskRepository {
                 INSERT INTO task(id, state, username, session_id, operation, params, status_description, creation_time, update_time, removed)
                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE)''', [
                 task.id, task.state.name(), task.username, task.sessionId, task.operation, taskParams,
-                task.statusDescription, task.creationTime, task.updateTime
+                task.statusDescription ?: task.state.description, task.creationTime, task.updateTime
         ])
     }
 

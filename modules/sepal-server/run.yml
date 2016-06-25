@@ -26,6 +26,7 @@
     volumes:
     - "/data/sepal:/data"
     env:
+      SEPAL_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
       SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
       LDAP_HOST_SEPAL_ENV: "{{ ldap_host }}"
       LDAP_ADMIN_PASSWORD_SEPAL_ENV: "{{ ldap_admin_password }}"

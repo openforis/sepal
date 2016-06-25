@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.dataprovider.retrieval.provider
 
-import groovy.transform.ToString
 import org.openforis.sepal.component.dataprovider.SceneRequest
 import org.openforis.sepal.component.dataprovider.retrieval.SceneRepository
+import org.openforis.sepal.util.annotation.Data
 
 interface Scene {
     void addFile(FileStream fileStream)
@@ -11,7 +11,7 @@ interface Scene {
 
 }
 
-@ToString
+@Data
 class DefaultScene implements Scene {
     private final SceneRequest request
     private final SceneRepository repository

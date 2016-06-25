@@ -7,12 +7,11 @@
         </encoder>
     </appender>
 
-    <logger name="org.openforis.sepal.component.sandboxmanager.DockerSandboxSessionProvider" additivity="false"
-            level="INFO">
+    <logger name="org.openforis" additivity="false" level="DEBUG">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="FILE"/>
     </root>
 </configuration>

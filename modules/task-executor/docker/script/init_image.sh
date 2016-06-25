@@ -1,5 +1,7 @@
 #!/bin/bash
 
+apt-get -y update && apt-get install -y software-properties-common
+
 # Repository for Java
 add-apt-repository -y ppa:webupd8team/java
 

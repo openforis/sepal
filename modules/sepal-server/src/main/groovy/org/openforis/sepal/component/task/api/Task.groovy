@@ -71,9 +71,9 @@ class Task {
     }
 
     enum State {
-        PENDING('Initializing'),
-        ACTIVE('Executing'),
-        COMPLETED('Completed'),
+        PENDING('Initializing...'),
+        ACTIVE('Executing...'),
+        COMPLETED('Completed!'),
         CANCELED('Canceled'),
         FAILED('Failed')
 

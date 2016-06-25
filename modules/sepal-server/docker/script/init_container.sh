@@ -13,7 +13,6 @@ mkdir -p /etc/sepal
 chown -R sepal: /etc/sepal
 chmod -R 770 /etc/sepal
 
-
 template /config/sepal.properties /etc/sepal/sepal.properties
 template /config/workerInstance.properties /etc/sepal/workerInstance.properties
 

@@ -31,6 +31,7 @@ class TaskExecutorEndpointTest extends Specification {
         Endpoints.deploy(port, pathRestrictions, registry)
         client.handler.failure = { resp -> return resp }
         client.auth.basic 'some-user', 'some-password'
+        userProvider.addRole('ADMIN')
     }
 
     void registerEndpoint(Controller controller) {

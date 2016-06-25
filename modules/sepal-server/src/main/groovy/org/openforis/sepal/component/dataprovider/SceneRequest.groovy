@@ -1,9 +1,8 @@
 package org.openforis.sepal.component.dataprovider
 
-import groovy.transform.ToString
+import org.openforis.sepal.util.annotation.Data
 
-
-@ToString
+@Data
 class SceneRequest {
     final long id
     final SceneReference sceneReference

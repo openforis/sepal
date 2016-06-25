@@ -8,7 +8,8 @@ CREATE TABLE admin_groups (
   PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_admin_groups_1 ON admin_groups (user_id);
+CREATE INDEX idx_admin_groups_1
+  ON admin_groups (user_id);
 
 CREATE TABLE config_details (
   name  VARCHAR(50) NOT NULL,
@@ -151,13 +152,20 @@ CREATE TABLE usgs_data_repo (
   PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_usgs_data_repo_1 ON usgs_data_repo (dataset_id);
-CREATE INDEX idx_usgs_data_repo_2 ON usgs_data_repo (sceneID);
-CREATE INDEX idx_usgs_data_repo_3 ON usgs_data_repo (sensor);
-CREATE INDEX idx_usgs_data_repo_4 ON usgs_data_repo (path);
-CREATE INDEX idx_usgs_data_repo_5 ON usgs_data_repo (row);
-CREATE INDEX idx_usgs_data_repo_6 ON usgs_data_repo (cloudCoverFull);
-CREATE INDEX idx_usgs_data_repo_7 ON usgs_data_repo (dataset_id, acquisitionDate);
+CREATE INDEX idx_usgs_data_repo_1
+  ON usgs_data_repo (dataset_id);
+CREATE INDEX idx_usgs_data_repo_2
+  ON usgs_data_repo (sceneID);
+CREATE INDEX idx_usgs_data_repo_3
+  ON usgs_data_repo (sensor);
+CREATE INDEX idx_usgs_data_repo_4
+  ON usgs_data_repo (path);
+CREATE INDEX idx_usgs_data_repo_5
+  ON usgs_data_repo (row);
+CREATE INDEX idx_usgs_data_repo_6
+  ON usgs_data_repo (cloudCoverFull);
+CREATE INDEX idx_usgs_data_repo_7
+  ON usgs_data_repo (dataset_id, acquisitionDate);
 
 CREATE TABLE wrs_points (
   id                  INT(11)         NOT NULL AUTO_INCREMENT,
@@ -260,7 +268,8 @@ CREATE TABLE user_monthly_storage (
   PRIMARY KEY (username, year, month)
 );
 
-CREATE INDEX idx_user_monthly_storage_1 ON user_monthly_storage (username, year, month);
+CREATE INDEX idx_user_monthly_storage_1
+  ON user_monthly_storage (username, year, month);
 
 CREATE TABLE scene_meta_data (
   id               VARCHAR(255) NOT NULL,
@@ -276,8 +285,10 @@ CREATE TABLE scene_meta_data (
   PRIMARY KEY (id, meta_data_source)
 );
 
-CREATE INDEX idx_scene_meta_data_1 ON scene_meta_data (meta_data_source, scene_area_id, acquisition_date);
-CREATE INDEX idx_scene_meta_data_2 ON scene_meta_data (meta_data_source, update_time);
+CREATE INDEX idx_scene_meta_data_1
+  ON scene_meta_data (meta_data_source, scene_area_id, acquisition_date);
+CREATE INDEX idx_scene_meta_data_2
+  ON scene_meta_data (meta_data_source, update_time);
 
 
 CREATE TABLE worker_session (
@@ -336,13 +347,15 @@ VALUES ('Planet Labs Scenes', 'PLANET_LAB_SCENES', 1);
 
 INSERT INTO groups_system (id, group_name) VALUES (46, 'admin');
 
-INSERT INTO roles (role_name, role_desc) VALUES ('application_admin', 'Application Administrator');
+INSERT INTO roles (id, role_name, role_desc) VALUES (1, 'application_admin', 'Application Administrator');
+INSERT INTO roles (id, role_name, role_desc) VALUES (2, 'task_executor', 'Task Executor');
 
 INSERT INTO users (id, username, full_name, user_uid) VALUES (1, 'admin', 'admin', 1001);
 INSERT INTO users (id, username, full_name, user_uid, is_system_user)
 VALUES (2, 'sepalAdmin', 'Administrator', 1002, 1);
-INSERT INTO users_roles (user_id, role_id, created_by) VALUES (1, 1, 1);
-INSERT INTO users_roles (user_id, role_id, created_by) VALUES (2, 1, 1);
+INSERT INTO users_roles (user_id, role_id, created_by) VALUES (2, 1, 2);
+INSERT INTO users_roles (user_id, role_id, created_by) VALUES (1, 1, 2);
+INSERT INTO users_roles (user_id, role_id, created_by) VALUES (2, 2, 2);
 INSERT INTO user_budget (username, monthly_instance, monthly_storage, storage_quota) VALUES ('admin', 10, 10, 100);
 INSERT INTO default_user_budget (monthly_instance, monthly_storage, storage_quota) VALUES (10, 10, 100);
 

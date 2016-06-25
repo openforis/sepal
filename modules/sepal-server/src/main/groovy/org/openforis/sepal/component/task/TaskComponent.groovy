@@ -24,12 +24,12 @@ import javax.sql.DataSource
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class TaskComponent extends AbstractComponent implements EndpointRegistry {
-    TaskComponent(WorkerSessionComponent workerSessionComponent, DataSource dataSource) {
+    TaskComponent(WorkerSessionComponent workerSessionComponent, WorkerGateway workerGateway, DataSource dataSource) {
         this(
                 dataSource,
                 new AsynchronousEventDispatcher(),
                 new SessionComponentAdapter(workerSessionComponent),
-                new HttpWorkerGateway(),
+                workerGateway,
                 new SystemClock()
         )
     }

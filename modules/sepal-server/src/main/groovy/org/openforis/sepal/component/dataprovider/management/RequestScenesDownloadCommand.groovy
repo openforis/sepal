@@ -1,14 +1,14 @@
 package org.openforis.sepal.component.dataprovider.management
 
-import groovy.transform.ToString
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.util.RegExpr
+import org.openforis.sepal.util.annotation.Data
 
 import static groovymvc.validate.Constraints.custom
 import static groovymvc.validate.Constraints.minLength
 
-@ToString
+@Data
 class RequestScenesDownloadCommand extends AbstractCommand<Void> {
     int dataSetId
     String processingChain

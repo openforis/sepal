@@ -9,6 +9,7 @@ import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.query.UserTasks
 
 import static groovy.json.JsonOutput.toJson
+import static org.openforis.sepal.security.Roles.ADMIN
 import static org.openforis.sepal.security.Roles.TASK_EXECUTOR
 
 class TaskEndpoint {
@@ -68,13 +69,26 @@ class TaskEndpoint {
                 response.status = 204
             }
 
-            post('/tasks/task/{id}/progress', [TASK_EXECUTOR]) {
+            post('/tasks/task/{id}/state-updated', [ADMIN, TASK_EXECUTOR]) {
                 submit(new UpdateTaskProgress(
-                        taskId: params.required('id', int),
+                        taskId: params.required('id', String),
                         state: params.required('state', Task.State),
                         statusDescription: params.required('statusDescription'),
                         username: currentUser.username
                 ))
+                response.status = 204
+            }
+
+            post('/tasks/active', [ADMIN, TASK_EXECUTOR]) {
+                def progress = new JsonSlurper().parseText(params.required('progress', String)) as Map
+                progress.each { taskId, description ->
+                    submit(new UpdateTaskProgress(
+                            taskId: taskId,
+                            state: Task.State.ACTIVE,
+                            statusDescription: description,
+                            username: currentUser.username
+                    ))
+                }
                 response.status = 204
             }
         }

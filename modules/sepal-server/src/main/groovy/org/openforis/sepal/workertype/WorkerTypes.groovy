@@ -10,12 +10,14 @@ final class WorkerTypes {
     WorkerTypes() {
         workerTypeByName[TASK_EXECUTOR] = new WorkerType(TASK_EXECUTOR,
                 [:],
-                new WorkerType.Endpoint(endpoint: 'task-executor', exposedPort: 80, publishedPort: 1234)
+                [],
+                [new WorkerType.Endpoint(endpoint: 'task-executor', exposedPort: 1026, publishedPort: 1026)]
         )
         workerTypeByName[SANDBOX] = new WorkerType(SANDBOX,
                 ['/data/sepal/shiny': '/shiny'],
-                new WorkerType.Endpoint(endpoint: 'rstudio-server', exposedPort: 8787, publishedPort: 8787),
-                new WorkerType.Endpoint(endpoint: 'shiny-server', exposedPort: 3838, publishedPort: 3838)
+                [new WorkerType.PublishedPort(exposedPort: 22, publishedPort: 222)],
+                [new WorkerType.Endpoint(endpoint: 'rstudio-server', exposedPort: 8787, publishedPort: 8787),
+                 new WorkerType.Endpoint(endpoint: 'shiny-server', exposedPort: 3838, publishedPort: 3838)]
         )
     }
 
@@ -31,7 +33,7 @@ final class WorkerType {
     private final Map<String, Integer> publishedPortByEndpoint
     private final Map<Integer, Integer> exposedPortByPublishedPort
 
-    WorkerType(String id, Map<String, String> mountedDirByHostDir, Endpoint... endpoints) {
+    WorkerType(String id, Map<String, String> mountedDirByHostDir, List<PublishedPort> publishedPorts, List<Endpoint> endpoints) {
         this.id = id
         this.imageName = "openforis/$id"
         this.mountedDirByHostDir = mountedDirByHostDir.asImmutable()
@@ -41,6 +43,11 @@ final class WorkerType {
         this.exposedPortByPublishedPort = endpoints.collectEntries {
             [(it.publishedPort): it.exposedPort]
         }
+        this.exposedPortByPublishedPort.putAll(
+                publishedPorts.collectEntries {
+                    [(it.publishedPort): it.exposedPort]
+                }
+        )
     }
 
     int publishedPortForEndpoint(String endpoint) {
@@ -62,5 +69,10 @@ final class WorkerType {
         int exposedPort
     }
 
+    @ImmutableData
+    static class PublishedPort {
+        int publishedPort
+        int exposedPort
+    }
 }
 

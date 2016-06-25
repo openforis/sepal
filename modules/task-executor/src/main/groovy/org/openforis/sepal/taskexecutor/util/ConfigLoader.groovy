@@ -1,4 +1,4 @@
-package org.openforis.sepal.component.hostingservice.internal
+package org.openforis.sepal.taskexecutor.util
 
 final class ConfigLoader {
     private final Properties config
@@ -28,6 +28,15 @@ final class ConfigLoader {
         }
     }
 
+    final URI uri(String key) {
+        def value = string(key)
+        try {
+            return URI.create(value)
+        } catch (Exception ignore) {
+            throw new InvalidConfig("Expected $key to be a URI: $value")
+        }
+    }
+
     static class MissingProperty extends RuntimeException {
         MissingProperty(String message) {
             super(message)
@@ -40,3 +49,4 @@ final class ConfigLoader {
         }
     }
 }
+

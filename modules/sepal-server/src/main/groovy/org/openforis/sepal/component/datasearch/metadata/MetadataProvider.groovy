@@ -1,10 +1,10 @@
 package org.openforis.sepal.component.datasearch.metadata
 
-import groovy.transform.ToString
 import org.openforis.sepal.component.dataprovider.DataSet
 import org.openforis.sepal.component.datasearch.metadata.crawling.MetadataCrawlingCriteria
+import org.openforis.sepal.util.annotation.Data
 
-@ToString
+@Data
 class MetadataProvider {
 
     int id

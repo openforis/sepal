@@ -2,7 +2,7 @@ package org.openforis.sepal.hostingservice
 
 import groovy.transform.ToString
 
-@ToString
+@ToString(includeSuperProperties = true, includePackage = false, includeNames = true)
 class WorkerInstance {
     String id
     String host

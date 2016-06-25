@@ -7,6 +7,7 @@ import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
 import org.openforis.sepal.component.task.TaskComponent
+import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.endpoint.Endpoints
@@ -37,7 +38,11 @@ class Main {
                 hostingServiceAdapter,
                 dataSource
         )
-        def taskComponent = start new TaskComponent(workerSessionComponent, dataSource)
+        def taskComponent = start new TaskComponent(
+                workerSessionComponent,
+                new HttpWorkerGateway(config.sepalUsername, config.sepalPassword, 1026),
+                dataSource
+        )
         start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
 
         def connectionManager = stoppable new SqlConnectionManager(dataSource)

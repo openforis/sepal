@@ -180,6 +180,13 @@ class SepalConfiguration {
         getValue('gateone.privateKey')
     }
 
+    String getSepalUsername() {
+        getValue('sepalUsername')
+    }
+
+    String getSepalPassword() {
+        getValue('sepalPassword')
+    }
 
     String getValue(String key) {
         return properties.getProperty(key)
