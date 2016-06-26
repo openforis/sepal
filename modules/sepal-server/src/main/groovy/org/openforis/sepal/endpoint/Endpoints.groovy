@@ -5,7 +5,6 @@ import groovymvc.Controller
 import groovymvc.ParamsException
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.command.ExecutionFailed
-import org.openforis.sepal.component.sandboxmanager.SessionFailed
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -32,11 +31,6 @@ final class Endpoints extends AbstractMvcFilter {
         controller.with {
 
             restrict('/**', [])
-
-            error(SessionFailed) {
-                response?.status = 400
-                response?.setContentType('application/json')
-            }
 
             error(InvalidRequest) {
                 response?.status = 400
