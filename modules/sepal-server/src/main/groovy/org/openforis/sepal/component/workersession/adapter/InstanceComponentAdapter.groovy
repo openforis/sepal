@@ -36,7 +36,7 @@ class InstanceComponentAdapter implements InstanceManager {
 
     void releaseUnusedInstances(List<WorkerSession> pendingOrActiveSessions, int minAge, TimeUnit timeUnit) {
         instanceComponent.submit(new ReleaseUnusedInstances(
-                usedInstanceIds: pendingOrActiveSessions.collect { it.id },
+                usedInstanceIds: pendingOrActiveSessions.collect { it.instance.id },
                 minAge: minAge,
                 timeUnit: timeUnit
         ))
