@@ -5,8 +5,13 @@ import java.nio.file.attribute.UserPrincipal
 
 class FileOwner {
     static void set(File file, String username) {
-        file.createNewFile()
-        UserPrincipal user = file.toPath().getFileSystem().getUserPrincipalLookupService().lookupPrincipalByName(username)
+        file.parentFile.mkdirs()
+        if (file.isDirectory())
+            file.mkdir()
+        else
+            file.createNewFile()
+        UserPrincipal user = file.toPath().getFileSystem().getUserPrincipalLookupService()
+                .lookupPrincipalByName(username)
         Files.setOwner(file.toPath(), user)
     }
 }

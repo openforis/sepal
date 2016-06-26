@@ -36,7 +36,7 @@ class BZip {
         return file
     }
 
-    private static File tar(File tarFile, String owner) {
+    private static void tar(File tarFile, String owner) {
         if (!tarFile.name.endsWith('.tar'))
             throw new IllegalArgumentException("$tarFile.name does not endsWith .tar")
         def folder = tarFile.parentFile
@@ -45,17 +45,19 @@ class BZip {
             TarArchiveEntry entry
             while (entry = tarInputStream.getNextTarEntry()) {
                 def tarEntry = new File(folder, entry.getName())
-                FileOwner.set(tarEntry, owner)
-                if (entry.directory)
+                tarEntry.parentFile.mkdirs()
+                if (entry.directory) {
                     tarEntry.mkdirs()
+                    FileOwner.set(tarEntry, owner)
+                }
                 else {
+                    FileOwner.set(tarEntry, owner)
                     FileOutputStream outputFile = new FileOutputStream(tarEntry, false)
                     IOUtils.copy(tarInputStream, outputFile)
                     outputFile.close()
                 }
             }
             tarFile.delete()
-            return folder
         } finally {
             tarInputStream.close()
         }
