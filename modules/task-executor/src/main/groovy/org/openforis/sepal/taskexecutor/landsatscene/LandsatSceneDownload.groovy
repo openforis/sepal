@@ -55,7 +55,7 @@ class LandsatSceneDownload implements TaskExecutor {
         def downloads = downloadsBySceneId.values().flatten()
         def allDownloadsCompleted = downloads.every() { it.hasCompleted() }
         if (allDownloadsCompleted)
-            return new Progress(downloadMessage + " (Preparing scenes)")
+            return new Progress(downloadMessage + " (Unpacking scenes)")
         def bytesDownloaded = downloads.sum { it.downloadedBytes } ?: 0
         def gbDownloaded = bytesDownloaded / 1024d / 1024d / 1024d // KB / MB / GB
         return new Progress(downloadMessage + " (${gbDownloaded.round(3)} GB transfered)")

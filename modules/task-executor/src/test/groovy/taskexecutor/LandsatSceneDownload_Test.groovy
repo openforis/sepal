@@ -111,7 +111,7 @@ class LandsatSceneDownload_Test extends Specification {
         def progress = executor.progress()
 
         then:
-        progress.message == 'Downloaded 0 of 1 scenes (Preparing scenes)'
+        progress.message == 'Downloaded 0 of 1 scenes (Unpacking scenes)'
     }
 
     def 'Can get status after executing task'() {
