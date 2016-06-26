@@ -1,4 +1,4 @@
-package sandboxmanager
+package fake
 
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock

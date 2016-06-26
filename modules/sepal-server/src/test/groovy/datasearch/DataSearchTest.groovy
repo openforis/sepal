@@ -20,8 +20,7 @@ class DataSearchTest extends Specification {
     def component = new DataSearchComponent(
             database.dataSource,
             sceneAreaProvider,
-            usgs,
-            new DataSearchComponent.Config(1, File.createTempDir().absolutePath)
+            usgs
     )
 
     def 'When finding scene areas for AOI, scene areas are returned'() {

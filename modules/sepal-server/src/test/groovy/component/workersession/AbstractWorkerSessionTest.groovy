@@ -2,6 +2,7 @@ package component.workersession
 
 import fake.Database
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
+import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.workersession.api.Spending
 import org.openforis.sepal.component.workersession.api.Timeout
 import org.openforis.sepal.component.workersession.api.UserSessionReport
@@ -14,12 +15,16 @@ import org.openforis.sepal.component.workersession.query.GenerateUserSessionRepo
 import org.openforis.sepal.component.workersession.query.UserWorkerSessions
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.SynchronousEventDispatcher
-import sandboxmanager.FakeClock
+import fake.FakeClock
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
 abstract class AbstractWorkerSessionTest extends Specification {
+    final testWorkerType = 'test-worker-type'
+    final testInstanceType = 'test-instance-type'
+    final testUsername = 'test-user'
+
     final database = new Database()
     final eventDispatcher = new SynchronousEventDispatcher()
     final instanceManager = new FakeInstanceManager()
@@ -30,13 +35,11 @@ abstract class AbstractWorkerSessionTest extends Specification {
             eventDispatcher,
             budgetManager,
             instanceManager,
+            [new InstanceType(testInstanceType, testInstanceType, testInstanceType, 123d, 1)],
             clock)
 
     final events = [] as List<Event>
 
-    final testWorkerType = 'test-worker-type'
-    final testInstanceType = 'test-instance-type'
-    final testUsername = 'test-user'
 
     def setup() {
         component.on(Event) { events << it }

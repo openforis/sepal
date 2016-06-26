@@ -2,7 +2,6 @@ package org.openforis.sepal
 
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.component.budget.BudgetComponent
-import org.openforis.sepal.component.dataprovider.DataProviderComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
@@ -28,7 +27,6 @@ class Main {
         def hostingServiceAdapter = HostingServiceAdapter.Factory.create(config.hostingService)
         def dataSource = config.dataSource
 
-        def dataProviderComponent = start new DataProviderComponent(config)
         def dataSearchComponent = start new DataSearchComponent(config)
         def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, dataSource)
         def budgetComponent = start new BudgetComponent(hostingServiceAdapter, dataSource)
@@ -60,7 +58,6 @@ class Main {
                 pathRestrictions,
                 authenticationEndpoint,
                 gateOneAuthEndpoint,
-                dataProviderComponent,
                 dataSearchComponent,
                 workerSessionComponent,
                 taskComponent

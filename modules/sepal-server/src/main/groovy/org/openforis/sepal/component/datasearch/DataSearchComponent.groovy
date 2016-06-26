@@ -1,6 +1,5 @@
 package org.openforis.sepal.component.datasearch
 
-import groovy.transform.Immutable
 import groovymvc.Controller
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.command.Command
@@ -19,6 +18,7 @@ import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JdbcUserRepository
+import org.openforis.sepal.util.annotation.ImmutableData
 import org.openforis.sepal.util.lifecycle.Lifecycle
 
 import javax.sql.DataSource
@@ -35,20 +35,14 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
         this(
                 config.dataSource,
                 new SceneAreaProviderHttpGateway(config.googleEarthEngineEndpoint),
-                CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
-                new Config(
-                        crawlerRunDelayHours: config.crawlerRunDelay,
-                        downloadWorkingDirectory: config.downloadWorkingDirectory
-                )
+                CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory))
         )
     }
 
     DataSearchComponent(
             DataSource dataSource,
             SceneAreaProvider sceneAreaProvider,
-            UsgsGateway usgs,
-            Config config
-    ) {
+            UsgsGateway usgs) {
         this.sceneAreaProvider = sceneAreaProvider
         connectionManager = new SqlConnectionManager(dataSource)
         this.sceneMetaDataRepository = new JdbcSceneMetaDataRepository(this.connectionManager)
@@ -83,9 +77,8 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
                 .registerWith(controller)
     }
 
-    @Immutable
+    @ImmutableData
     static class Config {
-        int crawlerRunDelayHours
         String downloadWorkingDirectory
     }
 }

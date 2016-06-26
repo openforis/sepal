@@ -5,9 +5,8 @@ import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.command.*
 import org.openforis.sepal.event.Event
-import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.SynchronousEventDispatcher
-import sandboxmanager.FakeClock
+import fake.FakeClock
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit

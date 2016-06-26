@@ -109,25 +109,25 @@ class MockServer extends AbstractMvcFilter {
                 //'ACTIVE|FAILED|COMPLETED|PENDING',
                 def tasks = [
                         [
-                                id               : 1,
+                                id               : 'a',
                                 name             : 'downloading scene LC81900302015079LGN00 from some part of hte universe',
                                 status           : 'ACTIVE',
                                 statusDescription: 'currently downloading something from somewhere'
                         ]
                         , [
-                                id               : 2,
+                                id               : 'b',
                                 name             : 'ciao2',
                                 status           : 'PENDING',
                                 statusDescription: 'currently downloading something from somewhere'
                         ]
                         , [
-                                id               : 3,
+                                id               : 'c',
                                 name             : 'ciao3',
                                 status           : 'COMPLETED',
                                 statusDescription: 'currently downloading something from somewhere'
                         ]
                         , [
-                                id               : 4,
+                                id               : 'd',
                                 name             : 'ciao4',
                                 status           : 'FAILED',
                                 statusDescription: 'currently downloading something from somewhere'

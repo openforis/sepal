@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.datasearch
 
-import groovy.transform.Immutable
+import org.openforis.sepal.util.annotation.ImmutableData
 
-@Immutable
+@ImmutableData
 class Polygon {
     List<LatLng> path
 

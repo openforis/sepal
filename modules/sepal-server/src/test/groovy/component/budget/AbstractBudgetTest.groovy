@@ -14,14 +14,14 @@ import org.openforis.sepal.component.budget.command.DetermineUserStorageUsage
 import org.openforis.sepal.component.budget.command.UpdateBudget
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
+import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.event.Event
-import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
-import sandboxmanager.FakeClock
+import fake.FakeClock
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -29,6 +29,10 @@ import java.util.concurrent.TimeUnit
 import static org.openforis.sepal.util.DateTime.parseDateString
 
 abstract class AbstractBudgetTest extends Specification {
+    final testWorkerType = 'test-worker-type'
+    final testInstanceType = 'test-instance-type'
+    final testUsername = 'test-username'
+
     final database = new Database()
     final eventDispatcher = new SynchronousEventDispatcher()
     final hostingService = new FakeHostingService()
@@ -53,13 +57,11 @@ abstract class AbstractBudgetTest extends Specification {
             eventDispatcher,
             new FakeBudgetManager(),
             new FakeInstanceManager(),
+            [new InstanceType(testInstanceType, testInstanceType, testInstanceType, 123d, 1)],
             clock)
 
     final events = [] as List<Event>
 
-    final testWorkerType = 'test-worker-type'
-    final testInstanceType = 'test-instance-type'
-    final testUsername = 'test-username'
 
 
     def setup() {

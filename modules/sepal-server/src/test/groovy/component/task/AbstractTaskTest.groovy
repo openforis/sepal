@@ -6,9 +6,8 @@ import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.Timeout
 import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.query.UserTasks
-import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.SynchronousEventDispatcher
-import sandboxmanager.FakeClock
+import fake.FakeClock
 import spock.lang.Specification
 
 abstract class AbstractTaskTest extends Specification {

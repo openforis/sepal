@@ -8,7 +8,7 @@ import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.component.workersession.endpoint.SandboxSessionEndpoint
 import org.openforis.sepal.component.workersession.query.GenerateUserSessionReport
 import org.openforis.sepal.util.DateTime
-import sandboxmanager.FakeClock
+import fake.FakeClock
 import util.AbstractComponentEndpointTest
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE

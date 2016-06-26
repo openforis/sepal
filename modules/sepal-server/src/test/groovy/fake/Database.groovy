@@ -1,9 +1,7 @@
 package fake
 
-import groovy.sql.BatchingPreparedStatementWrapper
 import groovy.sql.Sql
 import org.h2.jdbcx.JdbcDataSource
-import org.openforis.sepal.component.dataprovider.management.RequestScenesDownloadCommand
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -23,37 +21,6 @@ class Database {
     }
 
     DataSource getDataSource() { dataSource }
-
-    void addUser(String username) {
-        sql.executeInsert("INSERT INTO users(username) values($username)")
-    }
-
-    void addUser(String username, int userUid) {
-        sql.executeInsert("INSERT INTO users(username,user_uid) VALUES(?,?)", [username, userUid])
-    }
-
-    def addActiveDataSet(int dataSetId, int metadataProviderId = 1) {
-        def dataSetName = "DataSet$dataSetId" as String
-        sql.executeInsert("INSERT INTO data_set(id, dataset_name, dataset_value, dataset_active,metadata_provider) values($dataSetId, $dataSetName, $dataSetName, 1,$metadataProviderId)")
-    }
-
-    def addCrawlingCriteria(int providerId, String field, String expectedValue) {
-        sql.executeInsert("INSERT INTO metadata_crawling_criteria(metadata_provider_id,field_name,expected_value) VALUES(?,?,?)", [providerId, field, expectedValue])
-    }
-
-    def addMetadataProvider(int providerId, String providerName, String crawlingEntrypoint = '', Boolean active = true) {
-        sql.executeInsert("INSERT INTO metadata_providers(id,name,active,crawling_entrypoint) VALUES (?,?,?,?)", [providerId, providerName, active ? 1 : 0, crawlingEntrypoint])
-    }
-
-    def addDownloadRequest(RequestScenesDownloadCommand downloadRequest) {
-        def generated = sql.executeInsert('INSERT INTO download_requests(username) VALUES(?)', [downloadRequest.username])
-        def requestId = generated[0][0] as int
-        sql.withBatch('INSERT INTO requested_scenes(request_id, scene_id,dataset_id,processing_chain) VALUES(?, ?,?,?)') { BatchingPreparedStatementWrapper ps ->
-            downloadRequest.sceneIds.each {
-                ps.addBatch([requestId, it, downloadRequest.dataSetId, downloadRequest.processingChain])
-            }
-        }
-    }
 
     void reset() {
         long time = System.currentTimeMillis()

@@ -45,6 +45,10 @@ class FakeWorkerSessionManager implements WorkerSessionManager {
         sessionActivatedListeners << listener
     }
 
+    String getDefaultInstanceType() {
+        return 'some-instance-type'
+    }
+
     WorkerSession activate(String sessionId) {
         def session = sessionById[sessionId]
         sessionById[sessionId] = session.activate()
