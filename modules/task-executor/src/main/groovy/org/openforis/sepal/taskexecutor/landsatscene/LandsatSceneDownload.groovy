@@ -50,8 +50,8 @@ class LandsatSceneDownload implements TaskExecutor {
         def completedSceneCount = completedSceneCount.get()
         def sceneCount = sceneIds.size()
         if (completedSceneCount == sceneCount)
-            return new Progress("Downloaded $sceneCount scene${sceneCount > 1 ? 's' : ''}")
-        def downloadMessage = "Downloaded ${completedSceneCount} of ${sceneCount} scenes"
+            return new Progress("Completed $sceneCount scene${sceneCount > 1 ? 's' : ''}")
+        def downloadMessage = "Completed ${completedSceneCount} of ${sceneCount} scenes"
         def downloads = downloadsBySceneId.values().flatten()
         def allDownloadsCompleted = downloads.every() { it.hasCompleted() }
         if (allDownloadsCompleted)
