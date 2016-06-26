@@ -21,6 +21,7 @@ class ResubmitTask extends AbstractCommand<Task> {
 
 class ResubmitTaskHandler implements CommandHandler<Task, ResubmitTask> {
     private final TaskRepository taskRepository
+    private final WorkerSessionManager sessionManager
     private final SubmitTaskHandler submitTaskHandler
 
     ResubmitTaskHandler(
@@ -29,6 +30,7 @@ class ResubmitTaskHandler implements CommandHandler<Task, ResubmitTask> {
             WorkerGateway workerGateway,
             Clock clock) {
         this.taskRepository = taskRepository
+        this.sessionManager = sessionManager
         submitTaskHandler = new SubmitTaskHandler(taskRepository, sessionManager, workerGateway, clock)
     }
 
@@ -39,12 +41,15 @@ class ResubmitTaskHandler implements CommandHandler<Task, ResubmitTask> {
         if (![CANCELED, FAILED, COMPLETED].contains(task.state))
             throw new InvalidCommand("Only canceled, failed, and completed tasks can be resubmitted", command)
         taskRepository.remove(task)
+        def instanceType = command.instanceType ?: sessionManager.defaultInstanceType
         def resubmittedTask = submitTaskHandler.execute(new SubmitTask(
                 username: command.username,
-                instanceType: command.instanceType,
+                instanceType: instanceType,
                 operation: task.operation,
                 params: task.params
         ))
+
+        // TODO: Remove task
         return resubmittedTask
     }
 }

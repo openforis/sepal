@@ -68,7 +68,6 @@ class TaskEndpoint {
 
             post('/tasks/task/{id}/execute') {
                 submit(new ResubmitTask(
-                        instanceType: params.required('instanceType'),
                         taskId: params.required('id', String),
                         username: currentUser.username
                 ))
