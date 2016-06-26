@@ -91,17 +91,15 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
 
     def 'POST /tasks/task/{id}/execute, submits ResubmitTask'() {
         def taskId = 123
-        def instanceType = 'some-instance-type'
 
 
         when:
-        post(path: "tasks/task/$taskId/execute", query: [instanceType: instanceType])
+        post(path: "tasks/task/$taskId/execute")
 
         then:
         status == 204
         1 * component.submit(new ResubmitTask(
                 taskId: taskId,
-                instanceType: instanceType,
                 username: testUsername))
     }
 
