@@ -12,4 +12,6 @@ interface WorkerSessionManager {
     void heartbeat(String sessionId)
 
     void onSessionActivated(Closure listener)
+
+    String getDefaultInstanceType()
 }

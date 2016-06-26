@@ -45,20 +45,31 @@ class TaskEndpoint {
                 response.status = 204
             }
 
+            post('/data/scenes/retrieve') {
+                def sceneMap = fromJson(params.required('scenes', String)) as List<Map>
+                def scenes = sceneMap.collect { it.sceneId }
+                submit(new SubmitTask(
+                        operation: 'landsat-scene-download',
+                        params: [sceneIds: scenes],
+                        username: currentUser.username
+                ))
+                send toJson([status: 'OK'])
+            }
+
             post('/tasks/task/{id}/cancel') {
-                submit(new CancelTask(taskId: params.required('id', int), username: currentUser.username))
+                submit(new CancelTask(taskId: params.required('id', String), username: currentUser.username))
                 response.status = 204
             }
 
             post('/tasks/task/{id}/remove') {
-                submit(new RemoveTask(taskId: params.required('id', int), username: currentUser.username))
+                submit(new RemoveTask(taskId: params.required('id', String), username: currentUser.username))
                 response.status = 204
             }
 
             post('/tasks/task/{id}/execute') {
                 submit(new ResubmitTask(
                         instanceType: params.required('instanceType'),
-                        taskId: params.required('id', int),
+                        taskId: params.required('id', String),
                         username: currentUser.username
                 ))
                 response.status = 204

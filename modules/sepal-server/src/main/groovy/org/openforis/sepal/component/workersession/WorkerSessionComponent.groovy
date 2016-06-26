@@ -10,6 +10,7 @@ import org.openforis.sepal.component.workersession.adapter.InstanceComponentAdap
 import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository
 import org.openforis.sepal.component.workersession.api.BudgetManager
 import org.openforis.sepal.component.workersession.api.InstanceManager
+import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.workersession.command.*
 import org.openforis.sepal.component.workersession.endpoint.SandboxSessionEndpoint
 import org.openforis.sepal.component.workersession.query.*
@@ -27,6 +28,7 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 class WorkerSessionComponent extends AbstractComponent implements EndpointRegistry {
     private final Clock clock
+    private final List<InstanceType> instanceTypes
 
     WorkerSessionComponent(
             BudgetComponent budgetComponent,
@@ -38,6 +40,7 @@ class WorkerSessionComponent extends AbstractComponent implements EndpointRegist
                 new AsynchronousEventDispatcher(),
                 new BudgetComponentAdapter(budgetComponent),
                 new InstanceComponentAdapter(hostingServiceAdapter.instanceTypes, workerInstanceComponent),
+                hostingServiceAdapter.instanceTypes,
                 new SystemClock()
         )
     }
@@ -47,8 +50,10 @@ class WorkerSessionComponent extends AbstractComponent implements EndpointRegist
             HandlerRegistryEventDispatcher eventDispatcher,
             BudgetManager budgetManager,
             InstanceManager instanceManager,
+            List<InstanceType> instanceTypes,
             Clock clock) {
         super(dataSource, eventDispatcher)
+        this.instanceTypes = instanceTypes
         this.clock = clock
         def connectionManager = new SqlConnectionManager(dataSource)
         def sessionRepository = new JdbcWorkerSessionRepository(connectionManager, clock)
@@ -78,5 +83,13 @@ class WorkerSessionComponent extends AbstractComponent implements EndpointRegist
                 new CloseTimedOutSessions(),
                 new ReleaseUnusedInstances(5, MINUTES)
         )
+    }
+
+    List<InstanceType> getInstanceTypes() {
+        return instanceTypes
+    }
+
+    InstanceType getDefaultInstanceType() {
+        return instanceTypes.first()
     }
 }

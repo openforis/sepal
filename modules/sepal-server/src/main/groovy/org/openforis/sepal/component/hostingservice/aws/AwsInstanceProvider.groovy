@@ -6,7 +6,6 @@ import com.amazonaws.services.ec2.model.*
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.api.WorkerReservation
-import org.openforis.sepal.hostingservice.InvalidInstance
 import org.openforis.sepal.util.DateTime
 import org.openforis.sepal.util.JobScheduler
 import org.slf4j.Logger
@@ -204,7 +203,7 @@ final class AwsInstanceProvider implements InstanceProvider {
         )
         def response = client.describeImages(request)
         if (!response?.images)
-            throw new InvalidInstance("Unable to get image for $region having version $sepalVersion")
+            throw new UnableToGetImageId("sepalVersion: $sepalVersion, region: $region, availabilityZone: $availabilityZone")
         def image = response.images.first()
         LOG.info("Using sandbox image $image.imageId")
         return image.imageId
@@ -243,5 +242,11 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private String instanceType(Instance awsInstance) {
         InstanceType.fromValue(awsInstance.instanceType).name()
+    }
+
+    class UnableToGetImageId extends RuntimeException {
+        UnableToGetImageId(String message) {
+            super(message)
+        }
     }
 }

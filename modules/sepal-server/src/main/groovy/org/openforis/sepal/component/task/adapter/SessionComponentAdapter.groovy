@@ -1,8 +1,8 @@
 package org.openforis.sepal.component.task.adapter
 
-import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.task.api.WorkerSession
 import org.openforis.sepal.component.task.api.WorkerSessionManager
+import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.Heartbeat
 import org.openforis.sepal.component.workersession.command.RequestSession
@@ -12,9 +12,9 @@ import org.openforis.sepal.component.workersession.query.FindSessionById
 import org.openforis.sepal.workertype.WorkerTypes
 
 class SessionComponentAdapter implements WorkerSessionManager {
-    private final Component sessionComponent
+    private final WorkerSessionComponent sessionComponent
 
-    SessionComponentAdapter(Component sessionComponent) {
+    SessionComponentAdapter(WorkerSessionComponent sessionComponent) {
         this.sessionComponent = sessionComponent
     }
 
@@ -42,6 +42,10 @@ class SessionComponentAdapter implements WorkerSessionManager {
 
     void heartbeat(String sessionId) {
         sessionComponent.submit(new Heartbeat(sessionId: sessionId))
+    }
+
+    String getDefaultInstanceType() {
+        return sessionComponent.defaultInstanceType.id
     }
 
     void onSessionActivated(Closure listener) {

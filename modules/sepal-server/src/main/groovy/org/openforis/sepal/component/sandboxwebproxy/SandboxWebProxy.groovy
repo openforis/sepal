@@ -182,11 +182,11 @@ class SandboxWebProxy {
         }
 
         private Session getOrCreateHttpSession(HttpServerExchange exchange) {
-            SessionManager sessionManager = exchange.getAttachment(SessionManager.ATTACHMENT_KEY)
+            SessionManager httpSessionManager = exchange.getAttachment(SessionManager.ATTACHMENT_KEY)
             SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY)
-            def session = sessionManager.getSession(exchange, sessionConfig)
+            def session = httpSessionManager.getSession(exchange, sessionConfig)
             if (!session) {
-                session = sessionManager.createSession(exchange, sessionConfig)
+                session = httpSessionManager.createSession(exchange, sessionConfig)
                 LOG.info("Creating HTTP session. Username: ${determineUsername(exchange)}")
             }
             return session
