@@ -25,13 +25,14 @@ var getRequestData = function () {
     var data        = {}
     data.countryIso = SearchForm.countryCode()
     
-    var scenes = new Array()
+    var scenes = []
+    console.log("request data: ", SceneAreaModel)
     $.each( SceneAreaModel.areasSelection(), function ( i, k ) {
         $.each( SceneAreaModel.getSceneAreaSelectedImages( k ), function ( j, img ) {
             scenes.push( { sceneId: img.sceneId, sensor: img.sensor } )
         } )
     } )
-    data.scenes = scenes
+    data.scenes = JSON.stringify(scenes)
     
     return data
 }
