@@ -3,6 +3,7 @@ package org.openforis.sepal.taskexecutor.util.download
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
+import org.openforis.sepal.taskexecutor.util.FileOwner
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -30,21 +31,42 @@ interface Download {
 
 final class ExecutableDownload implements Download {
     private static final Logger LOG = LoggerFactory.getLogger(this)
+    public static final int MAX_TRIES = 3
     final URI uri
-    private final OutputStream out
+    private final File file
+    private final String username
 
     private HttpGet request
     private Download.State state = PENDING
     private String message
     private long downloadedBytes
+    private int tries
 
-    ExecutableDownload(URI uri, File file) {
+    ExecutableDownload(URI uri, File file, String username) {
+        this.username = username
+        this.file = file
         this.uri = uri
-        this.out = new FileOutputStream(file)
+        tries = MAX_TRIES
+    }
+
+    void setTries(int tries) {
+        this.tries = tries
     }
 
     void execute() {
+        for (int i = 0; i < tries; i++) {
+            executeOnce()
+            if (!hasFailed())
+                return
+            file.delete()
+            resetDownloadedBytes()
+            setMessage("Retry $i after failure: $message")
+        }
+    }
+
+    private void executeOnce() {
         LOG.debug("Downloading $uri")
+        FileOwner.set(file, username)
         try {
             setState(CONNECTING)
             def config = RequestConfig.custom()
@@ -80,18 +102,22 @@ final class ExecutableDownload implements Download {
     private void write(InputStream input) {
         BufferedInputStream bis = new BufferedInputStream(input);
         byte[] buf = new byte[8192];
-        long startTime = System.nanoTime()
-        int bytesRead
-        while ((bytesRead = bis.read(buf)) != -1) {
-            out.write(buf, 0, bytesRead)
-            double timeInSeconds = (System.nanoTime() - startTime) / 1000000000d
-            if (timeInSeconds > 0) {
-                incrementDownloadedBytes(bytesRead)
+        def out = new FileOutputStream(file)
+        try {
+            long startTime = System.nanoTime()
+            int bytesRead
+            while ((bytesRead = bis.read(buf)) != -1) {
+                out.write(buf, 0, bytesRead)
+                double timeInSeconds = (System.nanoTime() - startTime) / 1000000000d
+                if (timeInSeconds > 0) {
+                    incrementDownloadedBytes(bytesRead)
+                }
+                startTime = System.nanoTime()
             }
-            startTime = System.nanoTime()
+            out.flush()
+        } finally {
+            out.close()
         }
-        out.flush()
-        out.close() // TODO: Close on error too
     }
 
     synchronized String getMessage() {
@@ -110,6 +136,10 @@ final class ExecutableDownload implements Download {
         this.downloadedBytes += additionalBytes
     }
 
+    private synchronized void resetDownloadedBytes() {
+        this.downloadedBytes = 0
+    }
+
     private synchronized void setRequest(HttpGet request) {
         this.request = request
     }
@@ -119,7 +149,6 @@ final class ExecutableDownload implements Download {
         setMessage("Canceled $uri")
         request?.abort()
     }
-
 
     private synchronized void setState(Download.State state) {
         this.state = state
@@ -139,11 +168,5 @@ final class ExecutableDownload implements Download {
 
     String toString() {
         return uri
-    }
-}
-
-class DownloadFailed extends RuntimeException {
-    DownloadFailed(Download download) {
-        super(download.message)
     }
 }

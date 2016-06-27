@@ -24,8 +24,8 @@ class LandsatSceneDownload_Test extends Specification {
     def username = System.getProperty("user.name")
     def factory = new LandsatSceneDownload.Factory(
             workingDir,
-            new S3Landsat8Download(s3Server.host, downloader, username),
-            new GoogleLandsatDownload(googleLandsatServer.host, downloader, username),
+            new S3Landsat8Download(s3Server.uri, downloader, username),
+            new GoogleLandsatDownload(googleLandsatServer.uri, downloader, username),
             username
     )
 
@@ -51,7 +51,6 @@ class LandsatSceneDownload_Test extends Specification {
             assert it.text == it.name
         }
     }
-
 
     @Ignore
     def 'Test with real scenes'() {

@@ -4,6 +4,7 @@ import fake.FakeUserProvider
 import fake.FakeUsernamePasswordVerifier
 import groovymvc.AbstractMvcFilter
 import groovymvc.Controller
+import groovymvc.RequestContext
 import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
 import io.undertow.Undertow
@@ -17,8 +18,10 @@ import static io.undertow.Handlers.path
 import static io.undertow.servlet.Servlets.*
 import static javax.servlet.DispatcherType.REQUEST
 
-abstract class TestServer extends AbstractMvcFilter {
+class TestServer extends AbstractMvcFilter {
     private static final Logger LOG = LoggerFactory.getLogger(this)
+    private static Closure before
+    private static Closure get
     private Undertow server
     int port
 
@@ -30,11 +33,17 @@ abstract class TestServer extends AbstractMvcFilter {
                         new BasicRequestAuthenticator('Test', new FakeUsernamePasswordVerifier())
                 )
         ).build()
+        if (get)
+            controller.get('/**', get)
+        if (before)
+            controller.before('/**', before)
         register(controller)
         return controller
     }
 
-    abstract void register(Controller controller)
+    void register(Controller controller) {
+
+    }
 
     final TestServer start() {
         port = Port.findFree()
@@ -61,8 +70,16 @@ abstract class TestServer extends AbstractMvcFilter {
         return this
     }
 
-    final URI getHost() {
+    final URI getUri() {
         URI.create("http://localhost:$port/")
+    }
+
+    final void get(@DelegatesTo(RequestContext) Closure callback) {
+        this.get = callback
+    }
+
+    final void before(@DelegatesTo(RequestContext) Closure callback) {
+        this.before = callback
     }
 
     final void stop() {

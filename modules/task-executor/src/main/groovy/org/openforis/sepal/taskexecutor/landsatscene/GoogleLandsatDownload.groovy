@@ -22,8 +22,7 @@ class GoogleLandsatDownload {
     Download downloadInBackground(String sceneId, File sceneDir, Closure onCompletion) {
         def uri = URI.create("$endpoint${scenePath(sceneId)}")
         def sceneFile = new File(sceneDir, "${sceneId}.tar.bz")
-        FileOwner.set(sceneFile, this.username)
-        def download = downloader.download(uri, sceneFile) { Download download ->
+        def download = downloader.download(uri, sceneFile, username) { Download download ->
             onDownloadCompleted(sceneId, download, sceneFile, onCompletion)
         }
         return download

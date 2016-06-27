@@ -1,17 +1,19 @@
 package org.openforis.sepal.taskexecutor.util.download
 
+import org.openforis.sepal.taskexecutor.util.Stoppable
+
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class BackgroundDownloader {
+class BackgroundDownloader implements Stoppable {
     private final ExecutorService executor = Executors.newFixedThreadPool(20)
 
     /**
      * Requeststhe provided URI and writes it to the provided output stream. When completed, callback is called
      * with Download instance.
      */
-    Download download(URI uri, File file, Closure completionCallback) {
-        def download = new ExecutableDownload(uri, file)
+    Download download(URI uri, File file, String username, Closure completionCallback) {
+        def download = new ExecutableDownload(uri, file, username)
         executor.submit {
             executeDownload(download, completionCallback)
         }

@@ -37,7 +37,7 @@ class Main {
                 config.taskExecutorPassword
         )
         def backgroundExecutor = stoppable new ExecutorBackedBackgroundExecutor(progressMonitor)
-        def backgroundDownloader = new BackgroundDownloader()
+        def backgroundDownloader = stoppable new BackgroundDownloader()
         def taskManager = new BackgroundExecutingTaskManager([
                 'landsat-scene-download': new LandsatSceneDownload.Factory(
                         config.workingDir,

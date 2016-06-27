@@ -10,24 +10,26 @@ class BatchDownloader {
     private final BackgroundDownloader backgroundDownloader
     private final completedBatches = new LinkedBlockingQueue<BatchRequest>()
     private final Map<Download, Boolean> downloads = new ConcurrentHashMap<>()
-    private def canceled = new AtomicBoolean()
+    private final String username
+    private final canceled = new AtomicBoolean()
 
-    BatchDownloader(BackgroundDownloader backgroundDownloader) {
+    BatchDownloader(BackgroundDownloader backgroundDownloader, String username) {
         this.backgroundDownloader = backgroundDownloader
+        this.username = username
     }
 
     List<Download> downloadBatch(String batchId, Collection<DownloadRequest> downloadRequests, Closure onCompletion) {
         def batchRequest = new BatchRequest(batchId, downloadRequests.size())
-        batchRequest.onCompletion {
-            if (it) // We got passed a failed download
-                batchRequest.failed(it)
+        batchRequest.onCompletion { Download failedDownload ->
+            if (failedDownload)
+                batchRequest.failed(failedDownload)
             completedBatches.add(batchRequest)
             onCompletion.call(batchRequest.failedDownload)
         }
         downloadRequests.collect {
             if (canceled.get())
                 throw new DownloadCanceled()
-            def download = backgroundDownloader.download(it.uri, it.file) { Download download ->
+            def download = backgroundDownloader.download(it.uri, it.file, username) { Download download ->
                 batchRequest.downloadCompleted(download)
             }
             downloads[download] = true
