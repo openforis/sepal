@@ -130,6 +130,7 @@ export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/jre/lib/amd64/server:${JAVA_HOME}/jre/l
 /opt/miniconda3/bin/R CMD javareconf
 
 export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libfakeroot:/usr/local/lib:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu/mesa:/usr/lib:x86_64-linux-gnu/mir/clientplatform/mesa:/lib32:/usr/lib32:/opt/miniconda3/lib
+export PROJ_LIB=/usr/share/proj/
 
 /opt/miniconda3/bin/R -e "install.packages('dismo', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 /opt/miniconda3/bin/R -e "install.packages('DT', dependencies=TRUE, repos='http://cran.rstudio.com/')"
