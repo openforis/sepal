@@ -34,7 +34,36 @@ interface Component extends Lifecycle {
     void stop()
 }
 
-abstract class AbstractComponent implements Component {
+class ReadOnlyComponent implements Component {
+    private final HandlerRegistryQueryDispatcher queryDispatcher
+
+    ReadOnlyComponent() {
+        queryDispatcher = new HandlerRegistryQueryDispatcher()
+    }
+
+    final <R> R submit(Command<R> command) {
+        throw new UnsupportedOperationException("Component cannot submit commands")
+    }
+
+    final <R> R submit(Query<R> query) {
+        queryDispatcher.submit(query)
+    }
+
+    final <E extends Event> Component on(Class<E> eventType, EventHandler<E> handler) {
+        throw new UnsupportedOperationException("Component doesn't submit events")
+    }
+
+    final void start() {}
+
+    final void stop() {}
+
+    final <R, Q extends Query<R>> ReadOnlyComponent query(Class<Q> queryType, QueryHandler<R, Q> handler) {
+        queryDispatcher.register(queryType, handler)
+        return this
+    }
+}
+
+abstract class DataSourceBackedComponent implements Component {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final SqlConnectionManager connectionManager
     private final HandlerRegistryEventDispatcher eventDispatcher
@@ -42,7 +71,7 @@ abstract class AbstractComponent implements Component {
     private final HandlerRegistryQueryDispatcher queryDispatcher
     private final List<JobScheduler> schedulers = []
 
-    AbstractComponent(DataSource dataSource, HandlerRegistryEventDispatcher eventDispatcher) {
+    DataSourceBackedComponent(DataSource dataSource, HandlerRegistryEventDispatcher eventDispatcher) {
         connectionManager = new SqlConnectionManager(dataSource)
         this.eventDispatcher = eventDispatcher
 
@@ -58,17 +87,17 @@ abstract class AbstractComponent implements Component {
         queryDispatcher.submit(query)
     }
 
-    final <E extends Event> AbstractComponent on(Class<E> eventType, EventHandler<E> handler) {
+    final <E extends Event> DataSourceBackedComponent on(Class<E> eventType, EventHandler<E> handler) {
         eventDispatcher.register(eventType, handler)
         return this
     }
 
-    final <R, C extends Command<R>> AbstractComponent command(Class<C> commandType, CommandHandler<R, C> handler) {
+    final <R, C extends Command<R>> DataSourceBackedComponent command(Class<C> commandType, CommandHandler<R, C> handler) {
         commandDispatcher.register(commandType, handler)
         return this
     }
 
-    final <R, Q extends Query<R>> AbstractComponent query(Class<Q> queryType, QueryHandler<R, Q> handler) {
+    final <R, Q extends Query<R>> DataSourceBackedComponent query(Class<Q> queryType, QueryHandler<R, Q> handler) {
         queryDispatcher.register(queryType, handler)
         return this
     }

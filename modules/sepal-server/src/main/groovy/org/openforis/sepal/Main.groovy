@@ -3,6 +3,7 @@ package org.openforis.sepal
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
+import org.openforis.sepal.component.files.FilesComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
 import org.openforis.sepal.component.task.TaskComponent
@@ -51,6 +52,7 @@ class Main {
                 new SessionAwareAuthenticator(new NonChallengingBasicRequestAuthenticator('Sepal', usernamePasswordVerifier))
         )
 
+        def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir))
         def authenticationEndpoint = new AuthenticationEndpoint(userProvider, usernamePasswordVerifier)
         def gateOneAuthEndpoint = new GateOneAuthEndpoint(config.gateOnePublicKey, config.gateOnePrivateKey)
         Endpoints.deploy(
@@ -60,6 +62,7 @@ class Main {
                 gateOneAuthEndpoint,
                 dataSearchComponent,
                 workerSessionComponent,
+                filesComponent,
                 taskComponent
         )
         addShutdownHook { stop() }

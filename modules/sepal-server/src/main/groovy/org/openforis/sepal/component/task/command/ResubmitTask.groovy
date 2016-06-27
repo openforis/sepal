@@ -48,8 +48,6 @@ class ResubmitTaskHandler implements CommandHandler<Task, ResubmitTask> {
                 operation: task.operation,
                 params: task.params
         ))
-
-        // TODO: Remove task
         return resubmittedTask
     }
 }

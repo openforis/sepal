@@ -1,8 +1,7 @@
 package org.openforis.sepal.component.task
 
 import groovymvc.Controller
-import org.openforis.sepal.component.AbstractComponent
-import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
+import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.task.adapter.JdbcTaskRepository
 import org.openforis.sepal.component.task.adapter.SessionComponentAdapter
 import org.openforis.sepal.component.task.api.WorkerGateway
@@ -23,7 +22,7 @@ import javax.sql.DataSource
 
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class TaskComponent extends AbstractComponent implements EndpointRegistry {
+class TaskComponent extends DataSourceBackedComponent implements EndpointRegistry {
     TaskComponent(WorkerSessionComponent workerSessionComponent, WorkerGateway workerGateway, DataSource dataSource) {
         this(
                 dataSource,

@@ -18,7 +18,7 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
                 .registerWith(controller)
     }
 
-    def 'Given no tasks, GET /tasks, submits UserTasks returns empty array'() {
+    def 'Given no tasks, GET /tasks, queries UserTasks and returns empty array'() {
         when:
         get(path: 'tasks')
 
@@ -28,7 +28,7 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
         sameJson(response.data, [])
     }
 
-    def 'Given a task, GET /tasks, submits UserTasks returns empty array'() {
+    def 'Given a task, GET /tasks, queries UserTasks returns empty array'() {
         def task = task()
         when:
         def response = get(path: 'tasks')

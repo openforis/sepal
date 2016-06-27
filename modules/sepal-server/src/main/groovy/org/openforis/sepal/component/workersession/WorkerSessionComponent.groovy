@@ -1,7 +1,7 @@
 package org.openforis.sepal.component.workersession
 
 import groovymvc.Controller
-import org.openforis.sepal.component.AbstractComponent
+import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
@@ -26,7 +26,7 @@ import javax.sql.DataSource
 import static java.util.concurrent.TimeUnit.MINUTES
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class WorkerSessionComponent extends AbstractComponent implements EndpointRegistry {
+class WorkerSessionComponent extends DataSourceBackedComponent implements EndpointRegistry {
     private final Clock clock
     private final List<InstanceType> instanceTypes
 

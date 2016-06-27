@@ -1,6 +1,6 @@
 package org.openforis.sepal.component.workerinstance
 
-import org.openforis.sepal.component.AbstractComponent
+import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.component.workerinstance.adapter.DockerInstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
@@ -18,7 +18,7 @@ import javax.sql.DataSource
 import static java.util.concurrent.TimeUnit.MINUTES
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class WorkerInstanceComponent extends AbstractComponent {
+class WorkerInstanceComponent extends DataSourceBackedComponent {
     private final InstanceProvider instanceProvider
     private final List<InstanceType> instanceTypes
 

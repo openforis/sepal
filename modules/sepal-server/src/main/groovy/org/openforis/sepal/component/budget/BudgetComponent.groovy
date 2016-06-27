@@ -1,6 +1,6 @@
 package org.openforis.sepal.component.budget
 
-import org.openforis.sepal.component.AbstractComponent
+import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.budget.adapter.JdbcBudgetRepository
 import org.openforis.sepal.component.budget.api.HostingService
 import org.openforis.sepal.component.budget.command.*
@@ -21,7 +21,7 @@ import javax.sql.DataSource
 
 import static java.util.concurrent.TimeUnit.MINUTES
 
-class BudgetComponent extends AbstractComponent {
+class BudgetComponent extends DataSourceBackedComponent {
     BudgetComponent(HostingServiceAdapter hostingServiceAdapter, DataSource dataSource) {
         this(
                 dataSource,

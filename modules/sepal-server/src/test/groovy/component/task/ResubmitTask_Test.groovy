@@ -5,15 +5,16 @@ import org.openforis.sepal.command.ExecutionFailed
 import static org.openforis.sepal.component.task.api.Task.State.*
 
 class ResubmitTask_Test extends AbstractTaskTest {
-    def 'When resubmitting existing task, task is removed and a new is submitted'() {
+    def 'When resubmitting existing task, task is removed and a new task, with a different id, is submitted'() {
         def task = completedTask()
 
         when:
-        resubmitTask(task)
+        def resubmittedTask = resubmitTask(task)
 
         then:
         noTaskIs ACTIVE
         oneTaskIs PENDING
+        resubmittedTask.id != task.id
     }
 
     def 'When resubmitting existing task for another user, exception is thrown, task is not removed, and no new task is resubmitted'() {
