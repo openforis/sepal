@@ -10,6 +10,7 @@ import org.openforis.sepal.util.annotation.ImmutableData
 class UserWorkerSessions implements Query<List<WorkerSession>> {
     String username
     List<WorkerSession.State> states = []
+    String workerType
 }
 
 class UserWorkerSessionsHandler implements QueryHandler<List<WorkerSession>, UserWorkerSessions> {
@@ -20,6 +21,6 @@ class UserWorkerSessionsHandler implements QueryHandler<List<WorkerSession>, Use
     }
 
     List<WorkerSession> execute(UserWorkerSessions command) {
-        sessionRepository.userSessions(command.username, command.states)
+        sessionRepository.userSessions(command.username, command.states, command.workerType)
     }
 }

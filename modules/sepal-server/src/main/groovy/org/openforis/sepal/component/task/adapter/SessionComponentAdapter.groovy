@@ -27,7 +27,11 @@ class SessionComponentAdapter implements WorkerSessionManager {
     }
 
     WorkerSession findPendingOrActiveSession(String username, String instanceType) {
-        def session = sessionComponent.submit(new FindPendingOrActiveSession(username: username, instanceType: instanceType))
+        def session = sessionComponent.submit(new FindPendingOrActiveSession(
+                username: username,
+                workerType: WorkerTypes.TASK_EXECUTOR,
+                instanceType: instanceType
+        ))
         return toTaskSession(session)
     }
 

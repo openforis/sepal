@@ -4,9 +4,8 @@ import component.workersession.AbstractWorkerSessionTest
 import org.openforis.sepal.component.task.adapter.SessionComponentAdapter
 import org.openforis.sepal.component.task.api.WorkerSession
 
-import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
-import static org.openforis.sepal.component.workersession.api.WorkerSession.State.CLOSED
-import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
+import static org.openforis.sepal.component.workersession.api.WorkerSession.State.*
+import static org.openforis.sepal.workertype.WorkerTypes.TASK_EXECUTOR
 
 @SuppressWarnings("GrReassignedInClosureLocalVar")
 class SessionComponentAdapter_IntegrationTest extends AbstractWorkerSessionTest {
@@ -19,7 +18,7 @@ class SessionComponentAdapter_IntegrationTest extends AbstractWorkerSessionTest 
         then:
         budgetManager.budgetChecked
         def requestedInstance = instanceManager.requestedOne()
-        def workerSession = oneSessionIs PENDING
+        def workerSession = oneSessionIs(PENDING, [workerType: TASK_EXECUTOR])
         session == new WorkerSession(
                 id: workerSession.id,
                 instanceType: session.instanceType,
@@ -65,7 +64,7 @@ class SessionComponentAdapter_IntegrationTest extends AbstractWorkerSessionTest 
 
         then:
         instanceManager.releasedOne()
-        oneSessionIs CLOSED
+        oneSessionIs(CLOSED, [workerType: TASK_EXECUTOR])
     }
 
     def 'Given timed out session, when sending heartbeat, session is not considered timed out'() {

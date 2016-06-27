@@ -1,12 +1,9 @@
 package component.workersession
 
 import fake.Database
+import fake.FakeClock
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
-import org.openforis.sepal.component.workersession.api.InstanceType
-import org.openforis.sepal.component.workersession.api.Spending
-import org.openforis.sepal.component.workersession.api.Timeout
-import org.openforis.sepal.component.workersession.api.UserSessionReport
-import org.openforis.sepal.component.workersession.api.WorkerSession
+import org.openforis.sepal.component.workersession.api.*
 import org.openforis.sepal.component.workersession.api.WorkerSession.State
 import org.openforis.sepal.component.workersession.command.*
 import org.openforis.sepal.component.workersession.query.FindPendingOrActiveSession
@@ -15,7 +12,6 @@ import org.openforis.sepal.component.workersession.query.GenerateUserSessionRepo
 import org.openforis.sepal.component.workersession.query.UserWorkerSessions
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.SynchronousEventDispatcher
-import fake.FakeClock
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -107,13 +103,15 @@ abstract class AbstractWorkerSessionTest extends Specification {
     final WorkerSession findActiveOrPendingSession(Map args = [:]) {
         component.submit(new FindPendingOrActiveSession(
                 username: username(args),
+                workerType: args.workerType ?: testWorkerType,
                 instanceType: args.instanceType ?: testInstanceType))
     }
 
     final List<WorkerSession> userWorkerSessions(Map args = [:]) {
         component.submit(new UserWorkerSessions(
                 username: username(args),
-                states: args.states ?: []))
+                states: args.states ?: [],
+                workerType: args.workerType ?: testWorkerType))
     }
 
     final UserSessionReport generateUserSessionReport(Map args = [:]) {

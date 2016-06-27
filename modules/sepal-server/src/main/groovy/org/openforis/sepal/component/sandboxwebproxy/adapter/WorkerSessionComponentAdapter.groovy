@@ -43,7 +43,8 @@ class WorkerSessionComponentAdapter implements SandboxSessionManager {
     List<SandboxSession> findActiveSessions(String username) {
         def sessions = component.submit(new UserWorkerSessions(
                 username: username,
-                states: [ACTIVE]
+                states: [ACTIVE],
+                workerType: SANDBOX
         ))
         sessions.collect { toSession(it) }
     }

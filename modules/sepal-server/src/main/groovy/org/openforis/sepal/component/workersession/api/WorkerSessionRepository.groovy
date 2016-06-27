@@ -9,7 +9,9 @@ interface WorkerSessionRepository {
 
     List<WorkerSession> userSessions(String username, List<WorkerSession.State> states)
 
-    List<WorkerSession> userSessions(String username, List<WorkerSession.State> states, String instanceType)
+    List<WorkerSession> userSessions(String username, List<WorkerSession.State> states, String workerType)
+
+    List<WorkerSession> userSessions(String username, List<WorkerSession.State> states, String workerType, String instanceType)
 
     List<WorkerSession> pendingOrActiveSessions()
 

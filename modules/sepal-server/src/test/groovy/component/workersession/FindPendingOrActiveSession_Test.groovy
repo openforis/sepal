@@ -10,6 +10,15 @@ class FindPendingOrActiveSession_Test extends AbstractWorkerSessionTest {
         then:
         foundSession == session
     }
+    def 'Given pending session with another worker type, when finding session, session is not returned'() {
+        pendingSession(workerType: 'another-worker-type')
+
+        when:
+        def foundSession = findActiveOrPendingSession()
+
+        then:
+        !foundSession
+    }
 
     def 'Given active session, when finding session, session is returned'() {
         def session = activeSession()

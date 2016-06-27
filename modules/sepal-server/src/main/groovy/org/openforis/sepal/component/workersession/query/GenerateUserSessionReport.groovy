@@ -32,9 +32,7 @@ class GenerateUserSessionReportHandler implements QueryHandler<UserSessionReport
     }
 
     UserSessionReport execute(GenerateUserSessionReport query) {
-        def sessions = sessionRepository.userSessions(query.username, [PENDING, ACTIVE]).findAll {
-            it.workerType == query.workerType
-        }
+        def sessions = sessionRepository.userSessions(query.username, [PENDING, ACTIVE], query.workerType)
         return new UserSessionReport(
                 sessions: sessions,
                 instanceTypes: instanceManager.instanceTypes,

@@ -12,6 +12,7 @@ import static org.openforis.sepal.component.workersession.api.WorkerSession.Stat
 @ImmutableData
 class FindPendingOrActiveSession implements Query<WorkerSession> {
     String username
+    String workerType
     String instanceType
 }
 
@@ -23,7 +24,7 @@ class FindPendingOrActiveSessionHandler implements QueryHandler<WorkerSession, F
     }
 
     WorkerSession execute(FindPendingOrActiveSession query) {
-        def sessions = sessionRepository.userSessions(query.username, [PENDING, ACTIVE], query.instanceType)
+        def sessions = sessionRepository.userSessions(query.username, [PENDING, ACTIVE], query.workerType, query.instanceType)
         sessions.find { it.active } ?: sessions.find { it.pending }
     }
 }

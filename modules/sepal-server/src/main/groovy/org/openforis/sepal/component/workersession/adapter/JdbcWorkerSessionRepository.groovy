@@ -50,15 +50,22 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
         toSession(row)
     }
 
-    List<WorkerSession> userSessions(String username, List<WorkerSession.State> states, String instanceType = null) {
+    List<WorkerSession> userSessions(String username, List<WorkerSession.State> states, String workerType = null, String instanceType = null) {
         def query = '''
                 SELECT id, state, username, worker_type, instance_type, instance_id, host, creation_time, update_time
                 FROM worker_session
                 WHERE username = ?'''
+        def params = [username]
+        if (workerType) {
+            query += """
+                AND worker_type = ?"""
+            params.add(workerType)
+        }
+
         if (states)
             query += """
                 AND state IN (${(['?'] * states.size()).join(', ')})"""
-        def params = [username] + states.collect { it.name() }
+        params.addAll(states.collect { it.name() })
         if (instanceType) {
             query += """
                 AND instance_type = ?"""
