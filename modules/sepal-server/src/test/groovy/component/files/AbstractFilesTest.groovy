@@ -2,6 +2,7 @@ package component.files
 
 import org.openforis.sepal.component.files.FilesComponent
 import org.openforis.sepal.component.files.query.ListFiles
+import org.openforis.sepal.component.files.query.ReadFile
 import spock.lang.Specification
 
 abstract class AbstractFilesTest extends Specification {
@@ -22,6 +23,10 @@ abstract class AbstractFilesTest extends Specification {
         component.submit(new ListFiles(username: username, path: path))
     }
 
+    final String readFile(String path, String username = testUsername) {
+        component.submit(new ReadFile(username: username, path: path)).text
+    }
+
     final File createUserHome(String username) {
         new File(homeDir, username)
     }
@@ -31,5 +36,11 @@ abstract class AbstractFilesTest extends Specification {
         file.parentFile.mkdirs()
         file.write(file.name)
         return file.canonicalFile
+    }
+
+    final File addDir(String relativePath, String username = testUsername) {
+        def dir = new File(new File(homeDir, username), relativePath)
+        dir.mkdirs()
+        return dir.canonicalFile
     }
 }

@@ -3,6 +3,11 @@ package component.files.integration
 import groovymvc.Controller
 import org.openforis.sepal.component.files.endpoint.FilesEndpoint
 import org.openforis.sepal.component.files.query.ListFiles
+import org.openforis.sepal.component.files.query.ReadFile
+import org.openforis.sepal.query.Query
+import org.openforis.sepal.query.QueryFailed
+import org.openforis.sepal.query.QueryHandler
+import spock.lang.Unroll
 import util.AbstractComponentEndpointTest
 
 @SuppressWarnings("GroovyAssignabilityCheck")
@@ -33,9 +38,66 @@ class FilesEndpoint_Test extends AbstractComponentEndpointTest {
         sameJson(response.data, expectation)
     }
 
+    def 'GET /user/files, a non-existing path returns 400'() {
+        def query = new ListFiles(username: testUsername, path: '/non-existing-path')
+        failQuery(query, new ListFiles.InvalidPath('Non-existing path', query))
+
+        when:
+        get(path: 'user/files', query: [path: query.path])
+
+        then:
+        response.status == 400
+    }
+
+    def 'GET /user/files/download, returns file'() {
+        when:
+        get(path: 'user/files/download', query: [path: '/some-file'])
+
+        then:
+        1 * component.submit(new ReadFile(username: testUsername, path: '/some-file')) >> createFile('some-file')
+
+        response.data.text == 'some-file'
+        response.getFirstHeader('Content-disposition')?.value?.contains('some-file')
+    }
+
+    @Unroll
+    def 'GET /user/files/download, "#path" has content-type "#contentType"'() {
+        component.submit(new ReadFile(username: testUsername, path: path)) >> createFile(path)
+
+        when:
+        get(path: 'user/files/download', query: [path: path])
+
+        then:
+        response.contentType == contentType
+
+        where:
+        path                         | contentType
+        'foo.unrecognized/extension' | 'application/octet-stream'
+        'no-extension'               | 'application/octet-stream'
+        'foo.txt'                    | 'text/plain'
+        'foo.tif'                    | 'image/tiff'
+        '/in/directory.tif'          | 'image/tiff'
+    }
+
+    def 'GET /user/files/download, a non-existing file returns 400'() {
+        def query = new ReadFile(username: testUsername, path: '/non-existing-path')
+        failQuery(query, new ReadFile.InvalidPath('Non-existing path', query))
+
+        when:
+        get(path: 'user/files/download', query: [path: query.path])
+
+        then:
+        response.status == 400
+    }
+
+    void failQuery(Query query, Throwable cause) {
+        component.submit(query) >> { throw new QueryFailed({} as QueryHandler, query, cause) }
+    }
+
     List<File> createFiles(List<Map> expectedFiles) {
         expectedFiles.collect {
             def file = new File(workingDir, it.name)
+            file.parentFile.mkdirs()
             if (it.isDirectory)
                 file.mkdir()
             else {
@@ -44,5 +106,12 @@ class FilesEndpoint_Test extends AbstractComponentEndpointTest {
             }
             return file
         }
+    }
+
+    InputStream createFile(String path) {
+        def file = new File(workingDir.absolutePath + path)
+        file.parentFile.mkdirs()
+        file.write(path)
+        return file.newInputStream()
     }
 }

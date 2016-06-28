@@ -113,13 +113,10 @@ echo "*****************************************"
 /opt/miniconda3/bin/conda install -y -c r r-rcpp
 
 printf '%s\n' \
-    'GDAL_DATA=/opt/miniconda3/share/gdal/' \
-    'PROJ_LIB=/usr/share/proj/' \
-    >> /opt/miniconda3/lib64/R/etc/Renviron
-
-printf '%s\n' \
-    'R_LIBS_SITE="$R_LIBS_SITE:/opt/miniconda3/lib/R/library"' \
-    >> /usr/lib/R/etc/Renviron
+    "PROJ_LIB='/usr/share/proj/'" \
+    "R_LIBS_SITE='/shiny/library:/opt/miniconda3/lib/R/library:/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library'" \
+    "GDAL_DATA='/opt/miniconda3/share/gdal'" \
+    >> /opt/miniconda3/lib/R/etc/Renviron
 
 apt-get install -y \
     r-cran-rjava \
@@ -184,10 +181,11 @@ echo "******************************"
 mkdir /var/run/sshd
 
 # Setup /etc/environment
-echo "PATH=\"/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/miniconda3/envs/arcsi/bin\"" \
-    > /etc/environment
-echo "JAVA_HOME=\"/usr/lib/jvm/java-8-oracle\"" >> /etc/environment
-echo "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" >> /etc/environment
+printf '%s\n' \
+    "PATH=\"/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/miniconda3/envs/arcsi/bin\"" \
+    "JAVA_HOME=\"/usr/lib/jvm/java-8-oracle\"" \
+    "GDAL_DATA=\"/opt/miniconda3/share/gdal\"" \
+    >> /etc/environment
 
 # Remove redundant files
 rm -rf /var/lib/apt/lists/*

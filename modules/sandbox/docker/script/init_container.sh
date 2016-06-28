@@ -5,6 +5,12 @@ export sepal_host=$2
 export ldap_host=$3
 export ldap_admin_password=$4
 
+function exportEnvironment {
+    while read line; do
+      export $line
+    done </etc/environment
+}
+
 function template {
     envsubst < $1 > $2
     chmod $3 $2
@@ -22,19 +28,16 @@ ln -sf /conf/ldap.conf /etc/ldap/ldap.conf
 
 echo "$ldap_host ldap" >> /etc/hosts
 
-cp -f /config/Renviron /opt/miniconda3/lib64/R/etc/Renviron
-chmod 0644 /opt/miniconda3/lib64/R/etc/Renviron
 printf '%s\n' \
-    "R_LIBS_USER=\"/home/$sandbox_user/.R/library\"" \
-    "R_LIBS_SITE=\"/shiny/library:/opt/miniconda3/lib/R/library:/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library\"" \
-    >> /opt/miniconda3/lib64/R/etc/Renviron
+    "R_LIBS_USER=/home/$sandbox_user/.R/library" \
+    >> /etc/environment
 
 userHome=/home/$sandbox_user
 cp /etc/skel/.bashrc "$userHome"
 cp /etc/skel/.profile "$userHome"
 cp /etc/skel/.bash_logout "$userHome"
 
-source /etc/environment
+exportEnvironment
 source /home/$sandbox_user/.bashrc
 
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
