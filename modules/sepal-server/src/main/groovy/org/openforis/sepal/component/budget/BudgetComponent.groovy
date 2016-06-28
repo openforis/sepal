@@ -6,6 +6,8 @@ import org.openforis.sepal.component.budget.api.HostingService
 import org.openforis.sepal.component.budget.command.*
 import org.openforis.sepal.component.budget.internal.InstanceSpendingService
 import org.openforis.sepal.component.budget.internal.StorageUseService
+import org.openforis.sepal.component.budget.query.FindUsersExceedingBudget
+import org.openforis.sepal.component.budget.query.FindUsersExceedingBudgetHandler
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReportHandler
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
@@ -45,13 +47,16 @@ class BudgetComponent extends DataSourceBackedComponent {
         def instanceSpendingService = new InstanceSpendingService(budgetRepository, hostingService, clock)
         def storageUseService = new StorageUseService(budgetRepository, hostingService, clock)
 
-        command(CheckUserInstanceSpending, new CheckUserInstanceSpendingHandler(instanceSpendingService, budgetRepository, eventDispatcher))
-        command(CheckUserStorageUse, new CheckUserStorageUseHandler(storageUseService, budgetRepository, eventDispatcher))
+        def instanceSpendingChecker = new CheckUserInstanceSpendingHandler(instanceSpendingService, budgetRepository, eventDispatcher)
+        command(CheckUserInstanceSpending, instanceSpendingChecker)
+        def storageUseChecker = new CheckUserStorageUseHandler(storageUseService, budgetRepository, eventDispatcher)
+        command(CheckUserStorageUse, storageUseChecker)
         command(UpdateBudget, new UpdateBudgetHandler(budgetRepository))
         command(DetermineUserStorageUsage, new DetermineUserStorageUsageHandler(storageUseService, userRepository))
 
         query(GenerateUserSpendingReport,
                 new GenerateUserSpendingReportHandler(instanceSpendingService, storageUseService, budgetRepository))
+        query(FindUsersExceedingBudget, new FindUsersExceedingBudgetHandler(userRepository, instanceSpendingChecker, storageUseChecker))
     }
 
     void onStart() {
