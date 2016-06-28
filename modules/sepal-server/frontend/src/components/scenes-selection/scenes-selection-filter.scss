@@ -1,0 +1,135 @@
+#scene-images-selection .row-sort-filter {
+
+  //border: 1px solid rgba(255, 255, 255, .15);
+  border-bottom: 3px solid rgba(255, 255, 255, .15);
+  border-radius: 0rem;
+  background-color: rgba(255, 255, 255, 0.10);
+  margin-bottom: .5rem;
+  max-height: 60px;
+
+  .section-btn {
+    height: 100%;
+
+    > .row {
+
+     > div {
+        padding-top: .6rem;
+        padding-bottom: .6rem;
+        font-size: .8rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: background-color 400ms linear;
+      }
+      > div:not(:last-child) {
+        border-right: 1px solid rgba(255, 255, 255, .15);
+      }
+      > div:active ,
+      > div:active:focus,
+      > div:focus,
+      > div:hover {
+        cursor: pointer;
+        background-color: rgba(255, 255, 255, .15);
+        //border-right: 1px solid rgba(255, 255, 255, 0);
+        transition: background-color 400ms linear;
+      }
+
+      .btn {
+        border: 2px solid rgba(255, 255, 255, .3);
+        color: rgba(255, 255, 255, .8);
+        /* padding: .5rem; */
+        width: 2.5rem;
+        height: 2.5rem;
+        padding-top: .7rem;
+        background-color: transparent;
+      }
+
+    }
+
+    .selection {
+      padding-left: .8rem;
+    }
+
+  }
+
+  .section-options {
+    height: 100%;
+
+    > .row {
+
+      > div {
+        padding-top: .6rem;
+        padding-bottom: .6rem;
+        color: rgba(255,255,255,.8);
+        //font-size: .8rem;
+        //white-space: nowrap;
+        //overflow: hidden;
+        //text-overflow: ellipsis;
+        //transition: background-color 400ms linear;
+      }
+
+    }
+
+    .row-sensor {
+      .btn-sensor {
+        padding: .5rem .7rem;
+        display: inline-block;
+      }
+      .btn-sensor.active {
+        background-color: rgba(197, 179, 151, 0.3);
+        border: 2px solid rgba(197, 179, 151, 0.5);
+      }
+      .btn-sensor.active:active ,
+      .btn-sensor.active:focus,
+      .btn-sensor.activefocus,
+      .btn-sensor.active:hover {
+        background-color: rgba(197, 179, 151, 0.1);
+      }
+    }
+
+    .row-target-day {
+      .section-counter {
+        //padding-left: 25%;
+        .counter{
+          //width: 50%;
+          //border: 2px solid rgba(255,255,255,.1);
+          height: 100%;
+          max-height: 38px;
+          .text {
+            font-weight: bold;
+            border-top: 1px solid rgba(255, 255, 255, .15);
+            border-bottom: 1px solid rgba(255, 255, 255, .15);
+            //width: 60%;
+          }
+          //.btns{
+          //  width: 40%;
+            .btn {
+              border: none;
+              width: 100%;
+              height: 100%;
+              padding: 0;
+              background-color: rgba(255, 255, 255, .15);
+              //padding-top: 20%;
+              padding-top: 15%;
+              //top: -1px;
+            }
+            .btn:active ,
+            .btn:active:focus,
+            .btn:focus,
+            .btn:hover {
+              //cursor: pointer;
+              background-color: rgba(255, 255, 255, .3);
+              //transition: background-color 400ms linear;
+            }
+            //.btn:not(:last-child){
+            //  border-bottom: 2px solid rgba(255,255,255,.1);
+            //}
+          //}
+        }
+      }
+    }
+
+  }
+
+}
+

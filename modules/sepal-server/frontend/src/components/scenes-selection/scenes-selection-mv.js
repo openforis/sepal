@@ -6,9 +6,9 @@ var EventBus   = require( '../event/event-bus' )
 var Events     = require( '../event/events' )
 var Loader     = require( '../loader/loader' )
 //
-var Model      = require( './scene-images-selection-m' )
-var View       = require( './scene-images-selection-v' )
-var SearchForm = require( './search-form' )
+var Model      = require( './scenes-selection-m' )
+var View       = require( './scenes-selection-v' )
+var SearchForm = require( './../search/search-form' )
 
 var targetDateYearOffset = 1
 

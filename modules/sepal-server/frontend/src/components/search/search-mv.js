@@ -9,7 +9,7 @@ var Loader   = require( '../loader/loader' )
 
 var View = require( './search-v' )
 
-require( './scene-images-selection-mv' )
+require( './../scenes-selection/scenes-selection-mv' )
 require( '../search-retrieve/search-retrieve-mv' )
 
 var show = function ( e, type ) {

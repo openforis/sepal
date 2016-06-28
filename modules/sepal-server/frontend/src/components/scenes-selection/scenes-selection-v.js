@@ -1,16 +1,14 @@
 /**
  * @author Mino Togna
  */
-require( './scene-images-selection.css' )
-
-var noUiSlider = require( 'nouislider' )
-require('./nouislider.css')
+require( './scenes-selection.css' )
+var FilterView = require( '../scenes-selection/scenes-selection-filter-v' )
 
 var EventBus  = require( '../event/event-bus' )
 var Events    = require( '../event/events' )
 var Animation = require( '../animation/animation' )
 
-var template = require( './scene-images-selection.html' )
+var template = require( './scenes-selection.html' )
 var html     = $( template( {} ) )
 
 var section                       = null
@@ -38,25 +36,14 @@ var init = function () {
         imagesSelectionSection        = selectionSection.find( '.images-section' )
         imageSelectionSection         = appSection.find( '.image-section' )
         expandedImageSelectionSection = appSection.find( '.expanded-image-section' )
-
-        var sortSlider = selectionSection.find( '.sort-slider' ).get(0)
-        // noUiSlider.create( sortSlider, {
-        //     start: [ 0.5 ],
-        //     step : 0.05,
-        //     range: {
-        //         'min': [ 0 ],
-        //         'max': [ 1 ]
-        //     }
-        // } )
-        // sortSlider.noUiSlider.on('change', function(){
-        //     console.log( sortSlider.noUiSlider.get() )
-        // })
         //
-        selectedSection             = section.find( '.selected-section' )
-        selectedSectionHeader       = selectedSection.find( '.section-header' )
-        selectedSectionTableHeader  = selectedSection.find( '.table-header' )
-        selectedSectionTableContent = selectedSection.find( '.table-content' )
-        selectedSectionTableRow     = selectedSection.find( '.table-row' )
+        selectedSection               = section.find( '.selected-section' )
+        selectedSectionHeader         = selectedSection.find( '.section-header' )
+        selectedSectionTableHeader    = selectedSection.find( '.table-header' )
+        selectedSectionTableContent   = selectedSection.find( '.table-content' )
+        selectedSectionTableRow       = selectedSection.find( '.table-row' )
+        
+        FilterView.init( selectionSection )
     }
     
 }
@@ -65,7 +52,7 @@ var reset = function () {
     imagesSelectionSection.empty()
     selectedSectionTableContent.empty()
     selectedSectionTableHeader.hide()
-
+    
     imagesSelectionSection.velocity( 'scroll', { duration: 0 } )
 }
 
@@ -133,7 +120,7 @@ var getImageSectionForSelection = function ( sceneImage ) {
             .append( '<span class="fa-stack"><i class="fa fa-sun-o fa-stack-2x" aria-hidden="true"></i><i class="fa fa-ellipsis-h fa-stack-1x" aria-hidden="true"></i></span> ' + sceneImage.sunAzimuth.toFixed( 2 ) )
         expandedImageSelectionSection.find( '.sun-elevation' ).empty()
             .append( '<span class="fa-stack"><i class="fa fa-sun-o fa-stack-2x" aria-hidden="true"></i><i class="fa fa-ellipsis-v fa-stack-1x" aria-hidden="true"></i></span> ' + sceneImage.sunElevation.toFixed( 2 ) )
-
+        
         // acquisitionDate: '2015-03-20', cloudCover: 0.08, sunAzimuth: 150.48942477, sunElevation: 42.80026465 , daysFromTargetDay : 5
         // expandedImageSelectionSection.velocity( "stop" ).velocity( 'fadeIn', {
         //     delay   : 20,
@@ -176,7 +163,7 @@ var addToSelectedSection = function ( sceneImage ) {
         , duration: 600
         , delay   : 100
     } )
-
+    
     updateSelectedSectionHeader()
 }
 
@@ -191,7 +178,7 @@ var removeFromSelectedSection = function ( sceneImage ) {
         imgSection.remove()
         updateSelectedSectionHeader()
     } )
-
+    
 }
 
 var updateSelectedSectionHeader = function () {
