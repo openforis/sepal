@@ -3,6 +3,8 @@ package org.openforis.sepal.component.files.endpoint
 import groovymvc.Controller
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.files.query.ListFiles
+import org.openforis.sepal.component.files.query.ReadFile
+import org.openforis.sepal.query.QueryFailed
 
 import static groovy.json.JsonOutput.toJson
 
@@ -15,6 +17,19 @@ class FilesEndpoint {
 
     void registerWith(Controller controller) {
         controller.with {
+
+            error(QueryFailed, ListFiles.InvalidPath) {
+                response?.status = 400
+                response?.setContentType('application/json')
+                send(toJson([message: it.message]))
+            }
+
+            error(QueryFailed, ReadFile.InvalidPath) {
+                response?.status = 400
+                response?.setContentType('application/json')
+                send(toJson([message: it.message]))
+            }
+
             get('/user/files') {
                 response.contentType = 'application/json'
                 def path = params.required('path', String)
@@ -28,6 +43,20 @@ class FilesEndpoint {
                     return map
                 }
                 send toJson(result)
+            }
+
+            get('/user/files/download') {
+                def path = params.required('path', String)
+                def fileStream = component.submit(
+                        new ReadFile(username: currentUser.username, path: path)
+                )
+                def filename = new File(path).name
+                def mimeType = request.servletContext.getMimeType(filename) ?: 'application/octet-stream'
+                response.setHeader "Content-disposition", "attachment; filename=${filename}"
+                response.contentType = mimeType
+                response.outputStream.leftShift(fileStream)
+                response.outputStream << fileStream
+                response.outputStream.flush()
             }
         }
     }
