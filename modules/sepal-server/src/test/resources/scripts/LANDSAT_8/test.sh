@@ -1,1 +1,0 @@
-touch file_create_by_script.txt
