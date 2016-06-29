@@ -86,7 +86,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
                 new CloseTimedOutSessions(),
                 new ReleaseUnusedInstances(5, MINUTES)
         )
-        schedule(1, MINUTES,
+        schedule(10, MINUTES,
                 new CloseSessionsForUsersExceedingBudget()
         )
     }
