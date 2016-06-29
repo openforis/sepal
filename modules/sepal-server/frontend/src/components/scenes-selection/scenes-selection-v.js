@@ -7,6 +7,7 @@ var FilterView = require( '../scenes-selection/scenes-selection-filter-v' )
 var EventBus  = require( '../event/event-bus' )
 var Events    = require( '../event/events' )
 var Animation = require( '../animation/animation' )
+var Sensors   = require( '../sensors/sensors' )
 
 var template = require( './scenes-selection.html' )
 var html     = $( template( {} ) )
@@ -57,11 +58,16 @@ var reset = function () {
 }
 
 // Functions for selection section
-var add = function ( sceneImage ) {
+var add = function ( sceneImage , filterHidden ) {
     var imgSection = getImageSectionForSelection( sceneImage )
     
     imagesSelectionSection.append( imgSection )
-    imgSection.show( 0 )
+    if( filterHidden ){
+        imgSection.addClass( 'filter-hidden' )
+        imgSection.hide(0)
+    } else {
+        imgSection.show( 0 )
+    }
 }
 
 var hideFromSelection = function ( sceneImage ) {
@@ -114,7 +120,7 @@ var getImageSectionForSelection = function ( sceneImage ) {
             Animation.animateOut( expandedImageSelectionSection )
         } )
         expandedImageSelectionSection.find( '.cloud-cover' ).empty().append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + sceneImage.cloudCover )
-        expandedImageSelectionSection.find( '.sensor' ).empty().append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + sceneImage.sensor )
+        expandedImageSelectionSection.find( '.sensor' ).empty().append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + Sensors[ sceneImage.sensor ].name )
         expandedImageSelectionSection.find( '.acquisition-date' ).empty().append( '<i class="fa fa-calendar" aria-hidden="true"></i> ' + sceneImage.acquisitionDate )
         expandedImageSelectionSection.find( '.target-day' ).empty().append( '<i class="fa fa-calendar-minus-o" aria-hidden="true"></i> ' + sceneImage.daysFromTargetDay )
         expandedImageSelectionSection.find( '.sun-azimuth' ).empty()
@@ -132,7 +138,7 @@ var getImageSectionForSelection = function ( sceneImage ) {
     
     //TODO : add daysFromTargetDay
     imgSection.find( '.cloud-cover' ).append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + sceneImage.cloudCover )
-    imgSection.find( '.sensor' ).append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + sceneImage.sensor )
+    imgSection.find( '.sensor' ).append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + Sensors[ sceneImage.sensor ].shortName )
     
     imgSection.find( '.btn-add' ).click( function () {
         EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SELECT, null, sceneImage )
@@ -150,7 +156,7 @@ var addToSelectedSection = function ( sceneImage ) {
     img.attr( 'src', sceneImage.browseUrl )
     
     imgSection.find( '.cloud-cover' ).append( sceneImage.cloudCover )
-    imgSection.find( '.sensor' ).append( sceneImage.sensor )
+    imgSection.find( '.sensor' ).append( Sensors[ sceneImage.sensor ].shortName )
     imgSection.find( '.btn-remove' ).click( function ( e ) {
         e.preventDefault()
         EventBus.dispatch( Events.SECTION.SCENES_SELECTION.DESELECT, null, sceneImage )
@@ -206,13 +212,14 @@ var hideScenesBySensor = function ( sensor ) {
     scenes.addClass( 'filter-hidden' )
 
     scenes = scenes.not( '.selected' )
-    $.each( scenes, function ( i, scene ) {
-        scene = $( scene )
-
-        setTimeout( function () {
-            scene.hide( 0 )
-        }, i * 100 )
-    } )
+    scenes.fadeOut( 300 )
+    // $.each( scenes, function ( i, scene ) {
+    //     scene = $( scene )
+    //
+    //     setTimeout( function () {
+    //         scene.hide( 0 )
+    //     }, i * 25 )
+    // } )
 }
 
 var showScenesBySensor = function ( sensor ) {
@@ -224,7 +231,7 @@ var showScenesBySensor = function ( sensor ) {
         scene = $( scene )
         setTimeout( function () {
             scene.show( 0 )
-        }, i * 100 )
+        }, i * 50 )
     } )
 }
 

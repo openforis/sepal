@@ -6,14 +6,13 @@ require( './scenes-selection-filter.scss' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 // var Filter     = require( './scenes-selection-filter-m' )
+var Sensors  = require( '../sensors/sensors' )
 
 var noUiSlider = require( 'nouislider' )
 require( './nouislider.css' )
 
 var template = require( './scenes-selection-filter.html' )
 var html     = $( template( {} ) )
-
-var availableSensors = []
 
 //ui elements
 var container     = null
@@ -68,31 +67,24 @@ var init = function ( uiContainer ) {
         container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
     } )
     
+    // target day
     offsetTargetDayBtnPlus.click( function ( e ) {
         EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, 1 )
     } )
     offsetTargetDayBtnMinus.click( function ( e ) {
         EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, -1 )
     } )
-}
-
-var showButtons = function () {
-    sectionBtns.velocity( 'slideDown', { delay: 100, duration: 500 } )
-    sectionAction.velocity( 'slideUp', { delay: 100, duration: 500 } )
-}
-
-var setSensors = function ( sensors, selectedSensors ) {
+    
+    // availableSensors
     sectionSensors.empty()
-    availableSensors = sensors
-    $.each( sensors, function ( i, sensor ) {
-        // console.log( sensor )
+    $.each( Object.keys( Sensors ), function ( i, sensorId ) {
+        // console.log( sensorId )
         
-        var btn = $( '<a class="btn btn-base btn-sensor round">' + sensor + '</a>' )
-        btn.addClass( sensor )
+        var sensor = Sensors[ sensorId ]
         
-        if ( selectedSensors.indexOf( sensor ) >= 0 ) {
-            btn.addClass( 'active' )
-        }
+        var btn = $( '<button class="btn btn-base btn-sensor round">' + sensor.shortName + '</button>' )
+        btn.addClass( sensorId )
+        
         btn.click( function ( e ) {
             e.preventDefault()
             var evt = null
@@ -103,12 +95,48 @@ var setSensors = function ( sensors, selectedSensors ) {
                 evt = Events.SECTION.SCENES_SELECTION.FILTER_SHOW_SENSOR
                 btn.addClass( 'active' )
             }
-            EventBus.dispatch( evt, null, sensor )
+            EventBus.dispatch( evt, null, sensorId )
         } )
         
         sectionSensors.append( btn )
     } )
 }
+
+var showButtons = function () {
+    sectionBtns.velocity( 'slideDown', { delay: 100, duration: 500 } )
+    sectionAction.velocity( 'slideUp', { delay: 100, duration: 500 } )
+}
+
+var setSensors = function ( availableSensors, selectedSensors ) {
+    // _availableSensors = availableSensors
+    $.each( Object.keys( Sensors ), function ( i, sensorId ) {
+        // var sensor = Sensors[ sensorId ]
+        var btn = sectionSensors.find( '.' + sensorId )
+        
+        if ( selectedSensors.indexOf( sensorId ) >= 0 ) {
+            btn.addClass( 'active' )
+        }
+        
+        var disabled = availableSensors.indexOf( sensorId ) < 0
+        btn.prop( 'disabled', disabled )
+    } )
+    updateSelectedSensors(  availableSensors, selectedSensors )
+}
+
+var updateSelectedSensors = function ( availableSensors, selectedSensors ) {
+    var text = 'All'
+    console.log( availableSensors)
+    console.log( selectedSensors)
+    if ( availableSensors.length != selectedSensors.length ) {
+        var array = []
+        $.each( selectedSensors, function ( i, sensor ) {
+            array.push( Sensors[ sensor ].shortName )
+        } )
+        text = array.join( ', ' )
+    }
+    container.find( '.selected-sensors' ).html( text )
+}
+
 
 var setOffsetToTargetDay = function ( value ) {
     offsetTargetDayBtnMinus.prop( 'disabled', (value <= 1) )
@@ -121,8 +149,9 @@ var setOffsetToTargetDay = function ( value ) {
 }
 
 module.exports = {
-    init                  : init
-    , setSensors          : setSensors
-    , setOffsetToTargetDay: setOffsetToTargetDay
-    , showButtons         : showButtons
+    init                   : init
+    , setSensors           : setSensors
+    , updateSelectedSensors: updateSelectedSensors
+    , setOffsetToTargetDay : setOffsetToTargetDay
+    , showButtons          : showButtons
 }
