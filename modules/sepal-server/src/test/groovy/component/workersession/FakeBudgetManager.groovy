@@ -18,6 +18,10 @@ class FakeBudgetManager implements BudgetManager {
         return spendingByUsername[username]
     }
 
+    Collection<String> usersExceedingBudget() {
+        return spendingByUsername.keySet()
+    }
+
     void exceeded() {
         this.exceeded = true
     }
@@ -26,7 +30,7 @@ class FakeBudgetManager implements BudgetManager {
         checked
     }
 
-    Spending specifyUserSpending(String username, Spending spending) {
+    Spending setUserSpending(String username, Spending spending) {
         spendingByUsername[username] = spending
         return spending
     }

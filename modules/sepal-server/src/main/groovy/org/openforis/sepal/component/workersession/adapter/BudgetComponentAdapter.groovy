@@ -3,6 +3,7 @@ package org.openforis.sepal.component.workersession.adapter
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.budget.command.CheckUserInstanceSpending
 import org.openforis.sepal.component.budget.command.CheckUserStorageUse
+import org.openforis.sepal.component.budget.query.FindUsersExceedingBudget
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
 import org.openforis.sepal.component.workersession.api.*
 
@@ -34,5 +35,9 @@ class BudgetComponentAdapter implements BudgetManager {
                 storageQuota: report.storageQuota,
                 storageUsed: report.storageUsage
         )
+    }
+
+    Collection<String> usersExceedingBudget() {
+        budgetComponent.submit(new FindUsersExceedingBudget())
     }
 }

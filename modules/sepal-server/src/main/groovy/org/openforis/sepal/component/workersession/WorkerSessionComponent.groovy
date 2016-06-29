@@ -62,9 +62,12 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         command(CloseSession, new CloseSessionHandler(sessionRepository, instanceManager, eventDispatcher))
         command(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionRepository, instanceManager, eventDispatcher))
         command(ActivatePendingSessionOnInstance, new ActivatePendingSessionOnInstanceHandler(sessionRepository, eventDispatcher))
-        command(CloseUserSessions, new CloseUserSessionsHandler(sessionRepository, instanceManager, eventDispatcher))
+        def closeUserSessionsHandler = new CloseUserSessionsHandler(sessionRepository, instanceManager, eventDispatcher)
+        command(CloseUserSessions, closeUserSessionsHandler)
         command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(sessionRepository, instanceManager))
         command(Heartbeat, new HeartbeatHandler(sessionRepository))
+        command(CloseSessionsForUsersExceedingBudget,
+                new CloseSessionsForUsersExceedingBudgetHandler(budgetManager, closeUserSessionsHandler))
 
         query(UserWorkerSessions, new UserWorkerSessionsHandler(sessionRepository))
         query(FindSessionById, new FindSessionByIdHandler(sessionRepository))
@@ -82,6 +85,9 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         schedule(10, SECONDS,
                 new CloseTimedOutSessions(),
                 new ReleaseUnusedInstances(5, MINUTES)
+        )
+        schedule(1, MINUTES,
+                new CloseSessionsForUsersExceedingBudget()
         )
     }
 

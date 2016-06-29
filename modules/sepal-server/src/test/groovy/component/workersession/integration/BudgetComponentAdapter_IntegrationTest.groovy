@@ -89,6 +89,13 @@ class BudgetComponentAdapter_IntegrationTest extends AbstractBudgetTest {
         spending.storageQuota == 3
     }
 
+    def 'Given a user exceeding the budget, when getting users exceeding budget, user is returned'() {
+        exceededInstanceBudget()
+
+        expect:
+        adapter.usersExceedingBudget().toSet() == [testUsername].toSet()
+    }
+
 
     private void exceededInstanceBudget() {
         updateUserBudget(new Budget(instanceSpending: 100))

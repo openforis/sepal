@@ -3,7 +3,7 @@ package component.workersession
 import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.workersession.api.Spending
 
-class UserSessionReport_Test extends AbstractWorkerSessionTest {
+class GenerateUserSessionReport_Test extends AbstractWorkerSessionTest {
     def 'When generating report, instance types and their types are included'() {
         instanceManager.instanceTypes = [new InstanceType(id: 'some-instance')]
 
@@ -16,7 +16,7 @@ class UserSessionReport_Test extends AbstractWorkerSessionTest {
 
     def 'When generating report, user budget and spending is included'() {
         def spending = new Spending(monthlyInstanceBudget: 123)
-        specifyUserSpending(spending)
+        setUserSpending(spending)
 
         when:
         def report = generateUserSessionReport()
