@@ -92,6 +92,10 @@ abstract class AbstractWorkerSessionTest extends Specification {
         component.submit(new CloseUserSessions(username: username(args)))
     }
 
+    final void closeSessionsForUsersExcedingBudget(Map args = [:]) {
+        component.submit(new CloseSessionsForUsersExceedingBudget(username: username(args)))
+    }
+
     final void sendHeartbeat(WorkerSession session, Map args = [:]) {
         component.submit(new Heartbeat(username: username(args), sessionId: session.id))
     }
@@ -125,8 +129,8 @@ abstract class AbstractWorkerSessionTest extends Specification {
         component.submit(new ReleaseUnusedInstances(minAge, timeUnit))
     }
 
-    final Spending specifyUserSpending(Spending spending, Map args = [:]) {
-        budgetManager.specifyUserSpending(username(args), spending)
+    final Spending setUserSpending(Spending spending, Map args = [:]) {
+        budgetManager.setUserSpending(username(args), spending)
     }
 
 

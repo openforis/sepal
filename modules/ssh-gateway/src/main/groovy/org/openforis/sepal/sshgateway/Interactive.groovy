@@ -260,7 +260,6 @@ class Interactive {
             new Interactive(args[0], args[1], new File(args[2]), new File(args[3]), args[4]).start()
         } catch (Exception e) {
             LOG.error("Interactive failed", e)
-            e.printStackTrace()
             System.err.println("\nSomething went wrong, please try again")
             System.exit(1)
         }

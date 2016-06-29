@@ -41,7 +41,7 @@ class S3Landsat8Download {
     }
 
     private List<DownloadRequest> downloadRequests(File sceneDir, String sceneId) {
-        def response = http.get(path: scenePath(sceneId) + 'index.html')
+        def response = http.get(path: scenePath(sceneId) + 'index.html', contentType: 'text/html')
         if (response.status != 200)
             return []
         response.data.BODY.UL.LI.collect {

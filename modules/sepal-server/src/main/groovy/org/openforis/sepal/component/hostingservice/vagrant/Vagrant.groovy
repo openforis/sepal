@@ -7,9 +7,14 @@ import org.openforis.sepal.component.workersession.api.InstanceType
 
 class Vagrant implements HostingServiceAdapter {
     private final config = new VagrantConfig()
-    private final double storageCostPerGbMonth = 0.3d
+    private final double storageCostPerGbMonth = 44640d // 1 USD per minute - for testing
     final List<InstanceType> instanceTypes = [
-            new InstanceType(id: 'vagrant-box', name: 'Vagrant Box', description: 'Only supports one session at a time', hourlyCost: 0)
+            new InstanceType(
+                    id: 'vagrant-box',
+                    name: 'Vagrant Box',
+                    description: 'Only supports one session at a time',
+                    hourlyCost: 60 // 1 USD per minute - for testing
+            )
     ].asImmutable()
 
     HostingService getHostingService() {
