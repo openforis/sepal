@@ -9,6 +9,7 @@ docker push localhost/openforis/mysql:{{ version }}
 docker push localhost/openforis/google-earth-engine:{{ version }}
 docker push localhost/openforis/ssh-gateway:{{ version }}
 docker push localhost/openforis/sandbox:{{ version }}
+docker push localhost/openforis/task-executor:{{ version }}
 docker push localhost/openforis/gateone:{{ version }}
 docker push localhost/openforis/haproxy:{{ version }}
 docker logout localhost
