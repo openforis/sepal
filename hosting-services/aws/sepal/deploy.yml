@@ -36,12 +36,12 @@
 
     - { role: docker, users: ['ubuntu'] }
     - { role: aws-mount-efs }
-    - { role: run-container, image: ldap }
-    - { role: run-container, image: mysql }
-    - { role: run-container, image: google-earth-engine}
-    - { role: run-container, image: sepal-server }
-    - { role: run-container, image: ssh-gateway }
-    - { role: run-container, image: gateone }
-    - { role: run-container, image: sepal-php }
-    - { role: run-container, image: nginx }
-    - { role: run-container, image: haproxy }
+    - { role: run-module, module: ldap }
+    - { role: run-module, module: mysql }
+    - { role: run-module, module: google-earth-engine}
+    - { role: run-module, module: sepal-server }
+    - { role: run-module, module: ssh-gateway }
+    - { role: run-module, module: gateone }
+    - { role: run-module, module: sepal-php }
+    - { role: run-module, module: nginx }
+    - { role: run-module, module: haproxy }

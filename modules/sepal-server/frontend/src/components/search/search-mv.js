@@ -30,7 +30,7 @@ var requestSceneAreas = function () {
             EventBus.dispatch( Events.SECTION.REDUCE, null )
         }
         , success   : function ( response ) {
-            EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.RESET )
+            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.RESET )
             EventBus.dispatch( Events.MAP.LOAD_SCENE_AREAS, null, response )
             Loader.hide( { delay: 300 } )
         }

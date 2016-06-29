@@ -1,8 +1,0 @@
----
-
-- name: Copy sandbox pulling script
-  template: src=pull_sandbox.sh dest=/data/sepal/pull_sandbox.sh mode=0777
-
-- name: Pulling sandbox image
-  shell: "/data/sepal/pull_sandbox.sh"
-  register: sandbox_pull

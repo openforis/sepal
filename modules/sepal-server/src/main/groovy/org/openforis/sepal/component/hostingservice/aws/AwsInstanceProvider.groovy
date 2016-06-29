@@ -132,8 +132,7 @@ final class AwsInstanceProvider implements InstanceProvider {
                 tag('State', 'reserved'),
                 tag('Username', instance.reservation.username),
                 tag('WorkerType', instance.reservation.workerType),
-                tag('ReservationTime', DateTime.toDateTimeString(new Date())),
-                tag('IdleTime', ''),
+                tag('InStateSince', DateTime.toDateTimeString(new Date())),
                 tag('Name', "$environment: $instance.reservation.workerType, $instance.reservation.username")
         ]
     }
@@ -143,8 +142,7 @@ final class AwsInstanceProvider implements InstanceProvider {
                 tag('State', 'idle'),
                 tag('Username', ''),
                 tag('WorkerType', ''),
-                tag('IdleTime', DateTime.toDateTimeString(new Date())),
-                tag('IdleTime', ''),
+                tag('InStateSince', DateTime.toDateTimeString(new Date())),
                 tag('Name', "$environment: Idle worker")
         ]
     }

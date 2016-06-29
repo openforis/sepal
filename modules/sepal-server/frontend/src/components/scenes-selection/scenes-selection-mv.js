@@ -9,8 +9,8 @@ var Loader     = require( '../loader/loader' )
 var Model      = require( './scenes-selection-m' )
 var View       = require( './scenes-selection-v' )
 var SearchForm = require( './../search/search-form' )
-
-var targetDateYearOffset = 1
+var Filter     = require( './scenes-selection-filter-m' )
+var FilterView = require( './scenes-selection-filter-v' )
 
 var show = function ( e, type ) {
     if ( type == 'scene-images-selection' ) {
@@ -20,20 +20,35 @@ var show = function ( e, type ) {
 
 var reset = function ( e ) {
     Model.reset()
+    Filter.reset()
 }
 
 var update = function ( e, sceneAreaId, sceneImages ) {
     Model.setSceneArea( sceneAreaId, sceneImages )
+    
+    Filter.setSensors( Model.getSceneAreaSensors() )
+    Filter.setSelectedSensors( Model.getSceneAreaSensors() )
+    
+    FilterView.setSensors( Filter.getSensors(), Filter.getSelectedSensors() )
+    FilterView.setOffsetToTargetDay( Filter.getOffsetToTargetDay() )
+
+    FilterView.showButtons()
+
+    updateView()
+}
+
+var updateView = function () {
     View.reset()
     
-    $.each( Model.getSceneAreaImages(), function ( id, sceneImage ) {
-        View.add( sceneImage )
+    $.each( Model.getSceneAreaImages( Filter.getSortWeight() ), function ( i, sceneImage ) {
+        setTimeout( function () {
+            View.add( sceneImage )
+        }, i * 100 )
     } )
     
     $.each( Model.getSceneAreaSelectedImages( Model.getSceneAreaId() ), function ( id, sceneImage ) {
         View.select( sceneImage )
     } )
-    
 }
 
 var selectImage = function ( e, sceneImage ) {
@@ -51,21 +66,15 @@ var deselectImage = function ( e, sceneImage ) {
 }
 
 var loadSceneImages = function ( e, sceneAreaId ) {
-    // get('/data/sceneareas/{sceneAreaId}')
-    
-    // params.targetDay //MM-dd
-    // params.startDate //YYYY-MM-dd
-    // params.endDate  //YYYY-MM-dd
     var DATE_FORMAT = "YYYY-MM-DD"
-    var targetDay = SearchForm.targetDate().asMoment()
-    console.log( targetDay.format( DATE_FORMAT ) )
+    var targetDay   = SearchForm.targetDate().asMoment()
+    
     var data = {
-        startDate  : targetDay.clone().subtract( targetDateYearOffset / 2 , 'years' ).format( DATE_FORMAT )
-        , endDate  : targetDay.clone().add( targetDateYearOffset / 2 , 'years' ).format( DATE_FORMAT )
+        startDate  : targetDay.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
+        , endDate  : targetDay.clone().add( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
         , targetDay: targetDay.format( "MM-DD" )
     }
-    console.log( data )
-
+    
     var params = {
         url         : '/api/data/sceneareas/' + sceneAreaId
         , data      : data
@@ -75,7 +84,7 @@ var loadSceneImages = function ( e, sceneAreaId ) {
         , success   : function ( response ) {
             
             EventBus.dispatch( Events.SECTION.SHOW, null, 'scene-images-selection' )
-            EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.UPDATE, null, sceneAreaId, response )
+            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.UPDATE, null, sceneAreaId, response )
             
             Loader.hide( { delay: 500 } )
         }
@@ -84,11 +93,40 @@ var loadSceneImages = function ( e, sceneAreaId ) {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
+// Events listeners for filter / sort changes
+var updateSortWeight = function ( evt, sortWeight ) {
+    Filter.setSortWeight( sortWeight )
+    console.log( Filter.getSortWeight() )
+    updateView()
+}
+
+var filterHideSensor = function ( e, sensor ) {
+    Filter.removeSelectedSensor( sensor )
+    View.hideScenesBySensor( sensor )
+}
+
+var filterShowSensor = function ( e, sensor ) {
+    Filter.addSelectedSensor( sensor )
+    View.showScenesBySensor( sensor )
+}
+
+var filterTargetDayChange = function ( e, value ) {
+    if ( !( Filter.getOffsetToTargetDay() == 1 && value < 0 ) ) {
+        Filter.setOffsetToTargetDay( Filter.getOffsetToTargetDay() + value )
+        console.log( Filter.getOffsetToTargetDay() )
+        loadSceneImages( null, Model.getSceneAreaId() )
+    }
+}
+
 EventBus.addEventListener( Events.MAP.SCENE_AREA_CLICK, loadSceneImages )
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
-EventBus.addEventListener( Events.SECTION.SCENE_IMAGES_SELECTION.RESET, reset )
-EventBus.addEventListener( Events.SECTION.SCENE_IMAGES_SELECTION.UPDATE, update )
-EventBus.addEventListener( Events.SECTION.SCENE_IMAGES_SELECTION.SELECT, selectImage )
-EventBus.addEventListener( Events.SECTION.SCENE_IMAGES_SELECTION.DESELECT, deselectImage )
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.RESET, reset )
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.UPDATE, update )
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SELECT, selectImage )
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.DESELECT, deselectImage )
 
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, updateSortWeight )
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_HIDE_SENSOR, filterHideSensor )
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_SHOW_SENSOR, filterShowSensor )
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, filterTargetDayChange )

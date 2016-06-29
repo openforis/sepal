@@ -166,7 +166,6 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         new JsonOutput().toJson(map)
     }
 
-
     private <T> T withClient(
             WorkerInstance instance,
             @DelegatesTo(RESTClient) Closure<T> callback) {

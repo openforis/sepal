@@ -61,11 +61,12 @@ var add = function ( sceneImage ) {
     var imgSection = getImageSectionForSelection( sceneImage )
     
     imagesSelectionSection.append( imgSection )
-    imgSection.show()
+    imgSection.show( 0 )
 }
 
 var hideFromSelection = function ( sceneImage ) {
     var imgSection = imagesSelectionSection.find( '.' + sceneImage.sceneId )
+    imgSection.addClass( 'selected' )
     
     Animation.animateOut( imgSection )
     
@@ -77,19 +78,23 @@ var hideFromSelection = function ( sceneImage ) {
 
 var showInSelection = function ( sceneImage ) {
     var imgSection = imagesSelectionSection.find( '.' + sceneImage.sceneId )
-    
-    imgSection.velocity( 'scroll', {
-        container : imagesSelectionSection
-        , duration: 600
-        , delay   : 100
-    } )
-    
-    Animation.animateIn( imgSection )
+    imgSection.removeClass( 'selected' )
+
+    if ( !imgSection.hasClass( 'filter-hidden' ) ) {
+        imgSection.velocity( 'scroll', {
+            container : imagesSelectionSection
+            , duration: 600
+            , delay   : 100
+        } )
+
+        Animation.animateIn( imgSection )
+    }
 }
 
 var getImageSectionForSelection = function ( sceneImage ) {
     var imgSection = imageSelectionSection.clone()
     imgSection.addClass( sceneImage.sceneId )
+    imgSection.addClass( 'sensor-' + sceneImage.sensor )
     
     var img = imgSection.find( 'img' )
     img.attr( 'src', sceneImage.browseUrl )
@@ -106,10 +111,6 @@ var getImageSectionForSelection = function ( sceneImage ) {
     
     imgHover.click( function () {
         expandedImageSelectionSection.find( 'img' ).attr( 'src', sceneImage.browseUrl ).click( function () {
-            // expandedImageSelectionSection.velocity( "stop" ).velocity( 'fadeOut', {
-            //     delay   : 20,
-            //     duration: 500
-            // } )
             Animation.animateOut( expandedImageSelectionSection )
         } )
         expandedImageSelectionSection.find( '.cloud-cover' ).empty().append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + sceneImage.cloudCover )
@@ -134,12 +135,13 @@ var getImageSectionForSelection = function ( sceneImage ) {
     imgSection.find( '.sensor' ).append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + sceneImage.sensor )
     
     imgSection.find( '.btn-add' ).click( function () {
-        EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.SELECT, null, sceneImage )
+        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SELECT, null, sceneImage )
     } )
     
     return imgSection
 }
 
+// selected section methods
 var addToSelectedSection = function ( sceneImage ) {
     var imgSection = selectedSectionTableRow.clone()
     imgSection.addClass( sceneImage.sceneId )
@@ -151,7 +153,7 @@ var addToSelectedSection = function ( sceneImage ) {
     imgSection.find( '.sensor' ).append( sceneImage.sensor )
     imgSection.find( '.btn-remove' ).click( function ( e ) {
         e.preventDefault()
-        EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.DESELECT, null, sceneImage )
+        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.DESELECT, null, sceneImage )
     } )
     
     selectedSectionTableContent.append( imgSection )
@@ -198,10 +200,40 @@ var deselect = function ( sceneImage ) {
     showInSelection( sceneImage )
 }
 
+// filter methods
+var hideScenesBySensor = function ( sensor ) {
+    var scenes = imagesSelectionSection.find( '.sensor-' + sensor )
+    scenes.addClass( 'filter-hidden' )
+
+    scenes = scenes.not( '.selected' )
+    $.each( scenes, function ( i, scene ) {
+        scene = $( scene )
+
+        setTimeout( function () {
+            scene.hide( 0 )
+        }, i * 100 )
+    } )
+}
+
+var showScenesBySensor = function ( sensor ) {
+    var scenes = imagesSelectionSection.find( '.sensor-' + sensor )
+    scenes.removeClass( 'filter-hidden' )
+
+    scenes = scenes.not( '.selected' )
+    $.each( scenes, function ( i, scene ) {
+        scene = $( scene )
+        setTimeout( function () {
+            scene.show( 0 )
+        }, i * 100 )
+    } )
+}
+
 module.exports = {
-    init      : init
-    , reset   : reset
-    , add     : add
-    , select  : select
-    , deselect: deselect
+    init                : init
+    , reset             : reset
+    , add               : add
+    , select            : select
+    , deselect          : deselect
+    , hideScenesBySensor: hideScenesBySensor
+    , showScenesBySensor: showScenesBySensor
 }
