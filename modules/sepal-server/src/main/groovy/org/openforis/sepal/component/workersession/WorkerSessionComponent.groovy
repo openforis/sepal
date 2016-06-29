@@ -24,7 +24,6 @@ import org.openforis.sepal.util.SystemClock
 import javax.sql.DataSource
 
 import static java.util.concurrent.TimeUnit.MINUTES
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class WorkerSessionComponent extends DataSourceBackedComponent implements EndpointRegistry {
     private final Clock clock
@@ -82,7 +81,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
     }
 
     void onStart() {
-        schedule(10, SECONDS,
+        schedule(1, MINUTES,
                 new CloseTimedOutSessions(),
                 new ReleaseUnusedInstances(5, MINUTES)
         )

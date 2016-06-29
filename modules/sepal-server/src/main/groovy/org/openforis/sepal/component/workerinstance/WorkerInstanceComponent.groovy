@@ -65,7 +65,7 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
         def targetIdleCountByInstanceType = instanceTypes.collectEntries {
             [(it.id): it.idleCount]
         }.findAll { it.value > 0 }
-        schedule(10, SECONDS,
+        schedule(1, MINUTES,
                 new SizeIdlePool(
                         targetIdleCountByInstanceType: targetIdleCountByInstanceType,
                         timeBeforeChargeToTerminate: 5,
