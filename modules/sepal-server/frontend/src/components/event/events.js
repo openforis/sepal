@@ -43,11 +43,15 @@ Events = {
         
         , TERMINAL: {}
         
-        , SCENE_IMAGES_SELECTION: {
-            RESET     : 'section.scenes-selection.reset'
-            , UPDATE  : 'section.scenes-selection.update'
-            , SELECT  : 'section.scenes-selection.select'
-            , DESELECT: 'section.scenes-selection.deselect'
+        , SCENES_SELECTION: {
+            RESET                     : 'section.scenes-selection.reset'
+            , UPDATE                  : 'section.scenes-selection.update'
+            , SELECT                  : 'section.scenes-selection.select'
+            , DESELECT                : 'section.scenes-selection.deselect'
+            , SORT_CHANGE             : 'section.scenes-selection.sort-change'
+            , FILTER_SHOW_SENSOR      : 'section.scenes-selection.filter-show-sensor'
+            , FILTER_HIDE_SENSOR      : 'section.scenes-selection.filter-hide-sensor'
+            , FILTER_TARGET_DAY_CHANGE: 'section.scenes-selection.filter-target-day-change'
         }
         
         , TASK_MANAGER: {

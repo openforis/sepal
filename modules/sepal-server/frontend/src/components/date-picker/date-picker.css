@@ -57,4 +57,5 @@
 
 .date-picker .buttons a.active {
     background-color: rgba(197, 179, 151, 0.3);
+    border: 2px solid rgba(197, 179, 151, 0.5);
 }

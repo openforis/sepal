@@ -6,7 +6,7 @@ var EventBus       = require( '../event/event-bus' )
 var Events         = require( '../event/events' )
 var Loader         = require( '../loader/loader' )
 var View           = require( './search-retrieve-v' )
-var SceneAreaModel = require( '../search/scene-images-selection-m' )
+var SceneAreaModel = require( '../scenes-selection/scenes-selection-m' )
 var SearchForm     = require( '../search/search-form' )
 
 View.init()

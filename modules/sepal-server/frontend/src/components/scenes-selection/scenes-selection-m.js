@@ -4,7 +4,8 @@
 
 //scene area selection
 var sceneAreaId      = null
-var sceneAreaImages  = {}
+var sceneAreaImages  = []
+// var sceneAreaImages  = {}
 var sceneAreaSensors = []
 // selection
 var selectedImages   = {}
@@ -15,22 +16,37 @@ var key = function ( image ) {
 
 var setSceneArea = function ( id, images ) {
     sceneAreaId      = id
-    sceneAreaImages  = {}
+    sceneAreaImages  = images
+    // sceneAreaImages  = {}
     sceneAreaSensors = []
     
     $.each( images, function ( i, image ) {
-        sceneAreaImages[ key( image ) ] = image
+        // sceneAreaImages[ key( image ) ] = image
         
         if ( sceneAreaSensors.indexOf( image.sensor ) < 0 ) {
             sceneAreaSensors.push( image.sensor )
         }
         
     } )
-    console.log( sceneAreaSensors )
+    // console.log( sceneAreaSensors )
 }
 
-var getSceneAreaImages = function () {
-    return sceneAreaImages
+var getSceneAreaImages = function ( sortWeight ) {
+    var ccWeight = 1 - sortWeight
+    var tdWeight = sortWeight
+
+    var images = sceneAreaImages.slice()
+    images     = images.sort( function ( a, b ) {
+        var weightA = a.cloudCover * ccWeight + a.daysFromTargetDay * tdWeight
+        var weightB = b.cloudCover * ccWeight + b.daysFromTargetDay * tdWeight
+        return weightA - weightB
+    } )
+    
+    return images
+}
+
+var getSceneAreaSensors = function () {
+    return sceneAreaSensors
 }
 
 var getSceneAreaId = function () {
@@ -59,7 +75,8 @@ var deselect = function ( image ) {
 }
 
 var reset = function () {
-    sceneAreaImages  = {}
+    sceneAreaImages  = []
+    // sceneAreaImages  = {}
     sceneAreaId      = null
     sceneAreaSensors = []
     selectedImages   = {}
@@ -68,10 +85,6 @@ var reset = function () {
 var areasSelection = function () {
     return Object.keys( selectedImages )
 }
-
-// var areasSelectionLength = function () {
-//     return Object.keys( selectedImages ).length
-// }
 
 module.exports = {
     setSceneArea                : setSceneArea
@@ -82,4 +95,5 @@ module.exports = {
     , getSceneAreaId            : getSceneAreaId
     , getSceneAreaSelectedImages: getSceneAreaSelectedImages
     , areasSelection            : areasSelection
+    , getSceneAreaSensors       : getSceneAreaSensors
 }

@@ -1,16 +1,14 @@
 /**
  * @author Mino Togna
  */
-require( './scene-images-selection.css' )
-
-var noUiSlider = require( 'nouislider' )
-require('./nouislider.css')
+require( './scenes-selection.css' )
+var FilterView = require( '../scenes-selection/scenes-selection-filter-v' )
 
 var EventBus  = require( '../event/event-bus' )
 var Events    = require( '../event/events' )
 var Animation = require( '../animation/animation' )
 
-var template = require( './scene-images-selection.html' )
+var template = require( './scenes-selection.html' )
 var html     = $( template( {} ) )
 
 var section                       = null
@@ -38,25 +36,14 @@ var init = function () {
         imagesSelectionSection        = selectionSection.find( '.images-section' )
         imageSelectionSection         = appSection.find( '.image-section' )
         expandedImageSelectionSection = appSection.find( '.expanded-image-section' )
-
-        var sortSlider = selectionSection.find( '.sort-slider' ).get(0)
-        // noUiSlider.create( sortSlider, {
-        //     start: [ 0.5 ],
-        //     step : 0.05,
-        //     range: {
-        //         'min': [ 0 ],
-        //         'max': [ 1 ]
-        //     }
-        // } )
-        // sortSlider.noUiSlider.on('change', function(){
-        //     console.log( sortSlider.noUiSlider.get() )
-        // })
         //
-        selectedSection             = section.find( '.selected-section' )
-        selectedSectionHeader       = selectedSection.find( '.section-header' )
-        selectedSectionTableHeader  = selectedSection.find( '.table-header' )
-        selectedSectionTableContent = selectedSection.find( '.table-content' )
-        selectedSectionTableRow     = selectedSection.find( '.table-row' )
+        selectedSection               = section.find( '.selected-section' )
+        selectedSectionHeader         = selectedSection.find( '.section-header' )
+        selectedSectionTableHeader    = selectedSection.find( '.table-header' )
+        selectedSectionTableContent   = selectedSection.find( '.table-content' )
+        selectedSectionTableRow       = selectedSection.find( '.table-row' )
+        
+        FilterView.init( selectionSection )
     }
     
 }
@@ -65,7 +52,7 @@ var reset = function () {
     imagesSelectionSection.empty()
     selectedSectionTableContent.empty()
     selectedSectionTableHeader.hide()
-
+    
     imagesSelectionSection.velocity( 'scroll', { duration: 0 } )
 }
 
@@ -74,11 +61,12 @@ var add = function ( sceneImage ) {
     var imgSection = getImageSectionForSelection( sceneImage )
     
     imagesSelectionSection.append( imgSection )
-    imgSection.show()
+    imgSection.show( 0 )
 }
 
 var hideFromSelection = function ( sceneImage ) {
     var imgSection = imagesSelectionSection.find( '.' + sceneImage.sceneId )
+    imgSection.addClass( 'selected' )
     
     Animation.animateOut( imgSection )
     
@@ -90,19 +78,23 @@ var hideFromSelection = function ( sceneImage ) {
 
 var showInSelection = function ( sceneImage ) {
     var imgSection = imagesSelectionSection.find( '.' + sceneImage.sceneId )
-    
-    imgSection.velocity( 'scroll', {
-        container : imagesSelectionSection
-        , duration: 600
-        , delay   : 100
-    } )
-    
-    Animation.animateIn( imgSection )
+    imgSection.removeClass( 'selected' )
+
+    if ( !imgSection.hasClass( 'filter-hidden' ) ) {
+        imgSection.velocity( 'scroll', {
+            container : imagesSelectionSection
+            , duration: 600
+            , delay   : 100
+        } )
+
+        Animation.animateIn( imgSection )
+    }
 }
 
 var getImageSectionForSelection = function ( sceneImage ) {
     var imgSection = imageSelectionSection.clone()
     imgSection.addClass( sceneImage.sceneId )
+    imgSection.addClass( 'sensor-' + sceneImage.sensor )
     
     var img = imgSection.find( 'img' )
     img.attr( 'src', sceneImage.browseUrl )
@@ -119,10 +111,6 @@ var getImageSectionForSelection = function ( sceneImage ) {
     
     imgHover.click( function () {
         expandedImageSelectionSection.find( 'img' ).attr( 'src', sceneImage.browseUrl ).click( function () {
-            // expandedImageSelectionSection.velocity( "stop" ).velocity( 'fadeOut', {
-            //     delay   : 20,
-            //     duration: 500
-            // } )
             Animation.animateOut( expandedImageSelectionSection )
         } )
         expandedImageSelectionSection.find( '.cloud-cover' ).empty().append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + sceneImage.cloudCover )
@@ -133,7 +121,7 @@ var getImageSectionForSelection = function ( sceneImage ) {
             .append( '<span class="fa-stack"><i class="fa fa-sun-o fa-stack-2x" aria-hidden="true"></i><i class="fa fa-ellipsis-h fa-stack-1x" aria-hidden="true"></i></span> ' + sceneImage.sunAzimuth.toFixed( 2 ) )
         expandedImageSelectionSection.find( '.sun-elevation' ).empty()
             .append( '<span class="fa-stack"><i class="fa fa-sun-o fa-stack-2x" aria-hidden="true"></i><i class="fa fa-ellipsis-v fa-stack-1x" aria-hidden="true"></i></span> ' + sceneImage.sunElevation.toFixed( 2 ) )
-
+        
         // acquisitionDate: '2015-03-20', cloudCover: 0.08, sunAzimuth: 150.48942477, sunElevation: 42.80026465 , daysFromTargetDay : 5
         // expandedImageSelectionSection.velocity( "stop" ).velocity( 'fadeIn', {
         //     delay   : 20,
@@ -147,12 +135,13 @@ var getImageSectionForSelection = function ( sceneImage ) {
     imgSection.find( '.sensor' ).append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + sceneImage.sensor )
     
     imgSection.find( '.btn-add' ).click( function () {
-        EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.SELECT, null, sceneImage )
+        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SELECT, null, sceneImage )
     } )
     
     return imgSection
 }
 
+// selected section methods
 var addToSelectedSection = function ( sceneImage ) {
     var imgSection = selectedSectionTableRow.clone()
     imgSection.addClass( sceneImage.sceneId )
@@ -164,7 +153,7 @@ var addToSelectedSection = function ( sceneImage ) {
     imgSection.find( '.sensor' ).append( sceneImage.sensor )
     imgSection.find( '.btn-remove' ).click( function ( e ) {
         e.preventDefault()
-        EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.DESELECT, null, sceneImage )
+        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.DESELECT, null, sceneImage )
     } )
     
     selectedSectionTableContent.append( imgSection )
@@ -176,7 +165,7 @@ var addToSelectedSection = function ( sceneImage ) {
         , duration: 600
         , delay   : 100
     } )
-
+    
     updateSelectedSectionHeader()
 }
 
@@ -191,7 +180,7 @@ var removeFromSelectedSection = function ( sceneImage ) {
         imgSection.remove()
         updateSelectedSectionHeader()
     } )
-
+    
 }
 
 var updateSelectedSectionHeader = function () {
@@ -211,10 +200,40 @@ var deselect = function ( sceneImage ) {
     showInSelection( sceneImage )
 }
 
+// filter methods
+var hideScenesBySensor = function ( sensor ) {
+    var scenes = imagesSelectionSection.find( '.sensor-' + sensor )
+    scenes.addClass( 'filter-hidden' )
+
+    scenes = scenes.not( '.selected' )
+    $.each( scenes, function ( i, scene ) {
+        scene = $( scene )
+
+        setTimeout( function () {
+            scene.hide( 0 )
+        }, i * 100 )
+    } )
+}
+
+var showScenesBySensor = function ( sensor ) {
+    var scenes = imagesSelectionSection.find( '.sensor-' + sensor )
+    scenes.removeClass( 'filter-hidden' )
+
+    scenes = scenes.not( '.selected' )
+    $.each( scenes, function ( i, scene ) {
+        scene = $( scene )
+        setTimeout( function () {
+            scene.show( 0 )
+        }, i * 100 )
+    } )
+}
+
 module.exports = {
-    init      : init
-    , reset   : reset
-    , add     : add
-    , select  : select
-    , deselect: deselect
+    init                : init
+    , reset             : reset
+    , add               : add
+    , select            : select
+    , deselect          : deselect
+    , hideScenesBySensor: hideScenesBySensor
+    , showScenesBySensor: showScenesBySensor
 }

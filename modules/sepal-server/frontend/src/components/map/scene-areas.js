@@ -8,7 +8,7 @@ var EventBus         = require( '../event/event-bus' )
 var Events           = require( '../event/events' )
 var GoogleMapsLoader = require( 'google-maps' )
 
-var SceneAreaModel = require( '../search/scene-images-selection-m' )
+var SceneAreaModel = require( '../scenes-selection/scenes-selection-m' )
 
 var Sepal = require( '../main/sepal' )
 

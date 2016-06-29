@@ -9,7 +9,7 @@ var Loader   = require( '../loader/loader' )
 
 var View = require( './search-v' )
 
-require( './scene-images-selection-mv' )
+require( './../scenes-selection/scenes-selection-mv' )
 require( '../search-retrieve/search-retrieve-mv' )
 
 var show = function ( e, type ) {
@@ -30,7 +30,7 @@ var requestSceneAreas = function () {
             EventBus.dispatch( Events.SECTION.REDUCE, null )
         }
         , success   : function ( response ) {
-            EventBus.dispatch( Events.SECTION.SCENE_IMAGES_SELECTION.RESET )
+            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.RESET )
             EventBus.dispatch( Events.MAP.LOAD_SCENE_AREAS, null, response )
             Loader.hide( { delay: 300 } )
         }
