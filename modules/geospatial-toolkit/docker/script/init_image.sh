@@ -102,6 +102,7 @@ echo "************************"
 /opt/miniconda3/bin/conda create -y -n arcsi python=3.4
 /opt/miniconda3/bin/conda install -y -n arcsi -c https://conda.binstar.org/osgeo arcsi
 /opt/miniconda3/bin/conda install -y -n arcsi krb5
+/opt/miniconda3/bin/conda update -y -n arcsi scipy
 
 echo
 echo "*****************************************"
