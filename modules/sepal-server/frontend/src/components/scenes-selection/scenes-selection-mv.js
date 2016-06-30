@@ -26,10 +26,14 @@ var reset = function ( e ) {
 var update = function ( e, sceneAreaId, sceneImages ) {
     Model.setSceneArea( sceneAreaId, sceneImages )
     
-    Filter.setSensors( Model.getSceneAreaSensors() )
-    Filter.setSelectedSensors( Model.getSceneAreaSensors() )
-    
-    FilterView.setSensors( Filter.getSensors(), Filter.getSelectedSensors() )
+    Filter.setAvailableSensors( Model.getSceneAreaSensors().slice(0) )
+    // TODO : move out: users might have deselect all sensors and filter will be reset on a new scene area point click
+    if( Filter.getSelectedSensors().length ==0 ){
+        //it means reset was called. i.e. a new search has been performed
+        Filter.setSelectedSensors( Filter.getAvailableSensors().slice(0) )
+    }
+
+    FilterView.setSensors( Filter.getAvailableSensors(), Filter.getSelectedSensors() )
     FilterView.setOffsetToTargetDay( Filter.getOffsetToTargetDay() )
 
     FilterView.showButtons()
@@ -42,13 +46,15 @@ var updateView = function () {
     
     $.each( Model.getSceneAreaImages( Filter.getSortWeight() ), function ( i, sceneImage ) {
         setTimeout( function () {
-            View.add( sceneImage )
+            var filterHidden = Filter.getSelectedSensors().indexOf(sceneImage.sensor) < 0
+            View.add( sceneImage , filterHidden )
         }, i * 100 )
     } )
-    
+
     $.each( Model.getSceneAreaSelectedImages( Model.getSceneAreaId() ), function ( id, sceneImage ) {
         View.select( sceneImage )
     } )
+
 }
 
 var selectImage = function ( e, sceneImage ) {
@@ -96,24 +102,26 @@ var loadSceneImages = function ( e, sceneAreaId ) {
 // Events listeners for filter / sort changes
 var updateSortWeight = function ( evt, sortWeight ) {
     Filter.setSortWeight( sortWeight )
-    console.log( Filter.getSortWeight() )
+    // console.log( Filter.getSortWeight() )
     updateView()
 }
 
 var filterHideSensor = function ( e, sensor ) {
     Filter.removeSelectedSensor( sensor )
     View.hideScenesBySensor( sensor )
+    FilterView.updateSelectedSensors( Filter.getAvailableSensors(), Filter.getSelectedSensors() )
 }
 
 var filterShowSensor = function ( e, sensor ) {
     Filter.addSelectedSensor( sensor )
     View.showScenesBySensor( sensor )
+    FilterView.updateSelectedSensors( Filter.getAvailableSensors(), Filter.getSelectedSensors() )
 }
 
 var filterTargetDayChange = function ( e, value ) {
     if ( !( Filter.getOffsetToTargetDay() == 1 && value < 0 ) ) {
         Filter.setOffsetToTargetDay( Filter.getOffsetToTargetDay() + value )
-        console.log( Filter.getOffsetToTargetDay() )
+        // console.log( Filter.getOffsetToTargetDay() )
         loadSceneImages( null, Model.getSceneAreaId() )
     }
 }

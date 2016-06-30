@@ -1,13 +1,13 @@
 /**
  * @author Mino Togna
  */
-var sensors           = []
+var availableSensors  = []
 var selectedSensors   = []
 var sortWeight        = 0.5
 var offsetToTargetDay = 1
 
-var getSensors = function () {
-    return sensors
+var getAvailableSensors = function () {
+    return availableSensors
 }
 
 var getSelectedSensors = function () {
@@ -22,8 +22,8 @@ var getOffsetToTargetDay = function () {
     return offsetToTargetDay
 }
 
-var setSensors = function ( value ) {
-    sensors = value
+var setAvailableSensors = function ( value ) {
+    availableSensors = value
 }
 
 var setSelectedSensors = function ( value ) {
@@ -39,7 +39,8 @@ var setOffsetToTargetDay = function ( value ) {
 }
 
 var reset = function () {
-    sensors           = []
+    availableSensors  = []
+    selectedSensors   = []
     sortWeight        = 0.5
     offsetToTargetDay = 1
 }
@@ -47,6 +48,7 @@ var reset = function () {
 var removeSelectedSensor = function ( sensor ) {
     if ( selectedSensors.indexOf( sensor ) >= 0 ) {
         selectedSensors.splice( selectedSensors.indexOf( sensor ), 1 )
+        console.log(selectedSensors)
     }
 }
 
@@ -57,11 +59,11 @@ var addSelectedSensor = function ( sensor ) {
 }
 
 module.exports = {
-    getSensors            : getSensors
+    getAvailableSensors   : getAvailableSensors
     , getSelectedSensors  : getSelectedSensors
     , getSortWeight       : getSortWeight
     , getOffsetToTargetDay: getOffsetToTargetDay
-    , setSensors          : setSensors
+    , setAvailableSensors : setAvailableSensors
     , setSelectedSensors  : setSelectedSensors
     , setSortWeight       : setSortWeight
     , setOffsetToTargetDay: setOffsetToTargetDay

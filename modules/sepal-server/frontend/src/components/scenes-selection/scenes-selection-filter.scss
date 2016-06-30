@@ -30,18 +30,17 @@
       > div:hover {
         cursor: pointer;
         background-color: rgba(255, 255, 255, .15);
-        //border-right: 1px solid rgba(255, 255, 255, 0);
         transition: background-color 400ms linear;
       }
 
       .btn {
         border: 2px solid rgba(255, 255, 255, .3);
         color: rgba(255, 255, 255, .8);
-        /* padding: .5rem; */
         width: 2.5rem;
         height: 2.5rem;
         padding-top: .7rem;
-        background-color: transparent;
+        //background-color: transparent;
+        background-color: rgba(255, 251, 245, 0.05);
       }
 
     }
@@ -71,10 +70,12 @@
     }
 
     .row-sensor {
+
       .btn-sensor {
         padding: .5rem .7rem;
         display: inline-block;
         margin-right: .5rem;
+        font-weight: bold;
       }
       .btn-sensor.active {
         background-color: rgba(197, 179, 151, 0.3);
@@ -86,6 +87,11 @@
       .btn-sensor.active:hover {
         background-color: rgba(197, 179, 151, 0.1);
       }
+      .btn-sensor:disabled {
+        opacity: .55;
+        text-decoration: line-through;
+      }
+
     }
 
     .row-target-day {
@@ -94,8 +100,12 @@
           height: 100%;
           max-height: 38px;
           .text {
-            border-top: 1px solid rgba(255, 255, 255, .15);
-            border-bottom: 1px solid rgba(255, 255, 255, .15);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            font-weight: bold;
+            font-size: .8rem;
+            padding-top: .3rem;
+            background-color: rgba(29, 28, 27, 0.2);
           }
           .btn {
             border: none;
