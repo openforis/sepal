@@ -37,6 +37,8 @@ class TestServer extends AbstractMvcFilter {
             controller.get('/**', get)
         if (before)
             controller.before('/**', before)
+        get = null
+        before = null
         register(controller)
         return controller
     }

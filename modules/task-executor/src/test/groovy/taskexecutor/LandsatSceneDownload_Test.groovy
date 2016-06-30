@@ -39,7 +39,7 @@ class LandsatSceneDownload_Test extends Specification {
         execute(new Task('some-id', 'landsat-scene-download', [sceneIds: sceneIds]))
 
         then:
-        workingDir.list().toList() == sceneIds
+        workingDir.list().toList().toSet() == sceneIds.toSet()
 
         new File(workingDir, 'LC80010032014272LGN00').list()
         new File(workingDir, 'LC80010032014272LGN00').eachFile {
