@@ -55,7 +55,7 @@ var collapseMenu = function ( button ) {
         Animation.animateOut( button )
         
         var delay = 100
-        $.each( button.siblings(), function ( i, btnSibling ) {
+        $.each( button.siblings().not('.tasks'), function ( i, btnSibling ) {
             
             delay += 150
             btnSibling = $( btnSibling )

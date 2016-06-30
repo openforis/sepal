@@ -88,8 +88,9 @@
         background-color: rgba(197, 179, 151, 0.1);
       }
       .btn-sensor:disabled {
-        opacity: .55;
-        text-decoration: line-through;
+        opacity: .30;
+        //opacity: .55;
+        //text-decoration: line-through;
       }
 
     }

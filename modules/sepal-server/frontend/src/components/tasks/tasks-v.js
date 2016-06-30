@@ -1,7 +1,7 @@
 /**
  * @author Mino Togna
  */
-require( './tasks.css' )
+require( './tasks.scss' )
 require( './task-progress.scss' )
 
 var EventBus  = require( '../event/event-bus' )
@@ -32,13 +32,15 @@ var setTasks = function ( tasks ) {
     $.each( tasks, function ( i, task ) {
         var taskUI = getTaskUI( i, task )
         
+        taskUI.find( '.description' ).html( task.statusDescription )
+        
         var progressBar = taskUI.find( '.row-progress .progress' )
         progressBar.children().removeClass( 'determinate indeterminate failed completed' )
         
         var btnRemove  = taskUI.find( '.btn-remove' )
         var btnCancel  = taskUI.find( '.btn-cancel' )
         var btnExecute = taskUI.find( '.btn-execute' )
-        btnExecute.prop( "disabled", false )
+        // btnExecute.prop( "disabled", false )
         
         switch ( task.status ) {
             
@@ -51,10 +53,16 @@ var setTasks = function ( tasks ) {
                 break
             case Model.STATUS.PENDING:
                 btnRemove.hide()
+                btnCancel.show()
+                btnExecute.hide()
+                // btnExecute.prop( "disabled", true )
+    
+                break
+            case Model.STATUS.CANCELED:
+                btnRemove.show()
                 btnCancel.hide()
                 btnExecute.show()
-                btnExecute.prop( "disabled", true )
-                
+
                 break
             case Model.STATUS.FAILED:
                 // taskLoader.hide()
@@ -85,6 +93,7 @@ var getTaskUI = function ( index, task ) {
         taskUI = rowTask.clone()
         taskUI.addClass( 'task-' + task.id )
         taskUI.find( '.name' ).html( task.name )
+        
         container.append( taskUI )
         
         setTimeout( function () {
@@ -123,28 +132,3 @@ module.exports = {
     , setTasks  : setTasks
     , removeTask: removeTask
 }
-
-// var getTaskStatus = function ( status ) {
-//     var icon = ''
-//     switch ( status ) {
-//
-//         case Model.STATUS.ACTIVE:
-//             icon = '<i class="fa fa-refresh fa-spin fa-active" aria-hidden="true"' +
-//                 'data-toggle="tooltip" data-placement="top" title="Active"></i>'
-//             break;
-//         case Model.STATUS.PENDING:
-//             icon = '<i class="fa fa-hand-paper-o fa-pending" aria-hidden="true"' +
-//                 'data-toggle="tooltip" data-placement="top" title="Pending"></i>'
-//             break;
-//         case Model.STATUS.FAILED:
-//             icon = '<i class="fa fa-exclamation-triangle fa-failed" aria-hidden="true"' +
-//                 'data-toggle="tooltip" data-placement="top" title="Failed"></i>'
-//             break;
-//         case Model.STATUS.COMPLETED:
-//             icon = '<i class="fa fa-thumbs-up fa-completed" aria-hidden="true"' +
-//                 'data-toggle="tooltip" data-placement="top" title="Completed"></i>'
-//             break;
-//     }
-//
-//     return $( icon )
-// }

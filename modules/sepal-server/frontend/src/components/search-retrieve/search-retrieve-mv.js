@@ -10,7 +10,7 @@ var SceneAreaModel = require( '../scenes-selection/scenes-selection-m' )
 var SearchForm     = require( '../search/search-form' )
 
 View.init()
-View.hide({delay:0,duration:0})
+View.hide( { delay: 0, duration: 0 } )
 
 var appShow   = function ( e, section ) {
     View.hide()
@@ -26,13 +26,13 @@ var getRequestData = function () {
     data.countryIso = SearchForm.countryCode()
     
     var scenes = []
-    console.log("request data: ", SceneAreaModel)
+    console.log( "request data: ", SceneAreaModel )
     $.each( SceneAreaModel.areasSelection(), function ( i, k ) {
         $.each( SceneAreaModel.getSceneAreaSelectedImages( k ), function ( j, img ) {
             scenes.push( { sceneId: img.sceneId, sensor: img.sensor } )
         } )
     } )
-    data.scenes = JSON.stringify(scenes)
+    data.scenes = JSON.stringify( scenes )
     
     return data
 }
@@ -42,12 +42,13 @@ var getRequestParams = function ( url ) {
     var params = {
         url         : url
         , data      : data
-        , type    : "POST"
+        , type      : "POST"
         , beforeSend: function () {
             Loader.show()
         }
         , success   : function () {
             Loader.hide( { delay: 300 } )
+            EventBus.dispatch( Events.SECTION.TASK_MANAGER.CHECK_STATUS )
         }
     }
     return params

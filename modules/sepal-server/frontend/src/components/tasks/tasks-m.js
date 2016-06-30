@@ -52,6 +52,7 @@ var STATUS = {
     , PENDING  : 'PENDING'
     , COMPLETED: 'COMPLETED'
     , FAILED   : 'FAILED'
+    , CANCELED   : 'CANCELED'
 }
 
 module.exports = {

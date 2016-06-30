@@ -63,12 +63,12 @@ var removeSession = function ( sessionId ) {
 }
 
 var setSpending = function ( spending ) {
-    resourcesSection.find( '.monthlyInstanceBudget' ).html( spending.monthlyInstanceBudget )
-    resourcesSection.find( '.monthlyInstanceSpending' ).html( spending.monthlyInstanceSpending )
-    resourcesSection.find( '.monthlyStorageBudget' ).html( spending.monthlyStorageBudget )
-    resourcesSection.find( '.monthlyStorageSpending' ).html( spending.monthlyStorageSpending )
+    resourcesSection.find( '.monthlyInstanceBudget' ).html( spending.monthlyInstanceBudget + " USD" )
+    resourcesSection.find( '.monthlyInstanceSpending' ).html( spending.monthlyInstanceSpending + " USD" )
+    resourcesSection.find( '.monthlyStorageBudget' ).html( spending.monthlyStorageBudget + " USD" )
+    resourcesSection.find( '.monthlyStorageSpending' ).html( spending.monthlyStorageSpending + " USD" )
     resourcesSection.find( '.storageQuota' ).html( spending.storageQuota + " GB" )
-    resourcesSection.find( '.storageUsed' ).html( spending.storageUsed + " GB" )
+    resourcesSection.find( '.storageUsed' ).html( (spending.storageUsed).toFixed( 2 ) + " GB" )
 }
 
 module.exports = {

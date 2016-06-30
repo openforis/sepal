@@ -45,9 +45,11 @@ var init = function ( formSelector ) {
     
     targetDate = DatePicker.newInstance( form.find( '.target-date' ) )
     var now    = moment( new Date() )
-    targetDate.select( 'year', now.format( 'YYYY' ) )
-    targetDate.select( 'month', now.format( 'MM' ) )
-    targetDate.select( 'day', now.format( 'DD' ) )
+    setTimeout( function () {
+        targetDate.select( 'year', now.format( 'YYYY' ) )
+        targetDate.select( 'month', now.format( 'MM' ) )
+        targetDate.select( 'day', now.format( 'DD' ) )
+    }, 1000 )
 
     // endDate   = DatePicker.newInstance( form.find( '.to' ) )
     // targetDay = DatePicker.newInstance( form.find( '.target-day' ), true )

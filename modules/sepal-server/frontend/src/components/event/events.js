@@ -58,6 +58,7 @@ Events = {
             REMOVE_TASK   : 'section.task-manager.remove-task'
             , CANCEL_TASK : 'section.task-manager.cancel-task'
             , EXECUTE_TASK: 'section.task-manager.execute-task'
+            , CHECK_STATUS: 'section.task-manager.check-status'
         }
         
         , USER: {

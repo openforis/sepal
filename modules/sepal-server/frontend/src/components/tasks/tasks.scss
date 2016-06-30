@@ -1,0 +1,58 @@
+#tasks{
+    .task{
+        min-width: 30%;
+        max-width: 50%;
+        float: left;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 0 .5rem .5rem 0;
+        padding: .5rem 1rem;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.1);
+        font-family: Source Sans Pro;
+        position: relative;
+
+        .btn-remove {
+            width: 2rem;
+            height: 2rem;
+            position: absolute;
+            left: -1px;
+            top: -1px;
+            z-index: 3;
+            font-size: 1.2rem;
+            border: none;
+            padding: .4rem 0 0 0;
+        }
+
+        .row-header {
+        }
+
+        .name {
+            padding: .5rem 0 0 1.5rem;
+            font-size: .8rem;
+            /* border-bottom: 1px dotted rgba(255, 255, 255, 0.21); */
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .description {
+            padding: .2rem 0 1rem 2.1rem;
+            font-size: .75rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .op-button {
+            padding: 2rem 0 1rem 0.5rem;
+            .btn {
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                padding: .8rem;
+
+                i {
+                    font-size: 1.2rem;
+                }
+            }
+        }
+
+    }
+
+}

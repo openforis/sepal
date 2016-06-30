@@ -125,8 +125,7 @@ var setSensors = function ( availableSensors, selectedSensors ) {
 
 var updateSelectedSensors = function ( availableSensors, selectedSensors ) {
     var text = 'All'
-    console.log( availableSensors)
-    console.log( selectedSensors)
+
     if ( availableSensors.length != selectedSensors.length ) {
         var array = []
         $.each( selectedSensors, function ( i, sensor ) {

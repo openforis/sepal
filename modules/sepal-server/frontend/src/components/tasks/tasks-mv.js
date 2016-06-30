@@ -20,7 +20,7 @@ var init = function ( e ) {
         navMenuButton = NavMenu.btnTasks()
         
         setTimeout( function () {
-            jobTimer = setInterval( requestTasks, 1000 )
+            jobTimer = setInterval( requestTasks, 5000 )
         }, 1000 )
         
         initialized = true
@@ -32,13 +32,15 @@ var requestTasks = function ( callback ) {
         url      : '/api/tasks'
         , success: function ( tasks ) {
             Model.setTasks( tasks )
-            
+            // Animation.removeAnimation( navMenuButton )
+
             if ( Model.isEmpty() ) {
-                Animation.animateOut( navMenuButton )
+                // Animation.animateOut( navMenuButton )
+                navMenuButton.fadeOut()
                 navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
             } else {
-                Animation.animateIn( navMenuButton )
-                
+                // Animation.animateIn( navMenuButton )
+                navMenuButton.fadeIn()
                 if ( Model.isActive() ) {
                     navMenuButton.find( 'i' ).addClass( 'fa-spin' )
                 } else {
@@ -83,20 +85,23 @@ var taskAction = function ( evt, taskId ) {
     var callback = null
     var op       = ''
 
+    var removeTask = function () {
+        // from model is not necessary, because all tasks have been reloaded from server
+        // Model.removeTask( taskId )
+        View.removeTask( taskId )
+    }
+
     switch ( evt.type ) {
         case Events.SECTION.TASK_MANAGER.CANCEL_TASK:
             op = 'cancel'
             break
         case Events.SECTION.TASK_MANAGER.EXECUTE_TASK:
-            op = 'execute'
+            op       = 'execute'
+            callback = removeTask
             break
         case Events.SECTION.TASK_MANAGER.REMOVE_TASK:
             op       = 'remove'
-            callback = function () {
-                // from model is not necessary, because all tasks have been reloaded from server
-                // Model.removeTask( taskId )
-                View.removeTask( taskId )
-            }
+            callback = removeTask
             break
     }
 
@@ -111,3 +116,5 @@ EventBus.addEventListener( Events.SECTION.SHOW, init )
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.CANCEL_TASK, taskAction )
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.REMOVE_TASK, taskAction )
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.EXECUTE_TASK, taskAction )
+
+EventBus.addEventListener( Events.SECTION.TASK_MANAGER.CHECK_STATUS, requestTasks )

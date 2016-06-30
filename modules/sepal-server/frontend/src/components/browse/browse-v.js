@@ -49,7 +49,7 @@ var addDir = function ( dir ) {
     browseContentRow.find( '.level-' + dir.level ).nextAll().andSelf().remove()
     
     // var colLevel = $( '<div class="height100 level level-' + dir.level + '" />' )
-    var colLevel = $( '<div class="col-sd-3 height100 level level-' + dir.level + '" />' )
+    var colLevel = $( '<div class="col-sm-3 height100 level level-' + dir.level + '" />' )
     browseContentRow.append( colLevel )
     
     var rowH = $( '<div class="row dir-header height10"/>' )
