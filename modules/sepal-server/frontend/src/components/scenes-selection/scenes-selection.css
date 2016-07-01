@@ -1,7 +1,8 @@
 #scene-images-selection {
     overflow: hidden;
 }
-#scene-images-selection .selection-section{
+
+#scene-images-selection .selection-section {
     position: relative;
 }
 
@@ -43,7 +44,7 @@
     font-size: 0.6rem;
     width: 170px;
     text-align: center;
-    height: 220px;
+    height: 240px;
     margin-right: 10px;
     position: relative;
 }
@@ -51,7 +52,7 @@
 #scene-images-selection .image-section-container {
     background-color: rgba(255, 255, 255, 0.10);
     padding: 5px 0;
-    height: 210px;
+    height: 230px;
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
@@ -89,12 +90,19 @@
     margin: 7.5px 20px 0px 20px;
     border: 1px solid rgba(255, 255, 255, 0.10);
     /* background-color: rgba(0, 0, 0, 0.2); */
-    height: 40px;
+    height: 60px;
     background-color: rgba(255, 255, 255, 0.05);
 }
 
 #scene-images-selection .image-section .image-attributes > div {
     padding-left: 10px;
+}
+
+#scene-images-selection .image-section .image-attributes .acquisition-date,
+#scene-images-selection .image-section .image-attributes .target-day {
+    /*display: inline-block;*/
+    /*padding-left: 10px;*/
+    float: left;
 }
 
 #scene-images-selection .btn.circle {
@@ -113,10 +121,11 @@
 }
 
 #scene-images-selection .image-section .image-attributes .btn-add {
-    top: -34px;
+    top: -44px;
     right: -40px;
+    /*background-color: rgba(255, 255, 255, 0.05);*/
+    background-color: rgba(24, 24, 25, .1);
     /* border: 1px solid rgba(255, 255, 255, 0.1); */
-    /* background-color: rgb(24, 24, 25); */
     /* color: black; */
 }
 
@@ -148,18 +157,11 @@
 }
 
 #scene-images-selection .expanded-image-section .image-attributes {
-    margin: 2% 5% 0px 5%;
+    margin: 5% 5% 0 5%;
     padding: 1%;
     border: 1px solid rgba(255, 255, 255, 0.10);
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(0, 0, 0, 0.25);
     font-size: .8rem;
-}
-
-#scene-images-selection .expanded-image-section .image-attributes > div {
-    padding-left: 10px;
-    width: 50%;
-    /*float: left;*/
-    display: table-cell;
 }
 
 /*

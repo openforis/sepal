@@ -15,10 +15,10 @@ var template = require( './scenes-selection-filter.html' )
 var html     = $( template( {} ) )
 
 //ui elements
-var container     = null
-var sectionBtns   = null
-var sectionAction = null
-
+var container               = null
+var sectionBtns             = null
+var sectionAction           = null
+var sortSlider              = null
 var sectionSensors          = null
 var offsetTargetDayBtnPlus  = null
 var offsetTargetDayBtnMinus = null
@@ -51,7 +51,7 @@ var init = function ( uiContainer ) {
     } )
     
     //sort slider
-    var sortSlider = sectionAction.find( '.sort-slider' ).get( 0 )
+    sortSlider = sectionAction.find( '.sort-slider' ).get( 0 )
     noUiSlider.create( sortSlider, {
         start: [ 0.5 ],
         step : 0.05,
@@ -63,8 +63,9 @@ var init = function ( uiContainer ) {
     sortSlider.noUiSlider.on( 'change', function () {
         var sortWeight = sortSlider.noUiSlider.get()
         EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
-        container.find( '.cc-sort' ).html( Math.round( +((1 - sortWeight).toFixed( 2 )) * 100 ) + '%' )
-        container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
+        setSortWeight( sortWeight )
+        // container.find( '.cc-sort' ).html( Math.round( +((1 - sortWeight).toFixed( 2 )) * 100 ) + '%' )
+        // container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
     } )
     
     // target day
@@ -120,13 +121,16 @@ var setSensors = function ( availableSensors, selectedSensors ) {
         var disabled = availableSensors.indexOf( sensorId ) < 0
         btn.prop( 'disabled', disabled )
     } )
-    updateSelectedSensors(  availableSensors, selectedSensors )
+    updateSelectedSensors( availableSensors, selectedSensors )
 }
 
 var updateSelectedSensors = function ( availableSensors, selectedSensors ) {
     var text = 'All'
-
-    if ( availableSensors.length != selectedSensors.length ) {
+    
+    if ( selectedSensors.length == 0 ) {
+        text = 'None'
+    }
+    else if ( availableSensors.length != selectedSensors.length ) {
         var array = []
         $.each( selectedSensors, function ( i, sensor ) {
             array.push( Sensors[ sensor ].shortName )
@@ -147,10 +151,19 @@ var setOffsetToTargetDay = function ( value ) {
     container.find( '.offset-target-day' ).html( textValue )
 }
 
+var setSortWeight = function ( sortWeight ) {
+    sortSlider.noUiSlider.set( sortWeight )
+
+    container.find( '.cc-sort' ).html( Math.round( +((1 - sortWeight).toFixed( 2 )) * 100 ) + '%' )
+    container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
+    
+}
+
 module.exports = {
     init                   : init
     , setSensors           : setSensors
     , updateSelectedSensors: updateSelectedSensors
     , setOffsetToTargetDay : setOffsetToTargetDay
     , showButtons          : showButtons
+    , setSortWeight        : setSortWeight
 }

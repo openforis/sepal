@@ -26,33 +26,32 @@ var reset = function ( e ) {
 var update = function ( e, sceneAreaId, sceneImages ) {
     Model.setSceneArea( sceneAreaId, sceneImages )
     
-    Filter.setAvailableSensors( Model.getSceneAreaSensors().slice(0) )
-    // TODO : move out: users might have deselect all sensors and filter will be reset on a new scene area point click
-    if( Filter.getSelectedSensors().length ==0 ){
+    Filter.setAvailableSensors( Model.getSceneAreaSensors().slice( 0 ) )
+    if ( !Filter.getSelectedSensors() ) {
         //it means reset was called. i.e. a new search has been performed
-        Filter.setSelectedSensors( Filter.getAvailableSensors().slice(0) )
+        Filter.setSelectedSensors( Filter.getAvailableSensors().slice( 0 ) )
     }
-
+    
     FilterView.setSensors( Filter.getAvailableSensors(), Filter.getSelectedSensors() )
     FilterView.setOffsetToTargetDay( Filter.getOffsetToTargetDay() )
-
+    FilterView.setSortWeight( Filter.getSortWeight() )
+    
     FilterView.showButtons()
-
+    
     updateView()
 }
 
 var updateView = function () {
-    View.reset()
+    View.reset( Model.getSceneAreaId() )
     
     $.each( Model.getSceneAreaImages( Filter.getSortWeight() ), function ( i, sceneImage ) {
         setTimeout( function () {
-            var filterHidden = Filter.getSelectedSensors().indexOf(sceneImage.sensor) < 0
-            View.add( sceneImage , filterHidden )
+            
+            var filterHidden = Filter.isSensorSelected( sceneImage.sensor )
+            var selected     = Model.isSceneSelected( sceneImage )
+            View.add( sceneImage, filterHidden, selected )
+            
         }, i * 100 )
-    } )
-
-    $.each( Model.getSceneAreaSelectedImages( Model.getSceneAreaId() ), function ( id, sceneImage ) {
-        View.select( sceneImage )
     } )
 
 }
@@ -107,13 +106,13 @@ var updateSortWeight = function ( evt, sortWeight ) {
 }
 
 var filterHideSensor = function ( e, sensor ) {
-    Filter.removeSelectedSensor( sensor )
+    Filter.selectSensor( sensor )
     View.hideScenesBySensor( sensor )
     FilterView.updateSelectedSensors( Filter.getAvailableSensors(), Filter.getSelectedSensors() )
 }
 
 var filterShowSensor = function ( e, sensor ) {
-    Filter.addSelectedSensor( sensor )
+    Filter.deselectSensor( sensor )
     View.showScenesBySensor( sensor )
     FilterView.updateSelectedSensors( Filter.getAvailableSensors(), Filter.getSelectedSensors() )
 }

@@ -7,21 +7,42 @@
              data-animation-out="rotateOutDownLeft"
         >
             <div class="col-sm-12 height100 width100 image-section-container">
-                <div class="row height80">
+
+                <div class="row height5">
+                    <div class="col-sm-12 text-align-center p-t-0-5 p-b-0-5">
+                        <h4 class="scene-id"></h4>
+                    </div>
+                </div>
+
+                <div class="row height75">
                     <div class="col-sm-12 text-align-center p-t-1 image">
                         <img/>
                     </div>
                 </div>
                 <div class="row height20">
                     <div class="col-sm-12 text-align-center">
-                        <div class="image-attributes">
-                            <div class="sensor text-align-left"></div>
-                            <div class="cloud-cover text-align-left"></div>
-                            <div class="acquisition-date text-align-left"></div>
-                            <div class="target-day text-align-left"></div>
-                            <div class="sun-azimuth text-align-left"></div>
-                            <div class="sun-elevation text-align-left"></div>
+                        <div class="row image-attributes">
+                            <div class="col-sm-4 p-l-0-5">
+                                <div class="sensor width100 text-align-left"></div>
+                                <div class="cloud-cover width100 text-align-left"></div>
+                            </div>
+                            <div class="col-sm-4 p-l-0-5">
+                                <div class="acquisition-date width100 text-align-left"></div>
+                                <div class="target-day width100 text-align-left"></div>
+                            </div>
+                            <div class="col-sm-4 p-l-0-5">
+                                <div class="sun-azimuth width100 text-align-left"></div>
+                                <div class="sun-elevation width100 text-align-left"></div>
+                            </div>
                         </div>
+                        <!--<div class="image-attributes">-->
+                            <!--<div class="sensor text-align-left"></div>-->
+                            <!--<div class="cloud-cover text-align-left"></div>-->
+                            <!--<div class="acquisition-date text-align-left"></div>-->
+                            <!--<div class="target-day text-align-left"></div>-->
+                            <!--<div class="sun-azimuth text-align-left"></div>-->
+                            <!--<div class="sun-elevation text-align-left"></div>-->
+                        <!--</div>-->
                     </div>
 
                 </div>
@@ -78,8 +99,12 @@
             </div>
 
             <div class="image-attributes">
-                <div class="sensor text-align-left"></div>
-                <div class="cloud-cover text-align-left"></div>
+                <div class="sensor width100 text-align-left"></div>
+                <div class="cloud-cover width100 text-align-left"></div>
+                <div class="width100 text-align-left">
+                    <div class="width50 text-align-left acquisition-date"></div>
+                    <div class="width50 text-align-left target-day"></div>
+                </div>
                 <a class="btn btn-base circle btn-add"><i class="fa fa-plus-circle" aria-hidden="true"></i></a>
             </div>
 

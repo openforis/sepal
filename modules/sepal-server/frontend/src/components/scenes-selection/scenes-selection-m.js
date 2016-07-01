@@ -34,7 +34,7 @@ var setSceneArea = function ( id, images ) {
 var getSceneAreaImages = function ( sortWeight ) {
     var ccWeight = 1 - sortWeight
     var tdWeight = sortWeight
-
+    
     var images = sceneAreaImages.slice()
     images     = images.sort( function ( a, b ) {
         var weightA = a.cloudCover * ccWeight + a.daysFromTargetDay * tdWeight
@@ -55,6 +55,13 @@ var getSceneAreaId = function () {
 
 var getSceneAreaSelectedImages = function ( sceneAreaId ) {
     return selectedImages[ sceneAreaId ]
+}
+
+var isSceneSelected = function ( scene ) {
+    var sceneId        = key( scene )
+    var selectedScenes = getSceneAreaSelectedImages( getSceneAreaId() )
+    var selected       = selectedScenes && Object.keys( selectedScenes ).indexOf( sceneId ) >= 0
+    return selected
 }
 
 var select = function ( image ) {
@@ -91,6 +98,7 @@ module.exports = {
     , getSceneAreaImages        : getSceneAreaImages
     , select                    : select
     , deselect                  : deselect
+    , isSceneSelected           : isSceneSelected
     , reset                     : reset
     , getSceneAreaId            : getSceneAreaId
     , getSceneAreaSelectedImages: getSceneAreaSelectedImages

@@ -1,8 +1,8 @@
 /**
  * @author Mino Togna
  */
-var availableSensors  = []
-var selectedSensors   = []
+var availableSensors  = null
+var selectedSensors   = null
 var sortWeight        = 0.5
 var offsetToTargetDay = 1
 
@@ -39,23 +39,27 @@ var setOffsetToTargetDay = function ( value ) {
 }
 
 var reset = function () {
-    availableSensors  = []
-    selectedSensors   = []
+    availableSensors  = null
+    selectedSensors   = null
     sortWeight        = 0.5
     offsetToTargetDay = 1
 }
 
-var removeSelectedSensor = function ( sensor ) {
+var selectSensor = function ( sensor ) {
     if ( selectedSensors.indexOf( sensor ) >= 0 ) {
         selectedSensors.splice( selectedSensors.indexOf( sensor ), 1 )
-        console.log(selectedSensors)
     }
 }
 
-var addSelectedSensor = function ( sensor ) {
+var deselectSensor = function ( sensor ) {
     if ( selectedSensors.indexOf( sensor ) < 0 ) {
         selectedSensors.push( sensor )
     }
+}
+
+var isSensorSelected = function ( sensor ) {
+    var sensors = getSelectedSensors()
+    return sensors && sensors.indexOf( sensor ) < 0
 }
 
 module.exports = {
@@ -68,6 +72,7 @@ module.exports = {
     , setSortWeight       : setSortWeight
     , setOffsetToTargetDay: setOffsetToTargetDay
     , reset               : reset
-    , removeSelectedSensor: removeSelectedSensor
-    , addSelectedSensor   : addSelectedSensor
+    , selectSensor        : selectSensor
+    , deselectSensor      : deselectSensor
+    , isSensorSelected    : isSensorSelected
 }
