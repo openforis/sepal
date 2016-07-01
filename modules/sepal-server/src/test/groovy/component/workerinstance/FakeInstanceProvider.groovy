@@ -2,6 +2,7 @@ package component.workerinstance
 
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
+import org.openforis.sepal.component.workerinstance.api.WorkerReservation
 import org.openforis.sepal.util.Clock
 
 class FakeInstanceProvider implements InstanceProvider {
@@ -16,19 +17,30 @@ class FakeInstanceProvider implements InstanceProvider {
         this.clock = clock
     }
 
-    WorkerInstance launchReserved(WorkerInstance instance) {
-        def launchedInstance = instance.launched(UUID.randomUUID().toString(), clock.now())
-        launchedById[instance.id] = launchedInstance
-        reservedById[instance.id] = launchedInstance
-        return launchedInstance
+    WorkerInstance launchReserved(String instanceType, WorkerReservation reservation) {
+        def instance = new WorkerInstance(
+                id: UUID.randomUUID().toString(),
+                type: instanceType,
+                host: UUID.randomUUID().toString(),
+                launchTime: clock.now(),
+                reservation: reservation)
+        launchedById[instance.id] = instance
+        reservedById[instance.id] = instance
+        return instance
     }
 
-    void launchIdle(List<WorkerInstance> instances) {
-        instances.each {
-            def launchedInstance = it.launched(UUID.randomUUID().toString(), clock.now())
-            launchedById[it.id] = launchedInstance
-            idleById[it.id] = launchedInstance
-        }
+    void launchIdle(String instanceType, int count) {
+        count.times { launchOneIdle(instanceType) }
+    }
+
+    private void launchOneIdle(String instanceType) {
+        def instance = new WorkerInstance(
+                id: UUID.randomUUID().toString(),
+                type: instanceType,
+                host: UUID.randomUUID().toString(),
+                launchTime: clock.now())
+        launchedById[instance.id] = instance
+        idleById[instance.id] = instance
     }
 
     void terminate(String instanceId) {

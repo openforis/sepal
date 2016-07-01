@@ -41,7 +41,7 @@ class SizeIdlePoolHandler implements CommandHandler<Void, SizeIdlePool> {
             def idleCount = idleInstances.size()
             def targetCount = command.targetIdleCountByInstanceType[instanceType] ?: 0
             if (idleCount < targetCount)
-                launch(targetCount - idleCount, instanceType)
+                instanceProvider.launchIdle(instanceType, targetCount - idleCount)
             else if (idleCount > targetCount)
                 potentiallyForTermination(idleCount - targetCount, idleInstances, minutesBeforeChargeToTerminate)
         }
@@ -58,13 +58,6 @@ class SizeIdlePoolHandler implements CommandHandler<Void, SizeIdlePool> {
 
     private terminate(WorkerInstance instance) {
         instanceProvider.terminate(instance.id)
-    }
-
-    private void launch(int count, String instanceType) {
-        def instances = (0..<count).collect {
-            new WorkerInstance(id: UUID.randomUUID().toString(), type: instanceType)
-        }
-        instanceProvider.launchIdle(instances)
     }
 
     private int minutesUntilCharged(Date launchTime) {

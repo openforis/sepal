@@ -8,6 +8,8 @@ import org.openforis.sepal.component.workerinstance.event.FailedToReleaseInstanc
 import org.openforis.sepal.component.workerinstance.event.InstanceReleased
 import org.openforis.sepal.event.EventDispatcher
 import org.openforis.sepal.util.annotation.Data
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @Data(callSuper = true)
 class ReleaseInstance extends AbstractCommand<Void> {
@@ -15,6 +17,7 @@ class ReleaseInstance extends AbstractCommand<Void> {
 }
 
 class ReleaseInstanceHandler implements CommandHandler<Void, ReleaseInstance> {
+    private static Logger LOG = LoggerFactory.getLogger(this)
     private final InstanceProvider instanceProvider
     private final InstanceProvisioner instanceProvisioner
     private final EventDispatcher eventDispatcher
@@ -32,6 +35,7 @@ class ReleaseInstanceHandler implements CommandHandler<Void, ReleaseInstance> {
             instanceProvider.release(command.instanceId)
             eventDispatcher.publish(new InstanceReleased(instance.release()))
         } catch (Exception e) {
+            LOG.warn("Failed to release instance, terminating instead: $command", e)
             eventDispatcher.publish(new FailedToReleaseInstance(command.instanceId, e))
             instanceProvider.terminate(command.instanceId)
         }
