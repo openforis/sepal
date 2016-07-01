@@ -28,15 +28,22 @@ var init = function () {
             e.preventDefault()
             EventBus.dispatch( Events.SECTION.BROWSE.DOWNLOAD_ITEM, null, lastAbsPathClick )
         } )
-
-        setTimeout( function () {
-            setContentSize()
-        }, 1500 )
-
+        downloadBtn.prop( 'disabled', true )
+        // setTimeout( function () {
+        //     setContentSize()
+        // }, 1500 )
+        
         $( window ).resize( function () {
             setContentSize()
         } )
-
+        
+    }
+}
+var show = function ( e, type ) {
+    if ( type == 'browse' ) {
+        setTimeout( function () {
+            setContentSize()
+        }, 1500 )
     }
 }
 
@@ -46,71 +53,91 @@ var setContentSize = function () {
 }
 
 var addDir = function ( dir ) {
-    browseContentRow.find( '.level-' + dir.level ).nextAll().andSelf().remove()
+    var level = dir.level
+    removeDir( level )
     
     // var colLevel = $( '<div class="height100 level level-' + dir.level + '" />' )
-    var colLevel = $( '<div class="col-sm-3 height100 level level-' + dir.level + '" />' )
+    var colLevel = $( '<div class="col-sms-3 height100 level level-' + level + '" />' )
     browseContentRow.append( colLevel )
     
-    var rowH = $( '<div class="row dir-header height10"/>' )
+    var rowH = $( '<div class="dir-header width100 height10"/>' )
     colLevel.append( rowH )
-    var colH = $( '<div class="col-sm-12 text-align-center height100"/>' )
+    var colH = $( '<div class="text-align-center width100 height100"/>' )
     colH.append( dir.path )
     rowH.append( colH )
     
-    var rowC = $( '<div class="row dir-content height90"/>' )
-    colLevel.append( rowC )
-    var colC = $( '<div class="col-sm-12 text-align-left overflow-auto height100"/>' )
-    rowC.append( colC )
+    // var rowC = $( '<div class="row dir-content height90"/>' )
+    // colLevel.append( rowC )
+    // var colC = $( '<div class="col-sm-12 text-align-left overflow-auto height100"/>' )
+    // rowC.append( colC )
+    var colC = $( '<div class="dir-content height90"/>' )
+    colLevel.append( colC )
     
     if ( dir.children.length <= 0 ) {
-        var childDivR = $( '<div class="row dir-child"/>' )
-        colC.append( childDivR )
-        var childDivC = $( '<div class="col-sm-12">&nbsp;</div>' )
-        childDivR.append( childDivC )
+        // var childDivR = $( '<div class="row dir-child"/>' )
+        // colC.append( childDivR )
+        // var childDivC = $( '<div class="col-sm-12">&nbsp;</div>' )
+        // childDivR.append( childDivC )
     }
-
+    
     $.each( dir.children, function ( i, child ) {
-        var childDivR = $( '<div class="row dir-child"/>' )
+        var childDivR = $( '<div class="dir-child width100"/>' )
         colC.append( childDivR )
-        var childDivC = $( '<div/>' )
+        var childDivC = $( '<div class="file-name"/>' )
         childDivC.append( child.name )
         childDivR.append( childDivC )
-        
+
+        if ( child.name.indexOf( '.' ) == 0 ) {
+            childDivR.addClass( 'hidden-file' )
+        }
+
         if ( child.isDirectory === true ) {
-            childDivC.addClass( 'col-sm-11' )
-            var childDivL = $( '<div class="col-sm-1 no-padding"/>' )
+            childDivC.addClass( 'width90' )
+            var childDivL = $( '<div class="width10 text-align-left"/>' )
             childDivL.append( '<i class="fa fa-caret-right" aria-hidden="true"></i>' )
             childDivR.append( childDivL )
         } else {
-            childDivC.addClass( 'col-sm-12' )
+            childDivC.addClass( 'width100' )
         }
         
         childDivR.click( function ( e ) {
-            colC.find( 'div.row.dir-child.active' ).removeClass( 'active' )
+            colC.find( 'div.dir-child.active' ).removeClass( 'active' )
             childDivR.addClass( 'active' )
             
             EventBus.dispatch( Events.SECTION.BROWSE.NAV_ITEM_CLICK, null, dir.level, child )
             
-            var absPath      = Model.absolutePath( dir.level, child.name )
-            absPath          = absPath.substring( 0, absPath.length - 1 )
-            lastAbsPathClick = absPath
-            downloadBtn.html( '<i class="fa fa-download" aria-hidden="true"></i>' + absPath )
-            downloadBtn.fadeIn()
+            if ( child.isDirectory === true ) {
+                downloadBtn.html( '<i class="fa fa-download" aria-hidden="true"></i> -' )
+                downloadBtn.prop( 'disabled', true )
+            } else {
+                var absPath      = Model.absolutePath( dir.level, child.name )
+                absPath          = absPath.substring( 0, absPath.length - 1 )
+                lastAbsPathClick = absPath
+                downloadBtn.html( '<i class="fa fa-download" aria-hidden="true"></i>' + absPath )
+                downloadBtn.prop( 'disabled', false )
+            }
         } )
         
     } )
     
     colLevel.velocity( 'scroll', {
         container : browseContentRow
-        , duration: 200
-        , delay   : 100
+        , duration: 1500
+        , delay   : 50
         , axis    : "x"
+        , easing  : "easeInOutSine"
     } )
     
 }
 
+var removeDir = function ( level ) {
+    browseContentRow.find( '.level-' + level ).nextAll().andSelf().remove()
+}
+
+EventBus.addEventListener( Events.SECTION.SHOW, show )
+
 module.exports = {
-    init    : init
-    , addDir: addDir
+    init       : init
+    , addDir   : addDir
+    , removeDir: removeDir
 }
