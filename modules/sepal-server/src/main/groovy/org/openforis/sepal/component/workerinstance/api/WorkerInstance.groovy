@@ -23,11 +23,4 @@ class WorkerInstance {
         new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: reservation)
     }
 
-    WorkerInstance launched(String host, Date launchTime) {
-        new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: reservation)
-    }
-
-    WorkerInstance running() {
-        new WorkerInstance(id: id, type: type, host: host, running: true, launchTime: launchTime, reservation: reservation)
-    }
 }

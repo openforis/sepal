@@ -1,9 +1,9 @@
 package org.openforis.sepal.component.workerinstance.api
 
 interface InstanceProvider {
-    WorkerInstance launchReserved(WorkerInstance instance)
+    WorkerInstance launchReserved(String instanceType, WorkerReservation reservation)
 
-    void launchIdle(List<WorkerInstance> instances)
+    void launchIdle(String instanceType, int count)
 
     void terminate(String instanceId)
 

@@ -37,17 +37,15 @@ final class AwsInstanceProvider implements InstanceProvider {
         imageId = fetchImageId(availabilityZone)
     }
 
-    WorkerInstance launchReserved(WorkerInstance instance) {
-        Instance awsInstance = launch(instance)
-        tagInstance(awsInstance.instanceId, launchTags(instance), reserveTags(instance))
-        return toWorkerInstance(awsInstance)
+    void launchIdle(String instanceType, int count) {
+        Instance awsInstance = launch(instanceType, count)
+        tagInstance(awsInstance.instanceId, launchTags(awsInstance.instanceId), idleTags())
     }
 
-    void launchIdle(List<WorkerInstance> instances) {
-        instances.each { instance ->
-            Instance awsInstance = launch(instance)
-            tagInstance(awsInstance.instanceId, launchTags(instance), idleTags())
-        }
+    WorkerInstance launchReserved(String instanceType, WorkerReservation reservation) {
+        Instance awsInstance = launch(instanceType, 1)
+        tagInstance(awsInstance.instanceId, launchTags(awsInstance.instanceId), reserveTags(reservation))
+        return toWorkerInstance(awsInstance).reserve(reservation)
     }
 
     void terminate(String instanceId) {
@@ -59,7 +57,7 @@ final class AwsInstanceProvider implements InstanceProvider {
     }
 
     void reserve(WorkerInstance instance) {
-        tagInstance(instance.id, reserveTags(instance))
+        tagInstance(instance.id, reserveTags(instance.reservation))
     }
 
     void release(String instanceId) {
@@ -86,9 +84,12 @@ final class AwsInstanceProvider implements InstanceProvider {
     }
 
     WorkerInstance getInstance(String instanceId) {
-        findInstances(
-                taggedWith('InstanceId', instanceId)
-        ).first()
+        def instances = findInstances(new DescribeInstancesRequest()
+                .withInstanceIds(instanceId)
+        )
+        if (instances.size() != 1)
+            throw new IllegalStateException("Expected exactly one instance with id $instanceId, got $instances")
+        return instances.first()
     }
 
     void onInstanceLaunched(Closure listener) {
@@ -117,23 +118,23 @@ final class AwsInstanceProvider implements InstanceProvider {
         jobScheduler.stop()
     }
 
-    private List<Tag> launchTags(WorkerInstance instance) {
+    private List<Tag> launchTags(String instanceId) {
         [
                 tag('Environment', environment),
                 tag('Type', 'Worker'),
                 tag('Version', sepalVersion as String),
-                tag('InstanceId', instance.id),
+
                 tag('Starting', 'true')
         ]
     }
 
-    private List<Tag> reserveTags(WorkerInstance instance) {
+    private List<Tag> reserveTags(WorkerReservation reservation) {
         [
                 tag('State', 'reserved'),
-                tag('Username', instance.reservation.username),
-                tag('WorkerType', instance.reservation.workerType),
+                tag('Username', reservation.username),
+                tag('WorkerType', reservation.workerType),
                 tag('InStateSince', DateTime.toDateTimeString(new Date())),
-                tag('Name', "$environment: $instance.reservation.workerType, $instance.reservation.username")
+                tag('Name', "$environment: $reservation.workerType, $reservation.username")
         ]
     }
 
@@ -164,12 +165,15 @@ final class AwsInstanceProvider implements InstanceProvider {
     }
 
     private List<WorkerInstance> findInstances(Filter... filters) {
-        def request = new DescribeInstancesRequest().withFilters(
+        findInstances(new DescribeInstancesRequest().withFilters(
                 filters.toList() + [
                         taggedWith('Type', 'Worker'),
                         taggedWith('Environment', environment),
                         new Filter('instance-state-name', ['pending', 'running'])
-                ])
+                ]))
+    }
+
+    private List<WorkerInstance> findInstances(DescribeInstancesRequest request) {
         def awsInstances = client.describeInstances(request).reservations
                 .collect { it.instances }.flatten() as List<Instance>
         def instancesWithValidVersion = awsInstances.findAll {
@@ -178,15 +182,14 @@ final class AwsInstanceProvider implements InstanceProvider {
         return instancesWithValidVersion.collect { toWorkerInstance(it) }
     }
 
-    private Instance launch(WorkerInstance instance) {
-        def instanceType = instance.type
+    private Instance launch(String instanceType, int count) {
         LOG.info("Launching $instanceType")
         def request = new RunInstancesRequest()
                 .withKeyName(region)
                 .withInstanceType(instanceType as InstanceType)
                 .withSecurityGroups(SECURITY_GROUP)
                 .withImageId(imageId)
-                .withMinCount(1).withMaxCount(1)
+                .withMinCount(count).withMaxCount(count)
                 .withPlacement(new Placement(availabilityZone: availabilityZone))
 
         def response = client.runInstances(request)
