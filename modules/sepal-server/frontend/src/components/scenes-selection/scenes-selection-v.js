@@ -34,7 +34,7 @@ var init = function () {
     
     var appSection = $( '#app-section' ).find( '.scene-images-selection' )
     if ( appSection.children().length <= 0 ) {
-        var appSection = $( '#app-section' ).find( '.scene-images-selection' )
+        // var appSection = $( '#app-section' ).find( '.scene-images-selection' )
         appSection.append( html )
         
         section                       = appSection.find( '#scene-images-selection' )

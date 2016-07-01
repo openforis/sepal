@@ -8,6 +8,7 @@ require( '../search/search-mv' )
 require( '../terminal/terminal-mv' )
 require( '../browse/browse-mv' )
 require( '../user/user-mv' )
+require( '../process/process-mv' )
 
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
