@@ -6,6 +6,9 @@ apt-get -y update && apt-get install -y software-properties-common
 add-apt-repository "deb http://ppa.launchpad.net/natecarlson/maven3/ubuntu precise main"
 apt-get update -y && apt-get install -y --force-yes maven3
 
+curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+apt-get install -y nodejs
+
 useradd -m -d "${JENKINS_HOME}"  jenkins
 useradd -m -d /home/github github
 

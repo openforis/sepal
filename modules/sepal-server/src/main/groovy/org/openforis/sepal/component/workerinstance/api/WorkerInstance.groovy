@@ -15,6 +15,10 @@ class WorkerInstance {
         reservation != null
     }
 
+    boolean isIdle() {
+        !isReserved()
+    }
+
     WorkerInstance release() {
         new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: null)
     }
@@ -22,5 +26,4 @@ class WorkerInstance {
     WorkerInstance reserve(WorkerReservation reservation) {
         new WorkerInstance(id: id, type: type, host: host, running: running, launchTime: launchTime, reservation: reservation)
     }
-
 }

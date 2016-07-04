@@ -29,38 +29,34 @@ class VagrantInstanceProvider implements InstanceProvider {
     }
 
     void terminate(String instanceId) {
-        if (instance?.id == instanceId)
-            instance = null
+        // Do nothing
     }
 
     void reserve(WorkerInstance instance) {
-        if (this.instance?.id == instance.id)
-            this.instance.reserve(instance.reservation)
+        this.instance = instance
     }
 
     void release(String instanceId) {
-        if (instance?.id == instanceId)
-            instance = instance.release()
+        instance = instance.release()
     }
 
     List<WorkerInstance> idleInstances(String instanceType) {
-        [instance].findAll()
+        idleInstances()
                 .findAll { instance.type == instanceType }
-                .findAll { !instance.reservation }
     }
 
     List<WorkerInstance> idleInstances() {
         [instance].findAll()
-                .findAll { !instance.reservation }
+                .findAll { it.idle }
     }
 
     List<WorkerInstance> reservedInstances() {
         [instance].findAll()
-                .findAll { instance.reservation }
+                .findAll { instance.reserved }
     }
 
     WorkerInstance getInstance(String instanceId) {
-        instance?.id == instanceId ? instance : null
+        instance.id == instanceId ? instance : null
     }
 
     void onInstanceLaunched(Closure listener) {

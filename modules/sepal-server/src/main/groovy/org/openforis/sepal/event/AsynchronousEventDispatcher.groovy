@@ -5,6 +5,8 @@ import org.openforis.sepal.util.Is
 import org.openforis.sepal.util.JobExecutor
 import org.openforis.sepal.util.NamedThreadFactory
 import org.openforis.sepal.util.lifecycle.Stoppable
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -14,6 +16,7 @@ interface HandlerRegistryEventDispatcher extends EventDispatcher, EventSource, S
 }
 
 class SynchronousEventDispatcher implements HandlerRegistryEventDispatcher {
+    private static final Logger LOG = LoggerFactory.getLogger(this)
     private final Map<Class<? extends Event>, List<EventHandler>> handlersByType = new ConcurrentHashMap<>()
 
     void publish(Event event) {
@@ -21,6 +24,7 @@ class SynchronousEventDispatcher implements HandlerRegistryEventDispatcher {
         def handlers = handlersByType.findAll { type, potentialHandlers ->
             type.isAssignableFrom(event.class)
         }.collect { it.value }.flatten() as Collection<EventHandler>
+        LOG.debug("Publishing $event to $handlers")
         handlers.each {
             invokeHandler(it, event)
         }
@@ -46,8 +50,6 @@ class SynchronousEventDispatcher implements HandlerRegistryEventDispatcher {
 }
 
 class AsynchronousEventDispatcher extends SynchronousEventDispatcher {
-    private final dispatcher = new SynchronousEventDispatcher()
-
     private final JobExecutor handlerExecutor = new ExecutorServiceBasedJobExecutor(
             Executors.newFixedThreadPool(10, NamedThreadFactory.multipleThreadFactory('EventHandlerExecutor'))
     )

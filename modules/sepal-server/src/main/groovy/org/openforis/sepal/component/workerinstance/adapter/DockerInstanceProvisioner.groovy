@@ -23,9 +23,9 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     void provisionInstance(WorkerInstance instance) {
-        def workerType = workerType(instance)
         waitUntilDockerIsAvailable(instance)
         deleteExistingContainers(instance)
+        def workerType = workerType(instance)
         createContainer(instance, workerType)
         startContainer(instance, workerType)
         waitUntilInitialized(instance, workerType)
@@ -106,11 +106,12 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                     requestContentType: JSON
             )
             def execId = response.data.Id
-            post(
+            def startResponse = post(
                     path: "exec/$execId/start",
                     body: new JsonOutput().toJson([Detach: false, Tty: true]),
                     requestContentType: JSON
             )
+            LOG.debug("Waiting output:\n${startResponse.data}")
             LOG.debug("Session initialized. Instance: $instance.")
         }
     }
@@ -139,14 +140,18 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void waitUntilDockerIsAvailable(WorkerInstance instance) {
-        def retries = 10
+        def retries = 60
         for (int i = 0; i < retries; i++)
             try {
+                LOG.debug("Trying to connect to Docker on instance $instance")
                 deployedContainers(instance)
+                LOG.debug("Successfully connected to Docker on instance $instance")
                 return
             } catch (Exception ignore) {
+                LOG.debug("Failed to connect to Docker on instance $instance")
                 Thread.sleep(1000)
             }
+        throw new InstanceProvisioner.Failed(instance, "Unable to connect to docker on instance: $instance")
     }
 
     @SuppressWarnings("GrDeprecatedAPIUsage")

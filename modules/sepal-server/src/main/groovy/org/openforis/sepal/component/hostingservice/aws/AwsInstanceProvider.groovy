@@ -39,13 +39,33 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     void launchIdle(String instanceType, int count) {
         Instance awsInstance = launch(instanceType, count)
-        tagInstance(awsInstance.instanceId, launchTags(awsInstance.instanceId), idleTags())
+        tagInstance(awsInstance.instanceId, launchTags(), idleTags())
     }
 
     WorkerInstance launchReserved(String instanceType, WorkerReservation reservation) {
         Instance awsInstance = launch(instanceType, 1)
-        tagInstance(awsInstance.instanceId, launchTags(awsInstance.instanceId), reserveTags(reservation))
-        return toWorkerInstance(awsInstance).reserve(reservation)
+        tagInstance(awsInstance.instanceId, launchTags(), reserveTags(reservation))
+        def instance = toWorkerInstance(awsInstance).reserve(reservation)
+        return waitForPublicIpToBecomeAvailable(instance, instanceType, reservation)
+    }
+
+    private WorkerInstance waitForPublicIpToBecomeAvailable(WorkerInstance instance, String instanceType, WorkerReservation reservation) {
+        LOG.debug("Waiting for public IP to be come available on instance $instance, " +
+                "instanceType: $instanceType, reservation: $reservation")
+        int retries = 0
+        while (!instance.host && retries < Integer.MAX_VALUE) {
+            retries++
+            LOG.debug("Getting instance $instance.id to see if the public ID is assigned yet, " +
+                    "instanceType: $instanceType, reservation: $reservation")
+
+            instance = getInstance(instance.id)
+            LOG.debug("Got instance $instance")
+            Thread.sleep(1000)
+        }
+        if (!instance.host)
+            throw new FailedToLaunchInstance("Unable to get public IP of instance $instance.id, " +
+                    "instanceType: $instanceType, reservation: $reservation")
+        return instance
     }
 
     void terminate(String instanceId) {
@@ -108,7 +128,9 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private void notifyAboutStartedInstance() {
         def instances = findInstances(running(), taggedWith('Starting', 'true'))
-        instances.each {
+        instances.findAll {
+            it.running
+        }.each {
             tagInstance(it.id, [tag('Starting', '')])
             launchListeners*.call(it)
         }
@@ -118,12 +140,11 @@ final class AwsInstanceProvider implements InstanceProvider {
         jobScheduler.stop()
     }
 
-    private List<Tag> launchTags(String instanceId) {
+    private List<Tag> launchTags() {
         [
                 tag('Environment', environment),
                 tag('Type', 'Worker'),
                 tag('Version', sepalVersion as String),
-
                 tag('Starting', 'true')
         ]
     }
@@ -247,6 +268,12 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     class UnableToGetImageId extends RuntimeException {
         UnableToGetImageId(String message) {
+            super(message)
+        }
+    }
+
+    class FailedToLaunchInstance extends RuntimeException {
+        FailedToLaunchInstance(String message) {
             super(message)
         }
     }
