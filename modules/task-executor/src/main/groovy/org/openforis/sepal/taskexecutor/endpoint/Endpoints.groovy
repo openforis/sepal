@@ -28,7 +28,6 @@ final class Endpoints extends AbstractMvcFilter {
         }
 
         controller.with {
-            restrict('/**', ['ADMIN'])
 
             error(ParamsException) {
                 response?.status = 400
@@ -42,7 +41,14 @@ final class Endpoints extends AbstractMvcFilter {
                 send(toJson([message: it.message, task: it.task]))
             }
 
+            get('/healthcheck', [NO_AUTHORIZATION]) {
+                response.setContentType('application/json')
+                send toJson([status: 'OK'])
+            }
+
+            restrict('/**', ['ADMIN'])
         }
+
         return controller
     }
 
