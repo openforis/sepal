@@ -5,7 +5,6 @@ from datetime import date
 
 import ee
 from dateutil.parser import parse
-from ee.oauthinfo import OAuthInfo
 from flask import Flask
 from flask import Response
 from flask import render_template
@@ -146,8 +145,7 @@ def _toBrowseUrl(targetDay, date):
 
 
 if __name__ == '__main__':
-    # credentials = ee.ServiceAccountCredentials(sys.argv[1], sys.argv[2])
-    credentials = ServiceAccountCredentials.from_p12_keyfile(sys.argv[1], sys.argv[2], 'notasecret', OAuthInfo.SCOPE)
+    credentials = ServiceAccountCredentials.from_p12_keyfile(sys.argv[1], sys.argv[2], 'notasecret', ee.oauth.SCOPE)
     ee.Initialize(credentials)
     if len(sys.argv) > 3 and sys.argv[3] == 'debug':
         app.run(debug=True)
