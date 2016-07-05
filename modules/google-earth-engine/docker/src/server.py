@@ -54,6 +54,48 @@ def preview():
     })
 
 
+@app.route('/preview-scenes')
+def previewScenes():
+    scenes = request.args.get('scenes').split(',')
+    bands = request.args.get('bands')
+    mosaic = landsat.createMosaicFromScenes(
+        scenes=scenes,
+        bands=bands
+    )
+
+    vizParams = {
+        'bands': bands,
+        'min': 100,
+        'max': 5000,
+        'gamma': 1.2
+    }
+    mapid = mosaic.getMapId(vizParams)
+    # TODO: Get bounds from mosaic
+    bounds = 'foo'
+    return json.dumps({
+        'mapId': mapid['mapid'],
+        'token': mapid['token'],
+        'bounds': bounds
+    })
+
+
+@app.route('/scenes-in-mosaic')
+def scenes_in_mosaic():
+    # aoi = _countryGeometry(request.args.get('country'))
+    aoi = 'asdf'
+    target_date = date.fromtimestamp(int(request.args.get('targetDate')) / 1000.0)
+    sensors = request.args.get('sensors').split(',')
+    years = request.args.get('years')
+    bands = request.args.get('bands')
+    scenesInMosaic = landsat.getScenesInMosaic(
+        aoi=aoi,
+        target_date=target_date,
+        sensors=sensors,
+        years=years
+    )
+
+    return json.dumps(scenesInMosaic)
+
 
 @app.route('/map')
 def createMap():
@@ -184,6 +226,6 @@ if __name__ == '__main__':
     credentials = ServiceAccountCredentials.from_p12_keyfile(sys.argv[1], sys.argv[2], 'notasecret', ee.oauth.SCOPE)
     ee.Initialize(credentials)
     if len(sys.argv) > 3 and sys.argv[3] == 'debug':
-        app.run(debug=True)
+        app.run(debug=True, threaded=True)
     else:
-        app.run(host='0.0.0.0')
+        app.run(host='0.0.0.0', threaded=True)

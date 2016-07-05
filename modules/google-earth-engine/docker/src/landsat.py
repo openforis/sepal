@@ -53,6 +53,42 @@ def createMosaic(
     return mosaic3.select(bands)
 
 
+def getScenesInMosaic(
+        aoi,
+        target_date,
+        sensors,
+        years):
+    """Returns the scenes required to create a cloud-free mosaic.
+
+    :param aoi: The aoi to create the mosaic for.
+    :type aoi: ee.Geometry
+
+    :param target_date: The ideal date to generate the mosaic for.
+    :type target_date: datetime.date
+
+    :param sensors: The sensors to include imagery from.
+    :type sensors: iterable
+
+    :param years: The number of years to include imagery from.
+    :type years: int
+
+    :param bands: A list of the bands to include in the mosaic.
+    :type bands: iterable
+         """
+    # TODO: Implement...
+    return [
+        'LC81910312016185LGN00',
+        'LE71910312016177NSG00',
+        'LC81920302016176LGN00',
+        'LE71910302016177NSG00',
+        'LC81900312016178LGN00']
+
+
+def createMosaicFromScenes(scenes, bands):
+    # TODO: Implement...
+    return 'foo'
+
+
 def _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year):
     bounds_filter = ee.Filter.geometry(aoi)
     date_filter = ee.Filter.date(from_date, to_date)

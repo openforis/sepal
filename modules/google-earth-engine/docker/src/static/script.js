@@ -7,14 +7,18 @@
 
     $('#form').submit(function (e) {
         e.preventDefault()
-        updateMap()
+        preview()
+    })
+
+    $('#sceneIdForm').submit(function (e) {
+        e.preventDefault()
+        previewScenes()
     })
 
     var datePicker = createDatePicker($('#target-date')[0], new Date())
 
-
-    function updateMap() {
-        console.log('Updating map')
+    function preview() {
+        console.log('Preview')
         var country = $('#countries').val()
         var targetDate = datePicker.getDate().getTime()
         var sensors = []
@@ -32,6 +36,27 @@
                 var bounds = data.bounds
                 render(mapId, token, bounds)
         })
+        
+        $('#scenes-in-mosaic').html('Determining scenes used in mosaic...')
+        $.getJSON('scenes-in-mosaic', {country: country, targetDate: targetDate, sensors: sensors, years: years, bands: bands},
+            function (data) {
+                $('#scenes-in-mosaic').html(data.join( '<br/>'))
+        })
+    }
+
+    function previewScenes() {
+        console.log('Preview scenes')
+        var scenes = $('#sceneIds').val().split('\n').join(',')
+        var bands = $('#bands').val()
+        
+        $.getJSON('preview-scenes', {scenes, bands},
+            function (data) {
+                var mapId = data.mapId
+                var token = data.token
+                var bounds = data.bounds
+                render(mapId, token, bounds)
+        })
+        
     }
 
     function render(mapId, token, bounds) {
@@ -65,7 +90,7 @@
         var datePicker = new Pikaday({
             field: field,
             defaultDate: date,
-            onSelect: function() { if (initialized) updateMap }
+            onSelect: function() { if (initialized) preview }
         })
         datePicker.setDate(date)
         return datePicker
