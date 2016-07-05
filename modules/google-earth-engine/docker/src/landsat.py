@@ -53,6 +53,11 @@ def createMosaic(
     return mosaic3.select(bands)
 
 
+def createMosaicFromScenes(scenes, bands):
+    # TODO: Implement...
+    return 'foo'
+
+
 def getScenesInMosaic(
         aoi,
         target_date,
@@ -82,11 +87,6 @@ def getScenesInMosaic(
         'LC81920302016176LGN00',
         'LE71910302016177NSG00',
         'LC81900312016178LGN00']
-
-
-def createMosaicFromScenes(scenes, bands):
-    # TODO: Implement...
-    return 'foo'
 
 
 def _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year):
