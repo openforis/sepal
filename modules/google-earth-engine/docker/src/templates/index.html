@@ -2,29 +2,76 @@
 <html>
 <head>
     <title>GEE test</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.4.0/css/pikaday.min.css" rel="stylesheet" type="text/css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.4.0/css/pikaday.min.css" rel="stylesheet"
+          type="text/css">
 </head>
 <body>
 <div id="map" style="width: 100%; height: 480px;"></div>
+<table width="100%">
+    <tr>
+        <td valign="top" width="50%">
+            <form id="form">
+                <p>
+                    <label for="countries">Country</label><br/>
+                    <select id="countries">
+                        <option value="">[Please select]</option>
+                        {% for country in countryNames %}
+                        <option>{{ country }}</option>
+                        {% endfor %}
+                    </select>
+                </p>
 
-<label for="countries">Country: </label>
-<select id="countries" class="map-config">
-    <option value="">[Please select]</option>
-    {% for country in countryNames %}
-    <option>{{ country }}</option>
-    {% endfor %}
-</select>
+                <p>
+                    <label for="target-date">Target date</label><br/>
+                    <input type="text" id="target-date">
+                </p>
 
-<label for="bands">Bands: </label>
-<select id="bands" class="map-config">
-    <option>B4, B3, B2</option>
-    <option>B5, B6, B4</option>
-</select>
+                <p id="sensors">
+                    <label>Sensors</label><br/>
+                    <input type="checkbox" id="LANDSAT_8" checked>
+                    <label for="LANDSAT_8">Landsat 8 OLI/TIRS</label><br/>
 
-<label for="from-date">From: </label>
-<input type="text" id="from-date">
-<label for="to-date">To: </label>
-<input type="text" id="to-date">
+                    <input type="checkbox" id="LANDSAT_ETM_SLC_OFF">
+                    <label for="LANDSAT_ETM_SLC_OFF">Landsat 7 ETM+ (SLC-off)</label><br/>
+
+                    <input type="checkbox" id="LANDSAT_ETM">
+                    <label for="LANDSAT_ETM">Landsat 7 ETM+ (SLC-on)</label><br/>
+
+                    <input type="checkbox" id="LANDSAT_TM">
+                    <label for="LANDSAT_TM">Landsat 4-5 TM</label><br/>
+
+                    <input type="checkbox" id="LANDSAT_MSS">
+                    <label for="LANDSAT_MSS">Landsat 1-5 MSS</label><br/>
+                </p>
+
+                <p>
+                    <label for="years">Years</label><br/>
+                    <input type="number" id="years" value="1"> year(s)
+                </p>
+
+                <p>
+                    <label for="bands">Bands</label><br/>
+                    <select id="bands">
+                        <option>B4, B3, B2</option>
+                        <option>B5, B6, B4</option>
+                    </select>
+                </p>
+                <input type="submit" value="Preview">
+            </form>
+
+        </td>
+        <td valign="top">
+            <form id="sceneIdForm">
+                <p>
+                    <label for="sceneIds">Scene ids</label><br/>
+                    <textarea id="sceneIds" rows="20" cols="30"></textarea>
+                </p>
+                <input type="submit" value="Preview">
+            </form>
+        </td>
+    </tr>
+</table>
+
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.4.0/pikaday.min.js"></script>

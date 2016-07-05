@@ -1,9 +1,9 @@
 import json
 import re
-import sys
-from datetime import date
 
 import ee
+import sys
+from datetime import date
 from dateutil.parser import parse
 from flask import Flask
 from flask import Response
@@ -11,6 +11,7 @@ from flask import render_template
 from flask import request
 from oauth2client.service_account import ServiceAccountCredentials
 
+import landsat
 import landsat8
 
 app = Flask(__name__)
@@ -23,13 +24,41 @@ def index():
     return render_template('index.html', countryNames=countryNames)
 
 
+@app.route('/preview')
+def preview():
+    aoi = _countryGeometry(request.args.get('country'))
+    target_date = date.fromtimestamp(int(request.args.get('targetDate')) / 1000.0)
+    sensors = request.args.get('sensors').split(',')
+    years = request.args.get('years')
+    bands = request.args.get('bands')
+    mosaic = landsat.createMosaic(
+        aoi=aoi,
+        target_date=target_date,
+        sensors=sensors,
+        years=years,
+        bands=bands.split(', ')
+    )
+
+    vizParams = {
+        'bands': bands,
+        'min': 100,
+        'max': 5000,
+        'gamma': 1.2
+    }
+    mapid = mosaic.getMapId(vizParams)
+    bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
+    return json.dumps({
+        'mapId': mapid['mapid'],
+        'token': mapid['token'],
+        'bounds': bounds
+    })
+
+
+
 @app.route('/map')
 def createMap():
-    country = request.args.get('country')
     bands = request.args.get('bands')
-    countries = ee.FeatureCollection('ft:16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ')
-    aoi = countries \
-        .filterMetadata('admin', 'equals', country)
+    aoi = _countryGeometry(request.args.get('country'))
 
     bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     mosaic = landsat8.mosaic(
@@ -134,6 +163,13 @@ def scenearea(sceneAreaId):
     return json.dumps(scenes)
 
 
+def _countryGeometry(countryName):
+    countries = ee.FeatureCollection('ft:16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ')
+    aoi = countries \
+        .filterMetadata('admin', 'equals', countryName)
+    return aoi
+
+
 def _daysFromTarget(targetDay, date):
     theDate = parse(date)
     return min(map(lambda n: abs((theDate - parse(str(theDate.year + n) + '-' + targetDay)).days), [-1, 0, 1]))
@@ -150,4 +186,4 @@ if __name__ == '__main__':
     if len(sys.argv) > 3 and sys.argv[3] == 'debug':
         app.run(debug=True)
     else:
-        app.run(host= '0.0.0.0')
+        app.run(host='0.0.0.0')

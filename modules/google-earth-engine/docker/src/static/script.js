@@ -5,23 +5,32 @@
             streetViewControl: false
         })
 
-    $('select.map-config').change(function () {
+    $('#form').submit(function (e) {
+        e.preventDefault()
         updateMap()
     })
 
-    datePicker($('#from-date')[0], new Date(2013))
-    datePicker($('#to-date')[0], new Date())
+    var datePicker = createDatePicker($('#target-date')[0], new Date())
 
 
     function updateMap() {
         console.log('Updating map')
         var country = $('#countries').val()
+        var targetDate = datePicker.getDate().getTime()
+        var sensors = []
+        $('#sensors').find('input:checked').each(function() {
+            sensors.push($(this).attr('id'))
+        })
+        sensors = sensors.join(',')
+        var years = $('#years').val()
         var bands = $('#bands').val()
-        $.getJSON('map', {country: country, bands: bands}, function (data) {
-            var mapId = data.mapId
-            var token = data.token
-            var bounds = data.bounds
-            render(mapId, token, bounds)
+        
+        $.getJSON('preview', {country: country, targetDate: targetDate, sensors: sensors, years: years, bands: bands},
+            function (data) {
+                var mapId = data.mapId
+                var token = data.token
+                var bounds = data.bounds
+                render(mapId, token, bounds)
         })
     }
 
@@ -51,7 +60,7 @@
         map.fitBounds(latLngBounds)
     }
 
-    function datePicker(field, date) {
+    function createDatePicker(field, date) {
         var initialized = false
         var datePicker = new Pikaday({
             field: field,
