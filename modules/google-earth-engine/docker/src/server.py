@@ -12,7 +12,6 @@ from flask import request
 from oauth2client.service_account import ServiceAccountCredentials
 
 import landsat
-import landsat8
 
 app = Flask(__name__)
 
@@ -27,15 +26,18 @@ def index():
 @app.route('/preview')
 def preview():
     aoi = _countryGeometry(request.args.get('country'))
-    target_date = date.fromtimestamp(int(request.args.get('targetDate')) / 1000.0)
+    from_date = date.fromtimestamp(int(request.args.get('fromDate')) / 1000.0).isoformat()
+    to_date = date.fromtimestamp(int(request.args.get('toDate')) / 1000.0).isoformat()
     sensors = request.args.get('sensors').split(',')
-    years = request.args.get('years')
     bands = request.args.get('bands')
-    mosaic = landsat.createMosaic(
+    mosaic = landsat.create_mosaic(
         aoi=aoi,
-        target_date=target_date,
         sensors=sensors,
-        years=years,
+        from_date=from_date,
+        to_date=to_date,
+        target_day_of_year=int(request.args.get('targetDayOfYear')),
+        from_day_of_year=int(request.args.get('fromDayOfYear')),
+        to_day_of_year=int(request.args.get('toDayOfYear')),
         bands=bands.split(', ')
     )
 
@@ -58,7 +60,7 @@ def preview():
 def previewScenes():
     scenes = request.args.get('scenes').split(',')
     bands = request.args.get('bands')
-    mosaic = landsat.createMosaicFromScenes(
+    mosaic = landsat.create_mosaic_from_scenes(
         scenes=scenes,
         bands=bands
     )
@@ -81,13 +83,11 @@ def previewScenes():
 
 @app.route('/scenes-in-mosaic')
 def scenes_in_mosaic():
-    # aoi = _countryGeometry(request.args.get('country'))
-    aoi = 'asdf'
+    aoi = _countryGeometry(request.args.get('country'))
     target_date = date.fromtimestamp(int(request.args.get('targetDate')) / 1000.0)
     sensors = request.args.get('sensors').split(',')
     years = request.args.get('years')
-    bands = request.args.get('bands')
-    scenesInMosaic = landsat.getScenesInMosaic(
+    scenesInMosaic = landsat.get_scenes_in_mosaic(
         aoi=aoi,
         target_date=target_date,
         sensors=sensors,
@@ -96,37 +96,6 @@ def scenes_in_mosaic():
 
     return json.dumps(scenesInMosaic)
 
-
-@app.route('/map')
-def createMap():
-    bands = request.args.get('bands')
-    aoi = _countryGeometry(request.args.get('country'))
-
-    bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
-    mosaic = landsat8.mosaic(
-        aoi,
-        target_day_of_year=260,
-        from_day_of_year=200,
-        to_day_of_year=300,
-        from_date='2013-02-11',
-        to_date=date.today().isoformat(),
-        max_cloud_cover=80,
-        bands=bands.split(', ')
-    )
-
-    vizParams = {
-        'bands': bands,
-        'min': 100,
-        'max': 5000,
-        'gamma': 1.2
-    }
-    mapid = mosaic.getMapId(vizParams)
-
-    return json.dumps({
-        'mapId': mapid['mapid'],
-        'token': mapid['token'],
-        'bounds': bounds
-    })
 
 
 @app.route('/sceneareas')
@@ -144,7 +113,6 @@ def sceneareas():
     )
     saveAllJoin = ee.Join.saveAll(matchesKey='scenes')
     intersectJoined = saveAllJoin.apply(aoi, wrs, spatialFilter)
-    # intersected = ee.FeatureCollection(ee.List(intersectJoined.first().get('scenes')))
     intersected = intersectJoined.aggregate_array('scenes').getInfo()
     sceneAreas = []
     for featureScenes in intersected:
