@@ -30,28 +30,54 @@ def createMosaic(
          """
 
     target_day_of_year = 260
-    from_day_of_year = 200
-    to_day_of_year = 300
-    from_date = '2013-02-11'
+    from_day_of_year = 1
+    to_day_of_year = 350
+    from_date = '2016-02-16'
     to_date = date.today().isoformat()
-    max_cloud_cover = 1
+    max_cloud_cover = 99
 
-    input = ee.ImageCollection('LC8_L1T_TOA').filter(
-        _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year))
+    l8_collection = ee.ImageCollection('LC8_L1T_TOA').filter(
+        _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year)).map(
+        lambda image: _normalize_bandnames_l8(image))
+    l7_collection = ee.ImageCollection('LE7_L1T_TOA').filter(
+        _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year)).map(
+        lambda image: _normalize_bandnames_l7(image))
+    #l5_collection = ee.ImageCollection('LT5_L1T_TOA').filter(
+    #    _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year)).map(
+    #    lambda image: _normalize_bandnames_l45(image))
+    #l4_collection = ee.ImageCollection('LT4_L1T_TOA').filter(
+    #    _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year)).map(
+    #    lambda image: _normalize_bandnames_l45(image))
 
-    mosaic1 = input.map(lambda image: _addqa(image, target_day_of_year, bands))
+    l8_collection_f = l8_collection.map(lambda image: _addqa(image, target_day_of_year, bands))
+    l7_collection_f = l7_collection.map(lambda image: _addqa(image, target_day_of_year, bands))
+    #l5_collection_f = l5_collection.map(lambda image: _addqa(image, target_day_of_year, bands))
+    #l4_collection_f = l4_collection.map(lambda image: _addqa(image, target_day_of_year, bands))
+
     # Create a 'best pixel' composite using the warmest, wettest pixel closest to
     # specified target date
-    mosaic2 = mosaic1.qualityMosaic('cweight')
+    l8_mosaic = l8_collection_f.qualityMosaic('cweight')
+    l7_mosaic = l7_collection_f.qualityMosaic('cweight')
+    #l5_mosaic = l5_collection_f.qualityMosaic('cweight')
+    #l4_mosaic = l4_collection_f.qualityMosaic('cweight')
 
     # clip the water bodies according to GFC Water Mask
     gfc_image = ee.Image('UMD/hansen/global_forest_change_2013')
     gfc_watermask = gfc_image.select(['datamask'])  # 0 = no data, 1 = mapped land, 2 = water
-    mosaic3 = mosaic2.mask(gfc_watermask.neq(2)).clip(aoi).int16()
+    l8_mosaic_mask = l8_mosaic.mask(gfc_watermask.neq(2)).clip(aoi).int16()
+    l7_mosaic_mask = l7_mosaic.mask(gfc_watermask.neq(2)).clip(aoi).int16()
+    #l5_mosaic_mask = l5_mosaic.mask(gfc_watermask.neq(2)).clip(aoi).int16()
+    #l4_mosaic_mask = l4_mosaic.mask(gfc_watermask.neq(2)).clip(aoi).int16()
+
+    # combine the mosaics into a new collection
+    combi_l7l8_collection = ee.ImageCollection.fromImages([l8_mosaic_mask, l7_mosaic_mask]);
+
+    # make the best possible mosaic from the new, combined collection
+    l7l8_mosaic_final = combi_l7l8_collection.qualityMosaic('cweight')
 
     # Select the bands from the BIG mosaic
-    return mosaic3.select(bands)
-
+    #return l8_mosaic_mask.select(bands)
+    return l7l8_mosaic_final.select(bands)
 
 def createMosaicFromScenes(scenes, bands):
     # TODO: Implement...
@@ -102,6 +128,21 @@ def _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_dat
         cloud_cover_filter,
     )
     return filter
+
+
+def _normalize_bandnames_l45(image):
+    my_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
+    return image.select(['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6'], my_band_names)
+
+
+def _normalize_bandnames_l7(image):
+    my_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
+    return image.select(['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6_VCID_1'], my_band_names)
+
+
+def _normalize_bandnames_l8(image):
+    my_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
+    return image.select(['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B10'], my_band_names)
 
 
 def _addqa(image, target_day_of_year, bands):

@@ -19,8 +19,8 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    countries = ee.FeatureCollection('ft:16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ')
-    countryNames = countries.sort('admin').aggregate_array('admin').getInfo()
+    countries = ee.FeatureCollection('ft:15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F')
+    countryNames = countries.sort('NAME_ENGLI').aggregate_array('NAME_ENGLI').getInfo()
     return render_template('index.html', countryNames=countryNames)
 
 
@@ -132,9 +132,9 @@ def createMap():
 @app.route('/sceneareas')
 def sceneareas():
     countryIso = request.args.get('aoiId')
-    countries = ee.FeatureCollection('ft:16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ')
+    countries = ee.FeatureCollection('ft:15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F')
     aoi = countries \
-        .filterMetadata('sov_a3', 'equals', countryIso)
+        .filterMetadata('ISO', 'equals', countryIso)
 
     wrs = ee.FeatureCollection('ft:1EJjaOloQD5NL7ReC5aVtn8cX05xbdEbZthUiCFB6')  # WRS-2 polygons
     spatialFilter = ee.Filter.intersects(
@@ -206,9 +206,9 @@ def scenearea(sceneAreaId):
 
 
 def _countryGeometry(countryName):
-    countries = ee.FeatureCollection('ft:16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ')
+    countries = ee.FeatureCollection('ft:15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F')
     aoi = countries \
-        .filterMetadata('admin', 'equals', countryName)
+        .filterMetadata('NAME_FAO', 'equals', countryName)
     return aoi
 
 
