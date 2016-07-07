@@ -82,7 +82,7 @@ var animateOut = function ( element, callback ) {
 
     element.find( '[data-animation-out]' ).andSelf().one( animationEnd, function () {
         var $this = $( this )
-        $this.hide(0)
+        $this.hide()
 
         // if ( functx ) {
         //     functx()

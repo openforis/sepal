@@ -38,12 +38,17 @@ var init = function ( uiContainer ) {
     sectionAction.velocity( 'slideUp', { delay: 0, duration: 0 } )
     sectionBtns.find( '.row > div' ).click( function ( e ) {
         
-        sectionAction.find( '> .row' ).hide()
+        sectionAction.find( '> .row' ).hide( 0 )
         var target = $( this ).data( 'target' )
-        sectionAction.find( '.' + target ).show()
-        
+        setTimeout( function () {
+            sectionAction.find( '.' + target ).fadeIn( 250 )
+        }, 250 )
+
         sectionBtns.velocity( 'slideUp', { delay: 100, duration: 500 } )
         sectionAction.velocity( 'slideDown', { delay: 100, duration: 500 } )
+
+        // sectionBtns.velocity( { opacity: 0 }, { delay: 0, duration: 200 } )
+        // sectionAction.velocity( { opacity: 1 }, { delay: 0, duration: 200 } )
     } )
     
     sectionAction.find( '.btn-close-filter' ).click( function ( e ) {
@@ -104,8 +109,12 @@ var init = function ( uiContainer ) {
 }
 
 var showButtons = function () {
+    sectionAction.find( '> .row' ).fadeOut( 400 )
     sectionBtns.velocity( 'slideDown', { delay: 100, duration: 500 } )
     sectionAction.velocity( 'slideUp', { delay: 100, duration: 500 } )
+
+    // sectionBtns.velocity( { opacity: 1 }, { delay: 0, duration: 200 } )
+    // sectionAction.velocity( { opacity: 0 }, { delay: 0, duration: 200 } )
 }
 
 var setSensors = function ( availableSensors, selectedSensors ) {

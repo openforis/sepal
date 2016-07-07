@@ -93,8 +93,8 @@ var hideFromSelection = function ( sceneImage ) {
     Animation.animateOut( imgSection )
     
     setTimeout( function ( e ) {
-        Animation.removeAnimation( imgSection )
-        imgSection.hide()
+        // Animation.removeAnimation( imgSection )
+        // imgSection.hide()
     }, 600 )
 }
 
