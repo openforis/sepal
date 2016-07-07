@@ -27,13 +27,20 @@ var init = function ( e ) {
     }
 }
 
+var showLogin = function ( e ) {
+    if( jobTimer ){
+        clearTimeout( jobTimer )
+    }
+    initialized = false
+}
+
 var requestTasks = function ( callback ) {
     var params = {
         url      : '/api/tasks'
         , success: function ( tasks ) {
             Model.setTasks( tasks )
             // Animation.removeAnimation( navMenuButton )
-
+            
             if ( Model.isEmpty() ) {
                 // Animation.animateOut( navMenuButton )
                 navMenuButton.fadeOut()
@@ -46,10 +53,10 @@ var requestTasks = function ( callback ) {
                 } else {
                     navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
                 }
-
+                
                 View.setTasks( Model.getTasks() )
             }
-
+            
             if ( callback )
                 callback()
         }
@@ -66,7 +73,7 @@ var postTaskAction = function ( url, callback ) {
             Loader.show()
         }
         , success   : function () {
-
+            
             requestTasks( function () {
                 Loader.hide( { delay: 200 } )
                 
@@ -74,23 +81,23 @@ var postTaskAction = function ( url, callback ) {
                     callback()
                 }
             } )
-
+            
         }
     }
-
+    
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
 var taskAction = function ( evt, taskId ) {
     var callback = null
     var op       = ''
-
+    
     var removeTask = function () {
         // from model is not necessary, because all tasks have been reloaded from server
         // Model.removeTask( taskId )
         View.removeTask( taskId )
     }
-
+    
     switch ( evt.type ) {
         case Events.SECTION.TASK_MANAGER.CANCEL_TASK:
             op = 'cancel'
@@ -104,14 +111,15 @@ var taskAction = function ( evt, taskId ) {
             callback = removeTask
             break
     }
-
+    
     var url = '/api/tasks/task/' + taskId + '/' + op
-
+    
     postTaskAction( url, callback )
 }
 
 
 EventBus.addEventListener( Events.SECTION.SHOW, init )
+EventBus.addEventListener( Events.LOGIN.SHOW, showLogin )
 
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.CANCEL_TASK, taskAction )
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.REMOVE_TASK, taskAction )
