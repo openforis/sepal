@@ -66,7 +66,8 @@ module.exports = {
         proxy      : {
             // '*': { target: 'http://localhost:1025' }
             // '*': { target: 'http://localhost:9999' }
-            '*': { target: 'https://172.28.128.3' } // Vagrant box
+            '/api/*': { target: 'https://172.28.128.3' } // Vagrant box
+            , '/preview': { target: 'http://127.0.0.1:5000' } // Vagrant box
         }
     }
 }

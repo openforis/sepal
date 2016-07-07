@@ -30,8 +30,8 @@ var show = function () {
     html.find( 'a' ).click( showSection )
     
     // init style
-    btnTasks.hide()
-    btnUser.hide()
+    btnTasks.hide(0)
+    btnUser.hide(0)
     
     btnSearch.addClass( 'expanded' ).empty().append( '<i class="fa fa-globe" aria-hidden="true"></i> Search' )
     btnBrowse.addClass( 'expanded' ).empty().append( '<i class="fa fa-folder-open" aria-hidden="true"></i> Browse' )
@@ -55,7 +55,7 @@ var collapseMenu = function ( button ) {
         Animation.animateOut( button )
         
         var delay = 100
-        $.each( button.siblings().not('.tasks'), function ( i, btnSibling ) {
+        $.each( button.siblings().not('.tasks').not('.user'), function ( i, btnSibling ) {
             
             delay += 150
             btnSibling = $( btnSibling )
@@ -81,7 +81,9 @@ var collapseMenu = function ( button ) {
                 Animation.animateIn( btnProcess )
                 Animation.animateIn( btnTerminal )
                 
-                Animation.animateIn( btnUser )
+                btnUser.css('display','block')
+                Animation.animateIn( btnUser  )
+
             }, 250 )
             
             

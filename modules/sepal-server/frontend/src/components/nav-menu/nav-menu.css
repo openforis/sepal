@@ -17,7 +17,8 @@
 
 #nav-menu a {
     /*margin-bottom: 3rem;*/
-    /*display: table;*/
+    display: block;
+    border-radius: 50%;
 }
 
 #nav-menu a:not(.expanded) {
@@ -27,7 +28,7 @@
     height: 4rem;
     left: 10%;
     padding: 0px !important;
-    display: table;
+    /*display: table;*/
     margin-bottom: 2rem;
     position: relative;
 }

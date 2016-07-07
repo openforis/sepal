@@ -28,7 +28,7 @@ var init = function ( e ) {
 }
 
 var showLogin = function ( e ) {
-    if( jobTimer ){
+    if ( jobTimer ) {
         clearTimeout( jobTimer )
     }
     initialized = false
@@ -42,12 +42,25 @@ var requestTasks = function ( callback ) {
             // Animation.removeAnimation( navMenuButton )
             
             if ( Model.isEmpty() ) {
-                // Animation.animateOut( navMenuButton )
-                navMenuButton.fadeOut()
+                if ( navMenuButton.is( ":visible" ) ) {
+                    Animation.animateOut( navMenuButton, function () {
+                        Animation.removeAnimation( navMenuButton )
+                    } )
+                }
+                // navMenuButton.fadeOut()
                 navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
             } else {
-                // Animation.animateIn( navMenuButton )
-                navMenuButton.fadeIn()
+                // navMenuButton.css('display','block')
+                if ( !navMenuButton.is( ":visible" ) ) {
+                    console.log(
+                        'not visible'
+                    )
+                    Animation.animateIn( navMenuButton, function () {
+                        // Animation.removeAnimation( navMenuButton )
+                    } )
+                }
+
+                // navMenuButton.fadeIn()
                 if ( Model.isActive() ) {
                     navMenuButton.find( 'i' ).addClass( 'fa-spin' )
                 } else {
@@ -117,6 +130,9 @@ var taskAction = function ( evt, taskId ) {
     postTaskAction( url, callback )
 }
 
+var checkStatus = function ( ) {
+    requestTasks()
+}
 
 EventBus.addEventListener( Events.SECTION.SHOW, init )
 EventBus.addEventListener( Events.LOGIN.SHOW, showLogin )
@@ -125,4 +141,4 @@ EventBus.addEventListener( Events.SECTION.TASK_MANAGER.CANCEL_TASK, taskAction )
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.REMOVE_TASK, taskAction )
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.EXECUTE_TASK, taskAction )
 
-EventBus.addEventListener( Events.SECTION.TASK_MANAGER.CHECK_STATUS, requestTasks )
+EventBus.addEventListener( Events.SECTION.TASK_MANAGER.CHECK_STATUS, checkStatus )

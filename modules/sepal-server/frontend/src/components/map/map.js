@@ -57,6 +57,9 @@ var show = function () {
         } )
 
         map.setOptions( { styles: mapStyle } )
+
+        // preview()
+
     } )
 }
 
@@ -117,6 +120,42 @@ var addLayer = function ( e, layer ) {
     if ( layer ) {
         layer.setMap( map )
     }
+}
+
+function preview() {
+    var country = 'Italy'
+    var targetDate = new Date().getTime()
+    var sensors = 'LANDSAT_8'
+    // var sensors = ['LANDSAT_8']
+    // sensors = sensors.join(',')
+    var years = '1'
+    var bands = 'B4, B3, B2'
+
+    $.getJSON('/preview', {country: country, targetDate: targetDate, sensors: sensors, years: years, bands: bands},
+        function (data) {
+            var mapId = data.mapId
+            var token = data.token
+            var bounds = data.bounds
+            render(mapId, token, bounds)
+        })
+}
+
+function render(mapId, token, bounds) {
+    var eeMapOptions = {
+        getTileUrl: function (tile, zoom) {
+            var baseUrl = 'https://earthengine.googleapis.com/map'
+            var url = [baseUrl, mapId, zoom, tile.x, tile.y].join('/')
+            url += '?token=' + token
+            return url
+        },
+        tileSize: new google.maps.Size(256, 256)
+    }
+
+    // Create the map type.
+    var mapType = new google.maps.ImageMapType(eeMapOptions)
+    // map.overlayMapTypes.clear()
+    map.overlayMapTypes.push(mapType)
+
 }
 
 EventBus.addEventListener( Events.APP.LOAD, show )

@@ -21,10 +21,11 @@
     /*padding: 0px 16px;*/
     border-right: 2px solid rgba(255, 255, 255, 0.25);
 
-    /*float: left;*/
+    float: left;
     width: 25%;
 
     /*resize: horizontal;*/
+    overflow-x: hidden;
     overflow-y: auto;
     position: relative;
 }
