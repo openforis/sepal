@@ -1,12 +1,28 @@
 import ee
-from datetime import date
+
+_collection_names_by_sensor = {
+    'LANDSAT_8': ['LC8_L1T_TOA'],
+    'LANDSAT_ETM_SLC_OFF': ['LE7_L1T_TOA'],
+    'LANDSAT_ETM': ['LE7_L1T_TOA'],
+    'LANDSAT_TM': ['LT4_L1T_TOA', 'LT5_L1T_TOA'],
+}
+
+_bands_by_collection_name = {
+    'LC8_L1T_TOA': ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B10'],
+    'LE7_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6_VCID_1'],
+    'LT5_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6'],
+    'LT4_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6']
+}
 
 
-def createMosaic(
+def create_mosaic(
         aoi,
-        target_date,
         sensors,
-        years,
+        target_day_of_year,
+        from_day_of_year,
+        to_day_of_year,
+        from_date,
+        to_date,
         bands):
     """Creates a cloud-free mosaic.
 
@@ -28,37 +44,43 @@ def createMosaic(
     :return: the mosaic
     :rtype: ee.Image
          """
+    max_cloud_cover = 99
 
-    target_day_of_year = 260
-    from_day_of_year = 200
-    to_day_of_year = 300
-    from_date = '2013-02-11'
-    to_date = date.today().isoformat()
-    max_cloud_cover = 1
+    filter = _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year)
 
-    input = ee.ImageCollection('LC8_L1T_TOA').filter(
-        _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year))
+    image_collection = _create_merged_image_collections(sensors, filter)
+    mosaic = _create_mosaic(image_collection, aoi, target_day_of_year, bands)
 
-    mosaic1 = input.map(lambda image: _addqa(image, target_day_of_year, bands))
+    # image_collections = _create_image_collections(sensors, filter)
+    # mosaics = map(
+    #     lambda image_collection: _create_mosaic(image_collection, aoi, target_day_of_year, bands),
+    #     image_collections
+    # )
+    # mosaic = _merge_mosaics(mosaics)
+
+    return mosaic.select(bands)
+
+
+def _create_mosaic(image_collection, aoi, target_day_of_year, bands):
+    image_collection_qa = image_collection.map(
+        lambda image: _addqa(image, target_day_of_year, bands)
+    )
     # Create a 'best pixel' composite using the warmest, wettest pixel closest to
     # specified target date
-    mosaic2 = mosaic1.qualityMosaic('cweight')
-
+    mosaic = image_collection_qa.qualityMosaic('cweight')
     # clip the water bodies according to GFC Water Mask
     gfc_image = ee.Image('UMD/hansen/global_forest_change_2013')
     gfc_watermask = gfc_image.select(['datamask'])  # 0 = no data, 1 = mapped land, 2 = water
-    mosaic3 = mosaic2.mask(gfc_watermask.neq(2)).clip(aoi).int16()
-
-    # Select the bands from the BIG mosaic
-    return mosaic3.select(bands)
+    mosaic_mask = mosaic.mask(gfc_watermask.neq(2)).clip(aoi).int16()
+    return mosaic_mask
 
 
-def createMosaicFromScenes(scenes, bands):
+def create_mosaic_from_scenes(scenes, bands):
     # TODO: Implement...
     return 'foo'
 
 
-def getScenesInMosaic(
+def get_scenes_in_mosaic(
         aoi,
         target_date,
         sensors,
@@ -188,3 +210,44 @@ def _toa_correction(image_day_of_year):
     solar_elev = solar_elev1.add(solar_elev2)
     toa_cor2 = solar_elev.sin()
     return toa_cor2
+
+
+def _create_image_collections(sensors, filter):
+    collection_names = set(_flatten(map(lambda sensor: _collection_names_by_sensor[sensor], sensors)))
+    return map(
+        lambda collection_name: _create_image_collection(collection_name, filter),
+        collection_names
+    )
+
+
+def _create_merged_image_collections(sensors, filter):
+    collection_names = set(_flatten(map(lambda sensor: _collection_names_by_sensor[sensor], sensors)))
+    image_collections = map(
+        lambda collection_name: _create_image_collection(collection_name, filter),
+        collection_names
+    )
+    return reduce(_merge_image_collections, image_collections)
+
+
+def _merge_image_collections(collection_a, collection_b):
+    return collection_a.merge(collection_b)
+
+
+def _merge_mosaics(mosaics):
+    mosaic_collection = ee.ImageCollection.fromImages(mosaics)
+    return mosaic_collection.qualityMosaic('cweight')
+
+
+def _create_image_collection(collection_name, filter):
+    return ee.ImageCollection(collection_name).filter(filter).map(
+        lambda image: _normalize_band_names(image, collection_name)
+    )
+
+
+def _normalize_band_names(image, collection_name):
+    my_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
+    return image.select(_bands_by_collection_name[collection_name], my_band_names)
+
+
+def _flatten(iterable):
+    return [item for sublist in iterable for item in sublist]
