@@ -9,8 +9,8 @@ var Loader     = require( '../loader/loader' )
 var Model      = require( './scenes-selection-m' )
 var View       = require( './scenes-selection-v' )
 var SearchForm = require( './../search/search-form' )
-var Filter     = require( './scenes-selection-filter-m' )
-var FilterView = require( './scenes-selection-filter-v' )
+var Filter     = require( './../scenes-selection-filter/scenes-selection-filter-m' )
+var FilterView = require( './../scenes-selection-filter/scenes-selection-filter-v' )
 
 var show = function ( e, type ) {
     if ( type == 'scene-images-selection' ) {
@@ -128,7 +128,9 @@ var filterTargetDayChange = function ( e, value ) {
 EventBus.addEventListener( Events.MAP.SCENE_AREA_CLICK, loadSceneImages )
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
-EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.RESET, reset )
+
+EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, reset )
+
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.UPDATE, update )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SELECT, selectImage )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.DESELECT, deselectImage )

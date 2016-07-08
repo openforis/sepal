@@ -254,7 +254,8 @@ var sceneAreaChange = function ( e, sceneAreaId ) {
         .style( 'stroke', bgColor )
 }
 
-EventBus.addEventListener( Events.MAP.LOAD_SCENE_AREAS, loadSceneAreas )
+EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, loadSceneAreas )
+
 EventBus.addEventListener( Events.SECTION.SHOW, showApplicationSection )
 EventBus.addEventListener( Events.SECTION.REDUCE, reduceApplicationSection )
 

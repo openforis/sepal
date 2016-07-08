@@ -5,7 +5,7 @@ require( './scenes-selection.css' )
 
 var moment = require( 'moment' )
 
-var FilterView = require( '../scenes-selection/scenes-selection-filter-v' )
+var FilterView = require( '../scenes-selection-filter/scenes-selection-filter-v' )
 
 var EventBus  = require( '../event/event-bus' )
 var Events    = require( '../event/events' )

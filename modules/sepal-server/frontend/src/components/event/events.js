@@ -29,9 +29,10 @@ Events = {
         
         , SEARCH: {
             // SHOW_SCENE_AREA: 'section.search.show-scene-area'
-            REQUEST_SCENE_AREAS: 'section.search.request-scene-areas'
-            , RETRIEVE         : 'section.search.retrieve'
-            , MOSAIC           : 'section.search.mosaic'
+            FORM_SUBMIT         : 'section.search.form-submit'
+            , SCENE_AREAS_LOADED: 'section.search.scene-areas-loaded'
+            , RETRIEVE          : 'section.search.retrieve'
+            , MOSAIC            : 'section.search.mosaic'
         }
         
         , BROWSE: {
@@ -44,8 +45,8 @@ Events = {
         , TERMINAL: {}
         
         , SCENES_SELECTION: {
-            RESET                     : 'section.scenes-selection.reset'
-            , UPDATE                  : 'section.scenes-selection.update'
+            // RESET                     : 'section.scenes-selection.reset'
+            UPDATE                    : 'section.scenes-selection.update'
             , SELECT                  : 'section.scenes-selection.select'
             , DESELECT                : 'section.scenes-selection.deselect'
             , SORT_CHANGE             : 'section.scenes-selection.sort-change'
@@ -68,7 +69,7 @@ Events = {
     
     , MAP: {
         ZOOM_TO           : 'map.zoom-to'
-        , LOAD_SCENE_AREAS: 'map.load-scene-areas'
+        // , LOAD_SCENE_AREAS: 'map.load-scene-areas'
         , SCENE_AREA_CLICK: 'map.scene-area-click'
         , ADD_LAYER       : 'map.add-layer'
     }

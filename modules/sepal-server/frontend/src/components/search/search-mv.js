@@ -30,8 +30,8 @@ var requestSceneAreas = function () {
             EventBus.dispatch( Events.SECTION.REDUCE, null )
         }
         , success   : function ( response ) {
-            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.RESET )
-            EventBus.dispatch( Events.MAP.LOAD_SCENE_AREAS, null, response )
+            EventBus.dispatch( Events.SECTION.SEARCH.SCENE_AREAS_LOADED , null , response )
+            // EventBus.dispatch( Events.MAP.LOAD_SCENE_AREAS, null, response )
             Loader.hide( { delay: 300 } )
         }
     }
@@ -40,4 +40,4 @@ var requestSceneAreas = function () {
 }
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
-EventBus.addEventListener( Events.SECTION.SEARCH.REQUEST_SCENE_AREAS, requestSceneAreas )
+EventBus.addEventListener( Events.SECTION.SEARCH.FORM_SUBMIT, requestSceneAreas )

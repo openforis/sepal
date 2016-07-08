@@ -12,11 +12,16 @@ var SearchForm     = require( '../search/search-form' )
 View.init()
 View.hide( { delay: 0, duration: 0 } )
 
+var show     = false
+var appShown = true
+
 var appShow   = function ( e, section ) {
     View.hide()
+    appShown = true
 }
 var appReduce = function ( e, section ) {
-    if ( SceneAreaModel.areasSelection().length > 0 ) {
+    appShown = false
+    if ( show ) {
         View.show()
     }
 }
@@ -66,8 +71,17 @@ var mosaic = function () {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
+var sceneAreasLoaded = function () {
+    show = true
+    if ( appShown == false ) {
+        appReduce()
+    }
+}
+
 EventBus.addEventListener( Events.SECTION.SHOW, appShow )
 EventBus.addEventListener( Events.SECTION.REDUCE, appReduce )
 
 EventBus.addEventListener( Events.SECTION.SEARCH.RETRIEVE, retrieve )
 EventBus.addEventListener( Events.SECTION.SEARCH.MOSAIC, mosaic )
+
+EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, sceneAreasLoaded )

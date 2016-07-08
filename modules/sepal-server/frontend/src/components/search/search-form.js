@@ -85,7 +85,7 @@ var bindEvents = function () {
                 Animation.animateOut( formNotify )
                 formNotify.html( '' )
                 
-                EventBus.dispatch( Events.SECTION.SEARCH.REQUEST_SCENE_AREAS, null )
+                EventBus.dispatch( Events.SECTION.SEARCH.FORM_SUBMIT, null )
             } else {
                 Animation.animateIn( formNotify )
             }
