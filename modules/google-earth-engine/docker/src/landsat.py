@@ -45,19 +45,9 @@ def create_mosaic(
     :rtype: ee.Image
          """
     max_cloud_cover = 99
-
     filter = _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year)
-
     image_collection = _create_merged_image_collection(sensors, filter)
     mosaic = _create_mosaic(image_collection, aoi, target_day_of_year, bands)
-
-    # image_collections = _create_image_collections(sensors, filter)
-    # mosaics = map(
-    #     lambda image_collection: _create_mosaic(image_collection, aoi, target_day_of_year, bands),
-    #     image_collections
-    # )
-    # mosaic = _merge_mosaics(mosaics)
-
     return mosaic.select(bands)
 
 
@@ -153,24 +143,24 @@ def _addqa(image, target_day_of_year, bands):
             image.select(band).float().divide(toa_correction).multiply(10000)
         )
     ndvi = (
-        image.select('B5').subtract(image.select('B4'))
+        image.select('B4').subtract(image.select('B3'))
     ).divide(
-        image.select('B5').add(image.select('B4'))
+        image.select('B4').add(image.select('B3'))
     )
     temp = image.select('B10').focal_min().rename(['temp'])
     weight = ndvi.multiply(temp).rename(['cweight'])
     # Extract the cloud cover from Landsat metadata and use it as an inverse weight
     # e.g. to favor all pixels from an acquisition with low cloud cover
     # theoretically to help keep the resulting mosaic radiometrically uniform
-    #cweight = image.metadata('CLOUD_COVER').subtract(100).multiply(-1)
-    #cweight2 = weight.multiply(days_from_target_to_end_of_year).multiply(cweight).rename(['cweight'])
+    # cweight = image.metadata('CLOUD_COVER').subtract(100).multiply(-1)
+    # cweight2 = weight.multiply(days_from_target_to_end_of_year).multiply(cweight).rename(['cweight'])
     result = image
     for adjusted in adjustedBands:
         result = result.addBands(adjusted, overwrite=True)
     return result \
         .addBands(temp) \
         .addBands(weight) \
-        #.addBands(cweight2)
+        # .addBands(cweight2)
 
 
 def _toa_correction(image_day_of_year):
@@ -212,14 +202,6 @@ def _toa_correction(image_day_of_year):
     return toa_cor2
 
 
-def _create_image_collections(sensors, filter):
-    collection_names = set(_flatten(map(lambda sensor: _collection_names_by_sensor[sensor], sensors)))
-    return map(
-        lambda collection_name: _create_image_collection(collection_name, filter),
-        collection_names
-    )
-
-
 def _create_merged_image_collection(sensors, filter):
     collection_names = set(_flatten(map(lambda sensor: _collection_names_by_sensor[sensor], sensors)))
     image_collections = map(
@@ -230,19 +212,17 @@ def _create_merged_image_collection(sensors, filter):
 
 
 def _merge_image_collections(collection_a, collection_b):
-    return ee.ImageCollection(collection_a.merge(collection_b).set('bands', ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']))
-
-
-def _merge_mosaics(mosaics):
-    mosaic_collection = ee.ImageCollection.fromImages(mosaics)
-    return mosaic_collection.qualityMosaic('cweight')
+    return ee.ImageCollection(
+        collection_a.merge(collection_b).set('bands', ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']))
 
 
 def _create_image_collection(collection_name, filter):
-    image_collection = ee.ImageCollection(collection_name).filter(filter).map(
+    filtered_collection = ee.ImageCollection(collection_name).filter(filter)
+    normalized_collection = filtered_collection.map(
         lambda image: _normalize_band_names(image, collection_name)
     )
-    return image_collection
+    return normalized_collection
+
 
 def _normalize_band_names(image, collection_name):
     my_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']

@@ -26,8 +26,8 @@ def index():
 @app.route('/preview')
 def preview():
     aoi = _countryGeometry(request.args.get('country'))
-    from_date = date.fromtimestamp(int(request.args.get('fromDate')) / 1000.0).isoformat()
-    to_date = date.fromtimestamp(int(request.args.get('toDate')) / 1000.0).isoformat()
+    from_date = date.fromtimestamp(int(request.args.get('fromDate')) / 1000.0).isoformat() + 'T00:00'
+    to_date = date.fromtimestamp(int(request.args.get('toDate')) / 1000.0).isoformat() + 'T00:00'
     sensors = request.args.get('sensors').split(',')
     bands = request.args.get('bands')
     mosaic = landsat.create_mosaic(
