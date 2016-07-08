@@ -33,7 +33,7 @@ var animateIn = function ( element, callback ) {
 
     element.find( '[data-animation-in]' ).andSelf().one( animationEnd, function () {
         var $this = $( this )
-        $this.show()
+        $this.show(0)
 
         // if ( callback ) {
         //     callback()

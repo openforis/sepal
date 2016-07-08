@@ -3,6 +3,8 @@
     /*display: none;*/
     padding-bottom: 1rem;
     text-transform: none;
+    max-width: 90%;
+    text-overflow: ellipsis;
 }
 
 #browse .btn-download:disabled {
@@ -25,8 +27,10 @@
     width: 25%;
 
     /*resize: horizontal;*/
+    overflow-x: hidden;
     overflow-y: auto;
     position: relative;
+    vertical-align: top;
 }
 
 #browse .dir-header > div {

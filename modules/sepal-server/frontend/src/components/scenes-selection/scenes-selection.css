@@ -121,12 +121,13 @@
 }
 
 #scene-images-selection .image-section .image-attributes .btn-add {
-    top: -44px;
+    top: -48px;
     right: -40px;
-    /*background-color: rgba(255, 255, 255, 0.05);*/
-    background-color: rgba(24, 24, 25, .1);
-    /* border: 1px solid rgba(255, 255, 255, 0.1); */
+    /* background-color: rgba(255, 255, 255, 0.05); */
+    /* background-color: rgba(24, 24, 25, .1); */
+    border: 1px solid rgba(255, 255, 255, 0.1);
     /* color: black; */
+    padding-top: 6px;
 }
 
 /*expanded image section*/

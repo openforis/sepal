@@ -1,9 +1,41 @@
 (function () {
     var map = new google.maps.Map(
-        document.getElementById( 'map' ), {
-            // maxZoom: 10,
-            streetViewControl: false
-        } )
+        document.getElementById('map'), {
+            zoom: 3,
+            minZoom: 3,
+            maxZoom: 11,
+            center: new google.maps.LatLng( 16.7794913, 9.6771556 ),
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            zoomControl: true,
+            zoomControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_CENTER
+                , style: google.maps.ZoomControlStyle.LARGE
+            },
+            mapTypeControl: false,
+            scaleControl: false,
+            streetViewControl: false,
+            rotateControl: false,
+            fullscreenControl: false,
+            backgroundColor: '#131314'
+        })
+    var mapStyle = [
+        {
+            "stylers": [ { "visibility": "simplified" } ]
+        }
+        , {
+            "stylers": [ { "color": "#131314" } ]
+        }
+        , {
+            "featureType": "water",
+            "stylers"    : [ { "color": "#131313" }, { "lightness": 4 }
+            ]
+        }
+        , {
+            "elementType": "labels.text.fill"
+            , "stylers"  : [ { "visibility": "off" }, { "lightness": 25 } ]
+        }
+    ]
+    map.setOptions( { styles: mapStyle } )
     
     $( '#form' ).submit( function ( e ) {
         e.preventDefault()
