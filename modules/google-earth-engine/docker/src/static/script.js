@@ -1,23 +1,23 @@
 (function () {
-    var map = new google.maps.Map(
-        document.getElementById('map'), {
-            zoom: 3,
-            minZoom: 3,
-            maxZoom: 11,
-            center: new google.maps.LatLng( 16.7794913, 9.6771556 ),
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
-            zoomControl: true,
+    var map      = new google.maps.Map(
+        document.getElementById( 'map' ), {
+            zoom              : 3,
+            minZoom           : 3,
+            maxZoom           : 11,
+            center            : new google.maps.LatLng( 16.7794913, 9.6771556 ),
+            mapTypeId         : google.maps.MapTypeId.ROADMAP,
+            zoomControl       : true,
             zoomControlOptions: {
                 position: google.maps.ControlPosition.RIGHT_CENTER
-                , style: google.maps.ZoomControlStyle.LARGE
+                , style : google.maps.ZoomControlStyle.LARGE
             },
-            mapTypeControl: false,
-            scaleControl: false,
-            streetViewControl: false,
-            rotateControl: false,
-            fullscreenControl: false,
-            backgroundColor: '#131314'
-        })
+            mapTypeControl    : false,
+            scaleControl      : false,
+            streetViewControl : false,
+            rotateControl     : false,
+            fullscreenControl : false,
+            backgroundColor   : '#131314'
+        } )
     var mapStyle = [
         {
             "stylers": [ { "visibility": "simplified" } ]
@@ -47,12 +47,12 @@
         previewScenes()
     } )
     
-    var fromDate         = new Date()
+    var fromDate = new Date()
     fromDate.setMonth( 0 )
     fromDate.setDate( 1 )
     var fromDatePicker = createDatePicker( $( '#from-date' )[ 0 ], fromDate )
-    var toDatePicker = createDatePicker( $( '#to-date' )[ 0 ], new Date() )
-    $('#target-day-of-year').val(dayOfYear())
+    var toDatePicker   = createDatePicker( $( '#to-date' )[ 0 ], new Date() )
+    $( '#target-day-of-year' ).val( dayOfYear() )
     
     function preview() {
         console.log( 'Preview' )
@@ -87,7 +87,15 @@
             } )
         
         $( '#scenes-in-mosaic' ).html( 'Determining scenes used in mosaic...' )
-        $.getJSON( 'scenes-in-mosaic', { country: country, targetDate: targetDate, sensors: sensors, years: years, bands: bands },
+        $.getJSON( 'scenes-in-mosaic', {
+                country        : country,
+                sensors        : sensors,
+                fromDate       : fromDate,
+                toDate         : toDate,
+                targetDayOfYear: targetDayOfYear,
+                fromDayOfYear  : fromDayOfYear,
+                toDayOfYear    : toDayOfYear
+            },
             function ( data ) {
                 $( '#scenes-in-mosaic' ).html( data.join( '<br/>' ) )
             } )
@@ -95,10 +103,17 @@
     
     function previewScenes() {
         console.log( 'Preview scenes' )
-        var scenes = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
-        var bands  = $( '#bands' ).val()
+        var country = $( '#countries' ).val()
+        var scenes  = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
+        var bands   = $( '#bands' ).val()
+        var targetDayOfYear = $( '#target-day-of-year' ).val()
         
-        $.getJSON( 'preview-scenes', { scenes, bands },
+        $.getJSON( 'preview-scenes', {
+                country: country,
+                scenes : scenes,
+                targetDayOfYear: targetDayOfYear,
+                bands  : bands
+            },
             function ( data ) {
                 var mapId  = data.mapId
                 var token  = data.token
@@ -146,10 +161,10 @@
     }
     
     function dayOfYear() {
-        var now = new Date();
-        var start = new Date(now.getFullYear(), 0, 0);
-        var diff = now - start;
+        var now    = new Date();
+        var start  = new Date( now.getFullYear(), 0, 0 );
+        var diff   = now - start;
         var oneDay = 1000 * 60 * 60 * 24;
-        return Math.floor(diff / oneDay);
+        return Math.floor( diff / oneDay );
     }
 })()

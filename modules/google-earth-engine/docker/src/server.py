@@ -41,13 +41,12 @@ def preview():
         bands=bands.split(', ')
     )
 
-    vizParams = {
+    mapid = mosaic.getMapId({
         'bands': bands,
         'min': 100,
         'max': 5000,
         'gamma': 1.2
-    }
-    mapid = mosaic.getMapId(vizParams)
+    })
     bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     return json.dumps({
         'mapId': mapid['mapid'],
@@ -58,22 +57,23 @@ def preview():
 
 @app.route('/preview-scenes')
 def previewScenes():
+    aoi = _countryGeometry(request.args.get('country'))
     scenes = request.args.get('scenes').split(',')
     bands = request.args.get('bands')
     mosaic = landsat.create_mosaic_from_scenes(
-        scenes=scenes,
-        bands=bands
+        aoi=aoi,
+        sceneIds=scenes,
+        target_day_of_year=int(request.args.get('targetDayOfYear')),
+        bands=bands.split(', ')
     )
 
-    vizParams = {
+    mapid = mosaic.getMapId({
         'bands': bands,
         'min': 100,
         'max': 5000,
         'gamma': 1.2
-    }
-    mapid = mosaic.getMapId(vizParams)
-    # TODO: Get bounds from mosaic
-    bounds = 'foo'
+    })
+    bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     return json.dumps({
         'mapId': mapid['mapid'],
         'token': mapid['token'],
@@ -83,17 +83,20 @@ def previewScenes():
 
 @app.route('/scenes-in-mosaic')
 def scenes_in_mosaic():
+
     aoi = _countryGeometry(request.args.get('country'))
-    target_date = date.fromtimestamp(int(request.args.get('targetDate')) / 1000.0)
+    from_date = date.fromtimestamp(int(request.args.get('fromDate')) / 1000.0).isoformat() + 'T00:00'
+    to_date = date.fromtimestamp(int(request.args.get('toDate')) / 1000.0).isoformat() + 'T00:00'
     sensors = request.args.get('sensors').split(',')
-    years = request.args.get('years')
     scenesInMosaic = landsat.get_scenes_in_mosaic(
         aoi=aoi,
-        target_date=target_date,
         sensors=sensors,
-        years=years
+        from_date=from_date,
+        to_date=to_date,
+        target_day_of_year=int(request.args.get('targetDayOfYear')),
+        from_day_of_year=int(request.args.get('fromDayOfYear')),
+        to_day_of_year=int(request.args.get('toDayOfYear'))
     )
-
     return json.dumps(scenesInMosaic)
 
 

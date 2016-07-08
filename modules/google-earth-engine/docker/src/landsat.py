@@ -1,10 +1,17 @@
 import ee
+from itertools import groupby
 
 _collection_names_by_sensor = {
     'LANDSAT_8': ['LC8_L1T_TOA'],
     'LANDSAT_ETM_SLC_OFF': ['LE7_L1T_TOA'],
     'LANDSAT_ETM': ['LE7_L1T_TOA'],
     'LANDSAT_TM': ['LT4_L1T_TOA', 'LT5_L1T_TOA'],
+}
+_collection_name_by_scene_id_prefix = {
+    'LC8': 'LC8_L1T_TOA',
+    'LE7': 'LE7_L1T_TOA',
+    'LT5': 'LT5_L1T_TOA',
+    'LT4': 'LT4_L1T_TOA',
 }
 
 _bands_by_collection_name = {
@@ -29,25 +36,26 @@ def create_mosaic(
     :param aoi: The aoi to create the mosaic for.
     :type aoi: ee.Geometry
 
-    :param target_date: The ideal date to generate the mosaic for.
-    :type target_date: datetime.date
-
     :param sensors: The sensors to include imagery from.
     :type sensors: iterable
-
-    :param years: The number of years to include imagery from.
-    :type years: int
-
-    :param bands: A list of the bands to include in the mosaic.
-    :type bands: iterable
-
-    :return: the mosaic
-    :rtype: ee.Image
          """
     max_cloud_cover = 99
     filter = _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year)
     image_collection = _create_merged_image_collection(sensors, filter)
     mosaic = _create_mosaic(image_collection, aoi, target_day_of_year, bands)
+    return mosaic.select(bands)
+
+
+def create_mosaic_from_scenes(
+        aoi,
+        sceneIds,
+        target_day_of_year,
+        bands):
+    collection_for_id = lambda scene_id: _collection_name_by_scene_id_prefix[scene_id[:3]]
+    grouped = groupby(sorted(sceneIds), collection_for_id)
+    collections = [_create_collection(name, ids) for name, ids in grouped]
+    merged_collection = reduce(_merge_image_collections, collections)
+    mosaic = _create_mosaic(merged_collection, aoi, target_day_of_year, bands)
     return mosaic.select(bands)
 
 
@@ -65,16 +73,14 @@ def _create_mosaic(image_collection, aoi, target_day_of_year, bands):
     return mosaic_mask
 
 
-def create_mosaic_from_scenes(scenes, bands):
-    # TODO: Implement...
-    return 'foo'
-
-
 def get_scenes_in_mosaic(
         aoi,
-        target_date,
         sensors,
-        years):
+        target_day_of_year,
+        from_day_of_year,
+        to_day_of_year,
+        from_date,
+        to_date):
     """Returns the scenes required to create a cloud-free mosaic.
 
     :param aoi: The aoi to create the mosaic for.
@@ -231,3 +237,12 @@ def _normalize_band_names(image, collection_name):
 
 def _flatten(iterable):
     return [item for sublist in iterable for item in sublist]
+
+
+def _create_collection(name, image_ids):
+    images = [ee.Image('LANDSAT/' + name + '/' + image_id) for image_id in image_ids]
+    collection = ee.ImageCollection(images)
+    normalized_collection = collection.map(
+        lambda image: _normalize_band_names(image, name)
+    )
+    return normalized_collection
