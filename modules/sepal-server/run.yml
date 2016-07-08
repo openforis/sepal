@@ -1,4 +1,4 @@
- ---
+---
 - file: path="/data/sepal" state=directory
 - file: path="/data/sepal/ldap" state=directory
 - file: path="/data/sepal/shiny" state=directory
