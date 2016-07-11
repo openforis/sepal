@@ -15,6 +15,14 @@ import landsat
 
 app = Flask(__name__)
 
+viz_by_bands = {
+    'B3, B2, B1': {'bands': 'B3, B2, B1', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'B4, B3, B2': {'bands': 'B4, B3, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'B7, B4, B3': {'bands': 'B7, B4, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'B7, B5, B3': {'bands': 'B7, B5, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'B7, B4, B2': {'bands': 'B7, B4, B2', 'min': 100, 'max': 5000, 'gamma': 0.2},
+    'date': {'bands': 'date', 'min': 100, 'max': 5000, 'gamma': 1.2},
+}
 
 @app.route('/')
 def index():
@@ -41,12 +49,7 @@ def preview():
         bands=bands.split(', ')
     )
 
-    mapid = mosaic.getMapId({
-        'bands': bands,
-        'min': 100,
-        'max': 5000,
-        'gamma': 1.2
-    })
+    mapid = mosaic.getMapId(viz_by_bands[bands])
     bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     return json.dumps({
         'mapId': mapid['mapid'],
@@ -67,12 +70,7 @@ def previewScenes():
         bands=bands.split(', ')
     )
 
-    mapid = mosaic.getMapId({
-        'bands': bands,
-        'min': 100,
-        'max': 5000,
-        'gamma': 1.2
-    })
+    mapid = mosaic.getMapId(viz_by_bands[bands])
     bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     return json.dumps({
         'mapId': mapid['mapid'],
@@ -83,7 +81,6 @@ def previewScenes():
 
 @app.route('/scenes-in-mosaic')
 def scenes_in_mosaic():
-
     aoi = _countryGeometry(request.args.get('country'))
     from_date = date.fromtimestamp(int(request.args.get('fromDate')) / 1000.0).isoformat() + 'T00:00'
     to_date = date.fromtimestamp(int(request.args.get('toDate')) / 1000.0).isoformat() + 'T00:00'
