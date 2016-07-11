@@ -21,7 +21,7 @@ _bands_by_collection_name = {
     'LT4_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6']
 }
 
-
+_normalized_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
 _milis_per_day = 1000 * 60 * 60 * 24
 
 def create_mosaic(
@@ -101,12 +101,15 @@ def get_scenes_in_mosaic(
     :type bands: iterable
          """
     # TODO: Implement...
-    return [
-        'LC81910312016185LGN00',
-        'LE71910312016177NSG00',
-        'LC81920302016176LGN00',
-        'LE71910302016177NSG00',
-        'LC81900312016178LGN00']
+    return ['LC81910312016137LGN00',
+            'LE71910312016097NSG00',
+            'LC81920302016176LGN00',
+            'LE71920302016152NSG00',
+            'LE71910302016097NSG00',
+            'LC81910302016105LGN00',
+            'LC81900312016178LGN00',
+            'LE71900312016106NSG00',
+            'LC81900312016098LGN00']
 
 
 def _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year):
@@ -146,10 +149,10 @@ def _addqa(image, target_day_of_year, bands):
     days_from_target_to_end_of_year = ee.Number(365).subtract(days_from_target_day)
     toa_correction = _toa_correction(image_day_of_year)
     adjustedBands = []
-    # for band in bands:
-    #     adjustedBands.append(
-    #         image.select(band).float().divide(toa_correction).multiply(10000)
-    #     )
+    for band in _bands_to_toa_correct(bands):
+        adjustedBands.append(
+            image.select(band).float().divide(toa_correction).multiply(10000)
+        )
     ndvi = (
         image.select('B4').subtract(image.select('B3'))
     ).divide(
@@ -170,9 +173,11 @@ def _addqa(image, target_day_of_year, bands):
     return result \
         .addBands(time) \
         .addBands(temp) \
-        .addBands(cweight2) \
-        # .addBands(cweight2)
+        .addBands(cweight2)
 
+
+def _bands_to_toa_correct(bands):
+    return filter(lambda band: band in _normalized_band_names, bands)
 
 def _toa_correction(image_day_of_year):
     """Correct TOA reflectance for sun angle per pixel.
@@ -215,10 +220,7 @@ def _toa_correction(image_day_of_year):
 
 def _create_merged_image_collection(sensors, filter):
     collection_names = set(_flatten(map(lambda sensor: _collection_names_by_sensor[sensor], sensors)))
-    image_collections = map(
-        lambda collection_name: _create_image_collection(collection_name, filter),
-        collection_names
-    )
+    image_collections = [_create_image_collection(name, filter) for name in collection_names]
     return reduce(_merge_image_collections, image_collections)
 
 
@@ -236,8 +238,7 @@ def _create_image_collection(collection_name, filter):
 
 
 def _normalize_band_names(image, collection_name):
-    my_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
-    return image.select(_bands_by_collection_name[collection_name], my_band_names)
+    return image.select(_bands_by_collection_name[collection_name], _normalized_band_names)
 
 
 def _flatten(iterable):
