@@ -104,12 +104,12 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                         source: rs.getString('meta_data_source') as MetaDataSource,
                         sceneAreaId: rs.getString('scene_area_id'),
                         sensorId: rs.getString('sensor_id'),
-                        acquisitionDate: new Date(rs.getDate('acquisition_date').time as long),
+                        acquisitionDate: new Date(rs.getTimestamp('acquisition_date').time as long),
                         cloudCover: rs.getDouble('cloud_cover'),
                         sunAzimuth: rs.getDouble('sun_azimuth'),
                         sunElevation: rs.getDouble('sun_elevation'),
                         browseUrl: URI.create(rs.getString('browse_url')),
-                        updateTime: new Date(rs.getDate('update_time').time as long)
+                        updateTime: new Date(rs.getTimestamp('update_time').time as long)
                 )
                 if (!callback.call(scene))
                     break
