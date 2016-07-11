@@ -24,6 +24,7 @@ _bands_by_collection_name = {
 _normalized_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
 _milis_per_day = 1000 * 60 * 60 * 24
 
+
 def create_mosaic(
         aoi,
         sensors,
@@ -148,11 +149,7 @@ def _addqa(image, target_day_of_year, bands):
     days_from_target_day = ee.Number(target_day_of_year).subtract(image_day_of_year).abs()
     days_from_target_to_end_of_year = ee.Number(365).subtract(days_from_target_day)
     toa_correction = _toa_correction(image_day_of_year)
-    adjustedBands = []
-    for band in _bands_to_toa_correct(bands):
-        adjustedBands.append(
-            image.select(band).float().divide(toa_correction).multiply(10000)
-        )
+
     ndvi = (
         image.select('B4').subtract(image.select('B3'))
     ).divide(
@@ -160,7 +157,7 @@ def _addqa(image, target_day_of_year, bands):
     )
     temp = image.select('B10').focal_min().rename(['temp'])
     tmpndvi = ndvi.multiply(temp)
-    #time = ndvi.multiply(temp).rename(['date'])
+    # time = ndvi.multiply(temp).rename(['date'])
     time = image.metadata('system:time_start').divide(_milis_per_day).rename(['date'])
     # Extract the cloud cover from Landsat metadata and use it as an inverse weight
     # e.g. to favor all pixels from an acquisition with low cloud cover
@@ -168,7 +165,12 @@ def _addqa(image, target_day_of_year, bands):
     cloudweight = image.metadata('CLOUD_COVER').subtract(100).multiply(-1)
     cweight2 = tmpndvi.multiply(days_from_target_to_end_of_year).multiply(cloudweight).rename(['cweight'])
     result = image
-    for adjusted in adjustedBands:
+    adjusted_bands = []
+    for band in _bands_to_toa_correct(bands):
+        adjusted_bands.append(
+            image.select(band).float().divide(toa_correction).multiply(10000)
+        )
+    for adjusted in adjusted_bands:
         result = result.addBands(adjusted, overwrite=True)
     return result \
         .addBands(time) \
@@ -178,6 +180,7 @@ def _addqa(image, target_day_of_year, bands):
 
 def _bands_to_toa_correct(bands):
     return filter(lambda band: band in _normalized_band_names, bands)
+
 
 def _toa_correction(image_day_of_year):
     """Correct TOA reflectance for sun angle per pixel.
