@@ -28,7 +28,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         def response = get(path: 'data/sceneareas', query: [countryIso: 'aa'])
 
         then:
-        1 * queryDispatcher.submit({ it.aoiId == 'aa' } as FindSceneAreasForAoi) >> [
+        1 * queryDispatcher.submit({ it.keyValue == 'aa' } as FindSceneAreasForAoi) >> [
                 new SceneArea(
                         id: 'scene area id',
                         polygon: new Polygon([new LatLng(1d, 1d), new LatLng(2d, 2d), new LatLng(3d, 3d), new LatLng(1d, 1d)]))

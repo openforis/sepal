@@ -56,7 +56,7 @@
     
     function preview() {
         console.log( 'Preview' )
-        var country = $( '#countries' ).val()
+        var iso     = $( '#countries' ).val()
         var sensors = []
         $( '#sensors' ).find( 'input:checked' ).each( function () {
             sensors.push( $( this ).attr( 'id' ) )
@@ -70,7 +70,9 @@
         var bands           = $( '#bands' ).val()
         
         $.getJSON( 'preview', {
-                country        : country,
+                fusionTable    : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
+                keyColumn      : 'ISO',
+                keyValue       : iso,
                 sensors        : sensors,
                 fromDate       : fromDate,
                 toDate         : toDate,
@@ -88,7 +90,9 @@
         
         $( '#scenes-in-mosaic' ).html( 'Determining scenes used in mosaic...' )
         $.getJSON( 'scenes-in-mosaic', {
-                country        : country,
+                fusionTable    : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
+                keyColumn      : 'ISO',
+                keyValue       : iso,
                 sensors        : sensors,
                 fromDate       : fromDate,
                 toDate         : toDate,
@@ -103,16 +107,18 @@
     
     function previewScenes() {
         console.log( 'Preview scenes' )
-        var country = $( '#countries' ).val()
-        var scenes  = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
-        var bands   = $( '#bands' ).val()
+        var iso             = $( '#countries' ).val()
+        var scenes          = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
+        var bands           = $( '#bands' ).val()
         var targetDayOfYear = $( '#target-day-of-year' ).val()
         
         $.getJSON( 'preview-scenes', {
-                country: country,
-                scenes : scenes,
+                fusionTable    : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
+                keyColumn      : 'ISO',
+                keyValue       : iso,
+                scenes         : scenes,
                 targetDayOfYear: targetDayOfYear,
-                bands  : bands
+                bands          : bands
             },
             function ( data ) {
                 var mapId  = data.mapId

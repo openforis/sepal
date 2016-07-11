@@ -15,6 +15,8 @@ import org.openforis.sepal.util.DateTime
 import static groovy.json.JsonOutput.toJson
 
 class DataSearchEndpoint {
+    private static final FUSION_TABLE = '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F'
+    private static final KEY_COLUMN = 'ISO'
     private final QueryDispatcher queryDispatcher
     private final CommandDispatcher commandDispatcher
     private final UserRepository userRepository
@@ -32,7 +34,10 @@ class DataSearchEndpoint {
 
             get('/data/sceneareas') {
                 response.contentType = "application/json"
-                def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(aoiId: params.countryIso))
+                def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(
+                        fusionTable: FUSION_TABLE,
+                        keyColumn: KEY_COLUMN,
+                        keyValue: params.countryIso))
                 def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
                 send(toJson(data))
             }

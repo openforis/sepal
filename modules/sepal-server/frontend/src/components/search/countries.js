@@ -3,1078 +3,223 @@
  */
 
 var countries = [
-    {
-        "value":"Afghanistan",
-        "data":"AFG"
-    },
-    {
-        "value":"Albania",
-        "data":"ALB"
-    },
-    {
-        "value":"Algeria",
-        "data":"DZA"
-    },
-    {
-        "value":"Andorra",
-        "data":"ADD"
-    },
-    {
-        "value":"Angola",
-        "data":"AGO"
-    },
-    {
-        "value":"Antigua and Barbuda",
-        "data":"ATG"
-    },
-    {
-        "value":"Argentina",
-        "data":"ARG"
-    },
-    {
-        "value":"Armenia",
-        "data":"ARM"
-    },
-    {
-        "value":"Australia",
-        "data":"AU1"
-    },
-    {
-        "value":"Austria",
-        "data":"ATT"
-    },
-    {
-        "value":"Azerbaijan",
-        "data":"AZE"
-    },
-    {
-        "value":"Bahamas, The",
-        "data":"BS"
-    },
-    {
-        "value":"Bahrain",
-        "data":"BH"
-    },
-    {
-        "value":"Bangladesh",
-        "data":"BGD"
-    },
-    {
-        "value":"Barbados",
-        "data":"BB"
-    },
-    {
-        "value":"Belarus",
-        "data":"BY"
-    },
-    {
-        "value":"Belgium",
-        "data":"BEL"
-    },
-    {
-        "value":"Belize",
-        "data":"BZ"
-    },
-    {
-        "value":"Benin",
-        "data":"BJ"
-    },
-    {
-        "value":"Bhutan",
-        "data":"BTN"
-    },
-    {
-        "value":"Bolivia",
-        "data":"BO"
-    },
-    {
-        "value":"Bosnia and Herzegovina",
-        "data":"BA"
-    },
-    {
-        "value":"Botswana",
-        "data":"BW"
-    },
-    {
-        "value":"Brazil",
-        "data":"BRA"
-    },
-    {
-        "value":"Brunei",
-        "data":"BN"
-    },
-    {
-        "value":"Bulgaria",
-        "data":"BG"
-    },
-    {
-        "value":"Burkina Faso",
-        "data":"BF"
-    },
-    {
-        "value":"Burundi",
-        "data":"BI"
-    },
-    {
-        "value":"Cambodia",
-        "data":"KH"
-    },
-    {
-        "value":"Cameroon",
-        "data":"CM"
-    },
-    {
-        "value":"Canada",
-        "data":"CA"
-    },
-    {
-        "value":"Cape Verde",
-        "data":"CV"
-    },
-    {
-        "value":"Central African Republic",
-        "data":"CF"
-    },
-    {
-        "value":"Chad",
-        "data":"TD"
-    },
-    {
-        "value":"Chile",
-        "data":"CL"
-    },
-    {
-        "value":"China, People's Republic of",
-        "data":"CH1"
-    },
-    {
-        "value":"Colombia",
-        "data":"CO"
-    },
-    {
-        "value":"Comoros",
-        "data":"KM"
-    },
-    {
-        "value":"Congo, (Congo �� Kinshasa)",
-        "data":"CD"
-    },
-    {
-        "value":"Congo, (Congo �� Brazzaville)",
-        "data":"CG"
-    },
-    {
-        "value":"Costa Rica",
-        "data":"CR"
-    },
-    {
-        "value":"Cote d'Ivoire (Ivory Coast)",
-        "data":"CI"
-    },
-    {
-        "value":"Croatia",
-        "data":"HR"
-    },
-    {
-        "value":"Cuba",
-        "data":"CU"
-    },
-    {
-        "value":"Cyprus",
-        "data":"CY"
-    },
-    {
-        "value":"Czech Republic",
-        "data":"CZ"
-    },
-    {
-        "value":"Denmark",
-        "data":"DK"
-    },
-    {
-        "value":"Djibouti",
-        "data":"DJ"
-    },
-    {
-        "value":"Dominica",
-        "data":"DM"
-    },
-    {
-        "value":"Dominican Republic",
-        "data":"DO"
-    },
-    {
-        "value":"Ecuador",
-        "data":"EC"
-    },
-    {
-        "value":"Egypt",
-        "data":"EG"
-    },
-    {
-        "value":"El Salvador",
-        "data":"SV"
-    },
-    {
-        "value":"Equatorial Guinea",
-        "data":"GQ"
-    },
-    {
-        "value":"Eritrea",
-        "data":"ER"
-    },
-    {
-        "value":"Estonia",
-        "data":"EE"
-    },
-    {
-        "value":"Ethiopia",
-        "data":"ET"
-    },
-    {
-        "value":"Fiji",
-        "data":"FJ"
-    },
-    {
-        "value":"Finland",
-        "data":"FI"
-    },
-    {
-        "value":"France",
-        "data":"FRA"
-    },
-    {
-        "value":"Gabon",
-        "data":"GA"
-    },
-    {
-        "value":"Gambia, The",
-        "data":"GM"
-    },
-    {
-        "value":"Georgia",
-        "data":"GE"
-    },
-    {
-        "value":"Germany",
-        "data":"DEU"
-    },
-    {
-        "value":"Ghana",
-        "data":"GH"
-    },
-    {
-        "value":"Greece",
-        "data":"GR"
-    },
-    {
-        "value":"Grenada",
-        "data":"GD"
-    },
-    {
-        "value":"Guatemala",
-        "data":"GT"
-    },
-    {
-        "value":"Guinea",
-        "data":"GN"
-    },
-    {
-        "value":"Guinea-Bissau",
-        "data":"GW"
-    },
-    {
-        "value":"Guyana",
-        "data":"GY"
-    },
-    {
-        "value":"Haiti",
-        "data":"HT"
-    },
-    {
-        "value":"Honduras",
-        "data":"HN"
-    },
-    {
-        "value":"Hungary",
-        "data":"HU"
-    },
-    {
-        "value":"Iceland",
-        "data":"IS"
-    },
-    {
-        "value":"India",
-        "data":"IN"
-    },
-    {
-        "value":"Indonesia",
-        "data":"ID"
-    },
-    {
-        "value":"Iran",
-        "data":"IR"
-    },
-    {
-        "value":"Iraq",
-        "data":"IQ"
-    },
-    {
-        "value":"Ireland",
-        "data":"IE"
-    },
-    {
-        "value":"Israel",
-        "data":"IL"
-    },
-    {
-        "value":"Italy",
-        "data":"ITA"
-    },
-    {
-        "value":"Jamaica",
-        "data":"JM"
-    },
-    {
-        "value":"Japan",
-        "data":"JP"
-    },
-    {
-        "value":"Jordan",
-        "data":"JO"
-    },
-    {
-        "value":"Kazakhstan",
-        "data":"KZ"
-    },
-    {
-        "value":"Kenya",
-        "data":"KE"
-    },
-    {
-        "value":"Kiribati",
-        "data":"KI"
-    },
-    {
-        "value":"Korea, North",
-        "data":"KP"
-    },
-    {
-        "value":"Korea, South",
-        "data":"KR"
-    },
-    {
-        "value":"Kuwait",
-        "data":"KW"
-    },
-    {
-        "value":"Kyrgyzstan",
-        "data":"KG"
-    },
-    {
-        "value":"Laos",
-        "data":"LA"
-    },
-    {
-        "value":"Latvia",
-        "data":"LV"
-    },
-    {
-        "value":"Lebanon",
-        "data":"LB"
-    },
-    {
-        "value":"Lesotho",
-        "data":"LS"
-    },
-    {
-        "value":"Liberia",
-        "data":"LR"
-    },
-    {
-        "value":"Libya",
-        "data":"LY"
-    },
-    {
-        "value":"Liechtenstein",
-        "data":"LI"
-    },
-    {
-        "value":"Lithuania",
-        "data":"LT"
-    },
-    {
-        "value":"Luxembourg",
-        "data":"LU"
-    },
-    {
-        "value":"Macedonia",
-        "data":"MK"
-    },
-    {
-        "value":"Madagascar",
-        "data":"MG"
-    },
-    {
-        "value":"Malawi",
-        "data":"MW"
-    },
-    {
-        "value":"Malaysia",
-        "data":"MY"
-    },
-    {
-        "value":"Maldives",
-        "data":"MV"
-    },
-    {
-        "value":"Mali",
-        "data":"ML"
-    },
-    {
-        "value":"Malta",
-        "data":"MT"
-    },
-    {
-        "value":"Marshall Islands",
-        "data":"MH"
-    },
-    {
-        "value":"Mauritania",
-        "data":"MR"
-    },
-    {
-        "value":"Mauritius",
-        "data":"MU"
-    },
-    {
-        "value":"Mexico",
-        "data":"MX"
-    },
-    {
-        "value":"Micronesia",
-        "data":"FM"
-    },
-    {
-        "value":"Moldova",
-        "data":"MD"
-    },
-    {
-        "value":"Monaco",
-        "data":"MC"
-    },
-    {
-        "value":"Mongolia",
-        "data":"MN"
-    },
-    {
-        "value":"Montenegro",
-        "data":"ME"
-    },
-    {
-        "value":"Morocco",
-        "data":"MA"
-    },
-    {
-        "value":"Mozambique",
-        "data":"MZ"
-    },
-    {
-        "value":"Myanmar (Burma)",
-        "data":"MM"
-    },
-    {
-        "value":"Namibia",
-        "data":"NA"
-    },
-    {
-        "value":"Nauru",
-        "data":"NR"
-    },
-    {
-        "value":"Nepal",
-        "data":"NP"
-    },
-    {
-        "value":"Netherlands",
-        "data":"NL"
-    },
-    {
-        "value":"New Zealand",
-        "data":"NZ"
-    },
-    {
-        "value":"Nicaragua",
-        "data":"NI"
-    },
-    {
-        "value":"Niger",
-        "data":"NE"
-    },
-    {
-        "value":"Nigeria",
-        "data":"NG"
-    },
-    {
-        "value":"Norway",
-        "data":"NOR"
-    },
-    {
-        "value":"Oman",
-        "data":"OM"
-    },
-    {
-        "value":"Pakistan",
-        "data":"PK"
-    },
-    {
-        "value":"Palau",
-        "data":"PW"
-    },
-    {
-        "value":"Panama",
-        "data":"PA"
-    },
-    {
-        "value":"Papua New Guinea",
-        "data":"PG"
-    },
-    {
-        "value":"Paraguay",
-        "data":"PY"
-    },
-    {
-        "value":"Peru",
-        "data":"PE"
-    },
-    {
-        "value":"Philippines",
-        "data":"PH"
-    },
-    {
-        "value":"Poland",
-        "data":"PL"
-    },
-    {
-        "value":"Portugal",
-        "data":"PT"
-    },
-    {
-        "value":"Qatar",
-        "data":"QA"
-    },
-    {
-        "value":"Romania",
-        "data":"RO"
-    },
-    {
-        "value":"Russia",
-        "data":"RUS"
-    },
-    {
-        "value":"Rwanda",
-        "data":"RW"
-    },
-    {
-        "value":"Saint Kitts and Nevis",
-        "data":"KN"
-    },
-    {
-        "value":"Saint Lucia",
-        "data":"LC"
-    },
-    {
-        "value":"Saint Vincent and the Grenadines",
-        "data":"VC"
-    },
-    {
-        "value":"Samoa",
-        "data":"WS"
-    },
-    {
-        "value":"San Marino",
-        "data":"SM"
-    },
-    {
-        "value":"Sao Tome and Principe",
-        "data":"ST"
-    },
-    {
-        "value":"Saudi Arabia",
-        "data":"SA"
-    },
-    {
-        "value":"Senegal",
-        "data":"SN"
-    },
-    {
-        "value":"Serbia",
-        "data":"RS"
-    },
-    {
-        "value":"Seychelles",
-        "data":"SC"
-    },
-    {
-        "value":"Sierra Leone",
-        "data":"SL"
-    },
-    {
-        "value":"Singapore",
-        "data":"SG"
-    },
-    {
-        "value":"Slovakia",
-        "data":"SK"
-    },
-    {
-        "value":"Slovenia",
-        "data":"SI"
-    },
-    {
-        "value":"Solomon Islands",
-        "data":"SB"
-    },
-    {
-        "value":"Somalia",
-        "data":"SO"
-    },
-    {
-        "value":"South Africa",
-        "data":"ZA"
-    },
-    {
-        "value":"Spain",
-        "data":"ES"
-    },
-    {
-        "value":"Sri Lanka",
-        "data":"LK"
-    },
-    {
-        "value":"Sudan",
-        "data":"SD"
-    },
-    {
-        "value":"Suriname",
-        "data":"SR"
-    },
-    {
-        "value":"Swaziland",
-        "data":"SZ"
-    },
-    {
-        "value":"Sweden",
-        "data":"SWE"
-    },
-    {
-        "value":"Switzerland",
-        "data":"CH"
-    },
-    {
-        "value":"Syria",
-        "data":"SY"
-    },
-    {
-        "value":"Tajikistan",
-        "data":"TJ"
-    },
-    {
-        "value":"Tanzania",
-        "data":"TZA"
-    },
-    {
-        "value":"Thailand",
-        "data":"TH"
-    },
-    {
-        "value":"Timor-Leste (East Timor)",
-        "data":"TL"
-    },
-    {
-        "value":"Togo",
-        "data":"TG"
-    },
-    {
-        "value":"Tonga",
-        "data":"TO"
-    },
-    {
-        "value":"Trinidad and Tobago",
-        "data":"TT"
-    },
-    {
-        "value":"Tunisia",
-        "data":"TN"
-    },
-    {
-        "value":"Turkey",
-        "data":"TR"
-    },
-    {
-        "value":"Turkmenistan",
-        "data":"TM"
-    },
-    {
-        "value":"Tuvalu",
-        "data":"TV"
-    },
-    {
-        "value":"Uganda",
-        "data":"UG"
-    },
-    {
-        "value":"Ukraine",
-        "data":"UA"
-    },
-    {
-        "value":"United Arab Emirates",
-        "data":"AE"
-    },
-    {
-        "value":"United Kingdom",
-        "data":"GB1"
-    },
-    {
-        "value":"United States",
-        "data":"US1"
-    },
-    {
-        "value":"Uruguay",
-        "data":"UY"
-    },
-    {
-        "value":"Uzbekistan",
-        "data":"UZ"
-    },
-    {
-        "value":"Vanuatu",
-        "data":"VU"
-    },
-    {
-        "value":"Vatican City",
-        "data":"VA"
-    },
-    {
-        "value":"Venezuela",
-        "data":"VE"
-    },
-    {
-        "value":"Vietnam",
-        "data":"VN"
-    },
-    {
-        "value":"Yemen",
-        "data":"YE"
-    },
-    {
-        "value":"Zambia",
-        "data":"ZM"
-    },
-    {
-        "value":"Zimbabwe",
-        "data":"ZW"
-    },
-    {
-        "value":"Abkhazia",
-        "data":"GE"
-    },
-    {
-        "value":"China, Republic of (Taiwan)",
-        "data":"TW"
-    },
-    {
-        "value":"Nagorno-Karabakh",
-        "data":"AZ"
-    },
-    {
-        "value":"Northern Cyprus",
-        "data":"CY"
-    },
-    {
-        "value":"Pridnestrovie (Transnistria)",
-        "data":"MD"
-    },
-    {
-        "value":"Somaliland",
-        "data":"SO"
-    },
-    {
-        "value":"South Ossetia",
-        "data":"GE"
-    },
-    {
-        "value":"Ashmore and Cartier Islands",
-        "data":"AU"
-    },
-    {
-        "value":"Christmas Island",
-        "data":"CX"
-    },
-    {
-        "value":"Cocos (Keeling) Islands",
-        "data":"CC"
-    },
-    {
-        "value":"Coral Sea Islands",
-        "data":"AU"
-    },
-    {
-        "value":"Heard Island and McDonald Islands",
-        "data":"HM"
-    },
-    {
-        "value":"Norfolk Island",
-        "data":"NF"
-    },
-    {
-        "value":"New Caledonia",
-        "data":"NC"
-    },
-    {
-        "value":"French Polynesia",
-        "data":"PF"
-    },
-    {
-        "value":"Mayotte",
-        "data":"YT"
-    },
-    {
-        "value":"Saint Barthelemy",
-        "data":"GP"
-    },
-    {
-        "value":"Saint Martin",
-        "data":"GP"
-    },
-    {
-        "value":"Saint Pierre and Miquelon",
-        "data":"PM"
-    },
-    {
-        "value":"Wallis and Futuna",
-        "data":"WF"
-    },
-    {
-        "value":"French Southern and Antarctic Lands",
-        "data":"TF"
-    },
-    {
-        "value":"Clipperton Island",
-        "data":"PF"
-    },
-    {
-        "value":"Bouvet Island",
-        "data":"BV"
-    },
-    {
-        "value":"Cook Islands",
-        "data":"CK"
-    },
-    {
-        "value":"Niue",
-        "data":"NU"
-    },
-    {
-        "value":"Tokelau",
-        "data":"TK"
-    },
-    {
-        "value":"Guernsey",
-        "data":"GG"
-    },
-    {
-        "value":"Isle of Man",
-        "data":"IM"
-    },
-    {
-        "value":"Jersey",
-        "data":"JE"
-    },
-    {
-        "value":"Anguilla",
-        "data":"AI"
-    },
-    {
-        "value":"Bermuda",
-        "data":"BM"
-    },
-    {
-        "value":"British Indian Ocean Territory",
-        "data":"IO"
-    },
-    {
-        "value":"British Sovereign Base Areas",
-        "data":""
-    },
-    {
-        "value":"British Virgin Islands",
-        "data":"VG"
-    },
-    {
-        "value":"Cayman Islands",
-        "data":"KY"
-    },
-    {
-        "value":"Falkland Islands (Islas Malvinas)",
-        "data":"FK"
-    },
-    {
-        "value":"Gibraltar",
-        "data":"GI"
-    },
-    {
-        "value":"Montserrat",
-        "data":"MS"
-    },
-    {
-        "value":"Pitcairn Islands",
-        "data":"PN"
-    },
-    {
-        "value":"Saint Helena",
-        "data":"SH"
-    },
-    {
-        "value":"South Georgia & South Sandwich Islands",
-        "data":"GS"
-    },
-    {
-        "value":"Turks and Caicos Islands",
-        "data":"TC"
-    },
-    {
-        "value":"Northern Mariana Islands",
-        "data":"MP"
-    },
-    {
-        "value":"Puerto Rico",
-        "data":"PR"
-    },
-    {
-        "value":"American Samoa",
-        "data":"AS"
-    },
-    {
-        "value":"Baker Island",
-        "data":"UM"
-    },
-    {
-        "value":"Guam",
-        "data":"GU"
-    },
-    {
-        "value":"Howland Island",
-        "data":"UM"
-    },
-    {
-        "value":"Jarvis Island",
-        "data":"UM"
-    },
-    {
-        "value":"Johnston Atoll",
-        "data":"UM"
-    },
-    {
-        "value":"Kingman Reef",
-        "data":"UM"
-    },
-    {
-        "value":"Midway Islands",
-        "data":"UM"
-    },
-    {
-        "value":"Navassa Island",
-        "data":"UM"
-    },
-    {
-        "value":"Palmyra Atoll",
-        "data":"UM"
-    },
-    {
-        "value":"U.S. Virgin Islands",
-        "data":"VI"
-    },
-    {
-        "value":"Wake Island",
-        "data":"UM"
-    },
-    {
-        "value":"Hong Kong",
-        "data":"HK"
-    },
-    {
-        "value":"Macau",
-        "data":"MO"
-    },
-    {
-        "value":"Faroe Islands",
-        "data":"FO"
-    },
-    {
-        "value":"Greenland",
-        "data":"GL"
-    },
-    {
-        "value":"French Guiana",
-        "data":"GF"
-    },
-    {
-        "value":"Guadeloupe",
-        "data":"GP"
-    },
-    {
-        "value":"Martinique",
-        "data":"MQ"
-    },
-    {
-        "value":"Reunion",
-        "data":"RE"
-    },
-    {
-        "value":"Aland",
-        "data":"AX"
-    },
-    {
-        "value":"Aruba",
-        "data":"AW"
-    },
-    {
-        "value":"Netherlands Antilles",
-        "data":"AN"
-    },
-    {
-        "value":"Svalbard",
-        "data":"SJ"
-    },
-    {
-        "value":"Ascension",
-        "data":"AC"
-    },
-    {
-        "value":"Tristan da Cunha",
-        "data":"TA"
-    },
-    {
-        "value":"Australian Antarctic Territory",
-        "data":"AQ"
-    },
-    {
-        "value":"Ross Dependency",
-        "data":"AQ"
-    },
-    {
-        "value":"Peter I Island",
-        "data":"AQ"
-    },
-    {
-        "value":"Queen Maud Land",
-        "data":"AQ"
-    },
-    {
-        "value":"British Antarctic Territory",
-        "data":"AQ"
-    }
+    { "data": "AFG", "value": "Afghanistan" },
+    { "data": "ALB", "value": "Albania" },
+    { "data": "DZA", "value": "Algeria" },
+    { "data": "ASM", "value": "American Samoa" },
+    { "data": "AND", "value": "Andorra" },
+    { "data": "AGO", "value": "Angola" },
+    { "data": "ATG", "value": "Antigua and Barbuda" },
+    { "data": "ARG", "value": "Argentina" },
+    { "data": "ARM", "value": "Armenia" },
+    { "data": "ABW", "value": "Aruba" },
+    { "data": "AUS", "value": "Australia" },
+    { "data": "AUT", "value": "Austria" },
+    { "data": "AZE", "value": "Azerbaijan, Republic of" },
+    { "data": "BHS", "value": "Bahamas" },
+    { "data": "BHR", "value": "Bahrain" },
+    { "data": "BGD", "value": "Bangladesh" },
+    { "data": "BRB", "value": "Barbados" },
+    { "data": "BLR", "value": "Belarus" },
+    { "data": "BEL", "value": "Belgium" },
+    { "data": "BLZ", "value": "Belize" },
+    { "data": "BEN", "value": "Benin" },
+    { "data": "BMU", "value": "Bermuda" },
+    { "data": "BTN", "value": "Bhutan" },
+    { "data": "BOL", "value": "Bolivia" },
+    { "data": "BIH", "value": "Bosnia and Herzegovina" },
+    { "data": "BWA", "value": "Botswana" },
+    { "data": "BRA", "value": "Brazil" },
+    { "data": "VGB", "value": "British Virgin Islands" },
+    { "data": "BRN", "value": "Brunei Darussalam" },
+    { "data": "BGR", "value": "Bulgaria" },
+    { "data": "BFA", "value": "Burkina Faso" },
+    { "data": "BDI", "value": "Burundi" },
+    { "data": "KHM", "value": "Cambodia" },
+    { "data": "CMR", "value": "Cameroon" },
+    { "data": "CAN", "value": "Canada" },
+    { "data": "CPV", "value": "Cape Verde" },
+    { "data": "CYM", "value": "Cayman Islands" },
+    { "data": "CAF", "value": "Central African Republic" },
+    { "data": "TCD", "value": "Chad" },
+    { "data": "CHL", "value": "Chile" },
+    { "data": "CHN", "value": "China" },
+    { "data": "COL", "value": "Colombia" },
+    { "data": "COM", "value": "Comoros" },
+    { "data": "COK", "value": "Cook Islands" },
+    { "data": "CRI", "value": "Costa Rica" },
+    { "data": "CIV", "value": "Côte d'Ivoire" },
+    { "data": "HRV", "value": "Croatia" },
+    { "data": "CUB", "value": "Cuba" },
+    { "data": "CYP", "value": "Cyprus" },
+    { "data": "CZE", "value": "Czech Republic" },
+    { "data": "COD", "value": "Congo, Dem Republic of" },
+    { "data": "DNK", "value": "Denmark" },
+    { "data": "DJI", "value": "Djibouti" },
+    { "data": "DOM", "value": "Dominican Republic" },
+    { "data": "DMA", "value": "Dominica" },
+    { "data": "ECU", "value": "Ecuador" },
+    { "data": "EGY", "value": "Egypt" },
+    { "data": "SLV", "value": "El Salvador" },
+    { "data": "GNQ", "value": "Equatorial Guinea" },
+    { "data": "ERI", "value": "Eritrea" },
+    { "data": "EST", "value": "Estonia" },
+    { "data": "ETH", "value": "Ethiopia" },
+    { "data": "FRO", "value": "Faroe Islands" },
+    { "data": "FJI", "value": "Fiji Islands" },
+    { "data": "FIN", "value": "Finland" },
+    { "data": "FRA", "value": "France" },
+    { "data": "GUF", "value": "French Guiana" },
+    { "data": "PYF", "value": "French Polynesia" },
+    { "data": "GAB", "value": "Gabon" },
+    { "data": "GMB", "value": "Gambia" },
+    { "data": "GEO", "value": "Georgia" },
+    { "data": "DEU", "value": "Germany" },
+    { "data": "GHA", "value": "Ghana" },
+    { "data": "GRC", "value": "Greece" },
+    { "data": "GRD", "value": "Grenada" },
+    { "data": "GLP", "value": "Guadeloupe" },
+    { "data": "GUM", "value": "Guam" },
+    { "data": "GTM", "value": "Guatemala" },
+    { "data": "GNB", "value": "Guinea-Bissau" },
+    { "data": "GIN", "value": "Guinea" },
+    { "data": "GUY", "value": "Guyana" },
+    { "data": "HTI", "value": "Haiti" },
+    { "data": "HND", "value": "Honduras" },
+    { "data": "HUN", "value": "Hungary" },
+    { "data": "ISL", "value": "Iceland" },
+    { "data": "IND", "value": "India" },
+    { "data": "IDN", "value": "Indonesia" },
+    { "data": "IRN", "value": "Iran, Islamic Rep of" },
+    { "data": "IRQ", "value": "Iraq" },
+    { "data": "IRL", "value": "Ireland" },
+    { "data": "IMN", "value": "Isle of Man" },
+    { "data": "ISR", "value": "Israel" },
+    { "data": "ITA", "value": "Italy" },
+    { "data": "JAM", "value": "Jamaica" },
+    { "data": "JPN", "value": "Japan" },
+    { "data": "JOR", "value": "Jordan" },
+    { "data": "KAZ", "value": "Kazakhstan" },
+    { "data": "KEN", "value": "Kenya" },
+    { "data": "KIR", "value": "Kiribati" },
+    { "data": "KWT", "value": "Kuwait" },
+    { "data": "KGZ", "value": "Kyrgyzstan" },
+    { "data": "LAO", "value": "Laos" },
+    { "data": "LVA", "value": "Latvia" },
+    { "data": "LBN", "value": "Lebanon" },
+    { "data": "LSO", "value": "Lesotho" },
+    { "data": "LBR", "value": "Liberia" },
+    { "data": "LBY", "value": "Libyan Arab Jamahiriya" },
+    { "data": "LIE", "value": "Liechtenstein" },
+    { "data": "LTU", "value": "Lithuania" },
+    { "data": "LUX", "value": "Luxembourg" },
+    { "data": "MKD", "value": "Macedonia, The Fmr Yug Rp" },
+    { "data": "MDG", "value": "Madagascar" },
+    { "data": "MWI", "value": "Malawi" },
+    { "data": "MYS", "value": "Malaysia" },
+    { "data": "MDV", "value": "Maldives" },
+    { "data": "MLI", "value": "Mali" },
+    { "data": "MLT", "value": "Malta" },
+    { "data": "MHL", "value": "Marshall Islands" },
+    { "data": "MTQ", "value": "Martinique" },
+    { "data": "MRT", "value": "Mauritania" },
+    { "data": "MUS", "value": "Mauritius" },
+    { "data": "MYT", "value": "Mayotte" },
+    { "data": "MEX", "value": "Mexico" },
+    { "data": "FSM", "value": "Micronesia, Fed States of" },
+    { "data": "MDA", "value": "Moldova, Republic of" },
+    { "data": "MNG", "value": "Mongolia" },
+    { "data": "MSR", "value": "Montserrat" },
+    { "data": "MAR", "value": "Morocco" },
+    { "data": "MOZ", "value": "Mozambique" },
+    { "data": "MMR", "value": "Myanmar" },
+    { "data": "NAM", "value": "Namibia" },
+    { "data": "NPL", "value": "Nepal" },
+    { "data": "NLD", "value": "Netherlands" },
+    { "data": "NCL", "value": "New Caledonia" },
+    { "data": "NZL", "value": "New Zealand" },
+    { "data": "NIC", "value": "Nicaragua" },
+    { "data": "NER", "value": "Niger" },
+    { "data": "NGA", "value": "Nigeria" },
+    { "data": "NIU", "value": "Niue" },
+    { "data": "PRK", "value": "Korea, Dem People's Rep" },
+    { "data": "MNP", "value": "Northern Mariana Is" },
+    { "data": "NOR", "value": "Norway" },
+    { "data": "OMN", "value": "Oman" },
+    { "data": "PAK", "value": "Pakistan" },
+    { "data": "PLW", "value": "Palau" },
+    { "data": "PSE", "value": "Palestine, Occupied Tr." },
+    { "data": "PAN", "value": "Panama" },
+    { "data": "PNG", "value": "Papua New Guinea" },
+    { "data": "PRY", "value": "Paraguay" },
+    { "data": "PER", "value": "Peru" },
+    { "data": "PHL", "value": "Philippines" },
+    { "data": "POL", "value": "Poland" },
+    { "data": "PRT", "value": "Portugal" },
+    { "data": "PRI", "value": "Puerto Rico" },
+    { "data": "QAT", "value": "Qatar" },
+    { "data": "COG", "value": "Congo, Republic of" },
+    { "data": "REU", "value": "Réunion" },
+    { "data": "ROU", "value": "Romania" },
+    { "data": "RUS", "value": "Russian Federation" },
+    { "data": "RWA", "value": "Rwanda" },
+    { "data": "SHN", "value": "Saint Helena" },
+    { "data": "KNA", "value": "Saint Kitts and Nevis" },
+    { "data": "LCA", "value": "Saint Lucia" },
+    { "data": "SPM", "value": "Saint Pierre & Miquelon" },
+    { "data": "VCT", "value": "Saint Vincent/Grenadines" },
+    { "data": "WSM", "value": "Samoa" },
+    { "data": "SMR", "value": "San Marino" },
+    { "data": "STP", "value": "Sao Tome and Principe" },
+    { "data": "SAU", "value": "Saudi Arabia" },
+    { "data": "SEN", "value": "Senegal" },
+    { "data": "SRB", "value": "Serbia and Montenegro" },
+    { "data": "SYC", "value": "Seychelles" },
+    { "data": "SLE", "value": "Sierra Leone" },
+    { "data": "SGP", "value": "Singapore" },
+    { "data": "SVK", "value": "Slovakia" },
+    { "data": "SVN", "value": "Slovenia" },
+    { "data": "SLB", "value": "Solomon Islands" },
+    { "data": "SOM", "value": "Somalia" },
+    { "data": "ZAF", "value": "South Africa" },
+    { "data": "KOR", "value": "Korea, Republic of" },
+    { "data": "SSD", "value": "South Sudan" },
+    { "data": "ESP", "value": "Spain" },
+    { "data": "LKA", "value": "Sri Lanka" },
+    { "data": "SDN", "value": "Sudan" },
+    { "data": "SUR", "value": "Suriname" },
+    { "data": "SWZ", "value": "Swaziland" },
+    { "data": "SWE", "value": "Sweden" },
+    { "data": "CHE", "value": "Switzerland" },
+    { "data": "SYR", "value": "Syrian Arab Republic" },
+    { "data": "TJK", "value": "Tajikistan" },
+    { "data": "TZA", "value": "Tanzania, United Rep of" },
+    { "data": "THA", "value": "Thailand" },
+    { "data": "TLS", "value": "Timor-Leste" },
+    { "data": "TGO", "value": "Togo" },
+    { "data": "TON", "value": "Tonga" },
+    { "data": "TTO", "value": "Trinidad and Tobago" },
+    { "data": "TUN", "value": "Tunisia" },
+    { "data": "TUR", "value": "Turkey" },
+    { "data": "TKM", "value": "Turkmenistan" },
+    { "data": "TCA", "value": "Turks and Caicos Is" },
+    { "data": "TUV", "value": "Tuvalu" },
+    { "data": "UGA", "value": "Uganda" },
+    { "data": "UKR", "value": "Ukraine" },
+    { "data": "ARE", "value": "United Arab Emirates" },
+    { "data": "GBR", "value": "United Kingdom" },
+    { "data": "USA", "value": "United States of America" },
+    { "data": "URY", "value": "Uruguay" },
+    { "data": "UZB", "value": "Uzbekistan" },
+    { "data": "VUT", "value": "Vanuatu" },
+    { "data": "VEN", "value": "Venezuela,Bolivar Rep of" },
+    { "data": "VNM", "value": "Viet Nam" },
+    { "data": "VIR", "value": "US Virgin Islands" },
+    { "data": "WLF", "value": "Wallis and Futuna Is" },
+    { "data": "ESH", "value": "Western Sahara" },
+    { "data": "YEM", "value": "Yemen" },
+    { "data": "ZMB", "value": "Zambia" },
+    { "data": "ZWE", "value": "Zimbabwe" }
 ]
 
 module.exports = countries

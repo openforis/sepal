@@ -15,7 +15,9 @@ import static org.openforis.sepal.component.datasearch.MetaDataSource.USGS
 import static org.openforis.sepal.util.DateTime.parseDateString
 
 class DataSearchTest extends Specification {
-    public static final String SOME_AOI_ID = 'some AOI'
+    public static final String SOME_FUSION_TABLE = 'some fusion table'
+    public static final String SOME_KEY_COLUMN = 'some fusion table column'
+    public static final String SOME_KEY_VALUE = 'some key value'
     public static final String SCENE_AREA_ID = 'some scene area'
     def database = new Database()
     def sceneAreaProvider = new FakeSceneAreaProvider()
@@ -27,10 +29,14 @@ class DataSearchTest extends Specification {
     )
 
     def 'When finding scene areas for AOI, scene areas are returned'() {
-        def expectedSceneAreas = sceneAreaProvider.areas(SOME_AOI_ID, [sceneArea('some scene area')])
+        def expectedSceneAreas = sceneAreaProvider.areas(SOME_FUSION_TABLE, SOME_KEY_COLUMN, SOME_KEY_VALUE, [sceneArea('some scene area')])
 
         when:
-        def sceneAreas = component.submit(new FindSceneAreasForAoi(aoiId: SOME_AOI_ID))
+        def sceneAreas = component.submit(new FindSceneAreasForAoi(
+                fusionTable: SOME_FUSION_TABLE,
+                keyColumn: SOME_KEY_COLUMN,
+                keyValue: SOME_KEY_VALUE
+        ))
 
         then:
         sceneAreas == expectedSceneAreas

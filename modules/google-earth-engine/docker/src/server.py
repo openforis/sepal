@@ -28,20 +28,23 @@ viz_by_bands = {
         'bands': 'date',
         'min': params['from_days_since_epoch'],
         'max': params['to_days_since_epoch']
-        },
+    },
 }
 
 
 @app.route('/')
 def index():
-    countries = ee.FeatureCollection('ft:15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F')
-    countryNames = countries.sort('NAME_ENGLI').aggregate_array('NAME_ENGLI').getInfo()
-    return render_template('index.html', countryNames=countryNames)
+    countries = ee.FeatureCollection('ft:15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F') \
+        .filterMetadata('NAME_FAO', 'not_equals', '')
+    isos = countries.sort('NAME_FAO').aggregate_array('ISO').getInfo()
+    names = countries.sort('NAME_FAO').aggregate_array('NAME_FAO').getInfo()
+    countries = zip(isos, names)
+    return render_template('index.html', countries=countries)
 
 
 @app.route('/preview')
 def preview():
-    aoi = _countryGeometry(request.args.get('country'))
+    aoi = _aoiGeometry()
     from_millis_since_epoch = int(request.args.get('fromDate'))
     to_millis_since_epoch = int(request.args.get('toDate'))
     from_date = date.fromtimestamp(from_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
@@ -74,7 +77,7 @@ def preview():
 
 @app.route('/preview-scenes')
 def previewScenes():
-    aoi = _countryGeometry(request.args.get('country'))
+    aoi = _aoiGeometry()
     scenes = request.args.get('scenes').split(',')
     bands = request.args.get('bands')
     mosaic = landsat.create_mosaic_from_scenes(
@@ -84,9 +87,10 @@ def previewScenes():
         bands=bands.split(', ')
     )
 
+    # TODO: Fix fromDate and toDate - no present in these requests. Expect them or figure them out...
     mapid = mosaic.getMapId(viz_by_bands[bands]({
-        'from_date': int(request.args.get('fromDate')),
-        'to_date': int(request.args.get('toDate'))
+        # 'from_date': int(request.args.get('fromDate')),
+        # 'to_date': int(request.args.get('toDate'))
     }))
     bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     return json.dumps({
@@ -98,7 +102,7 @@ def previewScenes():
 
 @app.route('/scenes-in-mosaic')
 def scenes_in_mosaic():
-    aoi = _countryGeometry(request.args.get('country'))
+    aoi = _aoiGeometry()
     from_date = date.fromtimestamp(int(request.args.get('fromDate')) / 1000.0).isoformat() + 'T00:00'
     to_date = date.fromtimestamp(int(request.args.get('toDate')) / 1000.0).isoformat() + 'T00:00'
     sensors = request.args.get('sensors').split(',')
@@ -116,10 +120,12 @@ def scenes_in_mosaic():
 
 @app.route('/sceneareas')
 def sceneareas():
-    countryIso = request.args.get('aoiId')
-    countries = ee.FeatureCollection('ft:15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F')
-    aoi = countries \
-        .filterMetadata('ISO', 'equals', countryIso)
+    fusionTable = request.args.get('fusionTable')
+    keyColumn = request.args.get('keyColumn')
+    keyValue = request.args.get('keyValue')
+    features = ee.FeatureCollection('ft:' + fusionTable)
+    aoi = features \
+        .filterMetadata(keyColumn, 'equals', keyValue)
 
     wrs = ee.FeatureCollection('ft:1EJjaOloQD5NL7ReC5aVtn8cX05xbdEbZthUiCFB6')  # WRS-2 polygons
     spatialFilter = ee.Filter.intersects(
@@ -189,10 +195,13 @@ def scenearea(sceneAreaId):
     return json.dumps(scenes)
 
 
-def _countryGeometry(countryName):
-    countries = ee.FeatureCollection('ft:15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F')
+def _aoiGeometry():
+    fusionTable = request.args.get('fusionTable')
+    keyColumn = request.args.get('keyColumn')
+    keyValue = request.args.get('keyValue')
+    countries = ee.FeatureCollection('ft:' + fusionTable)
     aoi = countries \
-        .filterMetadata('NAME_FAO', 'equals', countryName)
+        .filterMetadata(keyColumn, 'equals', keyValue)
     return aoi
 
 

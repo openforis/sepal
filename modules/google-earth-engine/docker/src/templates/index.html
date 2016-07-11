@@ -15,8 +15,8 @@
                     <label for="countries">Country</label><br/>
                     <select id="countries">
                         <option value="">[Please select]</option>
-                        {% for country in countryNames %}
-                        <option>{{ country }}</option>
+                        {% for country in countries %}
+                        <option value="{{ country[0] }}">{{ country[1] }}</option>
                         {% endfor %}
                     </select>
                 </p>

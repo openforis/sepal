@@ -8,7 +8,9 @@ import org.openforis.sepal.query.QueryHandler
 
 @Immutable
 class FindSceneAreasForAoi implements Query<List<SceneArea>> {
-    String aoiId
+    String fusionTable
+    String keyColumn
+    String keyValue
 }
 
 class FindSceneAreasForAoiHandler implements QueryHandler<List<SceneArea>, FindSceneAreasForAoi> {
@@ -19,6 +21,6 @@ class FindSceneAreasForAoiHandler implements QueryHandler<List<SceneArea>, FindS
     }
 
     List<SceneArea> execute(FindSceneAreasForAoi query) {
-        return sceneAreaProvider.findSceneAreasInAoi(query.aoiId)
+        return sceneAreaProvider.findSceneAreasInAoi(query.fusionTable, query.keyColumn, query.keyValue)
     }
 }
