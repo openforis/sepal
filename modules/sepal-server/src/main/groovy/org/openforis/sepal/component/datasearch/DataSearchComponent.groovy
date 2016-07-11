@@ -7,6 +7,8 @@ import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaDataHandler
 import org.openforis.sepal.component.datasearch.endpoint.DataSearchEndpoint
+import org.openforis.sepal.component.datasearch.query.FindBestScenes
+import org.openforis.sepal.component.datasearch.query.FindBestScenesHandler
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoiHandler
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
@@ -52,6 +54,7 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
         queryDispatcher = new HandlerRegistryQueryDispatcher()
                 .register(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(sceneAreaProvider))
                 .register(FindScenesForSceneArea, new FindScenesForSceneAreaHandler(sceneMetaDataRepository))
+                .register(FindBestScenes, new FindBestScenesHandler(sceneMetaDataRepository))
 
         sceneMetaDataUpdateScheduler = new SceneMetaDataUpdateScheduler(commandDispatcher)
     }

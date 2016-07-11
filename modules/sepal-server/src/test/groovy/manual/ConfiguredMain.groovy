@@ -14,7 +14,14 @@ class ConfiguredMain {
     static void main(String[] args) {
         def config = new SepalConfiguration()
         LOG.info("Migrating database")
-        new Sql(config.dataSource).execute('CREATE SCHEMA IF NOT EXISTS "public"')
+        def sql = new Sql(config.dataSource)
+        sql.execute('''
+                CREATE SCHEMA IF NOT EXISTS "public";
+                CREATE ALIAS IF NOT EXISTS SPATIAL_INIT FOR
+                    "org.h2gis.h2spatialext.CreateSpatialExtension.initSpatialExtension";
+                CREATE ALIAS IF NOT EXISTS MAKEDATE FOR "fake.MySqlFunctions.makeDate";
+                CREATE ALIAS IF NOT EXISTS STR_TO_DATE FOR "fake.MySqlFunctions.strToDate";
+                CALL SPATIAL_INIT();''')
         new Flyway(
                 locations: ["filesystem:modules/mysql/docker/script/sqlScripts"],
                 dataSource: config.dataSource,

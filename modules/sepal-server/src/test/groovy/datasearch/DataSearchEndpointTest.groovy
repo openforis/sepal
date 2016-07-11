@@ -1,8 +1,13 @@
 package datasearch
 
 import groovymvc.Controller
-import org.openforis.sepal.component.datasearch.*
+import org.openforis.sepal.component.datasearch.LatLng
+import org.openforis.sepal.component.datasearch.Polygon
+import org.openforis.sepal.component.datasearch.SceneArea
+import org.openforis.sepal.component.datasearch.SceneMetaData
+import org.openforis.sepal.component.datasearch.api.SceneQuery
 import org.openforis.sepal.component.datasearch.endpoint.DataSearchEndpoint
+import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.util.DateTime
@@ -10,6 +15,7 @@ import util.AbstractEndpointTest
 
 import static org.openforis.sepal.component.datasearch.MetaDataSource.USGS
 import static org.openforis.sepal.util.DateTime.parseDateString
+import static org.openforis.sepal.util.DateTime.toDateTimeString
 
 @SuppressWarnings("GroovyAssignabilityCheck")
 class DataSearchEndpointTest extends AbstractEndpointTest {
@@ -37,13 +43,13 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
     }
 
     def 'GET /data/sceneareas/{sceneAreaId} returns scenes'() {
-        // TODO: Days from target date
         def query = [startDate: '2016-01-01', endDate: '2016-02-01', targetDay: '12-31']
         def expectedSceneQuery = new SceneQuery(
                 sceneAreaId: 'someSceneAreaId',
                 fromDate: parseDateString(query.startDate),
                 toDate: parseDateString(query.endDate),
-                targetDay: query.targetDay)
+                targetDay: query.targetDay
+        )
         def expectedScene = scene(expectedSceneQuery.fromDate)
 
         when:
@@ -66,7 +72,47 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         response.status == 200
     }
 
-    // TODO: Test with bad and missing params
+    def 'GET /data/sceneareas/best-scenes returns scenes'() {
+        def expectedQuery = new FindBestScenes(
+                sceneAreaIds: ['some-area', 'another-area'],
+                sensorIds: ['some-sensor', 'another-sensor'],
+                fromDate: parseDateString('2015-01-01'),
+                toDate: parseDateString('2016-01-01'),
+                targetDay: '01-22',
+                cloudTargetDaySortWeight: 0.12,
+                cloudCoverTarget: 0.001
+        )
+        def expectedScene = scene(parseDateString('2015-01-01'))
+
+        when:
+        def response = get(path: 'data/sceneareas/best-scenes', query: [
+                sceneAreaIds            : 'some-area, another-area',
+                sensorIds               : 'some-sensor, another-sensor',
+                startDate               : toDateTimeString(expectedQuery.fromDate),
+                endDate                 : toDateTimeString(expectedQuery.toDate),
+                targetDay               : expectedQuery.targetDay,
+                cloudTargetDaySortWeight: expectedQuery.cloudTargetDaySortWeight,
+                cloudCoverTarget        : expectedQuery.cloudCoverTarget
+        ])
+
+        then:
+        1 * queryDispatcher.submit(expectedQuery) >> [
+                'some-area': [expectedScene]
+        ]
+        sameJson(response.data, [
+                'some-area': [[
+                                      sceneId          : expectedScene.id,
+                                      sensor           : expectedScene.sensorId,
+                                      browseUrl        : expectedScene.browseUrl as String,
+                                      acquisitionDate  : DateTime.toDateString(expectedScene.acquisitionDate),
+                                      cloudCover       : expectedScene.cloudCover,
+                                      sunAzimuth       : expectedScene.sunAzimuth,
+                                      sunElevation     : expectedScene.sunElevation,
+                                      daysFromTargetDay: 21
+                              ]]
+        ])
+        response.status == 200
+    }
 
     private SceneMetaData scene(Date acquisitionDate) {
         new SceneMetaData(

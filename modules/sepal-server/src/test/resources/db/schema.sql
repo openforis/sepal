@@ -339,11 +339,11 @@ CREATE TABLE scene_meta_data (
   sun_elevation    DOUBLE       NOT NULL,
   browse_url       VARCHAR(255) NOT NULL,
   update_time      TIMESTAMP    NOT NULL,
-  PRIMARY KEY (id, meta_data_source)
+  PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_scene_meta_data_1 ON scene_meta_data (meta_data_source, scene_area_id, acquisition_date);
-CREATE INDEX idx_scene_meta_data_2 ON scene_meta_data (meta_data_source, update_time);
+CREATE INDEX idx_scene_meta_data_1 ON scene_meta_data (scene_area_id, acquisition_date);
+CREATE INDEX idx_scene_meta_data_2 ON scene_meta_data (meta_data_source, sensor_id, update_time);
 
 
 CREATE TABLE worker_session (

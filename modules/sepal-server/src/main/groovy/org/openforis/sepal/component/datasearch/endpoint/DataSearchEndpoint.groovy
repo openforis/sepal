@@ -4,7 +4,8 @@ import groovymvc.Controller
 import org.openforis.sepal.command.CommandDispatcher
 import org.openforis.sepal.component.datasearch.SceneArea
 import org.openforis.sepal.component.datasearch.SceneMetaData
-import org.openforis.sepal.component.datasearch.SceneQuery
+import org.openforis.sepal.component.datasearch.api.SceneQuery
+import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.query.QueryDispatcher
@@ -36,22 +37,39 @@ class DataSearchEndpoint {
                 send(toJson(data))
             }
 
+            get('/data/sceneareas/best-scenes') {
+                response.contentType = "application/json"
+                def query = new FindBestScenes(
+                        sceneAreaIds: params.required('sceneAreaIds', String).split(',')*.trim(),
+                        sensorIds: params.required('sensorIds', String).split(',')*.trim(),
+                        fromDate: DateTime.parseDateString(params.required('startDate', String)),
+                        toDate: DateTime.parseDateString(params.required('endDate', String)),
+                        targetDay: params.required('targetDay', String),
+                        cloudTargetDaySortWeight: params.required('cloudTargetDaySortWeight', double),
+                        cloudCoverTarget: params.required('cloudCoverTarget', double))
+                def scenesByArea = queryDispatcher.submit(query)
+                def data = scenesByArea.collectEntries { sceneAreaId, scenes ->
+                    [(sceneAreaId): scenes.collect { sceneData(it, query.targetDay) }]
+                }
+                send(toJson(data))
+            }
+
             get('/data/sceneareas/{sceneAreaId}') {
                 response.contentType = "application/json"
                 def query = new SceneQuery(
                         sceneAreaId: params.sceneAreaId,
-                        fromDate: DateTime.parseDateString(params.startDate as String),
-                        toDate: DateTime.parseDateString(params.endDate as String),
+                        fromDate: DateTime.parseDateString(params.required('startDate', String)),
+                        toDate: DateTime.parseDateString(params.required('endDate', String)),
                         targetDay: params.targetDay
                 )
                 def scenes = queryDispatcher.submit(new FindScenesForSceneArea(query))
-                def data = scenes.collect { sceneData(it, query) }
+                def data = scenes.collect { sceneData(it, query.targetDay) }
                 send(toJson(data))
             }
         }
     }
 
-    Map sceneData(SceneMetaData scene, SceneQuery query) {
+    Map sceneData(SceneMetaData scene, String targetDay) {
         [
                 sceneId          : scene.id,
                 sensor           : scene.sensorId,
@@ -60,7 +78,7 @@ class DataSearchEndpoint {
                 cloudCover       : scene.cloudCover,
                 sunAzimuth       : scene.sunAzimuth,
                 sunElevation     : scene.sunElevation,
-                daysFromTargetDay: DateTime.daysFromDayOfYear(scene.acquisitionDate, query.targetDay)
+                daysFromTargetDay: DateTime.daysFromDayOfYear(scene.acquisitionDate, targetDay)
         ]
     }
 

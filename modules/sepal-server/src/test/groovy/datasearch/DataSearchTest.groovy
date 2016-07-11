@@ -2,7 +2,9 @@ package datasearch
 
 import fake.Database
 import org.openforis.sepal.component.datasearch.*
+import org.openforis.sepal.component.datasearch.api.SceneQuery
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
+import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.component.datasearch.usgs.LandsatSensor
@@ -10,6 +12,7 @@ import org.openforis.sepal.component.datasearch.usgs.UsgsGateway
 import spock.lang.Specification
 
 import static org.openforis.sepal.component.datasearch.MetaDataSource.USGS
+import static org.openforis.sepal.util.DateTime.parseDateString
 
 class DataSearchTest extends Specification {
     public static final String SOME_AOI_ID = 'some AOI'
@@ -75,8 +78,8 @@ class DataSearchTest extends Specification {
     }
 
     def 'When finding scenes from one scene area, scenes from other scene areas are excluded'() {
-        def scene1 = sceneFromArea('first')
-        def scene2 = sceneFromArea('second')
+        def scene1 = scene('first')
+        def scene2 = scene('second')
         usgs.appendScenes([scene1, scene2])
         updateUsgsSceneMetaData()
 
@@ -98,6 +101,28 @@ class DataSearchTest extends Specification {
         findScenesInDateRange('2015-01-02', '2015-01-04') == [scene2, scene3, scene4]
     }
 
+    def 'When finding best scenes, scenes are returned'() {
+        def scene = scene(parseDateString('2016-01-01'))
+        usgs.appendScenes([scene])
+        updateUsgsSceneMetaData()
+
+        def cloudCoverTarget = 0.001
+        when:
+        def sceneAreasBySceneAreas = component.submit(new FindBestScenes(
+                sceneAreaIds: [SCENE_AREA_ID],
+                sensorIds: [scene.sensorId],
+                fromDate: new Date(0),
+                toDate: new Date(),
+                targetDay: '01-01',
+                cloudTargetDaySortWeight: 0.5,
+                cloudCoverTarget: cloudCoverTarget
+        ))
+
+        then:
+        sceneAreasBySceneAreas.size() == 1
+        sceneAreasBySceneAreas[SCENE_AREA_ID] == [scene]
+    }
+
     void updateUsgsSceneMetaData() {
         component.submit(new UpdateUsgsSceneMetaData())
     }
@@ -113,8 +138,7 @@ class DataSearchTest extends Specification {
     List<SceneMetaData> findScenes(
             Date from = new Date(Long.MIN_VALUE),
             Date to = new Date(Long.MAX_VALUE),
-            String sceneAreaId = SCENE_AREA_ID
-    ) {
+            String sceneAreaId = SCENE_AREA_ID) {
         def query = new SceneQuery(sceneAreaId: sceneAreaId, fromDate: from, toDate: to)
         return component.submit(new FindScenesForSceneArea(query))
     }
@@ -123,26 +147,25 @@ class DataSearchTest extends Specification {
         new SceneArea(id: id, polygon: new Polygon([new LatLng(0, 0), new LatLng(1, 1), new LatLng(2, 2), new LatLng(0, 0)]))
     }
 
-    SceneMetaData scene() {
-        scene(new Date(), new Date(), SCENE_AREA_ID)
+    SceneMetaData scene(Date acquisitionDate = parseDateString('2016-01-01')) {
+        scene(acquisitionDate, new Date(), SCENE_AREA_ID)
     }
 
-    SceneMetaData scene(Date acquisitionDate, updateTime, sceneAreaId) {
+    SceneMetaData scene(
+            Date acquisitionDate = parseDateString('2016-01-01'),
+            updateTime = parseDateString('2016-01-01'),
+            sceneAreaId) {
         return new SceneMetaData(
                 id: UUID.randomUUID() as String,
                 source: USGS,
                 sceneAreaId: sceneAreaId,
                 sensorId: 'LANDSAT_8',
                 acquisitionDate: acquisitionDate,
-                cloudCover: 0,
+                cloudCover: 0.1,
                 sunAzimuth: 123.4,
                 sunElevation: 12.4,
                 browseUrl: URI.create('http://some.browse/url'),
                 updateTime: updateTime)
-    }
-
-    SceneMetaData sceneFromArea(String sceneAreaId) {
-        scene(new Date(), new Date(), sceneAreaId)
     }
 
     SceneMetaData sceneUpdatedAt(String date) {
