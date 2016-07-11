@@ -4,6 +4,7 @@ import re
 import ee
 import sys
 from datetime import date
+from datetime import datetime
 from dateutil.parser import parse
 from flask import Flask
 from flask import Response
@@ -15,14 +16,21 @@ import landsat
 
 app = Flask(__name__)
 
+epoch = datetime.utcfromtimestamp(0)
+
 viz_by_bands = {
-    'B3, B2, B1': {'bands': 'B3, B2, B1', 'min': 100, 'max': 5000, 'gamma': 1.2},
-    'B4, B3, B2': {'bands': 'B4, B3, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
-    'B7, B4, B3': {'bands': 'B7, B4, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
-    'B7, B5, B3': {'bands': 'B7, B5, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
-    'B7, B4, B2': {'bands': 'B7, B4, B2', 'min': 100, 'max': 5000, 'gamma': 0.2},
-    'date': {'bands': 'date', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'B3, B2, B1': lambda params: {'bands': 'B3, B2, B1', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'B4, B3, B2': lambda params: {'bands': 'B4, B3, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'B7, B4, B3': lambda params: {'bands': 'B7, B4, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'B7, B5, B3': lambda params: {'bands': 'B7, B5, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'B7, B4, B2': lambda params: {'bands': 'B7, B4, B2', 'min': 100, 'max': 5000, 'gamma': 0.2},
+    'date': lambda params: {
+        'bands': 'date',
+        'min': params['from_days_since_epoch'],
+        'max': params['to_days_since_epoch'],
+        'gamma': 1.2},
 }
+
 
 @app.route('/')
 def index():
@@ -34,8 +42,10 @@ def index():
 @app.route('/preview')
 def preview():
     aoi = _countryGeometry(request.args.get('country'))
-    from_date = date.fromtimestamp(int(request.args.get('fromDate')) / 1000.0).isoformat() + 'T00:00'
-    to_date = date.fromtimestamp(int(request.args.get('toDate')) / 1000.0).isoformat() + 'T00:00'
+    from_millis_since_epoch = int(request.args.get('fromDate'))
+    to_millis_since_epoch = int(request.args.get('toDate'))
+    from_date = date.fromtimestamp(from_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
+    to_date = date.fromtimestamp(to_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
     sensors = request.args.get('sensors').split(',')
     bands = request.args.get('bands')
     mosaic = landsat.create_mosaic(
@@ -48,8 +58,12 @@ def preview():
         to_day_of_year=int(request.args.get('toDayOfYear')),
         bands=bands.split(', ')
     )
-
-    mapid = mosaic.getMapId(viz_by_bands[bands])
+    milis_per_day = 1000 * 60 * 60 * 24
+    viz_params = viz_by_bands[bands]({
+        'from_days_since_epoch': from_millis_since_epoch / milis_per_day,
+        'to_days_since_epoch': to_millis_since_epoch / milis_per_day
+    })
+    mapid = mosaic.getMapId(viz_params)
     bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     return json.dumps({
         'mapId': mapid['mapid'],
@@ -70,7 +84,10 @@ def previewScenes():
         bands=bands.split(', ')
     )
 
-    mapid = mosaic.getMapId(viz_by_bands[bands])
+    mapid = mosaic.getMapId(viz_by_bands[bands]({
+        'from_date': int(request.args.get('fromDate')),
+        'to_date': int(request.args.get('toDate'))
+    }))
     bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     return json.dumps({
         'mapId': mapid['mapid'],
@@ -95,7 +112,6 @@ def scenes_in_mosaic():
         to_day_of_year=int(request.args.get('toDayOfYear'))
     )
     return json.dumps(scenesInMosaic)
-
 
 
 @app.route('/sceneareas')
