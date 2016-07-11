@@ -27,8 +27,8 @@ viz_by_bands = {
     'date': lambda params: {
         'bands': 'date',
         'min': params['from_days_since_epoch'],
-        'max': params['to_days_since_epoch'],
-        'gamma': 1.2},
+        'max': params['to_days_since_epoch']
+        },
 }
 
 

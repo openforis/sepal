@@ -22,6 +22,8 @@ _bands_by_collection_name = {
 }
 
 
+_milis_per_day = 1000 * 60 * 60 * 24
+
 def create_mosaic(
         aoi,
         sensors,
@@ -144,28 +146,31 @@ def _addqa(image, target_day_of_year, bands):
     days_from_target_to_end_of_year = ee.Number(365).subtract(days_from_target_day)
     toa_correction = _toa_correction(image_day_of_year)
     adjustedBands = []
-    for band in bands:
-        adjustedBands.append(
-            image.select(band).float().divide(toa_correction).multiply(10000)
-        )
+    # for band in bands:
+    #     adjustedBands.append(
+    #         image.select(band).float().divide(toa_correction).multiply(10000)
+    #     )
     ndvi = (
         image.select('B4').subtract(image.select('B3'))
     ).divide(
         image.select('B4').add(image.select('B3'))
     )
     temp = image.select('B10').focal_min().rename(['temp'])
-    weight = ndvi.multiply(temp).rename(['cweight'])
+    tmpndvi = ndvi.multiply(temp)
+    #time = ndvi.multiply(temp).rename(['date'])
+    time = image.metadata('system:time_start').divide(_milis_per_day).rename(['date'])
     # Extract the cloud cover from Landsat metadata and use it as an inverse weight
     # e.g. to favor all pixels from an acquisition with low cloud cover
     # theoretically to help keep the resulting mosaic radiometrically uniform
-    # cweight = image.metadata('CLOUD_COVER').subtract(100).multiply(-1)
-    # cweight2 = weight.multiply(days_from_target_to_end_of_year).multiply(cweight).rename(['cweight'])
+    cloudweight = image.metadata('CLOUD_COVER').subtract(100).multiply(-1)
+    cweight2 = tmpndvi.multiply(days_from_target_to_end_of_year).multiply(cloudweight).rename(['cweight'])
     result = image
     for adjusted in adjustedBands:
         result = result.addBands(adjusted, overwrite=True)
     return result \
+        .addBands(time) \
         .addBands(temp) \
-        .addBands(weight) \
+        .addBands(cweight2) \
         # .addBands(cweight2)
 
 
