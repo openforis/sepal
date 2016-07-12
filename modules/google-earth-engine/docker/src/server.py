@@ -24,12 +24,19 @@ viz_by_bands = {
     'B4, B3, B2': lambda params: {'bands': 'B4, B3, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
     'B7, B4, B3': lambda params: {'bands': 'B7, B4, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
     'B7, B5, B3': lambda params: {'bands': 'B7, B5, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
-    'B7, B4, B2': lambda params: {'bands': 'B7, B4, B2', 'min': 100, 'max': 5000, 'gamma': 0.2},
+    'B7, B4, B2': lambda params: {'bands': 'B7, B4, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'temp': lambda params: {'bands': 'temp', 'min': 200, 'max': 400, 'palette': '0000FF, FF0000'},
     'date': lambda params: {
         'bands': 'date',
         'min': params['from_days_since_epoch'],
         'max': params['to_days_since_epoch'],
         'palette': '00FFFF, 000099'
+    },
+    'days': lambda params: {
+        'bands': 'days',
+        'min': 0,
+        'max': 183,
+        'palette': '00FF00, FF0000'
     },
 }
 

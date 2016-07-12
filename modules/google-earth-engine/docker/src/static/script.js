@@ -15,28 +15,8 @@
             scaleControl      : false,
             streetViewControl : false,
             rotateControl     : false,
-            fullscreenControl : false,
-            backgroundColor   : '#131314'
+            fullscreenControl : false
         } )
-    var mapStyle = [
-        {
-            "stylers": [ { "visibility": "simplified" } ]
-        }
-        , {
-            "stylers": [ { "color": "#131314" } ]
-        }
-        , {
-            "featureType": "water",
-            "stylers"    : [ { "color": "#131313" }, { "lightness": 4 }
-            ]
-        }
-        , {
-            "elementType": "labels.text.fill"
-            , "stylers"  : [ { "visibility": "off" }, { "lightness": 25 } ]
-        }
-    ]
-    map.setOptions( { styles: mapStyle } )
-    
     $( '#form' ).submit( function ( e ) {
         e.preventDefault()
         preview()
@@ -111,6 +91,8 @@
         var scenes          = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
         var bands           = $( '#bands' ).val()
         var targetDayOfYear = $( '#target-day-of-year' ).val()
+        var fromDate        = fromDatePicker.getDate().getTime()
+        var toDate          = toDatePicker.getDate().getTime()
         
         $.getJSON( 'preview-scenes', {
                 fusionTable    : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
@@ -118,7 +100,9 @@
                 keyValue       : iso,
                 scenes         : scenes,
                 targetDayOfYear: targetDayOfYear,
-                bands          : bands
+                bands          : bands,
+                fromDate       : fromDate,
+                toDate         : toDate
             },
             function ( data ) {
                 var mapId  = data.mapId

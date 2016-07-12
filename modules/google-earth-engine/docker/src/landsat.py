@@ -151,8 +151,12 @@ def _addqa(image, target_day_of_year, bands):
     timestamp = ee.Number(image.get('system:time_start'))
     image_day_of_year = ee.Number(ee.Date(timestamp).getRelative('day', 'year'))
     days_from_target_day = ee.Number(target_day_of_year).subtract(image_day_of_year).abs()
-    days_from_target_to_end_of_year = ee.Number(365).subtract(days_from_target_day)
-    toa_correction = _toa_correction(image_day_of_year)
+    # Closer to wrap over year boundary?
+    days_from_target_day = days_from_target_day.min(
+        ee.Number(365).subtract(days_from_target_day)
+    )
+    # 0 days from target day gives weight of 365, 183 days from target day gives weight 182
+    days_from_target_day_weight = ee.Number(365).subtract(days_from_target_day)
 
     ndvi = (
         image.select('B4').subtract(image.select('B3'))
@@ -167,19 +171,33 @@ def _addqa(image, target_day_of_year, bands):
     # e.g. to favor all pixels from an acquisition with low cloud cover
     # theoretically to help keep the resulting mosaic radiometrically uniform
     cloudweight = image.metadata('CLOUD_COVER').subtract(100).multiply(-1)
-    cweight2 = tmpndvi.multiply(days_from_target_to_end_of_year).multiply(cloudweight).rename(['cweight'])
-    result = image
+    total_weight = tmpndvi.multiply(days_from_target_day_weight).multiply(cloudweight).rename(['cweight'])
+
+    toa_correction = _toa_correction(image_day_of_year)
     adjusted_bands = []
     for band in _bands_to_toa_correct(bands):
         adjusted_bands.append(
             image.select(band).float().divide(toa_correction).multiply(10000)
         )
+    result = image
     for adjusted in adjusted_bands:
         result = result.addBands(adjusted, overwrite=True)
+
+    days_band = _create_days_band(days_from_target_day, image)
+
     return result \
         .addBands(time) \
         .addBands(temp) \
-        .addBands(cweight2)
+        .addBands(total_weight) \
+        .addBands(days_band)
+
+
+def _create_days_band(days_from_target_day, image):
+    return image.metadata('system:time_start').divide(
+        image.metadata('system:time_start')
+    ).multiply(
+        days_from_target_day
+    ).rename(['days'])
 
 
 def _bands_to_toa_correct(bands):
