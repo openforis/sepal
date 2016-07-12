@@ -51,7 +51,7 @@ def preview():
     to_millis_since_epoch = int(request.args.get('toDate'))
     from_date = date.fromtimestamp(from_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
     to_date = date.fromtimestamp(to_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
-    sensors = request.args.get('sensors').split(',')
+    sensors = _split(request.args.get('sensors'))
     bands = request.args.get('bands')
     mosaic = landsat.create_mosaic(
         aoi=aoi,
@@ -61,7 +61,7 @@ def preview():
         target_day_of_year=int(request.args.get('targetDayOfYear')),
         from_day_of_year=int(request.args.get('fromDayOfYear')),
         to_day_of_year=int(request.args.get('toDayOfYear')),
-        bands=bands.split(', ')
+        bands=_split(bands)
     )
     viz_params = viz_by_bands[bands]({
         'from_days_since_epoch': from_millis_since_epoch / _milis_per_day,
@@ -77,13 +77,13 @@ def preview():
 @app.route('/preview-scenes')
 def previewScenes():
     aoi = _aoiGeometry()
-    scenes = request.args.get('scenes').split(',')
+    scenes = _split(request.args.get('scenes'))
     bands = request.args.get('bands')
     mosaic = landsat.create_mosaic_from_scenes(
         aoi=aoi,
         sceneIds=scenes,
         target_day_of_year=int(request.args.get('targetDayOfYear')),
-        bands=bands.split(', ')
+        bands=_split(bands)
     )
 
     acquisition_timestamps = [_acquisition_timestamp(scene) for scene in scenes]
@@ -104,7 +104,7 @@ def scenes_in_mosaic():
     aoi = _aoiGeometry()
     from_date = date.fromtimestamp(int(request.args.get('fromDate')) / 1000.0).isoformat() + 'T00:00'
     to_date = date.fromtimestamp(int(request.args.get('toDate')) / 1000.0).isoformat() + 'T00:00'
-    sensors = request.args.get('sensors').split(',')
+    sensors = _split(request.args.get('sensors'))
     scenesInMosaic = landsat.get_scenes_in_mosaic(
         aoi=aoi,
         sensors=sensors,
@@ -217,6 +217,10 @@ def _toBrowseUrl(targetDay, date):
 def _acquisition_timestamp(scene):
     date = datetime.strptime(scene[9:16], '%Y%j')
     return (date - _epoch).total_seconds() * 1000
+
+
+def _split(str):
+    return [s.strip() for x in str.plit(',')]
 
 
 if __name__ == '__main__':
