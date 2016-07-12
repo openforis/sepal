@@ -220,7 +220,7 @@ def _acquisition_timestamp(scene):
 
 
 def _split(str):
-    return [s.strip() for x in str.plit(',')]
+    return [s.strip() for s in str.split(',')]
 
 
 if __name__ == '__main__':
