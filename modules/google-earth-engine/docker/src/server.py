@@ -16,7 +16,8 @@ import landsat
 
 app = Flask(__name__)
 
-epoch = datetime.utcfromtimestamp(0)
+_epoch = datetime.utcfromtimestamp(0)
+_milis_per_day = 1000 * 60 * 60 * 24
 
 viz_by_bands = {
     'B3, B2, B1': lambda params: {'bands': 'B3, B2, B1', 'min': 100, 'max': 5000, 'gamma': 1.2},
@@ -62,17 +63,14 @@ def preview():
         to_day_of_year=int(request.args.get('toDayOfYear')),
         bands=bands.split(', ')
     )
-    milis_per_day = 1000 * 60 * 60 * 24
     viz_params = viz_by_bands[bands]({
-        'from_days_since_epoch': from_millis_since_epoch / milis_per_day,
-        'to_days_since_epoch': to_millis_since_epoch / milis_per_day
+        'from_days_since_epoch': from_millis_since_epoch / _milis_per_day,
+        'to_days_since_epoch': to_millis_since_epoch / _milis_per_day
     })
     mapid = mosaic.getMapId(viz_params)
-    bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     return json.dumps({
         'mapId': mapid['mapid'],
-        'token': mapid['token'],
-        'bounds': bounds
+        'token': mapid['token']
     })
 
 
@@ -88,16 +86,16 @@ def previewScenes():
         bands=bands.split(', ')
     )
 
-    # TODO: Fix fromDate and toDate - no present in these requests. Expect them or figure them out...
+    acquisition_timestamps = [_acquisition_timestamp(scene) for scene in scenes]
+    from_millis_since_epoch = int(min(acquisition_timestamps))
+    to_millis_since_epoch = int(max(acquisition_timestamps))
     mapid = mosaic.getMapId(viz_by_bands[bands]({
-        # 'from_date': int(request.args.get('fromDate')),
-        # 'to_date': int(request.args.get('toDate'))
+        'from_days_since_epoch': from_millis_since_epoch / _milis_per_day,
+        'to_days_since_epoch': to_millis_since_epoch / _milis_per_day
     }))
-    bounds = aoi.geometry().bounds().getInfo()['coordinates'][0][1:]
     return json.dumps({
         'mapId': mapid['mapid'],
-        'token': mapid['token'],
-        'bounds': bounds
+        'token': mapid['token']
     })
 
 
@@ -214,6 +212,11 @@ def _daysFromTarget(targetDay, date):
 def _toBrowseUrl(targetDay, date):
     theDate = parse(date)
     return min(map(lambda n: abs((theDate - parse(str(theDate.year + n) + '-' + targetDay)).days), [-1, 0, 1]))
+
+
+def _acquisition_timestamp(scene):
+    date = datetime.strptime(scene[9:16], '%Y%j')
+    return (date - _epoch).total_seconds() * 1000
 
 
 if __name__ == '__main__':
