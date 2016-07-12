@@ -54,8 +54,7 @@ def create_mosaic_from_scenes(
         sceneIds,
         target_day_of_year,
         bands):
-    collection_for_id = lambda scene_id: _collection_name_by_scene_id_prefix[scene_id[:3]]
-    grouped = groupby(sorted(sceneIds), collection_for_id)
+    grouped = groupby(sorted(sceneIds), _collection_name)
     collections = [_create_collection(name, ids) for name, ids in grouped]
     merged_collection = reduce(_merge_image_collections, collections)
     mosaic = _create_mosaic(merged_collection, aoi, target_day_of_year, bands)
@@ -74,6 +73,11 @@ def _create_mosaic(image_collection, aoi, target_day_of_year, bands):
     gfc_watermask = gfc_image.select(['datamask'])  # 0 = no data, 1 = mapped land, 2 = water
     mosaic_mask = mosaic.mask(gfc_watermask.neq(2)).clip(aoi).int16()
     return mosaic_mask
+
+
+def _collection_name(scene_id):
+    prefix = scene_id[:3]
+    return _collection_name_by_scene_id_prefix[prefix]
 
 
 def get_scenes_in_mosaic(
@@ -249,9 +253,24 @@ def _flatten(iterable):
 
 
 def _create_collection(name, image_ids):
-    images = [ee.Image('LANDSAT/' + name + '/' + image_id) for image_id in image_ids]
+    image_list = ee.List(list(image_ids))
+    images = image_list.map(_to_image).removeAll([None])
     collection = ee.ImageCollection(images)
     normalized_collection = collection.map(
         lambda image: _normalize_band_names(image, name)
     )
     return normalized_collection
+
+
+def _to_image(image_id):
+    collection = ee.ImageCollection('LC8_L1T_TOA').merge(
+        ee.ImageCollection('LE7_L1T_TOA').merge(
+            ee.ImageCollection('LT5_L1T_TOA').merge(
+                ee.ImageCollection('LT4_L1T_TOA')
+            )
+        )
+    )
+    # noinspection PyTypeChecker
+    return collection.filter(
+        ee.Filter.eq('system:index', image_id)
+    ).first()
