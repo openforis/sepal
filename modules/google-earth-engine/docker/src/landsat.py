@@ -63,6 +63,7 @@ def create_mosaic_from_scenes(
 
 def _create_mosaic(image_collection, aoi, target_day_of_year, bands):
     image_collection_qa = image_collection.map(
+        # lambda image: _adjust_image(image, target_day_of_year, bands)
         lambda image: _addqa(image, target_day_of_year, bands)
     )
     # Create a 'best pixel' composite using the warmest, wettest pixel closest to
@@ -129,7 +130,68 @@ def _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_dat
         doy_of_year_filter,
         cloud_cover_filter,
     )
+    # TODO: Remove L08xxx
     return filter
+
+
+def _adjust_image(image, target_day_of_year, bands):
+    image_day_of_year = _day_of_year(image)
+    ndvi_normalized = _normalized_ndvi(image)
+    days_from_target_day = _days_from_target_year(image_day_of_year, target_day_of_year)
+    day_of_year_normalized = _normalized_day_of_year(days_from_target_day)
+    cloud_cover_normalized = _normalized_cloud_cover(image)
+
+    date_band = image.metadata('system:time_start').divide(_milis_per_day).rename(['date'])
+    temp_band = image.select('B10').focal_min().rename(['temp'])
+    temp_normalized = temp_band.divide(400)
+    days_band = _create_days_band(days_from_target_day, image)
+
+    weight_band = ndvi_normalized.multiply(9) \
+        .add(temp_normalized.multiply(3)) \
+        .add(day_of_year_normalized.multiply(1)) \
+        .add(cloud_cover_normalized.multiply(1)) \
+        .rename(['cweight'])
+
+    result = _apply_toa_correction(image, image_day_of_year, bands)
+    return result \
+        .addBands(date_band) \
+        .addBands(temp_band) \
+        .addBands(days_band) \
+        .addBands(weight_band)
+
+
+def _day_of_year(image):
+    acquisition_timestamp = ee.Number(image.get('system:time_start'))
+    return ee.Number(ee.Date(acquisition_timestamp).getRelative('day', 'year'))
+
+
+def _normalized_cloud_cover(image):
+    cloud_cover_normalized = image.metadata('CLOUD_COVER').divide(100).add(-1)
+    return cloud_cover_normalized
+
+
+def _normalized_day_of_year(days_from_target_day):
+    day_of_year_normalized = ee.Number(1).subtract(days_from_target_day.divide(183))
+    return day_of_year_normalized
+
+
+def _days_from_target_year(image_day_of_year, target_day_of_year):
+    days_from_target_day = ee.Number(target_day_of_year).subtract(image_day_of_year).abs()
+    days_from_target_day = ee.Number.min(
+        days_from_target_day,
+        ee.Number(365).subtract(days_from_target_day)  # Closer over year boundary?
+    )
+    return days_from_target_day
+
+
+def _normalized_ndvi(image):
+    ndvi = (
+        image.select('B4').subtract(image.select('B3'))
+    ).divide(
+        image.select('B4').add(image.select('B3'))
+    )
+    ndvi_normalized = ndvi.add(1).divide(2)
+    return ndvi_normalized
 
 
 def _addqa(image, target_day_of_year, bands):
@@ -173,6 +235,17 @@ def _addqa(image, target_day_of_year, bands):
     cloudweight = image.metadata('CLOUD_COVER').subtract(100).multiply(-1)
     total_weight = tmpndvi.multiply(days_from_target_day_weight).multiply(cloudweight).rename(['cweight'])
 
+    result = _apply_toa_correction(image, image_day_of_year, bands)
+    days_band = _create_days_band(days_from_target_day, image)
+
+    return result \
+        .addBands(time) \
+        .addBands(temp) \
+        .addBands(days_band) \
+        .addBands(total_weight)
+
+
+def _apply_toa_correction(image, image_day_of_year, bands):
     toa_correction = _toa_correction(image_day_of_year)
     adjusted_bands = []
     for band in _bands_to_toa_correct(bands):
@@ -182,20 +255,13 @@ def _addqa(image, target_day_of_year, bands):
     result = image
     for adjusted in adjusted_bands:
         result = result.addBands(adjusted, overwrite=True)
-
-    days_band = _create_days_band(days_from_target_day, image)
-
-    return result \
-        .addBands(time) \
-        .addBands(temp) \
-        .addBands(total_weight) \
-        .addBands(days_band)
+    return result
 
 
 def _create_days_band(days_from_target_day, image):
-    return image.metadata('system:time_start').divide(
+    return image.metadata('system:time_start').subtract(
         image.metadata('system:time_start')
-    ).multiply(
+    ).add(
         days_from_target_day
     ).rename(['days'])
 
