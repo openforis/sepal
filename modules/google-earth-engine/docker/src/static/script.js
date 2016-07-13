@@ -45,8 +45,6 @@
         var fromDate        = fromDatePicker.getDate().getTime()
         var toDate          = toDatePicker.getDate().getTime()
         var targetDayOfYear = $( '#target-day-of-year' ).val()
-        var fromDayOfYear   = $( '#from-day-of-year' ).val()
-        var toDayOfYear     = $( '#to-day-of-year' ).val()
         var bands           = $( '#bands' ).val()
         
         $.getJSON( 'preview', {
@@ -57,8 +55,6 @@
                 fromDate       : fromDate,
                 toDate         : toDate,
                 targetDayOfYear: targetDayOfYear,
-                fromDayOfYear  : fromDayOfYear,
-                toDayOfYear    : toDayOfYear,
                 bands          : bands
             },
             function ( data ) {
@@ -66,22 +62,6 @@
                 var token  = data.token
                 var bounds = data.bounds
                 render( mapId, token, bounds )
-            } )
-        
-        $( '#scenes-in-mosaic' ).html( 'Determining scenes used in mosaic...' )
-        $.getJSON( 'scenes-in-mosaic', {
-                fusionTable    : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-                keyColumn      : 'ISO',
-                keyValue       : iso,
-                sensors        : sensors,
-                fromDate       : fromDate,
-                toDate         : toDate,
-                targetDayOfYear: targetDayOfYear,
-                fromDayOfYear  : fromDayOfYear,
-                toDayOfYear    : toDayOfYear
-            },
-            function ( data ) {
-                $( '#scenes-in-mosaic' ).html( data.join( '<br/>' ) )
             } )
     }
     

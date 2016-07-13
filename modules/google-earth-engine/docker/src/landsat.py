@@ -29,42 +29,86 @@ def create_mosaic(
         aoi,
         sensors,
         target_day_of_year,
-        from_day_of_year,
-        to_day_of_year,
         from_date,
         to_date,
         bands):
-    """Creates a cloud-free mosaic.
+    """
+    Creates a cloud-free mosaic, automatically selecting scenes to include based on provided parameters.
+
+    Scenes from the specified sensors, within the area of interest, between the from and to dates will be used.
+    The warmest, wettest pixels, close to the specified target day of year, from scenes with low cloud cover
+    will be selected in the composite.
 
     :param aoi: The aoi to create the mosaic for.
     :type aoi: ee.Geometry
 
     :param sensors: The sensors to include imagery from.
     :type sensors: iterable
+
+    :param target_day_of_year: The day of year to try to use scenes from.
+    :type target_day_of_year: int
+
+    :param from_date: The earliest date to include scenes from.
+    :type from_date: datetime.date
+
+    :param to_date: The latest date to include scenes from.
+    :type to_date: datetime.date
+
+    :param bands: The bands to include in the mosaic.
+        Valid bands are B1, B2, B3, B4, B5, B7, B10, temp (temperature band), date (days since epoch),
+        and days (days from target day)
+    :type bands: iterable
+    :return: cloud-free mosaic, clipped to the area of interest, contains the specified bands.
          """
-    max_cloud_cover = 99
-    filter = _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year)
+    filter = _collection_filter(aoi, from_date, to_date)
     image_collection = _create_merged_image_collection(sensors, filter)
     mosaic = _create_mosaic(image_collection, aoi, target_day_of_year, bands)
     return mosaic.select(bands)
 
 
-def create_mosaic_from_scenes(
+def create_mosaic_from_scene_ids(
         aoi,
         sceneIds,
         target_day_of_year,
         bands):
-    grouped = groupby(sorted(sceneIds), _collection_name)
-    collections = [_create_collection(name, ids) for name, ids in grouped]
-    merged_collection = reduce(_merge_image_collections, collections)
+    """
+    Creates a cloud-free mosaic, selecting scenes based on provided ids.
+
+    The warmest, wettest pixels, close to the specified target day of year, from scenes with low cloud cover
+    will be selected in the composite.
+
+    :param aoi: The aoi to create the mosaic for.
+    :type aoi: ee.Geometry
+
+    :param sensors: The sensors to include imagery from.
+    :type sensors: iterable
+
+    :param target_day_of_year: The day of year to try to use scenes from.
+    :type target_day_of_year: int
+
+    :param from_date: The earliest date to include scenes from.
+    :type from_date: datetime.date
+
+    :param to_date: The latest date to include scenes from.
+    :type to_date: datetime.date
+
+    :param bands: The bands to include in the mosaic.
+        Valid bands are B1, B2, B3, B4, B5, B7, B10, temp (temperature band), date (days since epoch), and days (days from target day)
+    :type bands: iterable
+
+    :return: cloud-free mosaic, clipped to the area of interest, contains the specified bands.
+         """
+    scene_ids_by_collection_name = groupby(sorted(sceneIds), _collection_name)
+    image_collections = [_create_collection(name, ids) for name, ids in scene_ids_by_collection_name]
+    merged_collection = reduce(_merge_image_collections, image_collections)
     mosaic = _create_mosaic(merged_collection, aoi, target_day_of_year, bands)
     return mosaic.select(bands)
 
 
 def _create_mosaic(image_collection, aoi, target_day_of_year, bands):
     image_collection_qa = image_collection.map(
-        # lambda image: _adjust_image(image, target_day_of_year, bands)
-        lambda image: _addqa(image, target_day_of_year, bands)
+        lambda image: _adjust_image(image, target_day_of_year, bands)
+        # lambda image: _addqa(image, target_day_of_year, bands)
     )
     # Create a 'best pixel' composite using the warmest, wettest pixel closest to
     # specified target date
@@ -81,56 +125,15 @@ def _collection_name(scene_id):
     return _collection_name_by_scene_id_prefix[prefix]
 
 
-def get_scenes_in_mosaic(
-        aoi,
-        sensors,
-        target_day_of_year,
-        from_day_of_year,
-        to_day_of_year,
-        from_date,
-        to_date):
-    """Returns the scenes required to create a cloud-free mosaic.
-
-    :param aoi: The aoi to create the mosaic for.
-    :type aoi: ee.Geometry
-
-    :param target_date: The ideal date to generate the mosaic for.
-    :type target_date: datetime.date
-
-    :param sensors: The sensors to include imagery from.
-    :type sensors: iterable
-
-    :param years: The number of years to include imagery from.
-    :type years: int
-
-    :param bands: A list of the bands to include in the mosaic.
-    :type bands: iterable
-         """
-    # TODO: Implement...
-    return ['LC81910312016137LGN00',
-            'LE71910312016097NSG00',
-            'LC81920302016176LGN00',
-            'LE71920302016152NSG00',
-            'LE71910302016097NSG00',
-            'LC81910302016105LGN00',
-            'LC81900312016178LGN00',
-            'LE71900312016106NSG00',
-            'LC81900312016098LGN00']
-
-
-def _collection_filter(aoi, from_date, from_day_of_year, max_cloud_cover, to_date, to_day_of_year):
+def _collection_filter(aoi, from_date, to_date):
     bounds_filter = ee.Filter.geometry(aoi)
     date_filter = ee.Filter.date(from_date, to_date)
-    doy_of_year_filter = ee.Filter.calendarRange(from_day_of_year, to_day_of_year)
-    # noinspection PyTypeChecker
-    cloud_cover_filter = ee.Filter.lt('CLOUD_COVER', max_cloud_cover)
+    no_LO8_filter = ee.Filter.stringStartsWith('LO8').Not()
     filter = ee.Filter.And(
         bounds_filter,
         date_filter,
-        doy_of_year_filter,
-        cloud_cover_filter,
+        no_LO8_filter
     )
-    # TODO: Remove L08xxx
     return filter
 
 

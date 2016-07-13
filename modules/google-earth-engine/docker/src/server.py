@@ -67,8 +67,6 @@ def preview():
         from_date=from_date,
         to_date=to_date,
         target_day_of_year=int(request.args.get('targetDayOfYear')),
-        from_day_of_year=int(request.args.get('fromDayOfYear')),
-        to_day_of_year=int(request.args.get('toDayOfYear')),
         bands=_split(bands)
     )
     viz_params = viz_by_bands[bands]({
@@ -87,7 +85,7 @@ def previewScenes():
     aoi = _aoiGeometry()
     scenes = _split(request.args.get('scenes'))
     bands = request.args.get('bands')
-    mosaic = landsat.create_mosaic_from_scenes(
+    mosaic = landsat.create_mosaic_from_scene_ids(
         aoi=aoi,
         sceneIds=scenes,
         target_day_of_year=int(request.args.get('targetDayOfYear')),
@@ -105,24 +103,6 @@ def previewScenes():
         'mapId': mapid['mapid'],
         'token': mapid['token']
     })
-
-
-@app.route('/scenes-in-mosaic')
-def scenes_in_mosaic():
-    aoi = _aoiGeometry()
-    from_date = date.fromtimestamp(int(request.args.get('fromDate')) / 1000.0).isoformat() + 'T00:00'
-    to_date = date.fromtimestamp(int(request.args.get('toDate')) / 1000.0).isoformat() + 'T00:00'
-    sensors = _split(request.args.get('sensors'))
-    scenesInMosaic = landsat.get_scenes_in_mosaic(
-        aoi=aoi,
-        sensors=sensors,
-        from_date=from_date,
-        to_date=to_date,
-        target_day_of_year=int(request.args.get('targetDayOfYear')),
-        from_day_of_year=int(request.args.get('fromDayOfYear')),
-        to_day_of_year=int(request.args.get('toDayOfYear'))
-    )
-    return json.dumps(scenesInMosaic)
 
 
 @app.route('/sceneareas')
