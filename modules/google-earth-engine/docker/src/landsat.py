@@ -29,6 +29,7 @@ def create_mosaic(
         aoi,
         sensors,
         target_day_of_year,
+        target_day_of_year_weight,
         from_date,
         to_date,
         bands):
@@ -45,8 +46,12 @@ def create_mosaic(
     :param sensors: The sensors to include imagery from.
     :type sensors: iterable
 
-    :param target_day_of_year: ideal day of year to use scenes from.
+    :param target_day_of_year: Ideal day of year to use scenes from.
     :type target_day_of_year: int
+
+    :param target_day_of_year_weight: The importance of target day of year.
+        0 means no importance, 1 means very important, and 0.5 means somewhat important.
+    :type target_day_of_year_weight: float
 
     :param from_date: The earliest date to include scenes from.
     :type from_date: datetime.date
@@ -66,7 +71,7 @@ def create_mosaic(
     collection_names = _to_collection_names(sensors)
     # Creates an image collection for each GEE collection name
     image_collections = [_create_filtered_image_collection(name, filter) for name in collection_names]
-    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, bands)
+    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, bands)
     return mosaic
 
 
@@ -74,6 +79,7 @@ def create_mosaic_from_scene_ids(
         aoi,
         sceneIds,
         target_day_of_year,
+        target_day_of_year_weight,
         bands):
     """
     Creates a cloud-free mosaic, selecting scenes based on provided ids.
@@ -87,8 +93,12 @@ def create_mosaic_from_scene_ids(
     :param sensors: The sensors to include imagery from.
     :type sensors: iterable
 
-    :param target_day_of_year: ideal day of year to use scenes from.
+    :param target_day_of_year: Ideal day of year to use scenes from.
     :type target_day_of_year: int
+
+    :param target_day_of_year_weight: The importance of target day of year.
+        0 means no importance, 1 means very important, and 0.5 means somewhat important.
+    :type target_day_of_year_weight: float
 
     :param from_date: The earliest date to include scenes from.
     :type from_date: datetime.date
@@ -107,7 +117,7 @@ def create_mosaic_from_scene_ids(
     scene_ids_by_collection_name = groupby(sorted(sceneIds), _collection_name)
     # Creates an image collection for each GEE collection name, with its corresponding scenes
     image_collections = [_create_image_collection(name, ids) for name, ids in scene_ids_by_collection_name]
-    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, bands)
+    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, bands)
     return mosaic
 
 
@@ -196,7 +206,7 @@ def _create_image_collection(name, image_ids):
     return normalized_collection
 
 
-def _create_mosaic(image_collections, aoi, target_day_of_year, bands):
+def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, bands):
     """Creates a mosaic, clipped to the area of interest, containing the specified bands.
 
     :param image_collection: The image collections to create a mosaic for.
@@ -206,11 +216,15 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, bands):
     :param aoi: The area to clip the mosaic to.
     :type aoi: ee.Geometry
 
-    :param target_day_of_year: ideal day of year to use scenes from.
+    :param target_day_of_year: Ideal day of year to use scenes from.
     :type target_day_of_year: int
 
     :param target_day_of_year: The bands to include in the mosaic.
     :type target_day_of_year: iterable
+
+    :param target_day_of_year_weight: The importance of target day of year.
+        0 means no importance, 1 means very important, and 0.5 means somewhat important.
+    :type target_day_of_year_weight: float
 
     :return: An ee.Image.
     """
@@ -218,7 +232,7 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, bands):
     image_collection = reduce(_merge_image_collections, image_collections)
     # Adjust the images - add additional bands, apply TOA correction
     image_collection_qa = image_collection.map(
-        lambda image: _adjust_image(image, target_day_of_year, bands)
+        lambda image: _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands)
         # lambda image: _addqa(image, target_day_of_year, bands)
     )
     # Create a 'best pixel' composite using the warmest, wettest pixel closest to specified target date
@@ -232,7 +246,7 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, bands):
         .select(bands)
 
 
-def _adjust_image(image, target_day_of_year, bands):
+def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands):
     """Applies TOA correction to the image and adds a number of bands.
 
         * cweight - weight based on temperature, wetness, days from target day of year, and cloud cover 
@@ -244,8 +258,12 @@ def _adjust_image(image, target_day_of_year, bands):
         All collections must have normalized band names.
     :type image: ee.Image
 
-    :param target_day_of_year: ideal day of year to use scenes from.
+    :param target_day_of_year: Ideal day of year to use scenes from.
     :type target_day_of_year: int
+
+    :param target_day_of_year_weight: The importance of target day of year.
+        0 means no importance, 1 means very important, and 0.5 means somewhat important.
+    :type target_day_of_year_weight: float
 
     :param bands: The bands to include in the mosaic.
         Valid bands are B1, B2, B3, B4, B5, B7, B10, temp (temperature band), date (days since epoch), 
@@ -260,20 +278,20 @@ def _adjust_image(image, target_day_of_year, bands):
     # Bands to add
     ndvi_band = _ndvi_band(image)
     temp_band = _temp_band(image)
-    days_band = _days_band(days_from_target_day, image)
     date_band = _date_band(image)
+    days_band = _days_band(days_from_target_day, image)
 
     # Normalized values to use in weight band
     ndvi_normalized = _normalized_ndvi(ndvi_band)
     temp_normalized = _normalized_temp(temp_band)
-    days_from_target_day_normalized = _normalized_days_from_target_day(days_from_target_day)
     cloud_cover_normalized = _normalized_cloud_cover(image)
+    days_from_target_day_normalized = _normalized_days_from_target_day(days_from_target_day)
 
     # Create weight band
-    weight_band = ndvi_normalized.multiply(9) \
-        .add(temp_normalized.multiply(3)) \
-        .add(days_from_target_day_normalized.multiply(1)) \
-        .add(cloud_cover_normalized.multiply(1)) \
+    weight_band = ndvi_normalized.multiply(6) \
+        .add(temp_normalized.multiply(0)) \
+        .add(cloud_cover_normalized.multiply(3)) \
+        .add(days_from_target_day_normalized.multiply(target_day_of_year_weight * 2)) \
         .rename(['cweight'])
 
     # Apply TOA correction
@@ -418,7 +436,7 @@ def _normalized_cloud_cover(image):
 
     :return: An ee.Image with the normalized cloud cover.
     """
-    cloud_cover_normalized = image.metadata('CLOUD_COVER').divide(100).add(-1)
+    cloud_cover_normalized = image.metadata('CLOUD_COVER').divide(100).subtract(1).abs()
     return cloud_cover_normalized
 
 

@@ -5,8 +5,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.4.0/css/pikaday.min.css" rel="stylesheet"
           type="text/css">
 </head>
-<body>
-<div id="map" style="width: 100%; height: 480px;"></div>
+<body style="padding: 0; margin: 0">
+<div>
+    <div id="map2" style="width: 50%; height: 480px; float: right"></div>
+    <div id="map1" style="width: 50%; height: 480px; float: right;"></div>
+</div>
 <table width="100%">
     <tr>
         <td valign="top" width="50%">
@@ -36,6 +39,11 @@
                     <input type="number" id="target-day-of-year">
                 </p>
 
+                <p>
+                    <label for="target-day-of-year">Target day of year weight</label><br/>
+                    <input type="text" id="target-day-of-year-weight" value="0.5">
+                </p>
+
                 <p id="sensors">
                     <label>Sensors</label><br/>
                     <input type="checkbox" id="LANDSAT_8" checked>
@@ -56,8 +64,23 @@
 
 
                 <p>
-                    <label for="bands">Bands</label><br/>
-                    <select id="bands">
+                    <label for="bands1">Bands 1</label><br/>
+                    <select id="bands1">
+                        <option value="B3, B2, B1">Natural (3, 2, 1)</option>
+                        <option value="B4, B3, B2">Infrared (4, 3, 2)</option>
+                        <option value="B4, B5, B3">False color (4, 5, 3)</option>
+                        <option value="B7, B4, B3">False color (7, 4, 3)</option>
+                        <option value="B7, B5, B3">False color (7, 5, 3)</option>
+                        <option value="B7, B4, B2">False color (7, 4, 2)</option>
+                        <option value="temp">Temperature</option>
+                        <option value="date">Date of pixel in days</option>
+                        <option value="days">Days from target day</option>
+                        <option value="ndvi">NDVI</option>
+                    </select>
+                </p>
+                <p>
+                    <label for="bands2">Bands 2</label><br/>
+                    <select id="bands2">
                         <option value="B3, B2, B1">Natural (3, 2, 1)</option>
                         <option value="B4, B3, B2">Infrared (4, 3, 2)</option>
                         <option value="B4, B5, B3">False color (4, 5, 3)</option>

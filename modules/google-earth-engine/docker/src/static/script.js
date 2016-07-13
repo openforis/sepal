@@ -1,25 +1,29 @@
 (function () {
-    var map = new google.maps.Map(
-        document.getElementById( 'map' ), {
-            zoom              : 3,
-            minZoom           : 3,
-            maxZoom           : 11,
-            center            : new google.maps.LatLng( 16.7794913, 9.6771556 ),
-            mapTypeId         : google.maps.MapTypeId.ROADMAP,
-            zoomControl       : true,
-            zoomControlOptions: {
-                position: google.maps.ControlPosition.RIGHT_CENTER
-                , style : google.maps.ZoomControlStyle.LARGE
-            },
-            mapTypeControl    : false,
-            scaleControl      : false,
-            streetViewControl : false,
-            rotateControl     : false,
-            fullscreenControl : false
-        } )
+    var createMap = function ( mapIndex ) {
+        return new google.maps.Map(
+            document.getElementById( 'map' + mapIndex ), {
+                zoom   : 4,
+                minZoom: 3,
+                maxZoom: 13,
+                center : new google.maps.LatLng( 16.7794913, 9.6771556 ),
+            } )
+    }
+    
+    var maps = [ createMap( 1 ), createMap( 2 ) ]
+    google.maps.event.addListener( maps[ 0 ], 'bounds_changed', (function () {
+        maps[ 1 ].setCenter( maps[ 0 ].getCenter() )
+        maps[ 1 ].setZoom( maps[ 0 ].getZoom() )
+    }) );
+    google.maps.event.addListener( maps[ 1 ], 'bounds_changed', (function () {
+        maps[ 0 ].setCenter( maps[ 1 ].getCenter() )
+        maps[ 0 ].setZoom( maps[ 1 ].getZoom() )
+    }) );
+    
+    maps[ 1 ].setCenter( maps[ 0 ].getCenter() )
     $( '#form' ).submit( function ( e ) {
         e.preventDefault()
-        preview()
+        preview( 1 )
+        preview( 2 )
     } )
     
     $( '#sceneIdForm' ).submit( function ( e ) {
@@ -34,43 +38,44 @@
     var toDatePicker   = createDatePicker( $( '#to-date' )[ 0 ], new Date() )
     $( '#target-day-of-year' ).val( dayOfYear() )
     
-    function preview() {
-        console.log( 'Preview' )
+    function preview( mapIndex ) {
         var iso     = $( '#countries' ).val()
         var sensors = []
         $( '#sensors' ).find( 'input:checked' ).each( function () {
             sensors.push( $( this ).attr( 'id' ) )
         } )
-        sensors             = sensors.join( ',' )
-        var fromDate        = fromDatePicker.getDate().getTime()
-        var toDate          = toDatePicker.getDate().getTime()
-        var targetDayOfYear = $( '#target-day-of-year' ).val()
-        var bands           = $( '#bands' ).val()
+        sensors                   = sensors.join( ',' )
+        var fromDate              = fromDatePicker.getDate().getTime()
+        var toDate                = toDatePicker.getDate().getTime()
+        var targetDayOfYear       = $( '#target-day-of-year' ).val()
+        var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
+        var bands                 = $( '#bands' + mapIndex ).val()
         
         $.getJSON( 'preview', {
-                fusionTable    : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-                keyColumn      : 'ISO',
-                keyValue       : iso,
-                sensors        : sensors,
-                fromDate       : fromDate,
-                toDate         : toDate,
-                targetDayOfYear: targetDayOfYear,
-                bands          : bands
+                fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
+                keyColumn            : 'ISO',
+                keyValue             : iso,
+                sensors              : sensors,
+                fromDate             : fromDate,
+                toDate               : toDate,
+                targetDayOfYear      : targetDayOfYear,
+                targetDayOfYearWeight: targetDayOfYearWeight,
+                bands                : bands
             },
             function ( data ) {
                 var mapId  = data.mapId
                 var token  = data.token
                 var bounds = data.bounds
-                render( mapId, token, bounds )
+                render( mapId, token, bounds, mapIndex )
             } )
     }
     
-    function previewScenes() {
-        console.log( 'Preview scenes' )
+    function previewScenes( mapIndex ) {
         var iso             = $( '#countries' ).val()
         var scenes          = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
-        var bands           = $( '#bands' ).val()
+        var bands           = $( '#bands' + mapIndex ).val()
         var targetDayOfYear = $( '#target-day-of-year' ).val()
+        var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
         var fromDate        = fromDatePicker.getDate().getTime()
         var toDate          = toDatePicker.getDate().getTime()
         
@@ -80,6 +85,7 @@
                 keyValue       : iso,
                 scenes         : scenes,
                 targetDayOfYear: targetDayOfYear,
+                targetDayOfYearWeight: targetDayOfYearWeight,
                 bands          : bands,
                 fromDate       : fromDate,
                 toDate         : toDate
@@ -88,12 +94,12 @@
                 var mapId  = data.mapId
                 var token  = data.token
                 var bounds = data.bounds
-                render( mapId, token, bounds )
+                render( mapId, token, bounds, mapIndex )
             } )
         
     }
     
-    function render( mapId, token, bounds ) {
+    function render( mapId, token, bounds, mapIndex ) {
         var eeMapOptions = {
             getTileUrl: function ( tile, zoom ) {
                 var baseUrl = 'https://earthengine.googleapis.com/map'
@@ -105,6 +111,7 @@
         }
         
         // Create the map type.
+        var map     = maps[ mapIndex - 1 ]
         var mapType = new google.maps.ImageMapType( eeMapOptions )
         map.overlayMapTypes.clear()
         map.overlayMapTypes.push( mapType )
@@ -113,7 +120,6 @@
         var latLngBounds = new google.maps.LatLngBounds()
         for ( var i = 0; i < 4; i++ ) {
             var latLng = bounds[ i ]
-            console.log( latLng )
             latLngBounds.extend( new google.maps.LatLng( latLng[ 1 ], latLng[ 0 ] ) )
         }
         map.fitBounds( latLngBounds )
@@ -123,8 +129,7 @@
         var initialized = false
         var datePicker  = new Pikaday( {
             field      : field,
-            defaultDate: date,
-            onSelect   : function () { if ( initialized ) preview }
+            defaultDate: date
         } )
         datePicker.setDate( date )
         return datePicker

@@ -20,7 +20,7 @@ _epoch = datetime.utcfromtimestamp(0)
 _milis_per_day = 1000 * 60 * 60 * 24
 
 viz_by_bands = {
-    'B3, B2, B1': lambda params: {'bands': 'B3, B2, B1', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'B3, B2, B1': lambda params: {'bands': 'B3, B2, B1', 'min': 100, 'max': 5000, 'gamma': 1.8},
     'B4, B3, B2': lambda params: {'bands': 'B4, B3, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
     'B4, B5, B3': lambda params: {'bands': 'B4, B5, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
     'B7, B4, B3': lambda params: {'bands': 'B7, B4, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
@@ -68,6 +68,7 @@ def preview():
         from_date=from_date,
         to_date=to_date,
         target_day_of_year=int(request.args.get('targetDayOfYear')),
+        target_day_of_year_weight=float(request.args.get('targetDayOfYearWeight')),
         bands=_split(bands)
     )
     viz_params = viz_by_bands[bands]({
@@ -90,6 +91,7 @@ def previewScenes():
         aoi=aoi,
         sceneIds=scenes,
         target_day_of_year=int(request.args.get('targetDayOfYear')),
+        target_day_of_year_weight=float(request.args.get('targetDayOfYearWeight')),
         bands=_split(bands)
     )
 
