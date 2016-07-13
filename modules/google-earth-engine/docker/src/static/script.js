@@ -1,5 +1,5 @@
 (function () {
-    var map      = new google.maps.Map(
+    var map = new google.maps.Map(
         document.getElementById( 'map' ), {
             zoom              : 3,
             minZoom           : 3,

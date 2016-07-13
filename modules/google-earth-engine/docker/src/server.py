@@ -26,6 +26,7 @@ viz_by_bands = {
     'B7, B4, B3': lambda params: {'bands': 'B7, B4, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
     'B7, B5, B3': lambda params: {'bands': 'B7, B5, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
     'B7, B4, B2': lambda params: {'bands': 'B7, B4, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
+    'ndvi': lambda params: {'bands': 'ndvi', 'min': -1, 'max': 1, 'palette': '0000FF, 00FF00'},
     'temp': lambda params: {'bands': 'temp', 'min': 200, 'max': 400, 'palette': '0000FF, FF0000'},
     'date': lambda params: {
         'bands': 'date',
