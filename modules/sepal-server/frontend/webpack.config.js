@@ -22,8 +22,8 @@ module.exports = {
         new ExtractTextPlugin( 'static/app.css', { allChunks: true } ),
         // new Webpack.ProvidePlugin( { "window.Tether": "tether" } ),
         new Webpack.ProvidePlugin( {
-            $: "jquery",
-            jQuery: "jquery",
+            $              : "jquery",
+            jQuery         : "jquery",
             "window.jQuery": "jquery",
             "window.Tether": "tether"
         } )
@@ -34,7 +34,6 @@ module.exports = {
         loaders: [
             { test: /\.css$/, loader: ExtractTextPlugin.extract( 'style', 'css!postcss' ) },
             { test: /\.scss$/, loader: ExtractTextPlugin.extract( 'style', 'css!postcss!sass' ) },
-
             {
                 test  : /\.woff2?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
                 // Limiting the size of the woff fonts breaks font-awesome ONLY for the extract text plugin
@@ -46,7 +45,7 @@ module.exports = {
                 loader: 'file'
             },
             {
-                test: /\.less$/,
+                test  : /\.less$/,
                 loader: "style!css!less"
             },
             // inline base64 URLs for <=8k images, direct URLs for the rest
@@ -59,7 +58,7 @@ module.exports = {
         fs: "empty"
     },
     postcss: [ autoprefixer ],
-
+    
     devServer: {
         contentBase: './dist',
         host       : '0.0.0.0',
