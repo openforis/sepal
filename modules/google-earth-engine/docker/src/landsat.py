@@ -238,9 +238,7 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
     # Create a 'best pixel' composite using the warmest, wettest pixel closest to specified target date
     mosaic = image_collection_qa.qualityMosaic('cweight')
     # Clip the water bodies according to GFC Water Mask
-    water_mask = _water_mask()
     return mosaic \
-        .mask(water_mask) \
         .clip(aoi) \
         .int16() \
         .select(bands)
@@ -422,8 +420,7 @@ def _normalized_days_from_target_day(days_from_target_day):
 
     :return: An ee.Number with the normalized value.
     """
-    day_of_year_normalized = ee.Number(1).subtract(days_from_target_day.divide(183))
-    return day_of_year_normalized
+    return ee.Number(1).subtract(days_from_target_day.divide(183))
 
 
 def _normalized_cloud_cover(image):
@@ -436,8 +433,7 @@ def _normalized_cloud_cover(image):
 
     :return: An ee.Image with the normalized cloud cover.
     """
-    cloud_cover_normalized = image.metadata('CLOUD_COVER').divide(100).subtract(1).abs()
-    return cloud_cover_normalized
+    return image.metadata('CLOUD_COVER').divide(100).subtract(1).abs()
 
 
 def _apply_toa_correction(image, image_day_of_year, bands):
@@ -506,18 +502,6 @@ def _calculate_toa_correction(day_of_year):
     solar_elev = solar_elev1.add(solar_elev2)
     toa_cor2 = solar_elev.sin()
     return toa_cor2
-
-
-def _water_mask():
-    """Creates a water mask based Hansen's data.
-
-    :return: An ee.Image with the water mask.
-    """
-    gfc_image = ee.Image('UMD/hansen/global_forest_change_2013')
-    gfc_watermask = gfc_image.select(['datamask'])  # 0 = no data, 1 = mapped land, 2 = water
-    water = 2
-    water_mask = gfc_watermask.neq(water)
-    return water_mask
 
 
 def _collection_name(scene_id):

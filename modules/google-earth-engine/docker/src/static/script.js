@@ -28,7 +28,8 @@
     
     $( '#sceneIdForm' ).submit( function ( e ) {
         e.preventDefault()
-        previewScenes()
+        previewScenes( 1 )
+        previewScenes( 2 )
     } )
     
     var fromDate = new Date()
@@ -71,24 +72,20 @@
     }
     
     function previewScenes( mapIndex ) {
-        var iso             = $( '#countries' ).val()
-        var scenes          = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
-        var bands           = $( '#bands' + mapIndex ).val()
-        var targetDayOfYear = $( '#target-day-of-year' ).val()
+        var iso                   = $( '#countries' ).val()
+        var scenes                = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
+        var bands                 = $( '#bands' + mapIndex ).val()
+        var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
-        var fromDate        = fromDatePicker.getDate().getTime()
-        var toDate          = toDatePicker.getDate().getTime()
         
         $.getJSON( 'preview-scenes', {
-                fusionTable    : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-                keyColumn      : 'ISO',
-                keyValue       : iso,
-                scenes         : scenes,
-                targetDayOfYear: targetDayOfYear,
+                fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
+                keyColumn            : 'ISO',
+                keyValue             : iso,
+                scenes               : scenes,
+                targetDayOfYear      : targetDayOfYear,
                 targetDayOfYearWeight: targetDayOfYearWeight,
-                bands          : bands,
-                fromDate       : fromDate,
-                toDate         : toDate
+                bands                : bands
             },
             function ( data ) {
                 var mapId  = data.mapId

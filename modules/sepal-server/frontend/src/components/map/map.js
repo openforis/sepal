@@ -23,11 +23,6 @@ var mapStyle = require( './map-style.js' )
 // instance variables
 var map = null
 
-// Natural Earth Fusion Table data . see : https://www.google.com/fusiontables/DataSource?dsrcid=394713#rows:id=1
-// Name:	10m_admin_0_countries
-// Numeric ID:	419167
-// Encrypted ID:	16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ
-// var FT_TableID = "16CTzhDWVwwqa0e5xe4dRxQ9yoyE1hVt_3ekDFQ"
 var FT_TableID = "15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F"
 
 // overlay layers
@@ -81,9 +76,7 @@ var zoomTo = function ( e, address ) {
                     suppressInfoWindows: true,
                     query: {
                         from: FT_TableID,
-                        // select: 'kml_4326',
                         select: 'geometry',
-                        // where: "'sovereignt' = '" + address + "';"
                         where: "'NAME_FAO' = '" + address + "';"
                     },
                     styles: [ {
