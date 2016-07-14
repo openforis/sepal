@@ -1,17 +1,13 @@
 package datasearch
 
 import org.openforis.sepal.component.datasearch.SceneArea
-import org.openforis.sepal.component.datasearch.api.AutomaticSceneSelectingMapQuery
-import org.openforis.sepal.component.datasearch.api.FusionTableAoi
-import org.openforis.sepal.component.datasearch.api.GoogleEarthEngineGateway
-import org.openforis.sepal.component.datasearch.api.MapLayer
-import org.openforis.sepal.component.datasearch.api.PreselectedScenesMapQuery
+import org.openforis.sepal.component.datasearch.api.*
 
 class FakeGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
-    private final Map<FusionTableAoi, Collection<SceneArea>> sceneAreasByFusionTable = [:]
+    private final Map<Aoi, Collection<SceneArea>> sceneAreasByFusionTable = [:]
 
 
-    Collection<SceneArea> findSceneAreasInAoi(FusionTableAoi aoi) {
+    Collection<SceneArea> findSceneAreasInAoi(Aoi aoi) {
         return sceneAreasByFusionTable[aoi]
     }
 
@@ -24,7 +20,7 @@ class FakeGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
     }
 
     List<SceneArea> areas(String fusionTable, String keyColumn, String keyValue, List<SceneArea> sceneAreas) {
-        sceneAreasByFusionTable[new FusionTableAoi(fusionTable, keyColumn, keyValue)] = sceneAreas
+        sceneAreasByFusionTable[new FusionTableShape(fusionTable, keyColumn, keyValue)] = sceneAreas
         return sceneAreas
     }
 }

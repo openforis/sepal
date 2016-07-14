@@ -2,14 +2,14 @@ package org.openforis.sepal.component.datasearch.query
 
 import groovy.transform.Immutable
 import org.openforis.sepal.component.datasearch.SceneArea
+import org.openforis.sepal.component.datasearch.api.Aoi
 import org.openforis.sepal.component.datasearch.api.GoogleEarthEngineGateway
-import org.openforis.sepal.component.datasearch.api.FusionTableAoi
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 
 @Immutable
 class FindSceneAreasForAoi implements Query<List<SceneArea>> {
-    FusionTableAoi aoi
+    Aoi aoi
 }
 
 class FindSceneAreasForAoiHandler implements QueryHandler<List<SceneArea>, FindSceneAreasForAoi> {

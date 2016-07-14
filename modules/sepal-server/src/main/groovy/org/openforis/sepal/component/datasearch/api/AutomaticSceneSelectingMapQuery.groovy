@@ -7,7 +7,7 @@ class AutomaticSceneSelectingMapQuery {
     Date fromDate
     Date toDate
     List<String> sensors
-    FusionTableAoi aoi
+    Aoi aoi
     int targetDayOfYear
     double targetDayOfYearWeight
     List<String> bands

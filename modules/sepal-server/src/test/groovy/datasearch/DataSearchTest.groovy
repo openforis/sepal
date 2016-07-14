@@ -2,7 +2,7 @@ package datasearch
 
 import fake.Database
 import org.openforis.sepal.component.datasearch.*
-import org.openforis.sepal.component.datasearch.api.FusionTableAoi
+import org.openforis.sepal.component.datasearch.api.FusionTableShape
 import org.openforis.sepal.component.datasearch.api.SceneQuery
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
@@ -34,7 +34,7 @@ class DataSearchTest extends Specification {
 
         when:
         def sceneAreas = component.submit(new FindSceneAreasForAoi(
-                new FusionTableAoi(
+                new FusionTableShape(
                         tableName: SOME_FUSION_TABLE,
                         keyColumn: SOME_KEY_COLUMN,
                         keyValue: SOME_KEY_VALUE

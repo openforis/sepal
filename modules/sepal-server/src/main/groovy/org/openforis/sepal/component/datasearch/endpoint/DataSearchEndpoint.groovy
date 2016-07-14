@@ -1,6 +1,8 @@
 package org.openforis.sepal.component.datasearch.endpoint
 
+import groovy.json.JsonSlurper
 import groovymvc.Controller
+import groovymvc.Params
 import org.openforis.sepal.command.CommandDispatcher
 import org.openforis.sepal.component.datasearch.SceneArea
 import org.openforis.sepal.component.datasearch.SceneMetaData
@@ -33,7 +35,7 @@ class DataSearchEndpoint {
             get('/data/sceneareas') {
                 response.contentType = "application/json"
                 def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(
-                        toAoi(params.required('countryIso', String))))
+                        toAoi(params)))
                 def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
                 send(toJson(data))
             }
@@ -47,7 +49,7 @@ class DataSearchEndpoint {
 
                 def mapLayer = geeGateway.preview(new PreselectedScenesMapQuery(
                         sceneIds: sceneIds,
-                        aoi: toAoi(params.required('countryIso', String)),
+                        aoi: toAoi(params),
                         targetDayOfYear: targetDayOfYear,
                         atargetDayOfYearWeight: targetDayOfYearWeight,
                         bands: bands
@@ -72,7 +74,7 @@ class DataSearchEndpoint {
                         fromDate: fromDate,
                         toDate: toDate,
                         sensors: sensors,
-                        aoi: toAoi(params.required('countryIso', String)),
+                        aoi: toAoi(params),
                         targetDayOfYear: targetDayOfYear,
                         targetDayOfYearWeight: targetDayOfYearWeight,
                         bands: bands
@@ -116,11 +118,14 @@ class DataSearchEndpoint {
         }
     }
 
-    private FusionTableAoi toAoi(String iso) {
-        new FusionTableAoi(
-                tableName: FUSION_TABLE,
-                keyColumn: KEY_COLUMN,
-                keyValue: iso)
+    private Aoi toAoi(Params params) {
+        def polygon = params.polygon as String
+        polygon ?
+                new Polygon(new JsonSlurper().parseText(polygon) as List) :
+                new FusionTableShape(
+                        tableName: FUSION_TABLE,
+                        keyColumn: KEY_COLUMN,
+                        keyValue: params.required('countryIso', String))
     }
 
     Map sceneData(SceneMetaData scene, int targetDayOfYear) {

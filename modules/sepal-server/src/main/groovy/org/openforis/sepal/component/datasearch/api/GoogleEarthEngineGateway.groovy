@@ -3,7 +3,7 @@ package org.openforis.sepal.component.datasearch.api
 import org.openforis.sepal.component.datasearch.SceneArea
 
 interface GoogleEarthEngineGateway {
-    Collection<SceneArea> findSceneAreasInAoi(FusionTableAoi aoi)
+    Collection<SceneArea> findSceneAreasInAoi(Aoi aoi)
 
     MapLayer preview(AutomaticSceneSelectingMapQuery query)
 

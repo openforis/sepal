@@ -5,7 +5,7 @@ import org.openforis.sepal.util.annotation.ImmutableData
 @ImmutableData
 class PreselectedScenesMapQuery {
     List<String> sceneIds
-    FusionTableAoi aoi
+    Aoi aoi
     int targetDayOfYear
     double atargetDayOfYearWeight
     List<String> bands

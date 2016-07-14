@@ -75,7 +75,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         response.status == 200
     }
 
-    def 'GET /data/sceneareas/best-scenes returns scenes'() {
+    def 'GET /data/best-scenes returns scenes'() {
         def expectedQuery = new FindBestScenes(
                 sceneAreaIds: ['some-area', 'another-area'],
                 sensorIds: ['some-sensor', 'another-sensor'],
@@ -88,7 +88,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         def expectedScene = scene(parseDateString('2015-01-01'))
 
         when:
-        def response = get(path: 'data/sceneareas/best-scenes', query: [
+        def response = get(path: 'data/best-scenes', query: [
                 sceneAreaIds         : 'some-area, another-area',
                 sensorIds            : 'some-sensor, another-sensor',
                 fromDate             : toDateTimeString(expectedQuery.fromDate),
