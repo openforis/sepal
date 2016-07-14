@@ -66,18 +66,16 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                 .collect { toSceneMetaData(it) }
     }
 
-    void eachScene(SceneQuery query, double cloudTargetDaySortWeight, Closure<Boolean> callback) {
+    void eachScene(SceneQuery query, double targetDayOfYearWeight, Closure<Boolean> callback) {
         def q = """
                 SELECT
-                    (1 - $cloudTargetDaySortWeight) * cloud_cover / 100 + $cloudTargetDaySortWeight *
+                    (1 - $targetDayOfYearWeight) * cloud_cover / 100 + $targetDayOfYearWeight *
                     LEAST(
-                        ABS(TIMESTAMPDIFF(DAY, acquisition_date, STR_TO_DATE(CONCAT(YEAR(acquisition_date) + 1, '-$query.targetDay'), '%Y-%m-%d'))),
-                        ABS(TIMESTAMPDIFF(DAY, acquisition_date, STR_TO_DATE(CONCAT(YEAR(acquisition_date), '-$query.targetDay'), '%Y-%m-%d'))),
-                        ABS(TIMESTAMPDIFF(DAY, acquisition_date, STR_TO_DATE(CONCAT(YEAR(acquisition_date) - 1, '-$query.targetDay'), '%Y-%m-%d')))) / 182 as sort_weight,
+                        ABS(DAYOFYEAR(acquisition_date) - $query.targetDayOfYear),
+                        365 - ABS(DAYOFYEAR(acquisition_date) - $query.targetDayOfYear)) / 182 as sort_weight,
                     LEAST(
-                        ABS(TIMESTAMPDIFF(DAY, acquisition_date, STR_TO_DATE(CONCAT(YEAR(acquisition_date) + 1, '-$query.targetDay'), '%Y-%m-%d'))),
-                        ABS(TIMESTAMPDIFF(DAY, acquisition_date, STR_TO_DATE(CONCAT(YEAR(acquisition_date), '-$query.targetDay'), '%Y-%m-%d'))),
-                        ABS(TIMESTAMPDIFF(DAY, acquisition_date, STR_TO_DATE(CONCAT(YEAR(acquisition_date) - 1, '-$query.targetDay'), '%Y-%m-%d')))) days_from_target_date,
+                        ABS(DAYOFYEAR(acquisition_date) - $query.targetDayOfYear),
+                        365 - ABS(DAYOFYEAR(acquisition_date) - $query.targetDayOfYear)) days_from_target_date,
                     id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, sun_azimuth,
                     sun_elevation, browse_url, update_time
                 FROM scene_meta_data

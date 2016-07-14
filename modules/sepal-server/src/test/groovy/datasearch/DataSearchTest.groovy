@@ -2,6 +2,7 @@ package datasearch
 
 import fake.Database
 import org.openforis.sepal.component.datasearch.*
+import org.openforis.sepal.component.datasearch.api.FusionTableAoi
 import org.openforis.sepal.component.datasearch.api.SceneQuery
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
@@ -20,7 +21,7 @@ class DataSearchTest extends Specification {
     public static final String SOME_KEY_VALUE = 'some key value'
     public static final String SCENE_AREA_ID = 'some scene area'
     def database = new Database()
-    def sceneAreaProvider = new FakeSceneAreaProvider()
+    def sceneAreaProvider = new FakeGoogleEarthEngineGateway()
     def usgs = new FakeUsgsGateway()
     def component = new DataSearchComponent(
             database.dataSource,
@@ -33,10 +34,11 @@ class DataSearchTest extends Specification {
 
         when:
         def sceneAreas = component.submit(new FindSceneAreasForAoi(
-                fusionTable: SOME_FUSION_TABLE,
-                keyColumn: SOME_KEY_COLUMN,
-                keyValue: SOME_KEY_VALUE
-        ))
+                new FusionTableAoi(
+                        tableName: SOME_FUSION_TABLE,
+                        keyColumn: SOME_KEY_COLUMN,
+                        keyValue: SOME_KEY_VALUE
+                )))
 
         then:
         sceneAreas == expectedSceneAreas
@@ -119,8 +121,8 @@ class DataSearchTest extends Specification {
                 sensorIds: [scene.sensorId],
                 fromDate: new Date(0),
                 toDate: new Date(),
-                targetDay: '01-01',
-                cloudTargetDaySortWeight: 0.5,
+                targetDayOfYear: 1,
+                targetDayOfYearWeight: 0.5,
                 cloudCoverTarget: cloudCoverTarget
         ))
 

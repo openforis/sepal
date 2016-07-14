@@ -3,10 +3,10 @@ package org.openforis.sepal.component.datasearch.api
 import org.openforis.sepal.util.annotation.ImmutableData
 
 @ImmutableData
-class SceneQuery {
-    String sceneAreaId
-    List<String> sensorIds
-    Date fromDate
-    Date toDate
+class PreselectedScenesMapQuery {
+    List<String> sceneIds
+    FusionTableAoi aoi
     int targetDayOfYear
+    double atargetDayOfYearWeight
+    List<String> bands
 }

@@ -17,9 +17,6 @@ var formNotify  = null
 //
 var countryCode = null
 var targetDate  = null
-// var startDate   = null
-// var endDate     = null
-// var targetDay   = null
 
 var init = function ( formSelector ) {
 
@@ -50,9 +47,6 @@ var init = function ( formSelector ) {
         targetDate.select( 'month', now.format( 'MM' ) )
         targetDate.select( 'day', now.format( 'DD' ) )
     }, 1000 )
-
-    // endDate   = DatePicker.newInstance( form.find( '.to' ) )
-    // targetDay = DatePicker.newInstance( form.find( '.target-day' ), true )
     
     bindEvents()
     
@@ -73,11 +67,6 @@ var bindEvents = function () {
                 formNotify.html( 'Please select a valid TARGET DATE' )
                 valid = false
             }
-            // else if ( endDate.getYear() <= 0 || endDate.getMonth() <= 0 || endDate.getDay() <= 0 ) {
-            //     formNotify.html( 'Please select a valid TO date' )
-            //     valid = false
-            // }
-            
             // for debugging
             // TODO : REMOVE_TASK
             valid = true
@@ -107,14 +96,5 @@ module.exports = {
     , targetDate : function () {
         return targetDate
     }
-    // , startDate  : function () {
-    //     return startDate
-    // }
-    // , endDate    : function () {
-    //     return endDate
-    // }
-    // , targetDay  : function () {
-    //     return targetDay
-    // }
     , find       : find
 }

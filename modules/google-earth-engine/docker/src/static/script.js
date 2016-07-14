@@ -73,7 +73,7 @@
     
     function previewScenes( mapIndex ) {
         var iso                   = $( '#countries' ).val()
-        var scenes                = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
+        var sceneIds              = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
         var bands                 = $( '#bands' + mapIndex ).val()
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
@@ -82,7 +82,7 @@
                 fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
                 keyColumn            : 'ISO',
                 keyValue             : iso,
-                scenes               : scenes,
+                sceneIds             : sceneIds,
                 targetDayOfYear      : targetDayOfYear,
                 targetDayOfYearWeight: targetDayOfYearWeight,
                 bands                : bands

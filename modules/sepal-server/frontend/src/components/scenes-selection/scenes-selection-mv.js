@@ -53,7 +53,7 @@ var updateView = function () {
             
         }, i * 100 )
     } )
-
+    
 }
 
 var selectImage = function ( e, sceneImage ) {
@@ -72,12 +72,12 @@ var deselectImage = function ( e, sceneImage ) {
 
 var loadSceneImages = function ( e, sceneAreaId ) {
     var DATE_FORMAT = "YYYY-MM-DD"
-    var targetDay   = SearchForm.targetDate().asMoment()
+    var targetDate   = SearchForm.targetDate().asMoment()
     
     var data = {
-        startDate  : targetDay.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
-        , endDate  : targetDay.clone().add( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
-        , targetDay: targetDay.format( "MM-DD" )
+        fromDate        : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
+        , toDate        : targetDate.clone().add( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
+        , targetDayOfYear: targetDate.format( "DDD" )
     }
     
     var params = {

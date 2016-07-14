@@ -1,15 +1,11 @@
 package fake
 
 import groovy.sql.Sql
-import groovy.time.TimeCategory
 import org.h2.jdbcx.JdbcDataSource
-import org.openforis.sepal.util.DateTime
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
-import java.sql.Connection
-import java.text.SimpleDateFormat
 
 class Database {
     private static final Logger LOG = LoggerFactory.getLogger(this.class)
@@ -46,8 +42,6 @@ class Database {
             sql.execute('''
                 CREATE ALIAS IF NOT EXISTS SPATIAL_INIT FOR
                     "org.h2gis.h2spatialext.CreateSpatialExtension.initSpatialExtension";
-                CREATE ALIAS IF NOT EXISTS MAKEDATE FOR "fake.MySqlFunctions.makeDate";
-                CREATE ALIAS IF NOT EXISTS STR_TO_DATE FOR "fake.MySqlFunctions.strToDate";
                 CALL SPATIAL_INIT();''')
             setupSchema()
             LOG.info("Setup database in ${System.currentTimeMillis() - time} millis.")
@@ -57,25 +51,5 @@ class Database {
     private void setupSchema() {
         def schema = SCHEMA.getText('UTF-8')
         new Sql(dataSource).execute(schema)
-    }
-}
-
-class MySqlFunctions {
-    static Date makeDate(Connection connection, int year, int dayOfYear) {
-        return use (TimeCategory) {
-            DateTime.parseDateString("$year-01-01") + dayOfYear.days
-        }
-    }
-    static int dateDiff(Connection connection, Date d1, Date d2) {
-        return use (TimeCategory) {
-            (d2 - d1).days
-        }
-    }
-    static Date strToDate(Connection connection, String date, String pattern) {
-        def p = pattern
-                .replaceAll('%Y', 'yyyy')
-                .replaceAll('%m', 'MM')
-                .replaceAll('%d', 'dd')
-        new SimpleDateFormat(p).parse(date)
     }
 }

@@ -53,25 +53,25 @@ def index():
     return render_template('index.html', countries=countries)
 
 
-@app.route('/preview')
+@app.route('/preview', methods=['GET', 'POST'])
 def preview():
     aoi = _aoiGeometry()
-    from_millis_since_epoch = int(request.args.get('fromDate'))
-    to_millis_since_epoch = int(request.args.get('toDate'))
+    from_millis_since_epoch = int(request.values.get('fromDate'))
+    to_millis_since_epoch = int(request.values.get('toDate'))
     from_date = date.fromtimestamp(from_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
     to_date = date.fromtimestamp(to_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
-    sensors = _split(request.args.get('sensors'))
-    bands = request.args.get('bands')
+    sensors = _split(request.values.get('sensors'))
+    bands = _split(request.values.get('bands'))
     mosaic = landsat.create_mosaic(
         aoi=aoi,
         sensors=sensors,
         from_date=from_date,
         to_date=to_date,
-        target_day_of_year=int(request.args.get('targetDayOfYear')),
-        target_day_of_year_weight=float(request.args.get('targetDayOfYearWeight')),
-        bands=_split(bands)
+        target_day_of_year=int(request.values.get('targetDayOfYear')),
+        target_day_of_year_weight=float(request.values.get('targetDayOfYearWeight')),
+        bands=bands
     )
-    viz_params = viz_by_bands[bands]({
+    viz_params = viz_by_bands[', '.join(bands)]({
         'from_days_since_epoch': from_millis_since_epoch / _milis_per_day,
         'to_days_since_epoch': to_millis_since_epoch / _milis_per_day
     })
@@ -82,23 +82,23 @@ def preview():
     })
 
 
-@app.route('/preview-scenes')
+@app.route('/preview-scenes', methods=['GET', 'POST'])
 def previewScenes():
     aoi = _aoiGeometry()
-    scenes = _split(request.args.get('scenes'))
-    bands = request.args.get('bands')
+    scenes = _split(request.values.get('sceneIds'))
+    bands = _split(request.values.get('bands'))
     mosaic = landsat.create_mosaic_from_scene_ids(
         aoi=aoi,
         sceneIds=scenes,
-        target_day_of_year=int(request.args.get('targetDayOfYear')),
-        target_day_of_year_weight=float(request.args.get('targetDayOfYearWeight')),
-        bands=_split(bands)
+        target_day_of_year=int(request.values.get('targetDayOfYear')),
+        target_day_of_year_weight=float(request.values.get('targetDayOfYearWeight')),
+        bands=bands
     )
 
     acquisition_timestamps = [_acquisition_timestamp(scene) for scene in scenes]
     from_millis_since_epoch = int(min(acquisition_timestamps))
     to_millis_since_epoch = int(max(acquisition_timestamps))
-    mapid = mosaic.getMapId(viz_by_bands[bands]({
+    mapid = mosaic.getMapId(viz_by_bands[', '.join(bands)]({
         'from_days_since_epoch': from_millis_since_epoch / _milis_per_day,
         'to_days_since_epoch': to_millis_since_epoch / _milis_per_day
     }))
@@ -110,9 +110,9 @@ def previewScenes():
 
 @app.route('/sceneareas')
 def sceneareas():
-    fusionTable = request.args.get('fusionTable')
-    keyColumn = request.args.get('keyColumn')
-    keyValue = request.args.get('keyValue')
+    fusionTable = request.values.get('fusionTable')
+    keyColumn = request.values.get('keyColumn')
+    keyValue = request.values.get('keyValue')
     features = ee.FeatureCollection('ft:' + fusionTable)
     aoi = features \
         .filterMetadata(keyColumn, 'equals', keyValue)
@@ -141,16 +141,16 @@ def sceneareas():
 
 @app.route('/sceneareas/<sceneAreaId>')
 def scenearea(sceneAreaId):
-    targetDay = request.args.get('targetDay')
-    startDate = request.args.get('startDate')
-    endDate = request.args.get('endDate')
+    targetDay = request.values.get('targetDay')
+    fromDate = request.values.get('fromDate')
+    toDate = request.values.get('toDate')
 
     m = re.search('(...)_(.*)', sceneAreaId)
     path = int(m.group(1))
     row = int(m.group(2))
 
     input = ee.ImageCollection('LC8_L1T_TOA') \
-        .filter(ee.Filter.date(startDate, endDate)) \
+        .filter(ee.Filter.date(fromDate, toDate)) \
         .filterMetadata('WRS_PATH', 'equals', path) \
         .filterMetadata('WRS_ROW', 'equals', row)
 
@@ -186,9 +186,9 @@ def scenearea(sceneAreaId):
 
 
 def _aoiGeometry():
-    fusionTable = request.args.get('fusionTable')
-    keyColumn = request.args.get('keyColumn')
-    keyValue = request.args.get('keyValue')
+    fusionTable = request.values.get('fusionTable')
+    keyColumn = request.values.get('keyColumn')
+    keyValue = request.values.get('keyValue')
     countries = ee.FeatureCollection('ft:' + fusionTable)
     aoi = countries \
         .filterMetadata(keyColumn, 'equals', keyValue)

@@ -31,11 +31,11 @@ class DateTimeTest extends Specification {
         DateTime.daysFromDayOfYear(date, dayOfYear) == expectedDays
         where:
         dateString            | dayOfYear | expectedDays
-        '2016-01-01'          | '01-01'   | 0
-        '2016-01-01'          | '01-02'   | 1
-        '2016-01-01'          | '12-31'   | 1
-        '2016-01-01 00:00:00' | '01-01'   | 0
-        '2016-01-01 23:59:59' | '01-01'   | 0
+        '2016-01-01'          | 1         | 0
+        '2016-01-01'          | 2         | 1
+        '2016-01-01'          | 365       | 1
+        '2016-01-01 00:00:00' | 1         | 0
+        '2016-01-01 23:59:59' | 1         | 0
 
     }
 

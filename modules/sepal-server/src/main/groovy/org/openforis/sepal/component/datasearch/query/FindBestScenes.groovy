@@ -13,8 +13,8 @@ class FindBestScenes implements Query<Map<String, List<SceneMetaData>>> {
     Collection<String> sensorIds
     Date fromDate
     Date toDate
-    String targetDay
-    double cloudTargetDaySortWeight
+    int targetDayOfYear
+    double targetDayOfYearWeight
     double cloudCoverTarget
 }
 
@@ -29,12 +29,14 @@ class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaDa
         query.sceneAreaIds.collectEntries { sceneAreaId ->
             def scenes = []
             def cloudCover = 1
-            sceneMetaDataProvider.eachScene(new SceneQuery(
-                    sceneAreaId: sceneAreaId,
-                    sensorIds: query.sensorIds,
-                    fromDate: query.fromDate,
-                    toDate: query.toDate,
-                    targetDay: query.targetDay), query.cloudTargetDaySortWeight) { SceneMetaData scene ->
+            sceneMetaDataProvider.eachScene(
+                    new SceneQuery(
+                            sceneAreaId: sceneAreaId,
+                            sensorIds: query.sensorIds,
+                            fromDate: query.fromDate,
+                            toDate: query.toDate,
+                            targetDayOfYear: query.targetDayOfYear),
+                    query.targetDayOfYearWeight) { SceneMetaData scene ->
                 scenes << scene
                 cloudCover *= scene.cloudCover / 100
                 return cloudCover > query.cloudCoverTarget

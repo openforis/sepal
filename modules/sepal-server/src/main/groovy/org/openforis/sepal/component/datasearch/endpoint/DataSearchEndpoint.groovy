@@ -4,12 +4,11 @@ import groovymvc.Controller
 import org.openforis.sepal.command.CommandDispatcher
 import org.openforis.sepal.component.datasearch.SceneArea
 import org.openforis.sepal.component.datasearch.SceneMetaData
-import org.openforis.sepal.component.datasearch.api.SceneQuery
+import org.openforis.sepal.component.datasearch.api.*
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.query.QueryDispatcher
-import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
 
 import static groovy.json.JsonOutput.toJson
@@ -19,42 +18,85 @@ class DataSearchEndpoint {
     private static final KEY_COLUMN = 'ISO'
     private final QueryDispatcher queryDispatcher
     private final CommandDispatcher commandDispatcher
-    private final UserRepository userRepository
+    private final GoogleEarthEngineGateway geeGateway
 
     DataSearchEndpoint(QueryDispatcher queryDispatcher,
                        CommandDispatcher commandDispatcher,
-                       UserRepository userRepository) {
+                       GoogleEarthEngineGateway geeGateway) {
         this.queryDispatcher = queryDispatcher
         this.commandDispatcher = commandDispatcher
-        this.userRepository = userRepository
+        this.geeGateway = geeGateway
     }
 
     void registerWith(Controller controller) {
         controller.with {
-
             get('/data/sceneareas') {
                 response.contentType = "application/json"
                 def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(
-                        fusionTable: FUSION_TABLE,
-                        keyColumn: KEY_COLUMN,
-                        keyValue: params.countryIso))
+                        toAoi(params.required('countryIso', String))))
                 def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
                 send(toJson(data))
             }
 
-            get('/data/sceneareas/best-scenes') {
+            post('/data/mosaic/preview-scenes') {
+                response.contentType = "application/json"
+                def sceneIds = params.required('sceneIds', String).split(',')*.trim()
+                def bands = params.required('bands', String).split(',')*.trim()
+                def targetDayOfYear = params.required('targetDayOfYear', int)
+                def targetDayOfYearWeight = params.required('targetDayOfYearWeight', double)
+
+                def mapLayer = geeGateway.preview(new PreselectedScenesMapQuery(
+                        sceneIds: sceneIds,
+                        aoi: toAoi(params.required('countryIso', String)),
+                        targetDayOfYear: targetDayOfYear,
+                        atargetDayOfYearWeight: targetDayOfYearWeight,
+                        bands: bands
+                ))
+
+                send(toJson(
+                        mapId: mapLayer.id,
+                        token: mapLayer.token
+                ))
+            }
+
+            post('/data/mosaic/preview') {
+                response.contentType = "application/json"
+                def fromDate = DateTime.parseDateString(params.required('fromDate', String))
+                def toDate = DateTime.parseDateString(params.required('toDate', String))
+                def sensors = params.required('sensors', String).split(',')*.trim()
+                def targetDayOfYearWeight = params.required('targetDayOfYearWeight', double)
+                def bands = params.required('bands', String).split(',')*.trim()
+                def targetDayOfYear = params.required('targetDayOfYear', int)
+
+                def mapLayer = geeGateway.preview(new AutomaticSceneSelectingMapQuery(
+                        fromDate: fromDate,
+                        toDate: toDate,
+                        sensors: sensors,
+                        aoi: toAoi(params.required('countryIso', String)),
+                        targetDayOfYear: targetDayOfYear,
+                        targetDayOfYearWeight: targetDayOfYearWeight,
+                        bands: bands
+                ))
+
+                send(toJson(
+                        mapId: mapLayer.id,
+                        token: mapLayer.token
+                ))
+            }
+
+            get('/data/best-scenes') {
                 response.contentType = "application/json"
                 def query = new FindBestScenes(
                         sceneAreaIds: params.required('sceneAreaIds', String).split(',')*.trim(),
                         sensorIds: params.required('sensorIds', String).split(',')*.trim(),
-                        fromDate: DateTime.parseDateString(params.required('startDate', String)),
-                        toDate: DateTime.parseDateString(params.required('endDate', String)),
-                        targetDay: params.required('targetDay', String),
-                        cloudTargetDaySortWeight: params.required('cloudTargetDaySortWeight', double),
+                        fromDate: DateTime.parseDateString(params.required('fromDate', String)),
+                        toDate: DateTime.parseDateString(params.required('toDate', String)),
+                        targetDayOfYear: params.required('targetDayOfYear', int),
+                        targetDayOfYearWeight: params.required('targetDayOfYearWeight', double),
                         cloudCoverTarget: params.required('cloudCoverTarget', double))
                 def scenesByArea = queryDispatcher.submit(query)
                 def data = scenesByArea.collectEntries { sceneAreaId, scenes ->
-                    [(sceneAreaId): scenes.collect { sceneData(it, query.targetDay) }]
+                    [(sceneAreaId): scenes.collect { sceneData(it, query.targetDayOfYear) }]
                 }
                 send(toJson(data))
             }
@@ -63,18 +105,25 @@ class DataSearchEndpoint {
                 response.contentType = "application/json"
                 def query = new SceneQuery(
                         sceneAreaId: params.sceneAreaId,
-                        fromDate: DateTime.parseDateString(params.required('startDate', String)),
-                        toDate: DateTime.parseDateString(params.required('endDate', String)),
-                        targetDay: params.targetDay
+                        fromDate: DateTime.parseDateString(params.required('fromDate', String)),
+                        toDate: DateTime.parseDateString(params.required('toDate', String)),
+                        targetDayOfYear: params.required('targetDayOfYear', int)
                 )
                 def scenes = queryDispatcher.submit(new FindScenesForSceneArea(query))
-                def data = scenes.collect { sceneData(it, query.targetDay) }
+                def data = scenes.collect { sceneData(it, query.targetDayOfYear) }
                 send(toJson(data))
             }
         }
     }
 
-    Map sceneData(SceneMetaData scene, String targetDay) {
+    private FusionTableAoi toAoi(String iso) {
+        new FusionTableAoi(
+                tableName: FUSION_TABLE,
+                keyColumn: KEY_COLUMN,
+                keyValue: iso)
+    }
+
+    Map sceneData(SceneMetaData scene, int targetDayOfYear) {
         [
                 sceneId          : scene.id,
                 sensor           : scene.sensorId,
@@ -83,7 +132,7 @@ class DataSearchEndpoint {
                 cloudCover       : scene.cloudCover,
                 sunAzimuth       : scene.sunAzimuth,
                 sunElevation     : scene.sunElevation,
-                daysFromTargetDay: DateTime.daysFromDayOfYear(scene.acquisitionDate, targetDay)
+                daysFromTargetDay: DateTime.daysFromDayOfYear(scene.acquisitionDate, targetDayOfYear)
         ]
     }
 

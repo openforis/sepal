@@ -5,6 +5,7 @@ import org.openforis.sepal.component.datasearch.LatLng
 import org.openforis.sepal.component.datasearch.Polygon
 import org.openforis.sepal.component.datasearch.SceneArea
 import org.openforis.sepal.component.datasearch.SceneMetaData
+import org.openforis.sepal.component.datasearch.api.GoogleEarthEngineGateway
 import org.openforis.sepal.component.datasearch.api.SceneQuery
 import org.openforis.sepal.component.datasearch.endpoint.DataSearchEndpoint
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
@@ -19,8 +20,10 @@ import static org.openforis.sepal.util.DateTime.toDateTimeString
 
 @SuppressWarnings("GroovyAssignabilityCheck")
 class DataSearchEndpointTest extends AbstractEndpointTest {
+    def geeGateway = Mock GoogleEarthEngineGateway
+
     void registerEndpoint(Controller controller) {
-        new DataSearchEndpoint(queryDispatcher, commandDispatcher, userRepository).registerWith(controller)
+        new DataSearchEndpoint(queryDispatcher, commandDispatcher, geeGateway).registerWith(controller)
     }
 
     def 'GET /data/sceneareas/?countryIso= returns sceneareas'() {
@@ -28,7 +31,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         def response = get(path: 'data/sceneareas', query: [countryIso: 'aa'])
 
         then:
-        1 * queryDispatcher.submit({ it.keyValue == 'aa' } as FindSceneAreasForAoi) >> [
+        1 * queryDispatcher.submit({ it.aoi.keyValue == 'aa' } as FindSceneAreasForAoi) >> [
                 new SceneArea(
                         id: 'scene area id',
                         polygon: new Polygon([new LatLng(1d, 1d), new LatLng(2d, 2d), new LatLng(3d, 3d), new LatLng(1d, 1d)]))
@@ -43,12 +46,12 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
     }
 
     def 'GET /data/sceneareas/{sceneAreaId} returns scenes'() {
-        def query = [startDate: '2016-01-01', endDate: '2016-02-01', targetDay: '12-31']
+        def query = [fromDate: '2016-01-01', toDate: '2016-02-01', targetDayOfYear: 365]
         def expectedSceneQuery = new SceneQuery(
                 sceneAreaId: 'someSceneAreaId',
-                fromDate: parseDateString(query.startDate),
-                toDate: parseDateString(query.endDate),
-                targetDay: query.targetDay
+                fromDate: parseDateString(query.fromDate),
+                toDate: parseDateString(query.toDate),
+                targetDayOfYear: query.targetDayOfYear
         )
         def expectedScene = scene(expectedSceneQuery.fromDate)
 
@@ -78,21 +81,21 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
                 sensorIds: ['some-sensor', 'another-sensor'],
                 fromDate: parseDateString('2015-01-01'),
                 toDate: parseDateString('2016-01-01'),
-                targetDay: '01-22',
-                cloudTargetDaySortWeight: 0.12,
+                targetDayOfYear: 22,
+                targetDayOfYearWeight: 0.12,
                 cloudCoverTarget: 0.001
         )
         def expectedScene = scene(parseDateString('2015-01-01'))
 
         when:
         def response = get(path: 'data/sceneareas/best-scenes', query: [
-                sceneAreaIds            : 'some-area, another-area',
-                sensorIds               : 'some-sensor, another-sensor',
-                startDate               : toDateTimeString(expectedQuery.fromDate),
-                endDate                 : toDateTimeString(expectedQuery.toDate),
-                targetDay               : expectedQuery.targetDay,
-                cloudTargetDaySortWeight: expectedQuery.cloudTargetDaySortWeight,
-                cloudCoverTarget        : expectedQuery.cloudCoverTarget
+                sceneAreaIds         : 'some-area, another-area',
+                sensorIds            : 'some-sensor, another-sensor',
+                fromDate             : toDateTimeString(expectedQuery.fromDate),
+                toDate               : toDateTimeString(expectedQuery.toDate),
+                targetDayOfYear      : expectedQuery.targetDayOfYear,
+                targetDayOfYearWeight: expectedQuery.targetDayOfYearWeight,
+                cloudCoverTarget     : expectedQuery.cloudCoverTarget
         ])
 
         then:

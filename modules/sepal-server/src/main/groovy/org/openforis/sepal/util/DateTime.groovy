@@ -7,7 +7,6 @@ import java.time.ZoneId
 import java.time.temporal.ChronoField
 
 import static java.time.temporal.ChronoField.MONTH_OF_YEAR
-import static java.util.Calendar.YEAR
 
 class DateTime {
     private static final DATE_ONLY_DATE_FORMAT = 'yyyy-MM-dd'
@@ -76,15 +75,15 @@ class DateTime {
     }
 
     /**
-     * Determines the number of dates between the date and the provided day of year ('MM-dd')
+     * Determines the number of dates between the date and the provided day of year
      * @param date the date
-     * @param dayOfYear the day of the year ('MM-dd')
+     * @param dayOfYear the day of the year
      * @return the days between the date and the day of year.
      */
-    static int daysFromDayOfYear(Date date, String dayOfYear) {
-        [-1, 0, 1].collect {
-            daysBetween(date, parseDateString("${date[YEAR] + it}-$dayOfYear"))
-        }.min()
+    static int daysFromDayOfYear(Date date, int dayOfYear) {
+        def dateDayOfYear = new SimpleDateFormat('D').format(date).toInteger()
+        def days = Math.abs(dateDayOfYear - dayOfYear)
+        return [days, 365 - days].min()
     }
 
     private static daysBetween(Date date1, Date date2) {

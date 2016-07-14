@@ -103,6 +103,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
 
     private SceneMetaData toSceneMetaData(LandsatSensor sensor, data) {
         try {
+            // TODO: Get rid of 'LM5'
             if (data.DATA_TYPE_L1 == 'L1T' && data.dayOrNight == 'DAY' && data.cloudCoverFull.toDouble() >= 0d)
                 return new SceneMetaData(
                         id: data.sceneID,

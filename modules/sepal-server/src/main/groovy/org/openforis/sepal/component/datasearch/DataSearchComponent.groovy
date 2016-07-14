@@ -4,22 +4,18 @@ import groovymvc.Controller
 import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
+import org.openforis.sepal.component.datasearch.adapter.HttpGoogleEarthEngineGateway
+import org.openforis.sepal.component.datasearch.api.GoogleEarthEngineGateway
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaDataHandler
 import org.openforis.sepal.component.datasearch.endpoint.DataSearchEndpoint
-import org.openforis.sepal.component.datasearch.query.FindBestScenes
-import org.openforis.sepal.component.datasearch.query.FindBestScenesHandler
-import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
-import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoiHandler
-import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
-import org.openforis.sepal.component.datasearch.query.FindScenesForSceneAreaHandler
+import org.openforis.sepal.component.datasearch.query.*
 import org.openforis.sepal.component.datasearch.usgs.CsvBackedUsgsGateway
 import org.openforis.sepal.component.datasearch.usgs.UsgsGateway
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.transaction.SqlConnectionManager
-import org.openforis.sepal.user.JdbcUserRepository
 import org.openforis.sepal.util.annotation.ImmutableData
 import org.openforis.sepal.util.lifecycle.Lifecycle
 
@@ -28,7 +24,7 @@ import javax.sql.DataSource
 final class DataSearchComponent implements EndpointRegistry, Lifecycle {
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
-    private final SceneAreaProvider sceneAreaProvider
+    private final GoogleEarthEngineGateway geeGateway
     private final SceneMetaDataRepository sceneMetaDataRepository
     private final SqlConnectionManager connectionManager
     private SceneMetaDataUpdateScheduler sceneMetaDataUpdateScheduler
@@ -36,23 +32,23 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
     DataSearchComponent(SepalConfiguration config) {
         this(
                 config.dataSource,
-                new SceneAreaProviderHttpGateway(config.googleEarthEngineEndpoint),
+                new HttpGoogleEarthEngineGateway(config.googleEarthEngineEndpoint),
                 CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory))
         )
     }
 
     DataSearchComponent(
             DataSource dataSource,
-            SceneAreaProvider sceneAreaProvider,
+            GoogleEarthEngineGateway geeGateway,
             UsgsGateway usgs) {
-        this.sceneAreaProvider = sceneAreaProvider
+        this.geeGateway = geeGateway
         connectionManager = new SqlConnectionManager(dataSource)
         this.sceneMetaDataRepository = new JdbcSceneMetaDataRepository(this.connectionManager)
         commandDispatcher = new HandlerRegistryCommandDispatcher(this.connectionManager)
                 .register(UpdateUsgsSceneMetaData, new UpdateUsgsSceneMetaDataHandler(usgs, sceneMetaDataRepository))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
-                .register(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(sceneAreaProvider))
+                .register(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(geeGateway))
                 .register(FindScenesForSceneArea, new FindScenesForSceneAreaHandler(sceneMetaDataRepository))
                 .register(FindBestScenes, new FindBestScenesHandler(sceneMetaDataRepository))
 
@@ -76,7 +72,10 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
     }
 
     void registerEndpointsWith(Controller controller) {
-        new DataSearchEndpoint(queryDispatcher, commandDispatcher, new JdbcUserRepository(connectionManager))
+        new DataSearchEndpoint(
+                queryDispatcher,
+                commandDispatcher,
+                geeGateway)
                 .registerWith(controller)
     }
 

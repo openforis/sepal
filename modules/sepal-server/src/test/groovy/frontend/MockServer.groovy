@@ -53,40 +53,40 @@ class MockServer extends AbstractMvcFilter {
             }
 
 
-            get('/sandbox/report'){
+            get('/sandbox/report') {
                 response.contentType = 'application/json'
 
                 send toJson(
                         sessions: [[
-                                           id: 'some-session',
-                                           path: 'sandbox/session/some-session',
-                                           username: authenticator.users.values().first().username,
-                                           status: 'STARTING',
-                                           host: 'some-host',
-                                           instanceType: [
-                                                   path: "sandbox/instance-type/some-instance-type",
-                                                   id: 'some-instance-type',
-                                                   name: 'Some instance type',
+                                           id               : 'some-session',
+                                           path             : 'sandbox/session/some-session',
+                                           username         : authenticator.users.values().first().username,
+                                           status           : 'STARTING',
+                                           host             : 'some-host',
+                                           instanceType     : [
+                                                   path       : "sandbox/instance-type/some-instance-type",
+                                                   id         : 'some-instance-type',
+                                                   name       : 'Some instance type',
                                                    description: 'Some instance type description',
-                                                   hourlyCost: 0.1
+                                                   hourlyCost : 0.1
                                            ],
-                                           creationTime: '2016-01-01T00:00:00',
+                                           creationTime     : '2016-01-01T00:00:00',
                                            costSinceCreation: 0.1 * 2 * 24 // hourly cost * two days
                                    ]],
                         instanceTypes: [[
-                                                path: "sandbox/instance-type/some-instance-type",
-                                                id: 'some-instance-type',
-                                                name: 'Some instance type',
+                                                path       : "sandbox/instance-type/some-instance-type",
+                                                id         : 'some-instance-type',
+                                                name       : 'Some instance type',
                                                 description: 'Some instance type description',
-                                                hourlyCost: 0.1
+                                                hourlyCost : 0.1
                                         ]],
                         spending: [
-                                monthlyInstanceBudget: 1d,
+                                monthlyInstanceBudget  : 1d,
                                 monthlyInstanceSpending: 2d,
-                                monthlyStorageBudget: 3d,
-                                monthlyStorageSpending: 4d,
-                                storageQuota: 5d,
-                                storageUsed: 6d
+                                monthlyStorageBudget   : 3d,
+                                monthlyStorageSpending : 4d,
+                                storageQuota           : 5d,
+                                storageUsed            : 6d
                         ]
                 )
             }
@@ -188,8 +188,8 @@ class MockServer extends AbstractMvcFilter {
                 response.contentType = 'application/json'
 
                 params.targetDay //MM-dd
-                params.startDate //YYYY-MM-dd
-                params.endDate  //YYYY-MM-dd
+                params.fromDate //YYYY-MM-dd
+                params.toDate  //YYYY-MM-dd
 
                 send toJson([
                         [sceneId: 'LC81900302015079LGN00', sensor: 'LANDSAT_8', browseUrl: 'http://earthexplorer.usgs.gov/browse/landsat_8/2015/190/030/LC81900302015079LGN00.jpg', acquisitionDate: '2015-03-20', cloudCover: 0.08, sunAzimuth: 150.48942477, sunElevation: 42.80026465, daysFromTargetDay: 5],
