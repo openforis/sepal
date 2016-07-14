@@ -186,6 +186,18 @@ def scenearea(sceneAreaId):
 
 
 def _aoiGeometry():
+    if 'polygon' in request.values:
+        return _polygon_geometry()
+    else:
+        return _fusion_table_geometry()
+
+
+def _polygon_geometry():
+    polygon = json.loads(request.values.get('polygon'))
+    return ee.Geometry.Polygon([polygon])
+
+
+def _fusion_table_geometry():
     fusionTable = request.values.get('fusionTable')
     keyColumn = request.values.get('keyColumn')
     keyValue = request.values.get('keyValue')

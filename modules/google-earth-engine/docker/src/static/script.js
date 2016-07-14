@@ -32,6 +32,44 @@
         previewScenes( 2 )
     } )
     
+    
+    var shape          = null
+    var drawingManager = new google.maps.drawing.DrawingManager( {
+        drawingControl       : true,
+        drawingControlOptions: {
+            position    : google.maps.ControlPosition.TOP_CENTER,
+            drawingModes: [
+                google.maps.drawing.OverlayType.POLYGON
+            ]
+        },
+        polygonOptions: {
+            fillOpacity: 0,
+            strokeWeight: 2
+        }
+    } );
+    drawingManager.setMap( maps[ 0 ] );
+    google.maps.event.addListener( drawingManager, 'overlaycomplete', function ( e ) {
+        drawingManager.setDrawingMode( null );
+        if ( shape != null )
+            shape.setMap( null )
+        var newShape  = e.overlay;
+        shape         = newShape
+        newShape.type = e.type;
+        google.maps.event.addListener( newShape, 'click', function () {
+            shape.setMap( null )
+            shape = null
+        } );
+    } )
+    
+    function createPolygon() {
+        var polygon = []
+        shape.getPath().forEach( function ( a ) {
+            polygon.push( [ a.lng(), a.lat() ] )
+        } )
+        polygon.push( polygon[ 0 ] )
+        return JSON.stringify( polygon )
+    }
+    
     var fromDate = new Date()
     fromDate.setMonth( 0 )
     fromDate.setDate( 1 )
@@ -52,17 +90,20 @@
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
         var bands                 = $( '#bands' + mapIndex ).val()
         
-        $.getJSON( 'preview', {
-                fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-                keyColumn            : 'ISO',
-                keyValue             : iso,
-                sensors              : sensors,
-                fromDate             : fromDate,
-                toDate               : toDate,
-                targetDayOfYear      : targetDayOfYear,
-                targetDayOfYearWeight: targetDayOfYearWeight,
-                bands                : bands
-            },
+        var query = {
+            fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
+            keyColumn            : 'ISO',
+            keyValue             : iso,
+            sensors              : sensors,
+            fromDate             : fromDate,
+            toDate               : toDate,
+            targetDayOfYear      : targetDayOfYear,
+            targetDayOfYearWeight: targetDayOfYearWeight,
+            bands                : bands
+        }
+        if ( shape != null )
+            query.polygon = createPolygon()
+        $.getJSON( 'preview', query,
             function ( data ) {
                 var mapId  = data.mapId
                 var token  = data.token
@@ -78,15 +119,18 @@
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
         
-        $.getJSON( 'preview-scenes', {
-                fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-                keyColumn            : 'ISO',
-                keyValue             : iso,
-                sceneIds             : sceneIds,
-                targetDayOfYear      : targetDayOfYear,
-                targetDayOfYearWeight: targetDayOfYearWeight,
-                bands                : bands
-            },
+        var query = {
+            fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
+            keyColumn            : 'ISO',
+            keyValue             : iso,
+            sceneIds             : sceneIds,
+            targetDayOfYear      : targetDayOfYear,
+            targetDayOfYearWeight: targetDayOfYearWeight,
+            bands                : bands
+        }
+        if ( shape != null )
+            query.polygon = createPolygon()
+        $.getJSON( 'preview-scenes', query,
             function ( data ) {
                 var mapId  = data.mapId
                 var token  = data.token
