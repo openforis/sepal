@@ -240,7 +240,6 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
     # Clip the water bodies according to GFC Water Mask
     return mosaic \
         .clip(aoi) \
-        .int16() \
         .select(bands)
 
 
@@ -460,7 +459,7 @@ def _apply_toa_correction(image, image_day_of_year, bands):
     result = image
     for adjusted in adjusted_bands:
         result = result.addBands(adjusted, overwrite=True)
-    return result
+    return result.int16()
 
 
 def _calculate_toa_correction(day_of_year):
