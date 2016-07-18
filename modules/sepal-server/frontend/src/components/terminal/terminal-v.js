@@ -11,8 +11,9 @@ require( './gateone.css' )
 // html
 var template = require( './terminal.html' )
 var html     = $( template( {} ) )
-// ui components
-// var section  = null
+
+// gateOne terminal Id
+var terminalId = null
 
 var init = function () {
     var appSection = $( '#app-section' ).find( '.terminal' )
@@ -24,38 +25,39 @@ var init = function () {
             , success: initTerminal
         }
         EventBus.dispatch( Events.AJAX.REQUEST, null, params )
-    } else
-        window.setTimeout( function () {
-            focusTerminal()
-        }, 1000 )
+    }
 }
 
 function initTerminal( response ) {
     purgeUserPrefs()
-    onTerminalInitialized( function () {
-        GateOne.Storage.clearDatabase( 'terminal' )
-        onTerminalClosed( function () { GateOne.Terminal.newTerminal() } )
-        GateOne.Terminal.newTerminal()
-        window.setTimeout( function () {
+    
+    var createGateOneTerminal = function () {
+        var newTerminal = function () {
+            terminalId = GateOne.Terminal.newTerminal()
+            GateOne.Terminal.clearScrollback( terminalId )
             focusTerminal()
-        }, 1000 )
-    } )
-    GateOne.init( {
+        }
+    
+        if ( GateOne.Terminal.closeTermCallbacks.length == 0 ) {
+            GateOne.Terminal.closeTermCallbacks.push( newTerminal )
+        }
+        // avoid printing host fingerprints on the browser console
+        GateOne.Net.addAction('terminal:sshjs_display_fingerprint', function(){} );
+        GateOne.Logging.setLevel( 'ERROR' )
+        newTerminal()
+    }
+    
+    GateOne.Events.on( "go:js_loaded", createGateOneTerminal )
+    
+    var gateOnePrefs = {
         url     : 'https://' + window.location.host + '/gateone',
         // url           : 'https://172.28.128.3/gateone',
         autoConnectURL: 'ssh://' + Sepal.User.username + '@ssh-gateway?identities=id_rsa',
         auth          : response.authObject,
         embedded      : true
-    } )
-}
-
-function onTerminalClosed( callback ) {
-    if ( GateOne.Terminal.closeTermCallbacks.length == 0 )
-        GateOne.Terminal.closeTermCallbacks.push( callback )
-}
-
-function onTerminalInitialized( callback ) {
-    GateOne.Events.on( "go:js_loaded", callback )
+    }
+    
+    GateOne.init( gateOnePrefs )
 }
 
 function purgeUserPrefs() {
@@ -64,9 +66,17 @@ function purgeUserPrefs() {
 }
 
 function focusTerminal() {
-    GateOne.Terminal.Input.capture()
-    $( '.✈terminal' ).click()
+    if( terminalId ){
+        GateOne.Terminal.Input.capture()
+        $( '.✈terminal' ).click()
+    }
 }
+
+EventBus.addEventListener( Events.SECTION.SHOWN, function ( e, section ) {
+    if ( section == 'terminal' ) {
+        focusTerminal()
+    }
+} )
 
 module.exports = {
     init: init
