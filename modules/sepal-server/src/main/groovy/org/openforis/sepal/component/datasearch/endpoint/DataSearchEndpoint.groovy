@@ -32,7 +32,7 @@ class DataSearchEndpoint {
 
     void registerWith(Controller controller) {
         controller.with {
-            post('/data/sceneareas') {
+            get('/data/sceneareas') {
                 response.contentType = "application/json"
                 def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(
                         toAoi(params)))
@@ -86,7 +86,7 @@ class DataSearchEndpoint {
                 ))
             }
 
-            get('/data/best-scenes') {
+            post('/data/best-scenes') {
                 response.contentType = "application/json"
                 def query = new FindBestScenes(
                         sceneAreaIds: params.required('sceneAreaIds', String).split(',')*.trim(),
