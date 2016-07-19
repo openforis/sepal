@@ -25,8 +25,14 @@ loadHtml()
 
 var section = $( '.app' ).find( '#app-section' ).css( 'left', '120%' ).addClass( 'closed' )
 
+// current opened section
+var currentSection = null
+
 var carousel = section.find( '#app-section-carousel' )
 carousel.carousel( { interval: 0 } )
+carousel.on('slid.bs.carousel', function () {
+    EventBus.dispatch(Events.SECTION.SHOWN , null, currentSection)
+})
 
 var closeBtn = section.find( '.btn-close' )
 closeBtn.click( function ( e ) {
@@ -43,6 +49,8 @@ closeBtn.click( function ( e ) {
 var show = function ( e, type ) {
     if ( !section.hasClass( 'opened' ) ) {
         
+        showSection( type , false )
+        
         section
             .velocity( { left: '10%' }
                 , {
@@ -51,7 +59,6 @@ var show = function ( e, type ) {
                     , queue   : false
                     , delay   : 300
                     , complete: function () {
-                        showSection( type )
                     }
                 }
             )
@@ -68,34 +75,25 @@ var show = function ( e, type ) {
         
     } else {
         
-        showSection( type )
+        showSection( type , true )
         
     }
 }
 
-var showSection = function ( type ) {
+var showSection = function ( type , animate ) {
+    currentSection = type
+    
     var carouselItem = carousel.find( '.carousel-item.' + type )
     if ( !carouselItem.hasClass( 'active' ) ) {
+        if( !animate ){
+            carousel.removeClass('slide')
+        }
         carousel.carousel( carouselItem.index() )
+        if( !animate ){
+            carousel.addClass('slide')
+        }
     }
 }
-
-// TODO: CHECK IF NEEDED
-// var hide = function () {
-//     if ( !section.hasClass( 'closed' ) ) {
-//
-//         section
-//             .velocity( { left: '120%' }
-//                 , {
-//                     duration: 1000
-//                     , easing: 'swing'
-//                     , queue: false
-//                     , delay: 500
-//                 }
-//             )
-//         section.addClass( 'closed' ).removeClass( 'opened' ).removeClass( 'reduced' )
-//     }
-// }
 
 var reduce = function () {
     if ( section.hasClass( 'opened' ) ) {
@@ -122,5 +120,4 @@ var reduce = function () {
 }
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
-// EventBus.addEventListener( Events.SECTION.CLOSE_ALL, hide )
 EventBus.addEventListener( Events.SECTION.REDUCE, reduce )

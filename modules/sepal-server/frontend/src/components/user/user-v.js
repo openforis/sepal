@@ -41,11 +41,11 @@ var setSessions = function ( sessions ) {
         var creationTimeFromNow = moment( session.creationTime, "YYYY-MM-DD[T]HH:mm:ss" ).fromNow()
         row.find( '.time' ).html( creationTimeFromNow )
         row.find( '.cost' ).html( session.costSinceCreation + " USD " )
-
+        
         row.find( '.btn-remove' ).click( function ( e ) {
             EventBus.dispatch( Events.SECTION.USER.REMOVE_SESSION, null, session.id )
         } )
-
+        
         sessionsSection.append( row )
         setTimeout( function () {
             row.fadeIn( 200 )
@@ -63,11 +63,11 @@ var removeSession = function ( sessionId ) {
 }
 
 var setSpending = function ( spending ) {
-    resourcesSection.find( '.monthlyInstanceBudget' ).html( spending.monthlyInstanceBudget + " USD" )
-    resourcesSection.find( '.monthlyInstanceSpending' ).html( spending.monthlyInstanceSpending + " USD" )
-    resourcesSection.find( '.monthlyStorageBudget' ).html( spending.monthlyStorageBudget + " USD" )
-    resourcesSection.find( '.monthlyStorageSpending' ).html( spending.monthlyStorageSpending + " USD" )
-    resourcesSection.find( '.storageQuota' ).html( spending.storageQuota + " GB" )
+    resourcesSection.find( '.monthlyInstanceBudget' ).html( spending.monthlyInstanceBudget.toFixed( 2 ) + " USD" )
+    resourcesSection.find( '.monthlyInstanceSpending' ).html( spending.monthlyInstanceSpending.toFixed( 2 ) + " USD" )
+    resourcesSection.find( '.monthlyStorageBudget' ).html( spending.monthlyStorageBudget.toFixed( 2 ) + " USD" )
+    resourcesSection.find( '.monthlyStorageSpending' ).html( spending.monthlyStorageSpending.toFixed( 2 ) + " USD" )
+    resourcesSection.find( '.storageQuota' ).html( spending.storageQuota.toFixed( 2 ) + " GB" )
     resourcesSection.find( '.storageUsed' ).html( (spending.storageUsed).toFixed( 2 ) + " GB" )
 }
 

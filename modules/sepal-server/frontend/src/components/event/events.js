@@ -24,6 +24,7 @@ Events = {
     , SECTION: {
         CLOSE_ALL: 'section.close-all'
         , SHOW   : 'section.show'
+        , SHOWN  : 'section.shown'
         
         , REDUCE: 'section.reduce'
         

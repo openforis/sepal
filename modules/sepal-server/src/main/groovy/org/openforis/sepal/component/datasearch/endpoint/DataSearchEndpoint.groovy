@@ -86,7 +86,7 @@ class DataSearchEndpoint {
                 ))
             }
 
-            get('/data/best-scenes') {
+            post('/data/best-scenes') {
                 response.contentType = "application/json"
                 def query = new FindBestScenes(
                         sceneAreaIds: params.required('sceneAreaIds', String).split(',')*.trim(),

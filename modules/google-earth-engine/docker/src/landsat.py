@@ -21,7 +21,7 @@ _bands_by_collection_name = {
     'LT4_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6']
 }
 
-_normalized_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
+normalized_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
 _milis_per_day = 1000 * 60 * 60 * 24
 
 
@@ -119,6 +119,13 @@ def create_mosaic_from_scene_ids(
     image_collections = [_create_image_collection(name, ids) for name, ids in scene_ids_by_collection_name]
     mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, bands)
     return mosaic
+
+
+def cluster(mosaic):
+    # TODO: Do the classification
+    # Expects an image with a band called 'cluster' to be returned
+    # For now, returns some other band renamed to 'cluster'
+    return mosaic.select(['B1'], ['cluster'])
 
 
 def _create_image_filter(aoi, from_date, to_date):
@@ -240,7 +247,6 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
     # Clip the water bodies according to GFC Water Mask
     return mosaic \
         .clip(aoi) \
-        .int16() \
         .select(bands)
 
 
@@ -451,7 +457,7 @@ def _apply_toa_correction(image, image_day_of_year, bands):
     :return: An ee.Image with the correction applied.
     """
     toa_correction = _calculate_toa_correction(image_day_of_year)
-    bands_to_toa_correct = filter(lambda band: band in _normalized_band_names, bands)
+    bands_to_toa_correct = filter(lambda band: band in normalized_band_names, bands)
     adjusted_bands = []
     for band in bands_to_toa_correct:
         adjusted_bands.append(
@@ -460,7 +466,7 @@ def _apply_toa_correction(image, image_day_of_year, bands):
     result = image
     for adjusted in adjusted_bands:
         result = result.addBands(adjusted, overwrite=True)
-    return result
+    return result.int16()
 
 
 def _calculate_toa_correction(day_of_year):
@@ -530,7 +536,7 @@ def _merge_image_collections(collection_a, collection_b):
     :return: An ee.ImageCollection containing the elements from both collections.
     """
     return ee.ImageCollection(
-        collection_a.merge(collection_b).set('bands', _normalized_band_names))
+        collection_a.merge(collection_b).set('bands', normalized_band_names))
 
 
 def _normalize_band_names(image, collection_name):
@@ -544,7 +550,7 @@ def _normalize_band_names(image, collection_name):
 
     :return: An ee.Image with normalized band names.
     """
-    return image.select(_bands_by_collection_name[collection_name], _normalized_band_names)
+    return image.select(_bands_by_collection_name[collection_name], normalized_band_names)
 
 
 def _flatten(iterable):
