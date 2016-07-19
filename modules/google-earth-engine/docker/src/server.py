@@ -28,6 +28,7 @@ viz_by_bands = {
     'B7, B4, B2': lambda params: {'bands': 'B7, B4, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
     'ndvi': lambda params: {'bands': 'ndvi', 'min': -1, 'max': 1, 'palette': '0000FF, 00FF00'},
     'temp': lambda params: {'bands': 'temp', 'min': 200, 'max': 400, 'palette': '0000FF, FF0000'},
+    'cluster': lambda params: {'bands': 'cluster', 'min': 0, 'max': 5000},
     'date': lambda params: {
         'bands': 'date',
         'min': params['from_days_since_epoch'],
@@ -62,6 +63,7 @@ def preview():
     to_date = date.fromtimestamp(to_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
     sensors = _split(request.values.get('sensors'))
     bands = _split(request.values.get('bands'))
+    should_cluster = bands == ['cluster']
     mosaic = landsat.create_mosaic(
         aoi=aoi,
         sensors=sensors,
@@ -69,8 +71,12 @@ def preview():
         to_date=to_date,
         target_day_of_year=int(request.values.get('targetDayOfYear')),
         target_day_of_year_weight=float(request.values.get('targetDayOfYearWeight')),
-        bands=bands
+        bands=landsat.normalized_band_names if should_cluster else bands
     )
+
+    if should_cluster:
+        mosaic = landsat.cluster(mosaic)
+
     viz_params = viz_by_bands[', '.join(bands)]({
         'from_days_since_epoch': from_millis_since_epoch / _milis_per_day,
         'to_days_since_epoch': to_millis_since_epoch / _milis_per_day
