@@ -16,12 +16,16 @@ var Sepal = require( '../main/sepal' )
 var sceneAreasLayer = null
 // div wrapper for svg circles
 var sceneAreasDiv   = null
+// last scene areas loded
+var sceneAreas      = null
 
 var loadSceneAreas = function ( e, scenes ) {
     
     if ( sceneAreasLayer ) {
         sceneAreasLayer.setMap( null )
     }
+    
+    sceneAreas = scenes
     
     GoogleMapsLoader.load( function ( google ) {
         
@@ -231,27 +235,37 @@ var sceneAreaChange = function ( e, sceneAreaId ) {
     var length = images ? Object.keys( images ).length : 0
     // console.log( images )
     
-    sceneAreasDiv
-        .select( "._" + sceneAreaId + " text" )
-        // .selectAll( "text" )
-        .transition()
-        .delay( 400 )
-        .duration( 800 )
-        .text( function ( d ) {
-            return length
-        } )
-    
-    var bgColor = '#818181'
-    if ( length > 0 ) {
-        bgColor = '#9CEBB5'
+    if ( sceneAreasDiv ) {
+        
+        sceneAreasDiv
+            .select( "._" + sceneAreaId + " text" )
+            // .selectAll( "text" )
+            .transition()
+            .delay( 400 )
+            .duration( 800 )
+            .text( function ( d ) {
+                return length
+            } )
+        
+        var bgColor = '#818181'
+        if ( length > 0 ) {
+            bgColor = '#9CEBB5'
+        }
+        sceneAreasDiv
+            .select( "._" + sceneAreaId + " circle" )
+            .transition()
+            .delay( 400 )
+            .duration( 800 )
+            .style( 'fill', bgColor )
+            .style( 'stroke', bgColor )
+        
     }
-    sceneAreasDiv
-        .select( "._" + sceneAreaId + " circle" )
-        .transition()
-        .delay( 400 )
-        .duration( 800 )
-        .style( 'fill', bgColor )
-        .style( 'stroke', bgColor )
+}
+
+var resetSceneAreas = function ( e ) {
+    $.each( sceneAreas, function ( i, sceneArea ) {
+        sceneAreaChange( null, sceneArea.sceneAreaId )
+    } )
 }
 
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, loadSceneAreas )
@@ -260,3 +274,5 @@ EventBus.addEventListener( Events.SECTION.SHOW, showApplicationSection )
 EventBus.addEventListener( Events.SECTION.REDUCE, reduceApplicationSection )
 
 EventBus.addEventListener( Events.MODEL.SCENE_AREA.CHANGE, sceneAreaChange )
+
+EventBus.addEventListener( Events.MAP.SCENE_AREA_RESET, resetSceneAreas )

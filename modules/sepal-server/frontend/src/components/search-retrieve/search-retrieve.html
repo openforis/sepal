@@ -1,14 +1,56 @@
 <div id="search-retrieve">
 
-    <div class="text-align-center width50" >
-        <button class="btn btn-base round icon width80 retrieve">
-            <i class="fa fa-cloud-download" aria-hidden="true"></i> Retrieve scenes
-        </button>
+    <div class="row">
+        <!--Scenes section-->
+        <div class="col-sm-6 scenes">
+            <div class="row row-header">
+                <div class="col-sm-12 text-align-center">
+                    <h4>Scenes</h4>
+                </div>
+            </div>
+
+            <div class="row row-buttons">
+                <div class="col-sm-6 text-align-right">
+                    <button class="btn btn-base round icon width80 btn-best-scenes">
+                        <i class="fa fa-check-circle-o" aria-hidden="true"></i> Auto-select
+                    </button>
+                </div>
+                <div class="col-sm-6 text-align-left">
+                    <button class="btn btn-base round icon width80 btn-retrieve-scenes">
+                        <i class="fa fa-cloud-download" aria-hidden="true"></i> Retrieve
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!--Mosaic section-->
+        <div class="col-sm-6 mosaic">
+            <div class="row row-header">
+                <div class="col-sm-12 text-align-center">
+                    <h4>Mosaic</h4>
+                </div>
+            </div>
+
+            <div class="row row-buttons">
+                <div class="col-sm-6 text-align-right">
+                    <button class="btn btn-base round icon width80 btn-preview-mosaic">
+                        <i class="fa fa-eye" aria-hidden="true"></i> Preview
+                    </button>
+                </div>
+                <div class="col-sm-6 text-align-left">
+                    <button class="btn btn-base round icon width80 btn-retrieve-mosaic">
+                        <i class="fa fa-cloud-download" aria-hidden="true"></i> Retrieve
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
-    <div class="text-align-center width50">
-        <button class="btn btn-base round icon width80 mosaic">
-            <i class="fa fa-object-group" aria-hidden="true"></i> Generate mosaic
-        </button>
+
+
+    <div class="row row-best-scenes-form">
+        <div class="col-sm-12 text-align-center scenes-selection-filter">
+        </div>
     </div>
 
 </div>

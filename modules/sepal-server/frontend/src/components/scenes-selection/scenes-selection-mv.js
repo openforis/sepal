@@ -20,10 +20,12 @@ var show = function ( e, type ) {
 
 var reset = function ( e ) {
     Model.reset()
-    Filter.reset()
+    View.reset()
+    // Filter.reset()
+    EventBus.dispatch( Events.MAP.SCENE_AREA_RESET )
 }
 
-var update = function ( e, sceneAreaId, sceneImages ) {
+var update = function ( sceneAreaId, sceneImages ) {
     Model.setSceneArea( sceneAreaId, sceneImages )
     
     Filter.setAvailableSensors( Model.getSceneAreaSensors().slice( 0 ) )
@@ -37,46 +39,52 @@ var update = function ( e, sceneAreaId, sceneImages ) {
     FilterView.setSortWeight( Filter.getSortWeight() )
     
     FilterView.showButtons()
-    
-    updateView()
 }
 
 var updateView = function () {
     View.reset( Model.getSceneAreaId() )
-    
-    $.each( Model.getSceneAreaImages( Filter.getSortWeight() ), function ( i, sceneImage ) {
+    // console.log( "Filter.getSortWeight() ", Filter.getSortWeight() )
+    // FilterView.disableSorting()
+    // Loader.show()
+    var sceneAreaImages = Model.getSceneAreaImages( Filter.getSortWeight() )
+    // var cancelSorting
+    $.each( sceneAreaImages, function ( i, sceneImage ) {
         setTimeout( function () {
-            
+            // console.log( sceneImage.cloudCover )
             var filterHidden = Filter.isSensorSelected( sceneImage.sensor )
             var selected     = Model.isSceneSelected( sceneImage )
             View.add( sceneImage, filterHidden, selected )
             
+            if( i== sceneAreaImages.length - 1){
+                // FilterView.enableSorting()
+                // Loader.hide()
+            }
         }, i * 100 )
     } )
     
 }
 
-var selectImage = function ( e, sceneImage ) {
-    Model.select( sceneImage )
-    View.select( sceneImage )
+var selectImage = function ( e, sceneAreaId, sceneImage ) {
+    Model.select( sceneAreaId, sceneImage )
+    View.select( sceneAreaId, sceneImage )
     
-    EventBus.dispatch( Events.MODEL.SCENE_AREA.CHANGE, null, Model.getSceneAreaId() )
+    EventBus.dispatch( Events.MODEL.SCENE_AREA.CHANGE, null, sceneAreaId )
 }
 
-var deselectImage = function ( e, sceneImage ) {
-    Model.deselect( sceneImage )
-    View.deselect( sceneImage )
+var deselectImage = function ( e, sceneAreaId, sceneImage ) {
+    Model.deselect( sceneAreaId, sceneImage )
+    View.deselect( sceneAreaId, sceneImage )
     
-    EventBus.dispatch( Events.MODEL.SCENE_AREA.CHANGE, null, Model.getSceneAreaId() )
+    EventBus.dispatch( Events.MODEL.SCENE_AREA.CHANGE, null, sceneAreaId )
 }
 
-var loadSceneImages = function ( e, sceneAreaId ) {
+var loadSceneImages = function ( e, sceneAreaId, showAppSection ) {
     var DATE_FORMAT = "YYYY-MM-DD"
-    var targetDate   = SearchForm.targetDate().asMoment()
+    var targetDate  = SearchForm.targetDate().asMoment()
     
     var data = {
-        fromDate        : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
-        , toDate        : targetDate.clone().add( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
+        fromDate         : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
+        , toDate         : targetDate.clone().add( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
         , targetDayOfYear: targetDate.format( "DDD" )
     }
     
@@ -87,9 +95,13 @@ var loadSceneImages = function ( e, sceneAreaId ) {
             Loader.show()
         }
         , success   : function ( response ) {
+            if ( showAppSection !== false ) {
+                EventBus.dispatch( Events.SECTION.SHOW, null, 'scene-images-selection' )
+            }
             
-            EventBus.dispatch( Events.SECTION.SHOW, null, 'scene-images-selection' )
-            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.UPDATE, null, sceneAreaId, response )
+            update( sceneAreaId, response )
+            updateView()
+            // EventBus.dispatch( Events.SECTION.SCENES_SELECTION.UPDATE_VIEW )
             
             Loader.hide( { delay: 500 } )
         }
@@ -99,43 +111,46 @@ var loadSceneImages = function ( e, sceneAreaId ) {
 }
 
 // Events listeners for filter / sort changes
-var updateSortWeight = function ( evt, sortWeight ) {
-    Filter.setSortWeight( sortWeight )
-    // console.log( Filter.getSortWeight() )
-    updateView()
-}
+// var updateSortWeight = function ( evt, sortWeight ) {
+//     Filter.setSortWeight( sortWeight )
+//     // console.log( Filter.getSortWeight() )
+//     updateView()
+// }
 
 var filterHideSensor = function ( e, sensor ) {
-    Filter.selectSensor( sensor )
-    View.hideScenesBySensor( sensor )
-    FilterView.updateSelectedSensors( Filter.getAvailableSensors(), Filter.getSelectedSensors() )
+    if ( FilterView.isInitialzied() )
+        View.hideScenesBySensor( sensor )
 }
 
 var filterShowSensor = function ( e, sensor ) {
-    Filter.deselectSensor( sensor )
-    View.showScenesBySensor( sensor )
-    FilterView.updateSelectedSensors( Filter.getAvailableSensors(), Filter.getSelectedSensors() )
+    if ( FilterView.isInitialzied() )
+        View.showScenesBySensor( sensor )
 }
 
-var filterTargetDayChange = function ( e, value ) {
-    if ( !( Filter.getOffsetToTargetDay() == 1 && value < 0 ) ) {
-        Filter.setOffsetToTargetDay( Filter.getOffsetToTargetDay() + value )
-        // console.log( Filter.getOffsetToTargetDay() )
-        loadSceneImages( null, Model.getSceneAreaId() )
-    }
+var reloadScenes = function ( e ) {
+    loadSceneImages( null, Model.getSceneAreaId(), false )
 }
+// }// var filterTargetDayChange = function ( e, value ) {
+//     if ( !( Filter.getOffsetToTargetDay() == 1 && value < 0 ) ) {
+//         Filter.setOffsetToTargetDay( Filter.getOffsetToTargetDay() + value )
+//         // console.log( Filter.getOffsetToTargetDay() )
+//         loadSceneImages( null, Model.getSceneAreaId() )
+//     }
+// }
 
 EventBus.addEventListener( Events.MAP.SCENE_AREA_CLICK, loadSceneImages )
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, reset )
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.RESET, reset )
 
-EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.UPDATE, update )
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.UPDATE_VIEW, updateView )
+
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SELECT, selectImage )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.DESELECT, deselectImage )
 
-EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, updateSortWeight )
+// EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, updateSortWeight )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_HIDE_SENSOR, filterHideSensor )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_SHOW_SENSOR, filterShowSensor )
-EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, filterTargetDayChange )
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.RELOAD_SCENES, reloadScenes )

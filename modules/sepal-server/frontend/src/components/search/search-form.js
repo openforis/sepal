@@ -19,16 +19,18 @@ var countryCode = null
 var targetDate  = null
 
 var init = function ( formSelector ) {
-
+    
     form       = $( formSelector )
     formNotify = form.find( '.form-notify' )
     
     var country = form.find( '#search-form-country' )
     country.autocomplete( {
-        lookup           : countries
-        , minChars       : 0
-        , autoSelectFirst: true
-        , onSelect       : function ( selection ) {
+        lookup                     : countries
+        , minChars                 : 0
+        , autoSelectFirst          : true
+        , triggerSelectOnValidInput: false
+        , tabDisabled              : true
+        , onSelect                 : function ( selection ) {
             if ( selection ) {
                 var cCode = selection.data
                 var cName = selection.value
@@ -36,8 +38,9 @@ var init = function ( formSelector ) {
                 countryCode = cCode
                 EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
             }
+        }, onInvalidateSelection   : function () {
+            countryCode = null
         }
-        , tabDisabled    : true
     } )
     
     targetDate = DatePicker.newInstance( form.find( '.target-date' ) )
@@ -69,7 +72,7 @@ var bindEvents = function () {
             }
             // for debugging
             // TODO : REMOVE_TASK
-            valid = true
+            // valid = true
             if ( valid ) {
                 Animation.animateOut( formNotify )
                 formNotify.html( '' )

@@ -9,7 +9,7 @@ var Events   = require( '../event/events' )
 var Sensors  = require( '../sensors/sensors' )
 
 var noUiSlider = require( 'nouislider' )
-require( './nouislider.css' )
+require( '../nouislider/nouislider.css' )
 
 var template = require( './scenes-selection-filter.html' )
 var html     = $( template( {} ) )
@@ -22,6 +22,8 @@ var sortSlider              = null
 var sectionSensors          = null
 var offsetTargetDayBtnPlus  = null
 var offsetTargetDayBtnMinus = null
+
+var inizialized = false
 
 var init = function ( uiContainer ) {
     container = $( uiContainer )
@@ -43,10 +45,10 @@ var init = function ( uiContainer ) {
         setTimeout( function () {
             sectionAction.find( '.' + target ).fadeIn( 250 )
         }, 250 )
-
+        
         sectionBtns.velocity( 'slideUp', { delay: 100, duration: 500 } )
         sectionAction.velocity( 'slideDown', { delay: 100, duration: 500 } )
-
+        
         // sectionBtns.velocity( { opacity: 0 }, { delay: 0, duration: 200 } )
         // sectionAction.velocity( { opacity: 1 }, { delay: 0, duration: 200 } )
     } )
@@ -96,23 +98,25 @@ var init = function ( uiContainer ) {
             var evt = null
             if ( btn.hasClass( 'active' ) ) {
                 evt = Events.SECTION.SCENES_SELECTION.FILTER_HIDE_SENSOR
-                btn.removeClass( 'active' )
+                // btn.removeClass( 'active' )
             } else {
                 evt = Events.SECTION.SCENES_SELECTION.FILTER_SHOW_SENSOR
-                btn.addClass( 'active' )
+                // btn.addClass( 'active' )
             }
             EventBus.dispatch( evt, null, sensorId )
         } )
         
         sectionSensors.append( btn )
     } )
+    
+    inizialized = true
 }
 
 var showButtons = function () {
     sectionAction.find( '> .row' ).fadeOut( 400 )
     sectionBtns.velocity( 'slideDown', { delay: 100, duration: 500 } )
     sectionAction.velocity( 'slideUp', { delay: 100, duration: 500 } )
-
+    
     // sectionBtns.velocity( { opacity: 1 }, { delay: 0, duration: 200 } )
     // sectionAction.velocity( { opacity: 0 }, { delay: 0, duration: 200 } )
 }
@@ -123,26 +127,43 @@ var setSensors = function ( availableSensors, selectedSensors ) {
         // var sensor = Sensors[ sensorId ]
         var btn = sectionSensors.find( '.' + sensorId )
         
-        if ( selectedSensors.indexOf( sensorId ) >= 0 ) {
-            btn.addClass( 'active' )
-        }
+        // if ( selectedSensors.indexOf( sensorId ) >= 0 ) {
+        //     btn.addClass( 'active' )
+        // }
         
         var disabled = availableSensors.indexOf( sensorId ) < 0
         btn.prop( 'disabled', disabled )
     } )
-    updateSelectedSensors( availableSensors, selectedSensors )
+    setSelectedSensors( availableSensors, selectedSensors )
 }
 
-var updateSelectedSensors = function ( availableSensors, selectedSensors ) {
+var setSelectedSensors = function ( availableSensors, selectedSensors ) {
+    //update button status
+    var selectedCnt = 0
+    $.each( Object.keys( Sensors ), function ( i, sensorId ) {
+        // var sensor = Sensors[ sensorId ]
+        var btn = sectionSensors.find( '.' + sensorId )
+        
+        if ( selectedSensors.indexOf( sensorId ) >= 0 && availableSensors.indexOf( sensorId ) >= 0 ) {
+            btn.addClass( 'active' )
+            selectedCnt++
+        } else {
+            btn.removeClass( 'active' )
+        }
+        
+    } )
+    // update text
     var text = 'All'
     
-    if ( selectedSensors.length == 0 ) {
+    if ( selectedCnt == 0 ) {
         text = 'None'
     }
-    else if ( availableSensors.length != selectedSensors.length ) {
+    else if ( availableSensors.length != selectedCnt ) {
         var array = []
         $.each( selectedSensors, function ( i, sensor ) {
-            array.push( Sensors[ sensor ].shortName )
+            if ( availableSensors.indexOf( sensor ) >= 0 ) {
+                array.push( Sensors[ sensor ].shortName )
+            }
         } )
         text = array.join( ', ' )
     }
@@ -162,17 +183,21 @@ var setOffsetToTargetDay = function ( value ) {
 
 var setSortWeight = function ( sortWeight ) {
     sortSlider.noUiSlider.set( sortWeight )
-
+    
     container.find( '.cc-sort' ).html( Math.round( +((1 - sortWeight).toFixed( 2 )) * 100 ) + '%' )
     container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
     
 }
 
 module.exports = {
-    init                   : init
-    , setSensors           : setSensors
-    , updateSelectedSensors: updateSelectedSensors
-    , setOffsetToTargetDay : setOffsetToTargetDay
-    , showButtons          : showButtons
-    , setSortWeight        : setSortWeight
+    init                  : init
+    , setSensors          : setSensors
+    , setSelectedSensors  : setSelectedSensors
+    , setOffsetToTargetDay: setOffsetToTargetDay
+    , showButtons         : showButtons
+    , setSortWeight       : setSortWeight
+    , isInitialzied       : function () {
+        return inizialized
+    }
+    
 }

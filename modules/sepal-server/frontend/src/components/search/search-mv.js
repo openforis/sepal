@@ -11,6 +11,7 @@ var View = require( './search-v' )
 
 require( './../scenes-selection/scenes-selection-mv' )
 require( '../search-retrieve/search-retrieve-mv' )
+require( '../scenes-selection-filter/scenes-selection-filter-mv' )
 
 var show = function ( e, type ) {
     if ( type == 'search' ) {
@@ -30,7 +31,7 @@ var requestSceneAreas = function () {
             EventBus.dispatch( Events.SECTION.REDUCE, null )
         }
         , success   : function ( response ) {
-            EventBus.dispatch( Events.SECTION.SEARCH.SCENE_AREAS_LOADED , null , response )
+            EventBus.dispatch( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, null, response )
             // EventBus.dispatch( Events.MAP.LOAD_SCENE_AREAS, null, response )
             Loader.hide( { delay: 300 } )
         }

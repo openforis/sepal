@@ -28,12 +28,18 @@ Events = {
         
         , REDUCE: 'section.reduce'
         
-        , SEARCH: {
+        , SEARCH         : {
             // SHOW_SCENE_AREA: 'section.search.show-scene-area'
             FORM_SUBMIT         : 'section.search.form-submit'
             , SCENE_AREAS_LOADED: 'section.search.scene-areas-loaded'
-            , RETRIEVE          : 'section.search.retrieve'
-            , MOSAIC            : 'section.search.mosaic'
+            // , RETRIEVE          : 'section.search.retrieve'
+            // , MOSAIC            : 'section.search.mosaic'
+        }
+        , SEARCH_RETRIEVE: {
+            BEST_SCENES      : 'section.search-retrieve.best-scenes'
+            , RETRIEVE_SCENES: 'section.search-retrieve.retrieve-scenes'
+            , PREVIEW_MOSAIC : 'section.search-retrieve.preview-mosaic'
+            , RETRIEVE_MOSAIC: 'section.search-retrieve.retrieve-mosaic'
         }
         
         , BROWSE: {
@@ -46,10 +52,11 @@ Events = {
         , TERMINAL: {}
         
         , SCENES_SELECTION: {
-            // RESET                     : 'section.scenes-selection.reset'
-            UPDATE                    : 'section.scenes-selection.update'
+            RESET                     : 'section.scenes-selection.reset'
+            , UPDATE_VIEW             : 'section.scenes-selection.update-view'
             , SELECT                  : 'section.scenes-selection.select'
             , DESELECT                : 'section.scenes-selection.deselect'
+            , RELOAD_SCENES           : 'section.scenes-selection.reload-scenes'
             , SORT_CHANGE             : 'section.scenes-selection.sort-change'
             , FILTER_SHOW_SENSOR      : 'section.scenes-selection.filter-show-sensor'
             , FILTER_HIDE_SENSOR      : 'section.scenes-selection.filter-hide-sensor'
@@ -73,6 +80,7 @@ Events = {
         // , LOAD_SCENE_AREAS: 'map.load-scene-areas'
         , SCENE_AREA_CLICK: 'map.scene-area-click'
         , ADD_LAYER       : 'map.add-layer'
+        , SCENE_AREA_RESET: 'map.scene-area-reset'
     }
     
     // events that occur when a model changes

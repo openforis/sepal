@@ -64,20 +64,20 @@ var isSceneSelected = function ( scene ) {
     return selected
 }
 
-var select = function ( image ) {
-    if ( !selectedImages[ sceneAreaId ] ) {
-        selectedImages[ sceneAreaId ] = {}
+var select = function ( sceneArea, image ) {
+    if ( !selectedImages[ sceneArea ] ) {
+        selectedImages[ sceneArea ] = {}
     }
     
     var k                              = key( image )
-    selectedImages[ sceneAreaId ][ k ] = image
+    selectedImages[ sceneArea ][ k ] = image
 }
 
-var deselect = function ( image ) {
+var deselect = function ( sceneArea, image ) {
     var k = key( image )
-    delete selectedImages[ sceneAreaId ][ k ]
-    if ( Object.keys( selectedImages[ sceneAreaId ] ).length <= 0 ) {
-        delete selectedImages[ sceneAreaId ]
+    delete selectedImages[ sceneArea ][ k ]
+    if ( Object.keys( selectedImages[ sceneArea ] ).length <= 0 ) {
+        delete selectedImages[ sceneArea ]
     }
 }
 

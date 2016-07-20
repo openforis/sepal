@@ -47,9 +47,11 @@ closeBtn.click( function ( e ) {
 } )
 
 var show = function ( e, type ) {
-    if ( !section.hasClass( 'opened' ) ) {
-        
-        showSection( type , false )
+    var isSectionClosed = !section.hasClass( 'opened' )
+    
+    showSection( type , !isSectionClosed )
+    
+    if ( isSectionClosed ) {
         
         section
             .velocity( { left: '10%' }
@@ -73,11 +75,8 @@ var show = function ( e, type ) {
             newIcon.fadeIn( 700 )
         } )
         
-    } else {
-        
-        showSection( type , true )
-        
     }
+    
 }
 
 var showSection = function ( type , animate ) {

@@ -2,12 +2,15 @@
  * @author Mino Togna
  */
 
-var EventBus       = require( '../event/event-bus' )
-var Events         = require( '../event/events' )
-var Loader         = require( '../loader/loader' )
-var View           = require( './search-retrieve-v' )
-var SceneAreaModel = require( '../scenes-selection/scenes-selection-m' )
-var SearchForm     = require( '../search/search-form' )
+var EventBus         = require( '../event/event-bus' )
+var Events           = require( '../event/events' )
+var Loader           = require( '../loader/loader' )
+var View             = require( './search-retrieve-v' )
+var Model            = require( './search-retrieve-m' )
+var SceneAreaModel   = require( '../scenes-selection/scenes-selection-m' )
+var ScenesFilterView = require( '../search-retrieve/scenes-autoselection-form-v' )
+var SearchForm       = require( '../search/search-form' )
+var Filter           = require( './../scenes-selection-filter/scenes-selection-filter-m' )
 
 View.init()
 View.hide( { delay: 0, duration: 0 } )
@@ -59,29 +62,73 @@ var getRequestParams = function ( url ) {
     return params
 }
 
-var retrieve = function () {
+var retrieveScenes = function () {
     // '/data/scenes/retrieve') 
 //  { countryIso:ITA, scenes:[ {sceneId: 'LC81900302015079LGN00', sensor: 'LC8'}, ... ] }
     var params = getRequestParams( '/api/data/scenes/retrieve' )
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-var mosaic = function () {
+var retrieveMosaic = function () {
     var params = getRequestParams( '/api/data/scenes/mosaic' )
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-var sceneAreasLoaded = function () {
+var sceneAreasLoaded = function ( e, sceneAreas ) {
     show = true
     if ( appShown == false ) {
         appReduce()
     }
+    View.reset()
+    
+    Model.setSceneAreas( sceneAreas )
+}
+
+var bestScenes = function ( e ) {
+    var DATE_FORMAT = "YYYY-MM-DD"
+    var targetDate  = SearchForm.targetDate().asMoment()
+    
+    var data = {
+        fromDate               : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
+        , toDate               : targetDate.clone().add( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
+        , targetDayOfYear      : targetDate.format( "DDD" )
+        , targetDayOfYearWeight: 0.5
+        , cloudCoverTarget     : 0.0001
+        , sensorIds            : Filter.getSelectedSensors().join( ',' )
+        , sceneAreaIds         : Model.getSceneAreaIds().join( ',' )
+    }
+    
+    var params = {
+        url         : '/api/data/best-scenes'
+        , data      : data
+        , type      : 'POST'
+        , beforeSend: function () {
+            Loader.show()
+        }
+        , success   : function ( response ) {
+            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.RESET )
+            // console.log( response )
+            $.each( Object.keys( response ), function ( i, sceneAreaId ) {
+                var scenes = response[ sceneAreaId ]
+                $.each( scenes, function ( j, scene ) {
+                    EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SELECT, null, sceneAreaId, scene )
+                } )
+                // console.log( "Scene area", sceneAreaId, 'scenes', scenes )
+            } )
+            View.collapse()
+            Loader.hide( { delay: 500 } )
+        }
+    }
+    
+    // console.log( params )
+    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
 EventBus.addEventListener( Events.SECTION.SHOW, appShow )
 EventBus.addEventListener( Events.SECTION.REDUCE, appReduce )
 
-EventBus.addEventListener( Events.SECTION.SEARCH.RETRIEVE, retrieve )
-EventBus.addEventListener( Events.SECTION.SEARCH.MOSAIC, mosaic )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES, retrieveScenes )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, retrieveMosaic )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, bestScenes )
 
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, sceneAreasLoaded )

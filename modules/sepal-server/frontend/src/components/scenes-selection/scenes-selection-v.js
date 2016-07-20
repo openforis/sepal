@@ -55,17 +55,20 @@ var init = function () {
 }
 
 var reset = function ( sceneAreaId ) {
-    imagesSelectionSection.empty()
-    // scene area id is changed, therefore selected section rest as well
-    if ( currentSceneAreaId !== sceneAreaId ) {
+    if ( imagesSelectionSection ) {
         
-        selectedSectionTableContent.empty()
-        selectedSectionTableHeader.hide()
+        imagesSelectionSection.empty()
+        // scene area id is changed, therefore selected section reset as well
+        if ( !(sceneAreaId && currentSceneAreaId === sceneAreaId) ) {
+            
+            selectedSectionTableContent.empty()
+            selectedSectionTableHeader.hide()
+            
+            currentSceneAreaId = sceneAreaId
+        }
         
-        currentSceneAreaId = sceneAreaId
+        imagesSelectionSection.velocity( 'scroll', { duration: 0 } )
     }
-    
-    imagesSelectionSection.velocity( 'scroll', { duration: 0 } )
 }
 
 // Functions for selection section
@@ -160,7 +163,7 @@ var getImageSectionForSelection = function ( sceneImage ) {
     imgSection.find( '.target-day' ).append( '<i class="fa fa-calendar-times-o" aria-hidden="true"></i> ' + sceneImage.daysFromTargetDay )
     
     imgSection.find( '.btn-add' ).click( function () {
-        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SELECT, null, sceneImage )
+        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SELECT, null, currentSceneAreaId, sceneImage )
     } )
     
     return imgSection
@@ -181,7 +184,7 @@ var addToSelectedSection = function ( sceneImage ) {
         imgSection.find( '.sensor' ).append( Sensors[ sceneImage.sensor ].shortName )
         imgSection.find( '.btn-remove' ).click( function ( e ) {
             e.preventDefault()
-            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.DESELECT, null, sceneImage )
+            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.DESELECT, null, currentSceneAreaId, sceneImage )
         } )
         
         selectedSectionTableContent.append( imgSection )
@@ -220,13 +223,17 @@ var updateSelectedSectionHeader = function () {
     }
 }
 
-var select   = function ( sceneImage ) {
-    hideFromSelection( sceneImage )
-    addToSelectedSection( sceneImage )
+var select   = function ( sceneAreaId, sceneImage ) {
+    if ( sceneAreaId === currentSceneAreaId ) {
+        hideFromSelection( sceneImage )
+        addToSelectedSection( sceneImage )
+    }
 }
-var deselect = function ( sceneImage ) {
-    removeFromSelectedSection( sceneImage )
-    showInSelection( sceneImage )
+var deselect = function ( sceneAreaId, sceneImage ) {
+    if ( sceneAreaId === currentSceneAreaId ) {
+        removeFromSelectedSection( sceneImage )
+        showInSelection( sceneImage )
+    }
 }
 
 // filter methods
