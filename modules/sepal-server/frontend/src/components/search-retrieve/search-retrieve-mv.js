@@ -110,6 +110,7 @@ var bestScenes = function ( e ) {
         }
         , success   : function ( response ) {
             EventBus.dispatch( Events.SECTION.SCENES_SELECTION.RESET )
+            EventBus.dispatch( Events.MAP.SCENE_AREA_RESET )
             EventBus.dispatch( Events.MAP.REMOVE_EE_LAYER )
             // console.log( response )
             $.each( Object.keys( response ), function ( i, sceneAreaId ) {

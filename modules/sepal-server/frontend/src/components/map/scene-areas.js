@@ -28,7 +28,7 @@ var sceneAreasLoaded = function ( e, scenes ) {
         sceneAreasLayer.setMap( null )
     }
     
-    resetSceneAreas()
+    // resetSceneAreas()
     
     
     sceneAreas = scenes
@@ -199,8 +199,7 @@ var sceneAreasLoaded = function ( e, scenes ) {
         }
         
         EventBus.dispatch( Events.MAP.ADD_LAYER, null, sceneAreasLayer )
-    
-        // reduceApplicationSection()
+        
     } )
     
 }
@@ -310,6 +309,10 @@ var sceneAreaChange = function ( e, sceneAreaId ) {
 }
 
 var resetSceneAreas = function ( e ) {
+    isVisible = false
+    toggleVisibility()
+    isVisible = true
+    
     $.each( sceneAreas, function ( i, sceneArea ) {
         sceneAreaChange( null, sceneArea.sceneAreaId )
     } )
