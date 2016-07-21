@@ -67,11 +67,11 @@ var sceneAreasLoaded = function ( e, scenes ) {
             
             var gPolygon = new google.maps.Polygon( {
                 paths        : polygonPaths,
-                strokeColor  : '#EBEBCD',
+                strokeColor  : '#C5B397',
                 // strokeOpacity: 0.4,
                 strokeOpacity: 1,
                 strokeWeight : 2,
-                fillColor    : '#EBEBCD',
+                fillColor    : '#C5B397',
                 fillOpacity  : 0.8
                 // fillOpacity  : 0.1
             } )
