@@ -41,27 +41,39 @@ var update = function ( sceneAreaId, sceneImages ) {
     FilterView.showButtons()
 }
 
-var updateView = function () {
-    View.reset( Model.getSceneAreaId() )
-    // console.log( "Filter.getSortWeight() ", Filter.getSortWeight() )
-    // FilterView.disableSorting()
-    // Loader.show()
-    var sceneAreaImages = Model.getSceneAreaImages( Filter.getSortWeight() )
-    // var cancelSorting
-    $.each( sceneAreaImages, function ( i, sceneImage ) {
-        setTimeout( function () {
-            // console.log( sceneImage.cloudCover )
-            var filterHidden = Filter.isSensorSelected( sceneImage.sensor )
-            var selected     = Model.isSceneSelected( sceneImage )
-            View.add( sceneImage, filterHidden, selected )
+var interval       = null
+var stopUpdateView = function () {
+    clearInterval( interval )
+    interval = null
+}
+var updateView     = function () {
+    if ( Model.getSceneAreaId() ) {
+        
+        if ( interval ) {
+            stopUpdateView()
+            updateView()
+        } else {
+            var idx             = 0
+            var sceneAreaImages = Model.getSceneAreaImages( Filter.getSortWeight() )
             
-            if( i== sceneAreaImages.length - 1){
-                // FilterView.enableSorting()
-                // Loader.hide()
+            var addScene = function () {
+                var sceneImage   = sceneAreaImages[ idx ]
+                var filterHidden = Filter.isSensorSelected( sceneImage.sensor )
+                var selected     = Model.isSceneSelected( sceneImage )
+                
+                View.add( sceneImage, filterHidden, selected )
+                idx++
+                
+                if ( idx === sceneAreaImages.length ) {
+                    stopUpdateView()
+                }
             }
-        }, i * 100 )
-    } )
-    
+            
+            View.reset( Model.getSceneAreaId() )
+            interval = setInterval( addScene, 75 )
+        }
+        
+    }
 }
 
 var selectImage = function ( e, sceneAreaId, sceneImage ) {
