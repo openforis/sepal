@@ -182,6 +182,9 @@ var addToSelectedSection = function ( sceneImage ) {
         
         imgSection.find( '.cloud-cover' ).append( sceneImage.cloudCover )
         imgSection.find( '.sensor' ).append( Sensors[ sceneImage.sensor ].shortName )
+        imgSection.find( '.acquisition-date' ).append( moment( sceneImage.acquisitionDate, "YYYY-MM-DD" ).format( "YYYY" ) )
+        imgSection.find( '.target-day' ).append( sceneImage.daysFromTargetDay )
+    
         imgSection.find( '.btn-remove' ).click( function ( e ) {
             e.preventDefault()
             EventBus.dispatch( Events.SECTION.SCENES_SELECTION.DESELECT, null, currentSceneAreaId, sceneImage )

@@ -92,7 +92,7 @@ var bestScenes = function ( e ) {
         fromDate               : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
         , toDate               : targetDate.clone().add( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
         , targetDayOfYear      : targetDate.format( "DDD" )
-        , targetDayOfYearWeight: 0.5
+        , targetDayOfYearWeight: Filter.getSortWeight()
         , cloudCoverTarget     : 0.0001
         , sensorIds            : Filter.getSelectedSensors().join( ',' )
         , sceneAreaIds         : Model.getSceneAreaIds().join( ',' )
