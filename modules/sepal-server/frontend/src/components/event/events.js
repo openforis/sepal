@@ -76,11 +76,17 @@ Events = {
     }
     
     , MAP: {
-        ZOOM_TO           : 'map.zoom-to'
+        ZOOM_TO                       : 'map.zoom-to'
         // , LOAD_SCENE_AREAS: 'map.load-scene-areas'
-        , SCENE_AREA_CLICK: 'map.scene-area-click'
-        , ADD_LAYER       : 'map.add-layer'
-        , SCENE_AREA_RESET: 'map.scene-area-reset'
+        , SCENE_AREA_CLICK            : 'map.scene-area-click'
+        , ADD_LAYER                   : 'map.add-layer'
+        , ADD_EE_LAYER                : 'map.add-ee-layer'
+        , REMOVE_EE_LAYER             : 'map.remove-ee-layer'
+        , EE_LAYER_TOGGLE_VISIBILITY  : 'map.remove-ee-layer-toggle-visibility'
+        , SCENE_AREA_RESET            : 'map.scene-area-reset'
+        , SCENE_AREA_TOGGLE_VISIBILITY: 'map.scene-area-toggle-visibility'
+        , ADD_OVERLAY_MAP_TYPE        : 'map.add-overlay-map-type'
+        , REMOVE_OVERLAY_MAP_TYPE     : 'map.remove-overlay-map-type'
     }
     
     // events that occur when a model changes

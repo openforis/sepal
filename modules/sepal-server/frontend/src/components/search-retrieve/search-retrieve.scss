@@ -16,7 +16,18 @@
 
     .row-header {
         >div {
-            padding: 0 0 1rem 0;
+            padding: 1rem 0 1.5rem 0;
+        }
+         * {
+            display: inline-block;
+        }
+        .btn {
+            padding: .5rem !important;
+            font-size: .9rem !important;
+            margin-left: 1rem;
+        }
+        .btn :disabled{
+            opacity: .3;
         }
     }
 
