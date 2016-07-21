@@ -81,6 +81,9 @@ var sceneAreasLoaded = function ( e, sceneAreas ) {
     }
     View.reset()
     
+    // EventBus.dispatch( Events.MAP.SCENE_AREA_RESET )
+    EventBus.dispatch( Events.MAP.REMOVE_EE_LAYER )
+    
     Model.setSceneAreas( sceneAreas )
 }
 
@@ -107,6 +110,7 @@ var bestScenes = function ( e ) {
         }
         , success   : function ( response ) {
             EventBus.dispatch( Events.SECTION.SCENES_SELECTION.RESET )
+            EventBus.dispatch( Events.MAP.REMOVE_EE_LAYER )
             // console.log( response )
             $.each( Object.keys( response ), function ( i, sceneAreaId ) {
                 var scenes = response[ sceneAreaId ]
@@ -124,11 +128,51 @@ var bestScenes = function ( e ) {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
+var previewMosaic = function ( e, bands ) {
+    
+    var targetDate = SearchForm.targetDate().asMoment()
+    var data       = {
+        countryIso             : SearchForm.countryCode()
+        , targetDayOfYear      : targetDate.format( "DDD" )
+        , targetDayOfYearWeight: 0.5
+        // , targetDayOfYearWeight: Filter.getSortWeight()
+        , bands                : bands
+        , sceneIds             : SceneAreaModel.getSelectedSceneIds().join( ',' )
+    }
+    
+    var params = {
+        url         : '/api/data/mosaic/preview-scenes'
+        , data      : data
+        , type      : 'POST'
+        , beforeSend: function () {
+            Loader.show()
+        }
+        , success   : function ( response ) {
+            EventBus.dispatch( Events.MAP.ADD_EE_LAYER, null, response.mapId, response.token )
+            View.collapse()
+            Loader.hide( { delay: 500 } )
+        }
+    }
+    
+    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+}
+
+var onAddEELayer = function ( e ) {
+    View.enableToggleLayerButtons()
+}
+
+var onRemoveEELayer = function ( e ) {
+    View.disableToggleLayerButtons()
+}
+
 EventBus.addEventListener( Events.SECTION.SHOW, appShow )
 EventBus.addEventListener( Events.SECTION.REDUCE, appReduce )
 
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES, retrieveScenes )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, retrieveMosaic )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, bestScenes )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, previewMosaic )
 
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, sceneAreasLoaded )
+EventBus.addEventListener( Events.MAP.ADD_EE_LAYER, onAddEELayer )
+EventBus.addEventListener( Events.MAP.REMOVE_EE_LAYER, onRemoveEELayer )

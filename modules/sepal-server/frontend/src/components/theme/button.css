@@ -88,6 +88,16 @@
     color: #fff;
 
 }
+.btn-base.active {
+    background-color: rgba(197, 179, 151, 0.3);
+    border: 2px solid rgba(197, 179, 151, 0.5);
+}
+.btn-base.active:active,
+.btn-base.active:focus,
+.btn-base.activefocus,
+.btn-base.active:hover {
+    background-color: rgba(197, 179, 151, 0.1);
+}
 
 /* circle button */
 .btn.circle {

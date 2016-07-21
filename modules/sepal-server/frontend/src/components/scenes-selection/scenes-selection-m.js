@@ -57,6 +57,16 @@ var getSceneAreaSelectedImages = function ( sceneAreaId ) {
     return selectedImages[ sceneAreaId ]
 }
 
+var getSelectedSceneIds = function () {
+    var selectedScenes = []
+    $.each( Object.keys( selectedImages ), function ( i, sceneAreaId ) {
+        var selection = selectedImages[ sceneAreaId ]
+        // console.log( Object.keys( selection ) )
+        selectedScenes.push( Object.keys( selection ) )
+    } )
+    return selectedScenes
+}
+
 var isSceneSelected = function ( scene ) {
     var sceneId        = key( scene )
     var selectedScenes = getSceneAreaSelectedImages( getSceneAreaId() )
@@ -69,7 +79,7 @@ var select = function ( sceneArea, image ) {
         selectedImages[ sceneArea ] = {}
     }
     
-    var k                              = key( image )
+    var k                            = key( image )
     selectedImages[ sceneArea ][ k ] = image
 }
 
@@ -102,6 +112,7 @@ module.exports = {
     , reset                     : reset
     , getSceneAreaId            : getSceneAreaId
     , getSceneAreaSelectedImages: getSceneAreaSelectedImages
+    , getSelectedSceneIds       : getSelectedSceneIds
     , areasSelection            : areasSelection
     , getSceneAreaSensors       : getSceneAreaSensors
 }

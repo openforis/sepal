@@ -19,11 +19,17 @@ var sceneAreasDiv   = null
 // last scene areas loded
 var sceneAreas      = null
 
-var loadSceneAreas = function ( e, scenes ) {
+var isVisible = true
+
+var sceneAreasLoaded = function ( e, scenes ) {
+    isVisible = true
     
     if ( sceneAreasLayer ) {
         sceneAreasLayer.setMap( null )
     }
+    
+    resetSceneAreas()
+    
     
     sceneAreas = scenes
     
@@ -62,10 +68,12 @@ var loadSceneAreas = function ( e, scenes ) {
             var gPolygon = new google.maps.Polygon( {
                 paths        : polygonPaths,
                 strokeColor  : '#EBEBCD',
-                strokeOpacity: 0.4,
+                // strokeOpacity: 0.4,
+                strokeOpacity: 1,
                 strokeWeight : 2,
-                fillColor    : '#E1E1E6',
-                fillOpacity  : 0.1
+                fillColor    : '#EBEBCD',
+                fillOpacity  : 0.8
+                // fillOpacity  : 0.1
             } )
             // var bounds        = new google.maps.LatLngBounds()
             // var polygonCoords = [
@@ -162,7 +170,9 @@ var loadSceneAreas = function ( e, scenes ) {
                             d3.select( this )
                                 .transition()
                                 .duration( 200 )
-                                .style( "fill-opacity", '.1' )
+                                .style( "fill-opacity", function ( d ) {
+                                    return isVisible ? '.1' : '0'
+                                } )
                             
                             var polygon = d.value.polygon
                             polygon.setMap( null )
@@ -189,12 +199,14 @@ var loadSceneAreas = function ( e, scenes ) {
         }
         
         EventBus.dispatch( Events.MAP.ADD_LAYER, null, sceneAreasLayer )
+    
+        // reduceApplicationSection()
     } )
     
 }
 
 var showApplicationSection = function ( e ) {
-    if ( sceneAreasDiv ) {
+    if ( sceneAreasDiv && isVisible ) {
         sceneAreasDiv
             .selectAll( "circle" )
             .transition()
@@ -211,7 +223,7 @@ var showApplicationSection = function ( e ) {
 }
 
 var reduceApplicationSection = function ( e ) {
-    if ( sceneAreasDiv ) {
+    if ( sceneAreasDiv && isVisible ) {
         sceneAreasDiv
             .selectAll( "circle" )
             .transition()
@@ -227,6 +239,41 @@ var reduceApplicationSection = function ( e ) {
             .duration( 800 )
             .style( 'fill-opacity', '1' )
     }
+}
+
+var toggleVisibility = function ( e ) {
+    isVisible = !isVisible
+    
+    if ( !isVisible ) {
+        sceneAreasDiv
+            .selectAll( "circle" )
+            .transition()
+            .duration( 500 )
+            .style( 'stroke-opacity', '0' )
+            .style( 'fill-opacity', '0' )
+        
+        sceneAreasDiv
+            .selectAll( "text" )
+            .transition()
+            .duration( 500 )
+            .style( 'fill-opacity', '0' )
+    } else {
+        sceneAreasDiv
+            .selectAll( "circle" )
+            .transition()
+            // .delay( 400 )
+            .duration( 800 )
+            .style( 'stroke-opacity', '.4' )
+            .style( 'fill-opacity', '.1' )
+        
+        sceneAreasDiv
+            .selectAll( "text" )
+            .transition()
+            // .delay( 400 )
+            .duration( 800 )
+            .style( 'fill-opacity', '1' )
+    }
+    
 }
 
 var sceneAreaChange = function ( e, sceneAreaId ) {
@@ -268,10 +315,11 @@ var resetSceneAreas = function ( e ) {
     } )
 }
 
-EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, loadSceneAreas )
+EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, sceneAreasLoaded )
 
 EventBus.addEventListener( Events.SECTION.SHOW, showApplicationSection )
 EventBus.addEventListener( Events.SECTION.REDUCE, reduceApplicationSection )
+EventBus.addEventListener( Events.MAP.SCENE_AREA_TOGGLE_VISIBILITY, toggleVisibility )
 
 EventBus.addEventListener( Events.MODEL.SCENE_AREA.CHANGE, sceneAreaChange )
 

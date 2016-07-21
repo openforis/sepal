@@ -22,7 +22,7 @@ var reset = function ( e ) {
     Model.reset()
     View.reset()
     // Filter.reset()
-    EventBus.dispatch( Events.MAP.SCENE_AREA_RESET )
+    
 }
 
 var update = function ( sceneAreaId, sceneImages ) {
