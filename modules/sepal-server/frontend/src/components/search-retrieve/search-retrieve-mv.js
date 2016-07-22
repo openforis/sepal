@@ -63,8 +63,6 @@ var getRequestParams = function ( url ) {
 }
 
 var retrieveScenes = function () {
-    // '/data/scenes/retrieve') 
-//  { countryIso:ITA, scenes:[ {sceneId: 'LC81900302015079LGN00', sensor: 'LC8'}, ... ] }
     var params = getRequestParams( '/api/data/scenes/retrieve' )
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
@@ -81,7 +79,6 @@ var sceneAreasLoaded = function ( e, sceneAreas ) {
     }
     View.reset()
     
-    // EventBus.dispatch( Events.MAP.SCENE_AREA_RESET )
     EventBus.dispatch( Events.MAP.REMOVE_EE_LAYER )
     
     Model.setSceneAreas( sceneAreas )
@@ -112,20 +109,18 @@ var bestScenes = function ( e ) {
             EventBus.dispatch( Events.SECTION.SCENES_SELECTION.RESET )
             EventBus.dispatch( Events.MAP.SCENE_AREA_RESET )
             EventBus.dispatch( Events.MAP.REMOVE_EE_LAYER )
-            // console.log( response )
+            
             $.each( Object.keys( response ), function ( i, sceneAreaId ) {
                 var scenes = response[ sceneAreaId ]
                 $.each( scenes, function ( j, scene ) {
                     EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SELECT, null, sceneAreaId, scene )
                 } )
-                // console.log( "Scene area", sceneAreaId, 'scenes', scenes )
             } )
             View.collapse()
             Loader.hide( { delay: 500 } )
         }
     }
     
-    // console.log( params )
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
