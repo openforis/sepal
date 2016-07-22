@@ -110,6 +110,7 @@ var bestScenes = function ( e ) {
         }
         , success   : function ( response ) {
             EventBus.dispatch( Events.SECTION.SCENES_SELECTION.RESET )
+            EventBus.dispatch( Events.MAP.SCENE_AREA_RESET )
             EventBus.dispatch( Events.MAP.REMOVE_EE_LAYER )
             // console.log( response )
             $.each( Object.keys( response ), function ( i, sceneAreaId ) {
@@ -165,6 +166,14 @@ var onRemoveEELayer = function ( e ) {
     View.disableToggleLayerButtons()
 }
 
+var onSceneAreaChange = function ( e ) {
+    if ( SceneAreaModel.getSelectedSceneIds().length > 0 ) {
+        View.enableScenesSelectionRequiredButtons()
+    } else {
+        View.disableScenesSelectionRequiredButtons()
+    }
+}
+
 EventBus.addEventListener( Events.SECTION.SHOW, appShow )
 EventBus.addEventListener( Events.SECTION.REDUCE, appReduce )
 
@@ -174,5 +183,7 @@ EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, bestScene
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, previewMosaic )
 
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, sceneAreasLoaded )
+EventBus.addEventListener( Events.MODEL.SCENE_AREA.CHANGE, onSceneAreaChange )
+
 EventBus.addEventListener( Events.MAP.ADD_EE_LAYER, onAddEELayer )
 EventBus.addEventListener( Events.MAP.REMOVE_EE_LAYER, onRemoveEELayer )

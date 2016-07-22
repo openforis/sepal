@@ -28,7 +28,7 @@ var sceneAreasLoaded = function ( e, scenes ) {
         sceneAreasLayer.setMap( null )
     }
     
-    resetSceneAreas()
+    // resetSceneAreas()
     
     
     sceneAreas = scenes
@@ -67,11 +67,11 @@ var sceneAreasLoaded = function ( e, scenes ) {
             
             var gPolygon = new google.maps.Polygon( {
                 paths        : polygonPaths,
-                strokeColor  : '#EBEBCD',
+                strokeColor  : '#C5B397',
                 // strokeOpacity: 0.4,
                 strokeOpacity: 1,
                 strokeWeight : 2,
-                fillColor    : '#EBEBCD',
+                fillColor    : '#C5B397',
                 fillOpacity  : 0.8
                 // fillOpacity  : 0.1
             } )
@@ -199,8 +199,7 @@ var sceneAreasLoaded = function ( e, scenes ) {
         }
         
         EventBus.dispatch( Events.MAP.ADD_LAYER, null, sceneAreasLayer )
-    
-        // reduceApplicationSection()
+        
     } )
     
 }
@@ -310,6 +309,10 @@ var sceneAreaChange = function ( e, sceneAreaId ) {
 }
 
 var resetSceneAreas = function ( e ) {
+    isVisible = false
+    toggleVisibility()
+    isVisible = true
+    
     $.each( sceneAreas, function ( i, sceneArea ) {
         sceneAreaChange( null, sceneArea.sceneAreaId )
     } )

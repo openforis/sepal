@@ -120,7 +120,7 @@ var hide = function ( opts ) {
 var reset = function () {
     disableToggleLayerButtons()
     
-    // btnPreviewMosaic.prop( 'disabled', true )
+    btnPreviewMosaic.prop( 'disabled', true )
     btnRetrieveScenes.prop( 'disabled', true )
     btnRetrieveMosaic.prop( 'disabled', true )
     
@@ -143,12 +143,23 @@ var disableToggleLayerButtons = function () {
     btnHideMosaic.removeClass( 'active' ).prop( 'disabled', true )
 }
 
+var enableScenesSelectionRequiredButtons  = function () {
+    btnPreviewMosaic.prop( 'disabled', false )
+    btnRetrieveScenes.prop( 'disabled', false )
+}
+var disableScenesSelectionRequiredButtons = function () {
+    btnPreviewMosaic.prop( 'disabled', true )
+    btnRetrieveScenes.prop( 'disabled', true )
+}
+
 module.exports = {
-    init                       : init
-    , show                     : show
-    , hide                     : hide
-    , reset                    : reset
-    , collapse                 : collapse
-    , enableToggleLayerButtons : enableToggleLayerButtons
-    , disableToggleLayerButtons: disableToggleLayerButtons
+    init                                   : init
+    , show                                 : show
+    , hide                                 : hide
+    , reset                                : reset
+    , collapse                             : collapse
+    , enableToggleLayerButtons             : enableToggleLayerButtons
+    , disableToggleLayerButtons            : disableToggleLayerButtons
+    , enableScenesSelectionRequiredButtons : enableScenesSelectionRequiredButtons
+    , disableScenesSelectionRequiredButtons: disableScenesSelectionRequiredButtons
 }

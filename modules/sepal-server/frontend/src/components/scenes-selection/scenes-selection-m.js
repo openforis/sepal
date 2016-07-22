@@ -62,7 +62,10 @@ var getSelectedSceneIds = function () {
     $.each( Object.keys( selectedImages ), function ( i, sceneAreaId ) {
         var selection = selectedImages[ sceneAreaId ]
         // console.log( Object.keys( selection ) )
-        selectedScenes.push( Object.keys( selection ) )
+        // selectedScenes.push( Object.keys( selection ) )
+        $.each( Object.keys( selection ), function ( j, sceneImageId ) {
+            selectedScenes.push( sceneImageId )
+        } )
     } )
     return selectedScenes
 }
