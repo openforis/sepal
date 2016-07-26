@@ -62,7 +62,6 @@ class DriveDownload(object):
             self.stop()
 
     def to_file_id(self):
-        # TODO: Find file within directory
         results = self.drive.files().list(q='name = \'' + self.path + '\'', fields="files(id)").execute()
         drive_files = results.get('files', [])
         if not drive_files:

@@ -53,5 +53,6 @@ class DriveCleanup:
                                            fields="files(id, name)").execute()
         files = results.get('files', [])
         for file in files:
-            logger.debug("Deleting id: " + file['id'] + ', ' + file['name'])
+            file_id = file['id']
+            logger.debug("Deleting id: " + file_id + ', ' + file['name'])
             self._drive.files().delete(fileId=file_id).execute()

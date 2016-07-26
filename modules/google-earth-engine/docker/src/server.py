@@ -4,13 +4,9 @@ import re
 
 import ee
 import sys
-from datetime import date
-from datetime import datetime
+from datetime import date, datetime
 from dateutil.parser import parse
-from flask import Flask
-from flask import Response
-from flask import render_template
-from flask import request
+from flask import Flask, Response, render_template, request
 from oauth2client.service_account import ServiceAccountCredentials
 
 import export

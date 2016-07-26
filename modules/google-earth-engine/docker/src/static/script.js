@@ -22,8 +22,10 @@
     maps[ 1 ].setCenter( maps[ 0 ].getCenter() )
     $( '#form' ).submit( function ( e ) {
         e.preventDefault()
+        var exportImage = $( '#exportImage' ).prop( 'checked' )
         preview( 1 )
-        preview( 2 )
+        if ( !exportImage )
+            preview( 2 )
     } )
     
     $( '#sceneIdForm' ).submit( function ( e ) {
@@ -107,6 +109,7 @@
             query.polygon = createPolygon()
         $.getJSON( path, query,
             function ( data ) {
+                $('#response').html(JSON.stringify(data))
                 var mapId  = data.mapId
                 var token  = data.token
                 var bounds = data.bounds

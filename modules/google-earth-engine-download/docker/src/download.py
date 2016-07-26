@@ -1,8 +1,9 @@
 import logging
 
-logger = logging.getLogger(__name__)
-from earthengine import EarthEngineStatus
 from drive import DriveDownload
+from earthengine import EarthEngineStatus
+
+logger = logging.getLogger(__name__)
 
 
 class Downloader(object):
