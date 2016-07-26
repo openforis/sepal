@@ -21,6 +21,7 @@ def to_drive(image, region, name):
         image=image,
         description=name,
         scale=30,
+        maxPixels=1e9,
         region=region.bounds().getInfo()['coordinates']
     )
     task.start()
