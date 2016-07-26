@@ -119,9 +119,8 @@ var hide = function ( opts ) {
 
 var reset = function () {
     disableToggleLayerButtons()
+    disableScenesSelectionRequiredButtons()
     
-    btnPreviewMosaic.prop( 'disabled', true )
-    btnRetrieveScenes.prop( 'disabled', true )
     btnRetrieveMosaic.prop( 'disabled', true )
     
     slideUp( formBestScenes, { delay: 0, duration: 0 } )
@@ -147,6 +146,7 @@ var enableScenesSelectionRequiredButtons  = function () {
     btnPreviewMosaic.prop( 'disabled', false )
     btnRetrieveScenes.prop( 'disabled', false )
 }
+
 var disableScenesSelectionRequiredButtons = function () {
     btnPreviewMosaic.prop( 'disabled', true )
     btnRetrieveScenes.prop( 'disabled', true )

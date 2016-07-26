@@ -4,7 +4,7 @@
  * @author Mino Togna
  */
 
-Events = {
+var Events = {
     
     AJAX: {
         REQUEST: 'ajax'
@@ -25,7 +25,6 @@ Events = {
         CLOSE_ALL: 'section.close-all'
         , SHOW   : 'section.show'
         , SHOWN  : 'section.shown'
-        
         , REDUCE: 'section.reduce'
         
         , SEARCH         : {
