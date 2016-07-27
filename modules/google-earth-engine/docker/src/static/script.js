@@ -22,8 +22,10 @@
     maps[ 1 ].setCenter( maps[ 0 ].getCenter() )
     $( '#form' ).submit( function ( e ) {
         e.preventDefault()
+        var exportImage = $( '#exportImage' ).prop( 'checked' )
         preview( 1 )
-        preview( 2 )
+        if ( !exportImage )
+            preview( 2 )
     } )
     
     $( '#sceneIdForm' ).submit( function ( e ) {
@@ -42,8 +44,8 @@
                 google.maps.drawing.OverlayType.POLYGON
             ]
         },
-        polygonOptions: {
-            fillOpacity: 0,
+        polygonOptions       : {
+            fillOpacity : 0,
             strokeWeight: 2
         }
     } );
@@ -89,6 +91,8 @@
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
         var bands                 = $( '#bands' + mapIndex ).val()
+        var exportImage           = $( '#exportImage' ).prop( 'checked' )
+        var path                  = exportImage ? 'export' : 'preview'
         
         var query = {
             fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
@@ -103,8 +107,9 @@
         }
         if ( shape != null )
             query.polygon = createPolygon()
-        $.getJSON( 'preview', query,
+        $.getJSON( path, query,
             function ( data ) {
+                $('#response').html(JSON.stringify(data))
                 var mapId  = data.mapId
                 var token  = data.token
                 var bounds = data.bounds
@@ -118,6 +123,7 @@
         var bands                 = $( '#bands' + mapIndex ).val()
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
+        var path                  = 'preview-scenes'
         
         var query = {
             fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
@@ -130,7 +136,7 @@
         }
         if ( shape != null )
             query.polygon = createPolygon()
-        $.getJSON( 'preview-scenes', query,
+        $.getJSON( path, query,
             function ( data ) {
                 var mapId  = data.mapId
                 var token  = data.token

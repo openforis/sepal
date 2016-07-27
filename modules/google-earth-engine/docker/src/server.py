@@ -1,18 +1,17 @@
 import json
+import logging
 import re
 
 import ee
 import sys
-from datetime import date
-from datetime import datetime
+from datetime import date, datetime
 from dateutil.parser import parse
-from flask import Flask
-from flask import Response
-from flask import render_template
-from flask import request
+from flask import Flask, Response, render_template, request
 from oauth2client.service_account import ServiceAccountCredentials
 
+import export
 import landsat
+from drive_cleanup import DriveCleanup
 
 app = Flask(__name__)
 
@@ -26,7 +25,6 @@ viz_by_bands = {
     'B7, B4, B3': lambda params: {'bands': 'B7, B4, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
     'B7, B5, B3': lambda params: {'bands': 'B7, B5, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
     'B7, B4, B2': lambda params: {'bands': 'B7, B4, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
-    'ndvi': lambda params: {'bands': 'ndvi', 'min': -1, 'max': 1, 'palette': '0000FF, 00FF00'},
     'temp': lambda params: {'bands': 'temp', 'min': 200, 'max': 400, 'palette': '0000FF, FF0000'},
     'cluster': lambda params: {'bands': 'cluster', 'min': 0, 'max': 5000},
     'date': lambda params: {
@@ -112,6 +110,33 @@ def previewScenes():
         'mapId': mapid['mapid'],
         'token': mapid['token']
     })
+
+
+@app.route('/export', methods=['GET', 'POST'])
+def export_to_drive():
+    aoi = _aoiGeometry()
+    from_millis_since_epoch = int(request.values.get('fromDate'))
+    to_millis_since_epoch = int(request.values.get('toDate'))
+    from_date = date.fromtimestamp(from_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
+    to_date = date.fromtimestamp(to_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
+    sensors = _split(request.values.get('sensors'))
+    bands = _split(request.values.get('bands'))
+    should_cluster = bands == ['cluster']
+    mosaic = landsat.create_mosaic(
+        aoi=aoi,
+        sensors=sensors,
+        from_date=from_date,
+        to_date=to_date,
+        target_day_of_year=int(request.values.get('targetDayOfYear')),
+        target_day_of_year_weight=float(request.values.get('targetDayOfYearWeight')),
+        bands=landsat.normalized_band_names if should_cluster else bands
+    )
+
+    if should_cluster:
+        mosaic = landsat.cluster(mosaic)
+
+    task = export.to_drive(mosaic, aoi.bounds(), '-'.join(bands))
+    return json.dumps({'task': task})
 
 
 @app.route('/sceneareas')
@@ -210,7 +235,7 @@ def _fusion_table_geometry():
     countries = ee.FeatureCollection('ft:' + fusionTable)
     aoi = countries \
         .filterMetadata(keyColumn, 'equals', keyValue)
-    return aoi
+    return aoi.geometry()
 
 
 def _daysFromTarget(targetDay, date):
@@ -232,10 +257,22 @@ def _split(str):
     return [s.strip() for s in str.split(',')]
 
 
+def _destroy():
+    drive_cleanup.stop()
+
+
 if __name__ == '__main__':
-    credentials = ServiceAccountCredentials.from_p12_keyfile(sys.argv[1], sys.argv[2], 'notasecret', ee.oauth.SCOPE)
+    scopes = ee.oauth.SCOPE + ' ' + DriveCleanup.SCOPES
+    credentials = ServiceAccountCredentials.from_p12_keyfile(sys.argv[1], sys.argv[2], 'notasecret', scopes)
     ee.Initialize(credentials)
+    drive_cleanup = DriveCleanup(credentials)
+    _destroy()
+    drive_cleanup.start()
     if len(sys.argv) > 3 and sys.argv[3] == 'debug':
+        logging.basicConfig(level=logging.DEBUG)
         app.run(debug=True, threaded=True)
     else:
+        logging.basicConfig(level=logging.WARNING)
         app.run(host='0.0.0.0', threaded=True)
+
+_destroy()

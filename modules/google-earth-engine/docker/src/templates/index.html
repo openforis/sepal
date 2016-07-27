@@ -40,7 +40,7 @@
                 </p>
 
                 <p>
-                    <label for="target-day-of-year">Target day of year weight</label><br/>
+                    <label for="target-day-of-year-weight">Target day of year weight</label><br/>
                     <input type="text" id="target-day-of-year-weight" value="0.5">
                 </p>
 
@@ -75,7 +75,6 @@
                         <option value="temp">Temperature</option>
                         <option value="date">Date of pixel in days</option>
                         <option value="days">Days from target day</option>
-                        <option value="ndvi">NDVI</option>
                         <option value="cluster">Cluster</option>
                     </select>
                 </p>
@@ -91,9 +90,12 @@
                         <option value="temp">Temperature</option>
                         <option value="date">Date of pixel in days</option>
                         <option value="days">Days from target day</option>
-                        <option value="ndvi">NDVI</option>
                         <option value="cluster">Cluster</option>
                     </select>
+                </p>
+                <p>
+                    <label for="exportImage">Export</label><br/>
+                    <input type="checkbox" id="exportImage">
                 </p>
                 <input type="submit" value="Preview">
             </form>
@@ -107,6 +109,8 @@
                 </p>
                 <input type="submit" value="Preview">
             </form>
+            <h2>Response</h2>
+            <div id="response"></div>
         </td>
     </tr>
 </table>

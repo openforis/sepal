@@ -30,7 +30,6 @@ class Main_Test extends Specification {
             googleEndpoint      : "http://localhost:$googleLandsatServer.port/" as String,
             workingDir          : workingDir.absolutePath,
             username            : System.getProperty('user.name'),
-            userDownloadDir     : downloadDir.absolutePath,
             port                : port as String,
     ]
     def client = new RESTClient("http://localhost:$port/api/")
