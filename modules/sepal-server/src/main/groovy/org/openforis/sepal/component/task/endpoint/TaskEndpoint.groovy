@@ -104,8 +104,8 @@ class TaskEndpoint {
         }
     }
 
-    private Map fromJson(String json) {
-        new JsonSlurper().parseText(json) as Map
+    private List<Map> fromJson(String json) {
+        new JsonSlurper().parseText(json) as List<Map>
     }
 
     private void submit(Command command) {
