@@ -66,7 +66,6 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                     ["$it/tcp", [:]]
                 }
         ])
-
         withClient(instance) {
             def response = post(
                     path: "containers/create",
