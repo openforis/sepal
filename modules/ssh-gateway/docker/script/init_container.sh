@@ -14,8 +14,6 @@ mkdir -p /var/run/sshd
 mkdir -p /data/logs/supervisor
 mkdir -p /data/home
 
-chmod /data/logs/ssh-gateway 777
-
 rm -rf /var/log/supervisor && ln -sf /data/logs/supervisor /var/log/supervisor
 rm -rf /var/log/ssh-gateway && ln -sf /data/logs/supervisor /var/log/ssh-gateway
 rm -rf /home && ln -sf /data/home /home
@@ -45,7 +43,9 @@ if [ ! -d /data/ssh ]; then
     mkdir /data/ssh
     cp -rf /etc/ssh/* /data/ssh
 fi
-rm -rf /etc/ssh && ln -sf /data/ssh /etc/ssh
+rm -rf /etc/ssh-backup
+mv /etc/ssh /etc/ssh-backup
+ln -sf /data/ssh /etc/ssh
 
 mkdir -p /etc/ldap/certificates
 cp /data/ldap-ca.crt.pem /etc/ldap/certificates/ldap-ca.crt.pem
