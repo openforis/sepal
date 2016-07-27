@@ -8,6 +8,7 @@
     - "{{ secret_vars_file }}"
 
   roles:
+    - { role: build-module, module: ldap-backup }
     - { role: build-module, module: ldap }
     - { role: build-module, module: haproxy }
     - { role: build-module, module: nginx }

@@ -17,13 +17,13 @@
         src: ~/.sepal/certificates/docker-registry.crt
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
+    - file: path="/data/sepal/etc" state=directory
+    - template: src="./vagrant.properties" dest=/data/sepal/etc/vagrant.properties
+
     - set_fact:
        sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
        ldap_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
        hosting_service: "vagrant"
-
-    - file: path="/data/sepal/etc" state=directory
-    - template: src="./vagrant.properties" dest=/data/sepal/etc/vagrant.properties
 
   roles:
     - role: unattended-upgrades
@@ -32,6 +32,7 @@
         - 'o=Ubuntu,a=${distro_codename}-updates'
 
     - { role: docker, users: ['ubuntu', 'vagrant'] }
+    - { role: build-module, module: ldap-backup }
     - { role: build-module, module: ldap }
     - { role: build-module, module: haproxy }
     - { role: build-module, module: nginx }
@@ -45,6 +46,7 @@
     - { role: build-module, module: task-executor }
     - { role: build-module, module: google-earth-engine }
 
+    - { role: run-module, module: ldap-backup }
     - { role: run-module, module: ldap }
     - { role: run-module, module: mysql }
     - { role: run-module, module: google-earth-engine }
