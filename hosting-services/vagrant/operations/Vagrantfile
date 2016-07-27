@@ -4,7 +4,7 @@
 project_dir = '../../..'
 
 Vagrant.configure(2) do |config|
-  config.vm.network 'private_network', ip: '172.28.128.4'
+  config.vm.network 'private_network', ip: "#{ENV['VAGRANT_IP']}"
   config.vm.box = 'ubuntu/trusty64'
   config.vm.synced_folder project_dir, '/opt/sepal/'
 

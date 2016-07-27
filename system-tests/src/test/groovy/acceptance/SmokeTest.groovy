@@ -7,7 +7,7 @@ import spock.lang.Specification
 import static groovyx.net.http.ContentType.URLENC
 
 class SmokeTest extends Specification {
-    @Shared endpoint = 'https://172.28.128.3'
+    @Shared endpoint = System.getenv().VAGRANT_IP
     @Shared httpClient = new RESTClient(endpoint)
 
     def setupSpec() {
@@ -31,7 +31,7 @@ class SmokeTest extends Specification {
     String login() {
         def response = httpClient.post(
                 path: "/login",
-                body: [userName: 'admin', password: 'the admin user 123'],
+                body: [userName: 'admin', password: 'some password'],
                 requestContentType: URLENC
         )
         if (response.status != 302)

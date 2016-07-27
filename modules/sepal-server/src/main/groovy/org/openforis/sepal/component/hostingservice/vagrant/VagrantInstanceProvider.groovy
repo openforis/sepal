@@ -6,16 +6,15 @@ import org.openforis.sepal.component.workerinstance.api.WorkerReservation
 import org.openforis.sepal.component.workersession.api.InstanceType
 
 class VagrantInstanceProvider implements InstanceProvider {
-    private static final HOST = '172.28.128.3'
     private final InstanceType instanceType
     private WorkerInstance instance
     private final List<Closure> launchListeners = []
 
-    VagrantInstanceProvider(InstanceType instanceType) {
+    VagrantInstanceProvider(String host, InstanceType instanceType) {
         instance = new WorkerInstance(
                 id: 'vagrant-box',
                 type: instanceType.id,
-                host: HOST,
+                host: host,
                 launchTime: new Date())
         this.instanceType = instanceType
     }

@@ -53,7 +53,7 @@ function initTerminal( response ) {
     
     var gateOnePrefs = {
         url     : 'https://' + window.location.host + '/gateone',
-        // url     : 'https://172.28.128.3/gateone',
+        // url     : 'https://vagrant/gateone',
         auth    : response.authObject,
         embedded: true
     }

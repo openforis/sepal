@@ -7,9 +7,11 @@ import org.openforis.sepal.util.annotation.Data
 @Data
 class VagrantConfig {
     final String userHomeDirTemplate
+    final String host
 
     VagrantConfig() {
         def c = new ConfigLoader(new File(FileSystem.configDir(), 'vagrant.properties'))
         userHomeDirTemplate = c.string('userHomeDirTemplate')
+        host = c.string('host')
     }
 }

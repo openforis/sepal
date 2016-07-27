@@ -13,7 +13,7 @@ class Vagrant implements HostingServiceAdapter {
                     id: 'vagrant-box',
                     name: 'Vagrant Box',
                     description: 'Only supports one session at a time',
-                    hourlyCost: 1d
+                    hourlyCost: 0.1d
             )
     ].asImmutable()
 
@@ -22,6 +22,6 @@ class Vagrant implements HostingServiceAdapter {
     }
 
     InstanceProvider getInstanceProvider() {
-        return new VagrantInstanceProvider(instanceTypes.first())
+        return new VagrantInstanceProvider(config.host, instanceTypes.first())
     }
 }

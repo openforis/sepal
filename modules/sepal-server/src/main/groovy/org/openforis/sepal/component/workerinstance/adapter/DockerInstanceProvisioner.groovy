@@ -7,6 +7,7 @@ import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.util.Is
+import org.openforis.sepal.workertype.Image
 import org.openforis.sepal.workertype.WorkerType
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -26,24 +27,26 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         waitUntilDockerIsAvailable(instance)
         deleteExistingContainers(instance)
         def workerType = workerType(instance)
-        createContainer(instance, workerType)
-        startContainer(instance, workerType)
-        waitUntilInitialized(instance, workerType)
+        workerType.images.each { image ->
+            createContainer(instance, image)
+            startContainer(instance, image)
+            waitUntilInitialized(instance, image)
+        }
     }
 
     void undeploy(WorkerInstance instance) {
         deleteExistingContainers(instance)
     }
 
-    private void createContainer(WorkerInstance instance, WorkerType workerType) {
-        def exposedPorts = workerType.exposedPortByPublishedPort().values()
+    private void createContainer(WorkerInstance instance, Image image) {
+        def exposedPorts = image.exposedPortByPublishedPort().values()
         def username = instance.reservation.username
         def mountedDirByHostDir = [
                 "$config.userHomes/${username}"           : "/home/${username}",
                 "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"
-        ] + workerType.mountedDirByHostDir
+        ] + image.mountedDirByHostDir
         def request = toJson([
-                Image       : "$config.dockerRegistryHost/$workerType.imageName:$config.sepalVersion",
+                Image       : "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
                 Tty         : true,
                 Cmd         : [
                         "/script/init_container.sh",
@@ -67,7 +70,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         withClient(instance) {
             def response = post(
                     path: "containers/create",
-                    query: [name: containerName(instance)],
+                    query: [name: containerName(instance, image)],
                     body: request,
                     requestContentType: JSON
             )
@@ -76,26 +79,26 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         }
     }
 
-    private void startContainer(WorkerInstance instance, WorkerType workerType) {
-        def portBindings = workerType.exposedPortByPublishedPort()
+    private void startContainer(WorkerInstance instance, Image image) {
+        def portBindings = image.exposedPortByPublishedPort()
         def request = toJson(PortBindings: portBindings.collectEntries { publishedPort, exposedPort ->
             ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
         })
         withClient(instance) {
             post(
-                    path: "containers/${containerName(instance)}/start",
+                    path: "containers/${containerName(instance, image)}/start",
                     body: request,
                     requestContentType: JSON
             )
         }
     }
 
-    private void waitUntilInitialized(WorkerInstance instance, WorkerType workerType) {
-        def portsToWaitFor = workerType.exposedPortByPublishedPort().values().toList()
+    private void waitUntilInitialized(WorkerInstance instance, Image image) {
+        def portsToWaitFor = image.exposedPortByPublishedPort().values().toList()
         LOG.debug("Waiting for container to be initialized on ports $portsToWaitFor. Instance: $instance")
         withClient(instance) {
             def response = post(
-                    path: "containers/${containerName(instance)}/exec",
+                    path: "containers/${containerName(instance, image)}/exec",
                     body: new JsonOutput().toJson([
                             AttachStdin : false,
                             AttachStdout: true,
@@ -116,8 +119,8 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         }
     }
 
-    private String containerName(WorkerInstance instance) {
-        "worker-${instance.reservation.workerType}-${instance.reservation.username}"
+    private String containerName(WorkerInstance instance, Image image) {
+        "worker-${image.name}-${instance.reservation.username}"
     }
 
     private WorkerType workerType(WorkerInstance instance) {
