@@ -19,17 +19,17 @@
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
     volumes:
-    - "/data/ldap:/data"      
     - "/data/ldap/database:/var/lib/ldap"
     - "/data/ldap/config:/etc/ldap/slapd.d"
+    - "/data/ldap/shared:/shared"
     - "/backup/ldap:/data/backup"
     env:
-      LDAP_BACKUP_DATA_CRON_EXP: '* * * * *'
-      LDAP_BACKUP_CONFIG_CRON_EXP: '* * * * *'
+      LDAP_BACKUP_DATA_CRON_EXP: '0 0 * * *'
+      LDAP_BACKUP_CONFIG_CRON_EXP: '0 0 * * *'
       LDAP_BACKUP_TTL: '365'
       RESTORE_BACKUP: "{{ restore_backup }}"
   register: container
 
 - name: "ldap-backup | Wait until started"
-  wait_for: path=/data/ldap/backup-started
+  wait_for: path=/data/ldap/shared/backup-started
   when: (container.summary.started > 0 or container.summary.restarted > 0)

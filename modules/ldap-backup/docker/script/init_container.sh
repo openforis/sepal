@@ -17,11 +17,11 @@ if [[ "$RESTORE_BACKUP" == "True" ]]; then
 fi
 
 cat >/etc/cron.d/slapd-backup <<EOL
-* * * * * root export LDAP_BACKUP_TTL=$LDAP_BACKUP_TTL; /sbin/slapd-backup-config
-* * * * * root export LDAP_BACKUP_TTL=$LDAP_BACKUP_TTL; /sbin/slapd-backup-data
+$LDAP_BACKUP_CONFIG_CRON_EXP root export LDAP_BACKUP_TTL=$LDAP_BACKUP_TTL; /sbin/slapd-backup-config
+$LDAP_BACKUP_DATA_CRON_EXP root export LDAP_BACKUP_TTL=$LDAP_BACKUP_TTL; /sbin/slapd-backup-data
 EOL
 
-touch /data/backup-started
+touch /shared/backup-started
 
 # http://veithen.github.io/2014/11/16/sigterm-propagation.html
 trap 'kill -TERM $PID' TERM INT
