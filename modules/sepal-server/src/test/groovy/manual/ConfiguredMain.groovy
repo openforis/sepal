@@ -14,11 +14,7 @@ class ConfiguredMain {
         def config = new SepalConfiguration()
         LOG.info("Migrating database")
         def sql = new Sql(config.dataSource)
-        sql.execute('''
-                CREATE SCHEMA IF NOT EXISTS "public";
-                CREATE ALIAS IF NOT EXISTS SPATIAL_INIT FOR
-                    "org.h2gis.h2spatialext.CreateSpatialExtension.initSpatialExtension";
-                CALL SPATIAL_INIT();''')
+        sql.execute('CREATE SCHEMA IF NOT EXISTS "public"')
         new Flyway(
                 locations: ["filesystem:modules/mysql/docker/script/sqlScripts"],
                 dataSource: config.dataSource,
