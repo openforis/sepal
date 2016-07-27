@@ -19,7 +19,7 @@ class HttpWorkerGateway implements WorkerGateway {
     }
 
     void execute(Task task, WorkerSession session) {
-        client(session).post(path: 'tasks', query: [
+        client(session).post(path: 'tasks', body: [
                 id       : task.id,
                 operation: task.operation,
                 params   : toJson(task.params)
