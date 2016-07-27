@@ -18,6 +18,7 @@ apt-add-repository ppa:johanvdw/saga-gis -y
 
 apt-get -y update && apt-get -y upgrade
 
+# TODO: Add dans-gdal-scripts - this package currently won't install due to broken dependencies
 echo
 echo "*********************************"
 echo "*** Installing misc utilities ***"
@@ -27,7 +28,6 @@ apt-get install -y \
     bc \
     csh \
     curl  \
-    dans-gdal-scripts \
     gdebi-core \
     gettext \
     libcairo2-dev \
