@@ -66,8 +66,4 @@ class LdapUsernamePasswordVerifier implements UsernamePasswordVerifier {
             sb.insert(sb.length() - 1, '\\') // add the trailing backslash if needed
         return sb.toString()
     }
-
-    public static void main(String[] args) {
-        println new LdapUsernamePasswordVerifier('172.28.128.3').verify('admin', 'the admin user 123')
-    }
 }
