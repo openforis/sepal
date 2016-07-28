@@ -1,0 +1,19 @@
+- name: "elk | Start container"
+  docker:
+    docker_api_version: "1.22"
+    name: "elk"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/elk:{{ version }}"
+    state: "reloaded"
+    restart_policy: "always"
+    net: "bridge"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    ports:
+    - "5601:5601"
+    - "9200:9200"
+    - "5044:5044"
+    - "5000:5000"
+
