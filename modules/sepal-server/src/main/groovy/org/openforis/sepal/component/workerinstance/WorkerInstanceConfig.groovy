@@ -18,7 +18,6 @@ class WorkerInstanceConfig {
     int dockerPort
     String dockerEntryPoint
     String dockerRegistryHost
-    Map<String, WorkerType> workerTypeByName
 
     WorkerInstanceConfig() {
         def c = new ConfigLoader(new File(FileSystem.configDir(), 'workerInstance.properties'))
@@ -32,6 +31,5 @@ class WorkerInstanceConfig {
         dockerPort = c.integer('dockerPort')
         dockerEntryPoint = c.string('dockerEntryPoint')
         dockerRegistryHost = c.string('dockerRegistryHost')
-        this.workerTypeByName = new WorkerTypes().workerTypeByName()
     }
 }

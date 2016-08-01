@@ -9,6 +9,7 @@ import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.util.Is
 import org.openforis.sepal.workertype.Image
 import org.openforis.sepal.workertype.WorkerType
+import org.openforis.sepal.workertype.WorkerTypes
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -39,33 +40,27 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void createContainer(WorkerInstance instance, Image image) {
-        def exposedPorts = image.exposedPortByPublishedPort().values()
         def username = instance.reservation.username
         def mountedDirByHostDir = [
                 "$config.userHomes/${username}"           : "/home/${username}",
                 "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"
-        ] + image.mountedDirByHostDir
-        def request = toJson([
-                Image       : "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
-                Tty         : true,
-                Cmd         : [
-                        "/script/init_container.sh",
-                        username,
-                        config.sepalHost,
-                        config.ldapHost,
-                        config.ldapPassword,
-                        config.sepalUser,
-                        config.sepalPassword
-                ],
-                HostConfig  : [
+        ] + image.volumes
+        def request = toJson(
+                Image: "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
+                Tty: true,
+                Cmd: image.runCommand,
+                HostConfig: [
                         Binds: mountedDirByHostDir.collect { hostDir, mountedDir ->
                             "$hostDir:$mountedDir"
                         }
                 ],
-                ExposedPorts: exposedPorts.collectEntries {
+                ExposedPorts: image.exposedPorts.collectEntries {
                     ["$it/tcp", [:]]
+                },
+                Env: image.environment.collect {
+                    "$it.key=$it.value"
                 }
-        ])
+        )
         withClient(instance) {
             def response = post(
                     path: "containers/create",
@@ -79,8 +74,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void startContainer(WorkerInstance instance, Image image) {
-        def portBindings = image.exposedPortByPublishedPort()
-        def request = toJson(PortBindings: portBindings.collectEntries { publishedPort, exposedPort ->
+        def request = toJson(PortBindings: image.publishedPorts.collectEntries { publishedPort, exposedPort ->
             ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
         })
         withClient(instance) {
@@ -93,8 +87,8 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void waitUntilInitialized(WorkerInstance instance, Image image) {
-        def portsToWaitFor = image.exposedPortByPublishedPort().values().toList()
-        LOG.debug("Waiting for container to be initialized on ports $portsToWaitFor. Instance: $instance")
+        def publishedPorts = image.publishedPorts.keySet().toList()
+        LOG.debug("Waiting for container to be initialized on ports $publishedPorts. Instance: $instance")
         withClient(instance) {
             def response = post(
                     path: "containers/${containerName(instance, image)}/exec",
@@ -103,7 +97,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                             AttachStdout: true,
                             AttachStderr: true,
                             Tty         : false,
-                            Cmd         : ["/script/wait_until_initialized.sh", portsToWaitFor.join(';'), instance.reservation.username]
+                            Cmd         : image.waitCommand
                     ]),
                     requestContentType: JSON
             )
@@ -123,7 +117,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private WorkerType workerType(WorkerInstance instance) {
-        def workerType = config.workerTypeByName[instance.reservation.workerType]
+        def workerType = WorkerTypes.create(instance.reservation.workerType, instance, config)
         Is.notNull(workerType, "No worker type with id ${instance.reservation.workerType}")
         return workerType
     }
