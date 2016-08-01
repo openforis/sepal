@@ -1,6 +1,7 @@
 server {
     listen 80;
-    access_log /var/log/nginx/sepal.http.log;
+    access_log /dev/stdout;
+    error_log /dev/stderr;
 
 
    location / {
@@ -14,7 +15,8 @@ server {
 
 server {
     listen 443;
-    access_log                /var/log/nginx/sepal.https.log;
+    access_log                 /dev/stdout;
+    error_log                  /dev/stderr;
     ssl_certificate           /etc/ssl/sepal-https.crt;
     ssl_certificate_key       /etc/ssl/sepal-https.key;
     ssl on;
