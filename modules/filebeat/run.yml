@@ -1,0 +1,19 @@
+- name: "filebeat | Start container"
+  docker:
+    docker_api_version: "1.22"
+    name: "filebeat"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/filebeat:{{ version }}"
+    state: "reloaded"
+    restart_policy: "always"
+    net: "bridge"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    volumes:
+    - "/var/run/docker.sock:/tmp/docker.sock"
+    env:
+      LOGSTASH_HOST: "{{ logstash_host }}"
+      LOGSTASH_PORT: "{{ logstash_port }}"
+      LOGSTASH_SHIPPER_NAME: "{{ logstash_shipper_name }}"
