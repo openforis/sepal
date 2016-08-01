@@ -1,0 +1,31 @@
+
+- file: path="/data/mysql-backup/started" state=absent
+
+- name: "mysql-backup | Start container"
+  docker:
+    docker_api_version: "1.22"
+    name: "mysql-backup"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/mysql-backup:{{ version }}"
+    state: "reloaded"
+    restart_policy: "always"
+    net: "bridge"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    links:
+    - "mysql:mysql"
+    volumes:
+    - "/data/mysql-backup:/shared"
+    - "/backup/mysql:/backup"
+    env:
+      MYSQL_DATABASE: "sdms"
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+      BACKUP_CRON_EXP: '*/5 * * * *'
+      RESTORE_BACKUP: "{{ restore_backup }}"
+  register: container
+
+- name: "mysql-backup | Wait until started"
+  wait_for: path=/data/mysql-backup/started
+  when: (container.summary.started > 0 or container.summary.restarted > 0)
