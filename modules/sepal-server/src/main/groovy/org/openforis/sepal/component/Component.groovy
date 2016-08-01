@@ -108,7 +108,7 @@ abstract class DataSourceBackedComponent implements Component {
             schedulers <<
                     new ExecutorServiceBasedJobScheduler(
                             Executors.newSingleThreadScheduledExecutor(
-                                    NamedThreadFactory.singleThreadFactory(command.class.name)
+                                    NamedThreadFactory.singleThreadFactory(command.class.simpleName)
                             )
                     ).schedule(0, delay, timeUnit) {
                         try {
