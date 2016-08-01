@@ -6,6 +6,8 @@ import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSession
 
 import static groovy.json.JsonOutput.toJson
+import static groovyx.net.http.ContentType.JSON
+import static groovyx.net.http.ContentType.URLENC
 
 class HttpWorkerGateway implements WorkerGateway {
     private final String sepalUsername
@@ -19,11 +21,15 @@ class HttpWorkerGateway implements WorkerGateway {
     }
 
     void execute(Task task, WorkerSession session) {
-        client(session).post(path: 'tasks', body: [
-                id       : task.id,
-                operation: task.operation,
-                params   : toJson(task.params)
-        ])
+        client(session).post(
+                path: 'tasks',
+                requestContentType: URLENC,
+                contentType: JSON,
+                body: [
+                        id       : task.id,
+                        operation: task.operation,
+                        params   : toJson(task.params)
+                ])
     }
 
     void cancel(String taskId, WorkerSession session) {
