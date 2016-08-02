@@ -1,6 +1,6 @@
 FROM python:2.7-onbuild
 MAINTAINER OpenForis
-EXPOSE 5000
+EXPOSE 5001
 
 ADD script /script
 

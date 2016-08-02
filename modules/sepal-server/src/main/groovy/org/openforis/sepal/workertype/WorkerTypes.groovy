@@ -25,15 +25,19 @@ final class WorkerTypes {
 
     private static class TaskExecutorFactory implements Factory {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
-            def publishedPorts = [(1026): 1026]
+            def taskExecutorPublishedPorts = [(1026): 1026]
+            def username = instance.reservation.username
             new WorkerType(TASK_EXECUTOR, [
                     new Image(
                             name: 'task-executor',
                             exposedPorts: [1026],
-                            publishedPorts: publishedPorts,
+                            publishedPorts: taskExecutorPublishedPorts,
+                            volumes: [
+                                    "$config.userHomes/${username}"           : "/home/${username}",
+                                    "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"],
                             runCommand: [
                                     '/script/init_container.sh',
-                                    instance.reservation.username,
+                                    username,
                                     config.sepalHost,
                                     config.ldapHost,
                                     config.ldapPassword,
@@ -42,9 +46,20 @@ final class WorkerTypes {
                             ],
                             waitCommand: [
                                     "/script/wait_until_initialized.sh",
-                                    publishedPorts.values().join(';'),
-                                    instance.reservation.username
-                            ])
+                                    taskExecutorPublishedPorts.values().join(';'),
+                                    username
+                            ]),
+                    new Image(
+                            name: 'google-earth-engine-download',
+                            exposedPorts: [5002],
+                            runCommand: [
+                                    '/script/init_container.sh', username
+                            ],
+                            environment: [
+                                    EE_ACCOUNT_SEPAL_ENV    : config.googleEarthEngineAccount,
+                                    EE_PRIVATE_KEY_SEPAL_ENV: config.googleEarthEnginePrivateKey.replaceAll('\n', '-----LINE BREAK-----')
+                            ],
+                            waitCommand: ["/script/wait_until_initialized.sh"])
             ])
         }
     }
@@ -52,15 +67,19 @@ final class WorkerTypes {
     private static class SandboxFactory implements Factory {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
             def publishedPorts = [(222): 22, (8787): 8787, (3838): 3838]
+            def username = instance.reservation.username
             new WorkerType(SANDBOX, [
                     new Image(
                             name: 'sandbox',
                             exposedPorts: [22, 8787, 3838],
                             publishedPorts: publishedPorts,
-                            volumes: ['/data/sepal/shiny': '/shiny'],
+                            volumes: [
+                                    '/data/sepal/shiny'                       : '/shiny',
+                                    "$config.userHomes/${username}"           : "/home/${username}",
+                                    "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"],
                             runCommand: [
                                     '/script/init_container.sh',
-                                    instance.reservation.username,
+                                    username,
                                     config.sepalHost,
                                     config.ldapHost,
                                     config.ldapPassword,
@@ -70,7 +89,7 @@ final class WorkerTypes {
                             waitCommand: [
                                     "/script/wait_until_initialized.sh",
                                     publishedPorts.values().join(';'),
-                                    instance.reservation.username
+                                    username
                             ]
                     )
             ])

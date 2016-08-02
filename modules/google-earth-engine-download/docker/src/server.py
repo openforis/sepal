@@ -12,6 +12,11 @@ app = Flask(__name__)
 downloader = None
 
 
+@app.route('/healthcheck', methods=['GET'])
+def healthcheck():
+    return 'OK', 200
+
+
 @app.route('/download', methods=['POST'])
 def download():
     downloader.start_download(request.values.get('task'))
@@ -48,9 +53,9 @@ if __name__ == '__main__':
 
     if debug_mode:
         logging.basicConfig(level=logging.DEBUG)
-        app.run(debug=True, threaded=True, port=5001)
+        app.run(debug=True, threaded=True, port=5002)
     else:
         logging.basicConfig(level=logging.WARNING)
-        app.run(host='0.0.0.0', threaded=True, port=5001)
+        app.run(host='0.0.0.0', threaded=True, port=5002)
 
 _destroy()

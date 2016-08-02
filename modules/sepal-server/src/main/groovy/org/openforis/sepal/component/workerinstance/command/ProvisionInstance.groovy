@@ -28,8 +28,7 @@ class ProvisionInstanceHandler implements CommandHandler<Void, ProvisionInstance
             instanceProvisioner.provisionInstance(command.instance)
             eventDispatcher.publish(new InstanceProvisioned(command.instance))
         } catch (Exception e) {
-            // TODO: Add back
-//            eventDispatcher.publish(new FailedToProvisionInstance(command.instance, e))
+            eventDispatcher.publish(new FailedToProvisionInstance(command.instance, e))
             throw e
         }
         return null

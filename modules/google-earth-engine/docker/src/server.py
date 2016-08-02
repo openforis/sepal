@@ -270,9 +270,9 @@ if __name__ == '__main__':
     drive_cleanup.start()
     if len(sys.argv) > 3 and sys.argv[3] == 'debug':
         logging.basicConfig(level=logging.DEBUG)
-        app.run(debug=True, threaded=True)
+        app.run(debug=True, threaded=True, port=5001)
     else:
         logging.basicConfig(level=logging.WARNING)
-        app.run(host='0.0.0.0', threaded=True)
+        app.run(host='0.0.0.0', threaded=True, port=5001)
 
 _destroy()

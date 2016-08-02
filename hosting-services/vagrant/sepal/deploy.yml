@@ -51,6 +51,7 @@
     - { role: build-module, module: sepal-server }
     - { role: build-module, module: task-executor }
     - { role: build-module, module: google-earth-engine }
+    - { role: build-module, module: google-earth-engine-download }
 
     - { role: run-module, module: elk }
     - { role: run-module, module: filebeat }
