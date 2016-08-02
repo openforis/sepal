@@ -8,6 +8,8 @@ import org.openforis.sepal.component.workersession.event.WorkerSessionActivated
 import org.openforis.sepal.event.EventDispatcher
 import org.openforis.sepal.util.annotation.Data
 
+import static org.openforis.sepal.component.task.api.WorkerSession.State.PENDING
+
 @Data(callSuper = true)
 class ActivatePendingSessionOnInstance extends AbstractCommand<Void> {
     WorkerInstance instance
@@ -23,7 +25,7 @@ class ActivatePendingSessionOnInstanceHandler implements CommandHandler<Void, Ac
     }
 
     Void execute(ActivatePendingSessionOnInstance command) {
-        def session = sessionRepository.pendingSessionOnInstance(command.instance.id)
+        def session = sessionRepository.sessionOnInstance(command.instance.id, [PENDING])
         if (!session)
             return null // No pending session
 

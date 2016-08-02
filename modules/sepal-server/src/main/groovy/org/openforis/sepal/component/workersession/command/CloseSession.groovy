@@ -37,7 +37,7 @@ class CloseSessionHandler implements CommandHandler<Void, CloseSession> {
         if (command.username && command.username != session.username)
             throw new Unauthorized("Session not owned by user: $session", command)
         if (![ACTIVE, PENDING].contains(session.state))
-            throw new InvalidCommand('Only active and pending sessions can be closed', command)
+            return null
         repository.update(session.close())
         instanceManager.releaseInstance(session.instance.id)
         eventDispatcher.publish(new SessionClosed(session.id))

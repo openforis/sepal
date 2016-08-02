@@ -31,6 +31,8 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         workerType.images.each { image ->
             createContainer(instance, image)
             startContainer(instance, image)
+        }
+        workerType.images.each { image ->
             waitUntilInitialized(instance, image)
         }
     }
@@ -40,17 +42,12 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void createContainer(WorkerInstance instance, Image image) {
-        def username = instance.reservation.username
-        def mountedDirByHostDir = [
-                "$config.userHomes/${username}"           : "/home/${username}",
-                "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"
-        ] + image.volumes
         def request = toJson(
                 Image: "$config.dockerRegistryHost/openforis/$image.name:$config.sepalVersion",
                 Tty: true,
                 Cmd: image.runCommand,
                 HostConfig: [
-                        Binds: mountedDirByHostDir.collect { hostDir, mountedDir ->
+                        Binds: image.volumes.collect { hostDir, mountedDir ->
                             "$hostDir:$mountedDir"
                         }
                 ],
@@ -61,6 +58,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                     "$it.key=$it.value"
                 }
         )
+        LOG.debug("Creating container from image $image on instance $instance")
         withClient(instance) {
             def response = post(
                     path: "containers/create",
@@ -71,12 +69,14 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             if (response.data.Warnings)
                 LOG.warn("Warning when creating docker container on $instance: $response.data.Warnings")
         }
+        LOG.debug("Created container from image $image on instance $instance")
     }
 
     private void startContainer(WorkerInstance instance, Image image) {
         def request = toJson(PortBindings: image.publishedPorts.collectEntries { publishedPort, exposedPort ->
             ["$exposedPort/tcp", [[HostPort: "$publishedPort"]]]
         })
+        LOG.debug("Starting container from image $image on instance $instance")
         withClient(instance) {
             post(
                     path: "containers/${containerName(instance, image)}/start",
@@ -84,11 +84,12 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                     requestContentType: JSON
             )
         }
+        LOG.debug("Started container from image $image on instance $instance")
     }
 
     private void waitUntilInitialized(WorkerInstance instance, Image image) {
+        LOG.debug("Waiting until container initialized: Image $image on instance $instance")
         def publishedPorts = image.publishedPorts.keySet().toList()
-        LOG.debug("Waiting for container to be initialized on ports $publishedPorts. Instance: $instance")
         withClient(instance) {
             def response = post(
                     path: "containers/${containerName(instance, image)}/exec",
@@ -108,7 +109,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                     requestContentType: JSON
             )
             LOG.debug("Waiting output:\n${startResponse.data}")
-            LOG.debug("Session initialized. Instance: $instance.")
+            LOG.debug("Container initialized: Image $image on instance $instance")
         }
     }
 
@@ -130,9 +131,11 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
     }
 
     private void deleteContainer(WorkerInstance instance, containerId) {
+        LOG.debug("Deleting container $containerId from instance $instance")
         withClient(instance) {
             delete(path: "containers/$containerId", query: [force: true])
         }
+        LOG.debug("Deleted container $containerId from instance $instance")
     }
 
     private void waitUntilDockerIsAvailable(WorkerInstance instance) {
@@ -155,7 +158,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         withClient(instance) {
             client.params.setParameter('http.connection.timeout', new Integer(5 * 1000))
             client.params.setParameter('http.socket.timeout', new Integer(5 * 1000))
-            def response = get(path: 'containers/json')
+            def response = get(path: 'containers/json', query: [all: true])
             def allContainers = response.data
             return allContainers.findAll {
                 it.Names.find { String name -> name.startsWith('/worker-') }

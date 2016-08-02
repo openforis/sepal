@@ -4,6 +4,7 @@ import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.workerinstance.command.ReleaseInstance
 import org.openforis.sepal.component.workerinstance.command.ReleaseUnusedInstances
 import org.openforis.sepal.component.workerinstance.command.RequestInstance
+import org.openforis.sepal.component.workerinstance.event.FailedToProvisionInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceProvisioned
 import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.InstanceType
@@ -44,6 +45,12 @@ class InstanceComponentAdapter implements InstanceManager {
 
     void onInstanceActivated(Closure listener) {
         instanceComponent.on(InstanceProvisioned) {
+            listener(new WorkerInstance(id: it.instance.id, host: it.instance.host))
+        }
+    }
+
+    void onFailedToProvisionInstance(Closure listener) {
+        instanceComponent.on(FailedToProvisionInstance) {
             listener(new WorkerInstance(id: it.instance.id, host: it.instance.host))
         }
     }

@@ -1,5 +1,6 @@
 package component.workerinstance
 
+import org.openforis.sepal.component.workerinstance.event.FailedToProvisionInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceProvisioned
 
 class ProvisionInstance_Test extends AbstractWorkerInstanceTest {
@@ -31,5 +32,17 @@ class ProvisionInstance_Test extends AbstractWorkerInstanceTest {
 
         then:
         instanceProvisioner.provisionedNone()
+    }
+
+    def 'When failing to provision instance, event is sent and exception is thrown'() {
+        instanceProvisioner.fail()
+        def instance = requestInstance()
+
+        when:
+        provisionInstance(instance)
+
+        then:
+        published(FailedToProvisionInstance)
+        thrown Exception
     }
 }

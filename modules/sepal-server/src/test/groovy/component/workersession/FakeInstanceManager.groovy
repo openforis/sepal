@@ -11,7 +11,8 @@ class FakeInstanceManager implements InstanceManager {
     private final Map<String, WorkerInstance> instanceById = [:]
     private final List<WorkerInstance> released = []
     private boolean fail
-    private List<Closure> instanceActivatedListener = []
+    private List<Closure> instanceActivatedListeners = []
+    private List<Closure> provisionFailureListeners = []
     private List<WorkerSession> pendingOrActiveSessions = []
     List<InstanceType> instanceTypes = []
 
@@ -32,7 +33,11 @@ class FakeInstanceManager implements InstanceManager {
     }
 
     void onInstanceActivated(Closure listener) {
-        instanceActivatedListener << listener
+        instanceActivatedListeners << listener
+    }
+
+    void onFailedToProvisionInstance(Closure listener) {
+        provisionFailureListeners << listener
     }
 
     void releaseUnusedInstances(List<WorkerSession> pendingOrActiveSessions, int minAge, TimeUnit timeUnit) {
@@ -64,7 +69,12 @@ class FakeInstanceManager implements InstanceManager {
 
     WorkerInstance activate(String instanceId) {
         def instance = instanceById[instanceId]
-        instanceActivatedListener*.call(instance)
+        instanceActivatedListeners*.call(instance)
+    }
+
+    WorkerInstance provisioningFailed(String instanceId) {
+        def instance = instanceById[instanceId]
+        provisionFailureListeners*.call(instance)
     }
 
     private List<WorkerInstance> allInstances() {

@@ -89,4 +89,30 @@ class SessionComponentAdapter_IntegrationTest extends AbstractWorkerSessionTest 
         then:
         activatedSession?.id == sessionId
     }
+
+    def 'When closing session, session closed listener is called'() {
+        def session = pendingSession()
+
+        def closedSessionId = null
+        adapter.onSessionClosed { closedSessionId = it }
+
+        when:
+        closeSession(session)
+
+        then:
+        closedSessionId == session.id
+    }
+
+    def 'When failing to provision instance, session closed listener is called'() {
+        def session = pendingSession()
+
+        def closedSessionId = null
+        adapter.onSessionClosed { closedSessionId = it }
+
+        when:
+        instanceManager.provisioningFailed(session.instance.id)
+
+        then:
+        closedSessionId == session.id
+    }
 }

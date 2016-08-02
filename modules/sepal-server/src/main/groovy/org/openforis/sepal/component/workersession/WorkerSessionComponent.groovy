@@ -5,6 +5,8 @@ import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
+import org.openforis.sepal.component.workerinstance.command.CloseSessionOnInstance
+import org.openforis.sepal.component.workerinstance.command.CloseSessionOnInstanceHandler
 import org.openforis.sepal.component.workersession.adapter.BudgetComponentAdapter
 import org.openforis.sepal.component.workersession.adapter.InstanceComponentAdapter
 import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository
@@ -58,11 +60,13 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         def sessionRepository = new JdbcWorkerSessionRepository(connectionManager, clock)
 
         command(RequestSession, new RequestSessionHandler(sessionRepository, budgetManager, instanceManager, clock))
-        command(CloseSession, new CloseSessionHandler(sessionRepository, instanceManager, eventDispatcher))
+        def closeSessionHandler = new CloseSessionHandler(sessionRepository, instanceManager, eventDispatcher)
+        command(CloseSession, closeSessionHandler)
         command(CloseTimedOutSessions, new CloseTimedOutSessionsHandler(sessionRepository, instanceManager, eventDispatcher))
         command(ActivatePendingSessionOnInstance, new ActivatePendingSessionOnInstanceHandler(sessionRepository, eventDispatcher))
         def closeUserSessionsHandler = new CloseUserSessionsHandler(sessionRepository, instanceManager, eventDispatcher)
         command(CloseUserSessions, closeUserSessionsHandler)
+        command(CloseSessionOnInstance, new CloseSessionOnInstanceHandler(sessionRepository, closeSessionHandler))
         command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(sessionRepository, instanceManager))
         command(Heartbeat, new HeartbeatHandler(sessionRepository))
         command(CloseSessionsForUsersExceedingBudget,
@@ -74,6 +78,9 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         query(GenerateUserSessionReport, new GenerateUserSessionReportHandler(sessionRepository, instanceManager, budgetManager))
 
         instanceManager.onInstanceActivated { submit(new ActivatePendingSessionOnInstance(instance: it)) }
+        instanceManager.onFailedToProvisionInstance {
+            submit(new CloseSessionOnInstance(it.id))
+        }
     }
 
     void registerEndpointsWith(Controller controller) {

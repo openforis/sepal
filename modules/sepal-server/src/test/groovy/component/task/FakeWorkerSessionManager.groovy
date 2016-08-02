@@ -9,6 +9,7 @@ class FakeWorkerSessionManager implements WorkerSessionManager {
     private final Map<String, WorkerSession> sessionById = [:]
     private final List<WorkerSession> closedSessions = []
     private final List<Closure> sessionActivatedListeners = []
+    private final List<Closure> sessionClosedListeners = []
     private final List<String> heartbeats = []
 
     WorkerSession requestSession(String username, String instanceType) {
@@ -41,8 +42,14 @@ class FakeWorkerSessionManager implements WorkerSessionManager {
         heartbeats << sessionId
     }
 
-    void onSessionActivated(Closure listener) {
+    FakeWorkerSessionManager onSessionActivated(Closure listener) {
         sessionActivatedListeners << listener
+        return this
+    }
+
+    FakeWorkerSessionManager onSessionClosed(Closure listener) {
+        sessionClosedListeners << listener
+        return this
     }
 
     String getDefaultInstanceType() {
@@ -52,6 +59,12 @@ class FakeWorkerSessionManager implements WorkerSessionManager {
     WorkerSession activate(String sessionId) {
         def session = sessionById[sessionId]
         sessionById[sessionId] = session.activate()
+        sessionActivatedListeners*.call(session)
+    }
+
+    WorkerSession close(String sessionId) {
+        def session = sessionById[sessionId]
+        sessionById[sessionId] = session.close()
         sessionActivatedListeners*.call(session)
     }
 

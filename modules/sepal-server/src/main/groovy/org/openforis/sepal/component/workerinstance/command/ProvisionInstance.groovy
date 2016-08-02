@@ -4,6 +4,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
+import org.openforis.sepal.component.workerinstance.event.FailedToProvisionInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceProvisioned
 import org.openforis.sepal.event.EventDispatcher
 import org.openforis.sepal.util.annotation.Data
@@ -23,8 +24,14 @@ class ProvisionInstanceHandler implements CommandHandler<Void, ProvisionInstance
     }
 
     Void execute(ProvisionInstance command) {
-        instanceProvisioner.provisionInstance(command.instance)
-        eventDispatcher.publish(new InstanceProvisioned(command.instance))
+        try {
+            instanceProvisioner.provisionInstance(command.instance)
+            eventDispatcher.publish(new InstanceProvisioned(command.instance))
+        } catch (Exception e) {
+            // TODO: Add back
+//            eventDispatcher.publish(new FailedToProvisionInstance(command.instance, e))
+            throw e
+        }
         return null
     }
 }

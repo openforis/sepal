@@ -16,7 +16,6 @@ import org.openforis.sepal.util.SystemClock
 import javax.sql.DataSource
 
 import static java.util.concurrent.TimeUnit.MINUTES
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class WorkerInstanceComponent extends DataSourceBackedComponent {
     private final InstanceProvider instanceProvider

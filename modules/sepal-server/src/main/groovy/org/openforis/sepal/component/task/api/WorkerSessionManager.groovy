@@ -1,5 +1,8 @@
 package org.openforis.sepal.component.task.api
 
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.SimpleType
+
 interface WorkerSessionManager {
     WorkerSession requestSession(String username, String instanceType)
 
@@ -11,7 +14,15 @@ interface WorkerSessionManager {
 
     void heartbeat(String sessionId)
 
-    void onSessionActivated(Closure listener)
+    WorkerSessionManager onSessionActivated(
+            @ClosureParams(
+                    value = SimpleType,
+                    options = ['org.openforis.sepal.component.task.api.WorkerSession'])
+                    Closure listener)
+
+    WorkerSessionManager onSessionClosed(
+            @ClosureParams(value = SimpleType, options = ['java.lang.String'])
+                    Closure listener)
 
     String getDefaultInstanceType()
 }

@@ -1,7 +1,5 @@
 package component.task
 
-import org.openforis.sepal.command.ExecutionFailed
-
 class UpdateTaskProgress_Test extends AbstractTaskTest {
     def 'Given an active task, when updating progress, session heartbeat is sent'() {
         def task = activeTask()

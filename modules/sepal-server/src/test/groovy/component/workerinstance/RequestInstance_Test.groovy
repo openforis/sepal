@@ -1,5 +1,6 @@
 package component.workerinstance
 
+import org.openforis.sepal.component.workerinstance.event.FailedToRequestInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceLaunched
 import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
 
@@ -27,5 +28,16 @@ class RequestInstance_Test extends AbstractWorkerInstanceTest {
         instanceProvider.launchedOne()
         def event = published InstancePendingProvisioning
         event.instance == instance
+    }
+
+    def 'When failing to request instance, event is published and exception is thrown'() {
+        instanceProvider.fail()
+
+        when:
+        requestInstance()
+
+        then:
+        published(FailedToRequestInstance)
+        thrown Exception
     }
 }

@@ -52,10 +52,13 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
         command(UpdateTaskProgress, new UpdateTaskProgressHandler(taskRepository, sessionManager))
         command(RemoveTask, new RemoveTaskHandler(taskRepository))
         command(RemoveUserTasks, new RemoveUserTasksHandler(taskRepository))
+        command(FailTasksInSession, new FailTasksInSessionHandler(taskRepository))
 
         query(UserTasks, new UserTasksHandler(taskRepository))
 
-        sessionManager.onSessionActivated { submit(new ExecuteTasksInSession(session: it)) }
+        sessionManager
+                .onSessionActivated { submit(new ExecuteTasksInSession(session: it)) }
+                .onSessionClosed { submit(new FailTasksInSession(sessionId: it)) }
     }
 
     void registerEndpointsWith(Controller controller) {

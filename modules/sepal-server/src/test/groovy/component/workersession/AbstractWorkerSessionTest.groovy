@@ -2,6 +2,7 @@ package component.workersession
 
 import fake.Database
 import fake.FakeClock
+import org.openforis.sepal.component.workerinstance.command.CloseSessionOnInstance
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.workersession.api.*
 import org.openforis.sepal.component.workersession.api.WorkerSession.State
@@ -90,6 +91,10 @@ abstract class AbstractWorkerSessionTest extends Specification {
 
     final void closeUserSessions(Map args = [:]) {
         component.submit(new CloseUserSessions(username: username(args)))
+    }
+
+    final void closeSessionOnInstance(String instanceId) {
+        component.submit(new CloseSessionOnInstance(instanceId: instanceId))
     }
 
     final void closeSessionsForUsersExcedingBudget(Map args = [:]) {

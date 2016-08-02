@@ -62,9 +62,10 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
             params.add(workerType)
         }
 
-        if (states)
+        if (states) {
             query += """
-                AND state IN (${(['?'] * states.size()).join(', ')})"""
+                AND state IN (${placeholders(states.size())})"""
+        }
         params.addAll(states.collect { it.name() })
         if (instanceType) {
             query += """
@@ -94,11 +95,12 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
         ).collect { toSession(it) }
     }
 
-    WorkerSession pendingSessionOnInstance(String instanceId) {
-        def row = sql.firstRow('''
+    WorkerSession sessionOnInstance(String instanceId, List<WorkerSession.State> states) {
+        def query = """
                 SELECT id, state, username, worker_type, instance_type, instance_id, host, creation_time, update_time
                 FROM worker_session
-                WHERE instance_id = ? AND state = ?''', [instanceId, PENDING.name()])
+                WHERE instance_id = ? AND state in (${placeholders(states.size())})""" as String
+        def row = sql.firstRow(query, [instanceId, states.collect { it.name() }].flatten() as List<Object>)
         if (row)
             return toSession(row)
         return null
@@ -120,6 +122,10 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
 
     private Date toDate(date) {
         new Date((date as Timestamp).time)
+    }
+
+    private String placeholders(int count) {
+        (['?'] * count).join(', ')
     }
 
     private Sql getSql() {

@@ -1,5 +1,8 @@
 package org.openforis.sepal.component.workersession.api
 
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.SimpleType
+
 import java.util.concurrent.TimeUnit
 
 interface InstanceManager {
@@ -11,5 +14,16 @@ interface InstanceManager {
 
     List<InstanceType> getInstanceTypes()
 
-    void onInstanceActivated(Closure listener)
+    void onInstanceActivated(
+            @ClosureParams(
+                    value = SimpleType,
+                    options = ['org.openforis.sepal.component.workersession.api.WorkerInstance'])
+                    Closure listener
+    )
+
+    void onFailedToProvisionInstance(
+            @ClosureParams(
+                    value = SimpleType,
+                    options = ['org.openforis.sepal.component.workersession.api.WorkerInstance'])
+                    Closure listener)
 }

@@ -5,6 +5,7 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.api.WorkerReservation
+import org.openforis.sepal.component.workerinstance.event.FailedToRequestInstance
 import org.openforis.sepal.component.workerinstance.event.InstanceLaunched
 import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
 import org.openforis.sepal.event.EventDispatcher
@@ -32,11 +33,16 @@ class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestIn
     }
 
     WorkerInstance execute(RequestInstance command) {
-        def reservation = new WorkerReservation(username: command.username, workerType: command.workerType)
-        def idleInstance = idleInstance(command.instanceType)
-        if (idleInstance)
-            return reserveIdle(idleInstance, reservation)
-        return launchInstance(reservation, command)
+        try {
+            def reservation = new WorkerReservation(username: command.username, workerType: command.workerType)
+            def idleInstance = idleInstance(command.instanceType)
+            if (idleInstance)
+                return reserveIdle(idleInstance, reservation)
+            return launchInstance(reservation, command)
+        } catch (Exception e) {
+            eventDispatcher.publish(new FailedToRequestInstance(command.workerType, command.instanceType, e))
+            throw e
+        }
     }
 
     private WorkerInstance reserveIdle(WorkerInstance idleInstance, WorkerReservation reservation) {

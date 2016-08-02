@@ -12,12 +12,15 @@ class FakeInstanceProvider implements InstanceProvider {
     private final Map<String, WorkerInstance> idleById = [:]
     private final List<WorkerInstance> terminated = []
     private final List<Closure> launchListeners = []
+    private boolean failing
 
     FakeInstanceProvider(Clock clock) {
         this.clock = clock
     }
 
     WorkerInstance launchReserved(String instanceType, WorkerReservation reservation) {
+        if (failing)
+            throw new IllegalStateException("Failed to launch instance")
         def instance = new WorkerInstance(
                 id: UUID.randomUUID().toString(),
                 type: instanceType,
@@ -30,6 +33,8 @@ class FakeInstanceProvider implements InstanceProvider {
     }
 
     void launchIdle(String instanceType, int count) {
+        if (failing)
+            throw new IllegalStateException("Failed to launch instance")
         count.times { launchOneIdle(instanceType) }
     }
 
@@ -44,6 +49,8 @@ class FakeInstanceProvider implements InstanceProvider {
     }
 
     void terminate(String instanceId) {
+        if (failing)
+            throw new IllegalStateException("Failed to terminate instance")
         def instance = launchedById.remove(instanceId)
         reservedById.remove(instanceId)
         idleById.remove(instanceId)
@@ -51,6 +58,8 @@ class FakeInstanceProvider implements InstanceProvider {
     }
 
     void reserve(WorkerInstance instance) {
+        if (failing)
+            throw new IllegalStateException("Failed to reserve instance")
         assert instance.reservation
         assert idleById.remove(instance.id),
                 "Instance must be idle before it can be reserved"
@@ -59,6 +68,8 @@ class FakeInstanceProvider implements InstanceProvider {
     }
 
     void release(String instanceId) {
+        if (failing)
+            throw new IllegalStateException("Failed to release instance")
         def instance = reservedById.remove(instanceId)
         assert instance,
                 "Instance must be reserved before it can be idle. Reserved instances: ${reservedById.values()}"
@@ -81,6 +92,10 @@ class FakeInstanceProvider implements InstanceProvider {
 
     WorkerInstance getInstance(String instanceId) {
         launchedById[instanceId]
+    }
+
+    void fail() {
+        failing = true
     }
 
     void signalLaunched(WorkerInstance instance) {

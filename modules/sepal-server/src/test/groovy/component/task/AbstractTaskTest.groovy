@@ -1,13 +1,13 @@
 package component.task
 
 import fake.Database
+import fake.FakeClock
 import org.openforis.sepal.component.task.TaskComponent
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.Timeout
 import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.query.UserTasks
 import org.openforis.sepal.event.SynchronousEventDispatcher
-import fake.FakeClock
 import spock.lang.Specification
 
 abstract class AbstractTaskTest extends Specification {
@@ -103,6 +103,10 @@ abstract class AbstractTaskTest extends Specification {
 
     final void cancelUserTasks(Map args = [:]) {
         component.submit(new CancelUserTasks(username: username(args)))
+    }
+
+    final void failTasksInSession(String sessionId) {
+        component.submit(new FailTasksInSession(sessionId, 'Some reason for the failure'))
     }
 
     final void updateTaskProgress(Task task, Map args = [:]) {

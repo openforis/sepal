@@ -62,6 +62,22 @@ class InstanceComponentAdapter_IntegerationTest extends AbstractWorkerInstanceTe
         adapter.instanceTypes == instanceTypes
     }
 
+    @SuppressWarnings("GrReassignedInClosureLocalVar")
+    def 'When provisioning fails, instance request failure callback is invoked'() {
+        def instance = requestInstance()
+        instanceProvisioner.fail()
+
+        def failedInstance = null
+        adapter.onFailedToProvisionInstance { failedInstance = it }
+
+        when:
+        provisionInstance(instance)
+
+        then:
+        failedInstance == new WorkerInstance(id: instance.id, host: instance.host)
+        thrown Exception
+    }
+
     private WorkerSession session(Map args = [:]) {
         new WorkerSession(
                 id: UUID.randomUUID().toString(),

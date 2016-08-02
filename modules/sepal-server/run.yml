@@ -39,3 +39,5 @@
       HOSTING_SERVICE_SEPAL_ENV: "{{ hosting_service }}"
       GATE_ONE_PUBLIC_SEPAL_ENV: "{{ gate_one_public }}"
       GATE_ONE_SECRET_SEPAL_ENV: "{{ gate_one_secret }}"
+      EE_ACCOUNT_SEPAL_ENV: "{{ google_earth_engine_account }}"
+      EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"

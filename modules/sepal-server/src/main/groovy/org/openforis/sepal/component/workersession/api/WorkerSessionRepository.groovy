@@ -15,7 +15,7 @@ interface WorkerSessionRepository {
 
     List<WorkerSession> pendingOrActiveSessions()
 
-    WorkerSession pendingSessionOnInstance(String instanceId)
+    WorkerSession sessionOnInstance(String instanceId, List<WorkerSession.State> states)
 
     List<WorkerSession> timedOutSessions()
 
