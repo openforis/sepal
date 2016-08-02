@@ -29,6 +29,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
     def 'GET /data/sceneareas/?countryIso= returns sceneareas'() {
         when:
         def response = get(path: 'data/sceneareas', query: [countryIso: 'aa'])
+        assert response.status == 200
 
         then:
         1 * queryDispatcher.submit({ it.aoi.keyValue == 'aa' } as FindSceneAreasForAoi) >> [
@@ -57,6 +58,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
 
         when:
         def response = get(path: 'data/sceneareas/someSceneAreaId', query: query)
+        assert response.status == 200
 
         then:
         1 * queryDispatcher.submit({ it.sceneQuery == expectedSceneQuery } as FindScenesForSceneArea) >> [expectedScene]
@@ -88,7 +90,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         def expectedScene = scene(parseDateString('2015-01-01'))
 
         when:
-        def response = get(path: 'data/best-scenes', query: [
+        def response = post(path: 'data/best-scenes', query: [
                 sceneAreaIds         : 'some-area, another-area',
                 sensorIds            : 'some-sensor, another-sensor',
                 fromDate             : toDateTimeString(expectedQuery.fromDate),
@@ -97,6 +99,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
                 targetDayOfYearWeight: expectedQuery.targetDayOfYearWeight,
                 cloudCoverTarget     : expectedQuery.cloudCoverTarget
         ])
+        assert response.status == 200
 
         then:
         1 * queryDispatcher.submit(expectedQuery) >> [
