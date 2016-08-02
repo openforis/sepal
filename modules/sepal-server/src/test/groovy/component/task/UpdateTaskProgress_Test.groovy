@@ -87,14 +87,4 @@ class UpdateTaskProgress_Test extends AbstractTaskTest {
         then:
         sessionManager.closedOne()
     }
-
-    def 'Given a canceled task, when updating progress, execution failed'() {
-        def task = canceledTask()
-
-        when:
-        updateTaskProgress(task)
-
-        then:
-        thrown ExecutionFailed
-    }
 }
