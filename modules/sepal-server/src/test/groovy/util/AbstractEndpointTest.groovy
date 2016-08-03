@@ -14,35 +14,33 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.endpoint.Endpoints
+import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.query.QueryDispatcher
 import spock.lang.Specification
 
 import static groovy.json.JsonOutput.prettyPrint
-import static org.openforis.sepal.security.Roles.getADMIN
 
 @SuppressWarnings("GroovyAssignabilityCheck")
 abstract class AbstractEndpointTest extends Specification {
-    final port = Port.findFree()
-
     final queryDispatcher = Mock(QueryDispatcher)
     final commandDispatcher = Mock(CommandDispatcher)
     final userRepository = new FakeUserRepository()
     final passwordVerifier = new FakeUsernamePasswordVerifier()
 
-    final client = new RESTClient("http://localhost:$port/api/")
+    final server = new Server(Port.findFree(), new Endpoints(
+            new PathRestrictions(userRepository, new BasicRequestAuthenticator('Sepal', passwordVerifier)),
+            { registerEndpoint(it) } as EndpointRegistry))
+    final client = new RESTClient("http://$server.host/api/")
     final testUsername = 'some-user'
 
     def setup() {
-        EndpointRegistry registry = { registerEndpoint(it) }
-        Endpoints.deploy(port, new PathRestrictions(userRepository, new BasicRequestAuthenticator('Sepal', passwordVerifier)), registry)
         client.handler.failure = { resp -> return resp }
-
         client.auth.basic testUsername, 'some-password'
-        userRepository.addRole(ADMIN)
+        server.start()
     }
 
     def cleanup() {
-        Endpoints.undeploy()
+        server.stop()
     }
 
     abstract void registerEndpoint(Controller controller);

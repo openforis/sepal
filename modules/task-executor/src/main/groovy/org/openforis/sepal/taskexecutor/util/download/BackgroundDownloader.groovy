@@ -1,6 +1,6 @@
 package org.openforis.sepal.taskexecutor.util.download
 
-import org.openforis.sepal.taskexecutor.util.Stoppable
+import org.openforis.sepal.taskexecutor.util.lifecycle.Stoppable
 
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors

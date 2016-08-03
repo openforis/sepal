@@ -3,7 +3,7 @@ package org.openforis.sepal.taskexecutor.manager
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.taskexecutor.api.TaskExecution
 import org.openforis.sepal.taskexecutor.util.NamedThreadFactory
-import org.openforis.sepal.taskexecutor.util.Stoppable
+import org.openforis.sepal.taskexecutor.util.lifecycle.Stoppable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

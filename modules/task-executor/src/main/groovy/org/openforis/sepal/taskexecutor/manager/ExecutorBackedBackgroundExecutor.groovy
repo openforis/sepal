@@ -6,7 +6,7 @@ import org.openforis.sepal.taskexecutor.api.Progress
 import org.openforis.sepal.taskexecutor.api.TaskExecution
 import org.openforis.sepal.taskexecutor.api.TaskExecutor
 import org.openforis.sepal.taskexecutor.util.NamedThreadFactory
-import org.openforis.sepal.taskexecutor.util.Stoppable
+import org.openforis.sepal.taskexecutor.util.lifecycle.Stoppable
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors

@@ -14,32 +14,31 @@ import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.endpoint.Endpoints
+import org.openforis.sepal.endpoint.Server
 import spock.lang.Specification
 
 import static groovy.json.JsonOutput.prettyPrint
 
 @SuppressWarnings("GroovyAssignabilityCheck")
 abstract class AbstractComponentEndpointTest extends Specification {
-    final port = Port.findFree()
-
     final component = Mock(Component)
     final userRepository = new FakeUserRepository()
     final passwordVerifier = new FakeUsernamePasswordVerifier()
     final testUsername = 'some-user'
+    final server = new Server(Port.findFree(), new Endpoints(
+            new PathRestrictions(userRepository, new BasicRequestAuthenticator('Sepal', passwordVerifier)),
+            { registerEndpoint(it) } as EndpointRegistry))
+    final client = new RESTClient("http://$server.host/api/")
     HttpResponseDecorator response
 
-    final client = new RESTClient("http://localhost:$port/api/")
-
     def setup() {
-        def pathRestrictions = new PathRestrictions(userRepository, new BasicRequestAuthenticator('Sepal', passwordVerifier))
-        EndpointRegistry registry = { registerEndpoint(it) }
-        Endpoints.deploy(port, pathRestrictions, registry)
         client.handler.failure = { resp -> return resp }
         client.auth.basic 'some-user', 'some-password'
+        server.start()
     }
 
     def cleanup() {
-        Endpoints.undeploy()
+        server.stop()
     }
 
     abstract void registerEndpoint(Controller controller);

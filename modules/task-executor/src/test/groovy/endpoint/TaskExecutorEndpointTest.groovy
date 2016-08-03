@@ -7,31 +7,35 @@ import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.taskexecutor.api.Task
+import org.openforis.sepal.taskexecutor.api.TaskManager
 import org.openforis.sepal.taskexecutor.endpoint.EndpointRegistry
 import org.openforis.sepal.taskexecutor.endpoint.Endpoints
+import org.openforis.sepal.taskexecutor.endpoint.Server
 import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorEndpoint
-import org.openforis.sepal.taskexecutor.api.TaskManager
 import spock.lang.Specification
 import util.Port
 
 import static groovy.json.JsonOutput.toJson
 
 class TaskExecutorEndpointTest extends Specification {
-    final port = Port.findFree()
-
     final passwordVerifier = new FakeUsernamePasswordVerifier()
     final userProvider = new FakeUserProvider()
     final taskManager = Mock(TaskManager)
 
-    final client = new RESTClient("http://localhost:$port/api/")
+    final server = new Server(Port.findFree(), new Endpoints(
+            new PathRestrictions(userProvider, new BasicRequestAuthenticator('Sepal', passwordVerifier)),
+            { registerEndpoint(it) } as EndpointRegistry))
+    final client = new RESTClient("http://$server.host/api/")
 
     def setup() {
-        def pathRestrictions = new PathRestrictions(userProvider, new BasicRequestAuthenticator('Sepal', passwordVerifier))
-        EndpointRegistry registry = { registerEndpoint(it) }
-        Endpoints.deploy(port, pathRestrictions, registry)
+        server.start()
         client.handler.failure = { resp -> return resp }
         client.auth.basic 'some-user', 'some-password'
         userProvider.addRole('ADMIN')
+    }
+
+    def cleanup() {
+        server.stop()
     }
 
     void registerEndpoint(Controller controller) {

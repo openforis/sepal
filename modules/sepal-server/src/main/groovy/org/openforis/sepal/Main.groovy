@@ -11,6 +11,7 @@ import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.endpoint.Endpoints
+import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.security.*
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JdbcUserRepository
@@ -54,17 +55,17 @@ class Main {
 
         def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir))
         def authenticationEndpoint = new AuthenticationEndpoint(userProvider, usernamePasswordVerifier)
+
         def gateOneAuthEndpoint = new GateOneAuthEndpoint(config.gateOnePublicKey, config.gateOnePrivateKey)
-        Endpoints.deploy(
-                config.webAppPort,
+        def endpoints = new Endpoints(
                 pathRestrictions,
                 authenticationEndpoint,
                 gateOneAuthEndpoint,
                 dataSearchComponent,
                 workerSessionComponent,
                 filesComponent,
-                taskComponent
-        )
+                taskComponent)
+        start new Server(config.webAppPort, endpoints)
         addShutdownHook { stop() }
     }
 
@@ -81,7 +82,6 @@ class Main {
 
 
     private void stop() {
-        Endpoints.undeploy()
         toStop.reverse()*.stop()
     }
 

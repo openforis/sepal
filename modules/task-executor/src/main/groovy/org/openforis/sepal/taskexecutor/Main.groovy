@@ -2,10 +2,7 @@ package org.openforis.sepal.taskexecutor
 
 import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
-import org.openforis.sepal.taskexecutor.endpoint.Endpoints
-import org.openforis.sepal.taskexecutor.endpoint.SepalAdminUsernamePasswordVerifier
-import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorEndpoint
-import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorUserProvider
+import org.openforis.sepal.taskexecutor.endpoint.*
 import org.openforis.sepal.taskexecutor.landsatscene.GoogleLandsatDownload
 import org.openforis.sepal.taskexecutor.landsatscene.LandsatSceneDownload
 import org.openforis.sepal.taskexecutor.landsatscene.S3Landsat8Download
@@ -13,9 +10,10 @@ import org.openforis.sepal.taskexecutor.manager.BackgroundExecutingTaskManager
 import org.openforis.sepal.taskexecutor.manager.ExecutorBackedBackgroundExecutor
 import org.openforis.sepal.taskexecutor.manager.SepalNotifyingTaskProgressMonitor
 import org.openforis.sepal.taskexecutor.util.ConfigLoader
-import org.openforis.sepal.taskexecutor.util.Stoppable
 import org.openforis.sepal.taskexecutor.util.annotation.ImmutableData
 import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
+import org.openforis.sepal.taskexecutor.util.lifecycle.Lifecycle
+import org.openforis.sepal.taskexecutor.util.lifecycle.Stoppable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -46,13 +44,20 @@ class Main {
                         config.username
                 )
         ], backgroundExecutor)
-        def endpoint = new TaskExecutorEndpoint(taskManager)
-        Endpoints.deploy(config.port, pathRestrictions, endpoint)
+        def endpoints = new Endpoints(pathRestrictions,
+                new TaskExecutorEndpoint(taskManager))
+        start new Server(config.port, endpoints)
         addShutdownHook { stop() }
     }
 
+
+    private <T extends Lifecycle> T start(T lifecycle) {
+        lifecycle.start()
+        toStop << lifecycle
+        return lifecycle
+    }
+
     private void stop() {
-        Endpoints.undeploy()
         toStop.reverse()*.stop()
     }
 

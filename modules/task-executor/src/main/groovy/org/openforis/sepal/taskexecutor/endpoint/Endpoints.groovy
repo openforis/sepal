@@ -5,18 +5,19 @@ import groovymvc.Controller
 import groovymvc.ParamsException
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.taskexecutor.api.InvalidTask
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import javax.servlet.ServletContext
 
 import static groovy.json.JsonOutput.toJson
 
 final class Endpoints extends AbstractMvcFilter {
-    private static final Logger LOG = LoggerFactory.getLogger(this)
-    private static final Server server = new Server()
-    private static PathRestrictions pathRestrictions
-    private static List<EndpointRegistry> endpointRegistries = []
+    private final PathRestrictions pathRestrictions
+    private final List<EndpointRegistry> endpointRegistries
+
+    Endpoints(PathRestrictions pathRestrictions, EndpointRegistry... endpointRegistries) {
+        this.pathRestrictions = pathRestrictions
+        this.endpointRegistries = endpointRegistries.toList()
+    }
 
     Controller bootstrap(ServletContext servletContext) {
         def controller = Controller.builder(servletContext)
@@ -28,7 +29,6 @@ final class Endpoints extends AbstractMvcFilter {
         }
 
         controller.with {
-
             error(ParamsException) {
                 response?.status = 400
                 response?.setContentType('application/json')
@@ -48,19 +48,7 @@ final class Endpoints extends AbstractMvcFilter {
 
             restrict('/**', ['ADMIN'])
         }
-
         return controller
-    }
-
-    static void deploy(int port, PathRestrictions pathRestrictions, EndpointRegistry... endpointRegistries) {
-        Endpoints.pathRestrictions = pathRestrictions
-        Endpoints.endpointRegistries = endpointRegistries
-        LOG.debug("Deploying SEPAL endpoints on port $port")
-        server.deploy(Endpoints, port)
-    }
-
-    static void undeploy() {
-        server?.undeploy()
     }
 }
 
