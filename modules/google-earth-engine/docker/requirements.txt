@@ -3,4 +3,3 @@ Flask>=0.11.1
 google-api-python-client>=1.5.1
 pyCrypto>=2.6.1
 python-dateutil>=2.5.3
-schedule>=0.3.2
