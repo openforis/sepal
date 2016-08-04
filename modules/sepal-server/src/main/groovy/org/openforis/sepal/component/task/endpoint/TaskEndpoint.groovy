@@ -39,13 +39,14 @@ class TaskEndpoint {
                 submit(new SubmitTask(
                         instanceType: params.required('instanceType'),
                         operation: params.required('operation'),
-                        params: fromJson(params.required('params', String)),
+                        params: fromJson(params.required('params', String)) as Map,
                         username: currentUser.username
                 ))
                 response.status = 204
             }
 
             post('/data/scenes/retrieve') {
+                response.contentType = "application/json"
                 def sceneMap = fromJson(params.required('scenes', String)) as List<Map>
                 def scenes = sceneMap.collect { it.sceneId }
                 submit(new SubmitTask(
