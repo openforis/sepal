@@ -54,58 +54,17 @@ def index():
 
 @app.route('/preview', methods=['GET', 'POST'])
 def preview():
-    aoi = _aoiGeometry()
-    from_millis_since_epoch = int(request.values.get('fromDate'))
-    to_millis_since_epoch = int(request.values.get('toDate'))
-    from_date = date.fromtimestamp(from_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
-    to_date = date.fromtimestamp(to_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
-    sensors = _split(request.values.get('sensors'))
-    bands = _split(request.values.get('bands'))
-    should_cluster = bands == ['cluster']
-    mosaic = landsat.create_mosaic(
-        aoi=aoi,
-        sensors=sensors,
-        from_date=from_date,
-        to_date=to_date,
-        target_day_of_year=int(request.values.get('targetDayOfYear')),
-        target_day_of_year_weight=float(request.values.get('targetDayOfYearWeight')),
-        bands=landsat.normalized_band_names if should_cluster else bands
-    )
+    if 'sceneIds' in request.values:
+        viz_params = _scenes_preview_viz_params()
+        mosaic = _create_mosaic_from_scenes()
+    else:
+        viz_params = _preview_viz_params()
+        mosaic = _create_mosaic()
 
-    if should_cluster:
+    bands = _split(request.values.get('bands'))
+    if bands == ['cluster']:
         mosaic = landsat.cluster(mosaic)
-
-    viz_params = viz_by_bands[', '.join(bands)]({
-        'from_days_since_epoch': from_millis_since_epoch / _milis_per_day,
-        'to_days_since_epoch': to_millis_since_epoch / _milis_per_day
-    })
     mapid = mosaic.getMapId(viz_params)
-    return json.dumps({
-        'mapId': mapid['mapid'],
-        'token': mapid['token']
-    })
-
-
-@app.route('/preview-scenes', methods=['GET', 'POST'])
-def previewScenes():
-    aoi = _aoiGeometry()
-    scenes = _split(request.values.get('sceneIds'))
-    bands = _split(request.values.get('bands'))
-    mosaic = landsat.create_mosaic_from_scene_ids(
-        aoi=aoi,
-        sceneIds=scenes,
-        target_day_of_year=int(request.values.get('targetDayOfYear')),
-        target_day_of_year_weight=float(request.values.get('targetDayOfYearWeight')),
-        bands=bands
-    )
-
-    acquisition_timestamps = [_acquisition_timestamp(scene) for scene in scenes]
-    from_millis_since_epoch = int(min(acquisition_timestamps))
-    to_millis_since_epoch = int(max(acquisition_timestamps))
-    mapid = mosaic.getMapId(viz_by_bands[', '.join(bands)]({
-        'from_days_since_epoch': from_millis_since_epoch / _milis_per_day,
-        'to_days_since_epoch': to_millis_since_epoch / _milis_per_day
-    }))
     return json.dumps({
         'mapId': mapid['mapid'],
         'token': mapid['token']
@@ -114,28 +73,16 @@ def previewScenes():
 
 @app.route('/export', methods=['GET', 'POST'])
 def export_to_drive():
-    aoi = _aoiGeometry()
-    from_millis_since_epoch = int(request.values.get('fromDate'))
-    to_millis_since_epoch = int(request.values.get('toDate'))
-    from_date = date.fromtimestamp(from_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
-    to_date = date.fromtimestamp(to_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
-    sensors = _split(request.values.get('sensors'))
-    bands = _split(request.values.get('bands'))
-    should_cluster = bands == ['cluster']
-    mosaic = landsat.create_mosaic(
-        aoi=aoi,
-        sensors=sensors,
-        from_date=from_date,
-        to_date=to_date,
-        target_day_of_year=int(request.values.get('targetDayOfYear')),
-        target_day_of_year_weight=float(request.values.get('targetDayOfYearWeight')),
-        bands=landsat.normalized_band_names if should_cluster else bands
-    )
+    if 'sceneIds' in request.values:
+        mosaic = _create_mosaic_from_scenes()
+    else:
+        mosaic = _create_mosaic()
 
-    if should_cluster:
+    bands = _split(request.values.get('bands'))
+    if bands == ['cluster']:
         mosaic = landsat.cluster(mosaic)
 
-    task = export.to_drive(mosaic, aoi.bounds(), '-'.join(bands))
+    task = export.to_drive(mosaic, aoi.bounds(), request.values.get('name'), request.values.get('username'))
     return json.dumps({'task': task})
 
 
@@ -216,6 +163,62 @@ def scenearea(sceneAreaId):
     return json.dumps(scenes)
 
 
+def _create_mosaic():
+    aoi = _aoiGeometry()
+    from_millis_since_epoch = int(request.values.get('fromDate'))
+    to_millis_since_epoch = int(request.values.get('toDate'))
+    from_date = date.fromtimestamp(from_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
+    to_date = date.fromtimestamp(to_millis_since_epoch / 1000.0).isoformat() + 'T00:00'
+    sensors = _split(request.values.get('sensors'))
+    bands = _split(request.values.get('bands'))
+    should_cluster = bands == ['cluster']
+    mosaic = landsat.create_mosaic(
+        aoi=aoi,
+        sensors=sensors,
+        from_date=from_date,
+        to_date=to_date,
+        target_day_of_year=int(request.values.get('targetDayOfYear')),
+        target_day_of_year_weight=float(request.values.get('targetDayOfYearWeight')),
+        bands=landsat.normalized_band_names if should_cluster else bands
+    )
+    return mosaic
+
+
+def _create_mosaic_from_scenes():
+    aoi = _aoiGeometry()
+    scenes = _split(request.values.get('sceneIds'))
+    bands = _split(request.values.get('bands'))
+    mosaic = landsat.create_mosaic_from_scene_ids(
+        aoi=aoi,
+        sceneIds=scenes,
+        target_day_of_year=int(request.values.get('targetDayOfYear')),
+        target_day_of_year_weight=float(request.values.get('targetDayOfYearWeight')),
+        bands=bands
+    )
+    return mosaic
+
+
+def _preview_viz_params():
+    from_millis_since_epoch = int(request.values.get('fromDate'))
+    to_millis_since_epoch = int(request.values.get('toDate'))
+    viz_params = viz_by_bands[', '.join(bands)]({
+        'from_days_since_epoch': from_millis_since_epoch / _milis_per_day,
+        'to_days_since_epoch': to_millis_since_epoch / _milis_per_day
+    })
+    return viz_params
+
+
+def _scenes_preview_viz_params():
+    scenes = _split(request.values.get('sceneIds'))
+    acquisition_timestamps = [_acquisition_timestamp(scene) for scene in scenes]
+    from_millis_since_epoch = int(min(acquisition_timestamps))
+    to_millis_since_epoch = int(max(acquisition_timestamps))
+    bands = _split(request.values.get('bands'))
+    viz_params = viz_by_bands[', '.join(bands)]({'from_days_since_epoch': from_millis_since_epoch / _milis_per_day,
+                                                 'to_days_since_epoch': to_millis_since_epoch / _milis_per_day})
+    return viz_params
+
+
 def _aoiGeometry():
     if 'polygon' in request.values:
         return _polygon_geometry()
@@ -266,13 +269,12 @@ if __name__ == '__main__':
     credentials = ServiceAccountCredentials.from_p12_keyfile(sys.argv[1], sys.argv[2], 'notasecret', scopes)
     ee.Initialize(credentials)
     drive_cleanup = DriveCleanup(credentials)
-    _destroy()
     drive_cleanup.start()
     if len(sys.argv) > 3 and sys.argv[3] == 'debug':
         logging.basicConfig(level=logging.DEBUG)
         app.run(debug=True, threaded=True, port=5001)
     else:
-        logging.basicConfig(level=logging.WARNING)
+        logging.basicConfig(level=logging.INFO)
         app.run(host='0.0.0.0', threaded=True, port=5001)
 
 _destroy()

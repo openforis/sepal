@@ -1,3 +1,5 @@
+import logging
+
 import ee
 from itertools import groupby
 
@@ -65,6 +67,7 @@ def create_mosaic(
     :type bands: iterable
     :return: cloud-free mosaic, clipped to the area of interest, contains the specified bands.
          """
+    logging.info('Creating mosaic')
     # Filter to apply to all image collections
     filter = _create_image_filter(aoi, from_date, to_date)
     # Converts from Sepal sensor names to GEE collection names
@@ -113,6 +116,7 @@ def create_mosaic_from_scene_ids(
 
     :return: cloud-free mosaic, clipped to the area of interest, contains the specified bands.
          """
+    logging.info('Creating mosaic from ' + str(len(sceneIds)) + ' scenes')
     # Creates a dictionary with collection name as key and the scene ids as value
     scene_ids_by_collection_name = groupby(sorted(sceneIds), _collection_name)
     # Creates an image collection for each GEE collection name, with its corresponding scenes

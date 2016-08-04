@@ -123,7 +123,7 @@
         var bands                 = $( '#bands' + mapIndex ).val()
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
-        var path                  = 'preview-scenes'
+        var path                  = 'preview'
         
         var query = {
             fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',

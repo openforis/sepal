@@ -1,7 +1,9 @@
+import logging
+
 import ee
 
 
-def to_drive(image, region, name):
+def to_drive(image, region, name, username):
     """
     Exports an image to Google Drive.
 
@@ -15,19 +17,25 @@ def to_drive(image, region, name):
     :param region: The region to export.
     :type region: ee.Geometry
 
+    :param name: The name of the exported file.
+    :type name: str
+
+    :param username: The user exporting.
+    :type name: str
+
     :return: An export batch job
          """
+    logging.info('[' + username + '] Exporting ' + name + ' to drive')
     task = ee.batch.Export.image.toDrive(
         image=image,
         description=name,
+        folder=username,
         scale=30,
         maxPixels=1e9,
         region=region.bounds().getInfo()['coordinates']
     )
     task.start()
-    # TODO: Set max pixels
-
-    # TODO: If there already is a task with same description?
-    #   Put each export into a folder - UUID?
-    #   Don't allow it, because they could/would overwrite each other on disk anyway?
-    return task.status()['id']
+    task_id = task.status()['id']
+    logging.info('[' + username + '] Task id of ' + name + ':' + task_id)
+    # TODO: Find a good max pixel size
+    return task_id
