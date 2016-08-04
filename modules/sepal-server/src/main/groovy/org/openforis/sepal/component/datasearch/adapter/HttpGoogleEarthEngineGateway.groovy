@@ -48,7 +48,7 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
 
     MapLayer preview(PreselectedScenesMapQuery query) {
         def response = endpoint.post(
-                path: 'preview-scenes',
+                path: 'preview',
                 requestContentType: URLENC,
                 contentType: JSON,
                 body: [
