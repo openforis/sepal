@@ -25,7 +25,8 @@ def download():
 
 @app.route('/status', methods=['GET'])
 def status():
-    return '', 204
+    status = downloader.status(request.values.get('task'))
+    return json.dumps(status)
 
 
 @app.route('/cancel', methods=['POST'])
@@ -55,7 +56,7 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
         app.run(debug=True, threaded=True, port=5002)
     else:
-        logging.basicConfig(level=logging.WARNING)
+        logging.basicConfig(level=logging.INFO)
         app.run(host='0.0.0.0', threaded=True, port=5002)
 
 _destroy()

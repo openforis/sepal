@@ -15,7 +15,9 @@ class Downloader(object):
 
     def start_download(self, task_id):
         if task_id in self.downloads:
+            logging.info('Trying to start downloading a pre-existing task:' + task_id)
             return
+        logging.info('Downloading ' + task_id)
         self.statuses[task_id] = {'state': 'ACTIVE', 'description': 'Exporting to Google Drive'}
         download = Download(
             task_id=task_id,
@@ -25,25 +27,30 @@ class Downloader(object):
         self.downloads[task_id] = download
 
     def status(self, task_id):
-        return self.statuses[task_id]
+        status = self.statuses[task_id]
+        logging.info('Fetching status of ' + task_id + ': ' + status)
+        return status
 
     def update_status(self, task_id, status):
         current_state = self.statuses[task_id]['state']
-        if current_state == 'ACTIVE':  # Don't accept updates if current state isn't ACTIVE
-            logging.debug('Updating status of ' + task_id + ' to ' + str(status))
+        if current_state == 'ACTIVE':  # Only update state if current state is ACTIVE
+            logging.info('Updating status of ' + task_id + ' from ' + current_state + ' to ' + state)
             self.statuses[task_id] = status
+        else:
+            logging.debug(
+                'Trying to update state of non-active task ' + task_id + ' from ' + current_state + ' to ' + state)
         if status['state'] != 'ACTIVE':
             del self.downloads[task_id]
 
     def cancel(self, task_id):
         self.statuses[task_id] = {'state': 'CANCELLED', 'description': 'Download cancelled'}
         if task_id in self.downloads:
-            logging.debug('Cancelling download of task: ' + task_id)
+            logging.info('Cancelling ' + task_id)
             self.downloads[task_id].cancel()
             del self.downloads[task_id]
 
     def stop(self):
-        logging.debug('Stopping Downloader')
+        logging.info('Stopping Downloader')
         for download in self.downloads.values():
             download.stop()
 
