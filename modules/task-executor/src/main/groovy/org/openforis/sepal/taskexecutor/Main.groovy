@@ -3,6 +3,8 @@ package org.openforis.sepal.taskexecutor
 import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.taskexecutor.endpoint.*
+import org.openforis.sepal.taskexecutor.gee.GoogleEarthEngineDownload
+import org.openforis.sepal.taskexecutor.gee.HttpGoogleEarthEngineGateway
 import org.openforis.sepal.taskexecutor.landsatscene.GoogleLandsatDownload
 import org.openforis.sepal.taskexecutor.landsatscene.LandsatSceneDownload
 import org.openforis.sepal.taskexecutor.landsatscene.S3Landsat8Download
@@ -10,12 +12,15 @@ import org.openforis.sepal.taskexecutor.manager.BackgroundExecutingTaskManager
 import org.openforis.sepal.taskexecutor.manager.ExecutorBackedBackgroundExecutor
 import org.openforis.sepal.taskexecutor.manager.SepalNotifyingTaskProgressMonitor
 import org.openforis.sepal.taskexecutor.util.ConfigLoader
+import org.openforis.sepal.taskexecutor.util.SleepingScheduler
 import org.openforis.sepal.taskexecutor.util.annotation.ImmutableData
 import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
 import org.openforis.sepal.taskexecutor.util.lifecycle.Lifecycle
 import org.openforis.sepal.taskexecutor.util.lifecycle.Stoppable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class Main {
     private static final Logger LOG = LoggerFactory.getLogger(this)
@@ -37,11 +42,17 @@ class Main {
         def backgroundExecutor = stoppable new ExecutorBackedBackgroundExecutor(progressMonitor)
         def backgroundDownloader = stoppable new BackgroundDownloader()
         def taskManager = new BackgroundExecutingTaskManager([
-                'landsat-scene-download': new LandsatSceneDownload.Factory(
+                'landsat-scene-download'      : new LandsatSceneDownload.Factory(
                         config.workingDir,
                         new S3Landsat8Download(config.s3Endpoint, backgroundDownloader, config.username),
                         new GoogleLandsatDownload(config.googleEndpoint, backgroundDownloader, config.username),
                         config.username
+                ),
+                'google-earth-engine-download': new GoogleEarthEngineDownload.Factory(
+                        config.workingDir,
+                        config.username,
+                        new SleepingScheduler(5, SECONDS),
+                        new HttpGoogleEarthEngineGateway(config.googleEarthEngineDownloadEndpoint)
                 )
         ], backgroundExecutor)
         def endpoints = new Endpoints(pathRestrictions,
@@ -88,6 +99,7 @@ class Main {
         String sepalEndpoint
         URI s3Endpoint
         URI googleEndpoint
+        URI googleEarthEngineDownloadEndpoint
         File workingDir
         int port
 
@@ -102,6 +114,7 @@ class Main {
                     sepalEndpoint: c.string('sepalEndpoint'),
                     s3Endpoint: c.uri('s3Endpoint'),
                     googleEndpoint: c.uri('googleEndpoint'),
+                    googleEarthEngineDownloadEndpoint: c.uri('googleEarthEngineDownloadEndpoint'),
                     workingDir: c.file('workingDir'),
                     port: c.integer('port')
             )

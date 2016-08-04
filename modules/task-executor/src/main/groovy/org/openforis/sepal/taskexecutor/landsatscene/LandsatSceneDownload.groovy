@@ -20,17 +20,12 @@ class LandsatSceneDownload implements TaskExecutor {
     private final Map<String, List<Download>> downloadsBySceneId = new ConcurrentHashMap<>()
     private final String username
 
-    LandsatSceneDownload(
-            Task task,
-            File workingDir,
-            S3Landsat8Download s3Landsat8Download,
-            GoogleLandsatDownload googleLandsatDownload,
-            String username) {
+    private LandsatSceneDownload(Task task, Factory factory) {
         this.task = task
-        this.workingDir = workingDir
-        this.s3Landsat8Download = s3Landsat8Download
-        this.googleLandsatDownload = googleLandsatDownload
-        this.username = username
+        this.workingDir = factory.workingDir
+        this.s3Landsat8Download = factory.s3Landsat8Download
+        this.googleLandsatDownload = factory.googleLandsatDownload
+        this.username = factory.username
         sceneIds = task.params.sceneIds
         sceneResults = new ArrayBlockingQueue(sceneIds.size())
     }
@@ -92,24 +87,20 @@ class LandsatSceneDownload implements TaskExecutor {
     }
 
     static class Factory implements TaskExecutorFactory {
-        private final File workingDir
-        private final S3Landsat8Download s3Landsat8Download
-        private final GoogleLandsatDownload gsLandsatDownload
-        private final String username
+        final File workingDir
+        final S3Landsat8Download s3Landsat8Download
+        final GoogleLandsatDownload googleLandsatDownload
+        final String username
 
-        Factory(
-                File workingDir,
-                S3Landsat8Download s3Landsat8Download,
-                GoogleLandsatDownload gsLandsatDownload,
-                String username) {
+        Factory(File workingDir, S3Landsat8Download s3Landsat8Download, GoogleLandsatDownload googleLandsatDownload, String username) {
             this.workingDir = workingDir
             this.s3Landsat8Download = s3Landsat8Download
-            this.gsLandsatDownload = gsLandsatDownload
+            this.googleLandsatDownload = googleLandsatDownload
             this.username = username
         }
 
         TaskExecutor create(Task task) {
-            return new LandsatSceneDownload(task, workingDir, s3Landsat8Download, gsLandsatDownload, username)
+            return new LandsatSceneDownload(task, this)
         }
     }
 }

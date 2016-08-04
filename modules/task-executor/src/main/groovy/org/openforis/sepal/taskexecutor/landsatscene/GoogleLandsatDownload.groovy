@@ -1,6 +1,7 @@
 package org.openforis.sepal.taskexecutor.landsatscene
 
 import org.openforis.sepal.taskexecutor.util.BZip
+import org.openforis.sepal.taskexecutor.util.annotation.ImmutableData
 import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
 import org.openforis.sepal.taskexecutor.util.download.Download
 
