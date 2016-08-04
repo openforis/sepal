@@ -1,58 +1,54 @@
 import logging
+import threading
 from threading import Thread
 
 import httplib2
-import schedule
-import time
 from apiclient import discovery
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
-_MAX_FILE_AGE_MINS = 30
+DELAY_SECS = 60
+MAX_FILE_AGE_MINS = 30
 
 
 class DriveCleanup:
     SCOPES = 'https://www.googleapis.com/auth/drive'
-    _drive = None
-    _running = False
+    drive = None
+    stopped = False
 
     def __init__(self, credentials):
-        self._drive = discovery.build('drive', 'v3', http=(credentials.authorize(httplib2.Http())))
+        self.drive = discovery.build('drive', 'v3', http=(credentials.authorize(httplib2.Http())))
+        self.stopped_event = threading.Event()
 
     def start(self):
-        schedule.every().minute.do(
-            self._delete_old_no_raise
-        )
-
         def job():
-            self._running = True
-            schedule.run_all()
-            while self._running:
-                schedule.run_pending()
-                time.sleep(10)
+            logger.info("Scheduled drive cleanup job")
+            while not self.stopped:
+                self._delete_old_no_raise()
+                self.stopped_event.wait(DELAY_SECS)
 
         Thread(target=job).start()
         return self
 
     def stop(self):
-        logger.info("Stopping scheduler")
-        self._running = False
+        logger.info("Stopping drive cleanup job")
+        self.stopped = True
+        self.stopped_event.set()
 
     def _delete_old_no_raise(self):
-        logger.info("Deleting old files")
         try:
             self._delete_old()
         except:
-            import traceback
-            print(traceback.format_exc())
+            logger.exception('Failed to delete old drive files')
 
     def _delete_old(self):
+        logger.info("Searching for old drive files")
         now = datetime.utcnow()
-        oldest_to_keep = (now - timedelta(minutes=_MAX_FILE_AGE_MINS)).isoformat("T")
-        results = self._drive.files().list(q='modifiedTime <= \'' + oldest_to_keep + '\'',
-                                           fields="files(id, name)").execute()
+        oldest_to_keep = (now - timedelta(minutes=MAX_FILE_AGE_MINS)).isoformat("T")
+        results = self.drive.files().list(q='modifiedTime <= \'' + oldest_to_keep + '\'',
+                                          fields="files(id, name)").execute()
         files = results.get('files', [])
         for file in files:
             file_id = file['id']
-            logger.debug("Deleting id: " + file_id + ', ' + file['name'])
-            self._drive.files().delete(fileId=file_id).execute()
+            logger.info("Deleting old file id: " + file_id + ', name: ' + file['name'])
+            self.drive.files().delete(fileId=file_id).execute()
