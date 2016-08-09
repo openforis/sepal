@@ -141,7 +141,9 @@ var addOverlayMapType = function ( e, index, mapType ) {
 }
 
 var removeOverlayMapType = function ( e, index ) {
-    map.overlayMapTypes.removeAt( index )
+    if( map.overlayMapTypes.getAt(index) ){
+        map.overlayMapTypes.removeAt( index )
+    }
 }
 
 EventBus.addEventListener( Events.APP.LOAD, show )

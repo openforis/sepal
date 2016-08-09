@@ -41,12 +41,12 @@ var init          = function ( container ) {
     
     btnSubmit.click( function ( e ) {
         e.preventDefault()
-        formNotify.empty().velocity( 'slideUp', { delay: 0, duration: 100 } )
+        formNotify.empty().velocitySlideUp( { delay: 0, duration: 100 } )
         
         if ( selectedBands ) {
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, null, selectedBands )
         } else {
-            formNotify.html( 'A valid band must be selected' ).velocity( 'slideDown', { delay: 20, duration: 400 } )
+            formNotify.html( 'A valid band must be selected' ).velocitySlideDown( { delay: 20, duration: 400 } )
         }
     } )
 }

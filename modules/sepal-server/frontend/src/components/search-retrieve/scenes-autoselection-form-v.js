@@ -86,12 +86,12 @@ var init = function ( container ) {
     
     btnSubmit.click( function ( e ) {
         e.preventDefault()
-        formNotify.empty().velocity( 'slideUp', { delay: 0, duration: 100 } )
+        formNotify.empty().velocitySlideUp( { delay: 0, duration: 100 } )
         
         if ( Filter.getSelectedSensors().length > 0 ) {
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES )
         } else {
-            formNotify.html( 'At least one sensor must be selected' ).velocity( 'slideDown', { delay: 20, duration: 400 } )
+            formNotify.html( 'At least one sensor must be selected' ).velocitySlideDown( { delay: 20, duration: 400 } )
         }
     } )
     
@@ -99,7 +99,7 @@ var init = function ( container ) {
 }
 
 var reset = function () {
-    formNotify.velocity( 'slideUp', { delay: 0, duration: 0 } )
+    formNotify.velocitySlideUp( { delay: 0, duration: 0 } )
 }
 
 var setSelectedSensors = function ( selectedSensors ) {
