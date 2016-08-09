@@ -4,3 +4,4 @@
 
 require( './velocity-slide' )
 require( './enabling' )
+require( './string-utils' )

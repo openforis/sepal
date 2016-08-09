@@ -2,11 +2,43 @@
   //padding: 2rem 1rem;
   overflow: hidden;
 
+  .user-detail {
+    padding: 1rem 1rem;
+    border-right: 3px solid rgba(255, 255, 255, 0.1);
+
+    form {
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      .form-group:not(:last-child) {
+        padding-top: .8rem;
+        padding-bottom: .8rem;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        background-color: rgba(255, 255, 255, 0.05);
+        margin: 0;
+        border-radius: .25rem;
+      }
+
+      .form-label {
+        padding-top: 10px;
+        //border-bottom: 1px dotted rgba(255, 255, 255, .5);
+        /* padding-bottom: 20px; */
+      }
+
+      input.form-control {
+        padding: .8rem .2rem;
+      }
+
+      .form-notify {
+        margin: 0 !important;
+      }
+    }
+  }
+
   .sessions {
-    padding: 2rem 2rem;
+    padding: 1rem 2rem;
     overflow-y: auto;
     overflow-x: hidden;
-    border-right: 3px solid rgba(255, 255, 255, 0.1);
 
     .row-session {
       margin-top: .5rem;
@@ -17,7 +49,7 @@
       border-radius: 1rem;
       font-size: .9rem;
 
-      .btn-remove{
+      .btn-remove {
         width: 1.5rem;
         height: 1.5rem;
         padding: .14rem 0 0 0rem;
@@ -29,11 +61,13 @@
   }
 
   .resources {
-    padding: 2rem 2rem;
+    padding: 1rem 2rem;
+    //border-bottom: 3px solid rgba(255, 255, 255, 0.1);
 
     .row-resources {
       margin-top: 1rem;
-      padding: 1.5rem 2rem;
+      //padding: 1rem 2rem;
+      padding: 1rem;
       background-color: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 1rem;

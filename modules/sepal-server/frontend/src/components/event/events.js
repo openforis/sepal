@@ -25,7 +25,7 @@ var Events = {
         CLOSE_ALL: 'section.close-all'
         , SHOW   : 'section.show'
         , SHOWN  : 'section.shown'
-        , REDUCE: 'section.reduce'
+        , REDUCE : 'section.reduce'
         
         , SEARCH         : {
             // SHOW_SCENE_AREA: 'section.search.show-scene-area'
@@ -70,7 +70,8 @@ var Events = {
         }
         
         , USER: {
-            REMOVE_SESSION: 'section.user.remove-session'
+            REMOVE_SESSION    : 'section.user.remove-session'
+            , SAVE_USER_DETAIL: 'section.user.save-user-detail'
         }
     }
     

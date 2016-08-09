@@ -5,16 +5,25 @@
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var Loader   = require( '../loader/loader' )
+var Sepal    = require( '../main/sepal' )
 
 var View  = require( './user-v' )
 var Model = require( './user-m' )
+
+var show = function ( e, type ) {
+    if ( type == 'user' ) {
+        View.init()
+        
+        requestSandboxReport()
+    }
+}
 
 var requestSandboxReport = function () {
     var params = {
         url      : '/api/sandbox/report'
         , success: function ( response ) {
             Model.setUserSandboxReport( response )
-
+            
             View.setSessions( Model.getSessions() )
             View.setSpending( Model.getSpending() )
         }
@@ -23,17 +32,9 @@ var requestSandboxReport = function () {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-var show = function ( e, type ) {
-    if ( type == 'user' ) {
-        View.init()
-
-        requestSandboxReport()
-    }
-}
-
 var removeSession = function ( evt, sessionId ) {
     var session = Model.getSessionById( sessionId )
-
+    
     var params = {
         url         : '/api/' + session.path
         , method    : 'DELETE'
@@ -46,9 +47,29 @@ var removeSession = function ( evt, sessionId ) {
             Loader.hide( { delay: 200 } )
         }
     }
+    
+    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+}
 
+var saveUserDetail = function ( e, data ) {
+    // console.log( data )
+    
+    var params = {
+        url         : '/api/user/details'
+        , method    : 'POST'
+        , beforeSend: function () {
+            Loader.show()
+        }
+        , success   : function ( response ) {
+            console.log( response )
+            Loader.hide( { delay: 200 } )
+            Sepal.User = response
+        }
+    }
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 EventBus.addEventListener( Events.SECTION.USER.REMOVE_SESSION, removeSession )
+
+EventBus.addEventListener( Events.SECTION.USER.SAVE_USER_DETAIL, saveUserDetail )

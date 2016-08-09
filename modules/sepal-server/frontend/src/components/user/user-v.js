@@ -16,6 +16,8 @@ var html              = $( template( {} ) )
 var sessionsSection   = null
 var rowSessionSection = null
 var resourcesSection  = null
+//
+var userDetailForm    = null
 
 var init = function () {
     var appSection = $( '#app-section' ).find( '.user' )
@@ -26,8 +28,80 @@ var init = function () {
         sessionsSection   = html.find( '.sessions' )
         rowSessionSection = html.find( '.row-session-placeholder' )
         resourcesSection  = html.find( '.resources' )
+        
+        userDetailForm = html.find( '#user-detail-form' )
+        initForm()
     }
     
+}
+
+var initForm = function () {
+    
+    var formNotify = userDetailForm.find( '.form-notify' )
+    
+    var showError = function ( message ) {
+        // formNotify.html( message )
+        formNotify.velocitySlideDown( {
+            delay: 0, duration: 500, begin: function () {
+                formNotify.html( message )
+            }
+        } )
+    }
+    
+    var validString = function ( field, message ) {
+        if ( $.isEmptyString( field.val() ) ) {
+            field.closest( '.form-group' ).addClass( 'error' )
+            showError( message )
+            return false
+        }
+        return true
+    }
+    var validEmail  = function ( field ) {
+        var re = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i
+        
+        if ( !re.test( field.val() ) ) {
+            field.closest( '.form-group' ).addClass( 'error' )
+            showError( "Email is not valid" )
+            return false
+        }
+        return true
+    }
+    
+    
+    userDetailForm.submit( function ( e ) {
+        formNotify.velocitySlideUp( { delay: 0, duration: 100 } )
+        userDetailForm.find( '.form-group' ).removeClass( 'error' )
+        
+        e.preventDefault()
+        
+        var name         = userDetailForm.find( '[name=name]' )
+        var username     = userDetailForm.find( '[name=username]' )
+        var password     = userDetailForm.find( '[name=password]' )
+        var email        = userDetailForm.find( '[name=email]' )
+        var organization = userDetailForm.find( '[name=organization]' )
+        
+        var valid = false
+        if ( validString( name, 'Name cannot be empty' ) ) {
+            if ( validString( username, 'Username cannot be empty' ) ) {
+                if ( validString( password, 'Password cannot be empty' ) ) {
+                    if ( validString( email, 'Email cannot be empty' ) ) {
+                        if ( validEmail( email ) ) {
+                            if ( validString( organization, 'Organization cannot be empty' ) ) {
+                                valid = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if ( valid ) {
+            // submit
+            var data = userDetailForm.serialize()
+            EventBus.dispatch( Events.SECTION.USER.SAVE_USER_DETAIL , null , data )
+        }
+        
+    } )
 }
 
 var setSessions = function ( sessions ) {

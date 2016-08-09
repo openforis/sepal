@@ -554,9 +554,20 @@ img {
 .height20 {
     height: 20% !important;
 }
-
+.height30 {
+    height: 30% !important;
+}
+.height40 {
+    height: 40% !important;
+}
 .height50 {
     height: 50% !important;
+}
+.height60 {
+    height: 60% !important;
+}
+.height70 {
+    height: 70% !important;
 }
 .height75 {
     height: 75% !important;
