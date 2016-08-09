@@ -13,6 +13,9 @@ require( '../theme/section.css' )
 
 require( '../theme/footer.css' )
 
+// jquery sepal plugins
+require( '../jquery-sepal-plugins/jquery-sepal-plugins' )
+
 // application components
 require( '../login/login' )
 require( '../map/map' )

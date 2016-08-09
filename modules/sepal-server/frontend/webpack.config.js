@@ -1,7 +1,8 @@
-const Webpack           = require( 'webpack' )
-const HtmlWebpackPlugin = require( 'html-webpack-plugin' )
-const ExtractTextPlugin = require( 'extract-text-webpack-plugin' );
-const autoprefixer      = require( 'autoprefixer' );
+const Webpack               = require( 'webpack' )
+const HtmlWebpackPlugin     = require( 'html-webpack-plugin' )
+const ExtractTextPlugin     = require( 'extract-text-webpack-plugin' )
+const autoprefixer          = require( 'autoprefixer' )
+const FaviconsWebpackPlugin = require( 'favicons-webpack-plugin' )
 
 module.exports = {
     entry  : [
@@ -26,7 +27,8 @@ module.exports = {
             jQuery         : "jquery",
             "window.jQuery": "jquery",
             "window.Tether": "tether"
-        } )
+        } ),
+        new FaviconsWebpackPlugin( './src/icons/favicon.png' )
     ],
     resolve: { extensions: [ '', '.js' ] },
     devtool: 'source-map',
@@ -65,7 +67,7 @@ module.exports = {
         proxy      : {
             // '*': { target: 'http://localhost:1025' }
             // '*': { target: 'http://localhost:9999' }
-            '/api/*': { target: 'https://' + process.env.VAGRANT_IP } // Vagrant box
+            '*': { target: 'https://' + process.env.VAGRANT_IP } // Vagrant box
             // , '/preview': { target: 'http://127.0.0.1:5000' }
         }
     }

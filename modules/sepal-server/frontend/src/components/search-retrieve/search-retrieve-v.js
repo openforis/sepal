@@ -47,35 +47,16 @@ var init = function () {
     
 }
 
-var slide = function ( element, slideDir, options ) {
-    var slideOptions = { delay: 50, duration: 500 }
-    slideOptions     = $.extend( slideOptions, options )
-    
-    element.velocity( slideDir, slideOptions )
-    
-}
-
-var slideToggle = function ( element, options ) {
-    var isOpen   = element.is( ':visible' )
-    var slideDir = isOpen ? 'slideUp' : 'slideDown'
-    slide( element, slideDir, options )
-}
-
-var slideUp = function ( element, options ) {
-    slide( element, 'slideUp', options )
-}
-
-var slideDown = function ( element, options ) {
-    slide( element, 'slideDown', options )
-}
+var defaultSlideOpts = { delay: 50, duration: 500 }
 
 var initEventHandlers = function () {
     
     btnBestScenes.click( function ( e ) {
         e.preventDefault()
-        slideUp( mosaicPreviewForm )
-        slideToggle( formBestScenes )
+        mosaicPreviewForm.velocitySlideUp( defaultSlideOpts  )
+        formBestScenes.velocitySlideToggle( defaultSlideOpts )
     } )
+    
     btnRetrieveScenes.click( function ( e ) {
         e.preventDefault()
         EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES )
@@ -83,8 +64,8 @@ var initEventHandlers = function () {
     
     btnPreviewMosaic.click( function ( e ) {
         e.preventDefault()
-        slideUp( formBestScenes )
-        slideToggle( mosaicPreviewForm )
+        formBestScenes.velocitySlideUp( defaultSlideOpts  )
+        mosaicPreviewForm.velocitySlideToggle( defaultSlideOpts )
     } )
     btnRetrieveMosaic.click( function ( e ) {
         e.preventDefault()
@@ -107,49 +88,49 @@ var initEventHandlers = function () {
 
 var show = function () {
     if ( !html.is( ':visible' ) ) {
-        slideDown( html, { delay: 200, duration: 1000 } )
+        html.velocitySlideDown( { delay: 200, duration: 1000 } )
     }
 }
 
 var hide = function ( opts ) {
     var options = { delay: 200, duration: 1000 }
     options     = $.extend( options, opts )
-    slideUp( html, options )
+    html.velocitySlideUp( options )
 }
 
 var reset = function () {
     disableToggleLayerButtons()
     disableScenesSelectionRequiredButtons()
     
-    btnRetrieveMosaic.prop( 'disabled', true )
+    btnRetrieveMosaic.disable()
     
-    slideUp( formBestScenes, { delay: 0, duration: 0 } )
-    slideUp( mosaicPreviewForm, { delay: 0, duration: 0 } )
+    formBestScenes.velocitySlideUp( { delay: 0, duration: 0 } )
+    mosaicPreviewForm.velocitySlideUp( { delay: 0, duration: 0 } )
 }
 
 var collapse = function () {
-    slideUp( formBestScenes )
-    slideUp( mosaicPreviewForm )
+    formBestScenes.velocitySlideUp( defaultSlideOpts )
+    mosaicPreviewForm.velocitySlideUp( defaultSlideOpts )
 }
 
 var enableToggleLayerButtons = function () {
-    btnHideSceneAreas.addClass( 'active' ).prop( 'disabled', false )
-    btnHideMosaic.addClass( 'active' ).prop( 'disabled', false )
+    btnHideSceneAreas.addClass( 'active' ).enable()
+    btnHideMosaic.addClass( 'active' ).enable()
 }
 
 var disableToggleLayerButtons = function () {
-    btnHideSceneAreas.removeClass( 'active' ).prop( 'disabled', true )
-    btnHideMosaic.removeClass( 'active' ).prop( 'disabled', true )
+    btnHideSceneAreas.removeClass( 'active' ).disable()
+    btnHideMosaic.removeClass( 'active' ).disable()
 }
 
 var enableScenesSelectionRequiredButtons  = function () {
-    btnPreviewMosaic.prop( 'disabled', false )
-    btnRetrieveScenes.prop( 'disabled', false )
+    btnPreviewMosaic.enable()
+    btnRetrieveScenes.enable()
 }
 
 var disableScenesSelectionRequiredButtons = function () {
-    btnPreviewMosaic.prop( 'disabled', true )
-    btnRetrieveScenes.prop( 'disabled', true )
+    btnPreviewMosaic.disable()
+    btnRetrieveScenes.disable()
 }
 
 module.exports = {

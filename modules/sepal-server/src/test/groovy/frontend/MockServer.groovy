@@ -241,7 +241,7 @@ class MockServer extends AbstractMvcFilter {
     }
 
     static void main(String[] args) {
-        new Server().deploy(this, 9999)
+        new Server(9999, new MockServer()).start()
     }
 
 }
