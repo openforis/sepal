@@ -24,6 +24,8 @@ require( '../nav-menu/nav-menu' )
 require( '../app-section/app-section' )
 require( '../tasks/tasks-mv' )
 
+require( '../main/user-mv' )
+
 // event bus
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
@@ -32,16 +34,13 @@ var Events   = require( '../event/events' )
 var Loader = require( '../loader/loader' )
 
 // global app variables
-var Sepal = require( './sepal' )
+// var Sepal = require( './sepal' )
 
 // functions
 var userLoggedIn = function ( e, user ) {
-    Sepal.User = user
-    
     Loader.show()
     
     loadApp()
-    
 }
 
 var loadApp = function () {
@@ -63,6 +62,7 @@ var checkUser = function () {
         , success: function ( response ) {
             // console.log( response )
             EventBus.dispatch( Events.APP.USER_LOGGED_IN, null, response )
+            EventBus.dispatch( Events.USER.USER_DETAILS_LOADED, null, response )
         }
     }
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )

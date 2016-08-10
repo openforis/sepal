@@ -2,7 +2,8 @@
  * @author Mino Togna
  */
 require( './process.scss' )
-var Sepal    = require( '../main/sepal' )
+// var Sepal    = require( '../main/sepal' )
+var User     = require( '../main/user-m' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var template = require( './process.html' )
@@ -21,7 +22,7 @@ var init = function () {
         apps = html.find( '.apps' )
         
         var rStudioBtn = $( '<a class="btn btn-base round r-studio" target="_blank"></a>' )
-        var href       = '/user/' + Sepal.User.username + '/rstudio-server/'
+        var href       = '/user/' + User.username + '/rstudio-server/'
         rStudioBtn.attr( 'href', href )
         rStudioBtn.append( '<img src="' + rStudioImg + '"/>' )
         apps.append( rStudioBtn )

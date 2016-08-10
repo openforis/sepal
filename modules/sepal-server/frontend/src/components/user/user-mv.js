@@ -5,7 +5,7 @@
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var Loader   = require( '../loader/loader' )
-var Sepal    = require( '../main/sepal' )
+// var Sepal    = require( '../main/sepal' )
 
 var View  = require( './user-v' )
 var Model = require( './user-m' )
@@ -52,8 +52,6 @@ var removeSession = function ( evt, sessionId ) {
 }
 
 var saveUserDetail = function ( e, data ) {
-    // console.log( data )
-    
     var params = {
         url         : '/api/user/details'
         , method    : 'POST'
@@ -61,9 +59,8 @@ var saveUserDetail = function ( e, data ) {
             Loader.show()
         }
         , success   : function ( response ) {
-            console.log( response )
             Loader.hide( { delay: 200 } )
-            Sepal.User = response
+            EventBus.dispatch( Events.USER.USER_DETAILS_LOADED, null, response )
         }
     }
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )

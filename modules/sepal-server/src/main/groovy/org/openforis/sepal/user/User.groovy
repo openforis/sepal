@@ -10,6 +10,7 @@ class User implements groovymvc.security.User {
     Long userUid
     String email
     Set<String> roles
+    String organization
 
     boolean hasUsername(String username) {
         this.username.equalsIgnoreCase(username)

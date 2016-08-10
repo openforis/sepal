@@ -3,7 +3,8 @@
  */
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
-var Sepal    = require( '../main/sepal' )
+// var Sepal    = require( '../main/sepal' )
+var User     = require( '../main/user-m' )
 
 require( './gateone' )
 require( './gateone.css' )
@@ -38,7 +39,7 @@ function initTerminal( response ) {
             terminalId = GateOne.Terminal.newTerminal( randomTerminalId() )
             GateOne.Terminal.setTerminal( terminalId )
             GateOne.Terminal.clearScrollback( terminalId )
-            GateOne.Terminal.sendString( 'ssh://' + Sepal.User.username + '@ssh-gateway?identities=id_rsa\n', terminalId )
+            GateOne.Terminal.sendString( 'ssh://' + User.username + '@ssh-gateway?identities=id_rsa\n', terminalId )
             focusTerminal()
         }
         
@@ -46,7 +47,8 @@ function initTerminal( response ) {
             GateOne.Terminal.closeTermCallbacks.push( newTerminal )
         }
         // Avoid printing host fingerprints on the browser console
-        GateOne.Net.addAction( 'terminal:sshjs_display_fingerprint', function () {} );
+        GateOne.Net.addAction( 'terminal:sshjs_display_fingerprint', function () {
+        } );
         GateOne.Logging.setLevel( 'ERROR' )
         newTerminal()
     }

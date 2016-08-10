@@ -96,6 +96,10 @@ var Events = {
         }
     }
     
+    , USER : {
+        USER_DETAILS_LOADED : "user.user-details-loaded"
+    }
+    
 }
 
 module.exports = Events

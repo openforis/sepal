@@ -5,7 +5,7 @@ var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
 var Sepal = function () {
-    this.User = null
+    // this.User = null
 
     this.Section = {
         opened: false
