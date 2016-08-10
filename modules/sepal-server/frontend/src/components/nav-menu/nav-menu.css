@@ -163,8 +163,8 @@
 }
 
 #sepal-logo h2 div {
-    border: .2rem solid rgba(255, 255, 255, 0.15);
-    padding: .6rem 1.35rem;
+    border: .2rem solid rgba(255, 255, 255, 0.1);
+    padding: .5rem 1.3rem;
     margin-right: .1rem;
     border-radius: 50%;
     width: 4rem !important;

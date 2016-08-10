@@ -88,12 +88,12 @@ var initEventHandlers = function () {
 
 var show = function () {
     if ( !html.is( ':visible' ) ) {
-        html.velocitySlideDown( { delay: 200, duration: 1000 } )
+        html.velocitySlideDown( { delay: 300, duration: 800 } )
     }
 }
 
 var hide = function ( opts ) {
-    var options = { delay: 200, duration: 1000 }
+    var options = { delay: 100, duration: 800 }
     options     = $.extend( options, opts )
     html.velocitySlideUp( options )
 }
