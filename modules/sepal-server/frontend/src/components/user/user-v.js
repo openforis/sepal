@@ -98,7 +98,7 @@ var initForm = function () {
         if ( valid ) {
             // submit
             var data = userDetailForm.serialize()
-            EventBus.dispatch( Events.SECTION.USER.SAVE_USER_DETAIL , null , data )
+            EventBus.dispatch( Events.SECTION.USER.SAVE_USER_DETAIL, null, data )
         }
         
     } )
@@ -145,9 +145,18 @@ var setSpending = function ( spending ) {
     resourcesSection.find( '.storageUsed' ).html( (spending.storageUsed).toFixed( 2 ) + " GB" )
 }
 
+var setUserDetails = function ( userDetails ) {
+    userDetailForm.find( '[name=name]' ).val( userDetails.name )
+    userDetailForm.find( '[name=username]' ).val( userDetails.username )
+    userDetailForm.find( '[name=password]' ).val( userDetails.password )
+    userDetailForm.find( '[name=email]' ).val( userDetails.email )
+    userDetailForm.find( '[name=organization]' ).val( userDetails.organization )
+}
+
 module.exports = {
-    init           : init
-    , setSessions  : setSessions
-    , setSpending  : setSpending
-    , removeSession: removeSession
+    init            : init
+    , setSessions   : setSessions
+    , setSpending   : setSpending
+    , removeSession : removeSession
+    , setUserDetails: setUserDetails
 }

@@ -6,6 +6,7 @@ var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var Loader   = require( '../loader/loader' )
 // var Sepal    = require( '../main/sepal' )
+var User     = require( '../main/user-m' )
 
 var View  = require( './user-v' )
 var Model = require( './user-m' )
@@ -26,6 +27,7 @@ var requestSandboxReport = function () {
             
             View.setSessions( Model.getSessions() )
             View.setSpending( Model.getSpending() )
+            View.setUserDetails( User )
         }
     }
     

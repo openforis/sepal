@@ -39,7 +39,6 @@ var requestTasks = function ( callback ) {
         url      : '/api/tasks'
         , success: function ( tasks ) {
             Model.setTasks( tasks )
-            // Animation.removeAnimation( navMenuButton )
             
             if ( Model.isEmpty() ) {
                 if ( navMenuButton.is( ":visible" ) ) {
@@ -47,19 +46,13 @@ var requestTasks = function ( callback ) {
                         Animation.removeAnimation( navMenuButton )
                     } )
                 }
-                // navMenuButton.fadeOut()
                 navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
             } else {
-                // navMenuButton.css('display','block')
                 if ( !navMenuButton.is( ":visible" ) ) {
-                    console.log(
-                        'not visible'
-                    )
                     Animation.animateIn( navMenuButton, function () {
-                        // Animation.removeAnimation( navMenuButton )
                     } )
                 }
-
+                
                 // navMenuButton.fadeIn()
                 if ( Model.isActive() ) {
                     navMenuButton.find( 'i' ).addClass( 'fa-spin' )
@@ -130,7 +123,7 @@ var taskAction = function ( evt, taskId ) {
     postTaskAction( url, callback )
 }
 
-var checkStatus = function ( ) {
+var checkStatus = function () {
     requestTasks()
 }
 

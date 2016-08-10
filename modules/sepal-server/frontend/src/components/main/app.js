@@ -33,9 +33,6 @@ var Events   = require( '../event/events' )
 // loader
 var Loader = require( '../loader/loader' )
 
-// global app variables
-// var Sepal = require( './sepal' )
-
 // functions
 var userLoggedIn = function ( e, user ) {
     Loader.show()
@@ -60,7 +57,6 @@ var checkUser = function () {
     var params = {
         url      : '/api/user'
         , success: function ( response ) {
-            // console.log( response )
             EventBus.dispatch( Events.APP.USER_LOGGED_IN, null, response )
             EventBus.dispatch( Events.USER.USER_DETAILS_LOADED, null, response )
         }

@@ -5,8 +5,6 @@
 
 var setUserDetails = function ( userDetails ) {
     $.extend( this, userDetails )
-    
-    console.log( this )
 }
 
 module.exports = {
