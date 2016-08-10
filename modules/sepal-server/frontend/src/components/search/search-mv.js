@@ -28,10 +28,10 @@ var requestSceneAreas = function () {
         , data      : data
         , beforeSend: function () {
             Loader.show()
-            EventBus.dispatch( Events.SECTION.REDUCE, null )
         }
         , success   : function ( response ) {
             EventBus.dispatch( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, null, response )
+            EventBus.dispatch( Events.SECTION.REDUCE, null )
             // EventBus.dispatch( Events.MAP.LOAD_SCENE_AREAS, null, response )
             Loader.hide( { delay: 300 } )
         }

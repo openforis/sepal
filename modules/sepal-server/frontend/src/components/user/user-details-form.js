@@ -17,7 +17,6 @@ var init       = function ( form ) {
 
 var initForm = function () {
     
-    
     var showError = function ( message ) {
         // formNotify.html( message )
         FormNotify.velocitySlideDown( {

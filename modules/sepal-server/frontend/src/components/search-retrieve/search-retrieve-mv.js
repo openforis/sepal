@@ -74,9 +74,9 @@ var retrieveMosaic = function () {
 
 var sceneAreasLoaded = function ( e, sceneAreas ) {
     show = true
-    if ( appShown == false ) {
-        appReduce()
-    }
+    // if ( appShown == false ) {
+        // appReduce()
+    // }
     View.reset()
     
     EventBus.dispatch( Events.MAP.REMOVE_EE_LAYER )

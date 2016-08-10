@@ -118,23 +118,23 @@ var addLayer = function ( e, layer ) {
     }
 }
 
-function preview() {
-    var country    = 'Italy'
-    var targetDate = new Date().getTime()
-    var sensors    = 'LANDSAT_8'
-    // var sensors = ['LANDSAT_8']
-    // sensors = sensors.join(',')
-    var years = '1'
-    var bands = 'B4, B3, B2'
-    
-    $.getJSON( '/preview', { country: country, targetDate: targetDate, sensors: sensors, years: years, bands: bands },
-        function ( data ) {
-            var mapId  = data.mapId
-            var token  = data.token
-            var bounds = data.bounds
-            render( mapId, token, bounds )
-        } )
-}
+// function preview() {
+//     var country    = 'Italy'
+//     var targetDate = new Date().getTime()
+//     var sensors    = 'LANDSAT_8'
+//     // var sensors = ['LANDSAT_8']
+//     // sensors = sensors.join(',')
+//     var years = '1'
+//     var bands = 'B4, B3, B2'
+//
+//     $.getJSON( '/preview', { country: country, targetDate: targetDate, sensors: sensors, years: years, bands: bands },
+//         function ( data ) {
+//             var mapId  = data.mapId
+//             var token  = data.token
+//             var bounds = data.bounds
+//             render( mapId, token, bounds )
+//         } )
+// }
 
 var addOverlayMapType = function ( e, index, mapType ) {
     map.overlayMapTypes.setAt( index, mapType )
@@ -146,6 +146,22 @@ var removeOverlayMapType = function ( e, index ) {
     }
 }
 
+var onAppShow = function ( e , type ) {
+    if( aoiLayer ){
+        setTimeout( function (  ) {
+            aoiLayer.setMap( null )
+        } , 200 )
+    }
+}
+
+var onAppReduce = function ( e , type ) {
+    if( aoiLayer ){
+        setTimeout( function (  ) {
+            aoiLayer.setMap( map )
+        } , 500 )
+    }
+}
+
 EventBus.addEventListener( Events.APP.LOAD, show )
 EventBus.addEventListener( Events.MAP.ZOOM_TO, zoomTo )
 EventBus.addEventListener( Events.MAP.ADD_LAYER, addLayer )
@@ -153,3 +169,7 @@ EventBus.addEventListener( Events.MAP.ADD_LAYER, addLayer )
 EventBus.addEventListener( Events.MAP.ADD_OVERLAY_MAP_TYPE, addOverlayMapType )
 EventBus.addEventListener( Events.MAP.REMOVE_OVERLAY_MAP_TYPE, removeOverlayMapType )
 // EventBus.addEventListener( Events.MAP.ADD_EE_LAYER , renderEE )
+
+
+EventBus.addEventListener( Events.SECTION.SHOW, onAppShow )
+EventBus.addEventListener( Events.SECTION.REDUCE, onAppReduce )
