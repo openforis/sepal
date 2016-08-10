@@ -27,6 +27,10 @@ var Events = {
         , SHOWN  : 'section.shown'
         , REDUCE : 'section.reduce'
         
+        , NAV_MENU : {
+            LOADED : 'section.nav-menu.loaded'
+        }
+        
         , SEARCH         : {
             // SHOW_SCENE_AREA: 'section.search.show-scene-area'
             FORM_SUBMIT         : 'section.search.form-submit'
@@ -34,6 +38,7 @@ var Events = {
             // , RETRIEVE          : 'section.search.retrieve'
             // , MOSAIC            : 'section.search.mosaic'
         }
+        
         , SEARCH_RETRIEVE: {
             BEST_SCENES      : 'section.search-retrieve.best-scenes'
             , RETRIEVE_SCENES: 'section.search-retrieve.retrieve-scenes'
@@ -70,8 +75,8 @@ var Events = {
         }
         
         , USER: {
-            REMOVE_SESSION    : 'section.user.remove-session'
-            , SAVE_USER_DETAIL: 'section.user.save-user-detail'
+            REMOVE_SESSION     : 'section.user.remove-session'
+            , SAVE_USER_DETAILS: 'section.user.save-user-details'
         }
     }
     

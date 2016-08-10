@@ -49,8 +49,7 @@ var requestTasks = function ( callback ) {
                 navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
             } else {
                 if ( !navMenuButton.is( ":visible" ) ) {
-                    Animation.animateIn( navMenuButton, function () {
-                    } )
+                    Animation.animateIn( navMenuButton )
                 }
                 
                 // navMenuButton.fadeIn()

@@ -5,7 +5,6 @@
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var Loader   = require( '../loader/loader' )
-// var Sepal    = require( '../main/sepal' )
 var User     = require( '../main/user-m' )
 
 var View  = require( './user-v' )
@@ -71,4 +70,4 @@ var saveUserDetail = function ( e, data ) {
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 EventBus.addEventListener( Events.SECTION.USER.REMOVE_SESSION, removeSession )
 
-EventBus.addEventListener( Events.SECTION.USER.SAVE_USER_DETAIL, saveUserDetail )
+EventBus.addEventListener( Events.SECTION.USER.SAVE_USER_DETAILS, saveUserDetail )

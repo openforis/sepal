@@ -6,10 +6,13 @@
     display: none;
     z-index: 800;
     height: 80px;
+
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(28, 28, 28, 0.7);
 }
 
 .border-on .site-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    /*border-top: 1px solid rgba(255, 255, 255, 0.1);*/
 }
 
 .site-footer > .container {

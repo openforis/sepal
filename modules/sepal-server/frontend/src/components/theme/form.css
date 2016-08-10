@@ -45,6 +45,7 @@
 
 .form-theme .form-group.error input {
     border-bottom-color: #e81351;
+    background-color: rgba(232, 19, 81, 0.1);
 }
 
 .form-theme .form-label {

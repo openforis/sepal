@@ -17,14 +17,15 @@ require( '../theme/footer.css' )
 require( '../jquery-sepal-plugins/jquery-sepal-plugins' )
 
 // application components
+require( '../main/user-mv' )
+
 require( '../login/login' )
 require( '../map/map' )
 require( '../nav-menu/nav-menu' )
 
 require( '../app-section/app-section' )
 require( '../tasks/tasks-mv' )
-
-require( '../main/user-mv' )
+require( '../users/users-mv' )
 
 // event bus
 var EventBus = require( '../event/event-bus' )
