@@ -2,9 +2,13 @@
 
   .search {
 
+    i.fa-search {
+      transform:rotateY(180deg);
+    }
+
     input[type=text] {
-      border-radius: 0px;
-      border-bottom: 2px solid #fff;
+      //border-radius: 0px;
+      //border-bottom: 2px solid #fff;
       padding-top: 10px;
       padding-bottom: 10px;
     }
@@ -15,9 +19,7 @@
       padding: 0;
       font-size: 1.2rem;
 
-      i {
 
-      }
     }
 
   }

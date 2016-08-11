@@ -1,18 +1,35 @@
 /**
  * @author Mino Togna
  */
-var sandboxReport        = null
-var setUserSandboxReport = function ( data ) {
-    sandboxReport = data
+
+var User = function ( userDetails ) {
+    $.extend( this, userDetails )
+    this.sandboxReport        = null
 }
 
-var getSessions = function () {
-    return sandboxReport.sessions
+User.prototype.isAdmin = function () {
+    var isAdmin = false
+    $.each( this.roles, function ( i, role ) {
+        if ( role.toUpperCase() === 'ADMIN' ) {
+            isAdmin = true
+            return false
+        }
+    } )
+    return isAdmin
 }
 
-var getSessionById = function ( sessionId ) {
+
+User.prototype.setUserSandboxReport = function ( data ) {
+    this.sandboxReport = data
+}
+
+User.prototype.getSessions = function () {
+    return this.sandboxReport.sessions
+}
+
+User.prototype.getSessionById = function ( sessionId ) {
     var session = null
-    $.each( getSessions(), function ( i, s ) {
+    $.each( this.getSessions(), function ( i, s ) {
         if ( s.id === sessionId ) {
             session = s
             return false
@@ -21,13 +38,9 @@ var getSessionById = function ( sessionId ) {
     return session
 }
 
-var getSpending = function () {
-    return sandboxReport.spending
+User.prototype.getSpending = function () {
+    return this.sandboxReport.spending
 }
-
-module.exports = {
-    setUserSandboxReport: setUserSandboxReport
-    , getSessions       : getSessions
-    , getSpending       : getSpending
-    , getSessionById    : getSessionById
+module.exports = function ( userDetails ) {
+    return new User( userDetails )
 }

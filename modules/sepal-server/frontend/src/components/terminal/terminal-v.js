@@ -4,7 +4,7 @@
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 // var Sepal    = require( '../main/sepal' )
-var User     = require( '../main/user-m' )
+var UserMV     = require( '../user/user-mv' )
 
 require( './gateone' )
 require( './gateone.css' )
@@ -39,7 +39,7 @@ function initTerminal( response ) {
             terminalId = GateOne.Terminal.newTerminal( randomTerminalId() )
             GateOne.Terminal.setTerminal( terminalId )
             GateOne.Terminal.clearScrollback( terminalId )
-            GateOne.Terminal.sendString( 'ssh://' + User.username + '@ssh-gateway?identities=id_rsa\n', terminalId )
+            GateOne.Terminal.sendString( 'ssh://' + UserMV.getCurrentUser().username + '@ssh-gateway?identities=id_rsa\n', terminalId )
             focusTerminal()
         }
         

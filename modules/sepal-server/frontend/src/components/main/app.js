@@ -3,6 +3,9 @@
 require( 'bootstrap' )
 require( '../ajax/ajax' )
 
+// loader
+var Loader = require( '../loader/loader' )
+
 // application styles
 require( '../theme/base.css' )
 require( '../theme/button.css' )
@@ -17,7 +20,7 @@ require( '../theme/footer.css' )
 require( '../jquery-sepal-plugins/jquery-sepal-plugins' )
 
 // application components
-require( '../main/user-mv' )
+require( '../user/user-mv' )
 
 require( '../login/login' )
 require( '../map/map' )
@@ -31,8 +34,8 @@ require( '../users/users-mv' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
-// loader
-var Loader = require( '../loader/loader' )
+
+
 
 // functions
 var userLoggedIn = function ( e, user ) {

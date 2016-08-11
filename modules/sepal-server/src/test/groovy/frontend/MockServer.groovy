@@ -245,6 +245,12 @@ class MockServer extends AbstractMvcFilter {
                 send toJson(authenticator.users.values().first())
             }
 
+            get('/users'){
+                //TODO server side validation?
+                response.contentType = 'application/json'
+                send toJson(authenticator.users.values())
+            }
+
         }
         return controller
     }

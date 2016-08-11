@@ -4,11 +4,19 @@
 
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
+var UserModel   = require( './user-m' )
 var Loader   = require( '../loader/loader' )
-var User     = require( '../main/user-m' )
+var View     = require( './user-v' )
 
-var View  = require( './user-v' )
-var Model = require( './user-m' )
+var CurrentUser = null
+
+var userDetailsLoaded = function ( e, userDetails ) {
+    CurrentUser = UserModel( userDetails )
+}
+
+var getCurrentUser = function () {
+    return CurrentUser
+}
 
 var show = function ( e, type ) {
     if ( type == 'user' ) {
@@ -22,11 +30,11 @@ var requestSandboxReport = function () {
     var params = {
         url      : '/api/sandbox/report'
         , success: function ( response ) {
-            Model.setUserSandboxReport( response )
+            CurrentUser.setUserSandboxReport( response )
             
-            View.setSessions( Model.getSessions() )
-            View.setSpending( Model.getSpending() )
-            View.setUserDetails( User )
+            View.setSessions( CurrentUser.getSessions() )
+            View.setSpending( CurrentUser.getSpending() )
+            View.setUserDetails( CurrentUser )
         }
     }
     
@@ -34,7 +42,7 @@ var requestSandboxReport = function () {
 }
 
 var removeSession = function ( evt, sessionId ) {
-    var session = Model.getSessionById( sessionId )
+    var session = CurrentUser.getSessionById( sessionId )
     
     var params = {
         url         : '/api/' + session.path
@@ -67,7 +75,16 @@ var saveUserDetail = function ( e, data ) {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
+EventBus.addEventListener( Events.USER.USER_DETAILS_LOADED, userDetailsLoaded )
+
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 EventBus.addEventListener( Events.SECTION.USER.REMOVE_SESSION, removeSession )
 
 EventBus.addEventListener( Events.SECTION.USER.SAVE_USER_DETAILS, saveUserDetail )
+
+module.exports = {
+    getCurrentUser: function () {
+        return CurrentUser
+    }
+}
+
