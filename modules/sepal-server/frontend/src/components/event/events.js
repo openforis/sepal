@@ -27,11 +27,11 @@ var Events = {
         , SHOWN  : 'section.shown'
         , REDUCE : 'section.reduce'
         
-        , NAV_MENU : {
-            LOADED : 'section.nav-menu.loaded'
+        , NAV_MENU: {
+            LOADED: 'section.nav-menu.loaded'
         }
         
-        , SEARCH         : {
+        , SEARCH: {
             // SHOW_SCENE_AREA: 'section.search.show-scene-area'
             FORM_SUBMIT         : 'section.search.form-submit'
             , SCENE_AREAS_LOADED: 'section.search.scene-areas-loaded'
@@ -74,9 +74,13 @@ var Events = {
             , CHECK_STATUS: 'section.task-manager.check-status'
         }
         
-        , USER: {
+        , USER : {
             REMOVE_SESSION     : 'section.user.remove-session'
             , SAVE_USER_DETAILS: 'section.user.save-user-details'
+        }
+        , USERS: {
+            LIST_FILTER_CHANGE: 'section.users.list-filter-change'
+            , SELECT_USER     : 'section.users.select-user'
         }
     }
     
@@ -101,8 +105,8 @@ var Events = {
         }
     }
     
-    , USER : {
-        USER_DETAILS_LOADED : "user.user-details-loaded"
+    , USER: {
+        USER_DETAILS_LOADED: "user.user-details-loaded"
     }
     
 }

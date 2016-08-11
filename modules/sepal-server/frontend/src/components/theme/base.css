@@ -550,7 +550,9 @@ img {
 .height10 {
     height: 10% !important;
 }
-
+.height15 {
+    height: 15% !important;
+}
 .height20 {
     height: 20% !important;
 }

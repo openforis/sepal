@@ -35,8 +35,6 @@ var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
 
-
-
 // functions
 var userLoggedIn = function ( e, user ) {
     Loader.show()

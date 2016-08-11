@@ -50,7 +50,7 @@
     border-bottom-color: #e81351;
     background-color: rgba(232, 19, 81, 0.1);
 
-    transition: background-color 800ms ease-in;
+    transition: background-color 800ms ease-out;
     transition: border-bottom-color 500ms ease-in;
 }
 
