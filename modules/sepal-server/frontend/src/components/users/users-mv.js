@@ -16,14 +16,12 @@ var searchString = null
 var init = function () {
     if ( UserMV.getCurrentUser().isAdmin() ) {
         Animation.animateIn( NavMenu.btnUsers() )
-        
     }
 }
 
 var onSectionShow = function ( e, target ) {
     if ( target === 'users' ) {
         View.init()
-        // View.showList()
         loadUsers()
     }
 }
@@ -41,15 +39,38 @@ var loadUsers = function () {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-var onUsersListFilterChange = function ( e , value ) {
+var onUsersListFilterChange = function ( e, value ) {
     searchString = value
     
     var users = Model.filterUsers( searchString )
     View.setUsers( users )
 }
 
-var onSelectUser = function ( e , user ) {
+var onSelectUser = function ( e, user ) {
+    Model.setSelectedUser( user )
     View.selectUser( user )
+}
+
+var onShowUsersSection = function ( e ) {
+    
+    switch ( e.type ){
+        case Events.SECTION.USERS.SHOW_USERS_LIST:
+            View.showUsersListSection()
+            break
+    
+        case Events.SECTION.USERS.SHOW_INVITE_USER:
+            View.showInviteUserSection()
+            break
+    
+        case Events.SECTION.USERS.SHOW_EDIT_USER:
+            View.showEditUserSection()
+            break
+        
+        case Events.SECTION.USERS.SHOW_DELETE_USER:
+            View.showDeleteUserSection()
+            break
+    }
+    
 }
 
 EventBus.addEventListener( Events.SECTION.NAV_MENU.LOADED, init )
@@ -57,4 +78,10 @@ EventBus.addEventListener( Events.SECTION.SHOW, onSectionShow )
 
 EventBus.addEventListener( Events.SECTION.USERS.LIST_FILTER_CHANGE, onUsersListFilterChange )
 EventBus.addEventListener( Events.SECTION.USERS.SELECT_USER, onSelectUser )
+
+
+EventBus.addEventListener( Events.SECTION.USERS.SHOW_USERS_LIST, onShowUsersSection )
+EventBus.addEventListener( Events.SECTION.USERS.SHOW_INVITE_USER, onShowUsersSection )
+EventBus.addEventListener( Events.SECTION.USERS.SHOW_EDIT_USER, onShowUsersSection )
+EventBus.addEventListener( Events.SECTION.USERS.SHOW_DELETE_USER, onShowUsersSection )
 

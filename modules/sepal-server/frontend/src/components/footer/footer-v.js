@@ -15,11 +15,11 @@ var init = function () {
 }
 
 var hide = function () {
-    html.velocity( { bottom: '-8%' }, { delay: 200, duration: 2000, easing: 'easeOutQuint' } )
+    html.velocity( { bottom: '-7%' }, { delay: 200, duration: 1200, easing: 'easeOutQuint' } )
 }
 
 var show = function () {
-    html.velocity( { bottom: '0' }, { delay: 200, duration: 1000, easing: 'easeInQuint' } )
+    html.velocity( { bottom: '0' }, { delay: 1000, duration: 1000, easing: 'easeOutQuint' } )
 }
 
 var showLogo = function () {

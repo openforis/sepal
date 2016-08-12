@@ -1,5 +1,9 @@
 <div id="users" class="row height100">
-    <div class="col-sm-12 height100 p-t-1 list-section">
+
+    <!-- =========================== -->
+    <!-- Users List Section -->
+    <!-- =========================== -->
+    <div class="col-sm-12  p-t-1 list-section">
 
         <div class="row height10 actions form-theme">
             <div class="col-sm-1 text-align-right">
@@ -83,5 +87,191 @@
         </div>
 
     </div>
+
+
+    <!-- =========================== -->
+    <!--Invite User Section-->
+    <!-- =========================== -->
+    <div class="col-sm-12  p-t-1 invite-user-section">
+        <div class="row">
+            <div class="col-sm-8 col-sm-offset-2">
+
+                <h3 class="width100 text-align-center">Invite User</h3>
+
+                <form class="form-theme" >
+
+                    <div class="row form-group m-t-3">
+                        <label class="form-label col-sm-4">Name</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="name">
+                        </div>
+                    </div>
+
+                    <!--<div class="row form-group m-t-1">-->
+                    <!--<label class="form-label col-sm-4">Username</label>-->
+                    <!--<div class="col-sm-8">-->
+                    <!--<input type="text" class="form-control" name="username">-->
+                    <!--</div>-->
+                    <!--</div>-->
+
+                    <!--<div class="row form-group m-t-1">-->
+                    <!--<label class="form-label col-sm-4">Password</label>-->
+                    <!--<div class="col-sm-8">-->
+                    <!--<input type="password" class="form-control" name="password">-->
+                    <!--</div>-->
+                    <!--</div>-->
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Email</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="email">
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Organization</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="organization">
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-3">
+
+                        <div class="col-sm-12 text-align-center form-notify form-error" />
+
+                        <div class="col-sm-12 text-align-center">
+                            <button type="button" class="btn btn-base btn-cancel round icon p-y-1 m-r-3">
+                                <i class="fa fa-times-circle" aria-hidden="true"></i>
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-base round icon p-y-1">
+                                <i class="fa fa-user-plus" aria-hidden="true"></i>
+                                Invite
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =========================== -->
+    <!--Edit User Section-->
+    <!-- =========================== -->
+    <div class="col-sm-12  p-t-1 edit-user-section">
+        <div class="row">
+            <div class="col-sm-8 col-sm-offset-2">
+
+                <h3 class="width100 text-align-center">Edit User</h3>
+
+                <form class="form-theme" >
+                    <input type="hidden" name="id">
+
+                    <div class="row form-group m-t-3">
+                        <label class="form-label col-sm-4">Name</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="name">
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Username</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="username">
+                        </div>
+                    </div>
+
+                    <!--<div class="row form-group m-t-1">-->
+                    <!--<label class="form-label col-sm-4">Password</label>-->
+                    <!--<div class="col-sm-8">-->
+                    <!--<input type="password" class="form-control" name="password">-->
+                    <!--</div>-->
+                    <!--</div>-->
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Email</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="email">
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Organization</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="organization">
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-3">
+
+                        <div class="col-sm-12 text-align-center form-notify form-error" />
+
+                        <div class="col-sm-12 text-align-center">
+                            <button type="button" class="btn btn-base btn-cancel round icon p-y-1 m-r-3">
+                                <i class="fa fa-times-circle" aria-hidden="true"></i>
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-base round icon p-y-1">
+                                <i class="fa fa-save" aria-hidden="true"></i>
+                                Save
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =========================== -->
+    <!--Delete User Section-->
+    <!-- =========================== -->
+    <div class="col-sm-12  p-t-1 delete-user-section">
+        <div class="row">
+            <div class="col-sm-8 col-sm-offset-2">
+
+                <h3 class="width100 text-align-center">Delete User</h3>
+
+                <form class="form-theme">
+                    <input type="hidden" name="id">
+
+                    <div class="row form-group m-t-3">
+                        <label class="form-label col-sm-12 text-align-center">The following user will be deleted</label>
+                    </div>
+
+                    <div class="row form-group m-t-3">
+                        <label class="form-label col-sm-12 user"></label>
+                    </div>
+
+                    <div class="row form-group m-t-3">
+
+                        <div class="col-sm-12 text-align-center form-notify form-error" />
+
+                        <div class="col-sm-12 text-align-center">
+                            <button type="button" class="btn btn-base btn-cancel round icon p-y-1 m-r-3">
+                                <i class="fa fa-times-circle" aria-hidden="true"></i>
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-base round icon p-y-1">
+                                <i class="fa fa-user-times" aria-hidden="true"></i>
+                                Delete
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
 
 </div>

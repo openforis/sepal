@@ -10,7 +10,7 @@ var List        = require( './list' )
 var ListSummary = require( './list-summary' )
 
 var init = function ( container ) {
-    Container = container
+    Container = $( container )
     
     ListActions.init( Container.find( '.actions' ) )
     List.init( Container.find( '.list' ) )
@@ -26,8 +26,13 @@ var selectUser = function ( user ) {
     List.selectUser( user )
 }
 
+var getContainer = function () {
+    return Container
+}
+
 module.exports = {
-    init        : init
-    , setUsers  : setUsers
-    , selectUser: selectUser
+    init          : init
+    , setUsers    : setUsers
+    , selectUser  : selectUser
+    , getContainer: getContainer
 }

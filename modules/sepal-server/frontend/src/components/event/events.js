@@ -81,6 +81,10 @@ var Events = {
         , USERS: {
             LIST_FILTER_CHANGE: 'section.users.list-filter-change'
             , SELECT_USER     : 'section.users.select-user'
+            , SHOW_USERS_LIST : 'section.users.show-users-list'
+            , SHOW_INVITE_USER: 'section.users.show-invite-user'
+            , SHOW_EDIT_USER  : 'section.users.show-edit-user'
+            , SHOW_DELETE_USER: 'section.users.show-delete-user'
         }
     }
     

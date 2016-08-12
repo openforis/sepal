@@ -19,7 +19,7 @@ var onAppReduce = function () {
     View.hide()
 }
 
-var onNavMenuLoaded = function (  ) {
+var onNavMenuLoaded = function () {
     View.showLogo()
 }
 

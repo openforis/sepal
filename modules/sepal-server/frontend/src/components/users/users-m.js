@@ -4,7 +4,8 @@
 
 var UserM = require( '../user/user-m' )
 
-var users = null
+var users        = null
+var selectedUser = null
 
 var setUsers = function ( usersDetails ) {
     users = []
@@ -28,7 +29,7 @@ var filterUsers = function ( searchString ) {
             if (
                 $.containsString( user.name.toLowerCase(), searchString )
                 || $.containsString( user.username.toLowerCase(), searchString )
-                // || $.containsString( user.status.toLowerCase(), searchString )
+            // || $.containsString( user.status.toLowerCase(), searchString )
             ) {
                 match = true
             }
@@ -40,7 +41,17 @@ var filterUsers = function ( searchString ) {
     }
 }
 
+var getSelectedUser = function () {
+    return selectedUser
+}
+
+var setSelectedUser = function ( user ) {
+    selectedUser = user
+}
+
 module.exports = {
-    setUsers     : setUsers
-    , filterUsers: filterUsers
+    setUsers         : setUsers
+    , filterUsers    : filterUsers
+    , getSelectedUser: getSelectedUser
+    , setSelectedUser: setSelectedUser
 }
