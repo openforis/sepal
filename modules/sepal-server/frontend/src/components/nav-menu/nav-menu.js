@@ -99,10 +99,10 @@ var collapseMenu = function ( button ) {
             //     queue   : false
             // } )
             
-            $.each( $( "#sepal-logo" ).find( 'div' ), function ( i, e ) {
-                var elem = $( this )
-                elem.velocity( "fadeIn", { display: "inline-block", delay: i * 1000, easing: 'swing' } )
-            } )
+            // $.each( $( "#sepal-logo" ).find( 'div' ), function ( i, e ) {
+            //     var elem = $( this )
+            //     elem.velocity( "fadeIn", { display: "inline-block", delay: i * 1000, easing: 'swing' } )
+            // } )
             
         }, delay )
         

@@ -41,7 +41,7 @@ var setUsers       = function ( users ) {
             var addUser = function () {
                 var user = users[ idx ]
                 
-                var row = getListSectionUserRow( user )
+                var row = getUserRow( user )
                 UsersList.append( row )
                 row.show( 0 )
                 
@@ -59,7 +59,7 @@ var setUsers       = function ( users ) {
     }
 }
 
-var getListSectionUserRow = function ( user ) {
+var getUserRow = function ( user ) {
     var row = RowUser.clone()
     row.addClass( 'row-user-' + user.id )
     

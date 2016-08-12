@@ -14,19 +14,16 @@ require( '../theme/color.css' )
 require( '../animation/animation.css' )
 require( '../theme/section.css' )
 
-require( '../theme/footer.css' )
-
 // jquery sepal plugins
 require( '../jquery-sepal-plugins/jquery-sepal-plugins' )
 
 // application components
 require( '../user/user-mv' )
-
 require( '../login/login' )
-require( '../map/map' )
 require( '../nav-menu/nav-menu' )
-
+require( '../map/map' )
 require( '../app-section/app-section' )
+require( '../footer/footer-mv' )
 require( '../tasks/tasks-mv' )
 require( '../users/users-mv' )
 
