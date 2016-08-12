@@ -22,6 +22,7 @@ var init = function () {
 var onSectionShow = function ( e, target ) {
     if ( target === 'users' ) {
         View.init()
+        View.showUsersListSection()
         loadUsers()
     }
 }

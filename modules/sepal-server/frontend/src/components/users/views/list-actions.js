@@ -3,6 +3,7 @@
  */
 var EventBus = require( '../../event/event-bus' )
 var Events   = require( '../../event/events' )
+var UserMV   = require( '../../user/user-mv' )
 
 var Container   = null
 var SearchInput = null
@@ -26,23 +27,23 @@ var init = function ( container ) {
         EventBus.dispatch( Events.SECTION.USERS.LIST_FILTER_CHANGE, null, SearchInput.val() )
     } )
     
-    BtnInvite.click(function ( e ) {
+    BtnInvite.click( function ( e ) {
         e.preventDefault()
-    
+        
         EventBus.dispatch( Events.SECTION.USERS.SHOW_INVITE_USER )
-    })
+    } )
     
     BtnEdit.click( function ( e ) {
         e.preventDefault()
         
         EventBus.dispatch( Events.SECTION.USERS.SHOW_EDIT_USER )
-    })
+    } )
     
     BtnRemove.click( function ( e ) {
         e.preventDefault()
-    
+        
         EventBus.dispatch( Events.SECTION.USERS.SHOW_DELETE_USER )
-    })
+    } )
     
     updateActionButtons()
 }
@@ -50,7 +51,11 @@ var init = function ( container ) {
 var updateActionButtons = function () {
     if ( selectedUser ) {
         BtnEdit.enable()
-        BtnRemove.enable()
+        if( UserMV.getCurrentUser().id !== selectedUser.id ) {
+            BtnRemove.enable()
+        } else {
+            BtnRemove.disable()
+        }
     } else {
         BtnEdit.disable()
         BtnRemove.disable()

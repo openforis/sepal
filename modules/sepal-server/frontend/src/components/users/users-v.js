@@ -33,6 +33,8 @@ var init = function () {
 
 var selectUser = function ( user ) {
     ListSection.selectUser( user )
+    EditUserSection.selectUser( user )
+    DeleteUserSection.selectUser( user )
 }
 
 // ***********
@@ -63,8 +65,8 @@ var showInviteUserSection = function () {
 
 var showUsersListSection = function ( options ) {
     hideSection( InviteUserSection.getContainer(), options )
-    hideSection( EditUserSection.getContainer() )
-    hideSection( DeleteUserSection.getContainer() )
+    hideSection( EditUserSection.getContainer(), options )
+    hideSection( DeleteUserSection.getContainer(), options )
     showSection( ListSection.getContainer(), options )
 }
 
