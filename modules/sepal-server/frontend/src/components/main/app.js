@@ -1,46 +1,17 @@
 // common modules
-// require( 'tether' )
-require( 'bootstrap' )
-require( '../ajax/ajax' )
+require( './app-required-modules' )
 
-// loader
-var Loader = require( '../loader/loader' )
-
-// application styles
-require( '../theme/base.css' )
-require( '../theme/button.css' )
-require( '../theme/form.css' )
-require( '../theme/color.css' )
-require( '../animation/animation.css' )
-require( '../theme/section.css' )
-
-// jquery sepal plugins
-require( '../jquery-sepal-plugins/jquery-sepal-plugins' )
-
-// application components
-require( '../user/user-mv' )
-require( '../login/login' )
-require( '../nav-menu/nav-menu' )
-require( '../map/map' )
-require( '../app-section/app-section' )
-require( '../footer/footer-mv' )
-require( '../tasks/tasks-mv' )
-require( '../users/users-mv' )
-
-// event bus
+var Loader   = require( '../loader/loader' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
-
-// functions
 var userLoggedIn = function ( e, user ) {
-    Loader.show()
-    
+    EventBus.dispatch( Events.USER.USER_DETAILS_LOADED, null, user )
     loadApp()
 }
 
 var loadApp = function () {
-    
+    Loader.show()
     setTimeout( function () {
         
         EventBus.dispatch( Events.LOGIN.HIDE )
@@ -49,7 +20,6 @@ var loadApp = function () {
         Loader.hide()
         
     }, 2000 )
-    
 }
 
 var checkUser = function () {
@@ -57,13 +27,20 @@ var checkUser = function () {
         url      : '/api/user'
         , success: function ( response ) {
             EventBus.dispatch( Events.APP.USER_LOGGED_IN, null, response )
-            EventBus.dispatch( Events.USER.USER_DETAILS_LOADED, null, response )
         }
     }
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-checkUser()
+// checkUser()
+
+var initApp = function () {
+    var inviteParam = $.urlParam( 'i' )
+    console.log( inviteParam )
+    checkUser()
+}
+
+initApp()
 
 // event handlers
 EventBus.addEventListener( Events.APP.USER_LOGGED_IN, userLoggedIn )

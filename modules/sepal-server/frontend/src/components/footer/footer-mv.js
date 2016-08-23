@@ -20,7 +20,7 @@ var onAppReduce = function () {
 }
 
 var onNavMenuLoaded = function () {
-    View.showLogo()
+    setTimeout( View.showLogo, 3500 )
 }
 
 EventBus.addEventListener( Events.APP.LOAD, onAppLoad )

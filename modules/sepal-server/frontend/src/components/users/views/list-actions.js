@@ -23,25 +23,21 @@ var init = function ( container ) {
     
     SearchInput.keyup( function ( e ) {
         e.preventDefault()
-        
         EventBus.dispatch( Events.SECTION.USERS.LIST_FILTER_CHANGE, null, SearchInput.val() )
     } )
     
     BtnInvite.click( function ( e ) {
         e.preventDefault()
-        
         EventBus.dispatch( Events.SECTION.USERS.SHOW_INVITE_USER )
     } )
     
     BtnEdit.click( function ( e ) {
         e.preventDefault()
-        
         EventBus.dispatch( Events.SECTION.USERS.SHOW_EDIT_USER )
     } )
     
     BtnRemove.click( function ( e ) {
         e.preventDefault()
-        
         EventBus.dispatch( Events.SECTION.USERS.SHOW_DELETE_USER )
     } )
     
@@ -51,7 +47,7 @@ var init = function ( container ) {
 var updateActionButtons = function () {
     if ( selectedUser ) {
         BtnEdit.enable()
-        if( UserMV.getCurrentUser().id !== selectedUser.id ) {
+        if ( UserMV.getCurrentUser().id !== selectedUser.id ) {
             BtnRemove.enable()
         } else {
             BtnRemove.disable()

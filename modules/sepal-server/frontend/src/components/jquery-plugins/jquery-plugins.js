@@ -5,3 +5,4 @@
 require( './velocity-slide' )
 require( './enabling' )
 require( './string-utils' )
+require( './url-param' )
