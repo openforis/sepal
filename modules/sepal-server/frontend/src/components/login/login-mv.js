@@ -5,8 +5,8 @@ var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var View     = require( './login-v' )
 
-var show     = function ( e ) {
-    View.show()
+var show     = function ( e , invitation ) {
+    View.show( invitation )
 }
 
 var hide = function ( e ) {

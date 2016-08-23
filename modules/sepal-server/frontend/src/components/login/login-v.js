@@ -10,10 +10,10 @@ var BgStars     = require( './views/bg-stars' )
 var template = require( './login.html' )
 var html     = $( template( {} ) )
 
-var show = function () {
+var show = function ( invitation ) {
     $( "body" ).find( '.app' ).append( html )
     
-    Form.show( html.find( 'form' ) )
+    Form.show( html.find( 'form' ) , invitation )
     
     setTimeout( function () {
         BgSlideshow.show()

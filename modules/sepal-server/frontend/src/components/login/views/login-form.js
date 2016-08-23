@@ -8,12 +8,23 @@ var Animation = require( '../../animation/animation' )
 var Form       = null
 var FormNotify = null
 
-var show = function ( form ) {
+var show = function ( form, invitation ) {
     Form       = form
     FormNotify = form.find( '.form-notify' )
     
-    
     var $login = $( "#login" )
+    
+    if ( invitation ) {
+        // console.log( invitation )
+        $login.find( 'input[name=user]' ).val( invitation.username ).prop( 'readonly', true )
+        $login.find( 'input[name=invitationId]' ).val( invitation.invitationId )
+        $login.find( 'button[type=submit]' ).html( '<i class="fa fa-sign-in" aria-hidden="true"></i> Accept Invitation' )
+    } else {
+        $login.find( '.password2-section' ).remove()
+        $login.find( 'input[name=invitationId]' ).remove()
+        $login.find( 'button[type=submit]' ).html( '<i class="fa fa-sign-in" aria-hidden="true"></i> Login' )
+    }
+    
     Animation.animateIn( $login, function () {
         //TODO
         $login.find( 'input[name=user]' ).focusin()
@@ -67,5 +78,5 @@ var bindEvents = function () {
 }
 
 module.exports = {
-    show  : show
+    show: show
 }

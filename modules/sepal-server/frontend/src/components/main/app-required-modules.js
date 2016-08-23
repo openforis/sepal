@@ -16,7 +16,7 @@ require( '../theme/color.css' )
 require( '../animation/animation.css' )
 require( '../theme/section.css' )
 
-// jquery sepal plugins
+// jquery plugins
 require( '../jquery-plugins/jquery-plugins' )
 
 // application components

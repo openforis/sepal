@@ -7,6 +7,7 @@
             <div class="site-bg-img"></div>
             <div class="site-bg-overlay"></div>
             <canvas class="site-bg-canvas layer" data-depth=".30"></canvas>
+            
         </div>
 
         <div id="login" class="section">
@@ -92,8 +93,9 @@
                                          data-animation-out-delay="500">
                                         <form class="form-theme" id="formLogin" novalidate="novalidate"
                                               action="/api/login" method="POST">
+                                            <input type="hidden" name="invitationId" />
                                             <div class="row">
-                                                <div class="col-sm-12">
+                                                <div class="col-sm-12 username-section">
                                                     <div class="form-group">
                                                         <label class="form-label" for="user">Username</label>
                                                         <input type="text" class="form-control form-control-lg"
@@ -101,17 +103,23 @@
                                                                autocomplete="off">
                                                     </div>
                                                 </div>
-                                                <div class="col-sm-12">
+                                                <div class="col-sm-12 password-section">
                                                     <div class="form-group">
                                                         <label class="form-label" for="password">Password</label>
                                                         <input type="password" class="form-control form-control-lg"
-                                                               id="password" name="password" placeholder="Password">
+                                                               id="password" name="password" placeholder="Enter your password">
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-12 password2-section">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="password2">Re-Password</label>
+                                                        <input type="password" class="form-control form-control-lg"
+                                                               id="password2" name="password2" placeholder="Enter again your password">
                                                     </div>
                                                 </div>
                                             </div>
                                             <button type="submit" class="btn btn-theme round icon">
-                                                <i class="fa fa-sign-in" aria-hidden="true"></i>
-                                                Login
+                                                <i class="fa fa-sign-in" aria-hidden="true"></i> Login
                                             </button>
                                             <div class="form-notify"></div>
                                         </form>

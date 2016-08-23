@@ -32,12 +32,40 @@ var checkUser = function () {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-// checkUser()
-
 var initApp = function () {
     var inviteParam = $.urlParam( 'i' )
-    console.log( inviteParam )
-    checkUser()
+    
+    if ( inviteParam ) {
+        Loader.show()
+        // console.log( inviteParam )
+        // var params = {
+        //     url : '/api/user/invite'
+        //     , data : { i : inviteParam }
+        //     , success : function ( response ) {
+        //         var invitationId = response.invitationId
+        //         if( invitationId ){
+        //             //user clicked on an invitation link.
+        //             EventBus.dispatch( Events.LOGIN.SHOW , null , response )
+        //         } else {
+        //             checkUser()
+        //         }
+        //     }
+        // }
+        
+        // TODO: simulating now
+        var response = {
+            invitationId : 2341423
+            , userId    : 1234
+            , username: 'trest'
+        }
+        EventBus.dispatch( Events.LOGIN.SHOW, null, response )
+        Loader.hide( { delay: 200 } )
+    } else {
+        
+        checkUser()
+        
+    }
+    
 }
 
 initApp()
