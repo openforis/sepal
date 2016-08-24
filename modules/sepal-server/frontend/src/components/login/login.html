@@ -38,7 +38,7 @@
                                          data-animation-in-delay="0"
                                          data-animation-out="fadeOutDown"
                                          data-animation-out-delay="400">
-                                        <h2 class="section-title">
+                                        <h2 class="section-title m-t-3">
                                             SEPAL
                                         </h2>
                                         <div class="hr"></div>
@@ -84,13 +84,13 @@
                             </div>
 
                             <div class="col-xs-12 col-sm-6 col-sm-offset-1 col-md-offset-2">
-                                <!-- contact form -->
                                 <div class="overflow-hidden">
                                     <div class="animation-item"
                                          data-animation-in="fadeInRight"
                                          data-animation-in-delay="1500"
                                          data-animation-out="fadeOutRight"
                                          data-animation-out-delay="500">
+                                        <!-- Login form -->
                                         <form class="form-theme" id="formLogin" novalidate="novalidate"
                                               action="/api/login" method="POST">
                                             <input type="hidden" name="invitationId" />
@@ -118,14 +118,51 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button type="submit" class="btn btn-theme round icon">
-                                                <i class="fa fa-sign-in" aria-hidden="true"></i> Login
-                                            </button>
-                                            <div class="form-notify"></div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <div class="form-notify"></div>
+                                                    <button type="submit" class="btn btn-theme round icon">
+                                                        <i class="fa fa-sign-in" aria-hidden="true"></i> Login
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12  p-t-0-5 p-l-2">
+                                                    <a class="btn-forgot-pwd"><i class="fa fa-question-circle-o" aria-hidden="true"></i> Forgot password</a>
+                                                </div>
+                                            </div>
                                         </form>
+                                        <!-- /Login form -->
+
+                                        <!-- Forgot pwd form -->
+                                        <form class="form-theme" id="form-forgot-pwd" novalidate="novalidate"
+                                              action="/api/user/forgot-password" method="POST">
+                                            <div class="row">
+                                                <div class="col-sm-12 username-section">
+                                                    <div class="form-group">
+                                                        <label class="form-label" for="user-email">
+                                                            Forgot your password&nbsp;
+                                                            <i class="fa fa-question-circle-o p-l-0-5" aria-hidden="true" style="font-size: 1rem;font-weight: bold"></i>
+                                                        </label>
+                                                        <input type="text" class="form-control form-control-lg"
+                                                               id="user-email" name="user-email" placeholder="Enter your user email"
+                                                               autocomplete="off">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12 p-t-2">
+                                                    <div class="form-notify p-l-1 p-b-1"></div>
+                                                    <button type="submit" class="btn btn-theme round icon">
+                                                        <i class="fa fa-paper-plane-o" aria-hidden="true"></i> Request a new one
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                        <!-- /Forgot pwd form -->
+
                                     </div>
                                 </div>
-                                <!-- contact form -->
                             </div>
                         </div>
                         <!-- /section content -->

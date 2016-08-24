@@ -3,6 +3,8 @@
  */
 var EventBus = require( '../../event/event-bus' )
 var Events   = require( '../../event/events' )
+var UserM    = require( '../../user/user-m' )
+
 
 var Container = null
 var UsersList = null
@@ -67,9 +69,27 @@ var getUserRow = function ( user ) {
         row.addClass( 'active' )
     }
     
-    row.find( '.name' ).html( user.name )
+    var name = ( user.isAdmin() ? '<i class="fa fa-user-secret" aria-hidden="true"></i> ' : ' ' ) + user.name
+    row.find( '.name' ).html( name )
     row.find( '.username' ).html( user.username )
-    row.find( '.status' ).html( user.status )
+    var status = ''
+    switch ( user.status ) {
+        case 'locked':
+            status = '<i class="fa fa-lock" aria-hidden="true"></i>'
+            // status = '<i class="fa fa-frown-o" aria-hidden="true"></i>'
+            break
+        case 'pending':
+            status = '<i class="fa fa-meh-o" aria-hidden="true"></i>'
+            break
+        case 'active':
+            status = '<i class="fa fa-smile-o" aria-hidden="true"></i>'
+            break
+        default:
+            status = '<i class="fa fa-smile-o" aria-hidden="true"></i>'
+            // status = '<i class="fa fa-lock" aria-hidden="true"></i>'
+            
+    }
+    row.find( '.status' ).html( status )
     
     row.click( function ( e ) {
         e.preventDefault()

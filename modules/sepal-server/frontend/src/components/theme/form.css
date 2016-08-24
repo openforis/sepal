@@ -77,6 +77,27 @@
     font-family: "Merriweather", Georgia, "Times New Roman", Times, serif;
 }
 
+/*input placeholders*/
+::-webkit-input-placeholder {
+    opacity: .7;
+    font-style: italic;
+}
+
+:-moz-placeholder {
+    opacity: .7;
+    font-style: italic;
+}
+
+::-moz-placeholder {
+    opacity: .7;
+    font-style: italic;
+}
+
+:-ms-input-placeholder {
+    opacity: .7;
+    font-style: italic;
+}
+
 /*
 * devbrige autocomplete style
 */

@@ -1,7 +1,11 @@
 .login-container {
-  background-color: rgba(232, 237, 240, 0.05);
+  //background-color: rgba(232, 237, 240, 0.05);
+  //transition: background-color 2s ease;
+  //border-radius: 4rem;
   transition: background-color 2s ease;
-  border-radius: 4rem;
+  border-radius: 3rem;
+  background-color: rgba(187, 192, 195, 0.05);
+  border: 1px dotted rgba(187, 192, 195, 0.05);
 }
 
 #login .container {
@@ -18,70 +22,109 @@
   margin-top: 3rem;
 }
 
-/* login form */
-#formLogin .form-group {
-  border-width: 0 0 1px;
-  padding-right: 0;
-  padding-left: 0;
-}
+#login {
+  form {
+    .form-group {
+      border-width: 0 0 1px;
+      padding-right: 0;
+      padding-left: 0;
 
-#formLogin .form-label {
-  -webkit-border-top-left-radius: 50px;
-  border-top-left-radius: 50px;
-  -webkit-border-top-right-radius: 50px;
-  border-top-right-radius: 50px;
-  -webkit-border-bottom-left-radius: 50px;
-  border-bottom-left-radius: 50px;
-  -webkit-border-bottom-right-radius: 50px;
-  border-bottom-right-radius: 50px;
-  -webkit-transition-property: background-color;
-  -o-transition-property: background-color;
-  transition-property: background-color;
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: #c5b397;
-}
+      input {
+        margin-top: 1.5rem;
+      }
 
-#formLogin .btn {
-  margin-top: 20px;
-}
+    }
 
-@media (max-width: 767px) {
-  #formLogin {
-    margin-top: 3rem;
+    .form-label {
+      -webkit-border-top-left-radius: 50px;
+      border-top-left-radius: 50px;
+      -webkit-border-top-right-radius: 50px;
+      border-top-right-radius: 50px;
+      -webkit-border-bottom-left-radius: 50px;
+      border-bottom-left-radius: 50px;
+      -webkit-border-bottom-right-radius: 50px;
+      border-bottom-right-radius: 50px;
+      -webkit-transition-property: background-color;
+      -o-transition-property: background-color;
+      transition-property: background-color;
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #c5b397;
+    }
+
+    .btn {
+      font-weight: bold;
+    }
+
+    .form-notify {
+      color: #e81351;
+    }
+
+
+    .btn-forgot-pwd {
+      -webkit-transition: none;
+      -o-transition: none;
+      transition: none;
+      font-size: .85rem;
+      font-weight: 400;
+      color: #999;
+      opacity: .85;
+      //border-bottom: 2px dashed #999;
+    }
+
+    .btn-forgot-pwd:hover {
+      border-bottom: 1px dashed #999;
+      cursor: pointer;
+      opacity: 1;
+    }
+
   }
 }
 
-#formLogin .form-group input {
-  margin-top: 1.5rem;
+/* login form */
+//#formLogin .form-group {
+//  border-width: 0 0 1px;
+//  padding-right: 0;
+//  padding-left: 0;
+//}
+
+//#formLogin .form-label {
+//  -webkit-border-top-left-radius: 50px;
+//  border-top-left-radius: 50px;
+//  -webkit-border-top-right-radius: 50px;
+//  border-top-right-radius: 50px;
+//  -webkit-border-bottom-left-radius: 50px;
+//  border-bottom-left-radius: 50px;
+//  -webkit-border-bottom-right-radius: 50px;
+//  border-bottom-right-radius: 50px;
+//  -webkit-transition-property: background-color;
+//  -o-transition-property: background-color;
+//  transition-property: background-color;
+//  display: inline-block;
+//  padding: 10px 20px;
+//  background-color: #c5b397;
+//}
+
+#formLogin .btn {
+  margin-top: 20px;
+  //font-weight: bold;
 }
 
-#formLogin .form-notify {
-  color: #e81351;
-}
+//@media (max-width: 767px) {
+//  #formLogin {
+//    margin-top: 3rem;
+//  }
+//}
 
-#formLogin ::-webkit-input-placeholder {
-  opacity: .7;
-  font-style: italic;
-}
+//#formLogin .form-group input {
+//  margin-top: 1.5rem;
+//}
 
-#formLogin :-moz-placeholder {
-  opacity: .7;
-  font-style: italic;
+//#formLogin .form-notify {
+//  color: #e81351;
+//}
 
-}
 
-#formLogin ::-moz-placeholder {
-  opacity: .7;
-  font-style: italic;
-
-}
-
-#formLogin :-ms-input-placeholder {
-  opacity: .7;
-  font-style: italic;
-
-}
 
 .login-info_item {
   position: relative;
@@ -136,3 +179,20 @@
     line-height: 66px;
   }
 }
+//
+//#login .btn-forgot-pwd {
+//  -webkit-transition: none;
+//  -o-transition: none;
+//  transition: none;
+//  font-size: .85rem;
+//  font-weight: 400;
+//  color: #999;
+//  opacity: .85;
+//  //border-bottom: 2px dashed #999;
+//}
+//
+//#login .btn-forgot-pwd:hover {
+//  border-bottom: 1px dashed #999;
+//  cursor: pointer;
+//  opacity: 1;
+//}

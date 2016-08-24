@@ -34,13 +34,12 @@ $.ajaxSetup( {
     , error: function ( xhr, ajaxOptions, thrownError ) {
         switch ( xhr.status ) {
             case 401 :
-                console.log( "no access" )
+                console.debug( "no access" )
                 EventBus.dispatch( Events.LOGIN.SHOW )
                 break;
 
             default :
-                console.log( 'Error on javascript call' )
-                console.log( arguments )
+                console.debug( 'Error on javascript call'  , arguments )
         }
     }
 

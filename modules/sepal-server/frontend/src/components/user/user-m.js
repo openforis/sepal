@@ -41,6 +41,8 @@ User.prototype.getSessionById = function ( sessionId ) {
 User.prototype.getSpending = function () {
     return this.sandboxReport.spending
 }
+
+
 module.exports = function ( userDetails ) {
     return new User( userDetails )
 }

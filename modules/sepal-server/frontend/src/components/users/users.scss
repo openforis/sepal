@@ -67,6 +67,13 @@
           border-radius: .2rem;
 
           transition: background-color 200ms linear;
+
+          i {
+            font-weight: bold;
+            font-size: 1.1rem;
+            opacity: .7;
+          }
+
         }
         .row-user:active,
         .row-user:focus,
@@ -82,7 +89,7 @@
         }
         .row-user.active:active,
         .row-user.active:focus,
-        .row-user.activefocus,
+        .row-user.active:focus,
         .row-user.active:hover {
           background-color: rgba(197, 179, 151, 0.2);
           //background-color: rgba(255, 255, 255, 0.05);
@@ -116,8 +123,18 @@
     }
   }
 
+  .edit-user-section {
+    .btn-status i {
+      font-size: 1rem;
+      /* padding: 0rem .5rem 0 .3rem; */
+      padding-right: .3rem;
+      /* margin-top: .1rem; */
+      /* font-weight: bold; */
+    }
+  }
+
   .delete-user-section {
-    .form-label{
+    .form-label {
       font-size: 1rem;
     }
   }
