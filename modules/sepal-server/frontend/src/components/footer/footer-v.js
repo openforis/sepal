@@ -10,8 +10,11 @@ var html     = $( template( {} ) )
 var Logo = null
 
 var init = function () {
-    $( '.app' ).append( html )
-    Logo = html.find( ".sepal-logo" )
+    var footer = $( '.app' ).find( 'footer' )
+    if ( footer.children().length <= 0 ) {
+        $( '.app' ).append( html )
+        Logo = html.find( ".sepal-logo" )
+    }
 }
 
 var hide = function () {

@@ -25,25 +25,30 @@ var formBestScenes    = null
 var mosaicPreviewForm = null
 
 var init = function () {
-    $( '.app' ).append( html )
-    
-    // buttons
-    btnBestScenes     = html.find( '.btn-best-scenes' )
-    btnRetrieveScenes = html.find( '.btn-retrieve-scenes' )
-    btnPreviewMosaic  = html.find( '.btn-preview-mosaic' )
-    btnRetrieveMosaic = html.find( '.btn-retrieve-mosaic' )
-    //toggle visibility buttons
-    btnHideSceneAreas = html.find( '.btn-hide-scene-areas' )
-    btnHideMosaic     = html.find( '.btn-hide-mosaic' )
-    // expandable forms
-    formBestScenes    = html.find( '.row-best-scenes-form' )
-    mosaicPreviewForm = html.find( '.row-mosaic-preview' )
-    
-    ScenesAutoSelectForm.init( html.find( '.scenes-selection-filter' ) )
-    MosaicPreviewForm.init( html.find( '.mosaic-preview' ) )
-    
-    initEventHandlers()
-    reset()
+    var id  = html.attr( 'id' )
+    var app = $( '.app' )
+    if ( app.find( '#' + id ).children().length <= 0 ) {
+        
+        $( '.app' ).append( html )
+        
+        // buttons
+        btnBestScenes     = html.find( '.btn-best-scenes' )
+        btnRetrieveScenes = html.find( '.btn-retrieve-scenes' )
+        btnPreviewMosaic  = html.find( '.btn-preview-mosaic' )
+        btnRetrieveMosaic = html.find( '.btn-retrieve-mosaic' )
+        //toggle visibility buttons
+        btnHideSceneAreas = html.find( '.btn-hide-scene-areas' )
+        btnHideMosaic     = html.find( '.btn-hide-mosaic' )
+        // expandable forms
+        formBestScenes    = html.find( '.row-best-scenes-form' )
+        mosaicPreviewForm = html.find( '.row-mosaic-preview' )
+        
+        ScenesAutoSelectForm.init( html.find( '.scenes-selection-filter' ) )
+        MosaicPreviewForm.init( html.find( '.mosaic-preview' ) )
+        
+        initEventHandlers()
+        reset()
+    }
     
 }
 
@@ -53,7 +58,7 @@ var initEventHandlers = function () {
     
     btnBestScenes.click( function ( e ) {
         e.preventDefault()
-        mosaicPreviewForm.velocitySlideUp( defaultSlideOpts  )
+        mosaicPreviewForm.velocitySlideUp( defaultSlideOpts )
         formBestScenes.velocitySlideToggle( defaultSlideOpts )
     } )
     
@@ -64,7 +69,7 @@ var initEventHandlers = function () {
     
     btnPreviewMosaic.click( function ( e ) {
         e.preventDefault()
-        formBestScenes.velocitySlideUp( defaultSlideOpts  )
+        formBestScenes.velocitySlideUp( defaultSlideOpts )
         mosaicPreviewForm.velocitySlideToggle( defaultSlideOpts )
     } )
     btnRetrieveMosaic.click( function ( e ) {
@@ -123,7 +128,7 @@ var disableToggleLayerButtons = function () {
     btnHideMosaic.removeClass( 'active' ).disable()
 }
 
-var enableScenesSelectionRequiredButtons  = function () {
+var enableScenesSelectionRequiredButtons = function () {
     btnPreviewMosaic.enable()
     btnRetrieveScenes.enable()
 }

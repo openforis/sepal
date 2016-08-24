@@ -27,13 +27,17 @@ var onSectionShow = function ( e, target ) {
     }
 }
 
+var updateView = function() {
+    var users = Model.filterUsers( searchString )
+    View.setUsers( users )
+}
+
 var loadUsers = function () {
     var params = {
         url      : '/api/users'
         , success: function ( response ) {
             Model.setUsers( response )
-            var users = Model.filterUsers( searchString )
-            View.setUsers( users )
+            updateView()
         }
     }
     
@@ -42,9 +46,7 @@ var loadUsers = function () {
 
 var onUsersListFilterChange = function ( e, value ) {
     searchString = value
-    
-    var users = Model.filterUsers( searchString )
-    View.setUsers( users )
+    updateView()
 }
 
 var onSelectUser = function ( e, user ) {

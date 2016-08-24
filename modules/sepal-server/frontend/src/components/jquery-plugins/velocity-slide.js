@@ -4,12 +4,10 @@
 
 (function ( $ ) {
     
-    var slideOptions = { delay: 0, duration: 500 }
-    
     var slide = function ( element, slideDir, options ) {
-        options = $.extend( slideOptions, options )
+        var options = $.extend( {}, { delay: 0, duration: 500 }, options )
         
-        element.velocity( slideDir, slideOptions )
+        element.velocity( slideDir, options )
         
         return element
     }
