@@ -1,9 +1,10 @@
 /**
  * @author Mino Togna
  */
-var EventBus  = require( '../../event/event-bus' )
-var Events    = require( '../../event/events' )
-var Animation = require( '../../animation/animation' )
+var EventBus      = require( '../../event/event-bus' )
+var Events        = require( '../../event/events' )
+var Animation     = require( '../../animation/animation' )
+var FormValidator = require( '../../form-validator/form-validator' )
 
 var Form       = null
 var FormNotify = null
@@ -23,17 +24,17 @@ var init = function ( form ) {
 
 var show = function ( invitation ) {
     if ( invitation ) {
- 
+        
         Form.find( 'input[name=user]' ).val( invitation.username ).prop( 'readonly', true )
         Form.find( 'input[name=invitationId]' ).val( invitation.invitationId )
         Form.find( 'button[type=submit]' ).html( '<i class="fa fa-sign-in" aria-hidden="true"></i> Accept Invitation' )
- 
+        
     } else {
- 
+        
         Form.find( '.password2-section' ).remove()
         Form.find( 'input[name=invitationId]' ).remove()
         Form.find( 'button[type=submit]' ).html( '<i class="fa fa-sign-in" aria-hidden="true"></i> Login' )
- 
+        
     }
 }
 
@@ -42,28 +43,21 @@ var bindEvents = function () {
     Form.submit( function ( e ) {
         e.preventDefault()
         
+        FormValidator.resetFormErrors( Form, FormNotify )
+        
         var params = {
-            url         : Form.attr( 'action' )
-            , method    : Form.attr( 'method' )
-            , data      : Form.serialize()
-            , error     : null
-            , beforeSend: function () {
-                FormNotify.html( '' ).hide()
-                Form.find( '.form-group' ).removeClass( 'error' )
-            }
-            , complete  : function ( object, status ) {
+            url       : '/api/login'
+            , method  : 'POST'
+            , data    : Form.serialize()
+            , error   : null
+            , complete: function ( object, status ) {
                 
                 switch ( status ) {
                     case 'error' :
                         
-                        FormNotify.html( 'Invalid username or password' ).css( 'opacity', '0' ).show().addClass( 'animated' ).addClass( 'fadeInUp' );
-                        setTimeout( function () {
-                            FormNotify.css( 'opacity', '1' )
-                        }, 100 )
-                        
-                        Form.find( '.form-group' ).addClass( 'error' )
-                        
-                        break;
+                        FormValidator.addError( Form.find( 'input' ) )
+                        FormValidator.showError( FormNotify, 'Invalid username or password' )
+                        break
                     
                     case 'success' :
                         

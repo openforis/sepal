@@ -32,9 +32,13 @@ var showError = function ( errorContainer, message ) {
     } )
 }
 
+var addError = function ( inputField ) {
+    inputField.closest( '.form-group' ).addClass( 'error' )
+}
+
 var validateString = function ( field, errorMessage, errorMessageContainer ) {
     if ( !isValidString( field.val() ) ) {
-        field.closest( '.form-group' ).addClass( 'error' )
+        addError( field )
         showError( errorMessageContainer, errorMessage )
         return false
     }
@@ -43,7 +47,7 @@ var validateString = function ( field, errorMessage, errorMessageContainer ) {
 
 var validateEmail = function ( field, errorMessage, errorMessageContainer ) {
     if ( !isValidEmail( field.val() ) ) {
-        field.closest( '.form-group' ).addClass( 'error' )
+        addError( field )
         showError( errorMessageContainer, errorMessage )
         return false
     }
@@ -56,7 +60,7 @@ var validatePassword = function ( field, errorMessage, errorMessageContainer ) {
 
 var resetFormErrors = function ( form, errorMessageContainer ) {
     form.find( '.form-group' ).removeClass( 'error' )
-    errorMessageContainer.velocitySlideUp( { delay: 0, duration: 100 } )
+    errorMessageContainer.velocitySlideUp( { delay: 0, duration: 0 } )
 }
 
 module.exports = {
@@ -64,6 +68,7 @@ module.exports = {
     // , isValidEmail   : isValidEmail
     // , isValidPassword: isValidPassword
     showError         : showError
+    , addError        : addError
     , validateString  : validateString
     , validateEmail   : validateEmail
     , validatePassword: validatePassword

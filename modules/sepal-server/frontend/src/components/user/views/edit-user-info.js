@@ -22,15 +22,20 @@ var init = function ( userDetailsForm, changePwdForm ) {
     
     BtnChangePwd.click( function ( e ) {
         e.preventDefault()
+        
         userDetailsForm.velocitySlideUp()
         changePwdForm.velocitySlideDown()
     } )
     
     BtnCancelChangePwd.click( function ( e ) {
         e.preventDefault()
+        
+        ChangePwdForm.reset()
+        
         changePwdForm.velocitySlideUp()
         userDetailsForm.velocitySlideDown()
     } )
+    
 }
 
 var setUser = function ( user ) {
@@ -40,7 +45,6 @@ var setUser = function ( user ) {
 
 var showEditUserDetailsForm = function () {
     UserDetailsForm.setUserDetails( User )
-    ChangePwdForm.reset()
     BtnCancelChangePwd.click()
 }
 

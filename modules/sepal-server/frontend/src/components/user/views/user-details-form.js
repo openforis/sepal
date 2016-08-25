@@ -13,41 +13,42 @@ var init = function ( form ) {
     Form       = $( form )
     FormNotify = Form.find( '.form-notify' )
     
-    initForm()
+    Form.submit( submit )
 }
 
-var initForm = function () {
+var submit = function ( e ) {
+    e.preventDefault()
     
-    Form.submit( function ( e ) {
-        e.preventDefault()
-        
-        FormValidator.resetFormErrors( Form, FormNotify )
-        
-        var name         = Form.find( '[name=name]' )
-        var username     = Form.find( '[name=username]' )
-        var password     = Form.find( '[name=password]' )
-        var email        = Form.find( '[name=email]' )
-        var organization = Form.find( '[name=organization]' )
-        
-        var valid = false
-        if ( FormValidator.validateString( name, 'Name cannot be empty', FormNotify ) ) {
-            if ( FormValidator.validateString( username, 'Username cannot be empty', FormNotify ) ) {
-                if ( FormValidator.validateEmail( email, 'Email is not valid', FormNotify ) ) {
-                    if ( FormValidator.validateString( organization, 'Organization cannot be empty', FormNotify ) ) {
-                        valid = true
-                    }
+    var valid = validate()
+    
+    if ( valid ) {
+        var data = Form.serialize()
+        EventBus.dispatch( Events.SECTION.USER.SAVE_USER_DETAILS, null, data )
+    }
+    
+}
+
+var validate = function () {
+    FormValidator.resetFormErrors( Form, FormNotify )
+    
+    var name         = Form.find( '[name=name]' )
+    var username     = Form.find( '[name=username]' )
+    var password     = Form.find( '[name=password]' )
+    var email        = Form.find( '[name=email]' )
+    var organization = Form.find( '[name=organization]' )
+    
+    var valid = false
+    if ( FormValidator.validateString( name, 'Name cannot be empty', FormNotify ) ) {
+        if ( FormValidator.validateString( username, 'Username cannot be empty', FormNotify ) ) {
+            if ( FormValidator.validateEmail( email, 'Email is not valid', FormNotify ) ) {
+                if ( FormValidator.validateString( organization, 'Organization cannot be empty', FormNotify ) ) {
+                    valid = true
                 }
             }
         }
-        
-        if ( valid ) {
-            var data = Form.serialize()
-            EventBus.dispatch( Events.SECTION.USER.SAVE_USER_DETAILS, null, data )
-        }
-        
-    } )
+    }
+    return valid
 }
-
 
 var setUserDetails = function ( userDetails ) {
     FormValidator.resetFormErrors( Form, FormNotify )

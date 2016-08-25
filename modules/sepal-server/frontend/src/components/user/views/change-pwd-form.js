@@ -13,45 +13,48 @@ var init = function ( form ) {
     Form       = $( form )
     FormNotify = Form.find( '.form-notify' )
     
-    initForm()
+    Form.submit( submit )
 }
 
-
-var initForm = function () {
+var submit = function ( e ) {
+    e.preventDefault()
     
-    Form.submit( function ( e ) {
-        e.preventDefault()
-        
-        FormValidator.resetFormErrors( Form, FormNotify )
-        
-        var oldPassword = Form.find( '[name=old-password]' )
-        var password    = Form.find( '[name=password]' )
-        var password2   = Form.find( '[name=password2]' )
-        
-        var valid = false
-        if ( FormValidator.validatePassword( oldPassword, 'Invalid old password', FormNotify ) ) {
-            if ( FormValidator.validatePassword( password, 'Invalid new password', FormNotify ) ) {
-                if ( FormValidator.validatePassword( password2, 'Invalid new password', FormNotify ) ) {
-                    if ( password.val() === password2.val() ) {
-                        valid = true
-                    } else {
-                        FormValidator.showError( FormNotify, 'New passwords must be the same' )
-                    }
+    var valid = validate()
+    
+    if ( valid ) {
+        // submit
+        var data = Form.serialize()
+        EventBus.dispatch( Events.SECTION.USER.CHANGE_PASSWORD, null, data )
+    }
+}
+
+var validate = function () {
+    FormValidator.resetFormErrors( Form, FormNotify )
+    
+    var oldPassword = Form.find( '[name=old-password]' )
+    var password    = Form.find( '[name=password]' )
+    var password2   = Form.find( '[name=password2]' )
+    
+    var valid = false
+    if ( FormValidator.validatePassword( oldPassword, 'Invalid old password', FormNotify ) ) {
+        if ( FormValidator.validatePassword( password, 'Invalid new password', FormNotify ) ) {
+            if ( FormValidator.validatePassword( password2, 'Invalid new password', FormNotify ) ) {
+                if ( password.val() === password2.val() ) {
+                    valid = true
+                } else {
+                    FormValidator.addError( password )
+                    FormValidator.addError( password2 )
+                    FormValidator.showError( FormNotify, 'New passwords must be the same' )
                 }
             }
         }
-        
-        if ( valid ) {
-            // submit
-            var data = Form.serialize()
-            EventBus.dispatch( Events.SECTION.USER.CHANGE_PASSWORD, null, data )
-        }
-        
-    } )
+    }
+    return valid
 }
 
 var reset = function () {
     Form.trigger( 'reset' )
+    FormValidator.resetFormErrors( Form, FormNotify )
 }
 
 module.exports = {

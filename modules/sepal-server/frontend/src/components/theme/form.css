@@ -6,8 +6,9 @@
 /* form notify */
 .form-notify {
     display: none;
-    margin-top: 20px;
-    font-size: 14px;
+    /*margin-top: 20px;*/
+    font-size: .85rem;
+    font-weight: 400;
 }
 
 .form-error {
