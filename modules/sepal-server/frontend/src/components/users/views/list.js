@@ -69,9 +69,11 @@ var getUserRow = function ( user ) {
         row.addClass( 'active' )
     }
     
-    var name = ( user.isAdmin() ? '<i class="fa fa-user-secret" aria-hidden="true"></i> ' : ' ' ) + user.name
+    var name = ( user.isAdmin() ? '<i class="fa fa-user-secret p-r-0-5" aria-hidden="true"></i> ' : ' ' ) + user.name
     row.find( '.name' ).html( name )
+    
     row.find( '.username' ).html( user.username )
+    
     var status = ''
     switch ( user.status ) {
         case 'locked':
@@ -95,7 +97,6 @@ var getUserRow = function ( user ) {
         e.preventDefault()
         
         var selectedUser = row.hasClass( 'active' ) ? null : user
-        
         EventBus.dispatch( Events.SECTION.USERS.SELECT_USER, null, selectedUser )
     } )
     

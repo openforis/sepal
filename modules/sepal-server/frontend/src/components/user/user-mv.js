@@ -2,11 +2,11 @@
  * @author Mino Togna
  */
 
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
-var UserModel   = require( './user-m' )
-var Loader   = require( '../loader/loader' )
-var View     = require( './user-v' )
+var EventBus  = require( '../event/event-bus' )
+var Events    = require( '../event/events' )
+var UserModel = require( './user-m' )
+var Loader    = require( '../loader/loader' )
+var View      = require( './user-v' )
 
 var CurrentUser = null
 
@@ -21,24 +21,18 @@ var getCurrentUser = function () {
 var show = function ( e, type ) {
     if ( type == 'user' ) {
         View.init()
-        
-        requestSandboxReport()
-    }
-}
-
-var requestSandboxReport = function () {
-    var params = {
-        url      : '/api/sandbox/report'
-        , success: function ( response ) {
-            CurrentUser.setUserSandboxReport( response )
-            
-            View.setSessions( CurrentUser.getSessions() )
-            View.setSpending( CurrentUser.getSpending() )
-            View.setUserDetails( CurrentUser )
-        }
-    }
     
-    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+        var params = {
+            url      : '/api/sandbox/report'
+            , success: function ( response ) {
+                CurrentUser.setUserSandboxReport( response )
+            
+                View.setUser( CurrentUser )
+            }
+        }
+    
+        EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+    }
 }
 
 var removeSession = function ( evt, sessionId ) {
@@ -52,7 +46,7 @@ var removeSession = function ( evt, sessionId ) {
         }
         , success   : function ( response ) {
             View.removeSession( sessionId )
-            // requestSandboxReport()
+            
             Loader.hide( { delay: 200 } )
         }
     }
@@ -75,16 +69,38 @@ var saveUserDetail = function ( e, data ) {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
+var changePassword = function ( e, data ) {
+    var params = {
+        url         : '/api/user/password'
+        , method    : 'POST'
+        , beforeSend: function () {
+            Loader.show()
+        }
+        , success   : function ( response ) {
+            Loader.hide( { delay: 200 } )
+            View.showEditUserDetailsForm()
+        }
+    }
+    // EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+    View.showEditUserDetailsForm()
+}
+
+
+// section events
+EventBus.addEventListener( Events.SECTION.SHOW, show )
+
+//user loaded
 EventBus.addEventListener( Events.USER.USER_DETAILS_LOADED, userDetailsLoaded )
 
-EventBus.addEventListener( Events.SECTION.SHOW, show )
+// user edit events
+EventBus.addEventListener( Events.SECTION.USER.SAVE_USER_DETAILS, saveUserDetail )
+EventBus.addEventListener( Events.SECTION.USER.CHANGE_PASSWORD, changePassword )
+
+// sandbox edit events
 EventBus.addEventListener( Events.SECTION.USER.REMOVE_SESSION, removeSession )
 
-EventBus.addEventListener( Events.SECTION.USER.SAVE_USER_DETAILS, saveUserDetail )
 
 module.exports = {
-    getCurrentUser: function () {
-        return CurrentUser
-    }
+    getCurrentUser: getCurrentUser
 }
 

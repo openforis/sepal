@@ -77,6 +77,7 @@ var Events = {
         , USER : {
             REMOVE_SESSION     : 'section.user.remove-session'
             , SAVE_USER_DETAILS: 'section.user.save-user-details'
+            , CHANGE_PASSWORD  : 'section.user.change-password'
         }
         , USERS: {
             LIST_FILTER_CHANGE: 'section.users.list-filter-change'
