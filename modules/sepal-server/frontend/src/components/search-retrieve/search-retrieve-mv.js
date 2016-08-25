@@ -9,14 +9,20 @@ var View             = require( './search-retrieve-v' )
 var Model            = require( './search-retrieve-m' )
 var SceneAreaModel   = require( '../scenes-selection/scenes-selection-m' )
 var ScenesFilterView = require( '../search-retrieve/scenes-autoselection-form-v' )
-var SearchForm       = require( '../search/search-form' )
+var SearchForm       = require( '../search/views/search-form' )
 var Filter           = require( './../scenes-selection-filter/scenes-selection-filter-m' )
-
-View.init()
-View.hide( { delay: 0, duration: 0 } )
 
 var show     = false
 var appShown = true
+
+var init = function (  ) {
+    show     = false
+    appShown = true
+    
+    View.init()
+    View.hide( { delay: 0, duration: 0 } )
+}
+
 
 var appShow   = function ( e, section ) {
     View.hide()
@@ -168,15 +174,20 @@ var onSceneAreaChange = function ( e ) {
         View.disableScenesSelectionRequiredButtons()
     }
 }
+// app events
+EventBus.addEventListener( Events.APP.LOAD, init )
 
+// app section events
 EventBus.addEventListener( Events.SECTION.SHOW, appShow )
 EventBus.addEventListener( Events.SECTION.REDUCE, appReduce )
 
+//search retrieve events
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES, retrieveScenes )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, retrieveMosaic )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, bestScenes )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, previewMosaic )
 
+//search events
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, sceneAreasLoaded )
 EventBus.addEventListener( Events.MODEL.SCENE_AREA.CHANGE, onSceneAreaChange )
 

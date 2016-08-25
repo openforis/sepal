@@ -11,13 +11,18 @@ var Model     = require( './tasks-m' )
 
 // html
 var template = require( './tasks.html' )
-var html     = $( template( {} ) )
+var html     = null
 
-var rowTask   = html.find( '.task' )
-var rowHeader = html.find( '.row.row-header' )
-var container = html.find( '.tasks-container' )
+var rowTask   = null
+var rowHeader = null
+var container = null
 
 var init = function () {
+    html     = $( template( {} ) )
+    rowTask   = html.find( '.task' )
+    rowHeader = html.find( '.row.row-header' )
+    container = html.find( '.tasks-container' )
+    
     var appSection = $( '#app-section' ).find( '.tasks' )
     if ( appSection.children().length <= 0 ) {
         appSection.append( html )

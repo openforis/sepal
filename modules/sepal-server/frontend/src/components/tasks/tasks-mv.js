@@ -11,27 +11,27 @@ var View      = require( './tasks-v' )
 
 var jobTimer      = null
 var navMenuButton = null
-var initialized   = false
+// var initialized   = false
 
 var init = function ( e ) {
-    if ( !initialized ) {
-        View.init()
-        
-        navMenuButton = NavMenu.btnTasks()
-        
-        setTimeout( function () {
-            jobTimer = setInterval( requestTasks, 5000 )
-        }, 1000 )
-        
-        initialized = true
-    }
+    // if ( !initialized ) {
+    View.init()
+    
+    navMenuButton = NavMenu.btnTasks()
+    
+    setTimeout( function () {
+        jobTimer = setInterval( requestTasks, 5000 )
+    }, 1000 )
+    
+    // initialized = true
+    // }
 }
 
-var showLogin = function ( e ) {
+var onAppDestroy = function ( e ) {
     if ( jobTimer ) {
         clearTimeout( jobTimer )
     }
-    initialized = false
+    // initialized = false
 }
 
 var requestTasks = function ( callback ) {
@@ -126,8 +126,8 @@ var checkStatus = function () {
     requestTasks()
 }
 
-EventBus.addEventListener( Events.SECTION.SHOW, init )
-EventBus.addEventListener( Events.LOGIN.SHOW, showLogin )
+EventBus.addEventListener( Events.APP.LOAD, init )
+EventBus.addEventListener( Events.APP.DESTROY, onAppDestroy )
 
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.CANCEL_TASK, taskAction )
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.REMOVE_TASK, taskAction )

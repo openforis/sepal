@@ -11,9 +11,10 @@ var Events = {
     }
     
     , APP: {
-        LOAD            : 'app.load'
-        , DESTROY       : 'app.destroy'
-        , USER_LOGGED_IN: 'app.user-logged-in'
+        LOAD              : 'app.load'
+        , DESTROY         : 'app.destroy'
+        , REGISTER_ELEMENT: 'app.register-element'
+        , USER_LOGGED_IN  : 'app.user-logged-in'
     }
     
     , LOGIN: {

@@ -6,6 +6,7 @@
  */
 var EventBus = require( '../event/event-bus' );
 var Events   = require( '../event/events' );
+var Loader   = require( '../loader/loader' )
 
 // ajax common parameters:
 
@@ -24,25 +25,30 @@ var Events   = require( '../event/events' );
 
 // initialize global ajax setup
 $.ajaxSetup( {
-
+    
     dataType: "json"
-
+    
     , headers: { 'No-auth-challenge': 'true' }
-
+    
     , type: "GET"
-
+    
     , error: function ( xhr, ajaxOptions, thrownError ) {
+        Loader.hide()
         switch ( xhr.status ) {
+            
             case 401 :
                 console.debug( "no access" )
-                EventBus.dispatch( Events.LOGIN.SHOW )
+                EventBus.dispatch( Events.APP.DESTROY )
+                // EventBus.dispatch( Events.LOGIN.SHOW )
                 break;
-
+            
             default :
-                console.debug( 'Error on javascript call'  , arguments )
+                EventBus.dispatch( Events.APP.DESTROY )
+                // EventBus.dispatch( Events.LOGIN.SHOW )
+                console.debug( 'Error on javascript call', arguments )
         }
     }
-
+    
 } )
 
 var ajaxRequest = function ( e, params ) {

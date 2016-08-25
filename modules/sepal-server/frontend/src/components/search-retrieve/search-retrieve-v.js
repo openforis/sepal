@@ -26,6 +26,9 @@ var mosaicPreviewForm = null
 
 var init = function () {
     var id  = html.attr( 'id' )
+    
+    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, id )
+    
     var app = $( '.app' )
     if ( app.find( '#' + id ).children().length <= 0 ) {
         

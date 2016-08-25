@@ -59,22 +59,23 @@ var init = function ( uiContainer ) {
     
     //sort slider
     sortSlider = sectionAction.find( '.sort-slider' ).get( 0 )
-    noUiSlider.create( sortSlider, {
-        start: [ 0.5 ],
-        step : 0.05,
-        range: {
-            'min': [ 0 ],
-            'max': [ 1 ]
-        }
-    } )
-    sortSlider.noUiSlider.on( 'change', function () {
-        var sortWeight = sortSlider.noUiSlider.get()
-        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
-        setSortWeight( sortWeight )
-        // container.find( '.cc-sort' ).html( Math.round( +((1 - sortWeight).toFixed( 2 )) * 100 ) + '%' )
-        // container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
-    } )
-    
+    if(!sortSlider.hasOwnProperty('noUiSlider')) {
+        noUiSlider.create( sortSlider, {
+            start: [ 0.5 ],
+            step : 0.05,
+            range: {
+                'min': [ 0 ],
+                'max': [ 1 ]
+            }
+        } )
+        sortSlider.noUiSlider.on( 'change', function () {
+            var sortWeight = sortSlider.noUiSlider.get()
+            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
+            setSortWeight( sortWeight )
+            // container.find( '.cc-sort' ).html( Math.round( +((1 - sortWeight).toFixed( 2 )) * 100 ) + '%' )
+            // container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
+        } )
+    }
     // target day
     offsetTargetDayBtnPlus.click( function ( e ) {
         EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, 1 )

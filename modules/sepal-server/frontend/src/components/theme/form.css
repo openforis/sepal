@@ -41,8 +41,8 @@
 .form-theme .form-group input {
     border-radius: 0px;
     border-bottom: 1px solid #fff;
-    padding-bottom: 20px;
-
+    /*padding-bottom: 20px;*/
+    padding: .6rem .2rem;
     transition: background-color 800ms ease-in;
     transition: border-bottom-color 500ms ease-in;
 }

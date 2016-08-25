@@ -15,41 +15,47 @@ var Events   = require( '../event/events' )
 
 var Animation = require( '../animation/animation' )
 
-var template = require( './app-section.html' )
-var html     = $( template( {} ) )
-
-var loadHtml = function () {
-    $( '.app' ).append( html )
-}
-loadHtml()
-
-var section = $( '.app' ).find( '#app-section' ).css( 'left', '120%' ).addClass( 'closed' )
-
+var template       = require( './app-section.html' )
+var html           = null
+// ui elements
+var section        = null
+var carousel       = null
+var closeBtn       = null
 // current opened section
 var currentSection = null
 
-var carousel = section.find( '#app-section-carousel' )
-carousel.carousel( { interval: 0 } )
-carousel.on('slid.bs.carousel', function () {
-    EventBus.dispatch(Events.SECTION.SHOWN , null, currentSection)
-})
-
-var closeBtn = section.find( '.btn-close' )
-closeBtn.click( function ( e ) {
-    e.preventDefault()
+var init = function () {
+    html = $( template( {} ) )
     
-    if ( section.hasClass( 'opened' ) ) {
-        EventBus.dispatch( Events.SECTION.REDUCE )
-    } else {
-        EventBus.dispatch( Events.SECTION.SHOW )
-    }
+    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
     
-} )
+    $( '.app' ).append( html )
+    
+    section = $( '.app' ).find( '#app-section' ).css( 'left', '120%' ).addClass( 'closed' )
+    
+    carousel = section.find( '#app-section-carousel' )
+    carousel.carousel( { interval: 0 } )
+    carousel.on( 'slid.bs.carousel', function () {
+        EventBus.dispatch( Events.SECTION.SHOWN, null, currentSection )
+    } )
+    
+    closeBtn = section.find( '.btn-close' )
+    closeBtn.click( function ( e ) {
+        e.preventDefault()
+        
+        if ( section.hasClass( 'opened' ) ) {
+            EventBus.dispatch( Events.SECTION.REDUCE )
+        } else {
+            EventBus.dispatch( Events.SECTION.SHOW )
+        }
+        
+    } )
+}
 
 var show = function ( e, type ) {
     var isSectionClosed = !section.hasClass( 'opened' )
     
-    showSection( type , !isSectionClosed )
+    showSection( type, !isSectionClosed )
     
     if ( isSectionClosed ) {
         
@@ -79,17 +85,17 @@ var show = function ( e, type ) {
     
 }
 
-var showSection = function ( type , animate ) {
+var showSection = function ( type, animate ) {
     currentSection = type
     
     var carouselItem = carousel.find( '.carousel-item.' + type )
     if ( !carouselItem.hasClass( 'active' ) ) {
-        if( !animate ){
-            carousel.removeClass('slide')
+        if ( !animate ) {
+            carousel.removeClass( 'slide' )
         }
         carousel.carousel( carouselItem.index() )
-        if( !animate ){
-            carousel.addClass('slide')
+        if ( !animate ) {
+            carousel.addClass( 'slide' )
         }
     }
 }
@@ -118,5 +124,8 @@ var reduce = function () {
     }
 }
 
+EventBus.addEventListener( Events.APP.LOAD, init )
+
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 EventBus.addEventListener( Events.SECTION.REDUCE, reduce )
+

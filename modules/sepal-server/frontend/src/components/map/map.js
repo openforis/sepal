@@ -16,8 +16,7 @@ require( './ee-map-layer' )
 
 // html template
 var template = require( './map.html' )
-var html     = $( template( {} ) )
-
+var html     = null
 // google map style
 var mapStyle = require( './map-style.js' )
 
@@ -30,6 +29,9 @@ var FT_TableID = "15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F"
 var aoiLayer = null
 
 var show = function () {
+    html = $( template( {} ) )
+    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
+    
     $( '.app' ).append( html )
     
     GoogleMapsLoader.load( function ( google ) {
@@ -141,24 +143,24 @@ var addOverlayMapType = function ( e, index, mapType ) {
 }
 
 var removeOverlayMapType = function ( e, index ) {
-    if( map.overlayMapTypes.getAt(index) ){
+    if ( map.overlayMapTypes.getAt( index ) ) {
         map.overlayMapTypes.removeAt( index )
     }
 }
 
-var onAppShow = function ( e , type ) {
-    if( aoiLayer ){
-        setTimeout( function (  ) {
+var onAppShow = function ( e, type ) {
+    if ( aoiLayer ) {
+        setTimeout( function () {
             aoiLayer.setMap( null )
-        } , 200 )
+        }, 200 )
     }
 }
 
-var onAppReduce = function ( e , type ) {
-    if( aoiLayer ){
-        setTimeout( function (  ) {
+var onAppReduce = function ( e, type ) {
+    if ( aoiLayer ) {
+        setTimeout( function () {
             aoiLayer.setMap( map )
-        } , 500 )
+        }, 500 )
     }
 }
 

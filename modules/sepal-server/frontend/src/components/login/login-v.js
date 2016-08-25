@@ -11,9 +11,10 @@ var BgStars       = require( './views/bg-stars' )
 var BtnForgotPwd  = null
 
 var template = require( './login.html' )
-var html     = $( template( {} ) )
+var html     = null
 
 var show = function ( invitation ) {
+    html = $( template( {} ) )
     $( "body" ).find( '.app' ).append( html )
     
     FormLogin.init( html.find( '#formLogin' ) )

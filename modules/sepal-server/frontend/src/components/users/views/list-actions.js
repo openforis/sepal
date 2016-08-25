@@ -14,6 +14,8 @@ var BtnEdit     = null
 var selectedUser = null
 
 var init = function ( container ) {
+    selectedUser = null
+    
     Container = container
     
     SearchInput = Container.find( 'input[name=search]' )

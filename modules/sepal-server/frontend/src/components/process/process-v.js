@@ -2,19 +2,21 @@
  * @author Mino Togna
  */
 require( './process.scss' )
-// var Sepal    = require( '../main/sepal' )
-var UserMV     = require( '../user/user-mv' )
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
-var template = require( './process.html' )
-var html     = $( template( {} ) )
 
-var rStudioImg = require( './r-studio.png' )
+var UserMV = require( '../user/user-mv' )
+// var EventBus = require( '../event/event-bus' )
+// var Events   = require( '../event/events' )
+var template = require( './process.html' )
+var html     = null
+
+var rStudioImg = require( './img/r-studio.png' )
 
 //link to rstudio
 ///user/$USER/rstudio-server/
 var apps = null
 var init = function () {
+    html = $( template( {} ) )
+    
     var appSection = $( '#app-section' ).find( '.process' )
     if ( appSection.children().length <= 0 ) {
         appSection.append( html )

@@ -14,6 +14,8 @@ var RowUser   = null
 var selectedUser = null
 
 var init = function ( container ) {
+    selectedUser = null
+    
     Container = container
     
     UsersList = Container.find( '.users-list' )
@@ -88,8 +90,8 @@ var getUserRow = function ( user ) {
             break
         default:
             status = '<i class="fa fa-smile-o" aria-hidden="true"></i>'
-            // status = '<i class="fa fa-lock" aria-hidden="true"></i>'
-            
+        // status = '<i class="fa fa-lock" aria-hidden="true"></i>'
+        
     }
     row.find( '.status' ).html( status )
     

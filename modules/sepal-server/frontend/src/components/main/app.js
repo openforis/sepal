@@ -54,9 +54,9 @@ var initApp = function () {
         
         // TODO: simulating now
         var response = {
-            invitationId : 2341423
+            invitationId: 2341423
             , userId    : 1234
-            , username: 'trest'
+            , username  : 'trest'
         }
         EventBus.dispatch( Events.LOGIN.SHOW, null, response )
         Loader.hide( { delay: 200 } )
@@ -69,6 +69,27 @@ var initApp = function () {
 }
 
 initApp()
+
+var registeredElements = []
+var onRegisterElement  = function ( e, id ) {
+    registeredElements.push( id )
+}
+
+var onAppDestroy = function () {
+    Loader.show()
+    $.each( registeredElements, function ( i, id ) {
+        $( '#' + id ).remove()
+    } )
+    registeredElements = []
+    
+    EventBus.dispatch( Events.LOGIN.SHOW )
+    
+    Loader.hide( { delay: 1000 } )
+}
+
+// app events
+EventBus.addEventListener( Events.APP.DESTROY, onAppDestroy )
+EventBus.addEventListener( Events.APP.REGISTER_ELEMENT, onRegisterElement )
 
 // event handlers
 EventBus.addEventListener( Events.APP.USER_LOGGED_IN, userLoggedIn )

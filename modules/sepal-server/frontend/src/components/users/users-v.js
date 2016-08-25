@@ -8,7 +8,7 @@ var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
 var template = require( './users.html' )
-var html     = $( template( {} ) )
+var html     = null
 
 var ListSection       = require( './views/list-section' )
 var InviteUserSection = require( './views/invite-user-section' )
@@ -16,6 +16,8 @@ var EditUserSection   = require( './views/edit-user-section' )
 var DeleteUserSection = require( './views/delete-user-section' )
 
 var init = function () {
+    html = $( template( {} ) )
+    
     var appSection = $( '#app-section' ).find( '.users' )
     
     if ( appSection.children().length <= 0 ) {

@@ -2,11 +2,11 @@
  * @author Mino Togna
  */
 
-var EventBus      = require( '../event/event-bus' )
-var Events        = require( '../event/events' )
-var FormValidator = require( '../form-validator/form-validator' )
-var DatePicker    = require( '../date-picker/date-picker' )
-var countries     = require( './countries.js' )
+var EventBus      = require( '../../event/event-bus' )
+var Events        = require( '../../event/events' )
+var FormValidator = require( '../../form-validator/form-validator' )
+var DatePicker    = require( '../../date-picker/date-picker' )
+var countries     = require( './../data/countries.js' )
 var moment        = require( 'moment' )
 
 require( 'devbridge-autocomplete' )
@@ -20,9 +20,9 @@ var countryCode  = null
 var targetDate   = null
 
 var init = function ( formSelector ) {
-    
-    form       = $( formSelector )
-    formNotify = form.find( '.form-notify' )
+    countryCode = null
+    form        = $( formSelector )
+    formNotify  = form.find( '.form-notify' )
     
     fieldCountry = form.find( '#search-form-country' )
     fieldCountry.autocomplete( {

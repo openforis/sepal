@@ -38,19 +38,24 @@ var init = function ( container ) {
     
     //sort slider
     sortSlider = html.find( '.sort-slider' ).get( 0 )
-    noUiSlider.create( sortSlider, {
-        start: [ 0.5 ],
-        step : 0.05,
-        range: {
-            'min': [ 0 ],
-            'max': [ 1 ]
-        }
-    } )
-    sortSlider.noUiSlider.on( 'change', function () {
-        var sortWeight = sortSlider.noUiSlider.get()
-        setSortWeight( sortWeight )
-        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
-    } )
+    if ( !sortSlider.hasOwnProperty( 'noUiSlider' ) ) {
+        
+        noUiSlider.create( sortSlider, {
+            start: [ 0.5 ],
+            step : 0.05,
+            range: {
+                'min': [ 0 ],
+                'max': [ 1 ]
+            }
+        }, true )
+        
+        sortSlider.noUiSlider.on( 'change', function () {
+            var sortWeight = sortSlider.noUiSlider.get()
+            setSortWeight( sortWeight )
+            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
+        } )
+        
+    }
     
     // target day
     offsetTargetDayBtnPlus.click( function ( e ) {

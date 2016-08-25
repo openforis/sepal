@@ -1,15 +1,20 @@
 /**
  * @author Mino Togna
  */
-
 require( './footer.scss' )
 
+var EventBus = require( '../event/event-bus' )
+var Events   = require( '../event/events' )
+
 var template = require( './footer.html' )
-var html     = $( template( {} ) )
+var html     = null
 
 var Logo = null
 
 var init = function () {
+    html = $( template( {} ) )
+    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
+    
     var footer = $( '.app' ).find( 'footer' )
     if ( footer.children().length <= 0 ) {
         $( '.app' ).append( html )

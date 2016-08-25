@@ -7,11 +7,12 @@ var EditUserInfo      = require( './views/edit-user-info' )
 var UserSandboxReport = require( './views/sandbox-report' )
 
 var template = require( './user.html' )
-var html     = $( template( {} ) )
+var html     = null
 
 var init = function () {
-    var appSection = $( '#app-section' ).find( '.user' )
+    html = $( template( {} ) )
     
+    var appSection = $( '#app-section' ).find( '.user' )
     if ( appSection.children().length <= 0 ) {
         appSection.append( html )
         
@@ -32,4 +33,5 @@ module.exports = {
     init                     : init
     , setUser                : setUser
     , showEditUserDetailsForm: EditUserInfo.showEditUserDetailsForm
+    , removeSession          : UserSandboxReport.removeSession
 }

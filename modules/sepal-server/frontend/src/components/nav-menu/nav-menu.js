@@ -19,8 +19,10 @@ var btnUsers    = html.find( 'a.users' )
 var btnTasks    = html.find( 'a.tasks' )
 
 var show = function () {
+    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
     
     $( '.app' ).append( html )
+    $( '#nav-menu' ).removeClass( 'collapsed' )
     
     var showSection = function ( e ) {
         var btn = $( this )
@@ -45,6 +47,7 @@ var show = function () {
     Animation.animateIn( btnProcess )
     Animation.animateIn( btnTerminal )
 }
+
 
 var collapseMenu = function ( button ) {
     if ( button.hasClass( 'expanded' ) ) {
@@ -84,7 +87,7 @@ var collapseMenu = function ( button ) {
                 Animation.animateIn( btnTerminal )
                 
                 btnUser.css( 'display', 'block' )
-                Animation.animateIn( btnUser , function(){
+                Animation.animateIn( btnUser, function () {
                     EventBus.dispatch( Events.SECTION.NAV_MENU.LOADED )
                 } )
                 

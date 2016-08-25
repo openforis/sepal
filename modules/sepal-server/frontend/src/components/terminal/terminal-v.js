@@ -4,19 +4,20 @@
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 // var Sepal    = require( '../main/sepal' )
-var UserMV     = require( '../user/user-mv' )
+var UserMV   = require( '../user/user-mv' )
 
 require( './gateone' )
 require( './gateone.css' )
 
 // html
 var template = require( './terminal.html' )
-var html     = $( template( {} ) )
+var html     = null
 
 // gateOne terminal Id
 var terminalId = null
 
 var init = function () {
+    html           = $( template( {} ) )
     var appSection = $( '#app-section' ).find( '.terminal' )
     if ( appSection.children().length <= 0 ) {
         appSection.append( html )

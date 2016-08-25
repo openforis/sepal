@@ -8,7 +8,7 @@ var Loader     = require( '../loader/loader' )
 //
 var Model      = require( './scenes-selection-m' )
 var View       = require( './scenes-selection-v' )
-var SearchForm = require( './../search/search-form' )
+var SearchForm = require( './../search/views/search-form' )
 var Filter     = require( './../scenes-selection-filter/scenes-selection-filter-m' )
 var FilterView = require( './../scenes-selection-filter/scenes-selection-filter-v' )
 

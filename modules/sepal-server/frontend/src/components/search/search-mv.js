@@ -1,8 +1,6 @@
 /**
  * @author Mino Togna
  */
-require( './search.css' )
-
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var Loader   = require( '../loader/loader' )
