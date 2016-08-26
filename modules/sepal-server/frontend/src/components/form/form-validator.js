@@ -60,7 +60,39 @@ var validatePassword = function ( field, errorMessage, errorMessageContainer ) {
 
 var resetFormErrors = function ( form, errorMessageContainer ) {
     form.find( '.form-group' ).removeClass( 'error' )
-    errorMessageContainer.velocitySlideUp( { delay: 0, duration: 0 } )
+    if ( !errorMessageContainer ) {
+        errorMessageContainer = form.find( '.form-notify' )
+    }
+    if( errorMessageContainer )
+        errorMessageContainer.velocitySlideUp( { delay: 0, duration: 0 } )
+}
+
+var validateForm = function ( form ) {
+    var errorContainer = form.find( '.form-notify' )
+    
+    resetFormErrors( form, errorContainer )
+    
+    var inputs    = form.find( 'input[type=text], input[type=hidden], input[type=password], textarea' )
+    var validForm = true
+    $.each( inputs, function () {
+        var input    = $( this )
+        // var property = input.attr( 'name' )
+        var type     = input.data( 'type' )
+        var errorMsg = input.data( 'error-message' )
+        if ( type ) {
+            type     = $.capitalize( type )
+            errorMsg = (errorMsg) ? errorMsg : 'Invalid field'
+            
+            var functx = eval( 'validate' + type )
+            if ( functx ) {
+                var validInputField = functx.call( null, input, errorMsg, errorContainer )
+                validForm           = (validInputField) ? validForm : false
+                return validForm
+            }
+        }
+    } )
+    
+    return validForm
 }
 
 module.exports = {
@@ -73,4 +105,5 @@ module.exports = {
     , validateEmail   : validateEmail
     , validatePassword: validatePassword
     , resetFormErrors : resetFormErrors
+    , validateForm    : validateForm
 }

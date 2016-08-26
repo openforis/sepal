@@ -91,7 +91,7 @@
     <!-- =========================== -->
     <!--Invite User Section-->
     <!-- =========================== -->
-    <div class="col-sm-12  p-t-1 invite-user-section">
+    <div class="col-sm-12  p-t-1 overflow-y-auto invite-user-section">
         <div class="row">
             <div class="col-sm-8 col-sm-offset-2">
 
@@ -102,7 +102,8 @@
                     <div class="row form-group m-t-3">
                         <label class="form-label col-sm-4">Name</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" name="name">
+                            <input type="text" class="form-control" name="name"
+                                   data-type="string" data-error-message="Name cannot be empty">
                         </div>
                     </div>
 
@@ -123,22 +124,24 @@
                     <div class="row form-group m-t-1">
                         <label class="form-label col-sm-4">Email</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" name="email">
+                            <input type="text" class="form-control" name="email"
+                                   data-type="email" data-error-message="Invalid email">
                         </div>
                     </div>
 
                     <div class="row form-group m-t-1">
                         <label class="form-label col-sm-4">Organization</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" name="organization">
+                            <input type="text" class="form-control" name="organization"
+                                   data-type="string" data-error-message="Organization cannot be empty">
                         </div>
                     </div>
 
-                    <div class="row form-group m-t-3">
+                    <div class="row form-group m-t-1">
 
                         <div class="col-sm-12 text-align-center form-notify form-error" />
 
-                        <div class="col-sm-12 text-align-center">
+                        <div class="col-sm-12 m-t-1 text-align-center">
                             <button type="button" class="btn btn-base btn-cancel round icon p-y-1 m-r-3">
                                 <i class="fa fa-times-circle" aria-hidden="true"></i>
                                 Cancel
@@ -161,7 +164,7 @@
     <!-- =========================== -->
     <!--Edit User Section-->
     <!-- =========================== -->
-    <div class="col-sm-12  p-t-1 edit-user-section">
+    <div class="col-sm-12  p-t-1 overflow-y-auto edit-user-section">
         <div class="row">
             <div class="col-sm-8 col-sm-offset-2">
 
@@ -173,14 +176,16 @@
                     <div class="row form-group m-t-3">
                         <label class="form-label col-sm-4">Name</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" name="name">
+                            <input type="text" class="form-control" name="name"
+                                   data-type="string" data-error-message="Name cannot be empty">
                         </div>
                     </div>
 
                     <div class="row form-group m-t-1">
                         <label class="form-label col-sm-4">Username</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" name="username">
+                            <input type="text" class="form-control" name="username"
+                                   data-type="string" data-error-message="Username cannot be empty">
                         </div>
                     </div>
 
@@ -194,14 +199,16 @@
                     <div class="row form-group m-t-1">
                         <label class="form-label col-sm-4">Email</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" name="email">
+                            <input type="text" class="form-control" name="email"
+                                   data-type="email" data-error-message="Email is not valid">
                         </div>
                     </div>
 
                     <div class="row form-group m-t-1">
                         <label class="form-label col-sm-4">Organization</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" name="organization">
+                            <input type="text" class="form-control" name="organization"
+                                   data-type="string" data-error-message="Organization cannot be empty">
                         </div>
                     </div>
                     <div class="row form-group m-t-1">
@@ -221,11 +228,11 @@
                         </div>
                     </div>
 
-                    <div class="row form-group m-t-3">
+                    <div class="row form-group m-t-1">
 
                         <div class="col-sm-12 text-align-center form-notify form-error" />
 
-                        <div class="col-sm-12 text-align-center">
+                        <div class="col-sm-12 m-t-1 text-align-center">
                             <button type="button" class="btn btn-base btn-cancel round icon p-y-1 m-r-3">
                                 <i class="fa fa-times-circle" aria-hidden="true"></i>
                                 Cancel
@@ -248,7 +255,7 @@
     <!-- =========================== -->
     <!--Delete User Section-->
     <!-- =========================== -->
-    <div class="col-sm-12  p-t-1 delete-user-section">
+    <div class="col-sm-12  p-t-1 overflow-y-auto delete-user-section">
         <div class="row">
             <div class="col-sm-8 col-sm-offset-2">
 

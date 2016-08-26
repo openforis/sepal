@@ -1,11 +1,14 @@
 /**
  * @author Mino Togna
  */
-var EventBus = require( '../../event/event-bus' )
-var Events   = require( '../../event/events' )
+var EventBus      = require( '../../event/event-bus' )
+var Events        = require( '../../event/events' )
+var FormValidator = require( '../../form/form-validator' )
+var FormUtils     = require( '../../form/form-utils' )
 
 var Container        = null
 var Form             = null
+var FormNotify       = null
 // Form elements
 var BtnStatusActive  = null
 var BtnStatusPending = null
@@ -18,20 +21,31 @@ var init = function ( container ) {
     initForm()
 }
 
+
+var getContainer = function () {
+    return Container
+}
+
+var selectUser = function ( user ) {
+    selectedUser = user
+    updateForm()
+}
+
 var initForm = function () {
-    Form = Container.find( 'form' )
+    Form       = Container.find( 'form' )
+    FormNotify = Form.find( '.form-notify' )
     
     BtnStatusActive  = Form.find( '.btn-status-active' )
     BtnStatusPending = Form.find( '.btn-status-pending' )
     BtnStatusLocked  = Form.find( '.btn-status-locked' )
     
-    Form.submit( function ( e ) {
-        console.log( Form.serialize() )
-        e.preventDefault()
-    } )
+    Form.submit( submitForm )
     
     Form.find( '.btn-cancel' ).click( function ( e ) {
         e.preventDefault()
+    
+        updateForm()
+        
         EventBus.dispatch( Events.SECTION.USERS.SHOW_USERS_LIST )
     } )
     
@@ -48,44 +62,31 @@ var initForm = function () {
     BtnStatusLocked.click( onBtnStatusClick )
 }
 
-var getContainer = function () {
-    return Container
-}
-
-var selectUser = function ( user ) {
-    selectedUser = user
-    updateForm()
-}
-
 var updateForm = function () {
-    var id           = ''
-    var name         = ''
-    var username     = ''
-    var email        = ''
-    var organization = ''
-    var status       = ''
+    FormValidator.resetFormErrors( Form )
+    FormUtils.populateForm( Form, selectedUser )
     
     if ( selectedUser ) {
-        id           = selectedUser.id
-        name         = selectedUser.name
-        username     = selectedUser.username
-        email        = selectedUser.email
-        organization = selectedUser.organization
-        status       = selectedUser.status
+        var status = selectedUser.status
+        
+        Form.find( '.btn-status-' + status ).click()
+        
+        if ( status === 'pending' ) {
+            BtnStatusActive.disable()
+        } else {
+            BtnStatusActive.enable()
+        }
     }
+}
+
+var submitForm = function ( e ) {
+    e.preventDefault()
     
-    Form.find( '[name=id]' ).val( id )
-    Form.find( '[name=name]' ).val( name )
-    Form.find( '[name=username]' ).val( username )
-    // Form.find( '[name=password]' ).val( userDetails.password )
-    Form.find( '[name=email]' ).val( email )
-    Form.find( '[name=organization]' ).val( organization )
-    Form.find( '.btn-status-' + status ).click()
+    var valid = FormValidator.validateForm( Form )
     
-    if ( status === 'pending' ) {
-        BtnStatusActive.disable()
-    } else {
-        BtnStatusActive.enable()
+    if ( valid ) {
+        // submit
+        var data = Form.serialize()
     }
 }
 

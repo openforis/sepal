@@ -4,8 +4,8 @@
 
 require( './users.scss' )
 
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
+// var EventBus      = require( '../event/event-bus' )
+// var Events        = require( '../event/events' )
 
 var template = require( './users.html' )
 var html     = null

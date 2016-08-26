@@ -4,7 +4,7 @@
 var EventBus      = require( '../../event/event-bus' )
 var Events        = require( '../../event/events' )
 var Animation     = require( '../../animation/animation' )
-var FormValidator = require( '../../form-validator/form-validator' )
+var FormValidator = require( '../../form/form-validator' )
 
 var Form       = null
 var FormNotify = null
@@ -43,34 +43,38 @@ var bindEvents = function () {
     Form.submit( function ( e ) {
         e.preventDefault()
         
-        FormValidator.resetFormErrors( Form, FormNotify )
+        // FormValidator.resetFormErrors( Form, FormNotify )
         
-        var params = {
-            url       : '/api/login'
-            , method  : 'POST'
-            , data    : Form.serialize()
-            , error   : null
-            , complete: function ( object, status ) {
-                
-                switch ( status ) {
-                    case 'error' :
-                        
-                        FormValidator.addError( Form.find( 'input' ) )
-                        FormValidator.showError( FormNotify, 'Invalid username or password' )
-                        break
+        var valid = FormValidator.validateForm( Form )
+        if ( valid ) {
+            
+            var params = {
+                url       : '/api/login'
+                , method  : 'POST'
+                , data    : Form.serialize()
+                , error   : null
+                , complete: function ( object, status ) {
                     
-                    case 'success' :
+                    switch ( status ) {
+                        case 'error' :
+                            
+                            FormValidator.addError( Form.find( 'input' ) )
+                            FormValidator.showError( FormNotify, 'Invalid username or password' )
+                            break
                         
-                        var user = object.responseJSON
-                        EventBus.dispatch( Events.APP.USER_LOGGED_IN, this, user )
-                        
-                        break
+                        case 'success' :
+                            
+                            var user = object.responseJSON
+                            EventBus.dispatch( Events.APP.USER_LOGGED_IN, this, user )
+                            
+                            break
+                    }
                 }
+                
             }
             
+            EventBus.dispatch( Events.AJAX.REQUEST, this, params )
         }
-        
-        EventBus.dispatch( Events.AJAX.REQUEST, this, params )
     } )
     
 }

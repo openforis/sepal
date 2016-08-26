@@ -3,7 +3,7 @@
  */
 var EventBus      = require( '../../event/event-bus' )
 var Events        = require( '../../event/events' )
-var FormValidator = require( '../../form-validator/form-validator' )
+var FormValidator = require( '../../form/form-validator' )
 
 var Form       = null
 var FormNotify = null

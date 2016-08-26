@@ -99,21 +99,24 @@
                                                         <label class="form-label" for="user">Username</label>
                                                         <input type="text" class="form-control form-control-lg"
                                                                id="user" name="user" placeholder="Enter your user name"
-                                                               autocomplete="off">
+                                                               autocomplete="off"
+                                                               data-type="string" data-error-message="Invalid username">
                                                     </div>
                                                 </div>
                                                 <div class="col-sm-12 password-section">
                                                     <div class="form-group">
                                                         <label class="form-label" for="password">Password</label>
                                                         <input type="password" class="form-control form-control-lg"
-                                                               id="password" name="password" placeholder="Enter your password">
+                                                               id="password" name="password" placeholder="Enter your password"
+                                                               data-type="password" data-error-message="Invalid password">
                                                     </div>
                                                 </div>
                                                 <div class="col-sm-12 password2-section">
                                                     <div class="form-group">
-                                                        <label class="form-label" for="password2">Re-Password</label>
+                                                        <label class="form-label" for="password2">Repeat Password</label>
                                                         <input type="password" class="form-control form-control-lg"
-                                                               id="password2" name="password2" placeholder="Enter again your password">
+                                                               id="password2" name="password2" placeholder="Confirm your password"
+                                                               data-type="password" data-error-message="Invalid password">
                                                     </div>
                                                 </div>
                                             </div>

@@ -2,8 +2,8 @@
  * @author Mino Togna
  */
 
-var UserDetailsForm    = require( './user-details-form' )
-var ChangePwdForm      = require( './change-pwd-form' )
+var FormUserInfo       = require( './edit-user-info-form' )
+var FormUserPwd        = require( './edit-user-pwd-form' )
 //Buttons
 var BtnChangePwd       = null
 var BtnCancelChangePwd = null
@@ -11,40 +11,40 @@ var BtnCancelChangePwd = null
 // current user
 var User = null
 
-var init = function ( userDetailsForm, changePwdForm ) {
-    UserDetailsForm.init( userDetailsForm )
-    ChangePwdForm.init( changePwdForm )
+var init = function ( editUserInfoForm, editUserPwdForm ) {
+    FormUserInfo.init( editUserInfoForm )
+    FormUserPwd.init( editUserPwdForm )
     
-    changePwdForm.velocitySlideUp( { delay: 0, duration: 0 } )
+    editUserPwdForm.velocitySlideUp( { delay: 0, duration: 0 } )
     
-    BtnChangePwd       = userDetailsForm.find( '.btn-change-pwd' )
-    BtnCancelChangePwd = changePwdForm.find( '.btn-cancel-change-pwd' )
+    BtnChangePwd       = editUserInfoForm.find( '.btn-change-pwd' )
+    BtnCancelChangePwd = editUserPwdForm.find( '.btn-cancel-change-pwd' )
     
     BtnChangePwd.click( function ( e ) {
         e.preventDefault()
         
-        userDetailsForm.velocitySlideUp()
-        changePwdForm.velocitySlideDown()
+        editUserInfoForm.velocitySlideUp()
+        editUserPwdForm.velocitySlideDown()
     } )
     
     BtnCancelChangePwd.click( function ( e ) {
         e.preventDefault()
         
-        ChangePwdForm.reset()
+        FormUserPwd.reset()
         
-        changePwdForm.velocitySlideUp()
-        userDetailsForm.velocitySlideDown()
+        editUserPwdForm.velocitySlideUp()
+        editUserInfoForm.velocitySlideDown()
     } )
     
 }
 
 var setUser = function ( user ) {
     User = user
-    UserDetailsForm.setUserDetails( User )
+    FormUserInfo.setUser( User )
 }
 
 var showEditUserDetailsForm = function () {
-    UserDetailsForm.setUserDetails( User )
+    FormUserInfo.setUser( User )
     BtnCancelChangePwd.click()
 }
 

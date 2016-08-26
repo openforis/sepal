@@ -275,6 +275,11 @@ img {
     overflow: auto;
 }
 
+.overflow-y-auto {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 /* border radius */
 .border-radius-base {
     -webkit-border-top-left-radius: 0;
@@ -517,18 +522,23 @@ img {
 .width10 {
     width: 10% !important;
 }
+
 .width15 {
     width: 10% !important;
 }
+
 .width20 {
     width: 20% !important;
 }
+
 .width50 {
     width: 50% !important;
 }
+
 .width60 {
     width: 60% !important;
 }
+
 .width70 {
     width: 70% !important;
 }
@@ -552,36 +562,47 @@ img {
 .height10 {
     height: 10% !important;
 }
+
 .height15 {
     height: 15% !important;
 }
+
 .height20 {
     height: 20% !important;
 }
+
 .height30 {
     height: 30% !important;
 }
+
 .height40 {
     height: 40% !important;
 }
+
 .height50 {
     height: 50% !important;
 }
+
 .height60 {
     height: 60% !important;
 }
+
 .height70 {
     height: 70% !important;
 }
+
 .height75 {
     height: 75% !important;
 }
+
 .height80 {
     height: 80% !important;
 }
+
 .height85 {
     height: 85% !important;
 }
+
 .height90 {
     height: 90% !important;
 }

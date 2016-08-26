@@ -140,8 +140,8 @@
   }
 
   form {
-    overflow-y: auto;
-    overflow-x: hidden;
+    //overflow-y: auto;
+    //overflow-x: hidden;
 
     .form-group:not(:last-child) {
       padding-top: .8rem;
@@ -164,7 +164,7 @@
 
     .form-notify {
       margin: 0 !important;
-      padding-bottom: 1rem;
+      //padding-bottom: 1rem;
     }
   }
 

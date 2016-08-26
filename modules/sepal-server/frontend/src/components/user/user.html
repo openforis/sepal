@@ -10,14 +10,16 @@
                 <div class="row form-group m-t-1">
                     <label class="form-label col-sm-4">Name</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" name="name">
+                        <input type="text" class="form-control" name="name"
+                            data-type="string" data-error-message="Name cannot be empty">
                     </div>
                 </div>
 
                 <div class="row form-group m-t-1">
                     <label class="form-label col-sm-4">Username</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" name="username">
+                        <input type="text" class="form-control" name="username"
+                               data-type="string" data-error-message="Username cannot be empty">
                     </div>
                 </div>
 
@@ -35,14 +37,16 @@
                 <div class="row form-group m-t-1">
                     <label class="form-label col-sm-4">Email</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" name="email">
+                        <input type="text" class="form-control" name="email"
+                               data-type="email" data-error-message="Email is not valid">
                     </div>
                 </div>
 
                 <div class="row form-group m-t-1">
                     <label class="form-label col-sm-4">Organization</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" name="organization">
+                        <input type="text" class="form-control" name="organization"
+                               data-type="string" data-error-message="Organization cannot be empty">
                     </div>
                 </div>
 
@@ -67,21 +71,24 @@
                 <div class="row form-group m-t-1">
                     <label class="form-label col-sm-4">Old password</label>
                     <div class="col-sm-8">
-                        <input type="password" class="form-control" name="old-password">
+                        <input type="password" class="form-control" name="old-password"
+                               data-type="password" data-error-message="Invalid password">
                     </div>
                 </div>
 
                 <div class="row form-group m-t-1">
                     <label class="form-label col-sm-4">New password</label>
                     <div class="col-sm-8">
-                        <input type="password" class="form-control" name="password">
+                        <input type="password" class="form-control" name="password"
+                               data-type="password" data-error-message="Invalid password">
                     </div>
                 </div>
 
                 <div class="row form-group m-t-1">
                     <label class="form-label col-sm-4">Repeat new password</label>
                     <div class="col-sm-8">
-                        <input type="password" class="form-control" name="password2">
+                        <input type="password" class="form-control" name="password2"
+                               data-type="password" data-error-message="Invalid password">
                     </div>
                 </div>
 
