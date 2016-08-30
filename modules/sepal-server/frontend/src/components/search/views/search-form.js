@@ -42,7 +42,7 @@ var init = function ( formSelector ) {
                 var cName = selection.value
                 
                 // countryCode = cCode
-                SearchParams.setCountryIso( countryCode )
+                SearchParams.setCountryIso( cCode )
                 EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
                 EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
             }
