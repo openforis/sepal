@@ -15,7 +15,6 @@ var Events   = require( '../event/events' )
 
 var Animation = require( '../animation/animation' )
 
-var template       = require( './app-section.html' )
 var html           = null
 // ui elements
 var section        = null
@@ -25,6 +24,7 @@ var closeBtn       = null
 var currentSection = null
 
 var init = function () {
+    var template       = require( './app-section.html' )
     html = $( template( {} ) )
     
     EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )

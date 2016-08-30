@@ -33,20 +33,19 @@ $.ajaxSetup( {
     , type: "GET"
     
     , error: function ( xhr, ajaxOptions, thrownError ) {
+        EventBus.dispatch( Events.APP.DESTROY )
         Loader.hide()
-        switch ( xhr.status ) {
-            
-            case 401 :
-                console.debug( "no access" )
-                EventBus.dispatch( Events.APP.DESTROY )
-                // EventBus.dispatch( Events.LOGIN.SHOW )
-                break;
-            
-            default :
-                EventBus.dispatch( Events.APP.DESTROY )
-                // EventBus.dispatch( Events.LOGIN.SHOW )
-                console.debug( 'Error on javascript call', arguments )
-        }
+        // switch ( xhr.status ) {
+        //
+        //     case 401 :
+        //         console.debug( "no access" )
+        //         EventBus.dispatch( Events.APP.DESTROY )
+        //         break;
+        //
+        //     default :
+        //         EventBus.dispatch( Events.APP.DESTROY )
+        //         console.debug( 'Error on javascript call', arguments )
+        // }
     }
     
 } )

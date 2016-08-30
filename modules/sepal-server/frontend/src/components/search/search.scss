@@ -1,8 +1,14 @@
-#search-form .form-label {
-    padding-bottom: 35px;
-    border-bottom: 1px dotted rgba(255, 255, 255, .3);
-}
+#search-form {
+    .form-label {
+        padding-bottom: 35px;
+        border-bottom: 1px dotted rgba(255, 255, 255, .3);
+    }
 
-#search-form button > i {
-    font-size: 1.2rem;
+    .form-label-btn-draw-polygon {
+        border-bottom: none;
+    }
+
+    button > i {
+        font-size: 1.2rem;
+    }
 }

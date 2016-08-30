@@ -5,7 +5,8 @@ var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var Loader   = require( '../loader/loader' )
 
-var View = require( './search-v' )
+var View         = require( './search-v' )
+var SearchParams = require( '../search/search-params' )
 
 require( './../scenes-selection/scenes-selection-mv' )
 require( '../search-retrieve/search-retrieve-mv' )
@@ -19,7 +20,8 @@ var show = function ( e, type ) {
 
 var requestSceneAreas = function () {
     
-    var data = { countryIso: View.Form.countryCode() }
+    var data = {}
+    SearchParams.addAoiRequestParameter( data )
     
     var params = {
         url         : '/api/data/sceneareas'

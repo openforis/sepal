@@ -4,6 +4,7 @@
 
 var EventBus      = require( '../../event/event-bus' )
 var Events        = require( '../../event/events' )
+var SearchParams  = require( '../search-params' )
 var FormValidator = require( '../../form/form-validator' )
 var DatePicker    = require( '../../date-picker/date-picker' )
 var countries     = require( './../data/countries.js' )
@@ -12,17 +13,21 @@ var moment        = require( 'moment' )
 require( 'devbridge-autocomplete' )
 
 // form ui components
-var form         = null
-var formNotify   = null
+var form           = null
+var formNotify     = null
 //
-var fieldCountry = null
-var countryCode  = null
-var targetDate   = null
+var fieldCountry   = null
+// var countryCode    = null
+var btnDrawPolygon = null
+// var polygonAoi     = null
+var targetDate     = null
 
 var init = function ( formSelector ) {
-    countryCode = null
-    form        = $( formSelector )
-    formNotify  = form.find( '.form-notify' )
+    SearchParams.init()
+    
+    // countryIso = null
+    form       = $( formSelector )
+    formNotify = form.find( '.form-notify' )
     
     fieldCountry = form.find( '#search-form-country' )
     fieldCountry.autocomplete( {
@@ -36,15 +41,27 @@ var init = function ( formSelector ) {
                 var cCode = selection.data
                 var cName = selection.value
                 
-                countryCode = cCode
+                // countryCode = cCode
+                SearchParams.setCountryIso( countryCode )
                 EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
+                EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
             }
         }, onInvalidateSelection   : function () {
-            countryCode = null
+            SearchParams.setCountryIso( null )
         }
     } )
     
+    btnDrawPolygon = form.find( '.btn-draw-polygon' )
+    btnDrawPolygon.click( function ( e ) {
+        e.preventDefault()
+        EventBus.dispatch( Events.SECTION.REDUCE )
+        EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
+        EventBus.dispatch( Events.MAP.POLYGON_DRAW )
+    } )
+    
     targetDate = DatePicker.newInstance( form.find( '.target-date' ) )
+    SearchParams.setTargetDate( targetDate )
+    
     var now    = moment( new Date() )
     setTimeout( function () {
         targetDate.select( 'year', now.format( 'YYYY' ) )
@@ -63,9 +80,9 @@ var submit = function ( e ) {
     
     var valid    = true
     var errorMsg = ''
-    if ( $.isEmptyString( countryCode ) ) {
+    if ( !SearchParams.hasValidAoi() ) {
         valid    = false
-        errorMsg = 'Please select a valid COUNTRY'
+        errorMsg = 'Please select a valid COUNTRY or DRAW A POLYGON'
         
         FormValidator.addError( fieldCountry )
     } else if ( !targetDate.asMoment().isValid() ) {
@@ -85,13 +102,32 @@ var find = function ( selector ) {
     return form.find( selector )
 }
 
+var polygonDrawn = function ( e, polygon ) {
+    SearchParams.setPolygon( polygon )
+    
+    btnDrawPolygon.addClass( 'active' )
+    
+    fieldCountry.val( null )
+}
+
+var polygonClear = function ( e ) {
+    SearchParams.setPolygon( null )
+    btnDrawPolygon.removeClass( 'active' )
+}
+
 module.exports = {
     init         : init
-    , countryCode: function () {
-        return countryCode
-    }
-    , targetDate : function () {
-        return targetDate
-    }
+    // , params : function (  ) {
+    //     return SearchParams
+    // }
+    // , countryCode: function () {
+    //     return countryIso
+    // }
+    // , targetDate : function () {
+    //     return targetDate
+    // }
     , find       : find
 }
+
+EventBus.addEventListener( Events.MAP.POLYGON_DRAWN, polygonDrawn )
+EventBus.addEventListener( Events.MAP.POLYGON_CLEAR, polygonClear )

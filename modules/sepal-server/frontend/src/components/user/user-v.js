@@ -6,11 +6,11 @@ require( './user.scss' )
 var EditUserInfo      = require( './views/edit-user-info' )
 var UserSandboxReport = require( './views/sandbox-report' )
 
-var template = require( './user.html' )
-var html     = null
+var html = null
 
 var init = function () {
-    html = $( template( {} ) )
+    var template = require( './user.html' )
+    html         = $( template( {} ) )
     
     var appSection = $( '#app-section' ).find( '.user' )
     if ( appSection.children().length <= 0 ) {

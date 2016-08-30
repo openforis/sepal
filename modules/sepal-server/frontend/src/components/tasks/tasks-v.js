@@ -10,15 +10,16 @@ var Animation = require( '../animation/animation' )
 var Model     = require( './tasks-m' )
 
 // html
-var template = require( './tasks.html' )
-var html     = null
+var html = null
 
 var rowTask   = null
 var rowHeader = null
 var container = null
 
 var init = function () {
-    html     = $( template( {} ) )
+    var template = require( './tasks.html' )
+    html         = $( template( {} ) )
+    
     rowTask   = html.find( '.task' )
     rowHeader = html.find( '.row.row-header' )
     container = html.find( '.tasks-container' )
@@ -61,13 +62,13 @@ var setTasks = function ( tasks ) {
                 btnCancel.show()
                 btnExecute.hide()
                 // btnExecute.prop( "disabled", true )
-    
+                
                 break
             case Model.STATUS.CANCELED:
                 btnRemove.show()
                 btnCancel.hide()
                 btnExecute.show()
-
+                
                 break
             case Model.STATUS.FAILED:
                 // taskLoader.hide()
@@ -126,7 +127,7 @@ var getTaskUI = function ( index, task ) {
 
 var removeTask = function ( taskId ) {
     var taskUI = container.find( '.task-' + taskId )
-    Animation.animateOut( taskUI , function (  ) {
+    Animation.animateOut( taskUI, function () {
         taskUI.remove()
     } )
 }

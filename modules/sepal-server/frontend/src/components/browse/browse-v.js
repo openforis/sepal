@@ -10,15 +10,15 @@ var Loader   = require( '../loader/loader' )
 var Model    = require( './browse-m' )
 
 // html
-var template         = require( './browse.html' )
-var html             = null
+var html = null
 
 var browseContentRow = null
 var downloadBtn      = null
 var lastAbsPathClick = null
 
 var init = function () {
-    html = $( template( {} ) )
+    var template = require( './browse.html' )
+    html         = $( template( {} ) )
     
     var appSection = $( '#app-section' ).find( '.browse' )
     if ( appSection.children().length <= 0 ) {

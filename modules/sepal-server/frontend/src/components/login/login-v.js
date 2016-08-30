@@ -10,11 +10,11 @@ var BgStars       = require( './views/bg-stars' )
 //
 var BtnForgotPwd  = null
 
-var template = require( './login.html' )
-var html     = null
+var html = null
 
 var show = function ( invitation ) {
-    html = $( template( {} ) )
+    var template = require( './login.html' )
+    html         = $( template( {} ) )
     $( "body" ).find( '.app' ).append( html )
     
     FormLogin.init( html.find( '#formLogin' ) )
@@ -38,7 +38,9 @@ var show = function ( invitation ) {
 }
 
 var hide = function () {
-    html.remove()
+    if( html ){
+        html.remove()
+    }
 }
 
 module.exports = {

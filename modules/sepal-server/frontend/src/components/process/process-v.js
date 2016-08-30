@@ -6,8 +6,7 @@ require( './process.scss' )
 var UserMV = require( '../user/user-mv' )
 // var EventBus = require( '../event/event-bus' )
 // var Events   = require( '../event/events' )
-var template = require( './process.html' )
-var html     = null
+var html = null
 
 var rStudioImg = require( './img/r-studio.png' )
 
@@ -15,7 +14,8 @@ var rStudioImg = require( './img/r-studio.png' )
 ///user/$USER/rstudio-server/
 var apps = null
 var init = function () {
-    html = $( template( {} ) )
+    var template = require( './process.html' )
+    html         = $( template( {} ) )
     
     var appSection = $( '#app-section' ).find( '.process' )
     if ( appSection.children().length <= 0 ) {

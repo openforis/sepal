@@ -1,24 +1,25 @@
 /**
  * @author Mino Togna
  */
-require( './map.css' )
+require( './map.scss' )
 require( 'd3' )
 
-var EventBus         = require( '../event/event-bus' )
-var Events           = require( '../event/events' )
-var GoogleMapsLoader = require( 'google-maps' )
+var EventBus               = require( '../event/event-bus' )
+var Events                 = require( '../event/events' )
+var GoogleMapsLoader       = require( 'google-maps' )
+GoogleMapsLoader.LIBRARIES = [ 'drawing' ]
 // GoogleMapsLoader.KEY = 'qwertyuiopasdfghjklzxcvbnm'
 
 var Sepal = require( '../main/sepal' )
 // additional map components
 require( './scene-areas' )
 require( './ee-map-layer' )
+require( './polygon-draw' )
 
 // html template
-var template = require( './map.html' )
 var html     = null
 // google map style
-var mapStyle = require( './map-style.js' )
+var mapStyle = require( './data/map-style.js' )
 
 // instance variables
 var map = null
@@ -29,7 +30,8 @@ var FT_TableID = "15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F"
 var aoiLayer = null
 
 var show = function () {
-    html = $( template( {} ) )
+    var template = require( './map.html' )
+    html         = $( template( {} ) )
     EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
     
     $( '.app' ).append( html )
@@ -84,13 +86,11 @@ var zoomTo = function ( e, address ) {
                     },
                     styles             : [ {
                         polygonOptions: {
-                            // fillColor: "#fff7b5",
                             fillColor    : "#FBFAF2",
                             fillOpacity  : 0.07,
+                            strokeColor  : '#FBFAF2',
                             strokeOpacity: 0.15,
-                            strokeWeight : 1,
-                            // strokeColor: '#fff7b5'
-                            strokeColor  : '#FBFAF2'
+                            strokeWeight : 1
                         }
                     } ]
                 }
@@ -156,17 +156,24 @@ var onAppShow = function ( e, type ) {
     }
 }
 
-var onAppReduce = function ( e, type ) {
+var onAppReduce   = function ( e, type ) {
     if ( aoiLayer ) {
         setTimeout( function () {
             aoiLayer.setMap( map )
         }, 500 )
     }
 }
+var clearAoiLayer = function ( e ) {
+    if ( aoiLayer ) {
+        aoiLayer.setMap( null )
+        aoiLayer = null
+    }
+}
 
 EventBus.addEventListener( Events.APP.LOAD, show )
 EventBus.addEventListener( Events.MAP.ZOOM_TO, zoomTo )
 EventBus.addEventListener( Events.MAP.ADD_LAYER, addLayer )
+EventBus.addEventListener( Events.MAP.POLYGON_DRAWN, clearAoiLayer )
 
 EventBus.addEventListener( Events.MAP.ADD_OVERLAY_MAP_TYPE, addOverlayMapType )
 EventBus.addEventListener( Events.MAP.REMOVE_OVERLAY_MAP_TYPE, removeOverlayMapType )

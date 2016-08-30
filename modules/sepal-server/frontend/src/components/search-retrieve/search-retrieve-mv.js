@@ -8,14 +8,15 @@ var Loader           = require( '../loader/loader' )
 var View             = require( './search-retrieve-v' )
 var Model            = require( './search-retrieve-m' )
 var SceneAreaModel   = require( '../scenes-selection/scenes-selection-m' )
-var ScenesFilterView = require( '../search-retrieve/scenes-autoselection-form-v' )
-var SearchForm       = require( '../search/views/search-form' )
+// var ScenesFilterView = require( '../search-retrieve/scenes-autoselection-form-v' )
+// var SearchForm       = require( '../search/views/search-form' )
+var SearchParams     = require( '../search/search-params' )
 var Filter           = require( './../scenes-selection-filter/scenes-selection-filter-m' )
 
 var show     = false
 var appShown = true
 
-var init = function (  ) {
+var init = function () {
     show     = false
     appShown = true
     
@@ -37,7 +38,8 @@ var appReduce = function ( e, section ) {
 
 var getRequestData = function () {
     var data        = {}
-    data.countryIso = SearchForm.countryCode()
+    // data.countryIso = SearchForm.countryCode()
+    SearchParams.addAoiRequestParameter( data )
     
     var scenes = []
     // console.log( "request data: ", SceneAreaModel )
@@ -81,7 +83,7 @@ var retrieveMosaic = function () {
 var sceneAreasLoaded = function ( e, sceneAreas ) {
     show = true
     // if ( appShown == false ) {
-        // appReduce()
+    // appReduce()
     // }
     View.reset()
     
@@ -92,7 +94,7 @@ var sceneAreasLoaded = function ( e, sceneAreas ) {
 
 var bestScenes = function ( e ) {
     var DATE_FORMAT = "YYYY-MM-DD"
-    var targetDate  = SearchForm.targetDate().asMoment()
+    var targetDate  = SearchParams.getTargetDate().asMoment()
     
     var data = {
         fromDate               : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
@@ -132,15 +134,16 @@ var bestScenes = function ( e ) {
 
 var previewMosaic = function ( e, bands ) {
     
-    var targetDate = SearchForm.targetDate().asMoment()
+    var targetDate = SearchParams.getTargetDate().asMoment()
     var data       = {
-        countryIso             : SearchForm.countryCode()
-        , targetDayOfYear      : targetDate.format( "DDD" )
+        // countryIso             : SearchForm.countryCode()
+        targetDayOfYear      : targetDate.format( "DDD" )
         , targetDayOfYearWeight: 0.5
         // , targetDayOfYearWeight: Filter.getSortWeight()
         , bands                : bands
         , sceneIds             : SceneAreaModel.getSelectedSceneIds().join( ',' )
     }
+    SearchParams.addAoiRequestParameter( data )
     
     var params = {
         url         : '/api/data/mosaic/preview-scenes'
@@ -191,5 +194,6 @@ EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, previe
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, sceneAreasLoaded )
 EventBus.addEventListener( Events.MODEL.SCENE_AREA.CHANGE, onSceneAreaChange )
 
+//map events
 EventBus.addEventListener( Events.MAP.ADD_EE_LAYER, onAddEELayer )
 EventBus.addEventListener( Events.MAP.REMOVE_EE_LAYER, onRemoveEELayer )

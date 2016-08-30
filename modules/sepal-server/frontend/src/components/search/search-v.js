@@ -7,14 +7,14 @@ var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
 // html
-var template = require( './search.html' )
-var html     = null
+var html    = null
 // ui components
-var section  = null
-var Form     = require( './views/search-form' )
+var section = null
+var Form    = require( './views/search-form' )
 
 var init = function () {
-    html = $( template( {} ) )
+    var template = require( './search.html' )
+    html         = $( template( {} ) )
     
     var appSection = $( '#app-section' ).find( '.search' )
     if ( appSection.children().length <= 0 ) {

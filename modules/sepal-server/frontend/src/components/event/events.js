@@ -102,6 +102,9 @@ var Events = {
         , SCENE_AREA_TOGGLE_VISIBILITY: 'map.scene-area-toggle-visibility'
         , ADD_OVERLAY_MAP_TYPE        : 'map.add-overlay-map-type'
         , REMOVE_OVERLAY_MAP_TYPE     : 'map.remove-overlay-map-type'
+        , POLYGON_DRAW                : 'map.polygon-draw'
+        , POLYGON_DRAWN               : 'map.polygon-drawn'
+        , POLYGON_CLEAR               : 'map.polygon-clear'
     }
     
     // events that occur when a model changes

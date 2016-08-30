@@ -10,14 +10,15 @@ require( './gateone' )
 require( './gateone.css' )
 
 // html
-var template = require( './terminal.html' )
-var html     = null
+var html = null
 
 // gateOne terminal Id
 var terminalId = null
 
 var init = function () {
-    html           = $( template( {} ) )
+    var template = require( './terminal.html' )
+    html         = $( template( {} ) )
+    
     var appSection = $( '#app-section' ).find( '.terminal' )
     if ( appSection.children().length <= 0 ) {
         appSection.append( html )

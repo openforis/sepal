@@ -7,18 +7,26 @@ var EventBus  = require( '../event/event-bus' )
 var Events    = require( '../event/events' )
 var Animation = require( '../animation/animation' )
 
-var template = require( './nav-menu.html' )
-var html     = $( template( {} ) )
-
-var btnSearch   = html.find( 'a.bg-search' )
-var btnBrowse   = html.find( 'a.bg-browse' )
-var btnProcess  = html.find( 'a.bg-process' )
-var btnTerminal = html.find( 'a.bg-terminal' )
-var btnUser     = html.find( 'a.user' )
-var btnUsers    = html.find( 'a.users' )
-var btnTasks    = html.find( 'a.tasks' )
+var html        = null
+// ui components
+var btnSearch   = null
+var btnBrowse   = null
+var btnProcess  = null
+var btnTerminal = null
+var btnUser     = null
+var btnUsers    = null
+var btnTasks    = null
 
 var show = function () {
+    var template = require( './nav-menu.html' )
+    html         = $( template( {} ) )
+    btnSearch    = html.find( 'a.bg-search' )
+    btnBrowse    = html.find( 'a.bg-browse' )
+    btnProcess   = html.find( 'a.bg-process' )
+    btnTerminal  = html.find( 'a.bg-terminal' )
+    btnUser      = html.find( 'a.user' )
+    btnUsers     = html.find( 'a.users' )
+    btnTasks     = html.find( 'a.tasks' )
     EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
     
     $( '.app' ).append( html )

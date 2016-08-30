@@ -6,13 +6,13 @@ require( './footer.scss' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
-var template = require( './footer.html' )
-var html     = null
+var html = null
 
 var Logo = null
 
 var init = function () {
-    html = $( template( {} ) )
+    var template = require( './footer.html' )
+    html         = $( template( {} ) )
     EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
     
     var footer = $( '.app' ).find( 'footer' )
