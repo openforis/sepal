@@ -26,7 +26,7 @@
     display: none;
     padding: 5px 5px;
     position: absolute;
-    top: 2.3rem;
+    top: 2.5rem;
     background-color: rgba(226, 210, 210, 0.06);
     border-radius: 15px;
 }
@@ -41,7 +41,8 @@
     height: 2.5rem;
     width: 2.5rem;
     float: left;
-    margin-right: 8px;
+    /*margin-right: 8px;*/
+    margin: 0 4px;
 }
 
 .date-picker .buttons .inner a {
