@@ -11,4 +11,12 @@
     button > i {
         font-size: 1.2rem;
     }
+
+    button.btn-draw-polygon {
+        i {
+            position: absolute;
+            left: 1rem;
+            top: .35rem;
+        }
+    }
 }
