@@ -41,10 +41,10 @@ var init = function ( formSelector ) {
                 var cCode = selection.data
                 var cName = selection.value
                 
-                // countryCode = cCode
-                SearchParams.setCountryIso( cCode )
-                EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
                 EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
+                EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
+                
+                SearchParams.setCountryIso( cCode )
             }
         }, onInvalidateSelection   : function () {
             SearchParams.setCountryIso( null )
