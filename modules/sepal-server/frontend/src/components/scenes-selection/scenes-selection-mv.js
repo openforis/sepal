@@ -71,7 +71,9 @@ var updateView     = function () {
             }
             
             View.reset( Model.getSceneAreaId() )
-            interval = setInterval( addScene, 75 )
+            if( sceneAreaImages.length >0 ){
+                interval = setInterval( addScene, 75 )
+            }
         }
         
     }
@@ -93,7 +95,7 @@ var deselectImage = function ( e, sceneAreaId, sceneImage ) {
 
 var loadSceneImages = function ( e, sceneAreaId, showAppSection ) {
     var DATE_FORMAT = "YYYY-MM-DD"
-    var targetDate  = SearchParams.getTargetDate().asMoment()
+    var targetDate  = SearchParams.targetDate.asMoment()
     
     var data = {
         fromDate         : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )

@@ -44,12 +44,14 @@ var enable = function ( e ) {
 }
 
 var toGeoJSONString = function () {
-    var string = []
+    var array = []
     polygon.getPath().forEach( function ( a ) {
-        string.push( [ a.lng(), a.lat() ] )
+        array.push( [ a.lng(), a.lat() ] )
     } )
-    string.push( polygon[ 0 ] )
-    return JSON.stringify( string )
+    array.push( array[ 0 ] )
+    
+    var string = JSON.stringify( array )
+    return string
 }
 
 var disable = function () {

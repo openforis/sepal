@@ -43,11 +43,11 @@ var show = function () {
             maxZoom           : 11,
             center            : new google.maps.LatLng( 16.7794913, 9.6771556 ),
             mapTypeId         : google.maps.MapTypeId.ROADMAP,
-            zoomControl       : true,
-            zoomControlOptions: {
-                position: google.maps.ControlPosition.RIGHT_CENTER
-                , style : google.maps.ZoomControlStyle.LARGE
-            },
+            zoomControl       : false,
+            // zoomControlOptions: {
+            //     position: google.maps.ControlPosition.BOTTOM_CENTER
+            //     , style : google.maps.ZoomControlStyle.LARGE
+            // },
             mapTypeControl    : false,
             scaleControl      : false,
             streetViewControl : false,

@@ -4,28 +4,18 @@
 
 require( './search-retrieve.scss' )
 
-var EventBus             = require( '../event/event-bus' )
-var Events               = require( '../event/events' )
-var ScenesAutoSelectForm = require( './scenes-autoselection-form-v' )
-var MosaicPreviewForm    = require( './mosaic-preview-form' )
+var EventBus = require( '../event/event-bus' )
+var Events   = require( '../event/events' )
 
-// html
-var template = require( './search-retrieve.html' )
-var html     = $( template( {} ) )
+var SectionScenes = require( './views/section-scenes' )
+var SectionMosaic = require( './views/section-mosaic' )
 
-var btnRetrieveScenes = null
-var btnBestScenes     = null
-var btnPreviewMosaic  = null
-var btnRetrieveMosaic = null
-
-var btnHideSceneAreas = null
-var btnHideMosaic     = null
-
-var formBestScenes    = null
-var mosaicPreviewForm = null
+var html = null
 
 var init = function () {
-    var id  = html.attr( 'id' )
+    var template = require( './search-retrieve.html' )
+    html         = $( template( {} ) )
+    var id       = html.attr( 'id' )
     
     EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, id )
     
@@ -34,63 +24,11 @@ var init = function () {
         
         $( '.app' ).append( html )
         
-        // buttons
-        btnBestScenes     = html.find( '.btn-best-scenes' )
-        btnRetrieveScenes = html.find( '.btn-retrieve-scenes' )
-        btnPreviewMosaic  = html.find( '.btn-preview-mosaic' )
-        btnRetrieveMosaic = html.find( '.btn-retrieve-mosaic' )
-        //toggle visibility buttons
-        btnHideSceneAreas = html.find( '.btn-hide-scene-areas' )
-        btnHideMosaic     = html.find( '.btn-hide-mosaic' )
-        // expandable forms
-        formBestScenes    = html.find( '.row-best-scenes-form' )
-        mosaicPreviewForm = html.find( '.row-mosaic-preview' )
+        SectionScenes.init( html )
+        SectionMosaic.init( html )
         
-        ScenesAutoSelectForm.init( html.find( '.scenes-selection-filter' ) )
-        MosaicPreviewForm.init( html.find( '.mosaic-preview' ) )
-        
-        initEventHandlers()
         reset()
     }
-    
-}
-
-var defaultSlideOpts = { delay: 50, duration: 500 }
-
-var initEventHandlers = function () {
-    
-    btnBestScenes.click( function ( e ) {
-        e.preventDefault()
-        mosaicPreviewForm.velocitySlideUp( defaultSlideOpts )
-        formBestScenes.velocitySlideToggle( defaultSlideOpts )
-    } )
-    
-    btnRetrieveScenes.click( function ( e ) {
-        e.preventDefault()
-        EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES )
-    } )
-    
-    btnPreviewMosaic.click( function ( e ) {
-        e.preventDefault()
-        formBestScenes.velocitySlideUp( defaultSlideOpts )
-        mosaicPreviewForm.velocitySlideToggle( defaultSlideOpts )
-    } )
-    btnRetrieveMosaic.click( function ( e ) {
-        e.preventDefault()
-        EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC )
-    } )
-    
-    btnHideSceneAreas.click( function ( e ) {
-        e.preventDefault()
-        btnHideSceneAreas.toggleClass( 'active' )
-        EventBus.dispatch( Events.MAP.SCENE_AREA_TOGGLE_VISIBILITY )
-    } )
-    
-    btnHideMosaic.click( function ( e ) {
-        e.preventDefault()
-        btnHideMosaic.toggleClass( 'active' )
-        EventBus.dispatch( Events.MAP.EE_LAYER_TOGGLE_VISIBILITY )
-    } )
     
 }
 
@@ -110,35 +48,30 @@ var reset = function () {
     disableToggleLayerButtons()
     disableScenesSelectionRequiredButtons()
     
-    btnRetrieveMosaic.disable()
-    
-    formBestScenes.velocitySlideUp( { delay: 0, duration: 0 } )
-    mosaicPreviewForm.velocitySlideUp( { delay: 0, duration: 0 } )
+    SectionScenes.reset()
+    SectionMosaic.reset()
 }
 
 var collapse = function () {
-    formBestScenes.velocitySlideUp( defaultSlideOpts )
-    mosaicPreviewForm.velocitySlideUp( defaultSlideOpts )
+    var defaultSlideOpts = { delay: 50, duration: 500 }
+    SectionScenes.collapse( defaultSlideOpts )
+    SectionMosaic.collapse( defaultSlideOpts )
 }
 
 var enableToggleLayerButtons = function () {
-    btnHideSceneAreas.addClass( 'active' ).enable()
-    btnHideMosaic.addClass( 'active' ).enable()
+    html.find( '.btn-toggle-layer-visibility' ).addClass( 'active' ).enable()
 }
 
 var disableToggleLayerButtons = function () {
-    btnHideSceneAreas.removeClass( 'active' ).disable()
-    btnHideMosaic.removeClass( 'active' ).disable()
+    html.find( '.btn-toggle-layer-visibility' ).removeClass( 'active' ).disable()
 }
 
 var enableScenesSelectionRequiredButtons = function () {
-    btnPreviewMosaic.enable()
-    btnRetrieveScenes.enable()
+    html.find( '.btn-scenes-required' ).enable()
 }
 
 var disableScenesSelectionRequiredButtons = function () {
-    btnPreviewMosaic.disable()
-    btnRetrieveScenes.disable()
+    html.find( '.btn-scenes-required' ).disable()
 }
 
 module.exports = {

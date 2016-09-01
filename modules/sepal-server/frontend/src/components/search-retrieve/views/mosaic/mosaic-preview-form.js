@@ -1,21 +1,24 @@
 /**
  * @author Mino Togna
  */
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
+var EventBus = require( '../../../event/event-bus' )
+var Events   = require( '../../../event/events' )
 
 require( 'devbridge-autocomplete' )
 
-var template = require( './mosaic-preview-form.html' )
-var html     = $( template( {} ) )
+var parentContainer = null
+var template        = require( './mosaic-preview-form.html' )
+var html            = $( template( {} ) )
 
 var formNotify = null
 var btnSubmit  = null
 
 var bands         = require( './bands.js' )
 var selectedBands = null
-var init          = function ( container ) {
-    
+
+var init = function ( parent ) {
+    parentContainer = parent
+    var container   = parentContainer.find( '.mosaic-preview' )
     container.append( html )
     
     formNotify = html.find( '.form-notify' )
@@ -51,6 +54,16 @@ var init          = function ( container ) {
     } )
 }
 
+var hide = function ( options ) {
+    parentContainer.velocitySlideUp( options )
+}
+
+var toggleVisibility = function ( options ) {
+    parentContainer.velocitySlideToggle( options )
+}
+
 module.exports = {
-    init: init
+    init              : init
+    , hide            : hide
+    , toggleVisibility: toggleVisibility
 }

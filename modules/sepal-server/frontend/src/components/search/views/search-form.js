@@ -44,10 +44,10 @@ var init = function ( formSelector ) {
                 EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
                 EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
                 
-                SearchParams.setCountryIso( cCode )
+                setCountryIso( cCode )
             }
         }, onInvalidateSelection   : function () {
-            SearchParams.setCountryIso( null )
+            setCountryIso( null )
         }
     } )
     
@@ -59,10 +59,11 @@ var init = function ( formSelector ) {
         EventBus.dispatch( Events.MAP.POLYGON_DRAW )
     } )
     
-    targetDate = DatePicker.newInstance( form.find( '.target-date' ) )
-    SearchParams.setTargetDate( targetDate )
+    targetDate              = DatePicker.newInstance( form.find( '.target-date' ) )
+    // SearchParams.setTargetDate( targetDate )
+    SearchParams.targetDate = targetDate
     
-    var now    = moment( new Date() )
+    var now = moment( new Date() )
     setTimeout( function () {
         targetDate.select( 'year', now.format( 'YYYY' ) )
         targetDate.select( 'month', now.format( 'MM' ) )
@@ -103,7 +104,7 @@ var find = function ( selector ) {
 }
 
 var polygonDrawn = function ( e, polygon ) {
-    SearchParams.setPolygon( polygon )
+    setPolygon( polygon )
     
     btnDrawPolygon.addClass( 'active' )
     
@@ -111,22 +112,23 @@ var polygonDrawn = function ( e, polygon ) {
 }
 
 var polygonClear = function ( e ) {
-    SearchParams.setPolygon( null )
+    setPolygon( null )
     btnDrawPolygon.removeClass( 'active' )
 }
 
+var setCountryIso = function ( c ) {
+    SearchParams.countryIso = c
+    SearchParams.polygon    = null
+}
+
+var setPolygon = function ( p ) {
+    SearchParams.polygon    = p
+    SearchParams.countryIso = null
+}
+
 module.exports = {
-    init         : init
-    // , params : function (  ) {
-    //     return SearchParams
-    // }
-    // , countryCode: function () {
-    //     return countryIso
-    // }
-    // , targetDate : function () {
-    //     return targetDate
-    // }
-    , find       : find
+    init  : init
+    , find: find
 }
 
 EventBus.addEventListener( Events.MAP.POLYGON_DRAWN, polygonDrawn )

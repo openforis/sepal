@@ -9,21 +9,16 @@ var View     = require( './footer-v' )
 var onAppLoad = function () {
     View.init()
     View.show()
+    
+    showLogo()
 }
 
-var onAppShow = function () {
-    View.show()
-}
-
-var onAppReduce = function () {
-    View.hide()
-}
-
-var onNavMenuLoaded = function () {
-    setTimeout( View.showLogo, 3500 )
+var showLogo = function () {
+    setTimeout( View.showLogo, 1000 )
 }
 
 EventBus.addEventListener( Events.APP.LOAD, onAppLoad )
-EventBus.addEventListener( Events.SECTION.SHOW, onAppShow )
-EventBus.addEventListener( Events.SECTION.REDUCE, onAppReduce )
-EventBus.addEventListener( Events.SECTION.NAV_MENU.LOADED, onNavMenuLoaded )
+// EventBus.addEventListener( Events.SECTION.NAV_MENU.LOADED, showLogo )
+
+EventBus.addEventListener( Events.SECTION.SHOW, View.show )
+EventBus.addEventListener( Events.SECTION.REDUCE, View.hide )

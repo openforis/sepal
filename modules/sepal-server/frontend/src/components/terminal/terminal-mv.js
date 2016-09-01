@@ -2,11 +2,8 @@
 /**
  * @author Mino Togna
  */
-// require( './terminal.css' )
-
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
-var Loader   = require( '../loader/loader' )
 
 var View = require( './terminal-v' )
 

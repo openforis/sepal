@@ -3,17 +3,18 @@
  */
 require( './scenes-autoselection-form.scss' )
 
-var Filter = require( '../scenes-selection-filter/scenes-selection-filter-m' )
+var Filter = require( '../../../scenes-selection-filter/scenes-selection-filter-m' )
 
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
-var Sensors  = require( '../sensors/sensors' )
+var EventBus = require( '../../../event/event-bus' )
+var Events   = require( '../../../event/events' )
+var Sensors  = require( '../../../sensors/sensors' )
 
 var noUiSlider = require( 'nouislider' )
-require( '../nouislider/nouislider.css' )
+require( '../../../nouislider/nouislider.css' )
 
-var template = require( './scenes-autoselection-form.html' )
-var html     = $( template( {} ) )
+var parentContainer = null
+var template        = require( './scenes-autoselection-form.html' )
+var html            = $( template( {} ) )
 
 //UI elements
 var sortSlider              = null
@@ -25,8 +26,9 @@ var btnSubmit               = null
 // form notify
 var formNotify              = null
 
-var init = function ( container ) {
-    
+var init = function ( parent ) {
+    parentContainer = parent
+    var container   = parentContainer.find( '.scenes-selection-filter' )
     container.append( html )
     
     sectionSensors          = html.find( '.sensors' )
@@ -122,12 +124,16 @@ var setSelectedSensors = function ( selectedSensors ) {
 }
 
 var setOffsetToTargetDay = function ( value ) {
-    offsetTargetDayBtnMinus.prop( 'disabled', (value <= 1) )
+    offsetTargetDayBtnMinus.prop( 'disabled', (value <= 0) )
     
-    var textValue = value + ' year'
-    if ( value > 1 ) {
-        textValue += 's'
+    var textValue = ''
+    if ( value == 0 ) {
+        textValue = new Date().getFullYear()
+    } else {
+        textValue = value + ' year'
+        textValue += ( value > 1 ) ? 's' : ''
     }
+    
     html.find( '.offset-target-day' ).html( textValue )
 }
 
@@ -139,11 +145,21 @@ var setSortWeight = function ( sortWeight ) {
     
 }
 
+var hide = function ( options ) {
+    parentContainer.velocitySlideUp( options )
+}
+
+var toggleVisibility = function ( options ) {
+    parentContainer.velocitySlideToggle( options )
+}
+
 module.exports = {
     init                  : init
     , reset               : reset
     , setSortWeight       : setSortWeight
     , setOffsetToTargetDay: setOffsetToTargetDay
     , setSelectedSensors  : setSelectedSensors
+    , hide                : hide
+    , toggleVisibility    : toggleVisibility
     
 }

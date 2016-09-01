@@ -47,9 +47,10 @@
     transition: border-bottom-color 500ms ease-in;
 }
 
-.form-theme .form-group.error input {
-    border-bottom-color: #e81351;
-    background-color: rgba(232, 19, 81, 0.1);
+.form-theme .form-group.error input ,
+.form-theme .form-group.error button {
+    border-bottom-color: #e81351 !important;
+    background-color: rgba(232, 19, 81, 0.1 ) !important;
 
     transition: background-color 800ms ease-out;
     transition: border-bottom-color 500ms ease-in;

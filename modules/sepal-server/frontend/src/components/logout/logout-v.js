@@ -34,11 +34,21 @@ var init = function () {
     
 }
 
-var show = function () {
-    html.velocitySlideDown()
+var shown = false
+var show  = function () {
+    if ( !shown ) {
+        shown = true
+        html.velocitySlideDown( { delay: 1000, duration: 1000 } )
+    }
+}
+
+var hide = function () {
+    shown = false
+    html.velocitySlideUp()
 }
 
 module.exports = {
     init  : init
     , show: show
+    , hide: hide
 }

@@ -2,16 +2,16 @@
  * @author Mino Togna
  */
 
-var EventBus         = require( '../event/event-bus' )
-var Events           = require( '../event/events' )
-var Loader           = require( '../loader/loader' )
-var View             = require( './search-retrieve-v' )
-var Model            = require( './search-retrieve-m' )
-var SceneAreaModel   = require( '../scenes-selection/scenes-selection-m' )
+var EventBus       = require( '../event/event-bus' )
+var Events         = require( '../event/events' )
+var Loader         = require( '../loader/loader' )
+var View           = require( './search-retrieve-v' )
+var Model          = require( './search-retrieve-m' )
+var SceneAreaModel = require( '../scenes-selection/scenes-selection-m' )
 // var ScenesFilterView = require( '../search-retrieve/scenes-autoselection-form-v' )
 // var SearchForm       = require( '../search/views/search-form' )
-var SearchParams     = require( '../search/search-params' )
-var Filter           = require( './../scenes-selection-filter/scenes-selection-filter-m' )
+var SearchParams = require( '../search/search-params' )
+var Filter       = require( './../scenes-selection-filter/scenes-selection-filter-m' )
 
 var show     = false
 var appShown = true
@@ -36,10 +36,12 @@ var appReduce = function ( e, section ) {
     }
 }
 
-var getRequestData = function () {
-    var data        = {}
+var getRequestData = function ( addAoi ) {
+    var data = {}
     // data.countryIso = SearchForm.countryCode()
-    SearchParams.addAoiRequestParameter( data )
+    if ( addAoi !== false ) {
+        SearchParams.addAoiRequestParameter( data )
+    }
     
     var scenes = []
     // console.log( "request data: ", SceneAreaModel )
@@ -53,8 +55,8 @@ var getRequestData = function () {
     return data
 }
 
-var getRequestParams = function ( url ) {
-    var data   = getRequestData()
+var getRequestParams = function ( url, addAoi ) {
+    var data   = getRequestData( addAoi )
     var params = {
         url         : url
         , data      : data
@@ -71,7 +73,7 @@ var getRequestParams = function ( url ) {
 }
 
 var retrieveScenes = function () {
-    var params = getRequestParams( '/api/data/scenes/retrieve' )
+    var params = getRequestParams( '/api/data/scenes/retrieve', false )
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
@@ -94,7 +96,7 @@ var sceneAreasLoaded = function ( e, sceneAreas ) {
 
 var bestScenes = function ( e ) {
     var DATE_FORMAT = "YYYY-MM-DD"
-    var targetDate  = SearchParams.getTargetDate().asMoment()
+    var targetDate  = SearchParams.targetDate.asMoment()
     
     var data = {
         fromDate               : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
@@ -134,10 +136,10 @@ var bestScenes = function ( e ) {
 
 var previewMosaic = function ( e, bands ) {
     
-    var targetDate = SearchParams.getTargetDate().asMoment()
+    var targetDate = SearchParams.targetDate.asMoment()
     var data       = {
         // countryIso             : SearchForm.countryCode()
-        targetDayOfYear      : targetDate.format( "DDD" )
+        targetDayOfYear        : targetDate.format( "DDD" )
         , targetDayOfYearWeight: 0.5
         // , targetDayOfYearWeight: Filter.getSortWeight()
         , bands                : bands
