@@ -4,6 +4,8 @@ import groovy.json.JsonSlurper
 import groovymvc.Controller
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.component.Component
+import org.openforis.sepal.component.datasearch.api.FusionTableShape
+import org.openforis.sepal.component.datasearch.api.Polygon
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.query.UserTasks
@@ -13,6 +15,8 @@ import static org.openforis.sepal.security.Roles.ADMIN
 import static org.openforis.sepal.security.Roles.TASK_EXECUTOR
 
 class TaskEndpoint {
+    private static final FUSION_TABLE = '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F'
+    private static final KEY_COLUMN = 'ISO'
     private final Component component
 
     TaskEndpoint(Component component) {
@@ -57,6 +61,34 @@ class TaskEndpoint {
                 send toJson([status: 'OK'])
             }
 
+            post('/data/mosaic/retrieve') {
+                response.contentType = "application/json"
+                submit(new SubmitTask(
+                        operation: 'google-earth-engine-download',
+                        params: [
+                                name : params.required('name'),
+                                image: [
+                                        type                 : 'preselectedScenesMosaic',
+                                        aoi                  : ((params.polygon as String) ?
+                                                new Polygon(
+                                                        new JsonSlurper().parseText(
+                                                                params.required('polygon', String)
+                                                        ) as List
+                                                ) :
+                                                new FusionTableShape(
+                                                        tableName: FUSION_TABLE,
+                                                        keyColumn: KEY_COLUMN,
+                                                        keyValue: params.required('countryIso', String))).params,
+                                        bands                : params.required('bands', String).split(',')*.trim(),
+                                        targetDayOfYear      : params.required('targetDayOfYear', int),
+                                        targetDayOfYearWeight: params.required('targetDayOfYearWeight', double),
+                                        sceneIds             : params.required('sceneIds', String).split(',')*.trim()
+                                ]
+                        ],
+                        username: currentUser.username
+                ))
+                send toJson([status: 'OK'])
+            }
             post('/tasks/task/{id}/cancel') {
                 submit(new CancelTask(taskId: params.required('id', String), username: currentUser.username))
                 response.status = 204
@@ -102,18 +134,6 @@ class TaskEndpoint {
                 }
                 response.status = 204
             }
-
-            post('/tasks/{operation}') {
-                response.contentType = "application/json"
-                def taskParams = new JsonSlurper().parseText(params.required('params', String)) as Map
-                submit(new SubmitTask(
-                        operation: params.operation,
-                        params: taskParams,
-                        username: currentUser.username
-                ))
-                send toJson([status: 'OK'])
-            }
-
         }
     }
 

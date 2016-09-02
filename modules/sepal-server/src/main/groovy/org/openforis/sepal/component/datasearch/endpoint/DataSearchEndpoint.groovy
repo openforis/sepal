@@ -32,7 +32,14 @@ class DataSearchEndpoint {
 
     void registerWith(Controller controller) {
         controller.with {
-            get('/data/sceneareas') {
+            post('/data/sceneareas') {
+                response.contentType = "application/json"
+                def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(
+                        toAoi(params)))
+                def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
+                send(toJson(data))
+            }
+            get('/data/sceneareas') { // TODO: Remove...
                 response.contentType = "application/json"
                 def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(
                         toAoi(params)))
@@ -40,7 +47,7 @@ class DataSearchEndpoint {
                 send(toJson(data))
             }
 
-            post('/data/mosaic/preview-scenes') {
+            post('/data/mosaic/preview') {
                 response.contentType = "application/json"
                 def sceneIds = params.required('sceneIds', String).split(',')*.trim()
                 def bands = params.required('bands', String).split(',')*.trim()
@@ -49,31 +56,6 @@ class DataSearchEndpoint {
 
                 def mapLayer = geeGateway.preview(new PreselectedScenesMapQuery(
                         sceneIds: sceneIds,
-                        aoi: toAoi(params),
-                        targetDayOfYear: targetDayOfYear,
-                        targetDayOfYearWeight: targetDayOfYearWeight,
-                        bands: bands
-                ))
-
-                send(toJson(
-                        mapId: mapLayer.id,
-                        token: mapLayer.token
-                ))
-            }
-
-            post('/data/mosaic/preview') {
-                response.contentType = "application/json"
-                def fromDate = DateTime.parseDateString(params.required('fromDate', String))
-                def toDate = DateTime.parseDateString(params.required('toDate', String))
-                def sensors = params.required('sensors', String).split(',')*.trim()
-                def targetDayOfYearWeight = params.required('targetDayOfYearWeight', double)
-                def bands = params.required('bands', String).split(',')*.trim()
-                def targetDayOfYear = params.required('targetDayOfYear', int)
-
-                def mapLayer = geeGateway.preview(new AutomaticSceneSelectingMapQuery(
-                        fromDate: fromDate,
-                        toDate: toDate,
-                        sensors: sensors,
                         aoi: toAoi(params),
                         targetDayOfYear: targetDayOfYear,
                         targetDayOfYearWeight: targetDayOfYearWeight,
