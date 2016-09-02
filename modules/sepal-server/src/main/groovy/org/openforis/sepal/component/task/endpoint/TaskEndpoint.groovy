@@ -102,6 +102,18 @@ class TaskEndpoint {
                 }
                 response.status = 204
             }
+
+            post('/tasks/{operation}') {
+                response.contentType = "application/json"
+                def taskParams = new JsonSlurper().parseText(params.required('params', String)) as Map
+                submit(new SubmitTask(
+                        operation: params.operation,
+                        params: taskParams,
+                        username: currentUser.username
+                ))
+                send toJson([status: 'OK'])
+            }
+
         }
     }
 

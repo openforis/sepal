@@ -47,9 +47,10 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                 Tty: true,
                 Cmd: image.runCommand,
                 HostConfig: [
-                        Binds: image.volumes.collect { hostDir, mountedDir ->
+                        Binds  : image.volumes.collect { hostDir, mountedDir ->
                             "$hostDir:$mountedDir"
-                        }
+                        },
+                        "Links": image.links.collect { "$it.key:$it.value" }
                 ],
                 ExposedPorts: image.exposedPorts.collectEntries {
                     ["$it/tcp", [:]]
@@ -62,7 +63,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         withClient(instance) {
             def response = post(
                     path: "containers/create",
-                    query: [name: containerName(instance, image)],
+                    query: [name: image.containerName(instance)],
                     body: request,
                     requestContentType: JSON
             )
@@ -79,7 +80,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         LOG.debug("Starting container from image $image on instance $instance")
         withClient(instance) {
             post(
-                    path: "containers/${containerName(instance, image)}/start",
+                    path: "containers/${image.containerName(instance)}/start",
                     body: request,
                     requestContentType: JSON
             )
@@ -92,7 +93,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         def publishedPorts = image.publishedPorts.keySet().toList()
         withClient(instance) {
             def response = post(
-                    path: "containers/${containerName(instance, image)}/exec",
+                    path: "containers/${image.containerName(instance)}/exec",
                     body: new JsonOutput().toJson([
                             AttachStdin : false,
                             AttachStdout: true,
@@ -111,10 +112,6 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
             LOG.debug("Waiting output:\n${startResponse.data}")
             LOG.debug("Container initialized: Image $image on instance $instance")
         }
-    }
-
-    private String containerName(WorkerInstance instance, Image image) {
-        "worker-${image.name}-${instance.reservation.username}"
     }
 
     private WorkerType workerType(WorkerInstance instance) {
@@ -166,7 +163,7 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         }
     }
 
-    private String toJson(LinkedHashMap<String, Object> map) {
+    private String toJson(Map<String, Object> map) {
         new JsonOutput().toJson(map)
     }
 

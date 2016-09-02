@@ -1,5 +1,6 @@
 package fake.server
 
+import groovy.json.JsonSlurper
 import groovymvc.Controller
 import org.openforis.sepal.taskexecutor.gee.Status
 
@@ -8,37 +9,40 @@ import static org.openforis.sepal.taskexecutor.gee.Status.State.ACTIVE
 
 class GoogleEarthEngineDownloadServer extends TestServer {
     private final statuses = new LinkedList<Status>()
-    private String geeTaskId
+    private final File workingDir
+    private Map image
     private int statusCheckCount
-    private boolean cancelled
+    private boolean canceled
     private File file
 
     GoogleEarthEngineDownloadServer(File workingDir) {
-        file = new File(workingDir, 'some-filename')
+        this.workingDir = workingDir
     }
 
     void register(Controller controller) {
         controller.with {
             post('/download') {
-                this.geeTaskId = params.required('task', String)
+                response.contentType = 'application/json'
+                this.image = new JsonSlurper().parseText(params.required('image', String)) as Map
+                this.file = new File(workingDir, params.required('name', String))
                 if (!statuses)
                     states(ACTIVE)
-                response.status = 204
+                send(UUID.randomUUID().toString())
             }
 
             get('/status') {
-                response.contentType = 'application/json'
+                response.contentType = 'text/plain'
                 params.required('task', String)
                 statusCheckCount++
                 def status = statuses.size() > 1 ? statuses.poll() : statuses.peek()
                 if (status.hasCompleted())
                     file.createNewFile()
-                send(toJson(state: status.state, description: status.message, filename: file.name))
+                send(toJson(state: status.state, description: status.message))
             }
 
             post('/cancel') {
                 params.required('task', String)
-                cancelled = true
+                canceled = true
                 response.status = 204
             }
         }
@@ -50,16 +54,16 @@ class GoogleEarthEngineDownloadServer extends TestServer {
     }
 
 
-    void requestedDownload(geeTaskId) {
-        assert this.geeTaskId == geeTaskId, "Expected a download request for Google Earth Engine task id $geeTaskId " +
-                "to have been made. Actually requested ${this.geeTaskId}"
+    void requestedDownload(image) {
+        assert this.image == image, "Expected a download request for Google Earth Engine task id $image " +
+                "to have been made. Actually requested ${this.image}"
     }
 
     void checkedState(int count) {
         assert statusCheckCount == count
     }
 
-    void cancelled() {
-        assert cancelled
+    void canceled() {
+        assert canceled
     }
 }

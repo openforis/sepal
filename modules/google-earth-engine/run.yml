@@ -17,6 +17,8 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
+    expose:
+    - 5001
     env:
       EE_ACCOUNT_SEPAL_ENV: "{{ google_earth_engine_account }}"
       EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"

@@ -37,6 +37,12 @@
     } )
     
     
+    $( '#sceneAreasForm' ).submit( function ( e ) {
+        e.preventDefault()
+        findSceneAreas()
+    } )
+    
+    
     var shape          = null
     var drawingManager = new google.maps.drawing.DrawingManager( {
         drawingControl       : true,
@@ -71,7 +77,7 @@
             polygon.push( [ a.lng(), a.lat() ] )
         } )
         polygon.push( polygon[ 0 ] )
-        return JSON.stringify( polygon )
+        return polygon
     }
     
     var fromDate = new Date()
@@ -82,50 +88,46 @@
     $( '#target-day-of-year' ).val( dayOfYear() )
     
     function createQuery( mapIndex ) {
-        var iso     = $( '#countries' ).val()
+        var mosaic  = createMosaic( mapIndex )
         var sensors = []
         $( '#sensors' ).find( 'input:checked' ).each( function () {
             sensors.push( $( this ).attr( 'id' ) )
         } )
-        sensors                   = sensors.join( ',' )
-        var fromDate              = fromDatePicker.getDate().getTime()
-        var toDate                = toDatePicker.getDate().getTime()
-        var targetDayOfYear       = $( '#target-day-of-year' ).val()
-        var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
-        var bands                 = $( '#bands' + mapIndex ).val()
-        
-        var query = {
-            fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-            keyColumn            : 'ISO',
-            keyValue             : iso,
-            sensors              : sensors,
-            fromDate             : fromDate,
-            toDate               : toDate,
-            targetDayOfYear      : targetDayOfYear,
-            targetDayOfYearWeight: targetDayOfYearWeight,
-            bands                : bands
-        }
-        if ( shape != null )
-            query.polygon = createPolygon()
-        return query
+        mosaic.sensors  = sensors
+        mosaic.fromDate = fromDatePicker.getDate().getTime()
+        mosaic.toDate   = toDatePicker.getDate().getTime()
+        mosaic.type     = 'automaticSceneSelectingMosaic'
+        return { image: JSON.stringify( mosaic ) }
+    }
+    
+    function findSceneAreas() {
+        var aoi = createAoi()
+        $.getJSON( 'sceneareas', { aoi: JSON.stringify( aoi ) }, function ( data ) {
+            $( '#sceneAreas' ).html( "<pre>" + JSON.stringify( data, null, 2 ) + "</pre>")
+        } )
     }
     
     function preview( mapIndex ) {
         var handler = function ( data ) {
             $( '#response' ).html( JSON.stringify( data ) )
-            var mapId  = data.mapId
-            var token  = data.token
-            var bounds = data.bounds
-            render( mapId, token, bounds, mapIndex )
+            var mapId = data.mapId
+            var token = data.token
+            render( mapId, token, mapIndex )
         }
-        $.getJSON( 'preview', createQuery( mapIndex ), handler )
+        
+        $.post( {
+            url     : 'preview',
+            data    : createQuery( mapIndex ),
+            dataType: 'json',
+            success : handler
+        } )
     }
     
     function exportMosaic() {
         var data  = $( '#sceneIds' ).val() ? createScenesQuery( 1 ) : createQuery( 1 )
         data.name = $( '#exportName' ).val()
         $.post( {
-            url    : 'http://localhost:5002/download',
+            url    : 'download',
             data   : data,
             success: function ( data ) {
                 console.log( "Downloading..." )
@@ -134,40 +136,60 @@
         } )
     }
     
-    function createScenesQuery( mapIndex ) {
-        var iso                   = $( '#countries' ).val()
-        var sceneIds              = $( '#sceneIds' ).val().split( '\n' ).join( ',' )
-        var bands                 = $( '#bands' + mapIndex ).val()
+    function createAoi() {
+        if ( shape != null )
+            return {
+                type: 'polygon',
+                path: createPolygon()
+            }
+        else {
+            var iso = $( '#countries' ).val()
+            return {
+                type     : 'fusionTable',
+                tableName: '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
+                keyColumn: 'ISO',
+                keyValue : iso,
+            }
+        }
+    }
+    
+    function createMosaic( mapIndex ) {
+        var bands                 = $( '#bands' + mapIndex ).val().split( ', ' )
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
         
-        var query = {
-            fusionTable          : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-            keyColumn            : 'ISO',
-            keyValue             : iso,
-            sceneIds             : sceneIds,
+        return {
+            aoi                  : createAoi(),
             targetDayOfYear      : targetDayOfYear,
             targetDayOfYearWeight: targetDayOfYearWeight,
             bands                : bands
+            
         }
-        if ( shape != null )
-            query.polygon = createPolygon()
-        return query
+    }
+    
+    function createScenesQuery( mapIndex ) {
+        var mosaic      = createMosaic( mapIndex )
+        mosaic.sceneIds = $( '#sceneIds' ).val().split( '\n' )
+        mosaic.type     = 'preselectedScenesMosaic'
+        return { image: JSON.stringify( mosaic ) }
     }
     
     function previewScenes( mapIndex ) {
-        var query = createScenesQuery( mapIndex )
-        $.getJSON( 'preview', query,
-            function ( data ) {
-                var mapId  = data.mapId
-                var token  = data.token
-                var bounds = data.bounds
-                render( mapId, token, bounds, mapIndex )
-            } )
+        var handler = function ( data ) {
+            var mapId = data.mapId
+            var token = data.token
+            render( mapId, token, mapIndex )
+        }
         
+        $.post( {
+            url     : 'preview',
+            data    : createScenesQuery( mapIndex ),
+            dataType: 'json',
+            success : handler
+        } )
     }
     
-    function render( mapId, token, bounds, mapIndex ) {
+    function render( mapId, token, mapIndex ) {
         var eeMapOptions = {
             getTileUrl: function ( tile, zoom ) {
                 var baseUrl = 'https://earthengine.googleapis.com/map'
@@ -183,14 +205,6 @@
         var mapType = new google.maps.ImageMapType( eeMapOptions )
         map.overlayMapTypes.clear()
         map.overlayMapTypes.push( mapType )
-        
-        
-        var latLngBounds = new google.maps.LatLngBounds()
-        for ( var i = 0; i < 4; i++ ) {
-            var latLng = bounds[ i ]
-            latLngBounds.extend( new google.maps.LatLng( latLng[ 1 ], latLng[ 0 ] ) )
-        }
-        map.fitBounds( latLngBounds )
     }
     
     function createDatePicker( field, date ) {

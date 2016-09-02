@@ -11,6 +11,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 import static groovy.json.JsonOutput.toJson
+import static groovyx.net.http.ContentType.URLENC
 
 interface TaskProgressMonitor extends Stoppable {
     TaskProgressMonitor start(Collection<TaskExecution> taskExecutions)
@@ -81,8 +82,12 @@ class SepalTaskProgressNotifier {
             def progress = taskExecutions.collectEntries {
                 [(it.taskId): it.progress().message]
             }
+            LOG.info("Progress: $progress")
             if (progress)
-                sepal.post(path: 'tasks/active', query: [progress: toJson(progress)])
+                sepal.post(
+                        path: 'tasks/active',
+                        requestContentType: URLENC,
+                        body: [progress: toJson(progress)])
         } catch (Exception e) {
             LOG.error("Failed to notify $sepal.uri on progress. taskIds: ${taskExecutions.collect { it.taskId }}", e)
         }
@@ -92,7 +97,8 @@ class SepalTaskProgressNotifier {
         try {
             sepal.post(
                     path: "tasks/task/$taskId/state-updated",
-                    query: [
+                    requestContentType: URLENC,
+                    body: [
                             state            : state,
                             statusDescription: message
                     ])

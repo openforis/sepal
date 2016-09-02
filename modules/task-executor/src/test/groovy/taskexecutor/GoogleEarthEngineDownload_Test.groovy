@@ -22,24 +22,31 @@ class GoogleEarthEngineDownload_Test extends Specification {
     def scheduler = new SleepingScheduler(0, TimeUnit.SECONDS)
     def gateway = new HttpGoogleEarthEngineGateway(server.uri)
     def factory = new GoogleEarthEngineDownload.Factory(workingDir, username, scheduler, gateway)
-    def geeTaskId = 'some-gee-task-id'
-    def task = new Task('some-id', 'google-earth-engine-download', [geeTaskId: geeTaskId])
+    def image = [type: 'some-type']
+    def task = new Task('some-id', 'google-earth-engine-download', [name: 'some-filename', image: image])
     TaskExecutor executor
 
     def 'When executing task, gateway is told to download, and returns once gateway status is completed'() {
-        def geeTaskId = 'some-gee-task-id'
         server.states(COMPLETED)
 
         when:
         execute(task)
 
         then:
-        server.requestedDownload(geeTaskId)
+        server.requestedDownload(image)
     }
 
-    def 'Given task without geeTaskId param, when executing task, exception is thrown'() {
+    def 'Given task without image param, when executing task, exception is thrown'() {
         when:
-        execute(new Task('some-id', 'google-earth-engine-download', [:]))
+        execute(new Task('some-id', 'google-earth-engine-download', [name: 'some-name']))
+
+        then:
+        thrown Exception
+    }
+
+    def 'Given task without name param, when executing task, exception is thrown'() {
+        when:
+        execute(new Task('some-id', 'google-earth-engine-download', [image: image]))
 
         then:
         thrown Exception
@@ -75,7 +82,7 @@ class GoogleEarthEngineDownload_Test extends Specification {
         executionThread.join()
 
         then:
-        server.cancelled()
+        server.canceled()
     }
 
     def 'When getting progress, latest progress is returned'() {

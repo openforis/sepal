@@ -18,7 +18,7 @@ class Downloader(object):
             logging.info('Trying to start downloading a pre-existing task:' + task_id)
             return
         logging.info('Downloading ' + task_id)
-        self.statuses[task_id] = {'state': 'ACTIVE', 'description': 'Exporting to Google Drive'}
+        self.statuses[task_id] = {'state': 'ACTIVE', 'description': 'Export to Google Drive pending...'}
         download = Download(
             task_id=task_id,
             credentials=self.credentials,
@@ -27,23 +27,24 @@ class Downloader(object):
         self.downloads[task_id] = download
 
     def status(self, task_id):
+        logging.info('Fetching status of ' + task_id)
         status = self.statuses[task_id]
-        logging.info('Fetching status of ' + task_id + ': ' + status)
         return status
 
     def update_status(self, task_id, status):
         current_state = self.statuses[task_id]['state']
+        state = status['state']
         if current_state == 'ACTIVE':  # Only update state if current state is ACTIVE
             logging.info('Updating status of ' + task_id + ' from ' + current_state + ' to ' + state)
             self.statuses[task_id] = status
         else:
             logging.debug(
                 'Trying to update state of non-active task ' + task_id + ' from ' + current_state + ' to ' + state)
-        if status['state'] != 'ACTIVE':
+        if state != 'ACTIVE':
             del self.downloads[task_id]
 
     def cancel(self, task_id):
-        self.statuses[task_id] = {'state': 'CANCELLED', 'description': 'Download cancelled'}
+        self.statuses[task_id] = {'state': 'CANCELED', 'description': 'Canceled'}
         if task_id in self.downloads:
             logging.info('Cancelling ' + task_id)
             self.downloads[task_id].cancel()

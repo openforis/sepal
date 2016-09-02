@@ -51,7 +51,7 @@ class DataSearchEndpoint {
                         sceneIds: sceneIds,
                         aoi: toAoi(params),
                         targetDayOfYear: targetDayOfYear,
-                        atargetDayOfYearWeight: targetDayOfYearWeight,
+                        targetDayOfYearWeight: targetDayOfYearWeight,
                         bands: bands
                 ))
 
@@ -120,12 +120,13 @@ class DataSearchEndpoint {
 
     private Aoi toAoi(Params params) {
         def polygon = params.polygon as String
-        polygon ?
+        def aoi = polygon ?
                 new Polygon(new JsonSlurper().parseText(polygon) as List) :
                 new FusionTableShape(
                         tableName: FUSION_TABLE,
                         keyColumn: KEY_COLUMN,
                         keyValue: params.required('countryIso', String))
+        return aoi
     }
 
     Map sceneData(SceneMetaData scene, int targetDayOfYear) {

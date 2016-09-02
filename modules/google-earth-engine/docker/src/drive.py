@@ -16,7 +16,7 @@ class DriveDownload(object):
         self.listener = listener
         self.drive = discovery.build('drive', 'v3', http=(credentials.authorize(httplib2.Http())))
         self.running = True
-        self.cancelled = False
+        self.canceled = False
         self.thread = Thread(
             name='Drive_download-' + path,
             target=self._start_download)
@@ -24,7 +24,7 @@ class DriveDownload(object):
 
     def cancel(self):
         logging.debug('Cancelling Google Drive download and removing file: ' + self.path)
-        self.cancelled = True
+        self.canceled = True
         self.stop()
 
     def stop(self):
@@ -48,11 +48,19 @@ class DriveDownload(object):
             done = False
             while self.running and not done:
                 status, done = downloader.next_chunk()
-                if not self.cancelled:
+                if not self.canceled:
                     self.listener.update_status({
                         'state': 'ACTIVE',
                         'description': "Downloaded %d%%." % int(status.progress() * 100)})
-            if done or self.cancelled:
+            if done:
+                self.listener.update_status({
+                    'state': 'COMPLETED',
+                    'description': "Completed"})
+            if self.canceled:
+                self.listener.update_status({
+                    'state': 'CANCELED',
+                    'description': "Canceled"})
+            if done or self.canceled:
                 self._delete(file_id)
         except Exception:
             logger.exception('Download from Google Drive failed. Path: ' + self.path)

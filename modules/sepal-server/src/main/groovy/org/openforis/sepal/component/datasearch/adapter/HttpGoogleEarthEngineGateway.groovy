@@ -6,6 +6,7 @@ import org.openforis.sepal.component.datasearch.Polygon
 import org.openforis.sepal.component.datasearch.SceneArea
 import org.openforis.sepal.component.datasearch.api.*
 
+import static groovy.json.JsonOutput.toJson
 import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.ContentType.URLENC
 
@@ -17,7 +18,11 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
     }
 
     Collection<SceneArea> findSceneAreasInAoi(Aoi aoi) {
-        def response = endpoint.get(path: 'sceneareas', query: aoi.params)
+        def response = endpoint.get(
+                path: 'sceneareas',
+                contentType: JSON,
+                query: [aoi: toJson(aoi.params)]
+        )
         return response.data.collect {
             def polygon = it.polygon.size() == 1 ? it.polygon.first() : it.polygon
             new SceneArea(
@@ -28,18 +33,22 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
     }
 
     MapLayer preview(AutomaticSceneSelectingMapQuery query) {
+        def image = [
+                type                 : 'automaticSceneSelectingMosaic',
+                aoi                  : query.aoi.params,
+                targetDayOfYear      : query.targetDayOfYear,
+                targetDayOfYearWeight: query.targetDayOfYearWeight,
+                bands                : query.bands,
+                sensors              : query.sensors,
+                fromDate             : query.fromDate,
+                toDate               : query.toDate
+
+        ]
         def response = endpoint.post(
                 path: 'preview',
                 requestContentType: URLENC,
                 contentType: JSON,
-                body: [
-                        fromDate             : query.fromDate.time,
-                        toDate               : query.toDate.time,
-                        sensors              : query.sensors.join(','),
-                        targetDayOfYear      : query.targetDayOfYear,
-                        targetDayOfYearWeight: query.targetDayOfYearWeight,
-                        bands                : query.bands.join(',')
-                ] + query.aoi.params)
+                body: [image: toJson(image)])
         return new MapLayer(
                 id: response.data.mapId,
                 token: response.data.token
@@ -47,16 +56,19 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
     }
 
     MapLayer preview(PreselectedScenesMapQuery query) {
+        def image = [
+                type                 : 'preselectedScenesMosaic',
+                aoi                  : query.aoi.params,
+                targetDayOfYear      : query.targetDayOfYear,
+                targetDayOfYearWeight: query.targetDayOfYearWeight,
+                bands                : query.bands,
+                sceneIds             : query.sceneIds
+        ]
         def response = endpoint.post(
                 path: 'preview',
                 requestContentType: URLENC,
                 contentType: JSON,
-                body: [
-                        sceneIds             : query.sceneIds.join(','),
-                        targetDayOfYear      : query.targetDayOfYear,
-                        targetDayOfYearWeight: query.atargetDayOfYearWeight,
-                        bands                : query.bands.join(',')
-                ] + query.aoi.params)
+                body: [image: toJson(image)])
         return new MapLayer(
                 id: response.data.mapId,
                 token: response.data.token

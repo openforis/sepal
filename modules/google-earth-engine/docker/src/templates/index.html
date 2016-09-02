@@ -94,8 +94,8 @@
                     </select>
                 </p>
                 <p>
-                    <label for="exportImage">Export</label><br/>
-                    <input type="checkbox" id="exportImage">
+                    <input id="exportName">
+                    <input type="button" id="exportMosaic" value="Export">
                 </p>
                 <input type="submit" value="Preview">
             </form>
@@ -109,6 +109,15 @@
                 </p>
                 <input type="submit" value="Preview">
             </form>
+
+            <form id="sceneAreasForm">
+                <p>
+                    <strong>SceneAreas:</strong>
+                </p>
+                <input type="submit" value="Scene areas">
+                <div id="sceneAreas"></div>
+            </form>
+
             <h2>Response</h2>
             <div id="response"></div>
         </td>
@@ -119,6 +128,6 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.4.0/pikaday.min.js"></script>
 <script src="https://maps.google.com/maps/api/js?sensor=false&libraries=drawing"></script>
-<script src="/static/script.js"></script>
+<script src="/static/test-gui.js"></script>
 </body>
 </html>

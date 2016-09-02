@@ -27,40 +27,43 @@ final class WorkerTypes {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
             def taskExecutorPublishedPorts = [(1026): 1026]
             def username = instance.reservation.username
-            new WorkerType(TASK_EXECUTOR, [
-                    new Image(
-                            name: 'task-executor',
-                            exposedPorts: [1026],
-                            publishedPorts: taskExecutorPublishedPorts,
-                            volumes: [
-                                    "$config.userHomes/${username}"           : "/home/${username}",
-                                    "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"],
-                            runCommand: [
-                                    '/script/init_container.sh',
-                                    username,
-                                    config.sepalHost,
-                                    config.ldapHost,
-                                    config.ldapPassword,
-                                    config.sepalUser,
-                                    config.sepalPassword
-                            ],
-                            waitCommand: [
-                                    "/script/wait_until_initialized.sh",
-                                    taskExecutorPublishedPorts.values().join(';'),
-                                    username
-                            ]),
-                    new Image(
-                            name: 'google-earth-engine-download',
-                            exposedPorts: [5002],
-                            runCommand: [
-                                    '/script/init_container.sh', username
-                            ],
-                            environment: [
-                                    EE_ACCOUNT_SEPAL_ENV    : config.googleEarthEngineAccount,
-                                    EE_PRIVATE_KEY_SEPAL_ENV: config.googleEarthEnginePrivateKey.replaceAll('\n', '-----LINE BREAK-----')
-                            ],
-                            waitCommand: ["/script/wait_until_initialized.sh"])
-            ])
+            def googleEarthEngine = new Image(
+                    name: 'google-earth-engine',
+                    exposedPorts: [5002],
+                    volumes: [
+                            "$config.userHomes/${username}": "/home/${username}"
+                    ],
+                    runCommand: [
+                            '/script/init_container.sh', username
+                    ],
+                    environment: [
+                            EE_ACCOUNT_SEPAL_ENV    : config.googleEarthEngineAccount,
+                            EE_PRIVATE_KEY_SEPAL_ENV: config.googleEarthEnginePrivateKey.replaceAll('\n', '-----LINE BREAK-----')
+                    ],
+                    waitCommand: ["/script/wait_until_initialized.sh"])
+            def taskExecutor = new Image(
+                    name: 'task-executor',
+                    exposedPorts: [1026],
+                    publishedPorts: taskExecutorPublishedPorts,
+                    links: [(googleEarthEngine.containerName(instance)): 'google-earth-engine'],
+                    volumes: [
+                            "$config.userHomes/${username}"           : "/home/${username}",
+                            "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"],
+                    runCommand: [
+                            '/script/init_container.sh',
+                            username,
+                            config.sepalHost,
+                            config.ldapHost,
+                            config.ldapPassword,
+                            config.sepalUser,
+                            config.sepalPassword
+                    ],
+                    waitCommand: [
+                            "/script/wait_until_initialized.sh",
+                            taskExecutorPublishedPorts.values().join(';'),
+                            username
+                    ])
+            new WorkerType(TASK_EXECUTOR, [googleEarthEngine, taskExecutor])
         }
     }
 
@@ -113,11 +116,15 @@ final class Image {
     List<Integer> exposedPorts = []
     Map<Integer, Integer> publishedPorts = [:]
     Map<String, String> volumes = [:]
+    Map<String, String> links = [:]
 
     Map<String, String> environment = [:]
     List<String> runCommand = []
     List<String> waitCommand = []
 
+    String containerName(WorkerInstance instance) {
+        "worker-${name}-${instance.reservation.username}"
+    }
 }
 
 @ImmutableData

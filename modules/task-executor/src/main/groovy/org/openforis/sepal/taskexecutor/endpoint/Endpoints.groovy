@@ -41,6 +41,12 @@ final class Endpoints extends AbstractMvcFilter {
                 send(toJson([message: it.message, task: it.task]))
             }
 
+            error(Exception) {
+                response?.status = 500
+                response?.setContentType('application/json')
+                send(toJson([message: "Internal Server Error"]))
+            }
+
             get('/healthcheck', [NO_AUTHORIZATION]) {
                 response.setContentType('application/json')
                 send toJson([status: 'OK'])

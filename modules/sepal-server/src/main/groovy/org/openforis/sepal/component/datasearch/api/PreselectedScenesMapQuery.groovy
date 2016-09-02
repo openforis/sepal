@@ -7,6 +7,6 @@ class PreselectedScenesMapQuery {
     List<String> sceneIds
     Aoi aoi
     int targetDayOfYear
-    double atargetDayOfYearWeight
+    double targetDayOfYearWeight
     List<String> bands
 }

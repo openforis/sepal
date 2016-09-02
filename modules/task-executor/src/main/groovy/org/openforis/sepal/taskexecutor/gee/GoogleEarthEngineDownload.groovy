@@ -15,32 +15,39 @@ import static org.openforis.sepal.taskexecutor.gee.Status.State.ACTIVE
 
 class GoogleEarthEngineDownload implements TaskExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private final String geeTaskId
+    private final Task task
+    private final Map image
+    private final String name
     private final File workingDir
     private final String username
     private final Scheduler scheduler
     private final GoogleEarthEngineGateway gateway
     private final status = new AtomicReference<Status>(new Status(state: ACTIVE))
+    private final String geeTaskId
 
     GoogleEarthEngineDownload(Task task, Factory factory) {
-        this.geeTaskId = task.params.geeTaskId
+        this.task = task
+        this.image = task.params.image
+        this.name = task.params.name
         this.workingDir = factory.workingDir
         this.username = factory.username
         this.scheduler = factory.scheduler
         this.gateway = factory.gateway
 
-        if (!this.geeTaskId)
+        geeTaskId = gateway.download(name, image)
+
+        if (!this.image)
             throw new IllegalArgumentException("Expected task parameter geeTaskId")
     }
 
     String getTaskId() {
-        return null
+        return task.id
     }
 
     void execute() {
-        gateway.download(geeTaskId)
         scheduler.schedule {
-            def status = gateway.status(geeTaskId)
+            def status = gateway.status(this.geeTaskId)
+            LOG.info("Status of task $task: $status")
             this.status.set(status)
             if (status.hasFailed())
                 throw new Failed(status.message)
@@ -48,10 +55,10 @@ class GoogleEarthEngineDownload implements TaskExecutor {
         }
         def status = this.status.get()
         if (status.hasCompleted()) {
-            def file = new File(workingDir, status.filename)
+            def file = new File(workingDir, name + '.tif')
             if (!file.exists()) {
                 LOG.error('google-earth-engine-download says it completed successfully, but file is not there: ' + file)
-                throw new Failed(status.message)
+                throw new Failed('Internal Error')
             }
             FileOwner.set(file, username)
         }

@@ -51,6 +51,12 @@ final class Endpoints extends AbstractMvcFilter {
                         command: it.command.class.simpleName
                 ]))
             }
+
+            error(Exception) {
+                response?.status = 500
+                response?.setContentType('application/json')
+                send(toJson([message: "Internal Server Error"]))
+            }
         }
         return controller
     }

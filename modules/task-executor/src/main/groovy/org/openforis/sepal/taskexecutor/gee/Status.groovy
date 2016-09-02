@@ -6,7 +6,6 @@ import org.openforis.sepal.taskexecutor.util.annotation.ImmutableData
 class Status {
     State state
     String message
-    String filename
 
 
     boolean isActive() {

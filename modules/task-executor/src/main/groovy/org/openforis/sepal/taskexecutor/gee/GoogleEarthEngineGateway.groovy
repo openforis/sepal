@@ -2,10 +2,11 @@ package org.openforis.sepal.taskexecutor.gee
 
 import groovyx.net.http.RESTClient
 
-import static groovyx.net.http.ContentType.JSON
+import static groovy.json.JsonOutput.toJson
+import static groovyx.net.http.ContentType.*
 
 interface GoogleEarthEngineGateway {
-    void download(String geeTaskId)
+    String download(String name, Map image)
 
     Status status(String geeTaskId)
 
@@ -13,23 +14,32 @@ interface GoogleEarthEngineGateway {
 }
 
 class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
-
     private final URI uri
 
     HttpGoogleEarthEngineGateway(URI uri) {
         this.uri = uri
     }
 
-    void download(String geeTaskId) {
-        http.post(path: 'download', query: [task: geeTaskId])
+    String download(String name, Map image) {
+        def response = http.post(
+                path: 'download',
+                requestContentType: URLENC,
+                contentType: TEXT,
+                body: [name: name, image: toJson(image)]
+        )
+        def geeTaskId = response.data.text
+        return geeTaskId
     }
 
     Status status(String geeTaskId) {
-        def response = http.get(path: 'status', query: [task: geeTaskId], contentType: JSON)
+        def response = http.get(
+                path: 'status',
+                contentType: JSON,
+                query: [task: geeTaskId]
+        )
         return new Status(
                 state: response.data.state as Status.State,
-                message: response.data.description,
-                filename: response.data.filename)
+                message: response.data.description)
     }
 
     void cancel(String geeTaskId) {

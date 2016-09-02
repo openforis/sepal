@@ -1,0 +1,42 @@
+import logging
+import os
+
+import ee
+from flask import Flask, render_template
+
+import download_server
+import server
+
+modules = [server, download_server]
+app = Flask(__name__)
+
+
+@app.route('/')
+def index():
+    countries = ee.FeatureCollection('ft:15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F') \
+        .filterMetadata('NAME_FAO', 'not_equals', '')
+    isos = countries.sort('NAME_FAO').aggregate_array('ISO').getInfo()
+    names = countries.sort('NAME_FAO').aggregate_array('NAME_FAO').getInfo()
+    countries = zip(isos, names)
+    return render_template('index.html', countries=countries)
+
+
+def init():
+    print 'Init running'
+    for module in modules:
+        app.register_blueprint(module.http)
+        module.init()
+
+
+def destroy():
+    for module in modules:
+        module.destroy()
+
+
+if __name__ == '__main__':
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        init()
+    logging.basicConfig(level=logging.DEBUG)
+    app.run(debug=True, threaded=True, port=5001)
+
+destroy()

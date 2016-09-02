@@ -66,13 +66,17 @@ class EarthEngineStatus(object):
                     'description': state['error_message']}
         elif state in [Task.State.CANCEL_REQUESTED, Task.State.CANCELLED]:
             return {'state': 'CANCELED',
-                    'description': 'Download cancelled'}
+                    'description': 'Canceled'}
         elif state == Task.State.COMPLETED:
             return {'state': 'ACTIVE',
-                    'description': 'Downloading from Google Drive',
+                    'description': 'Downloading from Google Drive...',
                     'step': 'EXPORTED',
                     'path': gee_status['description'] + '.tif'}
+        elif state == Task.State.READY:
+            return {'state': 'ACTIVE',
+                    'description': 'Export to Google Drive pending...',
+                    'step': 'EXPORTING'}
         else:
             return {'state': 'ACTIVE',
-                    'description': 'Exporting to Google Drive',
+                    'description': 'Exporting to Google Drive...',
                     'step': 'EXPORTING'}

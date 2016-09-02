@@ -1,6 +1,5 @@
 package org.openforis.sepal.component.datasearch.api
 
-import groovy.json.JsonOutput
 import org.openforis.sepal.util.annotation.ImmutableData
 
 interface Aoi {
@@ -13,9 +12,10 @@ class FusionTableShape implements Aoi {
     String keyColumn
     String keyValue
 
-    Map<String, String> getParams() {
+    Map getParams() {
         [
-                fusionTable: tableName,
+                type     : 'fusionTable',
+                tableName: tableName,
                 keyColumn: keyColumn,
                 keyValue : keyValue
         ]
@@ -26,7 +26,10 @@ class FusionTableShape implements Aoi {
 class Polygon implements Aoi {
     List<List<Double>> path
 
-    Map<String, String> getParams() {
-        [polygon: JsonOutput.toJson(path)]
+    Map getParams() {
+        [
+                type: 'polygon',
+                path: path
+        ]
     }
 }

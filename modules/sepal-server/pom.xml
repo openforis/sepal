@@ -143,8 +143,6 @@
         </resources>
 
         <plugins>
-
-
             <!-- Create executable jar with all dependencies -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -18,7 +18,6 @@
     - { role: build-module, module: geospatial-toolkit }
     - { role: build-module, module: sandbox }
     - { role: build-module, module: task-executor }
-    - { role: build-module, module: google-earth-engine-download }
     - { role: build-module, module: google-earth-engine }
     - { role: build-module, module: sepal-php }
     - { role: build-module, module: sepal-server }
