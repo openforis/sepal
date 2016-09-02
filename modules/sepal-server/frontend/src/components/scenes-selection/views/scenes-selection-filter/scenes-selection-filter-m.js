@@ -1,6 +1,9 @@
 /**
  * @author Mino Togna
  */
+
+/// DEPRECATED
+
 var availableSensors  = null
 var selectedSensors   = null
 var sortWeight        = 0.5

@@ -2,14 +2,23 @@
  * @author Mino Togna
  */
 
+//search parameters
 this.countryIso = null
-this.polygon    = null
-this.targetDate = null
+this.polygon           = null
+this.targetDate        = null
+// TODO:  search retrieve + scenes selection parameters
+this.offsetToTargetDay = null
+this.sortWeight        = null
+this.sensors           = null
 
-this.init = function () {
-    this.countryIso = null
-    this.polygon    = null
-    this.targetDate = null
+this.reset = function () {
+    this.countryIso        = null
+    this.polygon           = null
+    this.targetDate        = null
+    //
+    this.offsetToTargetDay = 1
+    this.sortWeight        = 0.5
+    this.sensors           = Object.keys( require( '../sensors/sensors' ) )
 }
 
 this.hasValidAoi = function () {
@@ -27,5 +36,30 @@ this.addAoiRequestParameter = function ( data ) {
         
     }
 }
+
+this.addDatesRequestParameters = function ( data ) {
+    var DATE_FORMAT = "YYYY-MM-DD"
+    var date        = this.targetDate.asMoment()
+    
+    if ( this.offsetToTargetDay == 0 ) {
+        data.fromDate = date.clone().month( 0 ).date( 1 ).format( DATE_FORMAT )
+        data.toDate   = date.clone().month( 11 ).date( 31 ).format( DATE_FORMAT )
+    } else {
+        data.fromDate = date.clone().subtract( this.offsetToTargetDay / 2, 'years' ).format( DATE_FORMAT )
+        data.toDate   = date.clone().add( this.offsetToTargetDay / 2, 'years' ).format( DATE_FORMAT )
+    }
+    
+    this.addTargetDayOfYearRequestParameter( data )
+}
+
+this.addTargetDayOfYearRequestParameter = function ( data ) {
+    var date             = this.targetDate.asMoment()
+    data.targetDayOfYear = date.format( "DDD" )
+}
+
+this.isSensorSelected = function ( sensor ) {
+    return this.sensors && this.sensors.indexOf( sensor ) < 0
+}
+
 
 module.exports = this

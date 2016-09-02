@@ -1,6 +1,8 @@
 /**
  * @author Mino Togna
  */
+//TODO REFACTOR
+
 
 var EventBus       = require( '../event/event-bus' )
 var Events         = require( '../event/events' )
@@ -8,10 +10,8 @@ var Loader         = require( '../loader/loader' )
 var View           = require( './search-retrieve-v' )
 var Model          = require( './search-retrieve-m' )
 var SceneAreaModel = require( '../scenes-selection/scenes-selection-m' )
-// var ScenesFilterView = require( '../search-retrieve/scenes-autoselection-form-v' )
-// var SearchForm       = require( '../search/views/search-form' )
-var SearchParams = require( '../search/search-params' )
-var Filter       = require( './../scenes-selection-filter/scenes-selection-filter-m' )
+var SearchParams   = require( '../search/search-params' )
+// var Filter         = require( './../scenes-selection/views/scenes-selection-filter/scenes-selection-filter-m' )
 
 var show     = false
 var appShown = true
@@ -38,7 +38,7 @@ var appReduce = function ( e, section ) {
 
 var getRequestData = function ( addAoi ) {
     var data = {}
-    // data.countryIso = SearchForm.countryCode()
+    
     if ( addAoi !== false ) {
         SearchParams.addAoiRequestParameter( data )
     }
@@ -84,9 +84,6 @@ var retrieveMosaic = function () {
 
 var sceneAreasLoaded = function ( e, sceneAreas ) {
     show = true
-    // if ( appShown == false ) {
-    // appReduce()
-    // }
     View.reset()
     
     EventBus.dispatch( Events.MAP.REMOVE_EE_LAYER )
@@ -95,18 +92,14 @@ var sceneAreasLoaded = function ( e, sceneAreas ) {
 }
 
 var bestScenes = function ( e ) {
-    var DATE_FORMAT = "YYYY-MM-DD"
-    var targetDate  = SearchParams.targetDate.asMoment()
     
     var data = {
-        fromDate               : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
-        , toDate               : targetDate.clone().add( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
-        , targetDayOfYear      : targetDate.format( "DDD" )
-        , targetDayOfYearWeight: Filter.getSortWeight()
-        , cloudCoverTarget     : 0.0001
-        , sensorIds            : Filter.getSelectedSensors().join( ',' )
-        , sceneAreaIds         : Model.getSceneAreaIds().join( ',' )
+        targetDayOfYearWeight: SearchParams.sortWeight //Filter.getSortWeight()
+        , cloudCoverTarget   : 0.0001
+        , sensorIds          : SearchParams.sensors.join( ',' ) //Filter.getSelectedSensors().join( ',' )
+        , sceneAreaIds       : Model.getSceneAreaIds().join( ',' )
     }
+    SearchParams.addDatesRequestParameters( data )
     
     var params = {
         url         : '/api/data/best-scenes'
@@ -136,16 +129,14 @@ var bestScenes = function ( e ) {
 
 var previewMosaic = function ( e, bands ) {
     
-    var targetDate = SearchParams.targetDate.asMoment()
-    var data       = {
-        // countryIso             : SearchForm.countryCode()
-        targetDayOfYear        : targetDate.format( "DDD" )
-        , targetDayOfYearWeight: 0.5
+    var data = {
+        targetDayOfYearWeight: 0.5
         // , targetDayOfYearWeight: Filter.getSortWeight()
-        , bands                : bands
-        , sceneIds             : SceneAreaModel.getSelectedSceneIds().join( ',' )
+        , bands              : bands
+        , sceneIds           : SceneAreaModel.getSelectedSceneIds().join( ',' )
     }
     SearchParams.addAoiRequestParameter( data )
+    SearchParams.addTargetDayOfYearRequestParameter( data )
     
     var params = {
         url         : '/api/data/mosaic/preview-scenes'
@@ -199,3 +190,16 @@ EventBus.addEventListener( Events.MODEL.SCENE_AREA.CHANGE, onSceneAreaChange )
 //map events
 EventBus.addEventListener( Events.MAP.ADD_EE_LAYER, onAddEELayer )
 EventBus.addEventListener( Events.MAP.REMOVE_EE_LAYER, onRemoveEELayer )
+
+// search params changed events
+EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.WEIGHT_CHANGED, function () {
+    View.setSortWeight( SearchParams.sortWeight )
+} )
+
+EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGED, function () {
+    View.setOffsetToTargetDay( SearchParams.offsetToTargetDay )
+} )
+
+EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.SENSORS_CHANGED, function () {
+    View.setSelectedSensors( SearchParams.sensors )
+} )

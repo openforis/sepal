@@ -52,10 +52,15 @@ var collapse = function ( options ) {
 
 var reset = function () {
     collapse( { delay: 0, duration: 0 } )
+    ScenesAutoSelectForm.reset()
 }
 
 module.exports = {
-    init      : init
-    , collapse: collapse
-    , reset   : reset
+    init                  : init
+    , collapse            : collapse
+    , reset               : reset
+    // Scenes auto selection form set value methods
+    , setSortWeight       : ScenesAutoSelectForm.setSortWeight
+    , setOffsetToTargetDay: ScenesAutoSelectForm.setOffsetToTargetDay
+    , setSelectedSensors  : ScenesAutoSelectForm.setSelectedSensors
 }

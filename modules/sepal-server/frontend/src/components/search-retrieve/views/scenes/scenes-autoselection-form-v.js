@@ -3,7 +3,8 @@
  */
 require( './scenes-autoselection-form.scss' )
 
-var Filter = require( '../../../scenes-selection-filter/scenes-selection-filter-m' )
+var SearchParams = require( './../../../search/search-params' )
+// var Filter       = require( '../../../scenes-selection/views/scenes-selection-filter/scenes-selection-filter-m' )
 
 var EventBus = require( '../../../event/event-bus' )
 var Events   = require( '../../../event/events' )
@@ -54,17 +55,20 @@ var init = function ( parent ) {
         sortSlider.noUiSlider.on( 'change', function () {
             var sortWeight = sortSlider.noUiSlider.get()
             setSortWeight( sortWeight )
-            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
+            // EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
+            EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.WEIGHT_CHANGE, null, sortWeight )
         } )
         
     }
     
     // target day
     offsetTargetDayBtnPlus.click( function ( e ) {
-        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, 1 )
+        // EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, 1 )
+        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, null, 1 )
     } )
     offsetTargetDayBtnMinus.click( function ( e ) {
-        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, -1 )
+        // EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, -1 )
+        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, null, -1 )
     } )
     
     // availableSensors
@@ -79,10 +83,12 @@ var init = function ( parent ) {
             e.preventDefault()
             var evt = null
             if ( btn.hasClass( 'active' ) ) {
-                evt = Events.SECTION.SCENES_SELECTION.FILTER_HIDE_SENSOR
+                // evt = Events.SECTION.SCENES_SELECTION.FILTER_HIDE_SENSOR
+                evt = Events.SECTION.SEARCH.SEARCH_PARAMS.DESELECT_SENSOR
                 // btn.removeClass( 'active' )
             } else {
-                evt = Events.SECTION.SCENES_SELECTION.FILTER_SHOW_SENSOR
+                // evt = Events.SECTION.SCENES_SELECTION.FILTER_SHOW_SENSOR
+                evt = evt = Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_SENSOR
                 // btn.addClass( 'active' )
             }
             EventBus.dispatch( evt, null, sensorId )
@@ -95,7 +101,7 @@ var init = function ( parent ) {
         e.preventDefault()
         formNotify.empty().velocitySlideUp( { delay: 0, duration: 100 } )
         
-        if ( Filter.getSelectedSensors().length > 0 ) {
+        if ( SearchParams.sensors.length > 0 ) {
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES )
         } else {
             formNotify.html( 'At least one sensor must be selected' ).velocitySlideDown( { delay: 20, duration: 400 } )
@@ -106,6 +112,7 @@ var init = function ( parent ) {
 }
 
 var reset = function () {
+    formNotify.empty()
     formNotify.velocitySlideUp( { delay: 0, duration: 0 } )
 }
 
@@ -128,7 +135,7 @@ var setOffsetToTargetDay = function ( value ) {
     
     var textValue = ''
     if ( value == 0 ) {
-        textValue = new Date().getFullYear()
+        textValue = SearchParams.targetDate.asMoment().format( 'YYYY' )
     } else {
         textValue = value + ' year'
         textValue += ( value > 1 ) ? 's' : ''
@@ -142,15 +149,25 @@ var setSortWeight = function ( sortWeight ) {
     
     html.find( '.cc-sort' ).html( Math.round( +((1 - sortWeight).toFixed( 2 )) * 100 ) + '%' )
     html.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
-    
 }
 
 var hide = function ( options ) {
     parentContainer.velocitySlideUp( options )
 }
 
+
+var firstShow        = false
 var toggleVisibility = function ( options ) {
     parentContainer.velocitySlideToggle( options )
+    
+    if ( !firstShow ) {
+        setSelectedSensors( SearchParams.sensors )
+        setSortWeight( SearchParams.sortWeight )
+        setOffsetToTargetDay( SearchParams.offsetToTargetDay )
+    
+        firstShow = false
+    }
+    
 }
 
 module.exports = {

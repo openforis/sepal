@@ -67,7 +67,7 @@ var filterTargetDayChange = function ( e, value ) {
 
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, reset )
 
-EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, updateSortWeight )
+EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.WEIGHT_CHANGE, updateSortWeight )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_HIDE_SENSOR, filterHideSensor )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_SHOW_SENSOR, filterShowSensor )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, filterTargetDayChange )

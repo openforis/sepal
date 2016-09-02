@@ -36,8 +36,17 @@ var Events = {
             // SHOW_SCENE_AREA: 'section.search.show-scene-area'
             FORM_SUBMIT         : 'section.search.form-submit'
             , SCENE_AREAS_LOADED: 'section.search.scene-areas-loaded'
-            // , RETRIEVE          : 'section.search.retrieve'
-            // , MOSAIC            : 'section.search.mosaic'
+            
+            , SEARCH_PARAMS: {
+                WEIGHT_CHANGE              : 'section.search.search-params.weight-change'
+                , WEIGHT_CHANGED           : 'section.search.search-params.weight-changed'
+                , OFFSET_TARGET_DAY_CHANGE : 'section.search.search-params.offset-target-day-change'
+                , OFFSET_TARGET_DAY_CHANGED: 'section.search.search-params.offset-target-day-changed'
+                , SELECT_SENSOR            : 'section.search.search-params.select-sensor'
+                , DESELECT_SENSOR          : 'section.search.search-params.deselect-sensor'
+                , SENSORS_CHANGED          : 'section.search.search-params.sensors-changed'
+            }
+            
         }
         
         , SEARCH_RETRIEVE: {
@@ -62,6 +71,7 @@ var Events = {
             , SELECT                  : 'section.scenes-selection.select'
             , DESELECT                : 'section.scenes-selection.deselect'
             , RELOAD_SCENES           : 'section.scenes-selection.reload-scenes'
+            //DEPRECATED EVENTS BELOW
             , SORT_CHANGE             : 'section.scenes-selection.sort-change'
             , FILTER_SHOW_SENSOR      : 'section.scenes-selection.filter-show-sensor'
             , FILTER_HIDE_SENSOR      : 'section.scenes-selection.filter-hide-sensor'

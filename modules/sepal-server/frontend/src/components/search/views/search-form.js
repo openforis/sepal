@@ -23,7 +23,7 @@ var btnDrawPolygon = null
 var targetDate     = null
 
 var init = function ( formSelector ) {
-    SearchParams.init()
+    SearchParams.reset()
     
     // countryIso = null
     form       = $( formSelector )
@@ -60,7 +60,6 @@ var init = function ( formSelector ) {
     } )
     
     targetDate              = DatePicker.newInstance( form.find( '.target-date' ) )
-    // SearchParams.setTargetDate( targetDate )
     SearchParams.targetDate = targetDate
     
     var now = moment( new Date() )

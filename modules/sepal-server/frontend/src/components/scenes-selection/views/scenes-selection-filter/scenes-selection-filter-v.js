@@ -3,10 +3,11 @@
  */
 require( './scenes-selection-filter.scss' )
 
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
+var EventBus     = require( '../event/event-bus' )
+var Events       = require( '../event/events' )
 // var Filter     = require( './scenes-selection-filter-m' )
-var Sensors  = require( '../sensors/sensors' )
+var Sensors      = require( '../sensors/sensors' )
+var SearchParams = require( './../search/search-params' )
 
 var noUiSlider = require( 'nouislider' )
 require( '../nouislider/nouislider.css' )
@@ -27,7 +28,7 @@ var init = function ( uiContainer ) {
     container = $( uiContainer )
     
     var template = require( './scenes-selection-filter.html' )
-    html     = $( template( {} ) )
+    html         = $( template( {} ) )
     
     container.prepend( html )
     sectionBtns   = container.find( '.section-btn' )
@@ -73,8 +74,6 @@ var init = function ( uiContainer ) {
             var sortWeight = sortSlider.noUiSlider.get()
             EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
             setSortWeight( sortWeight )
-            // container.find( '.cc-sort' ).html( Math.round( +((1 - sortWeight).toFixed( 2 )) * 100 ) + '%' )
-            // container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
         } )
     }
     // target day
@@ -178,7 +177,7 @@ var setOffsetToTargetDay = function ( value ) {
     
     var textValue = ''
     if ( value == 0 ) {
-        textValue = new Date().getFullYear()
+        textValue = SearchParams.targetDate.asMoment().format( 'YYYY' )
     } else {
         textValue = value + ' year'
         textValue += ( value > 1 ) ? 's' : ''

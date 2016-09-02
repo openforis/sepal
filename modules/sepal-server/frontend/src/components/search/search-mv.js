@@ -5,12 +5,14 @@ var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var Loader   = require( '../loader/loader' )
 
+require( './search-params-mv' )
+
 var View         = require( './search-v' )
 var SearchParams = require( '../search/search-params' )
 
 require( './../scenes-selection/scenes-selection-mv' )
 require( '../search-retrieve/search-retrieve-mv' )
-require( '../scenes-selection-filter/scenes-selection-filter-mv' )
+// require( '../scenes-selection/views/scenes-selection-filter/scenes-selection-filter-mv' )
 
 var show = function ( e, type ) {
     if ( type == 'search' ) {

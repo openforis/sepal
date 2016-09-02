@@ -1,7 +1,6 @@
 /**
  * @author Mino Togna
  */
-
 require( './search-retrieve.scss' )
 
 var EventBus = require( '../event/event-bus' )
@@ -29,7 +28,6 @@ var init = function () {
         
         reset()
     }
-    
 }
 
 var show = function () {
@@ -84,4 +82,8 @@ module.exports = {
     , disableToggleLayerButtons            : disableToggleLayerButtons
     , enableScenesSelectionRequiredButtons : enableScenesSelectionRequiredButtons
     , disableScenesSelectionRequiredButtons: disableScenesSelectionRequiredButtons
+    
+    , setSortWeight       : SectionScenes.setSortWeight
+    , setOffsetToTargetDay: SectionScenes.setOffsetToTargetDay
+    , setSelectedSensors  : SectionScenes.setSelectedSensors
 }
