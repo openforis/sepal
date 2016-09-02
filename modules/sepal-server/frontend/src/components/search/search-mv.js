@@ -27,6 +27,7 @@ var requestSceneAreas = function () {
     
     var params = {
         url         : '/api/data/sceneareas'
+        , type      : 'POST'
         , data      : data
         , beforeSend: function () {
             Loader.show()

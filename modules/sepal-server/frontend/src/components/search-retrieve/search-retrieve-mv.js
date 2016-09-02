@@ -139,7 +139,7 @@ var previewMosaic = function ( e, bands ) {
     SearchParams.addTargetDayOfYearRequestParameter( data )
     
     var params = {
-        url         : '/api/data/mosaic/preview-scenes'
+        url         : '/api/data/mosaic/preview'
         , data      : data
         , type      : 'POST'
         , beforeSend: function () {
