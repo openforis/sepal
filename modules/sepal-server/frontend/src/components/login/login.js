@@ -4,23 +4,22 @@
  *
  * @author Mino Togna
  */
-require( '../velocity/velocity' )
-require( '../velocity/velocity-ui' )
+
 require( '../kenburnsy/kenburnsy' )
 require( '../kenburnsy/kenburnsy.css' )
 require( '../parallax/parallax' )
 require( '../login/login.scss' )
 
 
-var EventBus  = require( '../event/event-bus' );
-var Events    = require( '../event/events' );
+var EventBus  = require( '../event/event-bus' )
+var Events    = require( '../event/events' )
 var Animation = require( '../animation/animation' )
 
 var template = require( './login.html' )
 var html     = $( template( {} ) )
 
-var bg01 = require( './bg-01.jpg' )
-var bg02 = require( './bg-02.jpg' )
+var bg01 = require( './views/img/bg-01.jpg' )
+var bg02 = require( './views/img/bg-02.jpg' )
 
 var showLogin = function () {
 

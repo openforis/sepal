@@ -1,0 +1,145 @@
+.site-footer {
+  position: absolute;
+  right: 0;
+  bottom: -7.5%;
+  left: 0;
+  display: none;
+  height: 7.5%;
+
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(28, 28, 28, 0.99);
+
+  @media (max-width: 991px) {
+    display: none;
+  }
+
+  @media (min-width: 992px) {
+    position: fixed;
+    display: block;
+  }
+
+  > .container {
+    position: relative;
+    height: inherit;
+
+    > .row {
+      height: inherit;
+
+      > .col-xs-12 {
+        height: inherit;
+      }
+
+    }
+
+  }
+
+  .site-footer-inner {
+    height: inherit;
+
+    /* copyright */
+    //.site-footer-copyright {
+    //  -webkit-transform: translateY(-50%);
+    //  -ms-transform: translateY(-50%);
+    //  -o-transform: translateY(-50%);
+    //  transform: translateY(-50%);
+    //  position: relative;
+    //  top: 50%;
+    //  float: left;
+    //  line-height: 1;
+    //  font-size: 13px;
+    //  font-weight: 400;
+    //  color: #999;
+    //
+    //}
+
+    .site-footer-links {
+      -webkit-transform: translateY(-50%);
+      -ms-transform: translateY(-50%);
+      -o-transform: translateY(-50%);
+      transform: translateY(-50%);
+      position: relative;
+      top: 50%;
+      float: left;
+      //float: right;
+      line-height: 1;
+      text-align: left;
+      //text-align: right;
+      margin-bottom: 0;
+      padding-left: 0;
+      list-style: none;
+      //font-size: 13px;
+      //font-weight: 400;
+      //color: #999;
+
+      @media (max-width: 991px) {
+        display: none;
+      }
+
+      li {
+        float: left;
+        margin-right: 40px;
+      }
+
+      li:last-child {
+        margin-right: 0;
+      }
+
+    }
+
+    a , li {
+      -webkit-transition: none;
+      -o-transition: none;
+      transition: none;
+      font-size: 13px;
+      font-weight: 400;
+      color: #999;
+    }
+
+    a:hover {
+      border-bottom: 1px dashed #999;
+    }
+
+  }
+
+
+  .sepal-logo {
+    position: absolute;
+    width: 30%;
+    left: 35%;
+    bottom: 5px;
+    text-align: center;
+    opacity: .5;
+
+    h2 {
+      font-size: 17px;
+      font-weight: 300;
+
+      @media (min-width: 992px) {
+          letter-spacing: 5px;
+          font-size: 25px;
+      }
+
+      @media (min-width: 1200px) {
+          font-size: 32px;
+      }
+
+      div {
+        border: .15rem solid rgba(255, 255, 255, 0.1);
+        padding: .4rem 1rem;
+        margin-right: .1rem;
+        border-radius: 50%;
+        width: 3rem !important;
+        height: 3rem !important;
+        font-size: 1.5rem;
+        text-align: center;
+        /* display: inline-block; */
+        display: none;
+        background-color: rgba(255, 255, 255, 0.05);
+        font-weight: 300;
+      }
+    }
+
+  }
+
+
+}

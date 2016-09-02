@@ -2,15 +2,16 @@
  * @author Mino Togna
  */
 
-var EventBus   = require( '../event/event-bus' )
-var Events     = require( '../event/events' )
-var Loader     = require( '../loader/loader' )
+var EventBus     = require( '../event/event-bus' )
+var Events       = require( '../event/events' )
+var Loader       = require( '../loader/loader' )
 //
-var Model      = require( './scenes-selection-m' )
-var View       = require( './scenes-selection-v' )
-var SearchForm = require( './../search/search-form' )
-var Filter     = require( './../scenes-selection-filter/scenes-selection-filter-m' )
-var FilterView = require( './../scenes-selection-filter/scenes-selection-filter-v' )
+var Model        = require( './scenes-selection-m' )
+var View         = require( './scenes-selection-v' )
+var SearchForm   = require( './../search/views/search-form' )
+var SearchParams = require( './../search/search-params' )
+var Filter       = require( './../scenes-selection-filter/scenes-selection-filter-m' )
+var FilterView   = require( './../scenes-selection-filter/scenes-selection-filter-v' )
 
 var show = function ( e, type ) {
     if ( type == 'scene-images-selection' ) {
@@ -70,7 +71,9 @@ var updateView     = function () {
             }
             
             View.reset( Model.getSceneAreaId() )
-            interval = setInterval( addScene, 75 )
+            if( sceneAreaImages.length >0 ){
+                interval = setInterval( addScene, 75 )
+            }
         }
         
     }
@@ -92,7 +95,7 @@ var deselectImage = function ( e, sceneAreaId, sceneImage ) {
 
 var loadSceneImages = function ( e, sceneAreaId, showAppSection ) {
     var DATE_FORMAT = "YYYY-MM-DD"
-    var targetDate  = SearchForm.targetDate().asMoment()
+    var targetDate  = SearchParams.targetDate.asMoment()
     
     var data = {
         fromDate         : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )

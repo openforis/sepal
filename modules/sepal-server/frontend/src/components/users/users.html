@@ -1,0 +1,299 @@
+<div id="users" class="row height100">
+
+    <!-- =========================== -->
+    <!-- Users List Section -->
+    <!-- =========================== -->
+    <div class="col-sm-12  p-t-1 list-section">
+
+        <div class="row height10 actions form-theme">
+            <div class="col-sm-1 text-align-right">
+                <i class="fa fa-search m-t-1" aria-hidden="true"></i>
+            </div>
+            <div class="col-sm-5 form-group">
+                <input type="text" class="form-control" name="search">
+            </div>
+
+            <div class="col-sm-3 col-sm-offset-3 text-align-center">
+                <button class="btn btn-base circle btn-invite"><i class="fa fa-user-plus" aria-hidden="true"></i></button>
+                <button class="btn btn-base circle btn-remove"><i class="fa fa-user-times" aria-hidden="true"></i></button>
+                <button class="btn btn-base circle btn-edit">
+                    <span class="fa-stack">
+                        <i class="fa fa-user" aria-hidden="true"></i>
+                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <div class="row height80 list p-y-1">
+            <div class="col-sm-12 height100">
+
+                <div class="row row-header height15">
+                    <div class="col-sm-2 text-align-center">Name</div>
+                    <div class="col-sm-2 text-align-center">Username</div>
+                    <div class="col-sm-2 text-align-center">Status</div>
+                    <div class="col-sm-2 text-align-center">Monthly Instance Budget
+                        <div class="row">
+                            <div class="col-sm-6 text-align-center">Quota</div>
+                            <div class="col-sm-6 text-align-center">Used</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-2 text-align-center">Monthly Storage Budget
+                        <div class="row">
+                            <div class="col-sm-6 text-align-center">Quota</div>
+                            <div class="col-sm-6 text-align-center">Used</div>
+                        </div></div>
+                    <div class="col-sm-2 text-align-center">Storage
+                        <div class="row">
+                            <div class="col-sm-6 text-align-center">Quota</div>
+                            <div class="col-sm-6 text-align-center">Used</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row row-users height85">
+                    <div class="col-sm-12 users-list"></div>
+                </div>
+
+                <div class="row row-user" style="display: none">
+                    <div class="col-sm-2 name"></div>
+                    <div class="col-sm-2 username"></div>
+                    <div class="col-sm-2 status"></div>
+                    <div class="col-sm-1 monthlyInstanceBudget"></div>
+                    <div class="col-sm-1 monthlyInstanceSpending"></div>
+                    <div class="col-sm-1 monthlyStorageBudget"></div>
+                    <div class="col-sm-1 monthlyStorageSpending"></div>
+                    <div class="col-sm-1 storageQuota"></div>
+                    <div class="col-sm-1 storageUsed"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="row height10 summary p-t-1">
+            <div class="col-sm-12">
+
+                <div class="row row-totals">
+                    <div class="col-sm-6 totals text-align-right">Totals</div>
+                    <div class="col-sm-1 monthlyInstanceBudget text-align-center">23</div>
+                    <div class="col-sm-1 monthlyInstanceSpending text-align-center">2</div>
+                    <div class="col-sm-1 monthlyStorageBudget text-align-center">3232</div>
+                    <div class="col-sm-1 monthlyStorageSpending text-align-center">32</div>
+                    <div class="col-sm-1 storageQuota text-align-center">4523</div>
+                    <div class="col-sm-1 storageUsed text-align-center">543.54</div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =========================== -->
+    <!--Invite User Section-->
+    <!-- =========================== -->
+    <div class="col-sm-12  p-t-1 overflow-y-auto invite-user-section">
+        <div class="row">
+            <div class="col-sm-8 col-sm-offset-2">
+
+                <h3 class="width100 text-align-center">Invite User</h3>
+
+                <form class="form-theme" >
+
+                    <div class="row form-group m-t-3">
+                        <label class="form-label col-sm-4">Name</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="name"
+                                   data-type="string" data-error-message="Name cannot be empty">
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Username</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="username"
+                                   data-type="string" data-error-message="Username cannot be empty">
+                        </div>
+                    </div>
+
+                    <!--<div class="row form-group m-t-1">-->
+                    <!--<label class="form-label col-sm-4">Password</label>-->
+                    <!--<div class="col-sm-8">-->
+                    <!--<input type="password" class="form-control" name="password">-->
+                    <!--</div>-->
+                    <!--</div>-->
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Email</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="email"
+                                   data-type="email" data-error-message="Invalid email">
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Organization</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="organization"
+                                   data-type="string" data-error-message="Organization cannot be empty">
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-1">
+
+                        <div class="col-sm-12 text-align-center form-notify form-error" />
+
+                        <div class="col-sm-12 m-t-1 text-align-center">
+                            <button type="button" class="btn btn-base btn-cancel round icon p-y-1 m-r-3">
+                                <i class="fa fa-times-circle" aria-hidden="true"></i>
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-base round icon p-y-1">
+                                <i class="fa fa-user-plus" aria-hidden="true"></i>
+                                Invite
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =========================== -->
+    <!--Edit User Section-->
+    <!-- =========================== -->
+    <div class="col-sm-12  p-t-1 overflow-y-auto edit-user-section">
+        <div class="row">
+            <div class="col-sm-8 col-sm-offset-2">
+
+                <h3 class="width100 text-align-center">Edit User</h3>
+
+                <form class="form-theme" >
+                    <input type="hidden" name="id">
+
+                    <div class="row form-group m-t-3">
+                        <label class="form-label col-sm-4">Name</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="name"
+                                   data-type="string" data-error-message="Name cannot be empty">
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Username</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="username"
+                                   data-type="string" data-error-message="Username cannot be empty">
+                        </div>
+                    </div>
+
+                    <!--<div class="row form-group m-t-1">-->
+                    <!--<label class="form-label col-sm-4">Password</label>-->
+                    <!--<div class="col-sm-8">-->
+                    <!--<input type="password" class="form-control" name="password">-->
+                    <!--</div>-->
+                    <!--</div>-->
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Email</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="email"
+                                   data-type="email" data-error-message="Email is not valid">
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Organization</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="organization"
+                                   data-type="string" data-error-message="Organization cannot be empty">
+                        </div>
+                    </div>
+                    <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Status</label>
+                        <div class="col-sm-8">
+                            <input type="hidden" class="form-control" name="status">
+                            <button type="button" class="btn btn-base round p-a-1 btn-status btn-status-active" value="active">
+                                <i class="fa fa-smile-o" aria-hidden="true"></i> Active
+                            </button>
+                            <button type="button" class="btn btn-base round p-a-1 btn-status btn-status-pending" value="pending">
+                                <i class="fa fa-meh-o" aria-hidden="true"></i> Pending
+                            </button>
+                            <button type="button" class="btn btn-base round p-a-1 btn-status btn-status-locked" value="locked">
+                                <i class="fa fa-lock" aria-hidden="true"></i> Locked
+                                <!--<i class="fa fa-frown-o" aria-hidden="true"></i> Locked-->
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-1">
+
+                        <div class="col-sm-12 text-align-center form-notify form-error" />
+
+                        <div class="col-sm-12 m-t-1 text-align-center">
+                            <button type="button" class="btn btn-base btn-cancel round icon p-y-1 m-r-3">
+                                <i class="fa fa-times-circle" aria-hidden="true"></i>
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-base round icon p-y-1">
+                                <i class="fa fa-save" aria-hidden="true"></i>
+                                Save
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =========================== -->
+    <!--Delete User Section-->
+    <!-- =========================== -->
+    <div class="col-sm-12  p-t-1 overflow-y-auto delete-user-section">
+        <div class="row">
+            <div class="col-sm-8 col-sm-offset-2">
+
+                <h3 class="width100 text-align-center">Delete User</h3>
+
+                <form class="form-theme">
+                    <input type="hidden" name="id">
+
+                    <!--<div class="row form-group m-t-3">-->
+                        <!--<label class="form-label col-sm-12 text-align-center">The following user will be deleted</label>-->
+                    <!--</div>-->
+
+                    <div class="row form-group m-t-3">
+                        <label class="form-label col-sm-12 text-align-center user-label"></label>
+                    </div>
+
+                    <div class="row form-group m-t-3">
+
+                        <div class="col-sm-12 text-align-center form-notify form-error" />
+
+                        <div class="col-sm-12 text-align-center">
+                            <button type="button" class="btn btn-base btn-cancel round icon p-y-1 m-r-3">
+                                <i class="fa fa-times-circle" aria-hidden="true"></i>
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-base round icon p-y-1">
+                                <i class="fa fa-user-times" aria-hidden="true"></i>
+                                Delete
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>

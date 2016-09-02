@@ -96,7 +96,8 @@
 .btn-base.active:focus,
 .btn-base.activefocus,
 .btn-base.active:hover {
-    background-color: rgba(197, 179, 151, 0.1);
+    background-color: rgba(197, 179, 151, 0.225);
+    /*background-color: rgba(197, 179, 151, 0.1);*/
 }
 
 /* circle button */

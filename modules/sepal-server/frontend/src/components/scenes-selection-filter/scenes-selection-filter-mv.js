@@ -7,7 +7,7 @@ var Events   = require( '../event/events' )
 
 var Filter           = require( './scenes-selection-filter-m' )
 var FilterView       = require( './scenes-selection-filter-v' )
-var ScenesFilterView = require( '../search-retrieve/scenes-autoselection-form-v' )
+var ScenesFilterView = require( '../search-retrieve/views/scenes/scenes-autoselection-form-v' )
 var Sensors          = require( '../sensors/sensors' )
 
 var reset = function () {
@@ -53,7 +53,7 @@ var filterShowSensor = function ( e, sensor ) {
 }
 
 var filterTargetDayChange = function ( e, value ) {
-    if ( !( Filter.getOffsetToTargetDay() == 1 && value < 0 ) ) {
+    if ( !( Filter.getOffsetToTargetDay() == 0 && value < 0 ) ) {
         Filter.setOffsetToTargetDay( Filter.getOffsetToTargetDay() + value )
         ScenesFilterView.setOffsetToTargetDay( Filter.getOffsetToTargetDay() )
         

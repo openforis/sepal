@@ -1,48 +1,17 @@
 // common modules
-// require( 'tether' )
-require( 'bootstrap' )
-require( '../ajax/ajax' )
+require( './app-required-modules' )
 
-// application styles
-require( '../theme/base.css' )
-require( '../theme/button.css' )
-require( '../theme/form.css' )
-require( '../theme/color.css' )
-require( '../animation/animation.css' )
-require( '../theme/section.css' )
-
-require( '../theme/footer.css' )
-
-// application components
-require( '../login/login' )
-require( '../map/map' )
-require( '../nav-menu/nav-menu' )
-
-require( '../app-section/app-section' )
-require( '../tasks/tasks-mv' )
-
-// event bus
+var Loader   = require( '../loader/loader' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
-// loader
-var Loader = require( '../loader/loader' )
-
-// global app variables
-var Sepal = require( './sepal' )
-
-// functions
 var userLoggedIn = function ( e, user ) {
-    Sepal.User = user
-    
-    Loader.show()
-    
+    EventBus.dispatch( Events.USER.USER_DETAILS_LOADED, null, user )
     loadApp()
-    
 }
 
 var loadApp = function () {
-    
+    Loader.show()
     setTimeout( function () {
         
         EventBus.dispatch( Events.LOGIN.HIDE )
@@ -51,21 +20,76 @@ var loadApp = function () {
         Loader.hide()
         
     }, 2000 )
-    
 }
 
 var checkUser = function () {
     var params = {
         url      : '/api/user'
         , success: function ( response ) {
-            // console.log( response )
             EventBus.dispatch( Events.APP.USER_LOGGED_IN, null, response )
         }
     }
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-checkUser()
+var initApp = function () {
+    var inviteParam = $.urlParam( 'i' )
+    
+    if ( inviteParam ) {
+        Loader.show()
+        // console.log( inviteParam )
+        // var params = {
+        //     url : '/api/user/invite'
+        //     , data : { i : inviteParam }
+        //     , success : function ( response ) {
+        //         var invitationId = response.invitationId
+        //         if( invitationId ){
+        //             //user clicked on an invitation link.
+        //             EventBus.dispatch( Events.LOGIN.SHOW , null , response )
+        //         } else {
+        //             checkUser()
+        //         }
+        //     }
+        // }
+        
+        // TODO: simulating now
+        var response = {
+            invitationId: 2341423
+            , userId    : 1234
+            , username  : 'trest'
+        }
+        EventBus.dispatch( Events.LOGIN.SHOW, null, response )
+        Loader.hide( { delay: 200 } )
+    } else {
+        
+        checkUser()
+        
+    }
+    
+}
+
+initApp()
+
+var registeredElements = []
+var onRegisterElement  = function ( e, id ) {
+    registeredElements.push( id )
+}
+
+var onAppDestroy = function () {
+    Loader.show()
+    $.each( registeredElements, function ( i, id ) {
+        $( '#' + id ).remove()
+    } )
+    registeredElements = []
+    
+    EventBus.dispatch( Events.LOGIN.SHOW )
+    
+    Loader.hide( { delay: 1000 } )
+}
+
+// app events
+EventBus.addEventListener( Events.APP.DESTROY, onAppDestroy )
+EventBus.addEventListener( Events.APP.REGISTER_ELEMENT, onRegisterElement )
 
 // event handlers
 EventBus.addEventListener( Events.APP.USER_LOGGED_IN, userLoggedIn )

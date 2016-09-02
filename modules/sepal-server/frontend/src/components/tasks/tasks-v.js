@@ -10,14 +10,20 @@ var Animation = require( '../animation/animation' )
 var Model     = require( './tasks-m' )
 
 // html
-var template = require( './tasks.html' )
-var html     = $( template( {} ) )
+var html = null
 
-var rowTask   = html.find( '.task' )
-var rowHeader = html.find( '.row.row-header' )
-var container = html.find( '.tasks-container' )
+var rowTask   = null
+var rowHeader = null
+var container = null
 
 var init = function () {
+    var template = require( './tasks.html' )
+    html         = $( template( {} ) )
+    
+    rowTask   = html.find( '.task' )
+    rowHeader = html.find( '.row.row-header' )
+    container = html.find( '.tasks-container' )
+    
     var appSection = $( '#app-section' ).find( '.tasks' )
     if ( appSection.children().length <= 0 ) {
         appSection.append( html )
@@ -56,13 +62,13 @@ var setTasks = function ( tasks ) {
                 btnCancel.show()
                 btnExecute.hide()
                 // btnExecute.prop( "disabled", true )
-    
+                
                 break
             case Model.STATUS.CANCELED:
                 btnRemove.show()
                 btnCancel.hide()
                 btnExecute.show()
-
+                
                 break
             case Model.STATUS.FAILED:
                 // taskLoader.hide()
@@ -121,7 +127,7 @@ var getTaskUI = function ( index, task ) {
 
 var removeTask = function ( taskId ) {
     var taskUI = container.find( '.task-' + taskId )
-    Animation.animateOut( taskUI , function (  ) {
+    Animation.animateOut( taskUI, function () {
         taskUI.remove()
     } )
 }

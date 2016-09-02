@@ -158,6 +158,34 @@ a.bg-user:hover {
     transition: background-color 800ms ease-in;
 }
 
+/*user*/
+button.bg-users:active,
+button.bg-users:active:focus,
+button.bg-users:focus,
+button.bg-users:hover,
+a.bg-users:active,
+a.bg-users:active:focus,
+a.bg-users:focus,
+a.bg-users:hover {
+    border-color: rgba(125, 125, 111, 0.7);
+    background-color: rgba(125, 125, 111, .1);
+    border-width: 2px;
+    color: #fff;
+}
+
+.bg-users {
+    background-color: rgba(125, 125, 111, .4);
+    /*background-color: rgba(176, 149, 130, .8);*/
+    color: #fff;
+}
+
+.bg-users-l {
+    background-color:  rgba(125, 125, 111, .035);
+    /*background-color: rgba(176, 149, 130, .8);*/
+    color: #fff;
+    transition: background-color 800ms ease-in;
+}
+
 /*tasks*/
 button.bg-tasks:active,
 button.bg-tasks:active:focus,

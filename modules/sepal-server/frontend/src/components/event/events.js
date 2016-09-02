@@ -11,9 +11,10 @@ var Events = {
     }
     
     , APP: {
-        LOAD            : 'app.load'
-        , DESTROY       : 'app.destroy'
-        , USER_LOGGED_IN: 'app.user-logged-in'
+        LOAD              : 'app.load'
+        , DESTROY         : 'app.destroy'
+        , REGISTER_ELEMENT: 'app.register-element'
+        , USER_LOGGED_IN  : 'app.user-logged-in'
     }
     
     , LOGIN: {
@@ -25,15 +26,20 @@ var Events = {
         CLOSE_ALL: 'section.close-all'
         , SHOW   : 'section.show'
         , SHOWN  : 'section.shown'
-        , REDUCE: 'section.reduce'
+        , REDUCE : 'section.reduce'
         
-        , SEARCH         : {
+        , NAV_MENU: {
+            LOADED: 'section.nav-menu.loaded'
+        }
+        
+        , SEARCH: {
             // SHOW_SCENE_AREA: 'section.search.show-scene-area'
             FORM_SUBMIT         : 'section.search.form-submit'
             , SCENE_AREAS_LOADED: 'section.search.scene-areas-loaded'
             // , RETRIEVE          : 'section.search.retrieve'
             // , MOSAIC            : 'section.search.mosaic'
         }
+        
         , SEARCH_RETRIEVE: {
             BEST_SCENES      : 'section.search-retrieve.best-scenes'
             , RETRIEVE_SCENES: 'section.search-retrieve.retrieve-scenes'
@@ -69,8 +75,18 @@ var Events = {
             , CHECK_STATUS: 'section.task-manager.check-status'
         }
         
-        , USER: {
-            REMOVE_SESSION: 'section.user.remove-session'
+        , USER : {
+            REMOVE_SESSION     : 'section.user.remove-session'
+            , SAVE_USER_DETAILS: 'section.user.save-user-details'
+            , CHANGE_PASSWORD  : 'section.user.change-password'
+        }
+        , USERS: {
+            LIST_FILTER_CHANGE: 'section.users.list-filter-change'
+            , SELECT_USER     : 'section.users.select-user'
+            , SHOW_USERS_LIST : 'section.users.show-users-list'
+            , SHOW_INVITE_USER: 'section.users.show-invite-user'
+            , SHOW_EDIT_USER  : 'section.users.show-edit-user'
+            , SHOW_DELETE_USER: 'section.users.show-delete-user'
         }
     }
     
@@ -86,6 +102,9 @@ var Events = {
         , SCENE_AREA_TOGGLE_VISIBILITY: 'map.scene-area-toggle-visibility'
         , ADD_OVERLAY_MAP_TYPE        : 'map.add-overlay-map-type'
         , REMOVE_OVERLAY_MAP_TYPE     : 'map.remove-overlay-map-type'
+        , POLYGON_DRAW                : 'map.polygon-draw'
+        , POLYGON_DRAWN               : 'map.polygon-drawn'
+        , POLYGON_CLEAR               : 'map.polygon-clear'
     }
     
     // events that occur when a model changes
@@ -93,6 +112,10 @@ var Events = {
         SCENE_AREA: {
             CHANGE: 'model.scene-area-change'
         }
+    }
+    
+    , USER: {
+        USER_DETAILS_LOADED: "user.user-details-loaded"
     }
     
 }

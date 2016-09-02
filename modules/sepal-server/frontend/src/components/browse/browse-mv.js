@@ -15,10 +15,10 @@ var show = function ( e, type ) {
     
     if ( type == 'browse' ) {
         View.init()
-        if ( !initialized ) {
-            loadDir( -1, '/' )
-            initialized = true
-        }
+        // if ( !initialized ) {
+        loadDir( -1, '/' )
+        // initialized = true
+        // }
     }
     
 }

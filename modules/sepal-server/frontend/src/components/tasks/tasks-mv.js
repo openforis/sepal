@@ -11,27 +11,31 @@ var View      = require( './tasks-v' )
 
 var jobTimer      = null
 var navMenuButton = null
-var initialized   = false
 
 var init = function ( e ) {
-    if ( !initialized ) {
-        View.init()
-        
-        navMenuButton = NavMenu.btnTasks()
-        
-        setTimeout( function () {
-            jobTimer = setInterval( requestTasks, 5000 )
-        }, 1000 )
-        
-        initialized = true
+    View.init()
+    
+    navMenuButton = NavMenu.btnTasks()
+    
+    stopJob()
+}
+
+var stopJob = function ( e ) {
+    if ( jobTimer ) {
+        clearTimeout( jobTimer )
+        jobTimer = null
     }
 }
 
-var showLogin = function ( e ) {
-    if ( jobTimer ) {
-        clearTimeout( jobTimer )
+
+var startJob = function () {
+    if ( !jobTimer ) {
+        jobTimer = -1
+        setTimeout( function () {
+            jobTimer = setInterval( requestTasks, 5000 )
+        }, 2000 )
+        
     }
-    initialized = false
 }
 
 var requestTasks = function ( callback ) {
@@ -39,7 +43,6 @@ var requestTasks = function ( callback ) {
         url      : '/api/tasks'
         , success: function ( tasks ) {
             Model.setTasks( tasks )
-            // Animation.removeAnimation( navMenuButton )
             
             if ( Model.isEmpty() ) {
                 if ( navMenuButton.is( ":visible" ) ) {
@@ -47,19 +50,12 @@ var requestTasks = function ( callback ) {
                         Animation.removeAnimation( navMenuButton )
                     } )
                 }
-                // navMenuButton.fadeOut()
                 navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
             } else {
-                // navMenuButton.css('display','block')
                 if ( !navMenuButton.is( ":visible" ) ) {
-                    console.log(
-                        'not visible'
-                    )
-                    Animation.animateIn( navMenuButton, function () {
-                        // Animation.removeAnimation( navMenuButton )
-                    } )
+                    Animation.animateIn( navMenuButton )
                 }
-
+                
                 // navMenuButton.fadeIn()
                 if ( Model.isActive() ) {
                     navMenuButton.find( 'i' ).addClass( 'fa-spin' )
@@ -130,12 +126,13 @@ var taskAction = function ( evt, taskId ) {
     postTaskAction( url, callback )
 }
 
-var checkStatus = function ( ) {
+var checkStatus = function () {
     requestTasks()
 }
 
-EventBus.addEventListener( Events.SECTION.SHOW, init )
-EventBus.addEventListener( Events.LOGIN.SHOW, showLogin )
+EventBus.addEventListener( Events.APP.LOAD, init )
+EventBus.addEventListener( Events.SECTION.SHOW, startJob )
+EventBus.addEventListener( Events.APP.DESTROY, stopJob )
 
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.CANCEL_TASK, taskAction )
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.REMOVE_TASK, taskAction )

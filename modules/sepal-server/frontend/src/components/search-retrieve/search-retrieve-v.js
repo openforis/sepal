@@ -4,152 +4,74 @@
 
 require( './search-retrieve.scss' )
 
-var EventBus             = require( '../event/event-bus' )
-var Events               = require( '../event/events' )
-var ScenesAutoSelectForm = require( './scenes-autoselection-form-v' )
-var MosaicPreviewForm    = require( './mosaic-preview-form' )
+var EventBus = require( '../event/event-bus' )
+var Events   = require( '../event/events' )
 
-// html
-var template = require( './search-retrieve.html' )
-var html     = $( template( {} ) )
+var SectionScenes = require( './views/section-scenes' )
+var SectionMosaic = require( './views/section-mosaic' )
 
-var btnRetrieveScenes = null
-var btnBestScenes     = null
-var btnPreviewMosaic  = null
-var btnRetrieveMosaic = null
-
-var btnHideSceneAreas = null
-var btnHideMosaic     = null
-
-var formBestScenes    = null
-var mosaicPreviewForm = null
+var html = null
 
 var init = function () {
-    $( '.app' ).append( html )
+    var template = require( './search-retrieve.html' )
+    html         = $( template( {} ) )
+    var id       = html.attr( 'id' )
     
-    // buttons
-    btnBestScenes     = html.find( '.btn-best-scenes' )
-    btnRetrieveScenes = html.find( '.btn-retrieve-scenes' )
-    btnPreviewMosaic  = html.find( '.btn-preview-mosaic' )
-    btnRetrieveMosaic = html.find( '.btn-retrieve-mosaic' )
-    //toggle visibility buttons
-    btnHideSceneAreas = html.find( '.btn-hide-scene-areas' )
-    btnHideMosaic     = html.find( '.btn-hide-mosaic' )
-    // expandable forms
-    formBestScenes    = html.find( '.row-best-scenes-form' )
-    mosaicPreviewForm = html.find( '.row-mosaic-preview' )
+    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, id )
     
-    ScenesAutoSelectForm.init( html.find( '.scenes-selection-filter' ) )
-    MosaicPreviewForm.init( html.find( '.mosaic-preview' ) )
-    
-    initEventHandlers()
-    reset()
-    
-}
-
-var slide = function ( element, slideDir, options ) {
-    var slideOptions = { delay: 50, duration: 500 }
-    slideOptions     = $.extend( slideOptions, options )
-    
-    element.velocity( slideDir, slideOptions )
-    
-}
-
-var slideToggle = function ( element, options ) {
-    var isOpen   = element.is( ':visible' )
-    var slideDir = isOpen ? 'slideUp' : 'slideDown'
-    slide( element, slideDir, options )
-}
-
-var slideUp = function ( element, options ) {
-    slide( element, 'slideUp', options )
-}
-
-var slideDown = function ( element, options ) {
-    slide( element, 'slideDown', options )
-}
-
-var initEventHandlers = function () {
-    
-    btnBestScenes.click( function ( e ) {
-        e.preventDefault()
-        slideUp( mosaicPreviewForm )
-        slideToggle( formBestScenes )
-    } )
-    btnRetrieveScenes.click( function ( e ) {
-        e.preventDefault()
-        EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES )
-    } )
-    
-    btnPreviewMosaic.click( function ( e ) {
-        e.preventDefault()
-        slideUp( formBestScenes )
-        slideToggle( mosaicPreviewForm )
-    } )
-    btnRetrieveMosaic.click( function ( e ) {
-        e.preventDefault()
-        EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC )
-    } )
-    
-    btnHideSceneAreas.click( function ( e ) {
-        e.preventDefault()
-        btnHideSceneAreas.toggleClass( 'active' )
-        EventBus.dispatch( Events.MAP.SCENE_AREA_TOGGLE_VISIBILITY )
-    } )
-    
-    btnHideMosaic.click( function ( e ) {
-        e.preventDefault()
-        btnHideMosaic.toggleClass( 'active' )
-        EventBus.dispatch( Events.MAP.EE_LAYER_TOGGLE_VISIBILITY )
-    } )
+    var app = $( '.app' )
+    if ( app.find( '#' + id ).children().length <= 0 ) {
+        
+        $( '.app' ).append( html )
+        
+        SectionScenes.init( html )
+        SectionMosaic.init( html )
+        
+        reset()
+    }
     
 }
 
 var show = function () {
     if ( !html.is( ':visible' ) ) {
-        slideDown( html, { delay: 200, duration: 1000 } )
+        html.velocitySlideDown( { delay: 300, duration: 800 } )
     }
 }
 
 var hide = function ( opts ) {
-    var options = { delay: 200, duration: 1000 }
+    var options = { delay: 100, duration: 800 }
     options     = $.extend( options, opts )
-    slideUp( html, options )
+    html.velocitySlideUp( options )
 }
 
 var reset = function () {
     disableToggleLayerButtons()
     disableScenesSelectionRequiredButtons()
     
-    btnRetrieveMosaic.prop( 'disabled', true )
-    
-    slideUp( formBestScenes, { delay: 0, duration: 0 } )
-    slideUp( mosaicPreviewForm, { delay: 0, duration: 0 } )
+    SectionScenes.reset()
+    SectionMosaic.reset()
 }
 
 var collapse = function () {
-    slideUp( formBestScenes )
-    slideUp( mosaicPreviewForm )
+    var defaultSlideOpts = { delay: 50, duration: 500 }
+    SectionScenes.collapse( defaultSlideOpts )
+    SectionMosaic.collapse( defaultSlideOpts )
 }
 
 var enableToggleLayerButtons = function () {
-    btnHideSceneAreas.addClass( 'active' ).prop( 'disabled', false )
-    btnHideMosaic.addClass( 'active' ).prop( 'disabled', false )
+    html.find( '.btn-toggle-layer-visibility' ).addClass( 'active' ).enable()
 }
 
 var disableToggleLayerButtons = function () {
-    btnHideSceneAreas.removeClass( 'active' ).prop( 'disabled', true )
-    btnHideMosaic.removeClass( 'active' ).prop( 'disabled', true )
+    html.find( '.btn-toggle-layer-visibility' ).removeClass( 'active' ).disable()
 }
 
-var enableScenesSelectionRequiredButtons  = function () {
-    btnPreviewMosaic.prop( 'disabled', false )
-    btnRetrieveScenes.prop( 'disabled', false )
+var enableScenesSelectionRequiredButtons = function () {
+    html.find( '.btn-scenes-required' ).enable()
 }
 
 var disableScenesSelectionRequiredButtons = function () {
-    btnPreviewMosaic.prop( 'disabled', true )
-    btnRetrieveScenes.prop( 'disabled', true )
+    html.find( '.btn-scenes-required' ).disable()
 }
 
 module.exports = {

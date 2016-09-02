@@ -1,0 +1,43 @@
+#search-form {
+
+  .form-label {
+    padding-bottom: 35px;
+    border-bottom: 1px dotted rgba(255, 255, 255, .3);
+  }
+
+  .form-label-btn-draw-polygon {
+    border-bottom: none;
+  }
+
+  button {
+
+    i {
+      font-size: 1.2rem;
+    }
+
+    &.btn-draw-polygon {
+
+      border: none;
+      border-bottom: 1px solid white;
+      border-radius: 0;
+      padding-bottom: 1rem !important;
+      padding-top: .6rem;
+
+      &.active {
+        border-bottom: 1px solid rgba(197, 179, 151, 0.5);
+      }
+
+      i {
+        position: absolute;
+        left: 1rem;
+        top: .5rem;
+      }
+    }
+
+  }
+
+  input {
+    padding: .35rem 0 1rem .2rem;
+  }
+
+}

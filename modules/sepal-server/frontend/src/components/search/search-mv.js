@@ -1,13 +1,12 @@
 /**
  * @author Mino Togna
  */
-require( './search.css' )
-
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var Loader   = require( '../loader/loader' )
 
-var View = require( './search-v' )
+var View         = require( './search-v' )
+var SearchParams = require( '../search/search-params' )
 
 require( './../scenes-selection/scenes-selection-mv' )
 require( '../search-retrieve/search-retrieve-mv' )
@@ -21,17 +20,18 @@ var show = function ( e, type ) {
 
 var requestSceneAreas = function () {
     
-    var data = { countryIso: View.Form.countryCode() }
+    var data = {}
+    SearchParams.addAoiRequestParameter( data )
     
     var params = {
         url         : '/api/data/sceneareas'
         , data      : data
         , beforeSend: function () {
             Loader.show()
-            EventBus.dispatch( Events.SECTION.REDUCE, null )
         }
         , success   : function ( response ) {
             EventBus.dispatch( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, null, response )
+            EventBus.dispatch( Events.SECTION.REDUCE, null )
             // EventBus.dispatch( Events.MAP.LOAD_SCENE_AREAS, null, response )
             Loader.hide( { delay: 300 } )
         }

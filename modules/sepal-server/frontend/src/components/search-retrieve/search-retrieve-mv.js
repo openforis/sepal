@@ -2,21 +2,28 @@
  * @author Mino Togna
  */
 
-var EventBus         = require( '../event/event-bus' )
-var Events           = require( '../event/events' )
-var Loader           = require( '../loader/loader' )
-var View             = require( './search-retrieve-v' )
-var Model            = require( './search-retrieve-m' )
-var SceneAreaModel   = require( '../scenes-selection/scenes-selection-m' )
-var ScenesFilterView = require( '../search-retrieve/scenes-autoselection-form-v' )
-var SearchForm       = require( '../search/search-form' )
-var Filter           = require( './../scenes-selection-filter/scenes-selection-filter-m' )
-
-View.init()
-View.hide( { delay: 0, duration: 0 } )
+var EventBus       = require( '../event/event-bus' )
+var Events         = require( '../event/events' )
+var Loader         = require( '../loader/loader' )
+var View           = require( './search-retrieve-v' )
+var Model          = require( './search-retrieve-m' )
+var SceneAreaModel = require( '../scenes-selection/scenes-selection-m' )
+// var ScenesFilterView = require( '../search-retrieve/scenes-autoselection-form-v' )
+// var SearchForm       = require( '../search/views/search-form' )
+var SearchParams = require( '../search/search-params' )
+var Filter       = require( './../scenes-selection-filter/scenes-selection-filter-m' )
 
 var show     = false
 var appShown = true
+
+var init = function () {
+    show     = false
+    appShown = true
+    
+    View.init()
+    View.hide( { delay: 0, duration: 0 } )
+}
+
 
 var appShow   = function ( e, section ) {
     View.hide()
@@ -29,9 +36,12 @@ var appReduce = function ( e, section ) {
     }
 }
 
-var getRequestData = function () {
-    var data        = {}
-    data.countryIso = SearchForm.countryCode()
+var getRequestData = function ( addAoi ) {
+    var data = {}
+    // data.countryIso = SearchForm.countryCode()
+    if ( addAoi !== false ) {
+        SearchParams.addAoiRequestParameter( data )
+    }
     
     var scenes = []
     // console.log( "request data: ", SceneAreaModel )
@@ -45,8 +55,8 @@ var getRequestData = function () {
     return data
 }
 
-var getRequestParams = function ( url ) {
-    var data   = getRequestData()
+var getRequestParams = function ( url, addAoi ) {
+    var data   = getRequestData( addAoi )
     var params = {
         url         : url
         , data      : data
@@ -63,7 +73,7 @@ var getRequestParams = function ( url ) {
 }
 
 var retrieveScenes = function () {
-    var params = getRequestParams( '/api/data/scenes/retrieve' )
+    var params = getRequestParams( '/api/data/scenes/retrieve', false )
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
@@ -74,9 +84,9 @@ var retrieveMosaic = function () {
 
 var sceneAreasLoaded = function ( e, sceneAreas ) {
     show = true
-    if ( appShown == false ) {
-        appReduce()
-    }
+    // if ( appShown == false ) {
+    // appReduce()
+    // }
     View.reset()
     
     EventBus.dispatch( Events.MAP.REMOVE_EE_LAYER )
@@ -86,7 +96,7 @@ var sceneAreasLoaded = function ( e, sceneAreas ) {
 
 var bestScenes = function ( e ) {
     var DATE_FORMAT = "YYYY-MM-DD"
-    var targetDate  = SearchForm.targetDate().asMoment()
+    var targetDate  = SearchParams.targetDate.asMoment()
     
     var data = {
         fromDate               : targetDate.clone().subtract( Filter.getOffsetToTargetDay() / 2, 'years' ).format( DATE_FORMAT )
@@ -126,15 +136,16 @@ var bestScenes = function ( e ) {
 
 var previewMosaic = function ( e, bands ) {
     
-    var targetDate = SearchForm.targetDate().asMoment()
+    var targetDate = SearchParams.targetDate.asMoment()
     var data       = {
-        countryIso             : SearchForm.countryCode()
-        , targetDayOfYear      : targetDate.format( "DDD" )
+        // countryIso             : SearchForm.countryCode()
+        targetDayOfYear        : targetDate.format( "DDD" )
         , targetDayOfYearWeight: 0.5
         // , targetDayOfYearWeight: Filter.getSortWeight()
         , bands                : bands
         , sceneIds             : SceneAreaModel.getSelectedSceneIds().join( ',' )
     }
+    SearchParams.addAoiRequestParameter( data )
     
     var params = {
         url         : '/api/data/mosaic/preview-scenes'
@@ -168,17 +179,23 @@ var onSceneAreaChange = function ( e ) {
         View.disableScenesSelectionRequiredButtons()
     }
 }
+// app events
+EventBus.addEventListener( Events.APP.LOAD, init )
 
+// app section events
 EventBus.addEventListener( Events.SECTION.SHOW, appShow )
 EventBus.addEventListener( Events.SECTION.REDUCE, appReduce )
 
+//search retrieve events
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES, retrieveScenes )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, retrieveMosaic )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, bestScenes )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, previewMosaic )
 
+//search events
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, sceneAreasLoaded )
 EventBus.addEventListener( Events.MODEL.SCENE_AREA.CHANGE, onSceneAreaChange )
 
+//map events
 EventBus.addEventListener( Events.MAP.ADD_EE_LAYER, onAddEELayer )
 EventBus.addEventListener( Events.MAP.REMOVE_EE_LAYER, onRemoveEELayer )

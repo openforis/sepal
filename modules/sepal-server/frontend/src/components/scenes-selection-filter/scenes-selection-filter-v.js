@@ -11,9 +11,7 @@ var Sensors  = require( '../sensors/sensors' )
 var noUiSlider = require( 'nouislider' )
 require( '../nouislider/nouislider.css' )
 
-var template = require( './scenes-selection-filter.html' )
-var html     = $( template( {} ) )
-
+var html                    = null
 //ui elements
 var container               = null
 var sectionBtns             = null
@@ -27,6 +25,9 @@ var inizialized = false
 
 var init = function ( uiContainer ) {
     container = $( uiContainer )
+    
+    var template = require( './scenes-selection-filter.html' )
+    html     = $( template( {} ) )
     
     container.prepend( html )
     sectionBtns   = container.find( '.section-btn' )
@@ -59,22 +60,23 @@ var init = function ( uiContainer ) {
     
     //sort slider
     sortSlider = sectionAction.find( '.sort-slider' ).get( 0 )
-    noUiSlider.create( sortSlider, {
-        start: [ 0.5 ],
-        step : 0.05,
-        range: {
-            'min': [ 0 ],
-            'max': [ 1 ]
-        }
-    } )
-    sortSlider.noUiSlider.on( 'change', function () {
-        var sortWeight = sortSlider.noUiSlider.get()
-        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
-        setSortWeight( sortWeight )
-        // container.find( '.cc-sort' ).html( Math.round( +((1 - sortWeight).toFixed( 2 )) * 100 ) + '%' )
-        // container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
-    } )
-    
+    if ( !sortSlider.hasOwnProperty( 'noUiSlider' ) ) {
+        noUiSlider.create( sortSlider, {
+            start: [ 0.5 ],
+            step : 0.05,
+            range: {
+                'min': [ 0 ],
+                'max': [ 1 ]
+            }
+        } )
+        sortSlider.noUiSlider.on( 'change', function () {
+            var sortWeight = sortSlider.noUiSlider.get()
+            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
+            setSortWeight( sortWeight )
+            // container.find( '.cc-sort' ).html( Math.round( +((1 - sortWeight).toFixed( 2 )) * 100 ) + '%' )
+            // container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
+        } )
+    }
     // target day
     offsetTargetDayBtnPlus.click( function ( e ) {
         EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, 1 )
@@ -172,12 +174,16 @@ var setSelectedSensors = function ( availableSensors, selectedSensors ) {
 
 
 var setOffsetToTargetDay = function ( value ) {
-    offsetTargetDayBtnMinus.prop( 'disabled', (value <= 1) )
+    offsetTargetDayBtnMinus.prop( 'disabled', (value <= 0) )
     
-    var textValue = value + ' year'
-    if ( value > 1 ) {
-        textValue += 's'
+    var textValue = ''
+    if ( value == 0 ) {
+        textValue = new Date().getFullYear()
+    } else {
+        textValue = value + ' year'
+        textValue += ( value > 1 ) ? 's' : ''
     }
+    
     container.find( '.offset-target-day' ).html( textValue )
 }
 

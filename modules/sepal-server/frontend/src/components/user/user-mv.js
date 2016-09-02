@@ -2,38 +2,42 @@
  * @author Mino Togna
  */
 
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
-var Loader   = require( '../loader/loader' )
+var EventBus  = require( '../event/event-bus' )
+var Events    = require( '../event/events' )
+var UserModel = require( './user-m' )
+var Loader    = require( '../loader/loader' )
+var View      = require( './user-v' )
 
-var View  = require( './user-v' )
-var Model = require( './user-m' )
+var CurrentUser = null
 
-var requestSandboxReport = function () {
-    var params = {
-        url      : '/api/sandbox/report'
-        , success: function ( response ) {
-            Model.setUserSandboxReport( response )
+var userDetailsLoaded = function ( e, userDetails ) {
+    CurrentUser = UserModel( userDetails )
+}
 
-            View.setSessions( Model.getSessions() )
-            View.setSpending( Model.getSpending() )
-        }
-    }
-    
-    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+var getCurrentUser = function () {
+    return CurrentUser
 }
 
 var show = function ( e, type ) {
     if ( type == 'user' ) {
         View.init()
-
-        requestSandboxReport()
+    
+        var params = {
+            url      : '/api/sandbox/report'
+            , success: function ( response ) {
+                CurrentUser.setUserSandboxReport( response )
+            
+                View.setUser( CurrentUser )
+            }
+        }
+    
+        EventBus.dispatch( Events.AJAX.REQUEST, null, params )
     }
 }
 
 var removeSession = function ( evt, sessionId ) {
-    var session = Model.getSessionById( sessionId )
-
+    var session = CurrentUser.getSessionById( sessionId )
+    
     var params = {
         url         : '/api/' + session.path
         , method    : 'DELETE'
@@ -42,13 +46,61 @@ var removeSession = function ( evt, sessionId ) {
         }
         , success   : function ( response ) {
             View.removeSession( sessionId )
-            // requestSandboxReport()
+            
             Loader.hide( { delay: 200 } )
         }
     }
-
+    
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
+var saveUserDetail = function ( e, data ) {
+    var params = {
+        url         : '/api/user/details'
+        , method    : 'POST'
+        , beforeSend: function () {
+            Loader.show()
+        }
+        , success   : function ( response ) {
+            Loader.hide( { delay: 200 } )
+            EventBus.dispatch( Events.USER.USER_DETAILS_LOADED, null, response )
+        }
+    }
+    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+}
+
+var changePassword = function ( e, data ) {
+    var params = {
+        url         : '/api/user/password'
+        , method    : 'POST'
+        , beforeSend: function () {
+            Loader.show()
+        }
+        , success   : function ( response ) {
+            Loader.hide( { delay: 200 } )
+            View.showEditUserDetailsForm()
+        }
+    }
+    // EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+    View.showEditUserDetailsForm()
+}
+
+
+// section events
 EventBus.addEventListener( Events.SECTION.SHOW, show )
+
+//user loaded
+EventBus.addEventListener( Events.USER.USER_DETAILS_LOADED, userDetailsLoaded )
+
+// user edit events
+EventBus.addEventListener( Events.SECTION.USER.SAVE_USER_DETAILS, saveUserDetail )
+EventBus.addEventListener( Events.SECTION.USER.CHANGE_PASSWORD, changePassword )
+
+// sandbox edit events
 EventBus.addEventListener( Events.SECTION.USER.REMOVE_SESSION, removeSession )
+
+
+module.exports = {
+    getCurrentUser: getCurrentUser
+}
+

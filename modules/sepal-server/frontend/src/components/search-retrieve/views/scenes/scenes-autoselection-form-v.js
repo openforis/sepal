@@ -3,17 +3,18 @@
  */
 require( './scenes-autoselection-form.scss' )
 
-var Filter = require( '../scenes-selection-filter/scenes-selection-filter-m' )
+var Filter = require( '../../../scenes-selection-filter/scenes-selection-filter-m' )
 
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
-var Sensors  = require( '../sensors/sensors' )
+var EventBus = require( '../../../event/event-bus' )
+var Events   = require( '../../../event/events' )
+var Sensors  = require( '../../../sensors/sensors' )
 
 var noUiSlider = require( 'nouislider' )
-require( '../nouislider/nouislider.css' )
+require( '../../../nouislider/nouislider.css' )
 
-var template = require( './scenes-autoselection-form.html' )
-var html     = $( template( {} ) )
+var parentContainer = null
+var template        = require( './scenes-autoselection-form.html' )
+var html            = $( template( {} ) )
 
 //UI elements
 var sortSlider              = null
@@ -25,8 +26,9 @@ var btnSubmit               = null
 // form notify
 var formNotify              = null
 
-var init = function ( container ) {
-    
+var init = function ( parent ) {
+    parentContainer = parent
+    var container   = parentContainer.find( '.scenes-selection-filter' )
     container.append( html )
     
     sectionSensors          = html.find( '.sensors' )
@@ -38,19 +40,24 @@ var init = function ( container ) {
     
     //sort slider
     sortSlider = html.find( '.sort-slider' ).get( 0 )
-    noUiSlider.create( sortSlider, {
-        start: [ 0.5 ],
-        step : 0.05,
-        range: {
-            'min': [ 0 ],
-            'max': [ 1 ]
-        }
-    } )
-    sortSlider.noUiSlider.on( 'change', function () {
-        var sortWeight = sortSlider.noUiSlider.get()
-        setSortWeight( sortWeight )
-        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
-    } )
+    if ( !sortSlider.hasOwnProperty( 'noUiSlider' ) ) {
+        
+        noUiSlider.create( sortSlider, {
+            start: [ 0.5 ],
+            step : 0.05,
+            range: {
+                'min': [ 0 ],
+                'max': [ 1 ]
+            }
+        }, true )
+        
+        sortSlider.noUiSlider.on( 'change', function () {
+            var sortWeight = sortSlider.noUiSlider.get()
+            setSortWeight( sortWeight )
+            EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
+        } )
+        
+    }
     
     // target day
     offsetTargetDayBtnPlus.click( function ( e ) {
@@ -86,12 +93,12 @@ var init = function ( container ) {
     
     btnSubmit.click( function ( e ) {
         e.preventDefault()
-        formNotify.empty().velocity( 'slideUp', { delay: 0, duration: 100 } )
+        formNotify.empty().velocitySlideUp( { delay: 0, duration: 100 } )
         
         if ( Filter.getSelectedSensors().length > 0 ) {
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES )
         } else {
-            formNotify.html( 'At least one sensor must be selected' ).velocity( 'slideDown', { delay: 20, duration: 400 } )
+            formNotify.html( 'At least one sensor must be selected' ).velocitySlideDown( { delay: 20, duration: 400 } )
         }
     } )
     
@@ -99,7 +106,7 @@ var init = function ( container ) {
 }
 
 var reset = function () {
-    formNotify.velocity( 'slideUp', { delay: 0, duration: 0 } )
+    formNotify.velocitySlideUp( { delay: 0, duration: 0 } )
 }
 
 var setSelectedSensors = function ( selectedSensors ) {
@@ -117,12 +124,16 @@ var setSelectedSensors = function ( selectedSensors ) {
 }
 
 var setOffsetToTargetDay = function ( value ) {
-    offsetTargetDayBtnMinus.prop( 'disabled', (value <= 1) )
+    offsetTargetDayBtnMinus.prop( 'disabled', (value <= 0) )
     
-    var textValue = value + ' year'
-    if ( value > 1 ) {
-        textValue += 's'
+    var textValue = ''
+    if ( value == 0 ) {
+        textValue = new Date().getFullYear()
+    } else {
+        textValue = value + ' year'
+        textValue += ( value > 1 ) ? 's' : ''
     }
+    
     html.find( '.offset-target-day' ).html( textValue )
 }
 
@@ -134,11 +145,21 @@ var setSortWeight = function ( sortWeight ) {
     
 }
 
+var hide = function ( options ) {
+    parentContainer.velocitySlideUp( options )
+}
+
+var toggleVisibility = function ( options ) {
+    parentContainer.velocitySlideToggle( options )
+}
+
 module.exports = {
     init                  : init
     , reset               : reset
     , setSortWeight       : setSortWeight
     , setOffsetToTargetDay: setOffsetToTargetDay
     , setSelectedSensors  : setSelectedSensors
+    , hide                : hide
+    , toggleVisibility    : toggleVisibility
     
 }

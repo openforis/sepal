@@ -10,13 +10,16 @@ var Loader   = require( '../loader/loader' )
 var Model    = require( './browse-m' )
 
 // html
-var template         = require( './browse.html' )
-var html             = $( template( {} ) )
+var html = null
+
 var browseContentRow = null
 var downloadBtn      = null
 var lastAbsPathClick = null
 
 var init = function () {
+    var template = require( './browse.html' )
+    html         = $( template( {} ) )
+    
     var appSection = $( '#app-section' ).find( '.browse' )
     if ( appSection.children().length <= 0 ) {
         appSection.append( html )
@@ -86,11 +89,11 @@ var addDir = function ( dir ) {
         var childDivC = $( '<div class="file-name"/>' )
         childDivC.append( child.name )
         childDivR.append( childDivC )
-
+        
         if ( child.name.indexOf( '.' ) == 0 ) {
             childDivR.addClass( 'hidden-file' )
         }
-
+        
         if ( child.isDirectory === true ) {
             childDivC.addClass( 'width90' )
             var childDivL = $( '<div class="width10 text-align-left"/>' )
