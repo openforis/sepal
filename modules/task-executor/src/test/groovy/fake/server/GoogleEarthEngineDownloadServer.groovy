@@ -24,7 +24,7 @@ class GoogleEarthEngineDownloadServer extends TestServer {
             post('/download') {
                 response.contentType = 'application/json'
                 this.image = new JsonSlurper().parseText(params.required('image', String)) as Map
-                this.file = new File(workingDir, params.required('name', String))
+                this.file = new File(workingDir, params.required('name', String) + '.tif')
                 if (!statuses)
                     states(ACTIVE)
                 send(UUID.randomUUID().toString())

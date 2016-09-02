@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 
 import static org.openforis.sepal.taskexecutor.gee.Status.State.*
 
-@Timeout(1)
+@Timeout(2)
 class GoogleEarthEngineDownload_Test extends Specification {
     def workingDir = File.createTempDir()
     def server = new GoogleEarthEngineDownloadServer(workingDir).start() as GoogleEarthEngineDownloadServer

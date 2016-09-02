@@ -27,8 +27,6 @@ class HeartbeatHandler implements CommandHandler<WorkerSession, Heartbeat> {
         def session = sessionRepository.getSession(command.sessionId)
         if (command.username && command.username != session.username)
             throw new Unauthorized("Session not owned by user: $session", command)
-        if (![ACTIVE, PENDING].contains(session.state))
-            throw new InvalidCommand('Only active and pending sessions can receive heartbeats', command)
         if (session.active)
             sessionRepository.update(session)
         return session
