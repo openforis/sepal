@@ -67,15 +67,9 @@ var Events = {
         
         , SCENES_SELECTION: {
             RESET                     : 'section.scenes-selection.reset'
-            , UPDATE_VIEW             : 'section.scenes-selection.update-view'
             , SELECT                  : 'section.scenes-selection.select'
             , DESELECT                : 'section.scenes-selection.deselect'
             , RELOAD_SCENES           : 'section.scenes-selection.reload-scenes'
-            //DEPRECATED EVENTS BELOW
-            , SORT_CHANGE             : 'section.scenes-selection.sort-change'
-            , FILTER_SHOW_SENSOR      : 'section.scenes-selection.filter-show-sensor'
-            , FILTER_HIDE_SENSOR      : 'section.scenes-selection.filter-hide-sensor'
-            , FILTER_TARGET_DAY_CHANGE: 'section.scenes-selection.filter-target-day-change'
         }
         
         , TASK_MANAGER: {

@@ -106,34 +106,6 @@ var deselectImage = function ( e, sceneAreaId, sceneImage ) {
 }
 
 
-// Events listeners for filter / sort changes
-// var updateSortWeight = function ( evt, sortWeight ) {
-//     Filter.setSortWeight( sortWeight )
-//     // console.log( Filter.getSortWeight() )
-//     updateView()
-// }
-
-// var filterHideSensor = function ( e, sensor ) {
-//     if ( FilterView.isInitialzied() )
-//         View.hideScenesBySensor( sensor )
-// }
-//
-// var filterShowSensor = function ( e, sensor ) {
-//     if ( FilterView.isInitialzied() )
-//         View.showScenesBySensor( sensor )
-// }
-
-// var reloadScenes = function ( e ) {
-//     loadSceneImages( null, Model.getSceneAreaId(), false )
-// }
-// }// var filterTargetDayChange = function ( e, value ) {
-//     if ( !( Filter.getOffsetToTargetDay() == 1 && value < 0 ) ) {
-//         Filter.setOffsetToTargetDay( Filter.getOffsetToTargetDay() + value )
-//         // console.log( Filter.getOffsetToTargetDay() )
-//         loadSceneImages( null, Model.getSceneAreaId() )
-//     }
-// }
-
 var onWeightChanged = function () {
     if ( viewInitialized ) {
         View.setSortWeight( SearchParams.sortWeight )
@@ -156,7 +128,6 @@ var onSensorsChanged = function ( e, action, sensorId ) {
         } else if ( action === 'deselect' ) {
             View.hideScenesBySensor( sensorId )
         }
-        // updateView()
     }
 }
 
@@ -167,19 +138,11 @@ EventBus.addEventListener( Events.SECTION.SHOW, show )
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, reset )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.RESET, reset )
 
-// EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.UPDATE_VIEW, updateView )
-
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SELECT, selectImage )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.DESELECT, deselectImage )
-
 
 // search params changed events
 EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.WEIGHT_CHANGED, onWeightChanged )
 EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGED, onOffsetTargetDayChanged )
 EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.SENSORS_CHANGED, onSensorsChanged )
 
-//TODO search params changed events
-// EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, updateSortWeight )
-// EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_HIDE_SENSOR, filterHideSensor )
-// EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.FILTER_SHOW_SENSOR, filterShowSensor )
-// EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.RELOAD_SCENES, reloadScenes )

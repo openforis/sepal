@@ -2,11 +2,9 @@
  * @author Mino Togna
  */
 
-//search parameters
 this.countryIso = null
 this.polygon           = null
 this.targetDate        = null
-// TODO:  search retrieve + scenes selection parameters
 this.offsetToTargetDay = null
 this.sortWeight        = null
 this.sensors           = null
