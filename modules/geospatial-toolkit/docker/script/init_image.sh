@@ -142,6 +142,7 @@ export PROJ_LIB=/usr/share/proj/
 /opt/miniconda3/bin/R -e "install.packages('rmarkdown', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 /opt/miniconda3/bin/R -e "install.packages('shiny', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 /opt/miniconda3/bin/R -e "install.packages('shinydashboard', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+/opt/miniconda3/bin/R -e "install.packages('shinyBS', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 /opt/miniconda3/bin/R -e "install.packages('snow', dependencies=TRUE, repos='http://cran.rstudio.com/')" # Fails
 /opt/miniconda3/bin/R -e "install.packages('stringr', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 /opt/miniconda3/bin/R -e "install.packages('xtable', dependencies=TRUE, repos='http://cran.rstudio.com/')"
