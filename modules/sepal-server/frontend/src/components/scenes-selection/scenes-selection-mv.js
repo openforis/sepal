@@ -113,10 +113,11 @@ var onWeightChanged = function () {
     }
 }
 
-var onOffsetTargetDayChanged = function () {
+var onOffsetTargetDayChanged = function (e) {
     if ( viewInitialized ) {
         View.setOffsetToTargetDay( SearchParams.offsetToTargetDay )
-        loadSceneImages( null, Model.getSceneAreaId(), false )
+        var showLoader = e.target === 'section-filter-scenes'
+        loadSceneImages( null, Model.getSceneAreaId(), showLoader )
     }
 }
 
