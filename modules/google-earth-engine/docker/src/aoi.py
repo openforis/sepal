@@ -9,7 +9,7 @@ class Aoi:
     @staticmethod
     def create(spec):
         def polygon():
-            return ee.Geometry.Polygon([spec['path']])
+            return ee.Geometry(ee.Geometry.Polygon(coords=[spec['path']]), opt_geodesic=False)
 
         def fusionTable():
             table = ee.FeatureCollection('ft:' + spec['tableName'])
