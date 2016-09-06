@@ -30,7 +30,9 @@ var initEventHandlers = function () {
     btnBestScenes.click( function ( e ) {
         e.preventDefault()
         
+        $( "#search-retrieve .btn-toggle-section" ).removeClass( 'active' )
         $( this ).toggleClass( 'active' )
+        
         FormMosaicPreview.hide()
         FormMosaicRetrieve.hide()
         FormScenesAutoSelection.toggleVisibility()
