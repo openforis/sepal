@@ -1,10 +1,11 @@
 /**
  * @author Mino Togna
  */
-var EventBus             = require( '../../event/event-bus' )
-var Events               = require( '../../event/events' )
-var ScenesAutoSelectForm = require( './scenes/scenes-autoselection-form-v' )
-var MosaicPreviewForm    = require( './mosaic/mosaic-preview-form' )
+var EventBus                = require( '../../event/event-bus' )
+var Events                  = require( '../../event/events' )
+var FormScenesAutoSelection = require( './scenes/form-scenes-autoselection-form' )
+var FormMosaicPreview       = require( './mosaic/form-mosaic-preview' )
+var FormMosaicRetrieve      = require( './mosaic/form-mosaic-retrieve' )
 
 var html                     = null
 var btnRetrieveScenes        = null
@@ -18,7 +19,7 @@ var init = function ( container ) {
     btnRetrieveScenes        = html.find( '.btn-retrieve-scenes' )
     btnToggleLayerVisibility = html.find( '.btn-hide-scene-areas' )
     
-    ScenesAutoSelectForm.init( html.find( '.row-best-scenes-form' ) )
+    FormScenesAutoSelection.init( html.find( '.row-best-scenes-form' ) )
     
     initEventHandlers()
     reset()
@@ -28,8 +29,11 @@ var initEventHandlers = function () {
     
     btnBestScenes.click( function ( e ) {
         e.preventDefault()
-        MosaicPreviewForm.hide()
-        ScenesAutoSelectForm.toggleVisibility()
+        
+        $( this ).toggleClass( 'active' )
+        FormMosaicPreview.hide()
+        FormMosaicRetrieve.hide()
+        FormScenesAutoSelection.toggleVisibility()
     } )
     
     btnRetrieveScenes.click( function ( e ) {
@@ -47,12 +51,13 @@ var initEventHandlers = function () {
 }
 
 var collapse = function ( options ) {
-    ScenesAutoSelectForm.hide( options )
+    btnBestScenes.removeClass( 'active' )
+    FormScenesAutoSelection.hide( options )
 }
 
 var reset = function () {
     collapse( { delay: 0, duration: 0 } )
-    ScenesAutoSelectForm.reset()
+    FormScenesAutoSelection.reset()
 }
 
 module.exports = {
@@ -60,7 +65,7 @@ module.exports = {
     , collapse            : collapse
     , reset               : reset
     // Scenes auto selection form set value methods
-    , setSortWeight       : ScenesAutoSelectForm.setSortWeight
-    , setOffsetToTargetDay: ScenesAutoSelectForm.setOffsetToTargetDay
-    , setSelectedSensors  : ScenesAutoSelectForm.setSelectedSensors
+    , setSortWeight       : FormScenesAutoSelection.setSortWeight
+    , setOffsetToTargetDay: FormScenesAutoSelection.setOffsetToTargetDay
+    , setSelectedSensors  : FormScenesAutoSelection.setSelectedSensors
 }

@@ -1,10 +1,11 @@
 /**
  * @author Mino Togna
  */
-var EventBus             = require( '../../event/event-bus' )
-var Events               = require( '../../event/events' )
-var MosaicPreviewForm    = require( './mosaic/mosaic-preview-form' )
-var ScenesAutoSelectForm = require( './scenes/scenes-autoselection-form-v' )
+var EventBus                = require( '../../event/event-bus' )
+var Events                  = require( '../../event/events' )
+var FormMosaicPreview       = require( './mosaic/form-mosaic-preview' )
+var FormMosaicRetrieve      = require( './mosaic/form-mosaic-retrieve' )
+var FormScenesAutoSelection = require( './scenes/form-scenes-autoselection-form' )
 
 var html                     = null
 var btnPreviewMosaic         = null
@@ -18,7 +19,8 @@ var init = function ( container ) {
     btnRetrieveMosaic        = html.find( '.btn-retrieve-mosaic' )
     btnToggleLayerVisibility = html.find( '.btn-hide-mosaic' )
     
-    MosaicPreviewForm.init( html.find( '.row-mosaic-preview' ) )
+    FormMosaicPreview.init( html.find( '.row-mosaic-preview' ) )
+    FormMosaicRetrieve.init( html.find( '.row-mosaic-retrieve' ) )
     
     initEventHandlers()
     reset()
@@ -28,12 +30,21 @@ var initEventHandlers = function () {
     
     btnPreviewMosaic.click( function ( e ) {
         e.preventDefault()
-        MosaicPreviewForm.toggleVisibility()
-        ScenesAutoSelectForm.hide()
+        
+        $( this ).toggleClass( 'active' )
+        FormMosaicPreview.toggleVisibility()
+        FormScenesAutoSelection.hide()
+        FormMosaicRetrieve.hide()
+        
     } )
+    
     btnRetrieveMosaic.click( function ( e ) {
         e.preventDefault()
-        EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC )
+        
+        $( this ).toggleClass( 'active' )
+        FormMosaicPreview.hide()
+        FormScenesAutoSelection.hide()
+        FormMosaicRetrieve.toggleVisibility()
     } )
     
     btnToggleLayerVisibility.click( function ( e ) {
@@ -46,13 +57,17 @@ var initEventHandlers = function () {
 
 
 var collapse = function ( options ) {
-    MosaicPreviewForm.hide( options )
+    btnPreviewMosaic.removeClass( 'active' )
+    btnRetrieveMosaic.removeClass( 'active' )
+    FormMosaicPreview.hide( options )
+    FormMosaicRetrieve.hide( options )
 }
 
 var reset = function () {
-    btnRetrieveMosaic.disable()
-    
     collapse( { delay: 0, duration: 0 } )
+    
+    FormMosaicPreview.reset()
+    FormMosaicRetrieve.reset()
 }
 
 module.exports = {

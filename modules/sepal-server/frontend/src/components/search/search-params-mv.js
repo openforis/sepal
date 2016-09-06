@@ -13,11 +13,11 @@ var weightChange = function ( e, value ) {
     EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.WEIGHT_CHANGED )
 }
 
-var offsetTargetDayChange = function ( e, value ) {
+var offsetTargetDayChange = function ( e, value  ) {
     if ( !( SearchParams.offsetToTargetDay == 0 && value < 0 ) ) {
         SearchParams.offsetToTargetDay += value
         
-        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGED )
+        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGED , e.target  )
     }
     
 }

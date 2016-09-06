@@ -54,4 +54,16 @@ var ajaxRequest = function ( e, params ) {
     $.ajax( params )
 }
 
+var getRequest = function ( e, params ) {
+    params.type = "GET"
+    ajaxRequest( e, params )
+}
+
+var postRequest = function ( e, params ) {
+    params.type = "POST"
+    ajaxRequest( e, params )
+}
+
 EventBus.addEventListener( Events.AJAX.REQUEST, ajaxRequest )
+EventBus.addEventListener( Events.AJAX.GET, getRequest )
+EventBus.addEventListener( Events.AJAX.POST, postRequest )
