@@ -7,7 +7,7 @@ var Events   = require( '../../../event/events' )
 require( 'devbridge-autocomplete' )
 
 var parentContainer = null
-var template        = require( './mosaic-preview-form.html' )
+var template        = require( './form-mosaic-preview.html' )
 var html            = $( template( {} ) )
 
 var formNotify = null
@@ -62,8 +62,14 @@ var toggleVisibility = function ( options ) {
     parentContainer.velocitySlideToggle( options )
 }
 
+var reset = function () {
+    selectedBands = null
+    html.find( 'input[name=bands]' ).val( '' )
+}
+
 module.exports = {
     init              : init
     , hide            : hide
     , toggleVisibility: toggleVisibility
+    , reset           : reset
 }

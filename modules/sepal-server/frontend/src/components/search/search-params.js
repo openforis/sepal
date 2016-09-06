@@ -14,7 +14,7 @@ this.reset = function () {
     this.polygon           = null
     this.targetDate        = null
     //
-    this.offsetToTargetDay = 1
+    this.offsetToTargetDay = 0
     this.sortWeight        = 0.5
     this.sensors           = Object.keys( require( '../sensors/sensors' ) )
 }

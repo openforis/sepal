@@ -7,7 +7,9 @@
 var Events = {
     
     AJAX: {
-        REQUEST: 'ajax'
+        REQUEST: 'ajax.request'
+        , GET  : 'ajax.get'
+        , POST : 'ajax.post'
     }
     
     , APP: {
@@ -66,10 +68,10 @@ var Events = {
         , TERMINAL: {}
         
         , SCENES_SELECTION: {
-            RESET                     : 'section.scenes-selection.reset'
-            , SELECT                  : 'section.scenes-selection.select'
-            , DESELECT                : 'section.scenes-selection.deselect'
-            , RELOAD_SCENES           : 'section.scenes-selection.reload-scenes'
+            RESET          : 'section.scenes-selection.reset'
+            , SELECT       : 'section.scenes-selection.select'
+            , DESELECT     : 'section.scenes-selection.deselect'
+            , RELOAD_SCENES: 'section.scenes-selection.reload-scenes'
         }
         
         , TASK_MANAGER: {

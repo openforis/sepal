@@ -1,7 +1,7 @@
 /**
  * @author M. Togna
  */
-require( './scenes-autoselection-form.scss' )
+require( './form-scenes-autoselection.scss' )
 
 var SearchParams = require( './../../../search/search-params' )
 // var Filter       = require( '../../../scenes-selection/views/scenes-selection-filter/scenes-selection-filter-m' )
@@ -14,7 +14,7 @@ var noUiSlider = require( 'nouislider' )
 require( '../../../nouislider/nouislider.css' )
 
 var parentContainer = null
-var template        = require( './scenes-autoselection-form.html' )
+var template        = require( './form-scenes-autoselection.html' )
 var html            = $( template( {} ) )
 
 //UI elements
