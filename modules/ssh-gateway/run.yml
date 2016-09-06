@@ -6,6 +6,8 @@
 
 - copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/ssh-gateway/ldap-ca.crt.pem
 
+- file: path="/data/ssh-gateway/started" state=absent
+
 - name: "ssh-gateway | Start container"
   docker:
     docker_api_version: "1.22"
@@ -30,3 +32,9 @@
       SEPAL_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
       SEPAL_ADMIN_WEB_PASSWORD_SEPAL_ENV: "{{ sepal_admin_user_password }}"
       LDAP_ADMIN_PASSWORD_SEPAL_ENV: "{{ ldap_admin_password }}"
+  register: container
+
+
+- name: "ssh-gateway | Wait until started"
+  wait_for: path=/data/ssh-gateway/started
+  when: (container.summary.started > 0 or container.summary.restarted > 0)
