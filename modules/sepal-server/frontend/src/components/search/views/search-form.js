@@ -30,13 +30,9 @@ var init = function ( formSelector ) {
     formNotify = form.find( '.form-notify' )
     
     fieldCountry = form.find( '#search-form-country' )
-    fieldCountry.autocomplete( {
-        lookup                     : countries
-        , minChars                 : 0
-        , autoSelectFirst          : true
-        , triggerSelectOnValidInput: false
-        , tabDisabled              : true
-        , onSelect                 : function ( selection ) {
+    fieldCountry.sepalAutocomplete( {
+        lookup    : countries
+        , onChange: function ( selection ) {
             if ( selection ) {
                 var cCode = selection.data
                 var cName = selection.value
@@ -45,11 +41,31 @@ var init = function ( formSelector ) {
                 EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
                 
                 setCountryIso( cCode )
+            } else {
+                setCountryIso( null )
             }
-        }, onInvalidateSelection   : function () {
-            setCountryIso( null )
         }
     } )
+    // fieldCountry.autocomplete( {
+    //     lookup                     : countries
+    //     , minChars                 : 0
+    //     , autoSelectFirst          : true
+    //     , triggerSelectOnValidInput: false
+    //     , tabDisabled              : true
+    //     , onSelect                 : function ( selection ) {
+    //         if ( selection ) {
+    //             var cCode = selection.data
+    //             var cName = selection.value
+    //
+    //             EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
+    //             EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
+    //
+    //             setCountryIso( cCode )
+    //         }
+    //     }, onInvalidateSelection   : function () {
+    //         setCountryIso( null )
+    //     }
+    // } )
     
     btnDrawPolygon = form.find( '.btn-draw-polygon' )
     btnDrawPolygon.click( function ( e ) {
