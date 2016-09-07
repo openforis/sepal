@@ -30,7 +30,7 @@ var initEventHandlers = function () {
     btnBestScenes.click( function ( e ) {
         e.preventDefault()
         
-        $( "#search-retrieve .btn-toggle-section" ).removeClass( 'active' )
+        $( "#search-retrieve .btn-toggle-section" ).not( this ).removeClass( 'active' )
         $( this ).toggleClass( 'active' )
         
         FormMosaicPreview.hide()

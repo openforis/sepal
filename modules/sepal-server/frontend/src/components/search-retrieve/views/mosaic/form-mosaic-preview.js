@@ -29,7 +29,6 @@ var init = function ( parent ) {
         lookup    : bands
         , onChange: function ( selection ) {
             selectedBands = (selection) ? selection.data : null
-            console.log( selectedBands )
         }
     } )
     

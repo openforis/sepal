@@ -98,6 +98,7 @@ var Events = {
     
     , MAP: {
         ZOOM_TO                       : 'map.zoom-to'
+        , ZOOM_CHANGED                : 'map.zoom-changed'
         // , LOAD_SCENE_AREAS: 'map.load-scene-areas'
         , SCENE_AREA_CLICK            : 'map.scene-area-click'
         , ADD_LAYER                   : 'map.add-layer'
