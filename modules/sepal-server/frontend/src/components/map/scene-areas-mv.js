@@ -1,37 +1,37 @@
 /**
  * @author Mino Togna
  */
-var EventBus              = require( '../event/event-bus' )
-var Events                = require( '../event/events' )
-var SceneAreasOverlayView = require( './scene-areas/scene-areas-v' )
-var Model                 = require( './scene-areas/scene-areas-m' )
+var EventBus = require( '../event/event-bus' )
+var Events   = require( '../event/events' )
+// var SceneAreasOverlayView = require( './scene-areas/scene-areas-v' )
+var View     = require( './scene-areas/scene-areas-v' )
+var Model    = require( './scene-areas/scene-areas-m' )
 
-// map layer
-var View = null
 
 var sceneAreasLoaded = function ( e, scenes ) {
-    if ( View ) {
-        View.setMap( null )
-    }
+    // if ( View ) {
+    //     View.setMap( null )
+    // }
     
     Model.scenes = scenes
-    View         = SceneAreasOverlayView.newInstance( Model.scenesToMapPolygons() )
+    View.add( Model.scenesToMapPolygons() )
+    // View         = SceneAreasOverlayView.newInstance( Model.scenesToMapPolygons() )
     
-    EventBus.dispatch( Events.MAP.ADD_LAYER, null, View )
+    // EventBus.dispatch( Events.MAP.ADD_LAYER, null, View )
 }
 
 var onApplicationSectionShow = function ( e ) {
-    if ( View )
+    // if ( View )
         View.hide()
 }
 
 var onApplicationSectionReduce = function ( e ) {
-    if ( View )
+    // if ( View )
         View.show()
 }
 
 var onToggleVisibility = function ( e ) {
-    if ( View )
+    // if ( View )
         View.toggleVisibility()
 }
 
@@ -41,12 +41,12 @@ var onSceneAreaChange = function ( e, sceneAreaId ) {
 }
 
 var onResetSceneAreas = function ( e ) {
-    if ( View )
+    // if ( View )
         View.reset()
 }
 
 var onMapZoomChanged = function ( e, zoomLevel ) {
-    if ( View )
+    // if ( View )
         View.setZoomLevel( zoomLevel )
 }
 
