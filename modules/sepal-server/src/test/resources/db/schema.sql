@@ -159,16 +159,16 @@ CREATE TABLE worker_session (
 );
 
 CREATE TABLE task (
-  id                 VARCHAR(255)  NOT NULL,
-  state              VARCHAR(255)  NOT NULL,
-  username           VARCHAR(255)  NOT NULL,
-  session_id         VARCHAR(255)  NOT NULL,
-  operation          VARCHAR(255)  NOT NULL,
-  params             VARCHAR(2048) NOT NULL,
-  status_description VARCHAR(255)  NOT NULL,
-  creation_time      TIMESTAMP     NOT NULL,
-  update_time        TIMESTAMP     NOT NULL,
-  removed            BOOLEAN       NOT NULL,
+  id                 VARCHAR(255) NOT NULL,
+  state              VARCHAR(255) NOT NULL,
+  username           VARCHAR(255) NOT NULL,
+  session_id         VARCHAR(255) NOT NULL,
+  operation          VARCHAR(255) NOT NULL,
+  params             TEXT         NOT NULL,
+  status_description VARCHAR(255) NOT NULL,
+  creation_time      TIMESTAMP    NOT NULL,
+  update_time        TIMESTAMP    NOT NULL,
+  removed            BOOLEAN      NOT NULL,
   PRIMARY KEY (id)
 );
 

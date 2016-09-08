@@ -39,6 +39,8 @@ server {
         proxy_set_header sepal-endpoint $service;
         proxy_set_header sepal-user $user;
         proxy_pass http://sepal:9191;
+        # WebSockets not sending any data should not timeout
+        proxy_read_timeout 1d;
         proxy_redirect ~^https?://[^/]+/?(.*)$ /user/$user/$service/$1;
     }
 

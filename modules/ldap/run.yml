@@ -38,6 +38,7 @@
       LDAP_TLS_CRT_FILENAME: ldap-crt.pem
       LDAP_TLS_KEY_FILENAME: ldap-key.pem
       LDAP_TLS_CA_CRT_FILENAME: ldap-ca.crt.pem
+      LDAP_TLS_CIPHER_SUITE: SECURE256:-VERS-SSL3.0
       LDAP_TLS_VERIFY_CLIENT: never
   register: container
 
