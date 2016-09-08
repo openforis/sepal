@@ -2,7 +2,6 @@
  * @author Mino Togna
  */
 require( 'd3' )
-require( './scene-areas.css' )
 
 var EventBus         = require( '../../event/event-bus' )
 var Events           = require( '../../event/events' )
@@ -10,8 +9,7 @@ var Sepal            = require( '../../main/sepal' )
 var GoogleMapsLoader = require( 'google-maps' )
 var google           = null
 
-var SceneAreasOverlayView = function ( polygons ) {
-    //this extends google.maps.OverlayView object
+var SceneAreasOverlayView = function ( polygons , drawnCallback ) {
     $.extend( this, new google.maps.OverlayView() )
     
     //array data
@@ -21,6 +19,7 @@ var SceneAreasOverlayView = function ( polygons ) {
     //
     this.visible   = true
     
+    this.drawnCallback = drawnCallback
 }
 
 SceneAreasOverlayView.prototype.onAdd = function () {
@@ -34,7 +33,7 @@ SceneAreasOverlayView.prototype.onAdd = function () {
     // Draw each marker as a separate SVG element.
     this.draw = function () {
         var projection = this.getProjection(),
-            padding    = 15 * 2
+            padding    = 30 * 2
         
         var markers = this.container.selectAll( "svg" )
             .data( d3.entries( this.data ) )
@@ -117,6 +116,10 @@ SceneAreasOverlayView.prototype.onAdd = function () {
                 .style( "left", (d.x - padding) + "px" )
                 .style( "top", (d.y - padding) + "px" )
         }
+        
+        if( this.drawnCallback ){
+            this.drawnCallback()
+        }
     }
 }
 
@@ -128,7 +131,7 @@ SceneAreasOverlayView.prototype.onRemove = function () {
 }
 
 SceneAreasOverlayView.prototype.show = function () {
-    if ( this.container && this.visible ) {
+    if ( this.container ) {
         this.container
             .selectAll( "circle" )
             .transition()
@@ -147,7 +150,7 @@ SceneAreasOverlayView.prototype.show = function () {
 }
 
 SceneAreasOverlayView.prototype.hide = function () {
-    if ( this.container && this.visible ) {
+    if ( this.container ) {
         this.container
             .selectAll( "circle" )
             .transition()
@@ -163,86 +166,36 @@ SceneAreasOverlayView.prototype.hide = function () {
     }
 }
 
-SceneAreasOverlayView.prototype.toggleVisibility = function () {
-    this.visible = !this.visible
-    
-    if ( !this.visible ) {
-        this.container
-            .selectAll( "circle" )
-            .transition()
-            .duration( 500 )
-            .style( 'stroke-opacity', '0' )
-            .style( 'fill-opacity', '0' )
-        
-        this.container
-            .selectAll( "text" )
-            .transition()
-            .duration( 500 )
-            .style( 'fill-opacity', '0' )
-    } else {
-        this.container
-            .selectAll( "circle" )
-            .transition()
-            // .delay( 400 )
-            .duration( 800 )
-            .style( 'stroke-opacity', '.4' )
-            .style( 'fill-opacity', '.1' )
-        
-        this.container
-            .selectAll( "text" )
-            .transition()
-            // .delay( 400 )
-            .duration( 800 )
-            .style( 'fill-opacity', '1' )
-    }
-    
-}
-
-SceneAreasOverlayView.prototype.setCount = function ( sceneAreaId, count ) {
+SceneAreasOverlayView.prototype.circles = function () {
     if ( this.container ) {
-        
-        this.container
-            .select( "._" + sceneAreaId + " text" )
-            .transition()
-            .delay( 400 )
-            .duration( 800 )
-            .text( function ( d ) {
-                return count
-            } )
-        
-        var bgColor = '#818181'
-        if ( count > 0 ) {
-            bgColor = '#9CEBB5'
-        }
-        this.container
-            .select( "._" + sceneAreaId + " circle" )
-            .transition()
-            .delay( 400 )
-            .duration( 800 )
-            .style( 'fill', bgColor )
-            .style( 'stroke', bgColor )
-        
+        return this.container.selectAll( "circle" )
     }
 }
 
-SceneAreasOverlayView.prototype.reset = function () {
-    this.visible = false
-    this.toggleVisibility()
-    this.visible = true
-    
-    var $this = this
-    $.each( this.data, function ( i, item ) {
-        var sceneArea = item.scene
-        // sceneAreaChange( null, sceneArea.sceneAreaId )
-        $this.setCount( sceneArea.sceneAreaId, 0 )
-    } )
+SceneAreasOverlayView.prototype.texts = function () {
+    if ( this.container ) {
+        return this.container.selectAll( "text" )
+    }
 }
+
+SceneAreasOverlayView.prototype.circle = function ( sceneAreaId ) {
+    if ( this.container ) {
+        return this.container.select( "._" + sceneAreaId + " circle" )
+    }
+}
+
+SceneAreasOverlayView.prototype.text = function ( sceneAreaId ) {
+    if ( this.container ) {
+        return this.container.select( "._" + sceneAreaId + " text" )
+    }
+}
+
 
 module.exports = {
-    newInstance: function ( data ) {
+    newInstance: function ( data , drawnCallback ) {
         GoogleMapsLoader.load( function ( g ) {
             google = g
         } )
-        return new SceneAreasOverlayView( data )
+        return new SceneAreasOverlayView( data , drawnCallback )
     }
 }
