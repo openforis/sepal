@@ -13,29 +13,36 @@ var init = function ( form ) {
     Form       = form
     FormNotify = form.find( '.form-notify' )
     
-    var $login = $( "#login" )
-    Animation.animateIn( $login, function () {
-        //TODO
-        $login.find( 'input[name=user]' ).focusin()
+    Animation.animateIn( $( "#login" ), function () {
+        // TODO
+        // input.trigger( 'focus' )
+        // $login.find( 'input[name=user]' ).focusin()
     } )
     
     bindEvents()
 }
 
 var show = function ( invitation ) {
+    var input = null
     if ( invitation ) {
+        input = Form.find('input[name=password]')
         
         Form.find( 'input[name=user]' ).val( invitation.username ).prop( 'readonly', true )
         Form.find( 'input[name=invitationId]' ).val( invitation.invitationId )
         Form.find( 'button[type=submit]' ).html( '<i class="fa fa-sign-in" aria-hidden="true"></i> Accept Invitation' )
         
     } else {
+        input = Form.find('input[name=user]')
         
         Form.find( '.password2-section' ).remove()
         Form.find( 'input[name=invitationId]' ).remove()
         Form.find( 'button[type=submit]' ).html( '<i class="fa fa-sign-in" aria-hidden="true"></i> Login' )
         
     }
+    
+    setTimeout(function (  ) {
+        input.trigger( 'focus' )
+    } , 2500)
 }
 
 var bindEvents = function () {

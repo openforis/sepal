@@ -31,7 +31,9 @@ var initEventHandlers = function () {
     btnPreviewMosaic.click( function ( e ) {
         e.preventDefault()
         
+        $( "#search-retrieve .btn-toggle-section" ).not( this ).removeClass( 'active' )
         $( this ).toggleClass( 'active' )
+        
         FormMosaicPreview.toggleVisibility()
         FormScenesAutoSelection.hide()
         FormMosaicRetrieve.hide()
@@ -41,7 +43,9 @@ var initEventHandlers = function () {
     btnRetrieveMosaic.click( function ( e ) {
         e.preventDefault()
         
+        $( "#search-retrieve .btn-toggle-section" ).not( this ).removeClass( 'active' )
         $( this ).toggleClass( 'active' )
+        
         FormMosaicPreview.hide()
         FormScenesAutoSelection.hide()
         FormMosaicRetrieve.toggleVisibility()
@@ -59,6 +63,7 @@ var initEventHandlers = function () {
 var collapse = function ( options ) {
     btnPreviewMosaic.removeClass( 'active' )
     btnRetrieveMosaic.removeClass( 'active' )
+    
     FormMosaicPreview.hide( options )
     FormMosaicRetrieve.hide( options )
 }

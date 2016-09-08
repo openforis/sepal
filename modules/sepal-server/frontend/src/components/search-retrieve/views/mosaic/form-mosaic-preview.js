@@ -25,22 +25,12 @@ var init = function ( parent ) {
     btnSubmit  = html.find( '.btn-submit' )
     
     var bandsInput = html.find( 'input[name=bands]' )
-    bandsInput.autocomplete( {
-        lookup                     : bands
-        , minChars                 : 0
-        , autoSelectFirst          : true
-        , triggerSelectOnValidInput: false
-        , tabDisabled              : true
-        , onSelect                 : function ( selection ) {
-            if ( selection ) {
-                selectedBands = selection.data
-                // var cName = selection.value
-            }
-        }, onInvalidateSelection   : function () {
-            selectedBands = null
+    bandsInput.sepalAutocomplete( {
+        lookup    : bands
+        , onChange: function ( selection ) {
+            selectedBands = (selection) ? selection.data : null
         }
     } )
-    
     
     btnSubmit.click( function ( e ) {
         e.preventDefault()

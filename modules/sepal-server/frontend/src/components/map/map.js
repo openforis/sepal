@@ -12,7 +12,7 @@ GoogleMapsLoader.LIBRARIES = [ 'drawing' ]
 
 var Sepal = require( '../main/sepal' )
 // additional map components
-require( './scene-areas' )
+require( './scene-areas-mv' )
 require( './ee-map-layer' )
 require( './polygon-draw' )
 
@@ -38,28 +38,30 @@ var show = function () {
     
     GoogleMapsLoader.load( function ( google ) {
         map = new google.maps.Map( document.getElementById( 'map' ), {
-            zoom              : 3,
-            minZoom           : 3,
-            maxZoom           : 11,
-            center            : new google.maps.LatLng( 16.7794913, 9.6771556 ),
-            mapTypeId         : google.maps.MapTypeId.ROADMAP,
-            zoomControl       : false,
+            zoom             : 3,
+            minZoom          : 3,
+            maxZoom          : 11,
+            center           : new google.maps.LatLng( 16.7794913, 9.6771556 ),
+            mapTypeId        : google.maps.MapTypeId.ROADMAP,
+            zoomControl      : false,
             // zoomControlOptions: {
             //     position: google.maps.ControlPosition.BOTTOM_CENTER
             //     , style : google.maps.ZoomControlStyle.LARGE
             // },
-            mapTypeControl    : false,
-            scaleControl      : false,
-            streetViewControl : false,
-            rotateControl     : false,
-            fullscreenControl : false,
-            backgroundColor   : '#131314'
+            mapTypeControl   : false,
+            scaleControl     : false,
+            streetViewControl: false,
+            rotateControl    : false,
+            fullscreenControl: false,
+            backgroundColor  : '#131314'
             
         } )
         
         map.setOptions( { styles: mapStyle } )
         
-        // preview()
+        map.addListener( 'zoom_changed', function () {
+            EventBus.dispatch(Events.MAP.ZOOM_CHANGED , null , map.getZoom())
+        } )
         
     } )
 }

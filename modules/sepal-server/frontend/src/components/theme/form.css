@@ -49,14 +49,15 @@
 
 .form-theme .form-group.error input {
     border-bottom-color: #e81351 !important;
-    background-color: rgba(232, 19, 81, 0.1 ) !important;
+    background-color: rgba(232, 19, 81, 0.1) !important;
 
     transition: background-color 800ms ease-out;
     transition: border-bottom-color 500ms ease-in;
 }
+
 .form-theme .form-group.error button {
     border-color: #e81351 !important;
-    background-color: rgba(232, 19, 81, 0.1 ) !important;
+    background-color: rgba(232, 19, 81, 0.1) !important;
 }
 
 .form-theme .form-label {
@@ -126,9 +127,24 @@
 .autocomplete-suggestion:hover,
 .autocomplete-suggestion.autocomplete-selected {
     cursor: pointer;
-    /*background-color: rgba(28, 28, 28, 0.95);*/
     background-color: rgba(101, 101, 104, 0.6);
+}
 
+.autocomplete-reset {
+    position: absolute;
+    right: 1.2rem;
+    top: .6rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    animate: opacity 500 ease-in;
+}
+.autocomplete-reset.disabled, .autocomplete-reset:disabled {
+    opacity: .15 !important;
+    animate: opacity 500 ease-in;
+}
+.autocomplete-reset i {
+    font-size: 1.2rem !important;
 }
 
 /*.autocomplete-selected { background: #F0F0F0; }*/
