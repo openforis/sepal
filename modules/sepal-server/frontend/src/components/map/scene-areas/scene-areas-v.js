@@ -122,11 +122,12 @@ var updateLayerSize = function () {
             case 4:
                 radius   = 8
                 fontSize = 6
-                dx       = .35
+                dx       = .25
                 break
             case 5:
                 radius   = 16
                 fontSize = 8
+                dx       = .1
                 break
             case 6:
                 radius   = 25
@@ -135,26 +136,31 @@ var updateLayerSize = function () {
             case 7:
                 radius   = 33
                 fontSize = 14
+                dx       = -0.05
                 break
             case 8:
                 radius   = 40
                 fontSize = 17
+                dx       = -0.1
                 break
             case 9:
                 radius   = 45
                 fontSize = 20
+                dx       = -0.125
                 break
             case 10:
                 radius   = 50
                 fontSize = 23
+                dx       = -0.15
                 break
             case 11:
                 radius   = 55
                 fontSize = 26
+                dx       = -0.20
                 break
         }
         
-        
+        // console.debug( '=====zoom level: ', zoomLevel, '  ======dx: ', dx )
         layer.circles()
             .transition()
             .delay( 10 )
