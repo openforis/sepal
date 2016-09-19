@@ -86,8 +86,8 @@ module.exports = {
         host       : '0.0.0.0',
         proxy      : {
             // '*': { target: 'http://localhost:1025' }
-            '*': { target: 'http://localhost:9999' }
-            // '*': { target: 'https://' + process.env.VAGRANT_IP } // Vagrant box
+            // '*': { target: 'http://localhost:9999' }
+            '*': { target: 'https://' + process.env.VAGRANT_IP, secure: false} // Vagrant box
             // , '/preview': { target: 'http://127.0.0.1:5000' }
         }
     }
