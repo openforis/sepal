@@ -54,8 +54,6 @@ module.exports = {
                 test  : /\.scss$/,
                 loader: ExtractTextPlugin.extract( { fallbackLoader: 'style', loader: 'css!postcss!sass' } )
             },
-            // { test: /\.css$/, loader: ExtractTextPlugin.extract( 'style', 'css!postcss' ) },
-            // { test: /\.scss$/, loader: ExtractTextPlugin.extract( 'style', 'css!postcss!sass' ) },
             {
                 test  : /\.woff2?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
                 // Limiting the size of the woff fonts breaks font-awesome ONLY for the extract text plugin
