@@ -20,13 +20,25 @@ module.exports = {
             template: 'index.html',
             hash    : true
         } ),
-        new ExtractTextPlugin( 'static/app.css', { allChunks: true } ),
-        // new Webpack.ProvidePlugin( { "window.Tether": "tether" } ),
+        new ExtractTextPlugin( { filename: 'static/app.css', allChunks: true } ),
+        new Webpack.ProvidePlugin( { "window.Tether": "tether" } ),
         new Webpack.ProvidePlugin( {
             $              : "jquery",
             jQuery         : "jquery",
             "window.jQuery": "jquery",
-            "window.Tether": "tether"
+            "window.Tether": "tether",
+            // exports workaround for https://github.com/shakacode/bootstrap-loader/issues/172
+            Alert: "exports?Alert!bootstrap/js/dist/alert",
+            Button: "exports?Button!bootstrap/js/dist/button",
+            Carousel: "exports?Carousel!bootstrap/js/dist/carousel",
+            Collapse: "exports?Collapse!bootstrap/js/dist/collapse",
+            Dropdown: "exports?Dropdown!bootstrap/js/dist/dropdown",
+            Modal: "exports?Modal!bootstrap/js/dist/modal",
+            Popover: "exports?Popover!bootstrap/js/dist/popover",
+            Scrollspy: "exports?Scrollspy!bootstrap/js/dist/scrollspy",
+            Tab: "exports?Tab!bootstrap/js/dist/tab",
+            Tooltip: "exports?Tooltip!bootstrap/js/dist/tooltip",
+            Util: "exports?Util!bootstrap/js/dist/util",
         } ),
         new FaviconsWebpackPlugin( './src/icons/favicon.png' )
     ],
@@ -34,8 +46,16 @@ module.exports = {
     devtool: 'source-map',
     module : {
         loaders: [
-            { test: /\.css$/, loader: ExtractTextPlugin.extract( 'style', 'css!postcss' ) },
-            { test: /\.scss$/, loader: ExtractTextPlugin.extract( 'style', 'css!postcss!sass' ) },
+            {
+                test  : /\.css$/,
+                loader: ExtractTextPlugin.extract( { fallbackLoader: 'style', loader: 'css!postcss' } )
+            },
+            {
+                test  : /\.scss$/,
+                loader: ExtractTextPlugin.extract( { fallbackLoader: 'style', loader: 'css!postcss!sass' } )
+            },
+            // { test: /\.css$/, loader: ExtractTextPlugin.extract( 'style', 'css!postcss' ) },
+            // { test: /\.scss$/, loader: ExtractTextPlugin.extract( 'style', 'css!postcss!sass' ) },
             {
                 test  : /\.woff2?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
                 // Limiting the size of the woff fonts breaks font-awesome ONLY for the extract text plugin
@@ -66,8 +86,8 @@ module.exports = {
         host       : '0.0.0.0',
         proxy      : {
             // '*': { target: 'http://localhost:1025' }
-            // '*': { target: 'http://localhost:9999' }
-            '*': { target: 'https://' + process.env.VAGRANT_IP } // Vagrant box
+            '*': { target: 'http://localhost:9999' }
+            // '*': { target: 'https://' + process.env.VAGRANT_IP } // Vagrant box
             // , '/preview': { target: 'http://127.0.0.1:5000' }
         }
     }
