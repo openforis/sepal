@@ -16,3 +16,13 @@ wget "http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.38/mysql-co
 mv "mysql-connector-java-5.1.38.jar" "/opt/flyway/drivers"
 
 mkdir -p /home/mysql
+
+# append to my.cnf for logging:
+printf '%s\n' \
+    '[mysqld]' \
+    'explicit_defaults_for_timestamp' \
+    'log-error = /var/log/mysql/error.log' \
+    'long_query_time = 1' \
+    'slow_query_log = 1' \
+    'slow_query_log_file = /var/log/mysql/slow-queries.log' \
+    >> /etc/mysql/my.cnf
