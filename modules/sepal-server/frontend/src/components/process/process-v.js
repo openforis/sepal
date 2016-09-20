@@ -34,7 +34,7 @@ var init = function () {
             '    <a class="btn btn-base round app"' +
             '       target="_blank" ' +
             '       href="/user/'+ UserMV.getCurrentUser().username + '/shiny-server/accuracy-assessment/">' +
-            '        Accuraccy Assessment' +
+            '        Accuracy Assessment' +
             '    </a>' +
             '</div>')
     }
