@@ -1,4 +1,5 @@
-FROM mysql:5.6.26
+FROM mysql:5.7
+
 MAINTAINER OpenForis
 EXPOSE 3306
 
