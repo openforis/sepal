@@ -8,16 +8,18 @@ import org.openforis.sepal.component.task.api.Timeout
 import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.query.UserTasks
 import org.openforis.sepal.event.SynchronousEventDispatcher
+import org.openforis.sepal.transaction.SqlConnectionManager
 import spock.lang.Specification
 
 abstract class AbstractTaskTest extends Specification {
     final database = new Database()
+    final connectionManager = new SqlConnectionManager(database.dataSource)
     final eventDispatcher = new SynchronousEventDispatcher()
     final sessionManager = new FakeWorkerSessionManager()
     final workerGateway = new FakeWorkerGateway()
     final clock = new FakeClock()
     final component = new TaskComponent(
-            database.dataSource,
+            connectionManager,
             eventDispatcher,
             sessionManager,
             workerGateway,

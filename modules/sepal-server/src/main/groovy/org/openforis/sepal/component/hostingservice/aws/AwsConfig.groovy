@@ -1,6 +1,6 @@
 package org.openforis.sepal.component.hostingservice.aws
 
-import org.openforis.sepal.component.hostingservice.internal.ConfigLoader
+import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.FileSystem
 import org.openforis.sepal.util.annotation.Data
 
@@ -15,7 +15,7 @@ class AwsConfig {
     final String userHomeDirTemplate
 
     AwsConfig() {
-        def c = new ConfigLoader(new File(FileSystem.configDir(), 'aws.properties'))
+        def c = new Config('aws.properties')
         region = c.string('region')
         availabilityZone = c.string('availabilityZone')
         accessKey = c.string('accessKey')

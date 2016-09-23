@@ -16,35 +16,30 @@ import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.transaction.SqlConnectionManager
-import org.openforis.sepal.util.annotation.ImmutableData
 import org.openforis.sepal.util.lifecycle.Lifecycle
-
-import javax.sql.DataSource
 
 final class DataSearchComponent implements EndpointRegistry, Lifecycle {
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
     private final GoogleEarthEngineGateway geeGateway
     private final SceneMetaDataRepository sceneMetaDataRepository
-    private final SqlConnectionManager connectionManager
     private SceneMetaDataUpdateScheduler sceneMetaDataUpdateScheduler
 
-    DataSearchComponent(SepalConfiguration config) {
+    DataSearchComponent(SqlConnectionManager connectionManager, SepalConfiguration config) {
         this(
-                config.dataSource,
+                connectionManager,
                 new HttpGoogleEarthEngineGateway(config.googleEarthEngineEndpoint),
                 CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory))
         )
     }
 
     DataSearchComponent(
-            DataSource dataSource,
+            SqlConnectionManager connectionManager,
             GoogleEarthEngineGateway geeGateway,
             UsgsGateway usgs) {
         this.geeGateway = geeGateway
-        connectionManager = new SqlConnectionManager(dataSource)
-        this.sceneMetaDataRepository = new JdbcSceneMetaDataRepository(this.connectionManager)
-        commandDispatcher = new HandlerRegistryCommandDispatcher(this.connectionManager)
+        this.sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
+        commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
                 .register(UpdateUsgsSceneMetaData, new UpdateUsgsSceneMetaDataHandler(usgs, sceneMetaDataRepository))
 
         queryDispatcher = new HandlerRegistryQueryDispatcher()
@@ -77,10 +72,5 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
                 commandDispatcher,
                 geeGateway)
                 .registerWith(controller)
-    }
-
-    @ImmutableData
-    static class Config {
-        String downloadWorkingDirectory
     }
 }

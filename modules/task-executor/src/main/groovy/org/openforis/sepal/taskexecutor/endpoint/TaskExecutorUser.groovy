@@ -3,7 +3,7 @@ package org.openforis.sepal.taskexecutor.endpoint
 import groovymvc.security.User
 import groovymvc.security.UserProvider
 import groovymvc.security.UsernamePasswordVerifier
-import org.openforis.sepal.taskexecutor.util.annotation.ImmutableData
+import org.openforis.sepal.util.annotation.ImmutableData
 
 @ImmutableData
 class TaskExecutorUser implements User {

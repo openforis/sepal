@@ -2,6 +2,7 @@ package org.openforis.sepal.taskexecutor.endpoint
 
 import groovy.json.JsonSlurper
 import groovymvc.Controller
+import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.taskexecutor.api.Task
 import org.openforis.sepal.taskexecutor.api.TaskManager
 

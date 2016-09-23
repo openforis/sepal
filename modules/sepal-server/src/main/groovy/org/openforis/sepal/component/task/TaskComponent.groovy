@@ -18,14 +18,15 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
 
-import javax.sql.DataSource
-
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class TaskComponent extends DataSourceBackedComponent implements EndpointRegistry {
-    TaskComponent(WorkerSessionComponent workerSessionComponent, WorkerGateway workerGateway, DataSource dataSource) {
+    TaskComponent(
+            WorkerSessionComponent workerSessionComponent,
+            WorkerGateway workerGateway,
+            SqlConnectionManager connectionManager) {
         this(
-                dataSource,
+                connectionManager,
                 new AsynchronousEventDispatcher(),
                 new SessionComponentAdapter(workerSessionComponent),
                 workerGateway,
@@ -34,13 +35,12 @@ class TaskComponent extends DataSourceBackedComponent implements EndpointRegistr
     }
 
     TaskComponent(
-            DataSource dataSource,
+            SqlConnectionManager connectionManager,
             HandlerRegistryEventDispatcher eventDispatcher,
             WorkerSessionManager sessionManager,
             WorkerGateway workerGateway,
             Clock clock) {
-        super(dataSource, eventDispatcher)
-        def connectionManager = new SqlConnectionManager(dataSource)
+        super(connectionManager, eventDispatcher)
         def taskRepository = new JdbcTaskRepository(connectionManager, clock)
 
         command(SubmitTask, new SubmitTaskHandler(taskRepository, sessionManager, workerGateway, clock))

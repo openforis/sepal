@@ -8,7 +8,7 @@ import org.openforis.sepal.taskexecutor.api.TaskFailed
 import org.openforis.sepal.taskexecutor.landsatscene.GoogleLandsatDownload
 import org.openforis.sepal.taskexecutor.landsatscene.LandsatSceneDownload
 import org.openforis.sepal.taskexecutor.landsatscene.S3Landsat8Download
-import org.openforis.sepal.taskexecutor.util.NamedThreadFactory
+import org.openforis.sepal.util.NamedThreadFactory
 import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
 import spock.lang.Ignore
 import spock.lang.Specification

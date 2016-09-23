@@ -7,6 +7,7 @@ import org.openforis.sepal.component.workerinstance.command.*
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import fake.FakeClock
+import org.openforis.sepal.transaction.SqlConnectionManager
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -15,12 +16,13 @@ import static java.util.concurrent.TimeUnit.MINUTES
 
 abstract class AbstractWorkerInstanceTest extends Specification {
     final database = new Database()
+    final connectionManager = new SqlConnectionManager(database.dataSource)
     final eventDispatcher = new SynchronousEventDispatcher()
     final clock = new FakeClock()
     final instanceProvider = new FakeInstanceProvider(clock)
     final instanceProvisioner = new FakeInstanceProvisioner()
     final component = new WorkerInstanceComponent(
-            database.dataSource,
+            connectionManager,
             eventDispatcher,
             instanceProvider,
             [],

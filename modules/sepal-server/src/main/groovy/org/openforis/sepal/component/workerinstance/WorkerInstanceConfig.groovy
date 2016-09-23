@@ -1,10 +1,8 @@
 package org.openforis.sepal.component.workerinstance
 
-import org.openforis.sepal.component.hostingservice.internal.ConfigLoader
+import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.FileSystem
 import org.openforis.sepal.util.annotation.Data
-import org.openforis.sepal.workertype.WorkerType
-import org.openforis.sepal.workertype.WorkerTypes
 
 @Data
 class WorkerInstanceConfig {
@@ -22,7 +20,7 @@ class WorkerInstanceConfig {
     String googleEarthEnginePrivateKey
 
     WorkerInstanceConfig() {
-        def c = new ConfigLoader(new File(FileSystem.configDir(), 'workerInstance.properties'))
+        def c = new Config('workerInstance.properties')
         sepalVersion = c.integer('sepalVersion')
         sepalUser = c.string('sepalUser')
         sepalPassword = c.string('sepalPassword')

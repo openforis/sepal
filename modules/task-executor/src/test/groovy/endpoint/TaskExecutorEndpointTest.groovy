@@ -6,11 +6,11 @@ import groovymvc.Controller
 import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
 import groovyx.net.http.RESTClient
+import org.openforis.sepal.endpoint.EndpointRegistry
+import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.taskexecutor.api.Task
 import org.openforis.sepal.taskexecutor.api.TaskManager
-import org.openforis.sepal.taskexecutor.endpoint.EndpointRegistry
 import org.openforis.sepal.taskexecutor.endpoint.Endpoints
-import org.openforis.sepal.taskexecutor.endpoint.Server
 import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorEndpoint
 import spock.lang.Specification
 import util.Port

@@ -1,6 +1,6 @@
 package org.openforis.sepal.taskexecutor.gee
 
-import org.openforis.sepal.taskexecutor.util.annotation.ImmutableData
+import org.openforis.sepal.util.annotation.ImmutableData
 
 @ImmutableData
 class Status {

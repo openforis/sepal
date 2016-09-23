@@ -9,7 +9,15 @@ if [ -f ./docker/binary/sepal.jar ]; then
         -print -quit)
     if [ ! -z "$found" ]; then
         rebuild=true
-    fi
+    else
+        found=$(find ../../common \
+            -not \( -path ./target -prune \) \
+            -newer ./docker/binary/sepal.jar \
+            -print -quit)
+        if [ ! -z "$found" ]; then
+            rebuild=true
+        fi
+     fi
 else
     rebuild=true
 fi

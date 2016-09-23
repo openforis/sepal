@@ -11,7 +11,7 @@
   changed_when: should_rebuild.stdout_lines[0] == 'true'
 
 - name: "task-executor | Build jar"
-  shell: mvn clean package -DskipTests=true chdir="{{ module_dir }}"
+  shell: mvn clean package -DskipTests --projects modules/task-executor --also-make chdir="{{ module_dir }}/../.."
   delegate_to: 127.0.0.1
   become: no
   when: should_rebuild.changed

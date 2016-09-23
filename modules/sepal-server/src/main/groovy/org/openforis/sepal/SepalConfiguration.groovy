@@ -112,6 +112,9 @@ class SepalConfiguration {
     String getSepalPassword() {
         getValue('sepalPassword')
     }
+    String getSepalHost() {
+        getValue('sepal.host')
+    }
 
     String getUserHomesDir() {
         getValue('sepal.userHomes')

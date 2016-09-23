@@ -13,6 +13,7 @@ import org.openforis.sepal.component.workersession.query.GenerateUserSessionRepo
 import org.openforis.sepal.component.workersession.query.UserWorkerSessions
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.SynchronousEventDispatcher
+import org.openforis.sepal.transaction.SqlConnectionManager
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -23,12 +24,13 @@ abstract class AbstractWorkerSessionTest extends Specification {
     final testUsername = 'test-user'
 
     final database = new Database()
+    final connectionManager = new SqlConnectionManager(database.dataSource)
     final eventDispatcher = new SynchronousEventDispatcher()
     final instanceManager = new FakeInstanceManager()
     final budgetManager = new FakeBudgetManager()
     final clock = new FakeClock()
     final component = new WorkerSessionComponent(
-            database.dataSource,
+            connectionManager,
             eventDispatcher,
             budgetManager,
             instanceManager,

@@ -2,7 +2,11 @@ package org.openforis.sepal.taskexecutor
 
 import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
-import org.openforis.sepal.taskexecutor.endpoint.*
+import org.openforis.sepal.endpoint.Server
+import org.openforis.sepal.taskexecutor.endpoint.Endpoints
+import org.openforis.sepal.taskexecutor.endpoint.SepalAdminUsernamePasswordVerifier
+import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorEndpoint
+import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorUserProvider
 import org.openforis.sepal.taskexecutor.gee.GoogleEarthEngineDownload
 import org.openforis.sepal.taskexecutor.gee.HttpGoogleEarthEngineGateway
 import org.openforis.sepal.taskexecutor.landsatscene.GoogleLandsatDownload
@@ -11,12 +15,12 @@ import org.openforis.sepal.taskexecutor.landsatscene.S3Landsat8Download
 import org.openforis.sepal.taskexecutor.manager.BackgroundExecutingTaskManager
 import org.openforis.sepal.taskexecutor.manager.ExecutorBackedBackgroundExecutor
 import org.openforis.sepal.taskexecutor.manager.SepalNotifyingTaskProgressMonitor
-import org.openforis.sepal.taskexecutor.util.ConfigLoader
 import org.openforis.sepal.taskexecutor.util.SleepingScheduler
-import org.openforis.sepal.taskexecutor.util.annotation.ImmutableData
 import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
-import org.openforis.sepal.taskexecutor.util.lifecycle.Lifecycle
-import org.openforis.sepal.taskexecutor.util.lifecycle.Stoppable
+import org.openforis.sepal.util.Config
+import org.openforis.sepal.util.annotation.ImmutableData
+import org.openforis.sepal.util.lifecycle.Lifecycle
+import org.openforis.sepal.util.lifecycle.Stoppable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -26,7 +30,7 @@ class Main {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final List<Stoppable> toStop = []
 
-    Main(Config config) {
+    Main(ModuleConfig config) {
         LOG.info("Starting task-executor with $config")
         def userProvider = new TaskExecutorUserProvider(config.sepalUsername)
         def usernamePasswordVerifier = new SepalAdminUsernamePasswordVerifier(config.sepalUsername, config.sepalPassword)
@@ -81,7 +85,7 @@ class Main {
         try {
             if (args.length != 1)
                 throw new IllegalArgumentException("Expected one argument with task-executor.properties path")
-            def config = Config.create(args[0])
+            def config = ModuleConfig.create(args[0])
             new Main(config)
         } catch (Exception e) {
             LOG.error('Failed to start Task-Executor', e)
@@ -90,7 +94,7 @@ class Main {
     }
 
     @ImmutableData(knownImmutableClasses = [File])
-    static class Config {
+    static class ModuleConfig {
         String username
         String taskExecutorUsername
         String taskExecutorPassword
@@ -103,9 +107,9 @@ class Main {
         File workingDir
         int port
 
-        static Config create(String configPath) {
-            def c = new ConfigLoader(new File(configPath))
-            new Config(
+        static ModuleConfig create(String configPath) {
+            def c = new Config(new File(configPath))
+            new ModuleConfig(
                     username: c.string('username'),
                     taskExecutorUsername: c.string('taskExecutorUsername'),
                     taskExecutorPassword: c.string('taskExecutorPassword'),

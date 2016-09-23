@@ -10,7 +10,7 @@ var User = function ( userDetails ) {
 User.prototype.isAdmin = function () {
     var isAdmin = false
     $.each( this.roles, function ( i, role ) {
-        if ( role.toUpperCase() === 'ADMIN' ) {
+        if ( role.toUpperCase() === 'APPLICATION_ADMIN' ) {
             isAdmin = true
             return false
         }

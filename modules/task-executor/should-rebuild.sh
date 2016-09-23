@@ -8,6 +8,14 @@ if [ -f ./docker/binary/task-executor.jar ]; then
         -print -quit)
     if [ ! -z "$found" ]; then
         rebuild=true
+    else
+        found=$(find ../../common \
+            -not \( -path ./target -prune \) \
+            -newer ./docker/binary/task-executor.jar \
+            -print -quit)
+        if [ ! -z "$found" ]; then
+            rebuild=true
+        fi
     fi
 else
     rebuild=true

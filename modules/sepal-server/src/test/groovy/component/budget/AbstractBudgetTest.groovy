@@ -20,6 +20,7 @@ import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.SynchronousEventDispatcher
+import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
 import fake.FakeClock
@@ -35,6 +36,7 @@ abstract class AbstractBudgetTest extends Specification {
     final testUsername = 'test-username'
 
     final database = new Database()
+    final connectionManager = new SqlConnectionManager(database.dataSource)
     final eventDispatcher = new SynchronousEventDispatcher()
     final hostingService = new FakeHostingService()
     final userRepository = Mock(UserRepository)
@@ -47,14 +49,14 @@ abstract class AbstractBudgetTest extends Specification {
     )
 
     final component = new BudgetComponent(
-            database.dataSource,
+            connectionManager,
             hostingService,
             userRepository,
             eventDispatcher,
             clock
     )
     final sessionComponent = new WorkerSessionComponent(
-            database.dataSource,
+            connectionManager,
             eventDispatcher,
             new FakeBudgetManager(),
             new FakeInstanceManager(),

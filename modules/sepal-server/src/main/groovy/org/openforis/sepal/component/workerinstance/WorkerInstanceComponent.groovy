@@ -10,10 +10,9 @@ import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisi
 import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
-
-import javax.sql.DataSource
 
 import static java.util.concurrent.TimeUnit.MINUTES
 
@@ -21,9 +20,9 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
     private final InstanceProvider instanceProvider
     private final List<InstanceType> instanceTypes
 
-    WorkerInstanceComponent(HostingServiceAdapter hostingServiceAdapter, DataSource dataSource) {
+    WorkerInstanceComponent(HostingServiceAdapter hostingServiceAdapter, SqlConnectionManager connectionManager) {
         this(
-                dataSource,
+                connectionManager,
                 new AsynchronousEventDispatcher(),
                 hostingServiceAdapter.instanceProvider,
                 hostingServiceAdapter.instanceTypes,
@@ -33,13 +32,13 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
     }
 
     WorkerInstanceComponent(
-            DataSource dataSource,
+            SqlConnectionManager connectionManager,
             HandlerRegistryEventDispatcher eventDispatcher,
             InstanceProvider instanceProvider,
             List<InstanceType> instanceTypes,
             InstanceProvisioner instanceProvisioner,
             Clock clock) {
-        super(dataSource, eventDispatcher)
+        super(connectionManager, eventDispatcher)
         this.instanceProvider = instanceProvider
         this.instanceTypes = instanceTypes
         command(RequestInstance, new RequestInstanceHandler(instanceProvider, eventDispatcher, clock))

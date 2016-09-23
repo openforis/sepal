@@ -4,6 +4,7 @@ import groovymvc.AbstractMvcFilter
 import groovymvc.Controller
 import groovymvc.ParamsException
 import groovymvc.security.PathRestrictions
+import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.taskexecutor.api.InvalidTask
 
 import javax.servlet.ServletContext

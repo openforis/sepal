@@ -19,30 +19,26 @@ import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
 
-import javax.sql.DataSource
-
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class BudgetComponent extends DataSourceBackedComponent {
-    BudgetComponent(HostingServiceAdapter hostingServiceAdapter, DataSource dataSource) {
+    BudgetComponent(HostingServiceAdapter hostingServiceAdapter, SqlConnectionManager connectionManager) {
         this(
-                dataSource,
+                connectionManager,
                 hostingServiceAdapter.hostingService,
-                new JdbcUserRepository(new SqlConnectionManager(dataSource)),
+                new JdbcUserRepository(connectionManager),
                 new AsynchronousEventDispatcher(),
                 new SystemClock()
         )
     }
 
     BudgetComponent(
-            DataSource dataSource,
+            SqlConnectionManager connectionManager,
             HostingService hostingService,
             UserRepository userRepository,
             HandlerRegistryEventDispatcher eventDispatcher,
             Clock clock) {
-        super(dataSource, eventDispatcher)
-
-        def connectionManager = new SqlConnectionManager(dataSource)
+        super(connectionManager, eventDispatcher)
         def budgetRepository = new JdbcBudgetRepository(connectionManager, clock)
         def instanceSpendingService = new InstanceSpendingService(budgetRepository, hostingService, clock)
         def storageUseService = new StorageUseService(budgetRepository, hostingService, clock)

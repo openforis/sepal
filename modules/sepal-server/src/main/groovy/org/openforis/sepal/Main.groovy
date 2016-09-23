@@ -15,6 +15,7 @@ import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.security.*
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.user.JdbcUserRepository
+import org.openforis.sepal.util.EmailServer
 import org.openforis.sepal.util.lifecycle.Lifecycle
 import org.openforis.sepal.util.lifecycle.Stoppable
 import org.slf4j.Logger
@@ -29,23 +30,23 @@ class Main {
         def hostingServiceAdapter = HostingServiceAdapter.Factory.create(config.hostingService)
         def dataSource = config.dataSource
 
-        def dataSearchComponent = start new DataSearchComponent(config)
-        def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, dataSource)
-        def budgetComponent = start new BudgetComponent(hostingServiceAdapter, dataSource)
+        def connectionManager = stoppable new SqlConnectionManager(dataSource)
+        def dataSearchComponent = start new DataSearchComponent(connectionManager, config)
+        def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, connectionManager)
+        def budgetComponent = start new BudgetComponent(hostingServiceAdapter, connectionManager)
         def workerSessionComponent = start new WorkerSessionComponent(
                 budgetComponent,
                 workerInstanceComponent,
                 hostingServiceAdapter,
-                dataSource
+                connectionManager
         )
         def taskComponent = start new TaskComponent(
                 workerSessionComponent,
                 new HttpWorkerGateway(config.sepalUsername, config.sepalPassword, 1026),
-                dataSource
+                connectionManager
         )
         start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
 
-        def connectionManager = stoppable new SqlConnectionManager(dataSource)
         def userProvider = new JdbcUserRepository(connectionManager)
         def usernamePasswordVerifier = new LdapUsernamePasswordVerifier(config.ldapHost)
         def pathRestrictions = new PathRestrictions(

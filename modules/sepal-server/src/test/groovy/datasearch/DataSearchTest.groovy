@@ -10,21 +10,23 @@ import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.component.datasearch.usgs.LandsatSensor
 import org.openforis.sepal.component.datasearch.usgs.UsgsGateway
+import org.openforis.sepal.transaction.SqlConnectionManager
 import spock.lang.Specification
 
 import static org.openforis.sepal.component.datasearch.MetaDataSource.USGS
 import static org.openforis.sepal.util.DateTime.parseDateString
 
 class DataSearchTest extends Specification {
-    public static final String SOME_FUSION_TABLE = 'some fusion table'
-    public static final String SOME_KEY_COLUMN = 'some fusion table column'
-    public static final String SOME_KEY_VALUE = 'some key value'
-    public static final String SCENE_AREA_ID = 'some scene area'
-    def database = new Database()
-    def sceneAreaProvider = new FakeGoogleEarthEngineGateway()
-    def usgs = new FakeUsgsGateway()
-    def component = new DataSearchComponent(
-            database.dataSource,
+    static final String SOME_FUSION_TABLE = 'some fusion table'
+    static final String SOME_KEY_COLUMN = 'some fusion table column'
+    static final String SOME_KEY_VALUE = 'some key value'
+    static final String SCENE_AREA_ID = 'some scene area'
+    final database = new Database()
+    final connectionManager = new SqlConnectionManager(database.dataSource)
+    final sceneAreaProvider = new FakeGoogleEarthEngineGateway()
+    final usgs = new FakeUsgsGateway()
+    final component = new DataSearchComponent(
+            connectionManager,
             sceneAreaProvider,
             usgs
     )

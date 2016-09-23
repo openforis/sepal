@@ -10,7 +10,7 @@ import org.openforis.sepal.user.UserRepository
 
 class FakeAuthenticator implements UserRepository, UsernamePasswordVerifier, UserProvider<User>, RequestAuthenticator {
     final users = [
-            demo: new User(1, 'demo', "Demo Admin User", 1234, 'demo@test.com', ["admin"].toSet(), "FAO")
+            demo: new User(1, 'demo', "Demo Admin User", 1234, 'demo@test.com', ["application_admin"].toSet(), "FAO")
             ,demo1: new User(2, 'demo2', "Demo User 1", 1234, 'demo@test.com', ["user"].toSet(), "FAO")
             ,demo2: new User(3, 'demo3', "Demo User 2", 1234, 'demo@test.com', ["user"].toSet(), "FAO")
             ,demo3: new User(4, 'demo4', "Demo User 3", 1234, 'demo@test.com', ["user"].toSet(), "FAO")

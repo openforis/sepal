@@ -251,6 +251,10 @@ class MockServer extends AbstractMvcFilter {
                 send toJson(authenticator.users.values())
             }
 
+            post('/users'){
+                //TODO Invite
+            }
+
         }
         return controller
     }
