@@ -42,11 +42,9 @@ SceneAreasOverlayView.prototype.onAdd = function () {
             .each( transform )
             .attr( "class", function ( d ) {
                 var sceneArea = d.value.scene
-                // EventBus.dispatch( Events.MAP.SCENE_AREA_CLICK, null, sceneArea.sceneAreaId )
                 var cls       = "scene-area-marker _" + sceneArea.sceneAreaId
                 return cls
             } )
-        
         
         // Add a label.
         markers.append( "text" )
@@ -132,16 +130,14 @@ SceneAreasOverlayView.prototype.onRemove = function () {
 
 SceneAreasOverlayView.prototype.show = function () {
     if ( this.container ) {
-        this.container
-            .selectAll( "circle" )
+        this.circles()
             .transition()
             .delay( 400 )
             .duration( 800 )
             .style( 'stroke-opacity', '.4' )
             .style( 'fill-opacity', '.1' )
         
-        this.container
-            .selectAll( "text" )
+        this.texts()
             .transition()
             .delay( 400 )
             .duration( 800 )
@@ -151,15 +147,13 @@ SceneAreasOverlayView.prototype.show = function () {
 
 SceneAreasOverlayView.prototype.hide = function () {
     if ( this.container ) {
-        this.container
-            .selectAll( "circle" )
+        this.circles()
             .transition()
             .duration( 500 )
             .style( 'stroke-opacity', '.02' )
             .style( 'fill-opacity', '.01' )
         
-        this.container
-            .selectAll( "text" )
+        this.texts()
             .transition()
             .duration( 500 )
             .style( 'fill-opacity', '.05' )

@@ -174,7 +174,7 @@ class MockServer extends AbstractMvcFilter {
             }
 
 
-            get('/data/sceneareas') {
+            post('/data/sceneareas') {
                 response.contentType = 'application/json'
 
                 params.countryIso
