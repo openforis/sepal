@@ -23,11 +23,20 @@ var init = function () {
         
         apps = html.find( '.apps' )
         
-        var rStudioBtn = $( '<a class="btn btn-base round r-studio" target="_blank"></a>' )
+        var rStudioBtn = $( '<a class="btn btn-base round app r-studio" target="_blank"></a>' )
         var href       = '/user/' + UserMV.getCurrentUser().username + '/rstudio-server/'
         rStudioBtn.attr( 'href', href )
         rStudioBtn.append( '<img src="' + rStudioImg + '"/>' )
         apps.append( rStudioBtn )
+        
+        apps.append('' +
+            '<div>' +
+            '    <a class="btn btn-base round app"' +
+            '       target="_blank" ' +
+            '       href="/user/'+ UserMV.getCurrentUser().username + '/shiny-server/accuracy-assessment/">' +
+            '        Accuracy Assessment' +
+            '    </a>' +
+            '</div>')
     }
 }
 

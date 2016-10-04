@@ -36,7 +36,7 @@
 
     - { role: docker, users: ['ubuntu'] }
     - { role: aws-mount-efs }
-    - { role: run-module, module: ldap-backup }
+#    - { role: run-module, module: ldap-backup }
     - { role: run-module, module: ldap }
     - { role: run-module, module: mysql }
     - { role: run-module, module: google-earth-engine}

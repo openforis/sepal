@@ -2,7 +2,7 @@
  * @author Mino Togna
  */
 require( './map.scss' )
-require( 'd3' )
+var d3 = require( 'd3' )
 
 var EventBus               = require( '../event/event-bus' )
 var Events                 = require( '../event/events' )

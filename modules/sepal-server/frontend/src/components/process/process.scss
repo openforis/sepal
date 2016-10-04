@@ -1,6 +1,11 @@
 #process {
   .apps {
     padding: 2rem;
+
+    .app {
+      margin-top: 2rem;
+    }
+
     .btn.r-studio {
         img {
           width: 160px;
