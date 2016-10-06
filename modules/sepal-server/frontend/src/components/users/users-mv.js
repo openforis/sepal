@@ -27,7 +27,7 @@ var onSectionShow = function ( e, target ) {
     }
 }
 
-var updateView = function() {
+var updateView = function () {
     var users = Model.filterUsers( searchString )
     View.setUsers( users )
 }
@@ -56,15 +56,15 @@ var onSelectUser = function ( e, user ) {
 
 var onShowUsersSection = function ( e ) {
     
-    switch ( e.type ){
+    switch ( e.type ) {
         case Events.SECTION.USERS.SHOW_USERS_LIST:
             View.showUsersListSection()
             break
-    
+        
         case Events.SECTION.USERS.SHOW_INVITE_USER:
             View.showInviteUserSection()
             break
-    
+        
         case Events.SECTION.USERS.SHOW_EDIT_USER:
             View.showEditUserSection()
             break
@@ -75,6 +75,7 @@ var onShowUsersSection = function ( e ) {
     }
     
 }
+
 
 EventBus.addEventListener( Events.SECTION.NAV_MENU.LOADED, init )
 EventBus.addEventListener( Events.SECTION.SHOW, onSectionShow )
@@ -87,4 +88,3 @@ EventBus.addEventListener( Events.SECTION.USERS.SHOW_USERS_LIST, onShowUsersSect
 EventBus.addEventListener( Events.SECTION.USERS.SHOW_INVITE_USER, onShowUsersSection )
 EventBus.addEventListener( Events.SECTION.USERS.SHOW_EDIT_USER, onShowUsersSection )
 EventBus.addEventListener( Events.SECTION.USERS.SHOW_DELETE_USER, onShowUsersSection )
-

@@ -29,7 +29,6 @@ var bindEvents = function () {
             
             var params = {
                 url      : '/api/user/forgot-password'
-                , method : 'POST'
                 , data   : Form.serialize()
                 , success: function ( response ) {
                     if ( response.status == 'error' ) {
@@ -41,7 +40,7 @@ var bindEvents = function () {
                 
             }
             
-            EventBus.dispatch( Events.AJAX.REQUEST, this, params )
+            EventBus.dispatch( Events.AJAX.POST, this, params )
         }
     } )
     

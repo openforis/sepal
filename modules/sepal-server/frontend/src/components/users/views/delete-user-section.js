@@ -1,11 +1,14 @@
 /**
  * @author Mino Togna
  */
-var EventBus = require( '../../event/event-bus' )
-var Events   = require( '../../event/events' )
+var EventBus      = require( '../../event/event-bus' )
+var Events        = require( '../../event/events' )
+var Loader        = require( '../../loader/loader' )
+var FormValidator = require( '../../form/form-validator' )
 
 var Container = null
 var Form      = null
+
 var UserLabel = null
 
 var selectedUser = null
@@ -19,10 +22,7 @@ var initForm = function () {
     Form      = Container.find( 'form' )
     UserLabel = Form.find( '.user-label' )
     
-    Form.submit( function ( e ) {
-        e.preventDefault()
-        console.log( selectedUser )
-    } )
+    Form.submit( submit )
     
     Form.find( '.btn-cancel' ).click( function ( e ) {
         e.preventDefault()
@@ -31,12 +31,38 @@ var initForm = function () {
     } )
 }
 
+var submit = function ( e ) {
+    e.preventDefault()
+    
+    var params = {
+        url         : '/api/user/delete'
+        , data      : { userId: selectedUser.id }
+        , beforeSend: function () {
+            Loader.show()
+        }
+        , success   : function ( response ) {
+            Loader.hide( { delay: 200 } )
+            
+            FormValidator.showSuccess( Form.find( '.form-notify' ), "User deleted" )
+            
+            setTimeout( function () {
+                EventBus.dispatch( Events.SECTION.USERS.SHOW_USERS_LIST )
+            }, 1600 )
+        }
+        
+    }
+    
+    EventBus.dispatch( Events.AJAX.POST, this, params )
+    
+}
+
 var getContainer = function () {
     return Container
 }
 
 var selectUser = function ( user ) {
     selectedUser = user
+    FormValidator.resetFormErrors( Form )
     
     var userLabel = ''
     if ( user ) {

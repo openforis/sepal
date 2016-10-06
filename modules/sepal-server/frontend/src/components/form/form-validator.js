@@ -59,7 +59,8 @@ var showMessage = function ( container, message, type ) {
 }
 
 var addError = function ( inputField ) {
-    inputField.closest( '.form-group' ).addClass( 'error' )
+    if ( inputField )
+        inputField.closest( '.form-group' ).addClass( 'error' )
 }
 
 var validateString = function ( field, errorMessage, errorMessageContainer ) {
