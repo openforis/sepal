@@ -123,6 +123,7 @@ var Events = {
     
     , USER: {
         USER_DETAILS_LOADED: "user.user-details-loaded"
+        , PASSWORD_CHANGED : "user.password-changed"
     }
     
 }

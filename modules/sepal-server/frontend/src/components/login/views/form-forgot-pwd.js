@@ -32,7 +32,11 @@ var bindEvents = function () {
                 , method : 'POST'
                 , data   : Form.serialize()
                 , success: function ( response ) {
-                    console.log( response )
+                    if ( response.status == 'error' ) {
+                        FormValidator.showError( FormNotify, response.message )
+                    } else {
+                        FormValidator.showSuccess( FormNotify, response.message )
+                    }
                 }
                 
             }

@@ -22,7 +22,7 @@ class MockServer extends AbstractMvcFilter {
             get('/user') {
                 response.contentType = 'application/json'
 //                send toJson(authenticator.users.values().first())
-                    halt(401)
+                halt(401)
             }
 
             get('/user/files') {
@@ -167,7 +167,7 @@ class MockServer extends AbstractMvcFilter {
             post('/login') {
                 response.contentType = 'application/json'
 
-                if (params.password == 'demo')
+                if (params.password == 'demo12')
                     send toJson(authenticator.users.values().first())
                 else
                     halt(401)
@@ -220,35 +220,33 @@ class MockServer extends AbstractMvcFilter {
                 ])
             }
 
-
-
-
-
-
-            get('/foo/{name}') {
-
-                LOG.info("adasdasdfasfas")
-
-                response.contentType = 'application/json'
-                send toJson(
-                        foo: params.name,
-                        bar: params
-                )
-            }
-
-
-
 //            User apis
-            post('/user/details'){
+            post('/user/details') {
                 //TODO server side validation?
                 response.contentType = 'application/json'
                 send toJson(authenticator.users.values().first())
             }
 
-            get('/users'){
+            get('/users') {
                 //TODO server side validation?
                 response.contentType = 'application/json'
                 send toJson(authenticator.users.values())
+            }
+
+            post('/user/logout ') {
+                response.contentType = 'application/json'
+                halt(401)
+            }
+
+            post('/user/forgot-password ') {
+                response.contentType = 'application/json'
+                send toJson([status: 'success', message: 'Password reset. Check your email for the link'])
+//                send toJson([status:'error',message:'Email not found'])
+            }
+
+            post('/user/password') {
+                response.contentType = 'application/json'
+                send toJson([status: 'success'])
             }
 
         }
