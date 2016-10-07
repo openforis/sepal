@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+username=$1
+
+ldapdeleteuserfromgroup $username sepalUsers
+ldapdeleteuser $username
+ldapdeletegroup $username
+
+rm -rf /home/$username

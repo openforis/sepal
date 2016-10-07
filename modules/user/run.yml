@@ -1,0 +1,44 @@
+---
+- file: path="/data/user" state=directory
+- file: path="/data/user/ldap" state=directory
+- file: path="/data/user/certificates" state=directory
+- copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/user/certificates/ldap-ca.crt.pem
+
+- file: path="/data/user/started" state=absent
+
+- name: "user | Start container"
+  docker:
+    docker_api_version: "1.22"
+    name: "user"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/user:{{ version }}"
+    state: "reloaded"
+    net: "bridge"
+    restart_policy: "always"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    links:
+    - "ldap:ldap"
+    - "mysql:mysql"
+    volumes:
+    - "/data/user:/data"
+    - "/data/sepal/home:/sepal/home" # User data dir, to setup initial structure/remove when user is deleted
+    env:
+      SEPAL_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
+      SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
+      LDAP_HOST_SEPAL_ENV: "{{ ldap_host }}"
+      LDAP_ADMIN_PASSWORD_SEPAL_ENV: "{{ ldap_admin_password }}"
+      MYSQL_PASSWORD_SEPAL_ENV: "{{ mysql_password }}"
+      MYSQL_ROOT_PASSWORD_SEPAL_ENV: "{{ mysql_root_password }}"
+      SMTP_FROM_SEPAL_ENV: "{{ smtp_from }}"
+      SMTP_HOST_SEPAL_ENV: "{{ smtp_host }}"
+      SMTP_PORT_SEPAL_ENV: "{{ smtp_port }}"
+      SMTP_USERNAME_SEPAL_ENV: "{{ smtp_username }}"
+      SMTP_PASSWORD_SEPAL_ENV: "{{ smtp_password }}"
+  register: container
+
+- name: "user | Wait until started"
+  wait_for: path=/data/user/started
+  when: (container.summary.started > 0 or container.summary.restarted > 0)

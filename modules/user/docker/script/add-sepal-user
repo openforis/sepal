@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+USERNAME=$1
+PASSWORD=$2
+USER_GROUP=$3
+USER_HOME=/home/$USERNAME
+USER_DATA_HOME=/sepal/home/$USERNAME
+
+if ! ldapid "$USERNAME"; then
+    sss_cache -E
+    ldapaddgroup $USERNAME
+    ldapadduser $USERNAME $USERNAME
+    userId=$(ldapid "$USERNAME" | sed -E "s/.*uid=([0-9]+).*/\\1/")
+    groupId=$(ldapgid "$USERNAME" | sed -E "s/.*gid=([0-9]+).*/\\1/")
+
+    if [ -n "$PASSWORD" ]; then
+        passwordFile=$(mktemp /tmp/$USERNAME.XXXXXX)
+        echo $PASSWORD > $passwordFile
+        sss_seed --domain sepal.org --username $USERNAME --password-file $passwordFile --uid $userId --gid $groupId
+        rm $passwordFile
+        ldappasswd -p 389 -h ldap -x -D cn=admin,dc=sepal,dc=org -w "$(cat /etc/ldap.secret)" \
+            -s "$PASSWORD" uid=$USERNAME,ou=People,dc=sepal,dc=org -ZZ
+    fi
+
+    # TODO: Move home directory creation to sepal-server
+    # When user is a SEPAL user, add user to group and create user home directory structure
+    if [ -n "$USER_GROUP" ]; then
+        userGroupId=$(ldapgid "$USER_GROUP" | sed -E "s/.*gid=([0-9]+).*/\\1/")
+        ldapaddusertogroup $USERNAME $userGroupId
+
+        # Create user home directory
+        mkdir -p $USER_DATA_HOME
+        mkdir $USER_DATA_HOME/downloads
+
+        sepalGroupId=9999 # sepal group has id 9999
+        chown -R $userId:$sepalGroupId $USER_DATA_HOME
+        chmod -R 770 $USER_DATA_HOME
+        chmod -R g+s $USER_DATA_HOME
+    fi
+
+    mkdir -p $USER_HOME/.ssh
+    chmod -R 770 $USER_HOME
+
+    ssh-keygen -t rsa -b 4096 -C "Sandbox key for $USERNAME" -f $USER_HOME/.ssh/id_rsa -N ""
+    ldapmodify -H ldap://ldap -x -D cn=admin,dc=sepal,dc=org -w "$(cat /etc/ldap.secret)" <<!
+dn: uid=$USERNAME,ou=People,dc=sepal,dc=org
+changetype: modify
+replace: sshpublickey
+sshpublickey: $(cat $USER_HOME/.ssh/id_rsa.pub)
+!
+
+    chown -R $userId:$groupId $USER_HOME
+    chmod 400 $USER_HOME/.ssh/* # secure the keys
+
+    echo "Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    LogLevel QUIET" > $USER_HOME/.ssh/config
+fi
