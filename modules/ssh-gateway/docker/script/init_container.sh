@@ -11,16 +11,6 @@ function template {
 }
 
 mkdir -p /var/run/sshd
-mkdir -p /data/logs/supervisor
-mkdir -p /data/home
-
-rm -rf /var/log/supervisor && ln -sf /data/logs/supervisor /var/log/supervisor
-rm -rf /var/log/ssh-gateway && ln -sf /data/logs/supervisor /var/log/ssh-gateway
-rm -rf /home && ln -sf /data/home /home
-
-cp /script/add-sepal-user /usr/local/bin/
-cp /script/change-sepal-user-password /usr/local/bin/
-cp /script/delete-sepal-user /usr/local/bin/
 
 cp /script/ssh-bootstrap /usr/local/bin/ssh-bootstrap
 chmod 555 /usr/local/bin/ssh-bootstrap
@@ -31,9 +21,6 @@ chmod 555 /usr/local/bin/alive.sh
 template /config/ldap.conf /etc/ldap.conf root: 0600
 template /config/ldap.conf /etc/ldap/ldap.conf root: 0600
 template /config/ldap.secret /etc/ldap.secret root: 0600
-template /config/ldapscripts.conf /etc/ldapscripts/ldapscripts.conf root: 0600
-template /config/ldapscripts.passwd /etc/ldapscripts/ldapscripts.passwd root: 0600
-template /config/ldapadduser.template /etc/ldapscripts/ldapadduser.template root: 0600
 template /config/sssd.conf /etc/sssd/sssd.conf root: 0600
 template /config/sepalAdmin.passwd /etc/sepalAdmin.passwd root: 0644
 template /config/admin.passwd /etc/admin.passwd root: 0600

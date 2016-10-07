@@ -22,6 +22,7 @@ class TestServer {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private Closure before
     private Closure get
+    private Closure route
     private Undertow server
     int port
     private UUID serverId
@@ -57,12 +58,16 @@ class TestServer {
         return this
     }
 
-    final URI getUri() {
+    final URI getUrl() {
         URI.create("http://localhost:$port/")
     }
 
     final void get(@DelegatesTo(RequestContext) Closure callback) {
         get = callback
+    }
+
+    final void route(@DelegatesTo(RequestContext) Closure callback) {
+        route = callback
     }
 
     final void before(@DelegatesTo(RequestContext) Closure callback) {
@@ -81,6 +86,10 @@ class TestServer {
         before != null
     }
 
+    protected boolean isRouteRegistered() {
+        route != null
+    }
+
     static class Filter extends AbstractMvcFilter {
         final Controller bootstrap(ServletContext servletContext) {
             def owner = servletContext.getAttribute('owner') as TestServer
@@ -96,6 +105,15 @@ class TestServer {
                     controller.get('/**', get)
                 if (isBeforeRegistered())
                     controller.before('/**', before)
+                if (isRouteRegistered()) {
+                    controller.get('/**', route)
+                    controller.post('/**', route)
+                    controller.delete('/**', route)
+                    controller.put('/**', route)
+                    controller.options('/**', route)
+                    controller.head('/**', route)
+                    controller.trace('/**', route)
+                }
                 register(controller)
                 return controller
             }

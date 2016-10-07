@@ -7,6 +7,7 @@ import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.endpoint.EndpointRegistry
+import org.openforis.sepal.endpoint.ResourceServer
 import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.taskexecutor.api.Task
 import org.openforis.sepal.taskexecutor.api.TaskManager
@@ -22,7 +23,7 @@ class TaskExecutorEndpointTest extends Specification {
     final userProvider = new FakeUserProvider()
     final taskManager = Mock(TaskManager)
 
-    final server = new Server(Port.findFree(), new Endpoints(
+    final server = new ResourceServer(Port.findFree(), '/api', new Endpoints(
             new PathRestrictions(userProvider, new BasicRequestAuthenticator('Sepal', passwordVerifier)),
             { registerEndpoint(it) } as EndpointRegistry))
     final client = new RESTClient("http://$server.host/api/")
@@ -54,8 +55,8 @@ class TaskExecutorEndpointTest extends Specification {
         ])
 
         then:
-        1 * taskManager.execute(task)
         response.status == 201
+        1 * taskManager.execute(task)
     }
 
     def 'DELETE /tasks/{taskId}'() {
@@ -65,7 +66,7 @@ class TaskExecutorEndpointTest extends Specification {
         def response = client.delete(path: "tasks/$taskId")
 
         then:
-        1 * taskManager.cancel(taskId)
         response.status == 204
+        1 * taskManager.cancel(taskId)
     }
 }

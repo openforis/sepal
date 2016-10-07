@@ -1,6 +1,5 @@
 package org.openforis.sepal
 
-import groovymvc.security.PathRestrictions
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.files.FilesComponent
@@ -11,11 +10,11 @@ import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.endpoint.Endpoints
+import org.openforis.sepal.endpoint.ResourceServer
 import org.openforis.sepal.endpoint.Server
-import org.openforis.sepal.security.*
+import org.openforis.sepal.security.GateOneAuthEndpoint
+import org.openforis.sepal.security.PathRestrictionsFactory
 import org.openforis.sepal.transaction.SqlConnectionManager
-import org.openforis.sepal.user.JdbcUserRepository
-import org.openforis.sepal.util.EmailServer
 import org.openforis.sepal.util.lifecycle.Lifecycle
 import org.openforis.sepal.util.lifecycle.Stoppable
 import org.slf4j.Logger
@@ -33,7 +32,7 @@ class Main {
         def connectionManager = stoppable new SqlConnectionManager(dataSource)
         def dataSearchComponent = start new DataSearchComponent(connectionManager, config)
         def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, connectionManager)
-        def budgetComponent = start new BudgetComponent(hostingServiceAdapter, connectionManager)
+        def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, connectionManager)
         def workerSessionComponent = start new WorkerSessionComponent(
                 budgetComponent,
                 workerInstanceComponent,
@@ -46,27 +45,17 @@ class Main {
                 connectionManager
         )
         start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
-
-        def userProvider = new JdbcUserRepository(connectionManager)
-        def usernamePasswordVerifier = new LdapUsernamePasswordVerifier(config.ldapHost)
-        def pathRestrictions = new PathRestrictions(
-                userProvider,
-                new SessionAwareAuthenticator(new NonChallengingBasicRequestAuthenticator('Sepal', usernamePasswordVerifier))
-        )
-
         def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir))
-        def authenticationEndpoint = new AuthenticationEndpoint(userProvider, usernamePasswordVerifier)
 
         def gateOneAuthEndpoint = new GateOneAuthEndpoint(config.gateOnePublicKey, config.gateOnePrivateKey)
         def endpoints = new Endpoints(
-                pathRestrictions,
-                authenticationEndpoint,
+                PathRestrictionsFactory.create(),
                 gateOneAuthEndpoint,
                 dataSearchComponent,
                 workerSessionComponent,
                 filesComponent,
                 taskComponent)
-        start new Server(config.webAppPort, endpoints)
+        start new ResourceServer(config.webAppPort, '/api', endpoints)
         addShutdownHook { stop() }
     }
 

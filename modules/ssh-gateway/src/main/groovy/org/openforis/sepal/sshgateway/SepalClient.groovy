@@ -1,8 +1,12 @@
 package org.openforis.sepal.sshgateway
 
 import groovyx.net.http.RESTClient
+import org.openforis.sepal.security.Roles
+import org.openforis.sepal.user.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import static groovyx.net.http.ContentType.JSON
 
 class SepalClient {
     private static final Logger LOG = LoggerFactory.getLogger(this)
@@ -15,16 +19,21 @@ class SepalClient {
         this.username = username
         this.sepal = new RESTClient(sepalEndpoint)
         sepal.auth.basic 'sepalAdmin', password
+        sepal.headers['sepal-user'] = new User(username: username, roles: [Roles.ADMIN]).jsonString()
     }
 
     Map loadSandboxInfo() {
         LOG.debug("Loading sandbox info for $username")
-        sepal.get(path: "sandbox/$username/report").data
+        sepal.get(
+                path: "sandbox/$username/report",
+                contentType: JSON,
+                requestContentType: JSON
+        ).data
     }
 
     Map createSession(Map instanceType, Closure waitingCallback = {}) {
         LOG.info("Creating session on instance of type $instanceType")
-        def session = sepal.post(path: instanceType.path).data
+        def session = sepal.post(path: instanceType.path, contentType: JSON).data
         joinSession(session, waitingCallback)
     }
 
@@ -33,10 +42,10 @@ class SepalClient {
         while (!Thread.interrupted() && session.status == 'STARTING') {
             Thread.sleep(WAIT_TIME)
             waitingCallback.call()
-            session = sepal.post(path: session.path).data
+            session = sepal.post(path: session.path, contentType: JSON).data
         }
         LOG.info("Jointing session $session")
-        sepal.post(path: session.path).data
+        sepal.post(path: session.path, contentType: JSON).data
     }
 
     void terminate(Map session) {

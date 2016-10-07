@@ -14,7 +14,7 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.endpoint.Endpoints
-import org.openforis.sepal.endpoint.Server
+import org.openforis.sepal.endpoint.ResourceServer
 import org.openforis.sepal.query.QueryDispatcher
 import spock.lang.Specification
 
@@ -27,7 +27,7 @@ abstract class AbstractEndpointTest extends Specification {
     final userRepository = new FakeUserRepository()
     final passwordVerifier = new FakeUsernamePasswordVerifier()
 
-    final server = new Server(Port.findFree(), new Endpoints(
+    final server = new ResourceServer(Port.findFree(), '/api', new Endpoints(
             new PathRestrictions(userRepository, new BasicRequestAuthenticator('Sepal', passwordVerifier)),
             { registerEndpoint(it) } as EndpointRegistry))
     final client = new RESTClient("http://$server.host/api/")

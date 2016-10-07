@@ -33,7 +33,7 @@
     "moment": "^2.13.0",
     "nouislider": "github:leongersen/noUiSlider",
     "tether": "^1.3.2",
-    "webpack": "^2.1.0-beta.22",
+    "webpack": "2.1.0-beta.22",
     "webpack-dev-server": "^2.1.0-beta.4"
   }
 }

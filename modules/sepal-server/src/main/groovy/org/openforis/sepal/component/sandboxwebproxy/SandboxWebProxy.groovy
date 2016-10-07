@@ -4,11 +4,10 @@ import io.undertow.Undertow
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.handlers.ResponseCodeHandler
-import io.undertow.server.handlers.proxy.PatchedProxyHandler
 import io.undertow.server.session.*
 import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSession
 import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSessionManager
-import org.openforis.sepal.user.NonExistingUser
+import org.openforis.sepal.undertow.PatchedProxyHandler
 import org.openforis.sepal.util.NamedThreadFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -152,16 +151,12 @@ class SandboxWebProxy {
 
         private SandboxSession sandboxSession(String username) {
             SandboxSession sandboxSession
-            try {
-                def sepalSessions = sandboxSessionManager.findActiveSessions(username)
-                if (sepalSessions) {
-                    sandboxSession = sepalSessions.first()
-                    sandboxSessionManager.heartbeat(sandboxSession.id, username)
-                } else
-                    sandboxSession = sandboxSessionManager.requestSession(username)
-            } catch (NonExistingUser e) {
-                throw new BadRequest(e.getMessage())
-            }
+            def sepalSessions = sandboxSessionManager.findActiveSessions(username)
+            if (sepalSessions) {
+                sandboxSession = sepalSessions.first()
+                sandboxSessionManager.heartbeat(sandboxSession.id, username)
+            } else
+                sandboxSession = sandboxSessionManager.requestSession(username)
             return waitForSessionToActivate(sandboxSession)
         }
 

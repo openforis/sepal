@@ -11,7 +11,7 @@ class Database {
     private static final Logger LOG = LoggerFactory.getLogger(this.class)
     private static final File SCHEMA = new File('src/test/resources/db', 'schema.sql')
     private static final File RESET_SCRIPT = new File('src/test/resources/db', 'schema.sql')
-    static final String URL = "jdbc:h2:mem:sepal;MODE=MYSQL;DB_CLOSE_DELAY=-1"
+    static final String URL = "jdbc:h2:mem:sepal;MODE=MYSQL;DATABASE_TO_UPPER=FALSE;DB_CLOSE_DELAY=-1"
 
     private static boolean initialized
     private static DataSource dataSource
@@ -20,12 +20,17 @@ class Database {
         initDatabase()
     }
 
+    Database(String schema) {
+        initDatabase(schema)
+    }
+
     DataSource getDataSource() { dataSource }
 
     void reset() {
         long time = System.currentTimeMillis()
-        def resetScript = RESET_SCRIPT.getText('UTF-8')
-        new Sql(dataSource).execute(resetScript)
+        def script = RESET_SCRIPT.getText('UTF-8')
+        def rootDataSource = new JdbcDataSource(url: URL, user: 'sa', password: 'sa')
+        new Sql(rootDataSource).execute(script)
         LOG.info("Reset database in ${System.currentTimeMillis() - time} millis.")
     }
 
@@ -33,19 +38,21 @@ class Database {
         new Sql(dataSource)
     }
 
-    private synchronized void initDatabase() {
+    private synchronized void initDatabase(String schema = null) {
+        def schemaParam = schema ? ";SCHEMA=$schema" : ""
         if (!initialized) {
             initialized = true
             long time = System.currentTimeMillis()
-            dataSource = new JdbcDataSource(url: URL,
-                    user: 'sa', password: 'sa')
             setupSchema()
+            dataSource = new JdbcDataSource(url: URL + schemaParam,
+                    user: 'sa', password: 'sa')
             LOG.info("Setup database in ${System.currentTimeMillis() - time} millis.")
         } else reset()
     }
 
     private void setupSchema() {
-        def schema = SCHEMA.getText('UTF-8')
-        new Sql(dataSource).execute(schema)
+        def script = SCHEMA.getText('UTF-8')
+        def rootDataSource = new JdbcDataSource(url: URL, user: 'sa', password: 'sa')
+        new Sql(rootDataSource).execute(script)
     }
 }

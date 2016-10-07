@@ -14,19 +14,23 @@ import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
-import org.openforis.sepal.user.JdbcUserRepository
+import org.openforis.sepal.user.RestUserRepository
 import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.SystemClock
+import org.openforis.sepal.util.annotation.Data
 
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class BudgetComponent extends DataSourceBackedComponent {
-    BudgetComponent(HostingServiceAdapter hostingServiceAdapter, SqlConnectionManager connectionManager) {
-        this(
+
+    static BudgetComponent create(HostingServiceAdapter hostingServiceAdapter, SqlConnectionManager connectionManager) {
+        def config = new BudgetConfig()
+        new BudgetComponent(
                 connectionManager,
                 hostingServiceAdapter.hostingService,
-                new JdbcUserRepository(connectionManager),
+                new RestUserRepository(config.userEndpoint, config.userEndpointUser),
                 new AsynchronousEventDispatcher(),
                 new SystemClock()
         )
@@ -57,5 +61,17 @@ class BudgetComponent extends DataSourceBackedComponent {
 
     void onStart() {
         schedule(1, MINUTES, new DetermineUserStorageUsage())
+    }
+
+    @Data
+    private static final class BudgetConfig {
+        final String userEndpoint
+        final String userEndpointUser
+
+        BudgetConfig() {
+            def c = new Config('budget.properties')
+            userEndpoint = c.userEndpoint
+            userEndpointUser = c.userEndpointUser
+        }
     }
 }

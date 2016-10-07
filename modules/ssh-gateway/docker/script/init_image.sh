@@ -13,7 +13,6 @@ DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     libpam-sss \
     libnss-sss \
     libnss-ldap \
-    ldapscripts \
     sssd-tools \
     gettext \
     groovy

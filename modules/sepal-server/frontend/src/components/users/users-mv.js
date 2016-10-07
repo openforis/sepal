@@ -34,7 +34,7 @@ var updateView = function () {
 
 var loadUsers = function () {
     var params = {
-        url      : '/api/users'
+        url      : '/user/list'
         , success: function ( response ) {
             Model.setUsers( response )
             updateView()

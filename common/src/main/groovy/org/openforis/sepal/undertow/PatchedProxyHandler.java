@@ -1,22 +1,5 @@
-/*
- * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
- * as indicated by the @author tags.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+package org.openforis.sepal.undertow;
 
-package io.undertow.server.handlers.proxy;
 
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowOptions;
@@ -27,6 +10,7 @@ import io.undertow.io.IoCallback;
 import io.undertow.io.Sender;
 import io.undertow.server.*;
 import io.undertow.server.handlers.builder.HandlerBuilder;
+import io.undertow.server.handlers.proxy.*;
 import io.undertow.server.protocol.http.HttpAttachments;
 import io.undertow.server.protocol.http.HttpContinue;
 import io.undertow.util.*;
@@ -40,7 +24,10 @@ import javax.security.cert.X509Certificate;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.*;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.charset.Charset;
@@ -248,6 +235,7 @@ public final class PatchedProxyHandler implements HttpHandler {
 
         @Override
         public void failed(final HttpServerExchange exchange) {
+            log.error("**** Proxy failed. Client: " +proxyClient + ", Exchange: " + exchange);
             final long time = System.currentTimeMillis();
             if (tries++ < maxRetryAttempts) {
                 if (timeout > 0 && time > timeout) {
@@ -318,49 +306,34 @@ public final class PatchedProxyHandler implements HttpHandler {
 
         @Override
         public void run() {
+            log.warn("**** ProxyAction run() ****");
             final ClientRequest request = new ClientRequest();
 
-            StringBuilder requestURI = new StringBuilder();
-            try {
-                if (exchange.getRelativePath().isEmpty()) {
-                    requestURI.append(encodeUrlPart(clientConnection.getTargetPath(), exchange));
-                } else {
-                    if (clientConnection.getTargetPath().endsWith("/")) {
-                        requestURI.append(clientConnection.getTargetPath().substring(0, clientConnection.getTargetPath().length() - 1));
-                        requestURI.append(encodeUrlPart(exchange.getRelativePath(), exchange));
-                    } else {
-                        requestURI = requestURI.append(clientConnection.getTargetPath());
-                        requestURI.append(encodeUrlPart(exchange.getRelativePath(), exchange));
-                    }
+            String targetURI = exchange.getRequestURI();
+            if (exchange.isHostIncludedInRequestURI()) {
+                int uriPart = targetURI.indexOf("//");
+                if (uriPart != -1) {
+                    uriPart = targetURI.indexOf("/", uriPart);
+                    targetURI = targetURI.substring(uriPart);
                 }
-                boolean first = true;
-                if (!exchange.getPathParameters().isEmpty()) {
-                    requestURI.append(';');
-                    for (Map.Entry<String, Deque<String>> entry : exchange.getPathParameters().entrySet()) {
-                        if (first) {
-                            first = false;
-                        } else {
-                            requestURI.append('&');
-                        }
-                        for (String val : entry.getValue()) {
-                            requestURI.append(URLEncoder.encode(entry.getKey(), UTF_8));
-                            requestURI.append('=');
-                            requestURI.append(URLEncoder.encode(val, UTF_8));
-                        }
-                    }
-                }
+            }
 
-                String qs = exchange.getQueryString();
-                if (qs != null && !qs.isEmpty()) {
-                    requestURI.append('?');
-                    requestURI.append(qs);
-                }
-            } catch (UnsupportedEncodingException e) {
-                //impossible
-                UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
-                exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                exchange.endExchange();
-                return;
+            if (!exchange.getResolvedPath().isEmpty() && targetURI.startsWith(exchange.getResolvedPath())) {
+                targetURI = targetURI.substring(exchange.getResolvedPath().length());
+            }
+
+            StringBuilder requestURI = new StringBuilder();
+            if (!clientConnection.getTargetPath().isEmpty()
+                    && (!clientConnection.getTargetPath().equals("/") || targetURI.isEmpty())) {
+                requestURI.append(clientConnection.getTargetPath());
+            }
+            requestURI.append(targetURI);
+            if (requestURI.length() == 0)
+                requestURI.append('/');
+            String qs = exchange.getQueryString();
+            if (qs != null && !qs.isEmpty()) {
+                requestURI.append('?');
+                requestURI.append(qs);
             }
             request.setPath(requestURI.toString())
                     .setMethod(exchange.getRequestMethod());
@@ -435,7 +408,7 @@ public final class PatchedProxyHandler implements HttpHandler {
             if (!exchange.getRequestHeaders().contains(Headers.X_FORWARDED_HOST)) {
                 final String hostName = exchange.getHostName();
                 if (hostName != null) {
-                    request.getRequestHeaders().put(Headers.X_FORWARDED_HOST, hostName);
+                    request.getRequestHeaders().put(Headers.X_FORWARDED_HOST, NetworkUtils.formatPossibleIpv6Address(hostName));
                 }
             }
 
@@ -450,7 +423,7 @@ public final class PatchedProxyHandler implements HttpHandler {
                     request.putAttachment(ProxiedRequestAttachments.SERVER_PORT, port);
                 }
             } else {
-                int port = exchange.getConnection().getLocalAddress(InetSocketAddress.class).getPort();
+                int port = exchange.getHostPort();
                 request.getRequestHeaders().put(Headers.X_FORWARDED_PORT, port);
                 request.putAttachment(ProxiedRequestAttachments.SERVER_PORT, port);
             }
@@ -475,6 +448,8 @@ public final class PatchedProxyHandler implements HttpHandler {
                 request.getRequestHeaders().put(Headers.HOST, targetAddress.getHostString() + ":" + targetAddress.getPort());
                 request.getRequestHeaders().put(Headers.X_FORWARDED_HOST, exchange.getRequestHeaders().getFirst(Headers.HOST));
             }
+            log.warnf("Sending request %s to target %s with headers %s for exchange %s",
+                    request, remoteHost, request.getRequestHeaders(), exchange);
             if (log.isDebugEnabled()) {
                 log.debugf("Sending request %s to target %s for exchange %s", request, remoteHost, exchange);
             }
@@ -673,6 +648,9 @@ public final class PatchedProxyHandler implements HttpHandler {
             } catch (IOException e) {
                 UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
                 IoUtils.safeClose(channel);
+            } catch (Exception e) {
+                UndertowLogger.REQUEST_IO_LOGGER.ioException(new IOException(e));
+                IoUtils.safeClose(channel);
             }
 
         }
@@ -742,7 +720,7 @@ public final class PatchedProxyHandler implements HttpHandler {
         for (int i = 0; i < part.length(); ++i) {
             char c = part.charAt(i);
             if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-                    c == '.' || c == '-' || c == '*' || c == '_' || c == '/' || c == '=') {
+                    c == '.' || c == '-' || c == '*' || c == '_' || c == '/') {
                 if (sb != null) {
                     sb.append(c);
                 }

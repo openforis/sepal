@@ -5,12 +5,15 @@ import groovymvc.Controller
 import groovymvc.ParamsException
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.command.ExecutionFailed
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import javax.servlet.ServletContext
 
 import static groovy.json.JsonOutput.toJson
 
 final class Endpoints extends AbstractMvcFilter {
+    private static final Logger LOG = LoggerFactory.getLogger(this)
     private final PathRestrictions pathRestrictions
     private final List<EndpointRegistry> endpointRegistries
 
@@ -31,19 +34,26 @@ final class Endpoints extends AbstractMvcFilter {
         controller.with {
             restrict('/**', [])
 
+            before('/**') {
+                response.characterEncoding = 'UTF-8'
+            }
+
             error(InvalidRequest) {
                 response?.status = 400
                 response?.setContentType('application/json')
+                LOG.info("Invalid request " + requestContext.description, it)
                 send(toJson(it?.errors))
             }
 
             error(ParamsException) {
                 response?.status = 400
                 response?.setContentType('application/json')
+                LOG.info("Invalid request " + requestContext.description, it)
                 send(toJson([param: it.message]))
             }
 
             error(ExecutionFailed) {
+                LOG.error("Error executing " + requestContext.description, it)
                 response.status = 500
                 response.setContentType('application/json')
                 send(toJson([
@@ -54,6 +64,7 @@ final class Endpoints extends AbstractMvcFilter {
             error(Exception) {
                 response?.status = 500
                 response?.setContentType('application/json')
+                LOG.error("Error executing " + requestContext.description, it)
                 send(toJson([message: "Internal Server Error"]))
             }
 

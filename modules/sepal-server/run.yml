@@ -23,6 +23,7 @@
     links:
     - "mysql:mysql"
     - "google-earth-engine:google-earth-engine"
+    - "user:user"
     volumes:
     - "/data/sepal:/data"
     env:

@@ -1,7 +1,10 @@
 package org.openforis.sepal.user
 
+import groovy.json.JsonOutput
 import org.openforis.sepal.security.Roles
 import org.openforis.sepal.util.annotation.ImmutableData
+
+import static org.openforis.sepal.user.User.Status.ACTIVE
 
 @ImmutableData
 class User implements groovymvc.security.User {
@@ -12,6 +15,7 @@ class User implements groovymvc.security.User {
     String organization
     Status status
     Set<String> roles
+    boolean systemUser
 
     boolean hasUsername(String username) {
         this.username.equalsIgnoreCase(username)
@@ -25,6 +29,10 @@ class User implements groovymvc.security.User {
         hasRole(Roles.ADMIN)
     }
 
+    String jsonString() {
+        JsonOutput.toJson(this)
+    }
+
     User withId(long id) {
         new User(
                 id: id,
@@ -33,6 +41,17 @@ class User implements groovymvc.security.User {
                 email: email,
                 organization: organization,
                 status: status,
+                roles: roles)
+    }
+
+    User active() {
+        new User(
+                id: id,
+                name: name,
+                username: username,
+                email: email,
+                organization: organization,
+                status: ACTIVE,
                 roles: roles)
     }
 

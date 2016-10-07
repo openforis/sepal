@@ -20,7 +20,7 @@ class GoogleEarthEngineDownload_Test extends Specification {
     def server = new GoogleEarthEngineDownloadServer(workingDir).start() as GoogleEarthEngineDownloadServer
     def username = System.getProperty("user.name")
     def scheduler = new SleepingScheduler(0, TimeUnit.SECONDS)
-    def gateway = new HttpGoogleEarthEngineGateway(server.uri)
+    def gateway = new HttpGoogleEarthEngineGateway(server.url)
     def factory = new GoogleEarthEngineDownload.Factory(workingDir, username, scheduler, gateway)
     def image = [type: 'some-type']
     def task = new Task('some-id', 'google-earth-engine-download', [name: 'some-filename', image: image])

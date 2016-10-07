@@ -20,7 +20,7 @@ module.exports = {
             template: 'index.html',
             hash    : true
         } ),
-        new ExtractTextPlugin( { filename: 'static/app.css', allChunks: true } ),
+        new ExtractTextPlugin( { filename: 'static/sepal-[hash].css', allChunks: true } ),
         new Webpack.ProvidePlugin( { "window.Tether": "tether" } ),
         new Webpack.ProvidePlugin( {
             $              : "jquery",

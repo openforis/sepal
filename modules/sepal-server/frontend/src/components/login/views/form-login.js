@@ -48,11 +48,16 @@ var submit = function ( e ) {
     
     var valid = FormValidator.validateForm( Form )
     if ( valid ) {
+        var username = Form.find( 'input[name=user]' ).val()
+        var password = Form.find( 'input[name=password]' ).val()
         
         var params = {
-            url       : '/api/login'
+            url       : '/user/current'
             , data    : Form.serialize()
             , error   : null
+            , beforeSend: function ( xhr ) {
+                xhr.setRequestHeader( "Authorization", "Basic " + btoa( username + ":" + password ) );
+            }
             , complete: function ( object, status ) {
                 
                 switch ( status ) {

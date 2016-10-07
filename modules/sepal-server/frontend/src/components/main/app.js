@@ -24,7 +24,7 @@ var loadApp = function () {
 
 var checkUser = function () {
     var params = {
-        url      : '/api/user'
+        url      : '/user/current'
         , success: function ( response ) {
             EventBus.dispatch( Events.APP.USER_LOGGED_IN, null, response )
         }
@@ -39,7 +39,7 @@ var initApp = function () {
         Loader.show()
         // console.log( inviteParam )
         // var params = {
-        //     url : '/api/user/invite'
+        //     url : '/user/invite'
         //     , data : { i : inviteParam }
         //     , success : function ( response ) {
         //         var invitationId = response.invitationId

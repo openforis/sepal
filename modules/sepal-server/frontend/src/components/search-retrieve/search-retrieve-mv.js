@@ -92,10 +92,9 @@ var sceneAreasLoaded = function ( e, sceneAreas ) {
 }
 
 var bestScenes = function ( e ) {
-    
     var data = {
         targetDayOfYearWeight: SearchParams.sortWeight //Filter.getSortWeight()
-        , cloudCoverTarget   : 0.0001
+        , cloudCoverTarget   : Number($('.cloudCoverTarget').val())
         , sensorIds          : SearchParams.sensors.join( ',' ) //Filter.getSelectedSensors().join( ',' )
         , sceneAreaIds       : Model.getSceneAreaIds().join( ',' )
     }

@@ -2,6 +2,7 @@ package org.openforis.sepal.taskexecutor
 
 import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
+import org.openforis.sepal.endpoint.ResourceServer
 import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.taskexecutor.endpoint.Endpoints
 import org.openforis.sepal.taskexecutor.endpoint.SepalAdminUsernamePasswordVerifier
@@ -61,7 +62,7 @@ class Main {
         ], backgroundExecutor)
         def endpoints = new Endpoints(pathRestrictions,
                 new TaskExecutorEndpoint(taskManager))
-        start new Server(config.port, endpoints)
+        start new ResourceServer(config.port, '/api', endpoints)
         addShutdownHook { stop() }
     }
 

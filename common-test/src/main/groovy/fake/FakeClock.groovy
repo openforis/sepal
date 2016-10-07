@@ -3,7 +3,6 @@ package fake
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
 
-import java.time.temporal.TemporalUnit
 import java.util.concurrent.TimeUnit
 
 class FakeClock implements Clock {
@@ -29,13 +28,6 @@ class FakeClock implements Clock {
 
     Date set(String date, String time) {
         currentTime = Date.parse('yyyy-MM-dd HH:mm:ss', "$date $time")
-    }
-
-    Date advance(long amount, TemporalUnit timeUnit) {
-        if (!currentTime)
-            set()
-        def next = currentTime.toInstant().plus(amount, timeUnit)
-        currentTime = Date.from(next)
     }
 
     Date forward(long time, TimeUnit timeUnit) {

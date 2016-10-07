@@ -76,7 +76,7 @@ class ExecutableDownload_Test extends Specification {
         def testServer = new TestServer()
         testServer.get(action)
         testServer.start()
-        def download = new ExecutableDownload(testServer.uri, file, System.getProperty('user.name'))
+        def download = new ExecutableDownload(testServer.url, file, System.getProperty('user.name'))
         download.tries = 3
         download.execute()
         return download
