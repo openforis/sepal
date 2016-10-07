@@ -8,7 +8,6 @@ import groovymvc.security.PathRestrictions
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.endpoint.ResourceServer
-import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.taskexecutor.api.Task
 import org.openforis.sepal.taskexecutor.api.TaskManager
 import org.openforis.sepal.taskexecutor.endpoint.Endpoints
