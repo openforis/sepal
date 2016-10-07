@@ -1,10 +1,4 @@
 ---
-
-- name: "gateone | Create data dir"
-  file:
-    path: "/data/gateone/"
-    state: directory
-
 - name: "gateone | Start container"
   docker:
     docker_api_version: "1.22"
@@ -21,8 +15,7 @@
     links:
     - "ssh-gateway:ssh-gateway"
     volumes:
-    - "/data/gateone:/data"
-    - "/data/ssh-gateway/home:/ssh-gateway/home"
+    - "/data/user/home:/gateone/users" # Users home directories with ssh keys
     env:
       GATEONE_SESSION_TIMEOUT_SEPAL_ENV: '0s'
       GATE_ONE_PUBLIC_SEPAL_ENV: "{{ gate_one_public }}"

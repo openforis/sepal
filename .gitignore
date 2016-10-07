@@ -13,8 +13,9 @@ target
 #Sepal binaries
 /modules/task-executor/docker/binary/task-executor.jar
 /modules/ssh-gateway/docker/binary/sepal-ssh-gateway.jar
-/modules/sepal-php/docker/binary/sepal-php.tar.gz
+/modules/user/docker/binary/sepal-user.jar
 /modules/sepal-server/docker/binary/sepal.jar
+/modules/api-gateway/docker/binary/sepal-api-gateway.jar
 
 #Sepal frontend
 /modules/sepal-server/frontend/dist/

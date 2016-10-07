@@ -14,10 +14,11 @@
     <modules>
         <module>common</module>
         <module>common-test</module>
+        <module>modules/api-gateway</module>
+        <module>modules/user</module>
         <module>modules/sepal-server</module>
         <module>modules/task-executor</module>
         <module>modules/ssh-gateway</module>
-        <module>modules/sepal-php</module>
     </modules>
 
     <properties>
@@ -33,6 +34,11 @@
             <id>openforis-releases</id>
             <name>Open Foris Repository</name>
             <url>http://www.openforis.org/nexus/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>jcenter</id>
+            <name>JCenter</name>
+            <url>http://jcenter.bintray.com/</url>
         </repository>
     </repositories>
 

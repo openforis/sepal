@@ -21,7 +21,7 @@
     password: "{{ docker_password }}"
     links:
     - "gateone:gateone"
+    - "api-gateway:api-gateway"
     - "sepal:sepal"
-    - "php:php"
     volumes:
     - "/data/nginx:/data"

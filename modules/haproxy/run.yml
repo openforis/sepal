@@ -21,7 +21,7 @@
     - "80:80"
     - "443:443"
     links:
-    - "nginx:nginx"
+    - "api-gateway:api-gateway"
     - "ssh-gateway:ssh-gateway"
     volumes:
     - "/data/haproxy:/data"
