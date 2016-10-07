@@ -22,7 +22,6 @@ ansible-playbook deploy.yml \
             region=$REGION \
             efs_id=$EFS_ID \
             availability_zone=$AV_ZONE \
-            local_php=false \
             local_sepal=false \
             deploy_environment=$ENV \
             version=$VERSION \

@@ -13,13 +13,14 @@
     - { role: build-module, module: haproxy }
     - { role: build-module, module: nginx }
     - { role: build-module, module: mysql }
+    - { role: build-module, module: api-gateway }
     - { role: build-module, module: gateone }
     - { role: build-module, module: ssh-gateway }
     - { role: build-module, module: geospatial-toolkit }
     - { role: build-module, module: sandbox }
     - { role: build-module, module: task-executor }
     - { role: build-module, module: google-earth-engine }
-    - { role: build-module, module: sepal-php }
+    - { role: build-module, module: user }
     - { role: build-module, module: sepal-server }
     - role: push-images
 
