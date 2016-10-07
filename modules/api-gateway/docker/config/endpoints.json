@@ -1,0 +1,44 @@
+[
+  {
+    "prefix": "false",
+    "path": "/",
+    "target": "http://sepal:1025/",
+    "https": "true",
+    "authenticate": "false"
+  },
+  {
+    "prefix": "true",
+    "path": "/static/",
+    "target": "http://sepal:1025/static/",
+    "https": "true",
+    "authenticate": "false"
+  },
+  {
+    "prefix": "false",
+    "path": "/gateone/ws",
+    "target": "https://gateone:8000/ws/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/gateone/",
+    "target": "https://gateone:8000/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/user/",
+    "target": "http://user/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/",
+    "target": "http://sepal:1025/api/",
+    "https": "true",
+    "authenticate": "true"
+  }
+]

@@ -1,0 +1,29 @@
+---
+- file: path="/data/api-gateway/certificates" state=directory
+# TODO: Which are needed?
+- copy: src=~/.sepal/certificates/sepal-https.key dest=/data/api-gateway/certificates/sepal-https.key
+- copy: src=~/.sepal/certificates/sepal-https.ca-bundle dest=/data/api-gateway/certificates/sepal-https.ca-bundle
+- copy: src=~/.sepal/certificates/sepal-https.crt dest=/data/api-gateway/certificates/sepal-https.crt
+
+- name: "api-gateway | Start container"
+  docker:
+    docker_api_version: "1.22"
+    name: "api-gateway"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/api-gateway:{{ version }}"
+    state: "reloaded"
+    net: "bridge"
+    restart_policy: "always"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    links:
+    - "gateone:gateone"
+    - "google-earth-engine:google-earth-engine"
+    - "user:user"
+    - "sepal:sepal"
+    volumes:
+    - "/data/api-gateway:/data"
+    env:
+      SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
