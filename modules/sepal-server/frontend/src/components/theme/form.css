@@ -15,6 +15,11 @@
     color: #e81351;
 }
 
+.form-success {
+    /*color: #18b585;*/
+    color: #40d8aa;;
+}
+
 /* form theme */
 .form-theme {
     position: relative;

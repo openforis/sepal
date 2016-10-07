@@ -5,6 +5,7 @@
 var EventBus      = require( '../../event/event-bus' )
 var Events        = require( '../../event/events' )
 var FormValidator = require( '../../form/form-validator' )
+var Loader        = require( '../../loader/loader' )
 
 var Form       = null
 var FormNotify = null
@@ -25,8 +26,23 @@ var submit = function ( e ) {
     }
     if ( valid ) {
         // submit
-        var data = Form.serialize()
-        EventBus.dispatch( Events.SECTION.USER.CHANGE_PASSWORD, null, data )
+        var data   = Form.serialize()
+        // EventBus.dispatch( Events.SECTION.USER.CHANGE_PASSWORD, null, data )
+        var params = {
+            url         : '/api/user/password'
+            , data      : data
+            , beforeSend: function () {
+                Loader.show()
+            }
+            , success   : function ( response ) {
+                Loader.hide( { delay: 200 } )
+                FormValidator.showSuccess( FormNotify, 'Password changed' )
+                setTimeout( function () {
+                    EventBus.dispatch( Events.USER.PASSWORD_CHANGED )
+                }, 1600 )
+            }
+        }
+        EventBus.dispatch( Events.AJAX.POST, null, params )
     }
 }
 

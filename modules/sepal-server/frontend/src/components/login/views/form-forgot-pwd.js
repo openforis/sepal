@@ -29,15 +29,18 @@ var bindEvents = function () {
             
             var params = {
                 url      : '/api/user/forgot-password'
-                , method : 'POST'
                 , data   : Form.serialize()
                 , success: function ( response ) {
-                    console.log( response )
+                    if ( response.status == 'error' ) {
+                        FormValidator.showError( FormNotify, response.message )
+                    } else {
+                        FormValidator.showSuccess( FormNotify, response.message )
+                    }
                 }
                 
             }
             
-            EventBus.dispatch( Events.AJAX.REQUEST, this, params )
+            EventBus.dispatch( Events.AJAX.POST, this, params )
         }
     } )
     

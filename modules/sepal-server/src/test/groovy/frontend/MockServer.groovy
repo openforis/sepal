@@ -22,8 +22,92 @@ class MockServer extends AbstractMvcFilter {
             get('/user') {
                 response.contentType = 'application/json'
 //                send toJson(authenticator.users.values().first())
+                halt(401)
+            }
+
+// ########################### TODO: New methods ###########################
+            post('/login') {
+                response.contentType = 'application/json'
+
+//                when there's an invitation request parameters are:
+//                invitationId:2341423
+//                user:trest
+//                password:demo12
+//                password2:demo12
+
+                if (params.password == 'demo12')
+                    send toJson(authenticator.users.values().first())
+                else
                     halt(401)
             }
+
+            post('/user/details') {
+                //TODO: should it be merged with /user/edit ?
+//                name:Demo Admin User
+//                username:demo
+//                email:demo@test.com
+//                organization:FAO
+
+                response.contentType = 'application/json'
+                send toJson(authenticator.users.values().first())
+            }
+
+            get('/users') {
+                response.contentType = 'application/json'
+                send toJson(authenticator.users.values())
+            }
+
+            post('/user/logout ') {
+                response.contentType = 'application/json'
+                halt(401)
+            }
+
+            post('/user/forgot-password ') {
+//                email:fdsafs@fsaf.com
+
+                response.contentType = 'application/json'
+                send toJson([status: 'success', message: 'Password reset. Check your email for the link'])
+//                send toJson([status:'error',message:'Email not found'])
+            }
+
+            post('/user/password') {
+//                old-password:aaaaaa
+//                password:aaaaaa
+//                password2:aaaaaa
+
+                response.contentType = 'application/json'
+                send toJson([])
+            }
+
+            post('/user/invite') {
+//                name:aa
+//                username:aaa
+//                email:sfas@fas.cm
+//                organization:fdsgfds
+
+                response.contentType = 'application/json'
+                send toJson([])
+            }
+cd
+            post('/user/edit') {
+//                id:3
+//                name:Demo User 2
+//                username:demo3
+//                email:demo@test.com
+//                organization:FAO
+//                status:active
+
+                response.contentType = 'application/json'
+                send toJson([])
+            }
+            post('/user/delete') {
+//                userId:2
+
+                response.contentType = 'application/json'
+                send toJson([])
+            }
+// ########################### TODO: END New methods ###########################
+
 
             get('/user/files') {
                 response.contentType = 'application/json'
@@ -164,15 +248,6 @@ class MockServer extends AbstractMvcFilter {
                 response.status = 204
             }
 
-            post('/login') {
-                response.contentType = 'application/json'
-
-                if (params.password == 'demo')
-                    send toJson(authenticator.users.values().first())
-                else
-                    halt(401)
-            }
-
 
             post('/data/sceneareas') {
                 response.contentType = 'application/json'
@@ -243,16 +318,6 @@ class MockServer extends AbstractMvcFilter {
                 //TODO server side validation?
                 response.contentType = 'application/json'
                 send toJson(authenticator.users.values().first())
-            }
-
-            get('/users'){
-                //TODO server side validation?
-                response.contentType = 'application/json'
-                send toJson(authenticator.users.values())
-            }
-
-            post('/users'){
-                //TODO Invite
             }
 
         }

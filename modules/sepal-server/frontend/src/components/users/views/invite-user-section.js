@@ -5,6 +5,7 @@ var EventBus      = require( '../../event/event-bus' )
 var Events        = require( '../../event/events' )
 var FormValidator = require( '../../form/form-validator' )
 var FormUtils     = require( '../../form/form-utils' )
+var Loader        = require( '../../loader/loader' )
 
 var Container = null
 var Form      = null
@@ -35,6 +36,26 @@ var submitForm = function ( e ) {
     if ( valid ) {
         // submit
         var data = Form.serialize()
+        
+        var params = {
+            url         : '/api/user/invite'
+            , data      : data
+            , beforeSend: function () {
+                Loader.show()
+            }
+            , success   : function ( response ) {
+                Loader.hide( { delay: 200 } )
+                
+                FormValidator.showSuccess( Form.find( '.form-notify' ), "User invited" )
+                
+                setTimeout( function () {
+                    EventBus.dispatch( Events.SECTION.USERS.SHOW_USERS_LIST )
+                }, 1600 )
+            }
+            
+        }
+        
+        EventBus.dispatch( Events.AJAX.POST, this, params )
     }
 }
 
