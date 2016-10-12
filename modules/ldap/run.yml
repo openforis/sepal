@@ -1,4 +1,3 @@
----
 - file: path="/data/ldap" state=directory
 - file: path="/data/ldap/certificates" state=directory
 - file: path="/data/ldap/database" state=directory
@@ -8,7 +7,7 @@
 - copy: src=~/.sepal/certificates/ldap-key.pem dest=/data/ldap/certificates/ldap-key.pem
 - copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/ldap/certificates/ldap-ca.crt.pem
 
-- file: path="/data/ldap/started" state=absent
+- file: path="/data/ldap/module_initialized" state=absent
 
 - name: "ldap | Start container"
   docker:
@@ -42,6 +41,6 @@
       LDAP_TLS_VERIFY_CLIENT: never
   register: container
 
-- name: "ldap | Wait until started"
-  wait_for: path=/data/ldap/started
+- name: "ldap | Wait until initialized"
+  wait_for: path=/data/ldap/module_initialized
   when: (container.summary.started > 0 or container.summary.restarted > 0)

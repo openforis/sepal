@@ -25,7 +25,6 @@ fi
 echo "Setting up content..."
 ldapadd -x -D cn=admin,dc=sepal,dc=org -w "$LDAP_ADMIN_PASSWORD" -f /config/add_content.ldif
 
-echo "Content setup"
-touch /data/started
-echo "LDAP started"
+touch /data/module_initialized
+echo "LDAP initialized"
 exit 0

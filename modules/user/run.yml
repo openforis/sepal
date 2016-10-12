@@ -3,7 +3,7 @@
 - file: path="/data/user/certificates" state=directory
 - copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/user/certificates/ldap-ca.crt.pem
 
-- file: path="/data/user/started" state=absent
+- file: path="/data/user/module_initialized" state=absent
 
 - name: "user | Start container"
   docker:
@@ -39,6 +39,6 @@
       SMTP_PASSWORD_SEPAL_ENV: "{{ smtp_password }}"
   register: container
 
-- name: "user | Wait until started"
-  wait_for: path=/data/user/started
+- name: "user | Wait until initialized"
+  wait_for: path=/data/user/module_initialized
   when: (container.summary.started > 0 or container.summary.restarted > 0)

@@ -1,5 +1,5 @@
-
-- file: path="/data/mysql-backup/started" state=absent
+- file: path="/data/mysql-backup" state=directory
+- file: path="/data/mysql-backup/module_initialized" state=absent
 
 - name: "mysql-backup | Start container"
   docker:
@@ -17,8 +17,8 @@
     links:
     - "mysql:mysql"
     volumes:
-    - "/data/mysql-backup:/shared"
     - "/backup/mysql:/backup"
+    - "/data/mysql-backup:/module"
     env:
       MYSQL_DATABASE: "sdms"
       MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
@@ -26,6 +26,6 @@
       RESTORE_BACKUP: "{{ restore_backup }}"
   register: container
 
-- name: "mysql-backup | Wait until started"
-  wait_for: path=/data/mysql-backup/started
+- name: "mysql-backup | Wait until initialized"
+  wait_for: path=/data/mysql-backup/module_initialized
   when: (container.summary.started > 0 or container.summary.restarted > 0)

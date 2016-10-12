@@ -28,4 +28,4 @@ add-sepal-user sepalAdmin "$(cat /etc/sepalAdmin.passwd)"
 # Add admin user
 add-sepal-user admin "$(cat /etc/admin.passwd)" $USER_GROUP
 
-touch /data/started
+touch /data/module_initialized

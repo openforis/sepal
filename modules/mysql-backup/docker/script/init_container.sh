@@ -12,7 +12,7 @@ $BACKUP_CRON_EXP root /script/backup.sh '$MYSQL_DATABASE' '$passwordFile'
 EOL
 
 chmod 400 /etc/cron.d/mysql-backup
-touch /shared/started
+touch /module/module_initialized
 
 # http://veithen.github.io/2014/11/16/sigterm-propagation.html
 trap 'kill -TERM $PID' TERM INT

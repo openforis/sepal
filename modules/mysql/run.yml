@@ -1,10 +1,9 @@
----
 - name: "mysql | Create data dir"
   file:
     path: "/data/mysql"
     state: directory
 
-- file: path="/data/mysql/initialized" state=absent
+- file: path="/data/mysql/module_initialized" state=absent
 
 - name: "mysql | Start container"
   docker:
@@ -33,5 +32,5 @@
   register: container
 
 - name: "mysql | Wait until initialized"
-  wait_for: path=/data/mysql/initialized
+  wait_for: path=/data/mysql/module_initialized
   when: (container.summary.started > 0 or container.summary.restarted > 0)

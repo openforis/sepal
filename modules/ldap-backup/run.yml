@@ -1,9 +1,6 @@
 ---
-- file: path="/data/ldap" state=directory
-- file: path="/data/ldap/database" state=directory
-- file: path="/data/ldap/config" state=directory
-
-- file: path="/data/ldap/backup-started" state=absent
+- file: path="/data/ldap-backup" state=directory
+- file: path="/data/ldap-backup/module_initialized" state=absent
 
 - name: "ldap-backup | Start container"
   docker:
@@ -21,8 +18,8 @@
     volumes:
     - "/data/ldap/database:/var/lib/ldap"
     - "/data/ldap/config:/etc/ldap/slapd.d"
-    - "/data/ldap/shared:/shared"
-    - "/backup/ldap:/data/backup"
+    - "/data/ldap-backup:/module"
+    - "/backup/ldap:/backup"
     env:
       LDAP_BACKUP_DATA_CRON_EXP: '0 0 * * *'
       LDAP_BACKUP_CONFIG_CRON_EXP: '0 0 * * *'
@@ -30,6 +27,6 @@
       RESTORE_BACKUP: "{{ restore_backup }}"
   register: container
 
-- name: "ldap-backup | Wait until started"
-  wait_for: path=/data/ldap/shared/backup-started
+- name: "ldap-backup | Wait until initialized"
+  wait_for: path=/data/ldap-backup/module_initialized
   when: (container.summary.started > 0 or container.summary.restarted > 0)

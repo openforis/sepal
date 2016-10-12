@@ -20,5 +20,5 @@ fi
     -user=root \
     -password=${MYSQL_ROOT_PASSWORD}
 
-touch /data/initialized
+touch /data/module_initialized
 echo "MySQL container initialized"
