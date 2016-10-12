@@ -6,7 +6,9 @@ USER_GROUP=$3
 USER_HOME=/home/$USERNAME
 USER_DATA_HOME=/sepal/home/$USERNAME
 
+echo "add-sepal-user | username: $USERNAME"
 if ! ldapid "$USERNAME"; then
+    echo "add-sepal-user | Adding user: $USERNAME"
     sss_cache -E
     ldapaddgroup $USERNAME
     ldapadduser $USERNAME $USERNAME
@@ -14,6 +16,7 @@ if ! ldapid "$USERNAME"; then
     groupId=$(ldapgid "$USERNAME" | sed -E "s/.*gid=([0-9]+).*/\\1/")
 
     if [ -n "$PASSWORD" ]; then
+        echo "add-sepal-user | Setting password"
         passwordFile=$(mktemp /tmp/$USERNAME.XXXXXX)
         echo $PASSWORD > $passwordFile
         sss_seed --domain sepal.org --username $USERNAME --password-file $passwordFile --uid $userId --gid $groupId
@@ -25,9 +28,11 @@ if ! ldapid "$USERNAME"; then
     # TODO: Move home directory creation to sepal-server
     # When user is a SEPAL user, add user to group and create user home directory structure
     if [ -n "$USER_GROUP" ]; then
+        echo "add-sepal-user | Adding secondary group: $USER_GROUP"
         userGroupId=$(ldapgid "$USER_GROUP" | sed -E "s/.*gid=([0-9]+).*/\\1/")
         ldapaddusertogroup $USERNAME $userGroupId
 
+        echo "add-sepal-user | Creating user data home dir: $USER_DATA_HOME"
         # Create user home directory
         mkdir -p $USER_DATA_HOME
         mkdir $USER_DATA_HOME/downloads
@@ -37,10 +42,11 @@ if ! ldapid "$USERNAME"; then
         chmod -R 770 $USER_DATA_HOME
         chmod -R g+s $USER_DATA_HOME
     fi
-
+    echo "add-sepal-user | Creating user ssh home dir: $USER_HOME/.ssh"
     mkdir -p $USER_HOME/.ssh
     chmod -R 770 $USER_HOME
 
+    echo "add-sepal-user | Creating user key pair for $USERNAME"
     ssh-keygen -t rsa -b 4096 -C "Sandbox key for $USERNAME" -f $USER_HOME/.ssh/id_rsa -N ""
     ldapmodify -H ldap://ldap -x -D cn=admin,dc=sepal,dc=org -w "$(cat /etc/ldap.secret)" <<!
 dn: uid=$USERNAME,ou=People,dc=sepal,dc=org
@@ -56,4 +62,6 @@ sshpublickey: $(cat $USER_HOME/.ssh/id_rsa.pub)
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
     LogLevel QUIET" > $USER_HOME/.ssh/config
+else
+    echo "add-sepal-user | User already created: $USERNAME"
 fi
