@@ -1,9 +1,4 @@
 ---
-- name: "google-earth-engine | Create config dir"
-  file:
-    path: "/data/google-earth-engine"
-    state: directory
-
 - name: "google-earth-engine | Start container"
   docker:
     docker_api_version: "1.22"

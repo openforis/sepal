@@ -32,10 +32,6 @@ chown -R sepal: /data/workDir
 mkdir -p /data/home -m 770
 chown sepal: /data/home
 
-mkdir -p /data/log -m 770
-chown sepal: /data/log
-rm -f /var/log/sepal && ln -sf /data/log /var/log/sepal
-
 # Unset all env variables ending with _SEPAL_ENV
 unset $(printenv | grep '_SEPAL_ENV' | sed -E "s/([0-9a-zA-Z]+)=.*/\\1/" | tr '\n' ' ')
 

@@ -1,9 +1,5 @@
 #!/bin/bash
 
-mkdir -p /data/logs
-
-rm -rf /var/log/supervisor && ln -sf /data/logs /var/log/supervisor
-
 cp -R /script/sqlScripts/* /opt/flyway/sql/
 
 touch /var/log/mysql/error.log

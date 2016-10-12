@@ -1,6 +1,5 @@
 ---
 - file: path="/data/user" state=directory
-- file: path="/data/user/ldap" state=directory
 - file: path="/data/user/certificates" state=directory
 - copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/user/certificates/ldap-ca.crt.pem
 

@@ -1,9 +1,4 @@
 ---
-- name: "haproxy | Create config dir"
-  file:
-    path: "/data/haproxy"
-    state: directory
-
 - name: "haproxy | Start container"
   docker:
     docker_api_version: "1.22"
@@ -23,5 +18,3 @@
     links:
     - "api-gateway:api-gateway"
     - "ssh-gateway:ssh-gateway"
-    volumes:
-    - "/data/haproxy:/data"
