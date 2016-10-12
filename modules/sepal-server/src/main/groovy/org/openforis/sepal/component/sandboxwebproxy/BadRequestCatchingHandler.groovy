@@ -6,13 +6,13 @@ import io.undertow.util.Headers
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class SepalHttpHandler implements HttpHandler {
+class BadRequestCatchingHandler implements HttpHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     private final HttpHandler next
 
-    SepalHttpHandler(HttpHandler next) {
+    BadRequestCatchingHandler(HttpHandler next) {
         this.next = next
     }
 

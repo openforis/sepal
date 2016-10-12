@@ -7,26 +7,22 @@ import org.openforis.sepal.util.annotation.ImmutableData
 final class WorkerTypes {
     static final String SANDBOX = 'sandbox'
     static final String TASK_EXECUTOR = 'task-executor'
-    static final List<HttpEndpoint> SANDBOX_HTTP_ENDPOINTS = [
-            new HttpEndpoint(name: 'rstudio-server', port: 8787),
-            new HttpEndpoint(name: 'shiny-server', port: 3838)
-    ]
     static final Map<String, Factory> FACTORIES = [
-            (SANDBOX)      : new SandboxFactory(),
-            (TASK_EXECUTOR): new TaskExecutorFactory()
-    ]
+                    (SANDBOX)      : new SandboxFactory(),
+                    (TASK_EXECUTOR): new TaskExecutorFactory()
+            ]
 
-    static WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
-        def factory = FACTORIES[id]
-        if (!factory)
-            throw new IllegalStateException('There exist no worker type with id ' + id)
-        factory.create(id, instance, config)
-    }
+            static WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
+                def factory = FACTORIES[id]
+                if (!factory)
+                    throw new IllegalStateException('There exist no worker type with id ' + id)
+                factory.create(id, instance, config)
+            }
 
-    private static class TaskExecutorFactory implements Factory {
-        WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
-            def taskExecutorPublishedPorts = [(1026): 1026]
-            def username = instance.reservation.username
+            private static class TaskExecutorFactory implements Factory {
+                WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
+                    def taskExecutorPublishedPorts = [(1026): 1026]
+                    def username = instance.reservation.username
             def googleEarthEngine = new Image(
                     name: 'google-earth-engine',
                     exposedPorts: [5002],

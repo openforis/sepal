@@ -1,9 +1,6 @@
 package org.openforis.sepal.apigateway.server
 
 import io.undertow.Undertow
-import io.undertow.protocols.ssl.UndertowXnioSsl
-import org.xnio.OptionMap
-import org.xnio.Xnio
 
 class ProxyServer {
     private Undertow server

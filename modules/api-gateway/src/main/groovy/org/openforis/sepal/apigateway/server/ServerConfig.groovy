@@ -9,7 +9,6 @@ import static groovy.json.JsonParserType.LAX
 import static java.lang.Boolean.parseBoolean
 
 @ImmutableData(knownImmutableClasses = [File])
-//@Data
 class ServerConfig {
     final File keyFile
     final File certificateFile
@@ -32,8 +31,9 @@ class ServerConfig {
                             prefix: parseBoolean(it.prefix),
                             path: it.path,
                             target: URI.create(it.target),
+                            rewriteRedirects: parseBoolean(it.rewriteRedirects),
                             https: parseBoolean(it.https),
-                            authenticate: parseBoolean(it.authenticate),
+                            authenticate: parseBoolean(it.authenticate)
                     )
                 }.asImmutable()
         )

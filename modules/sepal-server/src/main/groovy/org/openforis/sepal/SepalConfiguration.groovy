@@ -21,11 +21,6 @@ class SepalConfiguration {
     Properties properties
     DataSource dataSource
 
-    SepalConfiguration(Properties props) {
-        this.properties = props
-        setEnv()
-    }
-
     SepalConfiguration() {
         properties = new Properties()
         File file = new File(FileSystem.configDir(), 'sepal.properties')
@@ -130,8 +125,8 @@ class SepalConfiguration {
 
     Map<String, Integer> getPortByProxiedEndpoint() {
         [
-                'rstudio-server': 8787,
-                'shiny-server': 3838,
+                'rstudio': 8787,
+                'shiny': 3838,
         ]
     }
 

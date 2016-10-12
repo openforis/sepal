@@ -34,8 +34,7 @@ class RootHandler implements HttpHandler {
     }
 
     RootHandler proxy(EndpointConfig endpointConfig) {
-        def target = endpointConfig.target.toString().replaceAll('/$', '') // Remove trailing slashes
-        def endpointHandler = new LoggingProxyHandler(target)
+        def endpointHandler = new LoggingProxyHandler(endpointConfig)
         if (endpointConfig.authenticate)
             endpointHandler = new SecureEndpointHandler(authenticationUrl, endpointHandler)
         if (endpointConfig.https)
@@ -58,19 +57,20 @@ class RootHandler implements HttpHandler {
         private final HttpHandler proxyHandler
         private final String target
 
-        LoggingProxyHandler(String target) {
-            this.target = target
+        LoggingProxyHandler(EndpointConfig endpointConfig) {
+            target = endpointConfig.target.toString().replaceAll('/$', '') // Remove trailing slashes
             def sslContext = new SSLContextBuilder()
                     .loadTrustMaterial(null, new TrustSelfSignedStrategy())
                     .build()
             def xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY, sslContext)
             def proxyClient = new LoadBalancingProxyClient()
             proxyClient.addHost(URI.create(target), xnioSsl)
-
             proxyHandler = new PatchedProxyHandler(
                     proxyClient,
                     ResponseCodeHandler.HANDLE_404
             )
+            if (endpointConfig.rewriteRedirects)
+                proxyHandler.clientResponseListener = new RedirectRewriter()
         }
 
         void handleRequest(HttpServerExchange exchange) throws Exception {

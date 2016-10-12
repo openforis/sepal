@@ -7,6 +7,7 @@ class EndpointConfig {
     boolean https = true
     boolean authenticate = true
     boolean prefix
+    boolean rewriteRedirects
     String path
     URI target
 }

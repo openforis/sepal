@@ -70,24 +70,24 @@ class DynamicProxyClient implements ProxyClient {
             this.exchange = exchange
         }
 
-        public void completed(final ClientConnection connection) {
+        void completed(final ClientConnection connection) {
             final ServerConnection serverConnection = exchange.getConnection()
             //we attach to the connection so it can be re-used
             serverConnection.putAttachment(clientAttachmentKey, connection)
             serverConnection.addCloseListener(new ServerConnection.CloseListener() {
-                public void closed(ServerConnection conn) {
+                void closed(ServerConnection conn) {
                     IoUtils.safeClose(connection)
                 }
             })
             connection.getCloseSetter().set(new ChannelListener<Channel>() {
-                public void handleEvent(Channel channel) {
+                void handleEvent(Channel channel) {
                     serverConnection.removeAttachment(clientAttachmentKey)
                 }
             })
             callback.completed(exchange, new ProxyConnection(connection, uri.getPath() == null ? "/" : uri.getPath()))
         }
 
-        public void failed(IOException e) {
+        void failed(IOException e) {
             callback.failed(exchange)
         }
     }

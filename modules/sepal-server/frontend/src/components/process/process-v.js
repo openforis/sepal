@@ -11,7 +11,6 @@ var html = null
 var rStudioImg = require( './img/r-studio.png' )
 
 //link to rstudio
-///user/$USER/rstudio-server/
 var apps = null
 var init = function () {
     var template = require( './process.html' )
@@ -24,7 +23,7 @@ var init = function () {
         apps = html.find( '.apps' )
         
         var rStudioBtn = $( '<a class="btn btn-base round app r-studio" target="_blank"></a>' )
-        var href       = '/user/' + UserMV.getCurrentUser().username + '/rstudio-server/'
+        var href       = '/sandbox/rstudio/'
         rStudioBtn.attr( 'href', href )
         rStudioBtn.append( '<img src="' + rStudioImg + '"/>' )
         apps.append( rStudioBtn )
@@ -33,7 +32,7 @@ var init = function () {
             '<div>' +
             '    <a class="btn btn-base round app"' +
             '       target="_blank" ' +
-            '       href="/user/'+ UserMV.getCurrentUser().username + '/shiny-server/accuracy-assessment/">' +
+            '       href="/sandbox/shiny/accuracy-assessment/">' +
             '        Accuracy Assessment' +
             '    </a>' +
             '</div>')

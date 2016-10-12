@@ -1,10 +1,15 @@
 package org.openforis.sepal.component.sandboxwebproxy
 
+import groovy.json.JsonParserType
+import groovy.json.JsonSlurper
 import io.undertow.Undertow
+import io.undertow.client.ClientResponse
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.handlers.ResponseCodeHandler
 import io.undertow.server.session.*
+import io.undertow.util.HeaderMap
+import io.undertow.util.HttpString
 import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSession
 import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSessionManager
 import org.openforis.sepal.undertow.PatchedProxyHandler
@@ -61,15 +66,16 @@ class SandboxWebProxy {
     }
 
     private HttpHandler createHandler(Map<String, Integer> portByEndpoint, WebProxySessionMonitor monitor) {
-        new SepalHttpHandler(
-                new SessionAttachmentHandler(
-                        new PatchedProxyHandler(
-                                new DynamicProxyClient(
-                                        new SessionBasedUriProvider(portByEndpoint, sandboxSessionManager, monitor)
-                                ),
-                                ResponseCodeHandler.HANDLE_404
-                        ), httpSessionManager, new SessionCookieConfig())
-        )
+        def proxyHandler = new PatchedProxyHandler(
+                new DynamicProxyClient(
+                        new SessionBasedUriProvider(portByEndpoint, sandboxSessionManager, monitor)
+                ),
+                ResponseCodeHandler.HANDLE_404)
+        proxyHandler.setClientResponseListener(new RedirectRewriter())
+        new BadRequestCatchingHandler(
+                new SessionAttachmentHandler(proxyHandler,
+                        httpSessionManager,
+                        new SessionCookieConfig(cookieName: "SANDBOX-SESSIONID", secure: true)))
     }
 
     void start() {
@@ -82,12 +88,40 @@ class SandboxWebProxy {
     }
 
     void stop() {
-        executor.shutdown();
+        executor.shutdown()
         server.stop()
     }
 
     static String username(Session session) {
         session.getAttribute(USERNAME_KEY) as String
+    }
+
+    private static String extractEndpoint(HttpServerExchange exchange) {
+        exchange.requestURI.find('/([^/]+)') { match, group -> group }
+    }
+
+    private static class RedirectRewriter implements PatchedProxyHandler.ClientResponseListener {
+        void completed(ClientResponse response, HttpServerExchange exchange) {
+            rewriteLocationHeader(response, exchange)
+        }
+
+        void failed(IOException e, HttpServerExchange exchange) {}
+
+        private void rewriteLocationHeader(ClientResponse response, HttpServerExchange exchange) {
+            HttpString locationHeaderName = HttpString.tryFromString("Location")
+            HeaderMap headers = response.getResponseHeaders()
+            String location = headers.getFirst(locationHeaderName)
+            if (location != null) {
+                URI locationURI = URI.create(location)
+                if (locationURI.getHost() == null || locationURI.getHost().equals(exchange.getHostName())) {
+                    String path = locationURI.getPath() == null ? "" : locationURI.getPath()
+                    URI rewrittenURI = locationURI.resolve("/${extractEndpoint(exchange)}${path}")
+                    headers.remove(locationHeaderName)
+                    headers.add(locationHeaderName, rewrittenURI.toString())
+                }
+            }
+
+        }
     }
 
     private static class SessionBasedUriProvider implements DynamicProxyClient.UriProvider {
@@ -109,6 +143,8 @@ class SandboxWebProxy {
             def httpSession = getOrCreateHttpSession(exchange)
             def endpoint = determineEndpoint(exchange)
             def username = determineUsername(exchange)
+            exchange.resolvedPath = "/$endpoint"
+            exchange.relativePath = exchange.requestURI.find('/[^/]+(/?.*)') { match, group -> group }
 
             def sandboxSessionId = httpSession.getAttribute(SANDBOX_SESSION_ID_KEY)
             def uriSessionKey = determineUriSessionKey(endpoint, username)
@@ -127,16 +163,23 @@ class SandboxWebProxy {
         }
 
         private static String determineUsername(HttpServerExchange exchange) {
-            def username = exchange.requestHeaders.getFirst(USERNAME_KEY)
-            if (!username)
+            def user = exchange.requestHeaders.getFirst(USERNAME_KEY)
+            if (!user)
                 throw new BadRequest("Missing header: $USERNAME_KEY")
+            def username = null
+            try {
+                username = new JsonSlurper(type: JsonParserType.LAX).parseText(user).username
+            } catch (Exception ignore) {
+            }
+            if (!username)
+                throw new BadRequest("Malformed header: $USERNAME_KEY")
             return username
         }
 
         private String determineEndpoint(HttpServerExchange exchange) {
-            def endpoint = exchange.requestHeaders.getFirst('sepal-endpoint')
+            Object endpoint = extractEndpoint(exchange)
             if (!endpoint)
-                throw new BadRequest('Missing header: sepal-endpoint')
+                throw new BadRequest('Malformed request:' + exchange)
             if (!portByEndpoint.containsKey(endpoint))
                 throw new BadRequest("Non-existing sepal-endpoint: ${endpoint}")
             return endpoint
@@ -188,4 +231,5 @@ class SandboxWebProxy {
 
         }
     }
+
 }

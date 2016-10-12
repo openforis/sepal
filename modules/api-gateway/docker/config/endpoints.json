@@ -40,5 +40,13 @@
     "target": "http://sepal:1025/api/",
     "https": "true",
     "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/sandbox/",
+    "target": "http://sepal:9191/",
+    "rewriteRedirects": "true",
+    "https": "true",
+    "authenticate": "true"
   }
 ]

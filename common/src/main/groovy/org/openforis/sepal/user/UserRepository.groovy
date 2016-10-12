@@ -21,7 +21,6 @@ class RestUserRepository implements UserRepository {
     void eachUsername(Closure closure) {
         def response = http.get(
                 path: 'list',
-                contentType: JSON,
                 requestContentType: JSON,
                 headers: ['sepal-user': new User(username: username, roles: [Roles.ADMIN]).jsonString()])
         response.data.each {
