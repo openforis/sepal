@@ -18,7 +18,6 @@ Vagrant.configure(2) do |config|
     ansible.extra_vars = {
         ansible_ssh_user: 'vagrant',
         deploy_environment: 'Staging',
-        local_sepal: false,
         secret_vars_file: '~/.sepal/secret.yml',
         docker_repository_host: 'localhost',
         version: '1',
