@@ -1,6 +1,5 @@
 #!/bin/bash
 
-sleep 10
 function sepalAvailable()  {
     ldapsearch \
         -LLxh localhost \
@@ -26,7 +25,6 @@ fi
 echo "Setting up content..."
 ldapadd -x -D cn=admin,dc=sepal,dc=org -w "$LDAP_ADMIN_PASSWORD" -f /config/add_content.ldif
 
-sleep 1
 echo "Content setup"
 touch /data/started
 echo "LDAP started"
