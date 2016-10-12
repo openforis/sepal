@@ -23,7 +23,6 @@ template /config/ldap.conf /etc/ldap/ldap.conf root: 0600
 template /config/ldap.secret /etc/ldap.secret root: 0600
 template /config/sssd.conf /etc/sssd/sssd.conf root: 0600
 template /config/sepalAdmin.passwd /etc/sepalAdmin.passwd root: 0644
-template /config/admin.passwd /etc/admin.passwd root: 0600
 
 # Keep /etc/ssh in a mounted volume, so host keys are reused between upgrades
 if [ ! -d /data/ssh ]; then
