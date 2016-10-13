@@ -23,7 +23,7 @@
     log_driver: syslog
     log_opt:
       syslog-address: "{{ syslog_address }}"
-      # tag: "sepal"
+      tag: "sepal"
     links:
     - "mysql:mysql"
     - "google-earth-engine:google-earth-engine"

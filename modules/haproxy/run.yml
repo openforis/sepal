@@ -12,6 +12,10 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      tag: "haproxy"
     ports:
     - "80:80"
     - "443:443"
