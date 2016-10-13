@@ -20,6 +20,10 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      # tag: "sepal"
     links:
     - "mysql:mysql"
     - "google-earth-engine:google-earth-engine"
