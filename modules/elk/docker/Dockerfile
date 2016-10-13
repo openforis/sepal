@@ -1,6 +1,8 @@
 FROM sebp/elk
 MAINTAINER OpenForis
 
+EXPOSE 25826
+
 ADD config /config
 ADD script /script
 

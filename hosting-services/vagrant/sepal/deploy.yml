@@ -16,6 +16,14 @@
       copy:
         src: ~/.sepal/certificates/docker-registry.crt
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+    - name: Create ELK certificate dir
+      file:
+        path: "/data/elk/certificates"
+        state: directory
+    - name: Copy ELK certificates
+      copy: src={{ item }} dest=/data/elk/certificates owner=root mode=644
+      with_fileglob:
+        - ~/.sepal/certificates/elk*
 
     - file: path="/data/sepal/etc" state=directory
     - template: src="./vagrant.properties" dest=/data/sepal/etc/vagrant.properties
@@ -36,7 +44,6 @@
 
     - { role: docker, users: ['ubuntu', 'vagrant'] }
     - { role: build-module, module: elk }
-    - { role: build-module, module: filebeat }
     - { role: build-module, module: ldap-backup }
     - { role: build-module, module: ldap }
     - { role: build-module, module: haproxy }
@@ -51,11 +58,12 @@
     - { role: build-module, module: sepal-server }
     - { role: build-module, module: task-executor }
     - { role: build-module, module: google-earth-engine }
+    - { role: build-module, module: rsyslog }
 
     - { role: run-module, module: elk }
-    - { role: run-module, module: filebeat }
-    - { role: run-module, module: ldap-backup }
+    - { role: run-module, module: rsyslog }
     - { role: run-module, module: ldap }
+    - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
     - { role: run-module, module: mysql-backup }
     - { role: run-module, module: google-earth-engine }
