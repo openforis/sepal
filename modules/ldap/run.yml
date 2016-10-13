@@ -23,6 +23,10 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      tag: "ldap"
     ports:
     - "389:389"
     - "636:636"
