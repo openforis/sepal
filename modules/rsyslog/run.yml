@@ -17,10 +17,10 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
-    links:
-    - "elk:elk"
     volumes:
     - "/data/elk/certificates:/certificates"
+    env:
+      ELK_HOST_SEPAL_ENV: "{{ elk_host }}"
 
 - command: "docker inspect --format '{{ '{{' }} .NetworkSettings.IPAddress }}' rsyslog"
   register: rsyslog_host
