@@ -1,9 +1,8 @@
 #!/bin/bash
 
 mkdir -p /data/log
-rm -rf /var/log/haproxy && ln -fs /data/log /var/log/haproxy
+mkdir -p /etc/haproxy
 
-cp /config/haproxy.cfg /usr/local/etc/haproxy/haproxy.cfg
-cp /config/rsyslog.conf /etc/rsyslog.conf
+cp /config/haproxy.cfg /etc/haproxy/haproxy.cfg
 
 exec /usr/bin/supervisord -c /config/supervisord.conf

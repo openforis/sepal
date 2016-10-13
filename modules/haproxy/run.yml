@@ -23,5 +23,6 @@
     links:
     - "nginx:nginx"
     - "ssh-gateway:ssh-gateway"
+    - "rsyslog:rsyslog"
     volumes:
     - "/data/haproxy:/data"
