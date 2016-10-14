@@ -22,6 +22,7 @@
     links:
     - "sepal:sepal"
     - "ldap:ldap"
+    - "rsyslog:rsyslog"
     volumes:
     - "/data/ssh-gateway:/data"
     - "/data/user/home:/home" # Users home directories with ssh keys
