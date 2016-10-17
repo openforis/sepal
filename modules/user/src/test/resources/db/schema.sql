@@ -10,7 +10,7 @@ CREATE TABLE sepal_user.sepal_user (
   id                    INT(11)     NOT NULL AUTO_INCREMENT PRIMARY KEY,
   username              VARCHAR(32) NOT NULL,
   name                  VARCHAR(1000),
-  email                 VARCHAR(1000),
+  email                 VARCHAR(1000) UNIQUE,
   organization          VARCHAR(1000),
   token                 VARCHAR(256),
   admin                 BOOLEAN     NOT NULL,
@@ -23,10 +23,10 @@ CREATE TABLE sepal_user.sepal_user (
   AUTO_INCREMENT = 10000;
 
 CREATE TABLE sepal_user.rmb_message (
-  id               VARCHAR(127) NOT NULL,
+  id               VARCHAR(127)    NOT NULL,
   sequence_no      BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
-  publication_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  queue_id         VARCHAR(127) NOT NULL,
+  publication_time TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  queue_id         VARCHAR(127)    NOT NULL,
   message_string   TEXT,
   message_bytes    BLOB,
   PRIMARY KEY (id)

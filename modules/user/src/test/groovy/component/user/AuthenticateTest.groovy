@@ -2,7 +2,7 @@ package component.user
 
 class AuthenticateTest extends AbstractUserTest {
     def 'Given valid credentials, when authenticating, user is returned'() {
-        def user = activeUser('the password')
+        def user = activeUserWithPassword('the password')
 
         when:
         def authenticatedUser = authenticate(testUsername, 'the password')
@@ -12,7 +12,7 @@ class AuthenticateTest extends AbstractUserTest {
     }
 
     def 'Given invalid credentials, when authenticating, null is returned'() {
-        activeUser('the password')
+        activeUserWithPassword('the password')
 
         when:
         def authenticatedUser = authenticate(testUsername, 'invalid password')

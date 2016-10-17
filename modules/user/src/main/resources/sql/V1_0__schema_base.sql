@@ -4,7 +4,7 @@ CREATE TABLE sepal_user.sepal_user (
   id                    INT(11)     NOT NULL AUTO_INCREMENT PRIMARY KEY,
   username              VARCHAR(32) NOT NULL,
   name                  VARCHAR(1000),
-  email                 VARCHAR(1000),
+  email                 VARCHAR(1000) UNIQUE,
   organization          VARCHAR(1000),
   token                 VARCHAR(256),
   admin                 BOOLEAN     NOT NULL,

@@ -11,4 +11,8 @@ class TokenStatus {
     Date generationTime
     User user
     boolean expired
+
+    boolean isValid() {
+        user && !expired
+    }
 }

@@ -92,7 +92,7 @@ var submitForm = function ( e ) {
         var data = Form.serialize()
     
         var params = {
-            url         : '/api/user/edit'
+            url         : '/user/details'
             , data      : data
             , beforeSend: function () {
                 Loader.show()

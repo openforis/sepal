@@ -28,7 +28,7 @@ var bindEvents = function () {
         if ( valid ) {
             
             var params = {
-                url      : '/user/forgot-password'
+                url      : '/user/password/reset-request'
                 , data   : Form.serialize()
                 , success: function ( response ) {
                     if ( response.status == 'error' ) {

@@ -7,9 +7,11 @@ import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.component.user.api.UsingInvalidToken
 import org.openforis.sepal.component.user.internal.TokenManager
 import org.openforis.sepal.user.User
+import org.openforis.sepal.util.annotation.Data
 
 import static org.openforis.sepal.user.User.Status.ACTIVE
 
+@Data(callSuper = true)
 class ActivateUser extends AbstractCommand<User> {
     String token
     String password

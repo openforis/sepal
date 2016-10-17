@@ -2,14 +2,14 @@ package component.user
 
 import org.openforis.sepal.component.user.api.TokenStatus
 import org.openforis.sepal.component.user.api.UsingInvalidToken
-import org.openforis.sepal.component.user.command.ResetPassword
 
 import static java.util.concurrent.TimeUnit.DAYS
 
 class ResetPasswordTest extends AbstractUserTest {
     def 'When resetting password, password is change on external user data gateway'() {
         def user = inviteUser()
-        def token = mailServer.invitationToken
+        requestPasswordReset()
+        def token = mailServer.token
         when:
         resetPassword(token, 'the password')
 
@@ -28,7 +28,8 @@ class ResetPasswordTest extends AbstractUserTest {
 
     def 'Given an expired token, when resetting password, exception is thrown'() {
         inviteUser()
-        def token = mailServer.invitationToken
+        requestPasswordReset()
+        def token = mailServer.token
         clock.forward(TokenStatus.MAX_AGE_DAYS, DAYS)
 
         when:
@@ -41,7 +42,8 @@ class ResetPasswordTest extends AbstractUserTest {
 
     def 'When reusing a token to reset password, exception is thrown'() {
         def user = inviteUser()
-        def token = mailServer.invitationToken
+        requestPasswordReset()
+        def token = mailServer.token
         resetPassword(token, 'the password')
 
         when:

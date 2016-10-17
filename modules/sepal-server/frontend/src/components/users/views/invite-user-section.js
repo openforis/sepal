@@ -38,7 +38,7 @@ var submitForm = function ( e ) {
         var data = Form.serialize()
         
         var params = {
-            url         : '/api/user/invite'
+            url         : '/user/invite'
             , data      : data
             , beforeSend: function () {
                 Loader.show()

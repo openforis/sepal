@@ -13,6 +13,7 @@ class FakeAuthenticator implements UserRepository, UsernamePasswordVerifier, Use
         def username = "demo$it"
         [(username): createUser(it, username)]
     }
+    final passwordByUser = [:]
 
     private User createUser(long id, String username, String... roles) {
         new User(
@@ -27,7 +28,12 @@ class FakeAuthenticator implements UserRepository, UsernamePasswordVerifier, Use
     }
 
     boolean verify(String username, String password) {
-        password == '123'
+        def correctPassword = passwordByUser[username] ?: 'demo12'
+        password == correctPassword
+    }
+
+    void password(String username, String password) {
+        passwordByUser[username] = password
     }
 
     User getUserByUsername(String username) {

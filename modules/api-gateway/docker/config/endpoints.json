@@ -28,6 +28,34 @@
     "authenticate": "true"
   },
   {
+    "prefix": "false",
+    "path": "/user/password/reset-request",
+    "target": "http://user/password/reset-request",
+    "https": "true",
+    "authenticate": "false"
+  },
+  {
+    "prefix": "false",
+    "path": "/user/password/reset",
+    "target": "http://user/password/reset",
+    "https": "true",
+    "authenticate": "false"
+  },
+  {
+    "prefix": "false",
+    "path": "/user/activate",
+    "target": "http://user/activate",
+    "https": "true",
+    "authenticate": "false"
+  },
+  {
+    "prefix": "false",
+    "path": "/user/validate-token",
+    "target": "http://user/validate-token",
+    "https": "true",
+    "authenticate": "false"
+  },
+  {
     "prefix": "true",
     "path": "/user/",
     "target": "http://user/",

@@ -56,7 +56,7 @@ var removeSession = function ( evt, sessionId ) {
 
 // var saveUserDetail = function ( e, data ) {
 //     var params = {
-//         url         : '/api/user/details'
+//         url         : '/user/details'
 //         , beforeSend: function () {
 //             Loader.show()
 //         }

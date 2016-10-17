@@ -46,8 +46,3 @@
       GATE_ONE_SECRET_SEPAL_ENV: "{{ gate_one_secret }}"
       EE_ACCOUNT_SEPAL_ENV: "{{ google_earth_engine_account }}"
       EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"
-      SMTP_FROM_SEPAL_ENV: "{{ smtp_from }}"
-      SMTP_HOST_SEPAL_ENV: "{{ smtp_host }}"
-      SMTP_PORT_SEPAL_ENV: "{{ smtp_port }}"
-      SMTP_USERNAME_SEPAL_ENV: "{{ smtp_username }}"
-      SMTP_PASSWORD_SEPAL_ENV: "{{ smtp_password }}"

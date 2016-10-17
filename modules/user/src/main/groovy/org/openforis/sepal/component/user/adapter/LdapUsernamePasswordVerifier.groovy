@@ -35,7 +35,6 @@ class LdapUsernamePasswordVerifier implements UsernamePasswordVerifier {
         }
     }
 
-
     static String escapeDN(String name) {
         def sb = new StringBuilder()
         if ((name.length() > 0) && ((name.charAt(0) as String == ' ') || (name.charAt(0) as String == '#')))

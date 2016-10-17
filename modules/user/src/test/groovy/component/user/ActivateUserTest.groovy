@@ -9,7 +9,7 @@ import static org.openforis.sepal.user.User.Status.ACTIVE
 class ActivateUserTest extends AbstractUserTest {
     def 'Given a pending user, when activating, user is active and pasword is set'() {
         def user = inviteUser()
-        def token = mailServer.invitationToken
+        def token = mailServer.token
         when:
         activateUser(token, 'the password')
 
@@ -29,7 +29,7 @@ class ActivateUserTest extends AbstractUserTest {
 
     def 'Given an expired token, when activating user, exception is thrown'() {
         inviteUser()
-        def token = mailServer.invitationToken
+        def token = mailServer.token
         clock.forward(TokenStatus.MAX_AGE_DAYS, DAYS)
 
         when:
@@ -42,7 +42,7 @@ class ActivateUserTest extends AbstractUserTest {
 
     def 'Given an active user, when trying to activate user again, exception is thrown'() {
         def user = inviteUser()
-        def token = mailServer.invitationToken
+        def token = mailServer.token
         activateUser(token, 'the password')
 
         when:
@@ -53,7 +53,4 @@ class ActivateUserTest extends AbstractUserTest {
         e.cause instanceof UsingInvalidToken
         externalUserDataGateway.password(user.username) == 'the password'
     }
-
-    // TODO: Locked user?
-
 }

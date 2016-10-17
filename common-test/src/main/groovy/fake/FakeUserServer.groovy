@@ -13,7 +13,7 @@ class FakeUserServer extends TestServer {
     void register(Controller controller) {
         controller.with {
             post('authenticate') {
-                if (params.user == validUsername && params.password == validPassword) {
+                if (params.username == validUsername && params.password == validPassword) {
                     response.status = 200
                     response.contentType = 'application/json'
                     send toJson(new User(username: params.username))

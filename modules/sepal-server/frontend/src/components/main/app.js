@@ -32,33 +32,30 @@ var checkUser = function () {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-var initApp = function () {
-    var inviteParam = $.urlParam( 'i' )
-    
-    if ( inviteParam ) {
-        Loader.show()
-        // console.log( inviteParam )
-        // var params = {
-        //     url : '/user/invite'
-        //     , data : { i : inviteParam }
-        //     , success : function ( response ) {
-        //         var invitationId = response.invitationId
-        //         if( invitationId ){
-        //             //user clicked on an invitation link.
-        //             EventBus.dispatch( Events.LOGIN.SHOW , null , response )
-        //         } else {
-        //             checkUser()
-        //         }
-        //     }
-        // }
-        
-        // TODO: simulating now
-        var response = {
-            invitationId: 2341423
-            , userId    : 1234
-            , username  : 'trest'
+var validateToken = function ( token, callback ) {
+    var params = {
+        url      : '/user/validate-token'
+        , data   : { token: token }
+        , success: function ( response ) {
+            callback( response )
         }
-        EventBus.dispatch( Events.LOGIN.SHOW, null, response )
+    }
+    EventBus.dispatch( Events.AJAX.POST, null, params )
+}
+
+var initApp = function () {
+    var token = $.urlParam( 'token' )
+    
+    if ( token ) {
+        validateToken( token, function ( tokenStatus ) {
+            if ( tokenStatus.status == 'success' ) {
+                tokenStatus.invitation = $.urlParam( 'invitation' ) === 'true'
+                EventBus.dispatch( Events.LOGIN.SHOW, null, tokenStatus )
+            } else
+                EventBus.dispatch( Events.LOGIN.SHOW )
+            
+        } )
+        
         Loader.hide( { delay: 200 } )
     } else {
         

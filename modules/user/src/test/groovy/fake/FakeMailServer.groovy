@@ -16,6 +16,10 @@ class FakeMailServer {
         ))
     }
 
+    void clear() {
+        server.clearMessages()
+    }
+
     int getEmailCount() {
         server.emailCount
     }
@@ -24,7 +28,14 @@ class FakeMailServer {
         server?.stop()
     }
 
-    String getInvitationToken() {
-        server.getMessage(0).body.find(/token=([\w-]*)/) { match, token -> token }
+    String getToken() {
+        if (server.emailCount == 0)
+            throw new IllegalStateException("No emails received")
+        def body = server.getMessage(server.emailCount - 1).body
+        def token = body.find(/token=([\w-]*)/) { match, token -> token }
+        if (!token)
+            throw new IllegalStateException("Token not found in email:\n$body")
+        return token
     }
+
 }

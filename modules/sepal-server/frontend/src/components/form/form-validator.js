@@ -3,6 +3,7 @@
  */
 
 var emailRegEx    = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i
+var usernameRegEx = /^[a-zA-Z_][a-zA-Z0-9]{0,29}$/
 var passwordRegEx = /^.{6,100}$/
 
 var isValidString = function ( value ) {
@@ -13,6 +14,14 @@ var isValidEmail = function ( value ) {
     var valid = false
     if ( isValidString( value ) ) {
         valid = emailRegEx.test( value )
+    }
+    return valid
+}
+
+var isValidUsername = function ( value ) {
+    var valid = false
+    if ( isValidString( value ) ) {
+        valid = usernameRegEx.test( value )
     }
     return valid
 }
@@ -63,31 +72,29 @@ var addError = function ( inputField ) {
         inputField.closest( '.form-group' ).addClass( 'error' )
 }
 
-var validateString = function ( field, errorMessage, errorMessageContainer ) {
-    if ( !isValidString( field.val() ) ) {
+var validateField = function ( field, errorMessage, errorMessageContainer, validation ) {
+    if ( !validation( field.val() ) ) {
         addError( field )
         showError( errorMessageContainer, errorMessage )
         return false
     }
     return true
+}
+
+var validateString = function ( field, errorMessage, errorMessageContainer ) {
+    return validateField( field, errorMessage, errorMessageContainer, isValidString )
 }
 
 var validateEmail = function ( field, errorMessage, errorMessageContainer ) {
-    if ( !isValidEmail( field.val() ) ) {
-        addError( field )
-        showError( errorMessageContainer, errorMessage )
-        return false
-    }
-    return true
+    return validateField( field, errorMessage, errorMessageContainer, isValidEmail )
+}
+
+var validateUsername = function ( field, errorMessage, errorMessageContainer ) {
+    return validateField( field, errorMessage, errorMessageContainer, isValidUsername )
 }
 
 var validatePassword = function ( field, errorMessage, errorMessageContainer ) {
-    if ( !isValidPassword( field.val() ) ) {
-        addError( field )
-        showError( errorMessageContainer, errorMessage )
-        return false
-    }
-    return true
+    return validateField( field, errorMessage, errorMessageContainer, isValidPassword )
 }
 
 var resetFormErrors = function ( form, errorMessageContainer, slideOptions ) {
@@ -130,14 +137,12 @@ var validateForm = function ( form ) {
 }
 
 module.exports = {
-    // isValidString    : isValidString
-    // , isValidEmail   : isValidEmail
-    // , isValidPassword: isValidPassword
     showError         : showError
     , showSuccess     : showSuccess
     , addError        : addError
     , validateString  : validateString
     , validateEmail   : validateEmail
+    , validateUsername: validateUsername
     , validatePassword: validatePassword
     , resetFormErrors : resetFormErrors
     , validateForm    : validateForm

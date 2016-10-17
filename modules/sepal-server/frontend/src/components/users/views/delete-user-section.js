@@ -35,7 +35,7 @@ var submit = function ( e ) {
     e.preventDefault()
     
     var params = {
-        url         : '/api/user/delete'
+        url         : '/user/delete'
         , data      : { userId: selectedUser.id }
         , beforeSend: function () {
             Loader.show()

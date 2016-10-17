@@ -8,7 +8,7 @@ import static java.util.concurrent.TimeUnit.DAYS
 class ValidateTokenStatusTest extends AbstractUserTest {
     def 'Given a valid invitation token, when validating token, user is returned'() {
         def user = inviteUser()
-        def token = mailServer.invitationToken
+        def token = mailServer.token
 
         when:
         def tokenStatus = validateToken(token)
@@ -30,7 +30,7 @@ class ValidateTokenStatusTest extends AbstractUserTest {
 
     def 'Given an expired invitation token, when validating token, token status is expired'() {
         def user = inviteUser()
-        def token = mailServer.invitationToken
+        def token = mailServer.token
         clock.forward(TokenStatus.MAX_AGE_DAYS, DAYS)
 
         when:
@@ -46,6 +46,5 @@ class ValidateTokenStatusTest extends AbstractUserTest {
                 new ValidateToken(token: token)
         )
     }
-
 }
 

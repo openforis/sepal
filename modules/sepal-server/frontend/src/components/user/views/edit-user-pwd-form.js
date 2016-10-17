@@ -29,7 +29,7 @@ var submit = function ( e ) {
         var data   = Form.serialize()
         // EventBus.dispatch( Events.SECTION.USER.CHANGE_PASSWORD, null, data )
         var params = {
-            url         : '/api/user/password'
+            url         : '/user/current/password'
             , data      : data
             , beforeSend: function () {
                 Loader.show()
@@ -47,8 +47,8 @@ var submit = function ( e ) {
 }
 
 var validateNewPasswords = function () {
-    var password  = Form.find( '[name=password]' )
-    var password2 = Form.find( '[name=password2]' )
+    var password  = Form.find( '[name=newPassword]' )
+    var password2 = Form.find( '[name=newPassword2]' )
     if ( password.val() !== password2.val() ) {
         
         FormValidator.addError( password )

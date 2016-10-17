@@ -44,6 +44,17 @@ class User implements groovymvc.security.User {
                 roles: roles)
     }
 
+    User withDetails(String name, String email, String organization) {
+        new User(
+                id: id,
+                name: name,
+                username: username,
+                email: email,
+                organization: organization,
+                status: status,
+                roles: roles)
+    }
+
     User active() {
         new User(
                 id: id,

@@ -1,8 +1,5 @@
 package component.user
 
-import com.dumbster.smtp.ServerOptions
-import com.dumbster.smtp.SmtpServerFactory
-import fake.FakeMailServer
 import org.openforis.sepal.user.User
 
 class InviteUserTest extends AbstractUserTest {

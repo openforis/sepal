@@ -28,7 +28,7 @@ var init = function () {
         
         btnLogout.click( function ( e ) {
             e.preventDefault()
-            EventBus.dispatch( Events.AJAX.REQUEST, null, { url: "/user/logout" } )
+            EventBus.dispatch( Events.AJAX.REQUEST, null, { url: "/logout" } )
         } )
     }
     

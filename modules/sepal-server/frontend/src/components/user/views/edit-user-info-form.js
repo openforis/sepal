@@ -25,7 +25,7 @@ var submit = function ( e ) {
     if ( valid ) {
         var data   = Form.serialize()
         var params = {
-            url         : '/api/user/details'
+            url         : '/user/current/details'
             , data      : data
             , beforeSend: function () {
                 Loader.show()

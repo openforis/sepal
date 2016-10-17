@@ -22,6 +22,12 @@ class JdbcUserRepository implements UserRepository {
         return user.withId(result[0][0] as long)
     }
 
+    void updateUserDetails(User user) {
+        sql.executeUpdate('''
+                UPDATE sepal_user SET name = ?, email = ?, organization = ? 
+                WHERE username = ?''', [user.name, user.email, user.organization, user.username])
+    }
+
     List<User> listUsers() {
         sql.rows('SELECT id, username, name, email, organization, admin, system_user, status FROM sepal_user').collect {
             createUser(it)
@@ -36,6 +42,20 @@ class JdbcUserRepository implements UserRepository {
         if (!row)
             throw new IllegalStateException('User not in repository: ' + username)
         return createUser(row)
+    }
+
+    User findUserByEmail(String email) {
+        def row = sql.firstRow('''
+                SELECT id, username, name, email, organization, admin, system_user, status 
+                FROM sepal_user 
+                WHERE email = ?''', [email])
+        return row ? createUser(row) : null
+    }
+
+    void updateToken(String username, String token, Date tokenGenerationTime) {
+        sql.executeUpdate('''
+                UPDATE sepal_user SET token = ?, token_generation_time = ? 
+                WHERE username = ?''', [token, tokenGenerationTime, username])
     }
 
     Map tokenStatus(String token) {

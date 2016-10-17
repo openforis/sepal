@@ -3,10 +3,7 @@ package component.user
 import fake.*
 import org.openforis.sepal.component.user.UserComponent
 import org.openforis.sepal.component.user.adapter.SmtpEmailGateway
-import org.openforis.sepal.component.user.command.ActivateUser
-import org.openforis.sepal.component.user.command.Authenticate
-import org.openforis.sepal.component.user.command.InviteUser
-import org.openforis.sepal.component.user.command.ResetPassword
+import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.query.ListUsers
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
@@ -43,6 +40,7 @@ class AbstractUserTest extends Specification {
     )
 
     final testUsername = 'test-user'
+    final testPassword = 'test-password'
     final testName = 'Test Name'
     final testEmail = 'test@email.com'
     final testOrganization = 'Test Organization'
@@ -58,6 +56,15 @@ class AbstractUserTest extends Specification {
                         name: args.name ?: testName,
                         email: args.email ?: testEmail,
                         organization: args.testOrganization ?: testOrganization
+                ))
+
+    }
+
+    void requestPasswordReset(Map args = [:]) {
+        component.submit(
+                new RequestPasswordReset(
+                        username: username(args),
+                        email: args.email ?: testEmail
                 ))
 
     }
@@ -78,10 +85,14 @@ class AbstractUserTest extends Specification {
         )
     }
 
-    User activeUser(String password) {
-        inviteUser()
-        def token = mailServer.invitationToken
-        return activateUser(token, password)
+    User activeUser(Map args =[:]) {
+        inviteUser(args)
+        def token = mailServer.token
+        return activateUser(token, args.password ?: testPassword)
+    }
+
+    User activeUserWithPassword(String password) {
+        activeUser(password: password)
     }
 
 
