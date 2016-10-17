@@ -43,9 +43,9 @@
         - 'o=Ubuntu,a=${distro_codename}-updates'
 
     - { role: docker, users: ['ubuntu', 'vagrant'] }
-#    - { role: build-module, module: elk }
-    - { role: build-module, module: ldap-backup }
+    - { role: build-module, module: elk }
     - { role: build-module, module: ldap }
+    - { role: build-module, module: ldap-backup }
     - { role: build-module, module: haproxy }
     - { role: build-module, module: mysql }
     - { role: build-module, module: mysql-backup }
@@ -60,8 +60,8 @@
     - { role: build-module, module: google-earth-engine }
     - { role: build-module, module: rsyslog }
 
-#    - { role: run-module, module: elk }
-    - { role: run-module, module: ldap-backup }
+    - { role: run-module, module: elk }
+    - { role: run-module, module: rsyslog }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
