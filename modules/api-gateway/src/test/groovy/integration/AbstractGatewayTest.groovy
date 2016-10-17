@@ -15,7 +15,7 @@ import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.protocol.HttpContext
 import org.openforis.sepal.apigateway.server.EndpointConfig
 import org.openforis.sepal.apigateway.server.ProxyServer
-import org.openforis.sepal.apigateway.server.ServerConfig
+import org.openforis.sepal.apigateway.server.ProxyConfig
 import spock.lang.Specification
 import util.Port
 
@@ -26,12 +26,13 @@ abstract class AbstractGatewayTest extends Specification {
     final httpsPort = Port.findFree()
     final FakeUserServer userServer = new FakeUserServer().start() as FakeUserServer
     final TestServer endpoint = new TestServer().start()
-    final server = new ProxyServer(new ServerConfig(
+    final server = new ProxyServer(new ProxyConfig(
             keyFile: new File(getClass().getResource('/test.key').file),
             certificateFile: new File(getClass().getResource('/test.crt').file),
             httpPort: httpPort,
             httpsPort: httpsPort,
             authenticationUrl: "${userServer.url}authenticate",
+            logoutPath: '/logout',
             endpointConfigs: []
     )).start()
     final List<RequestContext> requests = []

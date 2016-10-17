@@ -10,28 +10,29 @@ import io.undertow.server.session.SessionManager
 import io.undertow.util.Headers
 import io.undertow.util.HttpString
 import io.undertow.util.StatusCodes
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static groovy.json.JsonOutput.toJson
 
-class SecureEndpointHandler implements HttpHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(this)
-    private static final String NO_CHALLENGE_HEADER = "No-auth-challenge"
-    public static final String USER_SESSION_ATTRIBUTE = 'user'
+class AuthenticatingHandler implements HttpHandler {
+    private static final LOG = LoggerFactory.getLogger(this)
+    private static final NO_CHALLENGE_HEADER = 'No-auth-challenge'
+    public static final USER_SESSION_ATTRIBUTE = 'user'
+
     private final String authenticationUrl
     private final HttpHandler next
 
-    SecureEndpointHandler(String authenticationUrl, HttpHandler next) {
+    AuthenticatingHandler(String authenticationUrl, HttpHandler next) {
         this.authenticationUrl = authenticationUrl
         this.next = next
     }
 
     void handleRequest(HttpServerExchange exchange) throws Exception {
-        def user = isAuthentication(exchange) ? authenticate(exchange) : userFromSession(exchange)
-        if (user)
-            proxy(user, exchange)
-        else
+        def user = hasAuthorizationHeader(exchange) ? authenticate(exchange) : userFromSession(exchange)
+        if (user) {
+            exchange.requestHeaders.add(HttpString.tryFromString('sepal-user'), toJson(user))
+            next.handleRequest(exchange)
+        } else
             challenge(exchange)
     }
 
@@ -55,7 +56,7 @@ class SecureEndpointHandler implements HttpHandler {
         return session
     }
 
-    private boolean isAuthentication(HttpServerExchange exchange) {
+    private boolean hasAuthorizationHeader(HttpServerExchange exchange) {
         exchange.requestHeaders.getFirst(Headers.AUTHORIZATION)?.toLowerCase()?.startsWith('basic ')
     }
 
@@ -83,7 +84,7 @@ class SecureEndpointHandler implements HttpHandler {
                 requestContentType: ContentType.URLENC,
                 contentType: ContentType.JSON,
                 body: [
-                        user    : username,
+                        username: username,
                         password: usernamePassword[1]
                 ])
 
@@ -101,12 +102,6 @@ class SecureEndpointHandler implements HttpHandler {
     private String[] basicAuthUsernamePassword(HttpServerExchange exchange) {
         def authorization = exchange.requestHeaders.getFirst(Headers.AUTHORIZATION)
         new String(authorization.substring('basic '.length()).decodeBase64()).split(':')
-    }
-
-    private void proxy(Map user, HttpServerExchange exchange) {
-        LOG.info("Forwarding user " + user)
-        exchange.requestHeaders.add(HttpString.tryFromString('sepal-user'), toJson(user))
-        next.handleRequest(exchange)
     }
 }
 

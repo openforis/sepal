@@ -6,15 +6,14 @@ class ProxyServer {
     private Undertow server
     private final RootHandler handler
 
-    ProxyServer(ServerConfig config) {
+    ProxyServer(ProxyConfig config) {
         def sslContext = SslContextFactory.create(config.keyFile, config.certificateFile)
-        handler = new RootHandler(config.httpsPort, config.authenticationUrl)
+        handler = new RootHandler(config)
         server = Undertow.builder()
                 .addHttpListener(config.httpPort, '0.0.0.0')
                 .addHttpsListener(config.httpsPort, '0.0.0.0', sslContext)
                 .setHandler(handler)
                 .build()
-
         config.endpointConfigs.each { proxy(it) }
     }
 

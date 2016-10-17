@@ -26,20 +26,21 @@ class RootHandler implements HttpHandler {
     private final PathHandler handler = Handlers.path()
     private final SessionManager sessionManager
 
-    RootHandler(int httpsPort, String authenticationUrl) {
-        this.httpsPort = httpsPort
-        this.authenticationUrl = authenticationUrl
+    RootHandler(ProxyConfig config) {
+        this.httpsPort = config.httpsPort
+        this.authenticationUrl = config.authenticationUrl
         sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
         this.sessionManager.defaultSessionTimeout = SESSION_TIMEOUT
+        handler.addExactPath(config.logoutPath, LogoutHandler.create())
     }
 
     RootHandler proxy(EndpointConfig endpointConfig) {
         def endpointHandler = new LoggingProxyHandler(endpointConfig)
         if (endpointConfig.authenticate)
-            endpointHandler = new SecureEndpointHandler(authenticationUrl, endpointHandler)
+            endpointHandler = new AuthenticatingHandler(authenticationUrl, endpointHandler)
         if (endpointConfig.https)
             endpointHandler = new HttpsRedirectHandler(httpsPort, endpointHandler)
-        def sessionConfig = new SessionCookieConfig(cookieName: "SEPAL-SESSIONID", secure: true)
+        def sessionConfig = new SessionCookieConfig(cookieName: "SEPAL-SESSIONID", secure: endpointConfig.https)
         endpointHandler = new SessionAttachmentHandler(endpointHandler, sessionManager, sessionConfig)
         endpointConfig.prefix ?
                 handler.addPrefixPath(endpointConfig.path, endpointHandler) :
@@ -51,6 +52,29 @@ class RootHandler implements HttpHandler {
         exchange.requestHeaders.remove('sepal-user') // Prevent client from accessing as user without authenticating
         handler.handleRequest(exchange)
     }
+
+
+    private static class LogoutHandler implements HttpHandler {
+        private static final LOG = LoggerFactory.getLogger(this)
+
+        void handleRequest(HttpServerExchange exchange) throws Exception {
+            LOG.debug("Logging out: $exchange")
+            exchange.requestCookies
+                    .findAll { it.key.endsWith('SESSIONID') }
+                    .collect { it.value }
+                    .each {
+                it.value = ''
+                it.path = '/'
+                it.maxAge = 0
+                exchange.responseCookies[it.name] = it
+            }
+        }
+
+        static HttpHandler create() {
+            new LogoutHandler()
+        }
+    }
+
 
     private static class LoggingProxyHandler implements HttpHandler {
         private final Logger LOG = LoggerFactory.getLogger(LoggingProxyHandler)
