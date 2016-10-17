@@ -41,14 +41,14 @@ final class Endpoints extends AbstractMvcFilter {
             error(InvalidRequest) {
                 response?.status = 400
                 response?.setContentType('application/json')
-                LOG.info("Invalid request " + requestContext.description, it)
+                LOG.warn("Invalid request: $requestContext.description. Errors: ${it.errors}")
                 send(toJson(it?.errors))
             }
 
             error(ParamsException) {
                 response?.status = 400
                 response?.setContentType('application/json')
-                LOG.info("Invalid request " + requestContext.description, it)
+                LOG.warn("Invalid request " + requestContext.description)
                 send(toJson([param: it.message]))
             }
 
