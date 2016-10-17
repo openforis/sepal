@@ -2,6 +2,7 @@ package org.openforis.sepal.util
 
 import groovy.text.SimpleTemplateEngine
 import org.openforis.sepal.util.annotation.ImmutableData
+import org.slf4j.LoggerFactory
 
 import javax.mail.Message
 import javax.mail.Session
@@ -9,7 +10,9 @@ import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 
 class EmailServer {
+    private static final LOG = LoggerFactory.getLogger(this)
     private final String host
+    private final int port
     private final String username
     private final String password
     private final String from
@@ -22,7 +25,7 @@ class EmailServer {
     EmailServer(Config c) {
         from = c.string('from')
         host = c.string('host')
-        def port = c.integer('port')
+        port = c.integer('port')
         username = c.string('username')
         password = c.string('password')
         props = System.getProperties()
@@ -32,10 +35,19 @@ class EmailServer {
         props["mail.smtp.starttls.enable"] = true
         props["mail.smtp.starttls.required"] = false
         props["mail.smtp.host"] = host
-        props["mail.smtp.port"] = port
+        props["mail.smtp.port"] = this.port
     }
 
     void send(String to, EmailTemplate template) {
+        LOG.debug("Sending email: [" +
+                "host: ${host}, " +
+                "port: ${port}, " +
+                "username: ${username}, " +
+                "from: ${from}, " +
+                "to: ${to}, " +
+                "subject: ${template.subject}, " +
+                "binding: ${template.binding}" +
+                "]")
         def session = Session.getDefaultInstance(props, null)
         def message = new MimeMessage(session)
         message.from = new InternetAddress(from)
@@ -46,11 +58,42 @@ class EmailServer {
         try {
             transport.connect(host, username, password)
             transport.sendMessage(message, message.allRecipients)
+        } catch (Exception e) {
+            throw new FailedToSend(to, template, e)
         } finally {
             transport.close()
         }
     }
+
+
+    class FailedToSend extends RuntimeException {
+        final String host
+        final int port
+        final String username
+        final String from
+        final String to
+        final EmailTemplate template
+
+        FailedToSend(String to, EmailTemplate template, Exception e) {
+            super("Failed to send email: [" +
+                    "host: ${EmailServer.this.host}, " +
+                    "port: ${EmailServer.this.port}, " +
+                    "username: ${EmailServer.this.username}, " +
+                    "from: ${EmailServer.this.from}, " +
+                    "to: ${to}, " +
+                    "subject: ${template.subject}, " +
+                    "binding: ${template.binding}" +
+                    "]", e)
+            this.host = EmailServer.this.host
+            this.port = EmailServer.this.port
+            this.username = EmailServer.this.username
+            this.from = EmailServer.this.from
+            this.to = to
+            this.template = template
+        }
+    }
 }
+
 
 @ImmutableData
 class EmailTemplate {
