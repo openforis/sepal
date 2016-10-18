@@ -6,6 +6,7 @@ ami_ids:
   Localhost: 'n/a'
 
 docker_repository_host: '54.93.185.137'
+elk_host: '54.93.185.137'
 hosting_service: "aws"
 
 # https://cloud-images.ubuntu.com/locator/ec2/ - search for 'trusty hvm ssd'

@@ -24,7 +24,6 @@ ansible-playbook deploy.yml \
             availability_zone=$AV_ZONE \
             deploy_environment=$ENV \
             version=$VERSION \
-            use_custom_host=false \
             secret_vars_file=~/.sepal/secret.yml"
 
 

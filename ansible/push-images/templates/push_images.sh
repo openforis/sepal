@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
 docker login localhost
+docker push localhost/openforis/rsyslog:{{ version }}
 docker push localhost/openforis/ldap:{{ version }}
-docker push localhost/openforis/nginx:{{ version }}
+docker push localhost/openforis/ldap-backup:{{ version }}
 docker push localhost/openforis/user:{{ version }}
 docker push localhost/openforis/sepal:{{ version }}
 docker push localhost/openforis/mysql:{{ version }}
+docker push localhost/openforis/mysql-backup:{{ version }}
 docker push localhost/openforis/google-earth-engine:{{ version }}
 docker push localhost/openforis/api-gateway:{{ version }}
 docker push localhost/openforis/ssh-gateway:{{ version }}

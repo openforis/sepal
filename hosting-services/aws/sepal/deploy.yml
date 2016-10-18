@@ -19,8 +19,9 @@
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
     - name: Set sepal_host and ami_id var
       set_fact:
-        sepal_host: "{{ custom_host if use_custom_host == true else ec2_ip_address }}"
-        ldap_host: "{{ custom_host if use_custom_host == true else ec2_private_ip_address }}"
+        sepal_host: "{{ ec2_ip_address }}"
+        ldap_host: "{{ ec2_private_ip_address }}"
+        elk_host: "{{ elk_host }}"
 
     - file: path="/data/docker/storage/devicemapper/metadata" state=directory
     - file: path="/data/docker/storage/tmp" state=directory
@@ -36,9 +37,11 @@
 
     - { role: docker, users: ['ubuntu'] }
     - { role: aws-mount-efs }
-#    - { role: run-module, module: ldap-backup }
+    - { role: run-module, module: rsyslog }
     - { role: run-module, module: ldap }
+    - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
+    - { role: run-module, module: mysql-backup }
     - { role: run-module, module: google-earth-engine}
     - { role: run-module, module: user }
     - { role: run-module, module: sepal-server }

@@ -1,4 +1,4 @@
-- name: Configure Local Environment
+- name: Deploy on Vagrant box
   hosts: all
   user: vagrant
   become: yes
@@ -29,12 +29,10 @@
     - template: src="./vagrant.properties" dest=/data/sepal/etc/vagrant.properties
 
     - set_fact:
-       sepal_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
-       ldap_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
-       hosting_service: "vagrant"
-       logstash_host: "{{ custom_host if use_custom_host == true else inventory_hostname }}"
-       logstash_port: "5044"
-       logstash_shipper_name: "vagrant"
+       sepal_host: "{{ vagrant_ip }}"
+       ldap_host: "{{ vagrant_ip }}"
+       elk_host: "{{ vagrant_ip }}"
+       hosting_service: vagrant
 
   roles:
     - role: unattended-upgrades

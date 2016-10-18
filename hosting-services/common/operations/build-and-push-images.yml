@@ -8,10 +8,12 @@
     - "{{ secret_vars_file }}"
 
   roles:
+    - { role: build-module, module: rsyslog }
     - { role: build-module, module: ldap-backup }
     - { role: build-module, module: ldap }
     - { role: build-module, module: haproxy }
     - { role: build-module, module: nginx }
+    - { role: build-module, module: mysql-backup }
     - { role: build-module, module: mysql }
     - { role: build-module, module: api-gateway }
     - { role: build-module, module: gateone }
@@ -23,5 +25,3 @@
     - { role: build-module, module: user }
     - { role: build-module, module: sepal-server }
     - role: push-images
-
-
