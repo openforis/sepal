@@ -27,3 +27,5 @@
 
 - set_fact:
     syslog_address: "tcp://{{ rsyslog_host.stdout }}:10514"
+
+# TODO: Wait until able to connect (nc -z -v -w5 localhost 10514)

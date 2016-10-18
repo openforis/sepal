@@ -2,8 +2,6 @@ FROM ubuntu:trusty
 MAINTAINER OpenForis
 EXPOSE 22
 
-ENV USER_GROUP "sepalUsers"
-
 ADD config /config
 ADD script /script
 

@@ -88,24 +88,6 @@
     - name: Create Docker LVM Metadata Volume
       lvol: vg=vg-docker lv=metadata size=100%FREE
 
-  tasks:
-    - name: "Warming up sandbox image"
-      docker:
-        docker_api_version: "1.22"
-        name: "warmup"
-        image: "{{ docker_repository_host }}/openforis/sandbox:{{ version }}"
-        state: "started"
-        net: "bridge"
-        command: 'bash -c "arcsi.py --version; gdalinfo --version; oft-stack"'
-
-    - name: "Removing sandbox image warmup container"
-      docker:
-        docker_api_version: "1.22"
-        name: "warmup"
-        image: "{{ docker_repository_host }}/openforis/sandbox:{{ version }}"
-        state: "absent"
-        net: "bridge"
-
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:

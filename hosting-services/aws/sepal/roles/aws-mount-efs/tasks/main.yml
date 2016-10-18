@@ -13,9 +13,3 @@
     state: "mounted"
     src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/shiny"
 
-- name: Mount Efs Ssh-gateway Home Dir
-  mount:
-    name: "/data/ssh-gateway/home"
-    fstype: "nfs4"
-    state: "mounted"
-    src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/ssh-gateway/home"

@@ -37,8 +37,7 @@ printf '%s\n' \
     'PrintLastLog no' \
     'UseDNS no' \
     'GSSAPIAuthentication no' \
-    "Match Group $USER_GROUP" \
-    '    ForceCommand ssh-bootstrap' \
+    'ForceCommand ssh-bootstrap' \
     >> /etc/ssh/sshd_config
 
 # Make sure SSH connection with Sandbox doesn't time out

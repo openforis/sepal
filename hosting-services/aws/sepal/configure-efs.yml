@@ -40,12 +40,6 @@
         mode: "u=rwx,g=rwxs"
         state: "directory"
 
-    - name: Create ssh-gateway home dir
-      file:
-        path: "/efs/data/ssh-gateway/home"
-        mode: "u=rwx,g=rxs,o=rx"
-        state: directory
-
     - name: Unmount EFS Nfs4
       mount:
           name: "/efs"
