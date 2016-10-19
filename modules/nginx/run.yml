@@ -19,13 +19,13 @@
     username: "{{ docker_username }}"
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
-    log_driver: syslog
-    log_opt:
-      syslog-address: "{{ syslog_address }}"
-      tag: "nginx"
     links:
-    - "gateone:gateone"
-    - "api-gateway:api-gateway"
-    - "sepal:sepal"
+    - "elk:elk"
     volumes:
     - "/data/nginx:/data"
+    ports:
+      - "80:80"
+      - "5601:5601"
+    env:
+      PASSWORD_SEPAL_ENV: "{{ operations_password }}"
+

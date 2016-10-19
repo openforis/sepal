@@ -15,6 +15,4 @@
       - "/data/elk:/var/lib/elasticsearch"
       - "/data/elk/certificates:/etc/certificates/"
     ports:
-      - "5601:5601"
-      - "9200:9200"
       - "25826:25826"
