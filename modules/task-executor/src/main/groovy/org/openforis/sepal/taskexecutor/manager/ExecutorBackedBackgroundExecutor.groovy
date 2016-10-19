@@ -31,6 +31,7 @@ class ExecutorBackedBackgroundExecutor implements BackgroundExecutor, Stoppable 
                 taskExecutionByTaskId.remove(taskExecutor.taskId)
                 progressMonitor.completed(taskExecutor.taskId)
             } catch (Exception e) {
+                LOG.error("Failed to execute $taskExecutor.taskId", e)
                 taskExecutionByTaskId.remove(taskExecutor.taskId)
                 progressMonitor.failed(taskExecutor.taskId, e.message)
             }
