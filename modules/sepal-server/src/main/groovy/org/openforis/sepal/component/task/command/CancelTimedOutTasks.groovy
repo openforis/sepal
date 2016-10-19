@@ -7,12 +7,14 @@ import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSession
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.util.annotation.Data
+import org.slf4j.LoggerFactory
 
 @Data(callSuper = true)
 class CancelTimedOutTasks extends AbstractCommand<Void> {
 }
 
 class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutTasks> {
+    private static final LOG = LoggerFactory.getLogger(this)
     private final TaskRepository taskRepository
     private final WorkerSessionManager sessionManager
     private final WorkerGateway workerGateway
@@ -26,6 +28,7 @@ class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutT
     Void execute(CancelTimedOutTasks command) {
         def timedOutTasks = taskRepository.timedOutTasks()
         timedOutTasks.each {
+            LOG.warn("Updating state of timed out task to failed: ${it}")
             taskRepository.update(it.fail())
         }
         def sessionById = timedOutTasks.findAll { it.sessionId }.unique().collectEntries() {

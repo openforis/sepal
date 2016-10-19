@@ -6,12 +6,15 @@ import groovymvc.ParamsException
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.taskexecutor.api.InvalidTask
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import javax.servlet.ServletContext
 
 import static groovy.json.JsonOutput.toJson
 
 final class Endpoints extends AbstractMvcFilter {
+    private static final Logger LOG = LoggerFactory.getLogger(this)
     private final PathRestrictions pathRestrictions
     private final List<EndpointRegistry> endpointRegistries
 
@@ -30,19 +33,27 @@ final class Endpoints extends AbstractMvcFilter {
         }
 
         controller.with {
+
+            before('/**') {
+                LOG.debug(requestContext.description)
+                response.characterEncoding = 'UTF-8'
+            }
             error(ParamsException) {
+                LOG.warn("Invalid request $requestContext.description. ${[message: it.message]}")
                 response?.status = 400
                 response?.setContentType('application/json')
                 send(toJson([param: it.message]))
             }
 
             error(InvalidTask) {
+                LOG.warn("Invalid request: $requestContext.description. ${[message: it.message, task: it.task]}")
                 response?.status = 400
                 response?.setContentType('application/json')
                 send(toJson([message: it.message, task: it.task]))
             }
 
             error(Exception) {
+                LOG.error("Error executing " + requestContext.description, it)
                 response?.status = 500
                 response?.setContentType('application/json')
                 send(toJson([message: "Internal Server Error"]))

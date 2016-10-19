@@ -1,11 +1,13 @@
 package component.task
 
 import org.openforis.sepal.command.ExecutionFailed
+import spock.lang.Ignore
 
 import static org.openforis.sepal.component.task.api.Task.State.CANCELED
 
 class CancelTask_Test extends AbstractTaskTest {
-    def 'Given one passive task, when canceling it, task is canceled, work is not canceled, and session is closed'() {
+    @Ignore
+    def 'Given one pending task, when canceling it, task is canceled, work is not canceled, and session is closed'() {
         def task = pendingTask()
 
         when:
@@ -43,8 +45,8 @@ class CancelTask_Test extends AbstractTaskTest {
     }
 
     def 'Given two task in different instance types, when canceling one, task is canceled, and session is closed'() {
-        def task = pendingTask()
-        pendingTask(instanceType: 'another-instance-type')
+        def task = activeTask()
+        activeTask(instanceType: 'another-instance-type')
 
         when:
         cancelTask(task)
@@ -55,8 +57,8 @@ class CancelTask_Test extends AbstractTaskTest {
     }
 
     def 'Given two tasks for different users, when canceling one, task is canceled, and session is closed'() {
-        def task = pendingTask()
-        pendingTask(username: 'another-username')
+        def task = activeTask()
+        activeTask(username: 'another-username')
 
         when:
         cancelTask(task)
@@ -67,7 +69,7 @@ class CancelTask_Test extends AbstractTaskTest {
     }
 
     def 'Given task, when other user cancel task, task is not canceled, and execution fails'() {
-        def task = pendingTask([username: 'another-username'])
+        def task = activeTask([username: 'another-username'])
 
         when:
         cancelTask(task)

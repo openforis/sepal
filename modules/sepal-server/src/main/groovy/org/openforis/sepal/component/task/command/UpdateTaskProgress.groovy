@@ -6,6 +6,7 @@ import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerSessionManager
 import org.openforis.sepal.util.annotation.Data
+import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.component.task.api.Task.State.ACTIVE
 import static org.openforis.sepal.component.task.api.Task.State.PENDING
@@ -18,6 +19,7 @@ class UpdateTaskProgress extends AbstractCommand<Void> {
 }
 
 class UpdateTaskProgressHandler implements CommandHandler<Void, UpdateTaskProgress> {
+    private static final LOG = LoggerFactory.getLogger(this)
     private final TaskRepository taskRepository
     private final WorkerSessionManager sessionManager
 
@@ -28,16 +30,19 @@ class UpdateTaskProgressHandler implements CommandHandler<Void, UpdateTaskProgre
 
     Void execute(UpdateTaskProgress command) {
         def task = taskRepository.getTask(command.taskId)
-        if (![PENDING, ACTIVE].contains(task.state))
-            return
+        if (![PENDING, ACTIVE].contains(task.state)) {
+            LOG.info("Cannot update state of non-pending or active tasks. $task, $command")
+            return null
+        }
 
         def updatedTask = task.update(command.state, command.statusDescription)
         taskRepository.update(updatedTask)
-        if (updatedTask.failed || updatedTask.completed) {
-            if (!taskRepository.pendingOrActiveTasksInSession(updatedTask.sessionId))
-                sessionManager.closeSession(updatedTask.sessionId)
-        }
-        sessionManager.heartbeat(updatedTask.sessionId)
+        def closeSession = (updatedTask.failed || updatedTask.completed || updatedTask.canceled) &&
+                !taskRepository.pendingOrActiveTasksInSession(updatedTask.sessionId)
+        if (closeSession)
+            sessionManager.closeSession(updatedTask.sessionId)
+        else
+            sessionManager.heartbeat(updatedTask.sessionId)
         return null
     }
 }

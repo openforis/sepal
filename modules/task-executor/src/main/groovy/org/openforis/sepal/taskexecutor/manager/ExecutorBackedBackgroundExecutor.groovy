@@ -30,6 +30,9 @@ class ExecutorBackedBackgroundExecutor implements BackgroundExecutor, Stoppable 
                 taskExecutor.execute()
                 taskExecutionByTaskId.remove(taskExecutor.taskId)
                 progressMonitor.completed(taskExecutor.taskId)
+            } catch (InterruptedException ignore) {
+                taskExecutionByTaskId.remove(taskExecutor.taskId)
+                Thread.currentThread().interrupt()
             } catch (Exception e) {
                 LOG.error("Failed to execute $taskExecutor.taskId", e)
                 taskExecutionByTaskId.remove(taskExecutor.taskId)
@@ -42,7 +45,6 @@ class ExecutorBackedBackgroundExecutor implements BackgroundExecutor, Stoppable 
 
     void cancel(String taskId) {
         taskExecutionByTaskId.remove(taskId)?.cancel()
-        progressMonitor.canceled(taskId)
     }
 
     void stop() {

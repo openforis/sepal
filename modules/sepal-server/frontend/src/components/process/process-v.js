@@ -36,6 +36,15 @@ var init = function () {
             '        Accuracy Assessment' +
             '    </a>' +
             '</div>')
+        
+        apps.append('' +
+            '<div>' +
+            '    <a class="btn btn-base round app"' +
+            '       target="_blank" ' +
+            '       href="/sandbox/shiny/visualize/">' +
+            '        Visualize' +
+            '    </a>' +
+            '</div>')
     }
 }
 

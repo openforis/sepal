@@ -4,6 +4,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.util.annotation.Data
+import org.slf4j.LoggerFactory
 
 @Data
 class FailTasksInSession extends AbstractCommand<Void> {
@@ -12,6 +13,7 @@ class FailTasksInSession extends AbstractCommand<Void> {
 }
 
 class FailTasksInSessionHandler implements CommandHandler<Void, FailTasksInSession> {
+    private static final LOG = LoggerFactory.getLogger(this)
     private final TaskRepository taskRepository
 
     FailTasksInSessionHandler(TaskRepository taskRepository) {
@@ -21,6 +23,7 @@ class FailTasksInSessionHandler implements CommandHandler<Void, FailTasksInSessi
     Void execute(FailTasksInSession command) {
         def tasks = taskRepository.pendingOrActiveTasksInSession(command.sessionId)
         tasks.each {
+            LOG.warn("Updating state to failed: ${it}, description: $command.description")
             taskRepository.update(it.fail(command.description))
         }
         return null

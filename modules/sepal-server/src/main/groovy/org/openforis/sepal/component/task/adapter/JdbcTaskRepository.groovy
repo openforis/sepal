@@ -8,6 +8,7 @@ import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.Timeout
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
+import org.slf4j.LoggerFactory
 
 import java.sql.Clob
 
@@ -15,6 +16,7 @@ import static org.openforis.sepal.component.task.api.Task.State.ACTIVE
 import static org.openforis.sepal.component.task.api.Task.State.PENDING
 
 class JdbcTaskRepository implements TaskRepository {
+    private static final LOG = LoggerFactory.getLogger(this)
     private final SqlConnectionManager connectionManager
     private final Clock clock
 
@@ -31,25 +33,32 @@ class JdbcTaskRepository implements TaskRepository {
                 task.id, task.state.name(), task.username, task.sessionId, task.operation, taskParams,
                 task.statusDescription ?: task.state.description, task.creationTime, task.updateTime
         ])
+        LOG.debug("Inserted $task")
     }
 
     void update(Task task) {
-        sql.executeUpdate('''
+        def sql = new Sql(connectionManager.dataSource)
+        sql.withTransaction {
+            sql.executeUpdate('''
                 UPDATE task
                 SET state = ?, status_description = ?, update_time = ?
                 WHERE id = ?''', [task.state.name(), task.statusDescription, clock.now(), task.id])
+            LOG.debug("Updated $task")
+        }
     }
 
     void remove(Task task) {
-        sql.execute('UPDATE task SET removed = TRUE WHERE id = ?', [task.id])
+        LOG.debug("remove $task")
+        sql.executeUpdate('UPDATE task SET removed = TRUE WHERE id = ?', [task.id])
     }
 
     void removeNonPendingOrActiveUserTasks(String username) {
-        sql.execute('''
+        def removed = sql.executeUpdate('''
                 UPDATE task
                 SET removed = TRUE
                 WHERE username = ?
                 AND state NOT IN (?, ?)''', [username, PENDING.name(), ACTIVE.name()])
+        LOG.debug("Removed $removed non-pending or active tasks for $username")
     }
 
     Task getTask(String taskId) {

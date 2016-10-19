@@ -35,6 +35,7 @@ final class Endpoints extends AbstractMvcFilter {
             restrict('/**', [])
 
             before('/**') {
+                LOG.debug(requestContext.description)
                 response.characterEncoding = 'UTF-8'
             }
 
@@ -48,7 +49,7 @@ final class Endpoints extends AbstractMvcFilter {
             error(ParamsException) {
                 response?.status = 400
                 response?.setContentType('application/json')
-                LOG.warn("Invalid request " + requestContext.description)
+                LOG.warn("Invalid request $requestContext.description. ${[message: it.message]}")
                 send(toJson([param: it.message]))
             }
 

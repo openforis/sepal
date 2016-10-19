@@ -16,7 +16,7 @@ interface HandlerRegistryEventDispatcher extends EventDispatcher, EventSource, S
 }
 
 class SynchronousEventDispatcher implements HandlerRegistryEventDispatcher {
-    private static final Logger LOG = LoggerFactory.getLogger(this)
+    private static final Logger LOG = LoggerFactory.getLogger(HandlerRegistryEventDispatcher.class)
     private final Map<Class<? extends Event>, List<EventHandler>> handlersByType = new ConcurrentHashMap<>()
 
     void publish(Event event) {

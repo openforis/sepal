@@ -18,8 +18,6 @@ interface TaskProgressMonitor extends Stoppable {
 
     void completed(String taskId)
 
-    void canceled(String taskId)
-
     void failed(String taskId, String message)
 
     void stop()
@@ -45,10 +43,6 @@ class SepalNotifyingTaskProgressMonitor implements TaskProgressMonitor {
 
     void completed(String taskId) {
         notifier.notifyStateChange(taskId, 'COMPLETED', 'Completed')
-    }
-
-    void canceled(String taskId) {
-        notifier.notifyStateChange(taskId, 'CANCELED', 'Canceled')
     }
 
     void failed(String taskId, String message) {
