@@ -20,6 +20,6 @@ abstract class AbstractHostingService implements HostingService {
     }
 
     double storageCostPerGbMonth() {
-        return 0
+        return storageCostPerGbMonth
     }
 }
