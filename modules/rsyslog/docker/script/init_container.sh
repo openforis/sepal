@@ -2,7 +2,7 @@
 
 rm /etc/rsyslog.d/*
 cp /config/rsyslog.conf /etc/rsyslog.conf
-cp /config/10-logstash.conf /etc/rsyslog.d/10-logstash.conf
+#cp /config/10-logstash.conf /etc/rsyslog.d/10-logstash.conf
 
 printf '%s\n' \
     "$ELK_HOST_SEPAL_ENV	elk" \
