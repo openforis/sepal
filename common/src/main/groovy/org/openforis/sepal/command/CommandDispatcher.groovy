@@ -31,6 +31,12 @@ class HandlerRegistryCommandDispatcher implements CommandDispatcher {
             throw new IllegalStateException("No handler registered for commands of type ${command.class.name}")
         LOG.debug("Executing command $command with handler $handler")
         try {
+            if (handler instanceof AfterCommitCommandHandler)
+                transactionManager.registerAfterCommitCallback {result ->
+                    transactionManager.withTransaction {
+                        ((AfterCommitCommandHandler) handler).afterCommit(command, result)
+                    }
+                }
             transactionManager.withTransaction {
                 handler.execute(command)
             }

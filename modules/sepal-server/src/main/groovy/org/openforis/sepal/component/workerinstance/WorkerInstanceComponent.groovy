@@ -14,15 +14,17 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
 
+import javax.sql.DataSource
+
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class WorkerInstanceComponent extends DataSourceBackedComponent {
     private final InstanceProvider instanceProvider
     private final List<InstanceType> instanceTypes
 
-    WorkerInstanceComponent(HostingServiceAdapter hostingServiceAdapter, SqlConnectionManager connectionManager) {
+    WorkerInstanceComponent(HostingServiceAdapter hostingServiceAdapter, DataSource dataSource) {
         this(
-                connectionManager,
+                new SqlConnectionManager(dataSource),
                 new AsynchronousEventDispatcher(),
                 hostingServiceAdapter.instanceProvider,
                 hostingServiceAdapter.instanceTypes,
@@ -73,5 +75,6 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
 
     void onStop() {
         instanceProvider.stop()
+        connectionManager.stop()
     }
 }

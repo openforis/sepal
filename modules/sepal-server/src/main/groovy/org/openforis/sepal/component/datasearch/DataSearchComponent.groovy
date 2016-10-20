@@ -18,16 +18,19 @@ import org.openforis.sepal.query.Query
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.lifecycle.Lifecycle
 
+import javax.sql.DataSource
+
 final class DataSearchComponent implements EndpointRegistry, Lifecycle {
+    private final SqlConnectionManager connectionManager
     private final HandlerRegistryCommandDispatcher commandDispatcher
     private final HandlerRegistryQueryDispatcher queryDispatcher
     private final GoogleEarthEngineGateway geeGateway
     private final SceneMetaDataRepository sceneMetaDataRepository
     private SceneMetaDataUpdateScheduler sceneMetaDataUpdateScheduler
 
-    DataSearchComponent(SqlConnectionManager connectionManager, SepalConfiguration config) {
+    DataSearchComponent(DataSource dataSource, SepalConfiguration config) {
         this(
-                connectionManager,
+                new SqlConnectionManager(dataSource),
                 new HttpGoogleEarthEngineGateway(config.googleEarthEngineEndpoint),
                 CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory))
         )
@@ -37,6 +40,7 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
             SqlConnectionManager connectionManager,
             GoogleEarthEngineGateway geeGateway,
             UsgsGateway usgs) {
+        this.connectionManager = connectionManager
         this.geeGateway = geeGateway
         this.sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
@@ -64,6 +68,8 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
 
     void stop() {
         sceneMetaDataUpdateScheduler.stop()
+        connectionManager.stop()
+
     }
 
     void registerEndpointsWith(Controller controller) {

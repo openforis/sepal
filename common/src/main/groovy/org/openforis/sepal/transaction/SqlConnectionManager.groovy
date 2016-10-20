@@ -25,7 +25,7 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager,
             def result = closure.call()
             if (newTransaction) {
                 connection.commit()
-                notifyListeners()
+                notifyListeners(result)
             }
             return result
         } catch (Exception e) {
@@ -48,8 +48,8 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager,
         connectionHolder.get() != null
     }
 
-    private notifyListeners() {
-        afterCommitCallbacksHolder.get().each { it.call() }
+    private <T> void notifyListeners(T result) {
+        afterCommitCallbacksHolder.get().each { it.call(result) }
     }
 
     private Connection openConnection() {

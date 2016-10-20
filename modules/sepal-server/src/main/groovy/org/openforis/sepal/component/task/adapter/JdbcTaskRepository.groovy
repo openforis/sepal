@@ -37,14 +37,11 @@ class JdbcTaskRepository implements TaskRepository {
     }
 
     void update(Task task) {
-        def sql = new Sql(connectionManager.dataSource)
-        sql.withTransaction {
-            sql.executeUpdate('''
+        sql.executeUpdate('''
                 UPDATE task
                 SET state = ?, status_description = ?, update_time = ?
                 WHERE id = ?''', [task.state.name(), task.statusDescription, clock.now(), task.id])
-            LOG.debug("Updated $task")
-        }
+        LOG.debug("Updated $task")
     }
 
     void remove(Task task) {

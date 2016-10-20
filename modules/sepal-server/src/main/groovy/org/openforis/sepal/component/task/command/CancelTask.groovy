@@ -1,8 +1,9 @@
 package org.openforis.sepal.component.task.command
 
 import org.openforis.sepal.command.AbstractCommand
-import org.openforis.sepal.command.CommandHandler
+import org.openforis.sepal.command.AfterCommitCommandHandler
 import org.openforis.sepal.command.Unauthorized
+import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.WorkerGateway
 import org.openforis.sepal.component.task.api.WorkerSessionManager
@@ -13,11 +14,11 @@ import static org.openforis.sepal.component.task.api.Task.State.ACTIVE
 import static org.openforis.sepal.component.task.api.Task.State.PENDING
 
 @Data(callSuper = true)
-class CancelTask extends AbstractCommand<Void> {
+class CancelTask extends AbstractCommand<Task> {
     String taskId
 }
 
-class CancelTaskHandler implements CommandHandler<Void, CancelTask> {
+class CancelTaskHandler implements AfterCommitCommandHandler<Task, CancelTask> {
     private static final LOG = LoggerFactory.getLogger(this)
     private final TaskRepository taskRepository
     private final WorkerSessionManager sessionManager
@@ -29,7 +30,7 @@ class CancelTaskHandler implements CommandHandler<Void, CancelTask> {
         this.sessionManager = sessionManager
     }
 
-    Void execute(CancelTask command) {
+    Task execute(CancelTask command) {
         def task = taskRepository.getTask(command.taskId)
         if (task.username && task.username != command.username)
             throw new Unauthorized("Task not owned by user: $task", command)
@@ -38,12 +39,27 @@ class CancelTaskHandler implements CommandHandler<Void, CancelTask> {
             return null
         }
 
-        taskRepository.update(task.cancel())
+        def canceledTask = task.cancel()
+        taskRepository.update(canceledTask)
         def session = sessionManager.findSessionById(task.sessionId)
         workerGateway.cancel(task.id, session)
-        def tasksInSession = taskRepository.pendingOrActiveTasksInSession(session.id)
-        if (!tasksInSession)
-            sessionManager.closeSession(session.id)
-        return null
+
+        return canceledTask
+    }
+
+    void afterCommit(CancelTask command, Task canceledTask) {
+        if (!canceledTask) {
+            LOG.debug("No task was canceled, no need to close the session: $command")
+            return
+        }
+        def tasksInSession = taskRepository.pendingOrActiveTasksInSession(canceledTask.sessionId)
+        if (!tasksInSession) {
+            LOG.debug("No tasks in session, closing session. ${[canceledTask: canceledTask, command: command]}")
+            sessionManager.closeSession(canceledTask.sessionId)
+        } else {
+            LOG.debug("There still are tasks in session, will not close it. " +
+                    "${[tasksInSession: tasksInSession, canceledTask: canceledTask, command: command]}")
+            sessionManager.heartbeat(canceledTask.sessionId)
+        }
     }
 }

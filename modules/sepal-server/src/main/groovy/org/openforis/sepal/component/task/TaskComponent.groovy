@@ -18,15 +18,17 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
 
+import javax.sql.DataSource
+
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class TaskComponent extends DataSourceBackedComponent implements EndpointRegistry {
     TaskComponent(
             WorkerSessionComponent workerSessionComponent,
             WorkerGateway workerGateway,
-            SqlConnectionManager connectionManager) {
+            DataSource dataSource) {
         this(
-                connectionManager,
+                new SqlConnectionManager(dataSource),
                 new AsynchronousEventDispatcher(),
                 new SessionComponentAdapter(workerSessionComponent),
                 workerGateway,

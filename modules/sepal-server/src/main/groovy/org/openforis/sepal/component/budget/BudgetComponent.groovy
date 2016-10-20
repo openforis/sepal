@@ -21,14 +21,16 @@ import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.SystemClock
 import org.openforis.sepal.util.annotation.Data
 
+import javax.sql.DataSource
+
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class BudgetComponent extends DataSourceBackedComponent {
 
-    static BudgetComponent create(HostingServiceAdapter hostingServiceAdapter, SqlConnectionManager connectionManager) {
+    static BudgetComponent create(HostingServiceAdapter hostingServiceAdapter, DataSource dataSource) {
         def config = new BudgetConfig()
         new BudgetComponent(
-                connectionManager,
+                new SqlConnectionManager(dataSource),
                 hostingServiceAdapter.hostingService,
                 new RestUserRepository(config.userEndpoint, config.userEndpointUser),
                 new AsynchronousEventDispatcher(),

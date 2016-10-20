@@ -23,6 +23,8 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
 
+import javax.sql.DataSource
+
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class WorkerSessionComponent extends DataSourceBackedComponent implements EndpointRegistry {
@@ -33,9 +35,9 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
             BudgetComponent budgetComponent,
             WorkerInstanceComponent workerInstanceComponent,
             HostingServiceAdapter hostingServiceAdapter,
-            SqlConnectionManager connectionManager) {
+            DataSource dataSource) {
         this(
-                connectionManager,
+                new SqlConnectionManager(dataSource),
                 new AsynchronousEventDispatcher(),
                 new BudgetComponentAdapter(budgetComponent),
                 new InstanceComponentAdapter(hostingServiceAdapter.instanceTypes, workerInstanceComponent),
