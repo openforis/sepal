@@ -31,7 +31,7 @@ def to_drive(image, region, name, username):
         description=name,
         folder=username,
         scale=30,
-        maxPixels=1e9,
+        maxPixels=1e12,
         region=region.bounds().getInfo()['coordinates']
     )
     task.start()
