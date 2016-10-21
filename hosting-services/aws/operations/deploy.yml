@@ -6,10 +6,20 @@
 
   vars_files:
     - "{{ secret_vars_file }}"
+    - vars/vars.yml
 
   pre_tasks:
     - name: Copy Jenkins Image
       copy: src="../../../modules/jenkins/" dest="/opt/sepal/modules/jenkins/"
+
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        state: directory
+    - name: Copy docker-registry certificate
+      copy:
+        src: ~/.sepal/certificates/docker-registry.crt
+        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
 
     - name: Create ELK certificate dir
       file:
