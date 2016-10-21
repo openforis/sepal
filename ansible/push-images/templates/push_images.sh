@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 docker login localhost -u "{{ docker_username }}" -p "{{ docker_password }}"
+docker push localhost/openforis/elk:{{ version }}
+docker push localhost/openforis/nginx:{{ version }}
 docker push localhost/openforis/rsyslog:{{ version }}
 docker push localhost/openforis/ldap:{{ version }}
 docker push localhost/openforis/ldap-backup:{{ version }}
