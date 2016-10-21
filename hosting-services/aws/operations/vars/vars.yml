@@ -2,5 +2,5 @@
 ami_ids:
   eu-central-1: 'ami-9b9c86f7'
 
-docker_repository_host: '54.93.185.137'
+docker_repository_host: localhost
 
