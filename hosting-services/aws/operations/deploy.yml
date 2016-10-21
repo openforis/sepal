@@ -11,6 +11,15 @@
     - name: Copy Jenkins Image
       copy: src="../../../modules/jenkins/" dest="/opt/sepal/modules/jenkins/"
 
+    - name: Create ELK certificate dir
+      file:
+        path: "/data/elk/certificates"
+        state: directory
+    - name: Copy ELK certificates
+      copy: src={{ item }} dest=/data/elk/certificates owner=root mode=644
+      with_fileglob:
+        - ~/.sepal/certificates/elk*
+
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:
@@ -20,12 +29,18 @@
     - { role: docker, users: ['ubuntu'] }
     - { role: docker-registry }
     - { role: ansible }
+
     - { role: build-module, module: jenkins }
+    - { role: build-module, module: elk }
+    - { role: build-module, module: nginx }
+
     - { role: run-module, module: jenkins }
+    - { role: run-module, module: elk }
+    - { role: run-module, module: nginx }
 
   post_tasks:
     - name: "Clean environment"
-      shell: 'sudo rm -rf /opt/sepal'
+      shell: 'rm -rf /opt/sepal'
 
     - name: "Create symlink to /opt/sepal"
       file:
