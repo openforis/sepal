@@ -5,8 +5,8 @@
   gather_facts: true
 
   vars_files:
-    - "{{ secret_vars_file }}"
     - vars/vars.yml
+    - "{{ secret_vars_file }}"
 
   pre_tasks:
     - name: Copy Jenkins Image
@@ -50,7 +50,9 @@
 
   post_tasks:
     - name: "Clean environment"
-      shell: 'rm -rf /opt/sepal'
+      file:
+        path: /opt/sepal
+        state: absent
 
     - name: "Create symlink to /opt/sepal"
       file:
