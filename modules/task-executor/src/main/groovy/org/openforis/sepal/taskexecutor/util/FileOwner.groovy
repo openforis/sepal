@@ -14,9 +14,8 @@ class FileOwner {
     static void set(File file, String username) {
         if (!file.parentFile.exists())
             setOnDir(file.parentFile, username)
-        if (!file.exists())
-            if (!file.createNewFile())
-                throw new IOException("Failed to create file " + file)
+        if (!file.exists() && !file.createNewFile())
+            throw new IOException("Failed to create file " + file)
         UserPrincipal user = file.toPath().getFileSystem().getUserPrincipalLookupService()
                 .lookupPrincipalByName(username)
         Files.setOwner(file.toPath(), user)
@@ -25,7 +24,7 @@ class FileOwner {
     static void setOnDir(File dir, String username) {
         if (!dir.parentFile.exists())
             setOnDir(dir.parentFile, username)
-        if (!dir.mkdir())
+        if (!dir.exists() && !dir.mkdir())
             throw new IOException("Failed to created directory " + dir)
         set(dir, username)
     }
