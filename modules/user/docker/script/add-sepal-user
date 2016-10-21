@@ -25,7 +25,6 @@ if ! ldapid "$USERNAME"; then
             -s "$PASSWORD" uid=$USERNAME,ou=People,dc=sepal,dc=org -ZZ
     fi
 
-    # TODO: Move home directory creation to sepal-server
     # When user is a SEPAL user, add user to group and create user home directory structure
     if [ -n "$USER_GROUP" ]; then
         echo "add-sepal-user | Adding secondary group: $USER_GROUP"
