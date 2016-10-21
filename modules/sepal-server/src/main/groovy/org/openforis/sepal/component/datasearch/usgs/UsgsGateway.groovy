@@ -104,7 +104,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
     private SceneMetaData toSceneMetaData(LandsatSensor sensor, data) {
         try {
             // TODO: Get rid of 'LM5'
-            if (data.DATA_TYPE_L1 == 'L1T' && data.dayOrNight == 'DAY' && data.cloudCoverFull.toDouble() >= 0d)
+            if (isSceneIncluded(data))
                 return new SceneMetaData(
                         id: data.sceneID,
                         source: USGS,
@@ -120,6 +120,14 @@ class CsvBackedUsgsGateway implements UsgsGateway {
         } catch (Exception ignore) {
         }
         return null
+    }
+
+    private boolean isSceneIncluded(data) {
+        def prefix = (data.sceneID as String).substring(0, 3)
+        return data.DATA_TYPE_L1 == 'L1T' &&
+                data.dayOrNight == 'DAY' &&
+                data.cloudCoverFull.toDouble() >= 0d &&
+                prefix in ['LM1', 'LM2', 'LM3', 'LM4', 'LT4', 'LM5', 'LT5', 'LE7', 'LC8', 'LT8']
     }
 
     static UsgsGateway create(File workingDir) {
