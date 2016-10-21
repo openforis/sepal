@@ -11,7 +11,8 @@
     "path": "/static/",
     "target": "http://sepal:1025/static/",
     "https": "true",
-    "authenticate": "false"
+    "authenticate": "false",
+    "cached": "true"
   },
   {
     "prefix": "false",

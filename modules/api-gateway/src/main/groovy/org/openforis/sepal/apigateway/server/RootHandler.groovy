@@ -1,16 +1,23 @@
 package org.openforis.sepal.apigateway.server
 
 import io.undertow.Handlers
+import io.undertow.attribute.ExchangeAttributes
+import io.undertow.predicate.Predicates
 import io.undertow.protocols.ssl.UndertowXnioSsl
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.handlers.PathHandler
 import io.undertow.server.handlers.ResponseCodeHandler
+import io.undertow.server.handlers.encoding.ContentEncodingRepository
+import io.undertow.server.handlers.encoding.EncodingHandler
+import io.undertow.server.handlers.encoding.GzipEncodingProvider
 import io.undertow.server.handlers.proxy.LoadBalancingProxyClient
 import io.undertow.server.session.InMemorySessionManager
 import io.undertow.server.session.SessionAttachmentHandler
 import io.undertow.server.session.SessionCookieConfig
 import io.undertow.server.session.SessionManager
+import io.undertow.util.Headers
+import io.undertow.util.HttpString
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy
 import org.apache.http.ssl.SSLContextBuilder
 import org.openforis.sepal.undertow.PatchedProxyHandler
@@ -40,6 +47,9 @@ class RootHandler implements HttpHandler {
             endpointHandler = new AuthenticatingHandler(authenticationUrl, endpointHandler)
         if (endpointConfig.https)
             endpointHandler = new HttpsRedirectHandler(httpsPort, endpointHandler)
+        if (endpointConfig.cached)
+            endpointHandler = new CachedHandler(endpointHandler)
+        endpointHandler = gzipHandler(endpointHandler)
         def sessionConfig = new SessionCookieConfig(cookieName: "SEPAL-SESSIONID", secure: endpointConfig.https)
         endpointHandler = new SessionAttachmentHandler(endpointHandler, sessionManager, sessionConfig)
         endpointConfig.prefix ?
@@ -48,11 +58,42 @@ class RootHandler implements HttpHandler {
         return this
     }
 
+    private EncodingHandler gzipHandler(HttpHandler endpointHandler) {
+        return new EncodingHandler(
+                new ContentEncodingRepository().addEncodingHandler(
+                        "gzip",
+                        new GzipEncodingProvider(),
+                        50,
+                        Predicates.contains(ExchangeAttributes.responseHeader(Headers.CONTENT_TYPE),
+                                'text/plain',
+                                'text/css',
+                                'text/javascript',
+                                'application/json',
+                                'application/javascript',
+                                'application/x-javascript',
+                                'text/xml',
+                                'application/xml',
+                                'application/xml+rss')
+                )).setNext(endpointHandler)
+    }
+
     void handleRequest(HttpServerExchange exchange) throws Exception {
         exchange.requestHeaders.remove('sepal-user') // Prevent client from accessing as user without authenticating
         handler.handleRequest(exchange)
     }
 
+    private static class CachedHandler implements HttpHandler {
+        private final HttpHandler next
+
+        CachedHandler(HttpHandler next) {
+            this.next = next
+        }
+
+        void handleRequest(HttpServerExchange exchange) throws Exception {
+            exchange.responseHeaders.add(HttpString.tryFromString('Cache-Control'), 'public, max-age=31536000')
+            next.handleRequest(exchange)
+        }
+    }
 
     private static class LogoutHandler implements HttpHandler {
         private static final LOG = LoggerFactory.getLogger(this)

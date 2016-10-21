@@ -8,6 +8,7 @@ class EndpointConfig {
     boolean authenticate = true
     boolean prefix
     boolean rewriteRedirects
+    boolean cached
     String path
     URI target
 }
