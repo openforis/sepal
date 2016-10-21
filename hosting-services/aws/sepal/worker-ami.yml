@@ -35,10 +35,6 @@
       apt:
         name: "lvm2"
 
-    - name: Install Expect
-      apt:
-        name: "expect"
-
     - name: Create /data/sepal directory structure
       file:
         path: "/data/sepal"

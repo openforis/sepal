@@ -3,9 +3,6 @@
 - name: Copy the push script
   template: src="push_images.sh" dest="/data/ansible/" mode="u=rwx,g=rx,o=rx"
 
-- name: Copy the repo login script
-  template: src=login_to_repo dest=/data/ansible/login_to_repo mode=0777
-
 - name: Pushing the images to the local repo
-  shell: "/data/ansible/login_to_repo"
+  shell: "/data/ansible/push_images.sh"
 

@@ -8,9 +8,6 @@
     - "{{ secret_vars_file }}"
 
   pre_tasks:
-    - name: Install Expect
-      apt: name="expect"
-
     - name: Copy Jenkins Image
       copy: src="../../../modules/jenkins/" dest="/opt/sepal/modules/jenkins/"
 

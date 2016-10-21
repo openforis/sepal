@@ -1,0 +1,73 @@
+- name: config-generator
+  hosts: all
+  user: vagrant
+  become: yes
+  gather_facts: true
+
+  vars_files:
+    - "{{ secret_vars_file }}"
+
+  pre_tasks:
+    - name: Create docker-registry certificate dir
+      file:
+        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        state: directory
+    - name: Copy docker-registry certificate
+      copy:
+        src: ~/.sepal/certificates/docker-registry.crt
+        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+    - name: Create ELK certificate dir
+      file:
+        path: "/data/elk/certificates"
+        state: directory
+    - name: Copy ELK certificates
+      copy: src={{ item }} dest=/data/elk/certificates owner=root mode=644
+      with_fileglob:
+        - ~/.sepal/certificates/elk*
+
+    - file: path="/data/sepal/etc" state=directory
+    - template: src="./vagrant.properties" dest=/data/sepal/etc/vagrant.properties
+
+    - set_fact:
+       sepal_host: "{{ vagrant_ip }}"
+       ldap_host: "{{ vagrant_ip }}"
+       elk_host: "{{ vagrant_ip }}"
+       hosting_service: vagrant
+
+  roles:
+    - role: unattended-upgrades
+      unattended_origins_patterns:
+        - 'origin=Ubuntu,archive=${distro_codename}-security'
+        - 'o=Ubuntu,a=${distro_codename}-updates'
+
+    - { role: docker, users: ['ubuntu', 'vagrant'] }
+    - { role: build-module, module: elk }
+    - { role: build-module, module: ldap }
+    - { role: build-module, module: ldap-backup }
+    - { role: build-module, module: haproxy }
+    - { role: build-module, module: mysql }
+    - { role: build-module, module: mysql-backup }
+    - { role: build-module, module: api-gateway }
+    - { role: build-module, module: gateone }
+    - { role: build-module, module: ssh-gateway }
+    - { role: build-module, module: geospatial-toolkit }
+    - { role: build-module, module: sandbox }
+    - { role: build-module, module: user }
+    - { role: build-module, module: sepal-server }
+    - { role: build-module, module: task-executor }
+    - { role: build-module, module: google-earth-engine }
+    - { role: build-module, module: rsyslog }
+
+    - { role: run-module, module: elk }
+    - { role: run-module, module: rsyslog }
+    - { role: run-module, module: ldap }
+    - { role: run-module, module: ldap-backup }
+    - { role: run-module, module: mysql }
+    - { role: run-module, module: mysql-backup }
+    - { role: run-module, module: google-earth-engine }
+    - { role: run-module, module: user }
+    - { role: run-module, module: sepal-server }
+    - { role: run-module, module: ssh-gateway }
+    - { role: run-module, module: gateone }
+    - { role: run-module, module: api-gateway }
+    - { role: run-module, module: haproxy }

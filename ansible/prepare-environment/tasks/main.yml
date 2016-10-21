@@ -1,6 +1,0 @@
----
-
-- name: Install Expect
-  apt:
-    name: "expect"
-

@@ -8,8 +8,6 @@
     - "{{ secret_vars_file }}"
 
   pre_tasks:
-    - name: Install Expect
-      apt: name="expect"
 
     - name: Create ELK certificate dir
       file:
