@@ -10,6 +10,8 @@ import static org.openforis.sepal.util.DateTime.toDateString
 
 class CsvBackedUsgsGatewayTest extends Specification {
     def workingDir = File.createTempDir()
+    def sceneId = 'LC80390222013076EDC00'
+    def sceneId2 = 'LT80390222013076EDC00'
 
     def cleanup() {
         workingDir.deleteDir()
@@ -28,7 +30,7 @@ class CsvBackedUsgsGatewayTest extends Specification {
     }
 
     def 'Uninitialized and init source, when iterating, scenes are returned'() {
-        def gateway = new CsvBackedUsgsGateway(workingDir, [(LANDSAT_8): [new FakeCsvReader(a: new Date())]], [:])
+        def gateway = new CsvBackedUsgsGateway(workingDir, [(LANDSAT_8): [new FakeCsvReader((sceneId): new Date())]], [:])
 
         when:
         def updates = iterate(gateway, [:])
@@ -37,13 +39,13 @@ class CsvBackedUsgsGatewayTest extends Specification {
         updates.size() == 1
         def scenes = updates.first()
         scenes.size() == 1
-        scenes.first().id == 'a'
+        scenes.first().id == sceneId
     }
 
     def 'Uninitialized and sources, when iterating, only init sources are used'() {
         def gateway = new CsvBackedUsgsGateway(workingDir,
-                [(LANDSAT_8): [new FakeCsvReader(a: new Date())]],
-                [(LANDSAT_8): [new FakeCsvReader(b: new Date())]])
+                [(LANDSAT_8): [new FakeCsvReader((sceneId): new Date())]],
+                [(LANDSAT_8): [new FakeCsvReader((sceneId2): new Date())]])
 
         when:
         def updates = iterate(gateway, [:])
@@ -52,7 +54,7 @@ class CsvBackedUsgsGatewayTest extends Specification {
         updates.size() == 1
         def scenes = updates.first()
         scenes.size() == 1
-        scenes.first().id == 'a'
+        scenes.first().id == sceneId
     }
 
     def 'Initialized and last update same as acquisition date, when iterating, scene is returned'() {
@@ -60,7 +62,7 @@ class CsvBackedUsgsGatewayTest extends Specification {
         def acquisitionDate = new Date()
         def gateway = new CsvBackedUsgsGateway(workingDir,
                 [:],
-                [(LANDSAT_8): [new FakeCsvReader(a: acquisitionDate)]])
+                [(LANDSAT_8): [new FakeCsvReader((sceneId): acquisitionDate)]])
 
         when:
         def updates = iterate(gateway, [(LANDSAT_8): acquisitionDate])
@@ -69,7 +71,7 @@ class CsvBackedUsgsGatewayTest extends Specification {
         updates.size() == 1
         def scenes = updates.first()
         scenes.size() == 1
-        scenes.first().id == 'a'
+        scenes.first().id == sceneId
     }
 
     def 'Initialized and last update between acquisition dates, when iterating, scene with new date is returned'() {
@@ -78,8 +80,8 @@ class CsvBackedUsgsGatewayTest extends Specification {
         def gateway = new CsvBackedUsgsGateway(workingDir,
                 [:],
                 [(LANDSAT_8): [new FakeCsvReader(
-                        a: lastUpdated + 1,
-                        b: lastUpdated - 1,
+                        (sceneId): lastUpdated + 1,
+                        (sceneId2): lastUpdated - 1,
                 )]])
 
         when:
@@ -89,13 +91,13 @@ class CsvBackedUsgsGatewayTest extends Specification {
         updates.size() == 1
         def scenes = updates.first()
         scenes.size() == 1
-        scenes.first().id == 'a'
+        scenes.first().id == sceneId
     }
 
     def 'Given successfully iterated unititialized, when iterating, initialized sources are used'() {
         def gateway = new CsvBackedUsgsGateway(workingDir,
-                [(LANDSAT_8): [new FakeCsvReader(a: new Date())]],
-                [(LANDSAT_8): [new FakeCsvReader(b: new Date())]])
+                [(LANDSAT_8): [new FakeCsvReader((sceneId): new Date())]],
+                [(LANDSAT_8): [new FakeCsvReader((sceneId2): new Date())]])
 
         iterate(gateway, [:])
 
@@ -106,7 +108,7 @@ class CsvBackedUsgsGatewayTest extends Specification {
         updates.size() == 1
         def scenes = updates.first()
         scenes.size() == 1
-        scenes.first().id == 'b'
+        scenes.first().id == sceneId2
     }
 
     private List<List<SceneMetaData>> iterate(CsvBackedUsgsGateway gateway, Map lastUpdateBySensor) {
