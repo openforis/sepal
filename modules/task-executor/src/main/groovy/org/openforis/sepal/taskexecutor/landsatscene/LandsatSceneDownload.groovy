@@ -35,6 +35,7 @@ class LandsatSceneDownload implements TaskExecutor {
     }
 
     void execute() {
+        FileOwner.setOnDir(workingDir, username) // Make sure we have a workingDir with proper ownership
         sceneIds.each { sceneId ->
             downloadSceneInBackground(sceneId)
         }
@@ -69,7 +70,7 @@ class LandsatSceneDownload implements TaskExecutor {
     private void downloadSceneInBackground(String sceneId) {
         def sceneDir = new File(workingDir, sceneId)
         sceneDir.mkdir()
-        FileOwner.set(sceneDir, username)
+        FileOwner.setOnDir(sceneDir, username)
         def onCompletion = { ExecutionResult result ->
             sceneResults.add(result)
         }

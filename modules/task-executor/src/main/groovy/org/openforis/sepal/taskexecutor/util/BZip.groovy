@@ -48,7 +48,7 @@ class BZip {
                 tarEntry.parentFile.mkdirs()
                 if (entry.directory) {
                     tarEntry.mkdirs()
-                    FileOwner.set(tarEntry, owner)
+                    FileOwner.setOnDir(tarEntry, owner)
                 }
                 else {
                     FileOwner.set(tarEntry, owner)
