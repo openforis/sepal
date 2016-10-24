@@ -148,12 +148,11 @@ class UserEndpoint {
 
             post('/details', [ADMIN]) {
                 response.contentType = 'application/json'
-                def command = new UpdateUserDetails()
+                def command = new UpdateUserDetails(usernameToUpdate: params.username)
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
                 command.username = currentUser.username
-                command.usernameToUpdate = params.required('username', String)
                 def user = component.submit(command)
                 send toJson(user)
             }
