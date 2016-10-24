@@ -57,7 +57,6 @@ function initTerminal( response ) {
     
     var gateOnePrefs = {
         url     : 'https://' + window.location.host + '/gateone',
-        // url     : 'https://vagrant/gateone',
         auth    : response.authObject,
         embedded: true
     }
