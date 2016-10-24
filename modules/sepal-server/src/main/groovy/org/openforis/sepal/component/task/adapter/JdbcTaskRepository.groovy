@@ -102,7 +102,8 @@ class JdbcTaskRepository implements TaskRepository {
                 SELECT id, state, username, session_id, operation, params, status_description, creation_time, update_time
                 FROM task
                 WHERE username = ?
-                AND REMOVED = FALSE''', [username]) { tasks << toTask(it) }
+                AND REMOVED = FALSE
+                ORDER BY creation_time''', [username]) { tasks << toTask(it) }
         return tasks
     }
 
