@@ -1,0 +1,66 @@
+Ask for which environment
+    Conditionals depending on which
+
+Generate config dir with commands to perform tasks
+    provision, deploy, ssh(?)
+
+Set Ansible var with config dir, and access config files/keys relative to that dir
+
+CONFIG
+
+    Generate
+    --------
+    mysql_root_password
+    mysql_password
+
+    gate_one_secret
+    gate_one_public
+
+    sepal_admin_user_password
+    sepal_machine_admin_password
+
+    ldap_admin_password
+
+    Configure
+    ---------
+    elk_host
+    docker_registry_host
+
+    docker_password
+    docker_username (doesn't need to be configured)
+    docker_email (doesn't need to be configured)
+
+    aws_access_key_id
+    aws_secret_access_key
+    efs_id
+
+    google_earth_engine_account
+    google_earth_engine_private_key
+    google_maps_apk_key
+
+    smtp_from
+    smtp_host
+    smtp_port
+    smtp_username
+    smtp_password
+
+KEY PAIRS
+
+    # Generate sshd host keys - instead of having sshd generate them itself?
+      https://www.digitalocean.com/company/blog/avoid-duplicate-ssh-host-keys/
+      ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key
+      ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key
+      ssh-keygen -t ecdsa -N "" -f /etc/ssh/ssh_host_ecdsa_key
+
+
+    # http://security.stackexchange.com/questions/74345/provide-subjectaltname-to-openssl-directly-on-command-line
+    Generate - Make sure CA is specified
+    --------
+    docker
+    ldap
+    elk
+
+    Configure
+    ---------
+    aws
+
