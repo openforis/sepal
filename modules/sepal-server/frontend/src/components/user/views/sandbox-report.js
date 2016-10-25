@@ -24,7 +24,7 @@ var setSessions = function ( sessions ) {
         row.removeClass( 'row-session-placeholder' ).addClass( 'row-session ' + session.id )
         
         row.find( '.type' ).html( session.instanceType.name )
-        var creationTimeFromNow = moment( session.creationTime, "YYYY-MM-DD[T]HH:mm:ss" ).fromNow()
+        var creationTimeFromNow = moment( session.creationTime + ' +0000', "YYYY-MM-DD[T]HH:mm:ss Z" ).fromNow()
         row.find( '.time' ).html( creationTimeFromNow )
         row.find( '.cost' ).html( session.costSinceCreation + " USD " )
         
