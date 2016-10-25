@@ -27,7 +27,7 @@ class Main {
         def hostingServiceAdapter = HostingServiceAdapter.Factory.create(config.hostingService)
         def dataSource = config.dataSource
 
-        def dataSearchComponent = start new DataSearchComponent(dataSource, config)
+        def dataSearchComponent = start DataSearchComponent.create(dataSource)
         def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, dataSource)
         def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, dataSource)
         def workerSessionComponent = start new WorkerSessionComponent(

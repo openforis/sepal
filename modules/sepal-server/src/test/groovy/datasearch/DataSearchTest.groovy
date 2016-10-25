@@ -28,7 +28,8 @@ class DataSearchTest extends Specification {
     final component = new DataSearchComponent(
             connectionManager,
             sceneAreaProvider,
-            usgs
+            usgs,
+            'some-google-maps-api-key'
     )
 
     def 'When finding scene areas for AOI, scene areas are returned'() {

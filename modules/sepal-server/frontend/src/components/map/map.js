@@ -8,7 +8,6 @@ var EventBus               = require( '../event/event-bus' )
 var Events                 = require( '../event/events' )
 var GoogleMapsLoader       = require( 'google-maps' )
 GoogleMapsLoader.LIBRARIES = [ 'drawing' ]
-// GoogleMapsLoader.KEY = 'qwertyuiopasdfghjklzxcvbnm'
 
 var Sepal = require( '../main/sepal' )
 // additional map components
@@ -28,6 +27,7 @@ var FT_TableID = "15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F"
 
 // overlay layers
 var aoiLayer = null
+var apiKey   = null
 
 var show = function () {
     var template = require( './map.html' )
@@ -35,32 +35,39 @@ var show = function () {
     EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
     
     $( '.app' ).append( html )
-    
-    GoogleMapsLoader.load( function ( google ) {
-        map = new google.maps.Map( document.getElementById( 'map' ), {
-            zoom             : 3,
-            minZoom          : 3,
-            maxZoom          : 11,
-            center           : new google.maps.LatLng( 16.7794913, 9.6771556 ),
-            mapTypeId        : google.maps.MapTypeId.ROADMAP,
-            zoomControl      : false,
-            // zoomControlOptions: {
-            //     position: google.maps.ControlPosition.BOTTOM_CENTER
-            //     , style : google.maps.ZoomControlStyle.LARGE
-            // },
-            mapTypeControl   : false,
-            scaleControl     : false,
-            streetViewControl: false,
-            rotateControl    : false,
-            fullscreenControl: false,
-            backgroundColor  : '#131314'
+    load()
+}
+
+var load = function () {
+    retrieveApiKey( function ( apiKey ) {
+        GoogleMapsLoader.KEY = apiKey
+        GoogleMapsLoader.load( function ( google ) {
+            map = new google.maps.Map( document.getElementById( 'map' ), {
+                zoom             : 3,
+                minZoom          : 3,
+                maxZoom          : 11,
+                center           : new google.maps.LatLng( 16.7794913, 9.6771556 ),
+                mapTypeId        : google.maps.MapTypeId.ROADMAP,
+                zoomControl      : false,
+                // zoomControlOptions: {
+                //     position: google.maps.ControlPosition.BOTTOM_CENTER
+                //     , style : google.maps.ZoomControlStyle.LARGE
+                // },
+                mapTypeControl   : false,
+                scaleControl     : false,
+                streetViewControl: false,
+                rotateControl    : false,
+                fullscreenControl: false,
+                backgroundColor  : '#131314'
+                
+            } )
             
-        } )
-        
-        map.setOptions( { styles: mapStyle } )
-        
-        map.addListener( 'zoom_changed', function () {
-            EventBus.dispatch(Events.MAP.ZOOM_CHANGED , null , map.getZoom())
+            map.setOptions( { styles: mapStyle } )
+            
+            map.addListener( 'zoom_changed', function () {
+                EventBus.dispatch( Events.MAP.ZOOM_CHANGED, null, map.getZoom() )
+            } )
+            
         } )
         
     } )
@@ -170,6 +177,16 @@ var clearAoiLayer = function ( e ) {
         aoiLayer.setMap( null )
         aoiLayer = null
     }
+}
+
+var retrieveApiKey = function ( callback ) {
+    var params = {
+        url      : '/api/data/google-maps-api-key'
+        , success: function ( response ) {
+            callback( response.apiKey )
+        }
+    }
+    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
 EventBus.addEventListener( Events.APP.LOAD, show )

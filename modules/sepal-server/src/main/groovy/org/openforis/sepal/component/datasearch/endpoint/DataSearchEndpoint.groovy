@@ -21,10 +21,13 @@ class DataSearchEndpoint {
     private final QueryDispatcher queryDispatcher
     private final CommandDispatcher commandDispatcher
     private final GoogleEarthEngineGateway geeGateway
+    private final String googleMapsApiKey
 
     DataSearchEndpoint(QueryDispatcher queryDispatcher,
                        CommandDispatcher commandDispatcher,
-                       GoogleEarthEngineGateway geeGateway) {
+                       GoogleEarthEngineGateway geeGateway,
+                       String googleMapsApiKey) {
+        this.googleMapsApiKey = googleMapsApiKey
         this.queryDispatcher = queryDispatcher
         this.commandDispatcher = commandDispatcher
         this.geeGateway = geeGateway
@@ -32,6 +35,10 @@ class DataSearchEndpoint {
 
     void registerWith(Controller controller) {
         controller.with {
+            get('/data/google-maps-api-key') {
+                response.contentType = "application/json"
+                send toJson(apiKey: googleMapsApiKey)
+            }
             post('/data/sceneareas') {
                 response.contentType = "application/json"
                 def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(

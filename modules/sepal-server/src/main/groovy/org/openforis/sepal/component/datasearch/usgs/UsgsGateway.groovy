@@ -131,6 +131,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
     }
 
     static UsgsGateway create(File workingDir) {
+        // From http://landsat.usgs.gov/metadatalist.php
         new CsvBackedUsgsGateway(workingDir, [
                 (LANDSAT_8)          : [
                         new GzCsvUriReader(

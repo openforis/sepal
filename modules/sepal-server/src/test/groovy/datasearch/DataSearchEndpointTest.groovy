@@ -23,7 +23,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
     def geeGateway = Mock GoogleEarthEngineGateway
 
     void registerEndpoint(Controller controller) {
-        new DataSearchEndpoint(queryDispatcher, commandDispatcher, geeGateway).registerWith(controller)
+        new DataSearchEndpoint(queryDispatcher, commandDispatcher, geeGateway, 'some-google-maps-api-key').registerWith(controller)
     }
 
     def 'GET /data/sceneareas/?countryIso= returns sceneareas'() {

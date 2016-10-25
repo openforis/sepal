@@ -1,7 +1,6 @@
 package org.openforis.sepal.component.datasearch
 
 import groovymvc.Controller
-import org.openforis.sepal.SepalConfiguration
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
 import org.openforis.sepal.component.datasearch.adapter.HttpGoogleEarthEngineGateway
@@ -26,23 +25,27 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
     private final HandlerRegistryQueryDispatcher queryDispatcher
     private final GoogleEarthEngineGateway geeGateway
     private final SceneMetaDataRepository sceneMetaDataRepository
-    private SceneMetaDataUpdateScheduler sceneMetaDataUpdateScheduler
+    private final SceneMetaDataUpdateScheduler sceneMetaDataUpdateScheduler
+    private final String googleMapsApiKey
 
-    DataSearchComponent(DataSource dataSource, SepalConfiguration config) {
-        this(
+    static DataSearchComponent create(DataSource dataSource) {
+        def config = new DataSearchConfig()
+        new DataSearchComponent(
                 new SqlConnectionManager(dataSource),
                 new HttpGoogleEarthEngineGateway(config.googleEarthEngineEndpoint),
-                CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory))
-        )
+                CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
+                config.googleMapsApiKey)
     }
 
     DataSearchComponent(
             SqlConnectionManager connectionManager,
             GoogleEarthEngineGateway geeGateway,
-            UsgsGateway usgs) {
+            UsgsGateway usgs,
+            googleMapsApiKey) {
         this.connectionManager = connectionManager
         this.geeGateway = geeGateway
         this.sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
+        this.googleMapsApiKey = googleMapsApiKey
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
                 .register(UpdateUsgsSceneMetaData, new UpdateUsgsSceneMetaDataHandler(usgs, sceneMetaDataRepository))
 
@@ -76,7 +79,8 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
         new DataSearchEndpoint(
                 queryDispatcher,
                 commandDispatcher,
-                geeGateway)
-                .registerWith(controller)
+                geeGateway,
+                googleMapsApiKey
+        ).registerWith(controller)
     }
 }

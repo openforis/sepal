@@ -1,23 +1,22 @@
 package org.openforis.sepal.component.workerinstance
 
 import org.openforis.sepal.util.Config
-import org.openforis.sepal.util.FileSystem
 import org.openforis.sepal.util.annotation.Data
 
 @Data
 class WorkerInstanceConfig {
-    int sepalVersion
-    String sepalUser
-    String sepalPassword
-    String sepalHost
-    String ldapHost
-    String ldapPassword
-    File userHomes
-    int dockerPort
-    String dockerEntryPoint
-    String dockerRegistryHost
-    String googleEarthEngineAccount
-    String googleEarthEnginePrivateKey
+    final int sepalVersion
+    final String sepalUser
+    final String sepalPassword
+    final String sepalHost
+    final String ldapHost
+    final String ldapPassword
+    final File userHomes
+    final int dockerPort
+    final String dockerEntryPoint
+    final String dockerRegistryHost
+    final String googleEarthEngineAccount
+    final String googleEarthEnginePrivateKey
 
     WorkerInstanceConfig() {
         def c = new Config('workerInstance.properties')

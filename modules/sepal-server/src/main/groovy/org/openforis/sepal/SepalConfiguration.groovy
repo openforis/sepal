@@ -15,7 +15,6 @@ class SepalConfiguration {
     public static final String JDBC_CONN_USER_PARAMETER = 'jdbc.conn.user'
     public static final String JDBC_CONN_PWD_PARAMETER = 'jdbc.conn.pwd'
     public static final String JDBC_DRIVER_PARAMETER = 'jdbc.driver'
-    public static final String DOWNLOADS_WORKING_DIRECTORY = 'sepal.downloadWorkingDirectory'
     public static final String SANBOX_PROXY_SESSION_TIMEOUT = 'sandbox.webproxy_session_timeout'
 
     Properties properties
@@ -60,14 +59,6 @@ class SepalConfiguration {
         Integer.parseInt(getValue(SANBOX_PROXY_SESSION_TIMEOUT))
     }
 
-    String getDownloadWorkingDirectory() {
-        getValue(DOWNLOADS_WORKING_DIRECTORY)
-    }
-
-    String getGoogleEarthEngineEndpoint() {
-        getValue('gee.endpoint')
-    }
-
     String getJdbcDriver() {
         getValue(JDBC_DRIVER_PARAMETER)
     }
@@ -86,10 +77,6 @@ class SepalConfiguration {
 
     int getWebAppPort() {
         Integer.parseInt(getValue(WEBAPP_PORT_PARAMETER))
-    }
-
-    String getLdapHost() {
-        getValue('ldap.host')
     }
 
     String getGateOnePublicKey() {
