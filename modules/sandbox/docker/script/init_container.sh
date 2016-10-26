@@ -26,6 +26,8 @@ rm -rf /templates
 ln -sf /conf/ldap.conf /etc/ldap.conf
 ln -sf /conf/ldap.conf /etc/ldap/ldap.conf
 
+cp /etc/environment /etc/R/Renviron.site
+
 echo "$ldap_host ldap" >> /etc/hosts
 
 printf '%s\n' \

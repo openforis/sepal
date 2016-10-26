@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-apt-get install openssl
+apt-get install -y openssl
 
 mkdir -p /etc/nginx/sites-enabled/
 rm -rf /etc/nginx/sites-enabled/* && cp /config/operations.conf /etc/nginx/sites-enabled/

@@ -5,6 +5,10 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     libpam-sss \
     libnss-sss \
     libnss-ldap \
+    gdebi-core \
+    net-tools \
+    openssh-server \
+    sudo \
     supervisor \
     gettext
 
@@ -29,3 +33,30 @@ printf '%s\n' \
     "PS1='${debian_chroot:+($debian_chroot)}\u@sepal:\w\$ '" \
     >> /etc/bash.bashrc
 
+echo
+echo "*********************************"
+echo "*** Installing RStudio Server ***"
+echo "*********************************"
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+	&& locale-gen en_US.utf8 \
+	&& /usr/sbin/update-locale LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+wget https://download2.rstudio.org/rstudio-server-0.99.484-amd64.deb
+gdebi -n rstudio-server-0.99.484-amd64.deb
+rm -f rstudio-*
+
+echo
+echo "*******************************"
+echo "*** Installing Shiny Server ***"
+echo "*******************************"
+wget https://download3.rstudio.org/ubuntu-12.04/x86_64/shiny-server-1.4.2.786-amd64.deb
+gdebi -n shiny-server-1.4.2.786-amd64.deb
+chown shiny:root /usr/lib/R/library
+rm shiny-server-1.4.2.786-amd64.deb
+
+echo
+echo "***********************"
+echo "*** Installing QGIS ***"
+echo "***********************"
+apt-get -y install qgis

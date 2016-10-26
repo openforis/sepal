@@ -131,9 +131,6 @@ A collection of command-line utilities for processing of geospatial data.
 **GDAL** -
 A translator library for raster and vector geospatial data formats.
 
-**Arcsi** -
-A command line tool for the atmospheric correction of Earth Observation imagery.
-
 **R** -
 Language for statistical computing and graphics.
 

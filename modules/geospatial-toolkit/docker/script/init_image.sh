@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 echo
 echo "**********************"
@@ -13,8 +14,10 @@ apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
 # Repository for Java
 add-apt-repository -y ppa:webupd8team/java
 
-# Repository for Saga - System for Automated Geoscientific Analyses (http://www.saga-gis.org/en/index.html)
-apt-add-repository ppa:johanvdw/saga-gis -y
+# Repository for R
+echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/apt/sources.list
+gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
+gpg -a --export E084DAB9 | apt-key add -
 
 apt-get -y update && apt-get -y upgrade
 
@@ -25,26 +28,41 @@ echo "*** Installing misc utilities ***"
 echo "*********************************"
 apt-get install -y \
     aria2 \
+    autoconf \
     bc \
+    bison \
     csh \
     curl  \
-    gdebi-core \
+    ed \
+    flex \
     gettext \
+    git \
+    gsl-bin \
+    libboost-dev \
     libcairo2-dev \
+    libcunit1-dev \
     libdbd-xbase-perl \
+    libglade2-dev \
+    libgtk2.0-dev \
     libgmp3-dev \
     libgstreamer0.10-dev \
     libgstreamer-plugins-base0.10-dev \
 	libproj-dev \
+	libxcursor-dev \
+    libxinerama-dev \
+    libxrandr-dev \
     libxt-dev \
     nano \
-    openssh-server \
     otb-bin \
     otb-bin-qt \
-    python-otb \
     parallel \
+    pkg-config \
+    python-otb \
     rsync \
     saga \
+    swig \
+    tcl-dev \
     unzip \
+    vim \
 	wget \
     xml-twig-tools
