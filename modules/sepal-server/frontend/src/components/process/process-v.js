@@ -45,6 +45,15 @@ var init = function () {
             '        Visualize' +
             '    </a>' +
             '</div>')
+        
+        apps.append('' +
+            '<div>' +
+            '    <a class="btn btn-base round app"' +
+            '       target="_blank" ' +
+            '       href="/sandbox/shiny/osk/">' +
+            '        SAR Toolkit' +
+            '    </a>' +
+            '</div>')
     }
 }
 
