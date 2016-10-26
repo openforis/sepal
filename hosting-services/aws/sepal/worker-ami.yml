@@ -84,6 +84,16 @@
     - name: Create Docker LVM Metadata Volume
       lvol: vg=vg-docker lv=metadata size=100%FREE
 
+    - name: Install fio
+      apt:
+        name: "fio"
+
+    - name: Copy EBS volume initialization script to init.d
+      copy: src=initialize-ebs-volume.sh dest=/etc/init.d/initialize-ebs-volume mode=0755
+
+    - name: Copy EBS volume initialization script to init.d
+      file: src=/etc/init.d/initialize-ebs-volume dest=/etc/rc2.d/initialize-ebs-volume state=link
+
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:
