@@ -81,7 +81,7 @@ class Interactive {
     private printSessionOptionLine(int option, Map session) {
         print String.valueOf(option).padRight(6)
         print timeSinceCreation(session).padRight(15)
-        println "(${session.instanceType.name}, ${session.instanceType.hourlyCost} USD/hour)"
+        println "(${session.instanceType.name}, ${session.instanceType.description}, ${session.instanceType.hourlyCost} USD/h)"
     }
 
     private void readJoinSelection(Map sandboxInfo, List<Map> sessions) {
@@ -140,7 +140,7 @@ class Interactive {
 
     private void printInstanceTypeOption(int option, Map type) {
         print String.valueOf(option).padRight(6)
-        println "$type.name, $type.hourlyCost USD/h"
+        println "$type.name, $type.description, $type.hourlyCost USD/h"
     }
 
     private void readCreateSelection(Map sandboxInfo) {
