@@ -90,6 +90,7 @@
         "../../../ansible/pull-worker-images",
         "../../../ansible/docker",
         "../../../ansible/docker.devicemapper",
+        "../../../ansible/init-script",
         "../../../ansible/docker.ubuntu",
         "../../../ansible/unattended-upgrades"
       ]
