@@ -1,0 +1,40 @@
+{
+  "server": "172.28.128.40:5556",
+  "server_type": "ws",
+  "workspaces": [
+    {
+      "name": "SEPAL",
+      "view": {
+        "type": "Balloon",
+        "weight": 1,
+        "id": "860070f83ecc6c5e70ba73cfd88e46eb0fe8c1fe",
+        "version": 1,
+        "child": {
+          "type": "VStack",
+          "weight": 1,
+          "id": "4d1ae19415ab5db0ced6b4d261a1dd85eda4a016",
+          "version": 1,
+          "children": [
+            {
+              "type": "Grid",
+              "weight": 1,
+              "id": "1629d4a42e3afc002dbfd9b7b39d53a0563aa3d0",
+              "version": 1,
+              "title": "SEPAL",
+              "query": "true",
+              "max": "",
+              "rows": "service",
+              "cols": "host",
+              "row_sort": "lexical",
+              "col_sort": "lexical"
+            },
+            {
+              "type": "Help"
+            }
+          ]
+        }
+      },
+      "id": "1b4a7fecde3d4b174436dd60d18c7a26adca5cc4"
+    }
+  ]
+}

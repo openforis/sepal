@@ -31,7 +31,11 @@
     - { role: build-module, module: jenkins }
     - { role: build-module, module: elk }
     - { role: build-module, module: nginx }
+    - { role: build-module, module: riemann-server }
+    - { role: build-module, module: riemann-dash }
 
     - { role: run-module, module: jenkins }
     - { role: run-module, module: elk }
     - { role: run-module, module: nginx }
+    - { role: run-module, module: riemann-server }
+    - { role: run-module, module: riemann-dash }
