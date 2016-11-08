@@ -1,7 +1,15 @@
 ---
 
+- name: "jenkins | Create config folder"
+  file:
+    path: "/etc/sepal"
+    state: directory
+
 - name: "jenkins | Copy config folder"
-  copy: src="{{ config_home }}" dest=/home/ubuntu
+  copy: src="{{ config_home }}/" dest=/etc/sepal
+
+- name: "jenkins | Tighten permissions on certificates"
+  file: path="/etc/sepal/certificates" mode=0400 state=directory recurse=yes
 
 - name: "jenkins | Create jenkins volume folder"
   file:
@@ -22,7 +30,7 @@
       - "5000:5000"
     volumes:
       - "/data/jenkins:/var/jenkins_home"
-      - "{{ config_home }}:/etc/sepal"
+      - "/etc/sepal:/etc/sepal"
     env:
       JENKINS_PASSWD: "{{ jenkins_password }}"
       GITHUB_ACCOUNT_PASSWD: "{{ jenkins_github_user_password }}"

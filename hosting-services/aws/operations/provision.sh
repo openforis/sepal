@@ -23,7 +23,8 @@ ansible-playbook provision.yml \
     --private-key=$PRIVATE_KEY \
     --extra-vars "\
             region=$REGION \
-            secret_vars_file=$CONFIG_HOME/secret.yml"
+            secret_vars_file=$CONFIG_HOME/secret.yml \
+            config_home=$CONFIG_HOME"
 
 ${INVENTORY_FILE_PATH} --refresh-cache > /dev/null
 

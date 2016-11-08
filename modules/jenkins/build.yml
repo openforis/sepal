@@ -1,5 +1,3 @@
 - include: "{{ build_image_task }}"
   vars:
     image_name: "openforis/jenkins"
-
-
