@@ -1,12 +1,12 @@
 ---
-- name: "Add {{ script_name }} to init.d"
+- name: "Add {{ service_name }} to init.d"
   template:
     src: "{{ init-script.sh }}"
-    dest: "/etc/init.d/{{ script_name }}"
+    dest: "/etc/init.d/{{ service_name }}"
     mode: 0755
 
-- name: "Link {{ script_name }} to rc2.d"
+- name: "Link {{ service_name }} to rc2.d"
   file:
-    src: "/etc/init.d/{{ script_name }}"
-    dest: "/etc/rc2.d/S99{{ script_name }}"
+    src: "/etc/init.d/{{ service_name }}"
+    dest: "/etc/rc2.d/S99{{ service_name }}"
     state: link

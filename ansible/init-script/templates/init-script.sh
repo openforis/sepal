@@ -19,9 +19,9 @@ case "$1" in
         echo "Starting $name"
         cd "$dir"
         if [ -z "$user" ]; then
-            sudo {{ cmd }} >> "$stdout_log" 2>> "$stderr_log" &
+            sudo {{ command }} >> "$stdout_log" 2>> "$stderr_log" &
         else
-            sudo -u "$user" {{ cmd }} >> "$stdout_log" 2>> "$stderr_log" &
+            sudo -u "$user" {{ command }} >> "$stdout_log" 2>> "$stderr_log" &
         fi
         echo $! > "$pid_file"
         if ! is_running; then

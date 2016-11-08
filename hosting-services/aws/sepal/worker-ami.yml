@@ -89,12 +89,12 @@
 
   roles:
     - role: init-script
-      name: init_xvda
-      cmd: fio --filename=/dev/xvda --rw=randread --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=initialize-xvda
+      service_name: init_xvda
+      command: fio --filename=/dev/xvda --rw=randread --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=initialize-xvda
 
     - role: init-script
-      name: init_xvdf
-      cmd: fio --filename=/dev/xvdf --rw=randread --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=initialize-xvdf
+      service_name: init_xvdf
+      command: fio --filename=/dev/xvdf --rw=randread --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=initialize-xvdf
 
     - role: unattended-upgrades
       unattended_origins_patterns:
