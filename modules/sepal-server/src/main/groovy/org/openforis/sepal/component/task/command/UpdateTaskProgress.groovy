@@ -44,7 +44,6 @@ class UpdateTaskProgressHandler implements AfterCommitCommandHandler<Task, Updat
     void afterCommit(UpdateTaskProgress command, Task updatedTask) {
         if (!updatedTask || !(updatedTask.failed || updatedTask.completed || updatedTask.canceled)) {
             LOG.debug("No task failed, completed, or was canceled, so no need to close the session: $command")
-            sessionManager.heartbeat(updatedTask.sessionId)
             return
         }
 
