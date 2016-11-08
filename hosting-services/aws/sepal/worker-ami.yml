@@ -8,10 +8,6 @@
     - /tmp/secret.yml
 
   pre_tasks:
-    - name: Set Facts
-      set_fact:
-        docker_repository_host: "54.93.185.137"
-
     - name: Create docker-registry certificate dir
       file:
         path: "/etc/docker/certs.d/{{ docker_repository_host }}"

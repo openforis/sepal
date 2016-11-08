@@ -5,7 +5,7 @@
 - file: path="/data/sepal/shiny/apps" state=directory
 - file: path="/data/sepal/shiny/library" state=directory
 - file: path="/data/sepal/certificates" state=directory
-- copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/sepal/certificates/ldap-ca.crt.pem
+- copy: src="{{ config_home }}/certificates/ldap-ca.crt.pem" dest=/data/sepal/certificates/ldap-ca.crt.pem
 
 - name: "sepal | Start container"
   docker:

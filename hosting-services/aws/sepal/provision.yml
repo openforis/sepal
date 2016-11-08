@@ -4,7 +4,7 @@
   gather_facts: false
 
   vars_files:
-    - vars/vars.yml
+    - "{{ secret_vars_file }}"
 
   tasks:
     - name: Create Sepal security group
@@ -56,7 +56,7 @@
         key_name: "{{ region }}"
         group: Sepal
         instance_type: t2.medium
-        image: "{{ ami_ids[region] }}"
+        image: "{{ ami }}"
         region: "{{ region }}"
         zone: "{{ availability_zone }}"
         wait: true

@@ -10,5 +10,5 @@ export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible.cfg
 
 ansible-playbook ${CONTEXT_DIR}/hosting-services/common/operations/build-and-push-images.yml \
     -i ${INVENTORY_FILE_PATH} \
-    --private-key=~/.ssh/sepal/eu-central-1.pem \
-    --extra-vars "version=$VERSION secret_vars_file=~/.sepal/secret.yml context"
+    --private-key=/etc/sepal/certificates/aws.pem \
+    --extra-vars "version=$VERSION secret_vars_file=/etc/sepal/secret.yml context"

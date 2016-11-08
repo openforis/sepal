@@ -16,7 +16,7 @@
     - name: Copy ELK certificates
       copy: src={{ item }} dest=/data/elk/certificates owner=root mode=644
       with_fileglob:
-        - ~/.sepal/certificates/elk*      
+        - "{{ config_home }}/certificates/elk*"      
 
   roles:
     - role: unattended-upgrades

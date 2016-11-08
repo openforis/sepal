@@ -4,7 +4,7 @@
   gather_facts: false
 
   vars_files:
-      - vars/vars.yml
+    - "{{ secret_vars_file }}"
 
   tasks:
     - name: Create Operations security group
@@ -36,7 +36,7 @@
         key_name: "{{ region }}"
         group: Operations
         instance_type: t2.medium
-        image: "{{ ami_ids[region] }}"
+        image: "{{ ami }}"
         region: "{{ region }}"
         wait: true
         exact_count: 1

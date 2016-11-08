@@ -1,9 +1,8 @@
 ---
 - file: path="/data/api-gateway/certificates" state=directory
-# TODO: Which are needed?
-- copy: src=~/.sepal/certificates/sepal-https.key dest=/data/api-gateway/certificates/sepal-https.key
-- copy: src=~/.sepal/certificates/sepal-https.ca-bundle dest=/data/api-gateway/certificates/sepal-https.ca-bundle
-- copy: src=~/.sepal/certificates/sepal-https.crt dest=/data/api-gateway/certificates/sepal-https.crt
+- copy: src="{{ config_home }}/certificates/sepal-https.key" dest=/data/api-gateway/certificates/sepal-https.key
+- copy: src="{{ config_home }}/certificates/sepal-https.ca-bundle" dest=/data/api-gateway/certificates/sepal-https.ca-bundle
+- copy: src="{{ config_home }}/certificates/sepal-https.crt" dest=/data/api-gateway/certificates/sepal-https.crt
 
 - name: "api-gateway | Start container"
   docker:

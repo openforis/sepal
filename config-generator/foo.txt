@@ -36,7 +36,7 @@ CONFIG
 
     google_earth_engine_account
     google_earth_engine_private_key
-    google_maps_apk_key
+    google_maps_api_key
 
     smtp_from
     smtp_host

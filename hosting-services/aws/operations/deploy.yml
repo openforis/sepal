@@ -5,7 +5,6 @@
   gather_facts: true
 
   vars_files:
-    - vars/vars.yml
     - "{{ secret_vars_file }}"
 
   pre_tasks:
@@ -14,12 +13,12 @@
 
     - name: Create docker-registry certificate dir
       file:
-        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+        path: "/etc/docker/certs.d/localhost"
         state: directory
     - name: Copy docker-registry certificate
       copy:
-        src: ~/.sepal/certificates/docker-registry.crt
-        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+        src: "{{ config_home }}/certificates/docker-registry.crt"
+        dest: "/etc/docker/certs.d/localhost/ca.crt"
 
     - name: Create ELK certificate dir
       file:
@@ -28,7 +27,7 @@
     - name: Copy ELK certificates
       copy: src={{ item }} dest=/data/elk/certificates owner=root mode=644
       with_fileglob:
-        - ~/.sepal/certificates/elk*
+        - "{{ config_home }}/certificates/elk*"
 
   roles:
     - role: unattended-upgrades

@@ -16,13 +16,13 @@
     state: "directory"
 
 - name: Copy htpasswd file
-  copy: src=~/.sepal/.htpasswd dest=/data/ssl/registry
+  copy: src="{{ config_home }}/.htpasswd" dest=/data/ssl/registry
 
 - name: Copy registry ssl certificate
-  copy: src=~/.sepal/certificates/docker-registry.crt dest=/data/ssl/registry_certs
+  copy: src="{{ config_home }}/certificates/docker-registry.crt" dest=/data/ssl/registry_certs
 
 - name: Copy registry ssl key
-  copy: src=~/.sepal/certificates/docker-registry.key dest=/data/ssl/registry_certs
+  copy: src="{{ config_home }}/certificates/docker-registry.key" dest=/data/ssl/registry_certs
 
 - name: Start docker registry
   docker:

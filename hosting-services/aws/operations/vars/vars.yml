@@ -1,6 +1,0 @@
----
-ami_ids:
-  eu-central-1: 'ami-9b9c86f7'
-
-docker_repository_host: localhost
-

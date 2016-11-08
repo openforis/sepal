@@ -62,7 +62,7 @@
     },
     {
       "type": "file",
-      "source": "{{user `userHome`}}/.sepal/certificates/docker-registry.crt",
+      "source": "{{user `config_home`}}/certificates/docker-registry.crt",
       "destination": "/tmp/docker-registry.crt"
     },
     {
@@ -72,12 +72,12 @@
     },
     {
       "type": "file",
-      "source": "{{user `userHome`}}/.sepal/secret.yml",
+      "source": "{{user `config_home`}}/secret.yml",
       "destination": "/tmp/secret.yml"
     },
     {
       "type": "file",
-      "source": "{{user `userHome`}}/.sepal/certificates/ldap-ca.crt.pem",
+      "source": "{{user `config_home`}}/certificates/ldap-ca.crt.pem",
       "destination": "/tmp/ldap-ca.crt.pem"
     },
     {

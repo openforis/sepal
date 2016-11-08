@@ -14,7 +14,7 @@
         state: directory
     - name: Copy docker-registry certificate
       copy:
-        src: ~/.sepal/certificates/docker-registry.crt
+        src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
     - name: Create ELK certificate dir
       file:
@@ -23,7 +23,7 @@
     - name: Copy ELK certificates
       copy: src={{ item }} dest=/data/elk/certificates owner=root mode=644
       with_fileglob:
-        - ~/.sepal/certificates/elk*
+        - "{{ config_home }}/certificates/elk*"
 
     - file: path="/data/sepal/etc" state=directory
     - template: src="./vagrant.properties" dest=/data/sepal/etc/vagrant.properties

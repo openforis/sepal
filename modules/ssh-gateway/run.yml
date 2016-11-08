@@ -4,7 +4,7 @@
     path: "/data/ssh-gateway"
     state: directory
 
-- copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/ssh-gateway/ldap-ca.crt.pem
+- copy: src="{{ config_home }}/certificates/ldap-ca.crt.pem" dest=/data/ssh-gateway/ldap-ca.crt.pem
 
 - name: "ssh-gateway | Start container"
   docker:

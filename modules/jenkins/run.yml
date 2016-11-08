@@ -1,10 +1,7 @@
 ---
 
-- name: "jenkins | Copy .sepal folder"
-  copy: src=~/.sepal dest=/home/ubuntu
-
-- name: "jenkins | Copy .ssh folder"
-  copy: src=~/.ssh/sepal dest=/home/ubuntu/.ssh/ mode=0400
+- name: "jenkins | Copy config folder"
+  copy: src="{{ config_home }}" dest=/home/ubuntu
 
 - name: "jenkins | Create jenkins volume folder"
   file:
@@ -25,8 +22,7 @@
       - "5000:5000"
     volumes:
       - "/data/jenkins:/var/jenkins_home"
-      - "/home/ubuntu/.sepal:/root/.sepal"
-      - "/home/ubuntu/.ssh/sepal/:/root/.ssh/sepal"
+      - "{{ config_home }}:/etc/sepal"
     env:
       JENKINS_PASSWD: "{{ jenkins_password }}"
       GITHUB_ACCOUNT_PASSWD: "{{ jenkins_github_user_password }}"

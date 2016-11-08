@@ -1,8 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-project_dir = '../../..'
-
 Vagrant.configure(2) do |config|
   config.vm.box = 'ubuntu/trusty64'
 
@@ -10,13 +8,6 @@ Vagrant.configure(2) do |config|
     ansible.playbook = 'deploy.yml'
     #ansible.verbose = 'vvvv'
     ansible.extra_vars = {
-        ansible_ssh_user: 'vagrant',
-        deploy_environment: 'Staging',
-        secret_vars_file: '~/.sepal/secret.yml',
-        docker_repository_host: 'localhost',
-        version: '1',
-        vagrant_ip: "#{ENV['VAGRANT_IP']}",
-        restore_backup: false
     }
   end
 

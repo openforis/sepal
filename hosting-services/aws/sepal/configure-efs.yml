@@ -5,7 +5,7 @@
   gather_facts: true
 
   vars_files:
-    - vars/vars.yml
+    - "{{ secret_vars_file }}"
 
   tasks:
     - name: Install nfs-common

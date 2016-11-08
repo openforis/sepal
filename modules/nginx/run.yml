@@ -2,9 +2,9 @@
 - file: path="/data/nginx" state=directory
 - file: path="/data/nginx/certificates" state=directory
 
-- copy: src=~/.sepal/certificates/sepal-https.key dest=/data/nginx/certificates/sepal-https.key
-- copy: src=~/.sepal/certificates/sepal-https.ca-bundle dest=/data/nginx/certificates/sepal-https.ca-bundle
-- copy: src=~/.sepal/certificates/sepal-https.crt dest=/data/nginx/certificates/sepal-https.crt
+- copy: src="{{ config_home }}/certificates/sepal-https.key" dest=/data/nginx/certificates/sepal-https.key
+- copy: src="{{ config_home }}/certificates/sepal-https.ca-bundle" dest=/data/nginx/certificates/sepal-https.ca-bundle
+- copy: src="{{ config_home }}/certificates/sepal-https.crt" dest=/data/nginx/certificates/sepal-https.crt
 
 - name: "nginx | Start container"
   docker:

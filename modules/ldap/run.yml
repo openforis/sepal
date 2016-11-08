@@ -3,9 +3,9 @@
 - file: path="/data/ldap/database" state=directory
 - file: path="/data/ldap/config" state=directory
 
-- copy: src=~/.sepal/certificates/ldap-crt.pem dest=/data/ldap/certificates/ldap-crt.pem
-- copy: src=~/.sepal/certificates/ldap-key.pem dest=/data/ldap/certificates/ldap-key.pem
-- copy: src=~/.sepal/certificates/ldap-ca.crt.pem dest=/data/ldap/certificates/ldap-ca.crt.pem
+- copy: src="{{ config_home }}/certificates/ldap-crt.pem" dest=/data/ldap/certificates/ldap-crt.pem
+- copy: src="{{ config_home }}/certificates/ldap-key.pem" dest=/data/ldap/certificates/ldap-key.pem
+- copy: src="{{ config_home }}/certificates/ldap-ca.crt.pem" dest=/data/ldap/certificates/ldap-ca.crt.pem
 
 - file: path="/data/ldap/module_initialized" state=absent
 

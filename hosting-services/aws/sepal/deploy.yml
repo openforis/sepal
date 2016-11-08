@@ -5,7 +5,6 @@
   gather_facts: true
 
   vars_files:
-    - vars/vars.yml
     - "{{ secret_vars_file }}"
 
   pre_tasks:
@@ -15,7 +14,7 @@
         state: directory
     - name: Copy docker-registry certificate
       copy:
-        src: ~/.sepal/certificates/docker-registry.crt
+        src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
     - name: Set sepal_host and ami_id var
       set_fact:

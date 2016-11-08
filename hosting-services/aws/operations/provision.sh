@@ -1,27 +1,38 @@
 #!/usr/bin/env bash
+set -e
 
-CONTEXT_DIR=${1:-".."}
-VERSION=${2:-"latest"}
-INVENTORY_FILE_NAME=${3:-"ec2.py"}
+VERSION=$1
+REGION=$2
+CONFIG_HOME=$3
+PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
 
+echo "Provisioning and deploying Ops on AWS [\
+CONFIG_HOME: $CONFIG_HOME, \
+VERSION: $VERSION, \
+REGION: $REGION]"
 
-#to make the provisioning script works locally. Create a symlink from ProjectRoot to /opt/sepal
-
-INVENTORY_FILE_PATH="$CONTEXT_DIR"/inventory/"$INVENTORY_FILE_NAME"
+INVENTORY_FILE_PATH=../inventory/ec2.py
 
 export ANSIBLE_HOST_KEY_CHECKING=False
-export ANSIBLE_CONFIG=${CONTEXT_DIR}/ansible.cfg
+export ANSIBLE_CONFIG=../ansible.cfg
 
-source ~/.sepal/export_aws_keys.sh
+source $CONFIG_HOME/export_aws_keys.sh
 
 ansible-playbook provision.yml \
     -i ${INVENTORY_FILE_PATH} \
-    --private-key=~/.ssh/sepal/eu-central-1.pem \
-    --extra-vars "region=eu-central-1"
+    --private-key=$PRIVATE_KEY \
+    --extra-vars "\
+            region=$REGION \
+            secret_vars_file=$CONFIG_HOME/secret.yml"
 
 ${INVENTORY_FILE_PATH} --refresh-cache > /dev/null
 
 ansible-playbook deploy.yml \
     -i ${INVENTORY_FILE_PATH} \
-    --private-key=~/.ssh/sepal/eu-central-1.pem \
-    --extra-vars "region=eu-central-1 version=$VERSION secret_vars_file=~/.sepal/secret.yml"
+    --private-key=$PRIVATE_KEY \
+    --extra-vars "\
+            region=$REGION \
+            version=$VERSION \
+            secret_vars_file=$CONFIG_HOME/secret.yml \
+            config_home=$CONFIG_HOME"
+
