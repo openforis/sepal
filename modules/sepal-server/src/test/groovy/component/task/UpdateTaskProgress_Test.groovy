@@ -1,14 +1,14 @@
 package component.task
 
 class UpdateTaskProgress_Test extends AbstractTaskTest {
-    def 'Given an active task, when updating progress, session heartbeat is sent'() {
+    def 'Given an active task, when updating progress, no session heartbeat is sent'() {
         def task = activeTask()
 
         when:
         updateTaskProgress(task)
 
         then:
-        sessionManager.receivedOneHeartbeat()
+        sessionManager.receivedNoHeartbeats()
     }
 
     def 'Given a timed out active task, when updating progress, it is no longer considered timed out'() {

@@ -102,6 +102,11 @@ class FakeWorkerSessionManager implements WorkerSessionManager {
                 "Expected one heartbeat. Actually received ${heartbeats.size()}: ${heartbeats}"
     }
 
+    void receivedNoHeartbeats() {
+        assert heartbeats.empty,
+                "Expected no heartbeat. Actually received ${heartbeats.size()}: ${heartbeats}"
+    }
+
     private List<WorkerSession> allSessions() {
         sessionById.values().toList()
     }
