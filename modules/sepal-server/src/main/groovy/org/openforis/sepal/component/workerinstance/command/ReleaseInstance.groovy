@@ -31,7 +31,8 @@ class ReleaseInstanceHandler implements CommandHandler<Void, ReleaseInstance> {
     Void execute(ReleaseInstance command) {
         try {
             def instance = instanceProvider.getInstance(command.instanceId)
-            instanceProvisioner.undeploy(instance)
+            if (instance.host) // Host might be unknown at this point, and there will be nothing to undeploy on the instance
+                instanceProvisioner.undeploy(instance)
             instanceProvider.release(command.instanceId)
             eventDispatcher.publish(new InstanceReleased(instance.release()))
         } catch (Exception e) {
