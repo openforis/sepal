@@ -3,9 +3,10 @@
 
 Vagrant.configure(2) do |config|
   config.vm.box = 'ubuntu/trusty64'
+  config.vm.synced_folder "/tmp/", '/config'
 
   config.vm.provision 'ansible' do |ansible|
-    ansible.playbook = 'deploy.yml'
+    ansible.playbook = 'provision.yml'
     #ansible.verbose = 'vvvv'
     ansible.extra_vars = {
     }
