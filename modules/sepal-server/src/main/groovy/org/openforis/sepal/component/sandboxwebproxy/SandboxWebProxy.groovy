@@ -140,6 +140,7 @@ class SandboxWebProxy {
         }
 
         URI provide(HttpServerExchange exchange) {
+            LOG.debug("Providing URI for exchange: $exchange")
             def httpSession = getOrCreateHttpSession(exchange)
             def endpoint = determineEndpoint(exchange)
             def username = determineUsername(exchange)
@@ -149,8 +150,11 @@ class SandboxWebProxy {
             def sandboxSessionId = httpSession.getAttribute(SANDBOX_SESSION_ID_KEY)
             def uriSessionKey = determineUriSessionKey(endpoint, username)
             URI uri = null
-            if (sandboxSessionId)
+            if (sandboxSessionId) {
                 uri = httpSession.getAttribute(uriSessionKey) as URI
+                LOG.debug("HTTP session linked with sandbox $sandboxSessionId. Endpoint: $uri")
+            } else
+                LOG.debug("HTTP session not linked with any sandbox")
             if (!uri) {
                 def sandboxSession = sandboxSession(username)
                 def sandboxHost = determineUri(httpSession, sandboxSession)
@@ -158,6 +162,7 @@ class SandboxWebProxy {
                 httpSession.setAttribute(SANDBOX_SESSION_ID_KEY, sandboxSession.id)
                 httpSession.setAttribute(uriSessionKey, uri)
                 httpSession.setAttribute(USERNAME_KEY, username)
+                LOG.debug("Linked HTTP session with sandbox $sandboxSession.id. Endpoint: $uri")
             }
             return uri
         }
