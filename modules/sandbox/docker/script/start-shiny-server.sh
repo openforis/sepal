@@ -7,7 +7,7 @@ for i in {30..0}; do
         break
     fi
     echo "Waiting for user $sandbox_user to be initialized..."
-    sleep 1
+    /bin/sleep 1
 done
 if [ "$i" = 0 ]; then
     echo >&2 "User $sandbox_user not initialized"

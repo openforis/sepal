@@ -12,7 +12,7 @@ function sepalAvailable()  {
 for i in {50..0}; do
     if [ $(sepalAvailable) -eq 0 ]; then
         echo 'Waiting for LDAP...'
-        sleep 1
+        /bin/sleep 1
     else
 	    break
     fi

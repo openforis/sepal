@@ -7,7 +7,7 @@ for i in {30..0}; do
         break
     fi
     echo "Endpoint status is $responseCode, waiting for a 200"
-    sleep 1
+    /bin/sleep 1
 done
 if [ "$i" = 0 ]; then
     echo >&2 "Endpoint not available"
