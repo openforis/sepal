@@ -59,6 +59,8 @@ var hideSection = function ( elem, options ) {
 }
 
 var showInviteUserSection = function () {
+    InviteUserSection.reset()
+ 
     hideSection( ListSection.getContainer() )
     hideSection( EditUserSection.getContainer() )
     hideSection( DeleteUserSection.getContainer() )

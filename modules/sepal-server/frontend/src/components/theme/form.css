@@ -52,6 +52,13 @@
     transition: border-bottom-color 500ms ease-in;
 }
 
+.form-control:disabled,
+.form-control[readonly] {
+    /*background-color: #eceeef;*/
+    opacity: .8;
+    cursor: not-allowed;
+}
+
 .form-theme .form-group.error input {
     border-bottom-color: #e81351 !important;
     background-color: rgba(232, 19, 81, 0.1) !important;

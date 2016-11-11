@@ -47,6 +47,10 @@ var Events = {
                 , SELECT_SENSOR            : 'section.search.search-params.select-sensor'
                 , DESELECT_SENSOR          : 'section.search.search-params.deselect-sensor'
                 , SENSORS_CHANGED          : 'section.search.search-params.sensors-changed'
+                , MIN_SCENES_CHANGE        : 'section.search.search-params.min-scenes-change'
+                , MIN_SCENES_CHANGED       : 'section.search.search-params.min-scenes-changed'
+                , MAX_SCENES_CHANGE        : 'section.search.search-params.max-scenes-change'
+                , MAX_SCENES_CHANGED       : 'section.search.search-params.max-scenes-changed'
             }
             
         }

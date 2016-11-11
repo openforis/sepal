@@ -59,7 +59,7 @@ var setTasks = function ( tasks ) {
                 break
             case Model.STATUS.PENDING:
                 btnRemove.hide()
-                btnCancel.show()
+                btnCancel.hide()
                 btnExecute.hide()
                 // btnExecute.prop( "disabled", true )
                 

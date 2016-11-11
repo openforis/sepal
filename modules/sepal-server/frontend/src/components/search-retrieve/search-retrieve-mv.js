@@ -97,6 +97,8 @@ var bestScenes = function ( e ) {
         , cloudCoverTarget   : 0.0001
         , sensorIds          : SearchParams.sensors.join( ',' ) //Filter.getSelectedSensors().join( ',' )
         , sceneAreaIds       : Model.getSceneAreaIds().join( ',' )
+        , minScenes          : SearchParams.minScenes
+        , maxScenes          : SearchParams.maxScenes
     }
     SearchParams.addDatesRequestParameters( data )
     

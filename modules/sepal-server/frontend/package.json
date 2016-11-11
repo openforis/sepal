@@ -3,7 +3,7 @@
   "devDependencies": {
     "babel-core": "^6.10.4",
     "babel-loader": "^6.2.4",
-    "bootstrap-loader": "^2.0.0-beta.11",
+    "bootstrap-loader": "2.0.0-beta.12",
     "bootstrap-sass": "^3.3.6",
     "css-loader": "^0.25.0",
     "exports-loader": "^0.6.3",
@@ -24,7 +24,7 @@
     "webpack": "^2.1.0-beta.22"
   },
   "dependencies": {
-    "bootstrap": "^4.0.0-alpha.2",
+    "bootstrap": "4.0.0-alpha.4",
     "d3": "^4.2.3",
     "devbridge-autocomplete": "^1.2.25",
     "font-awesome": "^4.6.3",

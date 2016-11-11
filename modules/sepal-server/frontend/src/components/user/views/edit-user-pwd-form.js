@@ -36,10 +36,15 @@ var submit = function ( e ) {
             }
             , success   : function ( response ) {
                 Loader.hide( { delay: 200 } )
-                FormValidator.showSuccess( FormNotify, 'Password changed' )
-                setTimeout( function () {
-                    EventBus.dispatch( Events.USER.PASSWORD_CHANGED )
-                }, 1600 )
+                
+                if( response.status !== 'success' ){
+                    FormValidator.showError( FormNotify , response.message )
+                } else {
+                    FormValidator.showSuccess( FormNotify, 'Password changed' )
+                    setTimeout( function () {
+                        EventBus.dispatch( Events.USER.PASSWORD_CHANGED )
+                    }, 1600 )
+                }
             }
         }
         EventBus.dispatch( Events.AJAX.POST, null, params )
