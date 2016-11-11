@@ -8,7 +8,7 @@ for i in {50..0}; do
 		break
 	fi
 	echo 'Waiting for mysql...'
-	sleep 1
+	/bin/sleep 1
 done
 if [ "$i" = 0 ]; then
     echo >&2 'MySQL init process failed.'

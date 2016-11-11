@@ -18,7 +18,7 @@ class WebProxySessionMonitor extends AbstractSessionListener implements Runnable
     private final static Logger LOG = LoggerFactory.getLogger(this)
 
     private final Map<String, SandboxSession> sandboxSessionByHttpSessionId = new ConcurrentHashMap()
-    private final ConcurrentHashMap<String, List<String>> sessionIdsBySandboxSessionId = new ConcurrentHashMap()
+    private final ConcurrentHashMap<String, List<String>> httpSessionIdsBySandboxSessionId = new ConcurrentHashMap()
 
     private final SandboxSessionManager sandboxSessionManager
     private final SessionManager httpSessionManager
@@ -51,19 +51,23 @@ class WebProxySessionMonitor extends AbstractSessionListener implements Runnable
     void sessionDestroyed(Session httpSession, HttpServerExchange exchange, SessionListener.SessionDestroyedReason reason) {
         def sandboxSession = sandboxSessionByHttpSessionId.remove(httpSession.id)
         if (sandboxSession)
-            sessionIdsBySandboxSessionId[sandboxSession.id]?.remove(httpSession.id)
+            httpSessionIdsBySandboxSessionId[sandboxSession.id]?.remove(httpSession.id)
     }
 
     void sandboxSessionClosed(String sandboxSessionId) {
-        def httpSessionIds = sessionIdsBySandboxSessionId.remove(sandboxSessionId)
+        def httpSessionIds = httpSessionIdsBySandboxSessionId.remove(sandboxSessionId)
+        LOG.debug("Sandbox session closed ($sandboxSessionId). Removing all HTTP session attributes from $httpSessionIds")
         httpSessionIds?.each { httpSessionId ->
             sandboxSessionByHttpSessionId.remove(httpSessionId)
-            httpSessionManager.getSession(httpSessionId)?.removeAttribute(SANDBOX_SESSION_ID_KEY)
+            def httpSession = httpSessionManager.getSession(httpSessionId)
+            httpSession?.attributeNames?.each {
+                httpSession?.removeAttribute(it)
+            }
         }
     }
 
     def sandboxSessionBound(Session httpSession, SandboxSession sandboxSession) {
-        def existingList = sessionIdsBySandboxSessionId.putIfAbsent(sandboxSession.id, new CopyOnWriteArrayList([httpSession.id]))
+        def existingList = httpSessionIdsBySandboxSessionId.putIfAbsent(sandboxSession.id, new CopyOnWriteArrayList([httpSession.id]))
         if (existingList)
             existingList << httpSession.id
         sandboxSessionByHttpSessionId[httpSession.id] = sandboxSession

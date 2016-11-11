@@ -9,7 +9,7 @@ do
     		break
     	fi
     	echo "Waiting for ${port}..."
-    	sleep 1
+    	/bin/sleep 1
     done
     if [ "$i" = 0 ]; then
         echo >&2 "port $port not available"
@@ -25,7 +25,7 @@ for i in {30..0}; do
         break
     fi
     echo "Waiting for user $username to be initialized..."
-    sleep 1
+    /bin/sleep 1
 done
 if [ "$i" = 0 ]; then
     echo >&2 "User $username not initialized"

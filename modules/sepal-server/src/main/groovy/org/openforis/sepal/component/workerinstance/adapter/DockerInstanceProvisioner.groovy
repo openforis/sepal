@@ -90,7 +90,6 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
 
     private void waitUntilInitialized(WorkerInstance instance, Image image) {
         LOG.debug("Waiting until container initialized: Image $image on instance $instance")
-        def publishedPorts = image.publishedPorts.keySet().toList()
         withClient(instance) {
             def response = post(
                     path: "containers/${image.containerName(instance)}/exec",

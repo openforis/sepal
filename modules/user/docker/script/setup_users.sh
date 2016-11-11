@@ -6,7 +6,7 @@ for i in {30..0}; do
         break
     fi
     echo "Waiting for LDAP to initialize..."
-    sleep 1
+    /bin/sleep 1
 done
 if [ "$i" = 0 ]; then
     echo >&2 "LDAP not initializing"

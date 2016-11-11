@@ -41,7 +41,7 @@ case "$1" in
             fi
 
             echo -n "."
-            sleep 1
+            /bin/sleep 1
         done
         echo
 
