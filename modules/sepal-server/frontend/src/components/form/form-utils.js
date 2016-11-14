@@ -7,7 +7,7 @@ var FormValidator = require( './form-validator' )
 var populateForm = function ( form, object ) {
     if ( form ) {
         
-        var inputs = form.find( 'input[type=text], input[type=hidden], textarea' )
+        var inputs = form.find( 'input[type=text], input[type=hidden], input[type=number], textarea' )
         
         $.each( inputs, function () {
             var input    = $( this )
