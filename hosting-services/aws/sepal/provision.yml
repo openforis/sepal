@@ -55,7 +55,7 @@
       ec2:
         key_name: "{{ region }}"
         group: Sepal
-        instance_type: t2.medium
+        instance_type: m4.large
         image: "{{ ami }}"
         region: "{{ region }}"
         zone: "{{ availability_zone }}"
