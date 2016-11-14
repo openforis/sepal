@@ -8,6 +8,8 @@ this.targetDate        = null
 this.offsetToTargetDay = null
 this.sortWeight        = null
 this.sensors           = null
+this.minScenes         = null
+this.maxScenes         = null
 
 this.reset = function () {
     this.countryIso        = null
@@ -17,6 +19,7 @@ this.reset = function () {
     this.offsetToTargetDay = 0
     this.sortWeight        = 0.5
     this.sensors           = Object.keys( require( '../sensors/sensors' ) )
+    this.minScenes         = 1
 }
 
 this.hasValidAoi = function () {

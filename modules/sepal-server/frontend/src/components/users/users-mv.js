@@ -58,6 +58,7 @@ var onShowUsersSection = function ( e ) {
     
     switch ( e.type ) {
         case Events.SECTION.USERS.SHOW_USERS_LIST:
+            loadUsers()
             View.showUsersListSection()
             break
         

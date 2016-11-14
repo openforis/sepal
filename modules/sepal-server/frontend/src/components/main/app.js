@@ -50,6 +50,7 @@ var initApp = function () {
         validateToken( token, function ( tokenStatus ) {
             if ( tokenStatus.status == 'success' ) {
                 tokenStatus.invitation = $.urlParam( 'invitation' ) === 'true'
+                history.replaceState( null, $(document).find("title").text() ,'/')
                 EventBus.dispatch( Events.LOGIN.SHOW, null, tokenStatus )
             } else
                 EventBus.dispatch( Events.LOGIN.SHOW )

@@ -22,6 +22,8 @@ var sortSlider              = null
 var sectionSensors          = null
 var offsetTargetDayBtnPlus  = null
 var offsetTargetDayBtnMinus = null
+var minScenesInput          = null
+var maxScenesInput          = null
 // form
 var btnSubmit               = null
 // form notify
@@ -35,6 +37,9 @@ var init = function ( parent ) {
     sectionSensors          = html.find( '.sensors' )
     offsetTargetDayBtnPlus  = html.find( '.offset-target-day-btn-plus' )
     offsetTargetDayBtnMinus = html.find( '.offset-target-day-btn-minus' )
+    
+    minScenesInput = html.find( 'input[name=min-scenes]' )
+    maxScenesInput = html.find( 'input[name=max-scenes]' )
     
     formNotify = html.find( '.form-notify' )
     btnSubmit  = html.find( '.btn-submit' )
@@ -97,14 +102,26 @@ var init = function ( parent ) {
         sectionSensors.append( btn )
     } )
     
+    // number of scenes
+    minScenesInput.change( function ( e ) {
+        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.MIN_SCENES_CHANGE, null, minScenesInput.val() )
+    } )
+    
+    maxScenesInput.change( function ( e ) {
+        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.MAX_SCENES_CHANGE, null, maxScenesInput.val() )
+    } )
+    
+    // submit form
     btnSubmit.click( function ( e ) {
         e.preventDefault()
         formNotify.empty().velocitySlideUp( { delay: 0, duration: 100 } )
         
-        if ( SearchParams.sensors.length > 0 ) {
-            EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES )
-        } else {
+        if ( SearchParams.sensors.length <= 0) {
             formNotify.html( 'At least one sensor must be selected' ).velocitySlideDown( { delay: 20, duration: 400 } )
+        } else if( SearchParams.maxScenes && SearchParams.minScenes > SearchParams.maxScenes){
+            formNotify.html( 'Min number of scenes cannot be greater than Max number of scenes' ).velocitySlideDown( { delay: 20, duration: 400 } )
+        } else {
+            EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES )
         }
     } )
     
@@ -164,7 +181,7 @@ var toggleVisibility = function ( options ) {
         setSelectedSensors( SearchParams.sensors )
         setSortWeight( SearchParams.sortWeight )
         setOffsetToTargetDay( SearchParams.offsetToTargetDay )
-    
+        
         firstShow = false
     }
     

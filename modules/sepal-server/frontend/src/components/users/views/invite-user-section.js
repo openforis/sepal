@@ -59,6 +59,10 @@ var submitForm = function ( e ) {
     }
 }
 
+var reset = function () {
+    FormUtils.resetForm( Form )
+}
+
 var getContainer = function () {
     return Container
 }
@@ -66,4 +70,5 @@ var getContainer = function () {
 module.exports = {
     init          : init
     , getContainer: getContainer
+    , reset       : reset
 }
