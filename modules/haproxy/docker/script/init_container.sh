@@ -1,6 +1,5 @@
 #!/bin/bash
 
-mkdir -p /data/log
 mkdir -p /etc/haproxy
 
 cp /config/haproxy.cfg /etc/haproxy/haproxy.cfg
