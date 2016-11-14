@@ -70,6 +70,17 @@ class Task {
         )
     }
 
+    String getTitle() {
+        switch (operation) {
+            case 'landsat-scene-download':
+                return "Retrieving ${params.sceneIds?.sceneIds?.size()} Landsat scenes"
+            case 'google-earth-engine-download':
+                return "Retrieving ${params?.name}.tif from Google Earth Engine"
+            default:
+                return operation
+        }
+    }
+
     enum State {
         PENDING('Initializing...'),
         ACTIVE('Executing...'),
