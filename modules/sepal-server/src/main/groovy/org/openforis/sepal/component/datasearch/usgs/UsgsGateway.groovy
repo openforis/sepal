@@ -103,7 +103,6 @@ class CsvBackedUsgsGateway implements UsgsGateway {
 
     private SceneMetaData toSceneMetaData(LandsatSensor sensor, data) {
         try {
-            // TODO: Get rid of 'LM5'
             if (isSceneIncluded(data))
                 return new SceneMetaData(
                         id: data.sceneID,
@@ -127,7 +126,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
         return data.DATA_TYPE_L1 == 'L1T' &&
                 data.dayOrNight == 'DAY' &&
                 data.cloudCoverFull.toDouble() >= 0d &&
-                prefix in ['LM1', 'LM2', 'LM3', 'LM4', 'LT4', 'LM5', 'LT5', 'LE7', 'LC8', 'LT8']
+                prefix in ['LT4', 'LT5', 'LE7', 'LC8']
     }
 
     static UsgsGateway create(File workingDir) {

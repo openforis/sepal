@@ -21,11 +21,15 @@ template /templates/sssd.conf /etc/sssd/sssd.conf 0600
 template /templates/shiny-server.conf /etc/shiny-server/shiny-server.conf 0644
 template /templates/supervisord.conf /etc/supervisor/conf.d/supervisord.conf 0600
 
+mkdir -p /home/$sandbox_user/.log/shiny
+chown -R $sandbox_user: /home/$sandbox_user/.log/shiny
+
 rm -rf /templates
 
 ln -sf /conf/ldap.conf /etc/ldap.conf
 ln -sf /conf/ldap.conf /etc/ldap/ldap.conf
 
+cp /conf/Renviron /etc/R/Renviron
 cp /etc/environment /etc/R/Renviron.site
 
 echo "$ldap_host ldap" >> /etc/hosts

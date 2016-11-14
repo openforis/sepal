@@ -3,7 +3,7 @@
 
 Vagrant.configure(2) do |config|
   config.vm.box = 'ubuntu/trusty64'
-  config.vm.synced_folder "/tmp/", '/config'
+  config.vm.synced_folder '/tmp/sepal-config', '/config'
 
   config.vm.provision 'ansible' do |ansible|
     ansible.playbook = 'provision.yml'

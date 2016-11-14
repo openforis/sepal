@@ -49,7 +49,7 @@ class RootHandler implements HttpHandler {
             endpointHandler = new HttpsRedirectHandler(httpsPort, endpointHandler)
         if (endpointConfig.cached)
             endpointHandler = new CachedHandler(endpointHandler)
-        endpointHandler = gzipHandler(endpointHandler)
+//        endpointHandler = gzipHandler(endpointHandler)
         def sessionConfig = new SessionCookieConfig(cookieName: "SEPAL-SESSIONID", secure: endpointConfig.https)
         endpointHandler = new SessionAttachmentHandler(endpointHandler, sessionManager, sessionConfig)
         endpointConfig.prefix ?

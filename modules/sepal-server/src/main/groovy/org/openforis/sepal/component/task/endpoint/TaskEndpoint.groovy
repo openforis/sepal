@@ -31,7 +31,7 @@ class TaskEndpoint {
                 def tasks = component.submit(new UserTasks(username: currentUser.username)).collect {
                     [
                             id               : it.id,
-                            name             : it.operation,
+                            name             : it.title,
                             status           : it.state,
                             statusDescription: it.statusDescription
                     ]

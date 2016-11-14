@@ -117,7 +117,6 @@ class DataSearchTest extends Specification {
         usgs.appendScenes([scene])
         updateUsgsSceneMetaData()
 
-        def cloudCoverTarget = 0.001
         when:
         def sceneAreasBySceneAreas = component.submit(new FindBestScenes(
                 sceneAreaIds: [SCENE_AREA_ID],
@@ -126,12 +125,60 @@ class DataSearchTest extends Specification {
                 toDate: new Date(),
                 targetDayOfYear: 1,
                 targetDayOfYearWeight: 0.5,
-                cloudCoverTarget: cloudCoverTarget
+                cloudCoverTarget: 0.001
         ))
 
         then:
         sceneAreasBySceneAreas.size() == 1
         sceneAreasBySceneAreas[SCENE_AREA_ID] == [scene]
+    }
+
+    def 'Given min-scenes is 2 and first scene is cloud-free, when finding best scenes, two scenes are returned'() {
+        def cloudFreeScene = sceneWithCloudCover(0)
+        def anotherScene = scene()
+        usgs.appendScenes([cloudFreeScene, anotherScene])
+        updateUsgsSceneMetaData()
+
+        when:
+        def scenesBySceneAreas = component.submit(new FindBestScenes(
+                sceneAreaIds: [SCENE_AREA_ID],
+                sensorIds: [cloudFreeScene.sensorId],
+                fromDate: new Date(0),
+                toDate: new Date(),
+                targetDayOfYear: 1,
+                targetDayOfYearWeight: 0.5,
+                cloudCoverTarget: 0.001,
+                minScenes: 2
+        ))
+
+        then:
+        scenesBySceneAreas.size() == 1
+        def scenes = scenesBySceneAreas[SCENE_AREA_ID]
+        scenes == [cloudFreeScene, anotherScene]
+    }
+
+    def 'Given max-scenes is 1 and first scene is cloud very cloudy, when finding best scenes, one scene is returned'() {
+        def cloudyScene = sceneWithCloudCover(0.8)
+        def anotherScene = sceneWithCloudCover(0.9)
+        usgs.appendScenes([cloudyScene, anotherScene])
+        updateUsgsSceneMetaData()
+
+        when:
+        def scenesBySceneAreas = component.submit(new FindBestScenes(
+                sceneAreaIds: [SCENE_AREA_ID],
+                sensorIds: [cloudyScene.sensorId],
+                fromDate: new Date(0),
+                toDate: new Date(),
+                targetDayOfYear: 1,
+                targetDayOfYearWeight: 0.5,
+                cloudCoverTarget: 0.001,
+                maxScenes: 1
+        ))
+
+        then:
+        scenesBySceneAreas.size() == 1
+        def scenes = scenesBySceneAreas[SCENE_AREA_ID]
+        scenes == [cloudyScene]
     }
 
     void updateUsgsSceneMetaData() {
@@ -159,12 +206,17 @@ class DataSearchTest extends Specification {
     }
 
     SceneMetaData scene(Date acquisitionDate = parseDateString('2016-01-01')) {
-        scene(acquisitionDate, new Date(), SCENE_AREA_ID)
+        scene(acquisitionDate, new Date(), 0.1, SCENE_AREA_ID)
+    }
+
+    SceneMetaData sceneWithCloudCover(double cloudCover) {
+        scene(parseDateString('2016-01-01'), new Date(), cloudCover, SCENE_AREA_ID)
     }
 
     SceneMetaData scene(
             Date acquisitionDate = parseDateString('2016-01-01'),
             updateTime = parseDateString('2016-01-01'),
+            double cloudCover = 0.1,
             sceneAreaId) {
         return new SceneMetaData(
                 id: UUID.randomUUID() as String,
@@ -172,7 +224,7 @@ class DataSearchTest extends Specification {
                 sceneAreaId: sceneAreaId,
                 sensorId: 'LANDSAT_8',
                 acquisitionDate: acquisitionDate,
-                cloudCover: 0.1,
+                cloudCover: cloudCover,
                 sunAzimuth: 123.4,
                 sunElevation: 12.4,
                 browseUrl: URI.create('http://some.browse/url'),

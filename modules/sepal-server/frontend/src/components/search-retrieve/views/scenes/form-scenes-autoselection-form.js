@@ -38,8 +38,8 @@ var init = function ( parent ) {
     offsetTargetDayBtnPlus  = html.find( '.offset-target-day-btn-plus' )
     offsetTargetDayBtnMinus = html.find( '.offset-target-day-btn-minus' )
     
-    minScenesInput = html.find( 'input[name=min-scenes]' )
-    maxScenesInput = html.find( 'input[name=max-scenes]' )
+    minScenesInput = html.find( 'input[name=minScenes]' )
+    maxScenesInput = html.find( 'input[name=maxScenes]' )
     
     formNotify = html.find( '.form-notify' )
     btnSubmit  = html.find( '.btn-submit' )

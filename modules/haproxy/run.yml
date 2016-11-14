@@ -23,5 +23,3 @@
     - "api-gateway:api-gateway"
     - "ssh-gateway:ssh-gateway"
     - "rsyslog:rsyslog"
-    volumes:
-    - "/data/haproxy:/data"

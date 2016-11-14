@@ -16,6 +16,8 @@ class FindBestScenes implements Query<Map<String, List<SceneMetaData>>> {
     int targetDayOfYear
     double targetDayOfYearWeight
     double cloudCoverTarget
+    int minScenes = 1
+    int maxScenes = Integer.MAX_VALUE
 }
 
 class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaData>>, FindBestScenes> {
@@ -39,7 +41,9 @@ class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaDa
                     query.targetDayOfYearWeight) { SceneMetaData scene ->
                 scenes << scene
                 cloudCover *= scene.cloudCover / 100
-                return cloudCover > query.cloudCoverTarget
+                if (query.maxScenes <= scenes.size())
+                    return false
+                return (cloudCover > query.cloudCoverTarget || scenes.size() < query.minScenes)
             }
             [(sceneAreaId): scenes]
         }

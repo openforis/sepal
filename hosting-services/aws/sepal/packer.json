@@ -1,27 +1,27 @@
 {
   "variables": {
-    "aws_access_key": "",
-    "aws_secret_key": "",
-    "source_ami": "",
+    "aws_access_key_id": "",
+    "aws_secret_access_key": "",
+    "worker_instance_ami": "",
     "region": "",
     "version": "",
     "userHome": "",
     "efs_id": "",
-    "av_zone": ""
+    "availability_zone": ""
   },
   "builders": [
     {
       "type": "amazon-ebs",
-      "access_key": "{{user `aws_access_key`}}",
-      "secret_key": "{{user `aws_secret_key`}}",
+      "access_key": "{{user `aws_access_key_id`}}",
+      "secret_key": "{{user `aws_secret_access_key`}}",
       "region": "{{user `region`}}",
-      "source_ami": "{{user `source_ami`}}",
+      "source_ami": "{{user `worker_instance_ami`}}",
       "instance_type": "m4.large",
       "ssh_username": "ubuntu",
-      "ami_name": "Sandbox({{user  `av_zone`}}) - {{user `version`}}",
+      "ami_name": "Sandbox({{user  `availability_zone`}}) - {{user `version`}}",
       "tags": {
         "Version": "{{user `version`}}",
-        "AvailabilityZone": "{{user  `av_zone`}}"
+        "AvailabilityZone": "{{user  `availability_zone`}}"
       },
       "ami_block_device_mappings": [
         {
@@ -84,7 +84,7 @@
       "type": "ansible-local",
       "playbook_file": "worker-ami.yml",
       "extra_arguments": [
-        "--extra-vars \"efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}} availability_zone={{user `av_zone`}}\""
+        "--extra-vars \"efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}} availability_zone={{user `availability_zone`}}\""
       ],
       "role_paths": [
         "../../../ansible/pull-worker-images",
