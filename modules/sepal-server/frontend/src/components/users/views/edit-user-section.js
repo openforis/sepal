@@ -6,6 +6,7 @@ var Events        = require( '../../event/events' )
 var FormValidator = require( '../../form/form-validator' )
 var FormUtils     = require( '../../form/form-utils' )
 var Loader        = require( '../../loader/loader' )
+var UserMV        = require( '../../user/user-mv' )
 
 var Container        = null
 var Form             = null
@@ -53,7 +54,7 @@ var initForm = function () {
     var onBtnStatusClick = function ( e ) {
         var btn    = $( this )
         var status = btn.val()
-    
+        
         Form.find( '[name=status]' ).closest( '.form-group' ).removeClass( 'error' )
         
         Form.find( '.btn-status' ).removeClass( 'active' )
@@ -89,8 +90,10 @@ var submitForm = function ( e ) {
     valid     = (valid) ? FormValidator.validateString( Form.find( '[name=status]' ), 'Invalid Status', FormNotify ) : false
     if ( valid ) {
         // submit
-        var data = Form.serialize()
-    
+        var data        = Form.serialize()
+        var userId      = parseInt( Form.find( '[name=id]' ).val() )
+        var currentUser = UserMV.getCurrentUser()
+        
         var params = {
             url         : '/user/details'
             , data      : data
@@ -98,6 +101,11 @@ var submitForm = function ( e ) {
                 Loader.show()
             }
             , success   : function ( response ) {
+                
+                if ( userId === currentUser.id ) {
+                    EventBus.dispatch( Events.USER.RELOAD_USER_DETAILS )
+                }
+                
                 Loader.hide( { delay: 200 } )
                 
                 FormValidator.showSuccess( Form.find( '.form-notify' ), "Information saved" )
@@ -106,9 +114,9 @@ var submitForm = function ( e ) {
                     EventBus.dispatch( Events.SECTION.USERS.SHOW_USERS_LIST )
                 }, 1600 )
             }
-        
+            
         }
-    
+        
         EventBus.dispatch( Events.AJAX.POST, this, params )
     }
 }

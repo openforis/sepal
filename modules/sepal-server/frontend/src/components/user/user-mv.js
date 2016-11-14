@@ -73,6 +73,15 @@ var onPasswordChanged = function ( e ) {
     View.showEditUserDetailsForm()
 }
 
+var reloadUserDetails = function ( e ) {
+    var params = {
+        url      : '/user/current'
+        , success: function ( response ) {
+            userDetailsLoaded( null, response )
+        }
+    }
+    EventBus.dispatch( Events.AJAX.GET, null, params )
+}
 
 // section events
 EventBus.addEventListener( Events.SECTION.SHOW, show )
@@ -88,6 +97,8 @@ EventBus.addEventListener( Events.USER.PASSWORD_CHANGED, onPasswordChanged )
 // sandbox edit events
 EventBus.addEventListener( Events.SECTION.USER.REMOVE_SESSION, removeSession )
 
+// reload user details
+EventBus.addEventListener( Events.USER.RELOAD_USER_DETAILS, reloadUserDetails )
 
 module.exports = {
     getCurrentUser: getCurrentUser
