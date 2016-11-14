@@ -126,8 +126,9 @@ var Events = {
     }
     
     , USER: {
-        USER_DETAILS_LOADED: "user.user-details-loaded"
-        , PASSWORD_CHANGED : "user.password-changed"
+        USER_DETAILS_LOADED  : "user.user-details-loaded"
+        , RELOAD_USER_DETAILS: "user.reload-user-details"
+        , PASSWORD_CHANGED   : "user.password-changed"
     }
     
 }
