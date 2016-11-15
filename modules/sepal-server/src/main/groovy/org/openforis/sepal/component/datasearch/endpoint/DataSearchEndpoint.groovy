@@ -84,7 +84,9 @@ class DataSearchEndpoint {
                         toDate: DateTime.parseDateString(params.required('toDate', String)),
                         targetDayOfYear: params.required('targetDayOfYear', int),
                         targetDayOfYearWeight: params.required('targetDayOfYearWeight', double),
-                        cloudCoverTarget: params.required('cloudCoverTarget', double))
+                        cloudCoverTarget: params.required('cloudCoverTarget', double),
+                        minScenes: toInt(params.minScenes as String, 1),
+                        maxScenes: toInt(params.maxScenes as String, Integer.MAX_VALUE))
                 def scenesByArea = queryDispatcher.submit(query)
                 def data = scenesByArea.collectEntries { sceneAreaId, scenes ->
                     [(sceneAreaId): scenes.collect { sceneData(it, query.targetDayOfYear) }]
@@ -133,5 +135,15 @@ class DataSearchEndpoint {
 
     List polygonData(SceneArea sceneArea) {
         sceneArea.polygon.path.collect { [it.lat, it.lng] }
+    }
+
+    int toInt(String value, int defaultInt) {
+        if (!value)
+            return defaultInt
+        try {
+            return Integer.parseInt(value)
+        } catch (Exception ignore) {
+            return defaultInt
+        }
     }
 }
