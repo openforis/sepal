@@ -1,5 +1,5 @@
 - name: Configure Sepal instance
-  hosts: "tag_Type_Sepal:&tag_Environment_{{ deploy_environment }}"
+  hosts: "tag_Type_Sepal:&tag_Environment_{{ deploy_environment }}:&{{ region }}"
   user: ubuntu
   become: yes
   gather_facts: true
