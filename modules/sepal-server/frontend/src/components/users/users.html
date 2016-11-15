@@ -167,14 +167,14 @@
     <!-- =========================== -->
     <div class="col-sm-12  p-t-1 overflow-y-auto edit-user-section">
         <div class="row">
-            <div class="col-sm-8 offset-sm-2">
+            <div class="col-sm-10 offset-sm-1">
 
-                <h3 class="width100 text-align-center">Edit User</h3>
+                <!--<h3 class="width100 text-align-center">Edit User</h3>-->
 
                 <form class="form-theme" >
                     <input type="hidden" name="id">
 
-                    <div class="row form-group m-t-3">
+                    <div class="row form-group">
                         <label class="form-label col-sm-4">Username</label>
                         <div class="col-sm-8">
                             <input type="text" class="form-control" name="username"
@@ -223,10 +223,41 @@
                     </div>
 
                     <div class="row form-group m-t-1">
+                        <label class="form-label col-sm-4">Monthly Budget / Quota</label>
+                        <div class="col-sm-8">
+                            <div class="row budget_quota_labels" >
+                                <div class="col-sm-4 text-align-center">
+                                    Instance budget (USD)
+                                </div>
+                                <div class="col-sm-4 text-align-center">
+                                    Storage budget (USD)
+                                </div>
+                                <div class="col-sm-4 text-align-center">
+                                    Storage quota (GB)
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4 text-align-center">
+                                    <input type="number" class="form-control" name="monthlyInstanceBudget"
+                                           data-type="string" data-error-message="Monthly instance budget cannot be empty">
+                                </div>
+                                <div class="col-sm-4 text-align-center">
+                                    <input type="number" class="form-control" name="monthlyStorageBudget"
+                                           data-type="string" data-error-message="Monthly storage budget cannot be empty">
+                                </div>
+                                <div class="col-sm-4 text-align-center">
+                                    <input type="number" class="form-control" name="storageQuota"
+                                           data-type="string" data-error-message="Storage quota cannot be empty">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row form-group m-t-1">
 
                         <div class="col-sm-12 text-align-center form-notify form-error" />
 
-                        <div class="col-sm-12 m-t-1 text-align-center">
+                        <div class="col-sm-12 text-align-center">
                             <button type="button" class="btn btn-base btn-cancel round icon p-y-1 m-r-3">
                                 <i class="fa fa-times-circle" aria-hidden="true"></i>
                                 Cancel
