@@ -11,7 +11,7 @@ import static org.openforis.sepal.util.DateTime.toDateString
 class CsvBackedUsgsGatewayTest extends Specification {
     def workingDir = File.createTempDir()
     def sceneId = 'LC80390222013076EDC00'
-    def sceneId2 = 'LT80390222013076EDC00'
+    def sceneId2 = 'LE70390222013076EDC00'
 
     def cleanup() {
         workingDir.deleteDir()
