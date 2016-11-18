@@ -13,6 +13,7 @@ import org.openforis.sepal.component.budget.command.CheckUserStorageUse
 import org.openforis.sepal.component.budget.command.DetermineUserStorageUsage
 import org.openforis.sepal.component.budget.command.UpdateBudget
 import org.openforis.sepal.component.budget.query.FindUsersExceedingBudget
+import org.openforis.sepal.component.budget.query.GenerateSpendingReport
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.workersession.api.InstanceType
@@ -148,5 +149,9 @@ abstract class AbstractBudgetTest extends Specification {
             clock.forward((hours * 60d * 60d) as long, TimeUnit.SECONDS)
             determineStorageUsage()
         }
+    }
+
+    Map<String, UserSpendingReport> generateSpendingReport() {
+        component.submit(new GenerateSpendingReport())
     }
 }

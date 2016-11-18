@@ -65,6 +65,13 @@
   },
   {
     "prefix": "true",
+    "path": "/budget/",
+    "target": "http://sepal:1025/api/budget",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
     "path": "/api/",
     "target": "http://sepal:1025/api/",
     "https": "true",

@@ -1,16 +1,16 @@
 package org.openforis.sepal.component.budget
 
+import groovymvc.Controller
 import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.budget.adapter.JdbcBudgetRepository
 import org.openforis.sepal.component.budget.api.HostingService
 import org.openforis.sepal.component.budget.command.*
+import org.openforis.sepal.component.budget.endpoint.BudgetEndpoint
 import org.openforis.sepal.component.budget.internal.InstanceSpendingService
 import org.openforis.sepal.component.budget.internal.StorageUseService
-import org.openforis.sepal.component.budget.query.FindUsersExceedingBudget
-import org.openforis.sepal.component.budget.query.FindUsersExceedingBudgetHandler
-import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
-import org.openforis.sepal.component.budget.query.GenerateUserSpendingReportHandler
+import org.openforis.sepal.component.budget.query.*
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
+import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
@@ -25,7 +25,7 @@ import javax.sql.DataSource
 
 import static java.util.concurrent.TimeUnit.MINUTES
 
-class BudgetComponent extends DataSourceBackedComponent {
+class BudgetComponent extends DataSourceBackedComponent implements EndpointRegistry {
 
     static BudgetComponent create(HostingServiceAdapter hostingServiceAdapter, DataSource dataSource) {
         def config = new BudgetConfig()
@@ -56,6 +56,8 @@ class BudgetComponent extends DataSourceBackedComponent {
         command(UpdateBudget, new UpdateBudgetHandler(budgetRepository))
         command(DetermineUserStorageUsage, new DetermineUserStorageUsageHandler(storageUseService, userRepository))
 
+        query(GenerateSpendingReport,
+                new GenerateSpendingReportHandler(instanceSpendingService, storageUseService, budgetRepository, userRepository))
         query(GenerateUserSpendingReport,
                 new GenerateUserSpendingReportHandler(instanceSpendingService, storageUseService, budgetRepository))
         query(FindUsersExceedingBudget, new FindUsersExceedingBudgetHandler(userRepository, instanceSpendingChecker, storageUseChecker))
@@ -63,6 +65,10 @@ class BudgetComponent extends DataSourceBackedComponent {
 
     void onStart() {
         schedule(1, MINUTES, new DetermineUserStorageUsage())
+    }
+
+    void registerEndpointsWith(Controller controller) {
+        new BudgetEndpoint(this).registerWith(controller)
     }
 
     @Data
