@@ -30,6 +30,7 @@ class SandboxSessionEndpoint {
 
     void registerWith(Controller controller) {
         controller.with {
+
             get('/sandbox/report') {
                 currentUser(requestContext).generateReport()
             }

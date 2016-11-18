@@ -43,5 +43,4 @@ class GenerateUserSpendingReportHandler implements QueryHandler<UserSpendingRepo
                 storageQuota: budget.storageQuota
         )
     }
-
 }
