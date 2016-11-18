@@ -51,7 +51,8 @@ class Main {
                 dataSearchComponent,
                 workerSessionComponent,
                 filesComponent,
-                taskComponent)
+                taskComponent,
+                budgetComponent)
         start new ResourceServer(config.webAppPort, '/api', endpoints)
         addShutdownHook { stop() }
     }
