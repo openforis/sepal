@@ -113,7 +113,7 @@ var validateForm = function ( form ) {
     
     resetFormErrors( form, errorContainer )
     
-    var inputs    = form.find( 'input[type=text], input[type=hidden], input[type=password], textarea' )
+    var inputs    = form.find( 'input[type=text], input[type=hidden], input[type=number], input[type=password], textarea' )
     var validForm = true
     $.each( inputs, function () {
         var input    = $( this )

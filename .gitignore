@@ -24,3 +24,6 @@ target
 
 #Vagrant
 .vagrant
+
+#Ansible
+deploy.retry

@@ -267,6 +267,7 @@ class MockServer extends AbstractMvcFilter {
                 println "Updated details of user $username to {name: $name, email: $email, organization: $organization}"
 
                 response.contentType = 'application/json'
+                println(params)
                 send toJson(someUser())
             }
 
@@ -349,6 +350,41 @@ class MockServer extends AbstractMvcFilter {
                 response.contentType = 'application/json'
                 authenticator.users.remove(username)
                 send toJson([status: 'success', message: 'User deleted'])
+            }
+
+            get('/api/data/google-maps-api-key') {
+                response.contentType = 'application/json'
+                send toJson(apiKey: '')
+            }
+
+            post('/budget') {
+                response.contentType = 'application/json'
+                def username = params.required('username', String)
+                params.monthlyInstanceBudget
+                params.monthlyStorageBudget
+                params.storageQuota
+                println(params)
+
+                send toJson(status: 'success')
+            }
+
+            get('/budget/report') {
+                response.contentType = 'application/json'
+                send toJson(
+                        'demo': [
+                                monthlyInstanceBudget  : 1d,
+                                monthlyInstanceSpending: 2d,
+                                monthlyStorageBudget   : 3d,
+                                monthlyStorageSpending : 4d,
+                                storageQuota           : 5d,
+                                storageUsed            : 6d],
+                        'demo2': [
+                                monthlyInstanceBudget  : 1d,
+                                monthlyInstanceSpending: 2d,
+                                monthlyStorageBudget   : 3d,
+                                monthlyStorageSpending : 4d,
+                                storageQuota           : 5d,
+                                storageUsed            : 6d])
             }
         }
         return controller

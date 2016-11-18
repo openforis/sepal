@@ -89,23 +89,11 @@ var submitForm = function ( e ) {
     var valid = FormValidator.validateForm( Form )
     valid     = (valid) ? FormValidator.validateString( Form.find( '[name=status]' ), 'Invalid Status', FormNotify ) : false
     if ( valid ) {
-        // submit
-        var data        = Form.serialize()
-        var userId      = parseInt( Form.find( '[name=id]' ).val() )
-        var currentUser = UserMV.getCurrentUser()
         
-        var params = {
-            url         : '/user/details'
-            , data      : data
-            , beforeSend: function () {
-                Loader.show()
-            }
-            , success   : function ( response ) {
-                
-                if ( userId === currentUser.id ) {
-                    EventBus.dispatch( Events.USER.RELOAD_USER_DETAILS )
-                }
-                
+        var userDetailsSaved = false
+        var budgetSaved      = false
+        var checkResponses   = function () {
+            if ( userDetailsSaved && budgetSaved ) {
                 Loader.hide( { delay: 200 } )
                 
                 FormValidator.showSuccess( Form.find( '.form-notify' ), "Information saved" )
@@ -114,10 +102,45 @@ var submitForm = function ( e ) {
                     EventBus.dispatch( Events.SECTION.USERS.SHOW_USERS_LIST )
                 }, 1600 )
             }
-            
         }
+    
+        Loader.show()
         
+        // submit
+        var data        = Form.serialize()
+        var userId      = parseInt( Form.find( '[name=id]' ).val() )
+        var currentUser = UserMV.getCurrentUser()
+        
+        var params = {
+            url         : '/user/details'
+            , data      : data
+            , success   : function ( response ) {
+                if ( userId === currentUser.id ) {
+                    EventBus.dispatch( Events.USER.RELOAD_USER_DETAILS )
+                }
+                userDetailsSaved = true
+                checkResponses()
+            }
+        }
         EventBus.dispatch( Events.AJAX.POST, this, params )
+        
+        
+        var budgetParams = {
+            url      : '/budget'
+            , data   : {
+                username             : Form.find( '[name=username]' ).val(),
+                monthlyInstanceBudget: Form.find( '[name=monthlyInstanceBudget]' ).val(),
+                monthlyStorageBudget : Form.find( '[name=monthlyStorageBudget]' ).val(),
+                storageQuota         : Form.find( '[name=storageQuota]' ).val()
+            }
+            , success: function(){
+                budgetSaved = true
+                checkResponses()
+            }
+        }
+        EventBus.dispatch( Events.AJAX.POST, this, budgetParams )
+        
+        
     }
 }
 
