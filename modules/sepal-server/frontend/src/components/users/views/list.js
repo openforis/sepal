@@ -95,6 +95,15 @@ var getUserRow = function ( user ) {
     }
     row.find( '.status' ).html( status )
     
+    if ( user.sandboxReport ) {
+        row.find( '.monthlyInstanceBudget' ).html( user.sandboxReport.monthlyInstanceBudget )
+        row.find( '.monthlyInstanceSpending' ).html( user.sandboxReport.monthlyInstanceSpending )
+        row.find( '.monthlyStorageBudget' ).html( user.sandboxReport.monthlyStorageBudget )
+        row.find( '.monthlyStorageSpending' ).html( user.sandboxReport.monthlyStorageSpending )
+        row.find( '.storageQuota' ).html( user.sandboxReport.storageQuota )
+        row.find( '.storageUsed' ).html( user.sandboxReport.storageUsed )
+    }
+    
     row.click( function ( e ) {
         e.preventDefault()
         

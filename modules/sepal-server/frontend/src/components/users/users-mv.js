@@ -33,15 +33,36 @@ var updateView = function () {
 }
 
 var loadUsers = function () {
-    var params = {
-        url      : '/user/list'
-        , success: function ( response ) {
-            Model.setUsers( response )
+    var users     = false
+    var budgets    = false
+    
+    var checkResponses = function () {
+        if( users && budgets ){
+            Model.setUsers( users , budgets )
             updateView()
         }
     }
     
-    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+    var userParams = {
+        url      : '/user/list'
+        , success: function ( response ) {
+            users = response
+            checkResponses()
+        }
+    }
+    EventBus.dispatch( Events.AJAX.GET, null, userParams )
+    
+    
+    var budgetParams = {
+        url      : '/budget/report'
+        , success: function ( response ) {
+            budgets = response
+            checkResponses()
+        }
+    }
+    EventBus.dispatch( Events.AJAX.REQUEST, null, budgetParams )
+    
+    
 }
 
 var onUsersListFilterChange = function ( e, value ) {

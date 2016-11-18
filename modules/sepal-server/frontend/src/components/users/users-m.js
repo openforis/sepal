@@ -5,14 +5,22 @@
 var UserM = require( '../user/user-m' )
 
 var users        = null
+var userBudgets  = null
 var selectedUser = null
 
-var setUsers = function ( usersDetails ) {
-    users = []
+var setUsers = function ( usersDetails, budgets ) {
+    users       = []
+    userBudgets = budgets
+    
     $.each( usersDetails, function ( i, userDetail ) {
         var user = UserM( userDetail )
+        var userBudget = userBudgets[ user.username ]
+        user.setUserSandboxReport( userBudget )
         users.push( user )
     } )
+    
+    console.log(users)
+    
 }
 
 var filterUsers = function ( searchString ) {

@@ -19,6 +19,7 @@ var init = function ( container ) {
 
 var setUsers = function ( users ) {
     List.setUsers( users )
+    ListSummary.setUsers( users )
 }
 
 var selectUser = function ( user ) {

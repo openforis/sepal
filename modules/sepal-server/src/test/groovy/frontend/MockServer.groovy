@@ -384,7 +384,14 @@ class MockServer extends AbstractMvcFilter {
                                 monthlyStorageBudget   : 3d,
                                 monthlyStorageSpending : 4d,
                                 storageQuota           : 5d,
-                                storageUsed            : 6d])
+                                storageUsed            : 6d],
+                        'demo3': [
+                                monthlyInstanceBudget  : 2d,
+                                monthlyInstanceSpending: 4d,
+                                monthlyStorageBudget   : 6d,
+                                monthlyStorageSpending : 7d,
+                                storageQuota           : 9d,
+                                storageUsed            : 18d])
             }
         }
         return controller
