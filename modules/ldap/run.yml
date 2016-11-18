@@ -7,6 +7,7 @@
 - copy: src="{{ config_home }}/certificates/ldap-key.pem" dest=/data/ldap/certificates/ldap-key.pem
 - copy: src="{{ config_home }}/certificates/ldap-ca.crt.pem" dest=/data/ldap/certificates/ldap-ca.crt.pem
 
+- file: path="/data/ldap/database/alock" state=absent
 - file: path="/data/ldap/module_initialized" state=absent
 
 - name: "ldap | Start container"
