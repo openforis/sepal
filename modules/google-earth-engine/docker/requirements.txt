@@ -1,5 +1,5 @@
-earthengine-api>=0.1.93
+earthengine-api>=0.1.99
 Flask>=0.11.1
-google-api-python-client>=1.5.2
+google-api-python-client>=1.5.5
 pyCrypto>=2.6.1
 python-dateutil>=2.5.3
