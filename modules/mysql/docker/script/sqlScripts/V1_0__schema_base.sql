@@ -92,8 +92,6 @@ CREATE TABLE default_user_budget (
   storage_quota    INT NOT NULL
 );
 
-INSERT INTO default_user_budget (monthly_instance, monthly_storage, storage_quota) VALUES (111, 222, 333);
-
 CREATE TABLE user_monthly_storage (
   username     VARCHAR(255) NOT NULL,
   year         INT          NOT NULL,
