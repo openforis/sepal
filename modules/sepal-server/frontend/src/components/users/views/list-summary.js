@@ -44,12 +44,12 @@ var setUsers = function ( users ) {
         }
     } )
     
-    $monthlyInstanceBudget.stop().hide().html( monthlyInstanceBudgetTotal ).fadeIn()
-    $monthlyInstanceSpending.stop().hide().html( monthlyInstanceSpendingTotal ).fadeIn()
-    $monthlyStorageBudget.stop().hide().html( monthlyStorageBudgetTotal ).fadeIn()
-    $monthlyStorageSpending.stop().hide().html( monthlyStorageSpendingTotal ).fadeIn()
-    $storageQuota.stop().hide().html( storageQuotaTotal ).fadeIn()
-    $storageUsed.stop().hide().html( storageUsedTotal ).fadeIn()
+    $monthlyInstanceBudget.stop().hide().html( monthlyInstanceBudgetTotal.toFixed(0) ).fadeIn()
+    $monthlyInstanceSpending.stop().hide().html( monthlyInstanceSpendingTotal.toFixed(0) ).fadeIn()
+    $monthlyStorageBudget.stop().hide().html( monthlyStorageBudgetTotal.toFixed(0) ).fadeIn()
+    $monthlyStorageSpending.stop().hide().html( monthlyStorageSpendingTotal.toFixed(0) ).fadeIn()
+    $storageQuota.stop().hide().html( storageQuotaTotal.toFixed(0) ).fadeIn()
+    $storageUsed.stop().hide().html( storageUsedTotal.toFixed(0) ).fadeIn()
 }
 
 module.exports = {
