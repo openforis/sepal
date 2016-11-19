@@ -18,7 +18,7 @@ fi
 /opt/flyway/flyway migrate \
     -url=jdbc:mysql://${INSTANCE_HOSTNAME}:3306/${MYSQL_DATABASE} \
     -user=root \
-    -validateOnMigrate=false
+    -validateOnMigrate=false \
     -password=${MYSQL_ROOT_PASSWORD}
 
 touch /data/module_initialized
