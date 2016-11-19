@@ -15,7 +15,7 @@ class SepalConfiguration {
     public static final String JDBC_CONN_USER_PARAMETER = 'jdbc.conn.user'
     public static final String JDBC_CONN_PWD_PARAMETER = 'jdbc.conn.pwd'
     public static final String JDBC_DRIVER_PARAMETER = 'jdbc.driver'
-    public static final String SANBOX_PROXY_SESSION_TIMEOUT = 'sandbox.webproxy_session_timeout'
+    public static final String SANDBOX_PROXY_SESSION_TIMEOUT = 'sandbox.webproxy_session_timeout'
 
     Properties properties
     DataSource dataSource
@@ -56,7 +56,7 @@ class SepalConfiguration {
     }
 
     int getProxySessionTimeout() {
-        Integer.parseInt(getValue(SANBOX_PROXY_SESSION_TIMEOUT))
+        Integer.parseInt(getValue(SANDBOX_PROXY_SESSION_TIMEOUT))
     }
 
     String getJdbcDriver() {
