@@ -37,13 +37,13 @@ class UpdateTaskProgressHandler implements AfterCommitCommandHandler<Task, Updat
 
         def updatedTask = task.update(command.state, command.statusDescription)
         taskRepository.update(updatedTask)
-
         return updatedTask
     }
 
     void afterCommit(UpdateTaskProgress command, Task updatedTask) {
         if (!updatedTask || !(updatedTask.failed || updatedTask.completed || updatedTask.canceled)) {
             LOG.debug("No task failed, completed, or was canceled, so no need to close the session: $command")
+            sessionManager.heartbeat(updatedTask.sessionId)
             return
         }
 
