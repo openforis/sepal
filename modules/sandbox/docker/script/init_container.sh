@@ -21,8 +21,10 @@ template /templates/sssd.conf /etc/sssd/sssd.conf 0600
 template /templates/shiny-server.conf /etc/shiny-server/shiny-server.conf 0644
 template /templates/supervisord.conf /etc/supervisor/conf.d/supervisord.conf 0600
 
+sandbox_user_id=`stat -c '%u' /home/$sandbox_user`
+home_group_id=`stat -c '%g' /home/$sandbox_user`
 mkdir -p /home/$sandbox_user/.log/shiny
-chown -R $sandbox_user: /home/$sandbox_user/.log/shiny
+chown -R $sandbox_user_id:$home_group_id /home/$sandbox_user/.log
 
 rm -rf /templates
 
