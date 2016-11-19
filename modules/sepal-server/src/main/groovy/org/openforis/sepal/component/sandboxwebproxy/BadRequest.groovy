@@ -1,7 +1,10 @@
 package org.openforis.sepal.component.sandboxwebproxy
 
 class BadRequest extends RuntimeException {
-    BadRequest(String message) {
+    final int status
+
+    BadRequest(String message, int status) {
         super(message)
+        this.status = status
     }
 }

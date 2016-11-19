@@ -21,7 +21,7 @@ class BadRequestCatchingHandler implements HttpHandler {
             next.handleRequest(exchange)
         } catch (BadRequest e) {
             LOG.info("Bad Request arrived: $e.message")
-            exchange.statusCode = 400
+            exchange.statusCode = e.status
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/html");
             def sender = exchange.getResponseSender()
             sender.send(e.message)

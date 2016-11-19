@@ -75,7 +75,7 @@ class SandboxWebProxy {
         new BadRequestCatchingHandler(
                 new SessionAttachmentHandler(proxyHandler,
                         httpSessionManager,
-                        new SessionCookieConfig(cookieName: "SANDBOX-SESSIONID", secure: true)))
+                        new SessionCookieConfig(cookieName: "SANDBOX-SESSIONID", secure: false)))
     }
 
     void start() {
@@ -90,10 +90,6 @@ class SandboxWebProxy {
     void stop() {
         executor.shutdown()
         server.stop()
-    }
-
-    static String username(Session session) {
-        session.getAttribute(USERNAME_KEY) as String
     }
 
     private static String extractEndpoint(HttpServerExchange exchange) {
@@ -170,23 +166,23 @@ class SandboxWebProxy {
         private static String determineUsername(HttpServerExchange exchange) {
             def user = exchange.requestHeaders.getFirst(USERNAME_KEY)
             if (!user)
-                throw new BadRequest("Missing header: $USERNAME_KEY")
+                throw new BadRequest("Missing header: $USERNAME_KEY", 400)
             def username = null
             try {
                 username = new JsonSlurper(type: JsonParserType.LAX).parseText(user).username
             } catch (Exception ignore) {
             }
             if (!username)
-                throw new BadRequest("Malformed header: $USERNAME_KEY")
+                throw new BadRequest("Malformed header: $USERNAME_KEY", 400)
             return username
         }
 
         private String determineEndpoint(HttpServerExchange exchange) {
             Object endpoint = extractEndpoint(exchange)
             if (!endpoint)
-                throw new BadRequest('Malformed request:' + exchange)
+                throw new BadRequest('Endpoint must be specified: ' + exchange, 404)
             if (!portByEndpoint.containsKey(endpoint))
-                throw new BadRequest("Non-existing sepal-endpoint: ${endpoint}")
+                throw new BadRequest("Non-existing sepal-endpoint: ${endpoint}", 404)
             return endpoint
         }
 
@@ -209,7 +205,7 @@ class SandboxWebProxy {
         }
 
         private SandboxSession waitForSessionToActivate(SandboxSession sandboxSession) {
-            while (!sandboxSession.active) {
+            while (!sandboxSession.active && !sandboxSession.closed) {
                 Thread.sleep(5000)
                 sandboxSession = sandboxSessionManager.heartbeat(sandboxSession.id, sandboxSession.username)
             }

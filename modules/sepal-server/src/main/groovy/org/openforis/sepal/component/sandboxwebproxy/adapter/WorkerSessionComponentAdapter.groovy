@@ -54,7 +54,8 @@ class WorkerSessionComponentAdapter implements SandboxSessionManager {
                 id: session.id,
                 username: session.username,
                 host: session.instance.host,
-                active: session.active
+                active: session.active,
+                closed: session.closed
         )
     }
 

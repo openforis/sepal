@@ -8,4 +8,5 @@ class SandboxSession {
     String username
     String host
     boolean active
+    boolean closed
 }
