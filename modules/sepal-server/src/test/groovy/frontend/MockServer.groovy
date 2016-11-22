@@ -393,6 +393,34 @@ class MockServer extends AbstractMvcFilter {
                                 storageQuota           : 9d,
                                 storageUsed            : 18d])
             }
+
+
+            get('/apps') {
+                send '''
+                    [
+                      {
+                        "path": "/sandbox/shiny/accuracy-assessment/aa_design",
+                        "label": "Accuracy Assessment Design"
+                      },
+                      {
+                        "path": "/sandbox/shiny/accuracy-assessment/aa_analysis",
+                        "label": "Accuracy Assessment Analysis"
+                      },
+                      {
+                        "path": "/sandbox/shiny/geo-processing",
+                        "label": "GEO Processing"
+                      },
+                      {
+                        "path": "/sandbox/shiny/visualize",
+                        "label": "Visualize"
+                      },
+                      {
+                        "path": "/sandbox/shiny/osk",
+                        "label": "SAR Toolkit"
+                      }
+                    ]
+                    ]'''
+            }
         }
         return controller
     }
