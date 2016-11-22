@@ -1,5 +1,6 @@
 package org.openforis.sepal
 
+import org.openforis.sepal.component.apps.AppsComponent
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.files.FilesComponent
@@ -43,6 +44,7 @@ class Main {
         )
         start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
         def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir))
+        def appsComponent = new AppsComponent(config.appsFile)
 
         def gateOneAuthEndpoint = new GateOneAuthEndpoint(config.gateOnePublicKey, config.gateOnePrivateKey)
         def endpoints = new Endpoints(
@@ -52,7 +54,8 @@ class Main {
                 workerSessionComponent,
                 filesComponent,
                 taskComponent,
-                budgetComponent)
+                budgetComponent,
+                appsComponent)
         start new ResourceServer(config.webAppPort, '/api', endpoints)
         addShutdownHook { stop() }
     }
