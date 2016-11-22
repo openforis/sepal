@@ -1,0 +1,21 @@
+---
+- name: "Install rsyslog"
+  apt: name="rsyslog"
+
+- name: "Install rsyslog-gnutls"
+  apt: name="rsyslog-gnutls"
+
+- name: Create rsyslog.d
+  file:
+    path: "/etc/rsyslog.d"
+    state: directory
+
+- name: Copy rsyslog.conf
+  template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+
+- name: Make sure logstash.conf is not present
+  file: path=/etc/rsyslog.d/10-logstash.conf state=absent
+#- name: Copy logstash.conf
+#  template: src="logstash.conf" dest=/etc/rsyslog.d/10-logstash.conf
+
+- service: name=rsyslog state=restarted

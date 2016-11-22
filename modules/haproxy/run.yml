@@ -22,4 +22,5 @@
     links:
     - "api-gateway:api-gateway"
     - "ssh-gateway:ssh-gateway"
-    - "rsyslog:rsyslog"
+    extra_hosts:
+        syslog_host: "{{ syslog_host }}"

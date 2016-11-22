@@ -1,6 +1,6 @@
 <configuration>
     <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
-        <syslogHost>rsyslog</syslogHost>
+        <syslogHost>syslog_host</syslogHost>
         <facility>local0</facility>
         <suffixPattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</suffixPattern>
     </appender>

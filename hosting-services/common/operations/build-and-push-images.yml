@@ -9,7 +9,6 @@
 
   roles:
     - { role: build-module, module: java }
-    - { role: build-module, module: rsyslog }
     - { role: build-module, module: ldap-backup }
     - { role: build-module, module: ldap }
     - { role: build-module, module: haproxy }

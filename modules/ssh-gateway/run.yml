@@ -22,7 +22,8 @@
     links:
     - "sepal:sepal"
     - "ldap:ldap"
-    - "rsyslog:rsyslog"
+    extra_hosts:
+        syslog_host: "{{ syslog_host }}"
     volumes:
     - "/data/ssh-gateway:/data"
     - "/data/user/home:/home" # Users home directories with ssh keys

@@ -21,6 +21,8 @@
         sepal_host: "{{ ec2_ip_address }}"
         ldap_host: "{{ ec2_private_ip_address }}"
         elk_host: "{{ elk_host }}"
+        syslog_host: "172.17.0.1"
+        syslog_address: "tcp://172.17.0.1:514"
 
     - file: path="/data/docker/storage/devicemapper/metadata" state=directory
     - file: path="/data/docker/storage/tmp" state=directory
@@ -33,10 +35,9 @@
       unattended_origins_patterns:
         - 'origin=Ubuntu,archive=${distro_codename}-security'
         - 'o=Ubuntu,a=${distro_codename}-updates'
-
+    - { role: rsyslog }
     - { role: docker, users: ['ubuntu'] }
     - { role: aws-mount-efs }
-    - { role: run-module, module: rsyslog }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
