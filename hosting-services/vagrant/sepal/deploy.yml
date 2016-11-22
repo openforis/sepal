@@ -41,6 +41,7 @@
         - 'o=Ubuntu,a=${distro_codename}-updates'
 
     - { role: docker, users: ['ubuntu', 'vagrant'] }
+    - { role: build-module, module: java }
     - { role: build-module, module: elk }
     - { role: build-module, module: ldap }
     - { role: build-module, module: ldap-backup }

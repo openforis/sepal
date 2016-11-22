@@ -1,4 +1,4 @@
-FROM ubuntu:trusty
+FROM openforis/java
 MAINTAINER OpenForis
 EXPOSE 80
 
