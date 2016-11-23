@@ -28,7 +28,7 @@ class AuthenticatingHandler implements HttpHandler {
     }
 
     void handleRequest(HttpServerExchange exchange) throws Exception {
-        def user = hasAuthorizationHeader(exchange) ? authenticate(exchange) : userFromSession(exchange)
+        def user = userFromSession(exchange) ?: authenticate(exchange)
         if (user) {
             exchange.requestHeaders.add(HttpString.tryFromString('sepal-user'), toJson(user))
             next.handleRequest(exchange)
@@ -56,10 +56,6 @@ class AuthenticatingHandler implements HttpHandler {
         return session
     }
 
-    private boolean hasAuthorizationHeader(HttpServerExchange exchange) {
-        exchange.requestHeaders.getFirst(Headers.AUTHORIZATION)?.toLowerCase()?.startsWith('basic ')
-    }
-
     private void challenge(HttpServerExchange exchange) {
         if (!exchange.requestHeaders.contains(NO_CHALLENGE_HEADER)) {
             exchange.responseHeaders.add(Headers.WWW_AUTHENTICATE, $/$Headers.BASIC realm="Sepal"/$)
@@ -70,6 +66,9 @@ class AuthenticatingHandler implements HttpHandler {
     }
 
     private Map authenticate(HttpServerExchange exchange) {
+        def hasAuthenticationHeader = exchange.requestHeaders.getFirst(Headers.AUTHORIZATION)?.toLowerCase()?.startsWith('basic ')
+        if (!hasAuthenticationHeader)
+            return null
         String[] usernamePassword = basicAuthUsernamePassword(exchange)
         if (usernamePassword.length != 2) {
             LOG.info("Malformed authentication request")
