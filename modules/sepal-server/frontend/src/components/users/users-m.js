@@ -18,9 +18,6 @@ var setUsers = function ( usersDetails, budgets ) {
         user.setUserSandboxReport( userBudget )
         users.push( user )
     } )
-    
-    console.log(users)
-    
 }
 
 var filterUsers = function ( searchString ) {

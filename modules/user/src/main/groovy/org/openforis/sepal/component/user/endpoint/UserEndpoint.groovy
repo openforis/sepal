@@ -136,7 +136,7 @@ class UserEndpoint {
 
             post('/current/details') {
                 response.contentType = 'application/json'
-                def command = new UpdateUserDetails()
+                def command = new UpdateUserDetails(usernameToUpdate: currentUser.username)
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)

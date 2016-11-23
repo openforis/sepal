@@ -69,6 +69,9 @@ var initForm = function () {
 var updateForm = function () {
     FormValidator.resetFormErrors( Form )
     FormUtils.populateForm( Form, selectedUser )
+    Form.find( '[name=monthlyInstanceBudget]' ).val( selectedUser.sandboxReport.monthlyInstanceBudget )
+    Form.find( '[name=monthlyStorageBudget]' ).val( selectedUser.sandboxReport.monthlyStorageBudget )
+    Form.find( '[name=storageQuota]' ).val( selectedUser.sandboxReport.storageQuota )
     
     if ( selectedUser ) {
         var status = selectedUser.status
@@ -103,7 +106,7 @@ var submitForm = function ( e ) {
                 }, 1600 )
             }
         }
-    
+        
         Loader.show()
         
         // submit
@@ -112,9 +115,9 @@ var submitForm = function ( e ) {
         var currentUser = UserMV.getCurrentUser()
         
         var params = {
-            url         : '/user/details'
-            , data      : data
-            , success   : function ( response ) {
+            url      : '/user/details'
+            , data   : data
+            , success: function ( response ) {
                 if ( userId === currentUser.id ) {
                     EventBus.dispatch( Events.USER.RELOAD_USER_DETAILS )
                 }
@@ -133,7 +136,7 @@ var submitForm = function ( e ) {
                 monthlyStorageBudget : Form.find( '[name=monthlyStorageBudget]' ).val(),
                 storageQuota         : Form.find( '[name=storageQuota]' ).val()
             }
-            , success: function(){
+            , success: function () {
                 budgetSaved = true
                 checkResponses()
             }
