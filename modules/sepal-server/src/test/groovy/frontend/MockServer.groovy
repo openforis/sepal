@@ -396,6 +396,7 @@ class MockServer extends AbstractMvcFilter {
 
 
             get('/apps') {
+                response.contentType = 'application/json'
                 send '''
                     [
                       {
