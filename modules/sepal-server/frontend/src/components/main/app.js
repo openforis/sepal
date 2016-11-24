@@ -28,6 +28,9 @@ var checkUser = function () {
         , success: function ( response ) {
             EventBus.dispatch( Events.APP.USER_LOGGED_IN, null, response )
         }
+        , error  : function ( xhr, ajaxOptions, thrownError ) {
+            EventBus.dispatch( Events.LOGIN.SHOW )
+        }
     }
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
@@ -50,7 +53,7 @@ var initApp = function () {
         validateToken( token, function ( tokenStatus ) {
             if ( tokenStatus.status == 'success' ) {
                 tokenStatus.invitation = $.urlParam( 'invitation' ) === 'true'
-                history.replaceState( null, $(document).find("title").text() ,'/')
+                history.replaceState( null, $( document ).find( "title" ).text(), '/' )
                 EventBus.dispatch( Events.LOGIN.SHOW, null, tokenStatus )
             } else
                 EventBus.dispatch( Events.LOGIN.SHOW )
@@ -68,26 +71,19 @@ var initApp = function () {
 
 initApp()
 
-var registeredElements = []
-var onRegisterElement  = function ( e, id ) {
-    registeredElements.push( id )
-}
+// var registeredElements = []
+// var onRegisterElement  = function ( e, id ) {
+//     registeredElements.push( id )
+// }
 
 var onAppDestroy = function () {
-    Loader.show()
-    $.each( registeredElements, function ( i, id ) {
-        $( '#' + id ).remove()
-    } )
-    registeredElements = []
-    
-    EventBus.dispatch( Events.LOGIN.SHOW )
-    
-    Loader.hide( { delay: 1000 } )
+    location.reload()
 }
 
 // app events
 EventBus.addEventListener( Events.APP.DESTROY, onAppDestroy )
-EventBus.addEventListener( Events.APP.REGISTER_ELEMENT, onRegisterElement )
+EventBus.addEventListener( Events.USER.LOGGED_OUT, onAppDestroy )
+// EventBus.addEventListener( Events.APP.REGISTER_ELEMENT, onRegisterElement )
 
 // event handlers
 EventBus.addEventListener( Events.APP.USER_LOGGED_IN, userLoggedIn )
