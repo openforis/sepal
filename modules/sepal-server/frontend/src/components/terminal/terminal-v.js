@@ -3,7 +3,6 @@
  */
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
-// var Sepal    = require( '../main/sepal' )
 var UserMV   = require( '../user/user-mv' )
 
 require( './gateone' )
@@ -35,7 +34,7 @@ function initTerminal( response ) {
     purgeUserPrefs()
     
     var createGateOneTerminal = function () {
-        if ( terminalId )
+        if ( terminalId || GateOne.Terminal == null )
             return
         var newTerminal = function () {
             terminalId = GateOne.Terminal.newTerminal( randomTerminalId() )
@@ -55,13 +54,13 @@ function initTerminal( response ) {
         newTerminal()
     }
     
+    GateOne.Events.on( "go:js_loaded", createGateOneTerminal )
+    
     var gateOnePrefs = {
         url     : 'https://' + window.location.host + '/gateone',
         auth    : response.authObject,
         embedded: true
     }
-    
-    GateOne.Events.on( "go:js_loaded", createGateOneTerminal )
     GateOne.init( gateOnePrefs )
 }
 
@@ -89,4 +88,5 @@ EventBus.addEventListener( Events.SECTION.SHOWN, function ( e, section ) {
 
 module.exports = {
     init: init
+    
 }
