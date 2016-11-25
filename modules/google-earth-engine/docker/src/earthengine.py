@@ -33,7 +33,7 @@ class EarthEngineStatus(object):
         logging.debug('Starting polling status of Google Earth Engine export task: ' + self.task_id)
         try:
             while self.running:
-                status = self._gee_status()
+                status = self._task_status()
                 self.listener.update_status(status)
                 if status['state'] != 'ACTIVE':
                     self.stop()
@@ -46,21 +46,17 @@ class EarthEngineStatus(object):
                 'description': 'Export to Google Drive failed'})
             self.stop()
 
-    def _task(self):
-        tasks = Task.list()
-        matching_tasks = list(task for task in tasks if task.id == self.task_id)
-        return matching_tasks[0] if matching_tasks else None
-
-    def _gee_status(self):
-        task = self._task()
-        if task:
-            return self._to_status(task.status())
+    def _task_status(self):
+        task = Task(self.task_id).status()
+        if task['state'] not in (Task.State.UNSUBMITTED, Task.State.FAILED):
+            return self._to_status(task)
         else:
+            logger.exception('Export to Google Drive failed. Task: ' + task)
             return {'state': 'FAILED',
-                    'description': 'Export to Google Drive failed'}
+                    'description': 'Export to Google Drive failed: '}
 
-    def _to_status(self, gee_status):
-        state = gee_status['state']
+    def _to_status(self, task):
+        state = task['state']
         if state == Task.State.FAILED:
             return {'state': 'FAILED',
                     'description': state['error_message']}
@@ -71,7 +67,7 @@ class EarthEngineStatus(object):
             return {'state': 'ACTIVE',
                     'description': 'Downloading from Google Drive...',
                     'step': 'EXPORTED',
-                    'path': gee_status['description'] + '.tif'}
+                    'path': task['description'] + '.tif'}
         elif state == Task.State.READY:
             return {'state': 'ACTIVE',
                     'description': 'Export to Google Drive pending...',
