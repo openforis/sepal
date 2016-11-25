@@ -15,7 +15,6 @@ var Events = {
     , APP: {
         LOAD              : 'app.load'
         , DESTROY         : 'app.destroy'
-        , REGISTER_ELEMENT: 'app.register-element'
         , USER_LOGGED_IN  : 'app.user-logged-in'
     }
     

@@ -13,7 +13,6 @@ var Logo = null
 var init = function () {
     var template = require( './footer.html' )
     html         = $( template( {} ) )
-    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
     
     var footer = $( '.app' ).find( 'footer' )
     if ( footer.children().length <= 0 ) {

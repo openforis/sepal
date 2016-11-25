@@ -24,10 +24,8 @@ var closeBtn       = null
 var currentSection = null
 
 var init = function () {
-    var template       = require( './app-section.html' )
-    html = $( template( {} ) )
-    
-    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
+    var template = require( './app-section.html' )
+    html         = $( template( {} ) )
     
     $( '.app' ).append( html )
     

@@ -7,10 +7,10 @@ var Events   = require( '../event/events' )
 
 var userLoggedIn = function ( e, user ) {
     EventBus.dispatch( Events.USER.USER_DETAILS_LOADED, null, user )
-    loadApp()
+    load()
 }
 
-var loadApp = function () {
+var load = function () {
     Loader.show()
     setTimeout( function () {
         
@@ -46,7 +46,7 @@ var validateToken = function ( token, callback ) {
     EventBus.dispatch( Events.AJAX.POST, null, params )
 }
 
-var initApp = function () {
+var init = function () {
     var token = $.urlParam( 'token' )
     
     if ( token ) {
@@ -69,21 +69,15 @@ var initApp = function () {
     
 }
 
-initApp()
-
-// var registeredElements = []
-// var onRegisterElement  = function ( e, id ) {
-//     registeredElements.push( id )
-// }
-
-var onAppDestroy = function () {
+var destroy = function () {
     location.reload()
 }
 
+init()
+
 // app events
-EventBus.addEventListener( Events.APP.DESTROY, onAppDestroy )
-EventBus.addEventListener( Events.USER.LOGGED_OUT, onAppDestroy )
-// EventBus.addEventListener( Events.APP.REGISTER_ELEMENT, onRegisterElement )
+EventBus.addEventListener( Events.APP.DESTROY, destroy )
+EventBus.addEventListener( Events.USER.LOGGED_OUT, destroy )
 
 // event handlers
 EventBus.addEventListener( Events.APP.USER_LOGGED_IN, userLoggedIn )

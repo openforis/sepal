@@ -32,7 +32,6 @@ var apiKey   = null
 var show = function () {
     var template = require( './map.html' )
     html         = $( template( {} ) )
-    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
     
     $( '.app' ).append( html )
     load()

@@ -16,8 +16,6 @@ var init = function () {
     html         = $( template( {} ) )
     var id       = html.attr( 'id' )
     
-    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, id )
-    
     var app = $( '.app' )
     if ( app.find( '#' + id ).children().length <= 0 ) {
         

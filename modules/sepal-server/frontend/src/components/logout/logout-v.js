@@ -15,7 +15,6 @@ var init = function () {
     html         = $( template( {} ) )
     
     var id = html.attr( 'id' )
-    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, id )
     
     btnLogout = html.find( '.btn-logout' )
     

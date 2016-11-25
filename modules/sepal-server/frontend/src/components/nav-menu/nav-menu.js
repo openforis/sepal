@@ -27,7 +27,6 @@ var show = function () {
     btnUser      = html.find( 'a.user' )
     btnUsers     = html.find( 'a.users' )
     btnTasks     = html.find( 'a.tasks' )
-    EventBus.dispatch( Events.APP.REGISTER_ELEMENT, null, html.attr( 'id' ) )
     
     $( '.app' ).append( html )
     $( '#nav-menu' ).removeClass( 'collapsed' )
