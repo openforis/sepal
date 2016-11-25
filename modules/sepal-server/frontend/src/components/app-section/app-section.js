@@ -58,7 +58,7 @@ var show = function ( e, type ) {
     if ( isSectionClosed ) {
         
         section
-            .velocity( { left: '10%' }
+            .velocity( { left: '7.5%' }
                 , {
                     duration  : 1000
                     , easing  : 'swing'

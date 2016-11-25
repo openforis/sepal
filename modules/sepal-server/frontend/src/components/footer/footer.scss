@@ -5,6 +5,7 @@
   left: 0;
   display: none;
   height: 7.5%;
+  z-index: 1;
 
   border-top: 2px solid rgba(255, 255, 255, 0.1);
   background-color: rgba(28, 28, 28, 0.99);
@@ -35,7 +36,8 @@
 
   .site-footer-inner {
     height: inherit;
-
+    position: relative;
+    padding: 0 5%;
     /* copyright */
     //.site-footer-copyright {
     //  -webkit-transform: translateY(-50%);
@@ -85,6 +87,30 @@
       }
 
     }
+
+    > div {
+      opacity: .8;
+      position: relative;
+      top: 22%;
+
+      &.dashboard-links {
+        .btn {
+          font-size: 1.2rem;
+          top: -10%;
+          width: 2.75rem;
+          height: 2.75rem;
+          padding: 0;
+        }
+      }
+      //.tag-tasks {
+      //  position: absolute;
+      //  top: -.3rem;
+      //  left: -.01rem;
+      //  background-color: rgba(57, 132, 57, 0.4);
+      //}
+    }
+
+
 
     a , li {
       -webkit-transition: none;

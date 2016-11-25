@@ -67,6 +67,10 @@ var submit = function ( e ) {
                     hide()
                     Loader.hide( { delay: 200 } )
                     EventBus.dispatch( Events.SECTION.TASK_MANAGER.CHECK_STATUS )
+                    
+                    setTimeout( function (  ) {
+                        EventBus.dispatch(Events.ALERT.SHOW_INFO , null , 'The mosaic will be downloaded shortly. Check the task manager')
+                    } , 200 )
                 }
             }
             EventBus.dispatch( Events.AJAX.POST, null, params )

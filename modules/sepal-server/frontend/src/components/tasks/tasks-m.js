@@ -27,6 +27,16 @@ var isActive = function () {
     return running
 }
 
+var activeCount = function () {
+    var count = 0
+    $.each( tasks, function ( i, task ) {
+        if ( task.status === STATUS.ACTIVE ) {
+            count++
+        }
+    } )
+    return count
+}
+
 // var getTaskIndex = function ( taskId ) {
 //     var idx = -1
 //     $.each( tasks, function ( i, task ) {
@@ -52,14 +62,15 @@ var STATUS = {
     , PENDING  : 'PENDING'
     , COMPLETED: 'COMPLETED'
     , FAILED   : 'FAILED'
-    , CANCELED   : 'CANCELED'
+    , CANCELED : 'CANCELED'
 }
 
 module.exports = {
-    setTasks    : setTasks
-    , getTasks  : getTasks
-    , isEmpty   : isEmpty
-    , isActive  : isActive
+    setTasks     : setTasks
+    , getTasks   : getTasks
+    , isEmpty    : isEmpty
+    , isActive   : isActive
+    , activeCount: activeCount
     // , removeTask: removeTask
-    , STATUS    : STATUS
+    , STATUS     : STATUS
 }

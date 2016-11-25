@@ -13,9 +13,9 @@ var Events = {
     }
     
     , APP: {
-        LOAD              : 'app.load'
-        , DESTROY         : 'app.destroy'
-        , USER_LOGGED_IN  : 'app.user-logged-in'
+        LOAD            : 'app.load'
+        , DESTROY       : 'app.destroy'
+        , USER_LOGGED_IN: 'app.user-logged-in'
     }
     
     , LOGIN: {
@@ -30,7 +30,8 @@ var Events = {
         , REDUCE : 'section.reduce'
         
         , NAV_MENU: {
-            LOADED: 'section.nav-menu.loaded'
+            LOADED    : 'section.nav-menu.loaded'
+            , COLLAPSE: 'section.nav-menu-collapse'
         }
         
         , SEARCH: {
@@ -82,6 +83,7 @@ var Events = {
             , CANCEL_TASK : 'section.task-manager.cancel-task'
             , EXECUTE_TASK: 'section.task-manager.execute-task'
             , CHECK_STATUS: 'section.task-manager.check-status'
+            , UPDATED     : 'section.task-manager.updated'
         }
         
         , USER : {
@@ -129,6 +131,10 @@ var Events = {
         , RELOAD_USER_DETAILS: "user.reload-user-details"
         , PASSWORD_CHANGED   : "user.password-changed"
         , LOGGED_OUT         : "user.logged-out"
+    }
+    
+    , ALERT: {
+        SHOW_INFO: "alert.show-info"
     }
     
 }

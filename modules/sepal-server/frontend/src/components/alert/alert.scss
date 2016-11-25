@@ -1,0 +1,14 @@
+#alert {
+
+  position: absolute;
+  width: 40%;
+  left: 30%;
+  top: 25%;
+  border:none;
+  z-index: 5;
+
+  &.alert-info {
+    background-color: rgba(47, 55, 69, 0.76);
+    color: inherit !important;
+  }
+}

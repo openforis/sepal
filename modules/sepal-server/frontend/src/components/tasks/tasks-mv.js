@@ -4,20 +4,20 @@
 var EventBus  = require( '../event/event-bus' )
 var Events    = require( '../event/events' )
 var Loader    = require( '../loader/loader' )
-var Animation = require( '../animation/animation' )
-var NavMenu   = require( '../nav-menu/nav-menu' )
+// var Animation = require( '../animation/animation' )
+// var NavMenu   = require( '../nav-menu/nav-menu' )
 var Model     = require( './tasks-m' )
 var View      = require( './tasks-v' )
 
 var jobTimer      = null
-var navMenuButton = null
+// var navMenuButton = null
 
 var init = function ( e ) {
     View.init()
     
-    navMenuButton = NavMenu.btnTasks()
+    // navMenuButton = NavMenu.btnTasks()
     
-    stopJob()
+    startJob()
 }
 
 var stopJob = function ( e ) {
@@ -44,27 +44,33 @@ var requestTasks = function ( callback ) {
         , success: function ( tasks ) {
             Model.setTasks( tasks )
             
-            if ( Model.isEmpty() ) {
-                if ( navMenuButton.is( ":visible" ) ) {
-                    Animation.animateOut( navMenuButton, function () {
-                        Animation.removeAnimation( navMenuButton )
-                    } )
-                }
-                navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
-            } else {
-                if ( !navMenuButton.is( ":visible" ) ) {
-                    Animation.animateIn( navMenuButton )
-                }
-                
-                // navMenuButton.fadeIn()
-                if ( Model.isActive() ) {
-                    navMenuButton.find( 'i' ).addClass( 'fa-spin' )
-                } else {
-                    navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
-                }
-                
+            // if ( Model.isEmpty() ) {
+            // if ( navMenuButton.is( ":visible" ) ) {
+            //     Animation.animateOut( navMenuButton, function () {
+            //         Animation.removeAnimation( navMenuButton )
+            //     } )
+            // }
+            // navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
+            // } else {
+            // if ( !navMenuButton.is( ":visible" ) ) {
+            //     Animation.animateIn( navMenuButton )
+            // }
+            
+            // navMenuButton.fadeIn()
+            // if ( Model.isActive() ) {
+            //     navMenuButton.find( 'i' ).addClass( 'fa-spin' )
+            // } else {
+            //     navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
+            // }
+            
+            // View.setTasks( Model.getTasks() )
+            // }
+            
+            if ( !Model.isEmpty() ) {
                 View.setTasks( Model.getTasks() )
             }
+            
+            EventBus.dispatch( Events.SECTION.TASK_MANAGER.UPDATED )
             
             if ( callback )
                 callback()
@@ -131,7 +137,7 @@ var checkStatus = function () {
 }
 
 EventBus.addEventListener( Events.APP.LOAD, init )
-EventBus.addEventListener( Events.SECTION.SHOW, startJob )
+// EventBus.addEventListener( Events.SECTION.SHOW, startJob )
 EventBus.addEventListener( Events.APP.DESTROY, stopJob )
 
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.CANCEL_TASK, taskAction )

@@ -9,41 +9,35 @@ var Animation = require( '../animation/animation' )
 
 var html        = null
 // ui components
+var NavMenu     = null
 var btnSearch   = null
 var btnBrowse   = null
 var btnProcess  = null
 var btnTerminal = null
-var btnUser     = null
-var btnUsers    = null
-var btnTasks    = null
 
 var show = function () {
     var template = require( './nav-menu.html' )
     html         = $( template( {} ) )
-    btnSearch    = html.find( 'a.bg-search' )
-    btnBrowse    = html.find( 'a.bg-browse' )
-    btnProcess   = html.find( 'a.bg-process' )
-    btnTerminal  = html.find( 'a.bg-terminal' )
-    btnUser      = html.find( 'a.user' )
-    btnUsers     = html.find( 'a.users' )
-    btnTasks     = html.find( 'a.tasks' )
-    
     $( '.app' ).append( html )
-    $( '#nav-menu' ).removeClass( 'collapsed' )
+    
+    btnSearch   = html.find( '.btn.bg-search' )
+    btnBrowse   = html.find( '.btn.bg-browse' )
+    btnProcess  = html.find( '.btn.bg-process' )
+    btnTerminal = html.find( '.btn.bg-terminal' )
+    
+    NavMenu = $( '#nav-menu' )
+    NavMenu.removeClass( 'collapsed' )
     
     var showSection = function ( e ) {
         var btn = $( this )
-        collapseMenu( btn )
+        
+        EventBus.dispatch( Events.SECTION.NAV_MENU.COLLAPSE, null, btn )
         EventBus.dispatch( Events.SECTION.SHOW, null, btn.data( 'section-target' ) )
     }
     
     html.find( 'a' ).click( showSection )
     
     // init style
-    btnTasks.hide( 0 )
-    btnUser.hide( 0 )
-    btnUsers.hide( 0 )
-    
     btnSearch.addClass( 'expanded' ).empty().append( '<i class="fa fa-globe" aria-hidden="true"></i> Search' )
     btnBrowse.addClass( 'expanded' ).empty().append( '<i class="fa fa-folder-open" aria-hidden="true"></i> Browse' )
     btnProcess.addClass( 'expanded' ).empty().append( '<i class="fa fa-wrench" aria-hidden="true"></i> Process' )
@@ -55,19 +49,17 @@ var show = function () {
     Animation.animateIn( btnTerminal )
 }
 
-
-var collapseMenu = function ( button ) {
-    if ( button.hasClass( 'expanded' ) ) {
+var collapsing = false
+var collapse   = function ( e, button ) {
+    
+    if ( !(NavMenu.hasClass( 'collapsed' ) || collapsing ) ) {
+        collapsing = true
         
-        // Animation.removeAnimation( btnSearch )
-        // Animation.removeAnimation( btnBrowse )
-        // Animation.removeAnimation( btnProcess )
-        // Animation.removeAnimation( btnTerminal )
-        
+        button = ( button ) ? button : btnSearch
         Animation.animateOut( button )
         
         var delay = 100
-        $.each( button.siblings().not( '.tasks' ).not( '.user' ).not( '.users' ), function ( i, btnSibling ) {
+        $.each( button.siblings(), function ( i, btnSibling ) {
             
             delay += 150
             btnSibling = $( btnSibling )
@@ -80,7 +72,7 @@ var collapseMenu = function ( button ) {
         
         delay += 900
         setTimeout( function () {
-            $( '#nav-menu' ).addClass( 'collapsed' )
+            NavMenu.addClass( 'collapsed' )
             
             btnSearch.empty().removeClass( 'expanded' ).append( '<i class="fa fa-globe" aria-hidden="true"></i>' )
             btnBrowse.empty().removeClass( 'expanded' ).append( '<i class="fa fa-folder-open" aria-hidden="true"></i>' )
@@ -88,31 +80,16 @@ var collapseMenu = function ( button ) {
             btnTerminal.empty().removeClass( 'expanded' ).append( '<i class="fa fa-terminal" aria-hidden="true"></i>' )
             
             setTimeout( function () {
+                
                 Animation.animateIn( btnSearch )
                 Animation.animateIn( btnBrowse )
                 Animation.animateIn( btnProcess )
-                Animation.animateIn( btnTerminal )
-                
-                btnUser.css( 'display', 'block' )
-                Animation.animateIn( btnUser, function () {
+                Animation.animateIn( btnTerminal , function () {
                     EventBus.dispatch( Events.SECTION.NAV_MENU.LOADED )
+                    collapsing = false
                 } )
-                
+    
             }, 250 )
-            
-            
-            // $( '#sepal-logo' ).velocity( { 'left': '42%' }, {
-            // $( '#sepal-logo' ).velocity( { 'top': '0%', 'left': '0%', 'opacity': '0.7' }, {
-            //     duration: 1500,
-            //     easing  : 'swing',
-            //     delay   : 1500,
-            //     queue   : false
-            // } )
-            
-            // $.each( $( "#sepal-logo" ).find( 'div' ), function ( i, e ) {
-            //     var elem = $( this )
-            //     elem.velocity( "fadeIn", { display: "inline-block", delay: i * 1000, easing: 'swing' } )
-            // } )
             
         }, delay )
         
@@ -120,6 +97,7 @@ var collapseMenu = function ( button ) {
 }
 
 EventBus.addEventListener( Events.APP.LOAD, show )
+EventBus.addEventListener( Events.SECTION.NAV_MENU.COLLAPSE, collapse )
 
 module.exports = {
     btnTasks  : function () {

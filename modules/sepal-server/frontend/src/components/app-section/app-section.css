@@ -1,13 +1,8 @@
 .app-section {
     width: 85%;
-    left: 10%;
-    /*height: 75% !important;*/
-    /*top: 12.5%;*/
-    /* border-radius: 3rem; */
-    /*padding: 3rem;*/
-    /* border: 2px solid white; */
-    height: 85% !important;
-    top: 5%;
+    left: 7.5%;
+    height: 88%!important;
+    top: 3%;
     z-index: 3;
 }
 
