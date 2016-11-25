@@ -12,7 +12,6 @@ var bands = [
     , { data: 'temp', value: 'Temperature' }
     , { data: 'date', value: 'Date of pixel in days' }
     , { data: 'days', value: 'Days from target day' }
-    , { data: 'cluster', value: 'Cluster' }
 ]
 
 module.exports = bands
