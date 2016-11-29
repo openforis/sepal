@@ -1,82 +1,47 @@
-<div class="row" id="tasks">
-    <div class="col-sm-12 tasks-container">
-
-        <div class="row row--header m-b-15">
-            <!--<div class="col-sm-1 text-align-left"></div>-->
-            <!--<div class="col-sm-6 text-align-left">Task</div>-->
-            <!--<div class="col-sm-4 text-align-center status">Status</div>-->
-        </div>
-
+<div class="row height100" id="tasks">
+    <div class="col-sm-12 height100 text-align-center tasks-container">
     </div>
 
+    <div class="task-wrapper" style="display: none">
+        <div class="task width100 height100 overflow-hidden">
+            <a class="btn btn-base circle btn-remove">
+                <i class="fa fa-times-circle" aria-hidden="true"></i>
+            </a>
 
-    <div class="task" style="display: none">
-        <a class="btn btn-base circle btn-remove">
-            <i class="fa fa-times-circle" aria-hidden="true"></i>
-        </a>
+            <div class="row row-header height90">
+                <div class="col-sm-12 height100 overflow-hidden">
+                    <div class="row row-title">
+                        <div class="col-sm-9 name"></div>
+                        <div class="col-sm-3 op-button text-align-right">
+                            <button class="btn btn-base btn-cancel">
+                                <i class="fa fa-stop" aria-hidden="true"></i>
+                            </button>
+                            <button class="btn btn-base btn-execute">
+                                <i class="fa fa-play" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!--<div class="width100 height40 name"></div>-->
+                    <div class="width100 height60 description overflow-y-auto"></div>
+                </div>
 
-        <div class="row row-header">
-            <div class="col-sm-9">
-                <div class="width100 name"></div>
-                <div class="width100 description"></div>
+                <!--<div class="col-sm-3 op-button">-->
+                    <!--<button class="btn btn-base btn-cancel">-->
+                        <!--<i class="fa fa-stop" aria-hidden="true"></i>-->
+                    <!--</button>-->
+                    <!--<button class="btn btn-base btn-execute">-->
+                        <!--<i class="fa fa-play" aria-hidden="true"></i>-->
+                    <!--</button>-->
+                <!--</div>-->
             </div>
 
-            <div class="col-sm-3 op-button">
-                <button class="btn btn-base btn-cancel">
-                    <i class="fa fa-stop" aria-hidden="true"></i>
-                </button>
-                <button class="btn btn-base btn-execute">
-                    <i class="fa fa-play" aria-hidden="true"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="row row-progress">
-            <div class="col-sm-10 offset-sm-1">
-                <div class="progress">
-                    <div class="indeterminate"></div>
+            <div class="row row-progress height10">
+                <div class="col-sm-10 offset-sm-1">
+                    <div class="progress">
+                        <div class="indeterminate"></div>
+                    </div>
                 </div>
             </div>
         </div>
-        <!--<div class="row row-status">-->
-        <!--<div class="col-sm-8 col-sm-offset-2 status">-->
-        <!--Status : <span class="status-text"/>-->
-        <!--</div>-->
-        <!--</div>-->
     </div>
-
-    <!--<div class="row task m-b-10" style="display: none"-->
-    <!--data-animation-in="bounceInLeft"-->
-    <!--data-animation-out="bounceOutLeft"-->
-    <!--data-animation-in-delay="100"-->
-    <!--data-animation-out-delay="50">-->
-    <!--<div class="col-sm-1 text-align-left remove">-->
-    <!--<a class="btn btn-base circle btn-remove">-->
-    <!--<i class="fa fa-times" aria-hidden="true"></i>-->
-    <!--</a>-->
-    <!--</div>-->
-    <!--<div class="col-sm-5 text-align-left name"></div>-->
-    <!--<div class="col-sm-4 text-align-center status">-->
-
-    <!--<div class="status-container">-->
-    <!--<a class="btn btn-base square">-->
-    <!--<i class="fa fa-stop" aria-hidden="true"></i>-->
-    <!--</a>-->
-    <!--<div class="shaft-load task-loader">-->
-    <!--<div class="shaft1"></div>-->
-    <!--<div class="shaft2"></div>-->
-    <!--<div class="shaft3"></div>-->
-    <!--<div class="shaft4"></div>-->
-    <!--<div class="shaft5"></div>-->
-    <!--<div class="shaft6"></div>-->
-    <!--<div class="shaft7"></div>-->
-    <!--<div class="shaft8"></div>-->
-    <!--<div class="shaft9"></div>-->
-    <!--<div class="shaft10"></div>-->
-    <!--</div>-->
-    <!--</div>-->
-
-    <!--</div>-->
-    <!--</div>-->
-
 </div>

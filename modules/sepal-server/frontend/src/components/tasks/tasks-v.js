@@ -20,7 +20,7 @@ var init = function () {
     var template = require( './tasks.html' )
     html         = $( template( {} ) )
     
-    rowTask   = html.find( '.task' )
+    rowTask   = html.find( '.task-wrapper' )
     rowHeader = html.find( '.row.row-header' )
     container = html.find( '.tasks-container' )
     

@@ -41,6 +41,9 @@ var initEventHandlers = function () {
     btnRetrieveScenes.click( function ( e ) {
         e.preventDefault()
         EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES )
+        setTimeout( function (  ) {
+            EventBus.dispatch(Events.ALERT.SHOW_INFO , null , 'The download will start shortly.<br/>You can monitor the progress in the task manager')
+        } , 100 )
     } )
     
     

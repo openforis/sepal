@@ -61,16 +61,22 @@ var submit = function ( e ) {
                 url         : '/api/data/mosaic/retrieve'
                 , data      : data
                 , beforeSend: function () {
-                    Loader.show()
+                    // Loader.show()
+        
+                    setTimeout( function (  ) {
+                        EventBus.dispatch(Events.ALERT.SHOW_INFO , null , 'The download will start shortly.<br/>You can monitor the progress in the task manager')
+                    } , 100 )
+                    
+                    hide()
                 }
                 , success   : function ( e ) {
-                    hide()
-                    Loader.hide( { delay: 200 } )
+                    
+                    // Loader.hide( { delay: 200 } )
                     EventBus.dispatch( Events.SECTION.TASK_MANAGER.CHECK_STATUS )
                     
-                    setTimeout( function (  ) {
-                        EventBus.dispatch(Events.ALERT.SHOW_INFO , null , 'The mosaic will be downloaded shortly. Check the task manager')
-                    } , 200 )
+                    // setTimeout( function (  ) {
+                    //     EventBus.dispatch(Events.ALERT.SHOW_INFO , null , 'The download will start shortly.<br/>You can monitor the progress in the task manager')
+                    // } , 100 )
                 }
             }
             EventBus.dispatch( Events.AJAX.POST, null, params )

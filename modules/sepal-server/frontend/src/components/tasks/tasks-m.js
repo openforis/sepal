@@ -30,7 +30,7 @@ var isActive = function () {
 var activeCount = function () {
     var count = 0
     $.each( tasks, function ( i, task ) {
-        if ( task.status === STATUS.ACTIVE ) {
+        if ( task.status === STATUS.ACTIVE || task.status === STATUS.PENDING ) {
             count++
         }
     } )

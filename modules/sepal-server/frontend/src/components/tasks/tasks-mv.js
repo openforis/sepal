@@ -17,7 +17,8 @@ var init = function ( e ) {
     
     // navMenuButton = NavMenu.btnTasks()
     
-    startJob()
+    // startJob()
+    requestTasks()
 }
 
 var stopJob = function ( e ) {
@@ -31,9 +32,9 @@ var stopJob = function ( e ) {
 var startJob = function () {
     if ( !jobTimer ) {
         jobTimer = -1
-        setTimeout( function () {
-            jobTimer = setInterval( requestTasks, 5000 )
-        }, 2000 )
+        // setTimeout( function () {
+        jobTimer = setInterval( requestTasks, 5000 )
+        // }, 2000 )
         
     }
 }
