@@ -60,6 +60,7 @@ var Events = {
             , RETRIEVE_SCENES: 'section.search-retrieve.retrieve-scenes'
             , PREVIEW_MOSAIC : 'section.search-retrieve.preview-mosaic'
             , RETRIEVE_MOSAIC: 'section.search-retrieve.retrieve-mosaic'
+            , COLLAPSE_VIEW  : 'section.search-retrieve.collapse-view'
         }
         
         , BROWSE: {

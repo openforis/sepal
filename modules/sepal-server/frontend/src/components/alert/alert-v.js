@@ -24,7 +24,12 @@ var showInfo = function ( msg ) {
 var showMessage = function ( msg, type ) {
     $message.html( msg )
     $( 'body' ).append( html )
-    html.removeClass( 'alert-success alert-info alert-warning alert-danger' ).addClass( type ).alert()
+    html.removeClass( 'alert-success alert-info alert-warning alert-danger fade in' ).addClass( type ).alert().addClass('fade in')
+    
+    setTimeout(function (  ) {
+        // html.fadeOut()
+        html.alert( 'close' )
+    } , 3500 )
 }
 
 module.exports = {

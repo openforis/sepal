@@ -1,24 +1,19 @@
 /**
  * @author Mino Togna
  */
-var EventBus  = require( '../event/event-bus' )
-var Events    = require( '../event/events' )
-var Loader    = require( '../loader/loader' )
-// var Animation = require( '../animation/animation' )
-// var NavMenu   = require( '../nav-menu/nav-menu' )
-var Model     = require( './tasks-m' )
-var View      = require( './tasks-v' )
+var EventBus = require( '../event/event-bus' )
+var Events   = require( '../event/events' )
+var Loader   = require( '../loader/loader' )
 
-var jobTimer      = null
-// var navMenuButton = null
+var Model = require( './tasks-m' )
+var View  = require( './tasks-v' )
+
+var jobTimer = null
 
 var init = function ( e ) {
     View.init()
     
-    // navMenuButton = NavMenu.btnTasks()
-    
-    // startJob()
-    requestTasks()
+    startJob()
 }
 
 var stopJob = function ( e ) {
@@ -32,10 +27,7 @@ var stopJob = function ( e ) {
 var startJob = function () {
     if ( !jobTimer ) {
         jobTimer = -1
-        // setTimeout( function () {
         jobTimer = setInterval( requestTasks, 5000 )
-        // }, 2000 )
-        
     }
 }
 
@@ -44,28 +36,6 @@ var requestTasks = function ( callback ) {
         url      : '/api/tasks'
         , success: function ( tasks ) {
             Model.setTasks( tasks )
-            
-            // if ( Model.isEmpty() ) {
-            // if ( navMenuButton.is( ":visible" ) ) {
-            //     Animation.animateOut( navMenuButton, function () {
-            //         Animation.removeAnimation( navMenuButton )
-            //     } )
-            // }
-            // navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
-            // } else {
-            // if ( !navMenuButton.is( ":visible" ) ) {
-            //     Animation.animateIn( navMenuButton )
-            // }
-            
-            // navMenuButton.fadeIn()
-            // if ( Model.isActive() ) {
-            //     navMenuButton.find( 'i' ).addClass( 'fa-spin' )
-            // } else {
-            //     navMenuButton.find( 'i' ).removeClass( 'fa-spin' )
-            // }
-            
-            // View.setTasks( Model.getTasks() )
-            // }
             
             if ( !Model.isEmpty() ) {
                 View.setTasks( Model.getTasks() )
