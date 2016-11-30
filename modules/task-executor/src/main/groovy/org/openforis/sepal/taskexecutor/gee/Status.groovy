@@ -21,6 +21,6 @@ class Status {
     }
 
     enum State {
-        ACTIVE, COMPLETED, FAILED
+        ACTIVE, COMPLETED, CANCELED, FAILED
     }
 }
