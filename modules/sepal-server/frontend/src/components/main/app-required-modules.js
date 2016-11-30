@@ -20,6 +20,7 @@ require( '../theme/section.css' )
 require( '../jquery-plugins/jquery-plugins' )
 
 // application components
+require( '../alert/alert-mv' )
 require( '../user/user-mv' )
 require( '../login/login-mv' )
 require( '../nav-menu/nav-menu' )
@@ -28,4 +29,4 @@ require( '../app-section/app-section' )
 require( '../footer/footer-mv' )
 require( '../tasks/tasks-mv' )
 require( '../users/users-mv' )
-require( '../logout/logout-mv' )
+// require( '../logout/logout-mv' )

@@ -3,12 +3,12 @@
  */
 require( './form-mosaic-retrieve.scss' )
 
-var EventBus       = require( '../../../event/event-bus' )
-var Events         = require( '../../../event/events' )
-var Loader         = require( '../../../loader/loader' )
-var FormValidator  = require( '../../../form/form-validator' )
-var SearchParams   = require( '../../../search/search-params' )
-var SceneAreaModel = require( '../../../scenes-selection/scenes-selection-m' )
+var EventBus        = require( '../../../event/event-bus' )
+var Events          = require( '../../../event/events' )
+var Loader          = require( '../../../loader/loader' )
+var FormValidator   = require( '../../../form/form-validator' )
+var SearchParams    = require( '../../../search/search-params' )
+var SceneAreaModel  = require( '../../../scenes-selection/scenes-selection-m' )
 
 var parentContainer = null
 var template        = require( './form-mosaic-retrieve.html' )
@@ -61,12 +61,22 @@ var submit = function ( e ) {
                 url         : '/api/data/mosaic/retrieve'
                 , data      : data
                 , beforeSend: function () {
-                    Loader.show()
+                    // Loader.show()
+                    
+                    setTimeout( function () {
+                        EventBus.dispatch( Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager' )
+                    }, 100 )
+                    
+                    EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW )
                 }
                 , success   : function ( e ) {
-                    hide()
-                    Loader.hide( { delay: 200 } )
+                    
+                    // Loader.hide( { delay: 200 } )
                     EventBus.dispatch( Events.SECTION.TASK_MANAGER.CHECK_STATUS )
+                    
+                    // setTimeout( function (  ) {
+                    //     EventBus.dispatch(Events.ALERT.SHOW_INFO , null , 'The download will start shortly.<br/>You can monitor the progress in the task manager')
+                    // } , 100 )
                 }
             }
             EventBus.dispatch( Events.AJAX.POST, null, params )

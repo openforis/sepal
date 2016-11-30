@@ -77,10 +77,10 @@ var retrieveScenes = function () {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-var retrieveMosaic = function () {
-    var params = getRequestParams( '/api/data/scenes/mosaic' )
-    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
-}
+// var retrieveMosaic = function () {
+//     var params = getRequestParams( '/api/data/scenes/mosaic' )
+//     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+// }
 
 var sceneAreasLoaded = function ( e, sceneAreas ) {
     show = true
@@ -180,9 +180,11 @@ EventBus.addEventListener( Events.SECTION.REDUCE, appReduce )
 
 //search retrieve events
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES, retrieveScenes )
-EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, retrieveMosaic )
+// EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, retrieveMosaic )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, bestScenes )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, previewMosaic )
+
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW , View.collapse )
 
 //search events
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, sceneAreasLoaded )

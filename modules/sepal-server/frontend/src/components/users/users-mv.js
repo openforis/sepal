@@ -13,13 +13,7 @@ var Animation = require( '../animation/animation' )
 
 var searchString = null
 
-var init = function () {
-    if ( UserMV.getCurrentUser().isAdmin() ) {
-        Animation.animateIn( NavMenu.btnUsers() )
-    }
-}
-
-var onSectionShow = function ( e, target ) {
+var show = function ( e, target ) {
     if ( target === 'users' ) {
         View.init()
         View.showUsersListSection()
@@ -98,9 +92,7 @@ var onShowUsersSection = function ( e ) {
     
 }
 
-
-EventBus.addEventListener( Events.SECTION.NAV_MENU.LOADED, init )
-EventBus.addEventListener( Events.SECTION.SHOW, onSectionShow )
+EventBus.addEventListener( Events.SECTION.SHOW, show )
 
 EventBus.addEventListener( Events.SECTION.USERS.LIST_FILTER_CHANGE, onUsersListFilterChange )
 EventBus.addEventListener( Events.SECTION.USERS.SELECT_USER, onSelectUser )

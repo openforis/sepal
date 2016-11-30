@@ -159,20 +159,22 @@ a.bg-user:hover {
 }
 
 /*user*/
-button.bg-users:active,
-button.bg-users:active:focus,
-button.bg-users:focus,
-button.bg-users:hover,
-a.bg-users:active,
-a.bg-users:active:focus,
-a.bg-users:focus,
-a.bg-users:hover {
-    border-color: rgba(125, 125, 111, 0.7);
-    background-color: rgba(125, 125, 111, .1);
-    border-width: 2px;
-    color: #fff;
+.btn.bg-users:active,
+.btn.bg-users:active:focus,
+.btn.bg-users:focus,
+.btn.bg-users:hover {
+    /*border-color: rgba(125, 125, 111, 0.7);*/
+    /*background-color: rgba(125, 125, 111, .1);*/
+    /*border-width: 2px;*/
+    /*color: #fff;*/
+    background-color: rgba(125, 125, 111, .4);
 }
 
+.btn.bg-users {
+    /*border : 2px solid rgba(125, 125, 111, 0.7);*/
+    border: none;
+    background-color: rgba(125, 125, 111, .1);
+}
 .bg-users {
     background-color: rgba(125, 125, 111, .4);
     /*background-color: rgba(176, 149, 130, .8);*/
@@ -187,18 +189,20 @@ a.bg-users:hover {
 }
 
 /*tasks*/
-button.bg-tasks:active,
-button.bg-tasks:active:focus,
-button.bg-tasks:focus,
-button.bg-tasks:hover,
-a.bg-tasks:active,
-a.bg-tasks:active:focus,
-a.bg-tasks:focus,
-a.bg-tasks:hover {
-    border-color: rgba(225, 225, 230, 0.7);
+.btn.bg-tasks:active,
+.btn.bg-tasks:active:focus,
+.btn.bg-tasks:focus,
+.btn.bg-tasks:hover {
+    /*border-color: rgba(225, 225, 230, 0.7);*/
+    /*background-color: rgba(225, 225, 230, .1);*/
+    /*border-width: 2px;*/
+    /*color: #fff;*/
+    background-color: rgba(225, 225, 230, .4);
+}
+.btn.bg-tasks {
+    /*border: 2px solid rgba(225, 225, 230, 0.7);*/
+    border: none;
     background-color: rgba(225, 225, 230, .1);
-    border-width: 2px;
-    color: #fff;
 }
 
 .bg-tasks {

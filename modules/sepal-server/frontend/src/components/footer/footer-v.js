@@ -3,12 +3,15 @@
  */
 require( './footer.scss' )
 
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
+var EventBus       = require( '../event/event-bus' )
+var Events         = require( '../event/events' )
+var UserMV         = require( '../user/user-mv' )
+var DashboardLinks = require( './views/dashboard-links-v' )
 
-var html = null
-
-var Logo = null
+var html      = null
+var Logo      = null
+var BtnUser   = null
+var BtnLogout = null
 
 var init = function () {
     var template = require( './footer.html' )
@@ -17,7 +20,26 @@ var init = function () {
     var footer = $( '.app' ).find( 'footer' )
     if ( footer.children().length <= 0 ) {
         $( '.app' ).append( html )
-        Logo = html.find( ".sepal-logo" )
+        
+        DashboardLinks.init( html.find( '.dashboard-links' ) )
+        
+        Logo      = html.find( ".sepal-logo" )
+        BtnUser   = html.find( ".btn-user" )
+        BtnLogout = html.find( ".btn-logout" )
+        
+        BtnUser.find( '.username' ).html( UserMV.getCurrentUser().username )
+        BtnUser.click( function ( e ) {
+            e.preventDefault()
+            
+            EventBus.dispatch( Events.SECTION.NAV_MENU.COLLAPSE )
+            EventBus.dispatch( Events.SECTION.SHOW, null, "user" )
+        } )
+        
+        BtnLogout.click( function ( e ) {
+            e.preventDefault()
+            EventBus.dispatch( Events.AJAX.REQUEST, null, { url: "/logout" } )
+            EventBus.dispatch( Events.USER.LOGGED_OUT )
+        } )
     }
 }
 
@@ -26,7 +48,7 @@ var hide = function () {
 }
 
 var show = function () {
-    html.velocity( { bottom: '0' }, { delay: 1000, duration: 1000, easing: 'easeOutQuint' } )
+    html.velocity( { bottom: '0' }, { delay: 1000, duration: 1500, easing: 'easeOutQuint' } )
 }
 
 var showLogo = function () {
@@ -37,8 +59,9 @@ var showLogo = function () {
 }
 
 module.exports = {
-    init      : init
-    , show    : show
-    , hide    : hide
-    , showLogo: showLogo
+    init         : init
+    , show       : show
+    , hide       : hide
+    , showLogo   : showLogo
+    , updateTasks: DashboardLinks.updateTasks
 }
