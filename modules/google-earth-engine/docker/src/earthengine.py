@@ -59,7 +59,7 @@ class EarthEngineStatus(object):
         if task['state'] not in (Task.State.UNSUBMITTED, Task.State.FAILED):
             return self._to_status(task)
         else:
-            logger.exception('Export to Google Drive failed. Task: ' + task)
+            logger.exception('Export to Google Drive failed. Task: ' + str(task))
             return {'state': 'FAILED',
                     'description': 'Export to Google Drive failed: '}
 
