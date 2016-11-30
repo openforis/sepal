@@ -28,17 +28,17 @@ chown -R $sandbox_user_id:$home_group_id /home/$sandbox_user/.log
 
 rm -rf /templates
 
+printf '%s\n' \
+    "R_LIBS_USER=/home/$sandbox_user/.R/library" \
+    "R_LIBS_SITE=/shiny/library:/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library" \
+    >> /etc/environment
+
+cp /etc/environment /etc/R/Renviron.site
+
 ln -sf /conf/ldap.conf /etc/ldap.conf
 ln -sf /conf/ldap.conf /etc/ldap/ldap.conf
 
-cp /conf/Renviron /etc/R/Renviron
-cp /etc/environment /etc/R/Renviron.site
-
 echo "$ldap_host ldap" >> /etc/hosts
-
-printf '%s\n' \
-    "R_LIBS_USER=/home/$sandbox_user/.R/library" \
-    >> /etc/environment
 
 userHome=/home/$sandbox_user
 cp /etc/skel/.bashrc "$userHome"
