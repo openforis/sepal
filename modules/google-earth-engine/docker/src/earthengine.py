@@ -46,6 +46,14 @@ class EarthEngineStatus(object):
                 'description': 'Export to Google Drive failed'})
             self.stop()
 
+    def _task(self):
+        status = Task(self.task_id).status()
+        return Task(status['id'], {
+            'type': status['task_type'],
+            'description': status['description'],
+            'state': status['state'],
+        })
+
     def _task_status(self):
         task = Task(self.task_id).status()
         if task['state'] not in (Task.State.UNSUBMITTED, Task.State.FAILED):
