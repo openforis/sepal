@@ -11,7 +11,7 @@ mkdir /var/run/sshd
 printf '%s\n' \
     'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' \
     'JAVA_HOME="/usr/lib/jvm/java-8-oracle"' \
-    'GDAL_DATA="/usr/share/gdal"' \
+    'GDAL_DATA="/usr/share/gdal/2.1"' \
     >> /etc/environment
 
 # Remove redundant files
