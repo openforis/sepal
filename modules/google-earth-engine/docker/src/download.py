@@ -28,7 +28,7 @@ class Downloader(object):
 
     def status(self, task_id):
         status = self.statuses[task_id]
-        logging.info('Fetching status of ' + task_id + '(' + status + ')')
+        logging.debug('Fetching status of ' + task_id + '(' + str(status) + ')')
         return status
 
     def update_status(self, task_id, status):
