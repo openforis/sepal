@@ -55,17 +55,21 @@ var getRequestData = function ( addAoi ) {
     return data
 }
 
-var getRequestParams = function ( url, addAoi ) {
+var getRequestParams = function ( url, addAoi, showLoader ) {
+    showLoader = ( showLoader === false ) ? false : true
     var data   = getRequestData( addAoi )
     var params = {
         url         : url
         , data      : data
         , type      : "POST"
         , beforeSend: function () {
-            Loader.show()
+            if ( showLoader )
+                Loader.show()
         }
         , success   : function () {
-            Loader.hide( { delay: 300 } )
+            if ( showLoader )
+                Loader.hide( { delay: 300 } )
+            
             EventBus.dispatch( Events.SECTION.TASK_MANAGER.CHECK_STATUS )
         }
     }
@@ -73,7 +77,7 @@ var getRequestParams = function ( url, addAoi ) {
 }
 
 var retrieveScenes = function () {
-    var params = getRequestParams( '/api/data/scenes/retrieve', false )
+    var params = getRequestParams( '/api/data/scenes/retrieve', false , false )
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
@@ -184,7 +188,7 @@ EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES, retri
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, bestScenes )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, previewMosaic )
 
-EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW , View.collapse )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW, View.collapse )
 
 //search events
 EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, sceneAreasLoaded )

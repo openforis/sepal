@@ -53,6 +53,7 @@
 
         .op-button {
           padding: 0 .25rem .25rem .25rem;
+          overflow: auto !important;
           .btn {
             border: 2px solid rgba(255, 255, 255, 0.05);
             padding: 0;
