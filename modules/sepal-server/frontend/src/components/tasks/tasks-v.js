@@ -41,7 +41,7 @@ var setTasks = function ( tasks ) {
         taskUI.find( '.description' ).html( task.statusDescription )
         
         var progressBar = taskUI.find( '.row-progress .progress' )
-        progressBar.children().removeClass( 'determinate indeterminate failed completed' )
+        progressBar.children().removeClass( 'determinate indeterminate failed completed canceled' )
         
         var btnRemove  = taskUI.find( '.btn-remove' )
         var btnCancel  = taskUI.find( '.btn-cancel' )
@@ -52,7 +52,7 @@ var setTasks = function ( tasks ) {
             
             case Model.STATUS.ACTIVE:
                 progressBar.children().addClass( 'indeterminate' ).width( '' )
-                
+    
                 btnRemove.hide()
                 btnCancel.show()
                 btnExecute.hide()
@@ -65,6 +65,8 @@ var setTasks = function ( tasks ) {
                 
                 break
             case Model.STATUS.CANCELED:
+                progressBar.children().addClass( 'determinate canceled' ).width( '100%' )
+                
                 btnRemove.show()
                 btnCancel.hide()
                 btnExecute.show()

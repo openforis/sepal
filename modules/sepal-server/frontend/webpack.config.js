@@ -28,17 +28,17 @@ module.exports = {
             "window.jQuery": "jquery",
             "window.Tether": "tether",
             // exports workaround for https://github.com/shakacode/bootstrap-loader/issues/172
-            Alert: "exports?Alert!bootstrap/js/dist/alert",
-            Button: "exports?Button!bootstrap/js/dist/button",
-            Carousel: "exports?Carousel!bootstrap/js/dist/carousel",
-            Collapse: "exports?Collapse!bootstrap/js/dist/collapse",
-            Dropdown: "exports?Dropdown!bootstrap/js/dist/dropdown",
-            Modal: "exports?Modal!bootstrap/js/dist/modal",
-            Popover: "exports?Popover!bootstrap/js/dist/popover",
-            Scrollspy: "exports?Scrollspy!bootstrap/js/dist/scrollspy",
-            Tab: "exports?Tab!bootstrap/js/dist/tab",
-            Tooltip: "exports?Tooltip!bootstrap/js/dist/tooltip",
-            Util: "exports?Util!bootstrap/js/dist/util",
+            Alert          : "exports?Alert!bootstrap/js/dist/alert",
+            Button         : "exports?Button!bootstrap/js/dist/button",
+            Carousel       : "exports?Carousel!bootstrap/js/dist/carousel",
+            Collapse       : "exports?Collapse!bootstrap/js/dist/collapse",
+            Dropdown       : "exports?Dropdown!bootstrap/js/dist/dropdown",
+            Modal          : "exports?Modal!bootstrap/js/dist/modal",
+            Popover        : "exports?Popover!bootstrap/js/dist/popover",
+            Scrollspy      : "exports?Scrollspy!bootstrap/js/dist/scrollspy",
+            Tab            : "exports?Tab!bootstrap/js/dist/tab",
+            Tooltip        : "exports?Tooltip!bootstrap/js/dist/tooltip",
+            Util           : "exports?Util!bootstrap/js/dist/util"
         } ),
         new FaviconsWebpackPlugin( './src/icons/favicon.png' )
     ],
@@ -85,7 +85,7 @@ module.exports = {
         proxy      : {
             // '*': { target: 'http://localhost:8001', secure: false, changeOrigin: true }
             // '*': { target: 'http://localhost:9999' }
-            '*': { target: 'https://vagrant', secure: false} // Vagrant box
+            '*': { target: 'https://vagrant', secure: false } // Vagrant box
             // , '/preview': { target: 'http://127.0.0.1:5000' }
         }
     }

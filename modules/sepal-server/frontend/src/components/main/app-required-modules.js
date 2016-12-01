@@ -1,7 +1,7 @@
 /**
  * @author Mino Togna
  */
-
+// require('tether')
 require( 'bootstrap' )
 // common js
 require( '../velocity/velocity' )
@@ -29,4 +29,3 @@ require( '../app-section/app-section' )
 require( '../footer/footer-mv' )
 require( '../tasks/tasks-mv' )
 require( '../users/users-mv' )
-// require( '../logout/logout-mv' )

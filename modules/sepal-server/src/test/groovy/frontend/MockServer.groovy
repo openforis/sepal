@@ -29,6 +29,8 @@ class MockServer extends AbstractMvcFilter {
                 halt(400)
             }
 
+
+
             get('/user/files') {
                 response.contentType = 'application/json'
 
@@ -165,8 +167,78 @@ class MockServer extends AbstractMvcFilter {
                 response.status = 204
             }
 
+            get('/api/data/sensors') {
+                response.contentType = 'application/json'
+
+                def s = [
+                        [
+                                id        : 'landsat',
+                                label     : 'landsat',
+                                sensors   : [
+                                        [
+                                                id       : 'LANDSAT_8',
+                                                name     : 'Landsat 8 OLI/TIRS',
+                                                shortName: 'L8'
+                                        ],
+
+                                        [
+                                                id       : 'LANDSAT_ETM_SLC_OFF',
+                                                name     : 'Landsat 7 ETM+ (SLC-off)',
+                                                shortName: 'L7 SLC-off'
+                                        ],
+
+                                        [
+                                                id       : 'LANDSAT_ETM',
+                                                name     : 'Landsat 7 ETM+ (SLC-on)',
+                                                shortName: 'L7 SLC-on'
+                                        ],
+
+                                        [
+                                                id       : 'LANDSAT_TM',
+                                                name     : 'Landsat 4-5 TM',
+                                                shortName: 'L4-5 TM'
+                                        ],
+
+                                        [
+                                                id       : 'LANDSAT_MSS',
+                                                name     : 'Landsat 1-5 MSS',
+                                                shortName: 'L1-5 MSS'
+                                        ]
+                                ],
+                                bands     : [
+                                        [
+                                                id   : 'B1',
+                                                label: 'Blue'
+                                        ],
+                                        [
+                                                id   : 'B2',
+                                                label: 'Green'
+                                        ],
+                                ],
+                                bandGroups: [
+                                        [
+                                                id   : 'B3, B2, B1',
+                                                label: 'Natural (RGB)'
+                                        ],
+                                        [
+                                                id   : 'B4, B5, B3',
+                                                label: 'False color'
+                                        ]
+                                ]
+                        ]
+
+
+                ]
+
+                return toJson(s)
+            }
+
             post('/api/data/sceneareas') {
                 response.contentType = 'application/json'
+
+                // TODO add 
+                params.sensorFamily
+
 
                 params.countryIso
 //                params.polygon
