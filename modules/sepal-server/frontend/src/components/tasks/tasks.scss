@@ -18,7 +18,6 @@
         border-radius: 5px;
         background-color: rgba(255, 255, 255, 0.1);
 
-
         word-wrap: break-word;
         overflow: hidden;
 
@@ -53,16 +52,20 @@
         }
 
         .op-button {
-          padding: .25rem;
+          padding: 0 .25rem .25rem .25rem;
+          overflow: auto !important;
           .btn {
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            padding: .6rem;
-            /* border-radius: 50%; */
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            padding: 0;
+            border-radius: 50%;
             width: 2.2rem;
             height: 2.2rem;
-            //i {
-            //  font-size: 1.2rem;
-            //}
+            //border: none;
+            background-color: rgba(255, 255, 255, 0.25);
+          }
+          .btn:hover,
+          .btn:focus{
+            background-color: rgba(255, 255, 255, 0.1);
           }
         }
 
