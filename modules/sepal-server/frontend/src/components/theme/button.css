@@ -18,7 +18,7 @@
     text-transform: uppercase;
     letter-spacing: 1.5px;
     position: relative;
-    overflow: hidden;
+    /*overflow: hidden;*/
     border-width: 2px;
     padding: 19.5px 28.5px 19.5px 30px;
     font-size: 13px;
