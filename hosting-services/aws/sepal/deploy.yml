@@ -16,9 +16,7 @@
       copy:
         src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
-    - name: Set sepal_host and ami_id var
-      set_fact:
-        sepal_host: "{{ ec2_ip_address }}"
+    - set_fact:
         ldap_host: "{{ ec2_private_ip_address }}"
         elk_host: "{{ elk_host }}"
         syslog_host: "172.17.0.1"
@@ -38,6 +36,7 @@
     - { role: rsyslog }
     - { role: docker, users: ['ubuntu'] }
     - { role: aws-mount-efs }
+    - { role: run-module, module: letsencrypt }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }

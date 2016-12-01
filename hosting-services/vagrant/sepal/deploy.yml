@@ -29,7 +29,6 @@
     - template: src="./vagrant.properties" dest=/data/sepal/etc/vagrant.properties
 
     - set_fact:
-       sepal_host: "{{ vagrant_ip }}"
        ldap_host: "{{ vagrant_ip }}"
        elk_host: "{{ vagrant_ip }}"
        hosting_service: vagrant
@@ -43,6 +42,7 @@
         - 'o=Ubuntu,a=${distro_codename}-updates'
     - { role: rsyslog }
     - { role: docker, users: ['ubuntu', 'vagrant'] }
+    - { role: build-module, module: letsencrypt }
     - { role: build-module, module: java }
     - { role: build-module, module: elk }
     - { role: build-module, module: ldap }
@@ -60,6 +60,7 @@
     - { role: build-module, module: task-executor }
     - { role: build-module, module: google-earth-engine }
 
+    - { role: run-module, module: letsencrypt }
     - { role: run-module, module: elk }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }

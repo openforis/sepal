@@ -133,6 +133,7 @@ def _config_sepal():
     _random_password('mysql_password', 16)
     _random_password('gate_one_secret', 32)
     _random_password('gate_one_public', 32)
+    _text('sepal_host', 'Sepal Host')
     _password('sepal_admin_user_password', 'Sepal admin user password')
     _random_password('sepal_machine_admin_password', 32)
     _random_password('ldap_admin_password', 32)

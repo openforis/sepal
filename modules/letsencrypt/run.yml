@@ -1,0 +1,23 @@
+---
+- file: path="/data/letsencrypt" state=directory
+
+- name: "letsencrypt | Start container"
+  docker:
+    docker_api_version: "1.22"
+    name: "letsencrypt"
+    registry: "{{ docker_repository_host }}"
+    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/letsencrypt:{{ version }}"
+    state: "reloaded"
+    net: "bridge"
+    restart_policy: "always"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"
+    volumes:
+    - "/data/letsencrypt:/data"
+    ports:
+      - "443:443"
+    env:
+      SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
+
