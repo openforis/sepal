@@ -22,5 +22,6 @@
     links:
     - "api-gateway:api-gateway"
     - "ssh-gateway:ssh-gateway"
+    - "letsencrypt:letsencrypt"
     extra_hosts:
         syslog_host: "{{ syslog_host }}"
