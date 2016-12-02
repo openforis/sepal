@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-# TODO: Trigger if certificates are not already present
+sleep 60 # Make sure HAproxy is enabled
 
+# TODO: Trigger if certificates are not already present
 /root/certbot-auto certonly\
  --noninteractive\
  --agree-tos\
