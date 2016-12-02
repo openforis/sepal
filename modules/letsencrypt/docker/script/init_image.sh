@@ -17,7 +17,8 @@ cd /root
 wget https://dl.eff.org/certbot-auto
 chmod a+x certbot-auto
 
-# Renew the certificate the first of every month
+# Renew the certificate twice a day. It will not have any effect unless it's about to expire
+# but will catch cases where certificate been revoked for some reason.
 printf '%s\n' \
-    '0 0 1 * * root /root/certbot-auto renew --quiet --no-self-upgrade' \
+    '38  0,12 * * * root /root/certbot-auto renew --quiet --no-self-upgrade' \
     >> /etc/crontab
