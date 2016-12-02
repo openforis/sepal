@@ -1,9 +1,3 @@
----
-- file: path="/data/api-gateway/certificates" state=directory
-- copy: src="{{ config_home }}/certificates/sepal-https.key" dest=/data/api-gateway/certificates/sepal-https.key
-- copy: src="{{ config_home }}/certificates/sepal-https.ca-bundle" dest=/data/api-gateway/certificates/sepal-https.ca-bundle
-- copy: src="{{ config_home }}/certificates/sepal-https.crt" dest=/data/api-gateway/certificates/sepal-https.crt
-
 - name: "api-gateway | Start container"
   docker:
     docker_api_version: "1.22"
@@ -28,5 +22,6 @@
     - "sepal:sepal"
     volumes:
     - "/data/api-gateway:/data"
+    - "/data/letsencrypt:/etc/letsencrypt"
     env:
       SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"

@@ -14,10 +14,8 @@ mkdir -p /etc/sepal
 template /config/api-gateway-server.properties /etc/sepal/api-gateway-server.properties root: 0600
 template /config/endpoints.json /etc/sepal/endpoints.json root: 0600
 
-mkdir -p /etc/sepal
-cp /data/certificates/sepal-https.key /etc/sepal/
-cp /data/certificates/sepal-https.ca-bundle /etc/sepal/
-cp /data/certificates/sepal-https.crt /etc/sepal/
+ln -sf /etc/letsencrypt/live/$SEPAL_HOST_SEPAL_ENV/privkey.pem /etc/sepal/sepal-https.key
+ln -sf /etc/letsencrypt/live/$SEPAL_HOST_SEPAL_ENV/cert.pem /etc/sepal/sepal-https.crt
 
 # Unset all env variables ending with _SEPAL_ENV
 unset $(printenv | grep '_SEPAL_ENV' | sed -E "s/([0-9a-zA-Z]+)=.*/\\1/" | tr '\n' ' ')

@@ -15,7 +15,7 @@
     email: "{{ docker_email }}"
     password: "{{ docker_password }}"
     volumes:
-    - "/data/letsencrypt:/data"
+    - "/data/letsencrypt:/etc/letsencrypt"
     env:
       SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
       SEPAL_OPERATOR_EMAIL_SEPAL_ENV: "{{ sepal_operator_email}}"

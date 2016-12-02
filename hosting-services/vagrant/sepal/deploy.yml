@@ -28,6 +28,10 @@
     - file: path="/data/sepal/etc" state=directory
     - template: src="./vagrant.properties" dest=/data/sepal/etc/vagrant.properties
 
+    - file: path="/data/letsencrypt/live/{{ sepal_host }}" state=directory
+    - copy: src="{{ config_home }}/certificates/sepal-https.key" dest=/data/letsencrypt/live/{{ sepal_host }}/privkey.pem
+    - copy: src="{{ config_home }}/certificates/sepal-https.crt" dest=/data/letsencrypt/live/{{ sepal_host }}/cert.pem
+
     - set_fact:
        ldap_host: "{{ vagrant_ip }}"
        elk_host: "{{ vagrant_ip }}"
