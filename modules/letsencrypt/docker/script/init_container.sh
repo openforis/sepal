@@ -2,12 +2,12 @@
 
 sleep 60 # Make sure HAproxy is enabled
 
-# TODO: Trigger if certificates are not already present
 /root/certbot-auto certonly\
  --noninteractive\
  --agree-tos\
  --email $SEPAL_OPERATOR_EMAIL_SEPAL_ENV\
  --standalone\
+ --standalone-supported-challenges tls-sni-01\
  -d $SEPAL_HOST_SEPAL_ENV
 
 # Unset all env variables ending with _SEPAL_ENV
