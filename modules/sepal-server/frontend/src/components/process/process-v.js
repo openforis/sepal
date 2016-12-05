@@ -22,7 +22,7 @@ var init = function () {
 var setApps = function ( apps ) {
     $apps.empty()
     
-    var rStudioBtn = $( '<div><a class="btn btn-base app r-studio" target="_blank" href="/sandbox/rstudio"><img src="' + rStudioImg + '"/></a></div>' )
+    var rStudioBtn = $( '<div><a class="btn btn-base app r-studio" target="_blank" href="/sandbox/rstudio/"><img src="' + rStudioImg + '"/></a></div>' )
     $apps.append( rStudioBtn )
     
     $.each( apps, function ( i, app ) {
