@@ -5,6 +5,7 @@ echo
 echo "*****************************"
 echo "*** Installing OpenSARKit ***"
 echo "*****************************"
+echo "Version: 2016-12-07"
 OSK_HOME=/usr/local/lib/osk
 mkdir -p ${OSK_HOME}
 OPENSARKIT=${OSK_HOME}/opensarkit
