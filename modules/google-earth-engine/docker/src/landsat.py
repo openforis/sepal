@@ -4,26 +4,26 @@ import ee
 from itertools import groupby
 
 _collection_names_by_sensor = {
-    'LANDSAT_8': ['LC8_L1T_TOA'],
-    'LANDSAT_ETM_SLC_OFF': ['LE7_L1T_TOA'],
-    'LANDSAT_ETM': ['LE7_L1T_TOA'],
-    'LANDSAT_TM': ['LT4_L1T_TOA', 'LT5_L1T_TOA'],
+    'LANDSAT_8': ['LANDSAT/LC8_L1T_TOA_FMASK'],
+    'LANDSAT_ETM_SLC_OFF': ['LANDSAT/LE7_L1T_TOA_FMASK'],
+    'LANDSAT_ETM': ['LANDSAT/LE7_L1T_TOA_FMASK'],
+    'LANDSAT_TM': ['LANDSAT/LT4_L1T_TOA_FMASK', 'LANDSAT/LT5_L1T_TOA_FMASK'],
 }
 _collection_name_by_scene_id_prefix = {
-    'LC8': 'LC8_L1T_TOA',
-    'LE7': 'LE7_L1T_TOA',
-    'LT5': 'LT5_L1T_TOA',
-    'LT4': 'LT4_L1T_TOA',
+    'LC8': 'LANDSAT/LC8_L1T_TOA_FMASK',
+    'LE7': 'LANDSAT/LE7_L1T_TOA_FMASK',
+    'LT5': 'LANDSAT/LT5_L1T_TOA_FMASK',
+    'LT4': 'LANDSAT/LT4_L1T_TOA_FMASK',
 }
 
 _bands_by_collection_name = {
-    'LC8_L1T_TOA': ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B10'],
-    'LE7_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6_VCID_1'],
-    'LT5_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6'],
-    'LT4_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6']
+    'LANDSAT/LC8_L1T_TOA_FMASK': ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B10', 'fmask'],
+    'LANDSAT/LE7_L1T_TOA_FMASK': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6_VCID_1', 'fmask'],
+    'LANDSAT/LT5_L1T_TOA_FMASK': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6', 'fmask'],
+    'LANDSAT/LT4_L1T_TOA_FMASK': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6', 'fmask']
 }
 
-normalized_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
+normalized_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10', 'fmask']
 _milis_per_day = 1000 * 60 * 60 * 24
 
 
@@ -250,7 +250,7 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
     mosaic = image_collection_qa.qualityMosaic('cweight')
     # Clip the water bodies according to GFC Water Mask
     return mosaic \
-        .clip(aoi) \
+        .clip(aoi.buffer(10000)) \
         .select(bands) \
         .int16()
 
@@ -281,6 +281,7 @@ def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands):
 
     :return: The adjusted ee.Image.
     """
+    image = _mask_clouds(image)
     image_day_of_year = _day_of_year(image)
     days_from_target_day = _days_between(image_day_of_year, target_day_of_year)
 
@@ -311,6 +312,18 @@ def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands):
         .addBands(days_band) \
         .addBands(date_band) \
         .addBands(weight_band)
+
+
+def _mask_clouds(image):
+    """Use FMASK attribute to mask clouds
+
+    :param image: The image to mask clouds
+    :type image: ee.Image
+    """
+    quality = image.select('fmask')
+    cloud01 = quality.gt(2)
+    cloudmask = image.mask().And(cloud01.Not())
+    return image.updateMask(cloudmask)
 
 
 def _day_of_year(image):
@@ -592,54 +605,3 @@ def _to_image(image_id):
     return collection.filter(
         ee.Filter.eq('system:index', image_id)
     ).first()
-
-
-def _addqa(image, target_day_of_year, bands):
-    """Add qa bands.
-
-    :param image: The image to add qa bands to.
-    :type image: ee.Image
-
-    :param target_day_of_year: They day of the year to aim for.
-    :type target_day_of_year: int
-
-    :param bands: A list of the bands to include in the map.
-    :type bands: iterable
-    """
-
-    # Use the specified target day also as a weight factor
-    # theoretically to, again, help control the mosaic creation at the end
-    # ...where images closer to the target date are favored
-    timestamp = ee.Number(image.get('system:time_start'))
-    image_day_of_year = ee.Number(ee.Date(timestamp).getRelative('day', 'year'))
-    days_from_target_day = ee.Number(target_day_of_year).subtract(image_day_of_year).abs()
-    # Closer to wrap over year boundary?
-    days_from_target_day = days_from_target_day.min(
-        ee.Number(365).subtract(days_from_target_day)
-    )
-    # 0 days from target day gives weight of 365, 183 days from target day gives weight 182
-    days_from_target_day_weight = ee.Number(365).subtract(days_from_target_day)
-
-    ndvi = (
-        image.select('B4').subtract(image.select('B3'))
-    ).divide(
-        image.select('B4').add(image.select('B3'))
-    )
-    temp = image.select('B10').focal_min().rename(['temp'])
-    tmpndvi = ndvi.multiply(temp)
-    # time = ndvi.multiply(temp).rename(['date'])
-    time = image.metadata('system:time_start').divide(_milis_per_day).rename(['date'])
-    # Extract the cloud cover from Landsat metadata and use it as an inverse weight
-    # e.g. to favor all pixels from an acquisition with low cloud cover
-    # theoretically to help keep the resulting mosaic radiometrically uniform
-    cloudweight = image.metadata('CLOUD_COVER').subtract(100).multiply(-1)
-    total_weight = tmpndvi.multiply(days_from_target_day_weight).multiply(cloudweight).rename(['cweight'])
-
-    result = _apply_toa_correction(image, image_day_of_year, bands)
-    days_band = _days_band(days_from_target_day, image)
-
-    return result \
-        .addBands(time) \
-        .addBands(temp) \
-        .addBands(days_band) \
-        .addBands(total_weight)
