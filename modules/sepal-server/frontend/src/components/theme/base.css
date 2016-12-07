@@ -451,6 +451,9 @@ img {
 }
 
 /*padding */
+.p-a-0-5 {
+    padding: 0.5rem !important;
+}
 .p-t-0-5 {
     padding-top: 0.5rem !important;
 }

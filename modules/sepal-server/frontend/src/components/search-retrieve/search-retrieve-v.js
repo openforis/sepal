@@ -6,8 +6,9 @@ require( './search-retrieve.scss' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
-var SectionScenes = require( './views/section-scenes' )
-var SectionMosaic = require( './views/section-mosaic' )
+var SectionScenes  = require( './views/section-scenes' )
+var SectionMosaic  = require( './views/section-mosaic' )
+var SensorFamilies = require( './views/sensor-families/sensor-families-v' )
 
 var html = null
 
@@ -23,6 +24,7 @@ var init = function () {
         
         SectionScenes.init( html )
         SectionMosaic.init( html )
+        // SensorFamilies.init( html.find( '.row-sensor-families' ) )
         
         reset()
     }

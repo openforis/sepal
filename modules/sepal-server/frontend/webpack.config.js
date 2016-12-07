@@ -84,8 +84,8 @@ module.exports = {
         host       : '0.0.0.0',
         proxy      : {
             // '*': { target: 'http://localhost:8001', secure: false, changeOrigin: true }
-            // '*': { target: 'http://localhost:9999' }
-            '*': { target: 'https://vagrant', secure: false } // Vagrant box
+            '*': { target: 'http://localhost:9999' }
+            // '*': { target: 'https://vagrant', secure: false } // Vagrant box
             // , '/preview': { target: 'http://127.0.0.1:5000' }
         }
     }
