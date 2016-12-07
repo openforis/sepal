@@ -59,7 +59,6 @@ var addDir = function ( dir ) {
     var level = dir.level
     removeDir( level )
     
-    // var colLevel = $( '<div class="height100 level level-' + dir.level + '" />' )
     var colLevel = $( '<div class="col-sms-3 height100 level level-' + level + '" />' )
     browseContentRow.append( colLevel )
     
@@ -69,10 +68,6 @@ var addDir = function ( dir ) {
     colH.append( dir.path )
     rowH.append( colH )
     
-    // var rowC = $( '<div class="row dir-content height90"/>' )
-    // colLevel.append( rowC )
-    // var colC = $( '<div class="col-sm-12 text-align-left overflow-auto height100"/>' )
-    // rowC.append( colC )
     var colC = $( '<div class="dir-content height90"/>' )
     colLevel.append( colC )
     
