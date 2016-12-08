@@ -250,7 +250,7 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
     mosaic = image_collection_qa.qualityMosaic('cweight')
     # Clip the water bodies according to GFC Water Mask
     return mosaic \
-        .clip(aoi.buffer(10000)) \
+        .clip(aoi) \
         .select(bands) \
         .int16()
 
@@ -595,8 +595,8 @@ def _to_image(image_id):
     # Merges all collections into a single collection
     collection = ee.ImageCollection('LANDSAT/LC8_L1T_TOA_FMASK').merge(
         ee.ImageCollection('LANDSAT/LE7_L1T_TOA_FMASK').merge(
-            ee.ImageCollection('LT5_L1T_TOA_FMASK').merge(
-                ee.ImageCollection('LT4_L1T_TOA_FMASK')
+            ee.ImageCollection('LANDSAT/LT5_L1T_TOA_FMASK').merge(
+                ee.ImageCollection('LANDSAT/LT4_L1T_TOA_FMASK')
             )
         )
     )

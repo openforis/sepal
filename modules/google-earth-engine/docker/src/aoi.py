@@ -14,7 +14,7 @@ class Aoi:
         def fusionTable():
             table = ee.FeatureCollection('ft:' + spec['tableName'])
             aoi = table.filterMetadata(spec['keyColumn'], 'equals', spec['keyValue'])
-            return aoi.geometry()
+            return aoi.geometry().buffer(10000)
 
         aoi_type = spec['type']
         if aoi_type not in locals():
