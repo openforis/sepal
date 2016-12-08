@@ -244,11 +244,8 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
     # Adjust the images - add additional bands, apply TOA correction
     image_collection_qa = image_collection.map(
         lambda image: _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands)
-        # lambda image: _addqa(image, target_day_of_year, bands)
     )
-    # Create a 'best pixel' composite using the warmest, wettest pixel closest to specified target date
-    mosaic = image_collection_qa.qualityMosaic('cweight')
-    # Clip the water bodies according to GFC Water Mask
+    mosaic = image_collection_qa.median()
     return mosaic \
         .clip(aoi) \
         .select(bands) \
