@@ -593,10 +593,10 @@ def _to_image(image_id):
     :return: An ee.Image or None if the image isn't found.
     """
     # Merges all collections into a single collection
-    collection = ee.ImageCollection('LC8_L1T_TOA').merge(
-        ee.ImageCollection('LE7_L1T_TOA').merge(
-            ee.ImageCollection('LT5_L1T_TOA').merge(
-                ee.ImageCollection('LT4_L1T_TOA')
+    collection = ee.ImageCollection('LANDSAT/LC8_L1T_TOA_FMASK').merge(
+        ee.ImageCollection('LANDSAT/LE7_L1T_TOA_FMASK').merge(
+            ee.ImageCollection('LT5_L1T_TOA_FMASK').merge(
+                ee.ImageCollection('LT4_L1T_TOA_FMASK')
             )
         )
     )
