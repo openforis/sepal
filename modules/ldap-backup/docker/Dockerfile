@@ -1,4 +1,4 @@
-FROM osixia/openldap-backup:1.1.6
+FROM osixia/openldap-backup:1.1.7
 MAINTAINER OpenForis
 
 ADD script /script
