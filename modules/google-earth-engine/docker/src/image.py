@@ -50,12 +50,12 @@ class Mosaic(Image):
         self.bands = bands
 
     _viz_by_bands = {
-        'B3, B2, B1': lambda params: {'bands': 'B3, B2, B1', 'min': 100, 'max': 5000, 'gamma': 1.8},
-        'B4, B3, B2': lambda params: {'bands': 'B4, B3, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
-        'B4, B5, B3': lambda params: {'bands': 'B4, B5, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
-        'B7, B4, B3': lambda params: {'bands': 'B7, B4, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
-        'B7, B5, B3': lambda params: {'bands': 'B7, B5, B3', 'min': 100, 'max': 5000, 'gamma': 1.2},
-        'B7, B4, B2': lambda params: {'bands': 'B7, B4, B2', 'min': 100, 'max': 5000, 'gamma': 1.2},
+        'B3, B2, B1': lambda params: {'bands': 'B3, B2, B1', 'min': 500, 'max': 5000, 'gamma': 1.8},
+        'B4, B3, B2': lambda params: {'bands': 'B4, B3, B2', 'min': 200, 'max': 5000, 'gamma': 1.2},
+        'B4, B5, B3': lambda params: {'bands': 'B4, B5, B3', 'min': 200, 'max': 5000, 'gamma': 1.2},
+        'B7, B4, B3': lambda params: {'bands': 'B7, B4, B3', 'min': 200, 'max': 5000, 'gamma': 1.2},
+        'B7, B5, B3': lambda params: {'bands': 'B7, B5, B3', 'min': 200, 'max': 5000, 'gamma': 1.2},
+        'B7, B4, B2': lambda params: {'bands': 'B7, B4, B2', 'min': 200, 'max': 5000, 'gamma': 1.2},
         'temp': lambda params: {'bands': 'temp', 'min': 200, 'max': 400, 'palette': '0000FF, FF0000'},
         'cluster': lambda params: {'bands': 'cluster', 'min': 0, 'max': 5000},
         'date': lambda params: {
