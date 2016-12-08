@@ -110,7 +110,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
                         sceneAreaId: "${data.path}_${data.row}",
                         sensorId: sensor.name(),
                         acquisitionDate: parseDateString(data.acquisitionDate),
-                        cloudCover: data.cloudCoverFull.toDouble(),
+                        cloudCover: cloudCover(sensor, data),
                         sunAzimuth: data.sunAzimuth.toDouble(),
                         sunElevation: data.sunElevation.toDouble(),
                         browseUrl: URI.create(data.browseURL),
@@ -119,6 +119,14 @@ class CsvBackedUsgsGateway implements UsgsGateway {
         } catch (Exception ignore) {
         }
         return null
+    }
+
+    private double cloudCover(LandsatSensor sensor, data) {
+        def result = data.cloudCoverFull.toDouble() as Double
+        // LANDSAT_ETM_SLC_OFF always miss about 22% of its data. Consider that cloud cover.
+        if (result && sensor == LANDSAT_ETM_SLC_OFF)
+            result = Math.min(100, result + 22)
+        return result
     }
 
     private boolean isSceneIncluded(data) {
@@ -130,58 +138,58 @@ class CsvBackedUsgsGateway implements UsgsGateway {
     }
 
     static UsgsGateway create(File workingDir) {
-        // From http://landsat.usgs.gov/metadatalist.php
+        // From https://landsat.usgs.gov/download-entire-collection-metadata
         new CsvBackedUsgsGateway(workingDir, [
                 (LANDSAT_8)          : [
                         new GzCsvUriReader(
-                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_8.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8.csv.gz',
                                 workingDir,
                                 'LANDSAT_8')],
                 (LANDSAT_ETM)        : [
                         new GzCsvUriReader(
-                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM.csv.gz',
                                 workingDir,
                                 'LANDSAT_ETM')],
                 (LANDSAT_ETM_SLC_OFF): [
                         new GzCsvUriReader(
-                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM_SLC_OFF.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_SLC_OFF.csv.gz',
                                 workingDir,
                                 'LANDSAT_ETM_SLC_OFF')],
                 (LANDSAT_TM)         : [
                         new GzCsvUriReader(
-                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_TM-1980-1989.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_TM-1980-1989.csv.gz',
                                 workingDir,
                                 'LANDSAT_TM-1980-1989'),
                         new GzCsvUriReader(
-                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_TM-1990-1999.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_TM-1990-1999.csv.gz',
                                 workingDir,
                                 'LANDSAT_TM-1990-1999'),
                         new GzCsvUriReader(
-                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_TM-2000-2009.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_TM-2000-2009.csv.gz',
                                 workingDir,
                                 'LANDSAT_TM-2000-2009'),
                         new GzCsvUriReader(
-                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_TM-2010-2012.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_TM-2010-2012.csv.gz',
                                 workingDir,
                                 'LANDSAT_TM-2010-2012')],
                 (LANDSAT_MSS)        : [
                         new GzCsvUriReader(
-                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_MSS2.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_MSS2.csv.gz',
                                 workingDir,
                                 'LANDSAT_MSS2'),
                         new GzCsvUriReader(
-                                'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_MSS1.csv.gz',
+                                'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_MSS1.csv.gz',
                                 workingDir,
                                 'LANDSAT_MSS1')]
         ], [
                 (LANDSAT_8)          : [
-                        new CsvUriReader('http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_8.csv')
+                        new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8.csv')
                 ],
                 (LANDSAT_ETM)        : [
-                        new CsvUriReader('http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM.csv')
+                        new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM.csv')
                 ],
                 (LANDSAT_ETM_SLC_OFF): [
-                        new CsvUriReader('http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_ETM_SLC_OFF.csv')
+                        new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_SLC_OFF.csv')
                 ]
         ])
     }
