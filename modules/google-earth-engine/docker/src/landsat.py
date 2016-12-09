@@ -26,6 +26,11 @@ _bands_by_collection_name = {
 normalized_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10', 'fmask']
 _milis_per_day = 1000 * 60 * 60 * 24
 
+_mosaic_strategies = {
+    'median': lambda collection: collection.median(),
+    'quality-mosaic': lambda collection: collection.qualityMosaic('cweight')
+}
+
 
 def create_mosaic(
         aoi,
@@ -34,7 +39,9 @@ def create_mosaic(
         target_day_of_year_weight,
         from_date,
         to_date,
-        bands):
+        bands,
+        strategy,
+        fmask_threshold):
     """
     Creates a cloud-free mosaic, automatically selecting scenes to include based on provided parameters.
 
@@ -65,6 +72,18 @@ def create_mosaic(
         Valid bands are B1, B2, B3, B4, B5, B7, B10, temp (temperature band), date (days since epoch),
         and days (days from target day)
     :type bands: iterable
+
+    :param strategy: The strategy to use when creating the mosaic. Must be 'mean' or 'quality-mosaic'
+    :type strategy: str
+
+    :param fmask_threshold: The minimum class to include when applying FMask.
+        0: clear land pixel
+        1: clear water pixel
+        2: cloud shadow
+        3: snow
+        4: cloud
+    :type fmask_threshold: int
+
     :return: cloud-free mosaic, clipped to the area of interest, contains the specified bands.
          """
     logging.info('Creating mosaic')
@@ -74,7 +93,8 @@ def create_mosaic(
     collection_names = _to_collection_names(sensors)
     # Creates an image collection for each GEE collection name
     image_collections = [_create_filtered_image_collection(name, filter) for name in collection_names]
-    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, bands)
+    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, from_date, to_date,
+                            bands, strategy, fmask_threshold)
     return mosaic
 
 
@@ -83,7 +103,11 @@ def create_mosaic_from_scene_ids(
         sceneIds,
         target_day_of_year,
         target_day_of_year_weight,
-        bands):
+        from_date,
+        to_date,
+        bands,
+        strategy,
+        fmask_threshold):
     """
     Creates a cloud-free mosaic, selecting scenes based on provided ids.
 
@@ -109,10 +133,26 @@ def create_mosaic_from_scene_ids(
     :param to_date: The latest date to include scenes from.
     :type to_date: datetime.date
 
+    :param from_date: The earliest date to include scenes from.
+    :type from_date: datetime.date
+
+    :param to_date: The latest date to include scenes from.
+    :type to_date: datetime.date
+
     :param bands: The bands to include in the mosaic.
         Valid bands are B1, B2, B3, B4, B5, B7, B10, temp (temperature band), date (days since epoch), 
         days (days from target day), and ndvi
     :type bands: iterable
+
+    :param strategy: The strategy to use when creating the mosaic. Must be 'mean' or 'quality-mosaic'
+    :type strategy: str
+
+    :param fmask_threshold: The minimum class to include when applying FMask.
+        0: clear land pixel
+        1: clear water pixel
+        2: cloud shadow
+        3: snow
+        4: cloud
 
     :return: cloud-free mosaic, clipped to the area of interest, contains the specified bands.
          """
@@ -121,7 +161,8 @@ def create_mosaic_from_scene_ids(
     scene_ids_by_collection_name = groupby(sorted(sceneIds), _collection_name)
     # Creates an image collection for each GEE collection name, with its corresponding scenes
     image_collections = [_create_image_collection(name, ids) for name, ids in scene_ids_by_collection_name]
-    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, bands)
+    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, from_date, to_date,
+                            bands, strategy, fmask_threshold)
     return mosaic
 
 
@@ -217,7 +258,8 @@ def _create_image_collection(name, image_ids):
     return normalized_collection
 
 
-def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, bands):
+def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, from_date, to_date, bands,
+                   strategy, fmask_threshold):
     """Creates a mosaic, clipped to the area of interest, containing the specified bands.
 
     :param image_collection: The image collections to create a mosaic for.
@@ -237,22 +279,48 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
         0 means no importance, 1 means very important, and 0.5 means somewhat important.
     :type target_day_of_year_weight: float
 
+    :param from_date: The earliest date to include scenes from
+    :type from_date: datetime.date
+
+    :param to_date: The latest date to include scenes from
+    :type from_date: datetime.date
+
+    :param bands: The bands to include in the mosaic.
+        Valid bands are B1, B2, B3, B4, B5, B7, B10, temp (temperature band), date (days since epoch),
+        days (days from target day), and ndvi
+    :type bands: iterable
+
+    :param strategy: The strategy to use when creating the mosaic. Must be 'mean' or 'quality-mosaic'
+    :type strategy: str
+
+    :param fmask_threshold: The minimum class to include when applying FMask.
+        0: clear land pixel
+        1: clear water pixel
+        2: cloud shadow
+        3: snow
+        4: cloud
+
     :return: An ee.Image.
     """
     # Merges the image collections into a single collection
     image_collection = reduce(_merge_image_collections, image_collections)
     # Adjust the images - add additional bands, apply TOA correction
-    image_collection_qa = image_collection.map(
-        lambda image: _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands)
+    image_collection = image_collection.map(
+        lambda image: _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands, fmask_threshold)
     )
-    mosaic = image_collection_qa.median()
+
+    mosaic = _mosaic_strategies[strategy](image_collection)
+
+    modis_median = _create_modis_median(from_date, to_date, aoi)
+    mosaic = _add_brdf_corrected_bands(mosaic, modis_median)
+
     return mosaic \
         .clip(aoi) \
         .select(bands) \
         .int16()
 
 
-def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands):
+def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands, fmask_threshold):
     """Applies TOA correction to the image and adds a number of bands.
 
         * cweight - weight based on temperature, wetness, days from target day of year, and cloud cover 
@@ -278,7 +346,7 @@ def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands):
 
     :return: The adjusted ee.Image.
     """
-    image = _mask_clouds(image)
+    image = _mask_clouds(image, fmask_threshold)
     image_day_of_year = _day_of_year(image)
     days_from_target_day = _days_between(image_day_of_year, target_day_of_year)
 
@@ -311,15 +379,14 @@ def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands):
         .addBands(weight_band)
 
 
-def _mask_clouds(image):
+def _mask_clouds(image, fmask_threshold):
     """Use FMASK attribute to mask clouds
 
     :param image: The image to mask clouds
     :type image: ee.Image
     """
-    quality = image.select('fmask')
-    cloud01 = quality.gt(2)
-    cloudmask = image.mask().And(cloud01.Not())
+    below_threshold = image.select('fmask').lte(fmask_threshold)
+    cloudmask = image.mask().And(below_threshold)
     return image.updateMask(cloudmask)
 
 
@@ -455,6 +522,50 @@ def _normalized_cloud_cover(image):
     :return: An ee.Image with the normalized cloud cover.
     """
     return image.metadata('CLOUD_COVER').divide(100).subtract(1).abs()
+
+
+def _create_modis_median(from_date, to_date, aoi):
+    modis_coll = ee.ImageCollection('MODIS/MCD43A4').filterDate(from_date, to_date).filterBounds(aoi).map(
+        lambda image: _modis_mask_clouds(image))
+    modis_median = modis_coll.median()
+    return modis_median
+
+
+def _modis_mask_clouds(image):
+    return image.updateMask(image.select(['Nadir_Reflectance_Band2']).gt(0))
+
+
+def _add_brdf_corrected_bands(image, modis_median):
+    """Use time-coincident NBAR MODIS to correct reflectance of Landsat for
+    sun-target-sensor effects.
+    """
+    lsat_tmp = image.select(['B3', 'B4', 'B5', 'B7'])
+    nbar = modis_median.select('Nadir_Reflectance_Band1').rename(['red']) \
+        .addBands(modis_median.select('Nadir_Reflectance_Band2').rename(['nir'])) \
+        .addBands(modis_median.select('Nadir_Reflectance_Band6').rename(['swir1'])) \
+        .addBands(modis_median.select('Nadir_Reflectance_Band7').rename(['swir2']))
+    nbar_float = nbar.toFloat()
+    nbar_fmean = nbar_float.focal_mean(radius=2500, units="meters")
+    lsat_fmean = lsat_tmp.focal_mean(radius=2500, units="meters")
+
+    lsat_nbar = lsat_tmp.expression(
+        'TOA / A * B * 0.0001', {
+            'TOA': lsat_tmp,
+            'A': lsat_fmean,
+            'B': nbar_fmean
+        })
+
+    # Transformer les TOA corriges en DN avec une equation specifique (pour reduire la taille)
+    red_byte = lsat_nbar.select('B3').multiply(508).add(1).byte()
+    nir_byte = lsat_nbar.select('B4').multiply(254).add(1).byte()
+    sw1_byte = lsat_nbar.select('B5').multiply(363).add(1).byte()
+    sw2_byte = lsat_nbar.select('B7').multiply(423).add(1).byte()
+
+    return image \
+        .addBands(red_byte.rename(['B3_brdf'])) \
+        .addBands(nir_byte.rename(['B4_brdf'])) \
+        .addBands(sw1_byte.rename(['B5_brdf'])) \
+        .addBands(sw2_byte.rename(['B7_brdf']))
 
 
 def _apply_toa_correction(image, image_day_of_year, bands):

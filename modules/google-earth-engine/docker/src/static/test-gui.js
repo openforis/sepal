@@ -5,7 +5,7 @@
                 zoom   : 4,
                 minZoom: 3,
                 maxZoom: 13,
-                center : new google.maps.LatLng( 16.7794913, 9.6771556 ),
+                center : new google.maps.LatLng( 16.7794913, 9.6771556 )
             } )
     }
     
@@ -103,7 +103,7 @@
     function findSceneAreas() {
         var aoi = createAoi()
         $.getJSON( 'sceneareas', { aoi: JSON.stringify( aoi ) }, function ( data ) {
-            $( '#sceneAreas' ).html( "<pre>" + JSON.stringify( data, null, 2 ) + "</pre>")
+            $( '#sceneAreas' ).html( "<pre>" + JSON.stringify( data, null, 2 ) + "</pre>" )
         } )
     }
     
@@ -148,7 +148,7 @@
                 type     : 'fusionTable',
                 tableName: '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
                 keyColumn: 'ISO',
-                keyValue : iso,
+                keyValue : iso
             }
         }
     }
@@ -157,12 +157,16 @@
         var bands                 = $( '#bands' + mapIndex ).val().split( ', ' )
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
+        var strategy              = $( '#strategy' ).find( 'input[name="strategy"]:checked' ).val()
+        var fmaskThreshold        = $( '#fmask-threshold' ).val()
         
         return {
             aoi                  : createAoi(),
             targetDayOfYear      : targetDayOfYear,
             targetDayOfYearWeight: targetDayOfYearWeight,
-            bands                : bands
+            bands                : bands,
+            strategy             : strategy,
+            fmaskThreshold       : fmaskThreshold
             
         }
     }
