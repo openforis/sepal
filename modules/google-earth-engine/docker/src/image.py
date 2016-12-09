@@ -50,7 +50,7 @@ class Mosaic(Image):
         self.bands = bands
 
     _viz_by_bands = {
-        'B3, B2, B1': lambda params: {'bands': 'B3, B2, B1', 'min': 500, 'max': 5000, 'gamma': 1.8},
+        'B3, B2, B1': lambda params: {'bands': 'B3, B2, B1', 'min': 500, 'max': 5000, 'gamma': '2.1, 2.0, 1.7'},
         'B4, B3, B2': lambda params: {'bands': 'B4, B3, B2', 'min': 200, 'max': 5000, 'gamma': 1.2},
         'B4, B5, B3': lambda params: {'bands': 'B4, B5, B3', 'min': 200, 'max': 5000, 'gamma': 1.2},
         'B7, B4, B3': lambda params: {'bands': 'B7, B4, B3', 'min': 200, 'max': 5000, 'gamma': 1.2},
