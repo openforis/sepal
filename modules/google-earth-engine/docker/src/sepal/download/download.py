@@ -35,11 +35,11 @@ class Downloader(object):
         current_state = self.statuses[task_id]['state']
         state = status['state']
         if current_state == 'ACTIVE':  # Only update state if current state is ACTIVE
-            logging.info('Updating status of ' + task_id + ' from ' + current_state + ' to ' + state)
+            logging.info('Updating status of ' + task_id + ' from ' + str(self.statuses[task_id]) + ' to ' + str(status))
             self.statuses[task_id] = status
         else:
             logging.debug(
-                'Trying to update state of non-active task ' + task_id + ' from ' + current_state + ' to ' + state)
+                'Trying to update state of non-active task ' + task_id + ' from ' + str(self.statuses[task_id]) + ' to ' + str(status))
         if state != 'ACTIVE':
             del self.downloads[task_id]
 

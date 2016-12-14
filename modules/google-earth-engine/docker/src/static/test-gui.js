@@ -4,7 +4,7 @@
             document.getElementById( 'map' + mapIndex ), {
                 zoom   : 4,
                 minZoom: 3,
-                maxZoom: 13,
+                maxZoom: 15,
                 center : new google.maps.LatLng( 16.7794913, 9.6771556 )
             } )
     }
@@ -96,7 +96,7 @@
         mosaic.sensors  = sensors
         mosaic.fromDate = fromDatePicker.getDate().getTime()
         mosaic.toDate   = toDatePicker.getDate().getTime()
-        mosaic.type     = 'automaticSceneSelectingMosaic'
+        mosaic.type     = 'automatic'
         return { image: JSON.stringify( mosaic ) }
     }
     
@@ -158,7 +158,12 @@
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
         var strategy              = $( '#strategy' ).find( 'input[name="strategy"]:checked' ).val()
-        var fmaskThreshold        = $( '#fmask-threshold' ).val()
+        
+        
+        var classesToMask = []
+        $( '#classes-to-mask' ).find( 'input:checked' ).each( function () {
+            classesToMask.push( $( this ).attr( 'id' ) )
+        } )
         
         return {
             aoi                  : createAoi(),
@@ -166,7 +171,7 @@
             targetDayOfYearWeight: targetDayOfYearWeight,
             bands                : bands,
             strategy             : strategy,
-            fmaskThreshold       : fmaskThreshold
+            classesToMask        : classesToMask
             
         }
     }
@@ -174,7 +179,7 @@
     function createScenesQuery( mapIndex ) {
         var mosaic      = createMosaic( mapIndex )
         mosaic.sceneIds = $( '#sceneIds' ).val().split( '\n' )
-        mosaic.type     = 'preselectedScenesMosaic'
+        mosaic.type     = 'manual'
         return { image: JSON.stringify( mosaic ) }
     }
     

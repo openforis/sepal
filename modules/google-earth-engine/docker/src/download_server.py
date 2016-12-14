@@ -6,8 +6,8 @@ import sys
 from flask import Flask, Blueprint, Response, request
 from oauth2client.service_account import ServiceAccountCredentials
 
-from download import Downloader
-from image import Image
+from sepal import image_spec_factory
+from sepal.download.download import Downloader
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
@@ -23,7 +23,7 @@ def healthcheck():
 
 @http.route('/download', methods=['POST'])
 def download():
-    image = Image.create(json.loads(request.values['image']))
+    image = image_spec_factory.create(json.loads(request.values['image']))
     taskId = image.download(request.values['name'], username, downloader)
     return Response(taskId, mimetype='text/plain')
 

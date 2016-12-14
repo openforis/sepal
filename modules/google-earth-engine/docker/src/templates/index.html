@@ -44,12 +44,6 @@
                     <input type="text" id="target-day-of-year-weight" value="0.5">
                 </p>
 
-
-                <p>
-                    <label for="fmask-threshold">FMask Threshold</label><br/>
-                    <input type="text" id="fmask-threshold" value="1">
-                </p>
-
                 <p id="sensors">
                     <label>Sensors</label><br/>
                     <input type="checkbox" id="LANDSAT_8" checked>
@@ -68,16 +62,28 @@
                     <label for="LANDSAT_MSS">Landsat 1-5 MSS</label><br/>
                 </p>
 
+                <p id="classes-to-mask">
+                    <label>Classes to mask</label><br/>
+                    <input type="checkbox" id="land">
+                    <label for="land">Land</label>
+                    <input type="checkbox" id="water">
+                    <label for="water">Water</label>
+                    <input type="checkbox" id="cloud-shadow" checked>
+                    <label for="cloud-shadow">Cloud shadow</label>
+                    <input type="checkbox" id="cloud" checked>
+                    <label for="cloud">Cloud</label>
+                    <input type="checkbox" id="snow" checked>
+                    <label for="snow">Snow</label>
+                </p>
+
                 <p id="strategy">
-                    <label>Sensors</label><br/>
+                    <label>Composition strategy</label><br/>
                     <input id="strategy.median" type="radio" name="strategy" checked value="median">
                     <label for="strategy.median">Median</label>
 
-                    <input id="strategy.quality-mosaic" type="radio" name="strategy" value="quality-mosaic">
-                    <label for="strategy.quality-mosaic">Quality Mosaic</label>
+                    <input id="strategy.quality-band" type="radio" name="strategy" value="quality-band">
+                    <label for="strategy.quality-band">Quality Band</label>
                 </p>
-
-
                 <p>
                     <label for="bands1">Bands 1</label><br/>
                     <select id="bands1">
@@ -87,9 +93,12 @@
                         <option value="B7, B4, B3">False color(SWIR 2, NIR, Red)</option>
                         <option value="B7, B5, B3">False color(SWIR 2, SWIR 1, Red)</option>
                         <option value="B7, B4, B2">False color(SWIR 2, NIR, Green)</option>
-                        <option value="B4_brdf, B5_brdf, B3_brdf">False color(NIR, SWIR 1, Red - BRDF corrected)</option>
-                        <option value="B7_brdf, B4_brdf, B3_brdf">False color(SWIR 2, NIR, Red - BRDF corrected)</option>
-                        <option value="B7_brdf, B5_brdf, B3_brdf">False color(SWIR 2, SWIR 1, Red - BRDF corrected)</option>
+                        <option value="B4_brdf, B5_brdf, B3_brdf">False color(NIR, SWIR 1, Red - BRDF corrected)
+                        </option>
+                        <option value="B7_brdf, B4_brdf, B3_brdf">False color(SWIR 2, NIR, Red - BRDF corrected)
+                        </option>
+                        <option value="B7_brdf, B5_brdf, B3_brdf">False color(SWIR 2, SWIR 1, Red - BRDF corrected)
+                        </option>
                         <option value="temp">Temperature</option>
                         <option value="date">Date of pixel in days</option>
                         <option value="days">Days from target day</option>
@@ -104,9 +113,12 @@
                         <option value="B7, B4, B3">False color(SWIR 2, NIR, Red)</option>
                         <option value="B7, B5, B3">False color(SWIR 2, SWIR 1, Red)</option>
                         <option value="B7, B4, B2">False color(SWIR 2, NIR, Green)</option>
-                        <option value="B4_brdf, B5_brdf, B3_brdf">False color(NIR, SWIR 1, Red - BRDF corrected)</option>
-                        <option value="B7_brdf, B4_brdf, B3_brdf">False color(SWIR 2, NIR, Red - BRDF corrected)</option>
-                        <option value="B7_brdf, B5_brdf, B3_brdf">False color(SWIR 2, SWIR 1, Red - BRDF corrected)</option>
+                        <option value="B4_brdf, B5_brdf, B3_brdf">False color(NIR, SWIR 1, Red - BRDF corrected)
+                        </option>
+                        <option value="B7_brdf, B4_brdf, B3_brdf">False color(SWIR 2, NIR, Red - BRDF corrected)
+                        </option>
+                        <option value="B7_brdf, B5_brdf, B3_brdf">False color(SWIR 2, SWIR 1, Red - BRDF corrected)
+                        </option>
                         <option value="temp">Temperature</option>
                         <option value="date">Date of pixel in days</option>
                         <option value="days">Days from target day</option>

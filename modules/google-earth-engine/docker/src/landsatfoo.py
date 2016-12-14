@@ -28,7 +28,15 @@ _milis_per_day = 1000 * 60 * 60 * 24
 
 _mosaic_strategies = {
     'median': lambda collection: collection.median(),
-    'quality-mosaic': lambda collection: collection.qualityMosaic('cweight')
+    'quality-band': lambda collection: collection.qualityMosaic('cweight')
+}
+
+_fmask_value_by_class_name = {
+    'land': 0,
+    'water': 1,
+    'cloud-shadow': 2,
+    'snow': 3,
+    'cloud': 4
 }
 
 
@@ -41,7 +49,7 @@ def create_mosaic(
         to_date,
         bands,
         strategy,
-        fmask_threshold):
+        classes_to_mask):
     """
     Creates a cloud-free mosaic, automatically selecting scenes to include based on provided parameters.
 
@@ -73,16 +81,11 @@ def create_mosaic(
         and days (days from target day)
     :type bands: iterable
 
-    :param strategy: The strategy to use when creating the mosaic. Must be 'mean' or 'quality-mosaic'
+    :param strategy: The strategy to use when creating the mosaic. Must be 'median' or 'quality-band'
     :type strategy: str
 
-    :param fmask_threshold: The minimum class to include when applying FMask.
-        0: clear land pixel
-        1: clear water pixel
-        2: cloud shadow
-        3: snow
-        4: cloud
-    :type fmask_threshold: int
+    :param classes_to_mask: The classes to mask. Can contain 'land', 'water', 'cloud-shadow', 'cloud', and 'snow'.
+    :type classes_to_mask: iterable
 
     :return: cloud-free mosaic, clipped to the area of interest, contains the specified bands.
          """
@@ -94,7 +97,7 @@ def create_mosaic(
     # Creates an image collection for each GEE collection name
     image_collections = [_create_filtered_image_collection(name, filter) for name in collection_names]
     mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, from_date, to_date,
-                            bands, strategy, fmask_threshold)
+                            bands, strategy, classes_to_mask)
     return mosaic
 
 
@@ -107,7 +110,7 @@ def create_mosaic_from_scene_ids(
         to_date,
         bands,
         strategy,
-        fmask_threshold):
+        classes_to_mask):
     """
     Creates a cloud-free mosaic, selecting scenes based on provided ids.
 
@@ -144,15 +147,11 @@ def create_mosaic_from_scene_ids(
         days (days from target day), and ndvi
     :type bands: iterable
 
-    :param strategy: The strategy to use when creating the mosaic. Must be 'mean' or 'quality-mosaic'
+    :param strategy: The strategy to use when creating the mosaic. Must be 'median' or 'quality-band'
     :type strategy: str
 
-    :param fmask_threshold: The minimum class to include when applying FMask.
-        0: clear land pixel
-        1: clear water pixel
-        2: cloud shadow
-        3: snow
-        4: cloud
+    :param classes_to_mask: The classes to mask. Can contain 'land', 'water', 'cloud-shadow', 'cloud', and 'snow'.
+    :type classes_to_mask: iterable
 
     :return: cloud-free mosaic, clipped to the area of interest, contains the specified bands.
          """
@@ -162,7 +161,7 @@ def create_mosaic_from_scene_ids(
     # Creates an image collection for each GEE collection name, with its corresponding scenes
     image_collections = [_create_image_collection(name, ids) for name, ids in scene_ids_by_collection_name]
     mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, from_date, to_date,
-                            bands, strategy, fmask_threshold)
+                            bands, strategy, classes_to_mask)
     return mosaic
 
 
@@ -259,7 +258,7 @@ def _create_image_collection(name, image_ids):
 
 
 def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, from_date, to_date, bands,
-                   strategy, fmask_threshold):
+                   strategy, classes_to_mask):
     """Creates a mosaic, clipped to the area of interest, containing the specified bands.
 
     :param image_collection: The image collections to create a mosaic for.
@@ -290,15 +289,11 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
         days (days from target day), and ndvi
     :type bands: iterable
 
-    :param strategy: The strategy to use when creating the mosaic. Must be 'mean' or 'quality-mosaic'
+    :param strategy: The strategy to use when creating the mosaic. Must be 'median' or 'quality-band'
     :type strategy: str
 
-    :param fmask_threshold: The minimum class to include when applying FMask.
-        0: clear land pixel
-        1: clear water pixel
-        2: cloud shadow
-        3: snow
-        4: cloud
+    :param classes_to_mask: The classes to mask. Can contain 'land', 'water', 'cloud-shadow', 'cloud', and 'snow'.
+    :type classes_to_mask: iterable
 
     :return: An ee.Image.
     """
@@ -306,7 +301,7 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
     image_collection = reduce(_merge_image_collections, image_collections)
     # Adjust the images - add additional bands, apply TOA correction
     image_collection = image_collection.map(
-        lambda image: _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands, fmask_threshold)
+        lambda image: _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands, classes_to_mask)
     )
 
     mosaic = _mosaic_strategies[strategy](image_collection)
@@ -320,7 +315,7 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
         .int16()
 
 
-def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands, fmask_threshold):
+def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands, classes_to_mask):
     """Applies TOA correction to the image and adds a number of bands.
 
         * cweight - weight based on temperature, wetness, days from target day of year, and cloud cover 
@@ -346,7 +341,7 @@ def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands, f
 
     :return: The adjusted ee.Image.
     """
-    image = _mask_clouds(image, fmask_threshold)
+    image = _apply_mask(image, classes_to_mask)
     image_day_of_year = _day_of_year(image)
     days_from_target_day = _days_between(image_day_of_year, target_day_of_year)
 
@@ -379,15 +374,22 @@ def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands, f
         .addBands(weight_band)
 
 
-def _mask_clouds(image, fmask_threshold):
-    """Use FMASK attribute to mask clouds
+def _apply_mask(image, classes_to_mask):
+    """Use FMask attribute to mask provided classes.
 
-    :param image: The image to mask clouds
+    :param image: The image to mask
     :type image: ee.Image
+
+    :param classes_to_mask: The classes to mask. Can contain 'land', 'water', 'cloud-shadow', 'cloud', and 'snow'.
+    :type classes_to_mask: iterable
     """
-    below_threshold = image.select('fmask').lte(fmask_threshold)
-    cloudmask = image.mask().And(below_threshold)
-    return image.updateMask(cloudmask)
+    fmask = image.select('fmask')
+    mask = image.mask()
+    for class_to_mask in classes_to_mask:
+        fmask_value_to_mask = _fmask_value_by_class_name[class_to_mask]
+        mask = mask.And(fmask.neq(fmask_value_to_mask))
+
+    return image.updateMask(mask)
 
 
 def _day_of_year(image):
