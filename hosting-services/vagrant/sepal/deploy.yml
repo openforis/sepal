@@ -30,7 +30,7 @@
 
     - file: path="/data/letsencrypt/live/{{ sepal_host }}" state=directory
     - copy: src="{{ config_home }}/certificates/sepal-https.key" dest=/data/letsencrypt/live/{{ sepal_host }}/privkey.pem
-    - copy: src="{{ config_home }}/certificates/sepal-https.crt" dest=/data/letsencrypt/live/{{ sepal_host }}/cert.pem
+    - copy: src="{{ config_home }}/certificates/sepal-https.crt" dest=/data/letsencrypt/live/{{ sepal_host }}/fullchain.pem
 
     - set_fact:
        ldap_host: "{{ vagrant_ip }}"
