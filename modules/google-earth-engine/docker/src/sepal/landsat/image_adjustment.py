@@ -4,7 +4,7 @@ import constants
 import toa_correction
 
 
-def adjust_images(image_collection, mosaic_def):
+def apply(image_collection, mosaic_def):
     return image_collection.map(lambda image: _adjust_image(image, mosaic_def))
 
 

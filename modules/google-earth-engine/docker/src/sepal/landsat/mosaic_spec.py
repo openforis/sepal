@@ -30,7 +30,7 @@ class LandsatMosaicSpec(ImageSpec):
         :return: An ee.Image.
         """
         image_collection = self._merge(image_collections)
-        image_collection = image_adjustment.adjust_images(image_collection, self)
+        image_collection = image_adjustment.apply(image_collection, self)
         mosaic = constants.mosaic_strategies[self.strategy](image_collection)
         mosaic = brdf_correction.apply(mosaic, self)
         return mosaic \
