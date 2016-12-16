@@ -36,7 +36,8 @@ class ProxyConfig {
                             rewriteRedirects: parseBoolean(it.rewriteRedirects),
                             https: parseBoolean(it.https),
                             authenticate: parseBoolean(it.authenticate),
-                            cached: parseBoolean(it.cached)
+                            cached: parseBoolean(it.cached),
+                            noCache: parseBoolean(it.'no-cache')
                     )
                 }.asImmutable()
         )

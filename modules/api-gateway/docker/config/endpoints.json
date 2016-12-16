@@ -4,7 +4,8 @@
     "path": "/",
     "target": "http://sepal:1025/",
     "https": "true",
-    "authenticate": "false"
+    "authenticate": "false",
+    "no-cache": "true"
   },
   {
     "prefix": "true",
