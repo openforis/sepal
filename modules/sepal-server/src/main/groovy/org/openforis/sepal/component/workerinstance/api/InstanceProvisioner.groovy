@@ -5,6 +5,8 @@ interface InstanceProvisioner {
 
     void undeploy(WorkerInstance instance)
 
+    boolean isProvisioned(WorkerInstance instance)
+
     static class Failed extends RuntimeException {
         private final WorkerInstance instance
 

@@ -7,6 +7,8 @@ import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.command.*
 import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
+import org.openforis.sepal.component.workerinstance.query.FindMissingInstances
+import org.openforis.sepal.component.workerinstance.query.FindMissingInstancesHandler
 import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
@@ -48,6 +50,8 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
         command(ProvisionInstance, new ProvisionInstanceHandler(instanceProvisioner, eventDispatcher))
         command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceProvider, instanceProvisioner, eventDispatcher, clock))
         command(SizeIdlePool, new SizeIdlePoolHandler(instanceProvider, eventDispatcher, clock))
+
+        query(FindMissingInstances, new FindMissingInstancesHandler(instanceProvisioner))
 
         instanceProvider.onInstanceLaunched() {
             if (it.reserved)

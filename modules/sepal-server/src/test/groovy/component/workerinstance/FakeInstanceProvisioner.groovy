@@ -13,6 +13,10 @@ class FakeInstanceProvisioner implements InstanceProvisioner {
         provisioned << instance
     }
 
+    boolean isProvisioned(WorkerInstance instance) {
+        return provisioned.find { it.id == instance.id }
+    }
+
     void undeploy(WorkerInstance instance) {
         if (failing)
             throw new IllegalStateException("Instance provider failed to undeploy instance")

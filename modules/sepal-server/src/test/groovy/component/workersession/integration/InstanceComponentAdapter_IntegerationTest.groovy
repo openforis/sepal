@@ -8,6 +8,7 @@ import org.openforis.sepal.component.workersession.api.WorkerSession
 
 import static java.util.concurrent.TimeUnit.MINUTES
 
+@SuppressWarnings("GrReassignedInClosureLocalVar")
 class InstanceComponentAdapter_IntegerationTest extends AbstractWorkerInstanceTest {
     def instanceTypes = []
     def adapter = new InstanceComponentAdapter(instanceTypes, component)
@@ -43,7 +44,6 @@ class InstanceComponentAdapter_IntegerationTest extends AbstractWorkerInstanceTe
         instanceProvider.oneIdle()
     }
 
-    @SuppressWarnings("GrReassignedInClosureLocalVar")
     def 'When instance is provisioned, instance activated callback is invoked'() {
         def activatedInstance = null
         adapter.onInstanceActivated { activatedInstance = it }
@@ -62,7 +62,6 @@ class InstanceComponentAdapter_IntegerationTest extends AbstractWorkerInstanceTe
         adapter.instanceTypes == instanceTypes
     }
 
-    @SuppressWarnings("GrReassignedInClosureLocalVar")
     def 'When provisioning fails, instance request failure callback is invoked'() {
         def instance = requestInstance()
         instanceProvisioner.fail()
@@ -78,12 +77,37 @@ class InstanceComponentAdapter_IntegerationTest extends AbstractWorkerInstanceTe
         thrown Exception
     }
 
+    def 'Given session without instance, when getting sessions without instance, session is returned'() {
+        def sessions = [session(instance: new WorkerInstance('instance-id', 'instance-host'))]
+
+        when:
+        def result = adapter.sessionsWithoutInstance(sessions)
+
+        then:
+        result == sessions
+    }
+
+    def 'Given session with instance, when getting sessions without instance, session is not returned'() {
+        def session = session()
+        instanceProvider.launchIdle(session.instanceType, 1)
+        def instance = adapter.requestInstance(session)
+        session = session.withInstance(instance)
+
+        when:
+        def result = adapter.sessionsWithoutInstance([session])
+
+        then:
+        !result
+    }
+
+
     private WorkerSession session(Map args = [:]) {
         new WorkerSession(
                 id: UUID.randomUUID().toString(),
                 state: WorkerSession.State.PENDING,
                 workerType: args.workerType ?: testWorkerType,
                 instanceType: args.instanceType ?: testInstanceType,
+                instance: args.instance,
                 username: username(args),
                 creationTime: clock.now(),
                 updateTime: clock.now()

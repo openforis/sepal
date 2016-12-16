@@ -45,6 +45,11 @@ class FakeInstanceManager implements InstanceManager {
         this.pendingOrActiveSessions.addAll(pendingOrActiveSessions)
     }
 
+    List<WorkerSession> sessionsWithoutInstance(List<WorkerSession> workerSessions) {
+        return workerSessions.findAll {
+            !instanceById.containsKey(it.instance.id) || it.instance in released
+        }
+    }
 
     WorkerInstance requestedOne() {
         assert allInstances().size() == 1,

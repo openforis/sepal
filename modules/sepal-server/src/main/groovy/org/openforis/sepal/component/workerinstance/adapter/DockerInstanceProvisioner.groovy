@@ -37,6 +37,19 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
         }
     }
 
+    boolean isProvisioned(WorkerInstance instance) {
+        try {
+            def workerType = workerType(instance)
+            workerType.images.each { image ->
+                waitUntilInitialized(instance, image)
+            }
+        } catch (Exception e) {
+            LOG.warn("$instance not provisioned: $e.message")
+            return false
+        }
+        return true
+    }
+
     void undeploy(WorkerInstance instance) {
         deleteExistingContainers(instance)
     }

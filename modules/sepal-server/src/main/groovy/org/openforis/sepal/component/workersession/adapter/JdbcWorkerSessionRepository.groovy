@@ -75,11 +75,13 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
         sql.rows(query as String, params).collect { toSession(it) }
     }
 
-    List<WorkerSession> pendingOrActiveSessions() {
-        sql.rows('''
+    List<WorkerSession> sessions(List<WorkerSession.State> states) {
+        def query = """
                 SELECT id, state, username, worker_type, instance_type, instance_id, host, creation_time, update_time
                 FROM worker_session
-                WHERE state IN (?, ?)''', [PENDING.name(), ACTIVE.name()]
+                WHERE state in (${placeholders(states.size())})""" as String
+        sql.rows(
+                query, states.collect { it.name() }
         ).collect { toSession(it) }
     }
 
