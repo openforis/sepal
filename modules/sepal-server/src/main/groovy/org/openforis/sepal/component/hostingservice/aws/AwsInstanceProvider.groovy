@@ -198,9 +198,22 @@ final class AwsInstanceProvider implements InstanceProvider {
         def awsInstances = client.describeInstances(request).reservations
                 .collect { it.instances }.flatten() as List<Instance>
         def instancesWithValidVersion = awsInstances.findAll {
-            (tagValue(it, 'Version') as int) >= sepalVersion
+            instanceVersion(it) >= sepalVersion
         }
+        terminateOldIdle(awsInstances)
         return instancesWithValidVersion.collect { toWorkerInstance(it) }
+    }
+
+    private List<Instance> terminateOldIdle(List<Instance> awsInstances) {
+        awsInstances.findAll {
+            instanceVersion(it) < sepalVersion && tagValue(it, 'State') == 'idle'
+        }.each {
+            terminate(it.instanceId)
+        }
+    }
+
+    private int instanceVersion(Instance instance) {
+        tagValue(instance, 'Version') as int
     }
 
     private Instance launch(String instanceType, int count) {
