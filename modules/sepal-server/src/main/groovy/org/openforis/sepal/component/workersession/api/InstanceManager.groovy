@@ -14,6 +14,8 @@ interface InstanceManager {
 
     List<InstanceType> getInstanceTypes()
 
+    List<WorkerSession> sessionsWithoutInstance(List<WorkerSession> workerSessions)
+
     void onInstanceActivated(
             @ClosureParams(
                     value = SimpleType,

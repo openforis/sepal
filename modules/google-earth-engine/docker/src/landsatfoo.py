@@ -4,27 +4,40 @@ import ee
 from itertools import groupby
 
 _collection_names_by_sensor = {
-    'LANDSAT_8': ['LC8_L1T_TOA'],
-    'LANDSAT_ETM_SLC_OFF': ['LE7_L1T_TOA'],
-    'LANDSAT_ETM': ['LE7_L1T_TOA'],
-    'LANDSAT_TM': ['LT4_L1T_TOA', 'LT5_L1T_TOA'],
+    'LANDSAT_8': ['LANDSAT/LC8_L1T_TOA_FMASK'],
+    'LANDSAT_ETM_SLC_OFF': ['LANDSAT/LE7_L1T_TOA_FMASK'],
+    'LANDSAT_ETM': ['LANDSAT/LE7_L1T_TOA_FMASK'],
+    'LANDSAT_TM': ['LANDSAT/LT4_L1T_TOA_FMASK', 'LANDSAT/LT5_L1T_TOA_FMASK'],
 }
 _collection_name_by_scene_id_prefix = {
-    'LC8': 'LC8_L1T_TOA',
-    'LE7': 'LE7_L1T_TOA',
-    'LT5': 'LT5_L1T_TOA',
-    'LT4': 'LT4_L1T_TOA',
+    'LC8': 'LANDSAT/LC8_L1T_TOA_FMASK',
+    'LE7': 'LANDSAT/LE7_L1T_TOA_FMASK',
+    'LT5': 'LANDSAT/LT5_L1T_TOA_FMASK',
+    'LT4': 'LANDSAT/LT4_L1T_TOA_FMASK',
 }
 
 _bands_by_collection_name = {
-    'LC8_L1T_TOA': ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B10'],
-    'LE7_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6_VCID_1'],
-    'LT5_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6'],
-    'LT4_L1T_TOA': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6']
+    'LANDSAT/LC8_L1T_TOA_FMASK': ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B10', 'fmask'],
+    'LANDSAT/LE7_L1T_TOA_FMASK': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6_VCID_1', 'fmask'],
+    'LANDSAT/LT5_L1T_TOA_FMASK': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6', 'fmask'],
+    'LANDSAT/LT4_L1T_TOA_FMASK': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B6', 'fmask']
 }
 
-normalized_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10']
+normalized_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10', 'fmask']
 _milis_per_day = 1000 * 60 * 60 * 24
+
+_mosaic_strategies = {
+    'median': lambda collection: collection.median(),
+    'quality-band': lambda collection: collection.qualityMosaic('cweight')
+}
+
+_fmask_value_by_class_name = {
+    'land': 0,
+    'water': 1,
+    'cloud-shadow': 2,
+    'snow': 3,
+    'cloud': 4
+}
 
 
 def create_mosaic(
@@ -34,7 +47,9 @@ def create_mosaic(
         target_day_of_year_weight,
         from_date,
         to_date,
-        bands):
+        bands,
+        strategy,
+        classes_to_mask):
     """
     Creates a cloud-free mosaic, automatically selecting scenes to include based on provided parameters.
 
@@ -65,6 +80,13 @@ def create_mosaic(
         Valid bands are B1, B2, B3, B4, B5, B7, B10, temp (temperature band), date (days since epoch),
         and days (days from target day)
     :type bands: iterable
+
+    :param strategy: The strategy to use when creating the mosaic. Must be 'median' or 'quality-band'
+    :type strategy: str
+
+    :param classes_to_mask: The classes to mask. Can contain 'land', 'water', 'cloud-shadow', 'cloud', and 'snow'.
+    :type classes_to_mask: iterable
+
     :return: cloud-free mosaic, clipped to the area of interest, contains the specified bands.
          """
     logging.info('Creating mosaic')
@@ -74,7 +96,8 @@ def create_mosaic(
     collection_names = _to_collection_names(sensors)
     # Creates an image collection for each GEE collection name
     image_collections = [_create_filtered_image_collection(name, filter) for name in collection_names]
-    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, bands)
+    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, from_date, to_date,
+                            bands, strategy, classes_to_mask)
     return mosaic
 
 
@@ -83,7 +106,11 @@ def create_mosaic_from_scene_ids(
         sceneIds,
         target_day_of_year,
         target_day_of_year_weight,
-        bands):
+        from_date,
+        to_date,
+        bands,
+        strategy,
+        classes_to_mask):
     """
     Creates a cloud-free mosaic, selecting scenes based on provided ids.
 
@@ -109,10 +136,22 @@ def create_mosaic_from_scene_ids(
     :param to_date: The latest date to include scenes from.
     :type to_date: datetime.date
 
+    :param from_date: The earliest date to include scenes from.
+    :type from_date: datetime.date
+
+    :param to_date: The latest date to include scenes from.
+    :type to_date: datetime.date
+
     :param bands: The bands to include in the mosaic.
         Valid bands are B1, B2, B3, B4, B5, B7, B10, temp (temperature band), date (days since epoch), 
         days (days from target day), and ndvi
     :type bands: iterable
+
+    :param strategy: The strategy to use when creating the mosaic. Must be 'median' or 'quality-band'
+    :type strategy: str
+
+    :param classes_to_mask: The classes to mask. Can contain 'land', 'water', 'cloud-shadow', 'cloud', and 'snow'.
+    :type classes_to_mask: iterable
 
     :return: cloud-free mosaic, clipped to the area of interest, contains the specified bands.
          """
@@ -121,7 +160,8 @@ def create_mosaic_from_scene_ids(
     scene_ids_by_collection_name = groupby(sorted(sceneIds), _collection_name)
     # Creates an image collection for each GEE collection name, with its corresponding scenes
     image_collections = [_create_image_collection(name, ids) for name, ids in scene_ids_by_collection_name]
-    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, bands)
+    mosaic = _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, from_date, to_date,
+                            bands, strategy, classes_to_mask)
     return mosaic
 
 
@@ -217,7 +257,8 @@ def _create_image_collection(name, image_ids):
     return normalized_collection
 
 
-def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, bands):
+def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_year_weight, from_date, to_date, bands,
+                   strategy, classes_to_mask):
     """Creates a mosaic, clipped to the area of interest, containing the specified bands.
 
     :param image_collection: The image collections to create a mosaic for.
@@ -237,25 +278,44 @@ def _create_mosaic(image_collections, aoi, target_day_of_year, target_day_of_yea
         0 means no importance, 1 means very important, and 0.5 means somewhat important.
     :type target_day_of_year_weight: float
 
+    :param from_date: The earliest date to include scenes from
+    :type from_date: datetime.date
+
+    :param to_date: The latest date to include scenes from
+    :type from_date: datetime.date
+
+    :param bands: The bands to include in the mosaic.
+        Valid bands are B1, B2, B3, B4, B5, B7, B10, temp (temperature band), date (days since epoch),
+        days (days from target day), and ndvi
+    :type bands: iterable
+
+    :param strategy: The strategy to use when creating the mosaic. Must be 'median' or 'quality-band'
+    :type strategy: str
+
+    :param classes_to_mask: The classes to mask. Can contain 'land', 'water', 'cloud-shadow', 'cloud', and 'snow'.
+    :type classes_to_mask: iterable
+
     :return: An ee.Image.
     """
     # Merges the image collections into a single collection
     image_collection = reduce(_merge_image_collections, image_collections)
     # Adjust the images - add additional bands, apply TOA correction
-    image_collection_qa = image_collection.map(
-        lambda image: _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands)
-        # lambda image: _addqa(image, target_day_of_year, bands)
+    image_collection = image_collection.map(
+        lambda image: _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands, classes_to_mask)
     )
-    # Create a 'best pixel' composite using the warmest, wettest pixel closest to specified target date
-    mosaic = image_collection_qa.qualityMosaic('cweight')
-    # Clip the water bodies according to GFC Water Mask
+
+    mosaic = _mosaic_strategies[strategy](image_collection)
+
+    modis_median = _create_modis_median(from_date, to_date, aoi)
+    mosaic = _add_brdf_corrected_bands(mosaic, modis_median)
+
     return mosaic \
         .clip(aoi) \
         .select(bands) \
         .int16()
 
 
-def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands):
+def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands, classes_to_mask):
     """Applies TOA correction to the image and adds a number of bands.
 
         * cweight - weight based on temperature, wetness, days from target day of year, and cloud cover 
@@ -281,6 +341,7 @@ def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands):
 
     :return: The adjusted ee.Image.
     """
+    image = _apply_mask(image, classes_to_mask)
     image_day_of_year = _day_of_year(image)
     days_from_target_day = _days_between(image_day_of_year, target_day_of_year)
 
@@ -311,6 +372,24 @@ def _adjust_image(image, target_day_of_year, target_day_of_year_weight, bands):
         .addBands(days_band) \
         .addBands(date_band) \
         .addBands(weight_band)
+
+
+def _apply_mask(image, classes_to_mask):
+    """Use FMask attribute to mask provided classes.
+
+    :param image: The image to mask
+    :type image: ee.Image
+
+    :param classes_to_mask: The classes to mask. Can contain 'land', 'water', 'cloud-shadow', 'cloud', and 'snow'.
+    :type classes_to_mask: iterable
+    """
+    fmask = image.select('fmask')
+    mask = image.mask()
+    for class_to_mask in classes_to_mask:
+        fmask_value_to_mask = _fmask_value_by_class_name[class_to_mask]
+        mask = mask.And(fmask.neq(fmask_value_to_mask))
+
+    return image.updateMask(mask)
 
 
 def _day_of_year(image):
@@ -447,6 +526,50 @@ def _normalized_cloud_cover(image):
     return image.metadata('CLOUD_COVER').divide(100).subtract(1).abs()
 
 
+def _create_modis_median(from_date, to_date, aoi):
+    modis_coll = ee.ImageCollection('MODIS/MCD43A4').filterDate(from_date, to_date).filterBounds(aoi).map(
+        lambda image: _modis_mask_clouds(image))
+    modis_median = modis_coll.median()
+    return modis_median
+
+
+def _modis_mask_clouds(image):
+    return image.updateMask(image.select(['Nadir_Reflectance_Band2']).gt(0))
+
+
+def _add_brdf_corrected_bands(image, modis_median):
+    """Use time-coincident NBAR MODIS to correct reflectance of Landsat for
+    sun-target-sensor effects.
+    """
+    lsat_tmp = image.select(['B3', 'B4', 'B5', 'B7'])
+    nbar = modis_median.select('Nadir_Reflectance_Band1').rename(['red']) \
+        .addBands(modis_median.select('Nadir_Reflectance_Band2').rename(['nir'])) \
+        .addBands(modis_median.select('Nadir_Reflectance_Band6').rename(['swir1'])) \
+        .addBands(modis_median.select('Nadir_Reflectance_Band7').rename(['swir2']))
+    nbar_float = nbar.toFloat()
+    nbar_fmean = nbar_float.focal_mean(radius=2500, units="meters")
+    lsat_fmean = lsat_tmp.focal_mean(radius=2500, units="meters")
+
+    lsat_nbar = lsat_tmp.expression(
+        'TOA / A * B * 0.0001', {
+            'TOA': lsat_tmp,
+            'A': lsat_fmean,
+            'B': nbar_fmean
+        })
+
+    # Transformer les TOA corriges en DN avec une equation specifique (pour reduire la taille)
+    red_byte = lsat_nbar.select('B3').multiply(508).add(1).byte()
+    nir_byte = lsat_nbar.select('B4').multiply(254).add(1).byte()
+    sw1_byte = lsat_nbar.select('B5').multiply(363).add(1).byte()
+    sw2_byte = lsat_nbar.select('B7').multiply(423).add(1).byte()
+
+    return image \
+        .addBands(red_byte.rename(['B3_brdf'])) \
+        .addBands(nir_byte.rename(['B4_brdf'])) \
+        .addBands(sw1_byte.rename(['B5_brdf'])) \
+        .addBands(sw2_byte.rename(['B7_brdf']))
+
+
 def _apply_toa_correction(image, image_day_of_year, bands):
     """Applies TOA correction to image on provided bands based on specified day of year.
 
@@ -580,10 +703,10 @@ def _to_image(image_id):
     :return: An ee.Image or None if the image isn't found.
     """
     # Merges all collections into a single collection
-    collection = ee.ImageCollection('LC8_L1T_TOA').merge(
-        ee.ImageCollection('LE7_L1T_TOA').merge(
-            ee.ImageCollection('LT5_L1T_TOA').merge(
-                ee.ImageCollection('LT4_L1T_TOA')
+    collection = ee.ImageCollection('LANDSAT/LC8_L1T_TOA_FMASK').merge(
+        ee.ImageCollection('LANDSAT/LE7_L1T_TOA_FMASK').merge(
+            ee.ImageCollection('LANDSAT/LT5_L1T_TOA_FMASK').merge(
+                ee.ImageCollection('LANDSAT/LT4_L1T_TOA_FMASK')
             )
         )
     )
@@ -592,54 +715,3 @@ def _to_image(image_id):
     return collection.filter(
         ee.Filter.eq('system:index', image_id)
     ).first()
-
-
-def _addqa(image, target_day_of_year, bands):
-    """Add qa bands.
-
-    :param image: The image to add qa bands to.
-    :type image: ee.Image
-
-    :param target_day_of_year: They day of the year to aim for.
-    :type target_day_of_year: int
-
-    :param bands: A list of the bands to include in the map.
-    :type bands: iterable
-    """
-
-    # Use the specified target day also as a weight factor
-    # theoretically to, again, help control the mosaic creation at the end
-    # ...where images closer to the target date are favored
-    timestamp = ee.Number(image.get('system:time_start'))
-    image_day_of_year = ee.Number(ee.Date(timestamp).getRelative('day', 'year'))
-    days_from_target_day = ee.Number(target_day_of_year).subtract(image_day_of_year).abs()
-    # Closer to wrap over year boundary?
-    days_from_target_day = days_from_target_day.min(
-        ee.Number(365).subtract(days_from_target_day)
-    )
-    # 0 days from target day gives weight of 365, 183 days from target day gives weight 182
-    days_from_target_day_weight = ee.Number(365).subtract(days_from_target_day)
-
-    ndvi = (
-        image.select('B4').subtract(image.select('B3'))
-    ).divide(
-        image.select('B4').add(image.select('B3'))
-    )
-    temp = image.select('B10').focal_min().rename(['temp'])
-    tmpndvi = ndvi.multiply(temp)
-    # time = ndvi.multiply(temp).rename(['date'])
-    time = image.metadata('system:time_start').divide(_milis_per_day).rename(['date'])
-    # Extract the cloud cover from Landsat metadata and use it as an inverse weight
-    # e.g. to favor all pixels from an acquisition with low cloud cover
-    # theoretically to help keep the resulting mosaic radiometrically uniform
-    cloudweight = image.metadata('CLOUD_COVER').subtract(100).multiply(-1)
-    total_weight = tmpndvi.multiply(days_from_target_day_weight).multiply(cloudweight).rename(['cweight'])
-
-    result = _apply_toa_correction(image, image_day_of_year, bands)
-    days_band = _days_band(days_from_target_day, image)
-
-    return result \
-        .addBands(time) \
-        .addBands(temp) \
-        .addBands(days_band) \
-        .addBands(total_weight)

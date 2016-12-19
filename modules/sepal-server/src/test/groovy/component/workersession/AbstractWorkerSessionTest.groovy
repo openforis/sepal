@@ -136,6 +136,10 @@ abstract class AbstractWorkerSessionTest extends Specification {
         component.submit(new ReleaseUnusedInstances(minAge, timeUnit))
     }
 
+    final closeSessionsWithoutInstances() {
+        component.submit(new CloseSessionsWithoutInstance())
+    }
+
     final Spending setUserSpending(Spending spending, Map args = [:]) {
         budgetManager.setUserSpending(username(args), spending)
     }

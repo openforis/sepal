@@ -4,8 +4,8 @@
             document.getElementById( 'map' + mapIndex ), {
                 zoom   : 4,
                 minZoom: 3,
-                maxZoom: 13,
-                center : new google.maps.LatLng( 16.7794913, 9.6771556 ),
+                maxZoom: 15,
+                center : new google.maps.LatLng( 16.7794913, 9.6771556 )
             } )
     }
     
@@ -96,14 +96,14 @@
         mosaic.sensors  = sensors
         mosaic.fromDate = fromDatePicker.getDate().getTime()
         mosaic.toDate   = toDatePicker.getDate().getTime()
-        mosaic.type     = 'automaticSceneSelectingMosaic'
+        mosaic.type     = 'automatic'
         return { image: JSON.stringify( mosaic ) }
     }
     
     function findSceneAreas() {
         var aoi = createAoi()
         $.getJSON( 'sceneareas', { aoi: JSON.stringify( aoi ) }, function ( data ) {
-            $( '#sceneAreas' ).html( "<pre>" + JSON.stringify( data, null, 2 ) + "</pre>")
+            $( '#sceneAreas' ).html( "<pre>" + JSON.stringify( data, null, 2 ) + "</pre>" )
         } )
     }
     
@@ -148,7 +148,7 @@
                 type     : 'fusionTable',
                 tableName: '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
                 keyColumn: 'ISO',
-                keyValue : iso,
+                keyValue : iso
             }
         }
     }
@@ -157,12 +157,21 @@
         var bands                 = $( '#bands' + mapIndex ).val().split( ', ' )
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
+        var strategy              = $( '#strategy' ).find( 'input[name="strategy"]:checked' ).val()
+        
+        
+        var classesToMask = []
+        $( '#classes-to-mask' ).find( 'input:checked' ).each( function () {
+            classesToMask.push( $( this ).attr( 'id' ) )
+        } )
         
         return {
             aoi                  : createAoi(),
             targetDayOfYear      : targetDayOfYear,
             targetDayOfYearWeight: targetDayOfYearWeight,
-            bands                : bands
+            bands                : bands,
+            strategy             : strategy,
+            classesToMask        : classesToMask
             
         }
     }
@@ -170,7 +179,7 @@
     function createScenesQuery( mapIndex ) {
         var mosaic      = createMosaic( mapIndex )
         mosaic.sceneIds = $( '#sceneIds' ).val().split( '\n' )
-        mosaic.type     = 'preselectedScenesMosaic'
+        mosaic.type     = 'manual'
         return { image: JSON.stringify( mosaic ) }
     }
     

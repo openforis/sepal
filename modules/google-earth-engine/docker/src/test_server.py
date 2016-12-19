@@ -34,9 +34,8 @@ def destroy():
 
 
 if __name__ == '__main__':
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        init()
+    init()
     logging.basicConfig(level=logging.DEBUG)
-    app.run(debug=True, threaded=True, port=5001)
+    app.run(threaded=True, port=5001)
 
 destroy()

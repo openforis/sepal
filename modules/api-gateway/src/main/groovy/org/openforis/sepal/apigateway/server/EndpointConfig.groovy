@@ -9,6 +9,7 @@ class EndpointConfig {
     boolean prefix
     boolean rewriteRedirects
     boolean cached
+    boolean noCache
     String path
     URI target
 }

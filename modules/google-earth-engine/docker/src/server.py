@@ -6,9 +6,8 @@ import sys
 from flask import Flask, Blueprint, Response, request
 from oauth2client.service_account import ServiceAccountCredentials
 
-from aoi import Aoi
-from drive_cleanup import DriveCleanup
-from image import Image
+from sepal import Aoi, image_spec_factory
+from sepal.download.drive_cleanup import DriveCleanup
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
@@ -18,9 +17,9 @@ drive_cleanup = None
 
 @http.route('/preview', methods=['POST'])
 def preview():
-    image = Image.create(json.loads(request.values['image']))
-    preview = image.preview()
-    return Response(json.dumps(preview), mimetype='application/json')
+    image_spec = image_spec_factory.create(json.loads(request.values['image']))
+    image_preview = image_spec.preview()
+    return Response(json.dumps(image_preview), mimetype='application/json')
 
 
 @http.route('/sceneareas')

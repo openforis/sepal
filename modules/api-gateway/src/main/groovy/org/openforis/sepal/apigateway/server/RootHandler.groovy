@@ -20,6 +20,7 @@ import io.undertow.util.Headers
 import io.undertow.util.HttpString
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy
 import org.apache.http.ssl.SSLContextBuilder
+import org.openforis.sepal.undertow.PatchedGzipEncodingProvider
 import org.openforis.sepal.undertow.PatchedProxyHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -49,7 +50,9 @@ class RootHandler implements HttpHandler {
             endpointHandler = new HttpsRedirectHandler(httpsPort, endpointHandler)
         if (endpointConfig.cached)
             endpointHandler = new CachedHandler(endpointHandler)
-//        endpointHandler = gzipHandler(endpointHandler)
+        if (endpointConfig.noCache)
+            endpointHandler = new NoCacheHandler(endpointHandler)
+        endpointHandler = gzipHandler(endpointHandler)
         def sessionConfig = new SessionCookieConfig(cookieName: "SEPAL-SESSIONID", secure: endpointConfig.https)
         endpointHandler = new SessionAttachmentHandler(endpointHandler, sessionManager, sessionConfig)
         endpointConfig.prefix ?
@@ -62,7 +65,7 @@ class RootHandler implements HttpHandler {
         return new EncodingHandler(
                 new ContentEncodingRepository().addEncodingHandler(
                         "gzip",
-                        new GzipEncodingProvider(),
+                        new PatchedGzipEncodingProvider(),
                         50,
                         Predicates.contains(ExchangeAttributes.responseHeader(Headers.CONTENT_TYPE),
                                 'text/plain',
@@ -91,6 +94,23 @@ class RootHandler implements HttpHandler {
 
         void handleRequest(HttpServerExchange exchange) throws Exception {
             exchange.responseHeaders.add(HttpString.tryFromString('Cache-Control'), 'public, max-age=31536000')
+            next.handleRequest(exchange)
+        }
+    }
+
+    private static class NoCacheHandler implements HttpHandler {
+        private final HttpHandler next
+
+        NoCacheHandler(HttpHandler next) {
+            this.next = next
+        }
+
+        void handleRequest(HttpServerExchange exchange) throws Exception {
+            exchange.requestHeaders.remove(HttpString.tryFromString('If-None-Match'))
+            exchange.requestHeaders.remove(HttpString.tryFromString('If-Modified-Since'))
+            exchange.requestHeaders.remove(HttpString.tryFromString('Cache-Control'))
+            exchange.requestHeaders.add(HttpString.tryFromString('Cache-Control'), 'no-cache')
+            exchange.responseHeaders.add(HttpString.tryFromString('Cache-Control'), 'max-age=0')
             next.handleRequest(exchange)
         }
     }

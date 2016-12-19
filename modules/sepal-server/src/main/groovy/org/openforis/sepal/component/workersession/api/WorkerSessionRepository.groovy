@@ -13,7 +13,7 @@ interface WorkerSessionRepository {
 
     List<WorkerSession> userSessions(String username, List<WorkerSession.State> states, String workerType, String instanceType)
 
-    List<WorkerSession> pendingOrActiveSessions()
+    List<WorkerSession> sessions(List<WorkerSession.State> states)
 
     WorkerSession sessionOnInstance(String instanceId, List<WorkerSession.State> states)
 

@@ -24,6 +24,7 @@ def to_drive(image, region, name, username):
     :type name: str
 
     :return: An export batch job
+    :rtype: str
          """
     logging.info('[' + username + '] Exporting ' + name + ' to drive')
     task = ee.batch.Export.image.toDrive(

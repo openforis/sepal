@@ -8,6 +8,9 @@ import org.openforis.sepal.util.annotation.Data
 
 import java.util.concurrent.TimeUnit
 
+import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
+import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
+
 @Data(callSuper = true)
 class ReleaseUnusedInstances extends AbstractCommand<Void> {
     int minAge
@@ -24,7 +27,7 @@ class ReleaseUnusedInstancesHandler implements CommandHandler<Void, ReleaseUnuse
     }
 
     Void execute(ReleaseUnusedInstances command) {
-        def sessions = repository.pendingOrActiveSessions()
+        def sessions = repository.sessions([PENDING, ACTIVE])
         instanceManager.releaseUnusedInstances(sessions, command.minAge, command.timeUnit)
         return null
     }

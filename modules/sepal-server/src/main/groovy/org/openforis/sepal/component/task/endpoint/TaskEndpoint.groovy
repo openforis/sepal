@@ -68,7 +68,7 @@ class TaskEndpoint {
                         params: [
                                 name : params.required('name'),
                                 image: [
-                                        type                 : 'preselectedScenesMosaic',
+                                        type                 : 'manual',
                                         aoi                  : ((params.polygon as String) ?
                                                 new Polygon(
                                                         new JsonSlurper().parseText(

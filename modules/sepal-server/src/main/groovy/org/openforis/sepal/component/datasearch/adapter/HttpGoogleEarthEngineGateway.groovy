@@ -34,7 +34,7 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
 
     MapLayer preview(AutomaticSceneSelectingMapQuery query) {
         def image = [
-                type                 : 'automaticSceneSelectingMosaic',
+                type                 : 'automatic',
                 aoi                  : query.aoi.params,
                 targetDayOfYear      : query.targetDayOfYear,
                 targetDayOfYearWeight: query.targetDayOfYearWeight,
@@ -57,7 +57,7 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
 
     MapLayer preview(PreselectedScenesMapQuery query) {
         def image = [
-                type                 : 'preselectedScenesMosaic',
+                type                 : 'manual',
                 aoi                  : query.aoi.params,
                 targetDayOfYear      : query.targetDayOfYear,
                 targetDayOfYearWeight: query.targetDayOfYearWeight,

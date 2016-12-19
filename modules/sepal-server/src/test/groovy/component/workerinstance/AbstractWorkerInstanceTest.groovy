@@ -4,6 +4,7 @@ import fake.Database
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.command.*
+import org.openforis.sepal.component.workerinstance.query.FindMissingInstances
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import fake.FakeClock
@@ -68,6 +69,10 @@ abstract class AbstractWorkerInstanceTest extends Specification {
                 minAge: minAge,
                 timeUnit: timeUnit
         ))
+    }
+
+    final List<WorkerInstance> findMissingInstances(List<WorkerInstance> instances) {
+        return component.submit(new FindMissingInstances(instances))
     }
 
     final WorkerInstance idleInstance(Map args = [:]) {

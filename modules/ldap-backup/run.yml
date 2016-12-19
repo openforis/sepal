@@ -23,7 +23,7 @@
     - "/data/ldap/database:/var/lib/ldap"
     - "/data/ldap/config:/etc/ldap/slapd.d"
     - "/data/ldap-backup:/module"
-    - "/backup/ldap:/backup"
+    - "/backup/ldap:/data/backup"
     env:
       LDAP_BACKUP_DATA_CRON_EXP: '0 0 * * *'
       LDAP_BACKUP_CONFIG_CRON_EXP: '0 0 * * *'

@@ -9,7 +9,7 @@ class SceneMetaData {
     String sceneAreaId
     String sensorId
     Date acquisitionDate
-    double cloudCover
+    double cloudCover // In percentage
     double sunAzimuth
     double sunElevation
     URI browseUrl
