@@ -4,30 +4,30 @@
 
 (function ( $ ) {
     
-    var slide = function ( element, slideDir, options ) {
+    var fade = function ( element, fadeDir, options ) {
         var options = $.extend( {}, { delay: 0, duration: 500 }, options )
         
-        element.velocity( slideDir, options )
+        element.velocity( fadeDir, options )
         
         return element
     }
     
-    $.fn.velocitySlideUp = function ( options ) {
-        return slide( this, "slideUp", options )
+    $.fn.velocityFadeIn = function ( options ) {
+        return fade( this, "fadeIn", options )
     }
     
-    $.fn.velocitySlideDown = function ( options ) {
-        return slide( this, "slideDown", options )
+    $.fn.velocityFadeOut = function ( options ) {
+        return fade( this, "fadeOut", options )
     }
     
-    $.fn.velocitySlideToggle = function ( options ) {
+    $.fn.velocityFadeToggle = function ( options ) {
         return this.each( function ( i, el ) {
             
             var elem     = $( this )
             var isOpen   = elem.is( ':visible' )
-            var slideDir = isOpen ? 'slideUp' : 'slideDown'
+            var fadeDir = isOpen ? 'fadeOut' : 'fadeIn'
             
-            slide( elem, slideDir, options )
+            fade( elem, fadeDir, options )
         } )
     }
     
