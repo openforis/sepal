@@ -1,3 +1,5 @@
+import ee
+
 import brdf_correction
 import constants
 import image_adjustment
@@ -55,7 +57,7 @@ class LandsatMosaicSpec(ImageSpec):
         :return: An ee.ImageCollection containing the elements from both collections.
         """
         return ee.ImageCollection(
-            collection_a.merge(collection_b).set('bands', normalized_band_names))
+            collection_a.merge(collection_b).set('bands', constants.normalized_band_names))
 
     def _normalize_band_names(self, image, collection_name):
         """Normalizes the band names of the provided image.
