@@ -1,7 +1,7 @@
 /*search*/
 .btn.bg-search:active,
-.btn.bg-search:active:focus,
-.btn.bg-search:focus,
+/*.btn.bg-search:active:focus,*/
+/*.btn.bg-search:focus,*/
 .btn.bg-search:hover {
     border-color: rgba(252, 199, 123, 0.7);
     background-color: rgba(252, 199, 123, .1);
@@ -25,8 +25,8 @@
 
 /*browse data*/
 .btn.bg-browse:active,
-.btn.bg-browse:active:focus,
-.btn.bg-browse:focus,
+/*.btn.bg-browse:active:focus,*/
+/*.btn.bg-browse:focus,*/
 .btn.bg-browse:hover {
     border-color: rgba(126, 141, 118, 0.7);
     /*border-color: rgba(62, 69, 74, .8);*/
@@ -53,8 +53,8 @@
 
 /*process*/
 .btn.bg-process:active,
-.btn.bg-process:active:focus,
-.btn.bg-process:focus,
+/*.btn.bg-process:active:focus,*/
+/*.btn.bg-process:focus,*/
 .btn.bg-process:hover {
     border-color: rgba(96, 71, 90, 0.7);
     /*border-color: rgba(120, 88, 79, .8);*/
@@ -81,8 +81,8 @@
 
 /*terminal*/
 .btn.bg-terminal:active,
-.btn.bg-terminal:active:focus,
-.btn.bg-terminal:focus,
+/*.btn.bg-terminal:active:focus,*/
+/*.btn.bg-terminal:focus,*/
 .btn.bg-terminal:hover {
     border-color: rgba(74, 94, 130, 0.7);
     /*border-color: rgba(176, 149, 130, .8);*/
@@ -111,8 +111,8 @@
 
 /*user*/
 .btn.bg-user:active,
-.btn.bg-user:active:focus,
-.btn.bg-user:focus,
+/*.btn.bg-user:active:focus,*/
+/*.btn.bg-user:focus,*/
 .btn.bg-user:hover {
     border-color: rgba(223, 224, 206, 0.7);
     background-color: rgba(223, 224, 206, .1);
@@ -135,8 +135,8 @@
 
 /*user*/
 .btn.bg-users:active,
-.btn.bg-users:active:focus,
-.btn.bg-users:focus,
+/*.btn.bg-users:active:focus,*/
+/*.btn.bg-users:focus,*/
 .btn.bg-users:hover {
     /*border-color: rgba(125, 125, 111, 0.7);*/
     /*background-color: rgba(125, 125, 111, .1);*/
@@ -165,8 +165,8 @@
 
 /*tasks*/
 .btn.bg-tasks:active,
-.btn.bg-tasks:active:focus,
-.btn.bg-tasks:focus,
+/*.btn.bg-tasks:active:focus,*/
+/*.btn.bg-tasks:focus,*/
 .btn.bg-tasks:hover {
     /*border-color: rgba(225, 225, 230, 0.7);*/
     /*background-color: rgba(225, 225, 230, .1);*/
@@ -197,8 +197,8 @@
 * layers-vis
  */
 .btn.bg-layers-vis:active,
-.btn.bg-layers-vis:active:focus,
-.btn.bg-layers-vis:focus,
+/*.btn.bg-layers-vis:active:focus,*/
+/*.btn.bg-layers-vis:focus,*/
 .btn.bg-layers-vis:hover {
     border-color: rgba(213, 198, 208, 0.7);
     background-color: rgba(213, 198, 208, .1);
