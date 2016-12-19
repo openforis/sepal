@@ -60,7 +60,7 @@ var hideSection = function ( elem, options ) {
 
 var showInviteUserSection = function () {
     InviteUserSection.reset()
- 
+    
     hideSection( ListSection.getContainer() )
     hideSection( EditUserSection.getContainer() )
     hideSection( DeleteUserSection.getContainer() )
@@ -91,6 +91,7 @@ var showDeleteUserSection = function () {
 module.exports = {
     init                   : init
     , setUsers             : ListSection.setUsers
+    , setAllUsers          : ListSection.setAllUsers
     , selectUser           : selectUser
     , showInviteUserSection: showInviteUserSection
     , showUsersListSection : showUsersListSection

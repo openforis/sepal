@@ -36,4 +36,5 @@ module.exports = {
     , setUsers    : setUsers
     , selectUser  : selectUser
     , getContainer: getContainer
+    , setAllUsers : ListActions.setAllUsers
 }

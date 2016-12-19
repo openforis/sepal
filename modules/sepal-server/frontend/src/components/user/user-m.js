@@ -4,7 +4,7 @@
 
 var User = function ( userDetails ) {
     $.extend( this, userDetails )
-    this.sandboxReport        = null
+    this.sandboxReport = null
 }
 
 User.prototype.isAdmin = function () {
@@ -18,6 +18,12 @@ User.prototype.isAdmin = function () {
     return isAdmin
 }
 
+User.prototype.isActive = function () {
+    if ( this.status && this.status.toUpperCase() === 'ACTIVE' ) {
+        return true
+    }
+    return false
+}
 
 User.prototype.setUserSandboxReport = function ( data ) {
     this.sandboxReport = data

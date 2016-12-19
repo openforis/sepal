@@ -5,23 +5,26 @@ var EventBus = require( '../../event/event-bus' )
 var Events   = require( '../../event/events' )
 var UserMV   = require( '../../user/user-mv' )
 
-var Container   = null
-var SearchInput = null
-var BtnInvite   = null
-var BtnRemove   = null
-var BtnEdit     = null
-
-var selectedUser = null
+var Container              = null
+var SearchInput            = null
+var BtnInvite              = null
+var BtnRemove              = null
+var BtnEdit                = null
+var TotalUsersCounts       = null
+var TotalActiveUsersCounts = null
+var selectedUser           = null
 
 var init = function ( container ) {
     selectedUser = null
     
     Container = container
     
-    SearchInput = Container.find( 'input[name=search]' )
-    BtnInvite   = Container.find( '.btn-invite' )
-    BtnRemove   = Container.find( '.btn-remove' )
-    BtnEdit     = Container.find( '.btn-edit' )
+    SearchInput            = Container.find( 'input[name=search]' )
+    BtnInvite              = Container.find( '.btn-invite' )
+    BtnRemove              = Container.find( '.btn-remove' )
+    BtnEdit                = Container.find( '.btn-edit' )
+    TotalUsersCounts       = Container.find( '.total-users-counts' )
+    TotalActiveUsersCounts = Container.find( '.total-active-users-counts' )
     
     SearchInput.keyup( function ( e ) {
         e.preventDefault()
@@ -65,7 +68,19 @@ var selectUser = function ( user ) {
     updateActionButtons()
 }
 
+var setAllUsers = function ( users ) {
+    var activeCount = 0
+    $.each( users, function ( i, user ) {
+        if ( user.isActive() ) {
+            activeCount += 1
+        }
+    } )
+    TotalUsersCounts.html( users.length )
+    TotalActiveUsersCounts.html( activeCount )
+}
+
 module.exports = {
-    init        : init
-    , selectUser: selectUser
+    init         : init
+    , selectUser : selectUser
+    , setAllUsers: setAllUsers
 }
