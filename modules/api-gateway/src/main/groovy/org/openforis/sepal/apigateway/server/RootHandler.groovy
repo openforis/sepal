@@ -20,6 +20,7 @@ import io.undertow.util.Headers
 import io.undertow.util.HttpString
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy
 import org.apache.http.ssl.SSLContextBuilder
+import org.openforis.sepal.undertow.PatchedGzipEncodingProvider
 import org.openforis.sepal.undertow.PatchedProxyHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -51,7 +52,7 @@ class RootHandler implements HttpHandler {
             endpointHandler = new CachedHandler(endpointHandler)
         if (endpointConfig.noCache)
             endpointHandler = new NoCacheHandler(endpointHandler)
-//        endpointHandler = gzipHandler(endpointHandler)
+        endpointHandler = gzipHandler(endpointHandler)
         def sessionConfig = new SessionCookieConfig(cookieName: "SEPAL-SESSIONID", secure: endpointConfig.https)
         endpointHandler = new SessionAttachmentHandler(endpointHandler, sessionManager, sessionConfig)
         endpointConfig.prefix ?
@@ -64,7 +65,7 @@ class RootHandler implements HttpHandler {
         return new EncodingHandler(
                 new ContentEncodingRepository().addEncodingHandler(
                         "gzip",
-                        new GzipEncodingProvider(),
+                        new PatchedGzipEncodingProvider(),
                         50,
                         Predicates.contains(ExchangeAttributes.responseHeader(Headers.CONTENT_TYPE),
                                 'text/plain',
