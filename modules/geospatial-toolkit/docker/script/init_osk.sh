@@ -5,7 +5,7 @@ echo
 echo "*****************************"
 echo "*** Installing OpenSARKit ***"
 echo "*****************************"
-echo "Version: 2016-12-16"
+echo "Version: 2016-12-20"
 OSK_HOME=/usr/local/lib/osk
 mkdir -p ${OSK_HOME}
 OPENSARKIT=${OSK_HOME}/opensarkit
@@ -24,7 +24,7 @@ for OST_BINS in `ls -1`;do
     cd $OST_BINS
     for exe in `ls -1 {oft*,poft*}`;do
         exepath=`readlink -f $exe`
-        ln -s $exepath ${BINDIR}/
+        ln -sf $exepath ${BINDIR}/
     done
     cd ../
 done
