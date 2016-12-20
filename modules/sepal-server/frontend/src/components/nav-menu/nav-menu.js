@@ -31,12 +31,16 @@ var show = function () {
     var showSection = function ( e ) {
         var btn = $( this )
         
-        EventBus.dispatch( Events.SECTION.NAV_MENU.COLLAPSE, null, btn )
-        EventBus.dispatch( Events.SECTION.SHOW, null, btn.data( 'section-target' ) )
+        var target = btn.data( 'section-target' )
+        if ( target ) {
+            EventBus.dispatch( Events.SECTION.NAV_MENU.COLLAPSE, null, btn )
+            EventBus.dispatch( Events.SECTION.SHOW, null, target )
+        }
+        
     }
     
     html.find( 'a' ).click( showSection )
-    
+    html.find( '.btn.collapse-only' ).hide()
     // init style
     btnSearch.addClass( 'expanded' ).empty().append( '<i class="fa fa-globe" aria-hidden="true"></i> Search' )
     btnBrowse.addClass( 'expanded' ).empty().append( '<i class="fa fa-folder-open" aria-hidden="true"></i> Browse' )
@@ -59,7 +63,7 @@ var collapse   = function ( e, button ) {
         Animation.animateOut( button )
         
         var delay = 100
-        $.each( button.siblings(), function ( i, btnSibling ) {
+        $.each( button.siblings().not( '.collapse-only' ), function ( i, btnSibling ) {
             
             delay += 150
             btnSibling = $( btnSibling )
@@ -72,23 +76,35 @@ var collapse   = function ( e, button ) {
         
         delay += 900
         setTimeout( function () {
+            var btns = html.find( '.btn' )
+            btns.removeClass( 'expanded' )
+            
             NavMenu.addClass( 'collapsed' )
             
-            btnSearch.empty().removeClass( 'expanded' ).append( '<i class="fa fa-globe" aria-hidden="true"></i>' )
-            btnBrowse.empty().removeClass( 'expanded' ).append( '<i class="fa fa-folder-open" aria-hidden="true"></i>' )
-            btnProcess.empty().removeClass( 'expanded' ).append( '<i class="fa fa-wrench" aria-hidden="true"></i>' )
-            btnTerminal.empty().removeClass( 'expanded' ).append( '<i class="fa fa-terminal" aria-hidden="true"></i>' )
+            btnSearch.empty().append( '<i class="fa fa-globe" aria-hidden="true"></i>' )
+            btnBrowse.empty().append( '<i class="fa fa-folder-open" aria-hidden="true"></i>' )
+            btnProcess.empty().append( '<i class="fa fa-wrench" aria-hidden="true"></i>' )
+            btnTerminal.empty().append( '<i class="fa fa-terminal" aria-hidden="true"></i>' )
             
             setTimeout( function () {
-                
-                Animation.animateIn( btnSearch )
-                Animation.animateIn( btnBrowse )
-                Animation.animateIn( btnProcess )
-                Animation.animateIn( btnTerminal , function () {
-                    EventBus.dispatch( Events.SECTION.NAV_MENU.LOADED )
-                    collapsing = false
+                $.each( btns, function ( i, btn ) {
+                    btn = $( btn )
+                    if ( btn.hasClass( 'collapse-only' ) )
+                        btn.show( 0 )
+                    Animation.animateIn( btn )
+                    if ( i == btns.length - 1 ) {
+                        EventBus.dispatch( Events.SECTION.NAV_MENU.LOADED )
+                        collapsing = false
+                    }
                 } )
-    
+                // Animation.animateIn( btnSearch )
+                // Animation.animateIn( btnBrowse )
+                // Animation.animateIn( btnProcess )
+                // Animation.animateIn( btnTerminal , function () {
+                //     EventBus.dispatch( Events.SECTION.NAV_MENU.LOADED )
+                //     collapsing = false
+                // } )
+                
             }, 250 )
             
         }, delay )

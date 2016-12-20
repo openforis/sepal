@@ -161,7 +161,7 @@ a:focus {
     outline: 0;
 }
 
-a:focus,
+/*a:focus,*/
 a:hover {
     text-decoration: none;
     color: #b8a280;

@@ -1,7 +1,7 @@
 /**
  * @author Mino Togna
  */
-require( './map.scss' )
+require( './../map-style/map.scss' )
 var d3 = require( 'd3' )
 
 var EventBus               = require( '../event/event-bus' )
@@ -18,7 +18,7 @@ require( './polygon-draw' )
 // html template
 var html     = null
 // google map style
-var mapStyle = require( './data/map-style.js' )
+var mapStyle = require( './../map-style/map-style.js' )
 
 // instance variables
 var map = null
@@ -104,6 +104,9 @@ var zoomTo = function ( e, address ) {
                 }
                 
                 aoiLayer = new google.maps.FusionTablesLayer( FT_Options )
+                aoiLayer.addListener( 'click', function ( e ) {
+                    console.log( this )
+                } )
                 aoiLayer.setMap( map )
             }
         } )

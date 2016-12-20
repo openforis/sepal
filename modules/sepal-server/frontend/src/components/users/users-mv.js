@@ -24,15 +24,17 @@ var show = function ( e, target ) {
 var updateView = function () {
     var users = Model.filterUsers( searchString )
     View.setUsers( users )
+    
+    View.setAllUsers( Model.filterUsers() )
 }
 
 var loadUsers = function () {
-    var users     = false
-    var budgets    = false
+    var users   = false
+    var budgets = false
     
     var checkResponses = function () {
-        if( users && budgets ){
-            Model.setUsers( users , budgets )
+        if ( users && budgets ) {
+            Model.setUsers( users, budgets )
             updateView()
         }
     }

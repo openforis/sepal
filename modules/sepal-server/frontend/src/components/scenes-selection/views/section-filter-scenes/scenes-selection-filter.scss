@@ -25,8 +25,8 @@
         border-right: 1px solid rgba(255, 255, 255, .15);
       }
       > div:active,
-      > div:active:focus,
-      > div:focus,
+      //> div:active:focus,
+      //> div:focus,
       > div:hover {
         cursor: pointer;
         background-color: rgba(255, 255, 255, .15);
@@ -77,13 +77,14 @@
         margin-right: .5rem;
         font-weight: bold;
       }
-      .btn-sensor.active {
+      .btn-sensor.active ,
+      .btn-sensor.active:focus {
         background-color: rgba(197, 179, 151, 0.3);
         border: 2px solid rgba(197, 179, 151, 0.5);
       }
       .btn-sensor.active:active,
-      .btn-sensor.active:focus,
-      .btn-sensor.activefocus,
+      //.btn-sensor.active:focus,
+      //.btn-sensor.activefocus,
       .btn-sensor.active:hover {
         background-color: rgba(197, 179, 151, 0.1);
       }
@@ -116,8 +117,8 @@
             background-color: rgba(255, 255, 255, .15);
           }
           .btn:active,
-          .btn:active:focus,
-          .btn:focus,
+          //.btn:active:focus,
+          //.btn:focus,
           .btn:hover {
             background-color: rgba(255, 255, 255, .3);
           }

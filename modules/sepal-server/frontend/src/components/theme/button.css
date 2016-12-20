@@ -64,8 +64,8 @@
 }
 
 .btn-theme:active,
-.btn-theme:active:focus,
-.btn-theme:focus,
+/*.btn-theme:active:focus,*/
+/*.btn-theme:focus,*/
 .btn-theme:hover {
     border-color: #b8a280;
     background-color: #b8a280;
@@ -81,8 +81,8 @@
 }
 
 .btn-base:active,
-.btn-base:active:focus,
-.btn-base:focus,
+/*.btn-base:active:focus,*/
+/*.btn-base:focus,*/
 .btn-base:hover {
     background-color: rgba(255, 255, 255, 0.1);
     color: #fff;
@@ -93,8 +93,8 @@
     border: 2px solid rgba(197, 179, 151, 0.5);
 }
 .btn-base.active:active,
-.btn-base.active:focus,
-.btn-base.activefocus,
+/*.btn-base.active:focus,*/
+/*.btn-base.activefocus,*/
 .btn-base.active:hover {
     background-color: rgba(197, 179, 151, 0.225);
     /*background-color: rgba(197, 179, 151, 0.1);*/

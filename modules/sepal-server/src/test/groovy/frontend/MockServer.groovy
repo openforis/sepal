@@ -497,7 +497,7 @@ class MockServer extends AbstractMvcFilter {
                         "path": "/sandbox/shiny/osk",
                         "label": "SAR Toolkit"
                       }
-                    ]'''
+                    ]'''o
             }
 
             boolean sandboxServerUp = false
