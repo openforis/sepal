@@ -40,10 +40,6 @@ var init = function () {
         btnAddToMap      = html.find( '.btn-add-to-map' )
         btnFilterImages  = html.find( '.btn-filter-images' )
         
-        btnDownload.prop( 'disabled', true )
-        btnDelete.prop( 'disabled', true )
-        btnAddToMap.prop( 'disabled', true )
-        
         btnDownload.click( function ( e ) {
             e.preventDefault()
             var absPath = Model.absolutePath( lastClickItem[ 0 ].level, lastClickItem[ 1 ].name )
@@ -77,7 +73,14 @@ var init = function () {
         } )
         
     }
+    
+    lastClickItem = []
+    btnDownload.prop( 'disabled', true )
+    btnDelete.prop( 'disabled', true )
+    btnAddToMap.prop( 'disabled', true )
+    fileName.html( '' )
 }
+
 var show = function ( e, type ) {
     if ( type == 'browse' ) {
         setTimeout( function () {

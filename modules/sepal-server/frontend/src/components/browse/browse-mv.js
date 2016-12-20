@@ -9,16 +9,11 @@ var View         = require( './browse-v' )
 var Model        = require( './browse-m' )
 var FileDownload = require( '../file-download/file-download' )
 
-var initialized = false
-
 var show = function ( e, type ) {
     
     if ( type == 'browse' ) {
         View.init()
-        // if ( !initialized ) {
         loadDir( -1, '/' )
-        // initialized = true
-        // }
     }
     
 }
