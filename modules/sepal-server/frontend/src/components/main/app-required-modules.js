@@ -21,6 +21,7 @@ require( '../jquery-plugins/jquery-plugins' )
 
 // application components
 require( '../alert/alert-mv' )
+require( '../dialog/dialog' )
 require( '../user/user-mv' )
 require( '../login/login-mv' )
 require( '../nav-menu/nav-menu' )

@@ -52,6 +52,25 @@ var downloadItem = function ( evt, absPath ) {
     FileDownload.download( '/api/user/files/download', { path: absPath } )
 }
 
+var deleteItem = function ( evt, parent , child ) {
+    var absPath = Model.absolutePath( parent.level , child.name )
+    absPath = encodeURIComponent( absPath )
+    
+    var params = {
+        url         : '/api/user/files/'+absPath
+        , beforeSend: function (  ) {
+            Loader.show()
+        }
+        , success   : function ( response ) {
+            Loader.hide()
+            loadDir( parent.level -1, parent.name )
+        }
+    }
+ 
+    EventBus.dispatch( Events.AJAX.DELETE, null, params )
+}
+
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 EventBus.addEventListener( Events.SECTION.BROWSE.NAV_ITEM_CLICK, navItemClick )
 EventBus.addEventListener( Events.SECTION.BROWSE.DOWNLOAD_ITEM, downloadItem )
+EventBus.addEventListener( Events.SECTION.BROWSE.DELETE_ITEM, deleteItem )

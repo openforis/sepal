@@ -12,9 +12,9 @@ var setLevel = function ( level, path, children ) {
         delete dirs[ i ]
         i--
     }
-
-    var absPath = absolutePath( level -1 , path )
-    dirs[ level ] = { level: level, path: path, children: children , absPath: absPath}
+    
+    var absPath   = absolutePath( level - 1, path )
+    dirs[ level ] = { level: level, path: path, children: children, absPath: absPath, name: path }
 }
 
 var getLevel = function ( level ) {
@@ -22,13 +22,15 @@ var getLevel = function ( level ) {
 }
 
 var absolutePath = function ( parentLevel, name ) {
-
+    
     var path = name
-    if ( parentLevel >=0 ) {
+    if ( parentLevel == 0 ) {
+        path = '/' + name //+'/'
+    } else if ( parentLevel >= 0 ) {
         // path = dirs[ parentLevel ].absPath
-        path = dirs[ parentLevel ].absPath + name +'/'
+        path = dirs[ parentLevel ].absPath + '/' + name //+'/'
     }
-
+    
     return path
 }
 

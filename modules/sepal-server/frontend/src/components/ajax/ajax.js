@@ -64,6 +64,12 @@ var postRequest = function ( e, params ) {
     ajaxRequest( e, params )
 }
 
+var deleteRequest = function ( e, params ) {
+    params.type = "DELETE"
+    ajaxRequest( e, params )
+}
+
 EventBus.addEventListener( Events.AJAX.REQUEST, ajaxRequest )
 EventBus.addEventListener( Events.AJAX.GET, getRequest )
 EventBus.addEventListener( Events.AJAX.POST, postRequest )
+EventBus.addEventListener( Events.AJAX.DELETE, deleteRequest )

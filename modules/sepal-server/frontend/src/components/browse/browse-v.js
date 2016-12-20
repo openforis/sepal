@@ -2,19 +2,28 @@
  * @author Mino Togna
  */
 
-require( './browse.css' )
+require( './browse.scss' )
 
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var Loader   = require( '../loader/loader' )
 var Model    = require( './browse-m' )
+var Dialog   = require( '../dialog/dialog' )
 
 // html
 var html = null
 
 var browseContentRow = null
-var downloadBtn      = null
-var lastAbsPathClick = null
+var fileName         = null
+var btnDownload      = null
+var btnDelete        = null
+var btnAddToMap      = null
+var btnFilterImages  = null
+// var lastAbsPathClick = null
+var lastClickItem    = []
+
+var imagesExtensions = [ 'shp', 'tif', 'tiff' ]
+var filterImages     = false
 
 var init = function () {
     var template = require( './browse.html' )
@@ -24,17 +33,44 @@ var init = function () {
     if ( appSection.children().length <= 0 ) {
         appSection.append( html )
         
-        
         browseContentRow = html.find( '.browse-content-row' )
-        downloadBtn      = html.find( '.btn-download' )
-        downloadBtn.click( function ( e ) {
+        fileName         = html.find( '.filename' )
+        btnDownload      = html.find( '.btn-download' )
+        btnDelete        = html.find( '.btn-delete' )
+        btnAddToMap      = html.find( '.btn-add-to-map' )
+        btnFilterImages  = html.find( '.btn-filter-images' )
+        
+        btnDownload.prop( 'disabled', true )
+        btnDelete.prop( 'disabled', true )
+        btnAddToMap.prop( 'disabled', true )
+        
+        btnDownload.click( function ( e ) {
             e.preventDefault()
-            EventBus.dispatch( Events.SECTION.BROWSE.DOWNLOAD_ITEM, null, lastAbsPathClick )
+            var absPath = Model.absolutePath( lastClickItem[ 0 ].level, lastClickItem[ 1 ].name )
+            EventBus.dispatch( Events.SECTION.BROWSE.DOWNLOAD_ITEM, null, absPath )
         } )
-        downloadBtn.prop( 'disabled', true )
-        // setTimeout( function () {
-        //     setContentSize()
-        // }, 1500 )
+        
+        btnFilterImages.click( function ( e ) {
+            var files = browseContentRow.find( '.other-file' )
+            if ( filterImages ) {
+                files.fadeIn()
+                filterImages = false
+                btnFilterImages.removeClass( 'active' )
+            } else {
+                files.fadeOut( 200 )
+                filterImages = true
+                btnFilterImages.addClass( 'active' )
+            }
+        } )
+        
+        btnDelete.click( function ( e ) {
+            e.preventDefault()
+            Dialog.show( {
+                message: 'Do you want to delete the selected file?', onConfirm: function () {
+                    EventBus.dispatch( Events.SECTION.BROWSE.DELETE_ITEM, null, lastClickItem[ 0 ], lastClickItem[ 1 ] )
+                }
+            } )
+        } )
         
         $( window ).resize( function () {
             setContentSize()
@@ -71,51 +107,69 @@ var addDir = function ( dir ) {
     var colC = $( '<div class="dir-content height90"/>' )
     colLevel.append( colC )
     
-    if ( dir.children.length <= 0 ) {
-        // var childDivR = $( '<div class="row dir-child"/>' )
-        // colC.append( childDivR )
-        // var childDivC = $( '<div class="col-sm-12">&nbsp;</div>' )
-        // childDivR.append( childDivC )
-    }
+    // if ( dir.children.length <= 0 ) {
+    // var childDivR = $( '<div class="row dir-child"/>' )
+    // colC.append( childDivR )
+    // var childDivC = $( '<div class="col-sm-12">&nbsp;</div>' )
+    // childDivR.append( childDivC )
+    // }
     
     $.each( dir.children, function ( i, child ) {
-        var childDivR = $( '<div class="dir-child width100"/>' )
-        colC.append( childDivR )
-        var childDivC = $( '<div class="file-name"/>' )
-        childDivC.append( child.name )
-        childDivR.append( childDivC )
-        
-        if ( child.name.indexOf( '.' ) == 0 ) {
-            childDivR.addClass( 'hidden-file' )
-        }
-        
-        if ( child.isDirectory === true ) {
-            childDivC.addClass( 'width90' )
-            var childDivL = $( '<div class="width10 text-align-left"/>' )
-            childDivL.append( '<i class="fa fa-caret-right" aria-hidden="true"></i>' )
-            childDivR.append( childDivL )
-        } else {
-            childDivC.addClass( 'width100' )
-        }
-        
-        childDivR.click( function ( e ) {
-            colC.find( 'div.dir-child.active' ).removeClass( 'active' )
-            childDivR.addClass( 'active' )
+        // add non hidden files
+        if ( child.name.indexOf( '.' ) != 0 ) {
             
-            EventBus.dispatch( Events.SECTION.BROWSE.NAV_ITEM_CLICK, null, dir.level, child )
+            var childDivR = $( '<div class="dir-child width100"/>' )
+            colC.append( childDivR )
             
+            var childDivC = $( '<div class="file-name"/>' )
+            childDivC.append( child.name )
+            childDivR.append( childDivC )
+            
+            var isImageFile = isImage( child )
             if ( child.isDirectory === true ) {
-                downloadBtn.html( '<i class="fa fa-download" aria-hidden="true"></i> -' )
-                downloadBtn.prop( 'disabled', true )
+                childDivC.addClass( 'width90' )
+                var childDivL = $( '<div class="width10 text-align-left"/>' )
+                childDivL.append( '<i class="fa fa-caret-right" aria-hidden="true"></i>' )
+                childDivR.append( childDivL )
             } else {
-                var absPath      = Model.absolutePath( dir.level, child.name )
-                absPath          = absPath.substring( 0, absPath.length - 1 )
-                lastAbsPathClick = absPath
-                downloadBtn.html( '<i class="fa fa-download" aria-hidden="true"></i>' + absPath )
-                downloadBtn.prop( 'disabled', false )
+                childDivC.addClass( 'width100' )
+                
+                if ( isImageFile ) {
+                    childDivR.addClass( 'image-file' )
+                } else {
+                    childDivR.addClass( 'other-file' )
+                    if ( filterImages ) {
+                        childDivR.hide()
+                    }
+                }
+                
             }
-        } )
-        
+            
+            childDivR.click( function ( e ) {
+                colC.find( 'div.dir-child.active' ).removeClass( 'active' )
+                childDivR.addClass( 'active' )
+                
+                lastClickItem = [ dir, child ]
+                
+                EventBus.dispatch( Events.SECTION.BROWSE.NAV_ITEM_CLICK, null, dir.level, child )
+                
+                btnDelete.prop( 'disabled', false )
+                fileName.html( child.name )
+                
+                if ( child.isDirectory === true ) {
+                    btnDownload.prop( 'disabled', true )
+                    btnAddToMap.prop( 'disabled', true )
+                } else {
+                    // var absPath = Model.absolutePath( dir.level, child.name )
+                    // lastAbsPathClick = absPath
+                    
+                    btnDownload.prop( 'disabled', false )
+                    if ( isImageFile ) {
+                        // btnAddToMap.prop( 'disabled', false )
+                    }
+                }
+            } )
+        }
     } )
     
     colLevel.velocity( 'scroll', {
@@ -130,6 +184,11 @@ var addDir = function ( dir ) {
 
 var removeDir = function ( level ) {
     browseContentRow.find( '.level-' + level ).nextAll().andSelf().remove()
+}
+
+var isImage = function ( file ) {
+    var ext = file.name.substring( file.name.lastIndexOf( '.' ) + 1 )
+    return imagesExtensions.indexOf( ext ) !== -1
 }
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )

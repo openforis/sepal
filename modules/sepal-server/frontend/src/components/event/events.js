@@ -7,9 +7,10 @@
 var Events = {
     
     AJAX: {
-        REQUEST: 'ajax.request'
-        , GET  : 'ajax.get'
-        , POST : 'ajax.post'
+        REQUEST : 'ajax.request'
+        , GET   : 'ajax.get'
+        , POST  : 'ajax.post'
+        , DELETE: 'ajax.delete'
     }
     
     , APP: {
@@ -66,6 +67,7 @@ var Events = {
         , BROWSE: {
             NAV_ITEM_CLICK : 'section.browse.nav-item-click'
             , DOWNLOAD_ITEM: 'section.browse.download-item'
+            , DELETE_ITEM  : 'section.browse.delete-item'
         }
         
         , PROCESS: {}
