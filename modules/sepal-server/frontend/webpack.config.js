@@ -40,7 +40,7 @@ module.exports = {
             Tooltip        : "exports?Tooltip!bootstrap/js/dist/tooltip",
             Util           : "exports?Util!bootstrap/js/dist/util"
         } ),
-        new FaviconsWebpackPlugin( './src/icons/favicon.png' )
+        new FaviconsWebpackPlugin( { logo: './src/icons/favicon.png', prefix: 'static/icons-[hash]/' } )
     ],
     resolve: { extensions: [ '', '.js' ] },
     devtool: 'source-map',

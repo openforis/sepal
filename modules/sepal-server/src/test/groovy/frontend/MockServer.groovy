@@ -44,6 +44,14 @@ class MockServer extends AbstractMvcFilter {
                 send toJson(files)
             }
 
+
+            delete('/api/user/files/{path}') {
+                response.contentType = 'application/json'
+
+                def path = URLDecoder.decode( params.path, "UTF-8")
+                send toJson("[status:OK]")
+            }
+
             get('/api/user/files/download') {
                 def path = params.required('path', String)
                 println "Downloading file at path $path"
