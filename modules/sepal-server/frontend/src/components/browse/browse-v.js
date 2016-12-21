@@ -141,7 +141,7 @@ var addDir = function ( dir ) {
                 childDivC.addClass( 'width100' )
                 
                 if ( isImageFile ) {
-                    childDivC.append( '<i class="fa fa-picture-o" aria-hidden="true"></i> ' + child.name )
+                    childDivC.append( '<i class="fa fa-file-image-o" aria-hidden="true"></i> ' + child.name )
                     childDivR.addClass( 'image-file' )
                 } else {
                     childDivC.append( '<i class="fa fa-file-o" aria-hidden="true"></i> ' + child.name )
