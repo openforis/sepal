@@ -125,12 +125,13 @@ var addDir = function ( dir ) {
             colC.append( childDivR )
             
             var childDivC = $( '<div class="file-name"/>' )
-            childDivC.append( child.name )
             childDivR.append( childDivC )
             
             var isImageFile = isImage( child )
             if ( child.isDirectory === true ) {
+                childDivC.append( '<i class="fa fa-folder icon-folder" aria-hidden="true"></i> ' + child.name )
                 childDivC.addClass( 'width90' )
+                
                 var childDivL = $( '<div class="width10 text-align-left"/>' )
                 childDivL.append( '<i class="fa fa-caret-right" aria-hidden="true"></i>' )
                 childDivR.append( childDivL )
@@ -138,9 +139,12 @@ var addDir = function ( dir ) {
                 childDivC.addClass( 'width100' )
                 
                 if ( isImageFile ) {
+                    childDivC.append( '<i class="fa fa-picture-o" aria-hidden="true"></i> ' + child.name )
                     childDivR.addClass( 'image-file' )
                 } else {
+                    childDivC.append( child.name )
                     childDivR.addClass( 'other-file' )
+                    
                     if ( filterImages ) {
                         childDivR.hide()
                     }
