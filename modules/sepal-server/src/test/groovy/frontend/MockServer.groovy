@@ -47,7 +47,7 @@ class MockServer extends AbstractMvcFilter {
 
             delete('/api/user/files/{path}') {
                 response.contentType = 'application/json'
-
+                Thread.sleep(1500)
                 def path = URLDecoder.decode( params.path, "UTF-8")
                 send toJson("[status:OK]")
             }
