@@ -21,6 +21,8 @@ class BackgroundDownloader implements Stoppable {
     }
 
     private void executeDownload(ExecutableDownload download, Closure completionCallback) {
+        if (download.canceled)
+            return
         download.execute()
         completionCallback.call(download)
     }

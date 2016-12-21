@@ -7,7 +7,12 @@ import org.openforis.sepal.taskexecutor.util.download.Download
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+
+import static org.openforis.sepal.taskexecutor.util.download.Download.State.CANCELED
+import static org.openforis.sepal.taskexecutor.util.download.Download.State.COMPLETED
+import static org.openforis.sepal.taskexecutor.util.download.Download.State.FAILED
 
 class LandsatSceneDownload implements TaskExecutor {
     private final Task task
@@ -16,6 +21,7 @@ class LandsatSceneDownload implements TaskExecutor {
     private final GoogleLandsatDownload googleLandsatDownload
     private final BlockingQueue<ExecutionResult> sceneResults
     private final AtomicInteger completedSceneCount = new AtomicInteger()
+    private final AtomicBoolean canceled = new AtomicBoolean()
     private final List<String> sceneIds
     private final Map<String, List<Download>> downloadsBySceneId = new ConcurrentHashMap<>()
     private final String username
@@ -36,7 +42,7 @@ class LandsatSceneDownload implements TaskExecutor {
 
     void execute() {
         FileOwner.setOnDir(workingDir, username) // Make sure we have a workingDir with proper ownership
-        sceneIds.each { sceneId ->
+        for (def sceneId : sceneIds) {
             downloadSceneInBackground(sceneId)
         }
         waitUntilScenesAreDownloaded()
@@ -67,7 +73,9 @@ class LandsatSceneDownload implements TaskExecutor {
         }
     }
 
-    private void downloadSceneInBackground(String sceneId) {
+    private synchronized void downloadSceneInBackground(String sceneId) {
+        if (canceled.get())
+            return
         def sceneDir = new File(workingDir, sceneId)
         sceneDir.mkdir()
         FileOwner.setOnDir(sceneDir, username)
@@ -83,8 +91,14 @@ class LandsatSceneDownload implements TaskExecutor {
         downloadsBySceneId[sceneId] = downloads
     }
 
-    void cancel() {
+    synchronized void cancel() {
+        canceled.set(true)
         s3Landsat8Download.cancel()
+        downloadsBySceneId
+                .values()
+                .flatten()
+                .findAll { ![COMPLETED, FAILED, CANCELED].contains(it.state) }
+                .each { it.cancel() }
     }
 
     static class Factory implements TaskExecutorFactory {

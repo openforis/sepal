@@ -18,7 +18,7 @@ class BatchDownloader {
         this.username = username
     }
 
-    List<Download> downloadBatch(String batchId, Collection<DownloadRequest> downloadRequests, Closure onCompletion) {
+    synchronized List<Download> downloadBatch(String batchId, Collection<DownloadRequest> downloadRequests, Closure onCompletion) {
         def batchRequest = new BatchRequest(batchId, downloadRequests.size())
         batchRequest.onCompletion { Download failedDownload ->
             if (failedDownload)
@@ -26,21 +26,20 @@ class BatchDownloader {
             completedBatches.add(batchRequest)
             onCompletion.call(batchRequest.failedDownload)
         }
-        downloadRequests.collect {
+        def downloadsForBatch = []
+        for (def it : downloadRequests) {
             if (canceled.get())
-                throw new DownloadCanceled()
+                break
             def download = backgroundDownloader.download(it.uri, it.file, username) { Download download ->
                 batchRequest.downloadCompleted(download)
             }
             downloads[download] = true
-            return download
+            downloadsForBatch << download
         }
+        return downloadsForBatch
     }
 
-    void cancel() {
-        downloads.keySet().each {
-            it.cancel()
-        }
+    synchronized void cancel() {
         canceled.set(true)
     }
 
@@ -80,8 +79,4 @@ class BatchDownloader {
             failedDownload.get()
         }
     }
-}
-
-class DownloadCanceled extends RuntimeException {
-
 }

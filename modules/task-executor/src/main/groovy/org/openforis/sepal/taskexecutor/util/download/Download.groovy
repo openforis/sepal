@@ -24,6 +24,8 @@ interface Download {
 
     boolean hasCompleted()
 
+    State getState()
+
     enum State {
         PENDING, CONNECTING, DOWNLOADING, COMPLETED, FAILED, CANCELED
     }
@@ -91,7 +93,7 @@ final class ExecutableDownload implements Download {
                 setState(COMPLETED)
             }
         } catch (Exception e) {
-            if (isCanceled()) {
+            if (!isCanceled()) {
                 setState(FAILED)
                 setMessage("Failed to retrieve $uri: $e.message")
             }
@@ -106,7 +108,7 @@ final class ExecutableDownload implements Download {
         try {
             long startTime = System.nanoTime()
             int bytesRead
-            while ((bytesRead = bis.read(buf)) != -1) {
+            while (!canceled && (bytesRead = bis.read(buf)) != -1) {
                 out.write(buf, 0, bytesRead)
                 double timeInSeconds = (System.nanoTime() - startTime) / 1000000000d
                 if (timeInSeconds > 0) {
@@ -145,12 +147,13 @@ final class ExecutableDownload implements Download {
     }
 
     synchronized void cancel() {
-        setState(CANCELED)
-        setMessage("Canceled $uri")
+        this.state = CANCELED
         request?.abort()
     }
 
     private synchronized void setState(Download.State state) {
+        if (this.state == CANCELED)
+            throw new DownloadCanceled()
         this.state = state
     }
 
@@ -162,11 +165,17 @@ final class ExecutableDownload implements Download {
         return state == CANCELED
     }
 
-    boolean hasCompleted() {
+    synchronized boolean hasCompleted() {
         return state == COMPLETED
+    }
+
+    synchronized Download.State getState() {
+        return state
     }
 
     String toString() {
         return uri
     }
+
+    private static class DownloadCanceled extends RuntimeException {}
 }
