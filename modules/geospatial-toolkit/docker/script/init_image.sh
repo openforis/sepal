@@ -32,7 +32,8 @@ apt-get install -y \
     bc \
     bison \
     csh \
-    curl  \
+    curl \
+    dtach \
     ed \
     flex \
     gettext \
@@ -60,8 +61,10 @@ apt-get install -y \
     python-otb \
     rsync \
     saga \
+    screen \
     swig \
     tcl-dev \
+    tmux \
     unzip \
     vim \
 	wget \
