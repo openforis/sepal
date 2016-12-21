@@ -7,3 +7,17 @@ interface TransactionManager {
 
     boolean isTransactionRunning()
 }
+
+class NullTransactionManager implements TransactionManager {
+    def <T> T withTransaction(Closure<T> closure) {
+        return closure.call()
+    }
+
+    void registerAfterCommitCallback(Closure callback) {
+
+    }
+
+    boolean isTransactionRunning() {
+        return false
+    }
+}

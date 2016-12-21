@@ -9,6 +9,7 @@ import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
+import org.openforis.sepal.transaction.NullTransactionManager
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.ExecutorServiceBasedJobScheduler
 import org.openforis.sepal.util.JobScheduler
@@ -33,15 +34,17 @@ interface Component extends Lifecycle {
     void stop()
 }
 
-class ReadOnlyComponent implements Component {
+class NonTransactionalComponent implements Component {
     private final HandlerRegistryQueryDispatcher queryDispatcher
+    private final HandlerRegistryCommandDispatcher commandDispatcher
 
-    ReadOnlyComponent() {
+    NonTransactionalComponent() {
         queryDispatcher = new HandlerRegistryQueryDispatcher()
+        commandDispatcher = new HandlerRegistryCommandDispatcher(new NullTransactionManager())
     }
 
     final <R> R submit(Command<R> command) {
-        throw new UnsupportedOperationException("Component cannot submit commands")
+        commandDispatcher.submit(command)
     }
 
     final <R> R submit(Query<R> query) {
@@ -56,8 +59,13 @@ class ReadOnlyComponent implements Component {
 
     final void stop() {}
 
-    final <R, Q extends Query<R>> ReadOnlyComponent query(Class<Q> queryType, QueryHandler<R, Q> handler) {
+    final <R, Q extends Query<R>> NonTransactionalComponent query(Class<Q> queryType, QueryHandler<R, Q> handler) {
         queryDispatcher.register(queryType, handler)
+        return this
+    }
+
+    final <R, C extends Command<R>> NonTransactionalComponent command(Class<C> commandType, CommandHandler<R, C> handler) {
+        commandDispatcher.register(commandType, handler)
         return this
     }
 }

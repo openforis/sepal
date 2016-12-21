@@ -1,6 +1,7 @@
 package component.files
 
 import org.openforis.sepal.component.files.FilesComponent
+import org.openforis.sepal.component.files.command.DeleteFile
 import org.openforis.sepal.component.files.query.ListFiles
 import org.openforis.sepal.component.files.query.ReadFile
 import spock.lang.Specification
@@ -21,6 +22,10 @@ abstract class AbstractFilesTest extends Specification {
 
     final List<File> listFiles(String path, String username = testUsername) {
         component.submit(new ListFiles(username: username, path: path))
+    }
+
+    final void deleteFile(String path, String username = testUsername) {
+        component.submit(new DeleteFile(username: username, path: path))
     }
 
     final String readFile(String path, String username = testUsername) {

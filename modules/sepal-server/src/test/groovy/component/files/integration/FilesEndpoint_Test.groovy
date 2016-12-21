@@ -1,6 +1,8 @@
 package component.files.integration
 
 import groovymvc.Controller
+import org.openforis.sepal.component.files.api.InvalidPath
+import org.openforis.sepal.component.files.command.DeleteFile
 import org.openforis.sepal.component.files.endpoint.FilesEndpoint
 import org.openforis.sepal.component.files.query.ListFiles
 import org.openforis.sepal.component.files.query.ReadFile
@@ -40,7 +42,7 @@ class FilesEndpoint_Test extends AbstractComponentEndpointTest {
 
     def 'GET /user/files, a non-existing path returns 400'() {
         def query = new ListFiles(username: testUsername, path: '/non-existing-path')
-        failQuery(query, new ListFiles.InvalidPath('Non-existing path', query))
+        failQuery(query, new InvalidPath('Non-existing path'))
 
         when:
         get(path: 'user/files', query: [path: query.path])
@@ -81,13 +83,23 @@ class FilesEndpoint_Test extends AbstractComponentEndpointTest {
 
     def 'GET /user/files/download, a non-existing file returns 400'() {
         def query = new ReadFile(username: testUsername, path: '/non-existing-path')
-        failQuery(query, new ReadFile.InvalidPath('Non-existing path', query))
+        failQuery(query, new InvalidPath('Non-existing path'))
 
         when:
         get(path: 'user/files/download', query: [path: query.path])
 
         then:
         response.status == 400
+    }
+
+
+    def 'DELETE /user/files/some-file, file is deleted'() {
+        when:
+        def response = delete(path: 'user/files/some-file')
+
+        then:
+        1 * component.submit(new DeleteFile(username: testUsername, path: '/some-file'))
+        response.status == 200
     }
 
     void failQuery(Query query, Throwable cause) {

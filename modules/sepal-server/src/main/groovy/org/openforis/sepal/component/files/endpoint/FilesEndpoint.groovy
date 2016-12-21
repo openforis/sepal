@@ -2,6 +2,8 @@ package org.openforis.sepal.component.files.endpoint
 
 import groovymvc.Controller
 import org.openforis.sepal.component.Component
+import org.openforis.sepal.component.files.api.InvalidPath
+import org.openforis.sepal.component.files.command.DeleteFile
 import org.openforis.sepal.component.files.query.ListFiles
 import org.openforis.sepal.component.files.query.ReadFile
 import org.openforis.sepal.query.QueryFailed
@@ -18,13 +20,7 @@ class FilesEndpoint {
     void registerWith(Controller controller) {
         controller.with {
 
-            error(QueryFailed, ListFiles.InvalidPath) {
-                response?.status = 400
-                response?.setContentType('application/json')
-                send(toJson([message: it.message]))
-            }
-
-            error(QueryFailed, ReadFile.InvalidPath) {
+            error(QueryFailed, InvalidPath) {
                 response?.status = 400
                 response?.setContentType('application/json')
                 send(toJson([message: it.message]))
@@ -43,6 +39,14 @@ class FilesEndpoint {
                     return map
                 }
                 send toJson(result)
+            }
+
+            delete('/user/files/{path}') {
+                def path = URLDecoder.decode(params.required('path', String), "UTF-8")
+                component.submit(
+                        new DeleteFile(username: currentUser.username, path: path)
+                )
+                send toJson([status: 'success'])
             }
 
             get('/user/files/download') {
