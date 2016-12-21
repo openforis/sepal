@@ -23,7 +23,11 @@
       word-spacing: 2rem;
     }
 
-    .btn {
+    .btn-filter-images {
+      padding: .5rem 1rem;
+    }
+
+    .btn.circle {
       text-transform: none;
       text-overflow: ellipsis;
       font-size: 1rem;

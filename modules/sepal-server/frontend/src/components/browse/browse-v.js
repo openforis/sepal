@@ -101,11 +101,12 @@ var addDir = function ( dir ) {
     var colLevel = $( '<div class="col-sms-3 height100 level level-' + level + '" />' )
     browseContentRow.append( colLevel )
     
-    var rowH = $( '<div class="dir-header width100 height10"/>' )
-    colLevel.append( rowH )
-    var colH = $( '<div class="text-align-center width100 height100"/>' )
-    colH.append( dir.path )
-    rowH.append( colH )
+    var rowHeader = $( '<div class="dir-header width100 height10"/>' )
+    colLevel.append( rowHeader )
+    var colHeader = $( '<div class="text-align-center width100 height100"/>' )
+    colHeader.append( dir.path )
+    colHeader.attr( 'title', dir.path )
+    rowHeader.append( colHeader )
     
     var colC = $( '<div class="dir-content height90"/>' )
     colLevel.append( colC )
@@ -125,6 +126,7 @@ var addDir = function ( dir ) {
             colC.append( childDivR )
             
             var childDivC = $( '<div class="file-name"/>' )
+            childDivC.attr( 'title', child.name )
             childDivR.append( childDivC )
             
             var isImageFile = isImage( child )
@@ -142,7 +144,7 @@ var addDir = function ( dir ) {
                     childDivC.append( '<i class="fa fa-picture-o" aria-hidden="true"></i> ' + child.name )
                     childDivR.addClass( 'image-file' )
                 } else {
-                    childDivC.append( child.name )
+                    childDivC.append( '<i class="fa fa-file-o" aria-hidden="true"></i> ' + child.name )
                     childDivR.addClass( 'other-file' )
                     
                     if ( filterImages ) {
