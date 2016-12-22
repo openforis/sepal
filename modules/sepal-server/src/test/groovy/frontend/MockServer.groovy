@@ -48,7 +48,7 @@ class MockServer extends AbstractMvcFilter {
             delete('/api/user/files/{path}') {
                 response.contentType = 'application/json'
                 Thread.sleep(1500)
-                def path = URLDecoder.decode( params.path, "UTF-8")
+                def path = URLDecoder.decode(params.path, "UTF-8")
                 send toJson("[status:OK]")
             }
 
@@ -505,20 +505,21 @@ class MockServer extends AbstractMvcFilter {
                         "path": "/sandbox/shiny/osk",
                         "label": "SAR Toolkit"
                       }
-                    ]'''o
+                    ]'''
             }
 
             boolean sandboxServerUp = false
             // visualization - sandbox apis
             post('/sandbox/start') {
+                response.contentType = 'application/json'
                 if (sandboxServerUp)
-                    return send([status: 'STARTED'])
+                    send toJson([status: 'STARTED'])
                 else
-                    return send([status: 'STARTING'])
+                    send toJson([status: 'STARTING'])
             }
 
             get('/sandbox/**') {
-                while(!sandboxServerUp)
+                while (!sandboxServerUp)
                     Thread.sleep(1000)
                 send('Response from sandbox')
             }

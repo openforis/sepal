@@ -143,6 +143,11 @@ var Events = {
         SHOW_INFO: "alert.show-info"
     }
     
+    , APP_MANAGER: {
+        OPEN_IFRAME   : 'app-manager.open-iframe'
+        , OPEN_DATAVIS: 'app-manager.open-datavis'
+    }
+    
 }
 
 module.exports = Events

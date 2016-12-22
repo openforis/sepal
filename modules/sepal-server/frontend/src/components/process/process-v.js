@@ -3,6 +3,9 @@
  */
 require( './process.scss' )
 
+var EventBus = require( '../event/event-bus' )
+var Events   = require( '../event/events' )
+
 var html       = null
 var $apps      = null
 var rStudioImg = require( './img/r-studio.png' )
@@ -22,17 +25,22 @@ var init = function () {
 var setApps = function ( apps ) {
     $apps.empty()
     
-    var rStudioBtn = $( '<div><a class="btn btn-base app r-studio" target="_blank" href="/sandbox/rstudio/"><img src="' + rStudioImg + '"/></a></div>' )
+    var rStudioBtn = $( '<div><button class="btn btn-base app r-studio"><img src="' + rStudioImg + '"/></button></div>' )
+    rStudioBtn.click( function ( e ) {
+        EventBus.dispatch( Events.APP_MANAGER.OPEN_IFRAME, null, '/sandbox/rstudio/' )
+    } )
     $apps.append( rStudioBtn )
     
     $.each( apps, function ( i, app ) {
         var div = $( '<div/>' )
-        var a   = $( '<a class="btn btn-base app" target="_blank"></a>' )
+        var btn = $( '<button class="btn btn-base app"></button>' )
+        btn.html( app.label )
+        // btn.attr( 'href', app.path )
+        btn.click( function ( e ) {
+            EventBus.dispatch( Events.APP_MANAGER.OPEN_IFRAME, null, app.path )
+        } )
         
-        a.html( app.label )
-        a.attr( 'href', app.path )
-        
-        div.append( a )
+        div.append( btn )
         $apps.append( div )
     } )
 }
