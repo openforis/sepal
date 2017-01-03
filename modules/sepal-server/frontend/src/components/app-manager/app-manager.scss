@@ -5,12 +5,12 @@
   .btn-close {
     position: absolute;
     top: .5rem;
-    width: 2.5rem;
-    height: 2.5rem;
-    padding: 0;
-    font-size: 1.5rem;
+    left: .5rem;
+    font-size: 0.9rem;
     border: none;
     z-index: 9999999;
+    background-color: black;
+    padding: .2rem .5rem;
   }
 
   .modal-dialog {

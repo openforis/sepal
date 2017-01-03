@@ -1,5 +1,6 @@
 package org.openforis.sepal.component.sandboxwebproxy
 
+import groovy.json.JsonOutput
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.util.Headers
@@ -22,9 +23,9 @@ class BadRequestCatchingHandler implements HttpHandler {
         } catch (BadRequest e) {
             LOG.info("Bad Request arrived: $e.message")
             exchange.statusCode = e.status
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/html");
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
             def sender = exchange.getResponseSender()
-            sender.send(e.message)
+            sender.send(JsonOutput.toJson(message: e.message))
         }
     }
 }

@@ -27,7 +27,7 @@ var setApps = function ( apps ) {
     
     var rStudioBtn = $( '<div><button class="btn btn-base app r-studio"><img src="' + rStudioImg + '"/></button></div>' )
     rStudioBtn.click( function ( e ) {
-        EventBus.dispatch( Events.APP_MANAGER.OPEN_IFRAME, null, '/sandbox/rstudio/' )
+        EventBus.dispatch( Events.APP_MANAGER.OPEN_RSTUDIO, null, '/sandbox/rstudio/' )
     } )
     $apps.append( rStudioBtn )
     

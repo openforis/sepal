@@ -145,6 +145,7 @@ var Events = {
     
     , APP_MANAGER: {
         OPEN_IFRAME   : 'app-manager.open-iframe'
+        , OPEN_RSTUDIO: 'app-manager.open-rstudio'
         , OPEN_DATAVIS: 'app-manager.open-datavis'
     }
     

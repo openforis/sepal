@@ -20,6 +20,10 @@ var init         = function () {
         e.preventDefault()
         html.modal( 'hide' )
     } )
+    
+    html.on('hidden.bs.modal', function (e) {
+        showLoading()
+    })
 }
 
 var show = function () {
@@ -27,7 +31,7 @@ var show = function () {
 }
 
 var showLoading = function () {
-    appContainer.find( '.sepal-app:not(.loader-app)' ).hide()
+    appContainer.find( '.sepal-app:not(.loader-app)' ).remove()
     appContainer.find( '.loader-app' ).show()
 }
 

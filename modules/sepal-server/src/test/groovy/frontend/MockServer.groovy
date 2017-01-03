@@ -511,8 +511,8 @@ class MockServer extends AbstractMvcFilter {
             boolean sandboxServerUp = false
             // visualization - sandbox apis
             post('/sandbox/start') {
-                params.path
                 response.contentType = 'application/json'
+                params.endpoint // Either rstudio, data-vis, or shiny
                 if (sandboxServerUp)
                     send toJson([status: 'STARTED'])
                 else

@@ -83,11 +83,9 @@ module.exports = {
         contentBase: './dist',
         host       : '0.0.0.0',
         proxy      : {
-            // '/sandbox/demo/rstudio': {target: 'http://www.repubblica.it', secure: false, changeOrigin: true},
             // '*': { target: 'http://localhost:8001', secure: false, changeOrigin: true }
-            '*': { target: 'http://localhost:9999' }
-            // '*': { target: 'https://vagrant', secure: false } // Vagrant box
-            // , '/preview': { target: 'http://127.0.0.1:5000' }
+            // '*': { target: 'http://localhost:9999' }
+            '*': { target: 'https://vagrant', secure: false } // Vagrant box
         }
     }
 }
