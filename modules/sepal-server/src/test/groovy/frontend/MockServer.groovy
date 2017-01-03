@@ -511,6 +511,7 @@ class MockServer extends AbstractMvcFilter {
             boolean sandboxServerUp = false
             // visualization - sandbox apis
             post('/sandbox/start') {
+                params.path
                 response.contentType = 'application/json'
                 if (sandboxServerUp)
                     send toJson([status: 'STARTED'])

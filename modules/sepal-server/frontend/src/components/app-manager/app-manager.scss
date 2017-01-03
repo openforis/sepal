@@ -45,17 +45,14 @@
   .sepal-app {
     height: 100%;
     background-color: #131314;
-    padding: 1rem;
     display: none;
 
     &.loader-app {
       display: block;
-      padding-top: 5rem;
+      padding-top: 7%;
     }
 
     &.iframe-app {
-      padding: 0px !important;
-
       iframe {
         border: none;
       }

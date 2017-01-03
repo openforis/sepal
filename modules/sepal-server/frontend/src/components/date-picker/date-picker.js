@@ -27,6 +27,31 @@ var DatePicker = function ( parentContainer, disableYear ) {
 
 DatePicker.prototype.init = function () {
     this.html = html.clone()
+    
+    //add years to the dom
+    var yearsContainer = this.html.find( '.year' ).find( '.buttons' )
+    var year           = moment().year()
+    var container      = null
+    for ( var i = 1970; i <= year; i++ ) {
+        
+        var btn = $( '<a class="btn btn-base"/>' )
+        btn.attr( 'value', i )
+        btn.html( String( i ).substr( -2 ) )
+        
+        var lastDigit = String( i ).substr( -1 )
+        if ( lastDigit == "0" ) {
+            container = $( '<div class="outher"/>' )
+            yearsContainer.append( container )
+            btn.addClass( 'group' )
+        } else if ( lastDigit == "1" ) {
+            var innerContainer = $( '<div class="inner"/>' )
+            container.append( innerContainer )
+            container = innerContainer
+        }
+        
+        container.append( btn )
+    }
+    
     if ( this.disableYear === true ) {
         this.html.find( '.year' ).hide()
         this.html.find( '.year-separator' ).hide()

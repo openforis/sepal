@@ -15,38 +15,38 @@ var openView = function () {
 
 var openIFrameApp = function ( e, path ) {
     openView()
+    stopServerRequest()
     
     startServer( function () {
         View.showIFrameApp( path )
-    } )
+    }, path )
 }
 
 var openDataVisApp = function ( e ) {
     openView()
+    stopServerRequest()
     
     startServer( function () {
         View.showDataVisApp()
-    } )
+    }, '/data-vis' )
 }
 
 var checkServerIntervalId = null
-var startServer           = function ( callback ) {
-    
-    var stopServerRequest = function () {
-        clearInterval( checkServerIntervalId )
-        checkServerIntervalId = null
-    }
-    
-    if ( checkServerIntervalId ) {
-        stopServerRequest()
-        startServer( callback )
-    }
+var stopServerRequest     = function () {
+    // console.log( 'clearing job ', checkServerIntervalId )
+    clearInterval( checkServerIntervalId )
+    checkServerIntervalId = null
+}
+
+var startServer = function ( callback, path ) {
     
     var checkServerRequest = function () {
         var params = {
             url      : "/sandbox/start"
+            , data   : { path: path }
             , success: function ( response ) {
                 var status = response.status
+                // console.log( 'checking ', status, ' job ', checkServerIntervalId )
                 if ( status === 'STARTED' ) {
                     stopServerRequest()
                     callback()
