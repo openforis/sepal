@@ -36,37 +36,67 @@ class SandboxWebProxyTest extends Specification {
         endpoint.stop()
     }
 
-    def 'When requesting endpoint, proxy response match endpoint response'() {
+    def 'Given a started endpoint, when requesting endpoint, proxy response match endpoint response'() {
+        start('endpoint')
+
         when:
         def proxyResponse = get('endpoint/')
 
         then:
-        endpoint.responseMatch(proxyResponse)
+        this.endpoint.responseMatch(proxyResponse)
     }
 
-    def 'Given no previous request, when requesting endpoint, sandbox session is requested'() {
+    def 'Given an endpoint not started, when requesting endpoint, 400 is returned'() {
         when:
-        get('endpoint/')
+        def response  = get('endpoint/')
+
+        then:
+        response.status == 400
+    }
+
+    def 'Given a started endpoint, when requesting another endpoint, 400 is returned'() {
+        start('another-endpoint')
+
+        when:
+        def response  = get('endpoint/')
+
+        then:
+        response.status == 400
+    }
+
+    def 'Given no previous endpoint, when starting endpoint, sandbox session is requested'() {
+        when:
+        start('endpoint')
 
         then:
         requestedSandboxSessions(1)
     }
 
-    def 'Given a previous request from same user, when requesting endpoint, no additional sandbox session is requested'() {
-        get('endpoint/')
+    def 'Given a started endpoint, when starting again, no additional sandbox session is requested'() {
+        start('endpoint')
 
         when:
-        get('endpoint/')
+        start('endpoint')
 
         then:
         requestedSandboxSessions(1)
     }
 
-    def 'Given a previous request from same different, when requesting endpoint, additional sandbox session is requested'() {
-        get('endpoint/', 'some-user')
+    def 'Given a started endpoint, when starting another endpoint, no additional sandbox session is requested'() {
+        start('endpoint')
 
         when:
-        get('endpoint/', 'another-user')
+        start('another-endpoint')
+
+        then:
+        requestedSandboxSessions(1)
+    }
+
+    def 'Given a started endpoint, when another user start an endpoint, additional sandbox session is requested'() {
+        start('endpoint', 'some-user')
+
+        when:
+        start('endpoint', 'another-user')
 
         then:
         requestedSandboxSessions(2)
@@ -116,6 +146,13 @@ class SandboxWebProxyTest extends Specification {
     private HttpResponseDecorator get(String path, Map<String, Object> headers) {
         client.get(path: path, headers: headers) as HttpResponseDecorator
     }
+
+    private void start(String endpoint, String username = 'some-username') {
+        client.post(
+                path: 'start',
+                query: ['endpoint': endpoint],
+                headers: ['sepal-user': toJson([username: username])])
+    }
 }
 
 class Endpoint {
@@ -155,22 +192,29 @@ class Endpoint {
 class FakeSandboxSessionManager implements SandboxSessionManager {
     private final List<Closure> listeners = []
     private int requestedSessions
+    private Map<String, SandboxSession> sessionsById = [:]
 
     SandboxSession requestSession(String username) {
         requestedSessions++
-        return new SandboxSession(
+        def session = new SandboxSession(
                 id: UUID.randomUUID() as String,
                 username: username,
                 host: 'localhost',
                 active: true,
                 closed: false)
+        sessionsById[session.id] = session
+        return session
     }
 
     SandboxSession heartbeat(String sessionId, String username) {
         return null
     }
 
-    List<SandboxSession> findActiveSessions(String username) {
+    SandboxSession findSession(String sessionId) {
+        return sessionsById[sessionId]
+    }
+
+    List<SandboxSession> findPendingOrActiveSessions(String username) {
         return []
     }
 

@@ -2,6 +2,7 @@ package org.openforis.sepal.component.sandboxwebproxy
 
 import groovy.json.JsonParserType
 import groovy.json.JsonSlurper
+import io.undertow.Handlers
 import io.undertow.Undertow
 import io.undertow.client.ClientResponse
 import io.undertow.server.HttpHandler
@@ -61,19 +62,20 @@ class SandboxWebProxy {
         this.sessionMonitor = new WebProxySessionMonitor(sandboxSessionManager, httpSessionManager)
         this.server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
-                .setHandler(createHandler(portByEndpoint, sessionMonitor))
+                .setHandler(createHandler(portByEndpoint))
                 .build()
     }
 
-    private HttpHandler createHandler(Map<String, Integer> portByEndpoint, WebProxySessionMonitor monitor) {
+    private HttpHandler createHandler(Map<String, Integer> portByEndpoint) {
+        def sessionBasedUriProvider = new SessionBasedUriProvider(portByEndpoint, sandboxSessionManager, sessionMonitor)
         def proxyHandler = new PatchedProxyHandler(
-                new DynamicProxyClient(
-                        new SessionBasedUriProvider(portByEndpoint, sandboxSessionManager, monitor)
-                ),
+                new DynamicProxyClient(sessionBasedUriProvider),
                 ResponseCodeHandler.HANDLE_404)
         proxyHandler.setClientResponseListener(new RedirectRewriter())
+        def pathHandler = Handlers.path(proxyHandler).addExactPath('/start', sessionBasedUriProvider)
         new BadRequestCatchingHandler(
-                new SessionAttachmentHandler(proxyHandler,
+                new SessionAttachmentHandler(
+                        pathHandler,
                         httpSessionManager,
                         new SessionCookieConfig(cookieName: "SANDBOX-SESSIONID", secure: false)))
     }
@@ -120,7 +122,7 @@ class SandboxWebProxy {
         }
     }
 
-    private static class SessionBasedUriProvider implements DynamicProxyClient.UriProvider {
+    private static class SessionBasedUriProvider implements DynamicProxyClient.UriProvider, HttpHandler {
         private final Map<String, Integer> portByEndpoint
         private final SandboxSessionManager sandboxSessionManager
         private final WebProxySessionMonitor sessionMonitor
@@ -128,11 +130,52 @@ class SandboxWebProxy {
         SessionBasedUriProvider(
                 Map<String, Integer> portByEndpoint,
                 SandboxSessionManager sandboxSessionManager,
-                WebProxySessionMonitor sessionMonitor
-        ) {
+                WebProxySessionMonitor sessionMonitor) {
             this.portByEndpoint = portByEndpoint
             this.sandboxSessionManager = sandboxSessionManager
             this.sessionMonitor = sessionMonitor
+        }
+
+        void handleRequest(HttpServerExchange exchange) throws Exception {
+            if (exchange.requestMethod as String != 'POST')
+                throw new BadRequest('/start requires a POST', 404)
+            startSandbox(exchange)
+        }
+
+        private void startSandbox(HttpServerExchange exchange) {
+            def httpSession = getOrCreateHttpSession(exchange)
+            def endpoint = exchange.queryParameters.endpoint?.peekFirst() as String
+            if (!endpoint)
+                throw new BadRequest('Missing query parameter: endpoint', 400)
+            def username = determineUsername(exchange)
+            def uriSessionKey = determineUriSessionKey(endpoint, username)
+            def sandboxSessionId = httpSession.getAttribute(SANDBOX_SESSION_ID_KEY) as String
+            URI uri = null
+            if (sandboxSessionId) {
+                uri = httpSession.getAttribute(uriSessionKey) as URI
+                LOG.debug("HTTP session linked with sandbox $sandboxSessionId. Endpoint: $uri")
+            } else
+                LOG.debug("HTTP session not linked with any sandbox")
+            if (!uri) {
+                def sandboxSession = sandboxSession(sandboxSessionId, username)
+                httpSession.setAttribute(SANDBOX_SESSION_ID_KEY, sandboxSession.id)
+                httpSession.setAttribute(USERNAME_KEY, username)
+                if (sandboxSession.isActive()) {
+                    def sandboxHost = determineUri(httpSession, sandboxSession)
+                    uri = URI.create("http://$sandboxHost:${portByEndpoint[endpoint]}")
+                    httpSession.setAttribute(uriSessionKey, uri)
+                    sendSandboxStatus(exchange, 'STARTED')
+                } else {
+                    sendSandboxStatus(exchange, 'STARTING')
+                }
+            } else {
+                sendSandboxStatus(exchange, 'STARTED')
+            }
+        }
+
+        private sendSandboxStatus(HttpServerExchange exchange, String status) {
+            LOG.debug("Sending sandbox status " + status + " for " + exchange)
+            exchange.responseSender.send("{\"status\": \"$status\"}")
         }
 
         URI provide(HttpServerExchange exchange) {
@@ -142,24 +185,10 @@ class SandboxWebProxy {
             def username = determineUsername(exchange)
             exchange.resolvedPath = "/$endpoint"
             exchange.relativePath = exchange.requestURI.find('/[^/]+(/?.*)') { match, group -> group }
-
-            def sandboxSessionId = httpSession.getAttribute(SANDBOX_SESSION_ID_KEY)
             def uriSessionKey = determineUriSessionKey(endpoint, username)
-            URI uri = null
-            if (sandboxSessionId) {
-                uri = httpSession.getAttribute(uriSessionKey) as URI
-                LOG.debug("HTTP session linked with sandbox $sandboxSessionId. Endpoint: $uri")
-            } else
-                LOG.debug("HTTP session not linked with any sandbox")
-            if (!uri) {
-                def sandboxSession = sandboxSession(username)
-                def sandboxHost = determineUri(httpSession, sandboxSession)
-                uri = URI.create("http://$sandboxHost:${portByEndpoint[endpoint]}")
-                httpSession.setAttribute(SANDBOX_SESSION_ID_KEY, sandboxSession.id)
-                httpSession.setAttribute(uriSessionKey, uri)
-                httpSession.setAttribute(USERNAME_KEY, username)
-                LOG.debug("Linked HTTP session with sandbox $sandboxSession.id. Endpoint: $uri")
-            }
+            def uri = httpSession.getAttribute(uriSessionKey) as URI
+            if (!uri)
+                throw new BadRequest('Sandbox is not started', 400)
             return uri
         }
 
@@ -180,36 +209,10 @@ class SandboxWebProxy {
         private String determineEndpoint(HttpServerExchange exchange) {
             Object endpoint = extractEndpoint(exchange)
             if (!endpoint)
-                throw new BadRequest('Endpoint must be specified: ' + exchange, 404)
+                throw new BadRequest('Endpoint must be specified: ' + exchange.requestURL, 404)
             if (!portByEndpoint.containsKey(endpoint))
                 throw new BadRequest("Non-existing sepal-endpoint: ${endpoint}", 404)
             return endpoint
-        }
-
-        private String determineUri(Session httpSession, SandboxSession sandboxSession) {
-            def sessionKey = determineSandboxHostSessionKey(sandboxSession.username)
-            sessionMonitor.sandboxSessionBound(httpSession, sandboxSession)
-            httpSession.setAttribute(sessionKey, sandboxSession.host)
-            return sandboxSession.host
-        }
-
-        private SandboxSession sandboxSession(String username) {
-            SandboxSession sandboxSession
-            def sepalSessions = sandboxSessionManager.findActiveSessions(username)
-            if (sepalSessions) {
-                sandboxSession = sepalSessions.first()
-                sandboxSessionManager.heartbeat(sandboxSession.id, username)
-            } else
-                sandboxSession = sandboxSessionManager.requestSession(username)
-            return waitForSessionToActivate(sandboxSession)
-        }
-
-        private SandboxSession waitForSessionToActivate(SandboxSession sandboxSession) {
-            while (!sandboxSession.active && !sandboxSession.closed) {
-                Thread.sleep(5000)
-                sandboxSession = sandboxSessionManager.heartbeat(sandboxSession.id, sandboxSession.username)
-            }
-            return sandboxSession
         }
 
         private String determineSandboxHostSessionKey(String username) {
@@ -231,6 +234,29 @@ class SandboxWebProxy {
             return session
 
         }
-    }
 
+        private SandboxSession sandboxSession(String sessionId, String username) {
+            def sandboxSession = null
+            if (sessionId)
+                sandboxSession = sandboxSessionManager.findSession(sessionId)
+            else {
+                def sandboxSessions = sandboxSessionManager.findPendingOrActiveSessions(username)
+                // Take first active, or pending if none available
+                if (sandboxSessions)
+                    sandboxSession = sandboxSessions.sort { it.active }.reverse().first()
+            }
+            if (sandboxSession && sandboxSession.username == username)
+                sandboxSessionManager.heartbeat(sandboxSession.id, username)
+            else
+                sandboxSession = sandboxSessionManager.requestSession(username)
+            return sandboxSession
+        }
+
+        private String determineUri(Session httpSession, SandboxSession sandboxSession) {
+            def sessionKey = determineSandboxHostSessionKey(sandboxSession.username)
+            sessionMonitor.sandboxSessionBound(httpSession, sandboxSession)
+            httpSession.setAttribute(sessionKey, sandboxSession.host)
+            return sandboxSession.host
+        }
+    }
 }

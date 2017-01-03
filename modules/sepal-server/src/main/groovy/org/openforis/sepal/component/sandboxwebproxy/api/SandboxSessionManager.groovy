@@ -6,7 +6,9 @@ interface SandboxSessionManager {
 
     SandboxSession heartbeat(String sessionId, String username)
 
-    List<SandboxSession> findActiveSessions(String username)
+    SandboxSession findSession(String sessionId)
+
+    List<SandboxSession> findPendingOrActiveSessions(String username)
 
     void onSessionClosed(Closure listener)
 }

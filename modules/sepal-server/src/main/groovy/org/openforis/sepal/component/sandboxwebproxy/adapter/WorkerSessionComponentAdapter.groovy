@@ -8,9 +8,11 @@ import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.command.Heartbeat
 import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.component.workersession.event.SessionClosed
+import org.openforis.sepal.component.workersession.query.FindSessionById
 import org.openforis.sepal.component.workersession.query.UserWorkerSessions
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE
+import static org.openforis.sepal.component.workersession.api.WorkerSession.State.PENDING
 import static org.openforis.sepal.workertype.WorkerTypes.SANDBOX
 
 class WorkerSessionComponentAdapter implements SandboxSessionManager {
@@ -40,10 +42,19 @@ class WorkerSessionComponentAdapter implements SandboxSessionManager {
         return toSession(session)
     }
 
-    List<SandboxSession> findActiveSessions(String username) {
+    SandboxSession findSession(String sessionId) {
+        def session = component.submit(new FindSessionById(
+                sessionId: sessionId
+        ))
+        if (!session)
+            return null
+        return toSession(session)
+    }
+
+    List<SandboxSession> findPendingOrActiveSessions(String username) {
         def sessions = component.submit(new UserWorkerSessions(
                 username: username,
-                states: [ACTIVE],
+                states: [PENDING, ACTIVE],
                 workerType: SANDBOX
         ))
         sessions.collect { toSession(it) }
