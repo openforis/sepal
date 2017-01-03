@@ -6,6 +6,10 @@
     padding-top: 20px;
 }
 
+.date-picker .month .label {
+    padding-top: 10px;
+}
+
 .date-picker .row.year,
 .date-picker .row.day {
 }
