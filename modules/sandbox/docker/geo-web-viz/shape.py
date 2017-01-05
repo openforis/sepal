@@ -37,11 +37,11 @@ class ShapeLayer(object):
         self.mapnik_layer.maximum_extent = extent
 
         polygon_symbolizer = mapnik.PolygonSymbolizer()
-        polygon_symbolizer.fill = mapnik.Color('#00ff0055')
+        polygon_symbolizer.fill = mapnik.Color(str(fill_color))
 
         line_symbolizer = mapnik.LineSymbolizer()
-        line_symbolizer.stroke = mapnik.Color('#ff0000')
-        line_symbolizer.stroke_width = 0.1
+        line_symbolizer.stroke = mapnik.Color(str(stroke_color))
+        line_symbolizer.stroke_width = float(stroke_width)
 
         rule = mapnik.Rule()
         rule.symbols.append(polygon_symbolizer)
