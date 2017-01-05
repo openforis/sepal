@@ -42,7 +42,6 @@ var openDataVisApp = function ( e ) {
 
 var checkServerIntervalId = null
 var stopServerRequest     = function () {
-    // console.log( 'clearing job ', checkServerIntervalId )
     clearInterval( checkServerIntervalId )
     checkServerIntervalId = null
 }

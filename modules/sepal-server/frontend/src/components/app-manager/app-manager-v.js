@@ -3,7 +3,8 @@
  */
 require( './app-manager.scss' )
 
-var IFrameApp = require( './apps/iframe/iframe-app-mv' )
+var IFrameApp  = require( './apps/iframe/iframe-app-mv' )
+var DataVisApp = require( './apps/data-vis/data-vis-mv' )
 
 var html         = null
 var appContainer = null
@@ -21,9 +22,9 @@ var init         = function () {
         html.modal( 'hide' )
     } )
     
-    html.on('hidden.bs.modal', function (e) {
+    html.on( 'hidden.bs.modal', function ( e ) {
         showLoading()
-    })
+    } )
 }
 
 var show = function () {
@@ -41,6 +42,7 @@ var hideLoading = function () {
 
 var showDataVisApp = function () {
     hideLoading()
+    DataVisApp.show( appContainer )
 }
 
 

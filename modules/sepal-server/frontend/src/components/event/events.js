@@ -122,9 +122,6 @@ var Events = {
         , POLYGON_CLEAR               : 'map.polygon-clear'
     }
     
-    , MAP_VIS: {
-        ZOOM_CHANGED: 'map-vis.zoom-changed'
-    }
     // events that occur when a model changes
     , MODEL  : {
         SCENE_AREA: {

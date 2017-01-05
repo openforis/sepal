@@ -3,7 +3,7 @@
  */
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
-var View     = require( './map-visualization-v' )
+var View     = require( './data-vis-v' )
 
 
 var appLoad = function () {

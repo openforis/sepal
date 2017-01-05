@@ -30,7 +30,7 @@ var setApps = function ( apps ) {
     dataVisBtn.click( function ( e ) {
         EventBus.dispatch( Events.APP_MANAGER.OPEN_DATAVIS )
     } )
-    // $apps.append( dataVisBtn )
+    $apps.append( dataVisBtn )
     
     
     var rStudioBtn = $( '<div><button class="btn btn-base app r-studio"><img src="' + rStudioImg + '"/></button></div>' )
