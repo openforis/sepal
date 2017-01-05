@@ -44,10 +44,6 @@ class WebProxySessionMonitor extends AbstractSessionListener implements Runnable
         }
     }
 
-    void sessionCreated(Session session, HttpServerExchange exchange) {
-        super.sessionCreated(session, exchange)
-    }
-
     void sessionDestroyed(Session httpSession, HttpServerExchange exchange, SessionListener.SessionDestroyedReason reason) {
         def sandboxSession = sandboxSessionByHttpSessionId.remove(httpSession.id)
         if (sandboxSession)
