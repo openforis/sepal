@@ -77,7 +77,7 @@ var getUserRow = function ( user ) {
     row.find( '.username' ).html( user.username )
     
     var status = ''
-    switch ( user.status ) {
+    switch ( user.status.toLowerCase() ) {
         case 'locked':
             status = '<i class="fa fa-lock" aria-hidden="true"></i>'
             // status = '<i class="fa fa-frown-o" aria-hidden="true"></i>'

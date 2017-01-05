@@ -22,7 +22,7 @@ var btnFilterImages  = null
 // var lastAbsPathClick = null
 var lastClickItem    = []
 
-var imagesExtensions = [ 'shp', 'tif', 'tiff' ]
+var imagesExtensions = [ 'shp', 'tif', 'tiff', 'vrt' ]
 var filterImages     = false
 
 var init = function () {
