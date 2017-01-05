@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+    <title>Geo Web Wiz Test</title>
+    <style>
+        html, body, #container, #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        #container {
+            position: relative;
+        }
+
+        #map {
+            position: absolute;
+        }
+    </style>
+
+</head>
+<body>
+
+
+<div id="container">
+    <div id="map" style="width: 100%; height: 100%;"></div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map').setView([43.1353033129, 12.8492323295], 5);
+    var baseLayers = {
+        'OpenStreetMap': L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map)
+    }
+    var mapLayers = {}
+    var mapControls = L.control.layers(baseLayers, mapLayers).addTo(map)
+
+    var addLayer = function (layerId) {
+        mapLayers[layerId] = L.tileLayer('http://0.0.0.0:5678/layer/' + layerId + '/{z}/{x}/{y}.png?' + Math.random(), {
+            tms: true
+        }).addTo(map)
+        mapControls.remove()
+        mapControls = L.control.layers(baseLayers, mapLayers).addTo(map)
+    }
+
+    addLayer('another-id')
+</script>
+</body>
+</html>
