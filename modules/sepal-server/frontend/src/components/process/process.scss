@@ -31,6 +31,21 @@
         }
       }
 
+      .btn.data-vis {
+        padding-top: 2.1rem;
+
+        img {
+          width: 6rem;
+        }
+
+        i{
+          font-size: 1.1rem;
+          border-radius: 50%;
+          padding: .6rem .5rem .6rem .55rem;
+          border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+      }
+
       .btn:active,
       //.btn:active:focus,
       //.btn:focus,

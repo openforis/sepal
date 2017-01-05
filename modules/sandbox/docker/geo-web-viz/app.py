@@ -51,7 +51,7 @@ def save_shape():
     return json_response({'status': 'OK'})
 
 
-@app.route('/raster/<layer_id>', methods=['DELETE'])
+@app.route('/layers/<layer_id>', methods=['DELETE'])
 def remove_raster(layer_id):
     layers.remove_layer(layer_id)
     return json_response({'status': 'OK'})

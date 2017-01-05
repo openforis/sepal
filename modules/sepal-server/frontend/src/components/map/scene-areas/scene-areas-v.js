@@ -96,10 +96,12 @@ var reset = function () {
     toggleVisibility()
     visible = true
     
-    $.each( this.data, function ( i, item ) {
-        var sceneArea = item.scene
-        setCount( sceneArea.sceneAreaId, 0 )
-    } )
+    if ( layer ) {
+        $.each( layer.data, function ( i, item ) {
+            var sceneArea = item.scene
+            setCount( sceneArea.sceneAreaId, 0 )
+        } )
+    }
 }
 
 var setZoomLevel = function ( value ) {

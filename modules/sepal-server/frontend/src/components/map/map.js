@@ -43,7 +43,7 @@ var load = function () {
         GoogleMapsLoader.load( function ( google ) {
             map = new google.maps.Map( document.getElementById( 'map' ), {
                 zoom             : 3,
-                minZoom          : 3,
+                minZoom          : 1,
                 maxZoom          : 15,
                 center           : new google.maps.LatLng( 16.7794913, 9.6771556 ),
                 mapTypeId        : google.maps.MapTypeId.ROADMAP,
