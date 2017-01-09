@@ -1,19 +1,19 @@
 import ee
 
 
-def apply(image, mosaic_def):
+def apply(image, mosaic_spec):
     """Use time-coincident NBAR MODIS to correct reflectance of Landsat for
     sun-target-sensor effects.
 
     :param image: The image to correct.
     :type image: ee.Image
 
-    :param mosaic_def: The mosaic definition.
-    :type mosaic_def: sepal.landsat.landsatmosaic.LandsatMosaic
+    :param mosaic_spec: The mosaic definition.
+    :type mosaic_spec: sepal.landsat.landsatmosaic.LandsatMosaic
 
     :return: The ee.Image with correction applied.
     """
-    modis_median = _create_modis_median(mosaic_def.from_date, mosaic_def.to_date, mosaic_def.aoi.geometry())
+    modis_median = _create_modis_median(mosaic_spec.from_date, mosaic_spec.to_date, mosaic_spec.aoi.geometry())
     lsat_tmp = image.select(['B3', 'B4', 'B5', 'B7'])
     nbar = modis_median.select('Nadir_Reflectance_Band1').rename(['red']) \
         .addBands(modis_median.select('Nadir_Reflectance_Band2').rename(['nir'])) \
@@ -44,7 +44,11 @@ def apply(image, mosaic_def):
 
 
 def _create_modis_median(from_date, to_date, aoi):
-    modis_coll = ee.ImageCollection('MODIS/MCD43A4').filterDate(from_date, to_date).filterBounds(aoi).map(
+    # Extend the time range to make sure there is at least one Modis image.
+    millis_in_16_days = 16 * 24 * 60 * 60 * 1000
+    modis_coll = ee.ImageCollection('MODIS/MCD43A4')\
+        .filterDate(from_date - millis_in_16_days, to_date + millis_in_16_days)\
+        .filterBounds(aoi).map(
         lambda image: _modis_mask_clouds(image))
     modis_median = modis_coll.median()
     return modis_median
