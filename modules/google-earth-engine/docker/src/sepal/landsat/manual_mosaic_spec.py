@@ -48,7 +48,7 @@ class ManualMosaicSpec(LandsatMosaicSpec):
         prefix = scene_id[:3]
         return constants.collection_name_by_scene_id_prefix[prefix]
 
-    def _create_image_collection(self, name, image_ids):
+    def _create_image_collection(self, collection_name, image_ids):
         """Creates an image collection containing images with the specified ids.
 
         The band names will be normalized to B1, B2, B3, B4, B5, B7, B10.
@@ -61,18 +61,17 @@ class ManualMosaicSpec(LandsatMosaicSpec):
 
         :return: An ee.ImageCollection().
         """
-        image_list = ee.List(list(image_ids))
-        images = image_list \
-            .map(self._to_image) \
+        images = ee.List([self._to_image(image_id, collection_name) for image_id in image_ids]) \
             .removeAll([None])
+
         collection = ee.ImageCollection(images)
         normalized_collection = collection.map(
-            lambda image: self._normalize_band_names(image, name)
+            lambda image: self._normalize_band_names(image, collection_name)
         )
         return normalized_collection
 
     @staticmethod
-    def _to_image(image_id):
+    def _to_image(image_id, collection_name):
         """Retrieves an image with the specified id from the GEE landsat collections.
 
         :param image_id: The id of the image to retrieve.
@@ -80,16 +79,8 @@ class ManualMosaicSpec(LandsatMosaicSpec):
 
         :return: An ee.Image or None if the image isn't found.
         """
-        # Merges all collections into a single collection
-        collection = ee.ImageCollection('LANDSAT/LC8_L1T_TOA_FMASK').merge(
-            ee.ImageCollection('LANDSAT/LE7_L1T_TOA_FMASK').merge(
-                ee.ImageCollection('LANDSAT/LT5_L1T_TOA_FMASK').merge(
-                    ee.ImageCollection('LANDSAT/LT4_L1T_TOA_FMASK')
-                )
-            )
-        )
         # Finds the image with the specified id in the collection
-        return collection.filter(
+        return ee.ImageCollection(collection_name).filter(
             ee.Filter.eq('system:index', image_id)
         ).first()
 
