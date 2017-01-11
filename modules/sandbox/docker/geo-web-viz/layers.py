@@ -1,6 +1,7 @@
 import raster
 import render
 import shape
+import mapnik
 
 _layer_by_id = {}
 _index_by_id = {}
@@ -30,11 +31,12 @@ def reorder(order):
 #   ]
 # }
 def save_raster(layer_dict):
+    """Saves raster layer and returns bounding box of layer [[min lat, min lng], max lat, max lng]"""
     if _is_new_layer(layer_dict):
         layer = raster.from_dict(layer_dict)
     else:
         layer = _update_layer(layer_dict)
-    _save_layer(layer)
+    return _save_layer(layer)
 
 
 def save_shape(layer_dict):
@@ -42,7 +44,7 @@ def save_shape(layer_dict):
         layer = shape.from_dict(layer_dict)
     else:
         layer = _update_layer(layer_dict)
-    _save_layer(layer)
+    return _save_layer(layer)
 
 
 def remove_layer(layer_id):
@@ -63,3 +65,9 @@ def _save_layer(layer):
     _layer_by_id[layer.id] = layer
     _index_by_id[layer.id] = len(_index_by_id)
     render.create_renderer(layer)
+
+    map = mapnik.Map(1, 1, '+init=epsg:4326')
+    layer.append_to(map)
+    map.zoom_all()
+    envelope = map.envelope()
+    return [[envelope.miny, envelope.minx], [envelope.maxy, envelope.maxx]]
