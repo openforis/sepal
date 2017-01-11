@@ -4,6 +4,7 @@ import mapnik
 import ogr
 
 from config import to_file, to_path
+from layer import Layer
 
 
 def from_dict(shape_dict):
@@ -17,13 +18,14 @@ def from_dict(shape_dict):
 
 
 # noinspection PyUnresolvedReferences
-class ShapeLayer(object):
+class ShapeLayer(Layer):
     """Represents a map layer from a shape file."""
 
     concurrent = True
 
     def __init__(self, id, file, fill_color, stroke_color, stroke_width):
         """Creates a shape layer."""
+        super(ShapeLayer, self).__init__()
         self.id = id
         self.file = file
         self.fill_color = fill_color
@@ -87,7 +89,8 @@ class ShapeLayer(object):
             'path': to_path(self.file),
             'fill_color': self.fill_color,
             'stroke_color': self.stroke_color,
-            'stroke_width': self.stroke_width
+            'stroke_width': self.stroke_width,
+            'bounds': self.bounds()
         }
 
     def update(self, shape_dict):
