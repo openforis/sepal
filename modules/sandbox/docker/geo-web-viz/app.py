@@ -25,7 +25,7 @@ def order_layers():
 @app.route('/raster/band/count', methods=['GET'])
 def band_count():
     return json_response(
-        raster.band_count(to_file(request.values['path']))
+        {'count': raster.band_count(to_file(request.values['path']))}
     )
 
 
@@ -39,16 +39,15 @@ def band_info(band_index):
 @app.route('/raster/save', methods=['POST'])
 def save_raster():
     layer = json.loads(request.values['layer'])
-    layers.save_raster(layer)
-    return json_response({'status': 'OK'})
-
+    bounds = layers.save_raster(layer)
+    return json_response({'bounds': bounds})
 
 
 @app.route('/shape/save', methods=['POST'])
 def save_shape():
     layer = json.loads(request.values['layer'])
-    layers.save_shape(layer)
-    return json_response({'status': 'OK'})
+    bounds = layers.save_shape(layer)
+    return json_response({'bounds': bounds})
 
 
 @app.route('/layers/<layer_id>', methods=['DELETE'])

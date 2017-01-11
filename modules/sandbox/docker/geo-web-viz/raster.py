@@ -1,6 +1,7 @@
 import gdal
 import mapnik
 import operator
+import osr
 
 from config import to_file, to_path
 
@@ -28,9 +29,6 @@ def band_info(raster_file, band_index):
     (min, max, mean, std_dev) = band.ComputeStatistics(False)
     histogram = band.GetHistogram(min, max, 256)
 
-    # mapnik_map = _mapnik_map(raster_file, band_index, nodata)
-    # envelope = mapnik_map.envelope()
-
     return {
         # 'envelope': [[envelope.maxx, envelope.maxy], [envelope.minx, envelope.miny]],
         'nodata': nodata,
@@ -50,25 +48,11 @@ def from_dict(layer_dict):
     )
 
 
-# def _mapnik_map(raster_file, band_index, nodata):
-#     mapnik_datasource = mapnik.Gdal(
-#         file=raster_file,
-#         shared=True,
-#         band=band_index,
-#         nodata=nodata,
-#         nodata_tolerance=1e-12
-#     )
-#     mapnik_layer = mapnik.Layer('test')
-#     mapnik_layer.datasource = mapnik_datasource
-#     mapnik_map = mapnik.Map(1, 1, srs='+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
-#     mapnik_map.layers.append(mapnik_layer)
-#     mapnik_map.zoom_all()
-#     return mapnik_map
-
-
 # noinspection PyUnresolvedReferences
 class RasterLayer(object):
     """Represents a map layer."""
+
+    concurrent = False
 
     def __init__(self, id, file, bands, nodata=0, nodata_tolerance=1e-12):
         """Creates a raster layer.
@@ -134,9 +118,17 @@ class _BandLayer(object):
 
     def create_mapnik_layer(self):
         layer = mapnik.Layer(self.band.name)
+        layer.srs = self.extract_srs(self.file)
         layer.datasource = self.mapnik_datasource
         layer.styles.append(self.band.name)
         return layer
+
+    def extract_srs(self, file):
+        ds = gdal.Open(file)
+        projInfo = ds.GetProjection()
+        spatialRef = osr.SpatialReference()
+        spatialRef.ImportFromWkt(projInfo)
+        return spatialRef.ExportToProj4()
 
     def create_style(self):
         symbolizer = mapnik.RasterSymbolizer()

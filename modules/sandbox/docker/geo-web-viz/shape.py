@@ -1,7 +1,7 @@
 import os
 
 import mapnik
-import osgeo.ogr
+import ogr
 
 from config import to_file, to_path
 
@@ -20,6 +20,8 @@ def from_dict(shape_dict):
 class ShapeLayer(object):
     """Represents a map layer from a shape file."""
 
+    concurrent = True
+
     def __init__(self, id, file, fill_color, stroke_color, stroke_width):
         """Creates a shape layer."""
         self.id = id
@@ -27,14 +29,13 @@ class ShapeLayer(object):
         self.fill_color = fill_color
         self.stroke_color = stroke_color
         self.stroke_width = stroke_width
-        datasource = mapnik.Shapefile(
+        ds = mapnik.Shapefile(
             file=(os.path.splitext(file)[0])
         )
         srs = self._srs(file)
         self.mapnik_layer = mapnik.Layer('Shapefile Layer', srs)
-        self.mapnik_layer.datasource = datasource
-        extent = self._extent(file)
-        self.mapnik_layer.maximum_extent = extent
+        self.mapnik_layer.datasource = ds
+        self.mapnik_layer.maximum_extent = self._extent(file)
 
         polygon_symbolizer = mapnik.PolygonSymbolizer()
         polygon_symbolizer.fill = mapnik.Color(str(fill_color))
@@ -42,6 +43,7 @@ class ShapeLayer(object):
         line_symbolizer = mapnik.LineSymbolizer()
         line_symbolizer.stroke = mapnik.Color(str(stroke_color))
         line_symbolizer.stroke_width = float(stroke_width)
+        line_symbolizer.simplify = 0.1
 
         rule = mapnik.Rule()
         rule.symbols.append(polygon_symbolizer)
@@ -52,13 +54,13 @@ class ShapeLayer(object):
         self.mapnik_layer.styles.append('Shapefile Layer')
 
     def _extent(self, file):
-        ds = osgeo.ogr.Open(file)
+        ds = ogr.Open(file)
         layer = ds.GetLayerByIndex(0)
         extent = layer.GetExtent()
         return mapnik.Box2d(extent[0], extent[2], extent[1], extent[3])
 
     def _srs(self, file):
-        ds = osgeo.ogr.Open(file)
+        ds = ogr.Open(file)
         layer = ds.GetLayerByIndex(0)
         srs = layer.GetSpatialRef()
         epsg = srs.GetAuthorityCode('PROJCS')

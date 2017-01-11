@@ -1,3 +1,5 @@
+import multiprocessing
+
 import mapnik
 
 from mercator import SphericalMercator
@@ -38,7 +40,11 @@ class Renderer(object):
         self.size = 256
         self.buffer_size = 128
 
-        self.pool = Pool(layer, map_size=self.size, pool_size=1)
+        if layer.concurrent:
+            pool_size = multiprocessing.cpu_count()
+        else:
+            pool_size = 1
+        self.pool = Pool(layer, map_size=self.size, pool_size=pool_size)
 
         map = mapnik.Map(256, 256, '+init=epsg:3857')
         layer.append_to(map)

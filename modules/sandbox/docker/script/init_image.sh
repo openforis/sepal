@@ -6,8 +6,10 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     libnss-sss \
     libnss-ldap \
     gdebi-core \
+    mapnik-utils \
     net-tools \
     openssh-server \
+    python-pip \
     sudo \
     supervisor \
     gettext

@@ -25,28 +25,84 @@
     <div id="map" style="width: 100%; height: 100%;"></div>
 </div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js"></script>
 <script>
-    var map = L.map('map').setView([43.1353033129, 12.8492323295], 5);
-    var baseLayers = {
-        'OpenStreetMap': L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map)
-    }
-    var mapLayers = {}
-    var mapControls = L.control.layers(baseLayers, mapLayers).addTo(map)
+    var map;
+    function initMap() {
 
-    var addLayer = function (layerId) {
-        mapLayers[layerId] = L.tileLayer('http://0.0.0.0:5678/layer/' + layerId + '/{z}/{x}/{y}.png?' + Math.random(), {
-            tms: true
-        }).addTo(map)
-        mapControls.remove()
-        mapControls = L.control.layers(baseLayers, mapLayers).addTo(map)
-    }
+        var mapStyle = [
+            {
+                "stylers": [{"visibility": "simplified"}]
+            }
+            , {
+                "stylers": [{"color": "#131314"}]
+            }
+            , {
+                "featureType": "water",
+                "stylers": [{"color": "#131313"}, {"lightness": 4}
+                ]
+            }
+            , {
+                "elementType": "labels.text.fill"
+                , "stylers": [{"visibility": "off"}, {"lightness": 25}]
+            }
+        ]
 
-    addLayer('another-id')
-    addLayer('some-shape-id')
+
+        function getNormalizedCoord(coord, zoom) {
+            var y = coord.y;
+            var x = coord.x;
+
+            // tile range in one direction range is dependent on zoom level
+            // 0 = 1 tile, 1 = 2 tiles, 2 = 4 tiles, 3 = 8 tiles, etc
+            var tileRange = 1 << zoom;
+
+            // don't repeat across y-axis (vertically)
+            if (y < 0 || y >= tileRange) {
+                return null;
+            }
+
+            // repeat across x-axis
+            if (x < 0 || x >= tileRange) {
+                x = (x % tileRange + tileRange) % tileRange;
+            }
+
+            return {x: x, y: y};
+        }
+
+        var loading = false
+        var eeMapOptions = {
+            getTileUrl: function (tile, zoom) {
+                tile = getNormalizedCoord(tile, zoom)
+                var y = tile.y
+                y = Math.pow(2, zoom) - y - 1
+                var baseUrl = 'http://0.0.0.0:5678/layer/some-shape-id'
+                if (!loading) console.log('Starting')
+                loading = true
+                return [baseUrl, zoom, tile.x, y].join('/') + '.png'
+            },
+            tileSize: new google.maps.Size(256, 256)
+        }
+
+
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom             : 3,
+            minZoom          : 1,
+            maxZoom          : 15,
+            center           : new google.maps.LatLng( 16.7794913, 9.6771556 )
+        });
+
+        var mapType = new google.maps.ImageMapType(eeMapOptions)
+        mapType.addListener('tilesloaded', function(e) {
+            console.log('tilesloaded')
+            loading = false
+        })
+        map.overlayMapTypes.clear()
+        map.overlayMapTypes.push(mapType)
+        map.setOptions({styles: mapStyle})
+    }
+    initMap()
+
 </script>
 </body>
 </html>
