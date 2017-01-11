@@ -1,4 +1,9 @@
+import logging
+
 from flask import Flask, send_from_directory
+
+import config
+from app import http
 
 app = Flask(__name__, instance_relative_config=True)
 
@@ -9,8 +14,11 @@ def index():
 
 
 if __name__ == '__main__':
+    app.register_blueprint(http)
+    logging.basicConfig(level=logging.WARNING)
     app.run(
         host='0.0.0.0',
         port=6776,
-        threaded=True
+        threaded=True,
+        debug=config.debug_mode
     )

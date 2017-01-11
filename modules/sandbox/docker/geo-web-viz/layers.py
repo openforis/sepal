@@ -1,7 +1,6 @@
 import raster
 import render
 import shape
-import mapnik
 
 _layer_by_id = {}
 _index_by_id = {}
@@ -53,6 +52,13 @@ def remove_layer(layer_id):
     render.remove(layer_id)
 
 
+def features(lat, lng):
+    return {
+        id: layer.features(lat, lng)
+        for id, layer in _layer_by_id.iteritems()
+        }
+
+
 def _is_new_layer(layer_dict):
     return layer_dict['id'] not in _layer_by_id.keys()
 
@@ -65,9 +71,4 @@ def _save_layer(layer):
     _layer_by_id[layer.id] = layer
     _index_by_id[layer.id] = len(_index_by_id)
     render.create_renderer(layer)
-
-    map = mapnik.Map(1, 1, '+init=epsg:4326')
-    layer.append_to(map)
-    map.zoom_all()
-    envelope = map.envelope()
-    return [[envelope.miny, envelope.minx], [envelope.maxy, envelope.maxx]]
+    return layer.bounds()

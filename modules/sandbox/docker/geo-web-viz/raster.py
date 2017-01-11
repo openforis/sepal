@@ -2,6 +2,7 @@ import gdal
 import mapnik
 import operator
 import osr
+from layer import Layer
 
 from config import to_file, to_path
 
@@ -49,7 +50,7 @@ def from_dict(layer_dict):
 
 
 # noinspection PyUnresolvedReferences
-class RasterLayer(object):
+class RasterLayer(Layer):
     """Represents a map layer."""
 
     concurrent = False
@@ -69,6 +70,7 @@ class RasterLayer(object):
         :param nodata_tolerance: Distance from nodata value pixels still are considered nodata.
         :type nodata_tolerance: float
         """
+        super(RasterLayer, self).__init__()
         self.id = id
         self.file = file
         self.nodata = nodata
@@ -91,7 +93,8 @@ class RasterLayer(object):
             'id': self.id,
             'type': 'raster',
             'path': to_path(self.file),
-            'bands': [band_layer.band.to_dict() for band_layer in self.band_layers]
+            'bands': [band_layer.band.to_dict() for band_layer in self.band_layers],
+            'bounds': self.bounds()
         }
 
     def update(self, layer_dict):
