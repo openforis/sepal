@@ -59,7 +59,7 @@ def remove_raster(layer_id):
 
 
 @http.route('/layers/features/<lat>/<lng>')
-def features(lat, lng):
+def attributes(lat, lng):
     return json_response(layers.features(float(lat), float(lng)))
 
 

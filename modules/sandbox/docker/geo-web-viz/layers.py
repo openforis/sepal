@@ -52,6 +52,13 @@ def remove_layer(layer_id):
     render.remove(layer_id)
 
 
+def features(lat, lng):
+    return {
+        id: layer.features(lat, lng)
+        for id, layer in _layer_by_id.iteritems()
+        }
+
+
 def _is_new_layer(layer_dict):
     return layer_dict['id'] not in _layer_by_id.keys()
 
