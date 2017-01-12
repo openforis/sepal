@@ -46,26 +46,6 @@ var init = function ( formSelector ) {
             }
         }
     } )
-    // fieldCountry.autocomplete( {
-    //     lookup                     : countries
-    //     , minChars                 : 0
-    //     , autoSelectFirst          : true
-    //     , triggerSelectOnValidInput: false
-    //     , tabDisabled              : true
-    //     , onSelect                 : function ( selection ) {
-    //         if ( selection ) {
-    //             var cCode = selection.data
-    //             var cName = selection.value
-    //
-    //             EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
-    //             EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
-    //
-    //             setCountryIso( cCode )
-    //         }
-    //     }, onInvalidateSelection   : function () {
-    //         setCountryIso( null )
-    //     }
-    // } )
     
     btnDrawPolygon = form.find( '.btn-draw-polygon' )
     btnDrawPolygon.click( function ( e ) {
@@ -96,14 +76,18 @@ var submit = function ( e ) {
     
     var valid    = true
     var errorMsg = ''
+    var date     = targetDate.asMoment()
     if ( !SearchParams.hasValidAoi() ) {
         valid    = false
         errorMsg = 'Please select a valid COUNTRY or DRAW A POLYGON'
         
         FormValidator.addError( fieldCountry )
-    } else if ( !targetDate.asMoment().isValid() ) {
+    } else if ( !date.isValid() ) {
         valid    = false
         errorMsg = 'Please select a valid TARGET DATE'
+    } else if ( date.isAfter( moment() ) ) {
+        valid    = false
+        errorMsg = 'TARGET DATE cannot be later than today'
     }
     
     if ( valid ) {

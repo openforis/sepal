@@ -123,7 +123,7 @@ var Events = {
     }
     
     // events that occur when a model changes
-    , MODEL  : {
+    , MODEL: {
         SCENE_AREA: {
             CHANGE: 'model.scene-area-change'
         }
@@ -144,6 +144,16 @@ var Events = {
         OPEN_IFRAME   : 'app-manager.open-iframe'
         , OPEN_RSTUDIO: 'app-manager.open-rstudio'
         , OPEN_DATAVIS: 'app-manager.open-datavis'
+    }
+    
+    , APPS: {
+        DATA_VIS: {
+            MAP_INITIALIZED          : 'apps.data-vis.map-initialized'
+            , ADD_MAP_LAYER          : 'apps.data-vis.add-map-layer'
+            , REMOVE_MAP_LAYER       : 'apps.data-vis.remove-map-layer'
+            , MAP_LAYER_TILES_LOADING: 'apps.data-vis.map_layer_tiles_loading'
+            , MAP_TILES_LOADED       : 'apps.data-vis.map_tiles_loaded'
+        }
     }
     
 }

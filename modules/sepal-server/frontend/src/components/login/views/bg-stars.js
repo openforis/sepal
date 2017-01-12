@@ -1,6 +1,8 @@
 /**
  * @author Mino Togna
  */
+var EventBus = require( '../../event/event-bus' )
+var Events   = require( '../../event/events' )
 
 require( '../../parallax/parallax' )
 
@@ -204,12 +206,21 @@ var siteBgStar = function () {
         };
     })();
     
-    $( window ).resize( function () {
+    var resize = function (  ) {
         waitForFinalEvent( function () {
             callCanvas( $( 'canvas' )[ 0 ] ).init();
         }, 800, '' );
-    } );
-    $( '.site-bg' ).parallax()
+    }
+    
+    $( window ).on('resize' , resize )
+    
+    EventBus.addEventListener( Events.LOGIN.HIDE , function (  ) {
+        $( window ).off('resize' , resize )
+        waitForFinalEvent( function (  ) {
+        }, 400 , '')
+    })
+    
+    // $( '.site-bg' ).parallax()
 }
 
 module.exports = {

@@ -50,7 +50,7 @@ var loadMap = function ( domId, callback ) {
             map.setOptions( { styles: mapStyle } )
             
             if ( callback ) {
-                callback( map )
+                callback( map , google )
             }
         } )
         
