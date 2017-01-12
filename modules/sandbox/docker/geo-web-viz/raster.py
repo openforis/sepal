@@ -2,9 +2,9 @@ import gdal
 import mapnik
 import operator
 import osr
-from layer import Layer
 
 from config import to_file, to_path
+from layer import Layer
 
 
 def band_count(raster_file):
@@ -101,6 +101,18 @@ class RasterLayer(Layer):
         layer = self.to_dict()
         layer.update(layer_dict)
         return from_dict(layer)
+
+    def features(self, lat, lng):
+        return [
+            self.band_value(band_layer, lat, lng)
+            for band_layer in self.band_layers
+            ]
+
+    def band_value(self, band_layer, lat, lng):
+        features = self.layer_features(band_layer.band.index - 1, lat, lng)
+        if features:
+            return features[0]['value']
+        return None
 
 
 class _BandLayer(object):
