@@ -20,63 +20,6 @@
     }
   }
 
-  .layers-container {
-
-    width: 25%;
-    position: absolute;
-    top: 10%;
-    max-height: 90%;
-    overflow-y: auto;
-    //padding-top: 1rem;
-    padding-bottom: 1rem;
-    background-color: rgba(19, 19, 20, 0.7);
-    border-top-right-radius: 1rem;
-    border-bottom-right-radius: 1rem;
-    border: 1px solid rgba(84, 84, 84, 0.05);
-
-    .header {
-
-    }
-
-    .btn-close-layers {
-      width: 2rem;
-      height: 2rem;
-      padding: 0px;
-      border: none;
-      font-size: 1.3rem;
-      opacity: .7;
-    }
-
-    .row-layer {
-      padding-top: .5rem;
-      padding-bottom: .5rem;
-
-      &:not(:last-child){
-        border-bottom: 1px solid rgba(51, 51, 53, 0.15);
-      }
-
-      .col-buttons {
-        //word-spacing: .5rem;
-      }
-
-      .name {
-        font-size: .8rem;
-        text-overflow: ellipsis;
-        padding-top: .25rem;
-        //word-wrap: break-word;
-      }
-
-      .btn.circle {
-        width: 2rem;
-        height: 2rem;
-        padding: 0px;
-        border: none;
-        font-size: 1rem;
-      }
-    }
-
-  }
-
   .btn-open-layers {
     width: 3rem;
     height: 3rem;

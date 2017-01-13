@@ -7,7 +7,7 @@ var EventBus = require( '../../../event/event-bus' )
 var Events   = require( '../../../event/events' )
 
 var Map    = require( './views/map' )
-var Layers = require( './views/layers' )
+var Layers = require( './views/layers/layers' )
 
 var html           = null
 var map            = null

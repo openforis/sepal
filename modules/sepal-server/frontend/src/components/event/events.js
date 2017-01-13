@@ -148,11 +148,13 @@ var Events = {
     
     , APPS: {
         DATA_VIS: {
-            MAP_INITIALIZED          : 'apps.data-vis.map-initialized'
-            , ADD_MAP_LAYER          : 'apps.data-vis.add-map-layer'
-            , REMOVE_MAP_LAYER       : 'apps.data-vis.remove-map-layer'
-            , MAP_LAYER_TILES_LOADING: 'apps.data-vis.map_layer_tiles_loading'
-            , MAP_TILES_LOADED       : 'apps.data-vis.map_tiles_loaded'
+            MAP_INITIALIZED           : 'apps.data-vis.map-initialized'
+            , ADD_MAP_LAYER           : 'apps.data-vis.add-map-layer'
+            , REMOVE_MAP_LAYER        : 'apps.data-vis.remove-map-layer'
+            , MAP_LAYER_TILES_LOADING : 'apps.data-vis.map_layer_tiles_loading'
+            , MAP_TILES_LOADED        : 'apps.data-vis.map_tiles_loaded'
+            , MAP_LAYER_CHANGE_OPACITY: 'apps.data-vis.map_layer_change_opacity'
+            , MAP_LAYER_ZOOM_TO       : 'apps.data-vis.map_layer_zoom_to'
         }
     }
     

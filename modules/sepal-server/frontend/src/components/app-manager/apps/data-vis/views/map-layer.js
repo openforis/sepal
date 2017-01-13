@@ -7,8 +7,9 @@ var MapLoader = require( '../../../../map-loader/map-loader' )
 
 
 var Layer = function ( params ) {
-    var $this = this
-    $this.id  = params.id
+    var $this        = this
+    $this.properties = params
+    $this.id         = params.id
     // $this.pendingUrls = []
     
     MapLoader.load( function ( google ) {

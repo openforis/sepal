@@ -1,8 +1,10 @@
 /**
  * @author Mino Togna
  */
+require( './layers.scss' )
 
-var Layer = require( './layer' )
+var Sortable = require( 'sortablejs' )
+var Layer    = require( './layer' )
 
 var container = null
 var btnClose  = null
@@ -13,9 +15,18 @@ var init = function ( dataVis ) {
     btnClose  = dataVis.find( '.btn-close-layers' )
     btnOpen   = dataVis.find( '.btn-open-layers' )
     
+    Sortable.create( container.get( 0 ), {
+        handle     : ".btn-sort"
+        , draggable: ".row-layer"
+        , onUpdate : function ( evt ) {
+            var itemEl = evt.item
+            console.log( $( itemEl ).data( 'id' ) )
+            console.log( "UPD ", evt )
+        }
+    } )
+    
     btnClose.click( close )
     btnOpen.click( open )
-    
 }
 
 var close = function () {
@@ -50,7 +61,9 @@ var open = function () {
 
 var load = function ( layers ) {
     $.each( layers, function ( i, l ) {
-        l.index = i
+        l.index   = i
+        l.opacity = 1
+        // console.log( l )
         var uiLayer = Layer.newInstance( container, l )
         uiLayer.show()
     } )
