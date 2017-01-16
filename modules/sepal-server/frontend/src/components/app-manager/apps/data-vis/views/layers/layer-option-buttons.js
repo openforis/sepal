@@ -8,10 +8,10 @@ require( './layer-option-buttons.scss' )
 var noUiSlider = require( 'nouislider' )
 require( '../../../../../nouislider/nouislider.css' )
 
-
-var LayerOptionButtons = function ( container, layer ) {
-    var $this  = this
-    this.layer = layer
+var LayerOptionButtons = function ( container, layer, layerOptions ) {
+    var $this         = this
+    this.layer        = layer
+    this.layerOptions = layerOptions
     
     this.container      = container
     this.hover          = false
@@ -54,7 +54,12 @@ var LayerOptionButtons = function ( container, layer ) {
         EventBus.dispatch( Events.APPS.DATA_VIS.MAP_LAYER_ZOOM_TO, null, $this.layer.id )
     } )
     
+    this.btnSettings = this.container.find( '.btn-settings' )
+    this.btnSettings.click( function () {
+        layerOptions.show()
+    } )
     
+    this.btnRemove = this.container.find( '.btn-remove' )
 }
 
 LayerOptionButtons.prototype.show = function () {
@@ -67,8 +72,8 @@ LayerOptionButtons.prototype.hide = function () {
     }
 }
 
-var newInstance = function ( container, layer ) {
-    return new LayerOptionButtons( container, layer )
+var newInstance = function ( container, layer, layerOptions ) {
+    return new LayerOptionButtons( container, layer, layerOptions )
 }
 
 module.exports = {

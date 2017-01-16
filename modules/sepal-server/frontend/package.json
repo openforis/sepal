@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "bootstrap": "4.0.0-alpha.4",
+    "bootstrap-colorpicker": "^2.4.0",
     "d3": "^4.2.3",
     "devbridge-autocomplete": "^1.2.25",
     "font-awesome": "^4.6.3",

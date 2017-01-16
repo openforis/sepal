@@ -63,7 +63,7 @@ var load = function ( layers ) {
     $.each( layers, function ( i, l ) {
         l.index   = i
         l.opacity = 1
-        // console.log( l )
+        console.log( l )
         var uiLayer = Layer.newInstance( container, l )
         uiLayer.show()
     } )

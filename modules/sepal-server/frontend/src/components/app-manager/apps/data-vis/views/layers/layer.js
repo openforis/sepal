@@ -4,6 +4,7 @@
 var EventBus           = require( '../../../../../event/event-bus' )
 var Events             = require( '../../../../../event/events' )
 var LayerOptionButtons = require( './layer-option-buttons' )
+var LayerOptions       = require( './layer-options' )
 
 var template = require( './layer.html' )
 var html     = $( template( {} ) )
@@ -16,7 +17,8 @@ var LayerClass = function ( container, layer ) {
     
     this.options = layer
     
-    this.layerOptionButtons = LayerOptionButtons.newInstance( this.html.find( '.layer-option-buttons' ) , layer )
+    this.layerOptions       = LayerOptions.newInstance( this.html.find( '.layer-options' ), layer )
+    this.layerOptionButtons = LayerOptionButtons.newInstance( this.html.find( '.layer-option-buttons' ), layer, this.layerOptions )
     
     var path = layer.path
     if ( path.indexOf( '/' ) > 0 ) {
