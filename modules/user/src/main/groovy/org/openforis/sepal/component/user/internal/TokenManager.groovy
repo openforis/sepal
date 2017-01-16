@@ -16,12 +16,12 @@ class TokenManager {
         this.clock = clock
     }
 
-    TokenStatus validate(String token) {
+    TokenStatus validate(String token, boolean canExpire = true) {
         def map = userRepository.tokenStatus(token)
         if (!map)
             return null
         def generationTime = map.generationTime as Date
-        def expired = generationTime < clock.now() - MAX_AGE_DAYS
+        def expired = canExpire && generationTime < clock.now() - MAX_AGE_DAYS
         return new TokenStatus(
                 token: token,
                 generationTime: generationTime,

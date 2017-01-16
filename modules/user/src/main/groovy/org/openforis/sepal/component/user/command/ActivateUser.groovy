@@ -32,7 +32,7 @@ class ActivateUserHandler implements CommandHandler<User, ActivateUser> {
     }
 
     User execute(ActivateUser command) {
-        def tokenStatus = tokenManager.validate(command.token)
+        def tokenStatus = tokenManager.validate(command.token, false)
         if (!tokenStatus || tokenStatus.expired)
             throw new UsingInvalidToken(command.token, tokenStatus)
         def user = tokenStatus.user
