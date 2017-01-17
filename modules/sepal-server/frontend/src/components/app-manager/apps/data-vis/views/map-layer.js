@@ -10,6 +10,7 @@ var Layer = function ( params ) {
     var $this        = this
     $this.properties = params
     $this.id         = params.id
+    $this.opacity    = 1
     // $this.pendingUrls = []
     
     MapLoader.load( function ( google ) {

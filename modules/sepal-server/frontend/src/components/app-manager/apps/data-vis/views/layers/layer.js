@@ -59,7 +59,7 @@ var LayerClass = function ( container, layer ) {
 
 LayerClass.prototype.show = function () {
     var $this = this
-    this.btnVisibility.find( '.icon-hidden' ).fadeOut( 250, function () {
+    this.btnVisibility.find( '.icon-hidden' ).stop().fadeOut( 250, function () {
         $this.btnVisibility.find( '.icon-visible' ).fadeIn( 250 )
     } )
     this.btnVisibility.addClass( 'active' )
@@ -68,7 +68,7 @@ LayerClass.prototype.show = function () {
 
 LayerClass.prototype.hide = function () {
     var $this = this
-    this.btnVisibility.find( '.icon-visible' ).fadeOut( 250, function () {
+    this.btnVisibility.find( '.icon-visible' ).stop().fadeOut( 250, function () {
         $this.btnVisibility.find( '.icon-hidden' ).fadeIn()
     } )
     this.btnVisibility.removeClass( 'active' )

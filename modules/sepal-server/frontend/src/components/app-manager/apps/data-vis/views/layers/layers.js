@@ -18,10 +18,14 @@ var init = function ( dataVis ) {
     Sortable.create( container.get( 0 ), {
         handle     : ".btn-sort"
         , draggable: ".row-layer"
+        , onChoose : function ( evt ) {
+            $( '#data-vis .layers-container' ).css( 'width', '25%' )
+            $( "#data-vis .layer-options:visible" ).hide( 0 )
+        }
         , onUpdate : function ( evt ) {
             var itemEl = evt.item
-            console.log( $( itemEl ).data( 'id' ) )
-            console.log( "UPD ", evt )
+            // console.log( $( itemEl ).data( 'id' ) )
+            // console.log( "UPD ", evt )
         }
     } )
     
@@ -31,7 +35,7 @@ var init = function ( dataVis ) {
 
 var close = function () {
     container.velocity( {
-            left: '-30%'
+            left: '-' + (container.width() + 16) + 'px'
         },
         {
             duration: 600,

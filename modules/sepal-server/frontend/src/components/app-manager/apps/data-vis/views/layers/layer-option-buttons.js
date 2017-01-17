@@ -53,13 +53,18 @@ var LayerOptionButtons = function ( container, layer, layerOptions ) {
     this.btnZoomTo.click( function () {
         EventBus.dispatch( Events.APPS.DATA_VIS.MAP_LAYER_ZOOM_TO, null, $this.layer.id )
     } )
-    
+    // settings button
     this.btnSettings = this.container.find( '.btn-settings' )
     this.btnSettings.click( function () {
-        layerOptions.show()
+        // layerOptions.isVisible() ? layerOptions.hide() :
+            layerOptions.show()
     } )
     
+    //btn-remove
     this.btnRemove = this.container.find( '.btn-remove' )
+    this.btnRemove.click( function () {
+        $this.layerOptions.showRemove()
+    } )
 }
 
 LayerOptionButtons.prototype.show = function () {

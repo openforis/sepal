@@ -27,3 +27,7 @@ target
 
 #Ansible
 deploy.retry
+
+#Data-vis test server
+*.pyc
+

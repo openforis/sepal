@@ -28,7 +28,7 @@ var init         = function () {
 }
 
 var show = function () {
-    html.modal( { show: true, backdrop: 'static' } )
+    html.modal( { show: true, backdrop: 'static', keyboard: false } )
 }
 
 var showLoading = function () {

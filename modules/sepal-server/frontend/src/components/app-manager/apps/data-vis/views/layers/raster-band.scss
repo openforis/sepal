@@ -1,0 +1,44 @@
+#data-vis {
+
+  .row-raster-band {
+
+    background-color: rgb(28, 28, 28);
+    border-radius: 1rem;
+    margin-top: 1rem;
+
+    .col-band-index {
+      //border-right: 1px inset rgba(51, 51, 53, 0.2);
+      border-right: 1px inset rgba(255, 255, 255, 0.1);
+    }
+
+    > div:not(.col-band-histogram) {
+      padding-top: 25px !important;
+    }
+
+    .col-band-histogram {
+      //padding-top: 10px;
+      //padding-bottom: 10px;
+      padding: 10px 0px !important;
+      height: 80px;
+
+      .band-histogram {
+        height: 60px !important;
+        width: 100% !important;
+      }
+
+      .band-minmax {
+        height: 60px;
+        width: 100%;
+        position: absolute;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-left: 2px solid rgba(255, 255, 255, 0.05);
+        border-right: 2px solid rgba(255, 255, 255, 0.05);
+        top: 10px;
+        left: 0px;
+        z-index: 5;
+      }
+    }
+
+  }
+
+}
