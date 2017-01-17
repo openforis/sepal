@@ -1,12 +1,10 @@
 import json
 import logging
 
-import ee
-import sys
 from flask import Flask, Blueprint, Response, request
-from oauth2client.service_account import ServiceAccountCredentials
 
 from sepal import Aoi, image_spec_factory
+from sepal import credentials
 from sepal.download.drive_cleanup import DriveCleanup
 
 app = Flask(__name__)
@@ -30,13 +28,6 @@ def scene_areas():
 
 
 def init():
-    credentials = ServiceAccountCredentials.from_p12_keyfile(
-        service_account_email=sys.argv[1],
-        filename=sys.argv[2],
-        private_key_password='notasecret',
-        scopes=ee.oauth.SCOPE + ' ' + DriveCleanup.SCOPES)
-    ee.Initialize(credentials)
-
     global drive_cleanup
     drive_cleanup = DriveCleanup(credentials)
     drive_cleanup.start()

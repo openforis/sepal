@@ -1,7 +1,10 @@
 import ee
 
+import brdf
 import constants
 import toa_correction
+import cloud_score
+from util import *
 
 
 def apply(image_collection, mosaic_def):
@@ -9,9 +12,9 @@ def apply(image_collection, mosaic_def):
 
 
 def _adjust_image(image, mosaic_def):
-    """Applies TOA correction to the image and adds a number of bands.
+    """Masks clouds, adjusts some bands and adds some new bands.
 
-        * cweight - weight based on temperature, wetness, days from target day of year, and cloud cover
+        * quality - quality based on temperature, wetness, days from target day of year, and cloud cover
         * date - days since epoch
         * days - days from target day of year
         * temp - temperature
@@ -26,6 +29,7 @@ def _adjust_image(image, mosaic_def):
     :return: The adjusted ee.Image.
     """
     image = _apply_mask(image, mosaic_def.classes_to_mask)
+    image = brdf.correct(image)
     image_day_of_year = _day_of_year(image)
     days_from_target_day = _days_between(image_day_of_year, mosaic_def.target_day_of_year)
 
@@ -34,27 +38,28 @@ def _adjust_image(image, mosaic_def):
     temp_band = _temp_band(image)
     date_band = _date_band(image)
     days_band = _days_band(days_from_target_day, image)
+    quality_band = _quality_band(image, mosaic_def, days_from_target_day, ndvi_band, temp_band)
+    # quality_band = cloud_score.calculate(image)
 
-    # Normalized values to use in weight band
-    ndvi_normalized = _normalized_ndvi(ndvi_band)
-    temp_normalized = _normalized_temp(temp_band)
-    cloud_cover_normalized = _normalized_cloud_cover(image)
-    days_from_target_day_normalized = _normalized_days_from_target_day(days_from_target_day)
-
-    # Create weight band
-    weight_band = ndvi_normalized.multiply(6) \
-        .add(temp_normalized.multiply(0)) \
-        .add(cloud_cover_normalized.multiply(3)) \
-        .add(days_from_target_day_normalized.multiply(mosaic_def.target_day_of_year_weight * 2)) \
-        .rename(['cweight'])
-
-    result = toa_correction.apply(image, image_day_of_year)
-    return result \
+    # image = toa_correction.apply(image, image_day_of_year)
+    return image \
         .addBands(ndvi_band) \
         .addBands(temp_band) \
         .addBands(days_band) \
         .addBands(date_band) \
-        .addBands(weight_band)
+        .addBands(quality_band)
+
+
+def _quality_band(image, mosaic_def, days_from_target_day, ndvi_band, temp_band):
+    ndvi_normalized = _normalized_ndvi(ndvi_band)
+    temp_normalized = _normalized_temp(temp_band)
+    scene_cloud_cover_normalized = _scene_normalized_cloud_cover(image)
+    days_from_target_day_normalized = _normalized_days_from_target_day(days_from_target_day)
+    return ndvi_normalized.multiply(0) \
+        .add(temp_normalized.multiply(1)) \
+        .add(scene_cloud_cover_normalized.multiply(0)) \
+        .add(days_from_target_day_normalized.multiply(mosaic_def.target_day_of_year_weight * 2 * 0)) \
+        .rename([QUALITY])
 
 
 def _apply_mask(image, classes_to_mask):
@@ -63,7 +68,7 @@ def _apply_mask(image, classes_to_mask):
     :param image: The image to mask
     :type image: ee.Image
     """
-    fmask = image.select('fmask')
+    fmask = image.select(FMASK)
     mask = image.mask()
     for class_to_mask in classes_to_mask:
         fmask_value_to_mask = constants.fmask_value_by_class_name[class_to_mask]
@@ -113,9 +118,9 @@ def _ndvi_band(image):
 
     :return: An ee.Image containing the NDVI.
     """
-    return image.select('B4').subtract(image.select('B3')).divide(
-        image.select('B4').add(image.select('B3'))
-    ).rename(['ndvi'])
+    return image.select(NIR).subtract(image.select(RED)).divide(
+        image.select(NIR).add(image.select(RED))
+    ).rename([NDVI])
 
 
 def _temp_band(image):
@@ -126,7 +131,7 @@ def _temp_band(image):
 
     :return: An ee.Image containing the temperature.
     """
-    return image.select('B10').focal_min().rename(['temp'])
+    return image.select(THERMAL).focal_min().rename([TEMP])
 
 
 def _days_band(days_from_target_day, image):
@@ -141,7 +146,7 @@ def _days_band(days_from_target_day, image):
         image.metadata('system:time_start')
     ).add(
         days_from_target_day
-    ).rename(['days'])
+    ).rename([DAYS])
 
 
 def _date_band(image):
@@ -152,7 +157,7 @@ def _date_band(image):
 
     :return: An ee.Image containing the days since epoch.
     """
-    return image.metadata('system:time_start').divide(constants.milis_per_day).rename(['date'])
+    return image.metadata('system:time_start').divide(constants.milis_per_day).rename([DATE])
 
 
 def _normalized_ndvi(ndvi):
@@ -193,7 +198,7 @@ def _normalized_days_from_target_day(days_from_target_day):
     return ee.Number(1).subtract(days_from_target_day.divide(183))
 
 
-def _normalized_cloud_cover(image):
+def _scene_normalized_cloud_cover(image):
     """Normalizes the cloud cover to be between 0 and 1.
 
     1 represents no cloud cover while 0 is full cloud cover.
