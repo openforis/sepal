@@ -33,15 +33,10 @@ var LayerOptions = function ( container, layer ) {
 
 LayerOptions.prototype._show = function () {
     if ( !this.isVisible() ) {
-        $( '#data-vis .layers-container' ).velocity( { width: '40%' } ,{duration : 400})
+        $( '#data-vis .layers-container' ).velocity( { width: '40%' }, { duration: 400 } )
         
         $( "#data-vis .layer-options:visible" ).velocitySlideUp()
-        this.container.velocitySlideDown({complete:function (  ) {
-            console.log('complete')
-            setTimeout(function (  ) {
-                $(window).trigger('resize')
-            } , 100)
-        }})
+        this.container.velocitySlideDown( { height: 'auto' } )
     }
 }
 
@@ -50,8 +45,8 @@ LayerOptions.prototype.isVisible = function () {
 }
 
 LayerOptions.prototype.show = function () {
-    this.deleteOptions.hide()
-    if ( this.isShape ) this.shapeOptions.show()
+    this.deleteOptions.hide( 0 )
+    if ( this.isShape ) this.shapeOptions.show( 0 )
     if ( this.isRaster ) this.showRasterOptions()
     
     this._show()
@@ -139,7 +134,7 @@ LayerOptions.prototype.initShapeOptions = function () {
 }
 
 LayerOptions.prototype.showRasterOptions = function () {
-    this.rasterOptions.show()
+    this.rasterOptions.show( 0 )
     var ui = this.rasterOptions.data( 'ui' )
     ui.update()
 }

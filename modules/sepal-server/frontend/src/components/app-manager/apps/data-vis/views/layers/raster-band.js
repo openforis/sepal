@@ -4,6 +4,7 @@
 require( './raster-band.scss' )
 var Chartist = require( 'chartist' )
 var interact = require( 'interactjs' )
+require( 'devbridge-autocomplete' )
 //interactjs
 
 var EventBus = require( '../../../../../event/event-bus' )
@@ -25,7 +26,28 @@ var RasterBand = function ( rasterOptions, container, band ) {
     this.index         = this.band.index
     //band index
     this.bandIndex     = this.html.find( '[name=band-index]' )
-    this.bandIndex.attr( 'max', this.rasterOptions.bandCount )
+    
+    //input number
+    // this.bandIndex.attr( 'max', this.rasterOptions.bandCount )
+    
+    //autocomplete
+    // var availableBands = []
+    // for(var i = 1; i <= this.rasterOptions.bandCount ; i ++ ){
+    //     availableBands.push({data:i+'',value:i+''})
+    // }
+    // this.bandIndex.sepalAutocomplete( {
+    //     lookup    : availableBands
+    //     , onChange: function ( selection ) {
+    //         // selectedBands = (selection) ? selection.data : null
+    //     }
+    // } )
+    
+    //select
+    var availableBands = []
+    for(var i = 1; i <= this.rasterOptions.bandCount ; i ++ ){
+        // availableBands.push({data:i+'',value:i+''})
+        this.bandIndex.append( '<option value="'+i+'">'+i+'</option>')
+    }
     this.bandIndex.val( this.index )
     var readOnly = this.rasterOptions.bandCount == 1
     this.bandIndex.prop( 'readonly', readOnly )
@@ -77,30 +99,41 @@ RasterBand.prototype.initHistogram = function () {
     }
     
     this.histogram = new Chartist.Line( this.bandHistogram.get( 0 ), data, options )
-    
 }
 
 RasterBand.prototype.updateHistogram = function () {
-    this.histogram.update()
+    if ( this.histogram )
+        this.histogram.update()
 }
 
 RasterBand.prototype.initColorPickers = function () {
     var $this = this
-    var band  = this.rasterOptions.layer.bands[ this.index ]
+    // console.log( this )
+    var palette    = $this.band.palette
     
     // from color
+    var from       = palette[ 0 ]
     this.fromColor = this.html.find( '.from-color' )
     this.fromColor.colorpicker()
     this.fromColor.on( 'changeColor', function ( e ) {
         var color = e.color.toString( 'rgba' )
         $this.fromColor.find( 'i' ).css( 'background-color', color )
-        
-        // $this.layer.fill_color = color
+        from[ 1 ] = color
+        // console.log( $this )
     } )
+    this.fromColor.colorpicker( 'setValue', from[ 1 ] )
     
-    // if ( this.layer.fill_color ) {
-    //     this.fillColorPicker.colorpicker( 'setValue', this.layer.fill_color )
-    // }
+    // to color
+    var to       = palette[ 1 ]
+    this.toColor = this.html.find( '.to-color' )
+    this.toColor.colorpicker()
+    this.toColor.on( 'changeColor', function ( e ) {
+        var color = e.color.toString( 'rgba' )
+        $this.toColor.find( 'i' ).css( 'background-color', color )
+        to[ 1 ] = color
+        // console.log( $this )
+    } )
+    this.toColor.colorpicker( 'setValue', to[ 1 ] )
 }
 
 RasterBand.prototype.initHistogramOverlay = function () {
