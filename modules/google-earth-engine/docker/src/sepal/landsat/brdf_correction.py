@@ -5,7 +5,7 @@ import view_angles
 from util import *
 
 
-def correct(image):
+def apply(image):
     date = ee.Date(ee.Number(image.get('system:time_start')))
     footprint = determine_footprint(image)
     (sunAz, sunZen) = sun_angles.create(date, footprint)
