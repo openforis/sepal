@@ -158,8 +158,7 @@ class _BandLayer(object):
     def create_colorizer(self):
         band = self.band
         colorizer = mapnik.RasterColorizer(mapnik.COLORIZER_LINEAR, mapnik.Color('#00000000'))
-        palette = sorted(band.palette.items(), key=operator.itemgetter(0))
-        for stop, color in palette:
+        for stop, color in band.palette:
             colorizer.add_stop(stop, mapnik.COLORIZER_LINEAR, mapnik.Color(str(color)))
         return colorizer
 
@@ -201,7 +200,7 @@ class _Band(object):
         return [
             _Band(
                 index=int(band['index']),
-                palette={int(stop): color for stop, color in band['palette'].iteritems()}
+                palette=band['palette']
             )
             for band in bands_dict
             ]
