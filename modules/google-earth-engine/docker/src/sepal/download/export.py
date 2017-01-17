@@ -3,7 +3,7 @@ import logging
 import ee
 
 
-def to_drive(image, region, name, username):
+def to_drive(image, region, name, username, file_id):
     """
     Exports an image to Google Drive.
 
@@ -30,10 +30,11 @@ def to_drive(image, region, name, username):
     task = ee.batch.Export.image.toDrive(
         image=image,
         description=name,
-        folder=username,
+        folder=file_id,
         scale=30,
         maxPixels=1e12,
-        region=region.bounds().getInfo()['coordinates']
+        region=region.bounds().getInfo()['coordinates'],
+        shardSize=4096, fileDimensions=4096
     )
     task.start()
     task_id = task.status()['id']

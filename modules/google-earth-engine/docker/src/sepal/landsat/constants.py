@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from util import *
+
 default_strategy = 'median'
 default_classes_to_mask = ['cloud-shadow', 'cloud', 'snow']
 collection_names_by_sensor = {
@@ -20,10 +22,10 @@ collection_name_by_scene_id_prefix = {
     'LT5': 'LANDSAT/LT5_L1T_TOA_FMASK',
     'LT4': 'LANDSAT/LT4_L1T_TOA_FMASK',
 }
-normalized_band_names = ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B10', 'fmask']
+normalized_band_names = [BLUE, GREEN, RED, NIR, SWIR1, SWIR2, THERMAL, 'fmask']
 mosaic_strategies = {
     'median': lambda collection: collection.median(),
-    'quality-band': lambda collection: collection.qualityMosaic('cweight')
+    'quality-band': lambda collection: collection.qualityMosaic('quality')
 }
 fmask_value_by_class_name = {
     'land': 0,
@@ -33,24 +35,20 @@ fmask_value_by_class_name = {
     'cloud': 4
 }
 viz_by_bands = {
-    'B3, B2, B1': lambda params: {'bands': 'B3, B2, B1', 'min': 500, 'max': 5000, 'gamma': '2.1, 2.0, 1.7'},
-    'B4, B3, B2': lambda params: {'bands': 'B4, B3, B2', 'min': 200, 'max': 5000, 'gamma': 1.2},
-    'B4, B5, B3': lambda params: {'bands': 'B4, B5, B3', 'min': 200, 'max': 5000, 'gamma': 1.2},
-    'B7, B4, B3': lambda params: {'bands': 'B7, B4, B3', 'min': 200, 'max': 5000, 'gamma': 1.2},
-    'B7, B5, B3': lambda params: {'bands': 'B7, B5, B3', 'min': 200, 'max': 5000, 'gamma': 1.2},
-    'B7, B4, B2': lambda params: {'bands': 'B7, B4, B2', 'min': 200, 'max': 5000, 'gamma': 1.2},
-    # 'B4_brdf, B5_brdf, B3_brdf': lambda params: {
-    #     'bands': 'B4_brdf, B5_brdf, B3_brdf', 'min': 0, 'max': 150, 'gamma': '2.2, 0.9, 1.0'},
-    'B4_brdf, B5_brdf, B3_brdf': lambda params: {
-        'bands': 'B4_brdf, B5_brdf, B3_brdf', 'min': 0, 'max': 255, 'gamma': 2},
-    # 'B7_brdf, B4_brdf, B3_brdf': lambda params: {
-    #     'bands': 'B7_brdf, B4_brdf, B3_brdf', 'min': 0, 'max': 150, 'gamma': '0.9, 2.0, 1.0'},
-    'B7_brdf, B4_brdf, B3_brdf': lambda params: {
-        'bands': 'B7_brdf, B4_brdf, B3_brdf', 'min': 0, 'max': 255, 'gamma': 2},
-    'B7_brdf, B5_brdf, B3_brdf': lambda params: {
-        #     'bands': 'B7_brdf, B5_brdf, B3_brdf', 'min': 0, 'max': 150, 'gamma': '1.5, 1.5, 1.5'},
-        # 'B7_brdf, B5_brdf, B3_brdf': lambda params: {
-        'bands': 'B7_brdf, B5_brdf, B3_brdf', 'min': 0, 'max': 255, 'gamma': 2},
+    # 'B3, B2, B1': lambda params: {'bands': _bands(RED, GREEN, BLUE), 'min': 500, 'max': 5000, 'gamma': '2.1, 2.0, 1.7'},
+    # 'B4, B3, B2': lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 200, 'max': 5000, 'gamma': 1.2},
+    # 'B4, B5, B3': lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 200, 'max': 5000, 'gamma': 1.2},
+    # 'B7, B4, B3': lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 200, 'max': 5000, 'gamma': 1.2},
+    # 'B7, B5, B3': lambda params: {'bands': _bands(SWIR2, SWIR1, RED), 'min': 200, 'max': 5000, 'gamma': 1.2},
+    # 'B7, B4, B2': lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 200, 'max': 5000, 'gamma': 1.2},
+    'B3, B2, B1': lambda params: {'bands': _bands(RED, GREEN, BLUE), 'min': 0.05, 'max': 0.5, 'gamma': '2.0, 2.1, 1.8'},
+    'B4, B3, B2': lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+    'B4, B5, B3': lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+    'B7, B4, B3': lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+    'B7, B5, B3': lambda params: {'bands': _bands(SWIR2, SWIR1, RED), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+    'B7, B4, B2': lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+
+
     'temp': lambda params: {'bands': 'temp', 'min': 200, 'max': 400, 'palette': '0000FF, FF0000'},
     'cluster': lambda params: {'bands': 'cluster', 'min': 0, 'max': 5000},
     'date': lambda params: {
@@ -68,3 +66,7 @@ viz_by_bands = {
 }
 epoch = datetime.utcfromtimestamp(0)
 milis_per_day = 1000 * 60 * 60 * 24
+
+
+def _bands(*bands):
+    return ', '.join(bands)

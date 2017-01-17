@@ -29,17 +29,23 @@
         e.preventDefault()
         exportMosaic()
     } )
-    
+
     $( '#sceneIdForm' ).submit( function ( e ) {
         e.preventDefault()
         previewScenes( 1 )
         previewScenes( 2 )
     } )
-    
-    
+
+
     $( '#sceneAreasForm' ).submit( function ( e ) {
         e.preventDefault()
         findSceneAreas()
+    } )
+
+
+    $( '#exportForm' ).submit( function ( e ) {
+        e.preventDefault()
+        exportParams()
     } )
     
     
@@ -135,7 +141,20 @@
             }
         } )
     }
-    
+
+
+    function exportParams() {
+        var data  = $( '#exportParams' ).val()
+        $.post( {
+            url    : 'download',
+            data   : data,
+            success: function ( data ) {
+                console.log( "Downloading..." )
+                console.log( data )
+            }
+        } )
+    }
+
     function createAoi() {
         if ( shape != null )
             return {

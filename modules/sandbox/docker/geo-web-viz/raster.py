@@ -2,9 +2,9 @@ import gdal
 import mapnik
 import operator
 import osr
-from layer import Layer
 
 from config import to_file, to_path
+from layer import Layer
 
 
 def band_count(raster_file):
@@ -102,6 +102,18 @@ class RasterLayer(Layer):
         layer.update(layer_dict)
         return from_dict(layer)
 
+    def features(self, lat, lng):
+        return [
+            self.band_value(band_layer, lat, lng)
+            for band_layer in self.band_layers
+            ]
+
+    def band_value(self, band_layer, lat, lng):
+        features = self.layer_features(band_layer.band.index - 1, lat, lng)
+        if features:
+            return features[0]['value']
+        return None
+
 
 class _BandLayer(object):
     def __init__(self, file, band, nodata, nodata_tolerance):
@@ -146,8 +158,7 @@ class _BandLayer(object):
     def create_colorizer(self):
         band = self.band
         colorizer = mapnik.RasterColorizer(mapnik.COLORIZER_LINEAR, mapnik.Color('#00000000'))
-        palette = sorted(band.palette.items(), key=operator.itemgetter(0))
-        for stop, color in palette:
+        for stop, color in band.palette:
             colorizer.add_stop(stop, mapnik.COLORIZER_LINEAR, mapnik.Color(str(color)))
         return colorizer
 
@@ -189,7 +200,7 @@ class _Band(object):
         return [
             _Band(
                 index=int(band['index']),
-                palette={int(stop): color for stop, color in band['palette'].iteritems()}
+                palette=band['palette']
             )
             for band in bands_dict
             ]

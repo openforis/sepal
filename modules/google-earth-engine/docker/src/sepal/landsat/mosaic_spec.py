@@ -34,11 +34,9 @@ class LandsatMosaicSpec(ImageSpec):
         image_collection = self._merge(image_collections)
         image_collection = image_adjustment.apply(image_collection, self)
         mosaic = constants.mosaic_strategies[self.strategy](image_collection)
-        mosaic = brdf_correction.apply(mosaic, self)
         return mosaic \
             .clip(self.aoi.geometry()) \
-            .select(self.bands) \
-            .int16()
+            .select(self.bands)
 
     def _merge(self, image_collections):
         return reduce(self._merge_two, image_collections)

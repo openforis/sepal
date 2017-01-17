@@ -97,3 +97,6 @@ class ShapeLayer(Layer):
         layer = self.to_dict()
         layer.update(shape_dict)
         return from_dict(layer)
+
+    def features(self, lat, lng):
+        return self.layer_features(0, lat, lng)

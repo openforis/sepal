@@ -120,7 +120,7 @@ final class AwsInstanceProvider implements InstanceProvider {
         jobScheduler.schedule(0, 10, TimeUnit.SECONDS) {
             try {
                 notifyAboutStartedInstance()
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LOG.error('Failed to notify about started instances', e)
             }
         }

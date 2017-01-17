@@ -1,4 +1,5 @@
 import logging
+import uuid
 from abc import abstractmethod
 
 import ee
@@ -39,9 +40,10 @@ class ImageSpec(object):
         :return: The task id of the download
         :rtype: str
         """
-        task = export.to_drive(self._ee_image(), self.aoi.geometry().bounds(), name, username)
-        downloader.start_download(task)
-        return task
+        file_id = str(uuid.uuid4())
+        task_id = export.to_drive(self._ee_image(), self.aoi.geometry().bounds(), name, username, file_id)
+        downloader.start_download(task_id, name, file_id)
+        return task_id
 
     @abstractmethod
     def _ee_image(self):

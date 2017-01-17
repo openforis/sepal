@@ -8,6 +8,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 from sepal import image_spec_factory
 from sepal.download.download import Downloader
+from sepal import credentials
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
@@ -41,13 +42,6 @@ def cancel():
 
 
 def init():
-    credentials = ServiceAccountCredentials.from_p12_keyfile(
-        service_account_email=sys.argv[1],
-        filename=sys.argv[2],
-        private_key_password='notasecret',
-        scopes=ee.oauth.SCOPE + ' https://www.googleapis.com/auth/drive')
-    ee.Initialize(credentials)
-
     download_dir = sys.argv[3]
     global username
     username = sys.argv[4]
