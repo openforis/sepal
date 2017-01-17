@@ -121,7 +121,7 @@ abstract class DataSourceBackedComponent implements Component {
                     ).schedule(0, delay, timeUnit) {
                         try {
                             submit(command)
-                        } catch (Exception e) {
+                        } catch (Throwable e) {
                             LOG.error("Error executing scheduled command: $command", e)
                         }
                     }

@@ -65,12 +65,12 @@ final class WorkerTypes {
 
     private static class SandboxFactory implements Factory {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
-            def publishedPorts = [(222): 22, (8787): 8787, (3838): 3838]
+            def publishedPorts = [(222): 22, (8787): 8787, (3838): 3838, (5678): 5678]
             def username = instance.reservation.username
             new WorkerType(SANDBOX, [
                     new Image(
                             name: 'sandbox',
-                            exposedPorts: [22, 8787, 3838],
+                            exposedPorts: [22, 8787, 3838, 5678],
                             publishedPorts: publishedPorts,
                             volumes: [
                                     '/data/sepal/shiny'                       : '/shiny',
