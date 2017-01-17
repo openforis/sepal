@@ -45,7 +45,7 @@ class DriveCleanup:
         logger.info("Searching for old drive files")
         now = datetime.utcnow()
         oldest_to_keep = (now - timedelta(minutes=MAX_FILE_AGE_MINS)).isoformat("T")
-        results = self.drive.files().list(q='modifiedTime <= \'' + oldest_to_keep + '\'',
+        results = self.drive.files().list(q="modifiedTime <= '" + oldest_to_keep + "'",
                                           fields="files(id, name)").execute()
         files = results.get('files', [])
         for file in files:

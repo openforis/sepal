@@ -74,8 +74,7 @@ class EarthEngineStatus(object):
         elif state == Task.State.COMPLETED:
             return {'state': 'ACTIVE',
                     'description': 'Downloading from Google Drive...',
-                    'step': 'EXPORTED',
-                    'path': task['description'] + '.tif'}
+                    'step': 'EXPORTED'}
         elif state == Task.State.READY:
             return {'state': 'ACTIVE',
                     'description': 'Export to Google Drive pending...',
