@@ -1,6 +1,6 @@
 import ee
 
-import brdf
+import brdf_correction
 import constants
 import toa_correction
 import cloud_score

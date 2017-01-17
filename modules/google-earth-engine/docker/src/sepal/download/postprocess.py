@@ -2,7 +2,7 @@ import logging
 import os
 from threading import Thread
 
-import gdal
+import osgeo.gdal
 
 logger = logging.getLogger(__name__)
 
