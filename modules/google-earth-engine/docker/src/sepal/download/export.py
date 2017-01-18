@@ -34,7 +34,7 @@ def to_drive(image, region, name, username, file_id):
         scale=30,
         maxPixels=1e12,
         region=region.bounds().getInfo()['coordinates'],
-        shardSize=4096, fileDimensions=4096
+        shardSize=1024, fileDimensions=1024
     )
     task.start()
     task_id = task.status()['id']

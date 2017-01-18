@@ -29,7 +29,7 @@ def _adjust_image(image, mosaic_def):
     :return: The adjusted ee.Image.
     """
     image = _apply_mask(image, mosaic_def.classes_to_mask)
-    image = brdf.correct(image)
+    image = brdf_correction.apply(image)
     image_day_of_year = _day_of_year(image)
     days_from_target_day = _days_between(image_day_of_year, mosaic_def.target_day_of_year)
 
