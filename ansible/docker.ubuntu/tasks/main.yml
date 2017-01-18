@@ -1,0 +1,243 @@
+---
+# tasks file for docker.ubuntu
+- name: Fail if not a new release of Ubuntu
+  fail:
+    msg: "{{ ansible_distribution_version }} is not an acceptable version of Ubuntu for this role"
+  when: ansible_lsb.id|lower == "ubuntu" and ( ansible_distribution_version|version_compare('12.04', '<') or ansible_distribution_version|version_compare('12.10', '=') )
+
+- name: Fail if not a new release of Debian
+  fail:
+    msg: "{{ ansible_distribution_version }} is not an acceptable version of Debian for this role"
+  when: ansible_lsb.id|lower == "debian" and ansible_distribution_version|version_compare('8.5', '<')
+
+- name: Update kernel, kernel extras, Xorg pkgs, and related tasks
+  include: kernel_check_and_update.yml
+  when: kernel_update_and_reboot_permitted or install_kernel_extras
+
+# Fix for https://github.com/docker/docker/issues/23347
+- name: Install dmsetup for Ubuntu 16.04
+  apt:
+    pkg: dmsetup
+    state: "{{ dmsetup_pkg_state }}"
+    update_cache: "{{ 'yes' if dmsetup_pkg_state=='latest' else 'no' }}"
+    cache_valid_time: 600
+  register: dmsetup_result
+  when: ansible_distribution_version|version_compare('16.04', '=')
+
+- name: Read uname
+  shell: uname -r
+  register: uname_output
+  changed_when: false
+  check_mode: no
+
+- name: Install linux-image-extra-* packages to enable AuFS driver
+  apt:
+    pkg: "{{ item }}"
+    state: present
+    update_cache: yes
+    cache_valid_time: "{{ docker_apt_cache_valid_time }}"
+  with_items:
+    - linux-image-extra-{{ uname_output.stdout }}
+    - linux-image-extra-virtual
+  when: ansible_distribution_version|version_compare('14.04', '>=')
+
+- name: Run dmsetup for Ubuntu 16.04
+  command: dmsetup mknodes
+  when: dmsetup_result.changed
+
+- name: Add Docker repository key
+  apt_key:
+    id: "{{ apt_key_sig }}"
+    keyserver: "{{ apt_key_url }}"
+    state: present
+  register: add_repository_key
+  ignore_errors: true
+
+- name: Alternative | Add Docker repository key
+  shell: "curl -sSL {{ apt_key_url }} | sudo apt-key add -"
+  when: add_repository_key|failed
+
+- name: HTTPS APT transport for Docker repository
+  apt:
+    name: apt-transport-https
+    state: present
+
+- name: Add Docker repository and update apt cache
+  apt_repository:
+    repo: "{{ apt_repository }}"
+    mode: '644'
+    update_cache: yes
+    state: present
+
+- name: Install (or update) docker package
+  apt:
+    name: "{{ docker_pkg_name }}"
+    state: "{{ 'latest' if update_docker_package else 'present' }}"
+    update_cache: "{{ update_docker_package }}"
+    cache_valid_time: "{{ docker_apt_cache_valid_time }}"
+
+- name: Set systemd playbook var
+  set_fact:
+    is_systemd: false
+  changed_when: false
+
+- name: Set systemd playbook var
+  set_fact:
+    is_systemd: true
+  when: ( ansible_lsb.id|lower == "ubuntu" and ansible_distribution_version|version_compare('15.04', '>=') or ansible_lsb.id|lower == "debian" )
+
+- name: Set docker daemon options
+  copy:
+    content: "DOCKER_OPTS=\"{{ docker_opts.rstrip('\n') }}\""
+    dest: /etc/default/docker
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - Restart docker
+  when: docker_opts != "" and not is_systemd
+
+- name: Create systemd configuration directory for Docker service (systemd)
+  file:
+    dest: /etc/systemd/system/docker.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when: docker_opts != "" and is_systemd
+
+- name: Set docker daemon options (systemd)
+  copy:
+    content: |
+      [Service]
+      Environment="DOCKER_OPTS={{ docker_opts.rstrip('\n') }}"
+    dest: /etc/systemd/system/docker.service.d/env.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - Reload systemd
+    - Restart docker
+  when: docker_opts != "" and is_systemd
+
+- name: Ensure docker daemon options used (systemd)
+  template:
+    src: docker.conf
+    dest: /etc/systemd/system/docker.service.d/docker.conf
+  notify:
+    - Reload systemd
+    - Restart docker
+  when: docker_opts != "" and is_systemd
+
+- name: Fix DNS in docker.io
+  lineinfile:
+    dest: "{{ docker_defaults_file_path }}"
+    regexp: "DOCKER_OPTS="
+    line: 'DOCKER_OPTS="--dns {{ ansible_docker0.ipv4.address }}"'
+  register: dns_fix
+  notify: Restart dockerio
+  when: docker_pkg_name == 'docker.io'
+
+- meta: flush_handlers
+  when: "dns_fix|changed"
+
+- pause:
+    seconds: 1
+  when: "dns_fix|changed"
+
+# We must install pip via apt before we can use the pip module below
+- name: Install pip, python-dev package with apt
+  apt:
+    pkg: "{{ item }}"
+    state: latest
+    update_cache: yes
+    cache_valid_time: "{{ docker_apt_cache_valid_time }}"
+  with_items:
+    - python-dev
+    - python-pip
+
+# Upgrade pip with pip to fix angstwad/docker.ubuntu/pull/35 and docker-py/issues/525
+- name: Install pip, setuptools, docker-py and docker-compose with pip
+  pip:
+    name: "{{ item.name }}"
+    state: "{{ 'latest' if item.version=='latest' else 'present' }}"
+    version: "{{ item.version if item.version!='latest' else omit }}"
+  with_items:
+    - { name: pip, version: "{{ pip_version_pip }}", install: "{{ pip_install_pip }}" }
+    - { name: setuptools, version: "{{ pip_version_setuptools }}", install: "{{ pip_install_setuptools }}" }
+    - { name: docker-py, version: "{{ pip_version_docker_py }}", install: "{{ pip_install_docker_py }}" }
+    - { name: docker-compose, version: "{{ pip_version_docker_compose }}", install: "{{ pip_install_docker_compose }}" }
+  when: item.install
+
+- name: Check if /etc/updatedb.conf exists
+  stat:
+    path: /etc/updatedb.conf
+  register: updatedb_conf_exists
+
+- name: Ensure updatedb does not index /var/lib/docker
+  lineinfile:
+    dest: /etc/updatedb.conf
+    state: present
+    backrefs: yes
+    regexp: '^PRUNEPATHS="(/var/lib/docker )?(.*)"$'
+    line: 'PRUNEPATHS="/var/lib/docker \2"'
+  when: updatedb_conf_exists.stat.exists
+
+- name: Check if /etc/default/ufw exists
+  stat:
+    path: /etc/default/ufw
+  register: ufw_default_exists
+
+- name: Change ufw default forward policy from drop to accept
+  lineinfile:
+    dest: /etc/default/ufw
+    regexp: "^DEFAULT_FORWARD_POLICY="
+    line: "DEFAULT_FORWARD_POLICY=\"ACCEPT\""
+  when: ufw_default_exists.stat.exists
+
+- name: Set docker HTTP_PROXY if docker_http_proxy defined
+  lineinfile:
+    dest: /etc/default/docker
+    regexp: "^export HTTP_PROXY="
+    line: "export HTTP_PROXY=\"{{docker_http_proxy}}\""
+    state: present
+  when: docker_http_proxy is defined and (docker_http_proxy != None)
+  notify:
+    - Restart docker
+  tags: proxy
+
+- name: Set docker HTTPS_PROXY if docker_https_proxy defined
+  lineinfile:
+    dest: /etc/default/docker
+    regexp: "^export HTTPS_PROXY="
+    line: "export HTTPS_PROXY=\"{{docker_https_proxy}}\""
+    state: present
+  when: docker_https_proxy is defined and (docker_https_proxy != None)
+  notify:
+    - Restart docker
+  tags: proxy
+
+- name: Start docker
+  service:
+    name: docker
+    state: started
+  when: docker_pkg_name.find('lxc-docker') != -1 or docker_pkg_name.find('docker-engine') != -1
+
+- name: Start docker.io
+  service:
+    name: docker.io
+    state: started
+  when: docker_pkg_name == 'docker.io'
+
+  # ATTENTION: this task can potentially create new users!
+- name: Add users to the docker group
+  user:
+    name:   "{{ item }}"
+    groups: docker
+    append: yes
+  with_items: "{{docker_group_members}}"
+  when: docker_group_members is defined
+
+- name: update facts if docker0 is not defined
+  action: setup filter="ansible_docker0"
+  when: ansible_docker0 is not defined
