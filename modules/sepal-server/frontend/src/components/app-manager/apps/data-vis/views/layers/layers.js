@@ -21,6 +21,7 @@ var init = function ( dataVis ) {
         , onChoose : function ( evt ) {
             $( '#data-vis .layers-container' ).css( 'width', '25%' )
             $( "#data-vis .layer-options:visible" ).hide( 0 )
+            $( "#data-vis" ).find( '.row-layer.expanded' ).removeClass( 'expanded' )
         }
         , onUpdate : function ( evt ) {
             var itemEl = evt.item

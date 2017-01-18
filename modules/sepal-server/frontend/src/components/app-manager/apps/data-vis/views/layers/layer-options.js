@@ -2,6 +2,7 @@
  * @author Mino Togna
  */
 require( './layer-options.scss' )
+var ShapeOptions  = require( './shape-options' )
 var RasterOptions = require( './raster-options' )
 
 var LayerOptions = function ( container, layer ) {
@@ -14,13 +15,15 @@ var LayerOptions = function ( container, layer ) {
         $this.hide()
     } )
     
-    this.isShape       = false
-    this.shapeOptions  = this.container.find( '.row-shape' )
+    this.isShape      = false
+    this.shapeOptions = this.container.find( '.row-shape' )
+    
     this.isRaster      = false
     this.rasterOptions = this.container.find( '.row-raster' )
-    this.deleteOptions = this.container.find( '.row-remove-layer' )
     
+    this.deleteOptions = this.container.find( '.row-remove-layer' )
     this.initRemoveOptions()
+    
     
     if ( this.layer.path.endsWith( 'shp' ) ) {
         this.isShape = true
@@ -33,10 +36,19 @@ var LayerOptions = function ( container, layer ) {
 
 LayerOptions.prototype._show = function () {
     if ( !this.isVisible() ) {
+        var $this = this
         $( '#data-vis .layers-container' ).velocity( { width: '40%' }, { duration: 400 } )
         
-        $( "#data-vis .layer-options:visible" ).velocitySlideUp()
-        this.container.velocitySlideDown( { height: 'auto' } )
+        var visibleOptions = $( "#data-vis .layer-options:visible" )
+        visibleOptions.velocitySlideUp()
+        visibleOptions.closest( ".row-layer" ).removeClass( 'expanded' )
+        
+        this.container.velocitySlideDown( {
+            height: 'auto', complete: function () {
+                
+            }
+        } )
+        $this.container.closest( '.row-layer' ).addClass( 'expanded' )
     }
 }
 
@@ -56,6 +68,7 @@ LayerOptions.prototype.hide = function () {
     if ( this.container.is( ':visible' ) ) {
         $( '#data-vis .layers-container' ).velocity( { width: '25%' } )
         this.container.velocitySlideUp()
+        this.container.closest( '.row-layer' ).removeClass( 'expanded' )
     }
 }
 
@@ -81,56 +94,7 @@ LayerOptions.prototype.initRemoveOptions = function () {
 }
 
 LayerOptions.prototype.initShapeOptions = function () {
-    var $this = this
-    
-    //ui elements
-    this.fillColorPicker   = this.container.find( '.row-fill-color .color-picker' )
-    this.strokeColorPicker = this.container.find( '.row-stroke-color .color-picker' )
-    this.strokeWidthInput  = this.container.find( '[name=stroke-width]' )
-    this.btnSave           = this.container.find( '.btn-save' )
-    
-    // fill color
-    this.fillColorPicker.colorpicker( {
-        component: 'color-picker'
-    } )
-    this.fillColorPicker.on( 'changeColor', function ( e ) {
-        var color = e.color.toString( 'rgba' )
-        $this.fillColorPicker.find( 'i' ).css( 'background-color', color )
-        
-        $this.layer.fill_color = color
-    } )
-    
-    if ( this.layer.fill_color ) {
-        this.fillColorPicker.colorpicker( 'setValue', this.layer.fill_color )
-    }
-    
-    // stroke color
-    this.strokeColorPicker.colorpicker( {
-        component: 'color-picker'
-    } )
-    this.strokeColorPicker.on( 'changeColor', function ( e ) {
-        var color = e.color.toString( 'rgba' )
-        $this.strokeColorPicker.find( 'i' ).css( 'background-color', color )
-        
-        $this.layer.stroke_color = color
-    } )
-    
-    if ( this.layer.stroke_color ) {
-        this.strokeColorPicker.colorpicker( 'setValue', this.layer.stroke_color )
-    }
-    
-    // stroke width
-    this.strokeWidthInput.change( function ( e ) {
-        $this.layer.stroke_width = $this.strokeWidthInput.val()
-    } )
-    if ( this.layer.stroke_width ) {
-        this.strokeWidthInput.val( this.layer.stroke_width )
-    }
-    
-    // submit
-    this.btnSave.click( function () {
-        console.log( $this.layer )
-    } )
+    this.shapeOptions.data( 'ui', ShapeOptions.newInstance( this ) )
 }
 
 LayerOptions.prototype.showRasterOptions = function () {

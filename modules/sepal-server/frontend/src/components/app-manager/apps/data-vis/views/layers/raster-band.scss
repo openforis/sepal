@@ -59,6 +59,15 @@
         left: 0px;
         z-index: 5;
       }
+
+      .progress {
+        display: none;
+        position: absolute;
+        top: 40%;
+        z-index: 5;
+        margin-left: 20%;
+        width: 60%;
+      }
     }
 
   }
