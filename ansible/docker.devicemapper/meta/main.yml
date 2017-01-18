@@ -5,5 +5,7 @@ dependencies:
       docker_version: '1.8.1-0~trusty',
       docker_group_members: '{{ users }}',
       docker_opts: '-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --storage-driver=devicemapper --storage-opt dm.datadev=/dev/vg-docker/data --storage-opt dm.metadatadev=/dev/vg-docker/metadata',
-      install_kernel_extras: true
+      install_kernel_extras: true,
+      pip_version_docker_py: '1.10.6',
+      pip_version_docker_compose: '1.9.0'
   }
