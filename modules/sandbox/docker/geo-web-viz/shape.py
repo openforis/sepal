@@ -87,9 +87,9 @@ class ShapeLayer(Layer):
             'id': self.id,
             'type': 'shape',
             'path': to_path(self.file),
-            'fill_color': self.fill_color,
-            'stroke_color': self.stroke_color,
-            'stroke_width': self.stroke_width,
+            'fillColor': self.fill_color,
+            'strokeColor': self.stroke_color,
+            'strokeWidth': self.stroke_width,
             'bounds': self.bounds()
         }
 

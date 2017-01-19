@@ -127,6 +127,7 @@ RasterBand.prototype.initHistogram = function () {
 RasterBand.prototype.updateHistogram = function () {
     if ( this.histogram ) {
         this.histogram.update( this.histogramData )
+        this.updateHistogramOverlay()
     }
 }
 
@@ -263,19 +264,25 @@ RasterBand.prototype.initHistogramOverlay = function () {
 RasterBand.prototype.updateHistogramOverlay = function () {
     var minValue = this.band.palette[ 0 ][ 0 ]
     var maxValue = this.band.palette[ 1 ][ 0 ]
-    
     // console.log( minValue, maxValue )
     // console.log( this.properties.max, this.properties.min )
-    var pMin   = (minValue - this.properties.min) / this.properties.max * 100
-    var pMax   = ( maxValue - this.properties.min ) / this.properties.max * 100
+    // var pMin   = (minValue - this.properties.min) / this.properties.max * 100
+    // var pMin   = minValue / this.properties.max * 100
+    var pMin = (minValue - this.properties.min) / (this.properties.max - this.properties.min ) * 100
+    // var pMax   = ( maxValue - this.properties.min ) / this.properties.max * 100
+    // var pMax   = maxValue / this.properties.max * 100
+    var pMax   = (maxValue - this.properties.min) / (this.properties.max - this.properties.min ) * 100
     var pWidth = pMax - pMin
     // console.log( pMin, pMax, pWidth )
     
-    var parentWidth = this.bandHistogramOverlayElem.parent().width() - 6
+    // var parentWidth = this.bandHistogramOverlayElem.parent().width() - 6
+    var parentWidth = this.bandHistogramOverlayElem.parent().width()
     // console.log( parentWidth )
     
-    var x     = pMin * 100 / parentWidth
-    var width = pWidth * 100 / parentWidth
+    // var x     = pMin * 100 / parentWidth
+    var x     = parentWidth * pMin / 100
+    // var width = pWidth * 100 / parentWidth
+    var width = parentWidth * pWidth / 100
     
     var target = this.bandHistogramOverlayElem.get( 0 )
     

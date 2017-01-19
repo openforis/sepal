@@ -31,18 +31,19 @@
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:
-        - 'origin=Ubuntu,archive=${distro_codename}-security'
-        - 'o=Ubuntu,a=${distro_codename}-updates'
+       - 'origin=Ubuntu,archive=${distro_codename}-security'
+       - 'o=Ubuntu,a=${distro_codename}-updates'
     - { role: rsyslog }
     - { role: docker, users: ['ubuntu'] }
     - { role: aws-mount-efs }
+    - { role: docker-login }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
     - { role: run-module, module: mysql-backup }
     - { role: run-module, module: google-earth-engine}
     - { role: run-module, module: user }
-    - { role: run-module, module: sepal-server }
+    - { role: run-module, module: sepal-server, container_name: sepal }
     - { role: run-module, module: ssh-gateway }
     - { role: run-module, module: gateone }
     - { role: run-module, module: api-gateway }

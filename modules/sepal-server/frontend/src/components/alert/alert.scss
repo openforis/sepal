@@ -4,8 +4,8 @@
   width: 40%;
   left: 30%;
   top: 25%;
-  border:none;
-  z-index: 5;
+  border: none;
+  z-index: 2001;
   border-radius: 1rem;
 
   &.alert-info {
@@ -14,5 +14,10 @@
     background-color: rgba(47, 55, 69, 0.7);
     color: inherit !important;
     border: 2px solid rgba(47, 55, 69, 0.9);
+  }
+
+  button:hover {
+    opacity: .8 !important;
+    color: white !important;
   }
 }

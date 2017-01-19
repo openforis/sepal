@@ -27,11 +27,11 @@ var ShapeOptions = function ( layerOptions ) {
         var color = e.color.toString( 'rgba' )
         $this.fillColorPicker.find( 'i' ).css( 'background-color', color )
         
-        $this.layer.fill_color = color
+        $this.layer.fillColor = color
     } )
     
-    if ( this.layer.fill_color ) {
-        this.fillColorPicker.colorpicker( 'setValue', this.layer.fill_color )
+    if ( this.layer.fillColor ) {
+        this.fillColorPicker.colorpicker( 'setValue', this.layer.fillColor )
     }
     
     // stroke color
@@ -42,19 +42,19 @@ var ShapeOptions = function ( layerOptions ) {
         var color = e.color.toString( 'rgba' )
         $this.strokeColorPicker.find( 'i' ).css( 'background-color', color )
         
-        $this.layer.stroke_color = color
+        $this.layer.strokeColor = color
     } )
     
-    if ( this.layer.stroke_color ) {
-        this.strokeColorPicker.colorpicker( 'setValue', this.layer.stroke_color )
+    if ( this.layer.strokeColor ) {
+        this.strokeColorPicker.colorpicker( 'setValue', this.layer.strokeColor )
     }
     
     // stroke width
     this.strokeWidthInput.change( function ( e ) {
-        $this.layer.stroke_width = $this.strokeWidthInput.val()
+        $this.layer.strokeWidth = $this.strokeWidthInput.val()
     } )
-    if ( this.layer.stroke_width ) {
-        this.strokeWidthInput.val( this.layer.stroke_width )
+    if ( this.layer.strokeWidth ) {
+        this.strokeWidthInput.val( this.layer.strokeWidth )
     }
     
     // submit
@@ -64,15 +64,21 @@ var ShapeOptions = function ( layerOptions ) {
 }
 
 ShapeOptions.prototype.save = function () {
+    var $this  = this
     var params = {
         url         : '/sandbox/geo-web-viz/shape/save'
         , data      : { 'layer': JSON.stringify( this.layer ) }
         , beforeSend: function () {
+            $this.btnSave.disable()
             Loader.show()
         }
         , success   : function ( response ) {
-            Loader.hide()
-            console.log( response )
+            Loader.hide( { delay: 300 } )
+            // console.log( response )
+            EventBus.dispatch( Events.ALERT.SHOW_INFO, null, "Layer settings successfully saved" )
+            setTimeout( function () {
+                $this.btnSave.enable()
+            }, 1000 )
         }
     }
     EventBus.dispatch( Events.AJAX.POST, null, params )

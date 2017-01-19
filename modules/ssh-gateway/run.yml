@@ -7,22 +7,18 @@
 - copy: src="{{ config_home }}/certificates/ldap-ca.crt.pem" dest=/data/ssh-gateway/ldap-ca.crt.pem
 
 - name: "ssh-gateway | Start container"
-  docker:
-    docker_api_version: "1.22"
-    name: "ssh-gateway"
-    registry: "{{ docker_repository_host }}"
-    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
-    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/ssh-gateway:{{ version }}"
-    state: "reloaded"
-    net: "bridge"
-    restart_policy: "always"
-    username: "{{ docker_username }}"
-    email: "{{ docker_email }}"
-    password: "{{ docker_password }}"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
     links:
     - "sepal:sepal"
     - "ldap:ldap"
-    extra_hosts:
+    etc_hosts:
         syslog_host: "{{ syslog_host }}"
     volumes:
     - "/data/ssh-gateway:/data"

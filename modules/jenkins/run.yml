@@ -17,14 +17,14 @@
     state: directory
 
 - name: "jenkins | Start jenkins container"
-  docker:
-    docker_api_version: "1.22"
-    name: "jenkins"
-    pull: 'missing'
-    image: "openforis/jenkins"
-    state: "reloaded"
-    net: "bridge"
-    restart_policy: "always"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
     ports:
       - "8080:8080"
       - "5000:5000"

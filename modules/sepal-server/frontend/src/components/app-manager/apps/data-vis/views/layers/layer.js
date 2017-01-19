@@ -13,9 +13,10 @@ var LayerClass = function ( container, layer ) {
     var $this = this
     
     this.html = html.clone()
-    this.html.data( 'id', layer.id )
+    this.html.data( 'layer-id', layer.id )
     
-    this.options = layer
+    this.options            = layer
+    this.options.visible    = false
     
     this.layerOptions       = LayerOptions.newInstance( this.html.find( '.layer-options' ), layer )
     this.layerOptionButtons = LayerOptionButtons.newInstance( this.html.find( '.layer-option-buttons' ), layer, this.layerOptions )
@@ -59,19 +60,30 @@ var LayerClass = function ( container, layer ) {
 
 LayerClass.prototype.show = function () {
     var $this = this
-    this.btnVisibility.find( '.icon-hidden' ).stop().fadeOut( 250, function () {
-        $this.btnVisibility.find( '.icon-visible' ).fadeIn( 250 )
-    } )
-    this.btnVisibility.addClass( 'active' )
+    if ( !this.options.visible ) {
+        this.options.visible = true
+        
+        this.btnVisibility.find( '.icon-hidden' ).stop().fadeOut( 250, function () {
+            $this.btnVisibility.find( '.icon-visible' ).fadeIn( 250 )
+        } )
+        this.btnVisibility.addClass( 'active' )
+    }
+    
     EventBus.dispatch( Events.APPS.DATA_VIS.ADD_MAP_LAYER, null, this.options )
 }
 
 LayerClass.prototype.hide = function () {
     var $this = this
-    this.btnVisibility.find( '.icon-visible' ).stop().fadeOut( 250, function () {
-        $this.btnVisibility.find( '.icon-hidden' ).fadeIn()
-    } )
-    this.btnVisibility.removeClass( 'active' )
+    if ( this.options.visible ) {
+        
+        this.options.visible = false
+        
+        this.btnVisibility.find( '.icon-visible' ).stop().fadeOut( 250, function () {
+            $this.btnVisibility.find( '.icon-hidden' ).fadeIn()
+        } )
+        this.btnVisibility.removeClass( 'active' )
+    }
+    
     EventBus.dispatch( Events.APPS.DATA_VIS.REMOVE_MAP_LAYER, null, this.options )
 }
 

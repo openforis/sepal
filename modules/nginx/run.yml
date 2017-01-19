@@ -7,18 +7,14 @@
 - copy: src="{{ config_home }}/certificates/sepal-https.crt" dest=/data/nginx/certificates/sepal-https.crt
 
 - name: "nginx | Start container"
-  docker:
-    docker_api_version: "1.22"
-    name: "nginx"
-    registry: "{{ docker_repository_host }}"
-    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
-    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/nginx:{{ version }}"
-    state: "reloaded"
-    net: "bridge"
-    restart_policy: "always"
-    username: "{{ docker_username }}"
-    email: "{{ docker_email }}"
-    password: "{{ docker_password }}"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
     links:
     - "elk:elk"
     volumes:

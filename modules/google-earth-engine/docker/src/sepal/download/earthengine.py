@@ -61,7 +61,7 @@ class EarthEngineStatus(object):
         else:
             logger.exception('Export to Google Drive failed. Task: ' + str(task))
             return {'state': 'FAILED',
-                    'description': 'Export to Google Drive failed: '}
+                    'description': 'Export to Google Drive failed: ' + task['error_message']}
 
     def _to_status(self, task):
         state = task['state']

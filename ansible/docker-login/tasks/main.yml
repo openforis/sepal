@@ -1,0 +1,7 @@
+---
+- docker_login:
+    api_version: "1.22"
+    registry_url: "{{ docker_repository_host }}"
+    username: "{{ docker_username }}"
+    email: "{{ docker_email }}"
+    password: "{{ docker_password }}"

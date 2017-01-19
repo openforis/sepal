@@ -75,19 +75,24 @@ RasterOptions.prototype.save = function () {
         }
     } )
     
+    var $this = this
     if ( !valid ) {
         this.formNotify.html( 'All bands must be specified before saving' ).fadeIn()
     } else {
-        console.log( this.layer )
+        // console.log( "=== Before save", this.layer )
         var params = {
             url         : '/sandbox/geo-web-viz/raster/save'
             , data      : { 'layer': JSON.stringify( this.layer ) }
             , beforeSend: function () {
+                $this.btnSave.disable()
                 Loader.show()
             }
             , success   : function ( response ) {
-                Loader.hide()
-                console.log( response )
+                Loader.hide( { delay: 300 } )
+                EventBus.dispatch( Events.ALERT.SHOW_INFO, null, "Layer settings successfully saved" )
+                setTimeout( function () {
+                    $this.btnSave.enable()
+                }, 1000 )
             }
         }
         

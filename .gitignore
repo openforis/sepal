@@ -28,6 +28,11 @@ target
 #Ansible
 deploy.retry
 
+<<<<<<< HEAD
 #Data-vis test server
 *.pyc
 
+=======
+#Python
+*.pyc
+>>>>>>> 021999fec173ff85b24944b54c26d0d934695675
