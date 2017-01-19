@@ -27,3 +27,6 @@ target
 
 #Ansible
 deploy.retry
+
+#Python
+*.pyc

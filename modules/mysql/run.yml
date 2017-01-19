@@ -6,18 +6,14 @@
 - file: path="/data/mysql/module_initialized" state=absent
 
 - name: "mysql | Start container"
-  docker:
-    docker_api_version: "1.22"
-    name: "mysql"
-    registry: "{{ docker_repository_host }}"
-    pull: "{{ 'missing' if docker_repository_host == 'localhost'  else 'always' }}"
-    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/mysql:{{ version }}"
-    state: "reloaded"
-    restart_policy: "always"
-    net: "bridge"
-    username: "{{ docker_username }}"
-    email: "{{ docker_email }}"
-    password: "{{ docker_password }}"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
     log_driver: syslog
     log_opt:
       syslog-address: "{{ syslog_address }}"
@@ -35,6 +31,13 @@
       MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
   register: container
 
+# Check is container is started/restarted by checking if container start time changed after executing the
+# docker_container task.  Cannot use the container.changed, since it always return true when image is pulled
+# https://github.com/ansible/ansible/issues/19549
+- name: "Checking start time of {{ container_name | default(module) }}"
+  script: "start_time.sh {{ container_name | default(module) }}"
+  register: new_start_time
+
 - name: "mysql | Wait until initialized"
   wait_for: path=/data/mysql/module_initialized
-  when: (container.summary.started > 0 or container.summary.restarted > 0)
+  when: "{{ new_start_time.stdout != start_timestamp }}"

@@ -43,6 +43,7 @@
     - { role: build-module, module: elk }
     - { role: build-module, module: nginx }
 
+    - { role: docker-login }
     - { role: run-module, module: jenkins }
     - { role: run-module, module: elk }
     - { role: run-module, module: nginx }

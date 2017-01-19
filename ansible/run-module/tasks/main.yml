@@ -1,7 +1,19 @@
 ---
+- name: "Checking start time of {{ container_name | default(module) }}"
+  script: "start_time.sh {{ container_name | default(module) }}"
+  register: start_time_before_docker_container
 
 - name: "Run {{ module }}"
   include: "../../../modules/{{ module }}/run.yml"
+  vars:
+    api_version: "1.22"
+    name: "{{ container_name | default(module) }}"
+    pull: "{{ docker_repository_host != 'localhost' }}"
+    image: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/{{ container_name | default(module) }}:{{ version }}"
+    state: "started"
+    restart_policy: "always"
+    network_mode: "bridge"
+    start_timestamp: "{{ start_time_before_docker_container.stdout }}"
 
 
 
