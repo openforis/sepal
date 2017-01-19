@@ -16,7 +16,6 @@ def reorder(order):
     _index_by_id.clear()
     index_by_id = {id: index for index, id in enumerate(order)}
     _index_by_id.update(index_by_id)
-    # TODO: Verify that all ids exists, and that all existing id is included in "order"
 
 
 # {
@@ -25,7 +24,7 @@ def reorder(order):
 #   "bands": [
 #     {
 #       "index": "1",
-#       "palette": {"45": "#FFFFFF", "231": "#FF0000"}
+#       "palette": [[890, "#000000"], [5000, "#0000FF"]]
 #     }
 #   ]
 # }
@@ -68,7 +67,8 @@ def _update_layer(layer_dict):
 
 
 def _save_layer(layer):
+    if not _index_by_id.has_key(layer.id):
+        _index_by_id[layer.id] = len(_index_by_id)
     _layer_by_id[layer.id] = layer
-    _index_by_id[layer.id] = len(_index_by_id)
     render.create_renderer(layer)
     return layer.bounds()
