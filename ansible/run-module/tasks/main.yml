@@ -13,7 +13,7 @@
     state: "started"
     restart_policy: "always"
     network_mode: "bridge"
-    start_timestamp: "{{ start_time_before_docker_container.stdout }}"
+    start_timestamp: "{{ start_time_before_docker_container.stdout | regex_replace('[\\r\\n]+', '') }}"
 
 
 

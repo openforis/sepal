@@ -33,7 +33,10 @@
   script: "start_time.sh {{ container_name | default(module) }}"
   register: new_start_time
 
+- set_fact:
+   new_start_time: "{{ new_start_time.stdout | regex_replace('[\\r\\n]+', '') }}"
+
 - name: "mysql-backup | Wait until initialized"
   wait_for: path=/data/mysql-backup/module_initialized
-  when: "{{ new_start_time.stdout != start_timestamp }}"
+  when: "{{ new_start_time != start_timestamp }}"
 
