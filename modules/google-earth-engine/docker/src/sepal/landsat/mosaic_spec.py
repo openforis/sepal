@@ -1,6 +1,5 @@
 import ee
 
-import brdf_correction
 import constants
 import image_adjustment
 from .. import Aoi, ImageSpec
@@ -36,7 +35,8 @@ class LandsatMosaicSpec(ImageSpec):
         mosaic = constants.mosaic_strategies[self.strategy](image_collection)
         return mosaic \
             .clip(self.aoi.geometry()) \
-            .select(self.bands)
+            .select(self.bands) \
+            .float()
 
     def _merge(self, image_collections):
         return reduce(self._merge_two, image_collections)
