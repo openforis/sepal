@@ -1,0 +1,45 @@
+---
+- name: Make sure the mount points of the buckets are present
+  become: yes
+  file:
+    path: "{{ item.mountpoint }}"
+    state: directory
+  with_items: "{{ s3fs.buckets }}"
+  ignore_errors: yes
+  no_log: True
+
+- name: Make sure the access keys of buckets are present
+  become: yes
+  template:
+    src: passwd-s3fs.j2
+    dest: "{{ s3fs.passwd_file }}"
+    mode: 0640
+    owner: "{{ ansible_user_id }}"
+  with_items: "{{ s3fs.buckets }}"
+  notify: restart s3fs
+  no_log: True
+
+- name: Add start/stop script
+  become: yes
+  template:
+    src: s3fs.j2
+    dest: /etc/init.d/s3fs
+    mode: 0755
+  notify: restart s3fs
+
+- name: Add s3fs to run levels
+  become: yes
+  command: "update-rc.d s3fs defaults"
+  changed_when: False
+
+- name: Make sure mountpoints are present in fstab
+  become: yes
+  mount:
+    name: "{{ item.mountpoint }}"
+    src: "s3fs#{{ item.bucket }}"
+    fstype: fuse
+    opts: "_netdev,{{ item.options }},passwd_file={{ s3fs.passwd_file }}"
+    state: present
+  with_items: "{{ s3fs.buckets }}"
+  when: s3fs.buckets is defined and s3fs.add_to_fstab
+  no_log: True

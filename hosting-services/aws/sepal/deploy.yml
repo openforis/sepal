@@ -36,6 +36,19 @@
     - { role: rsyslog }
     - { role: docker, users: ['ubuntu'] }
     - { role: aws-mount-efs }
+    - {
+        role: s3fs,
+        s3fs: {
+          source: "https://github.com/s3fs-fuse/s3fs-fuse/archive/v1.80.tar.gz",
+          buckets: [{
+            mountpoint: /backup,
+            bucket: "{{ s3_backup_bucket }}",
+            accessKeyId: "{{ aws_access_key_id }}",
+            secretAccessKey: "{{ aws_secret_access_key }}",
+            options: "allow_other,use_cache=/tmp,max_stat_cache_size=100000,uid=0,gid=0,umask=077"
+          }]
+        }
+      }
     - { role: docker-login }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }

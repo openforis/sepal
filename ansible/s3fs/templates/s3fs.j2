@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# {{ ansible_managed }}
+#
+### BEGIN INIT INFO
+# Provides:          s3fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Mount and unmount s3fs buckets as file systems
+# Description:       Controls the s3fs mountpoint as file systems
+### END INIT INFO
+
+DESC="file system"
+NAME=s3fs
+DAEMON=/usr/local/bin/$NAME
+SCRIPTNAME=/etc/init.d/$NAME
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+    {% if s3fs.buckets is defined %}
+      {% for bucket in s3fs.buckets %}
+        mountpoint {{ bucket.mountpoint }} | grep -q 'is a mountpoint' && (echo '{{ bucket.bucket }} already mounted') || ({{ s3fs.daemon }} {{ bucket.bucket }} {{ bucket.mountpoint }} -o{{ bucket.options }},passwd_file={{ s3fs.passwd_file }} && echo '{{ bucket.bucket }} mounted')
+      {% else %}
+        echo 'No buckets to mount'
+      {% endfor %}
+    {% endif %}
+}
+
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+    {% if s3fs.buckets is defined %}
+      {% for bucket in s3fs.buckets %}
+        mountpoint {{ bucket.mountpoint }} | grep -q 'is a mountpoint' && (umount {{ bucket.mountpoint }} && echo '{{ bucket.bucket }} unmounted') || (echo '{{ bucket.bucket }} not mounted')
+      {% else %}
+        echo 'No buckets to unmount'
+      {% endfor %}
+    {% endif %}
+}
+
+#
+# Function that shows status of the daemon/service
+#
+do_status()
+{
+    {% if s3fs.buckets is defined %}
+      {% for bucket in s3fs.buckets %}
+        mountpoint {{ bucket.mountpoint }} | grep -q 'is a mountpoint' && (echo '{{ bucket.bucket }} is mounted') || (echo '{{ bucket.bucket }} not mounted')
+      {% else %}
+        echo 'No buckets available'
+      {% endfor %}
+    {% endif %}
+}
+
+case "$1" in
+  start)
+        echo "Starting ${DESC} ${NAME}"
+        do_start
+        ;;
+  stop|graceful-stop)
+        echo "Stoping ${DESC} ${NAME}"
+        do_stop
+        ;;
+  status)
+        do_status
+        exit $?
+        ;;
+  restart)
+        echo "Restarting ${DESC} ${NAME}"
+        do_stop
+        do_start
+        ;;
+  *)
+        echo "Usage: $SCRIPTNAME {start|stop|graceful-stop|restart}" >&2
+        exit 3
+        ;;
+esac
+
+exit 0
+
+# vim: syntax=sh ts=4 sw=4 sts=4 sr noet

@@ -1,0 +1,7 @@
+---
+- name: Testing S3fs Ansible role
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Test if s3fs is installed
+      shell: "s3fs --version"  

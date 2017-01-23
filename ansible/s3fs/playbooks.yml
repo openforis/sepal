@@ -1,0 +1,6 @@
+---
+- name: Install and configure S3fs
+  hosts: all
+  gather_facts: no
+  roles:
+    - Aplyca.S3fs

@@ -1,0 +1,17 @@
+---
+s3fs:
+  passwd_file: /etc/passwd-s3fs
+  daemon: /usr/local/bin/s3fs
+  dependencies:
+    - unzip
+    - fuse
+    - libssl-dev
+    - pkg-config
+    - build-essential
+    - libfuse-dev
+    - libcurl4-openssl-dev
+    - libxml2-dev
+    - mime-support
+    - automake
+    - libtool
+    - ntp
