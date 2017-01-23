@@ -117,6 +117,7 @@ def _config_aws():
     _text('worker_instance_ami', 'Worker instance AMI')
     _text('aws_access_key_id', 'AWS Access Key ID')
     _password('aws_secret_access_key', 'AWS Secret Access Key', 'required')
+    _text('s3_backup_bucket', 'S3 bucket for backups')
     _text('region', 'AWS region')
     _text('availability_zone', 'AWS availability zone')
     _text('efs_id', 'AWS EFS id')
