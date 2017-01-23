@@ -1,0 +1,19 @@
+- name: "backup | Start container"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      tag: "backup"
+    volumes:
+    - "/data:/data"
+    - "/backup:/backup"
+    env:
+      BACKUP_CRON_EXP: '0 0 * * *'
+  register: container
