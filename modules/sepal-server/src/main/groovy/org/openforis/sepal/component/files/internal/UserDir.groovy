@@ -20,7 +20,7 @@ class UserDir {
 
     void delete(String path) {
         def file = toUserDirFile(path)
-        if (file.equals(userDir))
+        if (file == userDir)
             throw new InvalidPath("Cannot delete users dir: $userDir")
         if (file.isDirectory())
             file.deleteDir()
