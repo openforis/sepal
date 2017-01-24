@@ -39,6 +39,10 @@
        syslog_host: "172.17.0.1"
        syslog_address: "tcp://172.17.0.1:514"
 
+  post_tasks:
+    - name: docker system prune
+      shell: echo y | docker system prune
+
   roles:
     - role: unattended-upgrades
       unattended_origins_patterns:
