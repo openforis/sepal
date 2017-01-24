@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  author: Aplyca
+  description: S for Debian/Ubuntu.
+  company: "Aplyca SAS"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 1.4
+  platforms:
+  - name: Debian
+    versions:
+    - all
+  - name: Ubuntu
+    versions:
+    - all
+  categories:
+    - cloud
+    - development
+    - networking
+    - system
+    - s3
+
+dependencies: []

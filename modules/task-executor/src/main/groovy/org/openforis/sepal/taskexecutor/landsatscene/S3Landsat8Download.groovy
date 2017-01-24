@@ -11,14 +11,11 @@ import static org.openforis.sepal.taskexecutor.landsatscene.ExecutionResult.succ
 
 class S3Landsat8Download {
     private final URI endpoint
-    private final RESTClient http
     private final BatchDownloader downloader
     private final String username
 
     S3Landsat8Download(URI endpoint, BackgroundDownloader downloader, String username) {
         this.endpoint = endpoint
-        http = new RESTClient(endpoint)
-        http.handler.failure = { resp -> return resp }
         this.downloader = new BatchDownloader(downloader, username)
         this.username = username
     }
@@ -38,6 +35,12 @@ class S3Landsat8Download {
 
     void cancel() {
         downloader.cancel()
+    }
+
+    private getHttp() {
+        def http = new RESTClient(endpoint)
+        http.handler.failure = { resp -> return resp }
+        return http
     }
 
     private List<DownloadRequest> downloadRequests(File sceneDir, String sceneId) {

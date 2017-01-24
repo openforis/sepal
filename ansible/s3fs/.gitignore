@@ -1,0 +1,5 @@
+.vagrant
+custom*
+*.box
+.vault
+*.retry

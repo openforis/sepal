@@ -1,0 +1,3 @@
+{% for bucket in s3fs.buckets %}
+{{ bucket.bucket }}:{{ bucket.accessKeyId | default('accessKeyId') }}:{{ bucket.secretAccessKey | default('secretAccessKey') }}
+{% endfor %}
