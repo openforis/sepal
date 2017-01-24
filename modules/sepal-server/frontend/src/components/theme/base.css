@@ -451,6 +451,35 @@ img {
 }
 
 /*padding */
+.p-a-0-25 {
+    padding: 0.25rem !important;
+}
+.p-t-0-25 {
+    padding-top: 0.25rem !important;
+}
+
+.p-r-0-25 {
+    padding-right: 0.25rem !important;
+}
+
+.p-b-0-25 {
+    padding-bottom: 0.25rem !important;
+}
+
+.p-l-0-25 {
+    padding-left: 0.25rem !important;
+}
+
+.p-x-0-25 {
+    padding-right: 0.25rem !important;
+    padding-left: 0.25rem !important;
+}
+
+.p-y-0-25 {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+}
+
 .p-a-0-5 {
     padding: 0.5rem !important;
 }

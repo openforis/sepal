@@ -9,7 +9,7 @@
     left: 0;
 
     position: absolute;
-    z-index: 900;
+    z-index: 9999999;
     background-color: rgba(17, 18, 21, 0.9);
     /*background-color: rgba(28, 28, 28, 0.7);*/
     /*background-color: rgba(14,10,12,0.8);*/

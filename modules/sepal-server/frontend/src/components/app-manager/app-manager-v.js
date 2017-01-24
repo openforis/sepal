@@ -2,8 +2,10 @@
  * @author Mino Togna
  */
 require( './app-manager.scss' )
-
-var IFrameApp = require( './apps/iframe/iframe-app-mv' )
+var EventBus   = require( '../event/event-bus' )
+var Events     = require( '../event/events' )
+var IFrameApp  = require( './apps/iframe/iframe-app-mv' )
+var DataVisApp = require( './apps/data-vis/data-vis-mv' )
 
 var html         = null
 var appContainer = null
@@ -19,15 +21,17 @@ var init         = function () {
     btnClose.click( function ( e ) {
         e.preventDefault()
         html.modal( 'hide' )
+        
+        EventBus.dispatch( Events.APP_MANAGER.CLOSED )
     } )
     
-    html.on('hidden.bs.modal', function (e) {
+    html.on( 'hidden.bs.modal', function ( e ) {
         showLoading()
-    })
+    } )
 }
 
 var show = function () {
-    html.modal( { show: true, backdrop: 'static' } )
+    html.modal( { show: true, backdrop: 'static', keyboard: false } )
 }
 
 var showLoading = function () {
@@ -41,6 +45,7 @@ var hideLoading = function () {
 
 var showDataVisApp = function () {
     hideLoading()
+    DataVisApp.show( appContainer )
 }
 
 

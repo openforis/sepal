@@ -39,12 +39,6 @@ var isValidPassword = function ( value ) {
 // ===================
 var showError = function ( errorContainer, message ) {
     showMessage( errorContainer, message, 'error' )
-    // errorContainer.removeClass( 'form-success' ).addClass( 'form-error' )
-    // errorContainer.velocitySlideDown( {
-    //     delay: 0, duration: 500, begin: function () {
-    //         errorContainer.html( message )
-    //     }
-    // } )
 }
 
 var showSuccess = function ( container, message ) {

@@ -37,12 +37,12 @@ var openDataVisApp = function ( e ) {
     
     startServer( function () {
         View.showDataVisApp()
-    }, '/data-vis' )
+    // }, '/data-vis' )
+    }, '/geo-web-viz' )
 }
 
 var checkServerIntervalId = null
 var stopServerRequest     = function () {
-    // console.log( 'clearing job ', checkServerIntervalId )
     clearInterval( checkServerIntervalId )
     checkServerIntervalId = null
 }

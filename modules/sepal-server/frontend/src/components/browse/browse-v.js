@@ -68,6 +68,13 @@ var init = function () {
             } )
         } )
         
+        btnAddToMap.click( function ( e ) {
+            var absPath = Model.absolutePath( lastClickItem[ 0 ].level, lastClickItem[ 1 ].name )
+            
+            EventBus.dispatch( Events.APPS.DATA_VIS.ADD_FILE, null, absPath )
+            EventBus.dispatch( Events.ALERT.SHOW_INFO, null, absPath + " added to the data visualization app" )
+        } )
+        
         $( window ).resize( function () {
             setContentSize()
         } )
@@ -169,12 +176,12 @@ var addDir = function ( dir ) {
                     btnDownload.prop( 'disabled', true )
                     btnAddToMap.prop( 'disabled', true )
                 } else {
-                    // var absPath = Model.absolutePath( dir.level, child.name )
+                    // var absPath = Model.absolutePath( lastClickItem[0].level, lastClickItem[1].name )
                     // lastAbsPathClick = absPath
                     
                     btnDownload.prop( 'disabled', false )
                     if ( isImageFile ) {
-                        // btnAddToMap.prop( 'disabled', false )
+                        btnAddToMap.prop( 'disabled', false )
                     }
                 }
             } )

@@ -1,0 +1,26 @@
+#data-vis {
+
+  .layer-option-buttons {
+    position: fixed;
+    left: 12.5%;
+    width: 25%;
+    background-color: rgba(39, 38, 38, 0.92);
+    border-radius: .5rem;
+    padding: .25rem 15px;
+    margin-top: -.25rem;
+    display: none;
+
+    .btn {
+      border: 2px solid rgba(255, 255, 255, 0.025) !important;
+    }
+
+    .col-opacity-slider {
+      border-right: 1px inset rgba(81, 81, 81, 0.15);
+    }
+
+    .col-buttons {
+      word-spacing: .5rem;
+    }
+  }
+
+}

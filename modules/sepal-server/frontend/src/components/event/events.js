@@ -122,11 +122,8 @@ var Events = {
         , POLYGON_CLEAR               : 'map.polygon-clear'
     }
     
-    , MAP_VIS: {
-        ZOOM_CHANGED: 'map-vis.zoom-changed'
-    }
     // events that occur when a model changes
-    , MODEL  : {
+    , MODEL: {
         SCENE_AREA: {
             CHANGE: 'model.scene-area-change'
         }
@@ -147,6 +144,23 @@ var Events = {
         OPEN_IFRAME   : 'app-manager.open-iframe'
         , OPEN_RSTUDIO: 'app-manager.open-rstudio'
         , OPEN_DATAVIS: 'app-manager.open-datavis'
+        , CLOSED      : 'app-manager.closed'
+    }
+    
+    , APPS: {
+        DATA_VIS: {
+            MAP_INITIALIZED           : 'apps.data-vis.map-initialized'
+            , ADD_MAP_LAYER           : 'apps.data-vis.add-map-layer'
+            , FORCE_UPDATE_LAYER      : 'apps.data-vis.force_update_layer'
+            , REMOVE_MAP_LAYER        : 'apps.data-vis.remove-map-layer'
+            , MAP_LAYER_TILES_LOADING : 'apps.data-vis.map_layer_tiles_loading'
+            , MAP_TILES_LOADED        : 'apps.data-vis.map_tiles_loaded'
+            , MAP_LAYER_CHANGE_OPACITY: 'apps.data-vis.map_layer_change_opacity'
+            , MAP_LAYER_ZOOM_TO       : 'apps.data-vis.map_layer_zoom_to'
+            , LAYER_DELETE            : 'apps.data-vis.layer_delete'
+            , ADD_FILE                : 'apps.data-vis.add_file'
+            , LAYERS_LOADED           : 'apps.data-vis.layers_loaded'
+        }
     }
     
 }
