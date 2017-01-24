@@ -37,8 +37,7 @@ var openDataVisApp = function ( e ) {
     
     startServer( function () {
         View.showDataVisApp()
-    // }, '/data-vis' )
-    }, '/geo-web-viz' )
+    }, 'geo-web-viz' )
 }
 
 var checkServerIntervalId = null
