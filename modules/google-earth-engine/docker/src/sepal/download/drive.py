@@ -5,6 +5,7 @@ from threading import Thread
 import httplib2
 from apiclient import discovery
 from apiclient.http import MediaIoBaseDownload
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class DriveDownload(object):
 
         completed = True
         for file_index, drive_file in enumerate(drive_files):
-            if not self._download_file(drive_file, file_index, len(drive_files)):
+            if not self._download_file(folder_id, drive_file, file_index, len(drive_files)):
                 self._delete(folder_id)
                 completed = False
                 break
@@ -63,14 +64,19 @@ class DriveDownload(object):
                 'step': "DOWNLOADED",
                 'description': "Downloaded files"})
 
-    def _download_file(self, drive_file, file_index, file_count):
+    def _download_file(self, folder_id, drive_file, file_index, file_count):
         logging.debug('Downloading %s from Google Drive: ' % str(drive_file['name']))
         try:
             request = self.drive.files().get_media(fileId=drive_file['id'])
             downloaded_file = open(self.dir + '/' + drive_file['name'], 'w')
             downloader = MediaIoBaseDownload(downloaded_file, request)
+
+            modified_time = self._touch(drive_file, folder_id)
+
             done = False
             while self.running and not done:
+                if self._seconds_since(modified_time) > 60:  # Heartbeat after 1 minutes download
+                    modified_time = self._touch(drive_file, folder_id)
                 status, done = downloader.next_chunk()
                 if not self.canceled:
                     self.listener.update_status({
@@ -93,6 +99,19 @@ class DriveDownload(object):
             return False
         return True
 
+    def _touch(self, drive_file, folder_id):
+        now = datetime.utcnow()
+
+        def update_file(id):
+            self.drive.files().update(
+                fileId=id,
+                body={'viewedByMeTime': now.strftime("%Y-%m-%dT%H:%M:%S" + 'Z')}
+            ).execute()
+            update_file(drive_file['id'])
+            update_file(folder_id)
+
+        return now
+
     def _files_in_folder(self, folder_id):
         """Lists files in drive folder, returning dict with id and name"""
         if not folder_id:
@@ -113,3 +132,6 @@ class DriveDownload(object):
 
     def _delete(self, file_id):
         self.drive.files().delete(fileId=file_id).execute()
+
+    def _seconds_since(self, time):
+        return (datetime.utcnow() - time).total_seconds()
