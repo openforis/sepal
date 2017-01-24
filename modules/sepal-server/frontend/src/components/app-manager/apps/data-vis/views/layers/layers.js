@@ -33,6 +33,15 @@ var init = function ( dataVis ) {
     
     btnClose.click( close )
     btnOpen.click( open )
+    
+    container.scroll( function () {
+        var scrollTop = $( window ).scrollTop()
+        $.each( container.find( '.layer-option-buttons' ), function ( i, elem ) {
+            var optionBtns    = $( elem )
+            var elementOffset = optionBtns.parent().offset().top
+            optionBtns.css( 'top', (elementOffset - scrollTop + 7) + 'px' )
+        } )
+    } )
 }
 
 var close = function () {
@@ -69,12 +78,35 @@ var load = function ( layers ) {
     $.each( layers, function ( i, l ) {
         l.index   = i
         l.opacity = 1
-        console.log( "Layers loaded at index ", i, " : ", l )
+        // console.log( "Layers loaded at index ", i, " : ", l )
         var uiLayer = Layer.newInstance( container, l )
         uiLayer.show()
         
         uiLayers[ l.id ] = uiLayer
     } )
+    EventBus.dispatch( Events.APPS.DATA_VIS.LAYERS_LOADED )
+}
+
+var addNewLayer = function ( path ) {
+    
+    var guid = function () {
+        function s4() {
+            return Math.floor( (1 + Math.random()) * 0x10000 )
+                .toString( 16 )
+                .substring( 1 )
+        }
+        
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
+    }
+    
+    var layer  = { path: path, id: guid(), index: Object.keys( uiLayers ).length, opacity: 1 }
+    layer.type = path.endsWith( 'shp' ) ? 'shape' : 'raster'
+    
+    // console.log( "=== ADDING NEW LAYER " + layer )
+    
+    var uiLayer = Layer.newInstance( container, layer )
+    
+    uiLayers[ layer.id ] = uiLayer
 }
 
 var sortLayers = function () {
@@ -114,7 +146,37 @@ var sortLayers = function () {
     
 }
 
+var deleteLayer = function ( e, layerId ) {
+    
+    var params = {
+        url         : '/sandbox/geo-web-viz/layers/' + layerId
+        , beforeSend: function () {
+            Loader.show()
+            
+            uiLayers[ layerId ].delete()
+            delete uiLayers[ layerId ]
+        }
+        , success   : function () {
+            
+            $.each( uiLayers, function ( i, uiLayer ) {
+                // console.log( uiLayer )
+                if ( uiLayer.options.visible ) {
+                    uiLayer.show()
+                } else {
+                    uiLayer.hide()
+                }
+            } )
+            
+            Loader.hide( { delay: 300 } )
+        }
+    }
+    EventBus.dispatch( Events.AJAX.DELETE, null, params )
+}
+
+EventBus.addEventListener( Events.APPS.DATA_VIS.LAYER_DELETE, deleteLayer )
+
 module.exports = {
-    init  : init
-    , load: load
+    init         : init
+    , load       : load
+    , addNewLayer: addNewLayer
 }

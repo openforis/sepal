@@ -10,7 +10,8 @@ var Layer = function ( params ) {
     var $this        = this
     $this.properties = params
     $this.id         = params.id
-    $this.opacity    = 1
+    $this.timestamp  = new Date().getTime()
+    // $this.opacity    = 1
     // $this.pendingUrls = []
     
     MapLoader.load( function ( google ) {
@@ -29,7 +30,7 @@ var Layer = function ( params ) {
                 }
                 $this.loading = true
                 
-                var url = [ baseUrl, zoom, tile.x, y ].join( '/' ) + '.png'
+                var url = [ baseUrl, zoom, tile.x, y ].join( '/' ) + '.png?' + $this.timestamp
                 
                 //test
                 // $this.pendingUrls.push( url )

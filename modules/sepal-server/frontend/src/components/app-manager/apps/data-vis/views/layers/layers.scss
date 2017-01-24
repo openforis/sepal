@@ -28,8 +28,10 @@
     }
 
     .row-layer {
-      padding-top: .5rem;
-      padding-bottom: .5rem;
+      //padding-top: .5rem;
+      padding-top: 7px;
+      padding-bottom: 7px;
+      //padding-bottom: .5rem;
       background-color: transparent;
       border-radius: 0px;
       transition: background-color 0.5s cubic-bezier(0.215, 0.610, 0.355, 1.000);

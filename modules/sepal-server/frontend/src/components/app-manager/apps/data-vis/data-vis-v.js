@@ -13,11 +13,14 @@ var html           = null
 var map            = null
 var mapTilesLoader = null
 
-var show = function ( container ) {
+var show = function ( container, callback ) {
     if ( container.find( '.data-vis-app' ).length <= 0 ) {
         init( container )
     }
     html.show()
+    if ( callback ) {
+        callback()
+    }
 }
 
 var init = function ( container ) {
@@ -44,6 +47,7 @@ EventBus.addEventListener( Events.APPS.DATA_VIS.MAP_LAYER_TILES_LOADING, showTil
 EventBus.addEventListener( Events.APPS.DATA_VIS.MAP_TILES_LOADED, hideTilesLoader )
 
 module.exports = {
-    show      : show,
-    loadLayers: Layers.load
+    show       : show,
+    loadLayers : Layers.load,
+    addNewLayer: Layers.addNewLayer
 }

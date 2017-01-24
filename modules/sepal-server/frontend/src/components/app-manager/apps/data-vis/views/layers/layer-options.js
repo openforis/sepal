@@ -2,10 +2,12 @@
  * @author Mino Togna
  */
 require( './layer-options.scss' )
+var EventBus      = require( '../../../../../event/event-bus' )
+var Events        = require( '../../../../../event/events' )
 var ShapeOptions  = require( './shape-options' )
 var RasterOptions = require( './raster-options' )
 
-var LayerOptions = function ( container, layer ) {
+var LayerOptions = function ( container, layer, onReady ) {
     var $this      = this
     this.container = container
     this.layer     = layer
@@ -27,10 +29,10 @@ var LayerOptions = function ( container, layer ) {
     
     if ( this.layer.path.endsWith( 'shp' ) ) {
         this.isShape = true
-        this.initShapeOptions()
+        this.initShapeOptions( onReady )
     } else {
         this.isRaster = true
-        this.initRasterOptions()
+        this.initRasterOptions( onReady )
     }
 }
 
@@ -84,7 +86,7 @@ LayerOptions.prototype.initRemoveOptions = function () {
     var $this         = this
     this.btnRemoveYes = this.deleteOptions.find( '.btn-yes' )
     this.btnRemoveYes.click( function () {
-        
+        EventBus.dispatch( Events.APPS.DATA_VIS.LAYER_DELETE, null, $this.layer.id )
     } )
     
     this.btnRemoveNo = this.deleteOptions.find( '.btn-no' )
@@ -93,8 +95,8 @@ LayerOptions.prototype.initRemoveOptions = function () {
     } )
 }
 
-LayerOptions.prototype.initShapeOptions = function () {
-    this.shapeOptions.data( 'ui', ShapeOptions.newInstance( this ) )
+LayerOptions.prototype.initShapeOptions = function ( onReady ) {
+    this.shapeOptions.data( 'ui', ShapeOptions.newInstance( this, onReady ) )
 }
 
 LayerOptions.prototype.showRasterOptions = function () {
@@ -102,12 +104,12 @@ LayerOptions.prototype.showRasterOptions = function () {
     var ui = this.rasterOptions.data( 'ui' )
     ui.update()
 }
-LayerOptions.prototype.initRasterOptions = function () {
-    this.rasterOptions.data( 'ui', RasterOptions.newInstance( this ) )
+LayerOptions.prototype.initRasterOptions = function ( onReady ) {
+    this.rasterOptions.data( 'ui', RasterOptions.newInstance( this, onReady ) )
 }
 
-var newInstance = function ( container, layer ) {
-    return new LayerOptions( container, layer )
+var newInstance = function ( container, layer, onReady ) {
+    return new LayerOptions( container, layer, onReady )
 }
 
 module.exports = {

@@ -6,7 +6,7 @@ var EventBus = require( '../../../../../event/event-bus' )
 var Events   = require( '../../../../../event/events' )
 var Loader   = require( '../../../../../loader/loader' )
 
-var ShapeOptions = function ( layerOptions ) {
+var ShapeOptions = function ( layerOptions, onReady ) {
     var $this = this
     
     this.layerOptions = layerOptions
@@ -19,6 +19,26 @@ var ShapeOptions = function ( layerOptions ) {
     this.strokeWidthInput  = this.container.find( '[name=stroke-width]' )
     this.btnSave           = this.container.find( '.btn-save' )
     
+    if ( this.layer.bounds ) {
+        this.init()
+        onReady()
+    } else {
+        // new layer to be added - set default values
+        this.layer.fillColor   = "#709cff"
+        this.layer.strokeColor = "#FFFFFF"
+        this.layer.strokeWidth = 0.5
+        
+        this.btnSave.disable()
+        this.save( function ( response ) {
+            $this.layer.bounds = response.bounds
+            $this.init()
+            onReady()
+        } )
+    }
+}
+
+ShapeOptions.prototype.init = function () {
+    var $this = this
     // fill color
     this.fillColorPicker.colorpicker( {
         component: 'color-picker'
@@ -63,19 +83,25 @@ var ShapeOptions = function ( layerOptions ) {
     } )
 }
 
-ShapeOptions.prototype.save = function () {
+ShapeOptions.prototype.save = function ( callback ) {
     var $this  = this
     var params = {
         url         : '/sandbox/geo-web-viz/shape/save'
         , data      : { 'layer': JSON.stringify( this.layer ) }
         , beforeSend: function () {
             $this.btnSave.disable()
-            Loader.show()
+            
+            if ( !callback )
+                Loader.show()
         }
         , success   : function ( response ) {
-            Loader.hide( { delay: 300 } )
-            // console.log( response )
-            EventBus.dispatch( Events.ALERT.SHOW_INFO, null, "Layer settings successfully saved" )
+            EventBus.dispatch( Events.APPS.DATA_VIS.FORCE_UPDATE_LAYER, null, $this.layer )
+            
+            if ( callback )
+                callback( response )
+            else
+                Loader.hide( { delay: 300 } )
+            
             setTimeout( function () {
                 $this.btnSave.enable()
             }, 1000 )
@@ -84,8 +110,8 @@ ShapeOptions.prototype.save = function () {
     EventBus.dispatch( Events.AJAX.POST, null, params )
 }
 
-var newInstance = function ( layerOptions ) {
-    return new ShapeOptions( layerOptions )
+var newInstance = function ( layerOptions, onReady ) {
+    return new ShapeOptions( layerOptions, onReady )
 }
 
 module.exports = {

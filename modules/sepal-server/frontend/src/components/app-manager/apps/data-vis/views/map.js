@@ -36,7 +36,7 @@ var addLayer = function ( e, layer ) {
         layers[ layer.id ] = l
     }
     map.overlayMapTypes.setAt( layer.index, l.imageMapType )
-    l.imageMapType.setOpacity( l.opacity )
+    l.imageMapType.setOpacity( layer.opacity )
 }
 
 var removeLayer = function ( e, layer ) {
@@ -44,26 +44,42 @@ var removeLayer = function ( e, layer ) {
 }
 
 var changeLayerOpacity = function ( e, layerId, opacity ) {
-    var l     = layers[ layerId ]
-    l.opacity = parseFloat( opacity )
-    l.imageMapType.setOpacity( l.opacity )
+    var l                = layers[ layerId ]
+    l.properties.opacity = parseFloat( opacity )
+    l.imageMapType.setOpacity( l.properties.opacity )
 }
 
 var zoomToLayer = function ( e, layerId ) {
-    var l            = layers[ layerId ]
-    var bounds       = l.properties.bounds
-    var sw           = { lat: bounds[ 0 ][ 0 ], lng: bounds[ 0 ][ 1 ] }
-    var ne           = { lat: bounds[ 1 ][ 0 ], lng: bounds[ 1 ][ 1 ] }
-    var latLngBounds = new google.maps.LatLngBounds( sw, ne )
-    map.fitBounds( latLngBounds )
+    var l = layers[ layerId ]
+    if ( l ) {
+        var bounds       = l.properties.bounds
+        var sw           = { lat: bounds[ 0 ][ 0 ], lng: bounds[ 0 ][ 1 ] }
+        var ne           = { lat: bounds[ 1 ][ 0 ], lng: bounds[ 1 ][ 1 ] }
+        var latLngBounds = new google.maps.LatLngBounds( sw, ne )
+        map.fitBounds( latLngBounds )
+    }
+}
+
+var forceUpdateLayer = function ( e, layer ) {
+    removeLayer( e, layer )
+    layers[ layer.id ] = null
+    addLayer( e, layer )
+}
+
+var deleteLayer = function ( e, layerId ) {
+    var l = layers[ layerId ]
+    map.overlayMapTypes.setAt( l.properties.index, null )
+    delete layers[ layerId ]
 }
 
 EventBus.addEventListener( Events.APPS.DATA_VIS.MAP_INITIALIZED, mapInitialized )
 // layer events
 EventBus.addEventListener( Events.APPS.DATA_VIS.ADD_MAP_LAYER, addLayer )
+EventBus.addEventListener( Events.APPS.DATA_VIS.FORCE_UPDATE_LAYER, forceUpdateLayer )
 EventBus.addEventListener( Events.APPS.DATA_VIS.REMOVE_MAP_LAYER, removeLayer )
 EventBus.addEventListener( Events.APPS.DATA_VIS.MAP_LAYER_CHANGE_OPACITY, changeLayerOpacity )
 EventBus.addEventListener( Events.APPS.DATA_VIS.MAP_LAYER_ZOOM_TO, zoomToLayer )
+EventBus.addEventListener( Events.APPS.DATA_VIS.LAYER_DELETE, deleteLayer )
 
 module.exports = {
     init: init

@@ -67,6 +67,42 @@ RasterBand.prototype.setBandIndex = function ( bandIndex ) {
             }
             , success   : function ( response ) {
                 $this.properties = response
+                //init default values for bands
+                if ( $this.band.palette[ 0 ][ 0 ] < 0 && $this.band.palette[ 1 ][ 0 ] < 0 ) {
+                    var total = 0
+                    for ( var i = 0; i < $this.properties.histogram.length; i++ ) {
+                        total += $this.properties.histogram[ i ]
+                    }
+                    var cutOff = 1
+                    var left   = cutOff * total / 100
+                    var right  = (100 - cutOff) * total / 100
+                    
+                    
+                    var noPixPerBucket = ($this.properties.max - $this.properties.min) / $this.properties.histogram.length
+                    
+                    total   = 0
+                    var min = 0
+                    for ( var i = 0; i < $this.properties.histogram.length; i++ ) {
+                        total += $this.properties.histogram[ i ]
+                        if ( total >= left ) {
+                            min = i * noPixPerBucket + $this.properties.min
+                            break
+                        }
+                    }
+                    
+                    total   = 0
+                    var max = 0
+                    for ( var i = 0; i < $this.properties.histogram.length; i++ ) {
+                        total += $this.properties.histogram[ i ]
+                        if ( total >= right ) {
+                            max = (i + 1) * noPixPerBucket + $this.properties.min
+                            break
+                        }
+                    }
+                    $this.band.palette[ 0 ][ 0 ] = min//$this.properties.min
+                    $this.band.palette[ 1 ][ 0 ] = max//$this.properties.max
+                }
+                
                 $this.bandHistogramProgressLoader.fadeOut( 100 )
                 
                 $this.initHistogram()
@@ -81,7 +117,6 @@ RasterBand.prototype.setBandIndex = function ( bandIndex ) {
                 $this.initHistogramOverlay()
                 $this.bandHistogramOverlayElem.show()
                 $this.updateHistogramOverlay()
-                // this.bandHistogramOverlay.draggable( false ).resizable( false )
                 
                 $this._initialized = true
             }

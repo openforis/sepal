@@ -2,7 +2,8 @@
  * @author Mino Togna
  */
 require( './app-manager.scss' )
-
+var EventBus   = require( '../event/event-bus' )
+var Events     = require( '../event/events' )
 var IFrameApp  = require( './apps/iframe/iframe-app-mv' )
 var DataVisApp = require( './apps/data-vis/data-vis-mv' )
 
@@ -20,6 +21,8 @@ var init         = function () {
     btnClose.click( function ( e ) {
         e.preventDefault()
         html.modal( 'hide' )
+        
+        EventBus.dispatch( Events.APP_MANAGER.CLOSED )
     } )
     
     html.on( 'hidden.bs.modal', function ( e ) {

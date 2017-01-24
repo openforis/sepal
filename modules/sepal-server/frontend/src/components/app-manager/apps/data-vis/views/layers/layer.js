@@ -15,18 +15,17 @@ var LayerClass = function ( container, layer ) {
     this.html = html.clone()
     this.html.data( 'layer-id', layer.id )
     
-    this.options            = layer
-    this.options.visible    = false
+    this.options         = layer
+    this.options.visible = false
     
-    this.layerOptions       = LayerOptions.newInstance( this.html.find( '.layer-options' ), layer )
-    this.layerOptionButtons = LayerOptionButtons.newInstance( this.html.find( '.layer-option-buttons' ), layer, this.layerOptions )
-    
-    var path = layer.path
-    if ( path.indexOf( '/' ) > 0 ) {
-        path = path.slice( path.lastIndexOf( '/' ) + 1 )
+    var name = layer.path
+    if ( name.indexOf( '/' ) >= 0 ) {
+        name = name.slice( name.lastIndexOf( '/' ) + 1 )
     }
+    
+   
     this.name = this.html.find( '.name' )
-    this.name.html( path )
+    this.name.html( name )
     this.name.mouseenter( function () {
         $this.layerOptionButtons.layerNameHover = true
         setTimeout( function () {
@@ -54,6 +53,12 @@ var LayerClass = function ( container, layer ) {
             $this.show()
         }
     } )
+    
+    // init ui properties
+    this.layerOptions       = LayerOptions.newInstance( this.html.find( '.layer-options' ), this.options, function () {
+        $this.show()
+    } )
+    this.layerOptionButtons = LayerOptionButtons.newInstance( this.html.find( '.layer-option-buttons' ), this.options, this.layerOptions )
     
     
 }
@@ -85,6 +90,16 @@ LayerClass.prototype.hide = function () {
     }
     
     EventBus.dispatch( Events.APPS.DATA_VIS.REMOVE_MAP_LAYER, null, this.options )
+}
+
+LayerClass.prototype.delete = function () {
+    var $this = this
+    
+    $this.layerOptions.hide()
+    
+    this.html.fadeOut( 500, function () {
+        $this.html.remove()
+    } )
 }
 
 var newInstance = function ( container, layer ) {
