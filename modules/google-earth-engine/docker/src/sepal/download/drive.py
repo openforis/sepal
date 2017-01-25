@@ -72,7 +72,6 @@ class DriveDownload(object):
             downloader = MediaIoBaseDownload(downloaded_file, request)
 
             modified_time = self._touch(drive_file, folder_id)
-
             done = False
             while self.running and not done:
                 if self._seconds_since(modified_time) > 60:  # Heartbeat after 1 minutes download
@@ -105,11 +104,11 @@ class DriveDownload(object):
         def update_file(id):
             self.drive.files().update(
                 fileId=id,
-                body={'viewedByMeTime': now.strftime("%Y-%m-%dT%H:%M:%S" + 'Z')}
+                body={'modifiedTime': now.strftime("%Y-%m-%dT%H:%M:%S" + 'Z')}
             ).execute()
-            update_file(drive_file['id'])
-            update_file(folder_id)
 
+        update_file(drive_file['id'])
+        update_file(folder_id)
         return now
 
     def _files_in_folder(self, folder_id):
