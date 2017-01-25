@@ -42,7 +42,7 @@ class FilesEndpoint {
             }
 
             delete('/user/files/{path}') {
-                def path = URLDecoder.decode(params.required('path', String), "UTF-8")
+                def path = '/' + URLDecoder.decode(params.required('path', String), "UTF-8")
                 component.submit(
                         new DeleteFile(username: currentUser.username, path: path)
                 )

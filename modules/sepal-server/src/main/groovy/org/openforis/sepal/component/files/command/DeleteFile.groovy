@@ -5,7 +5,7 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.files.internal.UserDir
 import org.openforis.sepal.util.annotation.Data
 
-@Data
+@Data(callSuper = true)
 class DeleteFile extends AbstractCommand<Void> {
     String path
 }
