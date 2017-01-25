@@ -35,18 +35,18 @@ fmask_value_by_class_name = {
     'cloud': 4
 }
 viz_by_bands = {
-    # 'B3, B2, B1': lambda params: {'bands': _bands(RED, GREEN, BLUE), 'min': 500, 'max': 5000, 'gamma': '2.1, 2.0, 1.7'},
-    # 'B4, B3, B2': lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 200, 'max': 5000, 'gamma': 1.2},
-    # 'B4, B5, B3': lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 200, 'max': 5000, 'gamma': 1.2},
-    # 'B7, B4, B3': lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 200, 'max': 5000, 'gamma': 1.2},
-    # 'B7, B5, B3': lambda params: {'bands': _bands(SWIR2, SWIR1, RED), 'min': 200, 'max': 5000, 'gamma': 1.2},
-    # 'B7, B4, B2': lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 200, 'max': 5000, 'gamma': 1.2},
-    'B3, B2, B1': lambda params: {'bands': _bands(RED, GREEN, BLUE), 'min': 0.05, 'max': 0.5, 'gamma': '2.0, 2.1, 1.8'},
-    'B4, B3, B2': lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
-    'B4, B5, B3': lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
-    'B7, B4, B3': lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
-    'B7, B5, B3': lambda params: {'bands': _bands(SWIR2, SWIR1, RED), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
-    'B7, B4, B2': lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+    # 'B3, B2, B1': lambda params: {'bands': _bands(RED, GREEN, BLUE), 'min': 0.05, 'max': 0.5, 'gamma': '2.0, 2.1, 1.8'},
+    # 'B4, B3, B2': lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+    # 'B4, B5, B3': lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+    # 'B7, B4, B3': lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+    # 'B7, B5, B3': lambda params: {'bands': _bands(SWIR2, SWIR1, RED), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+    # 'B7, B4, B2': lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 0.05, 'max': 0.5, 'gamma': 1.7},
+    'B3, B2, B1': lambda params: {'bands': _bands(RED, GREEN, BLUE), 'min': 500, 'max': 5000, 'gamma': '2.0, 2.1, 1.8'},
+    'B4, B3, B2': lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 500, 'max': 5000, 'gamma': 1.7},
+    'B4, B5, B3': lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 500, 'max': 5000, 'gamma': 1.7},
+    'B7, B4, B3': lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 500, 'max': 5000, 'gamma': 1.7},
+    'B7, B5, B3': lambda params: {'bands': _bands(SWIR2, SWIR1, RED), 'min': 500, 'max': 5000, 'gamma': 1.7},
+    'B7, B4, B2': lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 500, 'max': 5000, 'gamma': 1.7},
 
 
     'temp': lambda params: {'bands': 'temp', 'min': 200, 'max': 400, 'palette': '0000FF, FF0000'},
