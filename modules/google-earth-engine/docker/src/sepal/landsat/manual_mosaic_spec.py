@@ -61,28 +61,14 @@ class ManualMosaicSpec(LandsatMosaicSpec):
 
         :return: An ee.ImageCollection().
         """
-        images = ee.List([self._to_image(image_id, collection_name) for image_id in image_ids]) \
-            .removeAll([None])
-
-        collection = ee.ImageCollection(images)
+        image_id_list = ee.List(list(image_ids))
+        collection = ee.ImageCollection(collection_name).filter(
+            ee.Filter.inList('system:index', image_id_list)
+        )
         normalized_collection = collection.map(
             lambda image: self._normalize_band_names(image, collection_name)
         )
         return normalized_collection
-
-    @staticmethod
-    def _to_image(image_id, collection_name):
-        """Retrieves an image with the specified id from the GEE landsat collections.
-
-        :param image_id: The id of the image to retrieve.
-        :type image: str
-
-        :return: An ee.Image or None if the image isn't found.
-        """
-        # Finds the image with the specified id in the collection
-        return ee.ImageCollection(collection_name).filter(
-            ee.Filter.eq('system:index', image_id)
-        ).first()
 
     def __str__(self):
         return 'landsat.ManualMosaicSpec(' + str(self.spec) + ')'
