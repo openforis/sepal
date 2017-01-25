@@ -4,6 +4,7 @@
 var EventBus                = require( '../../event/event-bus' )
 var Events                  = require( '../../event/events' )
 var FormScenesAutoSelection = require( './scenes/form-scenes-autoselection-form' )
+var ScenesRetrieve          = require( './scenes/scenes-retrieve' )
 var FormMosaicPreview       = require( './mosaic/form-mosaic-preview' )
 var FormMosaicRetrieve      = require( './mosaic/form-mosaic-retrieve' )
 
@@ -20,6 +21,7 @@ var init = function ( container ) {
     btnToggleLayerVisibility = html.find( '.btn-hide-scene-areas' )
     
     FormScenesAutoSelection.init( html.find( '.row-best-scenes-form' ) )
+    ScenesRetrieve.init( html.find( '.row-scenes-retrieve' ) )
     
     initEventHandlers()
     reset()
@@ -35,16 +37,26 @@ var initEventHandlers = function () {
         
         FormMosaicPreview.hide()
         FormMosaicRetrieve.hide()
+        ScenesRetrieve.hide()
         FormScenesAutoSelection.toggleVisibility()
     } )
     
     btnRetrieveScenes.click( function ( e ) {
-        e.preventDefault()
-        EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES )
-        EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW )
-        setTimeout( function (  ) {
-            EventBus.dispatch(Events.ALERT.SHOW_INFO , null , 'The download will start shortly.<br/>You can monitor the progress in the task manager')
-        } , 100 )
+        // e.preventDefault()
+        // EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES )
+        // EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW )
+        // setTimeout( function () {
+        //     EventBus.dispatch( Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager' )
+        // }, 100 )
+        
+        $( "#search-retrieve .btn-toggle-section" ).not( this ).removeClass( 'active' )
+        $( this ).toggleClass( 'active' )
+        
+        FormMosaicPreview.hide()
+        FormMosaicRetrieve.hide()
+        FormScenesAutoSelection.hide()
+        ScenesRetrieve.toggleVisibility()
+        
     } )
     
     
@@ -58,7 +70,9 @@ var initEventHandlers = function () {
 
 var collapse = function ( options ) {
     btnBestScenes.removeClass( 'active' )
+    btnRetrieveScenes.removeClass( 'active' )
     FormScenesAutoSelection.hide( options )
+    ScenesRetrieve.hide( options )
 }
 
 var reset = function () {
@@ -67,11 +81,12 @@ var reset = function () {
 }
 
 module.exports = {
-    init                  : init
-    , collapse            : collapse
-    , reset               : reset
+    init                     : init
+    , collapse               : collapse
+    , reset                  : reset
     // Scenes auto selection form set value methods
-    , setSortWeight       : FormScenesAutoSelection.setSortWeight
-    , setOffsetToTargetDay: FormScenesAutoSelection.setOffsetToTargetDay
-    , setSelectedSensors  : FormScenesAutoSelection.setSelectedSensors
+    , setSortWeight          : FormScenesAutoSelection.setSortWeight
+    , setOffsetToTargetDay   : FormScenesAutoSelection.setOffsetToTargetDay
+    , setSelectedSensors     : FormScenesAutoSelection.setSelectedSensors
+    , setSelectedScenesNumber: ScenesRetrieve.setScenesNumber
 }

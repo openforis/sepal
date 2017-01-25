@@ -83,7 +83,8 @@ module.exports = {
     , enableScenesSelectionRequiredButtons : enableScenesSelectionRequiredButtons
     , disableScenesSelectionRequiredButtons: disableScenesSelectionRequiredButtons
     
-    , setSortWeight       : SectionScenes.setSortWeight
-    , setOffsetToTargetDay: SectionScenes.setOffsetToTargetDay
-    , setSelectedSensors  : SectionScenes.setSelectedSensors
+    , setSortWeight          : SectionScenes.setSortWeight
+    , setOffsetToTargetDay   : SectionScenes.setOffsetToTargetDay
+    , setSelectedSensors     : SectionScenes.setSelectedSensors
+    , setSelectedScenesNumber: SectionScenes.setSelectedScenesNumber
 }
