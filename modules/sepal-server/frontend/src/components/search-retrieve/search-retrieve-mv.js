@@ -77,7 +77,7 @@ var getRequestParams = function ( url, addAoi, showLoader ) {
 }
 
 var retrieveScenes = function () {
-    var params = getRequestParams( '/api/data/scenes/retrieve', false , false )
+    var params = getRequestParams( '/api/data/scenes/retrieve', false, false )
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
@@ -169,11 +169,13 @@ var onRemoveEELayer = function ( e ) {
 }
 
 var onSceneAreaChange = function ( e ) {
-    if ( SceneAreaModel.getSelectedSceneIds().length > 0 ) {
+    var scenesNo = SceneAreaModel.getSelectedSceneIds().length
+    if ( scenesNo > 0 ) {
         View.enableScenesSelectionRequiredButtons()
     } else {
         View.disableScenesSelectionRequiredButtons()
     }
+    View.setSelectedScenesNumber( scenesNo )
 }
 // app events
 EventBus.addEventListener( Events.APP.LOAD, init )

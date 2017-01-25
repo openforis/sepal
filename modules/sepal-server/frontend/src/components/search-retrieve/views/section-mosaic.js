@@ -6,6 +6,7 @@ var Events                  = require( '../../event/events' )
 var FormMosaicPreview       = require( './mosaic/form-mosaic-preview' )
 var FormMosaicRetrieve      = require( './mosaic/form-mosaic-retrieve' )
 var FormScenesAutoSelection = require( './scenes/form-scenes-autoselection-form' )
+var ScenesRetrieve          = require( './scenes/scenes-retrieve' )
 
 var html                     = null
 var btnPreviewMosaic         = null
@@ -36,6 +37,7 @@ var initEventHandlers = function () {
         
         FormMosaicPreview.toggleVisibility()
         FormScenesAutoSelection.hide()
+        ScenesRetrieve.hide()
         FormMosaicRetrieve.hide()
         
     } )
@@ -48,6 +50,7 @@ var initEventHandlers = function () {
         
         FormMosaicPreview.hide()
         FormScenesAutoSelection.hide()
+        ScenesRetrieve.hide()
         FormMosaicRetrieve.toggleVisibility()
     } )
     
