@@ -13,7 +13,7 @@ var setUsers = function ( usersDetails, budgets ) {
     userBudgets = budgets
     
     $.each( usersDetails, function ( i, userDetail ) {
-        var user = UserM( userDetail )
+        var user       = UserM( userDetail )
         var userBudget = userBudgets[ user.username ]
         user.setUserSandboxReport( userBudget )
         users.push( user )
@@ -34,6 +34,7 @@ var filterUsers = function ( searchString ) {
             if (
                 $.containsString( user.name.toLowerCase(), searchString )
                 || $.containsString( user.username.toLowerCase(), searchString )
+                || $.containsString( user.organization.toLowerCase(), searchString )
             // || $.containsString( user.status.toLowerCase(), searchString )
             ) {
                 match = true

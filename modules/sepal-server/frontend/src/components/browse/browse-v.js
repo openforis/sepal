@@ -204,6 +204,7 @@ var removeDir = function ( level ) {
 
 var isImage = function ( file ) {
     var ext = file.name.substring( file.name.lastIndexOf( '.' ) + 1 )
+    ext = ext.toLowerCase()
     return imagesExtensions.indexOf( ext ) !== -1
 }
 
