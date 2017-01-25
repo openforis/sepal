@@ -1,6 +1,5 @@
 import gdal
 import mapnik
-import operator
 import osr
 
 from config import to_file, to_path
@@ -22,16 +21,9 @@ def band_info(raster_file, band_index):
     ds = gdal.OpenShared(raster_file)
     band = ds.GetRasterBand(band_index)
     nodata = band.GetNoDataValue()
-    (min, max, mean, std_dev) = band.ComputeStatistics(False)
-    if nodata is None:
-        nodata = min
-        band.SetNoDataValue(nodata)
-
-    (min, max, mean, std_dev) = band.ComputeStatistics(False)
-    histogram = band.GetHistogram(min, max, 256)
-
+    (min, max, mean, std_dev) = band.ComputeStatistics(True)
+    histogram = band.GetHistogram(min, max, 256, approx_ok=1)
     return {
-        # 'envelope': [[envelope.maxx, envelope.maxy], [envelope.minx, envelope.miny]],
         'nodata': nodata,
         'min': min,
         'max': max,
@@ -75,6 +67,7 @@ class RasterLayer(Layer):
         self.file = file
         self.nodata = nodata
         self.nodata_tolerance = nodata_tolerance
+        self.add_overview()
         self.band_layers = [
             _BandLayer(file, band, nodata, nodata_tolerance)
             for band in bands]
@@ -113,6 +106,11 @@ class RasterLayer(Layer):
         if features:
             return features[0]['value']
         return None
+
+    def add_overview(self):
+        ds = gdal.OpenShared(self.file)
+        if not ds.GetRasterBand(1).GetOverviewCount():
+            ds.BuildOverviews('average', [2, 4, 8, 16])
 
 
 class _BandLayer(object):
