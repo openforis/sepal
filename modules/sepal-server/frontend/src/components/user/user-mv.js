@@ -8,10 +8,36 @@ var UserModel = require( './user-m' )
 var Loader    = require( '../loader/loader' )
 var View      = require( './user-v' )
 
+var loadUserSanboxIntervalId = null
+var viewInitialized          = false
+
 var CurrentUser = null
 
 var userDetailsLoaded = function ( e, userDetails ) {
     CurrentUser = UserModel( userDetails )
+    
+    if ( loadUserSanboxIntervalId ) {
+        clearInterval( loadUserSanboxIntervalId )
+    }
+    loadUserSandbox()
+    loadUserSanboxIntervalId = setInterval( loadUserSandbox, 1000 * 60 )
+}
+
+var loadUserSandbox = function () {
+    var params = {
+        url      : '/api/sandbox/report'
+        , success: function ( response ) {
+            CurrentUser.setUserSandboxReport( response )
+            
+            EventBus.dispatch( Events.USER.USER_SANDBOX_REPORT_LOADED, null, CurrentUser )
+            
+            if ( viewInitialized ) {
+                View.updateUserSandbox( CurrentUser )
+            }
+        }
+    }
+    
+    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
 var getCurrentUser = function () {
@@ -21,17 +47,9 @@ var getCurrentUser = function () {
 var show = function ( e, type ) {
     if ( type == 'user' ) {
         View.init()
+        View.setUser( CurrentUser )
         
-        var params = {
-            url      : '/api/sandbox/report'
-            , success: function ( response ) {
-                CurrentUser.setUserSandboxReport( response )
-                
-                View.setUser( CurrentUser )
-            }
-        }
-        
-        EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+        viewInitialized = true
     }
 }
 
@@ -54,21 +72,6 @@ var removeSession = function ( evt, sessionId ) {
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
-// var saveUserDetail = function ( e, data ) {
-//     var params = {
-//         url         : '/user/details'
-//         , beforeSend: function () {
-//             Loader.show()
-//         }
-//         , success   : function ( response ) {
-//             Loader.hide( { delay: 200 } )
-//             EventBus.dispatch( Events.USER.USER_DETAILS_LOADED, null, response )
-//
-//         }
-//     }
-//     EventBus.dispatch( Events.AJAX.POST, null, params )
-// }
-
 var onPasswordChanged = function ( e ) {
     View.showEditUserDetailsForm()
 }
@@ -89,14 +92,8 @@ EventBus.addEventListener( Events.SECTION.SHOW, show )
 //user loaded
 EventBus.addEventListener( Events.USER.USER_DETAILS_LOADED, userDetailsLoaded )
 EventBus.addEventListener( Events.USER.PASSWORD_CHANGED, onPasswordChanged )
-
-// user edit events
-// EventBus.addEventListener( Events.SECTION.USER.SAVE_USER_DETAILS, saveUserDetail )
-// EventBus.addEventListener( Events.SECTION.USER.CHANGE_PASSWORD, changePassword )
-
 // sandbox edit events
 EventBus.addEventListener( Events.SECTION.USER.REMOVE_SESSION, removeSession )
-
 // reload user details
 EventBus.addEventListener( Events.USER.RELOAD_USER_DETAILS, reloadUserDetails )
 

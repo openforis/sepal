@@ -16,7 +16,7 @@ var Events = {
     , APP: {
         LOAD            : 'app.load'
         , DESTROY       : 'app.destroy'
-        , USER_LOGGED_IN: 'app.user-logged-in'
+        , USER_LOGGED_IN: 'app.user_logged_in'
     }
     
     , LOGIN: {
@@ -25,49 +25,49 @@ var Events = {
     }
     
     , SECTION: {
-        CLOSE_ALL: 'section.close-all'
+        CLOSE_ALL: 'section.close_all'
         , SHOW   : 'section.show'
         , SHOWN  : 'section.shown'
         , REDUCE : 'section.reduce'
         
         , NAV_MENU: {
-            LOADED    : 'section.nav-menu.loaded'
-            , COLLAPSE: 'section.nav-menu-collapse'
+            LOADED    : 'section.nav_menu.loaded'
+            , COLLAPSE: 'section.nav_menu_collapse'
         }
         
         , SEARCH: {
-            // SHOW_SCENE_AREA: 'section.search.show-scene-area'
-            FORM_SUBMIT         : 'section.search.form-submit'
-            , SCENE_AREAS_LOADED: 'section.search.scene-areas-loaded'
+            // SHOW_SCENE_AREA: 'section.search.show_scene_area'
+            FORM_SUBMIT         : 'section.search.form_submit'
+            , SCENE_AREAS_LOADED: 'section.search.scene_areas_loaded'
             
             , SEARCH_PARAMS: {
-                WEIGHT_CHANGE              : 'section.search.search-params.weight-change'
-                , WEIGHT_CHANGED           : 'section.search.search-params.weight-changed'
-                , OFFSET_TARGET_DAY_CHANGE : 'section.search.search-params.offset-target-day-change'
-                , OFFSET_TARGET_DAY_CHANGED: 'section.search.search-params.offset-target-day-changed'
-                , SELECT_SENSOR            : 'section.search.search-params.select-sensor'
-                , DESELECT_SENSOR          : 'section.search.search-params.deselect-sensor'
-                , SENSORS_CHANGED          : 'section.search.search-params.sensors-changed'
-                , MIN_SCENES_CHANGE        : 'section.search.search-params.min-scenes-change'
-                , MIN_SCENES_CHANGED       : 'section.search.search-params.min-scenes-changed'
-                , MAX_SCENES_CHANGE        : 'section.search.search-params.max-scenes-change'
-                , MAX_SCENES_CHANGED       : 'section.search.search-params.max-scenes-changed'
+                WEIGHT_CHANGE              : 'section.search.search_params.weight_change'
+                , WEIGHT_CHANGED           : 'section.search.search_params.weight_changed'
+                , OFFSET_TARGET_DAY_CHANGE : 'section.search.search_params.offset_target_day_change'
+                , OFFSET_TARGET_DAY_CHANGED: 'section.search.search_params.offset_target_day_changed'
+                , SELECT_SENSOR            : 'section.search.search_params.select_sensor'
+                , DESELECT_SENSOR          : 'section.search.search_params.deselect_sensor'
+                , SENSORS_CHANGED          : 'section.search.search_params.sensors_changed'
+                , MIN_SCENES_CHANGE        : 'section.search.search_params.min_scenes_change'
+                , MIN_SCENES_CHANGED       : 'section.search.search_params.min_scenes_changed'
+                , MAX_SCENES_CHANGE        : 'section.search.search_params.max_scenes_change'
+                , MAX_SCENES_CHANGED       : 'section.search.search_params.max_scenes_changed'
             }
             
         }
         
         , SEARCH_RETRIEVE: {
-            BEST_SCENES      : 'section.search-retrieve.best-scenes'
-            , RETRIEVE_SCENES: 'section.search-retrieve.retrieve-scenes'
-            , PREVIEW_MOSAIC : 'section.search-retrieve.preview-mosaic'
-            , RETRIEVE_MOSAIC: 'section.search-retrieve.retrieve-mosaic'
-            , COLLAPSE_VIEW  : 'section.search-retrieve.collapse-view'
+            BEST_SCENES      : 'section.search_retrieve.best_scenes'
+            , RETRIEVE_SCENES: 'section.search_retrieve.retrieve_scenes'
+            , PREVIEW_MOSAIC : 'section.search_retrieve.preview_mosaic'
+            , RETRIEVE_MOSAIC: 'section.search_retrieve.retrieve_mosaic'
+            , COLLAPSE_VIEW  : 'section.search_retrieve.collapse_view'
         }
         
         , BROWSE: {
-            NAV_ITEM_CLICK : 'section.browse.nav-item-click'
-            , DOWNLOAD_ITEM: 'section.browse.download-item'
-            , DELETE_ITEM  : 'section.browse.delete-item'
+            NAV_ITEM_CLICK : 'section.browse.nav_item_click'
+            , DOWNLOAD_ITEM: 'section.browse.download_item'
+            , DELETE_ITEM  : 'section.browse.delete_item'
         }
         
         , PROCESS: {}
@@ -75,91 +75,92 @@ var Events = {
         , TERMINAL: {}
         
         , SCENES_SELECTION: {
-            RESET          : 'section.scenes-selection.reset'
-            , SELECT       : 'section.scenes-selection.select'
-            , DESELECT     : 'section.scenes-selection.deselect'
-            , RELOAD_SCENES: 'section.scenes-selection.reload-scenes'
+            RESET          : 'section.scenes_selection.reset'
+            , SELECT       : 'section.scenes_selection.select'
+            , DESELECT     : 'section.scenes_selection.deselect'
+            , RELOAD_SCENES: 'section.scenes_selection.reload_scenes'
         }
         
         , TASK_MANAGER: {
-            REMOVE_TASK   : 'section.task-manager.remove-task'
-            , CANCEL_TASK : 'section.task-manager.cancel-task'
-            , EXECUTE_TASK: 'section.task-manager.execute-task'
-            , CHECK_STATUS: 'section.task-manager.check-status'
-            , UPDATED     : 'section.task-manager.updated'
+            REMOVE_TASK   : 'section.task_manager.remove_task'
+            , CANCEL_TASK : 'section.task_manager.cancel_task'
+            , EXECUTE_TASK: 'section.task_manager.execute_task'
+            , CHECK_STATUS: 'section.task_manager.check_status'
+            , UPDATED     : 'section.task_manager.updated'
         }
         
         , USER : {
-            REMOVE_SESSION     : 'section.user.remove-session'
-            , SAVE_USER_DETAILS: 'section.user.save-user-details'
-            , CHANGE_PASSWORD  : 'section.user.change-password'
+            REMOVE_SESSION     : 'section.user.remove_session'
+            , SAVE_USER_DETAILS: 'section.user.save_user_details'
+            , CHANGE_PASSWORD  : 'section.user.change_password'
         }
         , USERS: {
-            LIST_FILTER_CHANGE: 'section.users.list-filter-change'
-            , SELECT_USER     : 'section.users.select-user'
-            , SHOW_USERS_LIST : 'section.users.show-users-list'
-            , SHOW_INVITE_USER: 'section.users.show-invite-user'
-            , SHOW_EDIT_USER  : 'section.users.show-edit-user'
-            , SHOW_DELETE_USER: 'section.users.show-delete-user'
+            LIST_FILTER_CHANGE: 'section.users.list_filter_change'
+            , SELECT_USER     : 'section.users.select_user'
+            , SHOW_USERS_LIST : 'section.users.show_users_list'
+            , SHOW_INVITE_USER: 'section.users.show_invite_user'
+            , SHOW_EDIT_USER  : 'section.users.show_edit_user'
+            , SHOW_DELETE_USER: 'section.users.show_delete_user'
         }
     }
     
     , MAP: {
-        ZOOM_TO                       : 'map.zoom-to'
-        , ZOOM_CHANGED                : 'map.zoom-changed'
-        // , LOAD_SCENE_AREAS: 'map.load-scene-areas'
-        , SCENE_AREA_CLICK            : 'map.scene-area-click'
-        , ADD_LAYER                   : 'map.add-layer'
-        , ADD_EE_LAYER                : 'map.add-ee-layer'
-        , REMOVE_EE_LAYER             : 'map.remove-ee-layer'
-        , EE_LAYER_TOGGLE_VISIBILITY  : 'map.remove-ee-layer-toggle-visibility'
-        , SCENE_AREA_RESET            : 'map.scene-area-reset'
-        , SCENE_AREA_TOGGLE_VISIBILITY: 'map.scene-area-toggle-visibility'
-        , ADD_OVERLAY_MAP_TYPE        : 'map.add-overlay-map-type'
-        , REMOVE_OVERLAY_MAP_TYPE     : 'map.remove-overlay-map-type'
-        , POLYGON_DRAW                : 'map.polygon-draw'
-        , POLYGON_DRAWN               : 'map.polygon-drawn'
-        , POLYGON_CLEAR               : 'map.polygon-clear'
+        ZOOM_TO                       : 'map.zoom_to'
+        , ZOOM_CHANGED                : 'map.zoom_changed'
+        // , LOAD_SCENE_AREAS: 'map.load_scene_areas'
+        , SCENE_AREA_CLICK            : 'map.scene_area_click'
+        , ADD_LAYER                   : 'map.add_layer'
+        , ADD_EE_LAYER                : 'map.add_ee_layer'
+        , REMOVE_EE_LAYER             : 'map.remove_ee_layer'
+        , EE_LAYER_TOGGLE_VISIBILITY  : 'map.remove_ee_layer_toggle_visibility'
+        , SCENE_AREA_RESET            : 'map.scene_area_reset'
+        , SCENE_AREA_TOGGLE_VISIBILITY: 'map.scene_area_toggle_visibility'
+        , ADD_OVERLAY_MAP_TYPE        : 'map.add_overlay_map_type'
+        , REMOVE_OVERLAY_MAP_TYPE     : 'map.remove_overlay_map_type'
+        , POLYGON_DRAW                : 'map.polygon_draw'
+        , POLYGON_DRAWN               : 'map.polygon_drawn'
+        , POLYGON_CLEAR               : 'map.polygon_clear'
     }
     
     // events that occur when a model changes
     , MODEL: {
         SCENE_AREA: {
-            CHANGE: 'model.scene-area-change'
+            CHANGE: 'model.scene_area_change'
         }
     }
     
     , USER: {
-        USER_DETAILS_LOADED  : "user.user-details-loaded"
-        , RELOAD_USER_DETAILS: "user.reload-user-details"
-        , PASSWORD_CHANGED   : "user.password-changed"
-        , LOGGED_OUT         : "user.logged-out"
+        USER_DETAILS_LOADED         : "user.user_details_loaded"
+        , USER_SANDBOX_REPORT_LOADED: "user.user_sandbox_report_loaded"
+        , RELOAD_USER_DETAILS       : "user.reload_user_details"
+        , PASSWORD_CHANGED          : "user.password_changed"
+        , LOGGED_OUT                : "user.logged_out"
     }
     
     , ALERT: {
-        SHOW_INFO: "alert.show-info"
+        SHOW_INFO: "alert.show_info"
     }
     
     , APP_MANAGER: {
-        OPEN_IFRAME   : 'app-manager.open-iframe'
-        , OPEN_RSTUDIO: 'app-manager.open-rstudio'
-        , OPEN_DATAVIS: 'app-manager.open-datavis'
-        , CLOSED      : 'app-manager.closed'
+        OPEN_IFRAME   : 'app_manager.open_iframe'
+        , OPEN_RSTUDIO: 'app_manager.open_rstudio'
+        , OPEN_DATAVIS: 'app_manager.open_datavis'
+        , CLOSED      : 'app_manager.closed'
     }
     
     , APPS: {
         DATA_VIS: {
-            MAP_INITIALIZED           : 'apps.data-vis.map-initialized'
-            , ADD_MAP_LAYER           : 'apps.data-vis.add-map-layer'
-            , FORCE_UPDATE_LAYER      : 'apps.data-vis.force_update_layer'
-            , REMOVE_MAP_LAYER        : 'apps.data-vis.remove-map-layer'
-            , MAP_LAYER_TILES_LOADING : 'apps.data-vis.map_layer_tiles_loading'
-            , MAP_TILES_LOADED        : 'apps.data-vis.map_tiles_loaded'
-            , MAP_LAYER_CHANGE_OPACITY: 'apps.data-vis.map_layer_change_opacity'
-            , MAP_LAYER_ZOOM_TO       : 'apps.data-vis.map_layer_zoom_to'
-            , LAYER_DELETE            : 'apps.data-vis.layer_delete'
-            , ADD_FILE                : 'apps.data-vis.add_file'
-            , LAYERS_LOADED           : 'apps.data-vis.layers_loaded'
+            MAP_INITIALIZED           : 'apps.data_vis.map_initialized'
+            , ADD_MAP_LAYER           : 'apps.data_vis.add_map_layer'
+            , FORCE_UPDATE_LAYER      : 'apps.data_vis.force_update_layer'
+            , REMOVE_MAP_LAYER        : 'apps.data_vis.remove_map_layer'
+            , MAP_LAYER_TILES_LOADING : 'apps.data_vis.map_layer_tiles_loading'
+            , MAP_TILES_LOADED        : 'apps.data_vis.map_tiles_loaded'
+            , MAP_LAYER_CHANGE_OPACITY: 'apps.data_vis.map_layer_change_opacity'
+            , MAP_LAYER_ZOOM_TO       : 'apps.data_vis.map_layer_zoom_to'
+            , LAYER_DELETE            : 'apps.data_vis.layer_delete'
+            , ADD_FILE                : 'apps.data_vis.add_file'
+            , LAYERS_LOADED           : 'apps.data_vis.layers_loaded'
         }
     }
     

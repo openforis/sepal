@@ -25,6 +25,10 @@ var init = function () {
 var setUser = function ( user ) {
     EditUserInfo.setUser( user )
     
+    updateUserSandbox( user )
+}
+
+var updateUserSandbox = function ( user ) {
     UserSandboxReport.setSessions( user.getSessions() )
     UserSandboxReport.setSpending( user.getSpending() )
 }
@@ -32,6 +36,7 @@ var setUser = function ( user ) {
 module.exports = {
     init                     : init
     , setUser                : setUser
+    , updateUserSandbox      : updateUserSandbox
     , showEditUserDetailsForm: EditUserInfo.showEditUserDetailsForm
     , removeSession          : UserSandboxReport.removeSession
 }
