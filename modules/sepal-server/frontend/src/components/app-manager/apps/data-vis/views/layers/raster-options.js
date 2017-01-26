@@ -10,7 +10,8 @@ var RasterOptions = function ( layerOptions, onReady ) {
     var $this         = this
     this.layerOptions = layerOptions
     this.container    = this.layerOptions.rasterOptions
-    this.layer        = this.layerOptions.layer
+    // var layer         = $.extend( true, {}, this.layerOptions.layer )
+    this.layer        = $.extend( true, {}, this.layerOptions.layer )
     this.bandsUI      = []
     
     var params = {
@@ -30,7 +31,6 @@ var RasterOptions = function ( layerOptions, onReady ) {
                     $this.layer.bands[ 0 ] = { index: 3, palette: [ [ -1, '#000000' ], [ -1, '#FF0000' ] ] }
                     $this.layer.bands[ 1 ] = { index: 2, palette: [ [ -1, '#000000' ], [ -1, '#00FF00' ] ] }
                     $this.layer.bands[ 2 ] = { index: 1, palette: [ [ -1, '#000000' ], [ -1, '#0000FF' ] ] }
-                    
                 } else {
                     $this.layer.bands[ 0 ] = { index: 1, palette: [ [ -1, '#000000' ], [ -1, '#CCCCCC' ] ] }
                 }
@@ -52,7 +52,7 @@ var RasterOptions = function ( layerOptions, onReady ) {
                     
                     if ( bandsInitialzied() ) {
                         clearInterval( interval )
-    
+                        
                         $this.save( function ( response ) {
                             $this.layer.bounds = response.bounds
                             onReady()
@@ -79,22 +79,22 @@ RasterOptions.prototype.initBands = function () {
     
     this.bandsUI[ 0 ] = RasterBand.newInstance( this, bandsContainer, this.layer.bands[ 0 ] )
     
-    if ( this.bandCount > 3 ) {
+    if ( this.bandCount >= 3 ) {
         this.bandsUI[ 1 ] = RasterBand.newInstance( this, bandsContainer, this.layer.bands[ 1 ] )
         this.bandsUI[ 2 ] = RasterBand.newInstance( this, bandsContainer, this.layer.bands[ 2 ] )
     }
 }
 
 RasterOptions.prototype.bandIndexChange = function ( target, newIndex ) {
-    var $this = this
-    target.band.palette[0][0] = -1
-    target.band.palette[1][0] = -1
+    var $this                     = this
+    target.band.palette[ 0 ][ 0 ] = -1
+    target.band.palette[ 1 ][ 0 ] = -1
     target.setBandIndex( newIndex )
     
     $.each( $this.bandsUI, function ( i, bandUI ) {
         if ( target !== bandUI && bandUI.band.index === newIndex ) {
-            bandUI.band.palette[0][0] = -1
-            bandUI.band.palette[1][0] = -1
+            bandUI.band.palette[ 0 ][ 0 ] = -1
+            bandUI.band.palette[ 1 ][ 0 ] = -1
             bandUI.setBandIndex( -1 )
         }
     } )
@@ -102,12 +102,14 @@ RasterOptions.prototype.bandIndexChange = function ( target, newIndex ) {
 
 RasterOptions.prototype.update = function () {
     this.formNotify.stop().hide()
-    var $this = this
+    var $this   = this
+    $this.layer = $.extend( true, {}, $this.layerOptions.layer )
     setTimeout( function () {
         $.each( $this.bandsUI, function ( i, bandUI ) {
-            bandUI.updateHistogram()
+            // $this.layer.bands[i] = $.extend( true, {}, $this.layerOptions.layer.bands[ i ] )
+            bandUI.update( $this.layer.bands[ i ] )
         } )
-    }, 550 )
+    }, 510 )
 }
 
 RasterOptions.prototype.save = function ( callback ) {
@@ -135,7 +137,6 @@ RasterOptions.prototype.save = function ( callback ) {
                     Loader.show()
             }
             , success   : function ( response ) {
-                
                 EventBus.dispatch( Events.APPS.DATA_VIS.FORCE_UPDATE_LAYER, null, $this.layer )
                 
                 if ( callback )
@@ -143,6 +144,7 @@ RasterOptions.prototype.save = function ( callback ) {
                 else
                     Loader.hide( { delay: 300 } )
                 
+                $this.layerOptions.layer = $.extend( true, {}, $this.layer )
                 
                 setTimeout( function () {
                     $this.btnSave.enable()

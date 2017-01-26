@@ -10,7 +10,8 @@ var ShapeOptions = function ( layerOptions, onReady ) {
     var $this = this
     
     this.layerOptions = layerOptions
-    this.layer        = this.layerOptions.layer
+    this.layer        = $.extend( true, {}, this.layerOptions.layer )
+    // $this.layerOptions.layer = $.extend( true, {}, $this.layer )
     this.container    = this.layerOptions.shapeOptions
     
     //ui elements
@@ -83,6 +84,20 @@ ShapeOptions.prototype.init = function () {
     } )
 }
 
+ShapeOptions.prototype.update = function () {
+    this.layer = $.extend( true, {}, this.layerOptions.layer )
+    
+    if ( this.layer.fillColor ) {
+        this.fillColorPicker.colorpicker( 'setValue', this.layer.fillColor )
+    }
+    if ( this.layer.strokeColor ) {
+        this.strokeColorPicker.colorpicker( 'setValue', this.layer.strokeColor )
+    }
+    if ( this.layer.strokeWidth ) {
+        this.strokeWidthInput.val( this.layer.strokeWidth )
+    }
+}
+
 ShapeOptions.prototype.save = function ( callback ) {
     var $this  = this
     var params = {
@@ -101,6 +116,8 @@ ShapeOptions.prototype.save = function ( callback ) {
                 callback( response )
             else
                 Loader.hide( { delay: 300 } )
+            
+            $this.layerOptions.layer = $.extend( true, {}, $this.layer )
             
             setTimeout( function () {
                 $this.btnSave.enable()

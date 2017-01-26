@@ -7,10 +7,11 @@ var Events        = require( '../../../../../event/events' )
 var ShapeOptions  = require( './shape-options' )
 var RasterOptions = require( './raster-options' )
 
-var LayerOptions = function ( container, layer, onReady ) {
+var LayerOptions = function ( container, layerUI, onReady ) {
     var $this      = this
     this.container = container
-    this.layer     = layer
+    this.layerUI   = layerUI
+    this.layer     = this.layerUI.options
     
     var btnClose = this.container.find( '.btn-close-options' )
     btnClose.click( function () {
@@ -60,7 +61,7 @@ LayerOptions.prototype.isVisible = function () {
 
 LayerOptions.prototype.show = function () {
     this.deleteOptions.hide( 0 )
-    if ( this.isShape ) this.shapeOptions.show( 0 )
+    if ( this.isShape ) this.showShapeOptions()
     if ( this.isRaster ) this.showRasterOptions()
     
     this._show()
@@ -98,6 +99,11 @@ LayerOptions.prototype.initRemoveOptions = function () {
 LayerOptions.prototype.initShapeOptions = function ( onReady ) {
     this.shapeOptions.data( 'ui', ShapeOptions.newInstance( this, onReady ) )
 }
+LayerOptions.prototype.showShapeOptions = function () {
+    this.shapeOptions.show( 0 )
+    var ui = this.shapeOptions.data( 'ui' )
+    ui.update()
+}
 
 LayerOptions.prototype.showRasterOptions = function () {
     this.rasterOptions.show( 0 )
@@ -108,8 +114,8 @@ LayerOptions.prototype.initRasterOptions = function ( onReady ) {
     this.rasterOptions.data( 'ui', RasterOptions.newInstance( this, onReady ) )
 }
 
-var newInstance = function ( container, layer, onReady ) {
-    return new LayerOptions( container, layer, onReady )
+var newInstance = function ( container, layerUI, onReady ) {
+    return new LayerOptions( container, layerUI, onReady )
 }
 
 module.exports = {

@@ -46,7 +46,6 @@ var RasterBand = function ( rasterOptions, container, band ) {
     this.bandHistogramProgressLoader = this.html.find( '.band-histogram-progress-loader' )
     
     this.band = band
-    
     this.setBandIndex( this.band.index )
 }
 
@@ -113,6 +112,7 @@ RasterBand.prototype.setBandIndex = function ( bandIndex ) {
                 
                 $this.initColorPickers()
                 $this.html.find( '.color-picker' ).enable()
+                $this.updateColorPickers()
                 
                 $this.initHistogramOverlay()
                 $this.bandHistogramOverlayElem.show()
@@ -152,11 +152,16 @@ RasterBand.prototype.initHistogram = function () {
                 offset   : 0
             },
             chartPadding: 0
-            
         }
         
         this.histogram = new Chartist.Line( this.bandHistogram.get( 0 ), { series: [ [] ] }, options )
     }
+}
+
+RasterBand.prototype.update = function ( band ) {
+    this.band = band
+    
+    this.setBandIndex( this.band.index )
 }
 
 RasterBand.prototype.updateHistogram = function () {
@@ -181,7 +186,7 @@ RasterBand.prototype.initColorPickers = function () {
             $this.fromColor.find( 'i' ).css( 'background-color', color )
             from[ 1 ] = color
         } )
-        this.fromColor.colorpicker( 'setValue', from[ 1 ] )
+        // this.fromColor.colorpicker( 'setValue', from[ 1 ] )
         
         // to color
         var to       = palette[ 1 ]
@@ -192,8 +197,14 @@ RasterBand.prototype.initColorPickers = function () {
             $this.toColor.find( 'i' ).css( 'background-color', color )
             to[ 1 ] = color
         } )
-        this.toColor.colorpicker( 'setValue', to[ 1 ] )
+        // this.toColor.colorpicker( 'setValue', to[ 1 ] )
     }
+}
+
+RasterBand.prototype.updateColorPickers = function () {
+    var palette = this.band.palette
+    this.fromColor.colorpicker( 'setValue', palette[ 0 ][ 1 ] )
+    this.toColor.colorpicker( 'setValue', palette[ 1 ][ 1 ] )
 }
 
 RasterBand.prototype.initHistogramOverlay = function () {

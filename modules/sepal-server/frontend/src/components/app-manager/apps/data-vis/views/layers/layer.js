@@ -55,12 +55,10 @@ var LayerClass = function ( container, layer ) {
     } )
     
     // init ui properties
-    this.layerOptions       = LayerOptions.newInstance( this.html.find( '.layer-options' ), this.options, function () {
+    this.layerOptions       = LayerOptions.newInstance( this.html.find( '.layer-options' ), this, function () {
         $this.show()
     } )
     this.layerOptionButtons = LayerOptionButtons.newInstance( this.html.find( '.layer-option-buttons' ), this.options, this.layerOptions )
-    
-    
 }
 
 LayerClass.prototype.show = function () {

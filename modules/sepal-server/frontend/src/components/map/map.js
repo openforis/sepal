@@ -15,6 +15,7 @@ require( './polygon-draw' )
 // html template
 var html       = null
 // instance variables
+var google     = null
 var map        = null
 //fusion table id
 var FT_TableID = "15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F"
@@ -28,8 +29,9 @@ var show = function () {
     $( '.app' ).append( html )
     
     //load map
-    MapLoader.loadMap( 'map', function ( m ) {
-        map = m
+    MapLoader.loadMap( 'map', function ( m, g ) {
+        map    = m
+        google = g
         map.addListener( 'zoom_changed', function () {
             EventBus.dispatch( Events.MAP.ZOOM_CHANGED, null, map.getZoom() )
         } )
@@ -41,40 +43,40 @@ var zoomTo = function ( e, address ) {
         aoiLayer.setMap( null )
     }
     
-    MapLoader.load( function ( google ) {
-        
-        var geocoder = new google.maps.Geocoder()
-        geocoder.geocode( { 'address': address }, function ( results, status ) {
-            if ( status == google.maps.GeocoderStatus.OK ) {
-                map.panTo( results[ 0 ].geometry.location )
-                map.fitBounds( results[ 0 ].geometry.viewport )
-                
-                var FT_Options = {
-                    suppressInfoWindows: true,
-                    query              : {
-                        from  : FT_TableID,
-                        select: 'geometry',
-                        where : "'NAME_FAO' = '" + address + "';"
-                    },
-                    styles             : [ {
-                        polygonOptions: {
-                            fillColor    : "#FBFAF2",
-                            fillOpacity  : 0.07,
-                            strokeColor  : '#FBFAF2',
-                            strokeOpacity: 0.15,
-                            strokeWeight : 1
-                        }
-                    } ]
-                }
-                
-                aoiLayer = new google.maps.FusionTablesLayer( FT_Options )
-                aoiLayer.addListener( 'click', function ( e ) {
-                    console.log( this )
-                } )
-                aoiLayer.setMap( map )
+    // MapLoader.load( function ( google ) {
+    
+    var geocoder = new google.maps.Geocoder()
+    geocoder.geocode( { 'address': address }, function ( results, status ) {
+        if ( status == google.maps.GeocoderStatus.OK ) {
+            map.panTo( results[ 0 ].geometry.location )
+            map.fitBounds( results[ 0 ].geometry.viewport )
+            
+            var FT_Options = {
+                suppressInfoWindows: true,
+                query              : {
+                    from  : FT_TableID,
+                    select: 'geometry',
+                    where : "'NAME_FAO' = '" + address + "';"
+                },
+                styles             : [ {
+                    polygonOptions: {
+                        fillColor    : "#FBFAF2",
+                        fillOpacity  : 0.07,
+                        strokeColor  : '#FBFAF2',
+                        strokeOpacity: 0.15,
+                        strokeWeight : 1
+                    }
+                } ]
             }
-        } )
+            
+            aoiLayer = new google.maps.FusionTablesLayer( FT_Options )
+            // aoiLayer.addListener( 'click', function ( e ) {
+            //     console.log( this )
+            // } )
+            aoiLayer.setMap( map )
+        }
     } )
+    // } )
 }
 
 var addLayer = function ( e, layer ) {

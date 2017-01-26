@@ -5,7 +5,7 @@ var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
 var eeOverlayMapType = null
-var LAYER_INDEX      = 0
+var LAYER_INDEX      = 100
 
 var isVisible = true
 var renderEE  = function ( e, mapId, token ) {
