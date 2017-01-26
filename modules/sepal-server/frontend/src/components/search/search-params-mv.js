@@ -13,11 +13,11 @@ var weightChange = function ( e, value ) {
     EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.WEIGHT_CHANGED )
 }
 
-var offsetTargetDayChange = function ( e, value  ) {
+var offsetTargetDayChange = function ( e, value ) {
     if ( !( SearchParams.offsetToTargetDay == 0 && value < 0 ) ) {
         SearchParams.offsetToTargetDay += value
         
-        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGED , e.target  )
+        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGED, e.target )
     }
     
 }
@@ -38,13 +38,13 @@ var deselectSensor = function ( e, sensorId ) {
     }
 }
 
-var minScenesChange = function ( e , value ) {
-    SearchParams.minScenes = value
+var minScenesChange = function ( e, value ) {
+    SearchParams.minScenes = $.isEmptyString( value ) ? '' : parseInt( value )
     EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.MIN_SCENES_CHANGED )
 }
 
-var maxScenesChange = function ( e , value ) {
-    SearchParams.maxScenes = value
+var maxScenesChange = function ( e, value ) {
+    SearchParams.maxScenes = $.isEmptyString( value ) ? '' : parseInt( value )
     EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.MAX_SCENES_CHANGED )
 }
 
