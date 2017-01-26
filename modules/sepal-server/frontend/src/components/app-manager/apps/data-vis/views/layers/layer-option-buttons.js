@@ -41,7 +41,11 @@ var LayerOptionButtons = function ( container, layer, layerOptions ) {
             }
         }, true )
         
-        this.opacitySlider.noUiSlider.on( 'change', function () {
+        // this.opacitySlider.noUiSlider.on( 'change', function () {
+        //     var opacity = $this.opacitySlider.noUiSlider.get()
+        //     EventBus.dispatch( Events.APPS.DATA_VIS.MAP_LAYER_CHANGE_OPACITY, null, $this.layer.id, opacity )
+        // } )
+        this.opacitySlider.noUiSlider.on( 'slide', function () {
             var opacity = $this.opacitySlider.noUiSlider.get()
             EventBus.dispatch( Events.APPS.DATA_VIS.MAP_LAYER_CHANGE_OPACITY, null, $this.layer.id, opacity )
         } )
