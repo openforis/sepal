@@ -56,12 +56,12 @@ class GoogleEarthEngineDownload implements TaskExecutor {
         }
         def status = this.status.get()
         if (status.hasCompleted()) {
-            def file = new File(workingDir, name + '.tif')
+            def file = new File(workingDir, name)
             if (!file.exists()) {
                 LOG.error('google-earth-engine-download says it completed successfully, but file is not there: ' + file)
                 throw new Failed('Internal Error')
             }
-            FileOwner.set(file, username)
+            FileOwner.setRecursively(file, username)
         }
     }
 

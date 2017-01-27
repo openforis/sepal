@@ -28,4 +28,12 @@ class FileOwner {
             throw new IOException("Failed to created directory " + dir)
         set(dir, username)
     }
+
+    static void setRecursively(File file, String username) {
+        if (!file.exists())
+            return
+        set(file, username)
+        if (file.isDirectory())
+            file.listFiles().each { setRecursively(it, username) }
+    }
 }
