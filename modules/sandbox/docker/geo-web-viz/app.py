@@ -33,8 +33,15 @@ def band_count():
 
 @http.route('/raster/band/<band_index>', methods=['GET'])
 def band_info(band_index):
+    nodata = request.values.get('nodata', None)
+    if nodata:
+        nodata = float(nodata)
     return json_response(
-        raster.band_info(to_file(request.values['path']), int(band_index))
+        raster.band_info(
+            raster_file=to_file(request.values['path']),
+            band_index=int(band_index),
+            nodata=nodata,
+            use_file_nodata=bool(request.values.get('useFileNodata', False)))
     )
 
 
