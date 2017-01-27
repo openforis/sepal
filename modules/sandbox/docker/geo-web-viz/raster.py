@@ -32,7 +32,9 @@ def band_info(raster_file, band_index, nodata, use_file_nodata):
     try:
         if nodata:
             band.SetNoDataValue(nodata)
-        elif not use_file_nodata:
+        elif use_file_nodata:
+            nodata = old_nodata
+        else:
             band.DeleteNoDataValue()
 
         if old_nodata == nodata:
@@ -42,7 +44,10 @@ def band_info(raster_file, band_index, nodata, use_file_nodata):
 
         histogram = band.GetHistogram(min, max, 256, approx_ok=1)
     finally:
-        band.SetNoDataValue(old_nodata)
+        if old_nodata:
+            band.SetNoDataValue(old_nodata)
+        elif band.GetNoDataValue():
+            band.DeleteNoDataValue()
     return {
         'nodata': nodata,
         'min': min,
