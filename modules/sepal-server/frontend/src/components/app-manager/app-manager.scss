@@ -8,10 +8,15 @@
     top: .5rem;
     left: .5rem;
     font-size: 0.9rem;
-    border: none;
     z-index: 899;
     background-color: #131314;
-    padding: .25rem .5rem;
+    //border: 2px solid #131314;
+    border: none;
+    padding: .5rem .75rem;
+  }
+  .btn-close:hover {
+    //background-color: rgba(46, 46, 47, 0.76);
+    background-color: rgba(33, 33, 35, 0.76);
   }
 
   .modal-dialog {

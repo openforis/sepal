@@ -72,7 +72,8 @@ var init = function () {
             var absPath = Model.absolutePath( lastClickItem[ 0 ].level, lastClickItem[ 1 ].name )
             
             EventBus.dispatch( Events.APPS.DATA_VIS.ADD_FILE, null, absPath )
-            EventBus.dispatch( Events.ALERT.SHOW_INFO, null, absPath + " added to the data visualization app" )
+            EventBus.dispatch( Events.APP_MANAGER.OPEN_DATAVIS )
+            // EventBus.dispatch( Events.ALERT.SHOW_INFO, null, absPath + " added to the data visualization app" )
         } )
         
         $( window ).resize( function () {
@@ -204,7 +205,7 @@ var removeDir = function ( level ) {
 
 var isImage = function ( file ) {
     var ext = file.name.substring( file.name.lastIndexOf( '.' ) + 1 )
-    ext = ext.toLowerCase()
+    ext     = ext.toLowerCase()
     return imagesExtensions.indexOf( ext ) !== -1
 }
 

@@ -330,6 +330,10 @@ RasterBand.prototype.updateHistogramOverlay = function () {
     // var width = pWidth * 100 / parentWidth
     var width = parentWidth * pWidth / 100
     
+    // removing border (3px)
+    width-=3
+    x-=3
+    
     var target = this.bandHistogramOverlayElem.get( 0 )
     
     target.style.webkitTransform =

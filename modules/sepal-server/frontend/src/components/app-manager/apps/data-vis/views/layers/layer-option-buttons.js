@@ -77,7 +77,7 @@ LayerOptionButtons.prototype.show = function () {
 
 LayerOptionButtons.prototype.hide = function () {
     if ( !(this.hover || this.layerNameHover ) ) {
-        this.container.stop().fadeOut( 100 )
+        this.container.stop().fadeOut( 500 )
     }
 }
 
