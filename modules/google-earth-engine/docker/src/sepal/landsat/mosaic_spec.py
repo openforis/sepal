@@ -36,8 +36,8 @@ class LandsatMosaicSpec(ImageSpec):
         return mosaic \
             .clip(self.aoi.geometry()) \
             .select(self.bands) \
-            .multiply(10000) \
-            .int()
+            .multiply(constants.multiplier) \
+            .int16()
 
     def _merge(self, image_collections):
         return reduce(self._merge_two, image_collections)
