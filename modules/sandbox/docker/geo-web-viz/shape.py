@@ -1,4 +1,5 @@
 import os
+from subprocess import call
 
 import mapnik
 import ogr
@@ -7,7 +8,13 @@ from config import to_file, to_path
 from layer import Layer
 
 
-def from_dict(shape_dict):
+def create(shape_dict):
+    layer = _from_dict(shape_dict)
+    call(['shapeindex', '--index-parts', layer.file])
+    return layer
+
+
+def _from_dict(shape_dict):
     return ShapeLayer(
         id=shape_dict['id'],
         file=to_file(shape_dict['path']),
@@ -96,7 +103,7 @@ class ShapeLayer(Layer):
     def update(self, shape_dict):
         layer = self.to_dict()
         layer.update(shape_dict)
-        return from_dict(layer)
+        return _from_dict(layer)
 
     def features(self, lat, lng):
         return self.layer_features(0, lat, lng)

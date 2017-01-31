@@ -14,6 +14,7 @@ def index():
 
 
 if __name__ == '__main__':
+    app.secret_key = config.session_key
     app.register_blueprint(http)
     logging.basicConfig(level=logging.WARNING)
     app.run(

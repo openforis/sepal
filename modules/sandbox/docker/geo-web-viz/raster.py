@@ -1,11 +1,16 @@
-from subprocess import call
-
 import gdal
 import mapnik
 import osr
 
 from config import to_file, to_path
 from layer import Layer
+
+
+def create(layer_dict):
+    layer = _from_dict(layer_dict)
+    layer._write_nodata()
+    _build_overviews(layer)
+    return layer
 
 
 def band_count(raster_file):
@@ -19,16 +24,19 @@ def band_count(raster_file):
         band += 1
 
 
-def band_info(raster_file, band_index, nodata, use_file_nodata):
+def read_nodata(raster_file):
+    ds = gdal.OpenShared(raster_file, gdal.GA_Update)
+    return ds.GetRasterBand(1).GetNoDataValue()
+
+
+def band_info(raster_file, band_index, nodata):
     ds = gdal.OpenShared(raster_file, gdal.GA_Update)
     band = ds.GetRasterBand(band_index)
-
     old_nodata = band.GetNoDataValue()
     try:
         if nodata:
-            band.SetNoDataValue(nodata)
-        elif use_file_nodata:
-            nodata = old_nodata
+            if nodata != old_nodata:
+                band.SetNoDataValue(nodata)
         else:
             band.DeleteNoDataValue()
 
@@ -45,7 +53,6 @@ def band_info(raster_file, band_index, nodata, use_file_nodata):
         elif band.GetNoDataValue():
             band.DeleteNoDataValue()
     return {
-        'nodata': nodata,
         'min': min,
         'max': max,
         'mean': mean,
@@ -54,10 +61,25 @@ def band_info(raster_file, band_index, nodata, use_file_nodata):
     }
 
 
-def from_dict(layer_dict):
+def _build_overviews(layer):
+    ds = gdal.OpenShared(layer.file)
+    bands_without_index = [
+        index
+        for index in range(1, band_count(layer.file))
+        if not ds.GetRasterBand(index).GetOverviewCount()
+    ]
+    if bands_without_index:
+        ds.BuildOverviews(resampling='average', overviewlist=[2, 4, 8])
+
+
+def _from_dict(layer_dict):
+    nodata = layer_dict['nodata']
+    if nodata:
+        nodata = float(nodata)
     return RasterLayer(
         id=layer_dict['id'],
         file=to_file(layer_dict['path']),
+        nodata=nodata,
         bands=_Band.from_dict(layer_dict['bands'])
     )
 
@@ -68,7 +90,7 @@ class RasterLayer(Layer):
 
     concurrent = False
 
-    def __init__(self, id, file, bands):
+    def __init__(self, id, file, nodata, bands):
         """Creates a raster layer.
 
         :param file: Path to raster image.
@@ -80,11 +102,11 @@ class RasterLayer(Layer):
         super(RasterLayer, self).__init__()
         self.id = id
         self.file = file
+        self.nodata = nodata
         # self._add_overview(bands)
         self.band_layers = [
-            _BandLayer(file, band)
+            _BandLayer(file, band, nodata)
             for band in bands]
-        self._persist_nodata(bands)
 
     def append_to(self, map):
         """Appends Mapnik layers and styles for the bands in this layer.
@@ -100,6 +122,7 @@ class RasterLayer(Layer):
             'id': self.id,
             'type': 'raster',
             'path': to_path(self.file),
+            'nodata': self.nodata,
             'bands': [band_layer.band.to_dict() for band_layer in self.band_layers],
             'bounds': self.bounds()
         }
@@ -107,32 +130,27 @@ class RasterLayer(Layer):
     def update(self, layer_dict):
         layer = self.to_dict()
         layer.update(layer_dict)
-        updated_layer = from_dict(layer)
-        bands = [band_layer.band for band_layer in updated_layer.band_layers]
-        self._persist_nodata(bands)
+        updated_layer = _from_dict(layer)
+        updated_layer._write_nodata()
         return updated_layer
-
-    def _persist_nodata(self, bands):
-        ds = gdal.OpenShared(self.file, gdal.GA_Update)
-        for band in bands:
-            gdal_band = ds.GetRasterBand(int(band.index))
-            nodata = band.nodata
-            if nodata:
-                gdal_band.SetNoDataValue(float(nodata))
-            else:
-                gdal_band.DeleteNoDataValue()
 
     def features(self, lat, lng):
         return [
             self.band_value(band_layer, lat, lng)
             for band_layer in self.band_layers
-            ]
+        ]
 
     def band_value(self, band_layer, lat, lng):
         features = self.layer_features(band_layer.band.index - 1, lat, lng)
         if features:
             return features[0]['value']
         return None
+
+    def _write_nodata(self):
+        ds = gdal.OpenShared(self.file, gdal.GA_Update)
+        for band_index in range(1, band_count(self.file)):
+            band = ds.GetRasterBand(band_index)
+            band.SetNoDataValue(self.nodata)
 
     def _flatten(self, items):
         if items == []:
@@ -143,16 +161,15 @@ class RasterLayer(Layer):
 
 
 class _BandLayer(object):
-    def __init__(self, file, band):
+    def __init__(self, file, band, nodata):
         self.file = file
         self.band = band
         self.style = self.create_style()
         self.mapnik_datasource = mapnik.Gdal(
             file=file,
             band=band.index,
-            shared=True,
-            nodata=band.nodata,
-            nodata_tolerance=band.nodata_tolerance
+            nodata=nodata,
+            shared=True
         )
         self.mapnik_layer = self.create_mapnik_layer()
 
@@ -195,7 +212,7 @@ class _BandLayer(object):
 class _Band(object):
     """Represents a band to include in a map layer, and it's visualisation properties"""
 
-    def __init__(self, index, nodata, nodata_tolerance, palette):
+    def __init__(self, index, palette):
         """Creates a band.
 
         :param index: Index of band in image.
@@ -207,26 +224,16 @@ class _Band(object):
         :param max: Value to map to last color in palette.
         :type max: float
 
-        :param nodata: Value to assign pixels with no data.
-        :type nodata: float
-
-        :param nodata_tolerance: Distance from nodata value pixels still are considered nodata.
-        :type nodata_tolerance: float
-
         :param palette: Iterable of hex-color strings, which will be used for the values in the band.
         :type palette: iterable
         """
         self.name = 'B' + str(index)
         self.index = index
-        self.nodata = nodata
-        self.nodata_tolerance = nodata_tolerance
         self.palette = palette
 
     def to_dict(self):
         return {
             'index': self.index,
-            'nodata': self.nodata if self.nodata else '',
-            'nodataTolerance': self.nodata_tolerance,
             'palette': self.palette
         }
 
@@ -235,9 +242,7 @@ class _Band(object):
         return [
             _Band(
                 index=int(band['index']),
-                nodata=float(band['nodata']) if band.get('nodata', None) else None,
-                nodata_tolerance=float(band.get('nodataTolerance', 1e-12)),
                 palette=band['palette']
             )
             for band in bands_dict
-            ]
+        ]

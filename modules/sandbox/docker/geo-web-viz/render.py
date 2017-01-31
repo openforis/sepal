@@ -5,19 +5,17 @@ import mapnik
 from mercator import SphericalMercator
 from pool import Pool
 
-_renderers = {}
+
+def create_renderer(layer, renderers):
+    renderers[layer.id] = Renderer(layer)
 
 
-def create_renderer(layer):
-    _renderers[layer.id] = Renderer(layer)
+def remove(layer_id, renderers):
+    del renderers[layer_id]
 
 
-def remove(layer_id):
-    del _renderers[layer_id]
-
-
-def render_tile(layer_id, z, x, y, fmt):
-    return _renderers[layer_id].render(z, x, y, fmt)
+def render_tile(layer_id, z, x, y, fmt, renderers):
+    return renderers[layer_id].render(z, x, y, fmt)
 
 
 # TODO: Improve pool - can be more clever.
