@@ -5,6 +5,7 @@ require( './raster-band.scss' )
 var Chartist = require( 'chartist' )
 var interact = require( 'interactjs' )
 require( 'devbridge-autocomplete' )
+var numeral = require( 'numeral' )
 //interactjs
 
 var EventBus = require( '../../../../../event/event-bus' )
@@ -45,6 +46,31 @@ var RasterBand = function ( rasterOptions, container, band ) {
     this.bandHistogramOverlay        = interact( this.bandHistogramOverlayElem.get( 0 ) )
     this.bandHistogramProgressLoader = this.html.find( '.band-histogram-progress-loader' )
     
+    //input values
+    this.inputNoDataValue = this.html.find( '[name=no-data]' )
+    this.inputMinValue    = this.html.find( '[name=min-value]' )
+    this.inputMaxValue    = this.html.find( '[name=max-value]' )
+    
+    this.inputNoDataValue.change( function () {
+        var val                      = $this.inputNoDataValue.val()
+        $this.band.nodata            = $.isNotEmptyString( val ) ? parseFloat( val ) : ''
+        $this.band.palette[ 0 ][ 0 ] = -1
+        $this.band.palette[ 1 ][ 0 ] = -1
+        $this.setBandIndex( $this.band.index )
+    } )
+    
+    this.inputMinValue.change( function () {
+        var val                      = $this.inputMinValue.val()
+        $this.band.palette[ 0 ][ 0 ] = $.isNotEmptyString( val ) ? parseFloat( val ) : ''
+        $this.updateHistogramOverlay()
+    } )
+    
+    this.inputMaxValue.change( function () {
+        var val                      = $this.inputMaxValue.val()
+        $this.band.palette[ 1 ][ 0 ] = $.isNotEmptyString( val ) ? parseFloat( val ) : ''
+        $this.updateHistogramOverlay()
+    } )
+    
     this.band = band
     this.setBandIndex( this.band.index )
 }
@@ -56,8 +82,15 @@ RasterBand.prototype.setBandIndex = function ( bandIndex ) {
     
     if ( this.band.index > 0 ) {
         
+        var data = { path: this.rasterOptions.layer.path }
+        if ( this.band.nodata )
+            data.nodata = this.band.nodata
+        else
+            data.useFileNodata = true
+        
         var params = {
-            url         : '/sandbox/geo-web-viz/raster/band/' + $this.band.index + '?path=' + this.rasterOptions.layer.path
+            url         : '/sandbox/geo-web-viz/raster/band/' + $this.band.index //+ '?path=' + this.rasterOptions.layer.path
+            , data      : data
             , beforeSend: function () {
                 $this.bandHistogramProgressLoader.fadeIn( 100 )
                 
@@ -118,6 +151,11 @@ RasterBand.prototype.setBandIndex = function ( bandIndex ) {
                 $this.bandHistogramOverlayElem.show()
                 $this.updateHistogramOverlay()
                 
+                // update input values
+                $this.inputNoDataValue.val( numeral( $this.band.nodata ).format( '0.[000]' ) )
+                $this.inputMinValue.val( numeral( $this.band.palette[ 0 ][ 0 ] ).format( '0.[000]' ) )
+                $this.inputMaxValue.val( numeral( $this.band.palette[ 1 ][ 0 ] ).format( '0.[000]' ) )
+                
                 $this._initialized = true
             }
         }
@@ -130,6 +168,10 @@ RasterBand.prototype.setBandIndex = function ( bandIndex ) {
         $this.html.find( '.color-picker' ).disable()
         
         $this.bandHistogramOverlayElem.hide()
+        
+        $this.inputNoDataValue.val( '' )
+        $this.inputMaxValue.val( '' )
+        $this.inputMinValue.val( '' )
     }
 }
 
@@ -284,17 +326,22 @@ RasterBand.prototype.initHistogramOverlay = function () {
             // console.log( "scrollLeft: ", target.scrollLeft, "scrollWidth: ", target.scrollWidth )
             // console.log( "x: ", x, "y: ", y )
             // console.log( "event.dxx: ", event.dx, "event.dy: ", event.dy )
-            var x1           = x * parentWidth / (parentWidth - 6)
-            var scrollWidth1 = target.scrollWidth * parentWidth / (parentWidth - 6)
+            var x1           = x * parentWidth / (parentWidth - 3)
+            var scrollWidth1 = target.scrollWidth * parentWidth / (parentWidth - 3)
             // console.log( "x1: ", x1, "scrollWidth1: ", scrollWidth1 )
             var getValue     = function ( x ) {
                 var percentage = ( x / parentWidth * 100 )
                 var value      = (percentage * ($this.properties.max - $this.properties.min) / 100) + $this.properties.min
                 return value
             }
-            var minValue     = getValue( x1 )
-            var maxValue     = getValue( x1 + scrollWidth1 )
+            // var minValue     = getValue( x1 )
+            var minValue     = getValue( x )
+            // var maxValue     = getValue( x1 + scrollWidth1 )
+            var maxValue     = getValue( x + target.scrollWidth )
             // console.log( "====== Min : " + minValue, " ==== Max : ", maxValue )
+            
+            $this.inputMinValue.val( numeral( minValue ).format( '0.[000]' ) )
+            $this.inputMaxValue.val( numeral( maxValue ).format( '0.[000]' ) )
             
             var palette = $this.band.palette
             var from    = palette[ 0 ]
@@ -310,6 +357,9 @@ RasterBand.prototype.initHistogramOverlay = function () {
 RasterBand.prototype.updateHistogramOverlay = function () {
     var minValue = this.band.palette[ 0 ][ 0 ]
     var maxValue = this.band.palette[ 1 ][ 0 ]
+    
+    minValue = ( minValue < this.properties.min) ? this.properties.min : minValue
+    maxValue = ( maxValue > this.properties.max) ? this.properties.max : maxValue
     // console.log( minValue, maxValue )
     // console.log( this.properties.max, this.properties.min )
     // var pMin   = (minValue - this.properties.min) / this.properties.max * 100
@@ -331,8 +381,8 @@ RasterBand.prototype.updateHistogramOverlay = function () {
     var width = parentWidth * pWidth / 100
     
     // removing border (3px)
-    width-=3
-    x-=3
+    //  width -= 6
+    //  x += 6
     
     var target = this.bandHistogramOverlayElem.get( 0 )
     

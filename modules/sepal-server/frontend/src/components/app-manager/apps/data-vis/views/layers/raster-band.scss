@@ -5,33 +5,30 @@
     background-color: rgb(28, 28, 28);
     border-radius: 1rem;
     margin-top: 1rem;
+    font-size: .7rem;
 
-    .col-band-index {
-      //border-right: 1px inset rgba(51, 51, 53, 0.2);
+    .col-band {
       border-right: 1px inset rgba(255, 255, 255, 0.05);
+      padding-top: 12.5px !important;
+
+      .row-band-index{
+        border-bottom: 1px dotted rgba(255, 255, 255, 0.05);
+        padding-top: 15%;
+      }
+      .row-no-data{
+        padding-top: 15%;
+      }
 
       select {
         background-color: transparent;
         color: white;
         border-radius: 0px !important;
         border: none;
-        /* border-bottom: 1px solid white; */
-        /* -webkit-appearance: none; */
-        /* text-align: center; */
-        //padding-left: 25%;
-        /* -webkit-appearance: none; */
-        //-moz-appearance: none;
-        /* background-position: right 50%; */
-        /* background-repeat: no-repeat; */
-        /* background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAMCAYAAABSgIzaAAAAGXRFW…zTk0D/M+KzkRGPoQSdykiKJrBGpOhgJFYTWNEIiEeAAAMAzNENEOH+do8AAAAASUVORK5CYII=); */
-        /* padding: .5em; */
-        /* padding-right: 1.5em; */
-        /* background-color: rgba(255, 255, 255, 0.1); */
       }
 
     }
 
-    > div:not(.col-band-histogram) {
+    .col-color-picker {
       padding-top: 25px !important;
     }
 
@@ -51,9 +48,9 @@
         width: 100%;
         position: absolute;
         background-color: rgba(255, 255, 255, 0.05);
-        border-left: 3px double rgba(255, 255, 255, 0.05);
+        //border-left: 3px double rgba(255, 255, 255, 0.05);
         //border-left: 2px solid rgba(255, 255, 255, 0.05);
-        border-right: 3px double rgba(255, 255, 255, 0.05);
+        //border-right: 3px double rgba(255, 255, 255, 0.05);
         //border-right: 2px solid rgba(255, 255, 255, 0.05);
         top: 10px;
         left: 0px;

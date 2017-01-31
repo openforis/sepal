@@ -23,11 +23,6 @@ def band_info(raster_file, band_index, nodata, use_file_nodata):
     ds = gdal.OpenShared(raster_file, gdal.GA_Update)
     band = ds.GetRasterBand(band_index)
 
-    if not band.GetOverviewCount():
-        call([
-            'gdaladdo', '-ro', '-q', '-b', str(band_index), '-r', 'average', raster_file, '2', '4', '8'
-        ])
-
     old_nodata = band.GetNoDataValue()
     try:
         if nodata:
@@ -39,10 +34,11 @@ def band_info(raster_file, band_index, nodata, use_file_nodata):
 
         if old_nodata == nodata:
             (min, max, mean, std_dev) = band.GetStatistics(True, True)
+            histogram = band.GetHistogram(min, max, 256, approx_ok=1)
         else:
             (min, max, mean, std_dev) = band.ComputeStatistics(False)
+            histogram = band.GetHistogram(min, max, 256, approx_ok=0)
 
-        histogram = band.GetHistogram(min, max, 256, approx_ok=1)
     finally:
         if old_nodata:
             band.SetNoDataValue(old_nodata)

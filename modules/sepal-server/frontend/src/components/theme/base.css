@@ -562,7 +562,12 @@ img {
 .width20 {
     width: 20% !important;
 }
-
+.width30 {
+    width: 30% !important;
+}
+.width40 {
+    width: 40% !important;
+}
 .width50 {
     width: 50% !important;
 }
