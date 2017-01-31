@@ -10,14 +10,26 @@ var RasterOptions = function ( layerOptions, onReady ) {
     var $this         = this
     this.layerOptions = layerOptions
     this.container    = this.layerOptions.rasterOptions
+    this.inputNoData  = this.container.find( 'input[name=no-data]' )
+    this.inputNoData.change( function () {
+        $.each( $this.bandsUI, function ( i, bandUI ) {
+            var val                       = $this.inputNoData.val()
+            $this.layer.nodata            = $.isEmptyString( val ) ? '' : val
+            bandUI.band.palette[ 0 ][ 0 ] = -1
+            bandUI.band.palette[ 1 ][ 0 ] = -1
+            bandUI.setBandIndex( bandUI.band.index )
+        } )
+    } )
     // var layer         = $.extend( true, {}, this.layerOptions.layer )
-    this.layer        = $.extend( true, {}, this.layerOptions.layer )
-    this.bandsUI      = []
+    this.layer   = $.extend( true, {}, this.layerOptions.layer )
+    this.bandsUI = []
     
     var params = {
-        url      : '/sandbox/geo-web-viz/raster/band/count?path=' + this.layer.path
+        url      : '/sandbox/geo-web-viz/raster/info?path=' + this.layer.path
         , success: function ( response ) {
-            $this.bandCount = response.count
+            $this.bandCount    = response.bandCount
+            $this.layer.nodata = response.nodata
+            $this.inputNoData.val( $this.layer.nodata )
             
             if ( $this.layer.bounds ) {
                 $this.initBands()
