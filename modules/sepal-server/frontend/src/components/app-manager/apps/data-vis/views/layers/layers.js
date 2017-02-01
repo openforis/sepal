@@ -36,13 +36,15 @@ var init = function ( dataVis ) {
     btnClose.click( close )
     btnOpen.click( open )
     
-    container.scroll( function () {
-        var scrollTop = $( window ).scrollTop()
-        $.each( container.find( '.layer-option-buttons' ), function ( i, elem ) {
-            var optionBtns    = $( elem )
-            var elementOffset = optionBtns.parent().offset().top
-            optionBtns.css( 'top', (elementOffset - scrollTop + 7) + 'px' )
-        } )
+    container.scroll( updateOptionButtonsPosition )
+}
+
+var updateOptionButtonsPosition = function () {
+    var scrollTop = $( window ).scrollTop()
+    $.each( container.find( '.layer-option-buttons' ), function ( i, elem ) {
+        var optionBtns    = $( elem )
+        var elementOffset = optionBtns.parent().offset().top
+        optionBtns.css( 'top', (elementOffset - scrollTop + 7) + 'px' )
     } )
 }
 
@@ -169,6 +171,7 @@ var deleteLayer = function ( e, layerId ) {
 }
 
 EventBus.addEventListener( Events.APPS.DATA_VIS.LAYER_DELETE, deleteLayer )
+EventBus.addEventListener( Events.APPS.DATA_VIS.LAYER_OPTIONS_CLOSED, updateOptionButtonsPosition )
 
 module.exports = {
     init         : init

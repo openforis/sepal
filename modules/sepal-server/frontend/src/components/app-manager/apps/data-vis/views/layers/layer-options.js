@@ -70,7 +70,11 @@ LayerOptions.prototype.show = function () {
 LayerOptions.prototype.hide = function () {
     if ( this.container.is( ':visible' ) ) {
         $( '#data-vis .layers-container' ).velocity( { width: '25%' } )
-        this.container.velocitySlideUp()
+        this.container.velocitySlideUp( {
+            complete: function () {
+                EventBus.dispatch( Events.APPS.DATA_VIS.LAYER_OPTIONS_CLOSED )
+            }
+        } )
         this.container.closest( '.row-layer' ).removeClass( 'expanded' )
     }
 }

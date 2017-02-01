@@ -161,6 +161,7 @@ var Events = {
             , LAYER_DELETE            : 'apps.data_vis.layer_delete'
             , ADD_FILE                : 'apps.data_vis.add_file'
             , LAYERS_LOADED           : 'apps.data_vis.layers_loaded'
+            , LAYER_OPTIONS_CLOSED    : 'apps.data_vis.layer_options_closed'
         }
     }
     
