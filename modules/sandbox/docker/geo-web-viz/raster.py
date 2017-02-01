@@ -16,18 +16,17 @@ def create(layer_dict):
 
 
 def band_count(raster_file):
-    return gdal.OpenShared(raster_file, gdal.GA_Update).RasterCount
+    return _open_readonly(raster_file).RasterCount
 
 
 def read_nodata(raster_file):
-    ds = gdal.OpenShared(raster_file, gdal.GA_Update)
+    ds = _open_readonly(raster_file)
     return ds.GetRasterBand(1).GetNoDataValue()
 
 
 def band_info(raster_file, band_index, nodata):
-    ds = gdal.OpenShared(raster_file, gdal.GA_Update)
+    ds = _open_writable(raster_file)
     band = ds.GetRasterBand(band_index)
-    band.SetMetadata(None)
     file_nodata = band.GetNoDataValue()
     try:
         if nodata:
@@ -36,12 +35,8 @@ def band_info(raster_file, band_index, nodata):
         else:
             band.DeleteNoDataValue()
 
-        if file_nodata == nodata:
-            (min, max, mean, std_dev) = band.GetStatistics(True, True)
-            histogram = band.GetHistogram(min, max, 256, approx_ok=1)
-        else:
-            (min, max, mean, std_dev) = band.ComputeStatistics(False)
-            histogram = band.GetHistogram(min, max, 256, approx_ok=0)
+        (min, max, mean, std_dev) = band.ComputeStatistics(False)
+        histogram = band.GetHistogram(min, max, 256, approx_ok=0)
 
     finally:
         if file_nodata:
@@ -57,6 +52,22 @@ def band_info(raster_file, band_index, nodata):
         'stdDev': std_dev,
         'histogram': histogram
     }
+
+
+def _open_writable(raster_file):
+    for retry in range(1, 3):
+        ds = gdal.OpenShared(raster_file, gdal.GA_Update)
+        if ds:
+            return ds
+    raise Exception('Unable to open file: ' + str(raster_file))
+
+
+def _open_readonly(raster_file):
+    for retry in range(1, 3):
+        ds = gdal.OpenShared(raster_file)
+        if ds:
+            return ds
+    raise Exception('Unable to open file: ' + str(raster_file))
 
 
 def _remove_stats(ds):
@@ -76,18 +87,18 @@ def _remove_file(file_to_delete):
 
 
 def _build_overviews(layer):
-    ds = gdal.OpenShared(layer.file)
+    ds = _open_readonly(layer.file)
     bands_without_index = [
         index
         for index in range(1, band_count(layer.file))
         if not ds.GetRasterBand(index).GetOverviewCount()
-        ]
+    ]
     if bands_without_index:
         ds.BuildOverviews(resampling='average', overviewlist=[2, 4, 8])
 
 
 def _from_dict(layer_dict):
-    nodata = layer_dict['nodata']
+    nodata = layer_dict.get('nodata', None)
     if nodata:
         nodata = float(nodata)
     return RasterLayer(
@@ -152,7 +163,7 @@ class RasterLayer(Layer):
         return [
             self.band_value(band_layer, lat, lng)
             for band_layer in self.band_layers
-            ]
+        ]
 
     def band_value(self, band_layer, lat, lng):
         features = self.layer_features(band_layer.band.index - 1, lat, lng)
@@ -161,10 +172,13 @@ class RasterLayer(Layer):
         return None
 
     def _update_file(self):
-        ds = gdal.OpenShared(self.file, gdal.GA_Update)
+        ds = _open_writable(self.file)
         for band_index in range(1, band_count(self.file)):
             band = ds.GetRasterBand(band_index)
-            band.SetNoDataValue(self.nodata)
+            if self.nodata:
+                band.SetNoDataValue(self.nodata)
+            else:
+                band.DeleteNoDataValue()
 
     def _flatten(self, items):
         if items == []:
@@ -259,4 +273,4 @@ class _Band(object):
                 palette=band['palette']
             )
             for band in bands_dict
-            ]
+        ]
