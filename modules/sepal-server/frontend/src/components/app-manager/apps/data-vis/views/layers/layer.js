@@ -5,6 +5,7 @@ var EventBus           = require( '../../../../../event/event-bus' )
 var Events             = require( '../../../../../event/events' )
 var LayerOptionButtons = require( './layer-option-buttons' )
 var LayerOptions       = require( './layer-options' )
+var Layers             = require( './layers' )
 
 var template = require( './layer.html' )
 var html     = $( template( {} ) )
@@ -23,7 +24,6 @@ var LayerClass = function ( container, layer ) {
         name = name.slice( name.lastIndexOf( '/' ) + 1 )
     }
     
-   
     this.name = this.html.find( '.name' )
     this.name.html( name )
     this.name.mouseenter( function () {
@@ -39,11 +39,10 @@ var LayerClass = function ( container, layer ) {
         }, 100 )
     } )
     
-    container.append( this.html )
+    this.html.insertAfter( container )
     
     
     // init UI components
-    // this.btnSort = this.html.find( '.btn-sort' )
     
     this.btnVisibility = this.html.find( '.btn-visibility' )
     this.btnVisibility.click( function () {
@@ -67,7 +66,7 @@ LayerClass.prototype.show = function () {
         this.options.visible = true
         
         this.btnVisibility.find( '.icon-hidden' ).stop().fadeOut( 250, function () {
-            $this.btnVisibility.find( '.icon-visible' ).fadeIn( 250 )
+            $this.btnVisibility.find( '.icon-visible' ).stop().fadeIn( 250 )
         } )
         this.btnVisibility.addClass( 'active' )
     }
