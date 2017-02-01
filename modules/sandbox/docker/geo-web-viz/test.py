@@ -19,7 +19,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.WARNING)
     app.run(
         host='0.0.0.0',
-        port=6776,
+        port=5678,
         threaded=True,
         debug=config.debug_mode
     )
