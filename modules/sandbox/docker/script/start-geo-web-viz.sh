@@ -15,7 +15,6 @@ if [ "$i" = 0 ]; then
 else
     echo "User $sandbox_user initialized"
 fi
-echo "PATH=$PATH"
 cd /usr/local/lib/geo-web-viz
 export core_count=$(/bin/grep -c ^processor /proc/cpuinfo)
 sudo -Eu $sandbox_user "PATH=$sandbox_path" gunicorn\
@@ -24,4 +23,3 @@ sudo -Eu $sandbox_user "PATH=$sandbox_path" gunicorn\
  --threads $(($core_count * 4))\
  --backlog 64\
  wsgi:app 5678 /home/$sandbox_user
-#sudo -Eu $sandbox_user "PATH=$sandbox_path" python /usr/local/lib/geo-web-viz/app.py 5678 /home/$sandbox_user
