@@ -1,3 +1,5 @@
+import os
+
 import gdal
 import mapnik
 import osr
@@ -8,20 +10,13 @@ from layer import Layer
 
 def create(layer_dict):
     layer = _from_dict(layer_dict)
-    layer._write_nodata()
+    layer._update_file()
     _build_overviews(layer)
     return layer
 
 
 def band_count(raster_file):
-    ds = gdal.OpenShared(raster_file)
-    if not ds:
-        return 0
-    band = 1
-    while True:
-        if not ds.GetRasterBand(band):
-            return band - 1
-        band += 1
+    return gdal.OpenShared(raster_file, gdal.GA_Update).RasterCount
 
 
 def read_nodata(raster_file):
@@ -32,15 +27,15 @@ def read_nodata(raster_file):
 def band_info(raster_file, band_index, nodata):
     ds = gdal.OpenShared(raster_file, gdal.GA_Update)
     band = ds.GetRasterBand(band_index)
-    old_nodata = band.GetNoDataValue()
+    file_nodata = band.GetNoDataValue()
     try:
         if nodata:
-            if nodata != old_nodata:
+            if nodata != file_nodata:
                 band.SetNoDataValue(nodata)
         else:
             band.DeleteNoDataValue()
 
-        if old_nodata == nodata:
+        if file_nodata == nodata:
             (min, max, mean, std_dev) = band.GetStatistics(True, True)
             histogram = band.GetHistogram(min, max, 256, approx_ok=1)
         else:
@@ -48,10 +43,12 @@ def band_info(raster_file, band_index, nodata):
             histogram = band.GetHistogram(min, max, 256, approx_ok=0)
 
     finally:
-        if old_nodata:
-            band.SetNoDataValue(old_nodata)
+        if file_nodata:
+            band.SetNoDataValue(file_nodata)
         elif band.GetNoDataValue():
             band.DeleteNoDataValue()
+        if nodata != file_nodata:
+            _remove_stats(ds)  # Stats doesn't match the file's nodata value, delete them
     return {
         'min': min,
         'max': max,
@@ -59,6 +56,15 @@ def band_info(raster_file, band_index, nodata):
         'stdDev': std_dev,
         'histogram': histogram
     }
+
+
+def _remove_stats(ds):
+    files_to_delete = [
+        related_file
+        for related_file in ds.GetFileList()
+        if related_file.endswith('.aux.xml')]
+    for file_to_delete in files_to_delete:
+        os.remove(file_to_delete)
 
 
 def _build_overviews(layer):
@@ -131,7 +137,7 @@ class RasterLayer(Layer):
         layer = self.to_dict()
         layer.update(layer_dict)
         updated_layer = _from_dict(layer)
-        updated_layer._write_nodata()
+        updated_layer._update_file()
         return updated_layer
 
     def features(self, lat, lng):
@@ -146,7 +152,7 @@ class RasterLayer(Layer):
             return features[0]['value']
         return None
 
-    def _write_nodata(self):
+    def _update_file(self):
         ds = gdal.OpenShared(self.file, gdal.GA_Update)
         for band_index in range(1, band_count(self.file)):
             band = ds.GetRasterBand(band_index)
