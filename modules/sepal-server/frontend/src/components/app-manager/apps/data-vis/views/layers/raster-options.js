@@ -127,12 +127,13 @@ RasterOptions.prototype.update = function () {
     
     // $this.layer.nodata = response.nodata
     // $this.inputNoData.val( $this.layer.nodata )
-    
-    setTimeout( function () {
-        $.each( $this.bandsUI, function ( i, bandUI ) {
-            bandUI.update( $this.layer.bands[ i ] )
-        } )
-    }, 510 )
+    if ( $this.layer.bands ) {
+        setTimeout( function () {
+            $.each( $this.bandsUI, function ( i, bandUI ) {
+                bandUI.update( $this.layer.bands[ i ] )
+            } )
+        }, 510 )
+    }
 }
 
 RasterOptions.prototype.save = function ( callback ) {

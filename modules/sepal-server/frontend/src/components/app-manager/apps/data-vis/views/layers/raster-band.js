@@ -70,6 +70,7 @@ RasterBand.prototype.setBandIndex = function ( bandIndex ) {
             url         : '/sandbox/geo-web-viz/raster/band/' + $this.band.index //+ '?path=' + this.rasterOptions.layer.path
             , data      : { path: this.rasterOptions.layer.path, nodata: this.rasterOptions.layer.nodata }
             , beforeSend: function () {
+                
                 $this.rasterBandHistogram.bandHistogramProgressLoader.fadeIn( 100 )
                 
                 $this.html.find( '.color-picker' ).disable()
@@ -126,6 +127,7 @@ RasterBand.prototype.setBandIndex = function ( bandIndex ) {
                 $this.inputMinValue.val( $this.band.palette[ 0 ][ 0 ] ).enable()
                 $this.inputMaxValue.val( $this.band.palette[ 1 ][ 0 ] ).enable()
                 
+                $this._initialized = true
             }
         }
         
