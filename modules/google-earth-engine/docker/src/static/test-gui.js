@@ -29,25 +29,37 @@
         e.preventDefault()
         exportMosaic()
     } )
-
+    
     $( '#sceneIdForm' ).submit( function ( e ) {
         e.preventDefault()
         previewScenes( 1 )
         previewScenes( 2 )
     } )
-
-
+    
+    
     $( '#sceneAreasForm' ).submit( function ( e ) {
         e.preventDefault()
         findSceneAreas()
     } )
-
-
+    
+    
     $( '#exportForm' ).submit( function ( e ) {
         e.preventDefault()
         exportParams()
     } )
     
+    
+    $( '#dataSet' ).find( 'input' ).change( function () {
+        if ( this.value === 'SENTINEL2' ) {
+            $( '#sensors' ).hide()
+            $( '#landsat-bands-section' ).hide()
+            $( '#sentinel2-bands-section' ).show()
+        } else {
+            $( '#sensors' ).show()
+            $( '#landsat-bands-section' ).show()
+            $( '#sentinel2-bands-section' ).hide()
+        }
+    } )
     
     var shape          = null
     var drawingManager = new google.maps.drawing.DrawingManager( {
@@ -141,10 +153,10 @@
             }
         } )
     }
-
-
+    
+    
     function exportParams() {
-        var data  = $( '#exportParams' ).val()
+        var data = $( '#exportParams' ).val()
         $.post( {
             url    : 'download',
             data   : data,
@@ -154,7 +166,7 @@
             }
         } )
     }
-
+    
     function createAoi() {
         if ( shape != null )
             return {
@@ -173,7 +185,10 @@
     }
     
     function createMosaic( mapIndex ) {
-        var bands                 = $( '#bands' + mapIndex ).val().split( ', ' )
+        var dataSet               = $( 'input[name=dataSet]:checked' ).val()
+        var bands                 = dataSet === 'LANDSAT'
+            ? $( '#bands' + mapIndex ).val().split( ', ' )
+            : $( '#sentinel2-bands' + mapIndex ).val().split( ', ' )
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
         var strategy              = $( '#strategy' ).find( 'input[name="strategy"]:checked' ).val()
@@ -188,6 +203,7 @@
             aoi                  : createAoi(),
             targetDayOfYear      : targetDayOfYear,
             targetDayOfYearWeight: targetDayOfYearWeight,
+            dataSet              : dataSet,
             bands                : bands,
             strategy             : strategy,
             classesToMask        : classesToMask

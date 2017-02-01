@@ -44,6 +44,14 @@
                     <input type="text" id="target-day-of-year-weight" value="0.5">
                 </p>
 
+                <p id="dataSet">
+                    <input id="dataSet.LANDSAT" type="radio" name="dataSet" checked value="LANDSAT">
+                    <label for="dataSet.LANDSAT">Landsat</label>
+
+                    <input id="dataSet.SENTINEL2" type="radio" name="dataSet" value="SENTINEL2">
+                    <label for="dataSet.SENTINEL2">Sentinel 2</label>
+                </p>
+
                 <p id="sensors">
                     <label>Sensors</label><br/>
                     <input type="checkbox" id="LANDSAT_8" checked>
@@ -84,34 +92,66 @@
                     <input id="strategy.quality-band" type="radio" name="strategy" value="quality-band">
                     <label for="strategy.quality-band">Quality Band</label>
                 </p>
-                <p>
-                    <label for="bands1">Bands 1</label><br/>
-                    <select id="bands1">
-                        <option value="B3, B2, B1">Natural (Red, Green, Blue)</option>
-                        <option value="B4, B3, B2">Infrared (NIR, Red, Green)</option>
-                        <option value="B4, B5, B3">False color(NIR, SWIR 1, Red)</option>
-                        <option value="B7, B4, B3">False color(SWIR 2, NIR, Red)</option>
-                        <option value="B7, B5, B3">False color(SWIR 2, SWIR 1, Red)</option>
-                        <option value="B7, B4, B2">False color(SWIR 2, NIR, Green)</option>
-                        <option value="temp">Temperature</option>
-                        <option value="date">Date of pixel in days</option>
-                        <option value="days">Days from target day</option>
-                    </select>
-                </p>
-                <p>
-                    <label for="bands2">Bands 2</label><br/>
-                    <select id="bands2">
-                        <option value="B3, B2, B1">Natural (Red, Green, Blue)</option>
-                        <option value="B4, B3, B2">Infrared (NIR, Red, Green)</option>
-                        <option value="B4, B5, B3">False color(NIR, SWIR 1, Red)</option>
-                        <option value="B7, B4, B3">False color(SWIR 2, NIR, Red)</option>
-                        <option value="B7, B5, B3">False color(SWIR 2, SWIR 1, Red)</option>
-                        <option value="B7, B4, B2">False color(SWIR 2, NIR, Green)</option>
-                        <option value="temp">Temperature</option>
-                        <option value="date">Date of pixel in days</option>
-                        <option value="days">Days from target day</option>
-                    </select>
-                </p>
+                <div id="landsat-bands-section">
+                    <p>
+                        <label for="bands1">Bands 1</label><br/>
+                        <select id="bands1">
+                            <option value="B3, B2, B1">Natural (Red, Green, Blue)</option>
+                            <option value="B4, B3, B2">Infrared (NIR, Red, Green)</option>
+                            <option value="B4, B5, B3">False color(NIR, SWIR 1, Red)</option>
+                            <option value="B7, B4, B3">False color(SWIR 2, NIR, Red)</option>
+                            <option value="B7, B5, B3">False color(SWIR 2, SWIR 1, Red)</option>
+                            <option value="B7, B4, B2">False color(SWIR 2, NIR, Green)</option>
+                            <option value="temp">Temperature</option>
+                            <option value="date">Date of pixel in days</option>
+                            <option value="days">Days from target day</option>
+                        </select>
+                    </p>
+                    <p>
+                        <label for="bands2">Bands 2</label><br/>
+                        <select id="bands2">
+                            <option value="B3, B2, B1">Natural (Red, Green, Blue)</option>
+                            <option value="B4, B3, B2">Infrared (NIR, Red, Green)</option>
+                            <option value="B4, B5, B3">False color(NIR, SWIR 1, Red)</option>
+                            <option value="B7, B4, B3">False color(SWIR 2, NIR, Red)</option>
+                            <option value="B7, B5, B3">False color(SWIR 2, SWIR 1, Red)</option>
+                            <option value="B7, B4, B2">False color(SWIR 2, NIR, Green)</option>
+                            <option value="temp">Temperature</option>
+                            <option value="date">Date of pixel in days</option>
+                            <option value="days">Days from target day</option>
+                        </select>
+                    </p>
+                </div>
+                <div id="sentinel2-bands-section" style="display:none">
+                    <p>
+                        <label for="sentinel2-bands1">Bands 1</label><br/>
+                        <select id="sentinel2-bands1">
+                            <option value="RED, GREEN, BLUE">Natural (Red, Green, Blue)</option>
+                            <option value="NIR, RED, GREEN">Infrared (NIR, Red, Green)</option>
+                            <option value="NIR, SWIR1, RED">False color(NIR, SWIR 1, Red)</option>
+                            <option value="SWIR2, NIR, RED">False color(SWIR 2, NIR, Red)</option>
+                            <option value="SWIR2, SWIR1, RED">False color(SWIR 2, SWIR 1, Red)</option>
+                            <option value="SWIR2, NIR, GREEN">False color(SWIR 2, NIR, Green)</option>
+                            <option value="temp">Temperature</option>
+                            <option value="date">Date of pixel in days</option>
+                            <option value="days">Days from target day</option>
+                        </select>
+                    </p>
+                    <p>
+                        <label for="sentinel2-bands2">Bands 2</label><br/>
+                        <select id="sentinel2-bands2">
+                            <option value="RED, GREEN, BLUE">Natural (Red, Green, Blue)</option>
+                            <option value="NIR, RED, GREEN">Infrared (NIR, Red, Green)</option>
+                            <option value="NIR, SWIR1, RED">False color(NIR, SWIR 1, Red)</option>
+                            <option value="SWIR2, NIR, RED">False color(SWIR 2, NIR, Red)</option>
+                            <option value="SWIR2, SWIR1, RED">False color(SWIR 2, SWIR 1, Red)</option>
+                            <option value="SWIR2, NIR, GREEN">False color(SWIR 2, NIR, Green)</option>
+                            <option value="temp">Temperature</option>
+                            <option value="date">Date of pixel in days</option>
+                            <option value="days">Days from target day</option>
+                        </select>
+                    </p>
+                </div>
                 <p>
                     <input id="exportName">
                     <input type="button" id="exportMosaic" value="Export">
