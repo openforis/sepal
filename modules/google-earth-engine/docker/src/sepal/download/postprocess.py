@@ -32,20 +32,28 @@ class PostProcess(object):
             self.running = False
 
     def _execute(self):
-        logging.debug('Starting to process: ' + self.dir)
-        tifs = ['%s/%s' % (self.dir, file)
-                for file in os.listdir(self.dir) if file.lower().endswith('.tif')]
-        logging.debug('Downloaded ' + str(tifs))
-        if len(tifs) > 1:
-            vrt = '%s/%s.vrt' % (self.dir, self.file_name)
-            logging.debug('Building vrt: ' + vrt)
-            self.listener.update_status({
-                'state': 'ACTIVE',
-                'step': 'POSTPROCESSING',
-                'description': "Building virtual raster"})
-
-            gdal.BuildVRT(vrt, tifs).FlushCache()
+        try:
             logging.debug('Starting to process: ' + self.dir)
-        self.listener.update_status({
-            'state': 'COMPLETED',
-            'description': "Completed"})
+            tifs = ['%s/%s' % (self.dir, file)
+                    for file in os.listdir(self.dir) if file.lower().endswith('.tif')]
+            logging.debug('Downloaded ' + str(tifs))
+            if len(tifs) > 1:
+                vrt = '%s/%s.vrt' % (self.dir, self.file_name)
+                logging.debug('Building vrt: ' + vrt)
+                self.listener.update_status({
+                    'state': 'ACTIVE',
+                    'step': 'POSTPROCESSING',
+                    'description': "Building virtual raster"})
+
+                gdal.BuildVRT(vrt, tifs).FlushCache()
+                logging.debug('Starting to process: ' + self.dir)
+            self.listener.update_status({
+                'state': 'COMPLETED',
+                'description': "Completed"})
+        except:
+            logger.exception('Download from Google Drive failed. Path: ' + self.file_name)
+            self.listener.update_status({
+                'state': 'FAILED',
+                'description': 'Failed to build virtual raster'})
+            self.stop()
+
