@@ -27,6 +27,7 @@ def read_nodata(raster_file):
 def band_info(raster_file, band_index, nodata):
     ds = gdal.OpenShared(raster_file, gdal.GA_Update)
     band = ds.GetRasterBand(band_index)
+    band.SetMetadata(None)
     file_nodata = band.GetNoDataValue()
     try:
         if nodata:
@@ -64,7 +65,14 @@ def _remove_stats(ds):
         for related_file in ds.GetFileList()
         if related_file.endswith('.aux.xml')]
     for file_to_delete in files_to_delete:
+        _remove_file(file_to_delete)
+
+
+def _remove_file(file_to_delete):
+    try:
         os.remove(file_to_delete)
+    except:
+        pass
 
 
 def _build_overviews(layer):
@@ -73,7 +81,7 @@ def _build_overviews(layer):
         index
         for index in range(1, band_count(layer.file))
         if not ds.GetRasterBand(index).GetOverviewCount()
-    ]
+        ]
     if bands_without_index:
         ds.BuildOverviews(resampling='average', overviewlist=[2, 4, 8])
 
@@ -144,7 +152,7 @@ class RasterLayer(Layer):
         return [
             self.band_value(band_layer, lat, lng)
             for band_layer in self.band_layers
-        ]
+            ]
 
     def band_value(self, band_layer, lat, lng):
         features = self.layer_features(band_layer.band.index - 1, lat, lng)
@@ -251,4 +259,4 @@ class _Band(object):
                 palette=band['palette']
             )
             for band in bands_dict
-        ]
+            ]

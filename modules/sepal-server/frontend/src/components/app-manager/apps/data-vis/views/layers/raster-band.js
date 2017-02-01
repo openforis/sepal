@@ -209,7 +209,6 @@ RasterBand.prototype.initColorPickers = function () {
             $this.fromColor.find( 'i' ).css( 'background-color', color )
             from[ 1 ] = color
         } )
-        // this.fromColor.colorpicker( 'setValue', from[ 1 ] )
         
         // to color
         var to       = palette[ 1 ]
@@ -220,7 +219,6 @@ RasterBand.prototype.initColorPickers = function () {
             $this.toColor.find( 'i' ).css( 'background-color', color )
             to[ 1 ] = color
         } )
-        // this.toColor.colorpicker( 'setValue', to[ 1 ] )
     }
 }
 
@@ -275,7 +273,7 @@ RasterBand.prototype.initHistogramOverlay = function () {
                 
                 var parentWidth    = $( event.target ).parent().width()
                 var width          = Math.min( event.rect.width, parentWidth )
-                target.style.width = width + 'px';
+                target.style.width = width + 'px'
                 
                 // translate when resizing from top or left edges
                 x += Math.floor( event.deltaRect.left );
@@ -288,7 +286,6 @@ RasterBand.prototype.initHistogramOverlay = function () {
                 
                 target.setAttribute( 'data-x', x );
                 target.setAttribute( 'data-y', y );
-                // target.textContent = Math.round( event.rect.width ) + '×' + Math.round( event.rect.height );
             } )
             .on( 'resizeend', function ( event ) {
                 updateBand( event )
@@ -302,24 +299,17 @@ RasterBand.prototype.initHistogramOverlay = function () {
             var parentWidth = $( event.target ).parent().width()
             var x           = (parseFloat( target.getAttribute( 'data-x' ) ) || 0)
             var y           = (parseFloat( target.getAttribute( 'data-y' ) ) || 0)
-            // console.log( "parent width" + parentWidth )
-            // console.log( $this.properties.min, $this.properties.max )
-            // console.log( "scrollLeft: ", target.scrollLeft, "scrollWidth: ", target.scrollWidth )
-            // console.log( "x: ", x, "y: ", y )
-            // console.log( "event.dxx: ", event.dx, "event.dy: ", event.dy )
-            var x1           = x * parentWidth / (parentWidth - 3)
-            var scrollWidth1 = target.scrollWidth * parentWidth / (parentWidth - 3)
-            // console.log( "x1: ", x1, "scrollWidth1: ", scrollWidth1 )
+
+            // var x1           = x * parentWidth / (parentWidth - 3)
+            // var scrollWidth1 = target.scrollWidth * parentWidth / (parentWidth - 3)
+            
             var getValue     = function ( x ) {
                 var percentage = ( x / parentWidth * 100 )
                 var value      = (percentage * ($this.properties.max - $this.properties.min) / 100) + $this.properties.min
                 return value
             }
-            // var minValue     = getValue( x1 )
             var minValue     = getValue( x )
-            // var maxValue     = getValue( x1 + scrollWidth1 )
             var maxValue     = getValue( x + target.scrollWidth )
-            // console.log( "====== Min : " + minValue, " ==== Max : ", maxValue )
             
             $this.inputMinValue.val( minValue )
             $this.inputMaxValue.val( maxValue )
@@ -330,7 +320,6 @@ RasterBand.prototype.initHistogramOverlay = function () {
             
             var to  = palette[ 1 ]
             to[ 0 ] = maxValue
-            // console.log( $this.rasterOptions.layerOptions.layer )
         }
     }
 }
