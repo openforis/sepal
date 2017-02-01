@@ -19,14 +19,16 @@ var init = function ( dataVis ) {
     btnOpen   = dataVis.find( '.btn-open-layers' )
     
     Sortable.create( container.get( 0 ), {
-        handle     : ".btn-sort"
-        , draggable: ".row-layer"
-        , onChoose : function ( evt ) {
+        handle      : ".btn-sort"
+        , animation : 80
+        , draggable : ".row-layer"
+        , ghostClass: "row-layer-placeholder"
+        , onChoose  : function ( evt ) {
             $( '#data-vis .layers-container' ).css( 'width', '25%' )
             $( "#data-vis .layer-options:visible" ).hide( 0 )
             $( "#data-vis" ).find( '.row-layer.expanded' ).removeClass( 'expanded' )
         }
-        , onUpdate : function ( evt ) {
+        , onUpdate  : function ( evt ) {
             sortLayers()
         }
     } )
@@ -76,10 +78,10 @@ var open = function () {
 
 var load = function ( layers ) {
     $.each( layers, function ( i, l ) {
-        l.index   = i
-        l.opacity = 1
+        l.index     = i
+        l.opacity   = 1
         // console.log( "Layers loaded at index ", i, " : ", l )
-        var uiLayer = Layer.newInstance( container, l )
+        var uiLayer = Layer.newInstance( btnClose, l )
         uiLayer.show()
         
         uiLayers[ l.id ] = uiLayer
@@ -104,24 +106,28 @@ var addNewLayer = function ( path ) {
     
     // console.log( "=== ADDING NEW LAYER " + layer )
     
-    var uiLayer = Layer.newInstance( container, layer )
+    var uiLayer = Layer.newInstance( btnClose, layer )
     
     uiLayers[ layer.id ] = uiLayer
 }
 
-var sortLayers = function () {
+var sortLayers = function ( callback ) {
+    // if ( !callback )
     Loader.show()
     
     // update index
     var rowLayers = container.find( '.row-layer' )
+    var length    = rowLayers.length
     var layerIds  = []
     $.each( rowLayers, function ( i, rowLayer ) {
         var layerId = $( rowLayer ).data( 'layer-id' )
         layerIds.push( layerId )
         
         var uiLayer           = uiLayers[ layerId ]
-        uiLayer.options.index = i
+        uiLayer.options.index = (length - 1 - i)
     } )
+    
+    layerIds.reverse()
     
     //submit re-order request
     var params = {
@@ -138,6 +144,9 @@ var sortLayers = function () {
                 }
             } )
             
+            // if ( callback )
+            //     callback()
+            // else
             Loader.hide()
         }
     }
@@ -157,17 +166,7 @@ var deleteLayer = function ( e, layerId ) {
             delete uiLayers[ layerId ]
         }
         , success   : function () {
-            
-            $.each( uiLayers, function ( i, uiLayer ) {
-                // console.log( uiLayer )
-                if ( uiLayer.options.visible ) {
-                    uiLayer.show()
-                } else {
-                    uiLayer.hide()
-                }
-            } )
-            
-            Loader.hide( { delay: 300 } )
+            sortLayers()
         }
     }
     EventBus.dispatch( Events.AJAX.DELETE, null, params )
