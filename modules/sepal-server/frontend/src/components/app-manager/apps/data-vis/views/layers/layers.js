@@ -112,7 +112,6 @@ var addNewLayer = function ( path ) {
 }
 
 var sortLayers = function ( callback ) {
-    // if ( !callback )
     Loader.show()
     
     // update index
@@ -144,9 +143,6 @@ var sortLayers = function ( callback ) {
                 }
             } )
             
-            // if ( callback )
-            //     callback()
-            // else
             Loader.hide()
         }
     }

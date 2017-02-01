@@ -64,6 +64,10 @@
       background-color: transparent !important;
       color: white;
     }
+    input:disabled {
+      cursor: not-allowed;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
   }
 

@@ -7,10 +7,15 @@ var Loader     = require( '../../../../../loader/loader' )
 var RasterBand = require( './raster-band' )
 
 var RasterOptions = function ( layerOptions, onReady ) {
-    var $this         = this
+    var $this = this
+    
+    //instance variables
     this.layerOptions = layerOptions
-    this.container    = this.layerOptions.rasterOptions
-    this.inputNoData  = this.container.find( 'input[name=no-data]' )
+    this.layer        = $.extend( true, {}, this.layerOptions.layer )
+    
+    // ui elements
+    this.container   = this.layerOptions.rasterOptions
+    this.inputNoData = this.container.find( 'input[name=no-data]' )
     this.inputNoData.change( function () {
         $.each( $this.bandsUI, function ( i, bandUI ) {
             var val                       = $this.inputNoData.val()
@@ -20,9 +25,20 @@ var RasterOptions = function ( layerOptions, onReady ) {
             bandUI.setBandIndex( bandUI.band.index )
         } )
     } )
-    // var layer         = $.extend( true, {}, this.layerOptions.layer )
-    this.layer   = $.extend( true, {}, this.layerOptions.layer )
+    
     this.bandsUI = []
+    
+    this.formNotify = this.container.find( '.form-notify' )
+    this.btnSave    = this.container.find( '.btn-save' )
+    this.btnSave.click( function () {
+        $this.save()
+    } )
+    
+    this.init( onReady )
+}
+
+RasterOptions.prototype.init = function ( onReady ) {
+    var $this = this
     
     var params = {
         url      : '/sandbox/geo-web-viz/raster/info?path=' + this.layer.path
@@ -32,12 +48,13 @@ var RasterOptions = function ( layerOptions, onReady ) {
             $this.inputNoData.val( $this.layer.nodata )
             
             if ( $this.layer.bounds ) {
-                $this.initBands()
+                $this.initBandsUI()
                 onReady()
             } else {
                 
-                $this.btnSave.disable()
                 // init default bands
+                $this.btnSave.disable()
+                
                 $this.layer.bands = []
                 if ( $this.bandCount >= 3 ) {
                     $this.layer.bands[ 0 ] = { index: 3, palette: [ [ -1, '#000000' ], [ -1, '#FF0000' ] ] }
@@ -46,9 +63,7 @@ var RasterOptions = function ( layerOptions, onReady ) {
                 } else {
                     $this.layer.bands[ 0 ] = { index: 1, palette: [ [ -1, '#000000' ], [ -1, '#CCCCCC' ] ] }
                 }
-                $this.initBands()
-                
-                // var bandsInitialzed       = false
+                $this.initBandsUI()
                 
                 var checkBandsInitialized = function () {
                     var bandsInitialzied = function () {
@@ -72,21 +87,14 @@ var RasterOptions = function ( layerOptions, onReady ) {
                     }
                 }
                 var interval              = setInterval( checkBandsInitialized, 300 )
-                // onReady()
             }
         }
     }
     
     EventBus.dispatch( Events.AJAX.GET, null, params )
-    
-    this.formNotify = this.container.find( '.form-notify' )
-    this.btnSave    = this.container.find( '.btn-save' )
-    this.btnSave.click( function () {
-        $this.save()
-    } )
 }
 
-RasterOptions.prototype.initBands = function () {
+RasterOptions.prototype.initBandsUI = function () {
     var bandsContainer = this.layerOptions.rasterOptions.find( '.raster-bands' )
     
     this.bandsUI[ 0 ] = RasterBand.newInstance( this, bandsContainer, this.layer.bands[ 0 ] )
@@ -116,9 +124,12 @@ RasterOptions.prototype.update = function () {
     this.formNotify.stop().hide()
     var $this   = this
     $this.layer = $.extend( true, {}, $this.layerOptions.layer )
+    
+    // $this.layer.nodata = response.nodata
+    // $this.inputNoData.val( $this.layer.nodata )
+    
     setTimeout( function () {
         $.each( $this.bandsUI, function ( i, bandUI ) {
-            // $this.layer.bands[i] = $.extend( true, {}, $this.layerOptions.layer.bands[ i ] )
             bandUI.update( $this.layer.bands[ i ] )
         } )
     }, 510 )
@@ -139,7 +150,7 @@ RasterOptions.prototype.save = function ( callback ) {
     if ( !valid ) {
         this.formNotify.html( 'All bands must be specified before saving' ).fadeIn()
     } else {
-        // console.log( "=== Before save", this.layer )
+        
         var params = {
             url         : '/sandbox/geo-web-viz/raster/save'
             , data      : { 'layer': JSON.stringify( this.layer ) }
