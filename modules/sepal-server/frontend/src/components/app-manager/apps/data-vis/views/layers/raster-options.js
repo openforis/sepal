@@ -122,15 +122,17 @@ RasterOptions.prototype.bandIndexChange = function ( target, newIndex ) {
 
 RasterOptions.prototype.update = function () {
     this.formNotify.stop().hide()
-    var $this   = this
+    var $this       = this
+    var reloadBands = $this.layer.nodata !== $this.layerOptions.layer.nodata
+    // console.log( "==== Reload bands" + reloadBands )
     $this.layer = $.extend( true, {}, $this.layerOptions.layer )
     
-    // $this.layer.nodata = response.nodata
-    // $this.inputNoData.val( $this.layer.nodata )
+    $this.inputNoData.val( $this.layer.nodata )
+    
     if ( $this.layer.bands ) {
         setTimeout( function () {
             $.each( $this.bandsUI, function ( i, bandUI ) {
-                bandUI.update( $this.layer.bands[ i ] )
+                bandUI.updateBand( $this.layer.bands[ i ] , reloadBands )
             } )
         }, 510 )
     }

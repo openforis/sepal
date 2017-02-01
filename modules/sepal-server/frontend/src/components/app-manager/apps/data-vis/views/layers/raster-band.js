@@ -111,21 +111,11 @@ RasterBand.prototype.setBandIndex = function ( bandIndex ) {
                             break
                         }
                     }
-                    $this.band.palette[ 0 ][ 0 ] = min//$this.properties.min
-                    $this.band.palette[ 1 ][ 0 ] = max//$this.properties.max
+                    $this.band.palette[ 0 ][ 0 ] = min
+                    $this.band.palette[ 1 ][ 0 ] = max
                 }
                 
-                // update histogram
-                $this.rasterBandHistogram.bandHistogramProgressLoader.fadeOut( 100 )
-                $this.rasterBandHistogram.setHistogramData( { series: [ $this.properties.histogram ] } )
-                
-                // update color pickers
-                $this.html.find( '.color-picker' ).enable()
-                $this.updateColorPickers()
-                
-                // update input values
-                $this.inputMinValue.val( $this.band.palette[ 0 ][ 0 ] ).enable()
-                $this.inputMaxValue.val( $this.band.palette[ 1 ][ 0 ] ).enable()
+                $this.update()
                 
                 $this._initialized = true
             }
@@ -145,11 +135,32 @@ RasterBand.prototype.setBandIndex = function ( bandIndex ) {
     }
 }
 
-RasterBand.prototype.update = function ( band ) {
+RasterBand.prototype.update = function () {
+    this.bandIndex.val( this.band.index )
+    
+    // update histogram
+    this.rasterBandHistogram.bandHistogramProgressLoader.fadeOut( 100 )
+    this.rasterBandHistogram.setHistogramData( { series: [ this.properties.histogram ] } )
+    
+    // update color pickers
+    this.html.find( '.color-picker' ).enable()
+    this.updateColorPickers()
+    
+    // update input values
+    this.inputMinValue.val( this.band.palette[ 0 ][ 0 ] ).enable()
+    this.inputMaxValue.val( this.band.palette[ 1 ][ 0 ] ).enable()
+}
+
+RasterBand.prototype.updateBand = function ( band, reload ) {
     this.band = band
     
-    this.setBandIndex( this.band.index )
+    if ( reload )
+        this.setBandIndex( this.band.index )
+    else
+        this.update()
+    // this.setBandIndex( this.band.index )
 }
+
 
 RasterBand.prototype.initColorPickers = function () {
     var $this = this
