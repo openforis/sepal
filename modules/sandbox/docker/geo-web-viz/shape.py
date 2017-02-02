@@ -51,7 +51,6 @@ class ShapeLayer(Layer):
         line_symbolizer = mapnik.LineSymbolizer()
         line_symbolizer.stroke = mapnik.Color(str(stroke_color))
         line_symbolizer.stroke_width = float(stroke_width)
-        line_symbolizer.simplify = 0.1
 
         rule = mapnik.Rule()
         rule.symbols.append(polygon_symbolizer)
