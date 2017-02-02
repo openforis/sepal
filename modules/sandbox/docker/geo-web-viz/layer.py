@@ -10,7 +10,7 @@ class Layer(object):
         envelope = map.envelope()
         return [[envelope.miny, envelope.minx], [envelope.maxy, envelope.maxx]]
 
-    def layer_features(self, lat, lng):
+    def layer_features(self, layer_index, lat, lng):
         map = mapnik.Map(1, 1, '+init=epsg:4326')
         self.append_to(map)
         map.zoom_all()
@@ -19,4 +19,4 @@ class Layer(object):
         return [
             feature.attributes
             for feature in map.query_point(layer_index, lng, lat)
-            ]
+        ]
