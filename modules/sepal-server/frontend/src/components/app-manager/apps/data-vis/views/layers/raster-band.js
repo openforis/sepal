@@ -14,8 +14,8 @@ var RasterBand = function ( rasterOptions, container, band ) {
     var $this = this
     
     //init html
-    this.html = html.clone()
-    container.append( this.html )
+    this.html            = html.clone()
+    this.parentContainer = container
     
     // init properties
     this.rasterOptions = rasterOptions
@@ -30,11 +30,7 @@ var RasterBand = function ( rasterOptions, container, band ) {
     }
     
     this.bandIndex.prop( 'disabled', this.rasterOptions.bandCount == 1 )
-    this.bandIndex.change( function () {
-        if ( $.isNotEmptyString( $this.bandIndex.val() ) ) {
-            $this.rasterOptions.bandIndexChange( $this, parseInt( $this.bandIndex.val() ) )
-        }
-    } )
+    
     // band histogram
     this.rasterBandHistogram = RasterBandHistogram.newInstance( this )
     
@@ -42,21 +38,48 @@ var RasterBand = function ( rasterOptions, container, band ) {
     this.inputMinValue = this.html.find( '[name=min-value]' )
     this.inputMaxValue = this.html.find( '[name=max-value]' )
     
-    this.inputMinValue.change( function () {
-        var val                      = $this.inputMinValue.val()
-        $this.band.palette[ 0 ][ 0 ] = $.isNotEmptyString( val ) ? parseFloat( val ) : ''
-        $this.rasterBandHistogram.updateHistogramOverlay()
-    } )
-    
-    this.inputMaxValue.change( function () {
-        var val                      = $this.inputMaxValue.val()
-        $this.band.palette[ 1 ][ 0 ] = $.isNotEmptyString( val ) ? parseFloat( val ) : ''
-        $this.rasterBandHistogram.updateHistogramOverlay()
-    } )
-    
+    //color picker
     this.initColorPickers()
     
+    //initDom
+    this.initDom()
+    
     this.setBandIndex( this.band.index )
+}
+
+RasterBand.prototype.initDom = function () {
+    if ( this.html.parent().length <= 0 ) {
+        var $this = this
+        
+        this.parentContainer.append( this.html )
+        this.bandIndex.change( function () {
+            if ( $.isNotEmptyString( $this.bandIndex.val() ) ) {
+                $this.rasterOptions.bandIndexChange( $this, parseInt( $this.bandIndex.val() ) )
+            }
+        } )
+        
+        this.inputMinValue.change( function () {
+            var val                      = $this.inputMinValue.val()
+            $this.band.palette[ 0 ][ 0 ] = $.isNotEmptyString( val ) ? parseFloat( val ) : ''
+            $this.rasterBandHistogram.updateHistogramOverlay()
+        } )
+        this.inputMaxValue.change( function () {
+            var val                      = $this.inputMaxValue.val()
+            $this.band.palette[ 1 ][ 0 ] = $.isNotEmptyString( val ) ? parseFloat( val ) : ''
+            $this.rasterBandHistogram.updateHistogramOverlay()
+        } )
+        
+        this.fromColor.on( 'changeColor', function ( e ) {
+            var color = e.color.toString( 'rgba' )
+            $this.fromColor.find( 'i' ).css( 'background-color', color )
+            $this.band.palette[ 0 ][ 1 ] = color
+        } )
+        this.toColor.on( 'changeColor', function ( e ) {
+            var color = e.color.toString( 'rgba' )
+            $this.toColor.find( 'i' ).css( 'background-color', color )
+            $this.band.palette[ 1 ][ 1 ] = color
+        } )
+    }
 }
 
 RasterBand.prototype.setBandIndex = function ( bandIndex ) {
@@ -152,6 +175,8 @@ RasterBand.prototype.update = function () {
 }
 
 RasterBand.prototype.updateBand = function ( band, reload ) {
+    this.initDom()
+    
     this.band = band
     
     if ( reload )
@@ -168,26 +193,21 @@ RasterBand.prototype.initColorPickers = function () {
     // from color
     this.fromColor = this.html.find( '.from-color' )
     this.fromColor.colorpicker()
-    this.fromColor.on( 'changeColor', function ( e ) {
-        var color = e.color.toString( 'rgba' )
-        $this.fromColor.find( 'i' ).css( 'background-color', color )
-        $this.band.palette[ 0 ][ 1 ] = color
-    } )
+    
     
     // to color
     this.toColor = this.html.find( '.to-color' )
     this.toColor.colorpicker()
-    this.toColor.on( 'changeColor', function ( e ) {
-        var color = e.color.toString( 'rgba' )
-        $this.toColor.find( 'i' ).css( 'background-color', color )
-        $this.band.palette[ 1 ][ 1 ] = color
-    } )
 }
 
 RasterBand.prototype.updateColorPickers = function () {
     var palette = this.band.palette
     this.fromColor.colorpicker( 'setValue', palette[ 0 ][ 1 ] )
     this.toColor.colorpicker( 'setValue', palette[ 1 ][ 1 ] )
+}
+
+RasterBand.prototype.delete = function () {
+    this.html.remove()
 }
 
 var newInstance = function ( rasterOptions, container, band ) {

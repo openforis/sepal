@@ -48,7 +48,7 @@ LayerOptions.prototype._show = function () {
         
         this.container.velocitySlideDown( {
             height: 'auto', complete: function () {
-                
+                EventBus.dispatch( Events.APPS.DATA_VIS.UPDATE_LAYER_OPTION_BTNS_POSITION )
             }
         } )
         $this.container.closest( '.row-layer' ).addClass( 'expanded' )
@@ -72,7 +72,7 @@ LayerOptions.prototype.hide = function () {
         $( '#data-vis .layers-container' ).velocity( { width: '25%' } )
         this.container.velocitySlideUp( {
             complete: function () {
-                EventBus.dispatch( Events.APPS.DATA_VIS.LAYER_OPTIONS_CLOSED )
+                EventBus.dispatch( Events.APPS.DATA_VIS.UPDATE_LAYER_OPTION_BTNS_POSITION )
             }
         } )
         this.container.closest( '.row-layer' ).removeClass( 'expanded' )

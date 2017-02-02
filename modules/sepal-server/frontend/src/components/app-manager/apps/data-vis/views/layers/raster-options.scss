@@ -1,0 +1,27 @@
+#data-vis {
+  .row-raster {
+    display: none;
+
+    .row-no-band-selector {
+      display: none;
+
+      .col-btns {
+        //word-spacing: 1rem;
+
+        .btn {
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          font-size: .7rem;
+          font-weight: 400;
+        }
+        .btn.active {
+          border: 1px solid rgba(197, 179, 151, 0.3);
+        }
+        .btn:not(:last-child){
+          margin-right: .5rem;
+        }
+
+      }
+    }
+
+  }
+}

@@ -64,7 +64,6 @@ var close = function () {
 }
 
 var open = function () {
-    
     container.velocity( {
             left: '15px'
         },
@@ -150,11 +149,9 @@ var sortLayers = function ( callback ) {
     }
     
     EventBus.dispatch( Events.AJAX.POST, null, params )
-    
 }
 
 var deleteLayer = function ( e, layerId ) {
-    
     var params = {
         url         : '/sandbox/geo-web-viz/layers/' + layerId
         , beforeSend: function () {
@@ -171,7 +168,7 @@ var deleteLayer = function ( e, layerId ) {
 }
 
 EventBus.addEventListener( Events.APPS.DATA_VIS.LAYER_DELETE, deleteLayer )
-EventBus.addEventListener( Events.APPS.DATA_VIS.LAYER_OPTIONS_CLOSED, updateOptionButtonsPosition )
+EventBus.addEventListener( Events.APPS.DATA_VIS.UPDATE_LAYER_OPTION_BTNS_POSITION, updateOptionButtonsPosition )
 
 module.exports = {
     init         : init

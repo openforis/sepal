@@ -150,18 +150,18 @@ var Events = {
     
     , APPS: {
         DATA_VIS: {
-            MAP_INITIALIZED           : 'apps.data_vis.map_initialized'
-            , ADD_MAP_LAYER           : 'apps.data_vis.add_map_layer'
-            , FORCE_UPDATE_LAYER      : 'apps.data_vis.force_update_layer'
-            , REMOVE_MAP_LAYER        : 'apps.data_vis.remove_map_layer'
-            , MAP_LAYER_TILES_LOADING : 'apps.data_vis.map_layer_tiles_loading'
-            , MAP_TILES_LOADED        : 'apps.data_vis.map_tiles_loaded'
-            , MAP_LAYER_CHANGE_OPACITY: 'apps.data_vis.map_layer_change_opacity'
-            , MAP_LAYER_ZOOM_TO       : 'apps.data_vis.map_layer_zoom_to'
-            , LAYER_DELETE            : 'apps.data_vis.layer_delete'
-            , ADD_FILE                : 'apps.data_vis.add_file'
-            , LAYERS_LOADED           : 'apps.data_vis.layers_loaded'
-            , LAYER_OPTIONS_CLOSED    : 'apps.data_vis.layer_options_closed'
+            MAP_INITIALIZED                    : 'apps.data_vis.map_initialized'
+            , ADD_MAP_LAYER                    : 'apps.data_vis.add_map_layer'
+            , FORCE_UPDATE_LAYER               : 'apps.data_vis.force_update_layer'
+            , REMOVE_MAP_LAYER                 : 'apps.data_vis.remove_map_layer'
+            , MAP_LAYER_TILES_LOADING          : 'apps.data_vis.map_layer_tiles_loading'
+            , MAP_TILES_LOADED                 : 'apps.data_vis.map_tiles_loaded'
+            , MAP_LAYER_CHANGE_OPACITY         : 'apps.data_vis.map_layer_change_opacity'
+            , MAP_LAYER_ZOOM_TO                : 'apps.data_vis.map_layer_zoom_to'
+            , LAYER_DELETE                     : 'apps.data_vis.layer_delete'
+            , ADD_FILE                         : 'apps.data_vis.add_file'
+            , LAYERS_LOADED                    : 'apps.data_vis.layers_loaded'
+            , UPDATE_LAYER_OPTION_BTNS_POSITION: 'apps.data_vis.update_layer_option_btns_position'
         }
     }
     
