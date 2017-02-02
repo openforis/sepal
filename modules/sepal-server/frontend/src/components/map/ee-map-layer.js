@@ -25,25 +25,25 @@ var renderEE  = function ( e, mapId, token ) {
     
     // Create the map type.
     eeOverlayMapType = new google.maps.ImageMapType( eeMapOptions )
-    EventBus.dispatch( Events.MAP.ADD_OVERLAY_MAP_TYPE, null, LAYER_INDEX, eeOverlayMapType )
+    EventBus.dispatch( Events.MAP.ADD_EE_MOSAIC, null, LAYER_INDEX, eeOverlayMapType )
 }
 
 var onRemoveEELayer = function ( e ) {
     if ( eeOverlayMapType && isVisible ) {
-        EventBus.dispatch( Events.MAP.REMOVE_OVERLAY_MAP_TYPE, null, LAYER_INDEX )
+        EventBus.dispatch( Events.MAP.REMOVE_EE_MOSAIC, null, LAYER_INDEX )
     }
     eeOverlayMapType = null
 }
 
 var onShowApplicationSection = function ( e ) {
     if ( eeOverlayMapType && isVisible ) {
-        EventBus.dispatch( Events.MAP.REMOVE_OVERLAY_MAP_TYPE, null, LAYER_INDEX )
+        EventBus.dispatch( Events.MAP.REMOVE_EE_MOSAIC, null, LAYER_INDEX )
     }
 }
 
 var onReduceApplicationSection = function ( e ) {
     if ( eeOverlayMapType && isVisible ) {
-        EventBus.dispatch( Events.MAP.ADD_OVERLAY_MAP_TYPE, null, LAYER_INDEX, eeOverlayMapType )
+        EventBus.dispatch( Events.MAP.ADD_EE_MOSAIC, null, LAYER_INDEX, eeOverlayMapType )
     }
 }
 
@@ -51,9 +51,9 @@ var toggleVisibility = function ( e ) {
     isVisible = !isVisible
     
     if ( !isVisible && eeOverlayMapType ) {
-        EventBus.dispatch( Events.MAP.REMOVE_OVERLAY_MAP_TYPE, null, LAYER_INDEX )
+        EventBus.dispatch( Events.MAP.REMOVE_EE_MOSAIC, null, LAYER_INDEX )
     } else if ( eeOverlayMapType ) {
-        EventBus.dispatch( Events.MAP.ADD_OVERLAY_MAP_TYPE, null, LAYER_INDEX, eeOverlayMapType )
+        EventBus.dispatch( Events.MAP.ADD_EE_MOSAIC, null, LAYER_INDEX, eeOverlayMapType )
     }
     
 }

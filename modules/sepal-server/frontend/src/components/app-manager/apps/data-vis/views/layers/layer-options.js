@@ -91,6 +91,7 @@ LayerOptions.prototype.initRemoveOptions = function () {
     var $this         = this
     this.btnRemoveYes = this.deleteOptions.find( '.btn-yes' )
     this.btnRemoveYes.click( function () {
+        $this.hide()
         EventBus.dispatch( Events.APPS.DATA_VIS.LAYER_DELETE, null, $this.layer.id )
     } )
     

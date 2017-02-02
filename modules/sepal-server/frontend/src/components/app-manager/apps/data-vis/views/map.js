@@ -18,7 +18,14 @@ var init = function ( domId ) {
         
         google.maps.event.addListenerOnce( map, 'idle', function () {
             EventBus.dispatch( Events.APPS.DATA_VIS.MAP_INITIALIZED )
-        } );
+        } )
+        
+        google.maps.event.addListener( map, 'click', function ( event ) {
+            console.log( event.latLng )
+            var lat = event.latLng.lat()
+            var lng = event.latLng.lng()
+            EventBus.dispatch( Events.APPS.DATA_VIS.GET_FEATURE_INFO, null, lat, lng )
+        } )
         
     } )
 }

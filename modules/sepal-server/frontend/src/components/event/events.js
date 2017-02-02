@@ -113,10 +113,12 @@ var Events = {
         , ADD_EE_LAYER                : 'map.add_ee_layer'
         , REMOVE_EE_LAYER             : 'map.remove_ee_layer'
         , EE_LAYER_TOGGLE_VISIBILITY  : 'map.remove_ee_layer_toggle_visibility'
+        , ADD_DRAWN_AOI_LAYER         : 'map.add_drawn_aoi_layer'
+        , REMOVE_DRAWN_AOI_LAYER      : 'map.remove_drawn_aoi_layer'
         , SCENE_AREA_RESET            : 'map.scene_area_reset'
         , SCENE_AREA_TOGGLE_VISIBILITY: 'map.scene_area_toggle_visibility'
-        , ADD_OVERLAY_MAP_TYPE        : 'map.add_overlay_map_type'
-        , REMOVE_OVERLAY_MAP_TYPE     : 'map.remove_overlay_map_type'
+        , ADD_EE_MOSAIC               : 'map.add_ee_mosaic'
+        , REMOVE_EE_MOSAIC            : 'map.remove_ee_mosaic'
         , POLYGON_DRAW                : 'map.polygon_draw'
         , POLYGON_DRAWN               : 'map.polygon_drawn'
         , POLYGON_CLEAR               : 'map.polygon_clear'
@@ -162,6 +164,7 @@ var Events = {
             , ADD_FILE                         : 'apps.data_vis.add_file'
             , LAYERS_LOADED                    : 'apps.data_vis.layers_loaded'
             , UPDATE_LAYER_OPTION_BTNS_POSITION: 'apps.data_vis.update_layer_option_btns_position'
+            , GET_FEATURE_INFO                 : 'apps.data_vis.get_feature_info'
         }
     }
     

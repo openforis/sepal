@@ -36,11 +36,12 @@ var enable = function ( e ) {
     google.maps.event.addListener( drawingManager, 'overlaycomplete', function ( e ) {
         polygon = e.overlay
         
-        EventBus.dispatch( Events.MAP.POLYGON_DRAWN, null, toGeoJSONString( polygon ) )
-        EventBus.dispatch( Events.SECTION.SHOW, null, 'search' )
+        EventBus.dispatch( Events.MAP.POLYGON_DRAWN, null, toGeoJSONString( polygon ), polygon )
+        EventBus.dispatch( Events.SECTION.SHOW, null, 'search', { keepAoiLayerVisible: true } )
     } )
     
-    EventBus.dispatch( Events.MAP.ADD_LAYER, null, drawingManager )
+    // EventBus.dispatch( Events.MAP.ADD_LAYER, null, drawingManager )
+    EventBus.dispatch( Events.MAP.ADD_DRAWN_AOI_LAYER, null, drawingManager )
 }
 
 var toGeoJSONString = function () {
@@ -62,7 +63,8 @@ var disable = function () {
 
 var clear = function () {
     if ( polygon ) {
-        polygon.setMap( null )
+        // polygon.setMap( null )
+        EventBus.dispatch( Events.MAP.REMOVE_DRAWN_AOI_LAYER, null, polygon )
     }
 }
 
