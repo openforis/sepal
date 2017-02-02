@@ -46,13 +46,6 @@ class DataSearchEndpoint {
                 def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
                 send(toJson(data))
             }
-            get('/data/sceneareas') { // TODO: Remove...
-                response.contentType = "application/json"
-                def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(
-                        toAoi(params)))
-                def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
-                send(toJson(data))
-            }
 
             post('/data/mosaic/preview') {
                 response.contentType = "application/json"
