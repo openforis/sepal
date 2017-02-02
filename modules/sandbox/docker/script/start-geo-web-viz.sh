@@ -20,6 +20,7 @@ export core_count=$(/bin/grep -c ^processor /proc/cpuinfo)
 sudo -Eu $sandbox_user "PATH=$sandbox_path" gunicorn\
  --bind 0.0.0.0:5678\
  --workers 1\
+ --timeout 3600\
  --threads $(($core_count * 4))\
  --backlog 64\
  wsgi:app 5678 /home/$sandbox_user
