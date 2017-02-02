@@ -10,7 +10,6 @@ from layer import Layer
 
 def create(shape_dict):
     layer = _from_dict(shape_dict)
-    call(['shapeindex', '--index-parts', layer.file])
     return layer
 
 
@@ -52,7 +51,6 @@ class ShapeLayer(Layer):
         line_symbolizer = mapnik.LineSymbolizer()
         line_symbolizer.stroke = mapnik.Color(str(stroke_color))
         line_symbolizer.stroke_width = float(stroke_width)
-        line_symbolizer.simplify = 0.1
 
         rule = mapnik.Rule()
         rule.symbols.append(polygon_symbolizer)
