@@ -160,13 +160,14 @@ class RasterLayer(Layer):
         return updated_layer
 
     def features(self, lat, lng):
+
         return [
-            self.band_value(band_layer, lat, lng)
-            for band_layer in self.band_layers
+            self.band_value(index, lat, lng)
+            for index, band_layer in enumerate(self.band_layers)
         ]
 
-    def band_value(self, band_layer, lat, lng):
-        features = self.layer_features(band_layer.band.index - 1, lat, lng)
+    def band_value(self, band_index, lat, lng):
+        features = self.layer_features(band_index, lat, lng)
         if features:
             return features[0]['value']
         return None
