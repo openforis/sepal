@@ -148,8 +148,8 @@ RasterOptions.prototype.setDefaultBands = function ( noBands, save, onSave ) {
 
 RasterOptions.prototype.initBandsUI = function () {
     var bandsContainer = this.layerOptions.rasterOptions.find( '.raster-bands' )
-    
-    this.bandsUI[ 0 ] = RasterBand.newInstance( this, bandsContainer, this.layer.bands[ 0 ] )
+    this.bandsUI       = []
+    this.bandsUI[ 0 ]  = RasterBand.newInstance( this, bandsContainer, this.layer.bands[ 0 ] )
     if ( this.layer.bands.length >= 3 ) {
         this.bandsUI[ 1 ] = RasterBand.newInstance( this, bandsContainer, this.layer.bands[ 1 ] )
         this.bandsUI[ 2 ] = RasterBand.newInstance( this, bandsContainer, this.layer.bands[ 2 ] )
