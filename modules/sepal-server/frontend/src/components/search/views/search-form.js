@@ -41,6 +41,8 @@ var init = function ( formSelector ) {
                 EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
                 
                 setCountryIso( cCode )
+    
+                FormValidator.resetFormErrors( form, formNotify )
             } else {
                 EventBus.dispatch( Events.MAP.REMOVE_AOI_LAYER )
                 setCountryIso( null )
