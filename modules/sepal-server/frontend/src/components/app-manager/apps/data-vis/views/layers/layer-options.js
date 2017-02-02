@@ -48,7 +48,7 @@ LayerOptions.prototype._show = function () {
         
         this.container.velocitySlideDown( {
             height: 'auto', complete: function () {
-                
+                EventBus.dispatch( Events.APPS.DATA_VIS.UPDATE_LAYER_OPTION_BTNS_POSITION )
             }
         } )
         $this.container.closest( '.row-layer' ).addClass( 'expanded' )
@@ -70,7 +70,11 @@ LayerOptions.prototype.show = function () {
 LayerOptions.prototype.hide = function () {
     if ( this.container.is( ':visible' ) ) {
         $( '#data-vis .layers-container' ).velocity( { width: '25%' } )
-        this.container.velocitySlideUp()
+        this.container.velocitySlideUp( {
+            complete: function () {
+                EventBus.dispatch( Events.APPS.DATA_VIS.UPDATE_LAYER_OPTION_BTNS_POSITION )
+            }
+        } )
         this.container.closest( '.row-layer' ).removeClass( 'expanded' )
     }
 }

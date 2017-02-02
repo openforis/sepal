@@ -30,10 +30,6 @@
 
     }
 
-    .row-raster {
-      display: none;
-    }
-
     .color-picker {
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
       width: 2rem;
@@ -63,6 +59,10 @@
       text-align: center;
       background-color: transparent !important;
       color: white;
+    }
+    input:disabled {
+      cursor: not-allowed;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
 
   }

@@ -36,13 +36,15 @@ var init = function ( dataVis ) {
     btnClose.click( close )
     btnOpen.click( open )
     
-    container.scroll( function () {
-        var scrollTop = $( window ).scrollTop()
-        $.each( container.find( '.layer-option-buttons' ), function ( i, elem ) {
-            var optionBtns    = $( elem )
-            var elementOffset = optionBtns.parent().offset().top
-            optionBtns.css( 'top', (elementOffset - scrollTop + 7) + 'px' )
-        } )
+    container.scroll( updateOptionButtonsPosition )
+}
+
+var updateOptionButtonsPosition = function () {
+    var scrollTop = $( window ).scrollTop()
+    $.each( container.find( '.layer-option-buttons' ), function ( i, elem ) {
+        var optionBtns    = $( elem )
+        var elementOffset = optionBtns.parent().offset().top
+        optionBtns.css( 'top', (elementOffset - scrollTop + 7) + 'px' )
     } )
 }
 
@@ -62,7 +64,6 @@ var close = function () {
 }
 
 var open = function () {
-    
     container.velocity( {
             left: '15px'
         },
@@ -112,7 +113,6 @@ var addNewLayer = function ( path ) {
 }
 
 var sortLayers = function ( callback ) {
-    // if ( !callback )
     Loader.show()
     
     // update index
@@ -144,19 +144,14 @@ var sortLayers = function ( callback ) {
                 }
             } )
             
-            // if ( callback )
-            //     callback()
-            // else
             Loader.hide()
         }
     }
     
     EventBus.dispatch( Events.AJAX.POST, null, params )
-    
 }
 
 var deleteLayer = function ( e, layerId ) {
-    
     var params = {
         url         : '/sandbox/geo-web-viz/layers/' + layerId
         , beforeSend: function () {
@@ -173,6 +168,7 @@ var deleteLayer = function ( e, layerId ) {
 }
 
 EventBus.addEventListener( Events.APPS.DATA_VIS.LAYER_DELETE, deleteLayer )
+EventBus.addEventListener( Events.APPS.DATA_VIS.UPDATE_LAYER_OPTION_BTNS_POSITION, updateOptionButtonsPosition )
 
 module.exports = {
     init         : init
