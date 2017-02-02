@@ -10,7 +10,6 @@ from layer import Layer
 
 def create(shape_dict):
     layer = _from_dict(shape_dict)
-    call(['shapeindex', '--index-parts', layer.file])
     return layer
 
 
