@@ -12,8 +12,4 @@ mkdir -p /etc/ssh/google-earth-engine
 privateKeyPath=/etc/ssh/google-earth-engine/key.pem
 echo -e $privateKey > $privateKeyPath
 
-if [ $worker_user ] ; then
-    exec python /src/download_server.py $account $privateKeyPath $downloadDir $worker_user
-else
-    exec python /src/server.py $account $privateKeyPath
-fi
+exec python /src/server.py $account $privateKeyPath
