@@ -8,33 +8,38 @@ final class WorkerTypes {
     static final String SANDBOX = 'sandbox'
     static final String TASK_EXECUTOR = 'task-executor'
     static final Map<String, Factory> FACTORIES = [
-                    (SANDBOX)      : new SandboxFactory(),
-                    (TASK_EXECUTOR): new TaskExecutorFactory()
-            ]
+            (SANDBOX)      : new SandboxFactory(),
+            (TASK_EXECUTOR): new TaskExecutorFactory()
+    ]
 
-            static WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
-                def factory = FACTORIES[id]
-                if (!factory)
-                    throw new IllegalStateException('There exist no worker type with id ' + id)
-                factory.create(id, instance, config)
-            }
+    static WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
+        def factory = FACTORIES[id]
+        if (!factory)
+            throw new IllegalStateException('There exist no worker type with id ' + id)
+        factory.create(id, instance, config)
+    }
 
-            private static class TaskExecutorFactory implements Factory {
-                WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
-                    def taskExecutorPublishedPorts = [(1026): 1026]
-                    def username = instance.reservation.username
+    private static class TaskExecutorFactory implements Factory {
+        WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
+            def taskExecutorPublishedPorts = [(1026): 1026]
+            def username = instance.reservation.username
+            def userHome = "$config.userHomes/${username}" as String
+            def eePrivateKey = config.googleEarthEnginePrivateKey.replaceAll(
+                    '\n', '-----LINE BREAK-----')
             def googleEarthEngine = new Image(
                     name: 'google-earth-engine',
                     exposedPorts: [5002],
                     volumes: [
-                            "$config.userHomes/${username}": "/home/${username}"
-                    ],
+                            (userHome)                                : "/home/${username}",
+                            '/data/sepal/certificates/ldap-ca.crt.pem': "/etc/ldap/certificates/ldap-ca.crt.pem"],
                     runCommand: [
-                            '/script/init_container.sh', username
-                    ],
+                            '/script/init_download_container.sh',
+                            username],
                     environment: [
-                            EE_ACCOUNT_SEPAL_ENV    : config.googleEarthEngineAccount,
-                            EE_PRIVATE_KEY_SEPAL_ENV: config.googleEarthEnginePrivateKey.replaceAll('\n', '-----LINE BREAK-----')
+                            EE_ACCOUNT_SEPAL_ENV         : config.googleEarthEngineAccount,
+                            EE_PRIVATE_KEY_SEPAL_ENV     : eePrivateKey,
+                            LDAP_HOST_SEPAL_ENV          : config.ldapHost,
+                            LDAP_ADMIN_PASSWORD_SEPAL_ENV: config.ldapPassword
                     ],
                     waitCommand: ["/script/wait_until_initialized.sh"])
             def taskExecutor = new Image(
@@ -43,8 +48,8 @@ final class WorkerTypes {
                     publishedPorts: taskExecutorPublishedPorts,
                     links: [(googleEarthEngine.containerName(instance)): 'google-earth-engine'],
                     volumes: [
-                            "$config.userHomes/${username}"           : "/home/${username}",
-                            "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"],
+                            (userHome)                                : "/home/${username}",
+                            '/data/sepal/certificates/ldap-ca.crt.pem': "/etc/ldap/certificates/ldap-ca.crt.pem"],
                     runCommand: [
                             '/script/init_container.sh',
                             username,
@@ -67,6 +72,7 @@ final class WorkerTypes {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config) {
             def publishedPorts = [(222): 22, (8787): 8787, (3838): 3838, (5678): 5678]
             def username = instance.reservation.username
+            def userHome = "$config.userHomes/${username}" as String
             new WorkerType(SANDBOX, [
                     new Image(
                             name: 'sandbox',
@@ -74,7 +80,7 @@ final class WorkerTypes {
                             publishedPorts: publishedPorts,
                             volumes: [
                                     '/data/sepal/shiny'                       : '/shiny',
-                                    "$config.userHomes/${username}"           : "/home/${username}",
+                                    (userHome)                                : "/home/${username}",
                                     "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"],
                             runCommand: [
                                     '/script/init_container.sh',
@@ -123,8 +129,3 @@ final class Image {
     }
 }
 
-@ImmutableData
-final class HttpEndpoint {
-    String name
-    int port
-}
