@@ -22,8 +22,8 @@
 }
 
 #scene-images-selection .selection-section .btn-images-section .btn:active,
-/*#scene-images-selection .selection-section .btn-images-section .btn:active:focus,*/
-/*#scene-images-selection .selection-section .btn-images-section .btn:focus,*/
+    /*#scene-images-selection .selection-section .btn-images-section .btn:active:focus,*/
+    /*#scene-images-selection .selection-section .btn-images-section .btn:focus,*/
 #scene-images-selection .selection-section .btn-images-section .btn:hover {
     background-color: rgba(255, 255, 255, 0.18);
 }
@@ -199,4 +199,5 @@ Selected scene images section
 #scene-images-selection .selected-section .table-row img {
     width: 55px;
     height: 55px;
+    cursor: pointer;
 }

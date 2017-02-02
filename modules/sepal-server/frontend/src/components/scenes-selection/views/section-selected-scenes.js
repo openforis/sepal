@@ -2,8 +2,9 @@
  * @author Mino Togna
  */
 var moment  = require( 'moment' )
-var Sensors = require( '../../sensors/sensors' )
+var numeral = require( 'numeral' )
 
+var Sensors   = require( '../../sensors/sensors' )
 var EventBus  = require( '../../event/event-bus' )
 var Events    = require( '../../event/events' )
 var Animation = require( '../../animation/animation' )
@@ -26,7 +27,7 @@ var init = function ( container ) {
 }
 
 var reset = function ( sceneAreaId ) {
-    if( section ){
+    if ( section ) {
         sectionTableContent.empty()
         sectionTableHeader.hide()
     }
@@ -61,8 +62,11 @@ var getImageSection = function ( sceneImage ) {
     
     var img = imgSection.find( 'img' )
     img.attr( 'src', sceneImage.browseUrl )
+    img.click( function () {
+        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.PREVIEW_SCENE, null, sceneImage )
+    } )
     
-    imgSection.find( '.cloud-cover' ).append( sceneImage.cloudCover )
+    imgSection.find( '.cloud-cover' ).append( numeral( sceneImage.cloudCover ).format( '0.[00]' ) )
     imgSection.find( '.sensor' ).append( Sensors[ sceneImage.sensor ].shortName )
     imgSection.find( '.acquisition-date' ).append( moment( sceneImage.acquisitionDate, "YYYY-MM-DD" ).format( "YYYY" ) )
     imgSection.find( '.target-day' ).append( sceneImage.daysFromTargetDay )

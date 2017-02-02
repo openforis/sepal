@@ -79,6 +79,7 @@ var Events = {
             , SELECT       : 'section.scenes_selection.select'
             , DESELECT     : 'section.scenes_selection.deselect'
             , RELOAD_SCENES: 'section.scenes_selection.reload_scenes'
+            , PREVIEW_SCENE: 'section.scenes_selection.preview_scene'
         }
         
         , TASK_MANAGER: {

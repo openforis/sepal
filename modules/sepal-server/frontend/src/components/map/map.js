@@ -132,14 +132,12 @@ var addEEMosaic = function ( e, index, mapType ) {
     }
     aoiDrawnPolygon.setOptions( opts )
     
-    console.log( aoiDrawnPolygon , aoiDrawingManager)
 }
 
 var removeEEMosaic = function ( e, index ) {
     if ( map.overlayMapTypes.getAt( index ) ) {
         map.overlayMapTypes.removeAt( index )
     }
-    console.log( aoiDrawnPolygon , aoiDrawingManager)
     
     if ( aoiLayer ) {
         var opts = {

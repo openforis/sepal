@@ -1,6 +1,7 @@
 /**
  * @author Mino Togna
  */
+var numeral = require( 'numeral' )
 
 var moment  = require( 'moment' )
 var Sensors = require( '../../sensors/sensors' )
@@ -25,7 +26,7 @@ var init = function ( container ) {
 }
 
 var reset = function ( sceneAreaId ) {
-    if( section ){
+    if ( section ) {
         sectionImages.empty()
         sectionImages.velocity( 'scroll', { duration: 0 } )
     }
@@ -58,32 +59,19 @@ var getImageSection = function ( sceneImage ) {
     
     var imgHover = imgSection.find( '.img-hover' )
     img.mouseenter( function () {
-        imgHover.fadeIn( 150 )
+        imgHover.stop().fadeIn( 150 )
         img.velocity( { opacity: 0.5 }, { duration: 150 } )
     } )
     imgHover.mouseleave( function () {
-        imgHover.fadeOut( 150 )
+        imgHover.stop().fadeOut( 150 )
         img.velocity( { opacity: 1 }, { duration: 150 } )
     } )
     
     imgHover.click( function () {
-        sectionExpandedImage.find( 'img' ).attr( 'src', sceneImage.browseUrl ).click( function () {
-            Animation.animateOut( sectionExpandedImage )
-        } )
-        sectionExpandedImage.find( '.scene-id' ).empty().append( sceneImage.sceneId )
-        sectionExpandedImage.find( '.cloud-cover' ).empty().append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + sceneImage.cloudCover )
-        sectionExpandedImage.find( '.sensor' ).empty().append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + Sensors[ sceneImage.sensor ].name )
-        sectionExpandedImage.find( '.acquisition-date' ).empty().append( '<i class="fa fa-calendar" aria-hidden="true"></i> ' + sceneImage.acquisitionDate )
-        sectionExpandedImage.find( '.target-day' ).empty().append( '<i class="fa fa-calendar-times-o" aria-hidden="true"></i> ' + sceneImage.daysFromTargetDay )
-        sectionExpandedImage.find( '.sun-azimuth' ).empty()
-            .append( '<span class="fa-stack"><i class="fa fa-sun-o fa-stack-2x" aria-hidden="true"></i><i class="fa fa-ellipsis-h fa-stack-1x" aria-hidden="true"></i></span> ' + sceneImage.sunAzimuth.toFixed( 2 ) )
-        sectionExpandedImage.find( '.sun-elevation' ).empty()
-            .append( '<span class="fa-stack"><i class="fa fa-sun-o fa-stack-2x" aria-hidden="true"></i><i class="fa fa-ellipsis-v fa-stack-1x" aria-hidden="true"></i></span> ' + sceneImage.sunElevation.toFixed( 2 ) )
-        
-        Animation.animateIn( sectionExpandedImage )
+        previewScene( null, sceneImage )
     } )
     
-    imgSection.find( '.cloud-cover' ).append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + sceneImage.cloudCover )
+    imgSection.find( '.cloud-cover' ).append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + numeral( sceneImage.cloudCover ).format( '0.[00]' ) )
     imgSection.find( '.sensor' ).append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + Sensors[ sceneImage.sensor ].shortName )
     imgSection.find( '.acquisition-date' ).append( '<i class="fa fa-calendar" aria-hidden="true"></i> ' + moment( sceneImage.acquisitionDate, "YYYY-MM-DD" ).format( "YYYY" ) )
     imgSection.find( '.target-day' ).append( '<i class="fa fa-calendar-times-o" aria-hidden="true"></i> ' + sceneImage.daysFromTargetDay )
@@ -138,6 +126,25 @@ var showScenesBySensor = function ( sensor ) {
         }, i * 50 )
     } )
 }
+
+var previewScene = function ( evt, sceneImage ) {
+    sectionExpandedImage.find( 'img' ).attr( 'src', sceneImage.browseUrl ).click( function () {
+        Animation.animateOut( sectionExpandedImage )
+    } )
+    sectionExpandedImage.find( '.scene-id' ).empty().append( sceneImage.sceneId )
+    sectionExpandedImage.find( '.cloud-cover' ).empty().append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + sceneImage.cloudCover )
+    sectionExpandedImage.find( '.sensor' ).empty().append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + Sensors[ sceneImage.sensor ].name )
+    sectionExpandedImage.find( '.acquisition-date' ).empty().append( '<i class="fa fa-calendar" aria-hidden="true"></i> ' + sceneImage.acquisitionDate )
+    sectionExpandedImage.find( '.target-day' ).empty().append( '<i class="fa fa-calendar-times-o" aria-hidden="true"></i> ' + sceneImage.daysFromTargetDay )
+    sectionExpandedImage.find( '.sun-azimuth' ).empty()
+        .append( '<span class="fa-stack"><i class="fa fa-sun-o fa-stack-2x" aria-hidden="true"></i><i class="fa fa-ellipsis-h fa-stack-1x" aria-hidden="true"></i></span> ' + sceneImage.sunAzimuth.toFixed( 2 ) )
+    sectionExpandedImage.find( '.sun-elevation' ).empty()
+        .append( '<span class="fa-stack"><i class="fa fa-sun-o fa-stack-2x" aria-hidden="true"></i><i class="fa fa-ellipsis-v fa-stack-1x" aria-hidden="true"></i></span> ' + sceneImage.sunElevation.toFixed( 2 ) )
+    
+    Animation.animateIn( sectionExpandedImage )
+}
+
+EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.PREVIEW_SCENE, previewScene )
 
 module.exports = {
     init                : init
