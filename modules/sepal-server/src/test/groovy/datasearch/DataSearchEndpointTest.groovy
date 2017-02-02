@@ -26,9 +26,9 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         new DataSearchEndpoint(queryDispatcher, commandDispatcher, geeGateway, 'some-google-maps-api-key').registerWith(controller)
     }
 
-    def 'GET /data/sceneareas/?countryIso= returns sceneareas'() {
+    def 'POST /data/sceneareas/?countryIso= returns sceneareas'() {
         when:
-        def response = get(path: 'data/sceneareas', query: [countryIso: 'aa'])
+        def response = post(path: 'data/sceneareas', query: [countryIso: 'aa'])
         assert response.status == 200
 
         then:
