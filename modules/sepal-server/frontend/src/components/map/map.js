@@ -85,6 +85,13 @@ var addLayer = function ( e, layer ) {
     }
 }
 
+var removeAoiLayer = function ( e ) {
+    if ( aoiLayer ) {
+        aoiLayer.setMap( null )
+        aoiLayer = null
+    }
+}
+
 var addDrawnAoiLayer = function ( e, layer ) {
     if ( layer ) {
         layer.setMap( map )
@@ -118,7 +125,7 @@ var addEEMosaic = function ( e, index, mapType ) {
         aoiLayer.setOptions( opts )
     }
     
-    if( aoiDrawnPolygon ){
+    if ( aoiDrawnPolygon ) {
         var opts = {
             fillColor    : "#FBFAF2",
             fillOpacity  : 0.000000000000000000000000000001,
@@ -154,7 +161,7 @@ var removeEEMosaic = function ( e, index ) {
         aoiLayer.setOptions( opts )
     }
     
-    if( aoiDrawnPolygon ){
+    if ( aoiDrawnPolygon ) {
         var opts = {
             fillColor    : "#FBFAF2",
             fillOpacity  : 0.07,
@@ -206,6 +213,7 @@ var ploygonDrawn = function ( e, polygonGeoJSON, polygon ) {
 EventBus.addEventListener( Events.APP.LOAD, show )
 EventBus.addEventListener( Events.MAP.ZOOM_TO, zoomTo )
 EventBus.addEventListener( Events.MAP.ADD_LAYER, addLayer )
+EventBus.addEventListener( Events.MAP.REMOVE_AOI_LAYER, removeAoiLayer )
 EventBus.addEventListener( Events.MAP.POLYGON_DRAWN, ploygonDrawn )
 
 EventBus.addEventListener( Events.MAP.ADD_EE_MOSAIC, addEEMosaic )

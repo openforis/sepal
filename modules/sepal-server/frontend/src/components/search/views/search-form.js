@@ -42,6 +42,7 @@ var init = function ( formSelector ) {
                 
                 setCountryIso( cCode )
             } else {
+                EventBus.dispatch( Events.MAP.REMOVE_AOI_LAYER )
                 setCountryIso( null )
             }
         }

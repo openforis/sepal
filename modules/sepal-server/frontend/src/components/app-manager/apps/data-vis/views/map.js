@@ -20,11 +20,22 @@ var init = function ( domId ) {
             EventBus.dispatch( Events.APPS.DATA_VIS.MAP_INITIALIZED )
         } )
         
+        var clickTimeOut = null
         google.maps.event.addListener( map, 'click', function ( event ) {
-            console.log( event.latLng )
-            var lat = event.latLng.lat()
-            var lng = event.latLng.lng()
-            EventBus.dispatch( Events.APPS.DATA_VIS.GET_FEATURE_INFO, null, lat, lng )
+            
+            clickTimeOut = setTimeout( function () {
+                var lat = event.latLng.lat()
+                var lng = event.latLng.lng()
+                
+                console.log( lat, lng )
+                
+                EventBus.dispatch( Events.APPS.DATA_VIS.GET_FEATURE_INFO, null, lat, lng )
+            }, 200 )
+            
+        } )
+        
+        google.maps.event.addListener( map, 'dblclick', function ( event ) {
+            clearTimeout( clickTimeOut )
         } )
         
     } )

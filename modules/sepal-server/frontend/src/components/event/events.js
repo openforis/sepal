@@ -111,6 +111,7 @@ var Events = {
         // , LOAD_SCENE_AREAS: 'map.load_scene_areas'
         , SCENE_AREA_CLICK            : 'map.scene_area_click'
         , ADD_LAYER                   : 'map.add_layer'
+        , REMOVE_AOI_LAYER            : 'map.remove_aoi_layer'
         , ADD_EE_LAYER                : 'map.add_ee_layer'
         , REMOVE_EE_LAYER             : 'map.remove_ee_layer'
         , EE_LAYER_TOGGLE_VISIBILITY  : 'map.remove_ee_layer_toggle_visibility'
