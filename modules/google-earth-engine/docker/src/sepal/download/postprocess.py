@@ -1,8 +1,7 @@
 import logging
 import os
-from threading import Thread
-
 import osgeo.gdal
+from threading import Thread
 
 logger = logging.getLogger(__name__)
 
@@ -38,15 +37,10 @@ class PostProcess(object):
                     for file in os.listdir(self.dir) if file.lower().endswith('.tif')]
             logging.debug('Downloaded ' + str(tifs))
             if len(tifs) > 1:
-                vrt = '%s/%s.vrt' % (self.dir, self.file_name)
-                logging.debug('Building vrt: ' + vrt)
-                self.listener.update_status({
-                    'state': 'ACTIVE',
-                    'step': 'POSTPROCESSING',
-                    'description': "Building virtual raster"})
-
-                gdal.BuildVRT(vrt, tifs).FlushCache()
-                logging.debug('Starting to process: ' + self.dir)
+                product = self._build_vrt(tifs)
+            else:
+                product = tifs[0]
+            self._build_overviews(product)
             self.listener.update_status({
                 'state': 'COMPLETED',
                 'description': "Completed"})
@@ -57,3 +51,21 @@ class PostProcess(object):
                 'description': 'Failed to build virtual raster'})
             self.stop()
 
+    def _build_vrt(self, tifs):
+        vrt = '%s/%s.vrt' % (self.dir, self.file_name)
+        logging.debug('Building vrt: ' + vrt)
+        self.listener.update_status({
+            'state': 'ACTIVE',
+            'step': 'POSTPROCESSING',
+            'description': "Building virtual raster..."})
+        osgeo.gdal.BuildVRT(vrt, tifs).FlushCache()
+        return vrt
+
+    def _build_overviews(self, product):
+        logging.debug('Building overviews: ' + product)
+        self.listener.update_status({
+            'state': 'ACTIVE',
+            'step': 'POSTPROCESSING',
+            'description': "Building overviews..."})
+        ds = osgeo.gdal.OpenShared(product)
+        ds.BuildOverviews(resampling='average', overviewlist=[2, 4, 8])
