@@ -23,4 +23,7 @@ sudo -Eu $sandbox_user "PATH=$sandbox_path" gunicorn\
  --timeout 3600\
  --threads $(($core_count * 4))\
  --backlog 64\
+ --error-logfile -\
+ --log-level info\
+ --capture-output\
  wsgi:app 5678 /home/$sandbox_user
