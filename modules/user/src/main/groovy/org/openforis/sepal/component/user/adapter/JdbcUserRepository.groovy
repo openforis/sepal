@@ -29,7 +29,10 @@ class JdbcUserRepository implements UserRepository {
     }
 
     List<User> listUsers() {
-        sql.rows('SELECT id, username, name, email, organization, admin, system_user, status FROM sepal_user').collect {
+        sql.rows('''
+                SELECT id, username, name, email, organization, admin, system_user, status 
+                FROM sepal_user 
+                ORDER BY creation_time DESC''').collect {
             createUser(it)
         }
     }
