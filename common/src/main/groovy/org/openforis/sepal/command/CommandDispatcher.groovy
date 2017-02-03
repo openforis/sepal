@@ -29,21 +29,35 @@ class HandlerRegistryCommandDispatcher implements CommandDispatcher {
         def handler = handlers[command.class]
         if (handler == null)
             throw new IllegalStateException("No handler registered for commands of type ${command.class.name}")
-        LOG.debug("Executing command $command with handler $handler")
+        LOG.debug("Executing command $command")
         try {
             if (handler instanceof AfterCommitCommandHandler)
-                transactionManager.registerAfterCommitCallback {result ->
-                    transactionManager.withTransaction {
-                        ((AfterCommitCommandHandler) handler).afterCommit(command, result)
+                transactionManager.registerAfterCommitCallback { result ->
+                    LOG.debug("Executing after commit callback for command $command")
+                    def (ignore, duration) = time {
+                        transactionManager.withTransaction {
+                            ((AfterCommitCommandHandler) handler).afterCommit(command, result)
+                        }
                     }
+                    LOG.debug("Completed after commit callback for command $command after $duration millis")
                 }
-            transactionManager.withTransaction {
-                handler.execute(command)
+            def (result, duration) = time {
+                transactionManager.withTransaction {
+                    handler.execute(command)
+                }
             }
+            LOG.debug("Completed command $command after $duration millis")
+            return result
         } catch (Exception e) {
             def executionFailed = new ExecutionFailed(handler, command, e)
             LOG.error(executionFailed.message, e)
             throw executionFailed
         }
+    }
+
+    private List time(Closure callback) {
+        def start = System.currentTimeMillis()
+        def result = callback.call()
+        return [result, System.currentTimeMillis() - start]
     }
 }

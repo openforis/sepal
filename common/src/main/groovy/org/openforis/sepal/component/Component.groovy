@@ -119,6 +119,8 @@ abstract class DataSourceBackedComponent implements Component {
                                     NamedThreadFactory.singleThreadFactory(command.class.simpleName)
                             )
                     ).schedule(0, delay, timeUnit) {
+                        def LOG = LoggerFactory.getLogger(command.class)
+                        LOG.debug("Submitting scheduled command: $command")
                         try {
                             submit(command)
                         } catch (Throwable e) {
