@@ -136,8 +136,8 @@ var addEEMosaic = function ( e, index, mapType ) {
             editable     : false,
             zIndex       : 1
         }
+        aoiDrawnPolygon.setOptions( opts )
     }
-    aoiDrawnPolygon.setOptions( opts )
     
 }
 
