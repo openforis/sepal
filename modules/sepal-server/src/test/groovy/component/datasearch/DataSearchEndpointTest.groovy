@@ -1,4 +1,4 @@
-package datasearch
+package component.datasearch
 
 import groovymvc.Controller
 import org.openforis.sepal.component.datasearch.LatLng
@@ -12,6 +12,7 @@ import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.util.DateTime
+import util.AbstractComponentEndpointTest
 import util.AbstractEndpointTest
 
 import static org.openforis.sepal.component.datasearch.MetaDataSource.USGS
@@ -19,11 +20,11 @@ import static org.openforis.sepal.util.DateTime.parseDateString
 import static org.openforis.sepal.util.DateTime.toDateTimeString
 
 @SuppressWarnings("GroovyAssignabilityCheck")
-class DataSearchEndpointTest extends AbstractEndpointTest {
+class DataSearchEndpointTest extends AbstractComponentEndpointTest {
     def geeGateway = Mock GoogleEarthEngineGateway
 
     void registerEndpoint(Controller controller) {
-        new DataSearchEndpoint(queryDispatcher, commandDispatcher, geeGateway, 'some-google-maps-api-key').registerWith(controller)
+        new DataSearchEndpoint(component, geeGateway, 'some-google-maps-api-key').registerWith(controller)
     }
 
     def 'POST /data/sceneareas/?countryIso= returns sceneareas'() {
@@ -32,7 +33,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         assert response.status == 200
 
         then:
-        1 * queryDispatcher.submit({ it.aoi.keyValue == 'aa' } as FindSceneAreasForAoi) >> [
+        1 * component.submit({ it.aoi.keyValue == 'aa' } as FindSceneAreasForAoi) >> [
                 new SceneArea(
                         id: 'scene area id',
                         polygon: new Polygon([new LatLng(1d, 1d), new LatLng(2d, 2d), new LatLng(3d, 3d), new LatLng(1d, 1d)]))
@@ -61,7 +62,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         assert response.status == 200
 
         then:
-        1 * queryDispatcher.submit({ it.sceneQuery == expectedSceneQuery } as FindScenesForSceneArea) >> [expectedScene]
+        1 * component.submit({ it.sceneQuery == expectedSceneQuery } as FindScenesForSceneArea) >> [expectedScene]
         sameJson(response.data, [
                 [
                         sceneId          : expectedScene.id,
@@ -102,7 +103,7 @@ class DataSearchEndpointTest extends AbstractEndpointTest {
         assert response.status == 200
 
         then:
-        1 * queryDispatcher.submit(expectedQuery) >> [
+        1 * component.submit(expectedQuery) >> [
                 'some-area': [expectedScene]
         ]
         sameJson(response.data, [

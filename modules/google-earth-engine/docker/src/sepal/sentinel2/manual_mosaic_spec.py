@@ -36,7 +36,7 @@ class Sentinel2ManualMosaicSpec(Sentinel2MosaicSpec):
         """
         image_id_list = ee.List(list(self.scene_ids))
         return ee.ImageCollection(constants.collection_name).filter(
-            ee.Filter.inList('system:index', image_id_list)
+            ee.Filter.inList('GRANULE_ID', image_id_list)
         )
 
     def __str__(self):

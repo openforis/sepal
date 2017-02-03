@@ -2,8 +2,8 @@ package org.openforis.sepal.component.datasearch.command
 
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
+import org.openforis.sepal.component.datasearch.DataSetMetadataGateway
 import org.openforis.sepal.component.datasearch.SceneMetaDataRepository
-import org.openforis.sepal.component.datasearch.usgs.UsgsGateway
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -14,10 +14,10 @@ class UpdateUsgsSceneMetaData extends AbstractCommand<Void> {
 
 class UpdateUsgsSceneMetaDataHandler implements CommandHandler<Void, UpdateUsgsSceneMetaData> {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    private final UsgsGateway usgs
+    private final DataSetMetadataGateway usgs
     private final SceneMetaDataRepository sceneMetaDataRepository
 
-    UpdateUsgsSceneMetaDataHandler(UsgsGateway usgs, SceneMetaDataRepository sceneMetaDataRepository) {
+    UpdateUsgsSceneMetaDataHandler(DataSetMetadataGateway usgs, SceneMetaDataRepository sceneMetaDataRepository) {
         this.usgs = usgs
         this.sceneMetaDataRepository = sceneMetaDataRepository
     }

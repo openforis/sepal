@@ -3,14 +3,13 @@ package org.openforis.sepal.component.datasearch.endpoint
 import groovy.json.JsonSlurper
 import groovymvc.Controller
 import groovymvc.Params
-import org.openforis.sepal.command.CommandDispatcher
+import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.datasearch.SceneArea
 import org.openforis.sepal.component.datasearch.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.*
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
-import org.openforis.sepal.query.QueryDispatcher
 import org.openforis.sepal.util.DateTime
 
 import static groovy.json.JsonOutput.toJson
@@ -18,18 +17,15 @@ import static groovy.json.JsonOutput.toJson
 class DataSearchEndpoint {
     private static final FUSION_TABLE = '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F'
     private static final KEY_COLUMN = 'ISO'
-    private final QueryDispatcher queryDispatcher
-    private final CommandDispatcher commandDispatcher
+    private final Component component
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
 
-    DataSearchEndpoint(QueryDispatcher queryDispatcher,
-                       CommandDispatcher commandDispatcher,
+    DataSearchEndpoint(Component component,
                        GoogleEarthEngineGateway geeGateway,
                        String googleMapsApiKey) {
+        this.component = component
         this.googleMapsApiKey = googleMapsApiKey
-        this.queryDispatcher = queryDispatcher
-        this.commandDispatcher = commandDispatcher
         this.geeGateway = geeGateway
     }
 
@@ -41,7 +37,7 @@ class DataSearchEndpoint {
             }
             post('/data/sceneareas') {
                 response.contentType = "application/json"
-                def sceneAreas = queryDispatcher.submit(new FindSceneAreasForAoi(
+                def sceneAreas = component.submit(new FindSceneAreasForAoi(
                         toAoi(params)))
                 def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
                 send(toJson(data))
@@ -80,7 +76,7 @@ class DataSearchEndpoint {
                         cloudCoverTarget: params.required('cloudCoverTarget', double),
                         minScenes: toInt(params.minScenes as String, 1),
                         maxScenes: toInt(params.maxScenes as String, Integer.MAX_VALUE))
-                def scenesByArea = queryDispatcher.submit(query)
+                def scenesByArea = component.submit(query)
                 def data = scenesByArea.collectEntries { sceneAreaId, scenes ->
                     [(sceneAreaId): scenes.collect { sceneData(it, query.targetDayOfYear) }]
                 }
@@ -95,7 +91,7 @@ class DataSearchEndpoint {
                         toDate: DateTime.parseDateString(params.required('toDate', String)),
                         targetDayOfYear: params.required('targetDayOfYear', int)
                 )
-                def scenes = queryDispatcher.submit(new FindScenesForSceneArea(query))
+                def scenes = component.submit(new FindScenesForSceneArea(query))
                 def data = scenes.collect { sceneData(it, query.targetDayOfYear) }
                 send(toJson(data))
             }

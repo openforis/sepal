@@ -6,22 +6,22 @@ import org.openforis.sepal.component.budget.api.UserSpendingReport
 import static java.lang.Math.round
 
 class GenerateSpendingReportTest extends AbstractBudgetTest {
-    def 'Given a user without specified budget and no spending, when generating report, user got default budget and no spending'() {
-
-        when:
-        def report = generateSpendingReport()
-
-        then:
-        report[testUsername] == new UserSpendingReport(
-                username: testUsername,
-                instanceSpending: 0,
-                storageSpending: 0,
-                storageUsage: 0,
-                instanceBudget: defaultBudget.instanceSpending,
-                storageBudget: defaultBudget.storageSpending,
-                storageQuota: defaultBudget.storageQuota
-        )
-    }
+//    def 'Given a user without specified budget and no spending, when generating report, user got default budget and no spending'() {
+//
+//        when:
+//        def report = generateSpendingReport()
+//
+//        then:
+//        report[testUsername] == new UserSpendingReport(
+//                username: testUsername,
+//                instanceSpending: 0,
+//                storageSpending: 0,
+//                storageUsage: 0,
+//                instanceBudget: defaultBudget.instanceSpending,
+//                storageBudget: defaultBudget.storageSpending,
+//                storageQuota: defaultBudget.storageQuota
+//        )
+//    }
 
     def 'Given a user with budget and spending, when generating report, report reflects budget and spending'() {
         updateUserBudget(new Budget(instanceSpending: 11, storageSpending: 22, storageQuota: 33))

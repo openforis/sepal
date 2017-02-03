@@ -1,5 +1,5 @@
 package org.openforis.sepal.component.datasearch
 
 enum MetaDataSource {
-    USGS
+    USGS, SENTINEL2
 }

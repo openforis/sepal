@@ -1,4 +1,4 @@
-package datasearch
+package component.datasearch
 
 import fake.Database
 import org.openforis.sepal.component.datasearch.*
@@ -8,8 +8,7 @@ import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
-import org.openforis.sepal.component.datasearch.usgs.LandsatSensor
-import org.openforis.sepal.component.datasearch.usgs.UsgsGateway
+import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
 import spock.lang.Specification
 
@@ -24,12 +23,15 @@ class DataSearchTest extends Specification {
     final database = new Database()
     final connectionManager = new SqlConnectionManager(database.dataSource)
     final sceneAreaProvider = new FakeGoogleEarthEngineGateway()
-    final usgs = new FakeUsgsGateway()
+    final usgs = new FakeGateway()
+    final sentinel2 = new FakeGateway()
     final component = new DataSearchComponent(
             connectionManager,
             sceneAreaProvider,
             usgs,
-            'some-google-maps-api-key'
+            sentinel2,
+            'some-google-maps-api-key',
+            new SynchronousEventDispatcher()
     )
 
     def 'When finding scene areas for AOI, scene areas are returned'() {
@@ -85,7 +87,7 @@ class DataSearchTest extends Specification {
         updateUsgsSceneMetaData()
 
         then:
-        usgs.lastUpdateBySensor() == [(scene.sensorId as LandsatSensor): date]
+        usgs.lastUpdateBySensor() == [(scene.sensorId): date]
     }
 
     def 'When finding scenes from one scene area, scenes from other scene areas are excluded'() {
@@ -238,20 +240,15 @@ class DataSearchTest extends Specification {
     SceneMetaData sceneUpdatedAt(Date date) {
         scene(date, date, SCENE_AREA_ID)
     }
-
-    SceneMetaData sceneAcquiredAt(String date) {
-        def acquisitionDate = Date.parse('yyyy-MM-dd', date)
-        scene(acquisitionDate, acquisitionDate, SCENE_AREA_ID)
-    }
 }
 
-class FakeUsgsGateway implements UsgsGateway {
+class FakeGateway implements DataSetMetadataGateway {
     final List<SceneMetaData> scenes = []
-    private Map<LandsatSensor, Date> lastUpdateBySensor
+    private Map<String, Date> lastUpdateBySensor
 
-    void eachSceneUpdatedSince(Map<LandsatSensor, Date> lastUpdateBySensor, Closure callback) throws UsgsGateway.SceneMetaDataRetrievalFailed {
+    void eachSceneUpdatedSince(Map<String, Date> lastUpdateBySensor, Closure callback) throws DataSetMetadataGateway.SceneMetaDataRetrievalFailed {
         this.lastUpdateBySensor = lastUpdateBySensor
-        def scenes = scenes.findAll { it.acquisitionDate > lastUpdateBySensor[it.sensorId as LandsatSensor] }
+        def scenes = scenes.findAll { it.acquisitionDate > lastUpdateBySensor[it.sensorId] }
         callback.call(scenes)
     }
 
@@ -259,7 +256,7 @@ class FakeUsgsGateway implements UsgsGateway {
         this.scenes.addAll(scenes)
     }
 
-    Map<LandsatSensor, Date> lastUpdateBySensor() {
+    Map<String, Date> lastUpdateBySensor() {
         lastUpdateBySensor
     }
 }

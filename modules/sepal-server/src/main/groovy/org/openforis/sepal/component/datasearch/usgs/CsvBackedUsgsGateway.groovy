@@ -1,5 +1,6 @@
 package org.openforis.sepal.component.datasearch.usgs
 
+import org.openforis.sepal.component.datasearch.DataSetMetadataGateway
 import org.openforis.sepal.component.datasearch.SceneMetaData
 import org.openforis.sepal.util.CsvReader
 import org.openforis.sepal.util.CsvUriReader
@@ -12,43 +13,28 @@ import static org.openforis.sepal.component.datasearch.usgs.LandsatSensor.*
 import static org.openforis.sepal.util.DateTime.parseDateString
 import static org.openforis.sepal.util.DateTime.startOfDay
 
-interface UsgsGateway {
-    /**
-     * Invokes callback for scenes updated since provided date.
-     *
-     * @param date scene updated before this date will not be included
-     * @param callback invoked with list of SceneMetaData instances
-     */
-    void eachSceneUpdatedSince(Map<LandsatSensor, Date> lastUpdateBySensor, Closure callback) throws SceneMetaDataRetrievalFailed
 
-    static class SceneMetaDataRetrievalFailed extends RuntimeException {
-        SceneMetaDataRetrievalFailed(String message) {
-            super(message)
-        }
-    }
-}
-
-
-class CsvBackedUsgsGateway implements UsgsGateway {
+class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final File workingDir
-    private final Map<LandsatSensor, List<CsvReader>> initCsvSourcesBySensor
-    private final Map<LandsatSensor, List<CsvReader>> updateCsvSourcesBySensor
+    private final Map<String, List<CsvReader>> initCsvSourcesBySensor
+    private final Map<String, List<CsvReader>> updateCsvSourcesBySensor
 
     CsvBackedUsgsGateway(
             File workingDir,
-            Map<LandsatSensor, List<CsvReader>> initCsvSourcesBySensor,
-            Map<LandsatSensor, List<CsvReader>> updateCsvSourcesBySensor) {
+            Map<String, List<CsvReader>> initCsvSourcesBySensor,
+            Map<String, List<CsvReader>> updateCsvSourcesBySensor) {
         this.workingDir = workingDir
         this.initCsvSourcesBySensor = initCsvSourcesBySensor
         this.updateCsvSourcesBySensor = updateCsvSourcesBySensor
     }
 
     @SuppressWarnings("UnnecessaryQualifiedReference")
-    void eachSceneUpdatedSince(Map<LandsatSensor, Date> lastUpdateBySensor, Closure callback) throws UsgsGateway.SceneMetaDataRetrievalFailed {
+    void eachSceneUpdatedSince(Map<String, Date> lastUpdateBySensor, Closure callback)
+            throws DataSetMetadataGateway.SceneMetaDataRetrievalFailed {
         LandsatSensor.values().each { sensor ->
             if (sensorInitializedFile(sensor).exists())
-                updatedSince(sensor, lastUpdateBySensor[sensor], callback)
+                updatedSince(sensor, lastUpdateBySensor[sensor.name()], callback)
             else
                 initializeSensor(sensor, callback)
         }
@@ -56,7 +42,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
 
     private void initializeSensor(LandsatSensor sensor, Closure callback) {
         def scenes = []
-        initCsvSourcesBySensor[sensor]?.each { reader ->
+        initCsvSourcesBySensor[sensor.name()]?.each { reader ->
             reader.eachLine {
                 def scene = toSceneMetaData(sensor, it)
                 if (scene)
@@ -84,7 +70,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
         if (!lastUpdate)
             return
         lastUpdate = startOfDay(lastUpdate)
-        updateCsvSourcesBySensor[sensor].each { readers ->
+        updateCsvSourcesBySensor[sensor.name()].each { readers ->
             def scenes = []
             readers.each { reader ->
                 reader.eachLine {
@@ -121,7 +107,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
         return null
     }
 
-    private double cloudCover(LandsatSensor sensor, data) {
+    private Double cloudCover(LandsatSensor sensor, data) {
         def result = data.cloudCoverFull.toDouble() as Double
         // LANDSAT_ETM_SLC_OFF always miss about 22% of its data. Consider that cloud cover.
         if (result && sensor == LANDSAT_ETM_SLC_OFF)
@@ -137,25 +123,25 @@ class CsvBackedUsgsGateway implements UsgsGateway {
                 prefix in ['LT4', 'LT5', 'LE7', 'LC8']
     }
 
-    static UsgsGateway create(File workingDir) {
+    static DataSetMetadataGateway create(File workingDir) {
         // From https://landsat.usgs.gov/download-entire-collection-metadata
         new CsvBackedUsgsGateway(workingDir, [
-                (LANDSAT_8)          : [
+                (LANDSAT_8.name())          : [
                         new GzCsvUriReader(
                                 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8.csv.gz',
                                 workingDir,
                                 'LANDSAT_8')],
-                (LANDSAT_ETM)        : [
+                (LANDSAT_ETM.name())        : [
                         new GzCsvUriReader(
                                 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM.csv.gz',
                                 workingDir,
                                 'LANDSAT_ETM')],
-                (LANDSAT_ETM_SLC_OFF): [
+                (LANDSAT_ETM_SLC_OFF.name()): [
                         new GzCsvUriReader(
                                 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_SLC_OFF.csv.gz',
                                 workingDir,
                                 'LANDSAT_ETM_SLC_OFF')],
-                (LANDSAT_TM)         : [
+                (LANDSAT_TM.name())         : [
                         new GzCsvUriReader(
                                 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_TM-1980-1989.csv.gz',
                                 workingDir,
@@ -172,7 +158,7 @@ class CsvBackedUsgsGateway implements UsgsGateway {
                                 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_TM-2010-2012.csv.gz',
                                 workingDir,
                                 'LANDSAT_TM-2010-2012')],
-                (LANDSAT_MSS)        : [
+                (LANDSAT_MSS.name())        : [
                         new GzCsvUriReader(
                                 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_MSS2.csv.gz',
                                 workingDir,
@@ -182,13 +168,13 @@ class CsvBackedUsgsGateway implements UsgsGateway {
                                 workingDir,
                                 'LANDSAT_MSS1')]
         ], [
-                (LANDSAT_8)          : [
+                (LANDSAT_8.name())          : [
                         new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8.csv')
                 ],
-                (LANDSAT_ETM)        : [
+                (LANDSAT_ETM.name())        : [
                         new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM.csv')
                 ],
-                (LANDSAT_ETM_SLC_OFF): [
+                (LANDSAT_ETM_SLC_OFF.name()): [
                         new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_SLC_OFF.csv')
                 ]
         ])

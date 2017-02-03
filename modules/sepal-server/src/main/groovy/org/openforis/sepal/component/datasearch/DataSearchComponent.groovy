@@ -1,31 +1,28 @@
 package org.openforis.sepal.component.datasearch
 
 import groovymvc.Controller
-import org.openforis.sepal.command.Command
-import org.openforis.sepal.command.HandlerRegistryCommandDispatcher
+import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.datasearch.adapter.HttpGoogleEarthEngineGateway
 import org.openforis.sepal.component.datasearch.api.GoogleEarthEngineGateway
+import org.openforis.sepal.component.datasearch.command.UpdateSentinel2SceneMetaData
+import org.openforis.sepal.component.datasearch.command.UpdateSentinel2SceneMetaDataHandler
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaDataHandler
 import org.openforis.sepal.component.datasearch.endpoint.DataSearchEndpoint
 import org.openforis.sepal.component.datasearch.query.*
+import org.openforis.sepal.component.datasearch.sentinel2.CsvBackedSentinel2Gateway
 import org.openforis.sepal.component.datasearch.usgs.CsvBackedUsgsGateway
-import org.openforis.sepal.component.datasearch.usgs.UsgsGateway
 import org.openforis.sepal.endpoint.EndpointRegistry
-import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
-import org.openforis.sepal.query.Query
+import org.openforis.sepal.event.AsynchronousEventDispatcher
+import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
-import org.openforis.sepal.util.lifecycle.Lifecycle
 
 import javax.sql.DataSource
+import java.util.concurrent.TimeUnit
 
-final class DataSearchComponent implements EndpointRegistry, Lifecycle {
-    private final SqlConnectionManager connectionManager
-    private final HandlerRegistryCommandDispatcher commandDispatcher
-    private final HandlerRegistryQueryDispatcher queryDispatcher
+final class DataSearchComponent extends DataSourceBackedComponent implements EndpointRegistry {
     private final GoogleEarthEngineGateway geeGateway
     private final SceneMetaDataRepository sceneMetaDataRepository
-    private final SceneMetaDataUpdateScheduler sceneMetaDataUpdateScheduler
     private final String googleMapsApiKey
 
     static DataSearchComponent create(DataSource dataSource) {
@@ -34,51 +31,42 @@ final class DataSearchComponent implements EndpointRegistry, Lifecycle {
                 new SqlConnectionManager(dataSource),
                 new HttpGoogleEarthEngineGateway(config.googleEarthEngineEndpoint),
                 CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
-                config.googleMapsApiKey)
+                CsvBackedSentinel2Gateway.create(new File(config.downloadWorkingDirectory)),
+                config.googleMapsApiKey,
+                new AsynchronousEventDispatcher()
+        )
     }
 
     DataSearchComponent(
             SqlConnectionManager connectionManager,
             GoogleEarthEngineGateway geeGateway,
-            UsgsGateway usgs,
-            googleMapsApiKey) {
-        this.connectionManager = connectionManager
+            DataSetMetadataGateway usgs,
+            DataSetMetadataGateway sentinel2,
+            String googleMapsApiKey,
+            HandlerRegistryEventDispatcher eventDispatcher) {
+        super(connectionManager, eventDispatcher)
         this.geeGateway = geeGateway
         this.sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
         this.googleMapsApiKey = googleMapsApiKey
-        commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
-                .register(UpdateUsgsSceneMetaData, new UpdateUsgsSceneMetaDataHandler(usgs, sceneMetaDataRepository))
 
-        queryDispatcher = new HandlerRegistryQueryDispatcher()
-                .register(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(geeGateway))
-                .register(FindScenesForSceneArea, new FindScenesForSceneAreaHandler(sceneMetaDataRepository))
-                .register(FindBestScenes, new FindBestScenesHandler(sceneMetaDataRepository))
+        command(UpdateUsgsSceneMetaData, new UpdateUsgsSceneMetaDataHandler(usgs, sceneMetaDataRepository))
+        command(UpdateSentinel2SceneMetaData, new UpdateSentinel2SceneMetaDataHandler(sentinel2, sceneMetaDataRepository))
 
-        sceneMetaDataUpdateScheduler = new SceneMetaDataUpdateScheduler(commandDispatcher)
+        query(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(geeGateway))
+        query(FindScenesForSceneArea, new FindScenesForSceneAreaHandler(sceneMetaDataRepository))
+        query(FindBestScenes, new FindBestScenesHandler(sceneMetaDataRepository))
     }
 
-    def <R> R submit(Command<R> command) {
-        commandDispatcher.submit(command)
-    }
-
-    def <R> R submit(Query<R> query) {
-        queryDispatcher.submit(query)
-    }
-
-    void start() {
-        sceneMetaDataUpdateScheduler.start()
-    }
-
-    void stop() {
-        sceneMetaDataUpdateScheduler.stop()
-        connectionManager.stop()
-
+    void onStart() {
+        schedule(1, TimeUnit.DAYS,
+                new UpdateUsgsSceneMetaData(),
+                new UpdateSentinel2SceneMetaData()
+        )
     }
 
     void registerEndpointsWith(Controller controller) {
         new DataSearchEndpoint(
-                queryDispatcher,
-                commandDispatcher,
+                this,
                 geeGateway,
                 googleMapsApiKey
         ).registerWith(controller)

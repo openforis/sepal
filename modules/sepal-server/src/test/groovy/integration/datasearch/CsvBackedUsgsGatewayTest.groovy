@@ -30,7 +30,7 @@ class CsvBackedUsgsGatewayTest extends Specification {
     }
 
     def 'Uninitialized and init source, when iterating, scenes are returned'() {
-        def gateway = new CsvBackedUsgsGateway(workingDir, [(LANDSAT_8): [new FakeCsvReader((sceneId): new Date())]], [:])
+        def gateway = new CsvBackedUsgsGateway(workingDir, [(LANDSAT_8.name()): [new FakeCsvReader((sceneId): new Date())]], [:])
 
         when:
         def updates = iterate(gateway, [:])
@@ -44,8 +44,8 @@ class CsvBackedUsgsGatewayTest extends Specification {
 
     def 'Uninitialized and sources, when iterating, only init sources are used'() {
         def gateway = new CsvBackedUsgsGateway(workingDir,
-                [(LANDSAT_8): [new FakeCsvReader((sceneId): new Date())]],
-                [(LANDSAT_8): [new FakeCsvReader((sceneId2): new Date())]])
+                [(LANDSAT_8.name()): [new FakeCsvReader((sceneId): new Date())]],
+                [(LANDSAT_8.name()): [new FakeCsvReader((sceneId2): new Date())]])
 
         when:
         def updates = iterate(gateway, [:])
@@ -62,10 +62,10 @@ class CsvBackedUsgsGatewayTest extends Specification {
         def acquisitionDate = new Date()
         def gateway = new CsvBackedUsgsGateway(workingDir,
                 [:],
-                [(LANDSAT_8): [new FakeCsvReader((sceneId): acquisitionDate)]])
+                [(LANDSAT_8.name()): [new FakeCsvReader((sceneId): acquisitionDate)]])
 
         when:
-        def updates = iterate(gateway, [(LANDSAT_8): acquisitionDate])
+        def updates = iterate(gateway, [(LANDSAT_8.name()): acquisitionDate])
 
         then:
         updates.size() == 1
@@ -79,13 +79,13 @@ class CsvBackedUsgsGatewayTest extends Specification {
         def lastUpdated = new Date() - 10
         def gateway = new CsvBackedUsgsGateway(workingDir,
                 [:],
-                [(LANDSAT_8): [new FakeCsvReader(
+                [(LANDSAT_8.name()): [new FakeCsvReader(
                         (sceneId): lastUpdated + 1,
                         (sceneId2): lastUpdated - 1,
                 )]])
 
         when:
-        def updates = iterate(gateway, [(LANDSAT_8): lastUpdated])
+        def updates = iterate(gateway, [(LANDSAT_8.name()): lastUpdated])
 
         then:
         updates.size() == 1
@@ -96,13 +96,13 @@ class CsvBackedUsgsGatewayTest extends Specification {
 
     def 'Given successfully iterated unititialized, when iterating, initialized sources are used'() {
         def gateway = new CsvBackedUsgsGateway(workingDir,
-                [(LANDSAT_8): [new FakeCsvReader((sceneId): new Date())]],
-                [(LANDSAT_8): [new FakeCsvReader((sceneId2): new Date())]])
+                [(LANDSAT_8.name()): [new FakeCsvReader((sceneId): new Date())]],
+                [(LANDSAT_8.name()): [new FakeCsvReader((sceneId2): new Date())]])
 
         iterate(gateway, [:])
 
         when:
-        def updates = iterate(gateway, [(LANDSAT_8): new Date() - 10])
+        def updates = iterate(gateway, [(LANDSAT_8.name()): new Date() - 10])
 
         then:
         updates.size() == 1
