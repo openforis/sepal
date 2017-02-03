@@ -18,8 +18,4 @@ var showLogo = function () {
 }
 
 EventBus.addEventListener( Events.APP.LOAD, onAppLoad )
-// EventBus.addEventListener( Events.SECTION.NAV_MENU.LOADED, showLogo )
-
-// EventBus.addEventListener( Events.SECTION.SHOW, View.show )
-// EventBus.addEventListener( Events.SECTION.REDUCE, View.hide )
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.UPDATED, View.updateTasks )

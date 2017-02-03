@@ -4,7 +4,6 @@
   bottom: -7.5%;
   left: 0;
   display: none;
-  //height: 7.5%;
   z-index: 1;
   height: 3.7rem;
   border-top: 2px solid rgba(255, 255, 255, 0.1);
@@ -38,60 +37,11 @@
     height: inherit;
     position: relative;
     padding: 0 5%;
-    /* copyright */
-    //.site-footer-copyright {
-    //  -webkit-transform: translateY(-50%);
-    //  -ms-transform: translateY(-50%);
-    //  -o-transform: translateY(-50%);
-    //  transform: translateY(-50%);
-    //  position: relative;
-    //  top: 50%;
-    //  float: left;
-    //  line-height: 1;
-    //  font-size: 13px;
-    //  font-weight: 400;
-    //  color: #999;
-    //
-    //}
-
-    .site-footer-links {
-      -webkit-transform: translateY(-50%);
-      -ms-transform: translateY(-50%);
-      -o-transform: translateY(-50%);
-      transform: translateY(-50%);
-      position: relative;
-      top: 50%;
-      float: left;
-      //float: right;
-      line-height: 1;
-      text-align: left;
-      //text-align: right;
-      margin-bottom: 0;
-      padding-left: 0;
-      list-style: none;
-      //font-size: 13px;
-      //font-weight: 400;
-      //color: #999;
-
-      @media (max-width: 991px) {
-        display: none;
-      }
-
-      li {
-        float: left;
-        margin-right: 40px;
-      }
-
-      li:last-child {
-        margin-right: 0;
-      }
-
-    }
 
     > div {
       opacity: .8;
       position: relative;
-      top: 22%;
+      top: 20%;
 
       &.dashboard-links {
         .btn {
@@ -102,17 +52,9 @@
           padding: 0;
         }
       }
-      //.tag-tasks {
-      //  position: absolute;
-      //  top: -.3rem;
-      //  left: -.01rem;
-      //  background-color: rgba(57, 132, 57, 0.4);
-      //}
     }
 
-
-
-    a , li {
+    a, li {
       -webkit-transition: none;
       -o-transition: none;
       transition: none;
@@ -126,46 +68,5 @@
     }
 
   }
-
-
-  .sepal-logo {
-    position: absolute;
-    width: 30%;
-    left: 35%;
-    bottom: 5px;
-    text-align: center;
-    opacity: .5;
-
-    h2 {
-      font-size: 17px;
-      font-weight: 300;
-
-      @media (min-width: 992px) {
-          letter-spacing: 5px;
-          font-size: 25px;
-      }
-
-      @media (min-width: 1200px) {
-          font-size: 32px;
-      }
-
-      div {
-        border: .15rem solid rgba(255, 255, 255, 0.1);
-        padding: .4rem 1rem;
-        margin-right: .1rem;
-        border-radius: 50%;
-        width: 3rem !important;
-        height: 3rem !important;
-        font-size: 1.5rem;
-        text-align: center;
-        /* display: inline-block; */
-        display: none;
-        background-color: rgba(255, 255, 255, 0.05);
-        font-weight: 300;
-      }
-    }
-
-  }
-
 
 }

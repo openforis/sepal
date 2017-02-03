@@ -486,24 +486,29 @@ class MockServer extends AbstractMvcFilter {
                 send '''
                     [
                       {
-                        "path": "/sandbox/shiny/accuracy-assessment/aa_design",
-                        "label": "Accuracy Assessment Design"
+                        "label": "GEO Processing ",
+                        "apps": [
+                          {
+                            "label": "GEO Processing - BETA",
+                            "path": "/sandbox/shiny/geo-processing"
+                          },
+                          {
+                            "label": "Visualize - BETA",
+                            "path": "/sandbox/shiny/visualize"
+                          },
+                          {
+                            "label": "SAR Toolkit",
+                            "path": "/sandbox/shiny/osk"
+                          }
+                        ]
                       },
                       {
-                        "path": "/sandbox/shiny/accuracy-assessment/aa_analysis",
-                        "label": "Accuracy Assessment Analysis"
+                        "label": "Accuracy Assessment Design",
+                        "path": "/sandbox/shiny/accuracy-assessment/aa_design"
                       },
                       {
-                        "path": "/sandbox/shiny/geo-processing",
-                        "label": "GEO Processing"
-                      },
-                      {
-                        "path": "/sandbox/shiny/visualize",
-                        "label": "Visualize"
-                      },
-                      {
-                        "path": "/sandbox/shiny/osk",
-                        "label": "SAR Toolkit"
+                        "label": "Accuracy Assessment Analysis",
+                        "path": "/sandbox/shiny/accuracy-assessment/aa_analysis"
                       }
                     ]'''
             }

@@ -2,16 +2,14 @@
  * @author Mino Togna
  */
 require( './footer.scss' )
+require( './sepal-logo.scss' )
 
-var EventBus       = require( '../event/event-bus' )
-var Events         = require( '../event/events' )
-var UserMV         = require( '../user/user-mv' )
 var DashboardLinks = require( './views/dashboard-links-v' )
+var SectionUser    = require( './views/section-user' )
 
-var html      = null
-var Logo      = null
-var BtnUser   = null
-var BtnLogout = null
+var html = null
+var Logo = null
+
 
 var init = function () {
     var template = require( './footer.html' )
@@ -22,24 +20,9 @@ var init = function () {
         $( '.app' ).append( html )
         
         DashboardLinks.init( html.find( '.dashboard-links' ) )
+        SectionUser.init( html.find( '.section-user' ) )
         
-        Logo      = html.find( ".sepal-logo" )
-        BtnUser   = html.find( ".btn-user" )
-        BtnLogout = html.find( ".btn-logout" )
-        
-        BtnUser.find( '.username' ).html( UserMV.getCurrentUser().username )
-        BtnUser.click( function ( e ) {
-            e.preventDefault()
-            
-            EventBus.dispatch( Events.SECTION.NAV_MENU.COLLAPSE )
-            EventBus.dispatch( Events.SECTION.SHOW, null, "user" )
-        } )
-        
-        BtnLogout.click( function ( e ) {
-            e.preventDefault()
-            EventBus.dispatch( Events.AJAX.REQUEST, null, { url: "/logout" } )
-            EventBus.dispatch( Events.USER.LOGGED_OUT )
-        } )
+        Logo = html.find( ".sepal-logo" )
     }
 }
 

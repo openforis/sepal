@@ -1,5 +1,6 @@
 #process {
-  .apps {
+  .apps,
+  .app-group {
 
     padding: 2rem;
 
@@ -17,42 +18,76 @@
         height: 100%;
         border: 2px solid rgba(96, 71, 90, 0.15);
         border-radius: 3px;
-        //background-color: rgba(96, 71, 90, 0.05);
-        /* font-family: Source Sans Pro; */
-        padding-top: 3rem;
         background-color: rgba(255, 255, 255, 0.1);
-      }
+        padding-top: 1.8rem;
+        text-overflow: ellipsis;
+        white-space: normal;
 
-      .btn.r-studio {
-        padding-top: 2.1rem;
+        &.r-studio {
+          //padding-top: 10%;
 
-        img {
-          width: 8rem;
-        }
-      }
-
-      .btn.data-vis {
-        padding-top: 2.1rem;
-
-        img {
-          width: 6rem;
+          img {
+            width: 8rem;
+          }
         }
 
-        i{
-          font-size: 1.1rem;
-          border-radius: 50%;
-          padding: .6rem .5rem .6rem .55rem;
-          border: 2px solid rgba(255, 255, 255, 0.2);
+        &.data-vis {
+          //padding-top: 10%;
+
+          img {
+            width: 6rem;
+          }
+
+          i {
+            font-size: 1.1rem;
+            border-radius: 50%;
+            padding: .6rem .5rem .6rem .55rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+          }
+        }
+
+      }
+      div.btn {
+        padding-top: 3rem;
+        transition: background-color 200ms linear;
+        i {
+          font-size: 1.2rem;
+          /* border-radius: 50%; */
+          /* padding: 1rem .5rem .6rem .55rem; */
+          /* border: 2px solid rgba(255, 255, 255, 0.2); */
+          padding-right: .5rem;
+          /* margin-top: 1rem; */
+          /* position: absolute; */
+          /* top: 3rem; */
+          /* left: 25%; */
+          /* top: 10%; */
+          /* left: 10%; */
+        }
+
+        &.expanded {
+          background-color: transparent;
         }
       }
 
       .btn:active,
-      //.btn:active:focus,
-      //.btn:focus,
       .btn:hover {
         background-color: rgba(255, 255, 255, 0.02);
       }
     }
 
+  }
+
+  .app-group {
+    display: none;
+    .btn-close-group {
+      position: absolute;
+      left: 0;
+      top: 5%;
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      font-size: 1.3rem;
+      border: none;
+    }
   }
 }
