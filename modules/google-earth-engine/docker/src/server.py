@@ -23,7 +23,7 @@ def preview():
 @http.route('/sceneareas')
 def scene_areas():
     aoi = Aoi.create(json.loads(request.values['aoi']))
-    areas = aoi.scene_areas('wrs-2')
+    areas = aoi.scene_areas(request.values.get('dataSet', 'LANDSAT'))
     return Response(json.dumps(areas), mimetype='application/json')
 
 

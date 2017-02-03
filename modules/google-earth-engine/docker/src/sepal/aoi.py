@@ -2,7 +2,16 @@ import ee
 
 
 class Aoi:
-    _reference_systems = {'wrs-2': 'ft:1EJjaOloQD5NL7ReC5aVtn8cX05xbdEbZthUiCFB6'}
+    _fusion_table_by_data_set = {
+        'LANDSAT': {
+            'table_id': 'ft:1EJjaOloQD5NL7ReC5aVtn8cX05xbdEbZthUiCFB6',
+            'id_column': 'name'
+        },
+        'SENTINEL2': {
+            'table_id': 'ft:1n7g37WMO1dUmF-lwEhbn_nkOf1G6uuKvIlWz74vD',
+            'id_column': 'Name'
+        }
+    }
 
     def __init__(self, geometry):
         self._geometry = geometry
@@ -23,16 +32,17 @@ class Aoi:
         }[spec['type']]
         return type(spec)
 
-    def scene_areas(self, reference_system):
+    def scene_areas(self, data_set):
         """Determines scene areas in the provided reference system this Aoi intersects.
 
         :param reference_system: The spatial reference system of the scene areas
         :return: A list of dicts scene areas
         :rtype: list
         """
-        if reference_system not in self._reference_systems:
-            raise ValueError('Unsupported spatial reference system: ' + aoi_type)
-        scene_area_table = ee.FeatureCollection(self._reference_systems[reference_system])
+        if data_set not in self._fusion_table_by_data_set:
+            raise ValueError('Unsupported data set: ' + data_set)
+        table = self._fusion_table_by_data_set[data_set]
+        scene_area_table = ee.FeatureCollection(table['table_id'])
         join = ee.Join.saveAll(matchesKey='scenes')
         intersect_joined = join.apply(self._geometry, scene_area_table, ee.Filter.intersects(
             leftField='.geo',
@@ -45,7 +55,7 @@ class Aoi:
             for sceneArea in featureScenes:
                 polygon = map(lambda lnglat: list(reversed(lnglat)), sceneArea['geometry']['coordinates'][0])
                 scene_areas.append({
-                    'sceneAreaId': sceneArea['properties']['name'],
+                    'sceneAreaId': sceneArea['properties'][table['id_column']],
                     'polygon': polygon,
                 })
         return scene_areas

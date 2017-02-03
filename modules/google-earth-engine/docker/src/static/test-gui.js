@@ -119,8 +119,12 @@
     }
     
     function findSceneAreas() {
-        var aoi = createAoi()
-        $.getJSON( 'sceneareas', { aoi: JSON.stringify( aoi ) }, function ( data ) {
+        var aoi   = createAoi()
+        var query = {
+            aoi    : JSON.stringify( aoi ),
+            dataSet: $( 'input[name=dataSet]:checked' ).val()
+        }
+        $.getJSON( 'sceneareas', query, function ( data ) {
             $( '#sceneAreas' ).html( "<pre>" + JSON.stringify( data, null, 2 ) + "</pre>" )
         } )
     }
