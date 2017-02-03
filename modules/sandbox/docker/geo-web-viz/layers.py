@@ -49,10 +49,8 @@ def remove_layer(layer_id, state):
 
 
 def features(lat, lng, state):
-    return {
-        id: layer.features(lat, lng)
-        for id, layer in _layer_by_id(state).iteritems()
-    }
+    result = {id: layer.features(lat, lng) for id, layer in _layer_by_id(state).iteritems()}
+    return {id: features for id, features in result.iteritems() if features}
 
 
 def _is_new_layer(layer_dict, state):

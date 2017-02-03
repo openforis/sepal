@@ -15,8 +15,13 @@ class Layer(object):
         self.append_to(map)
         map.zoom_all()
         if not map.envelope().intersects(lng, lat):
-            return []
-        return [
-            feature.attributes
-            for feature in map.query_point(layer_index, lng, lat)
-        ]
+            attributes = []
+        else:
+            attributes = [
+                feature.attributes
+                for feature in map.query_point(layer_index, lng, lat)
+            ]
+        if attributes:
+            return attributes
+        else:
+            return None
