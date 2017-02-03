@@ -52,6 +52,24 @@
           padding: 0;
         }
       }
+
+      &.section-user {
+
+        .hourly-cost {
+          display: none;
+          padding: .5rem 1rem;
+          font-size: .9rem;
+        }
+        .budget-exceeded {
+          display: none;
+          padding: .5rem 1rem;
+          font-size: .9rem;
+          color: rgba(232, 19, 81, 0.91);
+          background-color: rgba(232, 19, 81, 0.01);
+        }
+
+      }
+
     }
 
     a, li {

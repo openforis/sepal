@@ -1,7 +1,8 @@
 /**
  * @author Mino Togna
  */
-var moment = require( 'moment' )
+var moment  = require( 'moment' )
+var numeral = require( 'numeral' )
 
 var EventBus = require( '../../event/event-bus' )
 var Events   = require( '../../event/events' )
@@ -49,12 +50,13 @@ var removeSession = function ( sessionId ) {
 }
 
 var setSpending = function ( spending ) {
-    Resources.find( '.monthlyInstanceBudget' ).html( spending.monthlyInstanceBudget.toFixed( 2 ) + " USD" )
-    Resources.find( '.monthlyInstanceSpending' ).html( spending.monthlyInstanceSpending.toFixed( 2 ) + " USD" )
-    Resources.find( '.monthlyStorageBudget' ).html( spending.monthlyStorageBudget.toFixed( 2 ) + " USD" )
-    Resources.find( '.monthlyStorageSpending' ).html( spending.monthlyStorageSpending.toFixed( 2 ) + " USD" )
-    Resources.find( '.storageQuota' ).html( spending.storageQuota.toFixed( 2 ) + " GB" )
-    Resources.find( '.storageUsed' ).html( (spending.storageUsed).toFixed( 2 ) + " GB" )
+    Resources.find( '.monthlyInstanceBudget' ).html( numeral( spending.monthlyInstanceBudget ).format( '0.[00]' ) + " USD" )
+    Resources.find( '.monthlyInstanceSpending' ).html( numeral( spending.monthlyInstanceSpending ).format( '0.[00]' ) + " USD" )
+    Resources.find( '.monthlyStorageBudget' ).html( numeral( spending.monthlyStorageBudget ).format( '0.[00]' ) + " USD" )
+    Resources.find( '.monthlyStorageSpending' ).html( numeral( spending.monthlyStorageSpending ).format( '0.[00]' ) + " USD" )
+    Resources.find( '.storageQuota' ).html( numeral( spending.storageQuota ).format( '0.[00]' ) + " GB" )
+    Resources.find( '.storageUsed' ).html( numeral( spending.storageUsed ).format( '0.[00]' ) + " GB" )
+    
 }
 
 module.exports = {

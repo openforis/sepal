@@ -3,8 +3,9 @@
  */
 require( './scenes-retrieve.scss' )
 
-var EventBus = require( '../../../event/event-bus' )
-var Events   = require( '../../../event/events' )
+var EventBus    = require( '../../../event/event-bus' )
+var Events      = require( '../../../event/events' )
+var BudgetCheck = require( '../../../budget-check/budget-check' )
 
 var parentContainer = null
 var template        = require( './scenes-retrieve.html' )
@@ -43,6 +44,13 @@ var hide = function ( options ) {
 }
 
 var toggleVisibility = function ( options ) {
+    options = $.extend( {}, {
+        begin: function ( elements ) {
+            // if ( parentContainer.is( ":visible" ) ) {
+            BudgetCheck.check( html )
+            // }
+        }
+    }, options )
     parentContainer.velocitySlideToggle( options )
 }
 

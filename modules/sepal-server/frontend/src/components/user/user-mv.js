@@ -29,11 +29,11 @@ var loadUserSandbox = function () {
         , success: function ( response ) {
             CurrentUser.setUserSandboxReport( response )
             
-            EventBus.dispatch( Events.USER.USER_SANDBOX_REPORT_LOADED, null, CurrentUser )
-            
             if ( viewInitialized ) {
                 View.updateUserSandbox( CurrentUser )
             }
+            
+            EventBus.dispatch( Events.USER.USER_SANDBOX_REPORT_LOADED, null, CurrentUser )
         }
     }
     

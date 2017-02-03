@@ -24,14 +24,17 @@ var init = function () {
         
         Logo = html.find( ".sepal-logo" )
     }
+    
+    show()
 }
 
-var hide = function () {
-    html.velocity( { bottom: '-7%' }, { delay: 200, duration: 1200, easing: 'easeOutQuint' } )
-}
+// var hide = function () {
+//     html.velocity( { bottom: '-7%' }, { delay: 200, duration: 1200, easing: 'easeOutQuint' } )
+// }
 
 var show = function () {
     html.velocity( { bottom: '0' }, { delay: 1000, duration: 1500, easing: 'easeOutQuint' } )
+    setTimeout( showLogo, 1000 )
 }
 
 var showLogo = function () {
@@ -42,9 +45,7 @@ var showLogo = function () {
 }
 
 module.exports = {
-    init         : init
-    , show       : show
-    , hide       : hide
-    , showLogo   : showLogo
-    , updateTasks: DashboardLinks.updateTasks
+    init              : init
+    , updateTasks     : DashboardLinks.updateTasks
+    , updateUserBudget: SectionUser.updateUserBudget
 }

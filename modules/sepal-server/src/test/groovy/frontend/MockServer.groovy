@@ -92,12 +92,12 @@ class MockServer extends AbstractMvcFilter {
                                                 hourlyCost : 0.1
                                         ]],
                         spending: [
-                                monthlyInstanceBudget  : 1d,
-                                monthlyInstanceSpending: 2d,
-                                monthlyStorageBudget   : 3d,
-                                monthlyStorageSpending : 4d,
-                                storageQuota           : 5d,
-                                storageUsed            : 6d
+                                monthlyInstanceBudget  : 2d,
+                                monthlyInstanceSpending: 1d,
+                                monthlyStorageBudget   : 4d,
+                                monthlyStorageSpending : 3d,
+                                storageQuota           : 6d,
+                                storageUsed            : 5d
                         ]
                 )
             }

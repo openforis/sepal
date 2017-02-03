@@ -1,9 +1,10 @@
 /**
  * @author Mino Togna
  */
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
-var UserMV   = require( '../user/user-mv' )
+var EventBus    = require( '../event/event-bus' )
+var Events      = require( '../event/events' )
+var UserMV      = require( '../user/user-mv' )
+var BudgetCheck = require( '../budget-check/budget-check' )
 
 require( './gateone' )
 require( './gateone.css' )
@@ -28,6 +29,8 @@ var init = function () {
         }
         EventBus.dispatch( Events.AJAX.REQUEST, null, params )
     }
+    
+    BudgetCheck.check( html )
 }
 
 function initTerminal( response ) {

@@ -3,8 +3,9 @@
  */
 require( './process.scss' )
 
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
+var EventBus    = require( '../event/event-bus' )
+var Events      = require( '../event/events' )
+var BudgetCheck = require( '../budget-check/budget-check' )
 
 var rStudioImg = require( './img/r-studio.png' )
 
@@ -26,22 +27,16 @@ var init = function () {
         $btnCloseAppGroup = html.find( '.btn-close-group' )
         
         $btnCloseAppGroup.click( function () {
-            $appGroup.velocitySlideUp( {
-                begin: function ( elements ) {
-                    $( elements ).css( 'height', '100%' )
-                }
-            } )
-            $apps.velocitySlideDown( {
-                complete: function ( elements ) {
-                    $( elements ).css( 'height', '100%' )
-                }
-            } )
+            showSection( $apps )
+            hideSection( $appGroup )
         } )
         
     }
     
-    $apps.show()
-    $appGroup.hide()
+    showSection( $apps )
+    hideSection( $appGroup )
+    
+    BudgetCheck.check( html )
 }
 
 var setApps = function ( apps ) {
@@ -97,21 +92,29 @@ var addAppGroup = function ( app, container ) {
             addAppButton( app, $appGroup )
         } )
         
-        $apps.velocitySlideUp( {
-            begin: function ( elements ) {
-                $( elements ).css( 'height', '100%' )
-            }
-        } )
-        $appGroup.velocitySlideDown( {
-            complete: function ( elements ) {
-                $( elements ).css( 'height', '100%' )
-            }
-        } )
+        hideSection( $apps )
+        showSection( $appGroup )
         
     } )
     
     div.append( btn )
     container.append( div )
+}
+
+var showSection = function ( section ) {
+    section.velocitySlideDown( {
+        complete: function ( elements ) {
+            $( elements ).css( 'height', '100%' )
+        }
+    } )
+}
+
+var hideSection = function ( section ) {
+    section.velocitySlideUp( {
+        complete: function ( elements ) {
+            $( elements ).css( 'height', '100%' )
+        }
+    } )
 }
 
 module.exports = {
