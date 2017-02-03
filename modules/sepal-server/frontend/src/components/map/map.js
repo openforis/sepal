@@ -172,8 +172,8 @@ var removeEEMosaic = function ( e, index ) {
             editable     : false,
             zIndex       : 1
         }
+        aoiDrawnPolygon.setOptions( opts )
     }
-    aoiDrawnPolygon.setOptions( opts )
 }
 
 var onAppShow = function ( e, type, params ) {
