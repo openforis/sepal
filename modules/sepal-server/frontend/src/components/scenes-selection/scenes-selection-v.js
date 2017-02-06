@@ -1,7 +1,7 @@
 /**
  * @author Mino Togna
  */
-require( './scenes-selection.css' )
+require( './scenes-selection.scss' )
 
 var SearchParams          = require( '../search/search-params' )
 var SectionScenes         = require( './views/section-scenes' )
