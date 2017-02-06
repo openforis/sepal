@@ -8,7 +8,7 @@ import org.openforis.sepal.util.GzCsvUriReader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.component.datasearch.MetaDataSource.USGS
+import static org.openforis.sepal.component.datasearch.DataSet.LANDSAT
 import static org.openforis.sepal.component.datasearch.usgs.LandsatSensor.*
 import static org.openforis.sepal.util.DateTime.parseDateString
 import static org.openforis.sepal.util.DateTime.startOfDay
@@ -92,7 +92,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
             if (isSceneIncluded(data))
                 return new SceneMetaData(
                         id: data.sceneID,
-                        source: USGS,
+                        dataSet: LANDSAT,
                         sceneAreaId: "${data.path}_${data.row}",
                         sensorId: sensor.name(),
                         acquisitionDate: parseDateString(data.acquisitionDate),

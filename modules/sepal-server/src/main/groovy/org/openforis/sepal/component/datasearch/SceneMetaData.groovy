@@ -5,7 +5,7 @@ import org.openforis.sepal.util.annotation.ImmutableData
 @ImmutableData
 class SceneMetaData {
     String id
-    MetaDataSource source
+    DataSet dataSet
     String sceneAreaId
     String sensorId
     Date acquisitionDate

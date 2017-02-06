@@ -1,14 +1,16 @@
 package org.openforis.sepal.component.datasearch.query
 
+import org.openforis.sepal.component.datasearch.DataSet
 import org.openforis.sepal.component.datasearch.SceneMetaData
 import org.openforis.sepal.component.datasearch.SceneMetaDataProvider
 import org.openforis.sepal.component.datasearch.api.SceneQuery
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
-import org.openforis.sepal.util.annotation.ImmutableData
+import org.openforis.sepal.util.annotation.Data
 
-@ImmutableData
+@Data
 class FindBestScenes implements Query<Map<String, List<SceneMetaData>>> {
+    DataSet dataSet
     Collection<String> sceneAreaIds
     Collection<String> sensorIds
     Date fromDate
@@ -33,6 +35,7 @@ class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaDa
             def cloudCover = 1
             sceneMetaDataProvider.eachScene(
                     new SceneQuery(
+                            dataSet: query.dataSet,
                             sceneAreaId: sceneAreaId,
                             sensorIds: query.sensorIds,
                             fromDate: query.fromDate,

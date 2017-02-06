@@ -4,6 +4,7 @@ import groovy.json.JsonSlurper
 import groovymvc.Controller
 import groovymvc.Params
 import org.openforis.sepal.component.Component
+import org.openforis.sepal.component.datasearch.DataSet
 import org.openforis.sepal.component.datasearch.SceneArea
 import org.openforis.sepal.component.datasearch.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.*
@@ -37,7 +38,9 @@ class DataSearchEndpoint {
             }
             post('/data/sceneareas') {
                 response.contentType = "application/json"
+                def dataSet = params['dataSet'] as DataSet ?: DataSet.LANDSAT
                 def sceneAreas = component.submit(new FindSceneAreasForAoi(
+                        dataSet,
                         toAoi(params)))
                 def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
                 send(toJson(data))
@@ -45,12 +48,14 @@ class DataSearchEndpoint {
 
             post('/data/mosaic/preview') {
                 response.contentType = "application/json"
+                def dataSet = params['dataSet'] as DataSet ?: DataSet.LANDSAT
                 def sceneIds = params.required('sceneIds', String).split(',')*.trim()
                 def bands = params.required('bands', String).split(',')*.trim()
                 def targetDayOfYear = params.required('targetDayOfYear', int)
                 def targetDayOfYearWeight = params.required('targetDayOfYearWeight', double)
 
                 def mapLayer = geeGateway.preview(new PreselectedScenesMapQuery(
+                        dataSet: dataSet,
                         sceneIds: sceneIds,
                         aoi: toAoi(params),
                         targetDayOfYear: targetDayOfYear,
@@ -66,7 +71,9 @@ class DataSearchEndpoint {
 
             post('/data/best-scenes') {
                 response.contentType = "application/json"
+                def dataSet = params['dataSet'] as DataSet ?: DataSet.LANDSAT
                 def query = new FindBestScenes(
+                        dataSet: dataSet,
                         sceneAreaIds: params.required('sceneAreaIds', String).split(',')*.trim(),
                         sensorIds: params.required('sensorIds', String).split(',')*.trim(),
                         fromDate: DateTime.parseDateString(params.required('fromDate', String)),
@@ -85,7 +92,9 @@ class DataSearchEndpoint {
 
             get('/data/sceneareas/{sceneAreaId}') {
                 response.contentType = "application/json"
+                def dataSet = params['dataSet'] as DataSet ?: DataSet.LANDSAT
                 def query = new SceneQuery(
+                        dataSet: dataSet,
                         sceneAreaId: params.sceneAreaId,
                         fromDate: DateTime.parseDateString(params.required('fromDate', String)),
                         toDate: DateTime.parseDateString(params.required('toDate', String)),

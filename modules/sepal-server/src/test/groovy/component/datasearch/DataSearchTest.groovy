@@ -12,7 +12,7 @@ import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
 import spock.lang.Specification
 
-import static org.openforis.sepal.component.datasearch.MetaDataSource.USGS
+import static DataSet.LANDSAT
 import static org.openforis.sepal.util.DateTime.parseDateString
 
 class DataSearchTest extends Specification {
@@ -39,6 +39,7 @@ class DataSearchTest extends Specification {
 
         when:
         def sceneAreas = component.submit(new FindSceneAreasForAoi(
+                LANDSAT,
                 new FusionTableShape(
                         tableName: SOME_FUSION_TABLE,
                         keyColumn: SOME_KEY_COLUMN,
@@ -222,7 +223,7 @@ class DataSearchTest extends Specification {
             sceneAreaId) {
         return new SceneMetaData(
                 id: UUID.randomUUID() as String,
-                source: USGS,
+                dataSet: LANDSAT,
                 sceneAreaId: sceneAreaId,
                 sensorId: 'LANDSAT_8',
                 acquisitionDate: acquisitionDate,

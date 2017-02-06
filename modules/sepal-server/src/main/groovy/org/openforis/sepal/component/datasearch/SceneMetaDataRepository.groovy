@@ -7,7 +7,7 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 import java.sql.Connection
 
 interface SceneMetaDataRepository extends SceneMetaDataProvider {
-    Map<String, Date> lastUpdateBySensor(MetaDataSource source)
+    Map<String, Date> lastUpdateBySensor(DataSet source)
 
     void updateAll(Collection<SceneMetaData> scenes)
 }
@@ -31,7 +31,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
     private void update(SceneMetaData scene, Sql sql) {
         def params = scene.with {
             [sensorId, sceneAreaId, acquisitionDate, cloudCover, sunAzimuth, sunElevation, browseUrl.toString(),
-             scene.updateTime, source.name(), id]
+             scene.updateTime, dataSet.metaDataSource, id]
         }
 
         def rowsUpdated = sql.executeUpdate('''
@@ -98,7 +98,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
             while (rs.next()) {
                 def scene = new SceneMetaData(
                         id: rs.getString('id'),
-                        source: rs.getString('meta_data_source') as MetaDataSource,
+                        dataSet: query.dataSet,
                         sceneAreaId: rs.getString('scene_area_id'),
                         sensorId: rs.getString('sensor_id'),
                         acquisitionDate: new Date(rs.getTimestamp('acquisition_date').time as long),
@@ -116,13 +116,13 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
         }
     }
 
-    Map<String, Date> lastUpdateBySensor(MetaDataSource source) {
+    Map<String, Date> lastUpdateBySensor(DataSet dataSet) {
         def lastUpdates = [:]
         sql.rows('''
                 SELECT sensor_id, MAX(update_time) last_update
                 FROM scene_meta_data
                 WHERE meta_data_source = ?
-                GROUP BY sensor_id''', [source.name()]).each {
+                GROUP BY sensor_id''', [dataSet.metaDataSource]).each {
             lastUpdates[it.sensor_id] = new Date(it.last_update.time as long)
         }
         return lastUpdates
@@ -131,7 +131,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
     private SceneMetaData toSceneMetaData(Map row) {
         new SceneMetaData(
                 id: row.id,
-                source: row.meta_data_source as MetaDataSource,
+                dataSet: DataSet.fromMetaDataSource(row.meta_data_source),
                 sceneAreaId: row.scene_area_id,
                 sensorId: row.sensor_id,
                 acquisitionDate: new Date(row.acquisition_date.time as long),

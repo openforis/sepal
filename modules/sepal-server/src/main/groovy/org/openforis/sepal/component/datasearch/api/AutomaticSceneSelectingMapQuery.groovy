@@ -1,9 +1,11 @@
 package org.openforis.sepal.component.datasearch.api
 
-import org.openforis.sepal.util.annotation.ImmutableData
+import org.openforis.sepal.component.datasearch.DataSet
+import org.openforis.sepal.util.annotation.Data
 
-@ImmutableData
+@Data
 class AutomaticSceneSelectingMapQuery {
+    DataSet dataSet
     Date fromDate
     Date toDate
     List<String> sensors

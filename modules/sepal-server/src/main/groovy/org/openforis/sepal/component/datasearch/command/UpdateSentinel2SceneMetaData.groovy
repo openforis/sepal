@@ -7,7 +7,7 @@ import org.openforis.sepal.component.datasearch.SceneMetaDataRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.component.datasearch.MetaDataSource.SENTINEL2
+import static org.openforis.sepal.component.datasearch.DataSet.SENTINEL2
 
 class UpdateSentinel2SceneMetaData extends AbstractCommand<Void> {
 }

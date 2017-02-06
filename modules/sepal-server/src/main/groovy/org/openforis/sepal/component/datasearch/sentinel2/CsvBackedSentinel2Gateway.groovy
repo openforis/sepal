@@ -9,13 +9,16 @@ import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
 
-import static org.openforis.sepal.component.datasearch.MetaDataSource.SENTINEL2
+import static org.openforis.sepal.component.datasearch.DataSet.SENTINEL2
 
 class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
     private static final Logger LOG = LoggerFactory.getLogger(this)
+    public static final String CSV_FILE_NAME = 'sentinel2.csv'
+    private final File workingDir
     private final CsvReader reader
 
-    CsvBackedSentinel2Gateway(CsvReader reader) {
+    CsvBackedSentinel2Gateway(File workingDir, CsvReader reader) {
+        this.workingDir = workingDir
         this.reader = reader
     }
 
@@ -53,7 +56,7 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
             if (isSceneIncluded(data))
                 return new SceneMetaData(
                         id: data.GRANULE_ID,
-                        source: SENTINEL2,
+                        dataSet: SENTINEL2,
                         sceneAreaId: data.MGRS_TILE,
                         sensorId: sensor,
                         acquisitionDate: parseDate(data.SENSING_TIME),
@@ -85,10 +88,11 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
 
     static DataSetMetadataGateway create(File workingDir) {
         new CsvBackedSentinel2Gateway(
+                workingDir,
                 new GzCsvUriReader(
                         'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz',
                         workingDir,
-                        'sentinel2.csv.gz'
+                        "${CSV_FILE_NAME}.gz"
                 )
         )
     }

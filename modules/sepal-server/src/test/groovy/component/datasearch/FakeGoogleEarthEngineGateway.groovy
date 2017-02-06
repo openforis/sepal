@@ -1,5 +1,6 @@
 package component.datasearch
 
+import org.openforis.sepal.component.datasearch.DataSet
 import org.openforis.sepal.component.datasearch.SceneArea
 import org.openforis.sepal.component.datasearch.api.*
 
@@ -7,7 +8,7 @@ class FakeGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
     private final Map<Aoi, Collection<SceneArea>> sceneAreasByFusionTable = [:]
 
 
-    Collection<SceneArea> findSceneAreasInAoi(Aoi aoi) {
+    Collection<SceneArea> findSceneAreasInAoi(DataSet dataSet, Aoi aoi) {
         return sceneAreasByFusionTable[aoi]
     }
 

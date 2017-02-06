@@ -1,6 +1,7 @@
 package org.openforis.sepal.component.datasearch.adapter
 
 import groovyx.net.http.RESTClient
+import org.openforis.sepal.component.datasearch.DataSet
 import org.openforis.sepal.component.datasearch.LatLng
 import org.openforis.sepal.component.datasearch.Polygon
 import org.openforis.sepal.component.datasearch.SceneArea
@@ -17,11 +18,11 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
         this.endpoint = new RESTClient(targetUri)
     }
 
-    Collection<SceneArea> findSceneAreasInAoi(Aoi aoi) {
+    Collection<SceneArea> findSceneAreasInAoi(DataSet dataSet, Aoi aoi) {
         def response = endpoint.get(
                 path: 'sceneareas',
                 contentType: JSON,
-                query: [aoi: toJson(aoi.params)]
+                query: [dataSet: dataSet.name(), aoi: toJson(aoi.params)]
         )
         return response.data.collect {
             def polygon = it.polygon.size() == 1 ? it.polygon.first() : it.polygon
@@ -35,6 +36,7 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
     MapLayer preview(AutomaticSceneSelectingMapQuery query) {
         def image = [
                 type                 : 'automatic',
+                dataSet              : query.dataSet.name(),
                 aoi                  : query.aoi.params,
                 targetDayOfYear      : query.targetDayOfYear,
                 targetDayOfYearWeight: query.targetDayOfYearWeight,
@@ -58,6 +60,7 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
     MapLayer preview(PreselectedScenesMapQuery query) {
         def image = [
                 type                 : 'manual',
+                dataSet              : query.dataSet.name(),
                 aoi                  : query.aoi.params,
                 targetDayOfYear      : query.targetDayOfYear,
                 targetDayOfYearWeight: query.targetDayOfYearWeight,

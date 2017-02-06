@@ -13,9 +13,8 @@ import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.util.DateTime
 import util.AbstractComponentEndpointTest
-import util.AbstractEndpointTest
 
-import static org.openforis.sepal.component.datasearch.MetaDataSource.USGS
+import static org.openforis.sepal.component.datasearch.DataSet.LANDSAT
 import static org.openforis.sepal.util.DateTime.parseDateString
 import static org.openforis.sepal.util.DateTime.toDateTimeString
 
@@ -124,7 +123,7 @@ class DataSearchEndpointTest extends AbstractComponentEndpointTest {
     private SceneMetaData scene(Date acquisitionDate) {
         new SceneMetaData(
                 id: 'scene id',
-                source: USGS,
+                dataSet: LANDSAT,
                 sceneAreaId: 'scene area id',
                 sensorId: 'sensor id',
                 acquisitionDate: acquisitionDate,
