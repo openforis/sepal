@@ -63,6 +63,38 @@ class MockServer extends AbstractMvcFilter {
                 send toJson("[status:OK]")
             }
 
+            Object spending = [
+                    monthlyInstanceBudget  : 2d,
+                    monthlyInstanceSpending: 1d,
+                    monthlyStorageBudget   : 4d,
+                    monthlyStorageSpending : 3d,
+                    storageQuota           : 6d,
+                    storageUsed            : 5d
+            ]
+            get('/api/budget-exceeded') {
+                response.contentType = 'application/json'
+                boolean value = params.q
+                if (value == true) {
+                    spending = [
+                            monthlyInstanceBudget  : 2d,
+                            monthlyInstanceSpending: 3d,
+                            monthlyStorageBudget   : 4d,
+                            monthlyStorageSpending : 5d,
+                            storageQuota           : 6d,
+                            storageUsed            : 7d
+                    ]
+                } else {
+                    spending = [
+                            monthlyInstanceBudget  : 2d,
+                            monthlyInstanceSpending: 1d,
+                            monthlyStorageBudget   : 4d,
+                            monthlyStorageSpending : 3d,
+                            storageQuota           : 6d,
+                            storageUsed            : 5d
+                    ]
+                }
+                send toJson("[budget-exceeded:" + value + "]")
+            }
 
             get('/api/sandbox/report') {
                 response.contentType = 'application/json'
@@ -91,14 +123,7 @@ class MockServer extends AbstractMvcFilter {
                                                 description: 'Some instance type description',
                                                 hourlyCost : 0.1
                                         ]],
-                        spending: [
-                                monthlyInstanceBudget  : 2d,
-                                monthlyInstanceSpending: 1d,
-                                monthlyStorageBudget   : 4d,
-                                monthlyStorageSpending : 3d,
-                                storageQuota           : 6d,
-                                storageUsed            : 5d
-                        ]
+                        spending: spending
                 )
             }
 
