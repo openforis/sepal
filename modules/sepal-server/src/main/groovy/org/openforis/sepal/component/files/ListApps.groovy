@@ -24,11 +24,25 @@ class ListAppsHandler implements QueryHandler<List<Map>, ListApps> {
     }
 
     private void validate(apps) {
-        assert apps instanceof List, "$appsFile: : Can only contain list of objects: $apps"
+        assert apps instanceof List, "$appsFile: : App list must be list: $apps"
         apps.each { app ->
-            assert app instanceof Map, "$appsFile: Can only contain list of objects: $app"
-            assert app.path instanceof String, "$appsFile: Requires 'path' String property: $app"
-            assert app.label instanceof String, "$appsFile: Requires 'label' String property: $app"
+            if (app.apps)
+                validateGroup(app)
+            else
+                validateApp(app)
         }
+    }
+
+    private void validateGroup(group) {
+        assert group instanceof Map, "$appsFile: Group must be an object: $group"
+        assert group.label instanceof String, "$appsFile: Group requires 'label' String property: $group"
+        assert group.apps instanceof List, "$appsFile: Group requires 'apps' array property: $group"
+        validate(group.apps)
+    }
+
+    private void validateApp(app) {
+        assert app instanceof Map, "$appsFile: App must be an object: $app"
+        assert app.label instanceof String, "$appsFile: App requires 'label' string property: $app"
+        assert app.path instanceof String, "$appsFile: App requires 'path' string property: $app"
     }
 }
