@@ -1,0 +1,45 @@
+#data-vis {
+
+  .feature-info-container {
+    width: 35%;
+    position: absolute;
+    top: 10%;
+    right: -35%;
+    min-height: 40%;
+    max-height: 90%;
+    overflow-y: auto;
+    padding-bottom: 2rem;
+    padding-top: 2rem;
+    background-color: rgba(33, 33, 35, 0.8);
+    border-top-left-radius: 1rem;
+    border-bottom-left-radius: 1rem;
+
+    .btn-close-feature-info {
+      width: 2rem;
+      height: 2rem;
+      padding: 0px;
+      border: none;
+      font-size: 1.5rem;
+      opacity: .7;
+      position: absolute;
+      left: 0px;
+      top: 0px;
+    }
+
+    .row-raster, .row-shape {
+      display: none;
+
+      .btn-toggle-layer-info {
+        width: 1.5rem;
+        height: 1.5rem;
+        padding: 0px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        font-size: .8rem;
+        opacity: .7;
+      }
+
+    }
+
+  }
+
+}

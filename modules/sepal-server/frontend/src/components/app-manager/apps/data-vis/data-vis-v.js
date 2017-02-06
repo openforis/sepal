@@ -6,8 +6,9 @@ require( './data-vis.scss' )
 var EventBus = require( '../../../event/event-bus' )
 var Events   = require( '../../../event/events' )
 
-var Map    = require( './views/map' )
-var Layers = require( './views/layers/layers' )
+var Map         = require( './views/map' )
+var Layers      = require( './views/layers/layers' )
+var FeatureInfo = require( './views/feature-info/feature-info-mv' )
 
 var html           = null
 var map            = null
@@ -32,6 +33,7 @@ var init = function ( container ) {
     
     Map.init( 'map-data-vis' )
     Layers.init( html )
+    FeatureInfo.init( html.find( '.feature-info-container' ) )
 }
 
 var showTilesLoader = function () {
