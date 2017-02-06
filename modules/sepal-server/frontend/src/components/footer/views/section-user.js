@@ -46,8 +46,8 @@ var init = function ( container ) {
 
 var updateUserBudget = function ( user ) {
     hourlyCost = 0
-    $.each( user.sandboxReport.instanceTypes, function ( i, instanceType ) {
-        hourlyCost += instanceType.hourlyCost
+    $.each( user.sandboxReport.sessions, function ( i, session ) {
+        hourlyCost += session.instanceType.hourlyCost
     } )
     
     var spending = user.sandboxReport.spending
