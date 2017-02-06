@@ -15,11 +15,11 @@ var $appGroup         = null
 var $btnCloseAppGroup = null
 
 var init = function () {
-    var template = require( './process.html' )
-    html         = $( template( {} ) )
-    
     var appSection = $( '#app-section' ).find( '.process' )
     if ( appSection.children().length <= 0 ) {
+        
+        var template = require( './process.html' )
+        html         = $( template( {} ) )
         appSection.append( html )
         
         $apps             = html.find( '.apps' )
