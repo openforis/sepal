@@ -144,6 +144,7 @@ var sortLayers = function ( callback ) {
                 }
             } )
             
+            EventBus.dispatch( Events.APPS.DATA_VIS.UPDATE_LAYER_OPTION_BTNS_POSITION )
             Loader.hide()
         }
     }

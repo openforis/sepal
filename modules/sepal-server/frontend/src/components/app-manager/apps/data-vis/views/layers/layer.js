@@ -30,7 +30,6 @@ var LayerClass = function ( container, layer ) {
     
     this.html.insertAfter( container )
     
-    
     // init UI components
     this.btnVisibility = this.html.find( '.btn-visibility' )
     this.btnVisibility.click( function () {
@@ -43,14 +42,14 @@ var LayerClass = function ( container, layer ) {
     
     this.btnSort = this.html.find( '.btn-sort' )
     
-    // init ui properties
+    this.btnVisibility.hide()
+    this.btnSort.hide()
+    
+    // layer options
     this.layerOptions       = LayerOptions.newInstance( this.html.find( '.layer-options' ), this, function () {
         $this.show()
     } )
     this.layerOptionButtons = LayerOptionButtons.newInstance( this.html.find( '.layer-option-buttons' ), this.options, this.layerOptions )
-    
-    this.btnVisibility.hide()
-    this.btnSort.hide()
 }
 
 LayerClass.prototype.init = function () {
