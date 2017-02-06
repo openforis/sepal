@@ -122,6 +122,7 @@ class DataSearchTest extends Specification {
 
         when:
         def sceneAreasBySceneAreas = component.submit(new FindBestScenes(
+                dataSet: LANDSAT,
                 sceneAreaIds: [SCENE_AREA_ID],
                 sensorIds: [scene.sensorId],
                 fromDate: new Date(0),
@@ -144,6 +145,7 @@ class DataSearchTest extends Specification {
 
         when:
         def scenesBySceneAreas = component.submit(new FindBestScenes(
+                dataSet: LANDSAT,
                 sceneAreaIds: [SCENE_AREA_ID],
                 sensorIds: [cloudFreeScene.sensorId],
                 fromDate: new Date(0),
@@ -168,6 +170,7 @@ class DataSearchTest extends Specification {
 
         when:
         def scenesBySceneAreas = component.submit(new FindBestScenes(
+                dataSet: LANDSAT,
                 sceneAreaIds: [SCENE_AREA_ID],
                 sensorIds: [cloudyScene.sensorId],
                 fromDate: new Date(0),

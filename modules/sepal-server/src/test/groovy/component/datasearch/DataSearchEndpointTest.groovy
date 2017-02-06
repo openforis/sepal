@@ -49,6 +49,7 @@ class DataSearchEndpointTest extends AbstractComponentEndpointTest {
     def 'GET /data/sceneareas/{sceneAreaId} returns scenes'() {
         def query = [fromDate: '2016-01-01', toDate: '2016-02-01', targetDayOfYear: 365]
         def expectedSceneQuery = new SceneQuery(
+                dataSet: LANDSAT,
                 sceneAreaId: 'someSceneAreaId',
                 fromDate: parseDateString(query.fromDate),
                 toDate: parseDateString(query.toDate),
@@ -79,6 +80,7 @@ class DataSearchEndpointTest extends AbstractComponentEndpointTest {
 
     def 'GET /data/best-scenes returns scenes'() {
         def expectedQuery = new FindBestScenes(
+                dataSet: LANDSAT,
                 sceneAreaIds: ['some-area', 'another-area'],
                 sensorIds: ['some-sensor', 'another-sensor'],
                 fromDate: parseDateString('2015-01-01'),

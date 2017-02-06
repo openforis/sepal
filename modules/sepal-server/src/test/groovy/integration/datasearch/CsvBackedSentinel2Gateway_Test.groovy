@@ -9,12 +9,17 @@ import java.text.SimpleDateFormat
 
 class CsvBackedSentinel2Gateway_Test extends Specification {
     public static final Date LONG_AGO = new Date(0)
+    def workingDir = File.createTempDir()
     def sceneId = 'L1C_T48LYR_A007608_20161206T031336'
     def sceneId2 = 'S2A_OPER_MSI_L1C_TL_EPA__20160606T223605_A000062_T31RCL_N02.02'
 
+    def cleanup() {
+        workingDir.deleteDir()
+    }
+
     def 'Two scenes get accessed'() {
         def reader = new FakeCsvReader((sceneId): now, (sceneId2): now)
-        def gateway = new CsvBackedSentinel2Gateway(reader)
+        def gateway = new CsvBackedSentinel2Gateway(workingDir, reader)
 
         when:
         def updates = iterate(SENTINEL2A: LONG_AGO, gateway)
@@ -27,7 +32,7 @@ class CsvBackedSentinel2Gateway_Test extends Specification {
 
     def 'Scene acuired before last update is excluded'() {
         def reader = new FakeCsvReader((sceneId): LONG_AGO)
-        def gateway = new CsvBackedSentinel2Gateway(reader)
+        def gateway = new CsvBackedSentinel2Gateway(workingDir, reader)
 
         expect:
         !iterate(SENTINEL2A: now, gateway)
