@@ -35,7 +35,7 @@ var filterUsers = function ( searchString ) {
                 $.containsString( user.name.toLowerCase(), searchString )
                 || $.containsString( user.username.toLowerCase(), searchString )
                 || $.containsString( user.organization.toLowerCase(), searchString )
-            // || $.containsString( user.status.toLowerCase(), searchString )
+                // || $.containsString( user.status.toLowerCase(), searchString )
             ) {
                 match = true
             }

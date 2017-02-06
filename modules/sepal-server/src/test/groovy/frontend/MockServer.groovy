@@ -92,12 +92,12 @@ class MockServer extends AbstractMvcFilter {
                                                 hourlyCost : 0.1
                                         ]],
                         spending: [
-                                monthlyInstanceBudget  : 1d,
-                                monthlyInstanceSpending: 2d,
-                                monthlyStorageBudget   : 3d,
-                                monthlyStorageSpending : 4d,
-                                storageQuota           : 5d,
-                                storageUsed            : 6d
+                                monthlyInstanceBudget  : 2d,
+                                monthlyInstanceSpending: 1d,
+                                monthlyStorageBudget   : 4d,
+                                monthlyStorageSpending : 3d,
+                                storageQuota           : 6d,
+                                storageUsed            : 5d
                         ]
                 )
             }
@@ -486,24 +486,29 @@ class MockServer extends AbstractMvcFilter {
                 send '''
                     [
                       {
-                        "path": "/sandbox/shiny/accuracy-assessment/aa_design",
-                        "label": "Accuracy Assessment Design"
+                        "label": "GEO Processing ",
+                        "apps": [
+                          {
+                            "label": "GEO Processing - BETA",
+                            "path": "/sandbox/shiny/geo-processing"
+                          },
+                          {
+                            "label": "Visualize - BETA",
+                            "path": "/sandbox/shiny/visualize"
+                          },
+                          {
+                            "label": "SAR Toolkit",
+                            "path": "/sandbox/shiny/osk"
+                          }
+                        ]
                       },
                       {
-                        "path": "/sandbox/shiny/accuracy-assessment/aa_analysis",
-                        "label": "Accuracy Assessment Analysis"
+                        "label": "Accuracy Assessment Design",
+                        "path": "/sandbox/shiny/accuracy-assessment/aa_design"
                       },
                       {
-                        "path": "/sandbox/shiny/geo-processing",
-                        "label": "GEO Processing"
-                      },
-                      {
-                        "path": "/sandbox/shiny/visualize",
-                        "label": "Visualize"
-                      },
-                      {
-                        "path": "/sandbox/shiny/osk",
-                        "label": "SAR Toolkit"
+                        "label": "Accuracy Assessment Analysis",
+                        "path": "/sandbox/shiny/accuracy-assessment/aa_analysis"
                       }
                     ]'''
             }
