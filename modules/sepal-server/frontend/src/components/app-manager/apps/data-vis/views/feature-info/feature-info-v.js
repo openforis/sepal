@@ -91,16 +91,19 @@ var toggleInfo = function ( layer ) {
 }
 
 var addRasterInfo = function ( featureInfo, row ) {
+    var colValues = row.find( '.col-values' )
+    var table     = $( '<div class="row raster-table"/>' )
+    colValues.append( table )
+    
     $.each( featureInfo, function ( i, value ) {
         var colValue = $( '<div class="col-sm-4 raster-value"/>' )
         colValue.append( $( '<div>' + value + '</div>' ) )
-        row.find( '.row-values' ).append( colValue )
+        table.append( colValue )
     } )
 }
 
 var addShapeInfo = function ( featureInfo, row ) {
-    var colValues = $( '<div class="col-sm-12"/>' )
-    row.find( '.row-values' ).append( colValues )
+    var colValues = row.find( '.col-values' )
     
     $.each( featureInfo, function ( i, obj ) {
         var table = $( '<div class="row shape-table"/>' )
