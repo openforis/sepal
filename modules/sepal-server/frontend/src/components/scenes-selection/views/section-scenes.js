@@ -2,10 +2,9 @@
  * @author Mino Togna
  */
 var numeral = require( 'numeral' )
+// var moment  = require( 'moment' )
 
-var moment  = require( 'moment' )
 var Sensors = require( '../../sensors/sensors' )
-
 var EventBus  = require( '../../event/event-bus' )
 var Events    = require( '../../event/events' )
 var Animation = require( '../../animation/animation' )
@@ -73,7 +72,8 @@ var getImageSection = function ( sceneImage ) {
     
     imgSection.find( '.cloud-cover' ).append( '<i class="fa fa-cloud" aria-hidden="true"></i> ' + numeral( sceneImage.cloudCover ).format( '0.[00]' ) )
     imgSection.find( '.sensor' ).append( '<i class="fa fa-rocket" aria-hidden="true"></i> ' + Sensors[ sceneImage.sensor ].shortName )
-    imgSection.find( '.acquisition-date' ).append( '<i class="fa fa-calendar" aria-hidden="true"></i> ' + moment( sceneImage.acquisitionDate, "YYYY-MM-DD" ).format( "YYYY" ) )
+    imgSection.find( '.acquisition-date' ).append( '<i class="fa fa-calendar" aria-hidden="true"></i> ' + sceneImage.acquisitionDate )
+    // imgSection.find( '.acquisition-date' ).append( '<i class="fa fa-calendar" aria-hidden="true"></i> ' + moment( sceneImage.acquisitionDate, "YYYY-MM-DD" ).format( "YYYY" ) )
     imgSection.find( '.target-day' ).append( '<i class="fa fa-calendar-times-o" aria-hidden="true"></i> ' + sceneImage.daysFromTargetDay )
     
     imgSection.find( '.btn-add' ).click( function () {

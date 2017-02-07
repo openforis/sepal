@@ -17,7 +17,6 @@ var addLayer = function ( e, layer ) {
 }
 
 var removeLayer = function ( e, layer ) {
-    // layers[ layer.id ] = null
     View.toggleInfo( layer )
 }
 
@@ -33,7 +32,6 @@ var getFeatureInfo = function ( e, lat, lng ) {
             View.reset()
         }
         , success   : function ( response ) {
-            console.log( response )
             View.hideLoader()
             
             var layerIds = Object.keys( response )
@@ -58,7 +56,6 @@ EventBus.addEventListener( Events.APPS.DATA_VIS.REMOVE_MAP_LAYER, removeLayer )
 EventBus.addEventListener( Events.APPS.DATA_VIS.LAYER_DELETE, deleteLayer )
 
 EventBus.addEventListener( Events.APPS.DATA_VIS.GET_FEATURE_INFO, getFeatureInfo )
-
 
 module.exports = {
     init: init
