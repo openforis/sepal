@@ -13,9 +13,11 @@ class SepalClient {
     private static final int WAIT_TIME = 5 * 1000
     private final String username
     private final String sepalEndpoint
+    private final String password
 
     SepalClient(String username, String sepalEndpoint, String password) {
         this.sepalEndpoint = sepalEndpoint
+        this.password = password
         LOG.debug("Creating Sepal Client for $username at $sepalEndpoint")
         this.username = username
     }
