@@ -12,10 +12,10 @@ import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.ContentType.URLENC
 
 class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
-    private final RESTClient endpoint
+    private final String targetUri
 
     HttpGoogleEarthEngineGateway(String targetUri) {
-        this.endpoint = new RESTClient(targetUri)
+        this.targetUri = targetUri
     }
 
     Collection<SceneArea> findSceneAreasInAoi(DataSet dataSet, Aoi aoi) {
@@ -76,5 +76,9 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
                 id: response.data.mapId,
                 token: response.data.token
         )
+    }
+
+    RESTClient getEndpoint() {
+        new RESTClient(targetUri)
     }
 }
