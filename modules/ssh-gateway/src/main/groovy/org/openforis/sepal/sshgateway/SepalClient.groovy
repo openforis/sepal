@@ -18,8 +18,6 @@ class SepalClient {
         this.sepalEndpoint = sepalEndpoint
         LOG.debug("Creating Sepal Client for $username at $sepalEndpoint")
         this.username = username
-        sepal.auth.basic 'sepalAdmin', password
-        sepal.headers['sepal-user'] = new User(username: username, roles: [Roles.ADMIN]).jsonString()
     }
 
     Map loadSandboxInfo() {
@@ -54,6 +52,9 @@ class SepalClient {
     }
 
     RESTClient getSepal() {
-        new RESTClient(sepalEndpoint)
+        def sepal = new RESTClient(sepalEndpoint)
+        sepal.auth.basic 'sepalAdmin', password
+        sepal.headers['sepal-user'] = new User(username: username, roles: [Roles.ADMIN]).jsonString()
+        return sepal
     }
 }
