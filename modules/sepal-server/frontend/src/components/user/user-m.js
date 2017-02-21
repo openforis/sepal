@@ -19,10 +19,19 @@ User.prototype.isAdmin = function () {
 }
 
 User.prototype.isActive = function () {
-    if ( this.status && this.status.toUpperCase() === 'ACTIVE' ) {
-        return true
-    }
-    return false
+    return this.hasStatus( 'ACTIVE' )
+}
+
+User.prototype.isPending = function () {
+    return this.hasStatus( 'PENDING' )
+}
+
+User.prototype.isLocked = function () {
+    return this.hasStatus( 'LOCKED' )
+}
+
+User.prototype.hasStatus = function ( status ) {
+    return this.status && this.status.toUpperCase() === status
 }
 
 User.prototype.setUserSandboxReport = function ( data ) {
@@ -48,6 +57,27 @@ User.prototype.getSpending = function () {
     return this.sandboxReport.spending
 }
 
+User.prototype.hasBudgetExceeded = function () {
+    var spending = this.getSpending()
+    
+    var budgetExceeded =
+            spending.monthlyInstanceBudget <= spending.monthlyInstanceSpending ||
+            spending.monthlyStorageBudget <= spending.monthlyStorageSpending ||
+            spending.storageQuota <= spending.storageUsed
+    
+    return budgetExceeded
+}
+
+User.prototype.hasBudget0 = function () {
+    var spending = this.getSpending()
+    
+    var budget0 =
+            spending.monthlyInstanceBudget == 0 &&
+            spending.monthlyStorageBudget == 0 &&
+            spending.storageQuota == 0
+    
+    return budget0
+}
 
 module.exports = function ( userDetails ) {
     return new User( userDetails )

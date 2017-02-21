@@ -96,12 +96,20 @@ var Events = {
             , CHANGE_PASSWORD  : 'section.user.change_password'
         }
         , USERS: {
-            LIST_FILTER_CHANGE: 'section.users.list_filter_change'
-            , SELECT_USER     : 'section.users.select_user'
-            , SHOW_USERS_LIST : 'section.users.show_users_list'
-            , SHOW_INVITE_USER: 'section.users.show_invite_user'
-            , SHOW_EDIT_USER  : 'section.users.show_edit_user'
-            , SHOW_DELETE_USER: 'section.users.show_delete_user'
+            SELECT_USER                : 'section.users.select_user'
+            , SHOW_USERS_LIST          : 'section.users.show_users_list'
+            , SHOW_INVITE_USER         : 'section.users.show_invite_user'
+            , SHOW_EDIT_USER           : 'section.users.show_edit_user'
+            , SHOW_DELETE_USER         : 'section.users.show_delete_user'
+            , SHOW_SEND_INVITATION_USER: 'section.users.show_send_invitation_user'
+            , FILTER                   : {
+                CHANGED                       : 'section.users.filter.changed'
+                , SEARCH_STRING_CHANGE        : 'section.users.filter.search_string_change'
+                , USERS_ACTIVE_CHANGE         : 'section.users.filter.users_active_change'
+                , USERS_PENDING_CHANGE        : 'section.users.filter.users_pending_change'
+                , USERS_LOCKED_CHANGE         : 'section.users.filter.users_locked_change'
+                , USERS_BUDGET_EXCEEDED_CHANGE: 'section.users.filter.users_budget_exceeded_change'
+            }
         }
     }
     

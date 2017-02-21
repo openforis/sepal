@@ -56,7 +56,6 @@ var setSpending = function ( spending ) {
     Resources.find( '.monthlyStorageSpending' ).html( numeral( spending.monthlyStorageSpending ).format( '0.[00]' ) + " USD" )
     Resources.find( '.storageQuota' ).html( numeral( spending.storageQuota ).format( '0.[00]' ) + " GB" )
     Resources.find( '.storageUsed' ).html( numeral( spending.storageUsed ).format( '0.[00]' ) + " GB" )
-    
 }
 
 module.exports = {

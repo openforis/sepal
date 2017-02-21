@@ -10,7 +10,7 @@ var numeral  = require( 'numeral' )
 
 var budgetExceeded = false
 var budget0        = false
-var spending       = false
+var spending       = null
 
 var template = require( './budget-check.html' )
 var html     = $( template( {} ) )
@@ -54,21 +54,9 @@ var show = function ( container ) {
 }
 
 var updateUserBudget = function ( e, user ) {
-    
-    
-    spending = user.sandboxReport.spending
-    
-    budget0 =
-        spending.monthlyInstanceBudget == 0 &&
-        spending.monthlyStorageBudget == 0 &&
-        spending.storageQuota == 0
-    
-    
-    budgetExceeded =
-        spending.monthlyInstanceBudget <= spending.monthlyInstanceSpending ||
-        spending.monthlyStorageBudget <= spending.monthlyStorageSpending ||
-        spending.storageQuota <= spending.storageUsed
-    
+    spending       = user.getSpending()
+    budget0        = user.hasBudget0()
+    budgetExceeded = user.hasBudgetExceeded()
 }
 
 EventBus.addEventListener( Events.USER.USER_SANDBOX_REPORT_LOADED, updateUserBudget )

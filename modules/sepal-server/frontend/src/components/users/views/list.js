@@ -7,9 +7,9 @@ var UserM    = require( '../../user/user-m' )
 
 
 var Container = null
-var UsersList = null
-var RowHeader = null
-var RowUser   = null
+var usersList = null
+var rowHeader = null
+var rowUser   = null
 
 var selectedUser = null
 
@@ -18,9 +18,35 @@ var init = function ( container ) {
     
     Container = container
     
-    UsersList = Container.find( '.users-list' )
-    RowHeader = Container.find( '.row-header' )
-    RowUser   = Container.find( '.row-user' )
+    usersList = Container.find( '.users-list' )
+    rowHeader = Container.find( '.row-header' )
+    rowUser   = Container.find( '.row-user' )
+    
+    // var sortRow     = null
+    // var sortingHtml = rowHeader.find( '.data-sorting-popup' )
+    // sortingHtml.find( '.btn-sort-desc' ).click( function () {
+    //     sortingHtml.stop().fadeOut()
+    //
+    //     var property = sortRow.data( 'sorting-property' )
+    //     console.log( 'sorting desc ', property )
+    //
+    //     rowHeader.find( '.sort-reset' ).remove()
+    //
+    //     var i = $( this ).find('i').clone().addClass( 'sort-reset' )
+    //     sortRow.append( i )
+    // } )
+    // sortingHtml.find( '.btn-sort-asc' ).click( function () {
+    // } )
+    //
+    // sortingHtml.mouseleave( function () {
+    //     sortingHtml.stop().fadeOut()
+    // } )
+    //
+    // rowHeader.find( '.data-sorting' ).mouseenter( function ( e ) {
+    //     sortRow = $( this )
+    //     sortRow.append( sortingHtml )
+    //     sortingHtml.stop().fadeIn()
+    // } )
 }
 
 var interval       = null
@@ -37,16 +63,16 @@ var setUsers       = function ( users ) {
     } else {
         
         var idx = 0
-        UsersList.empty()
+        usersList.empty()
         
         if ( users && users.length > 0 ) {
-            RowHeader.show()
+            rowHeader.show()
             
             var addUser = function () {
                 var user = users[ idx ]
                 
                 var row = getUserRow( user )
-                UsersList.append( row )
+                usersList.append( row )
                 row.show( 0 )
                 
                 idx++
@@ -58,13 +84,13 @@ var setUsers       = function ( users ) {
             interval = setInterval( addUser, 100 )
             
         } else {
-            RowHeader.hide()
+            rowHeader.hide()
         }
     }
 }
 
 var getUserRow = function ( user ) {
-    var row = RowUser.clone()
+    var row = rowUser.clone()
     row.addClass( 'row-user-' + user.id )
     
     if ( selectedUser && selectedUser.id === user.id ) {
@@ -116,9 +142,9 @@ var getUserRow = function ( user ) {
 
 var selectUser = function ( user ) {
     selectedUser = user
-    UsersList.find( '.row-user.active' ).removeClass( 'active' )
+    usersList.find( '.row-user.active' ).removeClass( 'active' )
     if ( user ) {
-        UsersList.find( '.row-user.row-user-' + user.id ).addClass( 'active' )
+        usersList.find( '.row-user.row-user-' + user.id ).addClass( 'active' )
     }
 }
 

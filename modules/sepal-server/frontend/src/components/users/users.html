@@ -10,20 +10,49 @@
                 <span class="total-users-counts"/> Users<br/>
                 <span class="total-active-users-counts"/> Active
             </div>
-            <div class="col-sm-1 text-align-right">
-                <i class="fa fa-search m-t-1" aria-hidden="true"></i>
+
+            <div class="col-sm-1 p-t-0-5 text-align-right">
+                <i class="fa fa-search" aria-hidden="true"></i>
             </div>
-            <div class="col-sm-4 form-group">
+            <div class="col-sm-2 text-align-left form-group p-t-0-5">
                 <input type="text" class="form-control" name="search">
             </div>
 
-            <div class="col-sm-3 offset-sm-3 text-align-center">
+            <!--<div class="col-sm-1 p-t-0-5 col-filter text-align-right">-->
+                <!--<i class="fa fa-filter" aria-hidden="true"></i>-->
+            <!--</div>-->
+            <div class="col-sm-3 text-align-left p-l-1 p-t-0-5 col-filter">
+                <i class="fa fa-filter p-r-0-5" aria-hidden="true"></i>
+                <button class="btn btn-base circle btn-filter-active active">
+                    <i class="fa fa-smile-o" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-base circle btn-filter-pending active">
+                    <i class="fa fa-meh-o" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-base circle btn-filter-locked active">
+                    <i class="fa fa-lock" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-base circle btn-filter-budget-exceeded">
+                    <span class="fa-stack">
+                      <i class="fa fa-usd fa-stack-1x"></i>
+                      <i class="fa fa-ban fa-stack-2x text-danger"></i>
+                    </span>
+                </button>
+            </div>
+
+            <div class="col-sm-4 offset-sm-1 text-align-right p-r-2 col-user-btns">
                 <button class="btn btn-base circle btn-invite"><i class="fa fa-user-plus" aria-hidden="true"></i></button>
                 <button class="btn btn-base circle btn-remove"><i class="fa fa-user-times" aria-hidden="true"></i></button>
                 <button class="btn btn-base circle btn-edit">
                     <span class="fa-stack">
                         <i class="fa fa-user" aria-hidden="true"></i>
-                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                        <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                    </span>
+                </button>
+                <button class="btn btn-base circle btn-send-invitation">
+                    <span class="fa-stack">
+                        <i class="fa fa-user" aria-hidden="true"></i>
+                        <i class="fa fa-envelope-o" aria-hidden="true"></i>
                     </span>
                 </button>
             </div>
@@ -33,13 +62,23 @@
             <div class="col-sm-12 height100">
 
                 <div class="row row-header height15">
-                    <div class="col-sm-2 text-align-center">Name</div>
+                    <div class="data-sorting-popup">
+                        <button class="btn btn-base btn-sort-desc circle"><i class="fa fa-sort-amount-desc" aria-hidden="true"></i></button>
+                        <button class="btn btn-base btn-sort-asc circle"><i class="fa fa-sort-amount-asc" aria-hidden="true"></i></button>
+                    </div>
+                    <div class="col-sm-2 text-align-center">
+                        <div class="data-sorting" data-sorting-property="some">Name</div>
+                    </div>
                     <div class="col-sm-2 text-align-center">Username</div>
                     <div class="col-sm-2 text-align-center">Status</div>
                     <div class="col-sm-2 text-align-center">Monthly Instance Budget (USD)
                         <div class="row">
-                            <div class="col-sm-6 text-align-center">Quota</div>
-                            <div class="col-sm-6 text-align-center">Used</div>
+                            <div class="col-sm-6 text-align-center data-sorting" data-sorting-property="some" >
+                                Quota
+                                <!--<button class="btn btn-base circle"><i class="fa fa-sort-numeric-asc" aria-hidden="true"></i></button>-->
+                                <!--<button class="btn btn-base circle"><i class="fa fa-sort-numeric-desc" aria-hidden="true"></i></button>-->
+                            </div>
+                            <div class="col-sm-6 text-align-center data-sorting" data-sorting-property="some2">Used</div>
                         </div>
                     </div>
                     <div class="col-sm-2 text-align-center">Monthly Storage Budget (USD)
@@ -298,7 +337,7 @@
                     <!--</div>-->
 
                     <div class="row form-group m-t-3">
-                        <label class="form-label col-sm-12 text-align-center user-label"></label>
+                        <h4 class="col-sm-12 text-align-center user-label"></h4>
                     </div>
 
                     <div class="row form-group m-t-3">
@@ -323,5 +362,45 @@
             </div>
         </div>
     </div>
+
+    <!-- =========================== -->
+    <!--Send Invitation User Section-->
+    <!-- =========================== -->
+    <div class="col-sm-12  p-t-1 overflow-y-auto send-invitation-user-section">
+        <div class="row">
+            <div class="col-sm-8 offset-sm-2">
+
+                <h3 class="width100 text-align-center">Send invitation to user</h3>
+
+                <form class="form-theme">
+                    <input type="hidden" name="id">
+
+                    <div class="row form-group m-t-3">
+                        <h4 class="col-sm-12 text-align-center user-label"></h4>
+                    </div>
+
+                    <div class="row form-group m-t-3">
+
+                        <div class="col-sm-12 text-align-center form-notify form-error" />
+
+                        <div class="col-sm-12 text-align-center">
+                            <button type="button" class="btn btn-base btn-cancel round icon p-y-1 m-r-3">
+                                <i class="fa fa-times-circle" aria-hidden="true"></i>
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-base round icon p-y-1">
+                                <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                                Send
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
 
 </div>

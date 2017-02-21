@@ -35,7 +35,7 @@ var submit = function ( e ) {
     e.preventDefault()
     
     var params = {
-        url         : '/user/delete'
+        url         : '/user/send-invitation'
         , data      : { username: selectedUser.username }
         , beforeSend: function () {
             Loader.show()
@@ -43,7 +43,7 @@ var submit = function ( e ) {
         , success   : function ( response ) {
             Loader.hide( { delay: 200 } )
             
-            FormValidator.showSuccess( Form.find( '.form-notify' ), "User deleted" )
+            FormValidator.showSuccess( Form.find( '.form-notify' ), "Invitation sent" )
             
             setTimeout( function () {
                 EventBus.dispatch( Events.SECTION.USERS.SHOW_USERS_LIST )

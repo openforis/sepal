@@ -2,16 +2,10 @@
  * @author Mino Togna
  */
 
-var EventBus  = require( '../event/event-bus' )
-var Events    = require( '../event/events' )
-var View      = require( './users-v' )
-var Model     = require( './users-m' )
-var UserMV    = require( '../user/user-mv' )
-var NavMenu   = require( '../nav-menu/nav-menu' )
-var Animation = require( '../animation/animation' )
-
-
-var searchString = null
+var EventBus = require( '../event/event-bus' )
+var Events   = require( '../event/events' )
+var View     = require( './users-v' )
+var Model    = require( './users-m' )
 
 var show = function ( e, target ) {
     if ( target === 'users' ) {
@@ -22,10 +16,8 @@ var show = function ( e, target ) {
 }
 
 var updateView = function () {
-    var users = Model.filterUsers( searchString )
-    View.setUsers( users )
-    
-    View.setAllUsers( Model.filterUsers() )
+    View.setUsers( Model.getFilteredUsers() )
+    View.setAllUsers( Model.getUsers() )
 }
 
 var loadUsers = function () {
@@ -48,7 +40,6 @@ var loadUsers = function () {
     }
     EventBus.dispatch( Events.AJAX.GET, null, userParams )
     
-    
     var budgetParams = {
         url      : '/budget/report'
         , success: function ( response ) {
@@ -56,15 +47,15 @@ var loadUsers = function () {
             checkResponses()
         }
     }
-    EventBus.dispatch( Events.AJAX.REQUEST, null, budgetParams )
+    EventBus.dispatch( Events.AJAX.GET, null, budgetParams )
     
     
 }
 
-var onUsersListFilterChange = function ( e, value ) {
-    searchString = value
-    updateView()
-}
+// var onUsersListFilterChange = function ( e, value ) {
+//     searchString = value
+//     updateView()
+// }
 
 var onSelectUser = function ( e, user ) {
     Model.setSelectedUser( user )
@@ -90,13 +81,17 @@ var onShowUsersSection = function ( e ) {
         case Events.SECTION.USERS.SHOW_DELETE_USER:
             View.showDeleteUserSection()
             break
+        
+        case Events.SECTION.USERS.SHOW_SEND_INVITATION_USER:
+            View.showSendInvitationUserSection()
+            break
     }
     
 }
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 
-EventBus.addEventListener( Events.SECTION.USERS.LIST_FILTER_CHANGE, onUsersListFilterChange )
+EventBus.addEventListener( Events.SECTION.USERS.FILTER.CHANGED, updateView )
 EventBus.addEventListener( Events.SECTION.USERS.SELECT_USER, onSelectUser )
 
 
@@ -104,3 +99,4 @@ EventBus.addEventListener( Events.SECTION.USERS.SHOW_USERS_LIST, onShowUsersSect
 EventBus.addEventListener( Events.SECTION.USERS.SHOW_INVITE_USER, onShowUsersSection )
 EventBus.addEventListener( Events.SECTION.USERS.SHOW_EDIT_USER, onShowUsersSection )
 EventBus.addEventListener( Events.SECTION.USERS.SHOW_DELETE_USER, onShowUsersSection )
+EventBus.addEventListener( Events.SECTION.USERS.SHOW_SEND_INVITATION_USER, onShowUsersSection )

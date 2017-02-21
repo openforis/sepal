@@ -50,17 +50,8 @@ var updateUserBudget = function ( user ) {
         hourlyCost += session.instanceType.hourlyCost
     } )
     
-    var spending = user.sandboxReport.spending
-    
-    budget0 =
-        spending.monthlyInstanceBudget == 0 &&
-        spending.monthlyStorageBudget == 0 &&
-        spending.storageQuota == 0
-    
-    budgetExceeded =
-        spending.monthlyInstanceBudget <= spending.monthlyInstanceSpending ||
-        spending.monthlyStorageBudget <= spending.monthlyStorageSpending ||
-        spending.storageQuota <= spending.storageUsed
+    budget0        = user.hasBudget0()
+    budgetExceeded = user.hasBudgetExceeded()
     
     updateBudgetContainer()
 }

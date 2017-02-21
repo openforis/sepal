@@ -1,12 +1,12 @@
 /**
  * @author Mino Togna
  */
+var UserM       = require( '../user/user-m' )
+var UsersFilter = require( './users-filter' )
 
-var UserM = require( '../user/user-m' )
-
-var users        = null
-var userBudgets  = null
-var selectedUser = null
+var users         = null
+var userBudgets   = null
+var selectedUser  = null
 
 var setUsers = function ( usersDetails, budgets ) {
     users       = []
@@ -20,31 +20,13 @@ var setUsers = function ( usersDetails, budgets ) {
     } )
 }
 
-var filterUsers = function ( searchString ) {
-    if ( $.isEmptyString( searchString ) ) {
-        
-        return users
-        
-    } else {
-        
-        searchString = $.trim( searchString ).toLowerCase()
-        
-        var filterUser = function ( user ) {
-            var match = false
-            if (
-                $.containsString( user.name.toLowerCase(), searchString )
-                || $.containsString( user.username.toLowerCase(), searchString )
-                || $.containsString( user.organization.toLowerCase(), searchString )
-                // || $.containsString( user.status.toLowerCase(), searchString )
-            ) {
-                match = true
-            }
-            return match
-        }
-        
-        return users.filter( filterUser )
-        
-    }
+var getUsers = function () {
+    return users
+}
+
+var getFilteredUsers = function () {
+    var filteredUsers = UsersFilter.filterUsers( users )
+    return filteredUsers
 }
 
 var getSelectedUser = function () {
@@ -56,8 +38,9 @@ var setSelectedUser = function ( user ) {
 }
 
 module.exports = {
-    setUsers         : setUsers
-    , filterUsers    : filterUsers
-    , getSelectedUser: getSelectedUser
-    , setSelectedUser: setSelectedUser
+    setUsers          : setUsers
+    , getUsers        : getUsers
+    , getFilteredUsers: getFilteredUsers
+    , getSelectedUser : getSelectedUser
+    , setSelectedUser : setSelectedUser
 }

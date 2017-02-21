@@ -5,61 +5,110 @@ var EventBus = require( '../../event/event-bus' )
 var Events   = require( '../../event/events' )
 var UserMV   = require( '../../user/user-mv' )
 
-var Container              = null
-var SearchInput            = null
-var BtnInvite              = null
-var BtnRemove              = null
-var BtnEdit                = null
-var TotalUsersCounts       = null
-var TotalActiveUsersCounts = null
-var selectedUser           = null
+var container               = null
+// counts
+var totalUsersCounts        = null
+var totalActiveUsersCounts  = null
+//filters
+var searchInput             = null
+var btnFilterActive         = null
+var btnFilterPending        = null
+var btnFilterLocked         = null
+var btnFilterBudgetExceeded = null
+// user actions
+var btnInvite               = null
+var btnRemove               = null
+var btnEdit                 = null
+var btnSendInvitation       = null
+var selectedUser            = null
 
-var init = function ( container ) {
+var init = function ( Container ) {
     selectedUser = null
     
-    Container = container
+    container = $( Container )
     
-    SearchInput            = Container.find( 'input[name=search]' )
-    BtnInvite              = Container.find( '.btn-invite' )
-    BtnRemove              = Container.find( '.btn-remove' )
-    BtnEdit                = Container.find( '.btn-edit' )
-    TotalUsersCounts       = Container.find( '.total-users-counts' )
-    TotalActiveUsersCounts = Container.find( '.total-active-users-counts' )
+    // counts
+    totalUsersCounts       = container.find( '.total-users-counts' )
+    totalActiveUsersCounts = container.find( '.total-active-users-counts' )
     
-    SearchInput.keyup( function ( e ) {
-        e.preventDefault()
-        EventBus.dispatch( Events.SECTION.USERS.LIST_FILTER_CHANGE, null, SearchInput.val() )
-    } )
-    
-    BtnInvite.click( function ( e ) {
-        e.preventDefault()
-        EventBus.dispatch( Events.SECTION.USERS.SHOW_INVITE_USER )
-    } )
-    
-    BtnEdit.click( function ( e ) {
-        e.preventDefault()
-        EventBus.dispatch( Events.SECTION.USERS.SHOW_EDIT_USER )
-    } )
-    
-    BtnRemove.click( function ( e ) {
-        e.preventDefault()
-        EventBus.dispatch( Events.SECTION.USERS.SHOW_DELETE_USER )
-    } )
+    initFilters()
+    initUserActions()
     
     updateActionButtons()
 }
 
+var initFilters = function () {
+    // filters
+    searchInput             = container.find( 'input[name=search]' )
+    btnFilterActive         = container.find( '.btn-filter-active' )
+    btnFilterPending        = container.find( '.btn-filter-pending' )
+    btnFilterLocked         = container.find( '.btn-filter-locked' )
+    btnFilterBudgetExceeded = container.find( '.btn-filter-budget-exceeded' )
+    
+    // filters event handlers
+    searchInput.keyup( function ( e ) {
+        e.preventDefault()
+        EventBus.dispatch( Events.SECTION.USERS.FILTER.SEARCH_STRING_CHANGE, null, searchInput.val() )
+    } )
+    
+    var changeStatus = function ( btn, evt ) {
+        btn.toggleClass( 'active' )
+        EventBus.dispatch( evt, null, btn.hasClass( 'active' ) )
+    }
+    
+    btnFilterActive.click( function ( e ) {
+        changeStatus( btnFilterActive, Events.SECTION.USERS.FILTER.USERS_ACTIVE_CHANGE )
+    } )
+    btnFilterPending.click( function ( e ) {
+        changeStatus( btnFilterPending, Events.SECTION.USERS.FILTER.USERS_PENDING_CHANGE )
+    } )
+    btnFilterLocked.click( function ( e ) {
+        changeStatus( btnFilterLocked, Events.SECTION.USERS.FILTER.USERS_LOCKED_CHANGE )
+    } )
+    btnFilterBudgetExceeded.click( function ( e ) {
+        changeStatus( btnFilterBudgetExceeded, Events.SECTION.USERS.FILTER.USERS_BUDGET_EXCEEDED_CHANGE )
+    } )
+}
+
+var initUserActions = function () {
+    // btn user actions
+    btnInvite         = container.find( '.btn-invite' )
+    btnRemove         = container.find( '.btn-remove' )
+    btnEdit           = container.find( '.btn-edit' )
+    btnSendInvitation = container.find( '.btn-send-invitation' )
+    
+    // user action event handlers
+    btnInvite.click( function ( e ) {
+        e.preventDefault()
+        EventBus.dispatch( Events.SECTION.USERS.SHOW_INVITE_USER )
+    } )
+    btnEdit.click( function ( e ) {
+        e.preventDefault()
+        EventBus.dispatch( Events.SECTION.USERS.SHOW_EDIT_USER )
+    } )
+    btnRemove.click( function ( e ) {
+        e.preventDefault()
+        EventBus.dispatch( Events.SECTION.USERS.SHOW_DELETE_USER )
+    } )
+    btnSendInvitation.click( function ( e ) {
+        e.preventDefault()
+        EventBus.dispatch( Events.SECTION.USERS.SHOW_SEND_INVITATION_USER )
+    } )
+}
+
 var updateActionButtons = function () {
     if ( selectedUser ) {
-        BtnEdit.enable()
+        btnEdit.enable()
         if ( UserMV.getCurrentUser().id !== selectedUser.id ) {
-            BtnRemove.enable()
+            btnRemove.enable()
         } else {
-            BtnRemove.disable()
+            btnRemove.disable()
         }
+        selectedUser.isPending() ? btnSendInvitation.enable() : btnSendInvitation.disable()
     } else {
-        BtnEdit.disable()
-        BtnRemove.disable()
+        btnEdit.disable()
+        btnRemove.disable()
+        btnSendInvitation.disable()
     }
 }
 
@@ -75,8 +124,8 @@ var setAllUsers = function ( users ) {
             activeCount += 1
         }
     } )
-    TotalUsersCounts.html( users.length )
-    TotalActiveUsersCounts.html( activeCount )
+    totalUsersCounts.html( users.length )
+    totalActiveUsersCounts.html( activeCount )
 }
 
 module.exports = {

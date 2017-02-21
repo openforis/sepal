@@ -462,6 +462,14 @@ class MockServer extends AbstractMvcFilter {
                 authenticator.users.remove(username)
                 send toJson([status: 'success', message: 'User deleted'])
             }
+            post('/user/send-invitation') {
+                def username = params.required('username', String)
+                println "Sending intiation to user with username $username"
+
+                // TODO: Use username instead of ID
+                response.contentType = 'application/json'
+                send toJson([status: 'success', message: 'Invitation sent'])
+            }
 
             get('/api/data/google-maps-api-key') {
                 response.contentType = 'application/json'
