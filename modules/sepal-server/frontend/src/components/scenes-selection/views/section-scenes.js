@@ -4,10 +4,13 @@
 var numeral = require( 'numeral' )
 // var moment  = require( 'moment' )
 
-var Sensors = require( '../../sensors/sensors' )
-var EventBus  = require( '../../event/event-bus' )
-var Events    = require( '../../event/events' )
-var Animation = require( '../../animation/animation' )
+var SearchParams     = require( '../../search/search-params' )
+var LandsatSensors   = require( '../../sensors/landsat-sensors' )
+var Sentinel2Sensors = require( '../../sensors/sentinel2-sensors' )
+var Sensors          = null
+var EventBus         = require( '../../event/event-bus' )
+var Events           = require( '../../event/events' )
+var Animation        = require( '../../animation/animation' )
 
 var section              = null
 var sectionImages        = null
@@ -31,6 +34,14 @@ var reset = function ( sceneAreaId ) {
     }
     
     currentSceneAreaId = sceneAreaId
+}
+
+var setDataSet = function ( dataSet ) {
+    if ( dataSet == SearchParams.SENSORS.LANDSAT ) {
+        Sensors = LandsatSensors
+    } else if ( dataSet == SearchParams.SENSORS.SENTINEL2 ) {
+        Sensors = Sentinel2Sensors
+    }
 }
 
 var add = function ( sceneImage, filterHidden, selected ) {
@@ -149,6 +160,7 @@ EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.PREVIEW_SCENE, previe
 module.exports = {
     init                : init
     , reset             : reset
+    , setDataSet        : setDataSet
     , add               : add
     , hideScenesBySensor: hideScenesBySensor
     , showScenesBySensor: showScenesBySensor

@@ -3,13 +3,16 @@
  */
 require( './section-filter-scenes/scenes-selection-filter.scss' )
 
-var EventBus     = require( '../../event/event-bus' )
-var Events       = require( '../../event/events' )
-var Sensors      = require( '../../sensors/sensors' )
-var SearchParams = require( '../../search/search-params' )
+var EventBus         = require( '../../event/event-bus' )
+var Events           = require( '../../event/events' )
+var LandsatSensors   = require( '../../sensors/landsat-sensors' )
+var Sentinel2Sensors = require( '../../sensors/sentinel2-sensors' )
+var SearchParams     = require( '../../search/search-params' )
 
 var noUiSlider = require( 'nouislider' )
 require( '../../nouislider/nouislider.css' )
+
+var dataSet = null
 
 var html                    = null
 //ui elements
@@ -17,7 +20,8 @@ var container               = null
 var sectionBtns             = null
 var sectionAction           = null
 var sortSlider              = null
-var sectionSensors          = null
+var sectionLandsatSensors   = null
+var sectionSentinel2Sensors = null
 var offsetTargetDayBtnPlus  = null
 var offsetTargetDayBtnMinus = null
 
@@ -31,7 +35,8 @@ var init = function ( uiContainer ) {
     sectionBtns   = container.find( '.section-btn' )
     sectionAction = container.find( '.section-options' )
     
-    sectionSensors          = sectionAction.find( '.sensors' )
+    sectionLandsatSensors   = sectionAction.find( '.landsat-sensors' )
+    sectionSentinel2Sensors = sectionAction.find( '.sentinel2-sensors' )
     offsetTargetDayBtnPlus  = sectionAction.find( '.offset-target-day-btn-plus' )
     offsetTargetDayBtnMinus = sectionAction.find( '.offset-target-day-btn-minus' )
     
@@ -76,41 +81,59 @@ var init = function ( uiContainer ) {
     // target day
     offsetTargetDayBtnPlus.click( function ( e ) {
         // EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, 1 )
-        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, 'section-filter-scenes', 1  )
+        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, 'section-filter-scenes', 1 )
     } )
     offsetTargetDayBtnMinus.click( function ( e ) {
         // EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, -1 )
-        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, 'section-filter-scenes', -1  )
+        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, 'section-filter-scenes', -1 )
     } )
     
     // availableSensors
-    sectionSensors.empty()
-    $.each( Object.keys( Sensors ), function ( i, sensorId ) {
-        // console.log( sensorId )
-        
-        var sensor = Sensors[ sensorId ]
-        
-        var btn = $( '<button class="btn btn-base btn-sensor round">' + sensor.shortName + '</button>' )
-        btn.addClass( sensorId )
-        
-        btn.click( function ( e ) {
-            e.preventDefault()
-            var evt = null
-            if ( btn.hasClass( 'active' ) ) {
-                // evt = Events.SECTION.SCENES_SELECTION.FILTER_HIDE_SENSOR
-                evt = Events.SECTION.SEARCH.SEARCH_PARAMS.DESELECT_SENSOR
-                // btn.removeClass( 'active' )
-            } else {
-                // evt = Events.SECTION.SCENES_SELECTION.FILTER_SHOW_SENSOR
-                evt = evt = Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_SENSOR
-                // btn.addClass( 'active' )
-            }
-            EventBus.dispatch( evt, null, sensorId )
-        } )
-        
-        sectionSensors.append( btn )
-    } )
+    // sectionLandsatSensors.empty()
+    // sectionSentinel2Sensors.empty()
     
+    var addSensors = function ( sensors, section, selectEvt, deselectEvt ) {
+        section.empty()
+        $.each( Object.keys( sensors ), function ( i, sensorId ) {
+            var sensor = sensors[ sensorId ]
+            
+            var btn = $( '<button class="btn btn-base btn-sensor round">' + sensor.shortName + '</button>' )
+            btn.addClass( sensorId )
+            
+            btn.click( function ( e ) {
+                e.preventDefault()
+                var evt = null
+                if ( btn.hasClass( 'active' ) ) {
+                    evt = Events.SECTION.SEARCH.SEARCH_PARAMS[ deselectEvt ]
+                } else {
+                    evt = evt = Events.SECTION.SEARCH.SEARCH_PARAMS[ selectEvt ]
+                }
+                EventBus.dispatch( evt, null, sensorId )
+            } )
+            
+            section.append( btn )
+        } )
+    }
+    addSensors( LandsatSensors, sectionLandsatSensors, 'SELECT_LANDSAT_SENSOR', 'DESELECT_LANDSAT_SENSOR' )
+    addSensors( Sentinel2Sensors, sectionSentinel2Sensors, 'SELECT_SENTINEL2_SENSOR', 'DESELECT_SENTINEL2_SENSOR' )
+    toggleSensors()
+}
+
+var toggleSensors = function () {
+    if ( sectionLandsatSensors && sectionLandsatSensors ) {
+        sectionLandsatSensors.hide()
+        sectionSentinel2Sensors.hide()
+        
+        if ( dataSet == SearchParams.SENSORS.LANDSAT )
+            sectionLandsatSensors.show()
+        else if ( dataSet == SearchParams.SENSORS.SENTINEL2 )
+            sectionSentinel2Sensors.show()
+    }
+}
+
+var setDataSet = function ( value ) {
+    dataSet = value
+    toggleSensors()
 }
 
 var showButtons = function () {
@@ -121,19 +144,31 @@ var showButtons = function () {
 }
 
 var setSensors = function ( availableSensors, selectedSensors ) {
-    $.each( Object.keys( Sensors ), function ( i, sensorId ) {
-        var btn = sectionSensors.find( '.' + sensorId )
+    
+    var section = null
+    var sensors = null
+    if ( dataSet == SearchParams.SENSORS.LANDSAT ) {
+        section = sectionLandsatSensors
+        sensors = LandsatSensors
+    } else if ( dataSet == SearchParams.SENSORS.SENTINEL2 ) {
+        section = sectionSentinel2Sensors
+        sensors = Sentinel2Sensors
+    }
+    
+    $.each( Object.keys( sensors ), function ( i, sensorId ) {
+        var btn      = section.find( '.' + sensorId )
         var disabled = availableSensors.indexOf( sensorId ) < 0
         btn.prop( 'disabled', disabled )
     } )
-    setSelectedSensors( availableSensors, selectedSensors )
+    
+    setSelectedSensors( availableSensors, selectedSensors, sensors, section )
 }
 
-var setSelectedSensors = function ( availableSensors, selectedSensors ) {
+var setSelectedSensors = function ( availableSensors, selectedSensors, sensors, section ) {
     //update button status
     var selectedCnt = 0
-    $.each( Object.keys( Sensors ), function ( i, sensorId ) {
-        var btn = sectionSensors.find( '.' + sensorId )
+    $.each( Object.keys( sensors ), function ( i, sensorId ) {
+        var btn = section.find( '.' + sensorId )
         
         if ( selectedSensors.indexOf( sensorId ) >= 0 && availableSensors.indexOf( sensorId ) >= 0 ) {
             btn.addClass( 'active' )
@@ -153,7 +188,7 @@ var setSelectedSensors = function ( availableSensors, selectedSensors ) {
         var array = []
         $.each( selectedSensors, function ( i, sensor ) {
             if ( availableSensors.indexOf( sensor ) >= 0 ) {
-                array.push( Sensors[ sensor ].shortName )
+                array.push( sensors[ sensor ].shortName )
             }
         } )
         text = array.join( ', ' )
@@ -186,7 +221,8 @@ var setSortWeight = function ( sortWeight ) {
 module.exports = {
     init                  : init
     , setSensors          : setSensors
-    , setSelectedSensors  : setSelectedSensors
+    , setDataSet          : setDataSet
+    // , setSelectedSensors  : setSelectedSensors
     , setOffsetToTargetDay: setOffsetToTargetDay
     , showButtons         : showButtons
     , setSortWeight       : setSortWeight

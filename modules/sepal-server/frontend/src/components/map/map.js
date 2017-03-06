@@ -8,8 +8,6 @@ var Events    = require( '../event/events' )
 var MapLoader = require( '../map-loader/map-loader' )
 
 // additional map components
-require( './scene-areas-mv' )
-require( './ee-map-layer' )
 require( './polygon-draw' )
 
 // html template

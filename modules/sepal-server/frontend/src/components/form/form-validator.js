@@ -102,12 +102,12 @@ var resetFormErrors = function ( form, errorMessageContainer, slideOptions ) {
     }
 }
 
-var validateForm = function ( form ) {
+var validateForm = function ( form, fields ) {
     var errorContainer = form.find( '.form-notify' )
     
     resetFormErrors( form, errorContainer )
     
-    var inputs    = form.find( 'input[type=text], input[type=hidden], input[type=number], input[type=password], textarea' )
+    var inputs    = (fields) ? fields : form.find( 'input[type=text], input[type=hidden], input[type=number], input[type=password], textarea' )
     var validForm = true
     $.each( inputs, function () {
         var input    = $( this )

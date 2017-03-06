@@ -10,9 +10,10 @@ require( './search-params-mv' )
 var View         = require( './search-v' )
 var SearchParams = require( '../search/search-params' )
 
-require( './../scenes-selection/scenes-selection-mv' )
+require( '../scene-areas/scene-areas-mv' )
+require( '../scenes-selection/scenes-selection-mv' )
 require( '../search-retrieve/search-retrieve-mv' )
-// require( '../scenes-selection/views/scenes-selection-filter/scenes-selection-filter-mv' )
+require( '../scene-area-mosaics/scene-area-mosaics-mv' )
 
 var show = function ( e, type ) {
     if ( type == 'search' ) {
@@ -22,25 +23,48 @@ var show = function ( e, type ) {
 
 var requestSceneAreas = function () {
     
-    var data = {}
-    SearchParams.addAoiRequestParameter( data )
+    var landsatLoaded   = false
+    var sentinel2Loaded = false
     
-    var params = {
-        url         : '/api/data/sceneareas'
-        , type      : 'POST'
-        , data      : data
-        , beforeSend: function () {
-            Loader.show()
+    var landsatRequest = function ( params, data ) {
+        data.dataSet   = SearchParams.SENSORS.LANDSAT
+        params.data    = data
+        params.success = function ( response ) {
+            EventBus.dispatch( Events.SECTION.SEARCH.LANDSAT_SCENE_AREAS_LOADED, null, response )
+            landsatLoaded = true
+            checkResponses()
         }
-        , success   : function ( response ) {
-            EventBus.dispatch( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, null, response )
-            EventBus.dispatch( Events.SECTION.REDUCE, null )
-            // EventBus.dispatch( Events.MAP.LOAD_SCENE_AREAS, null, response )
+        EventBus.dispatch( Events.AJAX.POST, null, params )
+    }
+    
+    var sentinel2Request = function ( params, data ) {
+        data.dataSet   = SearchParams.SENSORS.SENTINEL2
+        params.data    = data
+        params.success = function ( response ) {
+            EventBus.dispatch( Events.SECTION.SEARCH.SENTINEL2_SCENE_AREAS_LOADED, null, response )
+            sentinel2Loaded = true
+            checkResponses()
+        }
+        EventBus.dispatch( Events.AJAX.POST, null, params )
+    }
+    
+    var checkResponses = function () {
+        if ( landsatLoaded && sentinel2Loaded ) {
+            EventBus.dispatch( Events.SECTION.SEARCH.SCENE_AREAS_LOADED )
+            EventBus.dispatch( Events.SECTION.REDUCE )
             Loader.hide( { delay: 300 } )
         }
     }
     
-    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+    var data = {}
+    SearchParams.addAoiRequestParameter( data )
+    
+    var params = { url: '/api/data/sceneareas' }
+    
+    Loader.show()
+    EventBus.dispatch( Events.SCENE_AREAS.INIT )
+    landsatRequest( params, data )
+    sentinel2Request( params, data )
 }
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )

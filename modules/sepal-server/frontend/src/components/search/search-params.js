@@ -7,7 +7,8 @@ this.polygon           = null
 this.targetDate        = null
 this.offsetToTargetDay = null
 this.sortWeight        = null
-this.sensors           = null
+this.landsatSensors    = null
+this.sentinel2Sensors  = null
 this.minScenes         = null
 this.maxScenes         = null
 
@@ -18,7 +19,8 @@ this.reset = function () {
     //
     this.offsetToTargetDay = 0
     this.sortWeight        = 0.5
-    this.sensors           = Object.keys( require( '../sensors/sensors' ) )
+    this.landsatSensors    = Object.keys( require( '../sensors/landsat-sensors' ) )
+    this.sentinel2Sensors  = []//Object.keys( require( '../sensors/sentinel2-sensors' ) )
     this.minScenes         = 1
 }
 
@@ -58,9 +60,19 @@ this.addTargetDayOfYearRequestParameter = function ( data ) {
     data.targetDayOfYear = date.format( "DDD" )
 }
 
-this.isSensorSelected = function ( sensor ) {
-    return this.sensors && this.sensors.indexOf( sensor ) < 0
+this.isSensorSelected = function ( dataSet , sensor ) {
+    var sensors = null
+    if( dataSet == this.SENSORS.LANDSAT )
+        sensors = this.landsatSensors
+    else if( dataSet == this.SENSORS.SENTINEL2 )
+        sensors = this.sentinel2Sensors
+    
+    return sensors && sensors.indexOf( sensor ) < 0
 }
 
+this.SENSORS = {
+    LANDSAT    : 'LANDSAT'
+    , SENTINEL2: 'SENTINEL2'
+}
 
 module.exports = this

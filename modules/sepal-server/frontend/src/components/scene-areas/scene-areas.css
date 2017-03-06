@@ -10,9 +10,15 @@
 
 .scene-areas-section circle {
     fill: #818181;
-    fill-opacity: .1;
+    /*fill-opacity: .1;*/
+    fill-opacity: 0;
     stroke: #818181;
     /*stroke: #EBEBCD;*/
     stroke-width: 2px;
-    stroke-opacity: .4;
+    /*stroke-opacity: .4;*/
+    stroke-opacity: 0;
+}
+.scene-areas-section text {
+    fill-opacity: 0;
+
 }

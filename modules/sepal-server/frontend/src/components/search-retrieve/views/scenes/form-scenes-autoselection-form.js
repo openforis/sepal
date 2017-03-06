@@ -6,9 +6,10 @@ require( './form-scenes-autoselection.scss' )
 var SearchParams = require( './../../../search/search-params' )
 // var Filter       = require( '../../../scenes-selection/views/scenes-selection-filter/scenes-selection-filter-m' )
 
-var EventBus = require( '../../../event/event-bus' )
-var Events   = require( '../../../event/events' )
-var Sensors  = require( '../../../sensors/sensors' )
+var EventBus         = require( '../../../event/event-bus' )
+var Events           = require( '../../../event/events' )
+var LandsatSensors   = require( '../../../sensors/landsat-sensors' )
+var Sentinel2Sensors = require( '../../../sensors/sentinel2-sensors' )
 
 var noUiSlider = require( 'nouislider' )
 require( '../../../nouislider/nouislider.css' )
@@ -19,7 +20,8 @@ var html            = $( template( {} ) )
 
 //UI elements
 var sortSlider              = null
-var sectionSensors          = null
+var sectionLandsatSensors   = null
+var sectionSentinel2Sensors = null
 var offsetTargetDayBtnPlus  = null
 var offsetTargetDayBtnMinus = null
 var minScenesInput          = null
@@ -34,7 +36,8 @@ var init = function ( parent ) {
     var container   = parentContainer.find( '.scenes-selection-filter' )
     container.append( html )
     
-    sectionSensors          = html.find( '.sensors' )
+    sectionLandsatSensors   = html.find( '.landsat-sensors' )
+    sectionSentinel2Sensors = html.find( '.sentinel2-sensors' )
     offsetTargetDayBtnPlus  = html.find( '.offset-target-day-btn-plus' )
     offsetTargetDayBtnMinus = html.find( '.offset-target-day-btn-minus' )
     
@@ -76,10 +79,10 @@ var init = function ( parent ) {
         EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, null, -1 )
     } )
     
-    // availableSensors
-    sectionSensors.empty()
-    $.each( Object.keys( Sensors ), function ( i, sensorId ) {
-        var sensor = Sensors[ sensorId ]
+    // Landsat Sensors
+    sectionLandsatSensors.empty()
+    $.each( Object.keys( LandsatSensors ), function ( i, sensorId ) {
+        var sensor = LandsatSensors[ sensorId ]
         
         var btn = $( '<button class="btn btn-base btn-sensor round">' + sensor.shortName + '</button>' )
         btn.addClass( sensorId )
@@ -88,19 +91,37 @@ var init = function ( parent ) {
             e.preventDefault()
             var evt = null
             if ( btn.hasClass( 'active' ) ) {
-                // evt = Events.SECTION.SCENES_SELECTION.FILTER_HIDE_SENSOR
-                evt = Events.SECTION.SEARCH.SEARCH_PARAMS.DESELECT_SENSOR
-                // btn.removeClass( 'active' )
+                evt = Events.SECTION.SEARCH.SEARCH_PARAMS.DESELECT_LANDSAT_SENSOR
             } else {
-                // evt = Events.SECTION.SCENES_SELECTION.FILTER_SHOW_SENSOR
-                evt = evt = Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_SENSOR
-                // btn.addClass( 'active' )
+                evt = evt = Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_LANDSAT_SENSOR
             }
             EventBus.dispatch( evt, null, sensorId )
         } )
         
-        sectionSensors.append( btn )
+        sectionLandsatSensors.append( btn )
     } )
+    //sentinel2 sensors
+    sectionSentinel2Sensors.empty()
+    $.each( Object.keys( Sentinel2Sensors ), function ( i, sensorId ) {
+        var sensor = Sentinel2Sensors[ sensorId ]
+        
+        var btn = $( '<button class="btn btn-base btn-sensor round">' + sensor.shortName + '</button>' )
+        btn.addClass( sensorId )
+        
+        btn.click( function ( e ) {
+            e.preventDefault()
+            var evt = null
+            if ( btn.hasClass( 'active' ) ) {
+                evt = Events.SECTION.SEARCH.SEARCH_PARAMS.DESELECT_SENTINEL2_SENSOR
+            } else {
+                evt = evt = Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_SENTINEL2_SENSOR
+            }
+            EventBus.dispatch( evt, null, sensorId )
+        } )
+        
+        sectionSentinel2Sensors.append( btn )
+    } )
+    
     
     // number of scenes
     minScenesInput.change( function ( e ) {
@@ -116,9 +137,9 @@ var init = function ( parent ) {
         e.preventDefault()
         formNotify.empty().velocitySlideUp( { delay: 0, duration: 100 } )
         
-        if ( SearchParams.sensors.length <= 0) {
+        if ( SearchParams.landsatSensors.length <= 0 && SearchParams.sentinel2Sensors.length <= 0 ) {
             formNotify.html( 'At least one sensor must be selected' ).velocitySlideDown( { delay: 20, duration: 400 } )
-        } else if( SearchParams.maxScenes && SearchParams.minScenes > SearchParams.maxScenes){
+        } else if ( SearchParams.maxScenes && SearchParams.minScenes > SearchParams.maxScenes ) {
             formNotify.html( 'Min number of scenes cannot be greater than Max number of scenes' ).velocitySlideDown( { delay: 20, duration: 400 } )
         } else {
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES )
@@ -133,16 +154,21 @@ var reset = function () {
     formNotify.velocitySlideUp( { delay: 0, duration: 0 } )
 }
 
-var setSelectedSensors = function ( selectedSensors ) {
-    $.each( Object.keys( Sensors ), function ( i, sensorId ) {
-        var btn = sectionSensors.find( '.' + sensorId )
-        
-        if ( selectedSensors.indexOf( sensorId ) >= 0 ) {
+var setSelectedSensors = function ( selectedLandsatSensors, selectedSentinel2Sensors ) {
+    $.each( Object.keys( LandsatSensors ), function ( i, sensorId ) {
+        var btn = sectionLandsatSensors.find( '.' + sensorId )
+        if ( selectedLandsatSensors.indexOf( sensorId ) >= 0 )
             btn.addClass( 'active' )
-        } else {
+        else
             btn.removeClass( 'active' )
-        }
-        
+    } )
+    
+    $.each( Object.keys( Sentinel2Sensors ), function ( i, sensorId ) {
+        var btn = sectionSentinel2Sensors.find( '.' + sensorId )
+        if ( selectedSentinel2Sensors.indexOf( sensorId ) >= 0 )
+            btn.addClass( 'active' )
+        else
+            btn.removeClass( 'active' )
     } )
     
 }
@@ -178,7 +204,7 @@ var toggleVisibility = function ( options ) {
     parentContainer.velocitySlideToggle( options )
     
     if ( !firstShow ) {
-        setSelectedSensors( SearchParams.sensors )
+        setSelectedSensors( SearchParams.landsatSensors, SearchParams.sentinel2Sensors )
         setSortWeight( SearchParams.sortWeight )
         setOffsetToTargetDay( SearchParams.offsetToTargetDay )
         

@@ -1,23 +1,14 @@
 <div id="search-retrieve">
-<!--<div id="search-retrieve" class="app-mode" data-app-mode="map-analysis">-->
 
-    <!--<div class="row row-sensor-families">-->
-        <!--<div class="col-sm-12 p-b-0-5 text-align-center">-->
-            <!--<button class="btn btn-base btn-sensor-family round icon p-y-0-5 active">-->
-                <!--<i class="fa fa-rocket label-sensor-family" aria-hidden="true"></i> Landsat-->
-            <!--</button>-->
-            <!--<button class="btn btn-base btn-sensor-family round icon p-y-0-5">-->
-                <!--<i class="fa fa-rocket label-sensor-family" aria-hidden="true"></i> Sentinel-->
-            <!--</button>-->
-        <!--</div>-->
-    <!--</div>-->
-
+    <!--Buttons row-->
     <div class="row">
         <!--Scenes section-->
         <div class="col-sm-6 scenes">
             <div class="row row-header">
                 <div class="col-sm-12 text-align-center">
-                    <h4>Scenes</h4> <button class="btn btn-base circle btn-hide-scene-areas btn-toggle-layer-visibility"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>
+                    <h4>Scenes</h4>
+                    <button class="btn btn-base round btn-hide-scene-areas btn-toggle-landsat-visibility">L  <i class="fa fa-eye" aria-hidden="true"></i></button>
+                    <button class="btn btn-base round btn-hide-scene-areas btn-toggle-sentinel2-visibility">S2 <i class="fa fa-eye" aria-hidden="true"></i></button>
                 </div>
             </div>
 
@@ -39,7 +30,9 @@
         <div class="col-sm-6 mosaic">
             <div class="row row-header">
                 <div class="col-sm-12 text-align-center">
-                    <h4>Mosaic</h4> <button class="btn btn-base circle btn-hide-mosaic btn-toggle-layer-visibility"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>
+                    <h4>Mosaic</h4>
+                    <button class="btn btn-base round btn-toggle-landsat-mosaic btn-toggle-layer-visibility">L <i class="fa fa-eye" aria-hidden="true"></i></button>
+                    <button class="btn btn-base round btn-toggle-sentinel2-mosaic btn-toggle-layer-visibility">S2 <i class="fa fa-eye" aria-hidden="true"></i></button>
                 </div>
             </div>
 
@@ -59,6 +52,7 @@
 
     </div>
 
+    <!--Collapsable sections-->
     <div class="row collapsable row-best-scenes-form">
         <div class="col-sm-12 text-align-center scenes-selection-filter">
         </div>

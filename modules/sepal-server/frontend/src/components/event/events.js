@@ -37,16 +37,20 @@ var Events = {
         
         , SEARCH: {
             // SHOW_SCENE_AREA: 'section.search.show_scene_area'
-            FORM_SUBMIT         : 'section.search.form_submit'
-            , SCENE_AREAS_LOADED: 'section.search.scene_areas_loaded'
+            FORM_SUBMIT                   : 'section.search.form_submit'
+            , SCENE_AREAS_LOADED          : 'section.search.scene_areas_loaded'
+            , LANDSAT_SCENE_AREAS_LOADED  : 'section.search.landsat_scene_areas_loaded'
+            , SENTINEL2_SCENE_AREAS_LOADED: 'section.search.sentinel2_scene_areas_loaded'
             
             , SEARCH_PARAMS: {
                 WEIGHT_CHANGE              : 'section.search.search_params.weight_change'
                 , WEIGHT_CHANGED           : 'section.search.search_params.weight_changed'
                 , OFFSET_TARGET_DAY_CHANGE : 'section.search.search_params.offset_target_day_change'
                 , OFFSET_TARGET_DAY_CHANGED: 'section.search.search_params.offset_target_day_changed'
-                , SELECT_SENSOR            : 'section.search.search_params.select_sensor'
-                , DESELECT_SENSOR          : 'section.search.search_params.deselect_sensor'
+                , SELECT_LANDSAT_SENSOR    : 'section.search.search_params.select_landsat_sensor'
+                , DESELECT_LANDSAT_SENSOR  : 'section.search.search_params.deselect_landsat_sensor'
+                , SELECT_SENTINEL2_SENSOR  : 'section.search.search_params.select_sentinel2_sensor'
+                , DESELECT_SENTINEL2_SENSOR: 'section.search.search_params.deselect_sentinel2_sensor'
                 , SENSORS_CHANGED          : 'section.search.search_params.sensors_changed'
                 , MIN_SCENES_CHANGE        : 'section.search.search_params.min_scenes_change'
                 , MIN_SCENES_CHANGED       : 'section.search.search_params.min_scenes_changed'
@@ -57,11 +61,20 @@ var Events = {
         }
         
         , SEARCH_RETRIEVE: {
-            BEST_SCENES      : 'section.search_retrieve.best_scenes'
-            , RETRIEVE_SCENES: 'section.search_retrieve.retrieve_scenes'
-            , PREVIEW_MOSAIC : 'section.search_retrieve.preview_mosaic'
-            , RETRIEVE_MOSAIC: 'section.search_retrieve.retrieve_mosaic'
-            , COLLAPSE_VIEW  : 'section.search_retrieve.collapse_view'
+            BEST_SCENES                : 'section.search_retrieve.best_scenes'
+            , RETRIEVE_LANDSAT_SCENES  : 'section.search_retrieve.retrieve_landsat_scenes'
+            , RETRIEVE_SENTINEL2_SCENES: 'section.search_retrieve.retrieve_sentinel2_scenes'
+            , PREVIEW_LANDSAT_MOSAIC   : 'section.search_retrieve.preview_landsat_mosaic'
+            , PREVIEW_SENTINEL2_MOSAIC : 'section.search_retrieve.preview_sentinel2_mosaic'
+            , RETRIEVE_LANDSAT_MOSAIC  : 'section.search_retrieve.retrieve_landsat_mosaic'
+            , RETRIEVE_SENTINEL2_MOSAIC: 'section.search_retrieve.retrieve_sentinel2_mosaic'
+            , ADD_LANDSAT_MOSAIC       : 'section.search_retrieve.add_landsat_mosaic'
+            , ADD_SENTINEL2_MOSAIC     : 'section.search_retrieve.add_sentinel2_mosaic'
+            , COLLAPSE_VIEW            : 'section.search_retrieve.collapse_view'
+            , SHOW_LANDSAT_AREA        : 'section.search_retrieve.show_landsat_area'
+            , HIDE_LANDSAT_AREA        : 'section.search_retrieve.hide_landsat_area'
+            , SHOW_SENTINEL2_AREA      : 'section.search_retrieve.show_sentinel2_area'
+            , HIDE_SENTINEL2_AREA      : 'section.search_retrieve.hide_sentinel2_area'
         }
         
         , BROWSE: {
@@ -114,30 +127,40 @@ var Events = {
     }
     
     , MAP: {
-        ZOOM_TO                       : 'map.zoom_to'
-        , ZOOM_CHANGED                : 'map.zoom_changed'
+        ZOOM_TO                 : 'map.zoom_to'
+        , ZOOM_CHANGED          : 'map.zoom_changed'
         // , LOAD_SCENE_AREAS: 'map.load_scene_areas'
-        , SCENE_AREA_CLICK            : 'map.scene_area_click'
-        , ADD_LAYER                   : 'map.add_layer'
-        , REMOVE_AOI_LAYER            : 'map.remove_aoi_layer'
-        , ADD_EE_LAYER                : 'map.add_ee_layer'
-        , REMOVE_EE_LAYER             : 'map.remove_ee_layer'
-        , EE_LAYER_TOGGLE_VISIBILITY  : 'map.remove_ee_layer_toggle_visibility'
-        , ADD_DRAWN_AOI_LAYER         : 'map.add_drawn_aoi_layer'
-        , REMOVE_DRAWN_AOI_LAYER      : 'map.remove_drawn_aoi_layer'
-        , SCENE_AREA_RESET            : 'map.scene_area_reset'
-        , SCENE_AREA_TOGGLE_VISIBILITY: 'map.scene_area_toggle_visibility'
-        , ADD_EE_MOSAIC               : 'map.add_ee_mosaic'
-        , REMOVE_EE_MOSAIC            : 'map.remove_ee_mosaic'
-        , POLYGON_DRAW                : 'map.polygon_draw'
-        , POLYGON_DRAWN               : 'map.polygon_drawn'
-        , POLYGON_CLEAR               : 'map.polygon_clear'
+        , SCENE_AREA_CLICK      : 'map.scene_area_click'
+        , ADD_LAYER             : 'map.add_layer'
+        , REMOVE_AOI_LAYER      : 'map.remove_aoi_layer'
+        // , ADD_EE_LAYER                        : 'map.add_ee_layer'
+        // , REMOVE_EE_LAYER                     : 'map.remove_ee_layer'
+        // , EE_LAYER_TOGGLE_VISIBILITY          : 'map.ee_layer_toggle_visibility'
+        // , EE_LANDSAT_LAYER_TOGGLE_VISIBILITY  : 'map.ee_landsat_layer_toggle_visibility'
+        // , EE_SENTINEL2_LAYER_TOGGLE_VISIBILITY: 'map.ee_sentinel2_layer_toggle_visibility'
+        , ADD_DRAWN_AOI_LAYER   : 'map.add_drawn_aoi_layer'
+        , REMOVE_DRAWN_AOI_LAYER: 'map.remove_drawn_aoi_layer'
+        , ADD_EE_MOSAIC         : 'map.add_ee_mosaic'
+        , REMOVE_EE_MOSAIC      : 'map.remove_ee_mosaic'
+        , POLYGON_DRAW          : 'map.polygon_draw'
+        , POLYGON_DRAWN         : 'map.polygon_drawn'
+        , POLYGON_CLEAR         : 'map.polygon_clear'
     }
     
-    // events that occur when a model changes
-    , MODEL: {
-        SCENE_AREA: {
-            CHANGE: 'model.scene_area_change'
+    , SCENE_AREAS: {
+        INIT           : "scene_areas.init"
+        , RESET        : "scene_areas.reset"
+        , SCENES_UPDATE: "scene_areas.scenes_update"
+    }
+    
+    , SCENE_AREA_MOSAICS: {
+        LANDSAT    : {
+            ADD                : "scene_area_mosaics.landsat.add"
+            , TOGGLE_VISIBILITY: "scene_area_mosaics.landsat.toggle_visibility"
+        }
+        , SENTINEL2: {
+            ADD                : "scene_area_mosaics.sentinel2.add"
+            , TOGGLE_VISIBILITY: "scene_area_mosaics.sentinel2.toggle_visibility"
         }
     }
     

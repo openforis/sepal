@@ -11,6 +11,9 @@ var SectionFilterScenes   = require( './views/section-filter-scenes-v' )
 var html               = null
 var section            = null
 var currentSceneAreaId = null
+var dataSet            = null
+var selectedSensors    = null
+var availableSensors   = null
 
 var init = function () {
     
@@ -31,8 +34,21 @@ var init = function () {
     
 }
 
-var reset = function ( sceneAreaId, availableSensors ) {
-    availableSensors = availableSensors ? availableSensors : []
+var setDataSet = function ( value ) {
+    dataSet = value
+    if ( dataSet == SearchParams.SENSORS.LANDSAT ) {
+        selectedSensors = SearchParams.landsatSensors
+    } else if ( dataSet == SearchParams.SENSORS.SENTINEL2 ) {
+        selectedSensors = SearchParams.sentinel2Sensors
+    }
+    
+    SectionScenes.setDataSet( dataSet )
+    SectionFilterScenes.setDataSet( dataSet )
+    SectionSelectedScenes.setDataSet( dataSet )
+}
+
+var reset = function ( sceneAreaId, avSensors ) {
+    availableSensors = avSensors ? avSensors : []
     
     SectionScenes.reset( sceneAreaId )
     
@@ -42,7 +58,7 @@ var reset = function ( sceneAreaId, availableSensors ) {
         
         SectionFilterScenes.setSortWeight( SearchParams.sortWeight )
         SectionFilterScenes.setOffsetToTargetDay( SearchParams.offsetToTargetDay )
-        SectionFilterScenes.setSensors( availableSensors, SearchParams.sensors )
+        updateSensors()
         SectionFilterScenes.showButtons()
         
     }
@@ -50,8 +66,11 @@ var reset = function ( sceneAreaId, availableSensors ) {
     currentSceneAreaId = sceneAreaId
 }
 
+var updateSensors = function () {
+    SectionFilterScenes.setSensors( availableSensors, selectedSensors )
+}
 // Functions for selection section
-var add = function ( sceneImage, filterHidden, selected ) {
+var add           = function ( sceneImage, filterHidden, selected ) {
     
     SectionScenes.add( sceneImage, filterHidden, selected )
     if ( selected ) {
@@ -75,6 +94,7 @@ var deselect = function ( sceneAreaId, sceneImage ) {
 
 module.exports = {
     init                  : init
+    , setDataSet          : setDataSet
     , reset               : reset
     , add                 : add
     , select              : select
@@ -83,5 +103,6 @@ module.exports = {
     , showScenesBySensor  : SectionScenes.showScenesBySensor
     , setSortWeight       : SectionFilterScenes.setSortWeight
     , setOffsetToTargetDay: SectionFilterScenes.setOffsetToTargetDay
-    , setSensors          : SectionFilterScenes.setSensors
+    // , setSensors          : SectionFilterScenes.setSensors
+    , updateSensors       : updateSensors
 }

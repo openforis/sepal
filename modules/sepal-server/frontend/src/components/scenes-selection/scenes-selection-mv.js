@@ -10,17 +10,24 @@ var Model        = require( './scenes-selection-m' )
 var View         = require( './scenes-selection-v' )
 var SearchParams = require( './../search/search-params' )
 
+var currentDataSet  = null
 var viewInitialized = false
-var show = function ( e, type ) {
+var show            = function ( e, type ) {
     if ( type == 'scene-images-selection' ) {
         View.init()
         viewInitialized = true
     }
 }
 
-var loadSceneImages = function ( e, sceneAreaId, showAppSection ) {
+var sceneAreaClick = function ( e, sceneAreaId, dataSet ) {
+    currentDataSet = dataSet
+    View.setDataSet( currentDataSet )
+    loadSceneImages( sceneAreaId )
+}
+
+var loadSceneImages = function ( sceneAreaId, showAppSection ) {
     
-    var data = {}
+    var data = { dataSet: currentDataSet }
     SearchParams.addDatesRequestParameters( data )
     
     var params = {
@@ -50,7 +57,7 @@ var loadSceneImages = function ( e, sceneAreaId, showAppSection ) {
 
 var reset = function ( e ) {
     Model.reset()
-    if( viewInitialized )
+    if ( viewInitialized )
         View.reset()
 }
 
@@ -71,7 +78,7 @@ var updateView     = function () {
             
             var addScene = function () {
                 var sceneImage   = sceneAreaImages[ idx ]
-                var filterHidden = SearchParams.isSensorSelected( sceneImage.sensor )
+                var filterHidden = SearchParams.isSensorSelected( currentDataSet, sceneImage.sensor )
                 var selected     = Model.isSceneSelected( sceneImage )
                 
                 View.add( sceneImage, filterHidden, selected )
@@ -95,16 +102,15 @@ var selectImage = function ( e, sceneAreaId, sceneImage ) {
     Model.select( sceneAreaId, sceneImage )
     View.select( sceneAreaId, sceneImage )
     
-    EventBus.dispatch( Events.MODEL.SCENE_AREA.CHANGE, null, sceneAreaId )
+    EventBus.dispatch( Events.SCENE_AREAS.SCENES_UPDATE, null, sceneAreaId )
 }
 
 var deselectImage = function ( e, sceneAreaId, sceneImage ) {
     Model.deselect( sceneAreaId, sceneImage )
     View.deselect( sceneAreaId, sceneImage )
     
-    EventBus.dispatch( Events.MODEL.SCENE_AREA.CHANGE, null, sceneAreaId )
+    EventBus.dispatch( Events.SCENE_AREAS.SCENES_UPDATE, null, sceneAreaId )
 }
-
 
 var onWeightChanged = function () {
     if ( viewInitialized ) {
@@ -113,17 +119,18 @@ var onWeightChanged = function () {
     }
 }
 
-var onOffsetTargetDayChanged = function (e) {
+var onOffsetTargetDayChanged = function ( e ) {
     if ( viewInitialized ) {
         View.setOffsetToTargetDay( SearchParams.offsetToTargetDay )
         var showLoader = e.target === 'section-filter-scenes'
-        loadSceneImages( null, Model.getSceneAreaId(), showLoader )
+        loadSceneImages( Model.getSceneAreaId(), showLoader )
     }
 }
 
 var onSensorsChanged = function ( e, action, sensorId ) {
     if ( viewInitialized ) {
-        View.setSensors( Model.getSceneAreaSensors().slice( 0 ), SearchParams.sensors )
+        // View.setSensors( Model.getSceneAreaSensors().slice( 0 ), SearchParams.landsatSensors )
+        View.updateSensors()
         if ( action === 'select' ) {
             View.showScenesBySensor( sensorId )
         } else if ( action === 'deselect' ) {
@@ -132,7 +139,7 @@ var onSensorsChanged = function ( e, action, sensorId ) {
     }
 }
 
-EventBus.addEventListener( Events.MAP.SCENE_AREA_CLICK, loadSceneImages )
+EventBus.addEventListener( Events.MAP.SCENE_AREA_CLICK, sceneAreaClick )
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 

@@ -1,13 +1,12 @@
 /**
  * @author Mino Togna
  */
+var SearchParams = require( './../search/search-params' )
 
 //scene area selection
 var sceneAreaId      = null
 var sceneAreaImages  = []
-// var sceneAreaImages  = {}
 var sceneAreaSensors = []
-// selection
 var selectedImages   = {}
 
 var key = function ( image ) {
@@ -58,15 +57,22 @@ var getSceneAreaSelectedImages = function ( sceneAreaId ) {
 }
 
 var getSelectedSceneIds = function () {
-    var selectedScenes = []
+    var selectedScenes                               = {}
+    selectedScenes[ SearchParams.SENSORS.LANDSAT ]   = []
+    selectedScenes[ SearchParams.SENSORS.SENTINEL2 ] = []
+    
     $.each( Object.keys( selectedImages ), function ( i, sceneAreaId ) {
         var selection = selectedImages[ sceneAreaId ]
-        // console.log( Object.keys( selection ) )
-        // selectedScenes.push( Object.keys( selection ) )
         $.each( Object.keys( selection ), function ( j, sceneImageId ) {
-            selectedScenes.push( sceneImageId )
+            var sceneImg = selection[ sceneImageId ]
+            if ( sceneImg.dataSet == SearchParams.SENSORS.LANDSAT ) {
+                selectedScenes[ SearchParams.SENSORS.LANDSAT ].push( sceneImageId )
+            } else if ( sceneImg.dataSet == SearchParams.SENSORS.SENTINEL2 ) {
+                selectedScenes[ SearchParams.SENSORS.SENTINEL2 ].push( sceneImageId )
+            }
         } )
     } )
+    
     return selectedScenes
 }
 

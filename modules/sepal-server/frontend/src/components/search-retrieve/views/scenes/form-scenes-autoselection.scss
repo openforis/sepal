@@ -9,7 +9,11 @@
     }
 
     .row-sensor {
-
+      font-size: .85rem;
+      font-weight: 400;
+      i {
+        font-size: 1rem;
+      }
       .btn-sensor {
         padding: .5rem .7rem;
         display: inline-block;
@@ -21,8 +25,8 @@
         border: 2px solid rgba(197, 179, 151, 0.5);
       }
       .btn-sensor.active:active,
-      //.btn-sensor.active:focus,
-      //.btn-sensor.activefocus,
+        //.btn-sensor.active:focus,
+        //.btn-sensor.activefocus,
       .btn-sensor.active:hover {
         background-color: rgba(197, 179, 151, 0.1);
       }
@@ -50,8 +54,8 @@
             top: -2px;
           }
           .btn:active,
-          //.btn:active:focus,
-          //.btn:focus,
+            //.btn:active:focus,
+            //.btn:focus,
           .btn:hover {
             background-color: rgba(255, 255, 255, .3);
           }
@@ -59,7 +63,7 @@
       }
     }
 
-    .row-no-scenes{
+    .row-no-scenes {
       input {
         padding-top: .3rem !important;
         padding-bottom: .3rem !important;;

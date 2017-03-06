@@ -4,7 +4,11 @@
 var moment  = require( 'moment' )
 var numeral = require( 'numeral' )
 
-var Sensors   = require( '../../sensors/sensors' )
+var SearchParams     = require( '../../search/search-params' )
+var LandsatSensors   = require( '../../sensors/landsat-sensors' )
+var Sentinel2Sensors = require( '../../sensors/sentinel2-sensors' )
+var Sensors          = null
+
 var EventBus  = require( '../../event/event-bus' )
 var Events    = require( '../../event/events' )
 var Animation = require( '../../animation/animation' )
@@ -35,6 +39,13 @@ var reset = function ( sceneAreaId ) {
     currentSceneAreaId = sceneAreaId
 }
 
+var setDataSet = function ( dataSet ) {
+    if ( dataSet == SearchParams.SENSORS.LANDSAT ) {
+        Sensors = LandsatSensors
+    } else if ( dataSet == SearchParams.SENSORS.SENTINEL2 ) {
+        Sensors = Sentinel2Sensors
+    }
+}
 
 var add = function ( sceneImage ) {
     // if not already added
@@ -101,8 +112,9 @@ var remove = function ( sceneImage ) {
 }
 
 module.exports = {
-    init    : init
-    , reset : reset
-    , add   : add
-    , remove: remove
+    init        : init
+    , reset     : reset
+    , setDataSet: setDataSet
+    , add       : add
+    , remove    : remove
 }

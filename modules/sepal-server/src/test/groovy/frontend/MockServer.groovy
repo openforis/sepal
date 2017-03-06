@@ -1,9 +1,17 @@
 package frontend
 
+import groovy.json.JsonSlurper
 import groovymvc.AbstractMvcFilter
 import groovymvc.Controller
+import groovymvc.Params
 import groovymvc.ParamsException
 import groovymvc.util.Decode
+import org.openforis.sepal.component.datasearch.DataSet
+import org.openforis.sepal.component.datasearch.adapter.HttpGoogleEarthEngineGateway
+import org.openforis.sepal.component.datasearch.api.Aoi
+import org.openforis.sepal.component.datasearch.api.FusionTableShape
+import org.openforis.sepal.component.datasearch.api.Polygon
+import org.openforis.sepal.component.datasearch.api.PreselectedScenesMapQuery
 import org.openforis.sepal.endpoint.ResourceServer
 
 import javax.servlet.ServletContext
@@ -12,6 +20,8 @@ import static groovy.json.JsonOutput.toJson
 import static groovymvc.RequestContext.CURRENT_USER_SESSION_ATTRIBUTE
 
 class MockServer extends AbstractMvcFilter {
+    private static final FUSION_TABLE = '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F'
+    private static final KEY_COLUMN = 'ISO'
 
     Controller bootstrap(ServletContext servletContext) {
         def authenticator = new FakeAuthenticator()
@@ -130,6 +140,7 @@ class MockServer extends AbstractMvcFilter {
             post('/api/data/scenes/retrieve') {
 //  { countryIso:ITA, scenes:[ {sceneId: 'LC81900302015079LGN00', sensor: 'LANDSAT_8'}, ... ] }
 //                params.selection
+                def sceneIds = fromJson(params.required('sceneIds', String))
 
                 send toJson("[status:OK]")
             }
@@ -322,6 +333,30 @@ class MockServer extends AbstractMvcFilter {
 //                        [sceneId: 'LC81900302015127LGN00', sensor: 'LANDSAT_8', browseUrl: 'http://earthexplorer.usgs.gov/browse/landsat_8/2015/190/030/LC81900302015127LGN00.jpg', acquisitionDate: '2015-05-07', cloudCover: 2.78, sunAzimuth: 143.40108505, sunElevation: 59.2340895, daysFromTargetDay: 11],
 //                        [sceneId: 'LC81900302016050LGN00', sensor: 'LANDSAT_8', browseUrl: 'http://earthexplorer.usgs.gov/browse/landsat_8/2016/190/030/LC81900302016050LGN00.jpg', acquisitionDate: '2016-02-19', cloudCover: 2.98, sunAzimuth: 153.68447136, sunElevation: 31.61607965, daysFromTargetDay: 64]
 //                ])
+            }
+
+            post('/api/data/mosaic/preview'){
+                response.contentType = "application/json"
+                def dataSet = params['dataSet'] as DataSet ?: DataSet.LANDSAT
+                def sceneIds = params.required('sceneIds', String).split(',')*.trim()
+                def bands = params.required('bands', String).split(',')*.trim()
+                def targetDayOfYear = params.required('targetDayOfYear', int)
+                def targetDayOfYearWeight = params.required('targetDayOfYearWeight', double)
+
+                def geeGateway = new HttpGoogleEarthEngineGateway('http://localhost:5001')
+                def mapLayer = geeGateway.preview(new PreselectedScenesMapQuery(
+                        dataSet: dataSet,
+                        sceneIds: sceneIds,
+                        aoi: toAoi(params),
+                        targetDayOfYear: targetDayOfYear,
+                        targetDayOfYearWeight: targetDayOfYearWeight,
+                        bands: bands
+                ))
+
+                send(toJson(
+                        mapId: mapLayer.id,
+                        token: mapLayer.token
+                ))
             }
 
 //            User apis
@@ -577,6 +612,21 @@ class MockServer extends AbstractMvcFilter {
 
         }
         return controller
+    }
+
+    private fromJson(String json) {
+        new JsonSlurper().parseText(json)
+    }
+
+    private Aoi toAoi(Params params) {
+        def polygon = params.polygon as String
+        def aoi = polygon ?
+                new Polygon(new JsonSlurper().parseText(polygon) as List) :
+                new FusionTableShape(
+                        tableName: FUSION_TABLE,
+                        keyColumn: KEY_COLUMN,
+                        keyValue: params.required('countryIso', String))
+        return aoi
     }
 
     static void main(String[] args) {

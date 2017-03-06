@@ -1,4 +1,5 @@
 #search-retrieve {
+
   position: absolute;
   z-index: 3;
   background-color: rgba(28, 28, 28, 1);
@@ -24,8 +25,9 @@
       padding: .5rem !important;
       font-size: .9rem !important;
       margin-left: 1rem;
+      min-width: 3.5rem;
     }
-    .btn :disabled {
+    .btn.disabled, .btn:disabled {
       opacity: .3;
     }
   }

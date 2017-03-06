@@ -6,9 +6,8 @@ require( './search-retrieve.scss' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
-var SectionScenes  = require( './views/section-scenes' )
-var SectionMosaic  = require( './views/section-mosaic' )
-var SensorFamilies = require( './views/sensor-families/sensor-families-v' )
+var SectionScenes = require( './views/section-scenes' )
+var SectionMosaic = require( './views/section-mosaic' )
 
 var html = null
 
@@ -24,7 +23,6 @@ var init = function () {
         
         SectionScenes.init( html )
         SectionMosaic.init( html )
-        // SensorFamilies.init( html.find( '.row-sensor-families' ) )
         
         reset()
     }
@@ -43,8 +41,7 @@ var hide = function ( opts ) {
 }
 
 var reset = function () {
-    disableToggleLayerButtons()
-    disableScenesSelectionRequiredButtons()
+    disableScenesRequiredButtons()
     
     SectionScenes.reset()
     SectionMosaic.reset()
@@ -56,35 +53,32 @@ var collapse = function () {
     SectionMosaic.collapse( defaultSlideOpts )
 }
 
-var enableToggleLayerButtons = function () {
-    html.find( '.btn-toggle-layer-visibility' ).addClass( 'active' ).enable()
+var setSelectedScenesNumber = function ( landsatScenesNo, sentinelScenesNo ) {
+    if ( landsatScenesNo > 0 || sentinelScenesNo > 0 ) {
+        enableScenesRequiredButtons()
+    } else {
+        disableScenesRequiredButtons()
+    }
+    SectionScenes.setSelectedScenesNumber( landsatScenesNo, sentinelScenesNo )
+    SectionMosaic.setSelectedScenesNumber( landsatScenesNo, sentinelScenesNo )
 }
 
-var disableToggleLayerButtons = function () {
-    html.find( '.btn-toggle-layer-visibility' ).removeClass( 'active' ).disable()
-}
-
-var enableScenesSelectionRequiredButtons = function () {
+var enableScenesRequiredButtons = function () {
     html.find( '.btn-scenes-required' ).enable()
 }
 
-var disableScenesSelectionRequiredButtons = function () {
+var disableScenesRequiredButtons = function () {
     html.find( '.btn-scenes-required' ).disable()
 }
 
 module.exports = {
-    init                                   : init
-    , show                                 : show
-    , hide                                 : hide
-    , reset                                : reset
-    , collapse                             : collapse
-    , enableToggleLayerButtons             : enableToggleLayerButtons
-    , disableToggleLayerButtons            : disableToggleLayerButtons
-    , enableScenesSelectionRequiredButtons : enableScenesSelectionRequiredButtons
-    , disableScenesSelectionRequiredButtons: disableScenesSelectionRequiredButtons
-    
+    init                     : init
+    , show                   : show
+    , hide                   : hide
+    , reset                  : reset
+    , collapse               : collapse
+    , setSelectedScenesNumber: setSelectedScenesNumber
     , setSortWeight          : SectionScenes.setSortWeight
     , setOffsetToTargetDay   : SectionScenes.setOffsetToTargetDay
     , setSelectedSensors     : SectionScenes.setSelectedSensors
-    , setSelectedScenesNumber: SectionScenes.setSelectedScenesNumber
 }

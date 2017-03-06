@@ -3,87 +3,67 @@
  */
 require( './form-mosaic-retrieve.scss' )
 
-var EventBus       = require( '../../../event/event-bus' )
-var Events         = require( '../../../event/events' )
-var FormValidator  = require( '../../../form/form-validator' )
-var SearchParams   = require( '../../../search/search-params' )
-var SceneAreaModel = require( '../../../scenes-selection/scenes-selection-m' )
-var BudgetCheck    = require( '../../../budget-check/budget-check' )
-
+var EventBus      = require( '../../../event/event-bus' )
+var Events        = require( '../../../event/events' )
+var FormValidator = require( '../../../form/form-validator' )
+var BudgetCheck   = require( '../../../budget-check/budget-check' )
 
 var parentContainer = null
 var template        = require( './form-mosaic-retrieve.html' )
 var html            = $( template( {} ) )
 
-var form       = null
-var formNotify = null
+var rowLandsat   = null
+var rowSentinel2 = null
+var form         = null
+var formNotify   = null
 
 var init = function ( parent ) {
     parentContainer = parent
     var container   = parentContainer.find( '.mosaic-retrieve' )
     container.append( html )
     
-    form       = html.find( 'form' )
-    formNotify = html.find( '.form-notify' )
+    rowLandsat   = html.find( '.row-landsat' )
+    rowSentinel2 = html.find( '.row-sentinel2' )
+    form         = html.find( 'form' )
+    formNotify   = html.find( '.form-notify' )
     
     container.find( '.btn-band' ).click( function ( e ) {
         e.preventDefault()
         $( this ).toggleClass( 'active' )
     } )
     
-    form.submit( submit )
+    rowLandsat.find( '.btn-submit' ).click( function ( e ) {
+        e.preventDefault()
+        submit( rowLandsat, Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_LANDSAT_MOSAIC )
+    } )
+    
+    rowSentinel2.find( '.btn-submit' ).click( function ( e ) {
+        e.preventDefault()
+        submit( rowSentinel2, Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SENTINEL2_MOSAIC )
+    } )
 }
 
-var submit = function ( e ) {
-    e.preventDefault()
+var submit = function ( section, evt ) {
     FormValidator.resetFormErrors( form )
     
-    var valid = FormValidator.validateForm( form )
+    var valid = FormValidator.validateForm( form, section.find( '[name=name]' ) )
+    
     if ( valid ) {
+        var bands = getBands( section )
         
-        var bands = getBands()
         if ( bands.length <= 0 ) {
-            
             FormValidator.showError( formNotify, 'At least one band must be selected' )
-            
         } else {
-            
-            var data = {
-                bands                  : bands.join( ',' )
-                , name                 : form.find( 'input[name=name]' ).val()
-                , sceneIds             : SceneAreaModel.getSelectedSceneIds().join( ',' )
-                , targetDayOfYearWeight: 0.5
-            }
-            
-            SearchParams.addAoiRequestParameter( data )
-            SearchParams.addTargetDayOfYearRequestParameter( data )
-            
-            var params = {
-                url         : '/api/data/mosaic/retrieve'
-                , data      : data
-                , beforeSend: function () {
-                    
-                    setTimeout( function () {
-                        EventBus.dispatch( Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager' )
-                    }, 100 )
-                    
-                    EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW )
-                }
-                , success   : function ( e ) {
-                    
-                    EventBus.dispatch( Events.SECTION.TASK_MANAGER.CHECK_STATUS )
-                    
-                }
-            }
-            EventBus.dispatch( Events.AJAX.POST, null, params )
+            var name = section.find( 'input[name=name]' ).val()
+            EventBus.dispatch( evt, null, bands.join( ',' ), name )
         }
     }
     
 }
 
-var getBands = function () {
+var getBands = function ( section ) {
     var bands = []
-    form.find( '.btn-band.active' ).each( function () {
+    section.find( '.btn-band.active' ).each( function () {
         var value = $( this ).val()
         bands.push( value )
     } )
@@ -104,13 +84,28 @@ var toggleVisibility = function ( options ) {
 }
 
 var reset = function () {
+    FormValidator.resetFormErrors( form )
+    
     form.find( '.btn-band' ).removeClass( 'active' )
     form.find( 'input' ).val( '' )
 }
 
+var setSelectedScenesNumber = function ( landsatNoScenes, sentinel2NoScenes ) {
+    if ( landsatNoScenes > 0 )
+        rowLandsat.show()
+    else
+        rowLandsat.hide()
+    
+    if ( sentinel2NoScenes > 0 )
+        rowSentinel2.show()
+    else
+        rowSentinel2.hide()
+}
+
 module.exports = {
-    init              : init
-    , hide            : hide
-    , toggleVisibility: toggleVisibility
-    , reset           : reset
+    init                     : init
+    , hide                   : hide
+    , toggleVisibility       : toggleVisibility
+    , reset                  : reset
+    , setSelectedScenesNumber: setSelectedScenesNumber
 }
