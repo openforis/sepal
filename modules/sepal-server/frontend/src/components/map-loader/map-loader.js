@@ -9,14 +9,19 @@ var Events   = require( '../event/events' )
 var GoogleMapsLoader       = require( 'google-maps' )
 GoogleMapsLoader.LIBRARIES = [ 'drawing' ]
 
-var retrieveApiKey = function ( callback ) {
-    var params = {
-        url      : '/api/data/google-maps-api-key'
-        , success: function ( response ) {
-            callback( response.apiKey )
+var checkApiKey = function ( callback ) {
+    if ( GoogleMapsLoader.KEY ) {
+        callback()
+    } else {
+        var params = {
+            url      : '/api/data/google-maps-api-key'
+            , success: function ( response ) {
+                GoogleMapsLoader.KEY = response.apiKey
+                callback()
+            }
         }
+        EventBus.dispatch( Events.AJAX.REQUEST, null, params )
     }
-    EventBus.dispatch( Events.AJAX.REQUEST, null, params )
 }
 
 var load = function ( callback ) {
@@ -28,8 +33,7 @@ var load = function ( callback ) {
 }
 
 var loadMap = function ( domId, callback ) {
-    retrieveApiKey( function ( apiKey ) {
-        GoogleMapsLoader.KEY = apiKey
+    checkApiKey( function () {
         load( function ( google ) {
             var map = new google.maps.Map( document.getElementById( domId ), {
                 zoom             : 3,
@@ -50,14 +54,19 @@ var loadMap = function ( domId, callback ) {
             map.setOptions( { styles: mapStyle } )
             
             if ( callback ) {
-                callback( map , google )
+                callback( map, google )
             }
         } )
         
     } )
 }
 
+var getApiKey = function ( callback ) {
+    checkApiKey( callback( GoogleMapsLoader.KEY ) )
+}
+
 module.exports = {
-    loadMap: loadMap
-    , load : load
+    loadMap    : loadMap
+    , load     : load
+    , getApiKey: getApiKey
 }

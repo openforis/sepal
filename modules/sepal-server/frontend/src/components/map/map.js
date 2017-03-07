@@ -6,6 +6,7 @@ var d3 = require( 'd3' )
 var EventBus  = require( '../event/event-bus' )
 var Events    = require( '../event/events' )
 var MapLoader = require( '../map-loader/map-loader' )
+var SepalAois = require( '../sepal-aois/sepal-aois' )
 
 // additional map components
 require( './polygon-draw' )
@@ -15,8 +16,6 @@ var html       = null
 // instance variables
 var google     = null
 var map        = null
-//fusion table id
-var FT_TableID = "15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F"
 
 // AOI layers
 var aoiLayer          = null
@@ -39,42 +38,17 @@ var show = function () {
     } )
 }
 
-var zoomTo = function ( e, address ) {
+var zoomTo = function ( e, isoCode ) {
     if ( aoiLayer ) {
         aoiLayer.setMap( null )
     }
     
-    // MapLoader.load( function ( google ) {
-    
-    var geocoder = new google.maps.Geocoder()
-    geocoder.geocode( { 'address': address }, function ( results, status ) {
-        if ( status == google.maps.GeocoderStatus.OK ) {
-            map.panTo( results[ 0 ].geometry.location )
-            map.fitBounds( results[ 0 ].geometry.viewport )
-            
-            var FT_Options = {
-                suppressInfoWindows: true,
-                query              : {
-                    from  : FT_TableID,
-                    select: 'geometry',
-                    where : "'NAME_FAO' = '" + address + "';"
-                },
-                styles             : [ {
-                    polygonOptions: {
-                        fillColor    : "#FBFAF2",
-                        fillOpacity  : 0.07,
-                        strokeColor  : '#FBFAF2',
-                        strokeOpacity: 0.15,
-                        strokeWeight : 1
-                    }
-                } ]
-            }
-            
-            aoiLayer = new google.maps.FusionTablesLayer( FT_Options )
-            aoiLayer.setMap( map )
-        }
+    SepalAois.loadBounds( isoCode, function ( bounds ) {
+        map.fitBounds( bounds )
     } )
-    // } )
+    
+    aoiLayer = SepalAois.getFusionTableLayer( isoCode )
+    aoiLayer.setMap( map )
 }
 
 var addLayer = function ( e, layer ) {

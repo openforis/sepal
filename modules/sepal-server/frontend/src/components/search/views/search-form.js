@@ -7,6 +7,7 @@ var Events        = require( '../../event/events' )
 var SearchParams  = require( '../search-params' )
 var FormValidator = require( '../../form/form-validator' )
 var DatePicker    = require( '../../date-picker/date-picker' )
+var SepalAois     = require( '../../sepal-aois/sepal-aois' )
 var countries     = require( './../data/countries.js' )
 var moment        = require( 'moment' )
 
@@ -17,37 +18,36 @@ var form           = null
 var formNotify     = null
 //
 var fieldCountry   = null
-// var countryCode    = null
 var btnDrawPolygon = null
-// var polygonAoi     = null
 var targetDate     = null
 
 var init = function ( formSelector ) {
     SearchParams.reset()
     
-    // countryIso = null
     form       = $( formSelector )
     formNotify = form.find( '.form-notify' )
     
     fieldCountry = form.find( '#search-form-country' )
-    fieldCountry.sepalAutocomplete( {
-        lookup    : countries
-        , onChange: function ( selection ) {
-            if ( selection ) {
-                var cCode = selection.data
-                var cName = selection.value
-                
-                EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
-                EventBus.dispatch( Events.MAP.ZOOM_TO, null, cName )
-                
-                setCountryIso( cCode )
-    
-                FormValidator.resetFormErrors( form, formNotify )
-            } else {
-                EventBus.dispatch( Events.MAP.REMOVE_AOI_LAYER )
-                setCountryIso( null )
+    SepalAois.loadAoiList( function ( aois ) {
+        fieldCountry.sepalAutocomplete( {
+            lookup    : aois
+            , onChange: function ( selection ) {
+                if ( selection ) {
+                    var cCode = selection.data
+                    var cName = selection.value
+                    
+                    EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
+                    EventBus.dispatch( Events.MAP.ZOOM_TO, null, cCode )
+                    
+                    setCountryIso( cCode )
+                    
+                    FormValidator.resetFormErrors( form, formNotify )
+                } else {
+                    EventBus.dispatch( Events.MAP.REMOVE_AOI_LAYER )
+                    setCountryIso( null )
+                }
             }
-        }
+        } )
     } )
     
     btnDrawPolygon = form.find( '.btn-draw-polygon' )

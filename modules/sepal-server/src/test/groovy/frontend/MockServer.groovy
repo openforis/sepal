@@ -510,7 +510,7 @@ class MockServer extends AbstractMvcFilter {
 
             get('/api/data/google-maps-api-key') {
                 response.contentType = 'application/json'
-                send toJson(apiKey: '')
+                send toJson(apiKey: 'AIzaSyAIi2lE7w25HZOrJkWT-qHH01W-ywyrC0U')
             }
 
             post('/budget') {
