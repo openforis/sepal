@@ -4,8 +4,8 @@ import groovy.json.JsonSlurper
 import groovymvc.Controller
 import org.openforis.sepal.command.Command
 import org.openforis.sepal.component.Component
+import org.openforis.sepal.component.datasearch.api.AoiPolygon
 import org.openforis.sepal.component.datasearch.api.FusionTableShape
-import org.openforis.sepal.component.datasearch.api.Polygon
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.command.*
 import org.openforis.sepal.component.task.query.UserTasks
@@ -51,11 +51,13 @@ class TaskEndpoint {
 
             post('/data/scenes/retrieve') {
                 response.contentType = "application/json"
-                def sceneMap = fromJson(params.required('scenes', String)) as List<Map>
-                def scenes = sceneMap.collect { it.sceneId }
+                def sceneIds = fromJson(params.required('sceneIds', String)) as List<String>
                 submit(new SubmitTask(
                         operation: 'landsat-scene-download',
-                        params: [sceneIds: scenes],
+                        params: [
+                                dataSet : params.required('dataSet'),
+                                sceneIds: sceneIds
+                        ],
                         username: currentUser.username
                 ))
                 send toJson([status: 'OK'])
@@ -70,7 +72,7 @@ class TaskEndpoint {
                                 image: [
                                         type                 : 'manual',
                                         aoi                  : ((params.polygon as String) ?
-                                                new Polygon(
+                                                new AoiPolygon(
                                                         new JsonSlurper().parseText(
                                                                 params.required('polygon', String)
                                                         ) as List

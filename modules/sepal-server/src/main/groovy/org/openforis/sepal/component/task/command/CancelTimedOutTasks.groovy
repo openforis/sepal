@@ -2,10 +2,7 @@ package org.openforis.sepal.component.task.command
 
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
-import org.openforis.sepal.component.task.api.TaskRepository
-import org.openforis.sepal.component.task.api.WorkerGateway
-import org.openforis.sepal.component.task.api.WorkerSession
-import org.openforis.sepal.component.task.api.WorkerSessionManager
+import org.openforis.sepal.component.task.api.*
 import org.openforis.sepal.util.annotation.Data
 import org.slf4j.LoggerFactory
 
@@ -37,7 +34,7 @@ class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutT
 
         timedOutTasks
                 .findAll { it.active }
-                .each { workerGateway.cancel(it.id, sessionById[it.sessionId]) }
+                .each { cancelTask(it, sessionById[it.sessionId]) }
 
         sessionById.keySet().each {
             def tasksInSession = taskRepository.pendingOrActiveTasksInSession(it)
@@ -45,5 +42,13 @@ class CancelTimedOutTasksHandler implements CommandHandler<Void, CancelTimedOutT
                 sessionManager.closeSession(it)
         }
         return null
+    }
+
+    private cancelTask(Task task, WorkerSession session) {
+        try {
+            workerGateway.cancel(task.id, session)
+        } catch (Exception e) {
+            LOG.warn("Failed to cancel task: $task", e)
+        }
     }
 }

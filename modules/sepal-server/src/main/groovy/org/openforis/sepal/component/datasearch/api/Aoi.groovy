@@ -23,7 +23,7 @@ class FusionTableShape implements Aoi {
 }
 
 @ImmutableData
-class Polygon implements Aoi {
+class AoiPolygon implements Aoi {
     List<List<Double>> path
 
     Map getParams() {

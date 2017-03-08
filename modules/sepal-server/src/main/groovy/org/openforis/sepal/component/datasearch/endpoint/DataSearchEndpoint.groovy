@@ -4,9 +4,6 @@ import groovy.json.JsonSlurper
 import groovymvc.Controller
 import groovymvc.Params
 import org.openforis.sepal.component.Component
-import org.openforis.sepal.component.datasearch.DataSet
-import org.openforis.sepal.component.datasearch.SceneArea
-import org.openforis.sepal.component.datasearch.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.*
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
@@ -110,7 +107,7 @@ class DataSearchEndpoint {
     private Aoi toAoi(Params params) {
         def polygon = params.polygon as String
         def aoi = polygon ?
-                new Polygon(new JsonSlurper().parseText(polygon) as List) :
+                new AoiPolygon(new JsonSlurper().parseText(polygon) as List) :
                 new FusionTableShape(
                         tableName: FUSION_TABLE,
                         keyColumn: KEY_COLUMN,
@@ -121,6 +118,7 @@ class DataSearchEndpoint {
     Map sceneData(SceneMetaData scene, int targetDayOfYear) {
         [
                 sceneId          : scene.id,
+                dataSet          : scene.dataSet.name(),
                 sensor           : scene.sensorId,
                 browseUrl        : scene.browseUrl as String,
                 acquisitionDate  : DateTime.toDateString(scene.acquisitionDate),

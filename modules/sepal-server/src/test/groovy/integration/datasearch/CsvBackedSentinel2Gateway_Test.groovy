@@ -1,24 +1,54 @@
 package integration.datasearch
 
-import org.openforis.sepal.component.datasearch.SceneMetaData
-import org.openforis.sepal.component.datasearch.sentinel2.CsvBackedSentinel2Gateway
+import org.openforis.sepal.component.datasearch.api.SceneMetaData
+import org.openforis.sepal.component.datasearch.adapter.CsvBackedSentinel2Gateway
+import org.openforis.sepal.util.CsvInputStreamReader
 import org.openforis.sepal.util.CsvReader
+import org.openforis.sepal.util.CsvUriReader
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
 
+@Ignore
 class CsvBackedSentinel2Gateway_Test extends Specification {
     public static final Date LONG_AGO = new Date(0)
     def workingDir = File.createTempDir()
-    def sceneId = 'L1C_T48LYR_A007608_20161206T031336'
-    def sceneId2 = 'S2A_OPER_MSI_L1C_TL_EPA__20160606T223605_A000062_T31RCL_N02.02'
+    def sceneId = '20150627T102531_20160606T223605_T31RCL'
+    def sceneId2 = '20150627T102531_20160606T223605_T31RCM'
 
     def cleanup() {
         workingDir.deleteDir()
     }
 
+//    @Ignore
+    def 'Test'() {
+        when:
+//        def reader = new CsvInputStreamReader(new FileInputStream('/Users/wiell/Downloads/sentinel2-metadata.csv'))
+//        def reader = new CsvUriReader('https://drive.google.com/open?id=0B1fRIaLaJSWtOU9HSzQ2Tml0eFk')
+        def reader = new CsvUriReader('https://dl.dropboxusercontent.com/u/6262669/sentinel2-metadata.csv')
+        def gateway = new CsvBackedSentinel2Gateway(workingDir, reader)
+
+        def ids = [:]
+        gateway.eachSceneUpdatedSince(SENTINEL2A: LONG_AGO) { scenes ->
+            scenes.each { SceneMetaData scene ->
+                def count = ids[scene.id]
+                if (count)
+                    count++
+                else
+                    count = 1
+                ids[scene.id] = count
+            }
+        }
+
+        def duplicate = ids.findAll { it.value > 1 }
+
+        then:
+        true
+    }
+
     def 'Two scenes get accessed'() {
-        def reader = new FakeCsvReader((sceneId): now, (sceneId2): now)
+        def reader = new FakeCsvReader([(sceneId): now, (sceneId2): now])
         def gateway = new CsvBackedSentinel2Gateway(workingDir, reader)
 
         when:

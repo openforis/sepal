@@ -1,4 +1,4 @@
-package org.openforis.sepal.component.datasearch
+package org.openforis.sepal.component.datasearch.api
 
 import org.openforis.sepal.util.annotation.ImmutableData
 

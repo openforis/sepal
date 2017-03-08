@@ -251,21 +251,21 @@ class MockServer extends AbstractMvcFilter {
                                 ],
                                 bands     : [
                                         [
-                                                id   : 'B1',
+                                                id   : 'BLUE',
                                                 label: 'Blue'
                                         ],
                                         [
-                                                id   : 'B2',
+                                                id   : 'GREEN',
                                                 label: 'Green'
                                         ],
                                 ],
                                 bandGroups: [
                                         [
-                                                id   : 'B3, B2, B1',
+                                                id   : 'SWIR2, NIR, GREEN',
                                                 label: 'Natural (RGB)'
                                         ],
                                         [
-                                                id   : 'B4, B5, B3',
+                                                id   : 'NIR, SWIR1, RED',
                                                 label: 'False color'
                                         ]
                                 ]
