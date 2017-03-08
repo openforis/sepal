@@ -14,10 +14,6 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="org.openforis.sepal.component.datasearch.usgs" additivity="false" level="INFO">
-        <appender-ref ref="STDOUT"/>
-    </logger>
-
     <logger name="frontend" additivity="false" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
