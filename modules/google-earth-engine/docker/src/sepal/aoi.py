@@ -1,15 +1,22 @@
+import logging
+
 import ee
+
+import landsat.best_scenes
+import sentinel2.best_scenes
 
 
 class Aoi:
     _fusion_table_by_data_set = {
         'LANDSAT': {
             'table_id': 'ft:1EJjaOloQD5NL7ReC5aVtn8cX05xbdEbZthUiCFB6',
-            'id_column': 'name'
+            'id_column': 'name',
+            'coordinates': lambda sceneArea: sceneArea['geometry']['coordinates'][0]
         },
         'SENTINEL2': {
-            'table_id': 'ft:1n7g37WMO1dUmF-lwEhbn_nkOf1G6uuKvIlWz74vD',
-            'id_column': 'Name'
+            'table_id': 'ft:1z3OSnCDFQqUHIXlU_hwVc5h4ZrDP2VdQNNfG3RZB',
+            'id_column': 'name',
+            'coordinates': lambda sceneArea: sceneArea['geometry']['geometries'][1]['coordinates'][0]
         }
     }
 
@@ -53,7 +60,7 @@ class Aoi:
         scene_areas = []
         for featureScenes in intersected:
             for sceneArea in featureScenes:
-                polygon = map(lambda lnglat: list(reversed(lnglat)), sceneArea['geometry']['coordinates'][0])
+                polygon = map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](sceneArea))
                 scene_areas.append({
                     'sceneAreaId': sceneArea['properties'][table['id_column']],
                     'polygon': polygon,
@@ -67,6 +74,13 @@ class Aoi:
         :rtype: ee.Geometry
         """
         return self._geometry
+
+    def best_scenes(self, data_set, from_date, to_date, target_day_of_year, target_day_of_year_weight):
+        logging.info('Determining best scenes of ' + str(self))
+        if data_set == 'SENTINEL2':
+            return sentinel2.best_scenes.find(self, from_date, to_date, target_day_of_year, target_day_of_year_weight)
+        else:
+            return landsat.best_scenes.find(self, from_date, to_date, target_day_of_year, target_day_of_year_weight)
 
 
 class Polygon(Aoi):
