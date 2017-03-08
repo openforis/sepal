@@ -10,7 +10,6 @@ import io.undertow.server.handlers.PathHandler
 import io.undertow.server.handlers.ResponseCodeHandler
 import io.undertow.server.handlers.encoding.ContentEncodingRepository
 import io.undertow.server.handlers.encoding.EncodingHandler
-import io.undertow.server.handlers.encoding.GzipEncodingProvider
 import io.undertow.server.handlers.proxy.LoadBalancingProxyClient
 import io.undertow.server.session.InMemorySessionManager
 import io.undertow.server.session.SessionAttachmentHandler
