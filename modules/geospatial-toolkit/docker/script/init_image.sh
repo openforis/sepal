@@ -39,6 +39,7 @@ apt-get install -y \
     gettext \
     git \
     gsl-bin \
+    imagemagick \
     libboost-dev \
     libcairo2-dev \
     libcunit1-dev \
@@ -48,8 +49,8 @@ apt-get install -y \
     libgmp3-dev \
     libgstreamer0.10-dev \
     libgstreamer-plugins-base0.10-dev \
-	libproj-dev \
-	libxcursor-dev \
+    libproj-dev \
+    libxcursor-dev \
     libxinerama-dev \
     libxrandr-dev \
     libxt-dev \
@@ -59,6 +60,10 @@ apt-get install -y \
     parallel \
     pkg-config \
     python-otb \
+    python-opencv \
+    python-pandas \
+    python-pyshp \
+    python-rasterio \
     rsync \
     saga \
     screen \
@@ -67,5 +72,5 @@ apt-get install -y \
     tmux \
     unzip \
     vim \
-	wget \
+    wget \
     xml-twig-tools
