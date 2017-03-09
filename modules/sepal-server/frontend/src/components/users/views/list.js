@@ -3,8 +3,7 @@
  */
 var EventBus = require( '../../event/event-bus' )
 var Events   = require( '../../event/events' )
-var UserM    = require( '../../user/user-m' )
-
+var ListSort = require( './list-sort' )
 
 var Container = null
 var usersList = null
@@ -22,31 +21,7 @@ var init = function ( container ) {
     rowHeader = Container.find( '.row-header' )
     rowUser   = Container.find( '.row-user' )
     
-    // var sortRow     = null
-    // var sortingHtml = rowHeader.find( '.data-sorting-popup' )
-    // sortingHtml.find( '.btn-sort-desc' ).click( function () {
-    //     sortingHtml.stop().fadeOut()
-    //
-    //     var property = sortRow.data( 'sorting-property' )
-    //     console.log( 'sorting desc ', property )
-    //
-    //     rowHeader.find( '.sort-reset' ).remove()
-    //
-    //     var i = $( this ).find('i').clone().addClass( 'sort-reset' )
-    //     sortRow.append( i )
-    // } )
-    // sortingHtml.find( '.btn-sort-asc' ).click( function () {
-    // } )
-    //
-    // sortingHtml.mouseleave( function () {
-    //     sortingHtml.stop().fadeOut()
-    // } )
-    //
-    // rowHeader.find( '.data-sorting' ).mouseenter( function ( e ) {
-    //     sortRow = $( this )
-    //     sortRow.append( sortingHtml )
-    //     sortingHtml.stop().fadeIn()
-    // } )
+    ListSort.init( rowHeader )
 }
 
 var interval       = null
@@ -121,13 +96,14 @@ var getUserRow = function ( user ) {
     }
     row.find( '.status' ).html( status )
     
-    if ( user.sandboxReport ) {
-        row.find( '.monthlyInstanceBudget' ).html( user.sandboxReport.monthlyInstanceBudget )
-        row.find( '.monthlyInstanceSpending' ).html( user.sandboxReport.monthlyInstanceSpending )
-        row.find( '.monthlyStorageBudget' ).html( user.sandboxReport.monthlyStorageBudget )
-        row.find( '.monthlyStorageSpending' ).html( user.sandboxReport.monthlyStorageSpending )
-        row.find( '.storageQuota' ).html( user.sandboxReport.storageQuota )
-        row.find( '.storageUsed' ).html( user.sandboxReport.storageUsed )
+    var spending = user.getSpending()
+    if ( spending ) {
+        row.find( '.monthlyInstanceBudget' ).html( spending.monthlyInstanceBudget )
+        row.find( '.monthlyInstanceSpending' ).html( spending.monthlyInstanceSpending )
+        row.find( '.monthlyStorageBudget' ).html( spending.monthlyStorageBudget )
+        row.find( '.monthlyStorageSpending' ).html( spending.monthlyStorageSpending )
+        row.find( '.storageQuota' ).html( spending.storageQuota )
+        row.find( '.storageUsed' ).html( spending.storageUsed )
     }
     
     row.click( function ( e ) {

@@ -36,13 +36,14 @@ var setUsers = function ( users ) {
     var storageUsedTotal             = 0
     
     $.each( users, function ( i, user ) {
-        if ( user.sandboxReport ) {
-            monthlyInstanceBudgetTotal += user.sandboxReport.monthlyInstanceBudget
-            monthlyInstanceSpendingTotal += user.sandboxReport.monthlyInstanceSpending
-            monthlyStorageBudgetTotal += user.sandboxReport.monthlyStorageBudget
-            monthlyStorageSpendingTotal += user.sandboxReport.monthlyStorageSpending
-            storageQuotaTotal += user.sandboxReport.storageQuota
-            storageUsedTotal += user.sandboxReport.storageUsed
+        var spending = user.getSpending()
+        if ( spending ) {
+            monthlyInstanceBudgetTotal += spending.monthlyInstanceBudget
+            monthlyInstanceSpendingTotal += spending.monthlyInstanceSpending
+            monthlyStorageBudgetTotal += spending.monthlyStorageBudget
+            monthlyStorageSpendingTotal += spending.monthlyStorageSpending
+            storageQuotaTotal += spending.storageQuota
+            storageUsedTotal += spending.storageUsed
         }
     } )
     

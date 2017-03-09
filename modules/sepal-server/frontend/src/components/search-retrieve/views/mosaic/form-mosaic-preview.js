@@ -18,11 +18,13 @@ var rowLandsat           = null
 var btnSubmitLandsat     = null
 var landsatBands         = require( './bands-landsat.js' )
 var landsatSelectedBands = null
+var inputBandsLandsat    = null
 
 var rowSentinel2           = null
 var btnSubmitSentinel2     = null
 var sentinel2Bands         = require( './bands-sentinel2.js' )
 var sentinel2SelectedBands = null
+var inputBandsSentinel2    = null
 
 var init = function ( parent ) {
     parentContainer = parent
@@ -35,8 +37,8 @@ var init = function ( parent ) {
     btnSubmitLandsat   = html.find( '.btn-submit-landsat' )
     btnSubmitSentinel2 = html.find( '.btn-submit-sentinel2' )
     
-    var landsatBandsInput = html.find( 'input[name=bands-landsat]' )
-    landsatBandsInput.sepalAutocomplete( {
+    inputBandsLandsat = html.find( 'input[name=bands-landsat]' )
+    inputBandsLandsat.sepalAutocomplete( {
         lookup    : landsatBands
         , onChange: function ( selection ) {
             landsatSelectedBands = (selection) ? selection.data : null
@@ -51,19 +53,20 @@ var init = function ( parent ) {
         if ( landsatSelectedBands ) {
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.PREVIEW_LANDSAT_MOSAIC, null, landsatSelectedBands )
         } else {
-            FormValidator.addError( landsatBandsInput )
+            FormValidator.addError( inputBandsLandsat )
             formNotify.html( 'A valid band must be selected' ).velocitySlideDown( { delay: 20, duration: 400 } )
         }
     } )
     
     //sentinel2
-    var sentinel2BandsInput = html.find( 'input[name=bands-sentinel2]' )
-    sentinel2BandsInput.sepalAutocomplete( {
+    inputBandsSentinel2 = html.find( 'input[name=bands-sentinel2]' )
+    inputBandsSentinel2.sepalAutocomplete( {
         lookup    : sentinel2Bands
         , onChange: function ( selection ) {
             sentinel2SelectedBands = (selection) ? selection.data : null
         }
     } )
+    
     
     btnSubmitSentinel2.click( function ( e ) {
         e.preventDefault()
@@ -72,7 +75,7 @@ var init = function ( parent ) {
         if ( sentinel2SelectedBands ) {
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.PREVIEW_SENTINEL2_MOSAIC, null, sentinel2SelectedBands )
         } else {
-            FormValidator.addError( sentinel2BandsInput )
+            FormValidator.addError( inputBandsSentinel2 )
             formNotify.html( 'A valid band must be selected' ).velocitySlideDown( { delay: 20, duration: 400 } )
         }
     } )
@@ -91,10 +94,10 @@ var reset = function () {
     FormValidator.resetFormErrors( html )
     
     landsatSelectedBands = null
-    html.find( 'input[name=bands-landsat]' ).val( '' )
+    inputBandsLandsat.sepalAutocomplete( 'reset' )
     
     sentinel2SelectedBands = null
-    html.find( '.btn-submit-sentinel2' ).val( '' )
+    inputBandsSentinel2.sepalAutocomplete( 'reset' )
 }
 
 var setSelectedScenesNumber = function ( landsatNoScenes, sentinel2NoScenes ) {

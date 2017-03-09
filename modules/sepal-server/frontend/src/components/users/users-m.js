@@ -4,9 +4,9 @@
 var UserM       = require( '../user/user-m' )
 var UsersFilter = require( './users-filter' )
 
-var users         = null
-var userBudgets   = null
-var selectedUser  = null
+var users        = null
+var userBudgets  = null
+var selectedUser = null
 
 var setUsers = function ( usersDetails, budgets ) {
     users       = []
@@ -15,7 +15,7 @@ var setUsers = function ( usersDetails, budgets ) {
     $.each( usersDetails, function ( i, userDetail ) {
         var user       = UserM( userDetail )
         var userBudget = userBudgets[ user.username ]
-        user.setUserSandboxReport( userBudget )
+        user.setUserSandboxReport( { spending: userBudget } )
         users.push( user )
     } )
 }

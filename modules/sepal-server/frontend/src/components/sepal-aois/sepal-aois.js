@@ -6,6 +6,7 @@ var EventBus         = require( '../event/event-bus' )
 var Events           = require( '../event/events' )
 var GoogleMapsLoader = require( 'google-maps' )
 
+var FT_URL     = 'https://www.googleapis.com/fusiontables/v2/query'
 var FT_TableID = "15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F"
 
 var loadAoiList = function ( callback ) {
@@ -13,11 +14,11 @@ var loadAoiList = function ( callback ) {
     var query = "SELECT ISO,NAME_FAO FROM " + FT_TableID + " WHERE NAME_FAO NOT EQUAL TO '' ORDER BY NAME_FAO ASC"
     var data  = { sql: query, key: GoogleMapsLoader.KEY }
     
-    var aois   = []
     var params = {
-        url      : 'https://www.googleapis.com/fusiontables/v2/query'
+        url      : FT_URL
         , data   : data
         , success: function ( response ) {
+            var aois = []
             $.each( response.rows, function ( i, row ) {
                 aois.push( { data: row[ 0 ], value: row[ 1 ] } )
             } )
@@ -56,7 +57,7 @@ var loadBounds = function ( isoCode, callback ) {
     var data  = { sql: query, key: GoogleMapsLoader.KEY }
     
     var params = {
-        url      : 'https://www.googleapis.com/fusiontables/v2/query'
+        url      : FT_URL
         , data   : data
         , success: function ( response ) {
             var bounds              = new google.maps.LatLngBounds()

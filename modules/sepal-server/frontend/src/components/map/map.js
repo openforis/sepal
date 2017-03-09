@@ -44,6 +44,7 @@ var zoomTo = function ( e, isoCode ) {
     }
     
     SepalAois.loadBounds( isoCode, function ( bounds ) {
+        map.panToBounds( bounds )
         map.fitBounds( bounds )
     } )
     

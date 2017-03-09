@@ -21,8 +21,8 @@ var updateView = function () {
 }
 
 var loadUsers = function () {
-    var users   = false
-    var budgets = false
+    var users   = null
+    var budgets = null
     
     var checkResponses = function () {
         if ( users && budgets ) {
@@ -52,17 +52,12 @@ var loadUsers = function () {
     
 }
 
-// var onUsersListFilterChange = function ( e, value ) {
-//     searchString = value
-//     updateView()
-// }
-
-var onSelectUser = function ( e, user ) {
+var selectUser = function ( e, user ) {
     Model.setSelectedUser( user )
     View.selectUser( user )
 }
 
-var onShowUsersSection = function ( e ) {
+var showSection = function ( e ) {
     
     switch ( e.type ) {
         case Events.SECTION.USERS.SHOW_USERS_LIST:
@@ -92,11 +87,11 @@ var onShowUsersSection = function ( e ) {
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 
 EventBus.addEventListener( Events.SECTION.USERS.FILTER.CHANGED, updateView )
-EventBus.addEventListener( Events.SECTION.USERS.SELECT_USER, onSelectUser )
+EventBus.addEventListener( Events.SECTION.USERS.SELECT_USER, selectUser )
 
-
-EventBus.addEventListener( Events.SECTION.USERS.SHOW_USERS_LIST, onShowUsersSection )
-EventBus.addEventListener( Events.SECTION.USERS.SHOW_INVITE_USER, onShowUsersSection )
-EventBus.addEventListener( Events.SECTION.USERS.SHOW_EDIT_USER, onShowUsersSection )
-EventBus.addEventListener( Events.SECTION.USERS.SHOW_DELETE_USER, onShowUsersSection )
-EventBus.addEventListener( Events.SECTION.USERS.SHOW_SEND_INVITATION_USER, onShowUsersSection )
+//show section events
+EventBus.addEventListener( Events.SECTION.USERS.SHOW_USERS_LIST, showSection )
+EventBus.addEventListener( Events.SECTION.USERS.SHOW_INVITE_USER, showSection )
+EventBus.addEventListener( Events.SECTION.USERS.SHOW_EDIT_USER, showSection )
+EventBus.addEventListener( Events.SECTION.USERS.SHOW_DELETE_USER, showSection )
+EventBus.addEventListener( Events.SECTION.USERS.SHOW_SEND_INVITATION_USER, showSection )

@@ -63,33 +63,33 @@
 
                 <div class="row row-header height15">
                     <div class="data-sorting-popup">
-                        <button class="btn btn-base btn-sort-desc circle"><i class="fa fa-sort-amount-desc" aria-hidden="true"></i></button>
                         <button class="btn btn-base btn-sort-asc circle"><i class="fa fa-sort-amount-asc" aria-hidden="true"></i></button>
+                        <button class="btn btn-base btn-sort-desc circle"><i class="fa fa-sort-amount-desc" aria-hidden="true"></i></button>
                     </div>
                     <div class="col-sm-2 text-align-center">
-                        <div class="data-sorting" data-sorting-property="some">Name</div>
+                        <div class="data-sorting" data-sorting-property="name">Name</div>
                     </div>
-                    <div class="col-sm-2 text-align-center">Username</div>
-                    <div class="col-sm-2 text-align-center">Status</div>
+                    <div class="col-sm-2 text-align-center">
+                        <div class="data-sorting" data-sorting-property="username">Username</div>
+                    </div>
+                    <div class="col-sm-2 text-align-center">
+                        <div class="data-sorting" data-sorting-property="status">Status</div>
+                        </div>
                     <div class="col-sm-2 text-align-center">Monthly Instance Budget (USD)
                         <div class="row">
-                            <div class="col-sm-6 text-align-center data-sorting" data-sorting-property="some" >
-                                Quota
-                                <!--<button class="btn btn-base circle"><i class="fa fa-sort-numeric-asc" aria-hidden="true"></i></button>-->
-                                <!--<button class="btn btn-base circle"><i class="fa fa-sort-numeric-desc" aria-hidden="true"></i></button>-->
-                            </div>
-                            <div class="col-sm-6 text-align-center data-sorting" data-sorting-property="some2">Used</div>
+                            <div class="col-sm-6 text-align-center data-sorting" data-sorting-property="monthlyInstanceBudget">Quota</div>
+                            <div class="col-sm-6 text-align-center data-sorting" data-sorting-property="monthlyInstanceSpending">Used</div>
                         </div>
                     </div>
                     <div class="col-sm-2 text-align-center">Monthly Storage Budget (USD)
                         <div class="row">
-                            <div class="col-sm-6 text-align-center">Quota</div>
-                            <div class="col-sm-6 text-align-center">Used</div>
+                            <div class="col-sm-6 text-align-center data-sorting" data-sorting-property="monthlyStorageBudget">Quota</div>
+                            <div class="col-sm-6 text-align-center data-sorting" data-sorting-property="monthlyStorageSpending">Used</div>
                         </div></div>
                     <div class="col-sm-2 text-align-center">Storage (GB)
                         <div class="row">
-                            <div class="col-sm-6 text-align-center">Quota</div>
-                            <div class="col-sm-6 text-align-center">Used</div>
+                            <div class="col-sm-6 text-align-center data-sorting" data-sorting-property="storageQuota">Quota</div>
+                            <div class="col-sm-6 text-align-center data-sorting" data-sorting-property="storageUsed">Used</div>
                         </div>
                     </div>
                 </div>

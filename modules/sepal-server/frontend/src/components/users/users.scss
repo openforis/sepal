@@ -92,9 +92,14 @@
           position: relative;
           padding: 0 !important;
           word-spacing: .2rem;
+
           .sort-reset {
-            color: #f8f9d8;
+            color: rgb(202, 158, 91);
             margin-left: 5px;
+          }
+          &.sort-active{
+            background-color: rgba(197, 179, 151, 0.3);
+            border-radius: 1rem;
           }
         }
         .data-sorting-popup {

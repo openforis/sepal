@@ -1,3 +1,5 @@
+require( './map.scss' )
+
 var stlye = [
     {
         "stylers": [ { "visibility": "simplified" } ]

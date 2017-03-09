@@ -123,6 +123,10 @@ var Events = {
                 , USERS_LOCKED_CHANGE         : 'section.users.filter.users_locked_change'
                 , USERS_BUDGET_EXCEEDED_CHANGE: 'section.users.filter.users_budget_exceeded_change'
             }
+            , SORT                     : {
+                RESET   : 'section.users.sort.reset'
+                , ACTIVE: 'section.users.sort.active'
+            }
         }
     }
     

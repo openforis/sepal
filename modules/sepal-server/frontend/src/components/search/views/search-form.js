@@ -1,22 +1,16 @@
 /**
  * @author Mino Togna
  */
-
 var EventBus      = require( '../../event/event-bus' )
 var Events        = require( '../../event/events' )
 var SearchParams  = require( '../search-params' )
 var FormValidator = require( '../../form/form-validator' )
 var DatePicker    = require( '../../date-picker/date-picker' )
 var SepalAois     = require( '../../sepal-aois/sepal-aois' )
-var countries     = require( './../data/countries.js' )
 var moment        = require( 'moment' )
 
-require( 'devbridge-autocomplete' )
-
-// form ui components
 var form           = null
 var formNotify     = null
-//
 var fieldCountry   = null
 var btnDrawPolygon = null
 var targetDate     = null
@@ -110,7 +104,7 @@ var polygonDrawn = function ( e, polygon ) {
     
     btnDrawPolygon.addClass( 'active' )
     
-    fieldCountry.val( null )
+    fieldCountry.sepalAutocomplete( 'reset' )
 }
 
 var polygonClear = function ( e ) {

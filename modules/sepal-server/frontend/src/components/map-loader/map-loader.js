@@ -1,7 +1,6 @@
 /**
  * @author Mino Togna
  */
-require( './../map-style/map.scss' )
 var mapStyle = require( './../map-style/map-style.js' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
@@ -10,9 +9,10 @@ var GoogleMapsLoader       = require( 'google-maps' )
 GoogleMapsLoader.LIBRARIES = [ 'drawing' ]
 
 var checkApiKey = function ( callback ) {
-    if ( GoogleMapsLoader.KEY ) {
-        callback()
-    } else {
+    // console.log(GoogleMapsLoader.KEY)
+    // if ( GoogleMapsLoader.KEY ) {
+    //     callback()
+    // } else {
         var params = {
             url      : '/api/data/google-maps-api-key'
             , success: function ( response ) {
@@ -21,7 +21,7 @@ var checkApiKey = function ( callback ) {
             }
         }
         EventBus.dispatch( Events.AJAX.REQUEST, null, params )
-    }
+    // }
 }
 
 var load = function ( callback ) {
@@ -48,7 +48,6 @@ var loadMap = function ( domId, callback ) {
                 rotateControl    : false,
                 fullscreenControl: false,
                 backgroundColor  : '#131314'
-                
             } )
             
             map.setOptions( { styles: mapStyle } )
