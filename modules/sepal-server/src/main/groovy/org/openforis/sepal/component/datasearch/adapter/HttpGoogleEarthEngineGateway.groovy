@@ -1,10 +1,6 @@
 package org.openforis.sepal.component.datasearch.adapter
 
 import groovyx.net.http.RESTClient
-import org.openforis.sepal.component.datasearch.DataSet
-import org.openforis.sepal.component.datasearch.LatLng
-import org.openforis.sepal.component.datasearch.Polygon
-import org.openforis.sepal.component.datasearch.SceneArea
 import org.openforis.sepal.component.datasearch.api.*
 
 import static groovy.json.JsonOutput.toJson

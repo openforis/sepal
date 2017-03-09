@@ -1,7 +1,7 @@
 package org.openforis.sepal.component.datasearch.query
 
-import org.openforis.sepal.component.datasearch.DataSet
-import org.openforis.sepal.component.datasearch.SceneArea
+import org.openforis.sepal.component.datasearch.api.DataSet
+import org.openforis.sepal.component.datasearch.api.SceneArea
 import org.openforis.sepal.component.datasearch.api.Aoi
 import org.openforis.sepal.component.datasearch.api.GoogleEarthEngineGateway
 import org.openforis.sepal.query.Query

@@ -2,7 +2,12 @@ package component.datasearch
 
 import fake.Database
 import org.openforis.sepal.component.datasearch.*
+import org.openforis.sepal.component.datasearch.api.DataSetMetadataGateway
 import org.openforis.sepal.component.datasearch.api.FusionTableShape
+import org.openforis.sepal.component.datasearch.api.LatLng
+import org.openforis.sepal.component.datasearch.api.Polygon
+import org.openforis.sepal.component.datasearch.api.SceneArea
+import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.SceneQuery
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
@@ -12,7 +17,7 @@ import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
 import spock.lang.Specification
 
-import static DataSet.LANDSAT
+import static org.openforis.sepal.component.datasearch.api.DataSet.LANDSAT
 import static org.openforis.sepal.util.DateTime.parseDateString
 
 class DataSearchTest extends Specification {

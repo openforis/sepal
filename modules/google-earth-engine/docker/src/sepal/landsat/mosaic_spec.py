@@ -2,6 +2,7 @@ import ee
 
 import constants
 import image_adjustment
+import util
 from .. import Aoi, ImageSpec
 
 
@@ -11,7 +12,7 @@ class LandsatMosaicSpec(ImageSpec):
         self.aoi = Aoi.create(spec['aoi'])
         self.target_day_of_year = int(spec['targetDayOfYear'])
         self.target_day_of_year_weight = float(spec['targetDayOfYearWeight'])
-        self.bands = spec['bands']
+        self.bands = [getattr(util, band) for band in spec['bands']]
         self.strategy = spec.get('strategy', constants.default_strategy)
         self.classes_to_mask = spec.get('classesToMask', constants.default_classes_to_mask)
 

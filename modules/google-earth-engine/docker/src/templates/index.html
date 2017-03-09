@@ -96,12 +96,12 @@
                     <p>
                         <label for="bands1">Bands 1</label><br/>
                         <select id="bands1">
-                            <option value="B3, B2, B1">Natural (Red, Green, Blue)</option>
-                            <option value="B4, B3, B2">Infrared (NIR, Red, Green)</option>
-                            <option value="B4, B5, B3">False color(NIR, SWIR 1, Red)</option>
-                            <option value="B7, B4, B3">False color(SWIR 2, NIR, Red)</option>
-                            <option value="B7, B5, B3">False color(SWIR 2, SWIR 1, Red)</option>
-                            <option value="B7, B4, B2">False color(SWIR 2, NIR, Green)</option>
+                            <option value="RED, GREEN, BLUE">Natural (Red, Green, Blue)</option>
+                            <option value="NIR, RED, GREEN">Infrared (NIR, Red, Green)</option>
+                            <option value="NIR, SWIR1, RED">False color(NIR, SWIR 1, Red)</option>
+                            <option value="SWIR2, NIR, RED">False color(SWIR 2, NIR, Red)</option>
+                            <option value="SWIR2, SWIR1, RED">False color(SWIR 2, SWIR 1, Red)</option>
+                            <option value="SWIR2, NIR, GREEN">False color(SWIR 2, NIR, Green)</option>
                             <option value="temp">Temperature</option>
                             <option value="date">Date of pixel in days</option>
                             <option value="days">Days from target day</option>
@@ -110,12 +110,12 @@
                     <p>
                         <label for="bands2">Bands 2</label><br/>
                         <select id="bands2">
-                            <option value="B3, B2, B1">Natural (Red, Green, Blue)</option>
-                            <option value="B4, B3, B2">Infrared (NIR, Red, Green)</option>
-                            <option value="B4, B5, B3">False color(NIR, SWIR 1, Red)</option>
-                            <option value="B7, B4, B3">False color(SWIR 2, NIR, Red)</option>
-                            <option value="B7, B5, B3">False color(SWIR 2, SWIR 1, Red)</option>
-                            <option value="B7, B4, B2">False color(SWIR 2, NIR, Green)</option>
+                            <option value="RED, GREEN, BLUE">Natural (Red, Green, Blue)</option>
+                            <option value="NIR, RED, GREEN">Infrared (NIR, Red, Green)</option>
+                            <option value="NIR, SWIR1, RED">False color(NIR, SWIR 1, Red)</option>
+                            <option value="SWIR2, NIR, RED">False color(SWIR 2, NIR, Red)</option>
+                            <option value="SWIR2, SWIR1, RED">False color(SWIR 2, SWIR 1, Red)</option>
+                            <option value="SWIR2, NIR, GREEN">False color(SWIR 2, NIR, Green)</option>
                             <option value="temp">Temperature</option>
                             <option value="date">Date of pixel in days</option>
                             <option value="days">Days from target day</option>
@@ -168,7 +168,12 @@
                 </p>
                 <input type="submit" value="Preview">
             </form>
-
+            <br/>
+            <form id="bestScenesForm">
+                <input type="submit" value="Best scenes">
+                <div id="bestScenes"></div>
+            </form>
+            <br/>
             <form id="sceneAreasForm">
                 <input type="submit" value="Scene areas">
                 <div id="sceneAreas"></div>

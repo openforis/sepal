@@ -1,18 +1,17 @@
-package org.openforis.sepal.component.datasearch.usgs
+package org.openforis.sepal.component.datasearch.adapter
 
-import org.openforis.sepal.component.datasearch.DataSetMetadataGateway
-import org.openforis.sepal.component.datasearch.SceneMetaData
+import org.openforis.sepal.component.datasearch.api.DataSetMetadataGateway
+import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.util.CsvReader
 import org.openforis.sepal.util.CsvUriReader
 import org.openforis.sepal.util.GzCsvUriReader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.component.datasearch.DataSet.LANDSAT
-import static org.openforis.sepal.component.datasearch.usgs.LandsatSensor.*
+import static CsvBackedUsgsGateway.Sensor.*
+import static org.openforis.sepal.component.datasearch.api.DataSet.LANDSAT
 import static org.openforis.sepal.util.DateTime.parseDateString
 import static org.openforis.sepal.util.DateTime.startOfDay
-
 
 class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     private static final Logger LOG = LoggerFactory.getLogger(this)
@@ -32,7 +31,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     @SuppressWarnings("UnnecessaryQualifiedReference")
     void eachSceneUpdatedSince(Map<String, Date> lastUpdateBySensor, Closure callback)
             throws DataSetMetadataGateway.SceneMetaDataRetrievalFailed {
-        LandsatSensor.values().each { sensor ->
+        Sensor.values().each { sensor ->
             if (sensorInitializedFile(sensor).exists())
                 updatedSince(sensor, lastUpdateBySensor[sensor.name()], callback)
             else
@@ -40,7 +39,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
         }
     }
 
-    private void initializeSensor(LandsatSensor sensor, Closure callback) {
+    private void initializeSensor(Sensor sensor, Closure callback) {
         def scenes = []
         initCsvSourcesBySensor[sensor.name()]?.each { reader ->
             reader.eachLine {
@@ -62,11 +61,11 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
         sensorInitializedFile(sensor).createNewFile()
     }
 
-    private File sensorInitializedFile(LandsatSensor sensor) {
+    private File sensorInitializedFile(Sensor sensor) {
         new File(workingDir, "${sensor}.initialized")
     }
 
-    private void updatedSince(LandsatSensor sensor, Date lastUpdate, Closure callback) {
+    private void updatedSince(Sensor sensor, Date lastUpdate, Closure callback) {
         if (!lastUpdate)
             return
         lastUpdate = startOfDay(lastUpdate)
@@ -87,7 +86,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
         }
     }
 
-    private SceneMetaData toSceneMetaData(LandsatSensor sensor, data) {
+    private SceneMetaData toSceneMetaData(Sensor sensor, data) {
         try {
             if (isSceneIncluded(data))
                 return new SceneMetaData(
@@ -97,6 +96,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
                         sensorId: sensor.name(),
                         acquisitionDate: parseDateString(data.acquisitionDate),
                         cloudCover: cloudCover(sensor, data),
+                        coverage: 100,
                         sunAzimuth: data.sunAzimuth.toDouble(),
                         sunElevation: data.sunElevation.toDouble(),
                         browseUrl: URI.create(data.browseURL),
@@ -107,7 +107,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
         return null
     }
 
-    private Double cloudCover(LandsatSensor sensor, data) {
+    private Double cloudCover(Sensor sensor, data) {
         def result = data.cloudCoverFull.toDouble() as Double
         // LANDSAT_ETM_SLC_OFF always miss about 22% of its data. Consider that cloud cover.
         if (result && sensor == LANDSAT_ETM_SLC_OFF)
@@ -178,5 +178,13 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
                         new CsvUriReader('https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_ETM_SLC_OFF.csv')
                 ]
         ])
+    }
+
+    static enum Sensor {
+        LANDSAT_8,
+        LANDSAT_ETM,
+        LANDSAT_ETM_SLC_OFF,
+        LANDSAT_TM,
+        LANDSAT_MSS
     }
 }

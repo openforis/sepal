@@ -35,19 +35,31 @@ fmask_value_by_class_name = {
     'snow': 3,
     'cloud': 4
 }
+
+
+def _bands(*bands):
+    return ', '.join(bands)
+
+
 viz_by_bands = {
-    'B3, B2, B1': lambda params: {'bands': _bands(RED, GREEN, BLUE), 'min': 0.05 * multiplier, 'max': 0.5 * multiplier,
-                                  'gamma': '2.0, 2.1, 1.8'},
-    'B4, B3, B2': lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 0.05 * multiplier, 'max': 0.5 * multiplier,
-                                  'gamma': 1.7},
-    'B4, B5, B3': lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 0.05 * multiplier, 'max': 0.5 * multiplier,
-                                  'gamma': 1.7},
-    'B7, B4, B3': lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 0.05 * multiplier, 'max': 0.5 * multiplier,
-                                  'gamma': 1.7},
-    'B7, B5, B3': lambda params: {'bands': _bands(SWIR2, SWIR1, RED), 'min': 0.05 * multiplier, 'max': 0.5 * multiplier,
-                                  'gamma': 1.7},
-    'B7, B4, B2': lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 0.05 * multiplier, 'max': 0.5 * multiplier,
-                                  'gamma': 1.7},
+    _bands(RED, GREEN, BLUE): lambda params: {'bands': _bands(RED, GREEN, BLUE), 'min': 0.05 * multiplier,
+                                              'max': 0.5 * multiplier,
+                                              'gamma': '2.0, 2.1, 1.8'},
+    _bands(NIR, RED, GREEN): lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 0.05 * multiplier,
+                                             'max': 0.5 * multiplier,
+                                             'gamma': 1.7},
+    _bands(NIR, SWIR1, RED): lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 0.05 * multiplier,
+                                             'max': 0.5 * multiplier,
+                                             'gamma': 1.7},
+    _bands(SWIR2, NIR, RED): lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 0.05 * multiplier,
+                                             'max': 0.5 * multiplier,
+                                             'gamma': 1.7},
+    _bands(SWIR2, SWIR1, RED): lambda params: {'bands': _bands(SWIR2, SWIR1, RED), 'min': 0.05 * multiplier,
+                                               'max': 0.5 * multiplier,
+                                               'gamma': 1.7},
+    _bands(SWIR2, NIR, GREEN): lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 0.05 * multiplier,
+                                               'max': 0.5 * multiplier,
+                                               'gamma': 1.7},
     'temp': lambda params: {'bands': 'temp', 'min': 200, 'max': 400, 'palette': '0000FF, FF0000'},
     'cluster': lambda params: {'bands': 'cluster', 'min': 0, 'max': 5000},
     'date': lambda params: {
@@ -65,7 +77,3 @@ viz_by_bands = {
 }
 epoch = datetime.utcfromtimestamp(0)
 milis_per_day = 1000 * 60 * 60 * 24
-
-
-def _bands(*bands):
-    return ', '.join(bands)

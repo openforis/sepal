@@ -14,7 +14,7 @@ class Sentinel2ManualMosaicSpec(Sentinel2MosaicSpec):
         self.scene_ids = spec['sceneIds']
 
         def acquisition(scene):
-            date = datetime.strptime(scene[14:14 + 8], '%Y%m%d')
+            date = datetime.strptime(scene[:8], '%Y%m%d')
             return (date - constants.epoch).total_seconds() * 1000
 
         acquisition_timestamps = [acquisition(scene) for scene in self.scene_ids]
@@ -36,7 +36,7 @@ class Sentinel2ManualMosaicSpec(Sentinel2MosaicSpec):
         """
         image_id_list = ee.List(list(self.scene_ids))
         return ee.ImageCollection(constants.collection_name).filter(
-            ee.Filter.inList('GRANULE_ID', image_id_list)
+            ee.Filter.inList('system:index', image_id_list)
         )
 
     def __str__(self):

@@ -2,12 +2,12 @@ package org.openforis.sepal.component.datasearch.command
 
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
-import org.openforis.sepal.component.datasearch.DataSetMetadataGateway
-import org.openforis.sepal.component.datasearch.SceneMetaDataRepository
+import org.openforis.sepal.component.datasearch.api.DataSetMetadataGateway
+import org.openforis.sepal.component.datasearch.api.SceneMetaDataRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.component.datasearch.DataSet.SENTINEL2
+import static org.openforis.sepal.component.datasearch.api.DataSet.SENTINEL2
 
 class UpdateSentinel2SceneMetaData extends AbstractCommand<Void> {
 }

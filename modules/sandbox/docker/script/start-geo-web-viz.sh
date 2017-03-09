@@ -24,6 +24,8 @@ sudo -Eu $sandbox_user "PATH=$sandbox_path" gunicorn\
  --threads 16\
  --backlog 64\
  --error-logfile -\
- --log-level info\
+ --log-file -\
+ --access-logfile -\
+ --log-level debug\
  --capture-output\
  wsgi:app 5678 /home/$sandbox_user

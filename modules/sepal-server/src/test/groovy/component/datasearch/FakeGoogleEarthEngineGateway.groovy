@@ -1,7 +1,7 @@
 package component.datasearch
 
-import org.openforis.sepal.component.datasearch.DataSet
-import org.openforis.sepal.component.datasearch.SceneArea
+import org.openforis.sepal.component.datasearch.api.DataSet
+import org.openforis.sepal.component.datasearch.api.SceneArea
 import org.openforis.sepal.component.datasearch.api.*
 
 class FakeGoogleEarthEngineGateway implements GoogleEarthEngineGateway {

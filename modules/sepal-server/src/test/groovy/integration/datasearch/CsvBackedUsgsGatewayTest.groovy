@@ -1,11 +1,11 @@
 package integration.datasearch
 
-import org.openforis.sepal.component.datasearch.SceneMetaData
-import org.openforis.sepal.component.datasearch.usgs.CsvBackedUsgsGateway
+import org.openforis.sepal.component.datasearch.adapter.CsvBackedUsgsGateway
+import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.util.CsvReader
 import spock.lang.Specification
 
-import static org.openforis.sepal.component.datasearch.usgs.LandsatSensor.LANDSAT_8
+import static org.openforis.sepal.component.datasearch.adapter.CsvBackedUsgsGateway.Sensor.LANDSAT_8
 import static org.openforis.sepal.util.DateTime.toDateString
 
 class CsvBackedUsgsGatewayTest extends Specification {

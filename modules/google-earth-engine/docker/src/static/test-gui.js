@@ -42,6 +42,11 @@
         findSceneAreas()
     } )
     
+    $( '#bestScenesForm' ).submit( function ( e ) {
+        e.preventDefault()
+        bestScenes()
+    } )
+    
     
     $( '#exportForm' ).submit( function ( e ) {
         e.preventDefault()
@@ -126,6 +131,27 @@
         }
         $.getJSON( 'sceneareas', query, function ( data ) {
             $( '#sceneAreas' ).html( "<pre>" + JSON.stringify( data, null, 2 ) + "</pre>" )
+        } )
+    }
+    
+    function bestScenes() {
+        var aoi   = createAoi()
+        var query = {
+            aoi                  : JSON.stringify( aoi ),
+            dataSet              : $( 'input[name=dataSet]:checked' ).val(),
+            fromDate             : fromDatePicker.getDate().getTime(),
+            toDate               : toDatePicker.getDate().getTime(),
+            targetDayOfYear      : $( '#target-day-of-year' ).val(),
+            targetDayOfYearWeight: $( '#target-day-of-year-weight' ).val()
+        }
+        $.getJSON( 'best-scenes', query, function ( data ) {
+            var scenes = ''
+            $.each( data, function ( i, scene ) {
+                scenes += scene
+                if (i  < scenes.length - 1)
+                    scenes += '\n'
+            } )
+            $( '#sceneIds' ).val(scenes)
         } )
     }
     
@@ -217,7 +243,7 @@
     
     function createScenesQuery( mapIndex ) {
         var mosaic      = createMosaic( mapIndex )
-        mosaic.sceneIds = $( '#sceneIds' ).val().split( '\n' )
+        mosaic.sceneIds = $( '#sceneIds' ).val().trim().split( '\n' )
         mosaic.type     = 'manual'
         return { image: JSON.stringify( mosaic ) }
     }
