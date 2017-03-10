@@ -28,7 +28,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.Channel;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import static io.undertow.util.NetworkUtils.formatPossibleIpv6Address;
@@ -68,7 +70,7 @@ public final class PatchedProxyHandler implements HttpHandler {
     private final boolean reuseXForwarded;
     private final int maxConnectionRetries;
 
-    private ClientResponseListener clientResponseListener;
+    private List<ClientResponseListener> clientResponseListeners = new CopyOnWriteArrayList<>();
 
     private PatchedProxyHandler(ProxyClient proxyClient, int maxRequestTime, HttpHandler next) {
         this(proxyClient, maxRequestTime, next, false, false);
@@ -117,9 +119,8 @@ public final class PatchedProxyHandler implements HttpHandler {
         this(proxyClient, -1, next);
     }
 
-
-    public void setClientResponseListener(ClientResponseListener clientResponseListener) {
-        this.clientResponseListener = clientResponseListener;
+    public void addClientResponseListener(ClientResponseListener clientResponseListener) {
+        clientResponseListeners.add(clientResponseListener);
     }
 
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
@@ -187,7 +188,7 @@ public final class PatchedProxyHandler implements HttpHandler {
                     requestHeaders,
                     rewriteHostHeader,
                     reuseXForwarded,
-                    clientResponseListener));
+                    clientResponseListeners));
         }
 
         @Override
@@ -251,20 +252,20 @@ public final class PatchedProxyHandler implements HttpHandler {
         private final Map<HttpString, ExchangeAttribute> requestHeaders;
         private final boolean rewriteHostHeader;
         private final boolean reuseXForwarded;
-        private final ClientResponseListener clientResponseListener;
+        private final List<ClientResponseListener> clientResponseListeners;
 
         ProxyAction(
                 final ProxyConnection clientConnection,
                 final HttpServerExchange exchange, Map<HttpString, ExchangeAttribute> requestHeaders,
                 boolean rewriteHostHeader,
                 boolean reuseXForwarded,
-                ClientResponseListener clientResponseListener) {
+                List<ClientResponseListener> clientResponseListeners) {
             this.clientConnection = clientConnection;
             this.exchange = exchange;
             this.requestHeaders = requestHeaders;
             this.rewriteHostHeader = rewriteHostHeader;
             this.reuseXForwarded = reuseXForwarded;
-            this.clientResponseListener = clientResponseListener;
+            this.clientResponseListeners = clientResponseListeners;
         }
 
         @Override
@@ -477,14 +478,14 @@ public final class PatchedProxyHandler implements HttpHandler {
                                                         requestHeaders,
                                                         rewriteHostHeader,
                                                         reuseXForwarded,
-                                                        clientResponseListener));
+                                                        clientResponseListeners));
                                     });
                             return true;
                         });
                     }
 
 
-                    result.setResponseListener(new ResponseCallback(clientResponseListener, exchange));
+                    result.setResponseListener(new ResponseCallback(clientResponseListeners, exchange));
                     final IoExceptionHandler handler = new IoExceptionHandler(exchange, clientConnection.getConnection());
                     if (requiresContinueResponse) {
                         try {
@@ -536,11 +537,11 @@ public final class PatchedProxyHandler implements HttpHandler {
 
     private static final class ResponseCallback implements ClientCallback<ClientExchange> {
 
-        private final ClientResponseListener listener;
+        private final List<ClientResponseListener> listeners;
         private final HttpServerExchange exchange;
 
-        private ResponseCallback(ClientResponseListener listener, HttpServerExchange exchange) {
-            this.listener = listener;
+        private ResponseCallback(List<ClientResponseListener> listeners, HttpServerExchange exchange) {
+            this.listeners = listeners;
             this.exchange = exchange;
         }
 
@@ -553,9 +554,8 @@ public final class PatchedProxyHandler implements HttpHandler {
                 log.debugf("Received response %s for request %s for exchange %s", response, result.getRequest(), exchange);
             }
 
-            if (listener != null) {
+            for (ClientResponseListener listener : listeners)
                 listener.completed(result.getResponse(), exchange);
-            }
 
             final HeaderMap inboundResponseHeaders = response.getResponseHeaders();
             final HeaderMap outboundResponseHeaders = exchange.getResponseHeaders();
@@ -620,9 +620,8 @@ public final class PatchedProxyHandler implements HttpHandler {
         public void failed(IOException e) {
             UndertowLogger.PROXY_REQUEST_LOGGER.proxyRequestFailed(exchange.getRequestURI(), e);
 
-            if (listener != null) {
+            for (ClientResponseListener listener : listeners)
                 listener.failed(e, exchange);
-            }
 
             if (!exchange.isResponseStarted()) {
                 exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);

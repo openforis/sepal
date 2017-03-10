@@ -154,7 +154,7 @@ class RootHandler implements HttpHandler {
                     ResponseCodeHandler.HANDLE_404
             )
             if (endpointConfig.rewriteRedirects)
-                proxyHandler.clientResponseListener = new RedirectRewriter()
+                proxyHandler.addClientResponseListener(new RedirectRewriter())
         }
 
         void handleRequest(HttpServerExchange exchange) throws Exception {

@@ -69,9 +69,9 @@ class SandboxWebProxy {
     private HttpHandler createHandler(Map<String, Integer> portByEndpoint) {
         def sessionBasedUriProvider = new SessionBasedUriProvider(portByEndpoint, sandboxSessionManager, sessionMonitor)
         def proxyHandler = new PatchedProxyHandler(
-                new DynamicProxyClient(sessionBasedUriProvider),
+                new SandboxProxyClient(sessionBasedUriProvider),
                 ResponseCodeHandler.HANDLE_404)
-        proxyHandler.setClientResponseListener(new RedirectRewriter())
+        proxyHandler.addClientResponseListener(new RedirectRewriter())
         def pathHandler = Handlers.path(proxyHandler).addExactPath('/start', sessionBasedUriProvider)
         new BadRequestCatchingHandler(
                 new SessionAttachmentHandler(
@@ -122,7 +122,7 @@ class SandboxWebProxy {
         }
     }
 
-    private static class SessionBasedUriProvider implements DynamicProxyClient.UriProvider, HttpHandler {
+    private static class SessionBasedUriProvider implements UriProvider, HttpHandler {
         private final Map<String, Integer> portByEndpoint
         private final SandboxSessionManager sandboxSessionManager
         private final WebProxySessionMonitor sessionMonitor
@@ -224,12 +224,14 @@ class SandboxWebProxy {
         }
 
         private Session getOrCreateHttpSession(HttpServerExchange exchange) {
+            def username = determineUsername(exchange)
             SessionManager httpSessionManager = exchange.getAttachment(SessionManager.ATTACHMENT_KEY)
             SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY)
             def session = httpSessionManager.getSession(exchange, sessionConfig)
             if (!session) {
                 session = httpSessionManager.createSession(exchange, sessionConfig)
-                LOG.info("Creating HTTP session. Username: ${determineUsername(exchange)}")
+                session.setAttribute('username', username)
+                LOG.info("Creating HTTP session. Username: ${username}")
             }
             return session
 
