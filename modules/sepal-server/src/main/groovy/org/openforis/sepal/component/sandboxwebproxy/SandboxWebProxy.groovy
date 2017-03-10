@@ -241,7 +241,7 @@ class SandboxWebProxy {
             def sandboxSession = null
             if (sessionId)
                 sandboxSession = sandboxSessionManager.findSession(sessionId)
-            else {
+            if (!sandboxSession) {
                 def sandboxSessions = sandboxSessionManager.findPendingOrActiveSessions(username)
                 // Take first active, or pending if none available
                 if (sandboxSessions)
