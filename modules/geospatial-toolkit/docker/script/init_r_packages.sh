@@ -13,6 +13,9 @@ export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
 export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/jre/lib/amd64/server:${JAVA_HOME}/jre/lib/amd64
 R CMD javareconf
 
+R -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+R -e "devtools::install_github('hoxo-m/githubinstall')"
+R -e "devtools::install_github('loicdtx/bfastSpatial')"
 R -e "install.packages('dismo', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 R -e "install.packages('DT', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 R -e "install.packages('ggplot2', dependencies=TRUE, repos='http://cran.rstudio.com/')"
