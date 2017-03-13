@@ -33,28 +33,18 @@ var init = function ( container ) {
 
 var initEventHandlers = function () {
     
-    btnBestScenes.click( function ( e ) {
-        e.preventDefault()
-        
-        $( "#search-retrieve .btn-toggle-section" ).not( this ).removeClass( 'active' )
-        $( this ).toggleClass( 'active' )
-        
+    btnBestScenes.click( function () {
         FormMosaicPreview.hide()
         FormMosaicRetrieve.hide()
         ScenesRetrieve.hide()
         FormScenesAutoSelection.toggleVisibility()
     } )
     
-    btnRetrieveScenes.click( function ( e ) {
-        
-        $( "#search-retrieve .btn-toggle-section" ).not( this ).removeClass( 'active' )
-        $( this ).toggleClass( 'active' )
-        
+    btnRetrieveScenes.click( function () {
         FormMosaicPreview.hide()
         FormMosaicRetrieve.hide()
         FormScenesAutoSelection.hide()
         ScenesRetrieve.toggleVisibility()
-        
     } )
     
     btnToggleLandsatVisibility.click( function () {

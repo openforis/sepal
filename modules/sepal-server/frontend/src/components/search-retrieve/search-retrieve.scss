@@ -50,6 +50,13 @@
       opacity: .4;
     }
 
+    .btn-toggle-section.disabling {
+      &.disabled, &:disabled {
+        opacity: 1 !important;
+        cursor: pointer !important;
+      }
+    }
+
   }
 
 }
