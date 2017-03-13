@@ -24,6 +24,19 @@ var init = function () {
         SectionScenes.init( html )
         SectionMosaic.init( html )
         
+        var btnsToggleSection = html.find( '.btn-toggle-section' )
+        btnsToggleSection.click( function () {
+            var btn = $( this )
+            
+            btnsToggleSection.not( btn ).removeClass( 'active' )
+            
+            btn.toggleClass( 'active' ).addClass('disabling').disable()
+            
+            setTimeout( function () {
+                btn.removeClass('disabling').enable()
+            }, 500 )
+        } )
+        
         reset()
     }
 }

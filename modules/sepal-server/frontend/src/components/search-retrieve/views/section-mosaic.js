@@ -31,25 +31,14 @@ var init = function ( container ) {
 
 var initEventHandlers = function () {
     
-    btnPreviewMosaic.click( function ( e ) {
-        e.preventDefault()
-        
-        $( "#search-retrieve .btn-toggle-section" ).not( this ).removeClass( 'active' )
-        $( this ).toggleClass( 'active' )
-        
+    btnPreviewMosaic.click( function () {
         FormMosaicPreview.toggleVisibility()
         FormScenesAutoSelection.hide()
         ScenesRetrieve.hide()
         FormMosaicRetrieve.hide()
-        
     } )
     
-    btnRetrieveMosaic.click( function ( e ) {
-        e.preventDefault()
-        
-        $( "#search-retrieve .btn-toggle-section" ).not( this ).removeClass( 'active' )
-        $( this ).toggleClass( 'active' )
-        
+    btnRetrieveMosaic.click( function () {
         FormMosaicPreview.hide()
         FormScenesAutoSelection.hide()
         ScenesRetrieve.hide()
