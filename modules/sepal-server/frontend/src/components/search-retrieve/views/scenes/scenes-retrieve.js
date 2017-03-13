@@ -10,21 +10,28 @@ var BudgetCheck = require( '../../../budget-check/budget-check' )
 var parentContainer            = null
 var template                   = require( './scenes-retrieve.html' )
 var html                       = $( template( {} ) )
-var landsatScenesNo            = null
-var sentinel2ScenesNo          = null
+var rowLandsat                 = null
+var rowSentinel2               = null
+var elemLandsatScenesNo        = null
+var elemSentinel2ScenesNo      = null
 var btnRetrieveLandsatScenes   = null
 var btnRetrieveSentinel2Scenes = null
+var landsatScenesNo            = null
+var sentinel2ScenesNo          = null
 
 var init = function ( parent ) {
     parentContainer = parent
     var container   = parentContainer.find( '.scenes-retrieve' )
     container.append( html )
     
-    landsatScenesNo   = container.find( '.landsat-scenes-number' )
-    sentinel2ScenesNo = container.find( '.sentinel2-scenes-number' )
+    rowLandsat   = container.find( '.row-landsat' ).hide()
+    rowSentinel2 = container.find( '.row-sentinel2' ).hide()
     
-    btnRetrieveLandsatScenes   = container.find( '.btn-retrieve-landsat-scenes' ).hide()
-    btnRetrieveSentinel2Scenes = container.find( '.btn-retrieve-sentinel2-scenes' ).hide()
+    elemLandsatScenesNo   = container.find( '.landsat-scenes-number' )
+    elemSentinel2ScenesNo = container.find( '.sentinel2-scenes-number' )
+    
+    btnRetrieveLandsatScenes   = container.find( '.btn-retrieve-landsat-scenes' )
+    btnRetrieveSentinel2Scenes = container.find( '.btn-retrieve-sentinel2-scenes' )
     
     var retrieveScenes = function ( e, evt ) {
         e.preventDefault()
@@ -57,26 +64,32 @@ var hide = function ( options ) {
 var toggleVisibility = function ( options ) {
     options = $.extend( {}, {
         begin: function ( elements ) {
-            // if ( parentContainer.is( ":visible" ) ) {
             BudgetCheck.check( html )
-            // }
+            toggleElements()
         }
     }, options )
     parentContainer.velocitySlideToggle( options )
 }
 
-var setScenesNumber = function ( landsatNoScenes, sentinel2NoScenes ) {
-    if ( landsatNoScenes > 0 )
-        btnRetrieveLandsatScenes.show()
+var toggleElements = function () {
+    if ( landsatScenesNo > 0 )
+        rowLandsat.show()
     else
-        btnRetrieveLandsatScenes.hide()
-    landsatScenesNo.html( landsatNoScenes )
+        rowLandsat.hide()
+    elemLandsatScenesNo.html( landsatScenesNo )
     
-    if ( sentinel2NoScenes > 0 )
-        btnRetrieveSentinel2Scenes.show()
+    if ( sentinel2ScenesNo > 0 )
+        rowSentinel2.show()
     else
-        btnRetrieveSentinel2Scenes.hide()
-    sentinel2ScenesNo.html( sentinel2NoScenes )
+        rowSentinel2.hide()
+    elemSentinel2ScenesNo.html( sentinel2ScenesNo )
+}
+
+var setScenesNumber = function ( landsatNoScenes, sentinel2NoScenes ) {
+    landsatScenesNo   = landsatNoScenes
+    sentinel2ScenesNo = sentinel2NoScenes
+    
+    toggleElements()
 }
 
 module.exports = {

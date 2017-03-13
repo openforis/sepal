@@ -62,9 +62,11 @@ var initEventHandlers = function () {
         EventBus.dispatch( evt )
     }
     btnToggleLandsat.click( function ( e ) {
+        btnToggleSentinel2.removeClass( 'active' )
         toggleVisibility( e, btnToggleLandsat, Events.SCENE_AREA_MOSAICS.LANDSAT.TOGGLE_VISIBILITY )
     } )
     btnToggleSentinel2.click( function ( e ) {
+        btnToggleLandsat.removeClass( 'active' )
         toggleVisibility( e, btnToggleSentinel2, Events.SCENE_AREA_MOSAICS.SENTINEL2.TOGGLE_VISIBILITY )
     } )
     
@@ -99,6 +101,7 @@ var disableLandsatButton = function () {
 
 var enableLandsatButton = function () {
     btnToggleLandsat.addClass( 'active' ).enable()
+    btnToggleSentinel2.removeClass( 'active' )
 }
 
 var disableSentinel2Button = function () {
@@ -107,6 +110,7 @@ var disableSentinel2Button = function () {
 
 var enableSentinel2Button = function () {
     btnToggleSentinel2.addClass( 'active' ).enable()
+    btnToggleLandsat.removeClass( 'active' )
 }
 
 module.exports = {

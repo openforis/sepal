@@ -16,17 +16,17 @@ def _bands(*bands):
 
 
 viz_by_bands = {
-    _bands(RED, GREEN, BLUE): lambda params: {'bands': _bands(RED, GREEN, BLUE), 'min': 500, 'max': 5000,
+    'RED, GREEN, BLUE': lambda params: {'bands': _bands(RED, GREEN, BLUE), 'min': 500, 'max': 5000,
                                               'gamma': '2.0, 2.1, 1.8'},
-    _bands(NIR, RED, GREEN): lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 500, 'max': 5000,
+    'NIR, RED, GREEN': lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 500, 'max': 5000,
                                              'gamma': 1.7},
-    _bands(NIR, SWIR1, RED): lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 500, 'max': 5000,
+    'NIR, SWIR1, RED': lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 500, 'max': 5000,
                                              'gamma': 1.7},
-    _bands(SWIR2, NIR, RED): lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 500, 'max': 5000,
+    'SWIR2, NIR, RED': lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 500, 'max': 5000,
                                              'gamma': 1.7},
-    _bands(SWIR2, SWIR1, RED): lambda params: {'bands': _bands(SWIR2, SWIR1, RED), 'min': 500, 'max': 5000,
+    'SWIR2, SWIR1, RED': lambda params: {'bands': _bands(SWIR2, SWIR1, RED), 'min': 500, 'max': 5000,
                                                'gamma': 1.7},
-    _bands(SWIR2, NIR, GREEN): lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 500, 'max': 5000,
+    'SWIR2, NIR, GREEN': lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 500, 'max': 5000,
                                                'gamma': 1.7},
     'temp': lambda params: {'bands': 'temp', 'min': 200, 'max': 400, 'palette': '0000FF, FF0000'},
     'cluster': lambda params: {'bands': 'cluster', 'min': 0, 'max': 5000},
