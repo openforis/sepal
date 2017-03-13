@@ -1,6 +1,6 @@
 package tile
 
-import org.openforis.sepal.component.datasearch.internal.Scene
+import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.component.datasearch.internal.Scenes
 import spock.lang.Ignore
 import spock.lang.Specification
@@ -16,7 +16,7 @@ class Scenes_Scene_Selection_Test extends Specification {
     int sceneIndex
     def scoreInvocations = []
     def spyingScore = new Scenes.ScoringAlgorithm() {
-        double score(Scene scene, double improvement) {
+        double score(SceneMetaData scene, double improvement) {
             scoreInvocations << [scene: scene, improvement: improvement]
             return improvement
         }
@@ -185,7 +185,6 @@ class Scenes_Scene_Selection_Test extends Specification {
 
 
     def 'Test'() {
-        def tile = new Scenes([[-77.6952059d, -0.08838420000000004d], [-76.70920589999999d, -0.08844310000000004d], [-76.7094155d, 0.9045062d], [-77.6955362d, 0.9039036999999995d], [-77.6952059d, -0.08838420000000004d]])
         def sceneData = [
                 [2.7903, [[-76.70938552083159, -0.08835220937365572], [-76.70929552620858, -0.08828262077779536], [-76.70933659967426, 0.4081222882656975], [-76.70950516552598, 0.9045061476782632], [-76.70957479805233, 0.9045961154526054], [-76.92750517623953, 0.9044861708195415], [-76.92806476066534, 0.9027933219123112], [-76.93021696764659, 0.8941080622105475], [-76.9401665389342, 0.8525992820552625], [-76.95926085122451, 0.7725674248986666], [-76.96302592066593, 0.7557469375304157], [-76.96759771477701, 0.7351291446027979], [-77.02947109931735, 0.4554447807670157], [-77.04319621957822, 0.39332559567765435], [-77.14094924398543, -0.05070049168034211], [-77.14633857376585, -0.07538233856890447], [-77.14876590399145, -0.08678325625926854], [-77.14876598636495, -0.0882309922359012], [-77.1476922687331, -0.08832932358961738], [-76.70938552083159, -0.08835220937365572]]],
                 [86, [[-76.73020446078476, 0.9045377487771171], [-76.73023750056852, 0.9045862564614053], [-77.69553626275555, 0.9039937196118255], [-77.69557770309825, 0.9039571221629467], [-77.69562620837374, 0.9039240811997865], [-77.69546829926149, 0.6558771960244861], [-77.69536062727619, 0.4078504538252646], [-77.69530316945585, 0.1598235414110291], [-77.69529592048359, -0.08820344680000186], [-77.69525935255231, -0.08824490844493606], [-77.6952263458109, -0.0882934313416937], [-76.9472327420047, -0.08834043559642367], [-76.94719787891547, -0.08830969254984852], [-76.9471540728257, -0.08829414912454525], [-76.94714569122127, -0.08827327159352642], [-76.9343896774453, -0.03962592433262516], [-76.89774775424603, 0.12096644328275732], [-76.86112037519294, 0.2859049253986467], [-76.74056521106745, 0.8491295662209805], [-76.73016709299677, 0.9028598876838304], [-76.73016786746891, 0.9044963005823813], [-76.73020446078476, 0.9045377487771171]]],
@@ -265,19 +264,20 @@ class Scenes_Scene_Selection_Test extends Specification {
             def footprint = scene[1].collect {
                 [it[0] as double, it[1] as double]
             }
-            scenes << new Scene(index as String, new Date(), scene[0] / 100d, footprint)
+            scenes << new Scenes.Scene(index as String, new Date(), scene[0] / 100d, footprint)
         }
         def start = System.currentTimeMillis()
-        def selectedScenes = tile.selectScenes(scenes, 0.9997, 1, Integer.MAX_VALUE, new Scenes.ScoringAlgorithm() {
-            double score(Scene scene, double improvement) {
+        def selectedScenes = new Scenes(scenes).selectScenes(0.9997, 1, Integer.MAX_VALUE, new Scenes.ScoringAlgorithm() {
+            double score(SceneMetaData scene, double improvement) {
                 improvement
             }
         })
-        println(System.currentTimeMillis() - start)
-//
-//
-        println(selectedScenes)
-        println(selectedScenes.size())
+        println("time: " + (System.currentTimeMillis() - start))
+
+
+        println("Selected scenes: " + selectedScenes)
+        println("Number of scenes: " + scenes.size())
+        println("Number of selected scenes: " + selectedScenes.size())
         when:
         true
 
@@ -308,7 +308,7 @@ class Scenes_Scene_Selection_Test extends Specification {
     }
 
 
-    List<Scene> selectScenes(Map args = [:], List<Scene> scenes) {
+    List<Scenes.Scene> selectScenes(Map args = [:], List<Scenes.Scene> scenes) {
         new Scenes(scenes).selectScenes(
                 args.minCoverage ?: 1d as double,
                 args.minScenes ?: 1 as int,
@@ -317,8 +317,8 @@ class Scenes_Scene_Selection_Test extends Specification {
         )
     }
 
-    Scene scene(Map args = [:]) {
-        new Scene(
+    Scenes.Scene scene(Map args = [:]) {
+        new Scenes.Scene(
                 args.id ?: "scene-${++sceneIndex}",
                 args.date ?: new Date(),
                 args.cloudCover ?: 0d,

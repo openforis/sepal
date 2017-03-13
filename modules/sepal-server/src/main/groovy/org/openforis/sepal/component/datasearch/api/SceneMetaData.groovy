@@ -13,7 +13,7 @@ class SceneMetaData {
     double coverage // In percentage
     double sunAzimuth
     double sunElevation
-    String footprint
+    double[][] footprint
     URI browseUrl
     Date updateTime
 }
