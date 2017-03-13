@@ -6,7 +6,7 @@ import groovymvc.Controller
 import groovymvc.Params
 import groovymvc.ParamsException
 import groovymvc.util.Decode
-import org.openforis.sepal.component.datasearch.DataSet
+import org.openforis.sepal.component.datasearch.api.DataSet
 import org.openforis.sepal.component.datasearch.adapter.HttpGoogleEarthEngineGateway
 import org.openforis.sepal.component.datasearch.api.Aoi
 import org.openforis.sepal.component.datasearch.api.FusionTableShape
