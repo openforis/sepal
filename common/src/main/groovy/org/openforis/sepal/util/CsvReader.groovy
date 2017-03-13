@@ -1,6 +1,9 @@
 package org.openforis.sepal.util
 
 import groovyx.net.http.HTTPBuilder
+import org.apache.commons.csv.CSVFormat
+import org.apache.commons.csv.CSVParser
+import org.apache.commons.csv.CSVRecord
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClients
 import org.slf4j.Logger
@@ -27,13 +30,11 @@ class CsvInputStreamReader implements CsvReader {
     }
 
     void eachLine(Closure closure) {
-        def reader = new InputStreamReader(inputStream, 'UTF-8')
-        def columns = reader.readLine().split(',').collect { it.trim() }
-        for (String line : reader) {
+        def parser = new CSVParser(new InputStreamReader(inputStream, 'UTF-8'), CSVFormat.DEFAULT.withHeader())
+        def columns = parser.headerMap.keySet() as List
+        for (CSVRecord record : parser) {
             def data = [:]
-            line.split(',')
-                    .collect { it.trim() }
-                    .eachWithIndex { value, int i ->
+            record.eachWithIndex {value, i ->
                 data[columns[i]] = value
             }
             def result = closure.call(data)
