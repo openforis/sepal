@@ -1,8 +1,6 @@
 package org.openforis.sepal.component.datasearch.adapter
 
-import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
-import groovyx.net.http.RESTClient
 import org.openforis.sepal.component.datasearch.api.DataSetMetadataGateway
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.util.CsvReader
@@ -18,7 +16,6 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final File workingDir
     private final List<CsvReader> readers
-    private final RESTClient aws = new RESTClient('http://sentinel-s2-l1c.s3.amazonaws.com/tiles/')
 
     CsvBackedSentinel2Gateway(File workingDir, List<CsvReader> readers) {
         this.workingDir = workingDir
@@ -80,9 +77,9 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
         return null
     }
 
-    private String footprint(data) {
+    private List<List<BigDecimal>> footprint(data) {
         def json = new JsonSlurper().parseText(data['.geo'])
-        return JsonOutput.toJson(json.coordinates[0])
+        return json.coordinates[0]
     }
 
     private boolean isSceneIncluded(data) {

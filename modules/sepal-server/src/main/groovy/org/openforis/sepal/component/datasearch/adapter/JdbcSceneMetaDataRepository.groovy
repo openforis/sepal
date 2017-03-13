@@ -9,7 +9,6 @@ import org.openforis.sepal.transaction.SqlConnectionManager
 
 import java.sql.Connection
 
-
 class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
     private final SqlConnectionManager connectionManager
 
@@ -28,8 +27,8 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
 
     private void update(SceneMetaData scene, Sql sql) {
         def params = scene.with {
-            [sensorId, sceneAreaId, acquisitionDate, cloudCover, coverage, sunAzimuth, sunElevation,
-             footprint, browseUrl.toString(), scene.updateTime, dataSet.metaDataSource, id]
+            [sensorId, sceneAreaId, acquisitionDate, cloudCover, sunAzimuth, sunElevation,
+             browseUrl.toString(), scene.updateTime, dataSet.metaDataSource, id]
         }
 
         def rowsUpdated = sql.executeUpdate('''
@@ -38,10 +37,8 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                       scene_area_id = ?,
                       acquisition_date = ?,
                       cloud_cover = ?,
-                      coverage = ?,
                       sun_azimuth = ?,
                       sun_elevation = ?,
-                      footprint = ?,
                       browse_url = ?,
                       update_time = ?,
                       meta_data_source = ?
@@ -49,15 +46,15 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
         if (!rowsUpdated)
             sql.executeInsert('''
                     INSERT INTO scene_meta_data(
-                        sensor_id, scene_area_id, acquisition_date, cloud_cover, coverage, sun_azimuth, sun_elevation, 
-                        footprint, browse_url, update_time, meta_data_source, id)
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', params)
+                        sensor_id, scene_area_id, acquisition_date, cloud_cover, sun_azimuth, sun_elevation, 
+                        browse_url, update_time, meta_data_source, id)
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', params)
     }
 
     List<SceneMetaData> findScenesInSceneArea(SceneQuery query) {
         return sql.rows('''
-                SELECT id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, coverage, 
-                       sun_azimuth, sun_elevation, footprint, browse_url, update_time
+                SELECT id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, 
+                       sun_azimuth, sun_elevation, browse_url, update_time
                 FROM scene_meta_data
                 WHERE scene_area_id = ?
                 AND acquisition_date >= ? AND acquisition_date <= ? AND acquisition_date <= ?''',
@@ -75,13 +72,13 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                     LEAST(
                         ABS(DAYOFYEAR(acquisition_date) - $query.targetDayOfYear),
                         365 - ABS(DAYOFYEAR(acquisition_date) - $query.targetDayOfYear)) days_from_target_date,
-                    id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, coverage, 
-                    sun_azimuth, sun_elevation, footprint, browse_url, update_time
+                    id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, 
+                    sun_azimuth, sun_elevation, browse_url, update_time
                 FROM scene_meta_data
                 WHERE scene_area_id  = ?
                 AND sensor_id in (${placeholders(query.sensorIds)})
                 AND acquisition_date >= ? AND acquisition_date <= ? AND acquisition_date <= ?
-                ORDER BY sort_weight, 1 - coverage * (1 - cloud_cover), days_from_target_date""" as String
+                ORDER BY sort_weight, cloud_cover, days_from_target_date""" as String
 
 
         sql.withTransaction { Connection conn ->
@@ -103,10 +100,8 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                         sensorId: rs.getString('sensor_id'),
                         acquisitionDate: new Date(rs.getTimestamp('acquisition_date').time as long),
                         cloudCover: rs.getDouble('cloud_cover'),
-                        coverage: rs.getDouble('coverage'),
                         sunAzimuth: rs.getDouble('sun_azimuth'),
                         sunElevation: rs.getDouble('sun_elevation'),
-                        footprint: rs.getString('footprint'),
                         browseUrl: URI.create(rs.getString('browse_url')),
                         updateTime: new Date(rs.getTimestamp('update_time').time as long)
                 )
@@ -138,7 +133,6 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                 sensorId: row.sensor_id,
                 acquisitionDate: new Date(row.acquisition_date.time as long),
                 cloudCover: row.cloud_cover,
-                coverage: row.coverage,
                 sunAzimuth: row.sun_azimuth,
                 sunElevation: row.sun_elevation,
                 browseUrl: URI.create(row.browse_url),

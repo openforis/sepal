@@ -1,12 +1,9 @@
 package org.openforis.sepal.component.datasearch.query
 
-import groovy.json.JsonSlurper
-
 import org.openforis.sepal.component.datasearch.api.DataSet
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.SceneMetaDataProvider
 import org.openforis.sepal.component.datasearch.api.SceneQuery
-import org.openforis.sepal.component.datasearch.internal.Scene
 import org.openforis.sepal.component.datasearch.internal.Scenes
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
@@ -39,12 +36,12 @@ class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaDa
         if (query.dataSet == LANDSAT)
             landsat(query)
         else
-            sentinel(query)
+            sentinel2(query)
     }
 
-    private Map<String, List<SceneMetaData>> sentinel(FindBestScenes query) {
-        query.sceneAreaIds.collectEntries { sceneAreaId ->
-            def allScenes = []
+    private Map<String, List<SceneMetaData>> sentinel2(FindBestScenes query) {
+        def allScenes = [] as List<SceneMetaData>
+        query.sceneAreaIds.each { sceneAreaId ->
             sceneMetaDataProvider.eachScene(
                     new SceneQuery(
                             dataSet: query.dataSet,
@@ -53,33 +50,33 @@ class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaDa
                             fromDate: query.fromDate,
                             toDate: query.toDate,
                             targetDayOfYear: query.targetDayOfYear),
-                    query.targetDayOfYearWeight) { SceneMetaData scene ->
-                def json = new JsonSlurper().parseText(geoJson)
-                def footprint = json.collect {
-                    [it[0] as double, it[1] as double]
-                }
-                allScenes << new Scene(scene.id, scene.acquisitionDate, scene.cloudCover / 100, footprint)
+                    query.targetDayOfYearWeight) {
+                allScenes << it
                 return true
             }
-            def scenes = new Scenes(tileFootprint).selectScenes(
-                    allScenes,
-                    1 - query.cloudCoverTarget,
-                    query.minScenes,
-                    query.maxScenes,
-                    new Scenes.ScoringAlgorithm() {
-                        double score(Scene scene, double improvement) {
-                            return 0
-                        }
-                    }
-            )
-            return [(sceneAreaId): scenes]
         }
+
+
+        def selectedScenes = new Scenes(allScenes).selectScenes(
+                1 - query.cloudCoverTarget,
+                query.minScenes,
+                query.maxScenes,
+                new Scenes.ScoringAlgorithm() {
+                    double score(SceneMetaData scene, double improvement) {
+                        return improvement
+                    }
+                }
+        )
+        def scenesBySceneAreaId = selectedScenes.groupBy {
+            it.sceneAreaId
+        }
+        return scenesBySceneAreaId
     }
 
     private Map<String, List<SceneMetaData>> landsat(FindBestScenes query) {
         query.sceneAreaIds.collectEntries { sceneAreaId ->
             def scenes = []
-            def missing = 1
+            def cloudCover = 1
             sceneMetaDataProvider.eachScene(
                     new SceneQuery(
                             dataSet: query.dataSet,
@@ -90,10 +87,10 @@ class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaDa
                             targetDayOfYear: query.targetDayOfYear),
                     query.targetDayOfYearWeight) { SceneMetaData scene ->
                 scenes << scene
-                missing *= 1 - (scene.coverage / 100) * (1 - scene.cloudCover / 100)
+                cloudCover *= scene.cloudCover / 100
                 if (query.maxScenes <= scenes.size())
                     return false
-                return (missing > query.cloudCoverTarget || scenes.size() < query.minScenes)
+                return (cloudCover > query.cloudCoverTarget || scenes.size() < query.minScenes)
             }
             return [(sceneAreaId): scenes]
         }
