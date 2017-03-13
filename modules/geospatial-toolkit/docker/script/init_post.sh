@@ -9,7 +9,7 @@ mkdir /var/run/sshd
 
 # Setup /etc/environment
 printf '%s\n' \
-    'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' \
+    'PATH="/usr/local/lib/orfeo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' \
     'JAVA_HOME="/usr/lib/jvm/java-8-oracle"' \
     'GDAL_DATA="/usr/share/gdal/2.1"' \
     >> /etc/environment

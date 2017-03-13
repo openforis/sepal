@@ -17,6 +17,9 @@ RUN chmod u+x /script/init_java.sh; sync && /script/init_java.sh
 ADD script/init_oft.sh /script
 RUN chmod u+x /script/init_oft.sh; sync && /script/init_oft.sh
 
+ADD script/init_orfeo.sh /script
+RUN chmod u+x /script/init_orfeo.sh; sync && /script/init_orfeo.sh
+
 ADD script/init_esa_snap_toolbox.sh /script
 RUN chmod u+x /script/init_esa_snap_toolbox.sh; sync && /script/init_esa_snap_toolbox.sh
 
