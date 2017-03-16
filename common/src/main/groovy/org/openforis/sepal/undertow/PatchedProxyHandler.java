@@ -219,8 +219,10 @@ public final class PatchedProxyHandler implements HttpHandler {
         @Override
         public void couldNotResolveBackend(HttpServerExchange exchange) {
             if (exchange.isResponseStarted()) {
+                log.error("Could not resolve backend, , and since response is started connection is closed. exchange: " + exchange);
                 IoUtils.safeClose(exchange.getConnection());
             } else {
+                log.error("[503] Could not resolve backend, , and since response is not started 503 is returned. exchange: " + exchange);
                 exchange.setStatusCode(StatusCodes.SERVICE_UNAVAILABLE);
                 exchange.endExchange();
             }
@@ -237,8 +239,10 @@ public final class PatchedProxyHandler implements HttpHandler {
                 UndertowLogger.PROXY_REQUEST_LOGGER.timingOutRequest(exchange.getRequestURI());
             }
             if (exchange.isResponseStarted()) {
+                log.error("Request canceled, and since response is started connection is closed. exchange: " + exchange);
                 IoUtils.safeClose(exchange.getConnection());
             } else {
+                log.error("[503] Request canceled, and since response is not started 503 is returned. exchange: " + exchange);
                 exchange.setStatusCode(StatusCodes.SERVICE_UNAVAILABLE);
                 exchange.endExchange();
             }
@@ -523,9 +527,11 @@ public final class PatchedProxyHandler implements HttpHandler {
                 public void failed(IOException e) {
                     UndertowLogger.PROXY_REQUEST_LOGGER.proxyRequestFailed(exchange.getRequestURI(), e);
                     if (!exchange.isResponseStarted()) {
+                        log.error("[503] Proxy request failed, and since response is not started 503 is returned. exchange: " + exchange, e);
                         exchange.setStatusCode(StatusCodes.SERVICE_UNAVAILABLE);
                         exchange.endExchange();
                     } else {
+                        log.error("Proxy request failed, and since response is started connection is closed. exchange: " + exchange, e);
                         IoUtils.safeClose(exchange.getConnection());
                     }
                 }

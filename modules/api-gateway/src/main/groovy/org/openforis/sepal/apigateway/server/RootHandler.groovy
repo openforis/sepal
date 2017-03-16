@@ -2,6 +2,7 @@ package org.openforis.sepal.apigateway.server
 
 import io.undertow.Handlers
 import io.undertow.attribute.ExchangeAttributes
+import io.undertow.client.ClientResponse
 import io.undertow.predicate.Predicates
 import io.undertow.protocols.ssl.UndertowXnioSsl
 import io.undertow.server.HttpHandler
@@ -155,6 +156,15 @@ class RootHandler implements HttpHandler {
             )
             if (endpointConfig.rewriteRedirects)
                 proxyHandler.addClientResponseListener(new RedirectRewriter())
+            proxyHandler.addClientResponseListener(new PatchedProxyHandler.ClientResponseListener() {
+                void completed(ClientResponse response, HttpServerExchange exchange) {
+                    LOG.debug("Completed exchange. response: $response, exchange: $exchange")
+                }
+
+                void failed(IOException e, HttpServerExchange exchange) {
+                    LOG.error("Failed exchange. exchange: $exchange", e)
+                }
+            })
         }
 
         void handleRequest(HttpServerExchange exchange) throws Exception {
