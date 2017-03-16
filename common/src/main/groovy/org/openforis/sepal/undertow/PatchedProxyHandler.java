@@ -218,13 +218,18 @@ public final class PatchedProxyHandler implements HttpHandler {
 
         @Override
         public void couldNotResolveBackend(HttpServerExchange exchange) {
-            if (exchange.isResponseStarted()) {
-                log.error("Could not resolve backend, , and since response is started connection is closed. exchange: " + exchange);
-                IoUtils.safeClose(exchange.getConnection());
-            } else {
-                log.error("[503] Could not resolve backend, , and since response is not started 503 is returned. exchange: " + exchange);
-                exchange.setStatusCode(StatusCodes.SERVICE_UNAVAILABLE);
-                exchange.endExchange();
+            try {
+                throw new RuntimeException("Could not resolve backend");
+            } catch(Exception e) {
+                if (exchange.isResponseStarted()) {
+                    log.error("Could not resolve backend, , and since response is started connection is closed. exchange: " + exchange, e);
+                    IoUtils.safeClose(exchange.getConnection());
+                } else {
+                    log.error("[503] Could not resolve backend, , and since response is not started 503 is returned. exchange: " + exchange, e);
+                    exchange.setStatusCode(StatusCodes.SERVICE_UNAVAILABLE);
+                    exchange.endExchange();
+                }
+
             }
         }
 
