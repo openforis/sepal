@@ -153,9 +153,9 @@ class SandboxWebProxy {
             URI uri = null
             if (sandboxSessionId) {
                 uri = httpSession.getAttribute(uriSessionKey) as URI
-                LOG.debug("HTTP session linked with sandbox $sandboxSessionId. Endpoint: $uri")
+                LOG.debug("HTTP session linked with sandbox $sandboxSessionId. endpoint: $uri, exchange: $exchange")
             } else
-                LOG.debug("HTTP session not linked with any sandbox")
+                LOG.debug("HTTP session not linked with any sandbox. exchange: $exchange")
             if (!uri) {
                 def sandboxSession = sandboxSession(sandboxSessionId, username)
                 httpSession.setAttribute(SANDBOX_SESSION_ID_KEY, sandboxSession.id)
@@ -241,7 +241,7 @@ class SandboxWebProxy {
             def sandboxSession = null
             if (sessionId)
                 sandboxSession = sandboxSessionManager.findSession(sessionId)
-            if (!sandboxSession) {
+            if (!sandboxSession || sandboxSession.closed) {
                 def sandboxSessions = sandboxSessionManager.findPendingOrActiveSessions(username)
                 // Take first active, or pending if none available
                 if (sandboxSessions)
