@@ -9,9 +9,9 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="io.undertow" additivity="false" level="DEBUG">
-        <appender-ref ref="STDOUT"/>
-    </logger>
+    <!--<logger name="io.undertow" additivity="false" level="DEBUG">-->
+        <!--<appender-ref ref="STDOUT"/>-->
+    <!--</logger>-->
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

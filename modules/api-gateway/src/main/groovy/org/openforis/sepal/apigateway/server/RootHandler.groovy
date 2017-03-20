@@ -2,11 +2,12 @@ package org.openforis.sepal.apigateway.server
 
 import io.undertow.Handlers
 import io.undertow.attribute.ExchangeAttributes
-import io.undertow.client.ClientResponse
 import io.undertow.predicate.Predicates
 import io.undertow.protocols.ssl.UndertowXnioSsl
+import io.undertow.server.ExchangeCompletionListener
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
+import io.undertow.server.ResponseCommitListener
 import io.undertow.server.handlers.PathHandler
 import io.undertow.server.handlers.ResponseCodeHandler
 import io.undertow.server.handlers.encoding.ContentEncodingRepository
@@ -44,6 +45,8 @@ class RootHandler implements HttpHandler {
 
     RootHandler proxy(EndpointConfig endpointConfig) {
         def endpointHandler = new LoggingProxyHandler(endpointConfig)
+        if (endpointConfig.rewriteRedirects)
+            endpointHandler = new RedirectRewriteHandler(endpointHandler)
         if (endpointConfig.authenticate)
             endpointHandler = new AuthenticatingHandler(authenticationUrl, endpointHandler)
         if (endpointConfig.https)
@@ -52,7 +55,7 @@ class RootHandler implements HttpHandler {
             endpointHandler = new CachedHandler(endpointHandler)
         if (endpointConfig.noCache)
             endpointHandler = new NoCacheHandler(endpointHandler)
-        endpointHandler = gzipHandler(endpointHandler)
+//        endpointHandler = gzipHandler(endpointHandler)
         def sessionConfig = new SessionCookieConfig(cookieName: "SEPAL-SESSIONID", secure: endpointConfig.https)
         endpointHandler = new SessionAttachmentHandler(endpointHandler, sessionManager, sessionConfig)
         endpointConfig.prefix ?
@@ -150,24 +153,26 @@ class RootHandler implements HttpHandler {
             def xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY, sslContext)
             def proxyClient = new LoadBalancingProxyClient()
             proxyClient.addHost(URI.create(target), xnioSsl)
+//            proxyClient.maxQueueSize = 10
+//            proxyClient.connectionsPerThread = 1000 // Setting this to 1 brakes it very easily
             proxyHandler = new PatchedProxyHandler(
                     proxyClient,
                     ResponseCodeHandler.HANDLE_404
             )
-            if (endpointConfig.rewriteRedirects)
-                proxyHandler.addClientResponseListener(new RedirectRewriter())
-            proxyHandler.addClientResponseListener(new PatchedProxyHandler.ClientResponseListener() {
-                void completed(ClientResponse response, HttpServerExchange exchange) {
-                    LOG.debug("Completed exchange. response: $response, exchange: $exchange")
-                }
-
-                void failed(IOException e, HttpServerExchange exchange) {
-                    LOG.error("Failed exchange. exchange: $exchange", e)
-                }
-            })
         }
 
         void handleRequest(HttpServerExchange exchange) throws Exception {
+            exchange.addResponseCommitListener(new ResponseCommitListener() {
+                void beforeCommit(HttpServerExchange ex) {
+                    LOG.debug("Before response commit. exchange: $exchange")
+                }
+            })
+            exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
+                void exchangeEvent(HttpServerExchange ex, ExchangeCompletionListener.NextListener nextListener) {
+                    LOG.debug("Exchange complete. exchange: $ex")
+                    nextListener.proceed()
+                }
+            })
             LOG.info("Forwarding to $target: $exchange")
             proxyHandler.handleRequest(exchange)
         }
