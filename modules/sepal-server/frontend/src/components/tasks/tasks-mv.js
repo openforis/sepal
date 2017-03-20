@@ -26,8 +26,18 @@ var stopJob = function ( e ) {
 
 var startJob = function () {
     if ( !jobTimer ) {
-        jobTimer = -1
-        jobTimer = setInterval( requestTasks, 5000 )
+        // jobTimer = 1
+        // jobTimer = setInterval( requestTasks, 5000 )
+        
+        var executeTaskRequest = function () {
+            // if ( jobTimer ) {
+            jobTimer = setTimeout( function () {
+                requestTasks( executeTaskRequest )
+            }, 5000 )
+            // }
+        }
+        
+        requestTasks( executeTaskRequest )
     }
 }
 

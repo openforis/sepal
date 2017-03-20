@@ -6,7 +6,7 @@ require( './login.scss' )
 var FormLogin     = require( './views/form-login' )
 var FormForgotPwd = require( './views/form-forgot-pwd' )
 var BgSlideshow   = require( './views/bg-slideshow' )
-var BgStars       = require( './views/bg-stars' )
+// var BgStars       = require( './views/bg-stars' )
 //
 var BtnForgotPwd  = null
 
@@ -25,7 +25,7 @@ var show = function ( invitation ) {
     
     setTimeout( function () {
         BgSlideshow.show()
-        BgStars.show()
+        // BgStars.show()
     }, 100 )
     
     BtnForgotPwd = html.find( '.btn-forgot-pwd' )

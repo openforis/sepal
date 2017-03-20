@@ -17,10 +17,10 @@ var userDetailsLoaded = function ( e, userDetails ) {
     CurrentUser = UserModel( userDetails )
     
     if ( loadUserSanboxIntervalId ) {
-        clearInterval( loadUserSanboxIntervalId )
+        stopJob()
     }
     loadUserSandbox()
-    loadUserSanboxIntervalId = setInterval( loadUserSandbox, 1000 * 60 )
+    // loadUserSanboxIntervalId = setInterval( loadUserSandbox, 1000 * 60 )
 }
 
 var loadUserSandbox = function () {
@@ -34,10 +34,20 @@ var loadUserSandbox = function () {
             }
             
             EventBus.dispatch( Events.USER.USER_SANDBOX_REPORT_LOADED, null, CurrentUser )
+            
+            
+            loadUserSanboxIntervalId = setTimeout( function () {
+                loadUserSandbox()
+            }, 60000 )
         }
     }
     
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+}
+
+var stopJob = function () {
+    clearInterval( loadUserSanboxIntervalId )
+    loadUserSanboxIntervalId = null
 }
 
 var getCurrentUser = function () {
@@ -96,6 +106,8 @@ EventBus.addEventListener( Events.USER.PASSWORD_CHANGED, onPasswordChanged )
 EventBus.addEventListener( Events.SECTION.USER.REMOVE_SESSION, removeSession )
 // reload user details
 EventBus.addEventListener( Events.USER.RELOAD_USER_DETAILS, reloadUserDetails )
+
+EventBus.addEventListener( Events.APP.DESTROY, stopJob )
 
 module.exports = {
     getCurrentUser: getCurrentUser
