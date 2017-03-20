@@ -11,6 +11,8 @@ import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSessionManager
 import spock.lang.Specification
 import util.Port
 
+import java.util.concurrent.ConcurrentHashMap
+
 import static groovy.json.JsonOutput.toJson
 
 class SandboxWebProxyTest extends Specification {
@@ -22,12 +24,11 @@ class SandboxWebProxyTest extends Specification {
     final sessionTimeout = 900
     final proxy = new SandboxWebProxy(port, portByEndpoint, sandboxSessionManager, sessionHeartbeatInterval, sessionTimeout)
 
-    def cookieStore = new BasicCookieStore()
+    def cookieStores = new ConcurrentHashMap<String, BasicCookieStore>()
     final client = new RESTClient("http://localhost:$port/")
 
     def setup() {
         client.handler.failure = { resp -> return resp }
-        client.client.cookieStore = cookieStore
         proxy.start()
     }
 
@@ -48,7 +49,7 @@ class SandboxWebProxyTest extends Specification {
 
     def 'Given an endpoint not started, when requesting endpoint, 400 is returned'() {
         when:
-        def response  = get('endpoint/')
+        def response = get('endpoint/')
 
         then:
         response.status == 400
@@ -58,7 +59,7 @@ class SandboxWebProxyTest extends Specification {
         start('another-endpoint')
 
         when:
-        def response  = get('endpoint/')
+        def response = get('endpoint/')
 
         then:
         response.status == 400
@@ -143,15 +144,26 @@ class SandboxWebProxyTest extends Specification {
         get(path, ['sepal-user': toJson([username: username])])
     }
 
-    private HttpResponseDecorator get(String path, Map<String, Object> headers) {
+    private HttpResponseDecorator get(String path, Map<String, String> headers) {
+        initCookieStore(headers)
         client.get(path: path, headers: headers) as HttpResponseDecorator
     }
 
     private void start(String endpoint, String username = 'some-username') {
+        def headers = ['sepal-user': toJson([username: username])]
+        initCookieStore(headers)
         client.post(
                 path: 'start',
                 query: ['endpoint': endpoint],
-                headers: ['sepal-user': toJson([username: username])])
+                headers: headers)
+    }
+
+    private void initCookieStore(Map<String, String> headers) {
+        def usernameHeader = headers['sepal-user']
+        if (usernameHeader)
+            client.client.cookieStore = cookieStores.computeIfAbsent(usernameHeader) {
+                new BasicCookieStore()
+            }
     }
 }
 

@@ -15,11 +15,13 @@ import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import static org.openforis.sepal.component.datasearch.api.DataSet.LANDSAT
 import static org.openforis.sepal.util.DateTime.parseDateString
 
+@Ignore
 class DataSearchTest extends Specification {
     static final String SOME_FUSION_TABLE = 'some fusion table'
     static final String SOME_KEY_COLUMN = 'some fusion table column'

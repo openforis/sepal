@@ -32,7 +32,8 @@ class RequestInstanceHandler implements CommandHandler<WorkerInstance, RequestIn
         this.clock = clock
     }
 
-    WorkerInstance execute(RequestInstance command) {
+    // Synchronizing to prevent race-condition on EC2 instance - TODO: Find better way
+    synchronized WorkerInstance execute(RequestInstance command) {
         try {
             def reservation = new WorkerReservation(username: command.username, workerType: command.workerType)
             def idleInstance = idleInstance(command.instanceType)
