@@ -12,10 +12,10 @@ var SepalAois = require( '../sepal-aois/sepal-aois' )
 require( './polygon-draw' )
 
 // html template
-var html       = null
+var html   = null
 // instance variables
-var google     = null
-var map        = null
+var google = null
+var map    = null
 
 // AOI layers
 var aoiLayer          = null

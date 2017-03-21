@@ -56,23 +56,34 @@ var loadBounds = function ( isoCode, callback ) {
     var query = "SELECT geometry FROM " + FT_TableID + " WHERE ISO = '" + isoCode + "' ORDER BY NAME_FAO ASC"
     var data  = { sql: query, key: GoogleMapsLoader.KEY }
     
+    
+    var bounds    = new google.maps.LatLngBounds()
+    var addBounds = function ( geometry ) {
+        $.each( geometry.coordinates, function ( k, latLngs ) {
+            $.each( latLngs, function ( l, latLng ) {
+                var gLatLng = new google.maps.LatLng( Number( latLng[ 1 ] ), Number( latLng[ 0 ] ) )
+                bounds.extend( gLatLng )
+            } )
+        } )
+    }
+    
     var params = {
         url      : FT_URL
         , data   : data
         , success: function ( response ) {
-            var bounds              = new google.maps.LatLngBounds()
             var geometryCollections = response.rows[ 0 ]
-            
             $.each( geometryCollections, function ( i, geometryCollection ) {
-                $.each( geometryCollection.geometries, function ( j, geometry ) {
-                    $.each( geometry.coordinates, function ( k, latLngs ) {
-                        $.each( latLngs, function ( l, latLng ) {
-                            var gLatLng = new google.maps.LatLng( Number( latLng[ 1 ] ), Number( latLng[ 0 ] ) )
-                            bounds.extend( gLatLng )
-                        } )
+                
+                if ( geometryCollection.geometries ) {
+                    $.each( geometryCollection.geometries, function ( j, geometry ) {
+                        addBounds( geometry )
                     } )
-                } )
+                } else if ( geometryCollection.geometry ) {
+                    addBounds( geometryCollection.geometry )
+                }
+                
             } )
+            
             callback( bounds )
         }
     }
