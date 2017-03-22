@@ -14,6 +14,8 @@ class SandboxProxyHandler implements HttpHandler {
     }
 
     void handleRequest(HttpServerExchange exchange) throws Exception {
-        endpointProvider.endpointFor(exchange).forward(exchange)
+        def endpoint = endpointProvider.endpointFor(exchange)
+        LOG.debug("Forwarding to endpoint. endpoint: $endpoint, exchange: $exchange")
+        endpoint.forward(exchange)
     }
 }

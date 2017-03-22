@@ -153,8 +153,7 @@ class RootHandler implements HttpHandler {
             def xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY, sslContext)
             def proxyClient = new LoadBalancingProxyClient()
             proxyClient.addHost(URI.create(target), xnioSsl)
-//            proxyClient.maxQueueSize = 10
-//            proxyClient.connectionsPerThread = 1000 // Setting this to 1 brakes it very easily
+            proxyClient.ttl = 30 * 1000
             proxyHandler = new PatchedProxyHandler(
                     proxyClient,
                     ResponseCodeHandler.HANDLE_404
@@ -164,16 +163,16 @@ class RootHandler implements HttpHandler {
         void handleRequest(HttpServerExchange exchange) throws Exception {
             exchange.addResponseCommitListener(new ResponseCommitListener() {
                 void beforeCommit(HttpServerExchange ex) {
-                    LOG.debug("Before response commit. exchange: $exchange")
+                    LOG.debug("Before response commit. statusCode: $ex.statusCode, exchange: $exchange")
                 }
             })
             exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
                 void exchangeEvent(HttpServerExchange ex, ExchangeCompletionListener.NextListener nextListener) {
-                    LOG.debug("Exchange complete. exchange: $ex")
+                    LOG.debug("Exchange complete. statusCode: $ex.statusCode, exchange: $ex")
                     nextListener.proceed()
                 }
             })
-            LOG.info("Forwarding to $target: $exchange")
+            LOG.info("Forwarding. target: $target, exchange: $exchange")
             proxyHandler.handleRequest(exchange)
         }
     }

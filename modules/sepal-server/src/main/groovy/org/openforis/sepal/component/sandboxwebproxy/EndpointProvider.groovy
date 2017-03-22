@@ -5,6 +5,7 @@ import groovy.json.JsonSlurper
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.session.Session
 import io.undertow.server.session.SessionConfig
+import io.undertow.server.session.SessionListener
 import io.undertow.server.session.SessionManager
 import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSession
 import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSessionManager
@@ -25,6 +26,7 @@ class EndpointProvider {
     private final endpointByNameByUsername =
             new ConcurrentHashMap<String, ConcurrentHashMap<String, Endpoint>>()
     private final endpointsBySandboxHost = new ConcurrentHashMap<String, Set<Endpoint>>()
+    private final sandboxSessionIdByhttpSessionId = new ConcurrentHashMap<String, String>()
 
     EndpointProvider(
             SessionManager httpSessionManager,
@@ -34,18 +36,37 @@ class EndpointProvider {
         this.sandboxSessionManager = sandboxSessionManager
         this.portByEndpointName = portByEndpointName
 
-        sandboxSessionManager.onSessionClosed { sandboxSessionClosed(it) }
+        sandboxSessionManager.onSessionClosed {
+            def sandboxSession = sandboxSessionManager.findSession(it)
+            if (sandboxSession)
+                sandboxSessionClosed(sandboxSession)
+        }
+
+        httpSessionManager.registerSessionListener(new SessionListener() {
+            void sessionCreated(Session session, HttpServerExchange exchange) {}
+
+            void sessionDestroyed(Session session, HttpServerExchange exchange, SessionListener.SessionDestroyedReason reason) {
+                def sandboxSessionId = sandboxSessionIdByhttpSessionId.remove(session.id)
+                LOG.debug("HTTP Session destroyed. httpSessionId: $session.id, sandboxSessionId: $sandboxSessionId")
+            }
+
+            void attributeAdded(Session session, String name, Object value) {}
+
+            void attributeUpdated(Session session, String name, Object newValue, Object oldValue) {}
+
+            void attributeRemoved(Session session, String name, Object oldValue) {}
+
+            void sessionIdChanged(Session session, String oldSessionId) {}
+        })
     }
 
     Runnable heartbeatSender() {
         return {
             try {
-                LOG.trace("Sending heartbeats for sandbox sessions referenced in http sessions")
-                def activeHttpSessionIds = httpSessionManager.allSessions.toSet()
-                activeHttpSessionIds.each { String httpSessionId ->
-                    def httpSession = httpSessionManager.getSession(httpSessionId)
-                    if (httpSession != null)
-                        sendWorkerSessionHeartbeat(httpSession.getAttribute(USERNAME_KEY) as String)
+                LOG.debug("Sending heartbeats for sandbox sessions referenced in http sessions")
+                def sandboxSessionIds = sandboxSessionIdByhttpSessionId.values().toSet() as Set<String>
+                sandboxSessionIds.each { sandboxSessionId ->
+                    sendHeartbeat(sandboxSessionId)
                 }
             } catch (Exception e) {
                 LOG.error("Failed to send heartbeats", e)
@@ -53,10 +74,36 @@ class EndpointProvider {
         } as Runnable
     }
 
-    void sandboxSessionClosed(String sandboxHost) { // TODO: Check if it's properly invoked
-        endpointsBySandboxHost.remove(sandboxHost).each { endpoint ->
-            endpoint.close()
+    private void sendHeartbeat(String sandboxSessionId) {
+        def sandboxSession = sandboxSessionManager.findSession(sandboxSessionId)
+        if (!sandboxSession) {
+            LOG.debug("Trying to send heartbeat to non-existing sandbox session. sandboxSessionId: $sandboxSessionId")
+            return
+        }
+
+        try {
+            if (sandboxSession.closed)
+                sandboxSessionClosed(sandboxSession)
+            else {
+                LOG.debug("Sending heartbeat. sandboxSession: $sandboxSession")
+                sandboxSessionManager.heartbeat(sandboxSessionId, sandboxSession.username)
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to send sandbox sesssion heartbeat. sandboxSession: $sandboxSession", e)
+            def endpoints = endpointByNameByUsername[sandboxSession.username].values()
+                    .findAll { it.sandboxSessionId == sandboxSessionId }
+            endpoints.each {
+                LOG.debug("Closed endpoint after failing to send heartbeat. endpoint: $it, sandboxSession: $sandboxSession")
+                it.close()
+            }
+        }
+    }
+
+    void sandboxSessionClosed(SandboxSession sandboxSession) {
+        LOG.debug("Sandbox session closed. sandboxSession: $sandboxSession")
+        endpointsBySandboxHost.remove(sandboxSession.host)?.each { endpoint ->
             endpointByNameByUsername.get(endpoint.username)?.remove(endpoint.name)
+            endpoint.close()
         }
     }
 
@@ -85,6 +132,7 @@ class EndpointProvider {
 
         def sandboxSession = findOrRequestSandboxSession(httpSession, username)
         httpSession.setAttribute(SANDBOX_SESSION_ID_KEY, sandboxSession.id)
+        sandboxSessionIdByhttpSessionId[httpSession.id] = sandboxSession.id
 
         def endpointByName = endpointByNameByUsername.computeIfAbsent(username) {
             new ConcurrentHashMap<>()
@@ -113,26 +161,6 @@ class EndpointProvider {
         if (!endpoint)
             throw new BadRequest("Endpoint must be started: ${endpointName}", 400)
         return endpoint
-    }
-
-
-    void sendWorkerSessionHeartbeat(String username) {
-        endpointByNameByUsername[username]?.values()?.collect { endpoint ->
-            endpoint.sandboxSessionId
-        }?.flatten()?.toSet()?.each { sandboxSessionId ->
-            try {
-                LOG.debug("Sending sandbox sesssion heartbeat. username: $username, sandboxSessionId: $sandboxSessionId")
-                sandboxSessionManager.heartbeat(sandboxSessionId as String, username)
-            } catch (Exception e) {
-                LOG.error("Failed to send sandbox sesssion heartbeat. username: $username, sandboxSessionId: $sandboxSessionId", e)
-                endpointByNameByUsername[username].values()
-                        .findAll { it.sandboxSessionId == sandboxSessionId }
-                        .each {
-                    LOG.debug("Closed endpoint after failing to send heartbeat. endpoint: $it")
-                    it.close()
-                }
-            }
-        }
     }
 
     private SandboxSession findOrRequestSandboxSession(Session httpSession, String username) {

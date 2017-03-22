@@ -2,6 +2,8 @@ package org.openforis.sepal.component.sandboxwebproxy
 
 import io.undertow.Handlers
 import io.undertow.Undertow
+import io.undertow.UndertowOptions
+import io.undertow.server.ExchangeCompletionListener
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.ResponseCommitListener
@@ -16,6 +18,7 @@ import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSessionManager
 import org.openforis.sepal.util.NamedThreadFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.xnio.Options
 
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -32,7 +35,7 @@ import java.util.concurrent.TimeUnit
  * </ul>
  */
 class SandboxWebProxy {
-    private final static Logger LOG = LoggerFactory.getLogger(this)
+    private final static Logger LOG = LoggerFactory.getLogger(SandboxWebProxy)
 
     private final Undertow server
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
@@ -60,11 +63,16 @@ class SandboxWebProxy {
         this.server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
                 .setHandler(createHandler(portByEndpoint))
+                .setIoThreads(Runtime.getRuntime().availableProcessors())
+                .setSocketOption(Options.READ_TIMEOUT, 30 * 1000)
+                .setSocketOption(Options.WRITE_TIMEOUT, 30 * 1000)
+                .setServerOption(UndertowOptions.IDLE_TIMEOUT, 30 * 1000)
+                .setServerOption(UndertowOptions.REQUEST_PARSE_TIMEOUT, 30 * 1000)
+                .setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 30 * 1000)
                 .build()
     }
 
     private HttpHandler createHandler(Map<String, Integer> portByEndpoint) {
-        def endpointProvider = new EndpointProvider(httpSessionManager, sandboxSessionManager, portByEndpoint)
         def pathHandler = Handlers.path(ResponseCodeHandler.HANDLE_404)
         def handler = new RedirectRewriteHandler(
                 new SandboxProxyHandler(endpointProvider)
@@ -74,10 +82,11 @@ class SandboxWebProxy {
         }
         pathHandler.addExactPath('/start', new SandboxStartHandler(endpointProvider))
         return new BadRequestCatchingHandler(
-                new SessionAttachmentHandler(
-                        pathHandler,
-                        httpSessionManager,
-                        new SessionCookieConfig(cookieName: "SANDBOX-SESSIONID", secure: false)))
+                new LoggingHandler(
+                        new SessionAttachmentHandler(
+                                pathHandler,
+                                httpSessionManager,
+                                new SessionCookieConfig(cookieName: "SANDBOX-SESSIONID", secure: false))))
     }
 
     void start() {
@@ -92,6 +101,31 @@ class SandboxWebProxy {
     void stop() {
         executor.shutdown()
         server.stop()
+    }
+
+    private static class LoggingHandler implements HttpHandler {
+        private final static Logger LOG = LoggerFactory.getLogger(LoggingHandler)
+        private final HttpHandler next
+
+        LoggingHandler(HttpHandler next) {
+            this.next = next
+        }
+
+        void handleRequest(HttpServerExchange exchange) throws Exception {
+            LOG.debug("Handling request. exchange $exchange")
+            exchange.addResponseCommitListener(new ResponseCommitListener() {
+                void beforeCommit(HttpServerExchange ex) {
+                    LOG.debug("Before response commit. statusCode: $ex.statusCode, exchange $ex")
+                }
+            })
+            exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
+                void exchangeEvent(HttpServerExchange ex, ExchangeCompletionListener.NextListener nextListener) {
+                    LOG.debug("Exchange complete. statusCode: $ex.statusCode, exchange $ex")
+                    nextListener.proceed()
+                }
+            })
+            next.handleRequest(exchange)
+        }
     }
 
     private static class RedirectRewriteHandler implements HttpHandler {

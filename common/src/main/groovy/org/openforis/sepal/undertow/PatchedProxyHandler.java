@@ -617,6 +617,7 @@ public final class PatchedProxyHandler implements HttpHandler {
     }
 
     static void handleFailure(HttpServerExchange exchange, PatchedProxyHandler.ProxyClientHandler proxyClientHandler, Predicate idempotentRequestPredicate, IOException e) {
+        log.error("Proxy request failed. exchange: " + exchange, e);
         UndertowLogger.PROXY_REQUEST_LOGGER.proxyRequestFailed(exchange.getRequestURI(), e);
         if(exchange.isResponseStarted()) {
             IoUtils.safeClose(exchange.getConnection());

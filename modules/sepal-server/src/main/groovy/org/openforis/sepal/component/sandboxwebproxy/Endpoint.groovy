@@ -4,11 +4,8 @@ import io.undertow.server.HttpServerExchange
 import io.undertow.server.handlers.ResponseCodeHandler
 import io.undertow.server.handlers.proxy.LoadBalancingProxyClient
 import org.openforis.sepal.undertow.PatchedProxyHandler
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 class Endpoint {
-    private final static Logger LOG = LoggerFactory.getLogger(this)
     final String username
     final String name
     final URI uri
@@ -23,6 +20,7 @@ class Endpoint {
         this.sandboxSessionId = sandboxSessionId
         proxyClient = new LoadBalancingProxyClient()
         proxyClient.addHost(uri)
+        proxyClient.ttl = 30 * 1000
         proxyHandler = new PatchedProxyHandler(proxyClient, ResponseCodeHandler.HANDLE_404)
     }
 
