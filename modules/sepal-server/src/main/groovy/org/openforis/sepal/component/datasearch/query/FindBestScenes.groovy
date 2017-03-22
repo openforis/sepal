@@ -4,7 +4,7 @@ import org.openforis.sepal.component.datasearch.api.DataSet
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.SceneMetaDataProvider
 import org.openforis.sepal.component.datasearch.api.SceneQuery
-import org.openforis.sepal.component.datasearch.internal.Scenes
+import org.openforis.sepal.component.datasearch.internal.Scenes2
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 import org.openforis.sepal.util.annotation.Data
@@ -39,9 +39,34 @@ class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaDa
             sentinel2(query)
     }
 
+//    private Map<String, List<SceneMetaData>> sentinel2(FindBestScenes query) {
+//        def allScenes = [] as List<SceneMetaData>
+//        query.sceneAreaIds.each { sceneAreaId ->
+//            sceneMetaDataProvider.eachScene(
+//                    new SceneQuery(
+//                            dataSet: query.dataSet,
+//                            sceneAreaId: sceneAreaId,
+//                            sensorIds: query.sensorIds,
+//                            fromDate: query.fromDate,
+//                            toDate: query.toDate,
+//                            targetDayOfYear: query.targetDayOfYear),
+//                    query.targetDayOfYearWeight) {
+//                allScenes << it
+//                return true
+//            }
+//        }
+//
+//        return new Scenes2(0.05, allScenes).selectScenes(
+//                query.cloudCoverTarget,
+//                query.minScenes,
+//                query.maxScenes
+//        )
+//    }
+
     private Map<String, List<SceneMetaData>> sentinel2(FindBestScenes query) {
-        def allScenes = [] as List<SceneMetaData>
-        query.sceneAreaIds.each { sceneAreaId ->
+        query.sceneAreaIds.collectEntries { sceneAreaId ->
+            def scenes = []
+            def cloudCover = 1
             sceneMetaDataProvider.eachScene(
                     new SceneQuery(
                             dataSet: query.dataSet,
@@ -50,27 +75,15 @@ class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaDa
                             fromDate: query.fromDate,
                             toDate: query.toDate,
                             targetDayOfYear: query.targetDayOfYear),
-                    query.targetDayOfYearWeight) {
-                allScenes << it
-                return true
+                    query.targetDayOfYearWeight) { SceneMetaData scene ->
+                scenes << scene
+                cloudCover *= scene.cloudCover / 100
+                if (query.maxScenes <= scenes.size())
+                    return false
+                return (cloudCover > query.cloudCoverTarget || scenes.size() < query.minScenes)
             }
+            return [(sceneAreaId): scenes]
         }
-
-
-        def selectedScenes = new Scenes(allScenes).selectScenes(
-                1 - query.cloudCoverTarget,
-                query.minScenes,
-                query.maxScenes,
-                new Scenes.ScoringAlgorithm() {
-                    double score(SceneMetaData scene, double improvement) {
-                        return improvement
-                    }
-                }
-        )
-        def scenesBySceneAreaId = selectedScenes.groupBy {
-            it.sceneAreaId
-        }
-        return scenesBySceneAreaId
     }
 
     private Map<String, List<SceneMetaData>> landsat(FindBestScenes query) {

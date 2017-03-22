@@ -41,8 +41,8 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     DataSearchComponent(
             SqlConnectionManager connectionManager,
             GoogleEarthEngineGateway geeGateway,
-            DataSetMetadataGateway usgs,
-            DataSetMetadataGateway sentinel2,
+            DataSetMetadataGateway landsatMetadata,
+            DataSetMetadataGateway sentinel2Metadata,
             String googleMapsApiKey,
             HandlerRegistryEventDispatcher eventDispatcher) {
         super(connectionManager, eventDispatcher)
@@ -50,8 +50,8 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
         this.googleMapsApiKey = googleMapsApiKey
         def sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
 
-        command(UpdateUsgsSceneMetaData, new UpdateUsgsSceneMetaDataHandler(usgs, sceneMetaDataRepository))
-        command(UpdateSentinel2SceneMetaData, new UpdateSentinel2SceneMetaDataHandler(sentinel2, sceneMetaDataRepository))
+        command(UpdateUsgsSceneMetaData, new UpdateUsgsSceneMetaDataHandler(landsatMetadata, sceneMetaDataRepository))
+        command(UpdateSentinel2SceneMetaData, new UpdateSentinel2SceneMetaDataHandler(sentinel2Metadata, sceneMetaDataRepository))
 
         query(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(geeGateway))
         query(FindScenesForSceneArea, new FindScenesForSceneAreaHandler(sceneMetaDataRepository))
@@ -61,7 +61,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     void onStart() {
         schedule(1, TimeUnit.DAYS,
                 new UpdateUsgsSceneMetaData(),
-//                new UpdateSentinel2SceneMetaData()
+                new UpdateSentinel2SceneMetaData()
         )
     }
 
