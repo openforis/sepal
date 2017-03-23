@@ -28,7 +28,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
     private void update(SceneMetaData scene, Sql sql) {
         def params = scene.with {
             [sensorId, sceneAreaId, acquisitionDate, cloudCover, sunAzimuth, sunElevation,
-             browseUrl.toString(), scene.updateTime, dataSet.metaDataSource, id]
+             browseUrl.toString(), updateTime, dataSet.metaDataSource, id]
         }
 
         def rowsUpdated = sql.executeUpdate('''

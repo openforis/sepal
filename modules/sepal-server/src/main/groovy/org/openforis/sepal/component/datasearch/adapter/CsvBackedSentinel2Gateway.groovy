@@ -69,7 +69,7 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
                         acquisitionDate: parseDate(data.SENSING_TIME),
                         cloudCover: data.CLOUD_COVER.toDouble(),
                         browseUrl: browseUrl(awsPath),
-                        updateTime: parseDate(data.GENERATION_TIME),
+                        updateTime: parseDate(data.SENSING_TIME),
                         sunAzimuth: 0,
                         sunElevation: 0,
                         coverage: coverage

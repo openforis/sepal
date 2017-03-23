@@ -13,6 +13,12 @@ class Sentinel2MosaicSpec(ImageSpec):
         self.target_day_of_year = int(spec['targetDayOfYear'])
         self.target_day_of_year_weight = float(spec['targetDayOfYearWeight'])
         self.bands = [getattr(util, band) for band in spec['bands']]
+        self.resolution = max([
+            resolution
+            for band, resolution
+            in constants.resolution_by_band.iteritems()
+            if band in self.bands
+        ])
         self.strategy = spec.get('strategy', constants.default_strategy)
         self.classes_to_mask = spec.get('classesToMask', constants.default_classes_to_mask)
 
@@ -32,6 +38,7 @@ class Sentinel2MosaicSpec(ImageSpec):
         """
         image_collection = image_adjustment.apply(image_collection, self)
         mosaic = constants.mosaic_strategies[self.strategy](image_collection)
+        mosaic
         return mosaic \
             .clip(self.aoi.geometry()) \
             .select(self.bands) \
