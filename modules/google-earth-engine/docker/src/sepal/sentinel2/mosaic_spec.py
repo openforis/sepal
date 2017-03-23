@@ -13,10 +13,10 @@ class Sentinel2MosaicSpec(ImageSpec):
         self.target_day_of_year = int(spec['targetDayOfYear'])
         self.target_day_of_year_weight = float(spec['targetDayOfYearWeight'])
         self.bands = [getattr(util, band) for band in spec['bands']]
-        self.resolution = max([
+        self.scale = min([
             resolution
             for band, resolution
-            in constants.resolution_by_band.iteritems()
+            in constants.scale_by_band.iteritems()
             if band in self.bands
         ])
         self.strategy = spec.get('strategy', constants.default_strategy)

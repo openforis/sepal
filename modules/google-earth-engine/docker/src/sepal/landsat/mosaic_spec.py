@@ -13,6 +13,7 @@ class LandsatMosaicSpec(ImageSpec):
         self.target_day_of_year = int(spec['targetDayOfYear'])
         self.target_day_of_year_weight = float(spec['targetDayOfYearWeight'])
         self.bands = [getattr(util, band) for band in spec['bands']]
+        self.scale = 30
         self.strategy = spec.get('strategy', constants.default_strategy)
         self.classes_to_mask = spec.get('classesToMask', constants.default_classes_to_mask)
 

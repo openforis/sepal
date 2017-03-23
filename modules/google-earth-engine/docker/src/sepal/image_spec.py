@@ -41,9 +41,11 @@ class ImageSpec(object):
         :rtype: str
         """
         file_id = str(uuid.uuid4())
-        task_id = export.to_drive(self._ee_image(), self.aoi.geometry().bounds(), name, username, file_id)
+        task_id = export.to_drive(self._ee_image(), self.aoi.geometry().bounds(), name, username, file_id, self.scale)
         downloader.start_download(task_id, name, file_id)
         return task_id
+
+
 
     @abstractmethod
     def _ee_image(self):

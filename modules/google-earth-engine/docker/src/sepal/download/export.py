@@ -3,7 +3,7 @@ import logging
 import ee
 
 
-def to_drive(image, region, name, username, file_id):
+def to_drive(image, region, name, username, file_id, scale):
     """
     Exports an image to Google Drive.
 
@@ -31,7 +31,7 @@ def to_drive(image, region, name, username, file_id):
         image=image,
         description=name,
         folder=file_id,
-        scale=30,
+        scale=scale,
         maxPixels=1e12,
         region=region.bounds().getInfo()['coordinates'],
         shardSize=256, fileDimensions=4096
