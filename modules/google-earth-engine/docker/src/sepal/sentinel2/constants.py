@@ -33,7 +33,7 @@ viz_by_bands = {
                                         'gamma': '2.0, 2.1, 1.8'},
     'NIR, RED, GREEN': lambda params: {'bands': _bands(NIR, RED, GREEN), 'min': 500, 'max': 5000,
                                        'gamma': 1.7},
-    'NIR, 2SWIR1, RED': lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 500, 'max': 5000,
+    'NIR, SWIR1, RED': lambda params: {'bands': _bands(NIR, SWIR1, RED), 'min': 500, 'max': 5000,
                                        'gamma': 1.7},
     'SWIR2, NIR, RED': lambda params: {'bands': _bands(SWIR2, NIR, RED), 'min': 500, 'max': 5000,
                                        'gamma': 1.7},
