@@ -55,9 +55,6 @@ apt-get install -y \
     libxrandr-dev \
     libxt-dev \
     nano \
-    otb-bin \
-    libotb \
-    libotb-apps \
     parallel \
     pkg-config \
     python-otb \
