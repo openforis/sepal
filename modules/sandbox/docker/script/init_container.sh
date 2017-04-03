@@ -25,6 +25,8 @@ sandbox_user_id=`stat -c '%u' /home/$sandbox_user`
 home_group_id=`stat -c '%g' /home/$sandbox_user`
 mkdir -p /home/$sandbox_user/.log/shiny
 chown -R $sandbox_user_id:$home_group_id /home/$sandbox_user/.log
+mkdir -p /home/$sandbox_user/.shiny
+chown -R $sandbox_user_id:$home_group_id /home/$sandbox_user/.shiny
 
 rm -rf /templates
 
