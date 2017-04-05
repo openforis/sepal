@@ -15,5 +15,9 @@
     - "/data:/data"
     - "/backup:/backup"
     env:
-      BACKUP_CRON_EXP: '0 0 * * *'
+      BACKUP_CRON_EXP: "0 0 * * *"
+      DEPLOY_ENVIRONMENT: "{{deploy_environment}}"
+      AWS_ACCESS_KEY_ID: "{{aws_access_key_id}}"
+      AWS_SECRET_ACCESS_KEY: "{{aws_secret_access_key}}"
+      S3_BACKUP_BUCKET: "{{s3_backup_bucket}}"
   register: container

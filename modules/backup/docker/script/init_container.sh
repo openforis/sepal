@@ -1,15 +1,15 @@
 #!/bin/bash
 set -e
 
-cat >/etc/cron.d/backup <<EOL
-$BACKUP_CRON_EXP root /script/backup.sh
-EOL
+mkdir ~/.aws
+printf '%s\n' \
+    "[default]" \
+    "aws_access_key_id=$AWS_ACCESS_KEY_ID" \
+    "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" \
+    >> ~/.aws/credentials
 
-# http://veithen.github.io/2014/11/16/sigterm-propagation.html
-trap 'kill -TERM $PID' TERM INT
-cron -f &
-PID=$!
-wait $PID
-trap - TERM INT
-wait $PID
-EXIT_STATUS=$?
+printf '%s\n' \
+    "$S3_BACKUP_BUCKET" \
+    >> ~/bucket
+
+cron -f
