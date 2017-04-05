@@ -50,7 +50,7 @@
         - 'o=Ubuntu,a=${distro_codename}-updates'
     - { role: rsyslog }
     - { role: docker, users: ['ubuntu', 'vagrant'] }
-#    - { role: build-module, module: backup }
+    - { role: build-module, module: backup }
     - { role: build-module, module: letsencrypt }
     - { role: build-module, module: java }
     - { role: build-module, module: elk }
@@ -70,7 +70,7 @@
     - { role: build-module, module: google-earth-engine }
 
     - { role: run-module, module: elk }
-#    - { role: run-module, module: backup }
+    - { role: run-module, module: backup }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }

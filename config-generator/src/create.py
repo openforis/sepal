@@ -1,14 +1,14 @@
 import getpass
-import json
-import os
 import random
 import string
 import subprocess
-from collections import OrderedDict
 from os.path import dirname
 
 import errno
+import json
+import os
 import sys
+from collections import OrderedDict
 
 print "******************************"
 print "*** Sepal Config Generator ***"
@@ -115,9 +115,6 @@ def _create_aws_key_export_script():
 def _config_aws():
     _text('ami', 'Sepal Server AMI')
     _text('worker_instance_ami', 'Worker instance AMI')
-    _text('aws_access_key_id', 'AWS Access Key ID')
-    _password('aws_secret_access_key', 'AWS Secret Access Key', 'required')
-    _text('s3_backup_bucket', 'S3 bucket for backups')
     _text('region', 'AWS region')
     _text('availability_zone', 'AWS availability zone')
     _text('efs_id', 'AWS EFS id')
@@ -211,6 +208,10 @@ try:
     )
 
     _text('deploy_environment', 'Deployment environment')
+    _text('aws_access_key_id', 'AWS Access Key ID') # Needed for backups to S3
+    _password('aws_secret_access_key', 'AWS Secret Access Key', 'required') # Needed for backups to S3
+    if config['deployment_type'] == 'sepal':
+        _text('s3_backup_bucket', 'S3 bucket for backups')
 
     if config['hosting_service'] == 'aws':
         _config_aws()
