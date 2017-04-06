@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-mkdir ~/.aws
+mkdir -p ~/.aws
 printf '%s\n' \
     "[default]" \
     "aws_access_key_id=$AWS_ACCESS_KEY_ID" \
