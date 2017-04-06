@@ -14,9 +14,11 @@ class SandboxStartHandler implements HttpHandler {
     }
 
     void handleRequest(HttpServerExchange exchange) throws Exception {
-        if (exchange.requestMethod as String != 'POST')
-            throw new BadRequest('/start requires a POST', 400)
-        String status = endpointProvider.startEndpoint(exchange)
+        String status
+        if (exchange.requestMethod as String == 'POST')
+            status = endpointProvider.startEndpoint(exchange)
+        else
+            status = endpointProvider.endpointStatus(exchange)
         LOG.debug("Sending sandbox status " + status + " for " + exchange)
         exchange.responseSender.send("{\"status\": \"$status\"}")
     }

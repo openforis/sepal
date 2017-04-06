@@ -15,7 +15,6 @@ var openView = function () {
 
 var openRStudioApp = function ( e, path ) {
     openView()
-    stopServerRequest()
     
     startServer( function () {
         View.showIFrameApp( path )
@@ -24,7 +23,6 @@ var openRStudioApp = function ( e, path ) {
 
 var openIFrameApp = function ( e, path ) {
     openView()
-    stopServerRequest()
     
     startServer( function () {
         View.showIFrameApp( path )
@@ -33,42 +31,29 @@ var openIFrameApp = function ( e, path ) {
 
 var openDataVisApp = function ( e ) {
     openView()
-    stopServerRequest()
     
     startServer( function () {
         View.showDataVisApp()
     }, 'geo-web-viz' )
 }
 
-var checkServerIntervalId = null
-var stopServerRequest     = function () {
-    clearInterval( checkServerIntervalId )
-    checkServerIntervalId = null
-}
-
 var startServer = function ( callback, endpoint ) {
-    
-    var checkServerRequest = function () {
-        var params = {
-            url      : "/sandbox/start?endpoint="+endpoint
-            // , data   : { endpoint: endpoint }
-            , success: function ( response ) {
-                var status = response.status
-                // console.log( 'checking ', status, ' job ', checkServerIntervalId )
-                if ( status === 'STARTED' ) {
-                    stopServerRequest()
-                    callback()
-                } else {
-                    View.showLoading()
-                }
-                
+    var params = {
+        url      : "/sandbox/start?endpoint=" + endpoint
+        // , data   : { endpoint: endpoint }
+        , success: function ( response ) {
+            var status = response.status
+            if ( status === 'STARTED' ) {
+                callback()
+            } else {
+                View.showLoading()
+                setTimeout( function () {
+                    EventBus.dispatch( Events.AJAX.GET, null, params )   // Check sandbox status, using HTTP GET
+                }, 1000 )
             }
         }
-        EventBus.dispatch( Events.AJAX.POST, null, params )
     }
-    
-    checkServerIntervalId = setInterval( checkServerRequest, 500 )
-    
+    EventBus.dispatch( Events.AJAX.POST, null, params )  // Start sandbox, using HTTP POST
 }
 
 init()

@@ -123,6 +123,24 @@ class EndpointProvider {
         endpointByNameByUsername.get(endpoint.username)?.remove(endpoint.name)
     }
 
+    String endpointStatus(HttpServerExchange exchange) {
+        def endpointName = exchange.queryParameters.endpoint?.peekFirst() as String
+        if (!endpointName)
+            throw new BadRequest('Missing query parameter: endpoint', 400)
+        def username = username(exchange)
+        def httpSession = getOrCreateHttpSession(exchange)
+
+        def sandboxSession = findSandboxSession(httpSession, username)
+
+        if (!sandboxSession)
+            throw new BadRequest("No session started for endpoint $endpointName", 400)
+
+        if (sandboxSession.isActive())
+            return 'STARTED'
+        else
+            return 'STARTING'
+    }
+
     String startEndpoint(HttpServerExchange exchange) {
         def endpointName = exchange.queryParameters.endpoint?.peekFirst() as String
         if (!endpointName)
@@ -163,7 +181,7 @@ class EndpointProvider {
         return endpoint
     }
 
-    private SandboxSession findOrRequestSandboxSession(Session httpSession, String username) {
+    private SandboxSession findSandboxSession(Session httpSession, String username) {
         def sandboxSessionId = httpSession.getAttribute(SANDBOX_SESSION_ID_KEY) as String
         def sandboxSession = null
         if (sandboxSessionId)
@@ -178,9 +196,11 @@ class EndpointProvider {
         }
         if (sandboxSession && sandboxSession.username == username)
             sandboxSessionManager.heartbeat(sandboxSession.id, username)
-        else
-            sandboxSession = sandboxSessionManager.requestSession(username)
         return sandboxSession
+    }
+
+    private SandboxSession findOrRequestSandboxSession(Session httpSession, String username) {
+        return findSandboxSession(httpSession, username) ?: sandboxSessionManager.requestSession(username)
     }
 
     private String endpointName(HttpServerExchange exchange) {
