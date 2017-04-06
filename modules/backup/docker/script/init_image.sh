@@ -6,7 +6,3 @@ apt-get -y update && apt-get install -y \
  python-pip
 
 pip install awscli
-
-printf '%s\n' \
-    "$BACKUP_CRON_EXP root flock -xn ~/backup.lck -c /script/backup.sh" \
-    >> /etc/crontab

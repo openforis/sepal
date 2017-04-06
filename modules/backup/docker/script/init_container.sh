@@ -12,4 +12,8 @@ printf '%s\n' \
     "$S3_BACKUP_BUCKET" \
     >> ~/bucket
 
+printf '%s\n' \
+    "$BACKUP_CRON_EXP root flock -xn ~/backup.lck -c /script/backup.sh" \
+    >> /etc/crontab
+
 cron -f
