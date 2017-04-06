@@ -19,7 +19,7 @@ echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/apt/so
 gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 gpg -a --export E084DAB9 | apt-key add -
 
-apt-get -y update && apt-get -y upgrade
+apt-get -y autoclean && apt-get -y clean && apt-get -y autoremove && apt-get -y purge && apt-get -y update && apt-get -y upgrade
 
 # TODO: Add dans-gdal-scripts - this package currently won't install due to broken dependencies
 echo
