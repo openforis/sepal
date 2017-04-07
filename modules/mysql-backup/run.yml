@@ -20,7 +20,6 @@
     - "/backup/mysql:/backup"
     - "/data/mysql-backup:/module"
     env:
-      MYSQL_DATABASE: "sdms"
       MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
       BACKUP_CRON_EXP: '0 0 * * *'
       RESTORE_BACKUP: "{{ restore_backup }}"

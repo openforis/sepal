@@ -10,7 +10,7 @@ echo "Backup started"
 bash -c "mysqldump \
     -p'$password' \
     -h mysql \
-    --databases $database \
+    --all-databases
     --single-transaction \
     --quick \
     > /backup/backup_$timestamp.sql"

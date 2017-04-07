@@ -8,6 +8,7 @@ LATEST=$(ls -t /backup | head -n1)
 echo "Restoring from latest database dump: $LATEST";
 
 echo "Deleting previous database"
+# TODO: Drop all databases(?) http://stackoverflow.com/questions/22301635/drop-all-databases-in-mysql
 bash -c "mysql -p'$MYSQL_ROOT_PASSWORD' -h mysql -e 'DROP DATABASE $MYSQL_DATABASE'"
 bash -c "mysql -p'$MYSQL_ROOT_PASSWORD' -h mysql -e 'SET foreign_key_checks = 0'"
 

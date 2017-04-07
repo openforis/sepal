@@ -8,7 +8,7 @@ echo $MYSQL_ROOT_PASSWORD > $passwordFile
 chmod 400 $passwordFile
 
 cat > /etc/cron.d/mysql-backup <<EOL
-$BACKUP_CRON_EXP root /script/backup.sh '$MYSQL_DATABASE' '$passwordFile'
+$BACKUP_CRON_EXP root /script/backup.sh '$passwordFile'
 EOL
 
 chmod 400 /etc/cron.d/mysql-backup
