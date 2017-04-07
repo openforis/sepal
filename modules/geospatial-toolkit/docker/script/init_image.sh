@@ -60,6 +60,7 @@ apt-get install -y \
     python-otb \
     python-opencv \
     python-pandas \
+    python-pip \
     python-pyshp \
     python-rasterio \
     rsync \
@@ -72,3 +73,7 @@ apt-get install -y \
     vim \
     wget \
     xml-twig-tools
+
+pip install awscli
+pip install google-api-python-client
+pip install pyCrypto
