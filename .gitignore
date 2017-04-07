@@ -26,7 +26,10 @@ target
 .vagrant
 
 #Ansible
-deploy.retry
+*.retry
+
+#JRE error
+*.log
 
 #Python
 *.pyc
