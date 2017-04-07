@@ -9,7 +9,6 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     mapnik-utils \
     net-tools \
     openssh-server \
-    python-pip \
     sudo \
     supervisor \
     gettext
