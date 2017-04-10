@@ -32,7 +32,7 @@ rm -rf /templates
 
 printf '%s\n' \
     "R_LIBS_USER=/home/$sandbox_user/.R/library" \
-    "R_LIBS_SITE=/shiny/library:/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library" \
+    "R_LIBS_SITE=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library:/shiny/library" \
     >> /etc/environment
 
 cp /etc/environment /etc/R/Renviron.site
