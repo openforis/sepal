@@ -1,8 +1,8 @@
 import logging
-import os
 from threading import Thread
 
 import httplib2
+import os
 from apiclient import discovery
 from apiclient.http import MediaIoBaseDownload
 from datetime import datetime
@@ -71,11 +71,11 @@ class DriveDownload(object):
             downloaded_file = open(self.dir + '/' + drive_file['name'], 'w')
             downloader = MediaIoBaseDownload(downloaded_file, request)
 
-            modified_time = self._touch(drive_file, folder_id)
+            modified_time = self._touch(folder_id)
             done = False
             while self.running and not done:
-                if self._seconds_since(modified_time) > 60:  # Heartbeat after 1 minutes download
-                    modified_time = self._touch(drive_file, folder_id)
+                if self._seconds_since(modified_time) > 5 * 60:  # Heartbeat after 5 minutes download
+                    modified_time = self._touch(folder_id)
                 status, done = downloader.next_chunk()
                 if not self.canceled:
                     self.listener.update_status({
@@ -98,7 +98,7 @@ class DriveDownload(object):
             return False
         return True
 
-    def _touch(self, drive_file, folder_id):
+    def _touch(self, folder_id):
         now = datetime.utcnow()
 
         def update_file(id):
@@ -107,8 +107,9 @@ class DriveDownload(object):
                 body={'modifiedTime': now.strftime("%Y-%m-%dT%H:%M:%S" + 'Z')}
             ).execute()
 
-        update_file(drive_file['id'])
         update_file(folder_id)
+        for file_in_folder in self._files_in_folder(folder_id):
+            update_file(file_in_folder['id'])
         return now
 
     def _files_in_folder(self, folder_id):
