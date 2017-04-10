@@ -14,7 +14,39 @@ export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/jre/lib/amd64/server:${JAVA_HOME}/jre/l
 R CMD javareconf
 
 R -e "install.packages('pacman', dependencies=TRUE, repos='http://cran.rstudio.com/')"
-R -e "pacman::p_load_gh('hoxo-m/githubinstall', 'loicdtx/bfastSpatial')"
-R -e "pacman::p_load('dismo', 'DT', 'ggplot2', 'leaflet', 'mapview', 'plyr', 'raster', 'RColorBrewer', 'rgdal',\
-    'rgeos', 'raster', 'RColorBrewer', 'rgdal', 'rgeos', 'rmarkdown', 'random', 'RSQLite', 'shiny', 'shinydashboard',\
-    'shinyFiles', 'shinyBS', 'snow', 'htmltools', 'devtools', 'stringr', 'xtable')"
+R -e "pacman::p_load_gh(\
+        'verbe039/bfast', \
+        'loicdtx/bfastSpatial'\
+    )"
+R -e "pacman::p_load(\
+        'devtools',\
+        'dismo',\
+        'dplyr',\
+        'DT',\
+        'ggmap',\
+        'ggplot2',\
+        'htmltools',\
+        'knitr',\
+        'leaflet',\
+        'lubridate',\
+        'mapview',\
+        'plyr',\
+        'random',\
+        'raster',\
+        'RColorBrewer',\
+        'rgdal',\
+        'rgeos',\
+        'rmarkdown',\
+        'rPython',\
+        'RSQLite',\
+        'shiny',\
+        'shinyBS',\
+        'shinydashboard',\
+        'shinyFiles',\
+        'shinyjs',\
+        'snow',\
+        'stringr',\
+        'strucchange',\
+        'xtable',\
+        'zoo'\
+    )"
