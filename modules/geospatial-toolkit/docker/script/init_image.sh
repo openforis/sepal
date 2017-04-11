@@ -74,6 +74,8 @@ apt-get install -y \
     wget \
     xml-twig-tools
 
-pip install awscli
-pip install google-api-python-client
+pip install python-dateutil
 pip install pyCrypto
+pip install earthengine-api
+pip install google-api-python-client
+pip install awscli
