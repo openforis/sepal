@@ -31,6 +31,7 @@ apt-get install -y \
     autoconf \
     bc \
     bison \
+    build-essential \
     csh \
     curl \
     dtach \
@@ -46,10 +47,12 @@ apt-get install -y \
     libdbd-xbase-perl \
     libglade2-dev \
     libgtk2.0-dev \
+    libffi-dev \
     libgmp3-dev \
     libgstreamer0.10-dev \
     libgstreamer-plugins-base0.10-dev \
     libproj-dev \
+    libssl-dev \
     libxcursor-dev \
     libxinerama-dev \
     libxrandr-dev \
@@ -57,6 +60,7 @@ apt-get install -y \
     nano \
     parallel \
     pkg-config \
+    python-dev \
     python-otb \
     python-opencv \
     python-pandas \
