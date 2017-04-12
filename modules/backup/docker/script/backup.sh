@@ -1,6 +1,4 @@
 #!/bin/bash
-set -e
-
 bucket=$(cat ~/bucket)
 dayOfWeek=$(date +%u)
 
