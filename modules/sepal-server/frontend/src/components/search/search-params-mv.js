@@ -24,6 +24,11 @@ var offsetTargetDayChange = function ( e, value ) {
 }
 
 // sensors selection
+var selectSensorGroup = function ( sensorGroup ) {
+    SearchParams.sensorGroup = sensorGroup
+    EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.SENSOR_GROUP_CHANGED, null, sensorGroup )
+}
+
 var selectSensor   = function ( sensors, sensorId ) {
     if ( sensors.indexOf( sensorId ) < 0 ) {
         sensors.push( sensorId )
@@ -68,6 +73,12 @@ EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.WEIGHT_CHANGE, we
 
 EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, offsetTargetDayChange )
 
+EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_LANDSAT_SENSOR_GROUP, function ( e ) {
+    selectSensorGroup( SearchParams.SENSORS.LANDSAT )
+} )
+EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_SENTINEL2_SENSOR_GROUP, function ( e ) {
+    selectSensorGroup( SearchParams.SENSORS.SENTINEL2 )
+} )
 EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_LANDSAT_SENSOR, selectLandsatSensor )
 EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.DESELECT_LANDSAT_SENSOR, deselectLandsatSensor )
 EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_SENTINEL2_SENSOR, selectSentinel2Sensor )

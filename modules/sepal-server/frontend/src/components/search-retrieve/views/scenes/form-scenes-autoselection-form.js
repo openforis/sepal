@@ -79,14 +79,14 @@ var init = function ( parent ) {
         EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, null, -1 )
     } )
     
-    // Landsat Sensors
+    // // Landsat Sensors
     sectionLandsatSensors.empty()
     $.each( Object.keys( LandsatSensors ), function ( i, sensorId ) {
         var sensor = LandsatSensors[ sensorId ]
-        
+
         var btn = $( '<button class="btn btn-base btn-sensor round">' + sensor.shortName + '</button>' )
         btn.addClass( sensorId )
-        
+
         btn.click( function ( e ) {
             e.preventDefault()
             var evt = null
@@ -97,17 +97,17 @@ var init = function ( parent ) {
             }
             EventBus.dispatch( evt, null, sensorId )
         } )
-        
+
         sectionLandsatSensors.append( btn )
     } )
-    //sentinel2 sensors
+    // //sentinel2 sensors
     sectionSentinel2Sensors.empty()
     $.each( Object.keys( Sentinel2Sensors ), function ( i, sensorId ) {
         var sensor = Sentinel2Sensors[ sensorId ]
-        
+
         var btn = $( '<button class="btn btn-base btn-sensor round">' + sensor.shortName + '</button>' )
         btn.addClass( sensorId )
-        
+
         btn.click( function ( e ) {
             e.preventDefault()
             var evt = null
@@ -118,7 +118,7 @@ var init = function ( parent ) {
             }
             EventBus.dispatch( evt, null, sensorId )
         } )
-        
+
         sectionSentinel2Sensors.append( btn )
     } )
     
@@ -139,7 +139,8 @@ var init = function ( parent ) {
         
         if ( SearchParams.landsatSensors.length <= 0 && SearchParams.sentinel2Sensors.length <= 0 ) {
             formNotify.html( 'At least one sensor must be selected' ).velocitySlideDown( { delay: 20, duration: 400 } )
-        } else if ( SearchParams.maxScenes && SearchParams.minScenes > SearchParams.maxScenes ) {
+        } else
+        if ( SearchParams.maxScenes && SearchParams.minScenes > SearchParams.maxScenes ) {
             formNotify.html( 'Min number of scenes cannot be greater than Max number of scenes' ).velocitySlideDown( { delay: 20, duration: 400 } )
         } else {
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES )

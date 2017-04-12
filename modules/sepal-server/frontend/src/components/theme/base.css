@@ -664,3 +664,7 @@ img {
 .hidden {
     display: none !important;
 }
+
+.border-none{
+    border: none !important;
+}

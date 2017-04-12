@@ -143,7 +143,7 @@ DatePicker.prototype.expandGroup = function ( property, aGroup ) {
     // hide ohter
     var opened    = container.find( '.inner.opened' )
     if ( opened.length == 0 ) {
-        container.velocity( { height: "*=2" }, { duration: 1000 } )
+        container.velocity( { height: "*=1.55" }, { duration: 1000 } )
     } else {
         opened.find( 'a' ).css( { opacity: 0 } )
         opened.hide()
