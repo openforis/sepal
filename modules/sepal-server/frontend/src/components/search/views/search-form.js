@@ -9,11 +9,16 @@ var DatePicker    = require( '../../date-picker/date-picker' )
 var SepalAois     = require( '../../sepal-aois/sepal-aois' )
 var moment        = require( 'moment' )
 
-var form           = null
-var formNotify     = null
+var form       = null
+var formNotify = null
+
 var fieldCountry   = null
 var btnDrawPolygon = null
+var btnLandsat     = null
+var btnSentinel2   = null
 var targetDate     = null
+// var sectionLandsatSensors   = null
+// var sectionSentinel2Sensors = null
 
 var init = function ( formSelector ) {
     SearchParams.reset()
@@ -52,6 +57,21 @@ var init = function ( formSelector ) {
         EventBus.dispatch( Events.MAP.POLYGON_DRAW )
     } )
     
+    btnLandsat            = form.find( '.btn-landsat' )
+    btnSentinel2          = form.find( '.btn-sentinel2' )
+    var changeSensorGroup = function ( domEvt, btn, evt ) {
+        domEvt.preventDefault()
+        if ( !btn.hasClass( 'active' ) ) {
+            EventBus.dispatch( evt )
+        }
+    }
+    btnLandsat.click( function ( e ) {
+        changeSensorGroup( e, btnLandsat, Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_LANDSAT_SENSOR_GROUP )
+    } )
+    btnSentinel2.click( function ( e ) {
+        changeSensorGroup( e, btnSentinel2, Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_SENTINEL2_SENSOR_GROUP )
+    } )
+    
     targetDate              = DatePicker.newInstance( form.find( '.target-date' ) )
     SearchParams.targetDate = targetDate
     
@@ -74,12 +94,22 @@ var submit = function ( e ) {
     var valid    = true
     var errorMsg = ''
     var date     = targetDate.asMoment()
+    
+    
     if ( !SearchParams.hasValidAoi() ) {
         valid    = false
         errorMsg = 'Please select a valid COUNTRY or DRAW A POLYGON'
         
         FormValidator.addError( fieldCountry )
-    } else if ( !date.isValid() ) {
+    }
+    // else if ( SearchParams.landsatSensors.length <= 0 && SearchParams.sentinel2Sensors.length <= 0 ) {
+    //     valid    = false
+    //     errorMsg = 'Please select either LANDSAT or SENTINEL-2 sensors'
+    // } else if ( SearchParams.landsatSensors.length > 0 && SearchParams.sentinel2Sensors.length > 0 ) {
+    //     valid    = false
+    //     errorMsg = 'Only sensors within LANDSAT or SENTINEL-2 can be selected'
+    // }
+    else if ( !date.isValid() ) {
         valid    = false
         errorMsg = 'Please select a valid TARGET DATE'
     } else if ( date.isAfter( moment() ) ) {
@@ -122,9 +152,21 @@ var setPolygon = function ( p ) {
     SearchParams.countryIso = null
 }
 
+// model change methods
+var setSensorGroup = function ( sensorGroup ) {
+    if ( SearchParams.SENSORS.LANDSAT == sensorGroup ) {
+        btnLandsat.addClass( 'active' )
+        btnSentinel2.removeClass( 'active' )
+    } else if ( SearchParams.SENSORS.SENTINEL2 == sensorGroup ) {
+        btnLandsat.removeClass( 'active' )
+        btnSentinel2.addClass( 'active' )
+    }
+}
+
 module.exports = {
-    init  : init
-    , find: find
+    init            : init
+    , find          : find
+    , setSensorGroup: setSensorGroup
 }
 
 EventBus.addEventListener( Events.MAP.POLYGON_DRAWN, polygonDrawn )

@@ -86,7 +86,6 @@
 .btn-base:hover {
     background-color: rgba(255, 255, 255, 0.1);
     color: #fff;
-
 }
 .btn-base.active {
     background-color: rgba(197, 179, 151, 0.3);

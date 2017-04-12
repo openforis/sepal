@@ -1,58 +1,108 @@
 <div id="search" class="row height100">
+    <div class="col-xs-12 height100">
 
-    <div class="col-xs-12 col-sm-12 col-md-12 height100 p-t-2">
+        <div class="mode-selection-container text-align-center hidden">
+            <button class="btn btn-base circle active" data-target="mode-edit-container"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></button>
+            <button class="btn btn-base circle" data-target="mode-list-container"><i class="fa fa-list" aria-hidden="true"></i></button>
+        </div>
 
-        <form class="form-theme" id="search-form">
-            <div class="row form-group">
-                <label class="form-label col-sm-2" for="search-form-country">Area of interest</label>
-                <div class="col-sm-4">
-                    <input type="text" class="form-control" id="search-form-country" name="country"
-                           placeholder="Select a country">
+        <!-- edit mosaic container -->
+        <div class="row mode-container mode-edit-container height100">
+            <div class="col-xs-12 height100">
+                <div class="row menu-container hidden">
+                    <div class="col-xs-12 text-align-center">
+                        <button class="btn btn-base mosaic active" data-target="section-search-form">Mosaic</button>
+                        <button class="btn btn-base classify" data-target="section-classify">Classify</button>
+                        <button class="btn btn-base change-detection" data-target="section-change-detection">Change detection</button>
+                    </div>
                 </div>
-                <label class="form-label col-sm-1 text-align-center form-label-btn-draw-polygon">Or</label>
-                <div class="col-sm-4">
-                    <button type="button" class="btn btn-base round btn-draw-polygon" >
-                        <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Draw a polygon
-                    </button>
+
+                <!-- Search Form -->
+                <div class="row search-section section-search-form height95">
+                    <div class="col-xs-12 height100">
+
+                        <form class="form-theme" id="search-form">
+                            <div class="row form-group hidden">
+                                <label class="form-label col-sm-2" for="mosaic-name">Name</label>
+                                <div class="col-sm-4">
+                                    <input type="text" class="form-control" id="mosaic-name" name="name" value="default-mosaic"
+                                           placeholder="Select a name">
+                                </div>
+                            </div>
+                            <div class="row form-group">
+                                <label class="form-label col-sm-2" for="search-form-country">Area of interest</label>
+                                <div class="col-sm-4">
+                                    <input type="text" class="form-control" id="search-form-country" name="country"
+                                           placeholder="Select a country">
+                                </div>
+                                <label class="form-label col-sm-1 text-align-center form-label-btn-draw-polygon">Or</label>
+                                <div class="col-sm-4">
+                                    <button type="button" class="btn btn-base round btn-draw-polygon" >
+                                        <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Draw a polygon
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row row-sensor form-group hidden">
+                                <label class="form-label col-sm-2">Sensors</label>
+                                <div class="col-sm-2 text-align-center">
+                                    <button type="button" class="btn btn-base round width100 p-y-0-5 btn-landsat active">Landsat</button>
+                                </div>
+                                <label class="form-label col-sm-1 p-t-0-5 text-align-center">Or</label>
+                                <div class="col-sm-2 text-align-center">
+                                    <button type="button" class="btn btn-base round width100 p-y-0-5 btn-sentinel2">Sentinel-2</button>
+                                </div>
+                            </div>
+                            <div class="row form-group m-t-10 p-b-2">
+                                <label class="form-label col-sm-2">Target date</label>
+                                <div class="col-sm-10 target-date">
+                                </div>
+                            </div>
+
+                            <div class="row form-group form-group-buttons no-padding">
+
+                                <div class="col-sm-12 text-align-center form-notify form-error"/>
+
+                                <div class="col-sm-12 text-align-center">
+                                    <button type="submit" class="btn btn-base round icon p-y-1">
+                                        <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                                        Search
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+                </div>
+
+                <!-- Classify -->
+                <div class="row search-section section-classify height95">
+                    <div class="col-xs-12 height100">
+                        Classify
+                    </div>
+                </div>
+
+                <!--Change detection-->
+                <div class="row search-section section-change-detection height95">
+                    <div class="col-xs-12 height100">
+                        Change Detection
+                    </div>
                 </div>
             </div>
-            <div class="row form-group m-t-10">
-                <label class="form-label col-sm-2">Target date</label>
-                <div class="col-sm-10 target-date">
-                </div>
+        </div>
+
+        <!--list mosaic container-->
+        <div class="row mode-container mode-list-container height100">
+            <div class="col-xs-12 height100">
+                List nbdflbgdls
             </div>
-            <!--<div class="row form-group m-t-10">-->
-                <!--<label class="form-label col-sm-2 from-label">Target date</label>-->
-                <!--<div class="col-sm-10 from">-->
-                <!--</div>-->
-            <!--</div>-->
-            <!--<div class="row form-group m-t-10">-->
-                <!--<label class="form-label col-sm-2 to-label">To</label>-->
-                <!--<div class="col-sm-10 to">-->
-                <!--</div>-->
-            <!--</div>-->
-            <!--<div class="row form-group m-t-10">-->
-                <!--<label class="form-label col-sm-2 target-day-label">Target day</label>-->
-                <!--<div class="col-sm-10 target-day">-->
-                <!--</div>-->
-            <!--</div>-->
+        </div>
 
 
-            <div class="row form-group form-group-buttons ">
-
-                <div class="col-sm-12 m-t-1 text-align-center form-notify form-error"/>
-
-                <div class="col-sm-12 m-t-1 text-align-center">
-                    <button type="submit" class="btn btn-base round icon">
-                        <i class="fa fa-paper-plane" aria-hidden="true"></i>
-                        Search
-                    </button>
-                </div>
-
-            </div>
-
-        </form>
 
     </div>
+
+
 
 </div>

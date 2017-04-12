@@ -1,9 +1,12 @@
 .date-picker .labels {
-    padding-top: 10px;
+    /*padding-top: 10px;*/
+    font-size: .9rem;
+    font-weight: 400;
 }
 
 .date-picker .label {
     padding-top: 20px;
+    font-size: .9rem;
 }
 
 .date-picker .month .label {

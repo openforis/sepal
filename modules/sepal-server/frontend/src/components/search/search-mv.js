@@ -67,5 +67,12 @@ var requestSceneAreas = function () {
     sentinel2Request( params, data )
 }
 
+var sensorGroupChanged = function ( e, sensorGroup ) {
+    View.setSensorGroup( sensorGroup )
+}
+
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 EventBus.addEventListener( Events.SECTION.SEARCH.FORM_SUBMIT, requestSceneAreas )
+
+//change model values
+EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.SENSOR_GROUP_CHANGED, sensorGroupChanged )

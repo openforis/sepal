@@ -3,9 +3,6 @@
   .row-sort-filter {
 
     .row {
-      //padding-top: .5rem;
-      //padding-bottom: .5rem;
-      //border-bottom: 1px dotted rgba(255,255,255,.15);
     }
 
     .row-sensor {
@@ -25,8 +22,6 @@
         border: 2px solid rgba(197, 179, 151, 0.5);
       }
       .btn-sensor.active:active,
-        //.btn-sensor.active:focus,
-        //.btn-sensor.activefocus,
       .btn-sensor.active:hover {
         background-color: rgba(197, 179, 151, 0.1);
       }
@@ -54,8 +49,6 @@
             top: -2px;
           }
           .btn:active,
-            //.btn:active:focus,
-            //.btn:focus,
           .btn:hover {
             background-color: rgba(255, 255, 255, .3);
           }
