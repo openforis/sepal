@@ -1,0 +1,6 @@
+#!/bin/bash
+port=$1;
+if [ !$port ]; then
+    port=8888;
+fi
+./node_modules/.bin/webpack-dev-server --port 443 --inline --hot --https

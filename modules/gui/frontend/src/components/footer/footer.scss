@@ -1,0 +1,90 @@
+.site-footer {
+  position: absolute;
+  right: 0;
+  bottom: -7.5%;
+  left: 0;
+  display: none;
+  z-index: 1;
+  height: 3.7rem;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(28, 28, 28, 0.99);
+
+  @media (max-width: 991px) {
+    display: none;
+  }
+
+  @media (min-width: 992px) {
+    position: fixed;
+    display: block;
+  }
+
+  > .container {
+    position: relative;
+    height: inherit;
+
+    > .row {
+      height: inherit;
+
+      > .col-12 {
+        height: inherit;
+      }
+
+    }
+
+  }
+
+  .site-footer-inner {
+    height: inherit;
+    position: relative;
+    padding: 0 5%;
+
+    > div {
+      opacity: .8;
+      position: relative;
+      top: 20%;
+
+      &.dashboard-links {
+        .btn {
+          font-size: 1.2rem;
+          top: -10%;
+          width: 2.75rem;
+          height: 2.75rem;
+          padding: 0;
+        }
+      }
+
+      &.section-user {
+
+        .hourly-cost {
+          display: none;
+          padding: .5rem 1rem;
+          font-size: .9rem;
+        }
+        .budget-exceeded {
+          display: none;
+          padding: .5rem 1rem;
+          font-size: .9rem;
+          color: rgba(232, 19, 81, 0.91);
+          background-color: rgba(232, 19, 81, 0.01);
+        }
+
+      }
+
+    }
+
+    a, li {
+      -webkit-transition: none;
+      -o-transition: none;
+      transition: none;
+      font-size: 13px;
+      font-weight: 400;
+      color: #999;
+    }
+
+    a:hover {
+      border-bottom: 1px dashed #999;
+    }
+
+  }
+
+}

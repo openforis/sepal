@@ -1,0 +1,19 @@
+#search-retrieve {
+  .scenes-retrieve {
+    //.btn {
+    //  min-width: 6rem;
+    //}
+
+    .row-landsat , .row-sentinel2{
+      padding: 2rem 0;
+      margin: .8rem .5rem 0 .5rem;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: .5rem;
+    }
+
+    .col-name {
+      padding-top: 1rem;
+    }
+
+  }
+}

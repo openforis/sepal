@@ -25,5 +25,6 @@
     - { role: build-module, module: task-executor }
     - { role: build-module, module: google-earth-engine }
     - { role: build-module, module: user }
+    - { role: build-module, module: gui }
     - { role: build-module, module: sepal-server }
     - role: push-images

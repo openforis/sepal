@@ -20,13 +20,17 @@ final class Server implements Lifecycle {
     private final Undertow server
 
     Server(int port, Filter app) {
+        this(port, '/', app)
+    }
+
+    Server(int port, String contextPath, Filter app) {
         this.port = port
         this.host = "localhost:$port"
         this.app = app
         LOG.info("Deploying server on port $port")
         def servletBuilder = deployment()
                 .setClassLoader(app.class.classLoader)
-                .setContextPath('/')
+                .setContextPath(contextPath)
                 .setDeploymentName('app.war')
                 .addFilter(filter('main', DelegatingFilter))
                 .addFilterUrlMapping('main', '/*', REQUEST)

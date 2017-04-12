@@ -16,6 +16,7 @@
     - "google-earth-engine:google-earth-engine"
     - "user:user"
     - "sepal:sepal"
+    - "gui:gui"
     volumes:
     - "/data/api-gateway:/data"
     - "/data/letsencrypt:/etc/letsencrypt"

@@ -1,0 +1,96 @@
+<div class="row">
+    <div class="col-sm-12 p-t-1">
+        <form class="form-theme form-mosaic-retrieve">
+
+            <!-- Landsat -->
+            <div class="row row-landsat">
+
+                <div class="col-sm-2 col-name text-align-right">
+                    LANDSAT <i class="fa fa-rocket" aria-hidden="true"></i>
+                </div>
+                <div class="col-sm-10">
+                    <div class="row">
+                        <div class="col-sm-3 text-align-right">
+                            <label class="form-label">Name</label>
+                        </div>
+                        <div class="col-sm-6 form-group text-align-center">
+                            <input type="text" class="form-control width100" name="name" placeholder="Enter a name"
+                                   data-type="string" data-error-message="Name for landsat mosaic is not valid">
+                        </div>
+                    </div>
+                    <div class="row row-bands p-t-0-5">
+                        <div class="col-sm-3 text-align-right">
+                            <label class="form-label">Bands</label>
+                        </div>
+                        <div class="col-sm-9 form-group p-t-0-5 text-align-left">
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="BLUE">Blue</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="GREEN">Green</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="RED">Red</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="NIR">NIR</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="SWIR1">SWIR 1</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="SWIR2">SWIR 2</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="THERMAL">Thermal</button>
+                        </div>
+                    </div>
+                    <div class="row p-t-0-5">
+                        <!--<div class="col-sm-12 text-align-center form-notify form-error"></div>-->
+                        <div class="col-sm-4 offset-sm-4 text-align-center">
+                            <button type="button" class="btn btn-base btn-submit round p-x-1 p-y-0-5">
+                                <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sentinel2 -->
+            <div class="row row-sentinel2">
+
+                <div class="col-sm-2 col-name text-align-right">
+                    SENTINEL2 <i class="fa fa-rocket" aria-hidden="true"></i>
+                </div>
+                <div class="col-sm-10">
+                    <div class="row">
+                        <div class="col-sm-3 text-align-right">
+                            <label class="form-label">Name</label>
+                        </div>
+                        <div class="col-sm-6 form-group text-align-center">
+                            <input type="text" class="form-control width100" name="name" placeholder="Enter a name"
+                                   data-type="string" data-error-message="Name for sentinel mosaic is not valid">
+                        </div>
+                    </div>
+                    <div class="row row-bands p-t-0-5">
+                        <div class="col-sm-3 text-align-right">
+                            <label class="form-label">Bands</label>
+                        </div>
+                        <div class="col-sm-9 form-group p-t-0-5 text-align-left">
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="BLUE">Blue</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="GREEN">Green</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="RED">Red</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="NIR">NIR</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="SWIR1">SWIR 1</button>
+                            <button type="button" class="btn btn-base round p-x-1 p-y-0-5 btn-band" value="SWIR2">SWIR 2</button>
+                        </div>
+                    </div>
+                    <div class="row p-t-0-5">
+                        <!--<div class="col-sm-12 text-align-center form-notify form-error"></div>-->
+                        <div class="col-sm-4 offset-sm-4 text-align-center">
+                            <button type="button" class="btn btn-base btn-submit round p-x-1 p-y-0-5">
+                                <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row p-y-1">
+                <div class="col-sm-12 text-align-center form-notify form-error"></div>
+            </div>
+
+        </form>
+    </div>
+</div>

@@ -1,0 +1,33 @@
+#data-vis {
+
+  display: none;
+  overflow: hidden;
+
+  .map-tiles-loader {
+    position: absolute;
+    width: 30%;
+    left: 35%;
+    top: 3%;
+    background-color: rgba(19, 19, 20, 0.7);
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+    border-radius: 1rem;
+    display: none;
+    opacity: .8;
+
+    .progress-container {
+      padding-top: .3rem;
+    }
+  }
+
+  .btn-open-layers {
+    width: 3rem;
+    height: 3rem;
+    padding: 0px;
+    display: none;
+    position: absolute;
+    top: 10%;
+    left: 2rem;
+  }
+
+}

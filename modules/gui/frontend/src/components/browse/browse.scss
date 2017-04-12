@@ -1,0 +1,120 @@
+#browse {
+
+  .browse-header-row {
+
+    .filename-container {
+      border-top-left-radius: .5rem;
+      border-bottom-left-radius: .5rem;
+      background-color: rgba(255, 255, 255, 0.04);
+      text-overflow: ellipsis !important;
+      /* word-break: break-all; */
+      /* word-wrap: normal; */
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .buttons-container {
+      border-top-right-radius: .5rem;
+      border-bottom-right-radius: .5rem;
+      background-color: rgba(255, 255, 255, 0.04);
+    }
+    .filters-container{
+      border-radius: .5rem;
+      background-color: rgba(255, 255, 255, 0.04);
+      word-spacing: 2rem;
+    }
+
+    .btn-filter-images {
+      padding: .5rem 1rem;
+    }
+
+    .btn.circle {
+      text-transform: none;
+      text-overflow: ellipsis;
+      font-size: 1rem;
+      width: 2.8rem;
+      height: 2.8rem;
+      padding: .5rem;
+
+      .fa-plus-circle {
+        position: relative;
+        top: -.125rem;
+        font-size: 1.2rem;
+      }
+      .fa-map-o {
+        position: relative;
+        left: -.5rem;
+        font-size: .8rem;
+      }
+    }
+
+    .btn:disabled {
+      opacity: .3;
+    }
+  }
+
+  .browse-content-row {
+    overflow-y: hidden;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: .5rem;
+    //margin-left: -15px;
+    //margin-right: -15px;
+
+    > .level {
+      display: inline-block;
+      /*padding: 0px 16px;*/
+      border-right: 2px solid rgba(255, 255, 255, 0.25);
+
+      /*float: left;*/
+      width: 25%;
+
+      /*resize: horizontal;*/
+      overflow-x: hidden;
+      overflow-y: auto;
+      position: relative;
+      vertical-align: top;
+    }
+
+    .dir-header > div {
+      //font-weight: bold;
+      background-color: rgba(255, 255, 255, 0.03);
+      padding-top: .5rem;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .dir-content {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .dir-child {
+      max-height: 2rem;
+    }
+
+    .dir-child.hidden-file {
+      display: none;
+    }
+
+    .dir-child:hover,
+    .dir-child.active {
+      background-color: rgba(255, 255, 255, .2);
+    }
+
+    .dir-child:hover {
+      cursor: pointer;
+    }
+
+    .dir-child > div {
+      display: inline-block;
+      padding-left: .5rem;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    i {
+      opacity: .9;
+    }
+  }
+
+}

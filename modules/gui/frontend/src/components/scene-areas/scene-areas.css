@@ -1,0 +1,24 @@
+.scene-areas-section, .scene-areas-section svg {
+    position: absolute;
+    color: #dadaed;
+}
+
+.scene-areas-section .scene-area-marker {
+    width: 120px;
+    height: 120px;
+}
+
+.scene-areas-section circle {
+    fill: #818181;
+    /*fill-opacity: .1;*/
+    fill-opacity: 0;
+    stroke: #818181;
+    /*stroke: #EBEBCD;*/
+    stroke-width: 2px;
+    /*stroke-opacity: .4;*/
+    stroke-opacity: 0;
+}
+.scene-areas-section text {
+    fill-opacity: 0;
+
+}

@@ -11,7 +11,7 @@ import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.endpoint.Endpoints
-import org.openforis.sepal.endpoint.ResourceServer
+import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.security.GateOneAuthEndpoint
 import org.openforis.sepal.security.PathRestrictionsFactory
 import org.openforis.sepal.util.lifecycle.Lifecycle
@@ -56,7 +56,7 @@ class Main {
                 taskComponent,
                 budgetComponent,
                 appsComponent)
-        start new ResourceServer(config.webAppPort, '/api', endpoints)
+        start new Server(config.webAppPort, '/api', endpoints)
         addShutdownHook { stop() }
     }
 

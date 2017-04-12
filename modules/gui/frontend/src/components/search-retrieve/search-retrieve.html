@@ -1,0 +1,76 @@
+<div id="search-retrieve">
+
+    <!--Buttons row-->
+    <div class="row">
+        <!--Scenes section-->
+        <div class="col-sm-6 scenes">
+            <div class="row row-header">
+                <div class="col-sm-12 text-align-center">
+                    <h4>Scenes</h4>
+                    <button class="btn btn-base round btn-hide-scene-areas btn-toggle-landsat-visibility">L  <i class="fa fa-eye" aria-hidden="true"></i></button>
+                    <button class="btn btn-base round btn-hide-scene-areas btn-toggle-sentinel2-visibility">S2 <i class="fa fa-eye" aria-hidden="true"></i></button>
+                </div>
+            </div>
+
+            <div class="row row-buttons">
+                <div class="col-sm-6 text-align-right">
+                    <button class="btn btn-base round icon width80 btn-best-scenes btn-toggle-section">
+                        <i class="fa fa-check-circle-o" aria-hidden="true"></i> Auto-select
+                    </button>
+                </div>
+                <div class="col-sm-6 text-align-left">
+                    <button class="btn btn-base round icon width80 btn-retrieve-scenes btn-scenes-required btn-toggle-section">
+                        <i class="fa fa-cloud-download" aria-hidden="true"></i> Retrieve
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!--Mosaic section-->
+        <div class="col-sm-6 mosaic">
+            <div class="row row-header">
+                <div class="col-sm-12 text-align-center">
+                    <h4>Mosaic</h4>
+                    <button class="btn btn-base round btn-toggle-landsat-mosaic btn-toggle-layer-visibility">L <i class="fa fa-eye" aria-hidden="true"></i></button>
+                    <button class="btn btn-base round btn-toggle-sentinel2-mosaic btn-toggle-layer-visibility">S2 <i class="fa fa-eye" aria-hidden="true"></i></button>
+                </div>
+            </div>
+
+            <div class="row row-buttons">
+                <div class="col-sm-6 text-align-right">
+                    <button class="btn btn-base round icon width80 btn-preview-mosaic btn-scenes-required btn-toggle-section">
+                        <i class="fa fa-eye" aria-hidden="true"></i> Preview
+                    </button>
+                </div>
+                <div class="col-sm-6 text-align-left">
+                    <button class="btn btn-base round icon width80 btn-retrieve-mosaic btn-scenes-required btn-toggle-section">
+                        <i class="fa fa-cloud-download" aria-hidden="true"></i> Retrieve
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!--Collapsable sections-->
+    <div class="row collapsable row-best-scenes-form">
+        <div class="col-sm-12 text-align-center scenes-selection-filter">
+        </div>
+    </div>
+
+    <div class="row collapsable row-scenes-retrieve">
+        <div class="col-sm-12 text-align-center scenes-retrieve">
+        </div>
+    </div>
+
+    <div class="row collapsable row-mosaic-preview">
+        <div class="col-sm-12 text-align-center mosaic-preview">
+        </div>
+    </div>
+
+    <div class="row collapsable row-mosaic-retrieve">
+        <div class="col-sm-12 text-align-center mosaic-retrieve">
+        </div>
+    </div>
+
+</div>

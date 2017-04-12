@@ -18,9 +18,9 @@ target
 /modules/api-gateway/docker/binary/sepal-api-gateway.jar
 
 #Sepal frontend
-/modules/sepal-server/frontend/dist/
-/modules/sepal-server/frontend/node/
-/modules/sepal-server/frontend/node_modules/
+/modules/gui/frontend/dist/
+/modules/gui/frontend/node/
+/modules/gui/frontend/node_modules/
 
 #Vagrant
 .vagrant

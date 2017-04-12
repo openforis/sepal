@@ -1,0 +1,72 @@
+#data-vis {
+
+  .row-raster-band {
+
+    background-color: rgb(28, 28, 28);
+    border-radius: 1rem;
+    margin-top: 1rem;
+    font-size: .7rem;
+
+    .col-band {
+      border-right: 1px inset rgba(255, 255, 255, 0.05);
+      padding-top: 12.5px !important;
+
+      .row-band-index {
+        border-bottom: 1px dotted rgba(255, 255, 255, 0.05);
+        padding-top: 35%;
+      }
+      //.row-no-data{
+      //  padding-top: 15%;
+      //}
+
+      select {
+        background-color: transparent;
+        color: white;
+        border-radius: 0px !important;
+        border: none;
+      }
+
+    }
+
+    .col-color-picker {
+      padding-top: 25px !important;
+    }
+
+    .col-band-histogram {
+      //padding-top: 10px;
+      //padding-bottom: 10px;
+      padding: 10px 0px !important;
+      height: 80px;
+
+      .band-histogram {
+        height: 60px !important;
+        width: 100% !important;
+      }
+
+      .band-minmax {
+        height: 60px;
+        width: 100%;
+        position: absolute;
+        background-color: rgba(255, 255, 255, 0.05);
+        //border-left: 3px double rgba(255, 255, 255, 0.05);
+        //border-left: 2px solid rgba(255, 255, 255, 0.05);
+        //border-right: 3px double rgba(255, 255, 255, 0.05);
+        //border-right: 2px solid rgba(255, 255, 255, 0.05);
+        top: 10px;
+        left: 0px;
+        z-index: 5;
+      }
+
+      .progress {
+        display: none;
+        position: absolute;
+        top: 40%;
+        z-index: 5;
+        margin-left: 20%;
+        width: 60%;
+      }
+    }
+
+  }
+
+}

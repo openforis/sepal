@@ -1,0 +1,133 @@
+.login-container {
+  //background-color: rgba(232, 237, 240, 0.05);
+  //transition: background-color 2s ease;
+  //border-radius: 4rem;
+  transition: background-color 2s ease;
+  border-radius: 3rem;
+  background-color: rgba(187, 192, 195, 0.05);
+  border: 1px dotted rgba(187, 192, 195, 0.05);
+}
+
+#login .container {
+  padding: 0.2rem 3rem;
+}
+
+@media (min-width: 1200px) {
+  #login .container {
+    padding: 1rem 3rem;
+  }
+}
+
+#login .section-caption {
+  margin-top: 3rem;
+}
+
+#login {
+  form {
+    .form-group {
+      border-width: 0 0 1px;
+      padding-right: 0;
+      padding-left: 0;
+
+      input {
+        margin-top: 1.5rem;
+      }
+
+    }
+
+    .form-label {
+      -webkit-border-top-left-radius: 50px;
+      border-top-left-radius: 50px;
+      -webkit-border-top-right-radius: 50px;
+      border-top-right-radius: 50px;
+      -webkit-border-bottom-left-radius: 50px;
+      border-bottom-left-radius: 50px;
+      -webkit-border-bottom-right-radius: 50px;
+      border-bottom-right-radius: 50px;
+      -webkit-transition-property: background-color;
+      -o-transition-property: background-color;
+      transition-property: background-color;
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #c5b397;
+    }
+
+    .btn {
+      font-weight: bold;
+    }
+
+    //.form-notify {
+    //  color: #e81351;
+    //}
+
+    .btn-forgot-pwd {
+      -webkit-transition: none;
+      -o-transition: none;
+      transition: none;
+      font-size: .85rem;
+      font-weight: 400;
+      color: #ababab;
+      opacity: .85;
+    }
+
+    .btn-forgot-pwd:hover {
+      border-bottom: 1px dashed #999;
+      cursor: pointer;
+      opacity: 1;
+    }
+
+  }
+}
+
+.login-info_item {
+  position: relative;
+  margin-bottom: 13px;
+  padding-left: 76px;
+}
+
+.login-info_item:last-child {
+  margin-bottom: 0;
+}
+
+.login-info_item i {
+  -webkit-border-top-left-radius: 50%;
+  border-top-left-radius: 50%;
+  -webkit-border-top-right-radius: 50%;
+  border-top-right-radius: 50%;
+  -webkit-border-bottom-left-radius: 50%;
+  border-bottom-left-radius: 50%;
+  -webkit-border-bottom-right-radius: 50%;
+  border-bottom-right-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 56px;
+  height: 56px;
+  line-height: 56px;
+  font-size: 25px;
+  text-align: center;
+  color: #fff;
+}
+
+.login-info_item h3 {
+  line-height: 1;
+  margin-bottom: 10px;
+  //color: #c5b397;
+  color: #E8EDF0;
+}
+
+.login-info_item p {
+  margin-bottom: 10px;
+}
+
+@media (min-width: 1200px) {
+  .login-info_item {
+    padding-left: 86px;
+    margin-bottom: 50px;
+  }
+  .login-info_item i {
+    width: 66px;
+    height: 66px;
+    line-height: 66px;
+  }
+}

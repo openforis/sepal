@@ -2,7 +2,7 @@
   {
     "prefix": "false",
     "path": "/",
-    "target": "http://sepal:1025/",
+    "target": "http://gui:7667/",
     "https": "true",
     "authenticate": "false",
     "no-cache": "true"
@@ -10,7 +10,7 @@
   {
     "prefix": "true",
     "path": "/static/",
-    "target": "http://sepal:1025/static/",
+    "target": "http://gui:7667/static/",
     "https": "true",
     "authenticate": "false",
     "cached": "true"
