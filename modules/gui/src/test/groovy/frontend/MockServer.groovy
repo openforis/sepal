@@ -237,12 +237,6 @@ class MockServer extends AbstractMvcFilter {
                                                 id       : 'LANDSAT_TM',
                                                 name     : 'Landsat 4-5 TM',
                                                 shortName: 'L4-5 TM'
-                                        ],
-
-                                        [
-                                                id       : 'LANDSAT_MSS',
-                                                name     : 'Landsat 1-5 MSS',
-                                                shortName: 'L1-5 MSS'
                                         ]
                                 ],
                                 bands     : [
