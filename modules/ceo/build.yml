@@ -1,0 +1,3 @@
+---
+
+- include: "{{ build_image_task }}"

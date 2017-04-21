@@ -17,6 +17,7 @@
     - "user:user"
     - "sepal:sepal"
     - "gui:gui"
+    - "ceo:ceo"
     volumes:
     - "/data/api-gateway:/data"
     - "/data/letsencrypt:/etc/letsencrypt"
