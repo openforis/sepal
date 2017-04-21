@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+{% block body %}
+
+    <div class="container">
+        <div class="row" style="padding: 0.5em 0;">
+            <div class="col">
+                <a class="btn btn-outline-success float-right" href="/project-add">add</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="table-responsive">
+                    <table class="table" id="project-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>filename</th>
+                                <th>upload time</th>
+                                <th>username</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="deleteModal" >
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    Are you sure you want to delete this project?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">cancel</button>
+                    <button type="button" class="btn btn-danger" id="deleteButton">delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+
+        $(document).ready(function() {
+
+            var cepSepalApiUrl = 'http://127.0.0.1:7766/api';
+
+            $.ajax({
+                url: cepSepalApiUrl + '/project',
+                dataType: 'json'
+            }).success(function(data) {
+                if (data !== undefined) {
+                    $(data).each(function() {
+                        var project_id = this.id;
+                        var tr = $('<tr>');
+                        tr.append($('<td>').text(project_id));
+                        tr.append($('<td>').text(this.filename));
+                        tr.append($('<td>').text(this.upload_datetime));
+                        tr.append($('<td>').text(this.username));
+                        tr.append($('<td>').append($('<a>').attr('href', '/collect-form?id=' + project_id).addClass('btn btn-outline-info').text('collect')));
+                        tr.append($('<td>').append($('<a>').attr('href', '#').addClass('btn btn-outline-danger').text('delete').click(function(e) {
+                            $('#deleteModal').modal('show');
+                            alert(project_id);
+                            $('#deleteButton').attr('data-project_id', project_id);
+                        })));
+                        $('#project-table tbody').append(tr);
+                    });
+                    $('#project-table').show();
+                    $('#deleteButton').click(function(e) {
+                        e.preventDefault();
+                        var project_id = $(this).attr('data-project_id');
+                        $.ajax({
+                            url: cepSepalApiUrl + '/project/remove',
+                            method: 'delete',
+                            data: JSON.stringify({
+                                project_id: project_id
+                            }),
+                            contentType: 'application/json;charset=UTF-8'
+                        }).success(function(data) {
+                            window.location.reload();
+                        }).fail(function(jqXHR, textStatus, errorThrown) {
+                            console.log(jqXHR, textStatus, errorThrown);
+                        });
+                    })
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR, textStatus, errorThrown);
+            });
+        });
+
+    </script>
+
+{% endblock %}
