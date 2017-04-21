@@ -85,7 +85,7 @@ class UserEndpoint {
                     send toJson([status: 'success', token: tokenStatus.token, user: tokenStatus.user, message: 'Token is valid'])
                 else {
                     def reason = tokenStatus?.expired ? 'expired' : 'invalid'
-                    send toJson([status: 'failure', token: tokenStatus.token, reason: reason, message: "Token is $reason"])
+                    send toJson([status: 'failure', token: tokenStatus?.token, reason: reason, message: "Token is $reason"])
                 }
             }
 
