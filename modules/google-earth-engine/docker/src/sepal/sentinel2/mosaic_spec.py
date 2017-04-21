@@ -38,8 +38,7 @@ class Sentinel2MosaicSpec(ImageSpec):
         """
         image_collection = image_adjustment.apply(image_collection, self)
         mosaic = constants.mosaic_strategies[self.strategy](image_collection)
-        mosaic
         return mosaic \
             .clip(self.aoi.geometry()) \
             .select(self.bands) \
-            .int16()
+            .uint16()

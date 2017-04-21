@@ -1,8 +1,8 @@
 from util import *
-
+import constants
 
 def apply(image_collection, mosaic_def):
-    scored = image_collection.map(lambda image: image.addBands(_Score(image, mosaic_def).apply()))
+    scored = image_collection.map(lambda image: _adjust_image(image, mosaic_def))
     scoreMax = scored.select('score').reduce(ee.Reducer.max())
     scoreThreshold = scoreMax.multiply(0.99)
 
@@ -20,6 +20,31 @@ def apply(image_collection, mosaic_def):
 
     result = clouds_masked.map(mask_shadows)
     return result
+
+
+def _adjust_image(image, mosaic_def):
+    image = image.addBands(_Score(image, mosaic_def).apply())
+    image = _add_days_band(image, mosaic_def)
+    image = _add_date_band(image)
+    return image
+
+
+def _add_days_band(image, mosaic_def):
+    target_day_of_year = mosaic_def.target_day_of_year
+    acquisition = ee.Number(image.get('system:time_start'))
+    day = ee.Date(acquisition).getRelative('day', 'year')
+    daysFromTargetDay = day.subtract(target_day_of_year).abs()
+    daysFromTargetDay = daysFromTargetDay.min(
+        ee.Number(365).subtract(daysFromTargetDay)  # Closer over year boundary?
+    )
+    image = image.addBands(ee.Image(daysFromTargetDay).uint16().rename([DAYS]))
+    return image
+
+
+def _add_date_band(image):
+    date = image.metadata('system:time_start').divide(constants.milis_per_day).rename([DATE])
+    image = image.addBands(ee.Image(date).uint16().rename([DATE]))
+    return image
 
 
 class _Score():

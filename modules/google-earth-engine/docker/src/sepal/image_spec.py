@@ -45,8 +45,6 @@ class ImageSpec(object):
         downloader.start_download(task_id, name, file_id)
         return task_id
 
-
-
     @abstractmethod
     def _ee_image(self):
         """Creates an ee.Image based on the spec.

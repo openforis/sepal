@@ -47,12 +47,12 @@ class AuthenticatingHandler implements HttpHandler {
         def sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY)
         def session = sessionManager.getSession(exchange, sessionConfig)
         if (!session && create) {
-            LOG.debug("Creating new session: " + exchange)
+            LOG.trace("Creating new session: " + exchange)
             session = sessionManager.createSession(exchange, sessionConfig)
         } else if (!session)
-            LOG.debug("No existing session, and will not create one: " + exchange)
+            LOG.trace("No existing session, and will not create one: " + exchange)
         else
-            LOG.debug("Existing session: " + exchange)
+            LOG.trace("Existing session: " + exchange)
         return session
     }
 

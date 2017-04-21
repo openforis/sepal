@@ -16,11 +16,11 @@ SWIR1 = 'B5'
 SWIR2 = 'B7'
 THERMAL = 'B10'
 FMASK = 'fmask'
-DAYS = 'days'
 TEMP = 'temp'
+DATE = 'date'
+DAYS = 'days'
 NDVI = 'ndvi'
 QUALITY = 'quality'
-DATE = 'date'
 
 
 def line_from_coords(coordinates, fromIndex, toIndex):

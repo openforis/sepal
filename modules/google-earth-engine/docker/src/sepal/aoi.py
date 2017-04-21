@@ -50,26 +50,23 @@ class Aoi:
             raise ValueError('Unsupported data set: ' + data_set)
         table = self._fusion_table_by_data_set[data_set]
         scene_area_table = ee.FeatureCollection(table['table_id'])
-        join = ee.Join.saveAll(matchesKey='scenes')
-        intersect_joined = join.apply(self._geometry, scene_area_table, ee.Filter.intersects(
+        intersected = scene_area_table.filter(ee.Filter.intersects(
             leftField='.geo',
-            rightField='.geo',
-            maxError=10
-        ))
-        intersected = intersect_joined.aggregate_array('scenes').getInfo()
+            rightValue=self._geometry,
+        )).toList(1e6).getInfo()
         scene_areas = []
-        for featureScenes in intersected:
-            for sceneArea in featureScenes:
-                polygon = map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](sceneArea))
-                scene_areas.append({
-                    'sceneAreaId': sceneArea['properties'][table['id_column']],
-                    'polygon': polygon,
-                })
+        for scene_area in intersected:
+            polygon = map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](scene_area))
+            scene_areas.append({
+                'sceneAreaId': scene_area['properties'][table['id_column']],
+                'polygon': polygon,
+            })
+
         return scene_areas
 
     def geometry(self):
         """Gets the ee.Geometry of this Aoi.
-
+    
         :return: The ee.Geometry
         :rtype: ee.Geometry
         """

@@ -15,6 +15,7 @@ target
 /modules/ssh-gateway/docker/binary/sepal-ssh-gateway.jar
 /modules/user/docker/binary/sepal-user.jar
 /modules/sepal-server/docker/binary/sepal.jar
+/modules/gui/docker/binary/sepal-gui.jar
 /modules/api-gateway/docker/binary/sepal-api-gateway.jar
 
 #Sepal frontend
