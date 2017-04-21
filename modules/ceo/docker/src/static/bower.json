@@ -1,0 +1,25 @@
+{
+  "name": "static",
+  "authors": [
+    "rfontanarosa <robertofontanarosa@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.2.4",
+    "bootstrap": "v4.0.0-alpha.6",
+    "tether": "1.4.0",
+    "d3": "3.3.3",
+    "font-awesome": "4.7.0"
+  }
+}

@@ -1,0 +1,4 @@
+env
+instance
+static/bower_components
+*.pyc
