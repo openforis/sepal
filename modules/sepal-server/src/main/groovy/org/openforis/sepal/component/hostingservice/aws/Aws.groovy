@@ -28,12 +28,12 @@ class Aws implements HostingServiceAdapter {
             new InstanceType(id: 'C42xlarge', name: 'c4.2xlarge', hourlyCost: 0.453, description: '8 CPU / 15 GiB'),
             new InstanceType(id: 'C44xlarge', name: 'c4.4xlarge', hourlyCost: 0.905, description: '16 CPU / 30 GiB'),
             new InstanceType(id: 'C48xlarge', name: 'c4.8xlarge', hourlyCost: 1.811, description: '36 CPU / 60 GiB'),
-            new InstanceType(id: 'R3Large', name: 'r3.large', hourlyCost: 0.185, description: '2 CPU / 15 GiB'),
-            new InstanceType(id: 'R3Xlarge', name: 'r3.xlarge', hourlyCost: 0.371, description: '4 CPU / 30.5 GiB'),
-            new InstanceType(id: 'R32xlarge', name: 'r3.2xlarge', hourlyCost: 0.741, description: '8 CPU / 61 GiB'),
-            new InstanceType(id: 'R34xlarge', name: 'r3.4xlarge', hourlyCost: 1.186, description: '16 CPU / 122 GiB'),
-            new InstanceType(id: 'R38xlarge', name: 'r3.8xlarge', hourlyCost: 2.371, description: '32 CPU / 244 GiB'),
-            new InstanceType(id: 'R316xlarge', name: 'r3.16xlarge', hourlyCost: 4.742, description: '64 CPU / 488 GiB'),
+            new InstanceType(id: 'R4Large', name: 'r4.large', hourlyCost: 0.148, description: '2 CPU / 15.25 GiB'),
+            new InstanceType(id: 'R4Xlarge', name: 'r4.xlarge', hourlyCost: 0.296, description: '4 CPU / 30.5 GiB'),
+            new InstanceType(id: 'R42xlarge', name: 'r4.2xlarge', hourlyCost: 0.593, description: '8 CPU / 61 GiB'),
+            new InstanceType(id: 'R44xlarge', name: 'r4.4xlarge', hourlyCost: 1.186, description: '16 CPU / 122 GiB'),
+            new InstanceType(id: 'R48xlarge', name: 'r4.8xlarge', hourlyCost: 2.371, description: '32 CPU / 244 GiB'),
+            new InstanceType(id: 'R416xlarge', name: 'r4.16xlarge', hourlyCost: 4.742, description: '64 CPU / 488 GiB'),
             new InstanceType(id: 'X116xlarge', name: 'x1.16xlarge', hourlyCost: 8.003, description: '64 CPU / 976 GiB'),
             new InstanceType(id: 'X132xlarge', name: 'x1.32xlarge', hourlyCost: 16.006, description: '128 CPU / 1920 GiB')
     ].asImmutable()
