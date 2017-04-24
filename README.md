@@ -135,12 +135,6 @@ Language for statistical computing and graphics.
 **RStudio Server** -
 An IDE for R in a web browser.
 
-**Tuiview** -
-A lightweight raster GIS.
-
-**QGIS** -
-A free and open source geographic information system.
-
 **Orfeo ToolBox** -
 Library for remote sensing image processing.
 
@@ -153,9 +147,8 @@ The project is under active development, and the build and release process is st
 instructions will change, and improve, over time.
 
 ### Prerequisites
-In order to build and run the SEPAL system, a Linux or Windows installation is needed. While it might be possible,
-with significant effort, to do this on Windows, it is not supported. The end-users on the other hand, are of course
-free to use whatever Operating system they prefer, including Windows.
+In order to build and run the SEPAL system, a Linux or macOS installation is needed.
+The end-users on the other hand, are of course free to use whatever Operating system they prefer, including Windows.
 
 In addition to this, the following software must be installed:
 

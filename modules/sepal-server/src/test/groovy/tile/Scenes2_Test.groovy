@@ -5,7 +5,7 @@ import org.openforis.sepal.component.datasearch.internal.Scenes2
 import spock.lang.Ignore
 import spock.lang.Specification
 
-@Ignore
+@org.junit.Ignore
 class Scenes2_Test extends Specification {
     static final SQUARE = [[0d, 0d], [1d, 0d], [1d, 1d], [0d, 1d], [0d, 0d]] as double[][]
     static final ROTATED = [[0d, 0.5d], [0.5d, 0d], [1d, 0.5d], [0.5d, 1d], [0d, 0.5d]] as double[][]
@@ -19,7 +19,7 @@ class Scenes2_Test extends Specification {
         false
     }
 
-    private List<SceneMetaData> select(Scenes2 scenes) {
+    private Map<String, List<SceneMetaData>> select(Scenes2 scenes) {
         scenes.selectScenes(0.9, 1, Integer.MAX_VALUE, null)
     }
 

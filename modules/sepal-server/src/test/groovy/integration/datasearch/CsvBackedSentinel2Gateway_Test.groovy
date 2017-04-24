@@ -1,8 +1,7 @@
 package integration.datasearch
 
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
-import org.openforis.sepal.component.datasearch.adapter.CsvBackedSentinel2Gateway
-import org.openforis.sepal.util.CsvInputStreamReader
+import org.openforis.sepal.component.datasearch.adapter.CsvBackedSentinel2GatewayWithCoverageAndFootprint
 import org.openforis.sepal.util.CsvReader
 import org.openforis.sepal.util.CsvUriReader
 import spock.lang.Ignore
@@ -27,7 +26,7 @@ class CsvBackedSentinel2Gateway_Test extends Specification {
 //        def reader = new CsvInputStreamReader(new FileInputStream('/Users/wiell/Downloads/sentinel2-metadata.csv'))
 //        def reader = new CsvUriReader('https://drive.google.com/open?id=0B1fRIaLaJSWtOU9HSzQ2Tml0eFk')
         def reader = new CsvUriReader('https://dl.dropboxusercontent.com/u/6262669/sentinel2-metadata.csv')
-        def gateway = new CsvBackedSentinel2Gateway(workingDir, reader)
+        def gateway = new CsvBackedSentinel2GatewayWithCoverageAndFootprint(workingDir, reader)
 
         def ids = [:]
         gateway.eachSceneUpdatedSince(SENTINEL2A: LONG_AGO) { scenes ->
@@ -49,7 +48,7 @@ class CsvBackedSentinel2Gateway_Test extends Specification {
 
     def 'Two scenes get accessed'() {
         def reader = new FakeCsvReader([(sceneId): now, (sceneId2): now])
-        def gateway = new CsvBackedSentinel2Gateway(workingDir, reader)
+        def gateway = new CsvBackedSentinel2GatewayWithCoverageAndFootprint(workingDir, reader)
 
         when:
         def updates = iterate(SENTINEL2A: LONG_AGO, gateway)
@@ -62,7 +61,7 @@ class CsvBackedSentinel2Gateway_Test extends Specification {
 
     def 'Scene acuired before last update is excluded'() {
         def reader = new FakeCsvReader((sceneId): LONG_AGO)
-        def gateway = new CsvBackedSentinel2Gateway(workingDir, reader)
+        def gateway = new CsvBackedSentinel2GatewayWithCoverageAndFootprint(workingDir, reader)
 
         expect:
         !iterate(SENTINEL2A: now, gateway)
