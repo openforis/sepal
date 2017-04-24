@@ -13,7 +13,7 @@ def import_sepal_auth(f):
         user = json.loads(sepalUser)
         session['username'] = user.get('username')
         session['roles'] = user.get('roles')
-        session['is_admin'] = user.get('roles')
+        session['is_admin'] = user.get('admin', False)
         return f(*args, **kwargs)
     return wrapper
 

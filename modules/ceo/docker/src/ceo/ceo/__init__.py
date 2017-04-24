@@ -6,7 +6,7 @@ app.config.from_pyfile('config.py', silent=True)
 
 app.secret_key = app.config['SESSION_SECRET_KEY']
 
-from flask.ext.pymongo import PyMongo
+from flask_pymongo import PyMongo
 mongo = PyMongo(app)
 import api_mongo, web
 
