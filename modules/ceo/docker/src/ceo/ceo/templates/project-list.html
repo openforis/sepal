@@ -47,10 +47,10 @@
 
         $(document).ready(function() {
 
-            var cepSepalApiUrl = 'http://127.0.0.1:7766/api';
+            var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
 
             $.ajax({
-                url: cepSepalApiUrl + '/project',
+                url: ceoSepalApiUrl + '/project',
                 dataType: 'json'
             }).success(function(data) {
                 if (data !== undefined) {
