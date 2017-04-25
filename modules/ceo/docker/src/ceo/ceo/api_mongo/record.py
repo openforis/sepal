@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 @requires_auth
 @requires_role('user')
 def recordById(id=None):
-    record = mongo.db.records.find({'id': id}, {'_id': False});
-    return jsonify(record.serialize), 200
+    record = mongo.db.records.find_one({'id': id}, {'_id': False});
+    return jsonify(record), 200
 
 @app.route('/api/record/project_id/<project_id>/username/<username>', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])

@@ -1,4 +1,5 @@
-import os, shutil, logging, json, datetime, hashlib
+import os, shutil, logging, json, datetime, hashlib, csv
+import xml.etree.ElementTree as ET
 
 from flask import session, request, redirect, url_for, jsonify, render_template, send_file
 from flask_cors import CORS, cross_origin
@@ -20,8 +21,8 @@ logger = logging.getLogger(__name__)
 @requires_auth
 @requires_role('user')
 def projectById(id=None):
-    project = mongo.db.projects.find({'id': id}, {'_id': False});
-    return jsonify(project.serialize), 200
+    project = mongo.db.projects.find_one({'id': id}, {'_id': False});
+    return jsonify(project), 200
 
 @app.route('/api/project', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
@@ -74,6 +75,40 @@ def projectAdd():
             zip_ref = zipfile.ZipFile(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'r')
             zip_ref.extractall(extractDir)
             zip_ref.close()
+        #
+        codeLists = []
+        if os.path.isfile(os.path.join(extractDir, 'placemark.idm.xml')):
+            ns = {
+                'of': 'http://www.openforis.org/idml/3.0'
+            }
+            tree = ET.parse(os.path.join(extractDir, 'placemark.idm.xml'))
+            lists = tree.findall('of:codeLists/of:list', ns)
+            for lst in lists:
+                codeList = {
+                    'id': lst.attrib.get('id'),
+                    'name': lst.attrib.get('name'),
+                    'items': []
+                }
+                items = lst.findall('of:items/of:item', ns)
+                for item in items:
+                    codeList.get('items').append({
+                        'code': item.find('of:code', ns).text,
+                        'label': item.find('of:label', ns).text
+                    })
+                codeLists.append(codeList)
+            print (codeLists)
+        #
+        plots = []
+        if os.path.isfile(os.path.join(extractDir, 'test_plots.ced')):
+            with open(os.path.join(extractDir, 'test_plots.ced'), 'rb') as csvfile:
+                csvreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+                next(csvreader, None)
+                for row in csvreader:
+                    plots.append({
+                        'id': row[0],
+                        'YCoordinate': row[1],
+                        'XCoordinate': row[2]
+                    })
         # create the project
         username = session.get('username')
         data = request.form.to_dict()
@@ -82,8 +117,10 @@ def projectAdd():
             'id': generate_id(filename),
             'filename': filename,
             'username': username,
-            'radius': int(radius),
-            'upload_datetime': datetime.datetime.utcnow()
+            'radius': radius,
+            'upload_datetime': datetime.datetime.utcnow(),
+            'plots': plots,
+            'codeLists': codeLists
         });
     return redirect(url_for('project_list'))
 

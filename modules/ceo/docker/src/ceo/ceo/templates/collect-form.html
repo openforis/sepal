@@ -52,29 +52,126 @@
 
         var project_id = $.urlParam('id');
 
-        d3.xml('/api/project/' + project_id + '/file/placemark.idm.xml', function(xhr) {
-            var codeLists = $(xhr).children('survey').children('codeLists').children();
-            codeLists.each(function(i) {
-                var list = $(this);
-                var element = $('<div>').addClass('form-group');
-                var label = $('<label>').text(list.attr('name'));
-                element.append(label);
-                var select = $('<select>').addClass('form-control').attr('data-record-name', list.attr('name'));
-                list.children('items:first').children().each(function(k) {
-                    var item = $(this);
-                    var text = $(item).children('label:first').text();
-                    var option = $('<option>').text(text);
-                    select.append(option);
+        var map;
+        var overlay;
+        var layer;
+        var bounds = 8;
+
+        function getProject() {
+            $.ajax({
+                url: ceoSepalApiUrl + "/project/" + project_id,
+                method: 'get',
+                contentType: 'application/json;charset=UTF-8'
+            }).success(function(data) {
+                //codeLists
+                data.codeLists.forEach(function(codeList) {
+                    var element = $('<div>').addClass('form-group');
+                    var label = $('<label>').text(codeList.name);
+                    element.append(label);
+                    var select = $('<select>').addClass('form-control').attr('data-record-name', codeList.name);
+                    codeList.items.forEach(function(item) {
+                        var option = $('<option>').text(item.label);
+                        select.append(option);
+                    });
+                    element.append(select);
+                    $('#codeLists').prepend(element);
                 });
-                element.append(select);
-                $('#codeLists').prepend(element);
+                //plots
+                data.plots.forEach(function(plot) {
+                    var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(plot.id).attr('data-record-name', plot.id).click(function() {
+                        var record_name = $(this).attr('data-record-name');
+                        $(this).siblings().removeClass("active");
+                        $(this).addClass("active");
+                        map.setCenter(new google.maps.LatLng(parseFloat(plot.YCoordinate), parseFloat(plot.XCoordinate)));
+                        map.setZoom(12);
+                        $('#codeLists input[name="id"]').val(0);
+                        record = $.grep(records, function(e) { return e['record_name'] == record_name; });
+                        if (record[0] !== undefined) {
+                            var id = record[0]['id'] !== undefined ? record[0]['id'] : 0;
+                            $('#codeLists input[name="id"]').val(id);
+                            var values = record[0]['record_value'];
+                            $.each(JSON.parse(values), function(key, value) {
+                                $('#codeLists select[data-record-name="' + key +'"]').val(value);
+                            });
+                        }
+                        $('#codeLists').show();
+                    });
+                    $('#list').append(li);
+                });
+                // plots
+               function initialize() {
+
+                    options  = { 
+                        zoom: 10,
+                        center: new google.maps.LatLng(0, 0),
+                        disableDefaultUI: false,
+                        streetViewControl: false,
+                        mapTypeId: 'satellite',
+                        styles: [{
+                            featureType: "water",
+                            elementType: "labels",
+                            stylers: [{
+                                visibility: "off"
+                            }]
+                        }]
+                    };
+
+                    map = new google.maps.Map(window.document.getElementById("map"), options);
+                    bounds = new google.maps.LatLngBounds();
+
+                    data.plots.forEach(function(plot) {
+
+                        var lat = parseFloat(plot.YCoordinate);
+                        var lng = parseFloat(plot.XCoordinate);
+                        var center = new google.maps.LatLng(lat, lng);
+                        var radius = 3000;
+
+                        var circle = new google.maps.Circle({
+                            center: center,
+                            radius: radius
+                        });
+
+                        var point = new google.maps.Circle({
+                            center: center,
+                            radius: 30,
+                            strokeColor: 'yellow',
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillOpacity: 0,
+                            map: map
+                        });
+
+                        var square = new google.maps.Rectangle({
+                            bounds: circle.getBounds(),
+                            strokeColor: 'yellow',
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillOpacity: 0,
+                            map: map
+                        }).addListener('click', function() {
+                            $('#list a[data-record-name=' + plot.id +']').click();
+                        });
+
+                        bounds.extend(center);
+
+                    });
+
+                }
+
+                initialize();
+                map.panToBounds(bounds);
+                map.fitBounds(bounds);
+
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR, textStatus, errorThrown);
             });
-        });
+        }
+
+        getProject();
 
 //
 
         var records = {};
-        var project_id = $.urlParam('id');
         var record_id = $(this).attr('data-id');
 
         function getRecords() {
@@ -92,110 +189,7 @@
             });
         }
 
-//
-
-        var map;
-        var overlay;
-        var layer;
-        var bounds = 8;
-
-//
-
-        d3.csv('/api/project/' + project_id + '/file/test_plots.ced', function(d) {
-            var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(d.id).attr('data-record-name', d.id).click(function() {
-                var record_name = $(this).attr('data-record-name');
-                $(this).siblings().removeClass("active");
-                $(this).addClass("active");
-                map.setCenter(new google.maps.LatLng(d.YCoordinate, d.XCoordinate));
-                map.setZoom(12);
-                $('#codeLists input[name="id"]').val(0);
-                record = $.grep(records, function(e) { return e['record_name'] == record_name; });
-                if (record[0] !== undefined) {
-                    var id = record[0]['id'] !== undefined ? record[0]['id'] : 0;
-                    $('#codeLists input[name="id"]').val(id);
-                    var values = record[0]['record_value'];
-                    $.each(JSON.parse(values), function(key, value) {
-                        $('#codeLists select[data-record-name="' + key +'"]').val(value);
-                    });
-                }
-                $('#codeLists').show();
-            });
-            $('#list').append(li);
-            return {
-                id: d.id,
-                XCoordinate: parseFloat(d.XCoordinate),
-                YCoordinate: parseFloat(d.YCoordinate)
-            };
-        }, function(data) {
-
-            getRecords();
-
-            function initialize() {
-
-                options  = { 
-                    zoom: 10,
-                    center: new google.maps.LatLng(0, 0),
-                    disableDefaultUI: false,
-                    streetViewControl: false,
-                    mapTypeId: 'satellite',
-                    styles: [{
-                        featureType: "water",
-                        elementType: "labels",
-                        stylers: [{
-                            visibility: "off"
-                        }]
-                    }]
-                };
-
-                map = new google.maps.Map(window.document.getElementById("map"), options);
-                bounds = new google.maps.LatLngBounds();
-
-                $.each(data, function() {
-
-                    var point = this;
-
-                    var lat = this.YCoordinate;
-                    var lng = this.XCoordinate;
-                    var center = new google.maps.LatLng(lat, lng);
-                    var radius = 3000;
-
-                    var circle = new google.maps.Circle({
-                        center: center,
-                        radius: radius
-                    });
-
-                    var point = new google.maps.Circle({
-                        center: center,
-                        radius: 30,
-                        strokeColor: 'yellow',
-                        strokeOpacity: 0.8,
-                        strokeWeight: 2,
-                        fillOpacity: 0,
-                        map: map
-                    });
-
-                    var square = new google.maps.Rectangle({
-                        bounds: circle.getBounds(),
-                        strokeColor: 'yellow',
-                        strokeOpacity: 0.8,
-                        strokeWeight: 2,
-                        fillOpacity: 0,
-                        map: map
-                    }).addListener('click', function() {
-                        $('#list a[data-record-name=' + point.id +']').click();
-                    });
-
-                    bounds.extend(center);
-
-                });
-
-            }
-
-            initialize();
-            map.panToBounds(bounds);
-            map.fitBounds(bounds);
-
-        });
+        getRecords();
 
         $('#codeLists button').click(function(e) {
             e.preventDefault();
@@ -210,7 +204,7 @@
                 record_value: record_value,
                 project_id: project_id
             }
-            var url = cepSepalApiUrl + '/record';
+            var url = ceoSepalApiUrl + '/record';
             var method = 'post';
             var record_id = $('#codeLists input[name="id"]').val();
             if (record_id != 0) {
