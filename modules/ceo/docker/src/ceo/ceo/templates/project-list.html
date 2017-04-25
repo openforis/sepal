@@ -64,7 +64,6 @@
                         tr.append($('<td>').append($('<a>').attr('href', '/collect-form?id=' + project_id).addClass('btn btn-outline-info').text('collect')));
                         tr.append($('<td>').append($('<a>').attr('href', '#').addClass('btn btn-outline-danger').text('delete').click(function(e) {
                             $('#deleteModal').modal('show');
-                            alert(project_id);
                             $('#deleteButton').attr('data-project_id', project_id);
                         })));
                         $('#project-table tbody').append(tr);
@@ -74,7 +73,7 @@
                         e.preventDefault();
                         var project_id = $(this).attr('data-project_id');
                         $.ajax({
-                            url: cepSepalApiUrl + '/project/remove',
+                            url: ceoSepalApiUrl + '/project/remove',
                             method: 'delete',
                             data: JSON.stringify({
                                 project_id: project_id
