@@ -53,9 +53,8 @@
         var project_id = $.urlParam('id');
 
         var map;
-        var overlay;
-        var layer;
-        var bounds = 8;
+        var bounds = new google.maps.LatLngBounds();
+        var radius = 30;
 
         function getProject() {
             $.ajax({
@@ -63,6 +62,8 @@
                 method: 'get',
                 contentType: 'application/json;charset=UTF-8'
             }).success(function(data) {
+                //project
+                radius = parseFloat(data.radius);
                 //codeLists
                 data.codeLists.forEach(function(codeList) {
                     var element = $('<div>').addClass('form-group');
@@ -117,14 +118,12 @@
                     };
 
                     map = new google.maps.Map(window.document.getElementById("map"), options);
-                    bounds = new google.maps.LatLngBounds();
 
                     data.plots.forEach(function(plot) {
 
                         var lat = parseFloat(plot.YCoordinate);
                         var lng = parseFloat(plot.XCoordinate);
                         var center = new google.maps.LatLng(lat, lng);
-                        var radius = 3000;
 
                         var circle = new google.maps.Circle({
                             center: center,
@@ -133,11 +132,12 @@
 
                         var point = new google.maps.Circle({
                             center: center,
-                            radius: 30,
+                            radius: 1,
                             strokeColor: 'yellow',
                             strokeOpacity: 0.8,
                             strokeWeight: 2,
-                            fillOpacity: 0,
+                            fillColor: 'yellow',
+                            fillOpacity: 1,
                             map: map
                         });
 
