@@ -66,7 +66,7 @@ def projectAdd():
         # save the file
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        # extract the file
+        # extract the files
         name, ext = os.path.splitext(filename)
         extractDir = os.path.join(app.config['UPLOAD_FOLDER'], name)
         if not os.path.exists(extractDir):
@@ -76,13 +76,16 @@ def projectAdd():
             zip_ref.close()
         # create the project
         username = session.get('username')
+        data = request.form.to_dict()
+        radius = data.get('radius')
         mongo.db.projects.insert({
             'id': generate_id(filename),
             'filename': filename,
             'username': username,
+            'radius': int(radius),
             'upload_datetime': datetime.datetime.utcnow()
         });
-    return 'OK', 200
+    return redirect(url_for('project_list'))
 
 @app.route('/api/project/remove', methods=['DELETE'])
 @cross_origin(origins=app.config['CO_ORIGINS'])

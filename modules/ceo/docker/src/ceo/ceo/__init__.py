@@ -9,10 +9,3 @@ app.secret_key = app.config['SESSION_SECRET_KEY']
 from flask_pymongo import PyMongo
 mongo = PyMongo(app)
 import api_mongo, web
-
-"""
-from flask.ext.sqlalchemy import SQLAlchemy
-db = SQLAlchemy(app)
-import api_db, web
-db.create_all()
-"""
