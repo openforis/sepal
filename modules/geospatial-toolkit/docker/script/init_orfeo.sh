@@ -2,9 +2,9 @@
 set -e
 
 echo
-echo "************************************************"
+echo "********************************"
 echo "*** Installing Orfeo ToolBox ***"
-echo "************************************************"
+echo "********************************"
 
 # install the ubuntigis version for use of ORFEO core modules
 apt-get install -y \
