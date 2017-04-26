@@ -14,6 +14,9 @@ RUN chmod u+x /script/init_image.sh; sync && /script/init_image.sh
 ADD script/init_java.sh /script
 RUN chmod u+x /script/init_java.sh; sync && /script/init_java.sh
 
+ADD script/init_gcloud.sh /script
+RUN chmod u+x /script/init_gcloud.sh; sync && /script/init_gcloud.sh
+
 ADD script/init_oft.sh /script
 RUN chmod u+x /script/init_oft.sh; sync && /script/init_oft.sh
 
