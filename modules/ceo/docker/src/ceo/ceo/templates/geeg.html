@@ -1,0 +1,47 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+              <label>ImageCollection</label>
+              <select class="form-control" name="collectionName[]">
+                  <option value="" selected>CHOOSE A COLLECTION</option>
+                  <option value="LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA">LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA</option>
+                  <option value="LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA">LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA</option>
+                  <option value="LANDSAT/LC8_L1T_TOA">LANDSAT/LC8_L1T_TOA</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>From (YYYY-MM-DD)</label>
+              <input type="text" class="form-control" name="dateFrom[]" />
+            </div>
+            <div class="form-group">
+              <label>To (YYYY-MM-DD)</label>
+              <input type="text" class="form-control" name="dateTo[]" />
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label>Min</label>
+                <input type="text" class="form-control" name="min[]" />
+            </div>
+            <div class="form-group">
+                <label>Max</label>
+                <input type="text" class="form-control" name="max[]" />
+            </div>
+            <div class="form-group">
+                <label>Bands</label>
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" name="band1[]" />
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" name="band2[]" />
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" name="band3[]" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

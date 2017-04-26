@@ -24,6 +24,10 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-6">
+            <select class="form-control" id="layer-selector">
+                <option value="" selected>CHOOSE A LAYER</option>
+            </select>
+            <br />
             <div id="map"></div>
         </div>
         <div class="col-3" style="color: red;">
@@ -43,7 +47,7 @@
     $(document).ready(function() {
 
         var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
-        var geeGatewayApiUrl = '{{config.GEE_API_URL}}';
+        var geeGatewayApiUrl = '{{config.GEEG_API_URL}}';
 
         $.urlParam = function (name) {
             var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
@@ -53,8 +57,15 @@
         var project_id = $.urlParam('id');
 
         var map;
+        var overlays = [];
         var bounds = new google.maps.LatLngBounds();
         var radius = 30;
+
+        $('#layer-selector').change(function(e) {
+            var index = $(this).val();
+            map.overlayMapTypes.pop();
+            map.overlayMapTypes.insertAt(0, overlays[index]);
+        });
 
         function getProject() {
             $.ajax({
@@ -99,68 +110,128 @@
                     });
                     $('#list').append(li);
                 });
-                // plots
-               function initialize() {
+                //plots
 
-                    options  = { 
-                        zoom: 10,
-                        center: new google.maps.LatLng(0, 0),
-                        disableDefaultUI: false,
-                        streetViewControl: false,
-                        mapTypeId: 'satellite',
-                        styles: [{
-                            featureType: "water",
-                            elementType: "labels",
-                            stylers: [{
-                                visibility: "off"
-                            }]
+                options  = { 
+                    zoom: 10,
+                    center: new google.maps.LatLng(0, 0),
+                    disableDefaultUI: false,
+                    streetViewControl: false,
+                    mapTypeId: 'satellite',
+                    styles: [{
+                        featureType: "water",
+                        elementType: "labels",
+                        stylers: [{
+                            visibility: "off"
                         }]
-                    };
+                    }]
+                };
 
-                    map = new google.maps.Map(window.document.getElementById("map"), options);
+                map = new google.maps.Map(window.document.getElementById("map"), options);
 
-                    data.plots.forEach(function(plot) {
+                data.plots.forEach(function(plot) {
 
-                        var lat = parseFloat(plot.YCoordinate);
-                        var lng = parseFloat(plot.XCoordinate);
-                        var center = new google.maps.LatLng(lat, lng);
+                    var lat = parseFloat(plot.YCoordinate);
+                    var lng = parseFloat(plot.XCoordinate);
+                    var center = new google.maps.LatLng(lat, lng);
 
-                        var circle = new google.maps.Circle({
-                            center: center,
-                            radius: radius
-                        });
-
-                        var point = new google.maps.Circle({
-                            center: center,
-                            radius: 1,
-                            strokeColor: 'yellow',
-                            strokeOpacity: 0.8,
-                            strokeWeight: 2,
-                            fillColor: 'yellow',
-                            fillOpacity: 1,
-                            map: map
-                        });
-
-                        var square = new google.maps.Rectangle({
-                            bounds: circle.getBounds(),
-                            strokeColor: 'yellow',
-                            strokeOpacity: 0.8,
-                            strokeWeight: 2,
-                            fillOpacity: 0,
-                            map: map
-                        }).addListener('click', function() {
-                            $('#list a[data-record-name=' + plot.id +']').click();
-                        });
-
-                        bounds.extend(center);
-
+                    var circle = new google.maps.Circle({
+                        center: center,
+                        radius: radius
                     });
 
-                }
+                    var point = new google.maps.Circle({
+                        center: center,
+                        radius: 1,
+                        strokeColor: 'yellow',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillColor: 'yellow',
+                        fillOpacity: 1,
+                        map: map
+                    });
 
-                initialize();
+                    var square = new google.maps.Rectangle({
+                        bounds: circle.getBounds(),
+                        strokeColor: 'yellow',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillOpacity: 0,
+                        map: map
+                    }).addListener('click', function() {
+                        $('#list a[data-record-name=' + plot.id +']').click();
+                    });
+
+                    bounds.extend(center);
+
+                });
+
                 map.panToBounds(bounds);
                 map.fitBounds(bounds);
+
+                //overlays
+
+                data.overlays.forEach(function(overlay) {
+                    var collectionName = overlay.collectionName;
+                    var bands = '';
+                    var b1 = overlay.band1;
+                    var b2 = overlay.band2;
+                    var b3 = overlay.band3;
+                    if (b1 != '' && b2 != '' && b3 != '') {
+                        bands = b1 + ',' + b2 + ',' + b3;
+                    }
+                    var visParams = {
+                        min: overlay.min,
+                        max: overlay.max,
+                        bands: bands
+                    };
+                    var dateFrom = overlay.dateFrom;
+                    var dateTo = overlay.dateTo;
+                    $.ajax({
+                        url: geeGatewayApiUrl + '/imageByMosaicCollection',
+                        type: 'POST',
+                        async: false,
+                        crossDomain : true,
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            collectionName: collectionName,
+                            visParams, visParams,
+                            dateFrom: dateFrom,
+                            dateTo: dateTo
+                        })
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        alert(textStatus);
+                    }).done(function(data, textStatus, jqXHR) {
+                        if (data.errMsg) {
+                            alert(data.errMsg);
+                        } else {
+                            if (data.hasOwnProperty('mapid')) {
+                                var mapId = data.mapid;
+                                var token = data.token;
+                                //
+                                var eeMapOptions = {
+                                    getTileUrl: function(tile, zoom) {
+                                      var baseUrl = 'https://earthengine.googleapis.com/map';
+                                      var url = [baseUrl, mapId, zoom, tile.x, tile.y].join('/');
+                                      url += '?token=' + token;
+                                      return url;
+                                    },
+                                    tileSize: new google.maps.Size(256, 256)
+                                };
+                                // Create the map type.
+                                var mapType = new google.maps.ImageMapType(eeMapOptions);
+                                // Create the base Google Map.
+                                //google.maps.event.trigger(map, 'resize');
+                                // Add the EE layer to the map.
+                                //map.overlayMapTypes.pop();
+                                //map.overlayMapTypes.push(mapType);
+                                overlays.push(mapType);
+                                var option = $('<option>').text(collectionName).attr('value', overlays.length - 1);
+                                $('#layer-selector').append(option);
+                            }
+                        }
+                    });
+                });
 
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.log(jqXHR, textStatus, errorThrown);

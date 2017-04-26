@@ -113,6 +113,30 @@ def projectAdd():
         username = session.get('username')
         data = request.form.to_dict()
         radius = data.get('radius')
+        overlays = []
+        #gee-gateway
+        collectionName = request.form.getlist('collectionName[]')
+        dateFrom = request.form.getlist('dateFrom[]')
+        dateTo = request.form.getlist('dateTo[]')
+        Min = request.form.getlist('min[]')
+        Max = request.form.getlist('max[]')
+        band1 = request.form.getlist('band1[]')
+        band2 = request.form.getlist('band2[]')
+        band3 = request.form.getlist('band3[]')
+        for i in range(0, len(collectionName)):
+            overlay = {
+                'type': 'gee-gateway',
+                'collectionName': collectionName[i],
+                'dateFrom': dateFrom[i],
+                'dateTo': dateTo[i],
+                'min': Min[i],
+                'max': Max[i],
+                'band1': band1[i],
+                'band2': band2[i],
+                'band3': band3[i]
+            }
+            overlays.append(overlay)
+        #
         mongo.db.projects.insert({
             'id': generate_id(filename),
             'filename': filename,
@@ -120,7 +144,8 @@ def projectAdd():
             'radius': radius,
             'upload_datetime': datetime.datetime.utcnow(),
             'plots': plots,
-            'codeLists': codeLists
+            'codeLists': codeLists,
+            'overlays': overlays
         });
     return redirect(url_for('project_list'))
 

@@ -1,25 +1,61 @@
 {% extends "layout.html" %}
 {% block body %}
 
+<form enctype="multipart/form-data" action="/api/project/add" method="post">
     <div class="container">
         <div class="row">
             <div class="col-6">
-                <form enctype="multipart/form-data" action="/api/project/add" method="post">
-                    <div class="form-group">
-                        <input type="file" name="file" class="form-control-file" />
+                <h2>CEP</h2>
+                <div class="form-group">
+                    <input type="file" name="file" class="form-control-file" />
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" name="radius" class="form-control" aria-describedby="basic-addon2">
+                        <span class="input-group-addon" id="basic-addon2">meters</span>
                     </div>
-                    <div class="form-group">
-                        <div class="input-group">
-                            <input type="text" name="radius" class="form-control" aria-describedby="basic-addon2">
-                            <span class="input-group-addon" id="basic-addon2">meters</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <input class="btn btn-primary" type="submit" value="Submit">
-                    </div>
-                </form>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <input id="add-subform" class="btn btn-success" type="submit" value="Add">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6" id="subform-container">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <input class="btn btn-primary" type="submit" value="Submit">
+                </div>
             </div>
         </div>
     </div>
+</form>
+
+<div style="display: none;" id="gee-gateway-subform">
+    <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove">
+    <h2>GEE-GATEWAY</h2>
+    {% include "geeg.html" %}
+</div>
+
+<script>
+
+$('#add-subform').click(function(e) {
+    e.preventDefault();
+    var subform = $('#gee-gateway-subform').clone().appendTo('#subform-container').show();
+    console.log(subform);
+    subform.children('.remove-subform').click(function(e) {
+        e.preventDefault();
+        $(this).parent().remove();
+    });
+});
+
+</script>
 
 {% endblock %}
