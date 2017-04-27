@@ -35,12 +35,16 @@ def recordsByProjectAndUser(project_id=None, username=None):
 @requires_role('user')
 def recordAdd():
     mongo.db.records.insert({
-        'id': generate_id(session.get('username') + request.json.get('project_id')),
-        'record_name': request.json.get('record_name'),
-        'record_value': json.dumps(request.json.get('record_value')),
+        'id': generate_id(session.get('username') + request.json.get('project_id') + request.json.get('plot').get('id')),
+        'value': json.dumps(request.json.get('value')),
         'project_id': request.json.get('project_id'),
         'username': session.get('username'),
-        'update_datetime': datetime.datetime.utcnow()
+        'update_datetime': datetime.datetime.utcnow(),
+        'plot': {
+            'id': request.json.get('plot').get('id'),
+            'YCoordinate': request.json.get('plot').get('YCoordinate'),
+            'XCoordinate': request.json.get('plot').get('XCoordinate')
+        }
     });
     return 'OK', 200
 
@@ -52,7 +56,7 @@ def recordAdd():
 def recordModify(id=None):
     mongo.db.records.update({'id': id}, {
         '$set': {
-            'record_value': json.dumps(request.json.get('record_value')),
+            'value': json.dumps(request.json.get('value')),
             'update_datetime': datetime.datetime.utcnow()
         }
     }, upsert=False)
