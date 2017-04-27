@@ -113,6 +113,8 @@ def projectAdd():
         username = session.get('username')
         data = request.form.to_dict()
         radius = data.get('radius')
+        name = data.get('name')
+        type = 'cep' #TODO
         overlays = []
         #gee-gateway
         collectionName = request.form.getlist('collectionName[]')
@@ -139,6 +141,8 @@ def projectAdd():
         #
         mongo.db.projects.insert({
             'id': generate_id(filename),
+            'name': name,
+            'type': type,
             'filename': filename,
             'username': username,
             'radius': radius,
