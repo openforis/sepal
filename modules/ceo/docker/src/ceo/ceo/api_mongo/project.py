@@ -149,7 +149,7 @@ def projectAdd():
             'codeLists': codeLists,
             'overlays': overlays
         });
-    return 'OK', 200
+    return redirect(app.config['CEO_URL'] + 'project-list')
 
 @app.route('/api/project/<id>', methods=['PUT'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
