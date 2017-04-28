@@ -75,7 +75,7 @@ $('#submit-btn').click(function(e) {
         method: 'put',
         data: $('form').serialize(),
     }).success(function(data) {
-        window.location.href = '/project-list';
+        window.location.href = 'project-list';
     }).fail(function(jqXHR, textStatus, errorThrown) {
         console.error(jqXHR, textStatus, errorThrown);
     });
@@ -93,8 +93,8 @@ $(document).ready(function() {
 
     $.ajax({
         url: ceoSepalApiUrl + "/project/" + project_id,
-            method: 'get',
-            contentType: 'application/json;charset=UTF-8'
+        method: 'get',
+        contentType: 'application/json;charset=UTF-8'
     }).success(function(data) {
         $('input[name="name"]').val(data.name);
         $('input[name="radius"]').val(data.radius);

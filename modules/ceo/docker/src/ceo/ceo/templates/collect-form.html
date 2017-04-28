@@ -94,7 +94,8 @@
                 data.plots.forEach(function(plot) {
                     var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(plot.id);
                     li.attr('data-plot-id', plot.id).attr('data-x-coordinate', plot.XCoordinate).attr('data-y-coordinate', plot.YCoordinate);
-                    li.click(function() {
+                    li.click(function(e) {
+                        e.preventDefault();
                         var plot_id = $(this).attr('data-plot-id');
                         $(this).siblings().removeClass("active");
                         $(this).addClass("active");
