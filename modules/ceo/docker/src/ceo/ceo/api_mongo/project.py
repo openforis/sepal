@@ -7,7 +7,7 @@ from flask_cors import CORS, cross_origin
 from .. import app
 from .. import mongo
 
-from ..common.utils import import_sepal_auth, requires_auth
+from ..common.utils import import_sepal_auth, requires_auth, propertyFileToDict
 
 from werkzeug.utils import secure_filename
 
@@ -96,9 +96,14 @@ def projectAdd():
                 codeLists.append(codeList)
             print (codeLists)
         #
+        properties = propertyFileToDict(os.path.join(extractDir, 'project_definition.properties'))
+        property = properties.get('csv', 'test_plots.ced')
+        head, tail = os.path.split(property)
+        print tail
+        #
         plots = []
-        if os.path.isfile(os.path.join(extractDir, 'test_plots.ced')):
-            with open(os.path.join(extractDir, 'test_plots.ced'), 'rb') as csvfile:
+        if os.path.isfile(os.path.join(extractDir, tail)):
+            with open(os.path.join(extractDir, tail), 'rb') as csvfile:
                 csvreader = csv.reader(csvfile, delimiter=',', quotechar='"')
                 next(csvreader, None)
                 for row in csvreader:
@@ -149,7 +154,7 @@ def projectAdd():
             'codeLists': codeLists,
             'overlays': overlays
         });
-    return redirect(app.config['CEO_URL'] + 'project-list')
+    return redirect(app.config['BASE'] + 'project-list')
 
 @app.route('/api/project/<id>', methods=['PUT'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
