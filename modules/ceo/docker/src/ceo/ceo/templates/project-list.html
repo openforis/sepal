@@ -13,8 +13,8 @@
                     <table class="table" id="project-table" style="display: none;">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>filename</th>
+                                <th>name</th>
+                                <th>type</th>
                                 <th>upload time</th>
                                 <th>username</th>
                                 <th></th>
@@ -57,8 +57,8 @@
                     $(data).each(function() {
                         var project_id = this.id;
                         var tr = $('<tr>');
-                        tr.append($('<td>').text(project_id));
-                        tr.append($('<td>').text(this.filename));
+                        tr.append($('<td>').text(this.name));
+                        tr.append($('<td>').text(this.type));
                         tr.append($('<td>').text(this.upload_datetime));
                         tr.append($('<td>').text(this.username));
                         tr.append($('<td>').append($('<a>').attr('href', '/collect-form?id=' + project_id).addClass('btn btn-outline-info').text('collect')));
@@ -82,12 +82,12 @@
                         }).success(function(data) {
                             window.location.reload();
                         }).fail(function(jqXHR, textStatus, errorThrown) {
-                            console.log(jqXHR, textStatus, errorThrown);
+                            console.error(jqXHR, textStatus, errorThrown);
                         });
                     })
                 }
             }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.log(jqXHR, textStatus, errorThrown);
+                console.error(jqXHR, textStatus, errorThrown);
             });
         });
 

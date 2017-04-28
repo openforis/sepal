@@ -31,6 +31,8 @@
             <div id="map"></div>
         </div>
         <div class="col-3" style="color: red;">
+            <button type="button" class="btn btn-primary" id="export-btn">Export</button>
+            <br /><br />
             <div id="list" class="list-group"></div>
         </div>
         <div class="col-3">
@@ -80,9 +82,9 @@
                     var element = $('<div>').addClass('form-group');
                     var label = $('<label>').text(codeList.name);
                     element.append(label);
-                    var select = $('<select>').addClass('form-control').attr('data-record-name', codeList.name);
+                    var select = $('<select>').addClass('form-control').attr('data-plot-id', codeList.name);
                     codeList.items.forEach(function(item) {
-                        var option = $('<option>').text(item.label);
+                        var option = $('<option>').text(item.label).attr('value', item.code);
                         select.append(option);
                     });
                     element.append(select);
@@ -90,20 +92,22 @@
                 });
                 //plots
                 data.plots.forEach(function(plot) {
-                    var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(plot.id).attr('data-record-name', plot.id).click(function() {
-                        var record_name = $(this).attr('data-record-name');
+                    var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(plot.id);
+                    li.attr('data-plot-id', plot.id).attr('data-x-coordinate', plot.XCoordinate).attr('data-y-coordinate', plot.YCoordinate);
+                    li.click(function() {
+                        var plot_id = $(this).attr('data-plot-id');
                         $(this).siblings().removeClass("active");
                         $(this).addClass("active");
                         map.setCenter(new google.maps.LatLng(parseFloat(plot.YCoordinate), parseFloat(plot.XCoordinate)));
                         map.setZoom(12);
                         $('#codeLists input[name="id"]').val(0);
-                        record = $.grep(records, function(e) { return e['record_name'] == record_name; });
+                        record = $.grep(records, function(e) { return e['plot']['id'] == plot_id; });
                         if (record[0] !== undefined) {
                             var id = record[0]['id'] !== undefined ? record[0]['id'] : 0;
                             $('#codeLists input[name="id"]').val(id);
-                            var values = record[0]['record_value'];
+                            var values = record[0]['value'];
                             $.each(JSON.parse(values), function(key, value) {
-                                $('#codeLists select[data-record-name="' + key +'"]').val(value);
+                                $('#codeLists select[data-plot-id="' + key +'"]').val(value);
                             });
                         }
                         $('#codeLists').show();
@@ -112,7 +116,7 @@
                 });
                 //plots
 
-                options  = { 
+                options  = {
                     zoom: 10,
                     center: new google.maps.LatLng(0, 0),
                     disableDefaultUI: false,
@@ -159,7 +163,7 @@
                         fillOpacity: 0,
                         map: map
                     }).addListener('click', function() {
-                        $('#list a[data-record-name=' + plot.id +']').click();
+                        $('#list a[data-plot-id=' + plot.id +']').click();
                     });
 
                     bounds.extend(center);
@@ -200,10 +204,10 @@
                             dateTo: dateTo
                         })
                     }).fail(function(jqXHR, textStatus, errorThrown) {
-                        alert(textStatus);
+                        console.error(jqXHR, textStatus, errorThrown);
                     }).done(function(data, textStatus, jqXHR) {
                         if (data.errMsg) {
-                            alert(data.errMsg);
+                            console.error(data, textStatus, jqXHR);
                         } else {
                             if (data.hasOwnProperty('mapid')) {
                                 var mapId = data.mapid;
@@ -234,7 +238,7 @@
                 });
 
             }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.log(jqXHR, textStatus, errorThrown);
+                console.error(jqXHR, textStatus, errorThrown);
             });
         }
 
@@ -253,10 +257,10 @@
             }).success(function(data) {
                 records = data;
                 $.each(records, function(key, value) {
-                    $('#list a[data-record-name="' + value.record_name +'"]').addClass('evaluated');
+                    $('#list a[data-plot-id="' + value.plot.id +'"]').addClass('evaluated');
                 });
             }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.log(jqXHR, textStatus, errorThrown);
+                console.error(jqXHR, textStatus, errorThrown);
             });
         }
 
@@ -264,22 +268,28 @@
 
         $('#codeLists button').click(function(e) {
             e.preventDefault();
-            var record_name = $('#list a.active').attr('data-record-name');
-            var record_value = {};
+            var plot_id = $('#list a.active').attr('data-plot-id');
+            var YCoordinate = $('#list a.active').attr('data-y-coordinate');
+            var XCoordinate = $('#list a.active').attr('data-x-coordinate');
+            var value = {};
             $('#codeLists select').each(function() {
-                record_value[$(this).attr('data-record-name')] = $(this).val();
+                value[$(this).attr('data-plot-id')] = $(this).val();
             });
             var project_id = $.urlParam('id');
             var record = {
-                record_name: record_name,
-                record_value: record_value,
-                project_id: project_id
+                project_id: project_id,
+                value: value,
+                plot: {
+                    id: plot_id,
+                    YCoordinate: YCoordinate,
+                    XCoordinate: XCoordinate
+                }
             }
             var url = ceoSepalApiUrl + '/record';
             var method = 'post';
             var record_id = $('#codeLists input[name="id"]').val();
             if (record_id != 0) {
-                url =  cepSepalApiUrl + '/record/' + record_id;
+                url =  ceoSepalApiUrl + '/record/' + record_id;
                 method = 'put';
             }
             $.ajax({
@@ -298,10 +308,14 @@
                         nextFromStart.click();
                     }
                 }
-                console.log(data);
             }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.log(jqXHR, textStatus, errorThrown);
+                console.error(jqXHR, textStatus, errorThrown);
             });
+        });
+
+        $('#export-btn').click(function(e) {
+            e.preventDefault();
+            window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export';
         });
 
     });

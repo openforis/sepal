@@ -1,7 +1,7 @@
-import os, shutil, logging, json, datetime, hashlib, csv
+import os, shutil, logging, json, datetime, hashlib, csv, io
 import xml.etree.ElementTree as ET
 
-from flask import session, request, redirect, url_for, jsonify, render_template, send_file
+from flask import Response, session, request, redirect, url_for, jsonify, render_template, send_file
 from flask_cors import CORS, cross_origin
 
 from .. import app
@@ -113,6 +113,8 @@ def projectAdd():
         username = session.get('username')
         data = request.form.to_dict()
         radius = data.get('radius')
+        name = data.get('name')
+        type = 'cep' #TODO
         overlays = []
         #gee-gateway
         collectionName = request.form.getlist('collectionName[]')
@@ -139,6 +141,8 @@ def projectAdd():
         #
         mongo.db.projects.insert({
             'id': generate_id(filename),
+            'name': name,
+            'type': type,
             'filename': filename,
             'username': username,
             'radius': radius,
@@ -168,9 +172,49 @@ def projectRemove():
     shutil.rmtree(os.path.join(app.config['UPLOAD_FOLDER'], name))
     return 'OK', 200
 
+@app.route("/api/project/<id>/export", methods=['GET'])
+@cross_origin(origins=app.config['CO_ORIGINS'])
+@import_sepal_auth
+@requires_auth
+@requires_role('user')
+def projectExportCSV(id=None):
+    #
+    project = mongo.db.projects.find_one({'id': id}, {'_id': False});
+    username = project['username']
+    records = mongo.db.records.find({'project_id': id, 'username': username}, {'_id': False});
+    filename = project['filename'] + '.csv'
+    #
+    codeListNames = []
+    for codeList in project['codeLists']:
+        codeListNames.append(codeList['name'])
+    #
+    csvHeaderData = ['YCoordinate', 'XCoordinate'] + codeListNames
+    csvString = listToCSVRowString(csvHeaderData)
+    #
+    for record in records:
+        csvRowData = []
+        csvRowData.append(record.get('plot').get('YCoordinate'))
+        csvRowData.append(record.get('plot').get('XCoordinate'))
+        values = json.loads(record['value'])
+        for codeListName in codeListNames:
+            value = values.get(codeListName, '')
+            csvRowData.append(value)
+        print csvRowData
+        csvString += listToCSVRowString(csvRowData)
+    #
+    return Response(csvString, mimetype="text/csv", headers={"Content-disposition": "attachment; filename=" + filename})
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 def generate_id(value):
     hash_object = hashlib.md5(value)
     return hash_object.hexdigest()
+
+def listToCSVRowString(lst):
+    output = io.BytesIO()
+    writer = csv.writer(output)
+    print 1
+    print lst
+    writer.writerow(lst)
+    return output.getvalue()

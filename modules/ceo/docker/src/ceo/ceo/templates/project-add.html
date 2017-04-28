@@ -49,7 +49,6 @@
 $('#add-subform').click(function(e) {
     e.preventDefault();
     var subform = $('#gee-gateway-subform').clone().appendTo('#subform-container').show();
-    console.log(subform);
     subform.children('.remove-subform').click(function(e) {
         e.preventDefault();
         $(this).parent().remove();
