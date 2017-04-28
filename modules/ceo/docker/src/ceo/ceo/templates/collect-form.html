@@ -19,6 +19,12 @@
         box-sizing: content-box;
     }
 
+    #list {
+        height: auto;
+        max-height: 500px;
+        overflow-x: hidden;
+    }
+
 </style>
 
 <div class="container-fluid">
@@ -99,8 +105,23 @@
                         var plot_id = $(this).attr('data-plot-id');
                         $(this).siblings().removeClass("active");
                         $(this).addClass("active");
-                        map.setCenter(new google.maps.LatLng(parseFloat(plot.YCoordinate), parseFloat(plot.XCoordinate)));
-                        map.setZoom(12);
+                        var center = new google.maps.LatLng(parseFloat(plot.YCoordinate), parseFloat(plot.XCoordinate))
+                        //map.setCenter(center);
+                        //map.setZoom(14);
+
+                        var circle = new google.maps.Circle({
+                            center: center,
+                            radius: radius
+                        });
+                        var square = new google.maps.Rectangle({
+                            bounds: circle.getBounds(),
+                            strokeColor: 'yellow',
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillOpacity: 0,
+                        });
+                        map.fitBounds(square.getBounds());
+
                         $('#codeLists input[name="id"]').val(0);
                         record = $.grep(records, function(e) { return e['plot']['id'] == plot_id; });
                         if (record[0] !== undefined) {
@@ -110,6 +131,8 @@
                             $.each(JSON.parse(values), function(key, value) {
                                 $('#codeLists select[data-plot-id="' + key +'"]').val(value);
                             });
+                        } else {
+                            $('#codeLists select').find('option:eq(0)').prop('selected', true);
                         }
                         $('#codeLists').show();
                     });

@@ -35,3 +35,20 @@ def requires_role(*role):
                 return render_template('401.html'), 401
         return wrapped
     return wrapper
+
+def propertyFileToDict(filename):
+    properties = {}
+    with open(filename, 'r') as f:
+        for line in f:
+            line = line.strip('\n')
+            if line.startswith('#'):
+                pass
+            else:
+                if '=' in line:
+                    parts = line.partition('=')
+                    value1 = parts[0]
+                    value2 = parts[2]
+                    if value2:
+                        key = value1
+                        properties[key] = value2
+    return properties
