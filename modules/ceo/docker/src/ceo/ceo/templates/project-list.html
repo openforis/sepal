@@ -19,6 +19,7 @@
                                 <th>username</th>
                                 <th></th>
                                 <th></th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -61,6 +62,7 @@
                         tr.append($('<td>').text(this.type));
                         tr.append($('<td>').text(this.upload_datetime));
                         tr.append($('<td>').text(this.username));
+                        tr.append($('<td>').append($('<a>').attr('href', '/project-edit?id=' + project_id).addClass('btn btn-outline-warning').text('edit')));
                         tr.append($('<td>').append($('<a>').attr('href', '/collect-form?id=' + project_id).addClass('btn btn-outline-info').text('collect')));
                         tr.append($('<td>').append($('<a>').attr('href', '#').addClass('btn btn-outline-danger').text('delete').click(function(e) {
                             $('#deleteModal').modal('show');

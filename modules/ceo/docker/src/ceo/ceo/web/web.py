@@ -1,6 +1,6 @@
-import os, logging, json
+import logging
 
-from flask import session, request, redirect, url_for, jsonify, render_template, send_file
+from flask import session, render_template
 from flask_cors import CORS, cross_origin
 
 from .. import app
@@ -32,6 +32,14 @@ def project_list():
 @requires_role('user')
 def project_add():
     return render_template('project-add.html', username=session.get('username'), is_admin=session.get('is_admin'))
+
+@app.route('/project-edit', methods=['GET'])
+@cross_origin(origins=app.config['CO_ORIGINS'])
+@import_sepal_auth
+@requires_auth
+@requires_role('user')
+def project_edit():
+    return render_template('project-edit.html', username=session.get('username'), is_admin=session.get('is_admin'))
 
 @app.route('/collect-form', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
