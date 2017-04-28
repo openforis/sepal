@@ -1,8 +1,6 @@
 from ceo import app
 import logging, argparse
 
-from flask import send_from_directory
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
@@ -14,9 +12,5 @@ if __name__ == '__main__':
     logging.basicConfig(level=app.config['LOGGING_LEVEL'])
     logging.getLogger('flask_cors').level = app.config['LOGGING_LEVEL']
     logging.getLogger('ceo').level = app.config['LOGGING_LEVEL']
-
-    @app.route('/test/<path:path>')
-    def send1(path):
-        return send_from_directory('/data/cep', path)
 
     app.run(debug=app.config['DEBUG'], port=app.config['PORT'], host=app.config['HOST'])
