@@ -65,6 +65,7 @@
                         tr.append($('<td>').append($('<a>').attr('href', 'project-edit?id=' + project_id).addClass('btn btn-outline-warning').text('edit')));
                         tr.append($('<td>').append($('<a>').attr('href', 'collect-form?id=' + project_id).addClass('btn btn-outline-info').text('collect')));
                         tr.append($('<td>').append($('<a>').attr('href', '#').addClass('btn btn-outline-danger').text('delete').click(function(e) {
+                            e.preventDefault();
                             $('#deleteModal').modal('show');
                             $('#deleteButton').attr('data-project_id', project_id);
                         })));

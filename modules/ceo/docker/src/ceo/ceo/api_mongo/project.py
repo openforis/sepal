@@ -63,10 +63,11 @@ def projectAdd():
         # save the file
         filename = secure_filename(file.filename)
         name, ext = os.path.splitext(filename)
-        uniqueFilename = name + '--' + str(int(time.time())) + ext
+        uniqueName = name + '--' + str(int(time.time()))
+        uniqueFilename =  uniqueName + ext
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename))
         # extract the files
-        extractDir = os.path.join(app.config['UPLOAD_FOLDER'], name)
+        extractDir = os.path.join(app.config['UPLOAD_FOLDER'], uniqueName)
         if not os.path.exists(extractDir):
             os.mkdir(extractDir)
             zip_ref = zipfile.ZipFile(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename), 'r')
@@ -148,7 +149,7 @@ def projectAdd():
             'codeLists': codeLists,
             'overlays': overlays
         });
-    return redirect(url_for('project_list'))
+    return 'OK', 200
 
 @app.route('/api/project/<id>', methods=['PUT'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
@@ -208,9 +209,11 @@ def projectRemove():
         return 'Forbidden!', 403
     filename = project['filename']
     mongo.db.projects.delete_many({'id': id})
-    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], filename)):
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     name, ext = os.path.splitext(filename)
-    shutil.rmtree(os.path.join(app.config['UPLOAD_FOLDER'], name))
+    if os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], name)):
+        shutil.rmtree(os.path.join(app.config['UPLOAD_FOLDER'], name))
     return 'OK', 200
 
 @app.route("/api/project/<id>/export", methods=['GET'])
