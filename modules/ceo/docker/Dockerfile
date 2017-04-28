@@ -13,4 +13,8 @@ ADD requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 
 ADD src /src
+
+CMD cd /src/ceo/static
+CMD npm install --global bower
+
 CMD ["/script/init_container.sh"]
