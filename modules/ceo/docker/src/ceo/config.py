@@ -16,5 +16,7 @@ SESSION_SECRET_KEY = 'notasecret'
 
 BASE = '/ceo/'
 
-CEO_API_URL = 'http://127.0.0.1:' + str(PORT) + BASE + 'api'
+CEO_URL = 'http://127.0.0.1:' + str(PORT) + BASE
+CEO_API_URL = CEO_URL + 'api'
+
 GEEG_API_URL = 'http://127.0.0.1:8888'
