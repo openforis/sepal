@@ -1,4 +1,4 @@
-import os, shutil, logging, json, datetime, hashlib, csv, io
+import os, shutil, logging, json, datetime, hashlib, csv, io, time
 import xml.etree.ElementTree as ET
 
 from flask import Response, session, request, redirect, url_for, jsonify, render_template, send_file
@@ -66,13 +66,14 @@ def projectAdd():
     if file and allowed_file(file.filename):
         # save the file
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        # extract the files
         name, ext = os.path.splitext(filename)
+        uniqueFilename = name + '--' + str(int(time.time())) + ext
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename))
+        # extract the files
         extractDir = os.path.join(app.config['UPLOAD_FOLDER'], name)
         if not os.path.exists(extractDir):
             os.mkdir(extractDir)
-            zip_ref = zipfile.ZipFile(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'r')
+            zip_ref = zipfile.ZipFile(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename), 'r')
             zip_ref.extractall(extractDir)
             zip_ref.close()
         #
@@ -140,10 +141,10 @@ def projectAdd():
             overlays.append(overlay)
         #
         mongo.db.projects.insert({
-            'id': generate_id(filename),
+            'id': generate_id(uniqueFilename),
             'name': name,
             'type': type,
-            'filename': filename,
+            'filename': uniqueFilename,
             'username': username,
             'radius': radius,
             'upload_datetime': datetime.datetime.utcnow(),
@@ -152,6 +153,52 @@ def projectAdd():
             'overlays': overlays
         });
     return redirect(url_for('project_list'))
+
+@app.route('/api/project/<id>', methods=['PUT'])
+@cross_origin(origins=app.config['CO_ORIGINS'])
+@import_sepal_auth
+@requires_auth
+@requires_role('user')
+def projectModify(id=None):
+    #
+    data = request.form.to_dict()
+    radius = data.get('radius')
+    name = data.get('name')
+    type = 'cep' #TODO
+    overlays = []
+    #gee-gateway
+    collectionName = request.form.getlist('collectionName[]')
+    dateFrom = request.form.getlist('dateFrom[]')
+    dateTo = request.form.getlist('dateTo[]')
+    Min = request.form.getlist('min[]')
+    Max = request.form.getlist('max[]')
+    band1 = request.form.getlist('band1[]')
+    band2 = request.form.getlist('band2[]')
+    band3 = request.form.getlist('band3[]')
+    for i in range(0, len(collectionName)):
+        overlay = {
+            'type': 'gee-gateway',
+            'collectionName': collectionName[i],
+            'dateFrom': dateFrom[i],
+            'dateTo': dateTo[i],
+            'min': Min[i],
+            'max': Max[i],
+            'band1': band1[i],
+            'band2': band2[i],
+            'band3': band3[i]
+        }
+        overlays.append(overlay)
+    #
+    mongo.db.projects.update({'id': id}, {
+        '$set': {
+            'name': name,
+            'type': type,
+            'radius': radius,
+            'overlays': overlays,
+            'update_datetime': datetime.datetime.utcnow()
+        }
+    }, upsert=False)
+    return 'OK', 200
 
 @app.route('/api/project/remove', methods=['DELETE'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
