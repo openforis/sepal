@@ -7,7 +7,7 @@ from flask_cors import CORS, cross_origin
 from .. import app
 from .. import mongo
 
-from ..common.utils import import_sepal_auth, requires_auth, requires_role
+from ..common.utils import import_sepal_auth, requires_auth
 
 from werkzeug.utils import secure_filename
 
@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def projectById(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False});
     return jsonify(project), 200
@@ -28,7 +27,6 @@ def projectById(id=None):
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def projects():
     projects = []
     if session.get('is_admin'):
@@ -41,7 +39,6 @@ def projects():
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def projectFileByIdAndFilename(id=None, filename=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False});
     name, ext = os.path.splitext(project['filename'])
@@ -51,7 +48,6 @@ def projectFileByIdAndFilename(id=None, filename=None):
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def projectAdd():
     # check if the post request has the file part
     if 'file' not in request.files:
@@ -158,7 +154,6 @@ def projectAdd():
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def projectModify(id=None):
     #
     data = request.form.to_dict()
@@ -204,7 +199,6 @@ def projectModify(id=None):
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def projectRemove():
     id = request.json.get('project_id')
     project = mongo.db.projects.find_one({'id': id}, {'_id': False});
@@ -223,7 +217,6 @@ def projectRemove():
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def projectExportCSV(id=None):
     #
     project = mongo.db.projects.find_one({'id': id}, {'_id': False});

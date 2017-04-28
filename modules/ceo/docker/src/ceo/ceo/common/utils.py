@@ -7,7 +7,7 @@ from flask import session, request, redirect, render_template
 def import_sepal_auth(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        sepalUser = request.headers.get('Sepal-User')
+        sepalUser = request.headers.get('sepal-user')
         if not sepalUser:
             return render_template('401.html'), 401
         user = json.loads(sepalUser)
@@ -20,7 +20,6 @@ def import_sepal_auth(f):
 def requires_auth(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        sepalUser = request.headers.get('sepal-user')
         if not session.get('username'):
             return render_template('401.html'), 401
         return f(*args, **kwargs)

@@ -6,7 +6,7 @@ from flask_cors import CORS, cross_origin
 from .. import app
 from .. import mongo
 
-from ..common.utils import import_sepal_auth, requires_auth, requires_role
+from ..common.utils import import_sepal_auth, requires_auth
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def recordById(id=None):
     record = mongo.db.records.find_one({'id': id}, {'_id': False});
     return jsonify(record), 200
@@ -23,7 +22,6 @@ def recordById(id=None):
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def recordsByProjectAndUser(project_id=None, username=None):
     records = mongo.db.records.find({'project_id': project_id, 'username': username}, {'_id': False});
     return jsonify(list(records)), 200
@@ -32,7 +30,6 @@ def recordsByProjectAndUser(project_id=None, username=None):
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def recordAdd():
     mongo.db.records.insert({
         'id': generate_id(session.get('username') + request.json.get('project_id') + request.json.get('plot').get('id')),
@@ -52,7 +49,6 @@ def recordAdd():
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-@requires_role('user')
 def recordModify(id=None):
     mongo.db.records.update({'id': id}, {
         '$set': {
