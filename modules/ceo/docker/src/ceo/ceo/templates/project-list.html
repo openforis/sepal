@@ -4,7 +4,7 @@
     <div class="container">
         <div class="row" style="padding: 0.5em 0;">
             <div class="col">
-                <a class="btn btn-outline-success float-right" href="/project-add">add</a>
+                <a class="btn btn-outline-success float-right" href="project-add">add</a>
             </div>
         </div>
         <div class="row">
@@ -62,8 +62,8 @@
                         tr.append($('<td>').text(this.type));
                         tr.append($('<td>').text(this.upload_datetime));
                         tr.append($('<td>').text(this.username));
-                        tr.append($('<td>').append($('<a>').attr('href', '/project-edit?id=' + project_id).addClass('btn btn-outline-warning').text('edit')));
-                        tr.append($('<td>').append($('<a>').attr('href', '/collect-form?id=' + project_id).addClass('btn btn-outline-info').text('collect')));
+                        tr.append($('<td>').append($('<a>').attr('href', 'project-edit?id=' + project_id).addClass('btn btn-outline-warning').text('edit')));
+                        tr.append($('<td>').append($('<a>').attr('href', 'collect-form?id=' + project_id).addClass('btn btn-outline-info').text('collect')));
                         tr.append($('<td>').append($('<a>').attr('href', '#').addClass('btn btn-outline-danger').text('delete').click(function(e) {
                             $('#deleteModal').modal('show');
                             $('#deleteButton').attr('data-project_id', project_id);
