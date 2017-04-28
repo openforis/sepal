@@ -6,8 +6,11 @@ apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
  libssl-dev\
  libffi-dev\
  gettext\
- git-all\
+ git\
  mongodb\
+ npm\
  supervisor
 
 git clone https://github.com/openforis/gee-gateway.git /src/gee-gateway
+
+npm install --global bower
