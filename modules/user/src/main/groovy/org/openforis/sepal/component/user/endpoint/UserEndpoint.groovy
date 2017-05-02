@@ -187,13 +187,13 @@ class UserEndpoint {
                 send toJson([status: 'success', message: 'User deleted'])
             }
 
-            post('/google/access-request-url') {
+            get('/google/access-request-url') {
                 response.contentType = 'application/json'
                 def url = component.submit(new GoogleAccessRequestUrl())
-                send toJson([url: url])
+                send toJson([url: url as String])
             }
 
-            post('/google/access-request-callback') {
+            get('/google/access-request-callback') {
                 response.contentType = 'application/json'
                 component.submit(
                         new AssociateGoogleAccount(

@@ -29,7 +29,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
     }
 
     URI redirectUrl() {
-        def redirectUrl = "http://$sepalHost/user/oauth/access-request-callback"
+        def redirectUrl = "https://$sepalHost/user/google/access-request-callback"
         def baseUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
         def params = [
                 scope                 : SCOPE,
