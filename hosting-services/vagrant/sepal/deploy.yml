@@ -44,46 +44,46 @@
       shell: echo y | docker system prune
 
   roles:
-#    - role: unattended-upgrades
-#      unattended_origins_patterns:
-#        - 'origin=Ubuntu,archive=${distro_codename}-security'
-#        - 'o=Ubuntu,a=${distro_codename}-updates'
-#    - { role: rsyslog }
-#    - { role: docker, users: ['ubuntu', 'vagrant'] }
-#    - { role: build-module, module: backup }
-#    - { role: build-module, module: letsencrypt }
-#    - { role: build-module, module: java }
-#    - { role: build-module, module: elk }
-#    - { role: build-module, module: ldap }
-#    - { role: build-module, module: ldap-backup }
-#    - { role: build-module, module: haproxy }
-#    - { role: build-module, module: mysql }
-#    - { role: build-module, module: mysql-backup }
-#    - { role: build-module, module: api-gateway }
-#    - { role: build-module, module: gateone }
-#    - { role: build-module, module: ssh-gateway }
-#    - { role: build-module, module: geospatial-toolkit }
-#    - { role: build-module, module: sandbox }
-#    - { role: build-module, module: user }
-#    - { role: build-module, module: sepal-server }
-#    - { role: build-module, module: gui }
+    - role: unattended-upgrades
+      unattended_origins_patterns:
+        - 'origin=Ubuntu,archive=${distro_codename}-security'
+        - 'o=Ubuntu,a=${distro_codename}-updates'
+    - { role: rsyslog }
+    - { role: docker, users: ['ubuntu', 'vagrant'] }
+    - { role: build-module, module: backup }
+    - { role: build-module, module: letsencrypt }
+    - { role: build-module, module: java }
+    - { role: build-module, module: elk }
+    - { role: build-module, module: ldap }
+    - { role: build-module, module: ldap-backup }
+    - { role: build-module, module: haproxy }
+    - { role: build-module, module: mysql }
+    - { role: build-module, module: mysql-backup }
+    - { role: build-module, module: api-gateway }
+    - { role: build-module, module: gateone }
+    - { role: build-module, module: ssh-gateway }
+    - { role: build-module, module: geospatial-toolkit }
+    - { role: build-module, module: sandbox }
+    - { role: build-module, module: user }
+    - { role: build-module, module: sepal-server }
+    - { role: build-module, module: gui }
     - { role: build-module, module: ceo }
-#    - { role: build-module, module: task-executor }
-#    - { role: build-module, module: google-earth-engine }
+    - { role: build-module, module: task-executor }
+    - { role: build-module, module: google-earth-engine }
 #
-#    - { role: run-module, module: elk }
-#    - { role: run-module, module: backup }
-#    - { role: run-module, module: ldap }
-#    - { role: run-module, module: ldap-backup }
-#    - { role: run-module, module: mysql }
-#    - { role: run-module, module: mysql-backup }
-#    - { role: run-module, module: google-earth-engine }
-#    - { role: run-module, module: user }
-#    - { role: run-module, module: sepal-server, container_name: sepal }
-#    - { role: run-module, module: gui }
+    - { role: run-module, module: elk }
+    - { role: run-module, module: backup }
+    - { role: run-module, module: ldap }
+    - { role: run-module, module: ldap-backup }
+    - { role: run-module, module: mysql }
+    - { role: run-module, module: mysql-backup }
+    - { role: run-module, module: google-earth-engine }
+    - { role: run-module, module: user }
+    - { role: run-module, module: sepal-server, container_name: sepal }
+    - { role: run-module, module: gui }
     - { role: run-module, module: ceo }
-#    - { role: run-module, module: ssh-gateway }
-#    - { role: run-module, module: gateone }
-#    - { role: run-module, module: api-gateway }
-#    - { role: run-module, module: letsencrypt }
-#    - { role: run-module, module: haproxy }
+    - { role: run-module, module: ssh-gateway }
+    - { role: run-module, module: gateone }
+    - { role: run-module, module: api-gateway }
+    - { role: run-module, module: letsencrypt }
+    - { role: run-module, module: haproxy }
