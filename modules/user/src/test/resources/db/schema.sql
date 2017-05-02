@@ -17,7 +17,7 @@ CREATE TABLE sepal_user.sepal_user (
   system_user                    BOOLEAN     NOT NULL,
   status                         VARCHAR(32) NOT NULL,
   google_refresh_token           VARCHAR(128),
-  google_access_token            VARCHAR(128),
+  google_access_token            VARCHAR(256),
   google_access_token_expiration TIMESTAMP,
   creation_time                  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   update_time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
