@@ -14,4 +14,6 @@ apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
 
 git clone https://github.com/openforis/gee-gateway.git /src/gee-gateway
 
+cp -r /src/gee-gateway/gee_gateway /src/ceo
+
 npm install --global bower
