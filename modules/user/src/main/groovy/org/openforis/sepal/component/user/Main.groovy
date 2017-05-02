@@ -28,7 +28,7 @@ class Main extends AbstractMain {
             def instance = new Main()
             addShutdownHook { instance.stop() }
         } catch (Exception e) {
-            LOG.error('Failed to start Sepal', e)
+            LOG.error('Failed to start user module', e)
             System.exit(1)
         }
     }
