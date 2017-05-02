@@ -19,4 +19,4 @@ BASE = '/ceo/'
 CEO_URL = BASE
 CEO_API_URL = CEO_URL + 'api'
 
-GEEG_API_URL = 'http://127.0.0.1:8888'
+GEEG_API_URL = 'gee-gateway/api'

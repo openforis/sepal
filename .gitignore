@@ -34,3 +34,4 @@ target
 
 #Python
 *.pyc
+modules/ceo/docker/src/ceo/gee_gateway
