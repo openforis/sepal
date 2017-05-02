@@ -22,7 +22,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <a class="navbar-brand" href="{{config.BASE}}">ceo-sepal</a>
-            {% if username %}
+            {% if session.username %}
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
                         <li class="nav-item">
@@ -31,7 +31,11 @@
                     </ul>
                     <ul class="nav navbar-nav ml-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="#"><i class="fa fa-user-circle-o" aria-hidden="true"></i>&nbsp;{{username}} - {{is_admin}}</a>
+                            <a class="nav-link disabled" href="#">
+                                <i class="fa fa-user-circle-o" aria-hidden="true"></i>
+                                &nbsp;{{session.username}}
+                                {% if session.is_admin %}(admin){% endif %}
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -39,6 +43,13 @@
         </nav>
 
         {% block body %}{% endblock %}
+
+        <script>
+            $('body').on('click', '.disabled', function(e) {
+                e.preventDefault();
+                return false;
+            });
+        </script>
 
     </body>
 </html>

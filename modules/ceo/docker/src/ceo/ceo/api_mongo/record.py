@@ -1,6 +1,6 @@
 import os, logging, json, datetime, hashlib
 
-from flask import session, request, redirect, url_for, jsonify, render_template, send_file
+from flask import session, request, redirect, url_for, jsonify, render_template, send_file, abort
 from flask_cors import CORS, cross_origin
 
 from .. import app
@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 @requires_auth
 def recordById(id=None):
     record = mongo.db.records.find_one({'id': id}, {'_id': False})
+    if not record:
+        abort(404)
     return jsonify(record), 200
 
 @app.route('/api/record/project_id/<project_id>', methods=['GET'])
