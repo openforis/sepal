@@ -15,15 +15,15 @@ logger = logging.getLogger(__name__)
 @import_sepal_auth
 @requires_auth
 def recordById(id=None):
-    record = mongo.db.records.find_one({'id': id}, {'_id': False});
+    record = mongo.db.records.find_one({'id': id}, {'_id': False})
     return jsonify(record), 200
 
-@app.route('/api/record/project_id/<project_id>/username/<username>', methods=['GET'])
+@app.route('/api/record/project_id/<project_id>', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-def recordsByProjectAndUser(project_id=None, username=None):
-    records = mongo.db.records.find({'project_id': project_id, 'username': username}, {'_id': False});
+def recordsByProject(project_id=None):
+    records = mongo.db.records.find({'project_id': project_id}, {'_id': False})
     return jsonify(list(records)), 200
 
 @app.route('/api/record', methods=['POST'])
@@ -42,7 +42,7 @@ def recordAdd():
             'YCoordinate': request.json.get('plot').get('YCoordinate'),
             'XCoordinate': request.json.get('plot').get('XCoordinate')
         }
-    });
+    })
     return 'OK', 200
 
 @app.route('/api/record/<id>', methods=['PUT'])
