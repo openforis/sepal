@@ -275,7 +275,7 @@
 
         function getRecords() {
             $.ajax({
-                url: ceoSepalApiUrl + "/record/project_id/" + project_id + "/username/" + '{{username}}',
+                url: ceoSepalApiUrl + "/record/project_id/" + project_id,
                 method: 'get',
                 contentType: 'application/json;charset=UTF-8'
             }).success(function(data) {

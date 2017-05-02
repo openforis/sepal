@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @import_sepal_auth
 @requires_auth
 def projectById(id=None):
-    project = mongo.db.projects.find_one({'id': id}, {'_id': False});
+    project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     return jsonify(project), 200
 
 @app.route('/api/project', methods=['GET'])
@@ -30,21 +30,22 @@ def projectById(id=None):
 def projects():
     projects = []
     if session.get('is_admin'):
-        projects = mongo.db.projects.find({}, {'_id': False});
+        projects = mongo.db.projects.find({}, {'_id': False})
     else:
-        projects = mongo.db.projects.find({'username': session.get('username')}, {'_id': False});
+        projects = mongo.db.projects.find({'username': session.get('username')}, {'_id': False})
     return jsonify(list(projects)), 200
 
-@app.route('/api/project/<id>/file/<filename>', methods=['GET'])
+@app.route('/api/project/<id>/file', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-def projectFileByIdAndFilename(id=None, filename=None):
-    project = mongo.db.projects.find_one({'id': id}, {'_id': False});
-    name, ext = os.path.splitext(project['filename'])
+def projectFileById(id=None):
+    project = mongo.db.projects.find_one({'id': id}, {'_id': False})
+    filename = project['filename']
+    name, ext = os.path.splitext(filename)
     return send_file(os.path.join(app.config['UPLOAD_FOLDER'], name, filename), mimetype='text/xml', attachment_filename=filename, as_attachment=True)
 
-@app.route('/api/project/add', methods=['POST'])
+@app.route('/api/project', methods=['POST'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
@@ -153,7 +154,7 @@ def projectAdd():
             'plots': plots,
             'codeLists': codeLists,
             'overlays': overlays
-        });
+        })
     return redirect(app.config['BASE'] + 'project-list')
 
 @app.route('/api/project/<id>', methods=['PUT'])
@@ -201,13 +202,13 @@ def projectModify(id=None):
     }, upsert=False)
     return 'OK', 200
 
-@app.route('/api/project/remove', methods=['DELETE'])
+@app.route('/api/project', methods=['DELETE'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
 def projectRemove():
     id = request.json.get('project_id')
-    project = mongo.db.projects.find_one({'id': id}, {'_id': False});
+    project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         return 'Error!', 500
     if project['username'] != session.get('username'):
@@ -227,9 +228,9 @@ def projectRemove():
 @requires_auth
 def projectExportCSV(id=None):
     #
-    project = mongo.db.projects.find_one({'id': id}, {'_id': False});
+    project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     username = project['username']
-    records = mongo.db.records.find({'project_id': id, 'username': username}, {'_id': False});
+    records = mongo.db.records.find({'project_id': id, 'username': username}, {'_id': False})
     filename = project['filename'] + '.csv'
     #
     codeListNames = []

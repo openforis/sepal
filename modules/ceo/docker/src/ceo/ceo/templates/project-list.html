@@ -76,7 +76,7 @@
                         e.preventDefault();
                         var project_id = $(this).attr('data-project_id');
                         $.ajax({
-                            url: ceoSepalApiUrl + '/project/remove',
+                            url: ceoSepalApiUrl + '/project',
                             method: 'delete',
                             data: JSON.stringify({
                                 project_id: project_id
