@@ -54,7 +54,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
                         code         : authorizationCode,
                         client_id    : clientId,
                         client_secret: clientSecret,
-                        redirect_uri : redirectUrl(),
+                        redirect_uri : "https://$sepalHost/user/google/access-request-callback",
                         grant_type   : 'authorization_code'
                 ]
         )
