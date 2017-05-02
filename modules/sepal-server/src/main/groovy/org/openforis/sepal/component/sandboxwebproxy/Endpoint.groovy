@@ -18,7 +18,7 @@ class Endpoint {
         this.username = username
         this.uri = uri
         this.sandboxSessionId = sandboxSessionId
-        proxyClient = new LoadBalancingProxyClient()
+        proxyClient = new LoadBalancingProxyClient(maxQueueSize: 100)
         proxyClient.addHost(uri)
         proxyClient.ttl = 30 * 1000
         proxyHandler = new PatchedProxyHandler(proxyClient, ResponseCodeHandler.HANDLE_404)

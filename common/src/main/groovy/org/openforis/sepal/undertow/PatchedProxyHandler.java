@@ -311,6 +311,7 @@ public final class PatchedProxyHandler implements HttpHandler {
 
         @Override
         public void couldNotResolveBackend(HttpServerExchange exchange) {
+            log.warn("Could not resolve backend. target: " + target + ", exchange: " + exchange);
             if (exchange.isResponseStarted()) {
                 IoUtils.safeClose(exchange.getConnection());
             } else {
@@ -331,6 +332,7 @@ public final class PatchedProxyHandler implements HttpHandler {
             if (exchange.isResponseStarted()) {
                 IoUtils.safeClose(exchange.getConnection());
             } else {
+                log.info("Cancelling request, returning 503. exchange: " + exchange);
                 exchange.setStatusCode(StatusCodes.SERVICE_UNAVAILABLE);
                 exchange.endExchange();
             }

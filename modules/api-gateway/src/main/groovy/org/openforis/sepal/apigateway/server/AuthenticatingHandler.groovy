@@ -78,7 +78,7 @@ class AuthenticatingHandler implements HttpHandler {
         def http = new RESTClient(authenticationUrl)
         http.handler.failure = { return it }
         def username = usernamePassword[0]
-        LOG.info("Authenticating " + username)
+        LOG.trace("Authenticating " + username)
         def response = http.post(
                 requestContentType: ContentType.URLENC,
                 contentType: ContentType.JSON,
