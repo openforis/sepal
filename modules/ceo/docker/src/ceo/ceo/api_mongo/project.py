@@ -1,7 +1,7 @@
 import os, shutil, logging, json, datetime, hashlib, csv, io, time
 import xml.etree.ElementTree as ET
 
-from flask import Response, session, request, redirect, url_for, jsonify, render_template, send_file
+from flask import Response, session, request, redirect, url_for, jsonify, render_template, send_file, abort
 from flask_cors import CORS, cross_origin
 
 from .. import app
@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 @requires_auth
 def projectById(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
+    if not project:
+        abort(404)
     return jsonify(project), 200
 
 @app.route('/api/project', methods=['GET'])
@@ -95,12 +97,10 @@ def projectAdd():
                         'label': item.find('of:label', ns).text
                     })
                 codeLists.append(codeList)
-            print (codeLists)
         #
         properties = propertyFileToDict(os.path.join(extractDir, 'project_definition.properties'))
         property = properties.get('csv', 'test_plots.ced')
         head, tail = os.path.split(property)
-        print tail
         #
         plots = []
         if os.path.isfile(os.path.join(extractDir, tail)):
@@ -248,7 +248,6 @@ def projectExportCSV(id=None):
         for codeListName in codeListNames:
             value = values.get(codeListName, '')
             csvRowData.append(value)
-        print csvRowData
         csvString += listToCSVRowString(csvRowData)
     #
     return Response(csvString, mimetype="text/csv", headers={"Content-disposition": "attachment; filename=" + filename})
@@ -263,7 +262,5 @@ def generate_id(value):
 def listToCSVRowString(lst):
     output = io.BytesIO()
     writer = csv.writer(output)
-    print 1
-    print lst
     writer.writerow(lst)
     return output.getvalue()
