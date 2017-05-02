@@ -3,8 +3,10 @@ package org.openforis.sepal.component.user.endpoint
 import groovymvc.Controller
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.user.command.*
+import org.openforis.sepal.component.user.query.GoogleAccessRequestUrl
 import org.openforis.sepal.component.user.query.ListUsers
 import org.openforis.sepal.endpoint.InvalidRequest
+import org.openforis.sepal.user.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -27,6 +29,10 @@ class UserEndpoint {
             def emailConstraints = [notBlank(), email()]
             def organizationConstraints = [maxLength(1000)]
             def passwordConstraints = custom { it ==~ /^.{6,100}$/ }
+
+            def loggedInUser = { ->
+                controller.requestContext.currentUser as User
+            }
 
             constrain(InviteUser, [
                     invitedUsername: usernameConstraints,
@@ -112,12 +118,12 @@ class UserEndpoint {
 
             post('/login') { // Just a nice looking endpoint the frontend can call to trigger authentication
                 response.contentType = 'application/json'
-                send toJson(currentUser)
+                send toJson(loggedInUser())
             }
 
             get('/current') {
                 response.contentType = 'application/json'
-                send toJson(currentUser)
+                send toJson(loggedInUser())
             }
 
             post('/current/password') {
@@ -126,7 +132,7 @@ class UserEndpoint {
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = currentUser.username
+                command.username = loggedInUser().username
                 def success = component.submit(command)
                 send toJson(success ?
                         [status: 'success', message: 'Password changed'] :
@@ -136,12 +142,12 @@ class UserEndpoint {
 
             post('/current/details') {
                 response.contentType = 'application/json'
-                def command = new UpdateUserDetails(usernameToUpdate: currentUser.username)
+                def command = new UpdateUserDetails(usernameToUpdate: loggedInUser().username)
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = currentUser.username
-                command.usernameToUpdate = currentUser.username
+                command.username = loggedInUser().username
+                command.usernameToUpdate = loggedInUser().username
                 def user = component.submit(command)
                 send toJson(user)
             }
@@ -152,7 +158,7 @@ class UserEndpoint {
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = currentUser.username
+                command.username = loggedInUser().username
                 def user = component.submit(command)
                 send toJson(user)
             }
@@ -170,7 +176,7 @@ class UserEndpoint {
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = currentUser.username
+                command.username = loggedInUser().username
                 component.submit(command)
                 send toJson([status: 'success', message: 'Invitation sent'])
             }
@@ -179,6 +185,42 @@ class UserEndpoint {
                 response.contentType = 'application/json'
                 // TODO: Implement...
                 send toJson([status: 'success', message: 'User deleted'])
+            }
+
+            post('/google/access-request-url') {
+                response.contentType = 'application/json'
+                def url = component.submit(new GoogleAccessRequestUrl())
+                send toJson([url: url])
+            }
+
+            post('/google/access-request-callback') {
+                response.contentType = 'application/json'
+                component.submit(
+                        new AssociateGoogleAccount(
+                                username: loggedInUser().username,
+                                authorizationCode: params.required('code', String)
+                        ))
+                // TODO: What to do here - redirect?
+            }
+
+            post('/google/revoke-access') {
+                response.contentType = 'application/json'
+                component.submit(
+                        new RevokeGoogleAccountAccess(
+                                username: loggedInUser().username,
+                                tokens: loggedInUser().googleTokens
+                        ))
+                send toJson([status: 'success', message: 'Access to Google account revoked'])
+            }
+
+            post('/google/refresh-access-token') {
+                response.contentType = 'application/json'
+                component.submit(
+                        new RefreshGoogleAccessToken(
+                                username: loggedInUser().username,
+                                tokens: loggedInUser().googleTokens
+                        ))
+                send toJson([status: 'success', message: 'Google access token refreshed'])
             }
         }
     }

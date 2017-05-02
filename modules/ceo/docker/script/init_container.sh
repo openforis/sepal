@@ -19,7 +19,7 @@ export privateKeyPath=/etc/ssh/google-earth-engine/key.pem
 echo -e $privateKey > $privateKeyPath
 
 mkdir -p /data/db
-mkdir -p /data/ceo
+mkdir -p /data/cep
 
 template /config/supervisord.conf /etc/supervisord.conf
 

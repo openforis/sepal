@@ -8,6 +8,7 @@ apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
  gettext\
  git\
  mongodb\
+ nodejs\
  npm\
  supervisor
 

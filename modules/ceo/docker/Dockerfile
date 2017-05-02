@@ -14,7 +14,8 @@ RUN pip install -r /requirements.txt
 
 ADD src /src
 
-CMD cd /src/ceo/static
-CMD npm install --global bower
+RUN cd /src/ceo/static && \
+    ln -s /usr/bin/nodejs /usr/bin/node && \
+    bower install --allow-root
 
 CMD ["/script/init_container.sh"]

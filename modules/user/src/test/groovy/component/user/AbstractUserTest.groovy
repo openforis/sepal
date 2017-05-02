@@ -5,8 +5,10 @@ import org.openforis.sepal.component.user.UserComponent
 import org.openforis.sepal.component.user.adapter.SmtpEmailGateway
 import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.query.ListUsers
+import org.openforis.sepal.component.user.query.LoadUser
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.user.User
 import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.EmailServer
@@ -28,6 +30,7 @@ class AbstractUserTest extends Specification {
     final emailGateway = new SmtpEmailGateway('localhost', new EmailServer(new Config(smtpConfig)))
     final messageBroker = new FakeMessageBroker()
     final eventDispatcher = new SynchronousEventDispatcher()
+    final googleOAuthClient = new FakeGoogleOAuthClient()
     final clock = new FakeClock()
     final component = new UserComponent(
             connectionManager,
@@ -36,6 +39,7 @@ class AbstractUserTest extends Specification {
             externalUserDataGateway,
             messageBroker,
             eventDispatcher,
+            googleOAuthClient,
             clock
     )
 
@@ -47,6 +51,12 @@ class AbstractUserTest extends Specification {
 
     def cleanup() {
         mailServer.stop()
+    }
+
+    User loadUser(String username) {
+        component.submit(
+                new LoadUser(username: username)
+        )
     }
 
     User inviteUser(Map args = [:]) {
@@ -85,7 +95,7 @@ class AbstractUserTest extends Specification {
         )
     }
 
-    User activeUser(Map args =[:]) {
+    User activeUser(Map args = [:]) {
         inviteUser(args)
         def token = mailServer.token
         return activateUser(token, args.password ?: testPassword)
@@ -98,6 +108,10 @@ class AbstractUserTest extends Specification {
 
     List<User> listUsers() {
         component.submit(new ListUsers())
+    }
+
+    GoogleTokens associateGoogleAccount(Map args = [:]) {
+        component.submit(new AssociateGoogleAccount(username: args.username ?: testUsername))
     }
 
 

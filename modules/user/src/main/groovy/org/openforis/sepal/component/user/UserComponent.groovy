@@ -9,8 +9,7 @@ import org.openforis.sepal.component.user.api.ExternalUserDataGateway
 import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.endpoint.UserEndpoint
 import org.openforis.sepal.component.user.internal.TokenManager
-import org.openforis.sepal.component.user.query.ListUsers
-import org.openforis.sepal.component.user.query.ListUsersHandler
+import org.openforis.sepal.component.user.query.*
 import org.openforis.sepal.database.DatabaseConfig
 import org.openforis.sepal.database.DatabaseMigration
 import org.openforis.sepal.endpoint.EndpointRegistry
@@ -25,17 +24,19 @@ import org.openforis.sepal.util.SystemClock
 class UserComponent extends DataSourceBackedComponent implements EndpointRegistry {
     private final MessageBroker messageBroker
 
-    static UserComponent create(String sepalHost, String ldapHost) {
+    static UserComponent create(ServerConfig serverConfig) {
         def databaseConfig = new DatabaseConfig()
         new DatabaseMigration(databaseConfig).migrate()
         def connectionManager = new SqlConnectionManager(databaseConfig.createConnectionPool())
         return new UserComponent(
                 connectionManager,
                 new TerminalBackedExternalUserDataGateway(),
-                new SmtpEmailGateway(sepalHost, new EmailServer()),
-                new LdapUsernamePasswordVerifier(ldapHost),
+                new SmtpEmailGateway(serverConfig.host, new EmailServer()),
+                new LdapUsernamePasswordVerifier(serverConfig.ldapHost),
                 new RmbMessageBroker(connectionManager),
                 new AsynchronousEventDispatcher(),
+                new RestBackedGoogleOAuthClient(
+                        serverConfig.host, serverConfig.googleOAuthClientId, serverConfig.googleOAuthClientSecret),
                 new SystemClock())
     }
 
@@ -46,6 +47,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
             UsernamePasswordVerifier usernamePasswordVerifier,
             MessageBroker messageBroker,
             HandlerRegistryEventDispatcher eventDispatcher,
+            GoogleOAuthClient googleOAuthClient,
             Clock clock) {
         super(connectionManager, eventDispatcher)
         this.messageBroker = messageBroker
@@ -59,7 +61,12 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
         command(UpdateUserDetails, new UpdateUserDetailsHandler(userRepository))
         command(ChangePassword, new ChangePasswordHandler(usernamePasswordVerifier, externalUserDataGateway))
         command(RequestPasswordReset, new RequestPasswordResetHandler(userRepository, emailGateway, messageBroker, clock))
+        command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository))
+        command(RefreshGoogleAccessToken, new RefreshGoogleAccessTokenHandler(googleOAuthClient, userRepository))
+        command(RevokeGoogleAccountAccess, new RevokeGoogleAccountAccessHandler(googleOAuthClient, userRepository))
+        query(LoadUser, new LoadUserHandler(userRepository))
         query(ListUsers, new ListUsersHandler(userRepository))
+        query(GoogleAccessRequestUrl, new GoogleAccessRequestUrlHandler(googleOAuthClient))
     }
 
     void onStart() {

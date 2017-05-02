@@ -15,7 +15,7 @@ class Main extends AbstractMain {
 
     Main() {
         def serverConfig = new ServerConfig()
-        def userComponent = start UserComponent.create(serverConfig.host, serverConfig.ldapHost)
+        def userComponent = start UserComponent.create(serverConfig)
         def endpoints = new Endpoints(
                 PathRestrictionsFactory.create(),
                 userComponent
@@ -39,12 +39,16 @@ class ServerConfig {
     final int port
     final String host
     final String ldapHost
+    final String googleOAuthClientId
+    final String googleOAuthClientSecret
 
     ServerConfig() {
         def c = new Config('user-server.properties')
         port = c.integer('port')
         host = c.host
         ldapHost = c.ldapHost
+        googleOAuthClientId = c.googleOAuthClientId
+        googleOAuthClientSecret = c.googleOAuthClientSecret
     }
 }
 
