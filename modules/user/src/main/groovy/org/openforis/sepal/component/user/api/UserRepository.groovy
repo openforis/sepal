@@ -8,6 +8,8 @@ interface UserRepository {
 
     void updateUserDetails(User user)
 
+    void deleteUser(String username)
+
     List<User> listUsers()
 
     User lookupUser(String username)

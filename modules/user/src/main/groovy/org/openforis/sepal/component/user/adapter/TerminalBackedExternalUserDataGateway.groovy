@@ -21,4 +21,11 @@ class TerminalBackedExternalUserDataGateway implements ExternalUserDataGateway {
                 password,
                 'sepalUsers')
     }
+
+    void deleteUser(String username) {
+        Terminal.execute(new File('.'),
+                'sudo',
+                'delete-sepal-user',
+                username)
+    }
 }

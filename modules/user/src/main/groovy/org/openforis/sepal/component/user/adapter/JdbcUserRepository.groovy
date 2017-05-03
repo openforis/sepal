@@ -29,6 +29,10 @@ class JdbcUserRepository implements UserRepository {
                 WHERE username = ?''', [user.name, user.email, user.organization, user.username])
     }
 
+    void deleteUser(String username) {
+        sql.execute('DELETE FROM sepal_user WHERE username = ?', [username])
+    }
+
     List<User> listUsers() {
         sql.rows('''
                 SELECT id, username, name, email, organization, admin, system_user, status, 

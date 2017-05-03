@@ -43,6 +43,6 @@ class FakeGoogleOAuthClient implements GoogleOAuthClient {
     }
 
     private GoogleTokens createTokens() {
-        new GoogleTokens(UUID.randomUUID() as String, UUID.randomUUID() as String, new Date() + 1)
+        new GoogleTokens(UUID.randomUUID() as String, UUID.randomUUID() as String, System.currentTimeMillis() + 60 * 1000)
     }
 }

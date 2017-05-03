@@ -184,7 +184,8 @@ class UserEndpoint {
 
             post('/delete', [ADMIN]) {
                 response.contentType = 'application/json'
-                // TODO: Implement...
+                def command = new DeleteUser(username: params.required('username', String))
+                component.submit(command)
                 send toJson([status: 'success', message: 'User deleted'])
             }
 
