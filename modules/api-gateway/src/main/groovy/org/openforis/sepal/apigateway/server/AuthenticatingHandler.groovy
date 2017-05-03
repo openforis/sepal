@@ -62,7 +62,7 @@ class AuthenticatingHandler implements HttpHandler {
 
     private Map userFromSession(HttpServerExchange exchange) {
         def user = getOrCreateSession(exchange, false)?.getAttribute(USER_SESSION_ATTRIBUTE) as Map
-        LOG.debug("User from session: $user:, Exchange: " + exchange)
+        if (LOG.isTraceEnabled()) LOG.trace("User from session: $user:, Exchange: " + exchange)
         return user
     }
 
@@ -71,12 +71,12 @@ class AuthenticatingHandler implements HttpHandler {
         def sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY)
         def session = sessionManager.getSession(exchange, sessionConfig)
         if (!session && create) {
-            LOG.trace("Creating new session: " + exchange)
+            if (LOG.isTraceEnabled()) LOG.trace("Creating new session: " + exchange)
             session = sessionManager.createSession(exchange, sessionConfig)
         } else if (!session)
-            LOG.trace("No existing session, and will not create one: " + exchange)
+            if (LOG.isTraceEnabled()) LOG.trace("No existing session, and will not create one: " + exchange)
         else
-            LOG.trace("Existing session: " + exchange)
+            if (LOG.isTraceEnabled()) LOG.trace("Existing session: " + exchange)
         return session
     }
 
@@ -102,7 +102,7 @@ class AuthenticatingHandler implements HttpHandler {
         def http = new RESTClient(authenticationUrl)
         http.handler.failure = { return it }
         def username = usernamePassword[0]
-        LOG.trace("Authenticating " + username)
+        if (LOG.isTraceEnabled()) LOG.trace("Authenticating " + username)
         def response = http.post(
                 requestContentType: ContentType.URLENC,
                 contentType: ContentType.JSON,
