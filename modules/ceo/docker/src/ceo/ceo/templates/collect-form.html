@@ -89,6 +89,7 @@
                     var label = $('<label>').text(codeList.name);
                     element.append(label);
                     var select = $('<select>').addClass('form-control').attr('data-plot-id', codeList.name);
+                    select.append($('<option>').text('Select a value').attr('value', ''));
                     codeList.items.forEach(function(item) {
                         var option = $('<option>').text(item.label).attr('value', item.code);
                         select.append(option);
@@ -105,9 +106,12 @@
                         var plot_id = $(this).attr('data-plot-id');
                         $(this).siblings().removeClass("active");
                         $(this).addClass("active");
+
+                        $(this).parent().animate({
+                            scrollTop: $(this).index() * $(this).outerHeight(true)
+                        }, 'slow');
+
                         var center = new google.maps.LatLng(parseFloat(plot.YCoordinate), parseFloat(plot.XCoordinate))
-                        //map.setCenter(center);
-                        //map.setZoom(14);
 
                         var circle = new google.maps.Circle({
                             center: center,
@@ -118,7 +122,7 @@
                             strokeColor: 'yellow',
                             strokeOpacity: 0.8,
                             strokeWeight: 2,
-                            fillOpacity: 0,
+                            fillOpacity: 0
                         });
                         map.fitBounds(square.getBounds());
 
@@ -323,7 +327,7 @@
                 contentType: 'application/json;charset=UTF-8'
             }).success(function(data) {
                 getRecords();
-                var nextFromActive = $('#list a.active').next(':not(.evaluated)');
+                var nextFromActive = $('#list a.active').nextAll(':not(.evaluated)').first();
                 if (nextFromActive.length != 0) {
                     nextFromActive.click();
                 } else {

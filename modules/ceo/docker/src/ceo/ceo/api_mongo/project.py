@@ -76,7 +76,7 @@ def projectAdd():
             zip_ref = zipfile.ZipFile(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename), 'r')
             zip_ref.extractall(extractDir)
             zip_ref.close()
-        #
+        # codeLists
         codeLists = []
         if os.path.isfile(os.path.join(extractDir, 'placemark.idm.xml')):
             ns = {
@@ -91,17 +91,18 @@ def projectAdd():
                     'items': []
                 }
                 items = lst.findall('of:items/of:item', ns)
-                for item in items:
-                    codeList.get('items').append({
-                        'code': item.find('of:code', ns).text,
-                        'label': item.find('of:label', ns).text
-                    })
-                codeLists.append(codeList)
+                if len(items) > 0:
+                    for item in items:
+                        codeList.get('items').append({
+                            'code': item.find('of:code', ns).text,
+                            'label': item.find('of:label', ns).text
+                        })
+                    codeLists.append(codeList)
         #
         properties = propertyFileToDict(os.path.join(extractDir, 'project_definition.properties'))
         property = properties.get('csv', 'test_plots.ced')
         head, tail = os.path.split(property)
-        #
+        # plots
         plots = []
         if os.path.isfile(os.path.join(extractDir, tail)):
             with open(os.path.join(extractDir, tail), 'rb') as csvfile:
@@ -120,7 +121,7 @@ def projectAdd():
         name = data.get('name')
         type = 'cep' #TODO
         overlays = []
-        #gee-gateway
+        # gee-gateway
         collectionName = request.form.getlist('collectionName[]')
         dateFrom = request.form.getlist('dateFrom[]')
         dateTo = request.form.getlist('dateTo[]')
@@ -142,7 +143,7 @@ def projectAdd():
                 'band3': band3[i]
             }
             overlays.append(overlay)
-        #
+        # insert the project
         mongo.db.projects.insert({
             'id': generate_id(uniqueFilename),
             'name': name,
