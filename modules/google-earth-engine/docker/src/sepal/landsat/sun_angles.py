@@ -10,7 +10,7 @@ def create(date, footprint):
     longDeg = ee.Image.pixelLonLat().select('longitude')
 
     # Julian day proportion in radians
-    jdpr = jdp.multiply(PI).multiply(2)
+    jdpr = jdp.multiply(PI()).multiply(2)
 
     a = ee.List([0.000075, 0.001868, 0.032077, 0.014615, 0.040849])
     meanSolarTime = longDeg.divide(15.0).add(ee.Number(hourGMT))
@@ -22,7 +22,7 @@ def create(date, footprint):
 
     localSolarDiff2 = localSolarDiff1.multiply(12 * 60)
 
-    localSolarDiff = localSolarDiff2.divide(PI)
+    localSolarDiff = localSolarDiff2.divide(PI())
     trueSolarTime = meanSolarTime \
         .add(localSolarDiff.divide(60)) \
         .subtract(12.0)
@@ -50,12 +50,12 @@ def create(date, footprint):
         .divide(sunZen.sin())
     sunAzSW = sinSunAzSW.asin()
 
-    sunAzSW = where(cosSunAzSW.lte(0), sunAzSW.multiply(-1).add(PI), sunAzSW)
-    sunAzSW = where(cosSunAzSW.gt(0).And(sinSunAzSW.lte(0)), sunAzSW.add(PI.multiply(2)), sunAzSW)
+    sunAzSW = where(cosSunAzSW.lte(0), sunAzSW.multiply(-1).add(PI()), sunAzSW)
+    sunAzSW = where(cosSunAzSW.gt(0).And(sinSunAzSW.lte(0)), sunAzSW.add(PI().multiply(2)), sunAzSW)
 
-    sunAz = sunAzSW.add(PI)
+    sunAz = sunAzSW.add(PI())
     # Keep within [0, 2pi] range
-    sunAz = where(sunAz.gt(PI.multiply(2)), sunAz.subtract(PI.multiply(2)), sunAz)
+    sunAz = where(sunAz.gt(PI().multiply(2)), sunAz.subtract(PI().multiply(2)), sunAz)
 
     footprint_polygon = ee.Geometry.Polygon(footprint)
     sunAz = sunAz.clip(footprint_polygon)

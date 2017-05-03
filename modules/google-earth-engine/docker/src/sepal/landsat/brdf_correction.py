@@ -11,7 +11,7 @@ def apply(image):
     (sunAz, sunZen) = sun_angles.create(date, footprint)
     (viewAz, viewZen) = view_angles.create(footprint)
     (kvol, kvol0) = _kvol(sunAz, sunZen, viewAz, viewZen)
-    return _apply(image, kvol.multiply(PI), kvol0.multiply(PI))
+    return _apply(image, kvol.multiply(PI()), kvol0.multiply(PI()))
 
 
 def _apply(image, kvol, kvol0):
@@ -48,11 +48,11 @@ def _kvol(sunAz, sunZen, viewAz, viewZen):
         .multiply(relative_azimuth.cos())
     phase_angle1 = pa1.add(pa2)
     phase_angle = phase_angle1.acos()
-    p1 = ee.Image(PI.divide(2)).subtract(phase_angle)
+    p1 = ee.Image(PI().divide(2)).subtract(phase_angle)
     p2 = p1.multiply(phase_angle1)
     p3 = p2.add(phase_angle.sin())
     p4 = sunZen.cos().add(viewZen.cos())
-    p5 = ee.Image(PI.divide(4))
+    p5 = ee.Image(PI().divide(4))
 
     kvol = p3.divide(p4).subtract(p5).rename(['kvol'])
 
@@ -64,11 +64,11 @@ def _kvol(sunAz, sunZen, viewAz, viewZen):
         .multiply(relative_azimuth.cos())
     phase_angle10 = pa10.add(pa20)
     phase_angle0 = phase_angle10.acos()
-    p10 = ee.Image(PI.divide(2)).subtract(phase_angle0)
+    p10 = ee.Image(PI().divide(2)).subtract(phase_angle0)
     p20 = p10.multiply(phase_angle10)
     p30 = p20.add(phase_angle0.sin())
     p40 = sunZen.cos().add(viewZen0.cos())
-    p50 = ee.Image(PI.divide(4))
+    p50 = ee.Image(PI().divide(4))
 
     kvol0 = p30.divide(p40).subtract(p50).rename(['kvol0'])
 

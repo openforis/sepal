@@ -5,7 +5,7 @@ UPPER_LEFT = 0
 LOWER_LEFT = 1
 LOWER_RIGHT = 2
 UPPER_RIGHT = 3
-PI = ee.Number(math.pi)
+PI = lambda: ee.Number(math.pi)
 MAX_SATELLITE_ZENITH = 7.5
 
 BLUE = 'B1'
@@ -34,7 +34,7 @@ def line(start, end):
 
 
 def degToRad(deg):
-    return deg.multiply(PI.divide(180))
+    return deg.multiply(PI().divide(180))
 
 
 def value(list, index):
@@ -42,7 +42,7 @@ def value(list, index):
 
 
 def radToDeg(rad):
-    return rad.multiply(180).divide(PI)
+    return rad.multiply(180).divide(PI())
 
 
 def where(condition, trueValue, falseValue):
