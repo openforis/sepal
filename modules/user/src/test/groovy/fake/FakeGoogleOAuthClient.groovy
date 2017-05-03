@@ -9,7 +9,7 @@ class FakeGoogleOAuthClient implements GoogleOAuthClient {
     private final Set revokedTokens = new HashSet()
     private final Set refreshedTokens = new HashSet()
 
-    URI redirectUrl() {
+    URI redirectUrl(String destinationUrl) {
         return redirectUri
     }
 

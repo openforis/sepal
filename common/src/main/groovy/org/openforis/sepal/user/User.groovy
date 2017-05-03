@@ -13,9 +13,9 @@ class User implements groovymvc.security.User {
     String username
     String email
     String organization
+    GoogleTokens googleTokens
     Status status
     Set<String> roles
-    GoogleTokens googleTokens
     boolean systemUser
 
     boolean hasUsername(String username) {

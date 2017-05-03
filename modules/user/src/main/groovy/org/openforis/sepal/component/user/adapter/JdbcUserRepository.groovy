@@ -93,7 +93,7 @@ class JdbcUserRepository implements UserRepository {
                     google_access_token = ?, 
                     google_access_token_expiration = ? 
                 WHERE username = ?''',
-                [tokens?.refreshToken, tokens?.accessToken, tokens?.accessTokenExpiryDate, username])
+                [tokens?.refreshToken, tokens?.accessToken, tokens ? new Date(tokens.accessTokenExpiryDate) : null, username])
     }
 
     private User createUser(GroovyRowResult row) {
@@ -108,7 +108,7 @@ class JdbcUserRepository implements UserRepository {
                 googleTokens: row.google_refresh_token ? new GoogleTokens(
                         refreshToken: row.google_refresh_token,
                         accessToken: row.google_access_token,
-                        accessTokenExpiryDate: row.google_access_token_expiration) : null,
+                        accessTokenExpiryDate: row.google_access_token_expiration.time) : null,
                 status: row.status as User.Status
         )
         return user

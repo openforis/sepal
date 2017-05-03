@@ -16,6 +16,8 @@ class ProxyConfig {
     final int httpsPort
     final String logoutPath
     final String authenticationUrl
+    final String currentUserUrl
+    final String refreshGoogleAccessTokenUrl
     final List<EndpointConfig> endpointConfigs
 
     static ProxyConfig create() {
@@ -27,6 +29,8 @@ class ProxyConfig {
                 httpsPort: c.integer('httpsPort'),
                 logoutPath: c.logoutPath,
                 authenticationUrl: c.authenticationUrl,
+                currentUserUrl: c.currentUserUrl,
+                refreshGoogleAccessTokenUrl: c.refreshGoogleAccessTokenUrl,
                 endpointConfigs: new JsonSlurper(type: LAX).parse(new File(FileSystem.configDir(), 'endpoints.json'))
                         .collect {
                     new EndpointConfig(

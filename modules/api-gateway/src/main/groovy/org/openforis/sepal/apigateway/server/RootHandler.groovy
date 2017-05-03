@@ -32,12 +32,16 @@ class RootHandler implements HttpHandler {
     private static final int SESSION_TIMEOUT = 30 * 60 // 30 minutes
     private final int httpsPort
     private final String authenticationUrl
+    private final String currentUserUrl
+    private final String refreshGoogleAccessTokenUrl
     private final PathHandler handler = Handlers.path()
     private final SessionManager sessionManager
 
     RootHandler(ProxyConfig config) {
         this.httpsPort = config.httpsPort
         this.authenticationUrl = config.authenticationUrl
+        this.currentUserUrl = config.currentUserUrl
+        this.refreshGoogleAccessTokenUrl = config.refreshGoogleAccessTokenUrl
         sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
         this.sessionManager.defaultSessionTimeout = SESSION_TIMEOUT
         handler.addExactPath(config.logoutPath, LogoutHandler.create())
@@ -48,7 +52,7 @@ class RootHandler implements HttpHandler {
         if (endpointConfig.rewriteRedirects)
             endpointHandler = new RedirectRewriteHandler(endpointHandler)
         if (endpointConfig.authenticate)
-            endpointHandler = new AuthenticatingHandler(authenticationUrl, endpointHandler)
+            endpointHandler = new AuthenticatingHandler(authenticationUrl, currentUserUrl, refreshGoogleAccessTokenUrl, endpointHandler)
         if (endpointConfig.https)
             endpointHandler = new HttpsRedirectHandler(httpsPort, endpointHandler)
         if (endpointConfig.cached)

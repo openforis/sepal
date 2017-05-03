@@ -5,6 +5,7 @@ import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 
 class GoogleAccessRequestUrl implements Query<URI> {
+    String destinationUrl
 }
 
 class GoogleAccessRequestUrlHandler implements QueryHandler<URI, GoogleAccessRequestUrl> {
@@ -15,6 +16,6 @@ class GoogleAccessRequestUrlHandler implements QueryHandler<URI, GoogleAccessReq
     }
 
     URI execute(GoogleAccessRequestUrl query) {
-        return googleOAuthClient.redirectUrl()
+        return googleOAuthClient.redirectUrl(query.destinationUrl)
     }
 }

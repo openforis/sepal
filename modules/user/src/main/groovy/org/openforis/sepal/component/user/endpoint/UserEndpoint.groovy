@@ -149,6 +149,7 @@ class UserEndpoint {
                 command.username = loggedInUser().username
                 command.usernameToUpdate = loggedInUser().username
                 def user = component.submit(command)
+                response.addHeader('sepal-user-updated', 'true')
                 send toJson(user)
             }
 
@@ -189,7 +190,7 @@ class UserEndpoint {
 
             get('/google/access-request-url') {
                 response.contentType = 'application/json'
-                def url = component.submit(new GoogleAccessRequestUrl())
+                def url = component.submit(new GoogleAccessRequestUrl(destinationUrl: params.destinationUrl))
                 send toJson([url: url as String])
             }
 
@@ -200,7 +201,8 @@ class UserEndpoint {
                                 username: loggedInUser().username,
                                 authorizationCode: params.required('code', String)
                         ))
-                // TODO: What to do here - redirect?
+                response.addHeader('sepal-user-updated', 'true')
+                response.sendRedirect(params.required('state', String))
             }
 
             post('/google/revoke-access') {
@@ -210,17 +212,21 @@ class UserEndpoint {
                                 username: loggedInUser().username,
                                 tokens: loggedInUser().googleTokens
                         ))
+                response.addHeader('sepal-user-updated', 'true')
                 send toJson([status: 'success', message: 'Access to Google account revoked'])
             }
 
             post('/google/refresh-access-token') {
                 response.contentType = 'application/json'
-                component.submit(
+                if (!loggedInUser().googleTokens)
+                    return halt(400)
+                def tokens = component.submit(
                         new RefreshGoogleAccessToken(
                                 username: loggedInUser().username,
                                 tokens: loggedInUser().googleTokens
                         ))
-                send toJson([status: 'success', message: 'Google access token refreshed'])
+                response.addHeader('sepal-user-updated', 'true')
+                send toJson(tokens)
             }
         }
     }

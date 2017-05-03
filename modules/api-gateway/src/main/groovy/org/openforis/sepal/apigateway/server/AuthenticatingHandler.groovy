@@ -4,6 +4,7 @@ import groovyx.net.http.ContentType
 import groovyx.net.http.RESTClient
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
+import io.undertow.server.ResponseCommitListener
 import io.undertow.server.session.Session
 import io.undertow.server.session.SessionConfig
 import io.undertow.server.session.SessionManager
@@ -16,24 +17,47 @@ import static groovy.json.JsonOutput.toJson
 
 class AuthenticatingHandler implements HttpHandler {
     private static final LOG = LoggerFactory.getLogger(this)
+    private static final int REFRESH_IF_EXPIRES_IN_MINUTES = 5
     private static final NO_CHALLENGE_HEADER = 'No-auth-challenge'
     public static final USER_SESSION_ATTRIBUTE = 'user'
 
     private final String authenticationUrl
+    private final String currentUserUrl
+    private final String refreshGoogleAccessTokenUrl
     private final HttpHandler next
+    private final userRefreshListener = new UserRefreshListener()
 
-    AuthenticatingHandler(String authenticationUrl, HttpHandler next) {
+    AuthenticatingHandler(String authenticationUrl, String currentUserUrl, String refreshGoogleAccessTokenUrl, HttpHandler next) {
         this.authenticationUrl = authenticationUrl
+        this.currentUserUrl = currentUserUrl
+        this.refreshGoogleAccessTokenUrl = refreshGoogleAccessTokenUrl
         this.next = next
     }
 
     void handleRequest(HttpServerExchange exchange) throws Exception {
         def user = userFromSession(exchange) ?: authenticate(exchange)
         if (user) {
+            user = refreshGoogleAccessTokenIfNeeded(user)
             exchange.requestHeaders.add(HttpString.tryFromString('sepal-user'), toJson(user))
             next.handleRequest(exchange)
         } else
             challenge(exchange)
+        exchange.addResponseCommitListener(userRefreshListener)
+    }
+
+    Map refreshGoogleAccessTokenIfNeeded(Map user) {
+        if (!user?.googleTokens?.accessTokenExpiryDate)
+            return user
+        def expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - System.currentTimeMillis()) / 60 / 1000 as int
+        if (expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES) {
+            def http = new RESTClient(refreshGoogleAccessTokenUrl)
+            def response = http.post(
+                    contentType: ContentType.JSON,
+                    headers: ['sepal-user': toJson(user)]
+            )
+            user.googleTokens = response.data
+        }
+        return user
     }
 
     private Map userFromSession(HttpServerExchange exchange) {
@@ -101,6 +125,24 @@ class AuthenticatingHandler implements HttpHandler {
     private String[] basicAuthUsernamePassword(HttpServerExchange exchange) {
         def authorization = exchange.requestHeaders.getFirst(Headers.AUTHORIZATION)
         new String(authorization.substring('basic '.length()).decodeBase64()).split(':')
+    }
+
+    private class UserRefreshListener implements ResponseCommitListener {
+        void beforeCommit(HttpServerExchange exchange) {
+            if (exchange.responseHeaders.contains('sepal-user-updated'))
+                updateUserInSession(exchange)
+        }
+
+        private void updateUserInSession(HttpServerExchange exchange) {
+            def user = userFromSession(exchange)
+            def http = new RESTClient(currentUserUrl)
+            def response = http.get(
+                    contentType: ContentType.JSON,
+                    headers: ['sepal-user': toJson(user)]
+            )
+            def session = getOrCreateSession(exchange)
+            session.setAttribute(USER_SESSION_ATTRIBUTE, response.data)
+        }
     }
 }
 

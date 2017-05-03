@@ -4,7 +4,7 @@ import groovyx.net.http.RESTClient
 import org.openforis.sepal.user.GoogleTokens
 
 interface GoogleOAuthClient {
-    URI redirectUrl()
+    URI redirectUrl(String destinationUrl)
 
     GoogleTokens requestTokens(String authorizationCode)
 
@@ -28,7 +28,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
         this.clientSecret = clientSecret
     }
 
-    URI redirectUrl() {
+    URI redirectUrl(String destinationUrl) {
         def redirectUrl = "https://$sepalHost/user/google/access-request-callback"
         def baseUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
         def params = [
@@ -36,7 +36,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
                 prompt                : 'consent',
                 access_type           : 'offline',
                 include_granted_scopes: 'true',
-                state                 : 'some-state',
+                state                 : destinationUrl,
                 redirect_uri          : redirectUrl,
                 response_type         : 'code',
                 client_id             : clientId
@@ -62,7 +62,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
         return new GoogleTokens(
                 refreshToken: response.data.refresh_token,
                 accessToken: response.data.access_token,
-                accessTokenExpiryDate: toDate(response.data.expires_in)
+                accessTokenExpiryDate: toTimestamp(response.data.expires_in)
         )
     }
 
@@ -74,7 +74,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
                         refresh_token: tokens.refreshToken,
                         client_id    : clientId,
                         client_secret: clientSecret,
-                        redirect_uri : redirectUrl(),
+                        redirect_uri : "https://$sepalHost/user/google/access-request-callback",
                         grant_type   : 'refresh_token'
                 ]
         )
@@ -82,22 +82,22 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
         return new GoogleTokens(
                 refreshToken: tokens.refreshToken,
                 accessToken: response.data.access_token,
-                accessTokenExpiryDate: toDate(response.data.expires_in)
+                accessTokenExpiryDate: toTimestamp(response.data.expires_in)
         )
     }
 
     void revokeTokens(GoogleTokens tokens) {
-        def response = http.post(
+        def response = http.get(
                 uri: 'https://accounts.google.com/',
                 path: 'o/oauth2/revoke',
-                query: [token: tokens.refreshToken]
+                query: [token: tokens.refreshToken],
+                headers: ['Content-Type': 'type:application/x-www-form-urlencoded']
         )
         // TODO: Handle failure
     }
 
-    private Date toDate(expiresInSeconds) {
-        new Date(System.currentTimeMillis() + (1000 * (expiresInSeconds as int))
-        )
+    private long toTimestamp(expiresInSeconds) {
+        new Date(System.currentTimeMillis() + (1000 * (expiresInSeconds as int))).time
     }
 
     private RESTClient getHttp() {

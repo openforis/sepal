@@ -6,5 +6,5 @@ import org.openforis.sepal.util.annotation.ImmutableData
 class GoogleTokens {
     String refreshToken
     String accessToken
-    Date accessTokenExpiryDate
+    long accessTokenExpiryDate
 }
