@@ -1,7 +1,12 @@
 package org.openforis.sepal.component.user.adapter
 
+import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.user.GoogleTokens
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+import static groovyx.net.http.ContentType.URLENC
 
 interface GoogleOAuthClient {
     URI redirectUrl(String destinationUrl)
@@ -14,6 +19,7 @@ interface GoogleOAuthClient {
 }
 
 class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
+    private static final Logger LOG = LoggerFactory.getLogger(this)
     public static final SCOPE = '' +
             'https://www.googleapis.com/auth/earthengine ' +
             'https://www.googleapis.com/auth/devstorage.full_control ' +
@@ -87,13 +93,18 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
     }
 
     void revokeTokens(GoogleTokens tokens) {
-        def response = http.get(
-                uri: 'https://accounts.google.com/',
-                path: 'o/oauth2/revoke',
-                query: [token: tokens.refreshToken],
-                headers: ['Content-Type': 'type:application/x-www-form-urlencoded']
-        )
-        // TODO: Handle failure
+        try {
+            http.post(
+                    uri: 'https://accounts.google.com/',
+                    requestContentType: URLENC,
+                    path: 'o/oauth2/revoke',
+                    body: [token: tokens.refreshToken]
+            )
+        } catch (HttpResponseException e) {
+            LOG.warn("Failed to revoke tokens $tokens. $e.response.data")
+            if (e.response.data?.error != 'invalid_token')
+                throw e
+        }
     }
 
     private long toTimestamp(expiresInSeconds) {
