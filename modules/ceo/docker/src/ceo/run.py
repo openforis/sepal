@@ -5,7 +5,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--gmaps_api_key', action='store', default='', help='Google Maps API key')
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
 
     app.config['GMAPS_API_KEY'] = args.gmaps_api_key
 
