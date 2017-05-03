@@ -206,6 +206,8 @@ class UserEndpoint {
 
             post('/google/revoke-access') {
                 response.contentType = 'application/json'
+                if (!sepalUser.googleTokens)
+                    return send(toJson([status: 'success', message: 'No tokens to revoke']))
                 component.submit(
                         new RevokeGoogleAccountAccess(
                                 username: sepalUser.username,
