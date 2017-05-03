@@ -7,7 +7,6 @@ import org.openforis.sepal.component.user.query.GoogleAccessRequestUrl
 import org.openforis.sepal.component.user.query.ListUsers
 import org.openforis.sepal.component.user.query.LoadUser
 import org.openforis.sepal.endpoint.InvalidRequest
-import org.openforis.sepal.user.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -30,10 +29,6 @@ class UserEndpoint {
             def emailConstraints = [notBlank(), email()]
             def organizationConstraints = [maxLength(1000)]
             def passwordConstraints = custom { it ==~ /^.{6,100}$/ }
-
-            def loggedInUser = { ->
-                controller.requestContext.currentUser as User
-            }
 
             constrain(InviteUser, [
                     invitedUsername: usernameConstraints,
@@ -119,12 +114,12 @@ class UserEndpoint {
 
             post('/login') { // Just a nice looking endpoint the frontend can call to trigger authentication
                 response.contentType = 'application/json'
-                send toJson(loggedInUser())
+                send toJson(sepalUser)
             }
 
             get('/current') {
                 response.contentType = 'application/json'
-                def query = new LoadUser(username: loggedInUser().username)
+                def query = new LoadUser(username: sepalUser.username)
                 def user = component.submit(query)
                 send toJson(user)
             }
@@ -135,7 +130,7 @@ class UserEndpoint {
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = loggedInUser().username
+                command.username = sepalUser.username
                 def success = component.submit(command)
                 send toJson(success ?
                         [status: 'success', message: 'Password changed'] :
@@ -145,12 +140,12 @@ class UserEndpoint {
 
             post('/current/details') {
                 response.contentType = 'application/json'
-                def command = new UpdateUserDetails(usernameToUpdate: loggedInUser().username)
+                def command = new UpdateUserDetails(usernameToUpdate: sepalUser.username)
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = loggedInUser().username
-                command.usernameToUpdate = loggedInUser().username
+                command.username = sepalUser.username
+                command.usernameToUpdate = sepalUser.username
                 def user = component.submit(command)
                 response.addHeader('sepal-user-updated', 'true')
                 send toJson(user)
@@ -162,7 +157,7 @@ class UserEndpoint {
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = loggedInUser().username
+                command.username = sepalUser.username
                 def user = component.submit(command)
                 send toJson(user)
             }
@@ -180,7 +175,7 @@ class UserEndpoint {
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = loggedInUser().username
+                command.username = sepalUser.username
                 component.submit(command)
                 send toJson([status: 'success', message: 'Invitation sent'])
             }
@@ -202,7 +197,7 @@ class UserEndpoint {
                 response.contentType = 'application/json'
                 component.submit(
                         new AssociateGoogleAccount(
-                                username: loggedInUser().username,
+                                username: sepalUser.username,
                                 authorizationCode: params.required('code', String)
                         ))
                 response.addHeader('sepal-user-updated', 'true')
@@ -213,8 +208,8 @@ class UserEndpoint {
                 response.contentType = 'application/json'
                 component.submit(
                         new RevokeGoogleAccountAccess(
-                                username: loggedInUser().username,
-                                tokens: loggedInUser().googleTokens
+                                username: sepalUser.username,
+                                tokens: sepalUser.googleTokens
                         ))
                 response.addHeader('sepal-user-updated', 'true')
                 send toJson([status: 'success', message: 'Access to Google account revoked'])
@@ -222,12 +217,12 @@ class UserEndpoint {
 
             post('/google/refresh-access-token') {
                 response.contentType = 'application/json'
-                if (!loggedInUser().googleTokens)
+                if (!sepalUser.googleTokens)
                     return halt(400)
                 def tokens = component.submit(
                         new RefreshGoogleAccessToken(
-                                username: loggedInUser().username,
-                                tokens: loggedInUser().googleTokens
+                                username: sepalUser.username,
+                                tokens: sepalUser.googleTokens
                         ))
                 response.addHeader('sepal-user-updated', 'true')
                 send toJson(tokens)
