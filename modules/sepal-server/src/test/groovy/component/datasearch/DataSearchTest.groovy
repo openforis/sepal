@@ -15,6 +15,8 @@ import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.user.GoogleTokens
+import org.openforis.sepal.user.User
 import spock.lang.Ignore
 import spock.lang.Specification
 
@@ -32,6 +34,10 @@ class DataSearchTest extends Specification {
     final sceneAreaProvider = new FakeGoogleEarthEngineGateway()
     final usgs = new FakeGateway()
     final sentinel2 = new FakeGateway()
+    final sepalUser = new User(
+            username: 'test-user',
+            googleTokens: new GoogleTokens('refresh', 'access', 123)
+    )
     final component = new DataSearchComponent(
             connectionManager,
             sceneAreaProvider,
@@ -46,6 +52,7 @@ class DataSearchTest extends Specification {
 
         when:
         def sceneAreas = component.submit(new FindSceneAreasForAoi(
+                sepalUser,
                 LANDSAT,
                 new FusionTableShape(
                         tableName: SOME_FUSION_TABLE,

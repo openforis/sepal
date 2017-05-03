@@ -6,6 +6,7 @@ import groovy.json.JsonSlurper
 import groovymvc.Controller
 import groovymvc.Params
 import org.openforis.sepal.endpoint.InvalidRequest
+import org.openforis.sepal.user.User
 
 class MvcExtension {
     /**
@@ -47,5 +48,9 @@ class MvcExtension {
      */
     static String getBody(Controller self) {
         self.requestContext.request.reader.text
+    }
+
+    static User getSepalUser(Controller self) throws InvalidRequest {
+        self.requestContext.currentUser as User
     }
 }
