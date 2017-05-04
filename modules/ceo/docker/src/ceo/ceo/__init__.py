@@ -9,4 +9,11 @@ app.secret_key = app.config['SESSION_SECRET_KEY']
 from flask_pymongo import PyMongo
 mongo = PyMongo(app)
 
-import api_mongo, web
+@app.before_first_request
+def beforeFirstRequest(*args, **kwargs):
+    mongo.db.projects.create_index('id')
+    mongo.db.projects.create_index('username')
+    mongo.db.records.create_index('id')
+    mongo.db.records.create_index('project_id')
+
+import api, web
