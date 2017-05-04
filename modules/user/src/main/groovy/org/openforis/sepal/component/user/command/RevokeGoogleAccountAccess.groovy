@@ -21,7 +21,7 @@ class RevokeGoogleAccountAccessHandler implements CommandHandler<Void, RevokeGoo
 
     Void execute(RevokeGoogleAccountAccess command) {
         userRepository.updateGoogleTokens(command.username, null)
-        oAuthClient.revokeTokens(command.tokens)
+        oAuthClient.revokeTokens(command.username, command.tokens)
         return null
     }
 }

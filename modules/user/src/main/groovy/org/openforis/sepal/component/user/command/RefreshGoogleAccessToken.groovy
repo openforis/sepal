@@ -20,7 +20,7 @@ class RefreshGoogleAccessTokenHandler implements CommandHandler<GoogleTokens, Re
     }
 
     GoogleTokens execute(RefreshGoogleAccessToken command) {
-        def tokens = oAuthClient.refreshAccessToken(command.tokens)
+        def tokens = oAuthClient.refreshAccessToken(command.username, command.tokens)
         userRepository.updateGoogleTokens(command.username, tokens)
         return tokens
     }

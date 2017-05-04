@@ -13,11 +13,11 @@ class FakeGoogleOAuthClient implements GoogleOAuthClient {
         return redirectUri
     }
 
-    GoogleTokens requestTokens(String authorizationCode) {
+    GoogleTokens requestTokens(String username, String authorizationCode) {
         return tokens
     }
 
-    GoogleTokens refreshAccessToken(GoogleTokens tokens) {
+    GoogleTokens refreshAccessToken(String username, GoogleTokens tokens) {
         refreshedTokens << tokens
         def refreshed = new GoogleTokens(
                 tokens.refreshToken, UUID.randomUUID() as String, tokens.accessTokenExpiryDate + 1)
@@ -25,7 +25,7 @@ class FakeGoogleOAuthClient implements GoogleOAuthClient {
         return refreshed
     }
 
-    void revokeTokens(GoogleTokens tokens) {
+    void revokeTokens(String username, GoogleTokens tokens) {
         revokedTokens << tokens
         this.tokens = null
     }

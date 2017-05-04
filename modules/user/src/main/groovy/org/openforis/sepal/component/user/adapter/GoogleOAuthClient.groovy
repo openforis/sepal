@@ -11,11 +11,11 @@ import static groovyx.net.http.ContentType.URLENC
 interface GoogleOAuthClient {
     URI redirectUrl(String destinationUrl)
 
-    GoogleTokens requestTokens(String authorizationCode)
+    GoogleTokens requestTokens(String username, String authorizationCode)
 
-    GoogleTokens refreshAccessToken(GoogleTokens tokens)
+    GoogleTokens refreshAccessToken(String username, GoogleTokens tokens)
 
-    void revokeTokens(GoogleTokens tokens)
+    void revokeTokens(String username, GoogleTokens tokens)
 }
 
 class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
@@ -24,11 +24,13 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
             'https://www.googleapis.com/auth/earthengine ' +
             'https://www.googleapis.com/auth/devstorage.full_control ' +
             'https://www.googleapis.com/auth/drive'
+    private final String homeDirectory
     private final String sepalHost
     private final String clientId
     private final String clientSecret
 
-    RestBackedGoogleOAuthClient(String sepalHost, String clientId, String clientSecret) {
+    RestBackedGoogleOAuthClient(String homeDirectory, String sepalHost, String clientId, String clientSecret) {
+        this.homeDirectory = homeDirectory
         this.sepalHost = sepalHost
         this.clientId = clientId
         this.clientSecret = clientSecret
@@ -52,7 +54,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
         return URI.create("$baseUrl?$params")
     }
 
-    GoogleTokens requestTokens(String authorizationCode) {
+    GoogleTokens requestTokens(String username, String authorizationCode) {
         def response = http.post(
                 uri: 'https://www.googleapis.com/',
                 path: 'oauth2/v4/token',
@@ -64,7 +66,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
                         grant_type   : 'authorization_code'
                 ]
         )
-        // TODO: Handle failure
+        storeOnDisk(username, response.data.access_token)
         return new GoogleTokens(
                 refreshToken: response.data.refresh_token,
                 accessToken: response.data.access_token,
@@ -72,7 +74,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
         )
     }
 
-    GoogleTokens refreshAccessToken(GoogleTokens tokens) {
+    GoogleTokens refreshAccessToken(String username, GoogleTokens tokens) {
         def response = http.post(
                 uri: 'https://www.googleapis.com/',
                 path: 'oauth2/v4/token',
@@ -84,7 +86,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
                         grant_type   : 'refresh_token'
                 ]
         )
-        // TODO: Handle failure
+        storeOnDisk(username, response.data.access_token)
         return new GoogleTokens(
                 refreshToken: tokens.refreshToken,
                 accessToken: response.data.access_token,
@@ -92,7 +94,7 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
         )
     }
 
-    void revokeTokens(GoogleTokens tokens) {
+    void revokeTokens(String username, GoogleTokens tokens) {
         try {
             http.post(
                     uri: 'https://accounts.google.com/',
@@ -105,6 +107,20 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
             if (e.response.data?.error != 'invalid_token')
                 throw e
         }
+        removeFromDisk(username)
+    }
+
+    private void storeOnDisk(String username, String accessToken) {
+        def file = new File("$homeDirectory/$username", '.google-access-token')
+        if (!file.exists()) {
+            file.parentFile.mkdirs()
+            file.createNewFile()
+        }
+        file.write(accessToken)
+    }
+
+    private void removeFromDisk(String username) {
+        new File("$homeDirectory/$username", '.google-access-token').delete()
     }
 
     private long toTimestamp(expiresInSeconds) {

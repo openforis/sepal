@@ -41,6 +41,7 @@ class ServerConfig {
     final String ldapHost
     final String googleOAuthClientId
     final String googleOAuthClientSecret
+    final String homeDirectory
 
     ServerConfig() {
         def c = new Config('user-server.properties')
@@ -49,6 +50,7 @@ class ServerConfig {
         ldapHost = c.ldapHost
         googleOAuthClientId = c.googleOAuthClientId
         googleOAuthClientSecret = c.googleOAuthClientSecret
+        homeDirectory = c.homeDirectory
     }
 }
 

@@ -20,7 +20,7 @@ class AssociateGoogleAccountHandler implements CommandHandler<GoogleTokens, Asso
     }
 
     GoogleTokens execute(AssociateGoogleAccount command) {
-        def tokens = oAuthClient.requestTokens(command.authorizationCode)
+        def tokens = oAuthClient.requestTokens(command.username, command.authorizationCode)
         userRepository.updateGoogleTokens(command.username, tokens)
         return tokens
     }
