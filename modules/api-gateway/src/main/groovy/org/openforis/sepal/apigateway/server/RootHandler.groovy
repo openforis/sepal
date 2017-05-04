@@ -42,7 +42,7 @@ class RootHandler implements HttpHandler {
         this.authenticationUrl = config.authenticationUrl
         this.currentUserUrl = config.currentUserUrl
         this.refreshGoogleAccessTokenUrl = config.refreshGoogleAccessTokenUrl
-        sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
+        sessionManager = new InMemorySessionManager('sandbox-web-proxy', 4096, true)
         this.sessionManager.defaultSessionTimeout = SESSION_TIMEOUT
         handler.addExactPath(config.logoutPath, LogoutHandler.create())
     }
@@ -155,12 +155,20 @@ class RootHandler implements HttpHandler {
                     .loadTrustMaterial(null, new TrustSelfSignedStrategy())
                     .build()
             def xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY, sslContext)
-            def proxyClient = new LoadBalancingProxyClient(maxQueueSize: 100)
+            def proxyClient = new LoadBalancingProxyClient(
+                    maxQueueSize: 4096,
+                    connectionsPerThread: 20,
+                    softMaxConnectionsPerThread: 10
+            )
             proxyClient.addHost(URI.create(target), xnioSsl)
             proxyClient.ttl = 30 * 1000
             proxyHandler = new PatchedProxyHandler(
                     proxyClient,
-                    ResponseCodeHandler.HANDLE_404
+                    -1,
+                    ResponseCodeHandler.HANDLE_404,
+                    false,
+                    false,
+                    3
             )
         }
 

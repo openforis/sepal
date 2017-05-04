@@ -43,8 +43,11 @@ final class ResourceServer implements Lifecycle {
         def handler = path(resourceHandler)
                 .addPrefixPath(contextPath, httpHandler)
 
+        def processorCount = Runtime.getRuntime().availableProcessors()
         server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
+                .setIoThreads(processorCount)
+                .setWorkerThreads(processorCount * 32)
                 .setHandler(handler)
                 .build()
     }

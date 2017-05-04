@@ -18,10 +18,20 @@ class Endpoint {
         this.username = username
         this.uri = uri
         this.sandboxSessionId = sandboxSessionId
-        proxyClient = new LoadBalancingProxyClient(maxQueueSize: 100)
+        proxyClient = new LoadBalancingProxyClient(
+                maxQueueSize: 4096,
+                connectionsPerThread: 20,
+                softMaxConnectionsPerThread: 10
+        )
         proxyClient.addHost(uri)
         proxyClient.ttl = 30 * 1000
-        proxyHandler = new PatchedProxyHandler(proxyClient, ResponseCodeHandler.HANDLE_404)
+        proxyHandler = new PatchedProxyHandler(
+                proxyClient,
+                -1,
+                ResponseCodeHandler.HANDLE_404,
+                false,
+                false,
+                3)
     }
 
     void forward(HttpServerExchange exchange) {
