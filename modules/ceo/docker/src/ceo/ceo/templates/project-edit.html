@@ -74,7 +74,7 @@ $('#edit-btn').click(function(e) {
         method: 'put',
         data: $('form').serialize(),
     }).success(function(data) {
-        window.location.href = 'project-list';
+        window.location.href = '{{config.BASE}}';
     }).fail(function(jqXHR, textStatus, errorThrown) {
         console.error(jqXHR, textStatus, errorThrown);
     });

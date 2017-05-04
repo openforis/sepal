@@ -116,9 +116,8 @@ def projectAdd():
                     })
         # create the project
         username = session.get('username')
-        data = request.form.to_dict()
-        radius = data.get('radius')
-        name = data.get('name')
+        name = request.form.get('name')
+        radius = request.form.get('radius', type=int)
         type = 'cep' #TODO
         overlays = []
         # gee-gateway
@@ -143,6 +142,9 @@ def projectAdd():
                 'band3': band3[i]
             }
             overlays.append(overlay)
+        # validation
+        if not name or not radius:
+            return 'KO', 400
         # insert the project
         mongo.db.projects.insert({
             'id': generate_id(uniqueFilename),
@@ -156,7 +158,7 @@ def projectAdd():
             'codeLists': codeLists,
             'overlays': overlays
         })
-    return redirect(app.config['BASE'] + 'project-list')
+    return redirect(app.config['BASE'])
 
 @app.route('/api/project/<id>', methods=['PUT'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
@@ -164,9 +166,8 @@ def projectAdd():
 @requires_auth
 def projectModify(id=None):
     #
-    data = request.form.to_dict()
-    radius = data.get('radius')
-    name = data.get('name')
+    name = request.form.get('name')
+    radius = request.form.get('radius', type=int)
     type = 'cep' #TODO
     overlays = []
     #gee-gateway
@@ -191,7 +192,10 @@ def projectModify(id=None):
             'band3': band3[i]
         }
         overlays.append(overlay)
-    #
+    # validation
+    if not name or not radius:
+        return 'KO', 400
+    # update the project
     mongo.db.projects.update({'id': id}, {
         '$set': {
             'name': name,

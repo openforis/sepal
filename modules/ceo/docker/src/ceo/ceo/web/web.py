@@ -14,13 +14,6 @@ logger = logging.getLogger(__name__)
 @import_sepal_auth
 @requires_auth
 def index():
-    return render_template('index.html')
-
-@app.route('/project-list', methods=['GET'])
-@cross_origin(origins=app.config['CO_ORIGINS'])
-@import_sepal_auth
-@requires_auth
-def project_list():
     return render_template('project-list.html')
 
 @app.route('/project-add', methods=['GET'])
