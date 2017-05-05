@@ -1,14 +1,18 @@
-import logging
-import os
-
 import ee
+import logging
 from flask import Flask, render_template
 
 import download_server
+import sepal
 import server
 
 modules = [server, download_server]
 app = Flask(__name__)
+
+
+@app.before_request
+def before():
+    sepal.init_ee()
 
 
 @app.route('/')

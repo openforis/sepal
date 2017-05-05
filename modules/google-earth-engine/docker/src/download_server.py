@@ -1,20 +1,37 @@
 import json
 import logging
+from threading import local
 
 import ee
 import sys
-from flask import Flask, Blueprint, Response, request
-from oauth2client.service_account import ServiceAccountCredentials
+from flask import Flask, Blueprint, Response
+from flask import request
+from os import path
 
+import sepal
 from sepal import image_spec_factory
 from sepal.download.download import Downloader
-from sepal import credentials
+from sepal.download.file_credentials import FileCredentials
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 drive_cleanup = None
+thread_local = local()
 
 downloader = None
+access_token_file = None
+
+
+@http.before_request
+def before():
+    credentials = sepal.service_account_credentials
+    if path.exists(access_token_file):
+        credentials = FileCredentials(access_token_file)
+    else:
+        logging.info('Access token file not found: ' + access_token_file)
+    logging.info('Using credentials: ' + str(credentials))
+    thread_local.credentials = credentials
+    ee.InitializeThread(credentials)
 
 
 @http.route('/healthcheck', methods=['GET'])
@@ -25,7 +42,7 @@ def healthcheck():
 @http.route('/download', methods=['POST'])
 def download():
     image = image_spec_factory.create(json.loads(request.values['image']))
-    taskId = image.download(request.values['name'], username, downloader)
+    taskId = image.download(request.values['name'], username, thread_local.credentials, downloader)
     return Response(taskId, mimetype='text/plain')
 
 
@@ -42,13 +59,15 @@ def cancel():
 
 
 def init():
-    download_dir = sys.argv[3]
+    global access_token_file
+    access_token_file = sys.argv[5]
+
     global username
     username = sys.argv[4]
+
     global downloader
     downloader = Downloader(
-        credentials=credentials,
-        download_dir=download_dir)
+        download_dir=sys.argv[3])
 
 
 def destroy():

@@ -4,6 +4,7 @@ account=$1
 privateKeyPath=$2
 downloadDir=$3
 worker_user=$4
+access_key_path=/home/$worker_user/.google-access-token
 
 for i in {30..0}; do
     if [ $(getent passwd $worker_user | wc -l) -eq 1 ]; then
@@ -19,4 +20,4 @@ else
     echo "User $worker_user initialized"
 fi
 
-exec su - $worker_user -c "python /src/download_server.py $account $privateKeyPath $downloadDir $worker_user"
+exec su - $worker_user -c "python /src/download_server.py $account $privateKeyPath $downloadDir $worker_user $access_key_path"

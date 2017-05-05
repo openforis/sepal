@@ -8,13 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class Downloader(object):
-    def __init__(self, credentials, download_dir):
-        self.credentials = credentials
+    def __init__(self, download_dir):
         self.download_dir = download_dir
         self.downloads = {}
         self.statuses = {}
 
-    def start_download(self, task_id, name, file_id):
+    def start_download(self, task_id, name, file_id, credentials):
         if task_id in self.downloads:
             logging.info('Trying to start downloading a pre-existing task:' + task_id)
             return
@@ -24,7 +23,7 @@ class Downloader(object):
             task_id=task_id,
             file_name=name,
             file_id=file_id,
-            credentials=self.credentials,
+            credentials=credentials,
             download_dir=self.download_dir,
             listener=self)
         self.downloads[task_id] = download
@@ -70,6 +69,7 @@ class Download(object):
         self.listener = listener
         self.earth_engine_status = EarthEngineStatus(
             task_id=task_id,
+            credentials=credentials,
             listener=self
         )
         self.drive_download = DriveDownload(

@@ -54,10 +54,10 @@ class DriveDownload(object):
         completed = True
         for file_index, drive_file in enumerate(drive_files):
             if not self._download_file(folder_id, drive_file, file_index, len(drive_files)):
-                self._delete(folder_id)
                 completed = False
                 break
 
+        self._delete(folder_id)
         if completed:
             self.listener.update_status({
                 'state': 'ACTIVE',
