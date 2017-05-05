@@ -2,6 +2,7 @@ package component.user
 
 import fake.*
 import org.openforis.sepal.component.user.UserComponent
+import org.openforis.sepal.component.user.adapter.GoogleAccessTokenFileGateway
 import org.openforis.sepal.component.user.adapter.SmtpEmailGateway
 import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.query.ListUsers
@@ -32,6 +33,7 @@ class AbstractUserTest extends Specification {
     final eventDispatcher = new SynchronousEventDispatcher()
     final googleOAuthClient = new FakeGoogleOAuthClient()
     final clock = new FakeClock()
+    final homeDirectory = File.createTempDir()
     final component = new UserComponent(
             connectionManager,
             externalUserDataGateway,
@@ -40,6 +42,7 @@ class AbstractUserTest extends Specification {
             messageBroker,
             eventDispatcher,
             googleOAuthClient,
+            new GoogleAccessTokenFileGateway(homeDirectory.absolutePath),
             clock
     )
 
@@ -51,6 +54,7 @@ class AbstractUserTest extends Specification {
 
     def cleanup() {
         mailServer.stop()
+        homeDirectory.deleteDir()
     }
 
     User loadUser(String username) {
@@ -114,6 +118,10 @@ class AbstractUserTest extends Specification {
         component.submit(new AssociateGoogleAccount(username: args.username ?: testUsername))
     }
 
+
+    File googleAccessTokenFile(String username) {
+        new File(new File(homeDirectory, username), '.google-access-token')
+    }
 
     private final username(Map args) {
         args.username ?: testUsername

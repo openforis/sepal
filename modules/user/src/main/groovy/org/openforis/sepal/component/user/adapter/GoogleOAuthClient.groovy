@@ -1,10 +1,7 @@
 package org.openforis.sepal.component.user.adapter
 
-import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.user.GoogleTokens
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import static groovy.json.JsonOutput.toJson
 import static groovyx.net.http.ContentType.URLENC
@@ -17,21 +14,30 @@ interface GoogleOAuthClient {
     GoogleTokens refreshAccessToken(String username, GoogleTokens tokens)
 
     void revokeTokens(String username, GoogleTokens tokens)
+
+    class InvalidToken extends GoogleOAuthException {
+        InvalidToken(String message) {
+            super(message)
+        }
+    }
+
+    class GoogleOAuthException extends RuntimeException {
+        GoogleOAuthException(String message) {
+            super(message)
+        }
+    }
 }
 
 class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
-    private static final Logger LOG = LoggerFactory.getLogger(this)
     public static final SCOPE = '' +
             'https://www.googleapis.com/auth/earthengine ' +
             'https://www.googleapis.com/auth/devstorage.full_control ' +
             'https://www.googleapis.com/auth/drive'
-    private final String homeDirectory
     private final String sepalHost
     private final String clientId
     private final String clientSecret
 
-    RestBackedGoogleOAuthClient(String homeDirectory, String sepalHost, String clientId, String clientSecret) {
-        this.homeDirectory = homeDirectory
+    RestBackedGoogleOAuthClient(String sepalHost, String clientId, String clientSecret) {
         this.sepalHost = sepalHost
         this.clientId = clientId
         this.clientSecret = clientSecret
@@ -67,7 +73,6 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
                         grant_type   : 'authorization_code'
                 ]
         )
-        storeOnDisk(username, response.data.access_token)
         return new GoogleTokens(
                 refreshToken: response.data.refresh_token,
                 accessToken: response.data.access_token,
@@ -87,7 +92,6 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
                         grant_type   : 'refresh_token'
                 ]
         )
-        storeOnDisk(username, response.data.access_token)
         return new GoogleTokens(
                 refreshToken: tokens.refreshToken,
                 accessToken: response.data.access_token,
@@ -96,32 +100,12 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
     }
 
     void revokeTokens(String username, GoogleTokens tokens) {
-        try {
-            http.post(
-                    uri: 'https://accounts.google.com/',
-                    requestContentType: URLENC,
-                    path: 'o/oauth2/revoke',
-                    body: [token: tokens.refreshToken]
-            )
-        } catch (HttpResponseException e) {
-            LOG.warn("Failed to revoke tokens $tokens. $e.response.data")
-            if (e.response.data?.error != 'invalid_token')
-                throw e
-        }
-        removeFromDisk(username)
-    }
-
-    private void storeOnDisk(String username, String accessToken) {
-        def file = new File("$homeDirectory/$username", '.google-access-token')
-        if (!file.exists()) {
-            file.parentFile.mkdirs()
-            file.createNewFile()
-        }
-        file.write(accessToken)
-    }
-
-    private void removeFromDisk(String username) {
-        new File("$homeDirectory/$username", '.google-access-token').delete()
+        http.post(
+                uri: 'https://accounts.google.com/',
+                requestContentType: URLENC,
+                path: 'o/oauth2/revoke',
+                body: [token: tokens.refreshToken]
+        )
     }
 
     private long toTimestamp(expiresInSeconds) {
@@ -130,13 +114,18 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
 
     private RESTClient getHttp() {
         def http = new RESTClient()
-        http.handler.failure = { response, data -> throw new GoogleOAuthException(data) }
+        http.handler.failure = { response, data ->
+            if (['invalid_token', 'invalid_grant'].contains(data.error))
+                throw new GoogleOAuthClient.InvalidToken(toJson(data))
+            else
+                throw new GoogleOAuthException(data)
+        }
         return http
     }
 
     static class GoogleOAuthException extends RuntimeException {
-        GoogleOAuthException(data) {
-            super(toJson(data))
+        GoogleOAuthException(String message) {
+            super(message)
         }
     }
 }

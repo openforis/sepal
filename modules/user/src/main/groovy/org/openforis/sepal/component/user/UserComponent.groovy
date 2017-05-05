@@ -36,7 +36,8 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
                 new RmbMessageBroker(connectionManager),
                 new AsynchronousEventDispatcher(),
                 new RestBackedGoogleOAuthClient(
-                        serverConfig.homeDirectory, serverConfig.host, serverConfig.googleOAuthClientId, serverConfig.googleOAuthClientSecret),
+                        serverConfig.host, serverConfig.googleOAuthClientId, serverConfig.googleOAuthClientSecret),
+                new GoogleAccessTokenFileGateway(serverConfig.homeDirectory),
                 new SystemClock())
     }
 
@@ -48,7 +49,9 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
             MessageBroker messageBroker,
             HandlerRegistryEventDispatcher eventDispatcher,
             GoogleOAuthClient googleOAuthClient,
-            Clock clock) {
+            GoogleAccessTokenFileGateway googleAccessTokenFileGateway,
+            Clock clock
+    ) {
         super(connectionManager, eventDispatcher)
         this.messageBroker = messageBroker
         def userRepository = new JdbcUserRepository(connectionManager)
@@ -61,9 +64,9 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
         command(UpdateUserDetails, new UpdateUserDetailsHandler(userRepository))
         command(ChangePassword, new ChangePasswordHandler(usernamePasswordVerifier, externalUserDataGateway))
         command(RequestPasswordReset, new RequestPasswordResetHandler(userRepository, emailGateway, messageBroker, clock))
-        command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository))
-        command(RefreshGoogleAccessToken, new RefreshGoogleAccessTokenHandler(googleOAuthClient, userRepository))
-        command(RevokeGoogleAccountAccess, new RevokeGoogleAccountAccessHandler(googleOAuthClient, userRepository))
+        command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway))
+        command(RefreshGoogleAccessToken, new RefreshGoogleAccessTokenHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway))
+        command(RevokeGoogleAccountAccess, new RevokeGoogleAccountAccessHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway))
         command(DeleteUser, new DeleteUserHandler(externalUserDataGateway, userRepository, messageBroker))
         query(LoadUser, new LoadUserHandler(userRepository))
         query(ListUsers, new ListUsersHandler(userRepository))

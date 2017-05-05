@@ -8,16 +8,23 @@ class FakeGoogleOAuthClient implements GoogleOAuthClient {
     GoogleTokens tokens = createTokens()
     private final Set revokedTokens = new HashSet()
     private final Set refreshedTokens = new HashSet()
+    private Exception failWith
 
     URI redirectUrl(String destinationUrl) {
+        if (failWith)
+            throw failWith
         return redirectUri
     }
 
     GoogleTokens requestTokens(String username, String authorizationCode) {
+        if (failWith)
+            throw failWith
         return tokens
     }
 
     GoogleTokens refreshAccessToken(String username, GoogleTokens tokens) {
+        if (failWith)
+            throw failWith
         refreshedTokens << tokens
         def refreshed = new GoogleTokens(
                 tokens.refreshToken, UUID.randomUUID() as String, tokens.accessTokenExpiryDate + 1)
@@ -26,6 +33,8 @@ class FakeGoogleOAuthClient implements GoogleOAuthClient {
     }
 
     void revokeTokens(String username, GoogleTokens tokens) {
+        if (failWith)
+            throw failWith
         revokedTokens << tokens
         this.tokens = null
     }
@@ -42,7 +51,13 @@ class FakeGoogleOAuthClient implements GoogleOAuthClient {
         tokens in refreshedTokens
     }
 
+    void failWith(Exception e) {
+        failWith = e
+    }
+
     private GoogleTokens createTokens() {
         new GoogleTokens(UUID.randomUUID() as String, UUID.randomUUID() as String, System.currentTimeMillis() + 60 * 1000)
     }
+
+
 }
