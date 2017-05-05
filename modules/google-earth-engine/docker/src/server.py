@@ -20,7 +20,7 @@ def before():
 
 
 @http.route('/healthcheck', methods=['GET'])
-def preview():
+def healtcheck():
     ee.Number(123)
     return 'OK', 200
 
