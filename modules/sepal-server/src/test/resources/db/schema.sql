@@ -168,7 +168,7 @@ CREATE TABLE task (
   username           VARCHAR(255) NOT NULL,
   session_id         VARCHAR(255) NOT NULL,
   operation          VARCHAR(255) NOT NULL,
-  params             TEXT         NOT NULL,
+  params             LONGTEXT     NOT NULL,
   status_description VARCHAR(255) NOT NULL,
   creation_time      TIMESTAMP    NOT NULL,
   update_time        TIMESTAMP    NOT NULL,
