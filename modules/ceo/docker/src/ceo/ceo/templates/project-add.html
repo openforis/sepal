@@ -25,7 +25,7 @@
             <div class="col-6">
                 <div class="form-group">
                     <button id="add-subform" type="button" class="btn btn-success">
-                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add layer
                     </button>
                 </div>
             </div>
@@ -41,7 +41,7 @@
     </div>
 </form>
 
-<div style="display: none;" id="gee-gateway-subform">
+<div style="display: none;" id="gee-gateway-subform-template">
     <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove">
     <h2>GEE-GATEWAY</h2>
     {% include "geeg.html" %}
@@ -51,7 +51,7 @@
 
 $('#add-subform').click(function(e) {
     e.preventDefault();
-    var subform = $('#gee-gateway-subform').clone().appendTo('#subform-container').show();
+    var subform = $('#gee-gateway-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
     subform.children('.remove-subform').click(function(e) {
         e.preventDefault();
         $(this).parent().remove();

@@ -19,7 +19,7 @@
             <label for="example-text-input" class="col-2 col-form-label">GEE-GATEWAY</label>
             <div class="col-10">
                 <button id="add-subform" type="button" class="btn btn-success">
-                    <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add
+                    <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add layer
                 </button>
             </div>
         </div>
@@ -34,7 +34,7 @@
     </div>
 </form>
 
-<div style="display: none;" id="gee-gateway-subform">
+<div style="display: none;" id="gee-gateway-subform-template">
     <input class="btn btn-danger remove-subform" type="submit" value="Remove">
     {% include "geeg.html" %}
 </div>
@@ -42,13 +42,13 @@
 <script>
 
 function addSubform(data) {
-    var subform = $('#gee-gateway-subform').clone().appendTo('#subform-container').show();
+    var subform = $('#gee-gateway-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
     $('.remove-subform', subform).click(function(e) {
         e.preventDefault();
         $(this).parent().remove();
     });
     if (data !== undefined) {
-        console.log(data.collectionName);
+        $('input[name="layerName[]"]', subform).val(data.layerName);
         $('select[name="collectionName[]"]', subform).val(data.collectionName);
         $('input[name="dateFrom[]"]', subform).val(data.dateFrom);
         $('input[name="dateTo[]"]', subform).val(data.dateTo);

@@ -1,4 +1,4 @@
-import json
+import json, hashlib, io, csv
 
 from functools import wraps
 
@@ -52,3 +52,16 @@ def propertyFileToDict(filename):
                         key = value1
                         properties[key] = value2
     return properties
+
+def allowed_file(filename, allowedExtensions):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowedExtensions
+
+def generate_id(value):
+    hash_object = hashlib.md5(value)
+    return hash_object.hexdigest()
+
+def listToCSVRowString(lst):
+    output = io.BytesIO()
+    writer = csv.writer(output)
+    writer.writerow(lst)
+    return output.getvalue()
