@@ -60,7 +60,7 @@ class AuthenticatingHandler implements HttpHandler {
                 user.googleTokens = response.data
             }
         } catch (HttpResponseException e) {
-            LOG.warn('Failed to refresh user token. user: $user', e)
+            LOG.warn("Failed to refresh user token. user: $user", e)
         }
         return user
     }
