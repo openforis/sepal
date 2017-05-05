@@ -14,17 +14,17 @@ interface GoogleOAuthClient {
     GoogleTokens refreshAccessToken(String username, GoogleTokens tokens)
 
     void revokeTokens(String username, GoogleTokens tokens)
+}
 
-    class InvalidToken extends GoogleOAuthException {
-        InvalidToken(String message) {
-            super(message)
-        }
+class InvalidToken extends GoogleOAuthException {
+    InvalidToken(String message) {
+        super(message)
     }
+}
 
-    class GoogleOAuthException extends RuntimeException {
-        GoogleOAuthException(String message) {
-            super(message)
-        }
+class GoogleOAuthException extends RuntimeException {
+    GoogleOAuthException(String message) {
+        super(message)
     }
 }
 
@@ -115,17 +115,12 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
     private RESTClient getHttp() {
         def http = new RESTClient()
         http.handler.failure = { response, data ->
+            def message = data instanceof Map ? toJson(data) : data?.toString()
             if (['invalid_token', 'invalid_grant'].contains(data.error))
-                throw new GoogleOAuthClient.InvalidToken(toJson(data))
+                throw new InvalidToken(message)
             else
-                throw new GoogleOAuthException(data)
+                throw new GoogleOAuthException(message)
         }
         return http
-    }
-
-    static class GoogleOAuthException extends RuntimeException {
-        GoogleOAuthException(String message) {
-            super(message)
-        }
     }
 }

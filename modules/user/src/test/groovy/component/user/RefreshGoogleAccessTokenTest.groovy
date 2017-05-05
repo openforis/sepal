@@ -1,7 +1,8 @@
 package component.user
 
 import org.openforis.sepal.command.ExecutionFailed
-import org.openforis.sepal.component.user.adapter.GoogleOAuthClient
+import org.openforis.sepal.component.user.adapter.GoogleOAuthException
+import org.openforis.sepal.component.user.adapter.InvalidToken
 import org.openforis.sepal.component.user.command.RefreshGoogleAccessToken
 
 class RefreshGoogleAccessTokenTest extends AbstractUserTest {
@@ -22,7 +23,7 @@ class RefreshGoogleAccessTokenTest extends AbstractUserTest {
     def 'Given an invalid refresh token, when refreshing access, null is returned, and token is removed from user'() {
         def user = activeUser()
         def tokens = associateGoogleAccount(username: user.username)
-        googleOAuthClient.failWith(new GoogleOAuthClient.InvalidToken(''))
+        googleOAuthClient.failWith(new InvalidToken(''))
 
         when:
         component.submit(new RefreshGoogleAccessToken(username: user.username, tokens: tokens))
@@ -36,7 +37,7 @@ class RefreshGoogleAccessTokenTest extends AbstractUserTest {
     def 'Given failing OAuth, when refreshing access, exception is thrown'() {
         def user = activeUser()
         def tokens = associateGoogleAccount(username: user.username)
-        googleOAuthClient.failWith(new GoogleOAuthClient.GoogleOAuthException('Some error'))
+        googleOAuthClient.failWith(new GoogleOAuthException('Some error'))
 
         when:
         component.submit(new RefreshGoogleAccessToken(username: user.username, tokens: tokens))

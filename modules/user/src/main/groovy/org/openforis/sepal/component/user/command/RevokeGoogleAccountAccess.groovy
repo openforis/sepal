@@ -4,6 +4,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.adapter.GoogleAccessTokenFileGateway
 import org.openforis.sepal.component.user.adapter.GoogleOAuthClient
+import org.openforis.sepal.component.user.adapter.InvalidToken
 import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.util.annotation.Data
@@ -34,7 +35,7 @@ class RevokeGoogleAccountAccessHandler implements CommandHandler<Void, RevokeGoo
     Void execute(RevokeGoogleAccountAccess command) {
         try {
             oAuthClient.revokeTokens(command.username, command.tokens)
-        } catch (GoogleOAuthClient.InvalidToken e) {
+        } catch (InvalidToken e) {
             LOG.info("Invalid token token. Sepal credentials will be used. command: $command, error: $e.message")
         }
         userRepository.updateGoogleTokens(command.username, null)
