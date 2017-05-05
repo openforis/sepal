@@ -5,7 +5,9 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.adapter.GoogleOAuthClient
 import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.user.GoogleTokens
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class AssociateGoogleAccount extends AbstractCommand<GoogleTokens> {
     String authorizationCode
 }

@@ -1,6 +1,7 @@
 package org.openforis.sepal.apigateway.server
 
 import groovyx.net.http.ContentType
+import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
@@ -48,14 +49,18 @@ class AuthenticatingHandler implements HttpHandler {
     Map refreshGoogleAccessTokenIfNeeded(Map user) {
         if (!user?.googleTokens?.accessTokenExpiryDate)
             return user
-        def expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - System.currentTimeMillis()) / 60 / 1000 as int
-        if (expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES) {
-            def http = new RESTClient(refreshGoogleAccessTokenUrl)
-            def response = http.post(
-                    contentType: ContentType.JSON,
-                    headers: ['sepal-user': toJson(user)]
-            )
-            user.googleTokens = response.data
+        try {
+            def expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - System.currentTimeMillis()) / 60 / 1000 as int
+            if (expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES) {
+                def http = new RESTClient(refreshGoogleAccessTokenUrl)
+                def response = http.post(
+                        contentType: ContentType.JSON,
+                        headers: ['sepal-user': toJson(user)]
+                )
+                user.googleTokens = response.data
+            }
+        } catch (HttpResponseException e) {
+            LOG.warn('Failed to refresh user token. user: $user', e)
         }
         return user
     }
@@ -73,10 +78,9 @@ class AuthenticatingHandler implements HttpHandler {
         if (!session && create) {
             if (LOG.isTraceEnabled()) LOG.trace("Creating new session: " + exchange)
             session = sessionManager.createSession(exchange, sessionConfig)
-        } else if (!session)
-            if (LOG.isTraceEnabled()) LOG.trace("No existing session, and will not create one: " + exchange)
-        else
-            if (LOG.isTraceEnabled()) LOG.trace("Existing session: " + exchange)
+        } else if (!session) {
+            LOG.trace("No existing session, and will not create one: " + exchange)
+        } else if (LOG.isTraceEnabled()) LOG.trace("Existing session: " + exchange)
         return session
     }
 

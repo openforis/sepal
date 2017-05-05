@@ -6,7 +6,9 @@ import org.openforis.sepal.component.user.api.ExternalUserDataGateway
 import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageQueue
+import org.openforis.sepal.util.annotation.Data
 
+@Data(callSuper = true)
 class DeleteUser extends AbstractCommand<Void> {
 }
 

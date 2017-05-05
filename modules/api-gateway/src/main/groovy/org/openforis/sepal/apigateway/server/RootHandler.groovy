@@ -173,14 +173,15 @@ class RootHandler implements HttpHandler {
         }
 
         void handleRequest(HttpServerExchange exchange) throws Exception {
+            LOG.debug(exchange.toString())
             exchange.addResponseCommitListener(new ResponseCommitListener() {
                 void beforeCommit(HttpServerExchange ex) {
-                    LOG.trace("Before response commit. statusCode: $ex.statusCode, exchange: $exchange")
+                    if (LOG.traceEnabled) LOG.trace("Before response commit. statusCode: $ex.statusCode, exchange: $exchange")
                 }
             })
             exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
                 void exchangeEvent(HttpServerExchange ex, ExchangeCompletionListener.NextListener nextListener) {
-                    LOG.trace("Exchange complete. statusCode: $ex.statusCode, exchange: $ex")
+                    if (LOG.traceEnabled) LOG.trace("Exchange complete. statusCode: $ex.statusCode, exchange: $ex")
                     nextListener.proceed()
                 }
             })

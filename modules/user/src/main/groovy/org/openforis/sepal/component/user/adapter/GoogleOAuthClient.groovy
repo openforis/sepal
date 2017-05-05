@@ -6,6 +6,7 @@ import org.openforis.sepal.user.GoogleTokens
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import static groovy.json.JsonOutput.toJson
 import static groovyx.net.http.ContentType.URLENC
 
 interface GoogleOAuthClient {
@@ -128,6 +129,14 @@ class RestBackedGoogleOAuthClient implements GoogleOAuthClient {
     }
 
     private RESTClient getHttp() {
-        new RESTClient()
+        def http = new RESTClient()
+        http.handler.failure = { response, data -> throw new GoogleOAuthException(data) }
+        return http
+    }
+
+    static class GoogleOAuthException extends RuntimeException {
+        GoogleOAuthException(data) {
+            super(toJson(data))
+        }
     }
 }
