@@ -1,12 +1,12 @@
-import os, logging, json, datetime, hashlib
+import os, logging, json, datetime
 
 from flask import session, request, redirect, url_for, jsonify, render_template, send_file, abort
-from flask_cors import CORS, cross_origin
+from flask_cors import cross_origin
 
 from .. import app
 from .. import mongo
 
-from ..common.utils import import_sepal_auth, requires_auth
+from ..common.utils import import_sepal_auth, requires_auth, generate_id
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,3 @@ def recordModify(id=None):
         }
     }, upsert=False)
     return 'OK', 200
-
-def generate_id(value):
-    hash_object = hashlib.md5(value)
-    return hash_object.hexdigest()

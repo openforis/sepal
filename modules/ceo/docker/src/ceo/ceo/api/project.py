@@ -1,17 +1,15 @@
-import os, shutil, logging, json, datetime, hashlib, csv, io, time
+import os, logging, json, datetime, zipfile, shutil, csv, time
 import xml.etree.ElementTree as ET
 
 from flask import Response, session, request, redirect, url_for, jsonify, render_template, send_file, abort
-from flask_cors import CORS, cross_origin
+from flask_cors import cross_origin
 
 from .. import app
 from .. import mongo
 
-from ..common.utils import import_sepal_auth, requires_auth, propertyFileToDict
+from ..common.utils import import_sepal_auth, requires_auth, propertyFileToDict, allowed_file, generate_id, listToCSVRowString
 
 from werkzeug.utils import secure_filename
-
-import zipfile
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +60,7 @@ def projectAdd():
         print('No selected file')
         return redirect(request.url)
     # if the file has the allowed extension
-    if file and allowed_file(file.filename):
+    if file and allowed_file(file.filename, app.config['ALLOWED_EXTENSIONS']):
         # save the file
         filename = secure_filename(file.filename)
         name, ext = os.path.splitext(filename)
@@ -118,9 +116,9 @@ def projectAdd():
         username = session.get('username')
         name = request.form.get('name')
         radius = request.form.get('radius', type=int)
-        type = 'cep' #TODO
         overlays = []
         # gee-gateway
+        layerName = request.form.getlist('layerName[]')
         collectionName = request.form.getlist('collectionName[]')
         dateFrom = request.form.getlist('dateFrom[]')
         dateTo = request.form.getlist('dateTo[]')
@@ -131,6 +129,7 @@ def projectAdd():
         band3 = request.form.getlist('band3[]')
         for i in range(0, len(collectionName)):
             overlay = {
+                'layerName': layerName[i],
                 'type': 'gee-gateway',
                 'collectionName': collectionName[i],
                 'dateFrom': dateFrom[i],
@@ -149,7 +148,7 @@ def projectAdd():
         mongo.db.projects.insert({
             'id': generate_id(uniqueFilename),
             'name': name,
-            'type': type,
+            'type': 'CEP',
             'filename': uniqueFilename,
             'username': username,
             'radius': radius,
@@ -168,9 +167,9 @@ def projectModify(id=None):
     #
     name = request.form.get('name')
     radius = request.form.get('radius', type=int)
-    type = 'cep' #TODO
     overlays = []
     #gee-gateway
+    layerName = request.form.getlist('layerName[]')
     collectionName = request.form.getlist('collectionName[]')
     dateFrom = request.form.getlist('dateFrom[]')
     dateTo = request.form.getlist('dateTo[]')
@@ -181,6 +180,7 @@ def projectModify(id=None):
     band3 = request.form.getlist('band3[]')
     for i in range(0, len(collectionName)):
         overlay = {
+            'layerName': layerName[i],
             'type': 'gee-gateway',
             'collectionName': collectionName[i],
             'dateFrom': dateFrom[i],
@@ -199,7 +199,7 @@ def projectModify(id=None):
     mongo.db.projects.update({'id': id}, {
         '$set': {
             'name': name,
-            'type': type,
+            'type': 'CEP',
             'radius': radius,
             'overlays': overlays,
             'update_datetime': datetime.datetime.utcnow()
@@ -256,16 +256,3 @@ def projectExportCSV(id=None):
         csvString += listToCSVRowString(csvRowData)
     #
     return Response(csvString, mimetype="text/csv", headers={"Content-disposition": "attachment; filename=" + filename})
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
-def generate_id(value):
-    hash_object = hashlib.md5(value)
-    return hash_object.hexdigest()
-
-def listToCSVRowString(lst):
-    output = io.BytesIO()
-    writer = csv.writer(output)
-    writer.writerow(lst)
-    return output.getvalue()

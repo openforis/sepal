@@ -204,6 +204,7 @@
                 //overlays
 
                 data.overlays.forEach(function(overlay) {
+                    var layerName = overlay.layerName;
                     var collectionName = overlay.collectionName;
                     var bands = '';
                     var b1 = overlay.band1;
@@ -258,7 +259,7 @@
                                 //map.overlayMapTypes.pop();
                                 //map.overlayMapTypes.push(mapType);
                                 overlays.push(mapType);
-                                var option = $('<option>').text(collectionName).attr('value', overlays.length - 1);
+                                var option = $('<option>').text(layerName).attr('value', overlays.length - 1);
                                 $('#layer-selector').append(option);
                             }
                         }
