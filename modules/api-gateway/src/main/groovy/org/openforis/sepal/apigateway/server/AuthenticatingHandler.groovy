@@ -12,13 +12,13 @@ import io.undertow.server.session.SessionManager
 import io.undertow.util.Headers
 import io.undertow.util.HttpString
 import io.undertow.util.StatusCodes
+import org.openforis.sepal.user.GoogleTokens
 import org.slf4j.LoggerFactory
 
 import static groovy.json.JsonOutput.toJson
 
 class AuthenticatingHandler implements HttpHandler {
     private static final LOG = LoggerFactory.getLogger(this)
-    private static final int REFRESH_IF_EXPIRES_IN_MINUTES = 5
     private static final NO_CHALLENGE_HEADER = 'No-auth-challenge'
     public static final USER_SESSION_ATTRIBUTE = 'user'
 
@@ -51,7 +51,7 @@ class AuthenticatingHandler implements HttpHandler {
             return user
         try {
             def expiresInMinutes = (user.googleTokens.accessTokenExpiryDate - System.currentTimeMillis()) / 60 / 1000 as int
-            if (expiresInMinutes < REFRESH_IF_EXPIRES_IN_MINUTES) {
+            if (expiresInMinutes < GoogleTokens.REFRESH_IF_EXPIRES_IN_MINUTES) {
                 def http = new RESTClient(refreshGoogleAccessTokenUrl)
                 def response = http.post(
                         contentType: ContentType.JSON,
