@@ -20,4 +20,4 @@ else
     echo "User $worker_user initialized"
 fi
 
-exec su - $worker_user -c "python /src/download_server.py $account $privateKeyPath $downloadDir $worker_user $access_key_path"
+exec su - $worker_user -c "python -s /src/download_server.py $account $privateKeyPath $downloadDir $worker_user $access_key_path"
