@@ -6,7 +6,7 @@ import org.openforis.sepal.component.user.adapter.InvalidToken
 import org.openforis.sepal.component.user.command.RefreshGoogleAccessToken
 
 class RefreshGoogleAccessTokenTest extends AbstractUserTest {
-    def 'When refreshing access, access token is refreshed'() {
+    def 'When refreshing token, access token is refreshed'() {
         def user = activeUser()
         def tokens = associateGoogleAccount(username: user.username)
 
@@ -20,7 +20,7 @@ class RefreshGoogleAccessTokenTest extends AbstractUserTest {
         googleAccessTokenFile(user.username).text == refreshed.accessToken
     }
 
-    def 'Given an invalid refresh token, when refreshing access, null is returned, and token is removed from user'() {
+    def 'Given an invalid refresh token, when refreshing token, null is returned, and token is removed from user'() {
         def user = activeUser()
         def tokens = associateGoogleAccount(username: user.username)
         googleOAuthClient.failWith(new InvalidToken(''))
@@ -34,7 +34,7 @@ class RefreshGoogleAccessTokenTest extends AbstractUserTest {
         !googleAccessTokenFile(user.username).exists()
     }
 
-    def 'Given failing OAuth, when refreshing access, exception is thrown'() {
+    def 'Given failing OAuth, when refreshing token, exception is thrown'() {
         def user = activeUser()
         def tokens = associateGoogleAccount(username: user.username)
         googleOAuthClient.failWith(new GoogleOAuthException('Some error'))
@@ -48,5 +48,24 @@ class RefreshGoogleAccessTokenTest extends AbstractUserTest {
         loadUser(user.username).googleTokens == tokens
         googleAccessTokenFile(user.username).exists()
         googleAccessTokenFile(user.username).text == tokens.accessToken
+    }
+
+    def 'Given no tokens specified, when refreshing token, token for user is refreshed'() {
+        def user = activeUser()
+        def tokens = associateGoogleAccount(username: user.username)
+
+        when:
+        component.submit(new RefreshGoogleAccessToken(username: user.username))
+
+        then:
+        googleOAuthClient.refreshed(tokens)
+        loadUser(user.username).googleTokens == googleOAuthClient.tokens
+    }
+
+    def 'User is not associated with Google account, when refreshing token, no exception is thrown and null is returned'() {
+        def user = activeUser()
+
+        expect:
+        component.submit(new RefreshGoogleAccessToken(username: user.username)) == null
     }
 }

@@ -219,8 +219,6 @@ class UserEndpoint {
 
             post('/google/refresh-access-token') {
                 response.contentType = 'application/json'
-                if (!sepalUser.googleTokens)
-                    return halt(400)
                 def tokens = component.submit(
                         new RefreshGoogleAccessToken(
                                 username: sepalUser.username,

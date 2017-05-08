@@ -50,4 +50,14 @@ class Heartbeat_Test extends AbstractWorkerSessionTest {
         closeTimedOutSessions()
         oneSessionIs CLOSED
     }
+
+    def 'When sending a heartbeat, Google OAuth tokens are refreshed'() {
+        def session = activeSession()
+
+        when:
+        sendHeartbeat(session)
+
+        then:
+        googleOAuthGateway.tokensRefreshed(session.username)
+    }
 }
