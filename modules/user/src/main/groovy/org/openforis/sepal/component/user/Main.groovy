@@ -41,6 +41,7 @@ class ServerConfig {
     final String ldapHost
     final String googleOAuthClientId
     final String googleOAuthClientSecret
+    final String googleEarthEngineEndpoint
     final String homeDirectory
 
     ServerConfig() {
@@ -50,6 +51,7 @@ class ServerConfig {
         ldapHost = c.ldapHost
         googleOAuthClientId = c.googleOAuthClientId
         googleOAuthClientSecret = c.googleOAuthClientSecret
+        googleEarthEngineEndpoint = c.googleEarthEngineEndpoint
         homeDirectory = c.homeDirectory
     }
 }

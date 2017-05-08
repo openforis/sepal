@@ -1,6 +1,7 @@
 import json
 import logging
 
+import ee
 from flask import Flask, Blueprint, Response, request
 
 import sepal
@@ -20,8 +21,12 @@ def before():
 
 
 @http.route('/healthcheck', methods=['GET'])
-def healtcheck():
-    ee.Number(123)
+def healthcheck():
+    try:
+        ee.Feature(ee.Geometry.Point(0, 0)).getMapId()
+    except Exception:
+        logging.info('User not whitelisted. user: ' + str(request.headers.get('sepal-user', '[No sepal-user header]')))
+        return 'NOT-WHITELISTED', 400
     return 'OK', 200
 
 
