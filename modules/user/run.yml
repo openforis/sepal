@@ -21,6 +21,7 @@
     links:
     - "ldap:ldap"
     - "mysql:mysql"
+    - "google-earth-engine:google-earth-engine"
     volumes:
     - "/data/user:/data"
     - "/data/sepal/home:/sepal/home" # User data dir, to setup initial structure/remove when user is deleted
