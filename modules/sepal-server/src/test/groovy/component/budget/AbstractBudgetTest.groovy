@@ -1,6 +1,7 @@
 package component.budget
 
 import component.workersession.FakeBudgetManager
+import component.workersession.FakeGoogleOAuthGateway
 import component.workersession.FakeInstanceManager
 import fake.Database
 import org.openforis.sepal.component.budget.BudgetComponent
@@ -61,6 +62,7 @@ abstract class AbstractBudgetTest extends Specification {
             eventDispatcher,
             new FakeBudgetManager(),
             new FakeInstanceManager(),
+            new FakeGoogleOAuthGateway(),
             [new InstanceType(testInstanceType, testInstanceType, testInstanceType, 123d, 1)],
             clock)
 
