@@ -53,12 +53,12 @@ def projectAdd():
     # check if the post request has the file part
     if 'file' not in request.files:
         print('No file part')
-        return redirect(request.url)
+        return 'KO', 400
     file = request.files['file']
     # if user does not select file, browser also submit a empty part without filename
     if file.filename == '':
         print('No selected file')
-        return redirect(request.url)
+        return 'KO', 400
     # if the file has the allowed extension
     if file and allowed_file(file.filename, app.config['ALLOWED_EXTENSIONS']):
         # save the file
@@ -117,7 +117,8 @@ def projectAdd():
         name = request.form.get('name')
         radius = request.form.get('radius', type=int)
         overlays = []
-        # gee-gateway
+        # layers
+        layerType = request.form.getlist('layerType[]')
         layerName = request.form.getlist('layerName[]')
         collectionName = request.form.getlist('collectionName[]')
         dateFrom = request.form.getlist('dateFrom[]')
@@ -127,20 +128,33 @@ def projectAdd():
         band1 = request.form.getlist('band1[]')
         band2 = request.form.getlist('band2[]')
         band3 = request.form.getlist('band3[]')
-        for i in range(0, len(collectionName)):
-            overlay = {
-                'layerName': layerName[i],
-                'type': 'gee-gateway',
-                'collectionName': collectionName[i],
-                'dateFrom': dateFrom[i],
-                'dateTo': dateTo[i],
-                'min': Min[i],
-                'max': Max[i],
-                'band1': band1[i],
-                'band2': band2[i],
-                'band3': band3[i]
-            }
-            overlays.append(overlay)
+        mapID = request.form.getlist('mapID[]')
+        index1 = index2 = -1
+        for i in range(0, len(layerType)):
+            overlay = None
+            if layerType[i] == 'gee-gateway':
+                index1 += 1
+                overlay = {
+                    'layerName': layerName[i],
+                    'type': layerType[i],
+                    'collectionName': collectionName[index1],
+                    'dateFrom': dateFrom[index1],
+                    'dateTo': dateTo[index1],
+                    'min': Min[index1],
+                    'max': Max[index1],
+                    'band1': band1[index1],
+                    'band2': band2[index1],
+                    'band3': band3[index1]
+                }
+            elif layerType[i] == 'digitalglobe':
+                index2 += 1
+                overlay = {
+                    'layerName': layerName[i],
+                    'type': layerType[i],
+                    'mapID': mapID[index2]
+                }
+            if overlay:
+                overlays.append(overlay)
         # validation
         if not name or not radius:
             return 'KO', 400
@@ -168,7 +182,8 @@ def projectModify(id=None):
     name = request.form.get('name')
     radius = request.form.get('radius', type=int)
     overlays = []
-    #gee-gateway
+    # layers
+    layerType = request.form.getlist('layerType[]')
     layerName = request.form.getlist('layerName[]')
     collectionName = request.form.getlist('collectionName[]')
     dateFrom = request.form.getlist('dateFrom[]')
@@ -178,20 +193,33 @@ def projectModify(id=None):
     band1 = request.form.getlist('band1[]')
     band2 = request.form.getlist('band2[]')
     band3 = request.form.getlist('band3[]')
-    for i in range(0, len(collectionName)):
-        overlay = {
-            'layerName': layerName[i],
-            'type': 'gee-gateway',
-            'collectionName': collectionName[i],
-            'dateFrom': dateFrom[i],
-            'dateTo': dateTo[i],
-            'min': Min[i],
-            'max': Max[i],
-            'band1': band1[i],
-            'band2': band2[i],
-            'band3': band3[i]
-        }
-        overlays.append(overlay)
+    mapID = request.form.getlist('mapID[]')
+    index1 = index2 = -1
+    for i in range(0, len(layerType)):
+        overlay = None
+        if layerType[i] == 'gee-gateway':
+            index1 += 1
+            overlay = {
+                'layerName': layerName[i],
+                'type': layerType[i],
+                'collectionName': collectionName[index1],
+                'dateFrom': dateFrom[index1],
+                'dateTo': dateTo[index1],
+                'min': Min[index1],
+                'max': Max[index1],
+                'band1': band1[index1],
+                'band2': band2[index1],
+                'band3': band3[index1]
+            }
+        elif layerType[i] == 'digitalglobe':
+            index2 += 1
+            overlay = {
+                'layerName': layerName[i],
+                'type': layerType[i],
+                'mapID': mapID[index2]
+            }
+        if overlay:
+            overlays.append(overlay)
     # validation
     if not name or not radius:
         return 'KO', 400

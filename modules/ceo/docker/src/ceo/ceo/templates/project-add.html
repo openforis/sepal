@@ -22,39 +22,71 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-6">
+            <div class="col">
                 <div class="form-group">
-                    <button id="add-subform" type="button" class="btn btn-success">
-                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add layer
+                    <button id="add-subform-geeg" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add GEE layer
+                    </button>
+                    <button id="add-subform-digitalglobe" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add DigitalGlobe layer
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-floppy-o" aria-hidden="true"></i>&nbsp;Submit
                     </button>
                 </div>
             </div>
         </div>
         <div class="row" id="subform-container"></div>
-        <div class="row">
-            <div class="col-6">
-                <div class="form-group">
-                    <input class="btn btn-primary" type="submit" value="Submit" />
-                </div>
-            </div>
-        </div>
     </div>
 </form>
 
-<div style="display: none;" id="gee-gateway-subform-template">
-    <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove">
-    <h2>GEE-GATEWAY</h2>
-    {% include "geeg.html" %}
+<div style="display: none;" id="gee-gateway-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="gee-gateway" />
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Google Earth Engine</h2>
+            </div>
+            <div class="col-6">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove" />
+            </div>
+        </div>
+        {% include "project-subform-geeg.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="digitalglobe-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="digitalglobe" />
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;DigitalGlobe</h2>
+            </div>
+            <div class="col-6">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove" />
+            </div>
+        </div>
+        {% include "project-subform-digitalglobe.html" %}
+    </div>
 </div>
 
 <script>
 
-$('#add-subform').click(function(e) {
+$('#add-subform-geeg').click(function(e) {
     e.preventDefault();
     var subform = $('#gee-gateway-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
-    subform.children('.remove-subform').click(function(e) {
+    $('.remove-subform', subform).click(function(e) {
         e.preventDefault();
-        $(this).parent().remove();
+        $(this).closest('.subform-template').remove();
+    });
+});
+
+$('#add-subform-digitalglobe').click(function(e) {
+    e.preventDefault();
+    var subform = $('#digitalglobe-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(function(e) {
+        e.preventDefault();
+        $(this).closest('.subform-template').remove();
     });
 });
 

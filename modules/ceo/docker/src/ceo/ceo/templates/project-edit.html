@@ -15,37 +15,67 @@
                 <input class="form-control" type="text" name="radius" />
             </div>
         </div>
-        <div class="form-group row">
-            <label for="example-text-input" class="col-2 col-form-label">GEE-GATEWAY</label>
-            <div class="col-10">
-                <button id="add-subform" type="button" class="btn btn-success">
-                    <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add layer
-                </button>
-            </div>
-        </div>
-        <div id="subform-container"></div>
         <div class="row">
-            <div class="col-6">
+            <div class="col">
                 <div class="form-group">
-                    <input class="btn btn-primary" id="edit-btn" type="submit" value="Submit" />
+                    <button id="add-subform-geeg" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add GEE layer
+                    </button>
+                    <button id="add-subform-digitalglobe" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add DigitalGlobe layer
+                    </button>
+                    <button type="submit" id="edit-btn" class="btn btn-primary">
+                        <i class="fa fa-floppy-o" aria-hidden="true"></i>&nbsp;Submit
+                    </button>
                 </div>
             </div>
         </div>
+        <div class="row" id="subform-container"></div>
     </div>
 </form>
 
-<div style="display: none;" id="gee-gateway-subform-template">
-    <input class="btn btn-danger remove-subform" type="submit" value="Remove">
-    {% include "geeg.html" %}
+<div style="display: none;" id="gee-gateway-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="gee-gateway" />
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Google Earth Engine</h2>
+            </div>
+            <div class="col-6">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove" />
+            </div>
+        </div>
+        {% include "project-subform-geeg.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="digitalglobe-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="digitalglobe" />
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;DigitalGlobe</h2>
+            </div>
+            <div class="col-6">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove" />
+            </div>
+        </div>
+        {% include "project-subform-digitalglobe.html" %}
+    </div>
 </div>
 
 <script>
 
-function addSubform(data) {
+$.urlParam = function(name) {
+    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+    return results[1] || 0;
+}
+
+function addSubformGEEG(data) {
     var subform = $('#gee-gateway-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
     $('.remove-subform', subform).click(function(e) {
         e.preventDefault();
-        $(this).parent().remove();
+        $(this).closest('.subform-template').remove();
     });
     if (data !== undefined) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
@@ -60,9 +90,26 @@ function addSubform(data) {
     }
 }
 
-$('#add-subform').click(function(e) {
+function addSubformDigitalGlobe(data) {
+    var subform = $('#digitalglobe-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(function(e) {
+        e.preventDefault();
+        $(this).closest('.subform-template').remove();
+    });
+    if (data !== undefined) {
+        $('input[name="layerName[]"]', subform).val(data.layerName);
+        $('select[name="mapID[]"]', subform).val(data.mapID);
+    }
+}
+
+$('#add-subform-geeg').click(function(e) {
     e.preventDefault();
-    addSubform();
+    addSubformGEEG();
+});
+
+$('#add-subform-digitalglobe').click(function(e) {
+    e.preventDefault();
+    addSubformDigitalGlobe();
 });
 
 $('#edit-btn').click(function(e) {
@@ -72,7 +119,7 @@ $('#edit-btn').click(function(e) {
     $.ajax({
         url: ceoSepalApiUrl + "/project/" + project_id,
         method: 'put',
-        data: $('form').serialize(),
+        data: $('form').serialize()
     }).success(function(data) {
         window.location.href = '{{config.BASE}}';
     }).fail(function(jqXHR, textStatus, errorThrown) {
@@ -81,11 +128,6 @@ $('#edit-btn').click(function(e) {
 });
 
 $(document).ready(function() {
-
-    $.urlParam = function (name) {
-        var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-        return results[1] || 0;
-    }
 
     var project_id = $.urlParam('id');
     var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
@@ -99,7 +141,11 @@ $(document).ready(function() {
         $('input[name="radius"]').val(data.radius);
         var overlays = data.overlays;
         overlays.forEach(function(overlay) {
-            addSubform(overlay);
+            if (overlay.type == 'gee-gateway') {
+                addSubformGEEG(overlay);
+            } else if (overlay.type == 'digitalglobe') {
+                addSubformDigitalGlobe(overlay);
+            }
         });
     }).fail(function(jqXHR, textStatus, errorThrown) {
         console.error(jqXHR, textStatus, errorThrown);

@@ -1,0 +1,57 @@
+<div class="form-group row">
+    <label class="col-2 col-form-label">Name</label>
+    <div class="col-10">
+        <input type="text" class="form-control" name="layerName[]" />
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-2 col-form-label">Collection</label>
+    <div class="col-10">
+      <select class="form-control" name="collectionName[]">
+          <option value="" selected>CHOOSE A COLLECTION</option>
+          <option value="LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA">LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA</option>
+          <option value="LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA">LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA</option>
+          <option value="LANDSAT/LC8_L1T_TOA">LANDSAT/LC8_L1T_TOA</option>
+      </select>
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-2 col-form-label">From (YYYY-MM-DD)</label>
+    <div class="col-10">
+        <input type="text" class="form-control" name="dateFrom[]" />
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-2 col-form-label">To (YYYY-MM-DD)</label>
+    <div class="col-10">
+        <input type="text" class="form-control" name="dateTo[]" />
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-2 col-form-label">Min</label>
+    <div class="col-10">
+        <input type="text" class="form-control" name="min[]" />
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-2 col-form-label">Max</label>
+    <div class="col-10">
+        <input type="text" class="form-control" name="max[]" />
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-2 col-form-label">Bands</label>
+    <div class="col-10">
+        <div class="row">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="band1[]" />
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="band2[]" />
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="band3[]" />
+            </div>
+        </div>
+    </div>
+</div>
