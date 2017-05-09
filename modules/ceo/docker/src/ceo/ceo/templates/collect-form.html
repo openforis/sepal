@@ -132,7 +132,7 @@
                 });
             } else if (overlay.type == 'digitalglobe') {
                 var mapId = overlay.mapID;
-                var token = '{{DIGITALGLOBE_API_KEY}}';
+                var token = '{{config.DIGITALGLOBE_API_KEY}}';
                 var dgMapOptions = {
                     getTileUrl: function (tile, zoom) {
                         var url = 'https://{s}.tiles.mapbox.com/v4/{m}/{z}/{x}/{y}.png?access_token=' + token;
