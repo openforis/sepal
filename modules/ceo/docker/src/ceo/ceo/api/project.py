@@ -257,19 +257,19 @@ def projectModify(id=None):
     }, upsert=False)
     return 'OK', 200
 
-@app.route('/api/project', methods=['DELETE'])
+@app.route('/api/project/<id>', methods=['DELETE'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-def projectRemove():
-    id = request.json.get('project_id')
+def projectRemove(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
-        return 'Error!', 500
-    if project['username'] != session.get('username'):
+        return 'Error!', 404
+    if session.get('is_admin') or project['username'] != session.get('username'):
         return 'Forbidden!', 403
-    filename = project['filename']
     mongo.db.projects.delete_many({'id': id})
+    mongo.db.records.delete_many({'project_id': id})
+    filename = project['filename']
     if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], filename)):
         os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     name, ext = os.path.splitext(filename)

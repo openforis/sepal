@@ -24,8 +24,8 @@
         <div class="row">
             <div class="col">
                 <div class="form-group">
-                    <button id="add-subform-geeg" type="button" class="btn btn-success">
-                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add GEE layer
+                    <button id="add-subform-gee" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add Google Earth Engine layer
                     </button>
                     <button id="add-subform-digitalglobe" type="button" class="btn btn-success">
                         <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add DigitalGlobe layer
@@ -57,10 +57,10 @@
                 <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Google Earth Engine</h2>
             </div>
             <div class="col-6">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove" />
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
             </div>
         </div>
-        {% include "project-subform-geeg.html" %}
+        {% include "project-subform-gee.html" %}
     </div>
 </div>
 
@@ -72,7 +72,7 @@
                 <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;DigitalGlobe</h2>
             </div>
             <div class="col-6">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove" />
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
             </div>
         </div>
         {% include "project-subform-digitalglobe.html" %}
@@ -87,7 +87,7 @@
                 <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GIBS (Global Imagery Browse Services)</h2>
             </div>
             <div class="col-4">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove" />
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
             </div>
         </div>
         {% include "project-subform-gibs.html" %}
@@ -96,7 +96,7 @@
 
 <script>
 
-$('#add-subform-geeg').click(function(e) {
+$('#add-subform-gee').click(function(e) {
     e.preventDefault();
     var subform = $('#gee-gateway-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
     $('.remove-subform', subform).click(function(e) {
