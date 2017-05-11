@@ -82,20 +82,22 @@ def projectAdd():
             }
             tree = ET.parse(os.path.join(extractDir, 'placemark.idm.xml'))
             lists = tree.findall('of:codeLists/of:list', ns)
+            disallowedNames = ('id', 'confidence')
             for lst in lists:
                 codeList = {
                     'id': lst.attrib.get('id'),
                     'name': lst.attrib.get('name'),
                     'items': []
                 }
-                items = lst.findall('of:items/of:item', ns)
-                if len(items) > 0:
-                    for item in items:
-                        codeList.get('items').append({
-                            'code': item.find('of:code', ns).text,
-                            'label': item.find('of:label', ns).text
-                        })
-                    codeLists.append(codeList)
+                if codeList['name'] not in disallowedNames:
+                    items = lst.findall('of:items/of:item', ns)
+                    if len(items) > 0:
+                        for item in items:
+                            codeList.get('items').append({
+                                'code': item.find('of:code', ns).text,
+                                'label': item.find('of:label', ns).text
+                            })
+                        codeLists.append(codeList)
         #
         properties = propertyFileToDict(os.path.join(extractDir, 'project_definition.properties'))
         property = properties.get('csv', 'test_plots.ced')
@@ -129,7 +131,9 @@ def projectAdd():
         band2 = request.form.getlist('band2[]')
         band3 = request.form.getlist('band3[]')
         mapID = request.form.getlist('mapID[]')
-        index1 = index2 = -1
+        imageryLayer = request.form.getlist('imageryLayer[]')
+        date = request.form.getlist('date[]')
+        index1 = index2 = index3 = -1
         for i in range(0, len(layerType)):
             overlay = None
             if layerType[i] == 'gee-gateway':
@@ -152,6 +156,14 @@ def projectAdd():
                     'layerName': layerName[i],
                     'type': layerType[i],
                     'mapID': mapID[index2]
+                }
+            elif layerType[i] == 'gibs':
+                index3 += 1
+                overlay = {
+                    'layerName': layerName[i],
+                    'type': layerType[i],
+                    'imageryLayer': imageryLayer[index3],
+                    'date': date[index3]
                 }
             if overlay:
                 overlays.append(overlay)
@@ -194,7 +206,9 @@ def projectModify(id=None):
     band2 = request.form.getlist('band2[]')
     band3 = request.form.getlist('band3[]')
     mapID = request.form.getlist('mapID[]')
-    index1 = index2 = -1
+    imageryLayer = request.form.getlist('imageryLayer[]')
+    date = request.form.getlist('date[]')
+    index1 = index2 = index3 = -1
     for i in range(0, len(layerType)):
         overlay = None
         if layerType[i] == 'gee-gateway':
@@ -217,6 +231,14 @@ def projectModify(id=None):
                 'layerName': layerName[i],
                 'type': layerType[i],
                 'mapID': mapID[index2]
+            }
+        elif layerType[i] == 'gibs':
+            index3 += 1
+            overlay = {
+                'layerName': layerName[i],
+                'type': layerType[i],
+                'imageryLayer': imageryLayer[index3],
+                'date': date[index3]
             }
         if overlay:
             overlays.append(overlay)

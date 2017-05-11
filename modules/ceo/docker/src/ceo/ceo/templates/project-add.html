@@ -30,7 +30,16 @@
                     <button id="add-subform-digitalglobe" type="button" class="btn btn-success">
                         <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add DigitalGlobe layer
                     </button>
-                    <button type="submit" class="btn btn-primary">
+                    <button id="add-subform-gibs" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add GIBS layer
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" id ="submit-btn">
                         <i class="fa fa-floppy-o" aria-hidden="true"></i>&nbsp;Submit
                     </button>
                 </div>
@@ -70,6 +79,21 @@
     </div>
 </div>
 
+<div style="display: none;" id="gibs-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="gibs" />
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GIBS (Global Imagery Browse Services)</h2>
+            </div>
+            <div class="col-4">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove" />
+            </div>
+        </div>
+        {% include "project-subform-gibs.html" %}
+    </div>
+</div>
+
 <script>
 
 $('#add-subform-geeg').click(function(e) {
@@ -84,6 +108,15 @@ $('#add-subform-geeg').click(function(e) {
 $('#add-subform-digitalglobe').click(function(e) {
     e.preventDefault();
     var subform = $('#digitalglobe-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(function(e) {
+        e.preventDefault();
+        $(this).closest('.subform-template').remove();
+    });
+});
+
+$('#add-subform-gibs').click(function(e) {
+    e.preventDefault();
+    var subform = $('#gibs-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
     $('.remove-subform', subform).click(function(e) {
         e.preventDefault();
         $(this).closest('.subform-template').remove();

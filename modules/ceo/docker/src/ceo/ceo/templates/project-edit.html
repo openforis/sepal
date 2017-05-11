@@ -24,7 +24,16 @@
                     <button id="add-subform-digitalglobe" type="button" class="btn btn-success">
                         <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add DigitalGlobe layer
                     </button>
-                    <button type="submit" id="edit-btn" class="btn btn-primary">
+                    <button id="add-subform-gibs" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add GIBS layer
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" id="submit-btn">
                         <i class="fa fa-floppy-o" aria-hidden="true"></i>&nbsp;Submit
                     </button>
                 </div>
@@ -61,6 +70,21 @@
             </div>
         </div>
         {% include "project-subform-digitalglobe.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="gibs-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="gibs" />
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GIBS (Global Imagery Browse Services)</h2>
+            </div>
+            <div class="col-4">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove" />
+            </div>
+        </div>
+        {% include "project-subform-gibs.html" %}
     </div>
 </div>
 
@@ -102,6 +126,19 @@ function addSubformDigitalGlobe(data) {
     }
 }
 
+function addSubformGIBS(data) {
+    var subform = $('#gibs-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(function(e) {
+        e.preventDefault();
+        $(this).closest('.subform-template').remove();
+    });
+    if (data !== undefined) {
+        $('input[name="layerName[]"]', subform).val(data.layerName);
+        $('select[name="imageryLayer[]"]', subform).val(data.imageryLayer);
+        $('input[name="date[]"]', subform).val(data.date);
+    }
+}
+
 $('#add-subform-geeg').click(function(e) {
     e.preventDefault();
     addSubformGEEG();
@@ -112,7 +149,12 @@ $('#add-subform-digitalglobe').click(function(e) {
     addSubformDigitalGlobe();
 });
 
-$('#edit-btn').click(function(e) {
+$('#add-subform-gibs').click(function(e) {
+    e.preventDefault();
+    addSubformGIBS();
+});
+
+$('#submit-btn').click(function(e) {
     e.preventDefault();
     var project_id = $.urlParam('id');
     var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
@@ -145,6 +187,8 @@ $(document).ready(function() {
                 addSubformGEEG(overlay);
             } else if (overlay.type == 'digitalglobe') {
                 addSubformDigitalGlobe(overlay);
+            } else if (overlay.type == 'gibs') {
+                addSubformGIBS(overlay);
             }
         });
     }).fail(function(jqXHR, textStatus, errorThrown) {

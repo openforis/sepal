@@ -4,8 +4,8 @@ body {
     background-color: rgba(17,18,21,.9);
 }
 
-nav {
-    margin-bottom: 1em;
+navbar-inverse {
+    background-color: rgba(17,18,21,.9);
 }
 
 .table > tbody > tr > td {
