@@ -3,20 +3,44 @@
 
 <style type="text/css">
 
-    html {
+    html, body {
         height: 100%;
         width: 100%;
-    }
-
-    body {
-        height: 100%;
-        width: 100%;
+        margin: 0;
+        padding: 0;
     }
 
     #map {
-        width: 100%;
-        height: 100%;
-        box-sizing: content-box;
+        width: 60%;
+        height: calc(100% - 56px);
+        position: relative;
+        top: 0;
+        left: 0;
+        float: left;
+    }
+
+    .map-control {
+        background-color: #fff;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 2px rgba(33, 33, 33, 0.4);
+        font-family: 'Roboto','sans-serif';
+        margin: 10px;
+        /* Hide the control initially, to prevent it from appearing before the map loads. */
+        display: none;
+    }
+
+    /* Display the control once it is inside the map. */
+    #map .map-control {
+        display: block;
+    }
+
+    #collect {
+        width: 40%;
+        height: calc(100% - 56px);
+        position: relative;
+        top: 0;
+        left: 0;
+        float: left;
     }
 
     #list {
@@ -27,24 +51,51 @@
 
 </style>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-6">
-            <select class="form-control" id="layer-selector">
-                <option value="" selected>CHOOSE A LAYER</option>
-            </select>
-            <br />
-            <div id="map"></div>
-        </div>
-        <div class="col-3" style="color: red;">
+<div id="style-selector-control" class="map-control">
+    <select id="layer-selector" class="selector-control">
+        <option value="">Default</option>
+    </select>
+</div>
+
+<div id="map"></div>
+
+<div id="collect" class="container-fluid">
+    <div class="form-group row">
+        <div class="col">
             <button type="button" class="btn btn-primary" id="export-btn">Export</button>
-            <br /><br />
+        </div>
+    </div>
+    <div class="row" id="list-row">
+        <div class="col">
             <div id="list" class="list-group"></div>
         </div>
-        <div class="col-3">
-            <div id="codeLists" style="display: none;">
-                <input type="hidden" name="id" />
-                <button type="button" class="btn btn-primary">Submit</button>
+    </div>
+    <div class="row" id="codeLists-row" style="display: none;">
+        <div class="col">
+            <div class="row">
+                <div class="col-6">
+                    <h3 id="selected-plot">XXX</h3>
+                </div>
+                <div class="col-6">
+                    <button type="button" class="btn btn-warning float-right" id="show-list-btn">List</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div id="codeLists">
+                        <input type="hidden" name="id" />
+                        <input type="hidden" name="confidence" />
+                        <button type="button" class="btn btn-primary" id="submit-btn" style="display: none;">Submit</button>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6 text-center">
+                    <button type="button" class="btn btn-secondary confidence-submit-btn" value="lo">Low</button>
+                </div>
+                <div class="col-6 text-center">
+                    <button type="button" class="btn btn-secondary confidence-submit-btn" value="hi">High</button>
+                </div>
             </div>
         </div>
     </div>
@@ -109,39 +160,50 @@
                         if (data.hasOwnProperty('mapid')) {
                             var mapId = data.mapid;
                             var token = data.token;
-                            //
-                            var eeMapOptions = {
+                            var layerOptions = {
                                 getTileUrl: function(tile, zoom) {
                                   var baseUrl = 'https://earthengine.googleapis.com/map';
                                   var url = [baseUrl, mapId, zoom, tile.x, tile.y].join('/');
                                   url += '?token=' + token;
                                   return url;
                                 },
+                                name: layerName,
                                 tileSize: new google.maps.Size(256, 256)
                             };
-                            // Create the map type.
-                            var mapType = new google.maps.ImageMapType(eeMapOptions);
-                            // Create the base Google Map.
-                            //google.maps.event.trigger(map, 'resize');
-                            // Add the EE layer to the map.
-                            //map.overlayMapTypes.pop();
-                            //map.overlayMapTypes.push(mapType);
-                            overlayMapTypes[index] = mapType;
+                            var imageMapType = new google.maps.ImageMapType(layerOptions);
+                            overlayMapTypes[index] = imageMapType;
                         }
                     }
                 });
             } else if (overlay.type == 'digitalglobe') {
                 var mapId = overlay.mapID;
                 var token = '{{config.DIGITALGLOBE_API_KEY}}';
-                var dgMapOptions = {
+                var layerOptions = {
                     getTileUrl: function (tile, zoom) {
                         var url = 'https://{s}.tiles.mapbox.com/v4/{m}/{z}/{x}/{y}.png?access_token=' + token;
                         return url.replace('{s}', 'api').replace('{m}', mapId).replace('{z}', zoom).replace('{x}', tile.x).replace('{y}', tile.y);
                     },
+                    name: layerName,
                     tileSize : new google.maps.Size(256, 256)
                 }
-                var mapType = new google.maps.ImageMapType(dgMapOptions);
-                overlayMapTypes[index] = mapType;
+                var imageMapType = new google.maps.ImageMapType(layerOptions);
+                overlayMapTypes[index] = imageMapType;
+            } else if (overlay.type == 'gibs') {
+                var imageryLayer = overlay.imageryLayer;
+                var date = overlay.date;
+                var layerOptions = {
+                    alt: layerName,
+                    getTileUrl: function(tile, zoom) {
+                        var url = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{imageryLayer}/default/{date}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png';
+                        return url.replace('{imageryLayer}', imageryLayer).replace('{date}', date).replace('{z}', zoom).replace('{x}', tile.x).replace('{y}', tile.y);
+                    },
+                    maxZoom: 8,
+                    minZoom: 1,
+                    name: layerName,
+                    tileSize: new google.maps.Size(256, 256)
+                };
+                var imageMapType = new google.maps.ImageMapType(layerOptions);
+                overlayMapTypes[index] = imageMapType;
             }
         }
 
@@ -171,20 +233,67 @@
             return square;
         }
 
+        var plotSelection = function(e) {
+            e.preventDefault();
+            var plot_id = $(this).attr('data-plot-id');
+            var x_coordinate = $(this).attr('data-x-coordinate');
+            var y_coordinate = $(this).attr('data-y-coordinate');
+            $(this).siblings().removeClass("active");
+            $(this).addClass("active");
+            $(this).parent().animate({
+                scrollTop: $(this).index() * $(this).outerHeight(true)
+            }, 'slow');
+            $('.confidence-submit-btn').removeClass('btn-success').addClass('btn-secondary');
+            var center = new google.maps.LatLng(parseFloat(y_coordinate), parseFloat(x_coordinate));
+            var circle = new google.maps.Circle({
+                center: center,
+                radius: radius
+            });
+            var square = new google.maps.Rectangle({
+                bounds: circle.getBounds(),
+                strokeColor: 'yellow',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillOpacity: 0
+            });
+            map.fitBounds(square.getBounds());
+            $('#codeLists input[name="id"]').val(0);
+            record = $.grep(records, function(e) { return e['plot']['id'] == plot_id; });
+            if (record[0] !== undefined) {
+                var id = record[0]['id'] !== undefined ? record[0]['id'] : 0;
+                $('#codeLists input[name="id"]').val(id);
+                var values = record[0]['value'];
+                $.each(JSON.parse(values), function(key, value) {
+                    if (key != 'confidence') {
+                        $('#codeLists select[data-plot-id="' + key +'"]').val(value);
+                    } else {
+                        $('.confidence-submit-btn[value="' + value + '"]').removeClass('btn-secondary').addClass('btn-success');
+                    }
+                });
+            } else {
+                $('#codeLists select').find('option:eq(0)').prop('selected', true);
+            }
+            $('#selected-plot').text(plot_id);
+            $('#list-row').hide();
+            $('#codeLists-row').show();
+        }
+
         function getProject() {
             $.ajax({
                 url: ceoSepalApiUrl + "/project/" + project_id,
                 method: 'get',
                 contentType: 'application/json;charset=UTF-8'
             }).success(function(data) {
-                //project
+                // project
+                projectName = data.name;
                 radius = parseFloat(data.radius);
-                //codeLists
+                // codeLists
                 data.codeLists.forEach(function(codeList) {
+                    var name = codeList.name;
                     var element = $('<div>').addClass('form-group');
-                    var label = $('<label>').text(codeList.name);
+                    var label = $('<label>').text(name);
                     element.append(label);
-                    var select = $('<select>').addClass('form-control').attr('data-plot-id', codeList.name);
+                    var select = $('<select>').addClass('form-control').attr('data-plot-id', name);
                     select.append($('<option>').text('Select a value').attr('value', ''));
                     codeList.items.forEach(function(item) {
                         var option = $('<option>').text(item.label).attr('value', item.code);
@@ -193,79 +302,60 @@
                     element.append(select);
                     $('#codeLists').prepend(element);
                 });
-                //plots
-                data.plots.forEach(function(plot) {
-                    var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(plot.id);
-                    li.attr('data-plot-id', plot.id).attr('data-x-coordinate', plot.XCoordinate).attr('data-y-coordinate', plot.YCoordinate);
-                    li.click(function(e) {
-                        e.preventDefault();
-                        var plot_id = $(this).attr('data-plot-id');
-                        $(this).siblings().removeClass("active");
-                        $(this).addClass("active");
 
-                        $(this).parent().animate({
-                            scrollTop: $(this).index() * $(this).outerHeight(true)
-                        }, 'slow');
-
-                        var center = new google.maps.LatLng(parseFloat(plot.YCoordinate), parseFloat(plot.XCoordinate))
-
-                        var circle = new google.maps.Circle({
-                            center: center,
-                            radius: radius
-                        });
-                        var square = new google.maps.Rectangle({
-                            bounds: circle.getBounds(),
-                            strokeColor: 'yellow',
-                            strokeOpacity: 0.8,
-                            strokeWeight: 2,
-                            fillOpacity: 0
-                        });
-                        map.fitBounds(square.getBounds());
-
-                        $('#codeLists input[name="id"]').val(0);
-                        record = $.grep(records, function(e) { return e['plot']['id'] == plot_id; });
-                        if (record[0] !== undefined) {
-                            var id = record[0]['id'] !== undefined ? record[0]['id'] : 0;
-                            $('#codeLists input[name="id"]').val(id);
-                            var values = record[0]['value'];
-                            $.each(JSON.parse(values), function(key, value) {
-                                $('#codeLists select[data-plot-id="' + key +'"]').val(value);
-                            });
-                        } else {
-                            $('#codeLists select').find('option:eq(0)').prop('selected', true);
-                        }
-                        $('#codeLists').show();
-                    });
-                    $('#list').append(li);
-                });
-                //plots
+                var mapStyle = [
+                    {
+                        "stylers": [ { "visibility": "simplified" } ]
+                    }, {
+                        "stylers": [ { "color": "#131314" } ]
+                    }, {
+                        "featureType": "water",
+                        "stylers"    : [ { "color": "#131313" }, { "lightness": 4 }
+                        ]
+                    }, {
+                        "elementType": "labels.text.fill"
+                        , "stylers"  : [ { "visibility": "off" }, { "lightness": 25 } ]
+                    }
+                ];
 
                 options = {
-                    zoom: 10,
-                    center: new google.maps.LatLng(0, 0),
-                    disableDefaultUI: false,
+                    zoom             : 10,
+                    center           : new google.maps.LatLng(0, 0),
+                    mapTypeId        : google.maps.MapTypeId.ROADMAP,
+                    zoomControl      : false,
+                    mapTypeControl   : false,
+                    scaleControl     : false,
                     streetViewControl: false,
-                    mapTypeId: 'satellite',
-                    styles: [{
-                        featureType: "water",
-                        elementType: "labels",
-                        stylers: [{
-                            visibility: "off"
-                        }]
-                    }]
+                    rotateControl    : false,
+                    fullscreenControl: false,
+                    backgroundColor  : '#131314'
                 };
 
                 map = new google.maps.Map(window.document.getElementById("map"), options);
+                map.setOptions( { styles: mapStyle } );
+
+                var styleControl = document.getElementById('style-selector-control');
+                map.controls[google.maps.ControlPosition.TOP_RIGHT].push(styleControl);
+
 /*
                 map.addListener('click', function(e) {
                     console.log(e.latLng.lat());
                 });
 */
+
+                // plots
                 data.plots.forEach(function(plot) {
+                    var id = plot.id;
                     var lat = parseFloat(plot.YCoordinate);
                     var lng = parseFloat(plot.XCoordinate);
                     var latLng = new google.maps.LatLng(lat, lng);
-                    var square = drawSquare(map, latLng, radius*2);
+                    //
+                    var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(plot.id);
+                    li.attr('data-plot-id', id).attr('data-x-coordinate', lng).attr('data-y-coordinate', lat);
+                    li.click(plotSelection);
+                    $('#list').append(li);
+                    //
+                    var square = drawSquare(map, latLng, radius);
                     square.addListener('click', function() {
                         $('#list a[data-plot-id=' + plot.id +']').click();
                     });
@@ -276,7 +366,6 @@
                 map.fitBounds(bounds);
 
                 //overlays
-
                 data.overlays.forEach(function(overlay, index) {
                     var layerName = overlay.layerName;
                     var option = $('<option>').text(layerName).attr('value', index);
@@ -313,7 +402,24 @@
 
         getRecords();
 
-        $('#codeLists button').click(function(e) {
+        $('#export-btn').click(function(e) {
+            e.preventDefault();
+            window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export';
+        });
+
+        $('#show-list-btn').click(function() {
+            $('#list-row').toggle();
+            $('#codeLists-row').toggle();
+        });
+
+        $('.confidence-submit-btn').click(function(e) {
+            e.preventDefault();
+            var value = $(this).val();
+            $('#codeLists input[name="confidence"]').val(value);
+            $('#submit-btn').trigger('click');
+        });
+
+        $('#submit-btn').click(function(e) {
             e.preventDefault();
             var plot_id = $('#list a.active').attr('data-plot-id');
             var YCoordinate = $('#list a.active').attr('data-y-coordinate');
@@ -322,6 +428,7 @@
             $('#codeLists select').each(function() {
                 value[$(this).attr('data-plot-id')] = $(this).val();
             });
+            value['confidence'] = $('#codeLists input[name="confidence"]').val();
             var project_id = $.urlParam('id');
             var record = {
                 project_id: project_id,
@@ -361,21 +468,19 @@
         });
 
         $('#layer-selector').change(function(e) {
-            var index = $(this).val();
             map.overlayMapTypes.pop();
-            if (index != '' && overlayMapTypes[index] === undefined) {
-                addOverlayMapType(overlays[index], overlayMapTypes, index);
+            var index = $(this).val();
+            if (index != '') {
+                var overlay = overlays[index]
+                if (overlayMapTypes[index] === undefined) {
+                    addOverlayMapType(overlay, overlayMapTypes, index);
+                }
+                var overlyMapType = overlayMapTypes[index];
+                map.overlayMapTypes.insertAt(0, overlyMapType);
             }
-            map.overlayMapTypes.insertAt(0, overlayMapTypes[index]);
-        });
-
-        $('#export-btn').click(function(e) {
-            e.preventDefault();
-            window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export';
         });
 
     });
-
 
 </script>
 
