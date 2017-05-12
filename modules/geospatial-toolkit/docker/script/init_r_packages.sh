@@ -6,8 +6,10 @@ echo "*****************************************"
 echo "*** Installing R packages ***"
 echo "*****************************************"
 
+# libudunits2-dev required for udunits, needed by mapview
 apt-get install -y \
-    r-cran-rmpi
+    r-cran-rmpi \
+    libudunits2-dev
 
 export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
 export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/jre/lib/amd64/server:${JAVA_HOME}/jre/lib/amd64
