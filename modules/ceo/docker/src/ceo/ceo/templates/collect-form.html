@@ -455,7 +455,8 @@
             nextEvaluation();
         });
 
-        $('#show-list-btn').click(function() {
+        $('#show-list-btn').click(function(e) {
+            e.preventDefault();
             $('#list-row').toggle();
             $('#codeLists-row').toggle();
             $('#list').animate({
