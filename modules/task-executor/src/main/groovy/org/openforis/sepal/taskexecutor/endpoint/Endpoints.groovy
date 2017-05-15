@@ -46,7 +46,7 @@ final class Endpoints extends AbstractMvcFilter {
             }
 
             error(InvalidTask) {
-                LOG.warn("Invalid request: $requestContext.description. ${[message: it.message, task: it.task]}")
+                LOG.warn("Invalid request: $requestContext.description. ${[message: it.message, task: it.task.id]}")
                 response?.status = 400
                 response?.setContentType('application/json')
                 send(toJson([message: it.message, task: it.task]))
