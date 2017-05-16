@@ -15,6 +15,10 @@ import static org.openforis.sepal.user.User.Status.ACTIVE
 class ActivateUser extends AbstractCommand<User> {
     String token
     String password
+
+    String toString() {
+        "ActivateUser(token:$token)"
+    }
 }
 
 class ActivateUserHandler implements CommandHandler<User, ActivateUser> {
