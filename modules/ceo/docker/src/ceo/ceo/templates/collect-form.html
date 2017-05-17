@@ -74,7 +74,7 @@
         <div class="col">
             <div class="row">
                 <div class="col-6">
-                    <h3 id="selected-plot">XXX</h3>
+                    <h3><i class="fa fa-map-marker"></i>&nbsp;<span id="selected-plot">XXX</span></h3>
                 </div>
                 <div class="col-2">
                     <button type="button" class="btn btn-primary float-right" id="prev-btn">Prev</button>
@@ -290,7 +290,7 @@
             }).success(function(data) {
                 // project
                 projectName = data.name;
-                radius = parseFloat(data.radius);
+                radius = parseFloat(data.radius) / 2;
                 // codeLists
                 data.codeLists.forEach(function(codeList) {
                     var name = codeList.name;
@@ -343,33 +343,28 @@
                 var styleControl = document.getElementById('style-selector-control');
                 map.controls[google.maps.ControlPosition.TOP_RIGHT].push(styleControl);
 
-/*
-                map.addListener('click', function(e) {
-                    console.log(e.latLng.lat());
-                });
-*/
-
                 // plots
-                data.plots.forEach(function(plot) {
-                    var id = plot.id;
-                    var lat = parseFloat(plot.YCoordinate);
-                    var lng = parseFloat(plot.XCoordinate);
-                    var latLng = new google.maps.LatLng(lat, lng);
-                    //
-                    var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(plot.id);
-                    li.attr('data-plot-id', id).attr('data-x-coordinate', lng).attr('data-y-coordinate', lat);
-                    li.click(plotSelection);
-                    $('#list').append(li);
-                    //
-                    var square = drawSquare(map, latLng, radius);
-                    square.addListener('click', function() {
-                        $('#list a[data-plot-id=' + plot.id +']').click();
+                if (data.plots !== undefined) {
+                    data.plots.forEach(function(plot) {
+                        var id = plot.id;
+                        var lat = parseFloat(plot.YCoordinate);
+                        var lng = parseFloat(plot.XCoordinate);
+                        var latLng = new google.maps.LatLng(lat, lng);
+                        //
+                        var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(id);
+                        li.attr('data-plot-id', id).attr('data-x-coordinate', lng).attr('data-y-coordinate', lat);
+                        li.click(plotSelection);
+                        $('#list').append(li);
+                        //
+                        var square = drawSquare(map, latLng, radius);
+                        square.addListener('click', function() {
+                            $('#list a[data-plot-id=' + plot.id +']').click();
+                        });
+                        bounds.extend(latLng);
                     });
-                    bounds.extend(latLng);
-                });
-
-                map.panToBounds(bounds);
-                map.fitBounds(bounds);
+                    map.panToBounds(bounds);
+                    map.fitBounds(bounds);
+                }
 
                 //overlays
                 data.overlays.forEach(function(overlay, index) {
@@ -500,7 +495,7 @@
             var method = 'post';
             var record_id = $('#codeLists input[name="id"]').val();
             if (record_id != 0) {
-                url =  ceoSepalApiUrl + '/record/' + record_id;
+                url = ceoSepalApiUrl + '/record/' + record_id;
                 method = 'put';
             }
             $.ajax({

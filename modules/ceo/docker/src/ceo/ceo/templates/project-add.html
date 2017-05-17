@@ -16,9 +16,33 @@
             </div>
         </div>
         <div class="form-group row">
+            <label class="col-2">Type</label>
+            <div class="col-8">
+                <div class="form-check form-check-inline">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="radio" name="projectType" id="inlineRadio1" value="CEP" checked>&nbsp;CEP
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="radio" name="projectType" id="inlineRadio2" value="TRAINING-DATA">&nbsp;TRAINNG DATA
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="form-group row cep-row">
             <label class="col-2 col-form-label">CEP</label>
             <div class="col-10">
                 <input class="form-control-file" type="file" name="file" />
+            </div>
+        </div>
+        <div class="row data-row" style="display: none;">
+            <div class="col">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-info" id="add-subform-codelist">
+                        <i class="fa fa-list" aria-hidden="true"></i>&nbsp;Add CodeList
+                    </button>
+                </div>
             </div>
         </div>
         <div class="row">
@@ -39,12 +63,13 @@
         <div class="row">
             <div class="col">
                 <div class="form-group">
-                    <button type="submit" class="btn btn-primary" id ="submit-btn">
+                    <button type="submit" class="btn btn-primary" id="submit-btn">
                         <i class="fa fa-floppy-o" aria-hidden="true"></i>&nbsp;Submit
                     </button>
                 </div>
             </div>
         </div>
+        <div class="row data-row" id="codelist-subform-container"></div>
         <div class="row" id="subform-container"></div>
     </div>
 </form>
@@ -94,7 +119,74 @@
     </div>
 </div>
 
+<div style="display: none;" id="codelist-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="codeListUniqueID[]" value="" />
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2><i class="fa fa-list" aria-hidden="true"></i>&nbsp;Code List</h2>
+            </div>
+            <div class="col-4">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove code list" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-info" id="add-subform-codelist-value">
+                        <i class="fa fa-list" aria-hidden="true"></i>&nbsp;Add value
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-2 col-form-label">Code List ID</label>
+            <div class="col-10">
+                <input type="text" class="form-control" name="codeListID[]" />
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-2 col-form-label">Code List Name</label>
+            <div class="col-10">
+                <input type="text" class="form-control" name="codeListName[]" />
+            </div>
+        </div>
+        <div class="row codelist-values-subform-container"></div>
+    </div>
+</div>
+
+<div style="display: none;" id="codelist-values-subform-template" class="subform-template">
+    <div class="container">
+        <div class="form-group row">
+            <div class="col-5">
+                <input type="text" class="form-control" name="XXX-codeListCode[]" />
+            </div>
+            <div class="col-5">
+                <input type="text" class="form-control" name="XXX-codeListLabel[]" />
+            </div>
+            <div class="col-2">
+                <button type="submit" class="btn btn-danger remove-subform float-right">
+                    <i class="fa fa-trash-o" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+
+$('input[type="radio"][name="projectType"]').change(function(e) {
+    var value = $(this).val();
+    if (value == 'CEP') {
+        $('.cep-row').show();
+        $('.cep-row input').prop('disabled', false);
+        $('.data-row').hide();
+    } else if (value == 'TRAINING-DATA') {
+        $('.cep-row').hide();
+        $('.cep-row input').prop('disabled', true);
+        $('.data-row').show();
+    }
+});
 
 $('#add-subform-gee').click(function(e) {
     e.preventDefault();
@@ -120,6 +212,29 @@ $('#add-subform-gibs').click(function(e) {
     $('.remove-subform', subform).click(function(e) {
         e.preventDefault();
         $(this).closest('.subform-template').remove();
+    });
+});
+
+$('#add-subform-codelist').click(function(e) {
+    e.preventDefault();
+    var subform = $('#codelist-subform-template').clone().removeAttr('id').appendTo('#codelist-subform-container').show();
+    $('.remove-subform', subform).click(function(e) {
+        e.preventDefault();
+        $(this).closest('.subform-template').remove();
+    });
+    $('input[name="codeListUniqueID[]"]', subform).val(Date.now());
+    $('#add-subform-codelist-value', subform).click(function(e) {
+        e.preventDefault();
+        var container = $(this).closest('.subform-template').find('.codelist-values-subform-container');
+        var uniqueID = $(this).closest('.subform-template').find('input[name="codeListUniqueID[]"]').val();
+        var subform = $('#codelist-values-subform-template').clone().removeAttr('id').appendTo(container).show();
+        $('input', subform).each(function() {
+            $(this).attr('name', $(this).attr('name').replace('XXX', uniqueID));
+        });
+        $('.remove-subform', subform).click(function(e) {
+            e.preventDefault();
+            $(this).closest('.subform-template').remove();
+        });
     });
 });
 

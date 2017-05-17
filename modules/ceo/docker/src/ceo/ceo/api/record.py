@@ -35,7 +35,7 @@ def recordsByProject(project_id=None):
 def recordAdd():
     mongo.db.records.insert({
         'id': generate_id(session.get('username') + request.json.get('project_id') + request.json.get('plot').get('id')),
-        'value': json.dumps(request.json.get('value')),
+        'value': request.json.get('value'),
         'project_id': request.json.get('project_id'),
         'username': session.get('username'),
         'update_datetime': datetime.datetime.utcnow(),
@@ -54,7 +54,7 @@ def recordAdd():
 def recordModify(id=None):
     mongo.db.records.update({'id': id}, {
         '$set': {
-            'value': json.dumps(request.json.get('value')),
+            'value': request.json.get('value'),
             'update_datetime': datetime.datetime.utcnow()
         }
     }, upsert=False)

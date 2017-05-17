@@ -57,13 +57,18 @@
                 if (data !== undefined) {
                     $(data).each(function() {
                         var project_id = this.id;
+                        var projectType = this.type;
                         var tr = $('<tr>');
                         tr.append($('<td>').text(this.name));
                         tr.append($('<td>').text(this.type));
                         tr.append($('<td>').text(this.upload_datetime));
                         tr.append($('<td>').text(this.username));
                         tr.append($('<td>').append($('<a>').attr('href', 'project-edit?id=' + project_id).addClass('btn btn-outline-warning').text('edit')));
-                        tr.append($('<td>').append($('<a>').attr('href', 'collect-form?id=' + project_id).addClass('btn btn-outline-info').text('collect')));
+                        if (projectType == 'CEP') {
+                            tr.append($('<td>').append($('<a>').attr('href', 'collect-form?id=' + project_id).addClass('btn btn-outline-info').text('collect')));
+                        } else if (projectType == 'TRAINING-DATA') {
+                            tr.append($('<td>').append($('<a>').attr('href', 'collect-training-data?id=' + project_id).addClass('btn btn-outline-info').text('collect')));
+                        }
                         tr.append($('<td>').append($('<a>').attr('href', '#').addClass('btn btn-outline-danger').text('delete').click(function(e) {
                             e.preventDefault();
                             $('#deleteModal').modal('show');
