@@ -25,8 +25,8 @@ class JdbcUserRepository implements UserRepository {
 
     void updateUserDetails(User user) {
         sql.executeUpdate('''
-                UPDATE sepal_user SET name = ?, email = ?, organization = ? 
-                WHERE username = ?''', [user.name, user.email, user.organization, user.username])
+                UPDATE sepal_user SET name = ?, email = ?, organization = ?, update_time = ? 
+                WHERE username = ?''', [user.name, user.email, user.organization, new Date(), user.username])
     }
 
     void deleteUser(String username) {
@@ -65,8 +65,8 @@ class JdbcUserRepository implements UserRepository {
 
     void updateToken(String username, String token, Date tokenGenerationTime) {
         sql.executeUpdate('''
-                UPDATE sepal_user SET token = ?, token_generation_time = ? 
-                WHERE username = ?''', [token, tokenGenerationTime, username])
+                UPDATE sepal_user SET token = ?, token_generation_time = ?, update_time = ? 
+                WHERE username = ?''', [token, tokenGenerationTime, new Date(), username])
     }
 
     Map tokenStatus(String token) {
@@ -95,9 +95,15 @@ class JdbcUserRepository implements UserRepository {
                 UPDATE sepal_user 
                 SET google_refresh_token = ?,  
                     google_access_token = ?, 
-                    google_access_token_expiration = ? 
-                WHERE username = ?''',
-                [tokens?.refreshToken, tokens?.accessToken, tokens ? new Date(tokens.accessTokenExpiryDate) : null, username])
+                    google_access_token_expiration = ?,
+                 update_time = ?
+                WHERE username = ?''', [
+                tokens?.refreshToken,
+                tokens?.accessToken,
+                tokens ? new Date(tokens.accessTokenExpiryDate) : null,
+                new Date(),
+                username
+        ])
     }
 
     private User createUser(GroovyRowResult row) {
