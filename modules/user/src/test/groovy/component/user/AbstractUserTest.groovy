@@ -107,6 +107,10 @@ class AbstractUserTest extends Specification {
         return activateUser(token, args.password ?: testPassword)
     }
 
+    User pendingUser(Map args = [:]) {
+        return inviteUser(args)
+    }
+
     User activeUserWithPassword(String password) {
         activeUser(password: password)
     }

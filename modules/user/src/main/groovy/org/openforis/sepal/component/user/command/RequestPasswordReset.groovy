@@ -6,10 +6,13 @@ import org.openforis.sepal.component.user.api.EmailGateway
 import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageQueue
+import org.openforis.sepal.user.User
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.annotation.Data
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import static org.openforis.sepal.user.User.Status.ACTIVE
 
 @Data(callSuper = true)
 class RequestPasswordReset extends AbstractCommand<Void> {
@@ -43,6 +46,8 @@ class RequestPasswordResetHandler implements CommandHandler<Void, RequestPasswor
             LOG.info("Requesting password reset for non-existing email: " + command)
             return null
         }
+        if (user.status == User.Status.PENDING)
+            userRepository.updateStatus(user.username, ACTIVE)
         userRepository.updateToken(user.username, token, clock.now())
         messageQueue.publish(
                 user: user,
