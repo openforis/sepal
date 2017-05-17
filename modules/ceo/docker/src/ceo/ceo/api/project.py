@@ -55,7 +55,6 @@ def projectFileById(id=None):
 def projectAdd():
     # retrieve project data
     username = session.get('username')
-    print request.form
     name = request.form.get('name')
     radius = request.form.get('radius', type=int)
     overlays = getLayersFromRequest(request)
@@ -93,9 +92,11 @@ def projectAdd():
                 'codeLists': result[2]
             })
     elif projectType == PROJECT_TYPE_TRAINING_DATA:
+        codeList = getCodeListFromRequest(request)
+        codeLists = [codeList]
         project.update({
             'id': generate_id(name),
-            'codeLists': getCodeListsFromRequest(request)
+            'codeLists': codeLists
         })
     mongo.db.projects.insert(project)
     return redirect(app.config['BASE'])
@@ -126,8 +127,10 @@ def projectUpdate(id=None):
     })
     projectType = project['type']
     if projectType == PROJECT_TYPE_TRAINING_DATA:
+        codeList = getCodeListFromRequest(request)
+        codeLists = [codeList]
         project.update({
-            'codeLists': getCodeListsFromRequest(request)
+            'codeLists': codeLists
         })
     mongo.db.projects.update({'id': id}, {'$set': project}, upsert=False)
     return 'OK', 200
@@ -144,7 +147,6 @@ def projectChange(id=None):
         return 'Forbidden!', 403
     # retrieve project data
     plots = request.json.get('plots')
-    print plots
     # update the project
     projectType = project['type']
     if projectType == PROJECT_TYPE_TRAINING_DATA:
@@ -184,11 +186,17 @@ def projectExportCSV(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     username = session.get('username')
     records = mongo.db.records.find({'project_id': id, 'username': username}, {'_id': False})
-    filename = project['filename'] + '.csv'
+    filename = project['name'] + '.csv'
     #
     codeListNames = []
     for codeList in project['codeLists']:
         codeListNames.append(codeList['name'])
+    projectType = project['type']
+    if projectType == PROJECT_TYPE_CEP:
+        if 'confidence' not in codeListNames:
+            codeListNames.append('confidence')
+    if projectType == PROJECT_TYPE_TRAINING_DATA:
+        pass
     #
     csvHeaderData = ['YCoordinate', 'XCoordinate'] + codeListNames
     csvString = listToCSVRowString(csvHeaderData)
@@ -197,7 +205,7 @@ def projectExportCSV(id=None):
         csvRowData = []
         csvRowData.append(record.get('plot').get('YCoordinate'))
         csvRowData.append(record.get('plot').get('XCoordinate'))
-        values = json.loads(record['value'])
+        values = record['value']
         for codeListName in codeListNames:
             value = values.get(codeListName, '')
             csvRowData.append(value)
@@ -312,23 +320,16 @@ def getLayersFromRequest(request):
             overlays.append(overlay)
     return overlays
 
-def getCodeListsFromRequest(request):
-    codeLists = []
-    codeListUniqueID = request.form.getlist('codeListUniqueID[]')
-    codeListID = request.form.getlist('codeListID[]')
-    codeListName = request.form.getlist('codeListName[]')
-    for i, uniqueID in enumerate(codeListUniqueID):
-        codeList = {
-            'id': codeListID[i],
-            'name': codeListName[i],
-            'items': []
-        }
-        codeListCode = request.form.getlist(uniqueID + '-codeListCode[]')
-        codeListLabel = request.form.getlist(uniqueID + '-codeListLabel[]')
-        for k in range(0, len(codeListCode)):
-            codeList['items'].append({
-                'code': codeListCode[k],
-                'label': codeListLabel[k]
-            })
-        codeLists.append(codeList)
-    return codeLists
+def getCodeListFromRequest(request):
+    codeList = {
+        'id': 'class',
+        'name': 'Class',
+        'items': []
+    }
+    codeListCode = request.form.getlist('codeListCode[]')
+    for i in range(0, len(codeListCode)):
+        codeList['items'].append({
+            'code': codeListCode[i],
+            'label': 'Dummy'
+        })
+    return codeList

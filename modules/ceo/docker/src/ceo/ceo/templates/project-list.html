@@ -61,7 +61,8 @@
                         var tr = $('<tr>');
                         tr.append($('<td>').text(this.name));
                         tr.append($('<td>').text(this.type));
-                        tr.append($('<td>').text(this.upload_datetime));
+                        var d = new Date(this.upload_datetime);
+                        tr.append($('<td>').text(d.toLocaleString()));
                         tr.append($('<td>').text(this.username));
                         tr.append($('<td>').append($('<a>').attr('href', 'project-edit?id=' + project_id).addClass('btn btn-outline-warning').text('edit')));
                         if (projectType == 'CEP') {

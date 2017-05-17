@@ -232,6 +232,7 @@
 
         var plotSelection = function(e) {
             e.preventDefault();
+            $('#codeLists button').removeClass('btn-success');
             var plot_id = $(this).attr('data-plot-id');
             var x_coordinate = $(this).attr('data-x-coordinate');
             var y_coordinate = $(this).attr('data-y-coordinate');
@@ -256,8 +257,8 @@
                 $('#codeLists input[name="id"]').val(id);
 
                 var values = record[0]['value'];
-                $.each(JSON.parse(values), function(key, value) {
-                    $('#codeLists select[data-plot-id="' + key +'"]').val(value);
+                $.each(values, function(key, value) {
+                    $('#codeLists button[value="' + value + '"]').addClass('btn-success');
                 });
 
             } else {
@@ -286,8 +287,8 @@
                     var label = $('<label>').addClass('form-control-label').text(name);
                     element.append(label);
                     codeList.items.forEach(function(item) {
-                        console.log(item.code);
-                        var button = $('<button>').attr('type', 'button').addClass('btn btn-secondary submit-btn form-control').text(item.label).attr('value', item.code);
+
+                        var button = $('<button>').attr('type', 'button').addClass('btn btn-secondary submit-btn form-control').text(item.code).attr('value', item.code);
                         $(button).click(function(e) {
                             e.preventDefault();
 
@@ -315,7 +316,8 @@
                             });
 
                             // records
-                            var value = $(this).val();
+                            var value = {};
+                            value['class'] = $(this).val();
                             var project_id = $.urlParam('id');
                             var plot_id = $('#list a.active').attr('data-plot-id');
                             var YCoordinate = $('#list a.active').attr('data-y-coordinate');
@@ -441,8 +443,6 @@
 
         getProject();
 
-//
-
         var records = {};
         var record_id = $(this).attr('data-id');
 
@@ -486,7 +486,7 @@
             }).success(function(data) {
                 records = data;
                 $.each(records, function(key, value) {
-                    $('#list a[data-plot-id="' + value.plot.id +'"]').addClass('evaluated');
+                    $('#list a[data-plot-id="' + value.plot.id +'"]').addClass('evaluated').text(value.plot.id + ' (' + value.value.class + ')');
                 });
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
@@ -514,6 +514,7 @@
             e.preventDefault();
             $('#list-row').toggle();
             $('#codeLists-row').toggle();
+            $('#codeLists button').removeClass('btn-success');
             $('#list').animate({
                 scrollTop: $('#list .active').index() * $('#list .active').outerHeight(true)
             }, 'slow');

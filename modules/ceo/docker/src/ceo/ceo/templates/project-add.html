@@ -36,15 +36,6 @@
                 <input class="form-control-file" type="file" name="file" />
             </div>
         </div>
-        <div class="row data-row" style="display: none;">
-            <div class="col">
-                <div class="form-group">
-                    <button type="submit" class="btn btn-info" id="add-subform-codelist">
-                        <i class="fa fa-list" aria-hidden="true"></i>&nbsp;Add CodeList
-                    </button>
-                </div>
-            </div>
-        </div>
         <div class="row">
             <div class="col">
                 <div class="form-group">
@@ -69,7 +60,25 @@
                 </div>
             </div>
         </div>
-        <div class="row data-row" id="codelist-subform-container"></div>
+        <div class="row data-row" id="codelist-subform-container" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <h2><i class="fa fa-list" aria-hidden="true"></i>&nbsp;Code List</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-info" id="add-subform-codelist-value">
+                                <i class="fa fa-list" aria-hidden="true"></i>&nbsp;Add value
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row codelist-values-subform-container"></div>
+            </div>
+        </div>
         <div class="row" id="subform-container"></div>
     </div>
 </form>
@@ -119,50 +128,11 @@
     </div>
 </div>
 
-<div style="display: none;" id="codelist-subform-template" class="subform-template">
-    <input type="hidden" class="form-control" name="codeListUniqueID[]" value="" />
-    <div class="container">
-        <div class="row">
-            <div class="col-8">
-                <h2><i class="fa fa-list" aria-hidden="true"></i>&nbsp;Code List</h2>
-            </div>
-            <div class="col-4">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove code list" />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col">
-                <div class="form-group">
-                    <button type="submit" class="btn btn-info" id="add-subform-codelist-value">
-                        <i class="fa fa-list" aria-hidden="true"></i>&nbsp;Add value
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="form-group row">
-            <label class="col-2 col-form-label">Code List ID</label>
-            <div class="col-10">
-                <input type="text" class="form-control" name="codeListID[]" />
-            </div>
-        </div>
-        <div class="form-group row">
-            <label class="col-2 col-form-label">Code List Name</label>
-            <div class="col-10">
-                <input type="text" class="form-control" name="codeListName[]" />
-            </div>
-        </div>
-        <div class="row codelist-values-subform-container"></div>
-    </div>
-</div>
-
 <div style="display: none;" id="codelist-values-subform-template" class="subform-template">
     <div class="container">
         <div class="form-group row">
-            <div class="col-5">
-                <input type="text" class="form-control" name="XXX-codeListCode[]" />
-            </div>
-            <div class="col-5">
-                <input type="text" class="form-control" name="XXX-codeListLabel[]" />
+            <div class="offset-5 col-5">
+                <input type="text" class="form-control" name="codeListCode[]" />
             </div>
             <div class="col-2">
                 <button type="submit" class="btn btn-danger remove-subform float-right">
@@ -176,12 +146,12 @@
 <script>
 
 $('input[type="radio"][name="projectType"]').change(function(e) {
-    var value = $(this).val();
-    if (value == 'CEP') {
+    var projectType = $(this).val();
+    if (projectType == 'CEP') {
         $('.cep-row').show();
         $('.cep-row input').prop('disabled', false);
         $('.data-row').hide();
-    } else if (value == 'TRAINING-DATA') {
+    } else if (projectType == 'TRAINING-DATA') {
         $('.cep-row').hide();
         $('.cep-row input').prop('disabled', true);
         $('.data-row').show();
@@ -215,27 +185,27 @@ $('#add-subform-gibs').click(function(e) {
     });
 });
 
-$('#add-subform-codelist').click(function(e) {
+$('#add-subform-codelist-value').click(function(e) {
     e.preventDefault();
-    var subform = $('#codelist-subform-template').clone().removeAttr('id').appendTo('#codelist-subform-container').show();
+    var container = $('#codelist-subform-container').find('.codelist-values-subform-container');
+    var subform = $('#codelist-values-subform-template').clone().removeAttr('id').appendTo(container).show();
     $('.remove-subform', subform).click(function(e) {
         e.preventDefault();
         $(this).closest('.subform-template').remove();
     });
-    $('input[name="codeListUniqueID[]"]', subform).val(Date.now());
-    $('#add-subform-codelist-value', subform).click(function(e) {
-        e.preventDefault();
-        var container = $(this).closest('.subform-template').find('.codelist-values-subform-container');
-        var uniqueID = $(this).closest('.subform-template').find('input[name="codeListUniqueID[]"]').val();
-        var subform = $('#codelist-values-subform-template').clone().removeAttr('id').appendTo(container).show();
-        $('input', subform).each(function() {
-            $(this).attr('name', $(this).attr('name').replace('XXX', uniqueID));
-        });
-        $('.remove-subform', subform).click(function(e) {
-            e.preventDefault();
-            $(this).closest('.subform-template').remove();
-        });
-    });
+});
+
+$(document).ready(function() {
+    var projectType = $('input[type="radio"][name="projectType"]');
+    if (projectType == 'CEP') {
+        $('.cep-row').show();
+        $('.cep-row input').prop('disabled', false);
+        $('.data-row').hide();
+    } else if (projectType == 'TRAINING-DATA') {
+        $('.cep-row').hide();
+        $('.cep-row input').prop('disabled', true);
+        $('.data-row').show();
+    }
 });
 
 </script>

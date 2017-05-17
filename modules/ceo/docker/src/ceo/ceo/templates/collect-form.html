@@ -265,7 +265,7 @@
                 var id = record[0]['id'] !== undefined ? record[0]['id'] : 0;
                 $('#codeLists input[name="id"]').val(id);
                 var values = record[0]['value'];
-                $.each(JSON.parse(values), function(key, value) {
+                $.each(values, function(key, value) {
                     if (key != 'confidence') {
                         $('#codeLists select[data-plot-id="' + key +'"]').val(value);
                     } else {
@@ -380,8 +380,6 @@
         }
 
         getProject();
-
-//
 
         var records = {};
         var record_id = $(this).attr('data-id');
