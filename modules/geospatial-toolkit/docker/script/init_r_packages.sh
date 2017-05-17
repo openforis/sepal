@@ -21,6 +21,7 @@ R -e "pacman::p_load_gh(\
         'loicdtx/bfastSpatial'\
     )"
 R -e "pacman::p_load(\
+        'corrplot',\
         'devtools',\
         'dismo',\
         'dplyr',\
