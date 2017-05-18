@@ -2,6 +2,8 @@
 set -e
 
 export mapApiKey=$GOOGLE_MAPS_API_KEY_SEPAL_ENV
+export digitalGlobeApiKey=$DIGITAL_GLOBE_API_KEY_SEPAL_ENV
+
 export account=$EE_ACCOUNT_SEPAL_ENV
 export privateKey=${EE_PRIVATE_KEY_SEPAL_ENV//-----LINE BREAK-----/\\n}
 
