@@ -21,6 +21,16 @@ gpg -a --export E084DAB9 | apt-key add -
 
 apt-get -y autoclean && apt-get -y clean && apt-get -y autoremove && apt-get -y purge && apt-get -y update && apt-get -y upgrade
 
+echo
+echo "*************************"
+echo "*** Configuring Locale***"
+echo "*************************"
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+apt-get install locales
+locale-gen en_US.utf8
+update-locale LC_ALL=en_US.UTF-8
+update-locale LANG=en_US.UTF-8
+
 # TODO: Add dans-gdal-scripts - this package currently won't install due to broken dependencies
 echo
 echo "*********************************"

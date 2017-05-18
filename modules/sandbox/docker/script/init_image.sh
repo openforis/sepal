@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     sssd \
@@ -18,6 +19,9 @@ sed -e '/.*pam_motd\.so.*/ s/^#*/#/' -i /etc/pam.d/sshd
 sed -e '/.*pam_motd\.so.*/ s/^#*/#/' -i /etc/pam.d/login
 sed -e '/PrintMotd / s/^#*/#/' -i /etc/ssh/sshd_config
 sed -e '/PrintLastLog / s/^#*/#/' -i /etc/ssh/sshd_config
+
+# Prevent locale from being forwarded by client
+sed -e '/AcceptEnv / s/^#*/#/' -i /etc/ssh/sshd_config
 
 # Get authorized keys from LDAP, disable message of the day and last log printout, disable options for speeding up access
 printf '%s\n' \
