@@ -1,0 +1,540 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<style type="text/css">
+
+    html, body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    #map {
+        width: 60%;
+        height: calc(100% - 56px);
+        position: relative;
+        top: 0;
+        left: 0;
+        float: left;
+    }
+
+    .map-control {
+        background-color: #fff;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 2px rgba(33, 33, 33, 0.4);
+        font-family: 'Roboto','sans-serif';
+        margin: 10px;
+        /* Hide the control initially, to prevent it from appearing before the map loads. */
+        display: none;
+    }
+
+    /* Display the control once it is inside the map. */
+    #map .map-control {
+        display: block;
+    }
+
+    #collect {
+        width: 40%;
+        height: calc(100% - 56px);
+        position: relative;
+        top: 0;
+        left: 0;
+        float: left;
+    }
+
+    #list {
+        height: auto;
+        max-height: 500px;
+        overflow-x: hidden;
+    }
+
+</style>
+
+<div id="style-selector-control" class="map-control">
+    <select id="layer-selector" class="selector-control">
+        <option value="">Default</option>
+    </select>
+</div>
+
+<div id="map"></div>
+
+<div id="collect" class="container-fluid">
+    <div class="form-group row">
+        <div class="col">
+            <button type="button" class="btn btn-primary" id="export-btn">Export</button>
+        </div>
+    </div>
+    <div class="row" id="list-row">
+        <div class="col">
+            <div id="list" class="list-group"></div>
+        </div>
+    </div>
+    <div class="row" id="codeLists-row" style="display: none;">
+        <div class="col">
+            <div class="row">
+                <div class="col-6">
+                    <h3><i class="fa fa-map-marker"></i>&nbsp;<span id="selected-plot">XXX</span></h3>
+                </div>
+                <div class="col-2">
+                    <button type="button" class="btn btn-primary float-right" id="prev-btn">Prev</button>
+                </div>
+                <div class="col-2">
+                    <button type="button" class="btn btn-primary float-right" id="next-btn">Next</button>
+                </div>
+                <div class="col-2">
+                    <button type="button" class="btn btn-warning float-right" id="show-list-btn">List</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div id="codeLists" style="margin-top: 1rem;">
+                        <input type="hidden" name="id" />
+                        <button type="button" class="btn btn-primary" id="submit-btn" style="display: none;">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $.urlParam = function(name) {
+        var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+        return results[1] || 0;
+    }
+
+    $(document).ready(function() {
+
+        var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
+        var geeGatewayApiUrl = '{{config.GEEG_API_URL}}';
+
+        var project_id = $.urlParam('id');
+
+        var map;
+        var overlays = [];
+        var overlayMapTypes = {};
+        var bounds = new google.maps.LatLngBounds();
+        var radius = 30;
+
+        function addOverlayMapType(overlay, overlayMapTypes, index) {
+            var layerName = overlay.layerName;
+            if (overlay.type == 'gee-gateway') {
+                var collectionName = overlay.collectionName;
+                var bands = '';
+                var b1 = overlay.band1;
+                var b2 = overlay.band2;
+                var b3 = overlay.band3;
+                if (b1 != '' && b2 != '' && b3 != '') {
+                    bands = b1 + ',' + b2 + ',' + b3;
+                }
+                var visParams = {
+                    min: overlay.min,
+                    max: overlay.max,
+                    bands: bands
+                };
+                var dateFrom = overlay.dateFrom;
+                var dateTo = overlay.dateTo;
+                $.ajax({
+                    url: geeGatewayApiUrl + '/imageByMosaicCollection',
+                    type: 'POST',
+                    async: false,
+                    crossDomain : true,
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        collectionName: collectionName,
+                        visParams, visParams,
+                        dateFrom: dateFrom,
+                        dateTo: dateTo
+                    })
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error(jqXHR, textStatus, errorThrown);
+                }).done(function(data, textStatus, jqXHR) {
+                    if (data.errMsg) {
+                        console.error(data, textStatus, jqXHR);
+                    } else {
+                        if (data.hasOwnProperty('mapid')) {
+                            var mapId = data.mapid;
+                            var token = data.token;
+                            var layerOptions = {
+                                getTileUrl: function(tile, zoom) {
+                                  var baseUrl = 'https://earthengine.googleapis.com/map';
+                                  var url = [baseUrl, mapId, zoom, tile.x, tile.y].join('/');
+                                  url += '?token=' + token;
+                                  return url;
+                                },
+                                name: layerName,
+                                tileSize: new google.maps.Size(256, 256)
+                            };
+                            var imageMapType = new google.maps.ImageMapType(layerOptions);
+                            overlayMapTypes[index] = imageMapType;
+                        }
+                    }
+                });
+            } else if (overlay.type == 'digitalglobe') {
+                var mapId = overlay.mapID;
+                var token = '{{config.DIGITALGLOBE_API_KEY}}';
+                var layerOptions = {
+                    getTileUrl: function (tile, zoom) {
+                        var url = 'https://{s}.tiles.mapbox.com/v4/{m}/{z}/{x}/{y}.png?access_token=' + token;
+                        return url.replace('{s}', 'api').replace('{m}', mapId).replace('{z}', zoom).replace('{x}', tile.x).replace('{y}', tile.y);
+                    },
+                    name: layerName,
+                    tileSize : new google.maps.Size(256, 256)
+                }
+                var imageMapType = new google.maps.ImageMapType(layerOptions);
+                overlayMapTypes[index] = imageMapType;
+            } else if (overlay.type == 'gibs') {
+                var imageryLayer = overlay.imageryLayer;
+                var date = overlay.date;
+                var layerOptions = {
+                    alt: layerName,
+                    getTileUrl: function(tile, zoom) {
+                        var url = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{imageryLayer}/default/{date}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png';
+                        return url.replace('{imageryLayer}', imageryLayer).replace('{date}', date).replace('{z}', zoom).replace('{x}', tile.x).replace('{y}', tile.y);
+                    },
+                    maxZoom: 8,
+                    minZoom: 1,
+                    name: layerName,
+                    tileSize: new google.maps.Size(256, 256)
+                };
+                var imageMapType = new google.maps.ImageMapType(layerOptions);
+                overlayMapTypes[index] = imageMapType;
+            }
+        }
+
+        function drawSquare(map, latLng, side) {
+            var point = new google.maps.Circle({
+                center: latLng,
+                radius: 1,
+                strokeColor: 'yellow',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: 'yellow',
+                fillOpacity: 1,
+                map: map
+            });
+            var circle = new google.maps.Circle({
+                center: latLng,
+                radius: side
+            });
+            var square = new google.maps.Rectangle({
+                bounds: circle.getBounds(),
+                strokeColor: 'yellow',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillOpacity: 0,
+                map: map
+            });
+            return square;
+        }
+
+        var plotSelection = function(e) {
+            e.preventDefault();
+            $('#codeLists button').removeClass('btn-success');
+            var plot_id = $(this).attr('data-plot-id');
+            var x_coordinate = $(this).attr('data-x-coordinate');
+            var y_coordinate = $(this).attr('data-y-coordinate');
+            $(this).addClass('active').siblings().removeClass('active');
+            var center = new google.maps.LatLng(parseFloat(y_coordinate), parseFloat(x_coordinate));
+            var circle = new google.maps.Circle({
+                center: center,
+                radius: radius
+            });
+            var square = new google.maps.Rectangle({
+                bounds: circle.getBounds(),
+                strokeColor: 'yellow',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillOpacity: 0
+            });
+            //map.fitBounds(square.getBounds());
+            $('#codeLists input[name="id"]').val(0);
+            record = $.grep(records, function(e) { return e['plot']['id'] == plot_id; });
+            if (record[0] !== undefined) {
+                var id = record[0]['id'] !== undefined ? record[0]['id'] : 0;
+                $('#codeLists input[name="id"]').val(id);
+
+                var values = record[0]['value'];
+                $.each(values, function(key, value) {
+                    $('#codeLists button[value="' + value + '"]').addClass('btn-success');
+                });
+
+            } else {
+                $('#codeLists select').find('option:eq(0)').prop('selected', true);
+                $('#codeLists .form-group').removeClass('has-danger');
+                $('#codeLists .form-control-feedback').hide();
+            }
+            $('#selected-plot').text(plot_id);
+            $('#list-row').hide();
+            $('#codeLists-row').show();
+        }
+
+        function getProject() {
+            $.ajax({
+                url: ceoSepalApiUrl + "/project/" + project_id,
+                method: 'get',
+                contentType: 'application/json;charset=UTF-8'
+            }).success(function(data) {
+                // project
+                projectName = data.name;
+                radius = parseFloat(data.radius) / 2;
+                // codeLists
+                data.codeLists.forEach(function(codeList) {
+                    var name = codeList.name;
+                    var element = $('<div>').addClass('form-group');
+                    var label = $('<label>').addClass('form-control-label').text(name);
+                    element.append(label);
+                    codeList.items.forEach(function(item) {
+
+                        var button = $('<button>').attr('type', 'button').addClass('btn btn-secondary submit-btn form-control').text(item.code).attr('value', item.code);
+                        $(button).click(function(e) {
+                            e.preventDefault();
+
+                            //plots
+                            var plots = [];
+                            var project_id = $.urlParam('id');
+                            $('#list a').each(function(index) {
+                                plots.push({
+                                    XCoordinate: $(this).attr('data-x-coordinate'),
+                                    YCoordinate: $(this).attr('data-y-coordinate'),
+                                    id: $(this).attr('data-plot-id')
+                                });
+                            });
+                            $.ajax({
+                                url: ceoSepalApiUrl + "/project/" + project_id,
+                                method: 'patch',
+                                data: JSON.stringify({
+                                    'plots': plots
+                                }),
+                                contentType: 'application/json;charset=UTF-8'
+                            }).success(function(data) {
+                                //
+                            }).fail(function(jqXHR, textStatus, errorThrown) {
+                                console.error(jqXHR, textStatus, errorThrown);
+                            });
+
+                            // records
+                            var value = {};
+                            value['class'] = $(this).val();
+                            var project_id = $.urlParam('id');
+                            var plot_id = $('#list a.active').attr('data-plot-id');
+                            var YCoordinate = $('#list a.active').attr('data-y-coordinate');
+                            var XCoordinate = $('#list a.active').attr('data-x-coordinate');
+                            var record = {
+                                project_id: project_id,
+                                value: value,
+                                plot: {
+                                    id: plot_id,
+                                    YCoordinate: YCoordinate,
+                                    XCoordinate: XCoordinate
+                                }
+                            }
+                            var url = ceoSepalApiUrl + '/record';
+                            var method = 'post';
+                            var record_id = $('#codeLists input[name="id"]').val();
+                            if (record_id != 0) {
+                                url = ceoSepalApiUrl + '/record/' + record_id;
+                                method = 'put';
+                            }
+                            $.ajax({
+                                url: url,
+                                method: method,
+                                data: JSON.stringify(record),
+                                contentType: 'application/json;charset=UTF-8'
+                            }).success(function(data) {
+                                getRecords();
+                                $('#show-list-btn').trigger('click');
+                            }).fail(function(jqXHR, textStatus, errorThrown) {
+                                console.error(jqXHR, textStatus, errorThrown);
+                            });
+                        });
+                        $('#codeLists').prepend($('<div class="form-group">').append(button));
+                    });
+                });
+
+                var mapStyle = [
+                    {
+                        "stylers": [ { "visibility": "simplified" } ]
+                    }, {
+                        "stylers": [ { "color": "#131314" } ]
+                    }, {
+                        "featureType": "water",
+                        "stylers"    : [ { "color": "#131313" }, { "lightness": 4 }
+                        ]
+                    }, {
+                        "elementType": "labels.text.fill"
+                        , "stylers"  : [ { "visibility": "off" }, { "lightness": 25 } ]
+                    }
+                ];
+
+                options = {
+                    zoom             : 10,
+                    center           : new google.maps.LatLng(0, 0),
+                    mapTypeId        : google.maps.MapTypeId.ROADMAP,
+                    zoomControl      : false,
+                    mapTypeControl   : false,
+                    scaleControl     : false,
+                    streetViewControl: false,
+                    rotateControl    : false,
+                    fullscreenControl: false,
+                    backgroundColor  : '#131314'
+                };
+
+                map = new google.maps.Map(window.document.getElementById("map"), options);
+                map.setOptions( { styles: mapStyle } );
+
+                var styleControl = document.getElementById('style-selector-control');
+                map.controls[google.maps.ControlPosition.TOP_RIGHT].push(styleControl);
+
+                map.addListener('click', function(e) {
+                    var id = Date.now();
+                    var lat = e.latLng.lat();
+                    var lng = e.latLng.lng();
+                    var latLng = new google.maps.LatLng(lat, lng);
+                    //
+                    var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(id);
+                    li.attr('data-plot-id', id).attr('data-x-coordinate', lng).attr('data-y-coordinate', lat);
+                    li.click(plotSelection);
+                    $('#list').append(li);
+                    var square = drawSquare(map, latLng, radius);
+                    square.addListener('click', function() {
+                        $('#list a[data-plot-id=' + plot.id +']').click();
+                    });
+                    li.trigger('click');
+                });
+
+                // plots
+                if (data.plots !== undefined) {
+                    data.plots.forEach(function(plot) {
+                        var id = plot.id;
+                        var lat = parseFloat(plot.YCoordinate);
+                        var lng = parseFloat(plot.XCoordinate);
+                        var latLng = new google.maps.LatLng(lat, lng);
+                        //
+                        var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(id);
+                        li.attr('data-plot-id', id).attr('data-x-coordinate', lng).attr('data-y-coordinate', lat);
+                        li.click(plotSelection);
+                        $('#list').append(li);
+                        //
+                        var square = drawSquare(map, latLng, radius);
+                        square.addListener('click', function() {
+                            $('#list a[data-plot-id=' + plot.id +']').click();
+                        });
+                        bounds.extend(latLng);
+                    });
+                    map.panToBounds(bounds);
+                    map.fitBounds(bounds);
+                }
+
+                //overlays
+                data.overlays.forEach(function(overlay, index) {
+                    var layerName = overlay.layerName;
+                    var option = $('<option>').text(layerName).attr('value', index);
+                    $('#layer-selector').append(option);
+                    overlays.push(overlay);
+                });
+
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
+            });
+        }
+
+        getProject();
+
+        var records = {};
+        var record_id = $(this).attr('data-id');
+
+        function prevEvaluation() {
+            var prev = null;
+            var prevFromActive = $('#list a.active').prevAll(':not(.evaluated)').first();
+            if (prevFromActive.length != 0) {
+                prev = prevFromActive;
+            } else {
+                var prevFromEnd = $('#list a:not(.evaluated)').last();
+                if (prevFromEnd.length != 0) {
+                    prev = prevFromEnd;
+                }
+            }
+            if (prev != null) {
+                prev.click();
+            }
+        }
+
+        function nextEvaluation() {
+            var next = null;
+            var nextFromActive = $('#list a.active').nextAll(':not(.evaluated)').first();
+            if (nextFromActive.length != 0) {
+                next = nextFromActive;
+            } else {
+                var nextFromStart = $('#list a:not(.evaluated)').first();
+                if (nextFromStart.length != 0) {
+                    next = nextFromStart;
+                }
+            }
+            if (next != null) {
+                next.click();
+            }
+        }
+
+        function getRecords() {
+            $.ajax({
+                url: ceoSepalApiUrl + "/record/project_id/" + project_id,
+                method: 'get',
+                contentType: 'application/json;charset=UTF-8'
+            }).success(function(data) {
+                records = data;
+                $.each(records, function(key, value) {
+                    $('#list a[data-plot-id="' + value.plot.id +'"]').addClass('evaluated').text(value.plot.id + ' (' + value.value.class + ')');
+                });
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
+            });
+        }
+
+        getRecords();
+
+        $('#export-btn').click(function(e) {
+            e.preventDefault();
+            window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export';
+        });
+
+        $('#prev-btn').click(function(e) {
+            e.preventDefault();
+            prevEvaluation();
+        });
+
+        $('#next-btn').click(function(e) {
+            e.preventDefault();
+            nextEvaluation();
+        });
+
+        $('#show-list-btn').click(function(e) {
+            e.preventDefault();
+            $('#list-row').toggle();
+            $('#codeLists-row').toggle();
+            $('#codeLists button').removeClass('btn-success');
+            $('#list').animate({
+                scrollTop: $('#list .active').index() * $('#list .active').outerHeight(true)
+            }, 'slow');
+        });
+
+        $('#layer-selector').change(function(e) {
+            map.overlayMapTypes.pop();
+            var index = $(this).val();
+            if (index != '') {
+                var overlay = overlays[index]
+                if (overlayMapTypes[index] === undefined) {
+                    addOverlayMapType(overlay, overlayMapTypes, index);
+                }
+                var overlyMapType = overlayMapTypes[index];
+                map.overlayMapTypes.insertAt(0, overlyMapType);
+            }
+        });
+
+    });
+
+</script>
+
+{% endblock %}

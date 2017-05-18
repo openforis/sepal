@@ -37,6 +37,13 @@ def project_edit():
 def collect_form():
     return render_template('collect-form.html')
 
+@app.route('/collect-training-data', methods=['GET'])
+@cross_origin(origins=app.config['CO_ORIGINS'])
+@import_sepal_auth
+@requires_auth
+def collect_training_data():
+    return render_template('collect-training-data.html')
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
