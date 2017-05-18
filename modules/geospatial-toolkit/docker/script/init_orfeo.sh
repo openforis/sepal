@@ -13,7 +13,7 @@ apt-get install -y \
     libotb-apps 
 
 # install the latest Orfeo packaged version for use of ORFEO remote modules
-otb=OTB-contrib-5.10.1-Linux64
+otb=OTB-contrib-6.0.0-Linux64
 wget https://www.orfeo-toolbox.org/packages/$otb.run
 chmod +x $otb.run
 mv $otb.run /usr/local/lib
