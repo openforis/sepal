@@ -13,7 +13,6 @@ class SshSessionCommand {
         output.executable = true
         output.write("#!/usr/bin/env bash\n" +
                 "\$(alive.sh $session.id > ~/alive.log 2>&1 &) && ssh " +
-                "-YC " +
                 "-i $privateKey " +
                 "-l $session.username " +
                 "-q " +
