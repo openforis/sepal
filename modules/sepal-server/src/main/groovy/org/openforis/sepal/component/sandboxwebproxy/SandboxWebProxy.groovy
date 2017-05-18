@@ -115,6 +115,8 @@ class SandboxWebProxy {
             LOG.debug("Handling request. exchange $exchange")
             exchange.addResponseCommitListener(new ResponseCommitListener() {
                 void beforeCommit(HttpServerExchange ex) {
+                    // Force applications to be allowed to run inside frames
+                    ex.responseHeaders.remove(HttpString.tryFromString('X-Frame-Options'))
                     LOG.debug("Before response commit. statusCode: $ex.statusCode, exchange $ex")
                 }
             })
