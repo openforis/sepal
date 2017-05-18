@@ -43,4 +43,4 @@
 
 - name: "mysql | Wait until initialized"
   wait_for: path=/data/mysql/module_initialized
-  when: "{{ new_start_time != start_timestamp }}"
+  when: new_start_time != start_timestamp

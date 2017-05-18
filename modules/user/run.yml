@@ -54,5 +54,5 @@
 
 - name: "user | Wait until initialized"
   wait_for: path=/data/user/module_initialized
-  when: "{{ new_start_time != start_timestamp }}"
+  when: new_start_time != start_timestamp
 
