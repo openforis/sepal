@@ -433,6 +433,14 @@
 
         getRecords();
 
+        function showList() {
+            $('#list-row').toggle();
+            $('#codeLists-row').toggle();
+            $('#list').animate({
+                scrollTop: $('#list .active').index() * $('#list .active').outerHeight(true)
+            }, 'slow');
+        }
+
         $('#export-btn').click(function(e) {
             e.preventDefault();
             window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export';
@@ -450,11 +458,7 @@
 
         $('#show-list-btn').click(function(e) {
             e.preventDefault();
-            $('#list-row').toggle();
-            $('#codeLists-row').toggle();
-            $('#list').animate({
-                scrollTop: $('#list .active').index() * $('#list .active').outerHeight(true)
-            }, 'slow');
+            showList();
         });
 
         $('.confidence-submit-btn').click(function(e) {

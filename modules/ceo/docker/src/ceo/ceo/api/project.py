@@ -105,7 +105,7 @@ def projectAdd():
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-def projectUpdate(id=None):
+def projectModify(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         return 'Error!', 404
@@ -160,7 +160,7 @@ def projectChange(id=None):
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-def projectRemove(id=None):
+def projectDelete(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         return 'Error!', 404

@@ -76,14 +76,8 @@
                 <div class="col-6">
                     <h3><i class="fa fa-map-marker"></i>&nbsp;<span id="selected-plot">XXX</span></h3>
                 </div>
-                <div class="col-2">
-                    <button type="button" class="btn btn-primary float-right" id="prev-btn">Prev</button>
-                </div>
-                <div class="col-2">
-                    <button type="button" class="btn btn-primary float-right" id="next-btn">Next</button>
-                </div>
-                <div class="col-2">
-                    <button type="button" class="btn btn-warning float-right" id="show-list-btn">List</button>
+                <div class="offset-4 col-2">
+                    <button type="button" class="btn btn-danger float-right" id="delete-btn">Delete</button>
                 </div>
             </div>
             <div class="row">
@@ -117,6 +111,7 @@
         var overlayMapTypes = {};
         var bounds = new google.maps.LatLngBounds();
         var radius = 30;
+        var shapes = {};
 
         function addOverlayMapType(overlay, overlayMapTypes, index) {
             var layerName = overlay.layerName;
@@ -204,7 +199,7 @@
             }
         }
 
-        function drawSquare(map, latLng, side) {
+        function drawPoint(map, latLng) {
             var point = new google.maps.Circle({
                 center: latLng,
                 radius: 1,
@@ -215,6 +210,10 @@
                 fillOpacity: 1,
                 map: map
             });
+            return point;
+        }
+
+        function drawSquare(map, latLng, side) {
             var circle = new google.maps.Circle({
                 center: latLng,
                 radius: side
@@ -292,29 +291,6 @@
                         $(button).click(function(e) {
                             e.preventDefault();
 
-                            //plots
-                            var plots = [];
-                            var project_id = $.urlParam('id');
-                            $('#list a').each(function(index) {
-                                plots.push({
-                                    XCoordinate: $(this).attr('data-x-coordinate'),
-                                    YCoordinate: $(this).attr('data-y-coordinate'),
-                                    id: $(this).attr('data-plot-id')
-                                });
-                            });
-                            $.ajax({
-                                url: ceoSepalApiUrl + "/project/" + project_id,
-                                method: 'patch',
-                                data: JSON.stringify({
-                                    'plots': plots
-                                }),
-                                contentType: 'application/json;charset=UTF-8'
-                            }).success(function(data) {
-                                //
-                            }).fail(function(jqXHR, textStatus, errorThrown) {
-                                console.error(jqXHR, textStatus, errorThrown);
-                            });
-
                             // records
                             var value = {};
                             value['class'] = $(this).val();
@@ -343,12 +319,19 @@
                                 method: method,
                                 data: JSON.stringify(record),
                                 contentType: 'application/json;charset=UTF-8'
-                            }).success(function(data) {
-                                getRecords();
-                                $('#show-list-btn').trigger('click');
+                            }).done(function(data) {
+                                updatePlots().done(function(data) {
+                                    //
+                                }).fail(function(jqXHR, textStatus, errorThrown) {
+                                    console.error(jqXHR, textStatus, errorThrown);
+                                });
                             }).fail(function(jqXHR, textStatus, errorThrown) {
                                 console.error(jqXHR, textStatus, errorThrown);
+                            }).always(function() {
+                                getRecords();
+                                showList();
                             });
+
                         });
                         $('#codeLists').prepend($('<div class="form-group">').append(button));
                     });
@@ -389,6 +372,7 @@
                 map.controls[google.maps.ControlPosition.TOP_RIGHT].push(styleControl);
 
                 map.addListener('click', function(e) {
+                    removePlots();
                     var id = Date.now();
                     var lat = e.latLng.lat();
                     var lng = e.latLng.lng();
@@ -398,15 +382,20 @@
                     li.attr('data-plot-id', id).attr('data-x-coordinate', lng).attr('data-y-coordinate', lat);
                     li.click(plotSelection);
                     $('#list').append(li);
+                    //
+                    var point = drawPoint(map, latLng);
                     var square = drawSquare(map, latLng, radius);
+                    shapes[id] = [point, square];
                     square.addListener('click', function() {
-                        $('#list a[data-plot-id=' + plot.id +']').click();
+                        removePlots();
+                        $('#list a[data-plot-id=' + id +']').click();
                     });
+                    //
                     li.trigger('click');
                 });
 
                 // plots
-                if (data.plots !== undefined) {
+                if (data.plots !== undefined && data.plots.length != 0) {
                     data.plots.forEach(function(plot) {
                         var id = plot.id;
                         var lat = parseFloat(plot.YCoordinate);
@@ -418,14 +407,19 @@
                         li.click(plotSelection);
                         $('#list').append(li);
                         //
+                        var point = drawPoint(map, latLng);
                         var square = drawSquare(map, latLng, radius);
+                        shapes[id] = [point, square];
                         square.addListener('click', function() {
+                            removePlots();
                             $('#list a[data-plot-id=' + plot.id +']').click();
                         });
                         bounds.extend(latLng);
                     });
                     map.panToBounds(bounds);
                     map.fitBounds(bounds);
+                } else {
+                    map.setZoom(2);
                 }
 
                 //overlays
@@ -486,7 +480,7 @@
             }).success(function(data) {
                 records = data;
                 $.each(records, function(key, value) {
-                    $('#list a[data-plot-id="' + value.plot.id +'"]').addClass('evaluated').text(value.plot.id + ' (' + value.value.class + ')');
+                    $('#list a[data-plot-id="' + value.plot.id +'"]').attr('data-record-id', value.id).addClass('evaluated').text(value.plot.id + ' (' + value.value.class + ')');
                 });
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
@@ -494,6 +488,76 @@
         }
 
         getRecords();
+
+        function showList() {
+            $('#list-row').toggle();
+            $('#codeLists-row').toggle();
+            $('#codeLists button').removeClass('btn-success');
+            $('#list').animate({
+                scrollTop: $('#list .active').index() * $('#list .active').outerHeight(true)
+            }, 'slow');
+        }
+
+        function removePlots() {
+            $('#list a:not(.evaluated)').each(function(index, li) {
+                var id = $(li).attr('data-plot-id');
+                li.remove();
+                shapes[id][0].setMap(null);
+                shapes[id][1].setMap(null);
+            });
+        }
+
+        function removeCurrentPlot() {
+            $('#list a.active').each(function(index, li) {
+                var id = $(li).attr('data-plot-id');
+                li.remove();
+                shapes[id][0].setMap(null);
+                shapes[id][1].setMap(null);
+            });
+        }
+
+        function updatePlots() {
+            var plots = [];
+            var project_id = $.urlParam('id');
+            $('#list a').each(function(index) {
+                plots.push({
+                    XCoordinate: $(this).attr('data-x-coordinate'),
+                    YCoordinate: $(this).attr('data-y-coordinate'),
+                    id: $(this).attr('data-plot-id')
+                });
+            });
+            return $.ajax({
+                url: ceoSepalApiUrl + "/project/" + project_id,
+                method: 'patch',
+                data: JSON.stringify({
+                    'plots': plots
+                }),
+                contentType: 'application/json;charset=UTF-8'
+            })
+        }
+
+        $('#delete-btn').click(function(e) {
+            e.preventDefault();
+            var record_id = $('#list a.active').attr('data-record-id');
+            $.ajax({
+                url: ceoSepalApiUrl + '/record/' + record_id,
+                method: 'delete',
+                contentType: 'application/json;charset=UTF-8'
+            }).done(function(data) {
+                removeCurrentPlot();
+                $('#list a.active').remove();
+                updatePlots().done(function(data) {
+                    //
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error(jqXHR, textStatus, errorThrown);
+                });
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
+            }).always(function() {
+                getRecords();
+                showList();
+            });
+        });
 
         $('#export-btn').click(function(e) {
             e.preventDefault();
@@ -512,12 +576,7 @@
 
         $('#show-list-btn').click(function(e) {
             e.preventDefault();
-            $('#list-row').toggle();
-            $('#codeLists-row').toggle();
-            $('#codeLists button').removeClass('btn-success');
-            $('#list').animate({
-                scrollTop: $('#list .active').index() * $('#list .active').outerHeight(true)
-            }, 'slow');
+            showList();
         });
 
         $('#layer-selector').change(function(e) {

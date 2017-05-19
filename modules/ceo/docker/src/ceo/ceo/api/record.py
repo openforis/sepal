@@ -52,10 +52,28 @@ def recordAdd():
 @import_sepal_auth
 @requires_auth
 def recordModify(id=None):
-    mongo.db.records.update({'id': id}, {
-        '$set': {
-            'value': request.json.get('value'),
-            'update_datetime': datetime.datetime.utcnow()
-        }
-    }, upsert=False)
+    record = mongo.db.records.find_one({'id': id}, {'_id': False})
+    if not record:
+        return 'Error!', 404
+    if session.get('is_admin') or record['username'] != session.get('username'):
+        return 'Forbidden!', 403
+    # update the record
+    record.update({
+        'value': request.json.get('value'),
+        'update_datetime': datetime.datetime.utcnow()
+    })
+    mongo.db.records.update({'id': id}, {'$set': record}, upsert=False)
+    return 'OK', 200
+
+@app.route('/api/record/<id>', methods=['DELETE'])
+@cross_origin(origins=app.config['CO_ORIGINS'])
+@import_sepal_auth
+@requires_auth
+def recordDelete(id=None):
+    record = mongo.db.records.find_one({'id': id}, {'_id': False})
+    if not record:
+        return 'Error!', 404
+    if session.get('is_admin') or record['username'] != session.get('username'):
+        return 'Forbidden!', 403
+    mongo.db.records.delete_many({'id': id})
     return 'OK', 200
