@@ -1,0 +1,28 @@
+#search .mode-list-container {
+
+  .row-header {
+    font-weight: 400;
+  }
+
+  .row-list {
+
+    .row {
+      &.template {
+        display: none;
+      }
+      //display: flex;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: .5rem;
+      padding-bottom: .5rem;
+      border-radius: 2px;
+      background-color: rgba(255, 255, 255, 0.1);
+
+      .btn {
+        padding: 0 !important;
+        width: 2rem;
+        height: 2rem;
+      }
+    }
+  }
+
+}

@@ -49,6 +49,7 @@ var Events = {
         , ACTIVE_SAVE                 : 'section.search.model.active_save'
         , RESTORE_DRAWN_AOI           : 'section.search.model.restore_drawn_aoi'
         
+        , LIST_LOAD   : 'section.search.model.list_load'
         , LIST_CHANGED: 'section.search.model.list_changed'
       }
       
