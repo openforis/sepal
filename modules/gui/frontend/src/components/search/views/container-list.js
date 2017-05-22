@@ -18,7 +18,6 @@ var init = function (container) {
 }
 
 var listChanged = function (e, list) {
-  console.log(list)
   containerItems.empty()
   $.each(list, function (i, item) {
     var row = rowTemplate.clone().removeClass('template').hide()
