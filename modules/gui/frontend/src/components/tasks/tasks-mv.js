@@ -56,6 +56,7 @@ var requestTasks = function ( callback ) {
             if ( callback )
                 callback()
         }
+        , error  : function () { }
     }
     
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )
