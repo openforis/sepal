@@ -2,17 +2,21 @@
  * @author Mino Togna
  */
 
-var EventBus     = require( '../event/event-bus' )
-var Events       = require( '../event/events' )
-var Loader       = require( '../loader/loader' )
-//
-var Model        = require( './scenes-selection-m' )
-var View         = require( './scenes-selection-v' )
-var SearchParams = require( './../search/search-params' )
+var EventBus = require( '../event/event-bus' )
+var Events   = require( '../event/events' )
+var Loader   = require( '../loader/loader' )
 
-var currentDataSet  = null
+var Model              = require( './scenes-selection-m' )
+var View               = require( './scenes-selection-v' )
+var SModel             = require( './../search/model/search-model' )
+var SearchRequestUtils = require( './../search/search-request-utils' )
+
+var oldOffsetTargetDay = null
+
+var state = {}
 var viewInitialized = false
-var show            = function ( e, type ) {
+
+var show = function ( e, type ) {
     if ( type == 'scene-images-selection' ) {
         View.init()
         viewInitialized = true
@@ -20,15 +24,15 @@ var show            = function ( e, type ) {
 }
 
 var sceneAreaClick = function ( e, sceneAreaId, dataSet ) {
-    currentDataSet = dataSet
-    View.setDataSet( currentDataSet )
+    Model.setSceneAreaId( sceneAreaId )
+    View.setDataSet( state.sensorGroup )
     loadSceneImages( sceneAreaId )
 }
 
 var loadSceneImages = function ( sceneAreaId, showAppSection ) {
     
-    var data = { dataSet: currentDataSet }
-    SearchParams.addDatesRequestParameters( data )
+    var data = { dataSet: state.sensorGroup }
+    SearchRequestUtils.addDatesRequestParameters( state, data )
     
     var params = {
         url         : '/api/data/sceneareas/' + sceneAreaId
@@ -43,7 +47,8 @@ var loadSceneImages = function ( sceneAreaId, showAppSection ) {
                 EventBus.dispatch( Events.SECTION.SHOW, null, 'scene-images-selection' )
             }
             
-            Model.setSceneArea( sceneAreaId, response )
+            Model.setSceneAreaImages( response )
+            oldOffsetTargetDay = state.offsetToTargetDay
             updateView()
             
             if ( showAppSection !== false ) {
@@ -56,7 +61,7 @@ var loadSceneImages = function ( sceneAreaId, showAppSection ) {
 }
 
 var reset = function ( e ) {
-    Model.reset()
+    // Model.reset()
     if ( viewInitialized )
         View.reset()
 }
@@ -74,11 +79,11 @@ var updateView     = function () {
             updateView()
         } else {
             var idx             = 0
-            var sceneAreaImages = Model.getSceneAreaImages( SearchParams.sortWeight )
+            var sceneAreaImages = Model.getSortedSceneAreaImages()
             
             var addScene = function () {
                 var sceneImage   = sceneAreaImages[ idx ]
-                var filterHidden = SearchParams.isSensorSelected( currentDataSet, sceneImage.sensor )
+                var filterHidden = state.sensors.indexOf( sceneImage.sensor ) < 0
                 var selected     = Model.isSceneSelected( sceneImage )
                 
                 View.add( sceneImage, filterHidden, selected )
@@ -86,10 +91,13 @@ var updateView     = function () {
                 
                 if ( idx === sceneAreaImages.length ) {
                     stopUpdateView()
+                    
+                    
                 }
             }
+            View.reset( Model.getSceneAreaId(), Model.getAvailableSensors().slice( 0 ) )
+            updateState( null, state )
             
-            View.reset( Model.getSceneAreaId(), Model.getSceneAreaSensors().slice( 0 ) )
             if ( sceneAreaImages.length > 0 ) {
                 interval = setInterval( addScene, 75 )
             }
@@ -99,43 +107,38 @@ var updateView     = function () {
 }
 
 var selectImage = function ( e, sceneAreaId, sceneImage ) {
-    Model.select( sceneAreaId, sceneImage )
+    Model.select( sceneImage )
     View.select( sceneAreaId, sceneImage )
     
-    EventBus.dispatch( Events.SCENE_AREAS.SCENES_UPDATE, null, sceneAreaId )
+    EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+    
 }
 
 var deselectImage = function ( e, sceneAreaId, sceneImage ) {
-    Model.deselect( sceneAreaId, sceneImage )
+    Model.deselect( sceneImage )
     View.deselect( sceneAreaId, sceneImage )
     
-    EventBus.dispatch( Events.SCENE_AREAS.SCENES_UPDATE, null, sceneAreaId )
+    EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
 }
 
-var onWeightChanged = function () {
-    if ( viewInitialized ) {
-        View.setSortWeight( SearchParams.sortWeight )
-        updateView()
-    }
-}
-
-var onOffsetTargetDayChanged = function ( e ) {
-    if ( viewInitialized ) {
-        View.setOffsetToTargetDay( SearchParams.offsetToTargetDay )
-        var showLoader = e.target === 'section-filter-scenes'
-        loadSceneImages( Model.getSceneAreaId(), showLoader )
-    }
-}
-
-var onSensorsChanged = function ( e, action, sensorId ) {
-    if ( viewInitialized ) {
-        // View.setSensors( Model.getSceneAreaSensors().slice( 0 ), SearchParams.landsatSensors )
+var updateState = function ( e, s ) {
+    state = s
+    Model.setState( state )
+    if ( state.type === SModel.TYPES.MOSAIC && viewInitialized ) {
+        View.setSortWeight( state.sortWeight )
+        View.setOffsetToTargetDay( state.offsetToTargetDay )
         View.updateSensors()
-        if ( action === 'select' ) {
-            View.showScenesBySensor( sensorId )
-        } else if ( action === 'deselect' ) {
-            View.hideScenesBySensor( sensorId )
+    }
+}
+
+var searchParamsChanged = function ( e ) {
+    if ( viewInitialized ) {
+        if ( oldOffsetTargetDay != null && state.offsetToTargetDay !== oldOffsetTargetDay ) {
+            loadSceneImages( Model.getSceneAreaId(), false )
+        } else {
+            updateView()
         }
+        oldOffsetTargetDay = state.offsetToTargetDay
     }
 }
 
@@ -143,14 +146,11 @@ EventBus.addEventListener( Events.MAP.SCENE_AREA_CLICK, sceneAreaClick )
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 
-EventBus.addEventListener( Events.SECTION.SEARCH.SCENE_AREAS_LOADED, reset )
-EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.RESET, reset )
+EventBus.addEventListener( Events.SECTION.SEARCH.REQUEST_SCENE_AREAS, reset )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, reset )
+
+EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, updateState )
+EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED, searchParamsChanged )
 
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SELECT, selectImage )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.DESELECT, deselectImage )
-
-// search params changed events
-EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.WEIGHT_CHANGED, onWeightChanged )
-EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGED, onOffsetTargetDayChanged )
-EventBus.addEventListener( Events.SECTION.SEARCH.SEARCH_PARAMS.SENSORS_CHANGED, onSensorsChanged )
-

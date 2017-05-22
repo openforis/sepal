@@ -3,87 +3,107 @@
  */
 var EventBus      = require( '../../event/event-bus' )
 var Events        = require( '../../event/events' )
-var SearchParams  = require( '../search-params' )
 var FormValidator = require( '../../form/form-validator' )
 var DatePicker    = require( '../../date-picker/date-picker' )
 var SepalAois     = require( '../../sepal-aois/sepal-aois' )
+var Model         = require( './../model/search-model' )
 var moment        = require( 'moment' )
 
-var form       = null
-var formNotify = null
+var form                = null
+var formNotify          = null
+var inputName           = null
+var inputAoiCode        = null
+var autocompleteAoiCode = null
+var btnDrawPolygon      = null
+var btnLandsat          = null
+var btnSentinel2        = null
+var targetDate          = null
 
-var fieldCountry   = null
-var btnDrawPolygon = null
-var btnLandsat     = null
-var btnSentinel2   = null
-var targetDate     = null
-// var sectionLandsatSensors   = null
-// var sectionSentinel2Sensors = null
+// default state
+var defaultState = {
+    id         : -1,
+    type       : Model.TYPES.MOSAIC,
+    name       : 'default-mosaic',
+    aoiCode    : null,
+    aoiName    : null,
+    sensorGroup: Model.getSensorGroups()[ 0 ],
+    targetDate : moment( new Date() ).format( 'YYYY-MM-DD' ),
+    
+    sortWeight       : 0.5,
+    sensors          : Object.keys( Model.getSensors( Model.getSensorGroups()[ 0 ] ) ),
+    offsetToTargetDay: 0,
+    minScenes        : 1,
+    maxScenes        : null
+}
+
+var state = {}
 
 var init = function ( formSelector ) {
-    SearchParams.reset()
-    
     form       = $( formSelector )
     formNotify = form.find( '.form-notify' )
     
-    fieldCountry = form.find( '#search-form-country' )
+    inputName = form.find( '[name=name]' )
+    inputName.keyup( function ( e ) {
+        state.name = inputName.val()
+        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+    } )
+    
+    inputAoiCode = form.find( '#search-form-country' )
     SepalAois.loadAoiList( function ( aois ) {
-        fieldCountry.sepalAutocomplete( {
+        autocompleteAoiCode = inputAoiCode.sepalAutocomplete( {
             lookup    : aois
             , onChange: function ( selection ) {
                 if ( selection ) {
-                    var cCode = selection.data
-                    var cName = selection.value
-                    
-                    EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
-                    EventBus.dispatch( Events.MAP.ZOOM_TO, null, cCode )
-                    
-                    setCountryIso( cCode )
-                    
                     FormValidator.resetFormErrors( form, formNotify )
+                    
+                    setCountryIso( selection.data, selection.value )
                 } else {
-                    EventBus.dispatch( Events.MAP.REMOVE_AOI_LAYER )
-                    setCountryIso( null )
+                    setCountryIso( null, null )
                 }
+                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
             }
         } )
-    } )
-    
-    btnDrawPolygon = form.find( '.btn-draw-polygon' )
-    btnDrawPolygon.click( function ( e ) {
-        e.preventDefault()
-        EventBus.dispatch( Events.SECTION.REDUCE )
-        EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
-        EventBus.dispatch( Events.MAP.POLYGON_DRAW )
-    } )
-    
-    btnLandsat            = form.find( '.btn-landsat' )
-    btnSentinel2          = form.find( '.btn-sentinel2' )
-    var changeSensorGroup = function ( domEvt, btn, evt ) {
-        domEvt.preventDefault()
-        if ( !btn.hasClass( 'active' ) ) {
-            EventBus.dispatch( evt )
+        
+        
+        btnDrawPolygon = form.find( '.btn-draw-polygon' )
+        btnDrawPolygon.click( function ( e ) {
+            e.preventDefault()
+            EventBus.dispatch( Events.SECTION.REDUCE )
+            // EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
+            EventBus.dispatch( Events.MAP.POLYGON_DRAW )
+        } )
+        
+        btnLandsat            = form.find( '.btn-landsat' )
+        btnSentinel2          = form.find( '.btn-sentinel2' )
+        var changeSensorGroup = function ( e, btn ) {
+            e.preventDefault()
+            if ( !btn.hasClass( 'active' ) ) {
+                var value         = btn.val()
+                state.sensorGroup = value
+                state.sensors     = Object.keys( Model.getSensors( state.sensorGroup ) )
+                
+                setSensorGroupState( state.sensorGroup )
+                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+            }
         }
-    }
-    btnLandsat.click( function ( e ) {
-        changeSensorGroup( e, btnLandsat, Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_LANDSAT_SENSOR_GROUP )
+        btnLandsat.click( function ( e ) {
+            changeSensorGroup( e, btnLandsat )
+        } )
+        btnSentinel2.click( function ( e ) {
+            changeSensorGroup( e, btnSentinel2 )
+        } )
+        
+        targetDate          = DatePicker.newInstance( form.find( '.target-date' ) )
+        targetDate.onChange = function ( year, month, day ) {
+            state.targetDate = year + '-' + month + '-' + day
+            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+        }
+        
+        form.submit( submit )
+        
+        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, defaultState )
+        
     } )
-    btnSentinel2.click( function ( e ) {
-        changeSensorGroup( e, btnSentinel2, Events.SECTION.SEARCH.SEARCH_PARAMS.SELECT_SENTINEL2_SENSOR_GROUP )
-    } )
-    
-    targetDate              = DatePicker.newInstance( form.find( '.target-date' ) )
-    SearchParams.targetDate = targetDate
-    
-    var now = moment( new Date() )
-    setTimeout( function () {
-        targetDate.select( 'year', now.format( 'YYYY' ) )
-        targetDate.select( 'month', now.format( 'MM' ) )
-        targetDate.select( 'day', now.format( 'DD' ) )
-    }, 1000 )
-    
-    form.submit( submit )
-    
 }
 
 var submit = function ( e ) {
@@ -95,21 +115,17 @@ var submit = function ( e ) {
     var errorMsg = ''
     var date     = targetDate.asMoment()
     
-    
-    if ( !SearchParams.hasValidAoi() ) {
+    if ( !inputName.val() || inputName.val().indexOf( ' ' ) >= 0 ) {
+        valid    = false
+        errorMsg = 'Please enter a valid name, no whitespace are allowed'
+        
+        FormValidator.addError( inputName )
+    } else if ( $.isEmptyString( state.aoiCode ) && $.isEmptyString( state.polygon ) ) {
         valid    = false
         errorMsg = 'Please select a valid COUNTRY or DRAW A POLYGON'
         
-        FormValidator.addError( fieldCountry )
-    }
-    // else if ( SearchParams.landsatSensors.length <= 0 && SearchParams.sentinel2Sensors.length <= 0 ) {
-    //     valid    = false
-    //     errorMsg = 'Please select either LANDSAT or SENTINEL-2 sensors'
-    // } else if ( SearchParams.landsatSensors.length > 0 && SearchParams.sentinel2Sensors.length > 0 ) {
-    //     valid    = false
-    //     errorMsg = 'Only sensors within LANDSAT or SENTINEL-2 can be selected'
-    // }
-    else if ( !date.isValid() ) {
+        FormValidator.addError( inputAoiCode )
+    } else if ( !date.isValid() ) {
         valid    = false
         errorMsg = 'Please select a valid TARGET DATE'
     } else if ( date.isAfter( moment() ) ) {
@@ -118,7 +134,7 @@ var submit = function ( e ) {
     }
     
     if ( valid ) {
-        EventBus.dispatch( Events.SECTION.SEARCH.FORM_SUBMIT, null )
+        EventBus.dispatch( Events.SECTION.SEARCH.REQUEST_SCENE_AREAS, null, state )
     } else {
         FormValidator.showError( formNotify, errorMsg )
     }
@@ -129,12 +145,13 @@ var find = function ( selector ) {
     return form.find( selector )
 }
 
-var polygonDrawn = function ( e, polygon ) {
-    setPolygon( polygon )
-    
+var polygonDrawn = function ( e, jsonPolygon, polygon ) {
+    setPolygon( jsonPolygon )
     btnDrawPolygon.addClass( 'active' )
     
-    fieldCountry.sepalAutocomplete( 'reset' )
+    inputAoiCode.sepalAutocomplete( 'reset' )
+    
+    EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state, { restoreAoi: false } )
 }
 
 var polygonClear = function ( e ) {
@@ -142,31 +159,79 @@ var polygonClear = function ( e ) {
     btnDrawPolygon.removeClass( 'active' )
 }
 
-var setCountryIso = function ( c ) {
-    SearchParams.countryIso = c
-    SearchParams.polygon    = null
-}
-
-var setPolygon = function ( p ) {
-    SearchParams.polygon    = p
-    SearchParams.countryIso = null
-}
-
-// model change methods
-var setSensorGroup = function ( sensorGroup ) {
-    if ( SearchParams.SENSORS.LANDSAT == sensorGroup ) {
-        btnLandsat.addClass( 'active' )
-        btnSentinel2.removeClass( 'active' )
-    } else if ( SearchParams.SENSORS.SENTINEL2 == sensorGroup ) {
-        btnLandsat.removeClass( 'active' )
-        btnSentinel2.addClass( 'active' )
+var setCountryIso = function ( code, name ) {
+    
+    state.aoiCode = code
+    state.aoiName = name
+    
+    if ( code ) {
+        EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
+        EventBus.dispatch( Events.MAP.ZOOM_TO, null, state.aoiCode )
+        
+        state.polygon = null
+    } else {
+        EventBus.dispatch( Events.MAP.REMOVE_AOI_LAYER )
     }
 }
 
+var setPolygon = function ( p ) {
+    state.polygon = p
+    if ( p ) {
+        state.aoiCode = null
+        state.aoiName = null
+    }
+}
+
+
+// model change methods
+var setState = function ( e, newState, params ) {
+    // state = { polygon: "[[20.21484375,42.811521745097906],[23.90625,38.95940879245423],[18.10546875,39.774769485295465],[18.28125,42.553080288955805],[20.21484375,42.811521745097906]]" }
+    state = newState
+    // $.extend( state, newState )
+    
+    if ( state.type == Model.TYPES.MOSAIC ) {
+        
+        inputName.val( state.name )
+        
+        if ( state.aoiCode && state.aoiName ) {
+            inputAoiCode.val( state.aoiName ).data( 'reset-btn' ).enable()
+            
+            setCountryIso( state.aoiCode, state.aoiName )
+        } else if ( state.polygon ) {
+            inputAoiCode.sepalAutocomplete( 'reset' )
+            setPolygon( state.polygon )
+            btnDrawPolygon.addClass( 'active' )
+            
+            if ( !params || params.restoreAoi )
+                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.RESTORE_DRAWN_AOI, null, state.polygon )
+        }
+        
+        var date = moment( state.targetDate )
+        setTimeout( function () {
+            targetDate.triggerChange = false
+            targetDate.select( 'year', date.format( 'YYYY' ) )
+            targetDate.select( 'month', date.format( 'MM' ) )
+            targetDate.select( 'day', date.format( 'DD' ) )
+            targetDate.triggerChange = true
+        }, 1000 )
+        
+        setSensorGroupState( state.sensorGroup )
+    } else {
+        EventBus.dispatch( Events.MAP.POLYGON_CLEAR )
+        EventBus.dispatch( Events.MAP.REMOVE_AOI_LAYER )
+    }
+}
+EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setState )
+
+var setSensorGroupState = function ( sensorGroup ) {
+    form.find( ".btn-sensor-group" ).removeClass( 'active' )
+    form.find( ".btn-sensor-group[value=" + sensorGroup + "]" ).addClass( 'active' )
+}
+
 module.exports = {
-    init            : init
-    , find          : find
-    , setSensorGroup: setSensorGroup
+    init  : init
+    , find: find
+    
 }
 
 EventBus.addEventListener( Events.MAP.POLYGON_DRAWN, polygonDrawn )

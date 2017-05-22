@@ -86,7 +86,7 @@ var showSection = function ( e ) {
 
 EventBus.addEventListener( Events.SECTION.SHOW, show )
 
-EventBus.addEventListener( Events.SECTION.USERS.FILTER.CHANGED, updateView )
+EventBus.addEventListener( Events.SECTION.USERS.FILTER.ACTIVE_CHANGED, updateView )
 EventBus.addEventListener( Events.SECTION.USERS.SELECT_USER, selectUser )
 
 //show section events

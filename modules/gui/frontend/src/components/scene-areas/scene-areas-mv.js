@@ -1,95 +1,129 @@
 /**
  * @author Mino Togna
  */
-var EventBus      = require( '../event/event-bus' )
-var Events        = require( '../event/events' )
-var View          = require( './scene-areas-v' )
-var LandsatView   = View.newInstance()
-var Sentinel2View = View.newInstance()
-var Model         = require( './scene-areas-m' )
+var GoogleMapsLoader = require( 'google-maps' )
+var EventBus         = require( '../event/event-bus' )
+var Events           = require( '../event/events' )
+var View             = require( './scene-areas-v' )
+var ActiveView       = View.newInstance()
+var SModel           = require( '../search/model/search-model' )
 
-var visibleArea = LandsatView
+var state   = {}
+var visible = false
 
-var initSceneAreas = function ( e ) {
-    showLandsatArea()
+var stateChanged = function ( e, s, params ) {
+    state = s
+    if ( state.type === SModel.TYPES.MOSAIC ) {
+        if ( state.sceneAreas ) {
+            visible = true
+            if ( params && params.resetSceneAreas === true ) {
+                var polygons = areasToMapPolygons( state.sceneAreas, state.sensorGroup )
+                ActiveView.add( polygons, true )
+            }
+            
+            updateCount()
+        }
+    } else {
+        hideActive()
+    }
 }
 
-var landsatSceneAreasLoaded   = function ( e, areas ) {
-    Model.setLandsatAreas( areas )
-    LandsatView.add( Model.landsatAreasToMapPolygons(), visibleArea === LandsatView )
+var hideActive = function () {
+    if ( ActiveView ) {
+        ActiveView.hide()
+        visible = false
+    }
 }
-var sentinel2SceneAreasLoaded = function ( e, areas ) {
-    Model.setSentinel2Areas( areas )
-    Sentinel2View.add( Model.sentinel2AreasToMapPolygons(), visibleArea === Sentinel2View )
+
+var areasToMapPolygons = function ( scenes, dataSet ) {
+    var array = new Array()
+    
+    GoogleMapsLoader.load( function ( google ) {
+        $.each( Object.keys( scenes ), function ( i, key ) {
+            var scene        = scenes[ key ]
+            var bounds       = new google.maps.LatLngBounds()
+            var polygonPaths = new Array()
+            var polygon      = scene.polygon
+            for ( var j = 0; j < polygon.length; j++ ) {
+                var latLong  = polygon[ j ]
+                var gLatLong = new google.maps.LatLng( Number( latLong[ 0 ] ), Number( latLong[ 1 ] ) )
+                bounds.extend( gLatLong )
+                
+                polygonPaths.push( gLatLong )
+            }
+            
+            var gPolygon = new google.maps.Polygon( {
+                paths        : polygonPaths,
+                strokeColor  : '#C5B397',
+                // strokeOpacity: 0.4,
+                strokeOpacity: 1,
+                strokeWeight : 2,
+                fillColor    : '#C5B397',
+                fillOpacity  : 0.8
+            } )
+            
+            var item               = {}
+            item.center            = bounds.getCenter()
+            item.scene             = scene
+            item.scene.sceneAreaId = key
+            item.polygon           = gPolygon
+            item.dataSet           = dataSet
+            array.push( item )
+        } )
+    } )
+    
+    return array
+}
+
+var updateCount = function () {
+    if ( ActiveView.layer && ActiveView.layer.ready ) {
+        $.each( Object.keys( state.sceneAreas ), function ( i, key ) {
+            var scene = state.sceneAreas[ key ]
+            var cnt   = scene.selection.length
+            ActiveView.setCount( key, cnt )
+        } )
+    } else {
+        setTimeout( updateCount, 500 )
+    }
 }
 
 //application visibility events
 var onApplicationSectionShow = function ( e ) {
-    if ( visibleArea )
-        visibleArea.hide()
+    if ( visible )
+        ActiveView.hide()
 }
 
 var onApplicationSectionReduce = function ( e ) {
-    if ( visibleArea )
-        visibleArea.show()
+    if ( visible )
+        ActiveView.show()
 }
 // visibility events
-var showLandsatArea            = function () {
-    hideSentinel2Area()
-    
-    LandsatView.show()
-    visibleArea = LandsatView
+var showArea                   = function () {
+    ActiveView.show()
+    visible = true
 }
-var hideLandsatArea            = function () {
-    visibleArea = null
-    LandsatView.hide()
-}
-var showSentinel2Area          = function () {
-    hideLandsatArea()
-    
-    Sentinel2View.show()
-    visibleArea = Sentinel2View
-}
-var hideSentinel2Area          = function () {
-    visibleArea = null
-    Sentinel2View.hide()
-}
-
-var onSceneAreaChange = function ( e, sceneAreaId ) {
-    var cnt = Model.countSeletedImages( sceneAreaId )
-    LandsatView.setCount( sceneAreaId, cnt )
-    Sentinel2View.setCount( sceneAreaId, cnt )
+var hideArea                   = function () {
+    ActiveView.hide()
+    visible = false
 }
 
 var resetSceneAreas = function ( e ) {
-    LandsatView.reset()
-    Sentinel2View.reset()
+    ActiveView.reset()
 }
 
 var onMapZoomChanged = function ( e, zoomLevel ) {
-    LandsatView.setZoomLevel( zoomLevel )
-    Sentinel2View.setZoomLevel( zoomLevel )
+    ActiveView.setZoomLevel( zoomLevel )
 }
-// events when search form is submitted
-EventBus.addEventListener( Events.SCENE_AREAS.INIT, initSceneAreas )
-EventBus.addEventListener( Events.SECTION.SEARCH.LANDSAT_SCENE_AREAS_LOADED, landsatSceneAreasLoaded )
-EventBus.addEventListener( Events.SECTION.SEARCH.SENTINEL2_SCENE_AREAS_LOADED, sentinel2SceneAreasLoaded )
+
+EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, stateChanged )
 
 //application visibility events
 EventBus.addEventListener( Events.SECTION.SHOW, onApplicationSectionShow )
 EventBus.addEventListener( Events.SECTION.REDUCE, onApplicationSectionReduce )
 
 // visibility events
-EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.SHOW_LANDSAT_AREA, showLandsatArea )
-EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.HIDE_LANDSAT_AREA, hideLandsatArea )
-EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.SHOW_SENTINEL2_AREA, showSentinel2Area )
-EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.HIDE_SENTINEL2_AREA, hideSentinel2Area )
-
-// scenes within a scene area change
-EventBus.addEventListener( Events.SCENE_AREAS.SCENES_UPDATE, onSceneAreaChange )
-
-// reset the scene areas (remove all selected scenes within each scene area)
-EventBus.addEventListener( Events.SCENE_AREAS.RESET, resetSceneAreas )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.SHOW_SCENE_AREAS, showArea )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.HIDE_SCENE_AREAS, hideArea )
 
 // map zoom change
 EventBus.addEventListener( Events.MAP.ZOOM_CHANGED, onMapZoomChanged )

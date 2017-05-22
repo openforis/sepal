@@ -58,5 +58,7 @@ var hideSection = function ( section, opts ) {
 
 module.exports = {
     init            : init
-    , setSensorGroup: ContainerEdit.setSensorGroup
+    , setEditState  : ContainerEdit.setState
+    // deprecated
+    // , setSensorGroup: ContainerEdit.setSensorGroup
 }

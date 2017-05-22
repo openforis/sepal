@@ -3,7 +3,10 @@
  */
 require( './scenes-selection.scss' )
 
-var SearchParams          = require( '../search/search-params' )
+var EventBus = require( '../event/event-bus' )
+var Events   = require( '../event/events' )
+
+var SModel                = require( './../search/model/search-model' )
 var SectionScenes         = require( './views/section-scenes' )
 var SectionSelectedScenes = require( './views/section-selected-scenes' )
 var SectionFilterScenes   = require( './views/section-filter-scenes-v' )
@@ -14,6 +17,8 @@ var currentSceneAreaId = null
 var dataSet            = null
 var selectedSensors    = null
 var availableSensors   = null
+
+var state = {}
 
 var init = function () {
     
@@ -35,12 +40,8 @@ var init = function () {
 }
 
 var setDataSet = function ( value ) {
-    dataSet = value
-    if ( dataSet == SearchParams.SENSORS.LANDSAT ) {
-        selectedSensors = SearchParams.landsatSensors
-    } else if ( dataSet == SearchParams.SENSORS.SENTINEL2 ) {
-        selectedSensors = SearchParams.sentinel2Sensors
-    }
+    dataSet         = value
+    selectedSensors = Object.keys( SModel.getSensors( dataSet ) )
     
     SectionScenes.setDataSet( dataSet )
     SectionFilterScenes.setDataSet( dataSet )
@@ -56,8 +57,8 @@ var reset = function ( sceneAreaId, avSensors ) {
     if ( !(sceneAreaId && currentSceneAreaId === sceneAreaId) ) {
         SectionSelectedScenes.reset( sceneAreaId )
         
-        SectionFilterScenes.setSortWeight( SearchParams.sortWeight )
-        SectionFilterScenes.setOffsetToTargetDay( SearchParams.offsetToTargetDay )
+        SectionFilterScenes.setSortWeight( state.sortWeight )
+        SectionFilterScenes.setOffsetToTargetDay( state.offsetToTargetDay )
         updateSensors()
         SectionFilterScenes.showButtons()
         
@@ -67,7 +68,7 @@ var reset = function ( sceneAreaId, avSensors ) {
 }
 
 var updateSensors = function () {
-    SectionFilterScenes.setSensors( availableSensors, selectedSensors )
+    SectionFilterScenes.setSensors( availableSensors, state.sensors )
 }
 // Functions for selection section
 var add           = function ( sceneImage, filterHidden, selected ) {
@@ -92,6 +93,13 @@ var deselect = function ( sceneAreaId, sceneImage ) {
     }
 }
 
+var updateState = function ( e, s ) {
+    state = s
+}
+
+EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, updateState )
+
+
 module.exports = {
     init                  : init
     , setDataSet          : setDataSet
@@ -103,6 +111,5 @@ module.exports = {
     , showScenesBySensor  : SectionScenes.showScenesBySensor
     , setSortWeight       : SectionFilterScenes.setSortWeight
     , setOffsetToTargetDay: SectionFilterScenes.setOffsetToTargetDay
-    // , setSensors          : SectionFilterScenes.setSensors
     , updateSensors       : updateSensors
 }

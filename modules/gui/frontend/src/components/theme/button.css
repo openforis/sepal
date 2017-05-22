@@ -42,6 +42,7 @@
 .btn:focus,
 .btn:hover {
     outline: none !important;
+    box-shadow: none !important;
 }
 
 .btn.icon {

@@ -62,8 +62,8 @@
     - { role: build-module, module: api-gateway }
     - { role: build-module, module: gateone }
     - { role: build-module, module: ssh-gateway }
-    - { role: build-module, module: geospatial-toolkit }
-    - { role: build-module, module: sandbox }
+#    - { role: build-module, module: geospatial-toolkit }
+#    - { role: build-module, module: sandbox }
     - { role: build-module, module: user }
     - { role: build-module, module: sepal-server }
     - { role: build-module, module: gui }
@@ -71,11 +71,11 @@
     - { role: build-module, module: google-earth-engine }
 
     - { role: run-module, module: elk }
-    - { role: run-module, module: backup }
+#    - { role: run-module, module: backup }
     - { role: run-module, module: ldap }
-    - { role: run-module, module: ldap-backup }
+#    - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
-    - { role: run-module, module: mysql-backup }
+#    - { role: run-module, module: mysql-backup }
     - { role: run-module, module: google-earth-engine }
     - { role: run-module, module: user }
     - { role: run-module, module: sepal-server, container_name: sepal }

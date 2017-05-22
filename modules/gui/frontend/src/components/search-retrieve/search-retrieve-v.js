@@ -6,8 +6,12 @@ require( './search-retrieve.scss' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 
-var SectionScenes = require( './views/section-scenes' )
-var SectionMosaic = require( './views/section-mosaic' )
+var Model = require( '../search/model/search-model' )
+
+var SectionActiveMosaicsList = require( './views/section-active-mosaics-list' )
+var SectionCreateMosaic      = require( './views/section-create-mosaic' )
+var SectionClassify          = require( './views/section-classify' )
+var SectionChangeDetection   = require( './views/section-classify' )
 
 var html = null
 
@@ -21,23 +25,11 @@ var init = function () {
         
         $( '.app' ).append( html )
         
-        SectionScenes.init( html )
-        SectionMosaic.init( html )
+        SectionActiveMosaicsList.init( html.find( '.active-mosaics' ) )
+        SectionCreateMosaic.init( html.find( '.section-create-mosaic' ) )
+        SectionClassify.init( html.find( '.section-classify' ) )
+        SectionChangeDetection.init( html.find( '.section-change-detection' ) )
         
-        var btnsToggleSection = html.find( '.btn-toggle-section' )
-        btnsToggleSection.click( function () {
-            var btn = $( this )
-            
-            btnsToggleSection.not( btn ).removeClass( 'active' )
-            
-            btn.toggleClass( 'active' ).addClass('disabling').disable()
-            
-            setTimeout( function () {
-                btn.removeClass('disabling').enable()
-            }, 500 )
-        } )
-        
-        reset()
     }
 }
 
@@ -53,45 +45,40 @@ var hide = function ( opts ) {
     html.velocitySlideUp( options )
 }
 
-var reset = function () {
-    disableScenesRequiredButtons()
-    
-    SectionScenes.reset()
-    SectionMosaic.reset()
-}
-
 var collapse = function () {
     var defaultSlideOpts = { delay: 50, duration: 500 }
-    SectionScenes.collapse( defaultSlideOpts )
-    SectionMosaic.collapse( defaultSlideOpts )
+    
+    SectionCreateMosaic.collapse( defaultSlideOpts )
 }
 
-var setSelectedScenesNumber = function ( landsatScenesNo, sentinelScenesNo ) {
-    if ( landsatScenesNo > 0 || sentinelScenesNo > 0 ) {
-        enableScenesRequiredButtons()
-    } else {
-        disableScenesRequiredButtons()
+var setActiveState = function ( e, state ) {
+    switch ( state.type ) {
+        case Model.TYPES.MOSAIC:
+            SectionCreateMosaic.show()
+            SectionChangeDetection.hide()
+            SectionClassify.hide()
+            
+            break;
+        case Model.TYPES.CHANGE_DETECTION:
+            SectionCreateMosaic.hide()
+            SectionChangeDetection.show()
+            SectionClassify.hide()
+            
+            break;
+        case Model.TYPES.CLASSIFY:
+            SectionCreateMosaic.hide()
+            SectionChangeDetection.hide()
+            SectionClassify.show()
+            
+            break;
     }
-    SectionScenes.setSelectedScenesNumber( landsatScenesNo, sentinelScenesNo )
-    SectionMosaic.setSelectedScenesNumber( landsatScenesNo, sentinelScenesNo )
 }
-
-var enableScenesRequiredButtons = function () {
-    html.find( '.btn-scenes-required' ).enable()
-}
-
-var disableScenesRequiredButtons = function () {
-    html.find( '.btn-scenes-required' ).disable()
-}
+EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setActiveState )
 
 module.exports = {
-    init                     : init
-    , show                   : show
-    , hide                   : hide
-    , reset                  : reset
-    , collapse               : collapse
-    , setSelectedScenesNumber: setSelectedScenesNumber
-    , setSortWeight          : SectionScenes.setSortWeight
-    , setOffsetToTargetDay   : SectionScenes.setOffsetToTargetDay
-    , setSelectedSensors     : SectionScenes.setSelectedSensors
+    init               : init
+    , show             : show
+    , hide             : hide
+    , collapse         : collapse
+    , resetCreateMosaic: SectionCreateMosaic.reset
 }

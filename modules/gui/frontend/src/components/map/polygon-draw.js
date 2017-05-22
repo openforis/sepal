@@ -7,18 +7,18 @@ var Events   = require( '../event/events' )
 var drawingManager = null
 var polygon        = null
 
+var layerOptions = {
+    fillColor    : "#FBFAF2",
+    fillOpacity  : 0.07,
+    strokeColor  : '#FBFAF2',
+    strokeOpacity: 0.15,
+    strokeWeight : 1,
+    clickable    : false,
+    editable     : false,
+    zIndex       : 1
+}
+
 var enable = function ( e ) {
-    
-    var layerOptions = {
-        fillColor    : "#FBFAF2",
-        fillOpacity  : 0.07,
-        strokeColor  : '#FBFAF2',
-        strokeOpacity: 0.15,
-        strokeWeight : 1,
-        clickable    : false,
-        editable     : false,
-        zIndex       : 1
-    }
     
     drawingManager = new google.maps.drawing.DrawingManager( {
         drawingMode          : google.maps.drawing.OverlayType.POLYGON,
@@ -34,6 +34,7 @@ var enable = function ( e ) {
     } )
     
     google.maps.event.addListener( drawingManager, 'overlaycomplete', function ( e ) {
+        clear()
         polygon = e.overlay
         
         EventBus.dispatch( Events.MAP.POLYGON_DRAWN, null, toGeoJSONString( polygon ), polygon )
@@ -55,6 +56,21 @@ var toGeoJSONString = function () {
     return string
 }
 
+var restoreDrawnAoi = function ( e, string ) {
+    var array = JSON.parse( string )
+    var path  = []
+    
+    $.each( array, function ( i, item ) {
+        path.push( { lat: item[ 1 ], lng: item[ 0 ] } )
+    } )
+    
+    polygon = new google.maps.Polygon()
+    polygon.setOptions( layerOptions )
+    polygon.setPath( path )
+    
+    EventBus.dispatch( Events.MAP.POLYGON_DRAWN, null, array, polygon, true )
+}
+
 var disable = function () {
     if ( drawingManager ) {
         drawingManager.setMap( null )
@@ -65,10 +81,14 @@ var clear = function () {
     if ( polygon ) {
         // polygon.setMap( null )
         EventBus.dispatch( Events.MAP.REMOVE_DRAWN_AOI_LAYER, null, polygon )
+        polygon = null
     }
 }
 
 EventBus.addEventListener( Events.MAP.POLYGON_DRAW, enable )
 EventBus.addEventListener( Events.MAP.POLYGON_CLEAR, clear )
+
+// restore model object
+EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.RESTORE_DRAWN_AOI, restoreDrawnAoi )
 
 EventBus.addEventListener( Events.SECTION.SHOW, disable )

@@ -22,6 +22,8 @@ var DatePicker = function ( parentContainer, disableYear ) {
         
     }
     
+    this.triggerChange = true
+    
     this.init()
 }
 
@@ -103,7 +105,8 @@ DatePicker.prototype._bindEvents = function ( property ) {
             $this.html.find( '.' + property + '-label' ).html( value )
             $( this ).addClass( 'active' )
             
-            $this.onChange( $this )
+            if ( $this.triggerChange )
+                $this.onChange( $this.year, $this.month, $this.day )
         }
     } )
 }
@@ -131,7 +134,7 @@ DatePicker.prototype.select = function ( property, value ) {
     a.click()
     
     var parent = a.parent()
-    if ( parent.hasClass( 'inner' ) ) {
+    if ( parent.hasClass( 'inner' ) && !parent.hasClass( 'opened' ) ) {
         var aGroup = parent.parent().find( 'a.group' )
         // console.log( aGroup.length )
         this.expandGroup( property, aGroup )
@@ -140,7 +143,7 @@ DatePicker.prototype.select = function ( property, value ) {
 
 DatePicker.prototype.expandGroup = function ( property, aGroup ) {
     var container = this.html.find( '.' + property )
-    // hide ohter
+    // hide others
     var opened    = container.find( '.inner.opened' )
     if ( opened.length == 0 ) {
         container.velocity( { height: "*=1.55" }, { duration: 1000 } )

@@ -6,14 +6,17 @@ var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
 var Loader   = require( '../loader/loader' )
 
-var SceneSelectionModel = require( '../scenes-selection/scenes-selection-m' )
-var SceneAreaModel      = require( '../scene-areas/scene-areas-m' )
-var SearchParams        = require( '../search/search-params' )
+var SearchRequestUtils = require( './../search/search-request-utils' )
 
-var requestScenes = function ( url, dataSet, scenes ) {
+var SceneSelectionModel = require( '../scenes-selection/scenes-selection-m' )
+
+var retrieveScenes = function ( e, state ) {
+    var data = { dataSet: state.sensorGroup }
+    SearchRequestUtils.addSceneIds( state, data )
+    
     var params = {
-        url      : url
-        , data   : { dataSet: dataSet, sceneIds: JSON.stringify( scenes ) }
+        url      : '/api/data/scenes/retrieve'
+        , data   : data
         , success: function () {
             EventBus.dispatch( Events.SECTION.TASK_MANAGER.CHECK_STATUS )
         }
@@ -21,92 +24,47 @@ var requestScenes = function ( url, dataSet, scenes ) {
     EventBus.dispatch( Events.AJAX.POST, null, params )
 }
 
-var retrieveLandsatScenes   = function () {
-    requestScenes( '/api/data/scenes/retrieve', SearchParams.SENSORS.LANDSAT, SceneSelectionModel.getSelectedSceneIds()[ SearchParams.SENSORS.LANDSAT ] )
-}
-var retrieveSentinel2Scenes = function () {
-    requestScenes( '/api/data/scenes/retrieve', SearchParams.SENSORS.SENTINEL2, SceneSelectionModel.getSelectedSceneIds()[ SearchParams.SENSORS.SENTINEL2 ] )
-}
-
-var requestBestScenes = function ( e ) {
+var requestBestScenes = function ( e, state ) {
     
-    var landsatRequestCompleted   = false
-    var sentinel2RequestCompleted = false
-    
-    var request = function ( sensor ) {
-        
-        var data = {
-            targetDayOfYearWeight: SearchParams.sortWeight
-            , cloudCoverTarget   : 0.0001
-            , minScenes          : SearchParams.minScenes
-            , maxScenes          : SearchParams.maxScenes
-            , dataSet            : sensor
-        }
-        switch ( sensor ) {
-            case SearchParams.SENSORS.LANDSAT:
-                data.sensorIds    = SearchParams.landsatSensors.join( ',' )
-                data.sceneAreaIds = SceneAreaModel.getLandsatAreaIds().join( ',' )
-                break
-            case SearchParams.SENSORS.SENTINEL2:
-                data.sensorIds    = SearchParams.sentinel2Sensors.join( ',' )
-                data.sceneAreaIds = SceneAreaModel.getSentinel2AreaIds().join( ',' )
-                break
-            
-        }
-        SearchParams.addDatesRequestParameters( data )
-        
-        var params = {
-            url      : '/api/data/best-scenes'
-            , data   : data
-            , type   : 'POST'
-            , success: function ( response ) {
-                
-                $.each( Object.keys( response ), function ( i, sceneAreaId ) {
-                    var scenes = response[ sceneAreaId ]
-                    $.each( scenes, function ( j, scene ) {
-                        EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SELECT, null, sceneAreaId, scene )
-                    } )
-                } )
-                
-                if ( sensor == SearchParams.SENSORS.LANDSAT )
-                    landsatRequestCompleted = true
-                else if ( sensor == SearchParams.SENSORS.SENTINEL2 )
-                    sentinel2RequestCompleted = true
-                
-                checkResponses()
-            }
-        }
-        
-        EventBus.dispatch( Events.AJAX.REQUEST, null, params )
+    var data = {
+        targetDayOfYearWeight: state.sortWeight
+        , cloudCoverTarget   : 0.0001
+        , minScenes          : state.minScenes
+        , maxScenes          : state.maxScenes
+        , dataSet            : state.sensorGroup
     }
+    SearchRequestUtils.addSceneAreaIds( state, data )
+    SearchRequestUtils.addSensorIds( state, data )
+    SearchRequestUtils.addDatesRequestParameters( state, data )
     
-    var checkResponses = function () {
-        if ( landsatRequestCompleted && sentinel2RequestCompleted ) {
+    var params = {
+        url         : '/api/data/best-scenes'
+        , data      : data
+        , beforeSend: function () {
+            Loader.show()
+        }
+        , success   : function ( response ) {
+            SceneSelectionModel.setState( state )
+            
+            $.each( Object.keys( response ), function ( i, sceneAreaId ) {
+                SceneSelectionModel.setSceneAreaId( sceneAreaId )
+                SceneSelectionModel.resetSelection()
+                
+                var scenes = response[ sceneAreaId ]
+                $.each( scenes, function ( j, scene ) {
+                    SceneSelectionModel.select( scene )
+                } )
+            } )
+            
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW )
+            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
             Loader.hide( { delay: 500 } )
         }
     }
-    
-    Loader.show()
+    EventBus.dispatch( Events.AJAX.POST, null, params )
     EventBus.dispatch( Events.SECTION.SCENES_SELECTION.RESET )
-    EventBus.dispatch( Events.SCENE_AREAS.RESET )
-    // EventBus.dispatch( Events.MAP.REMOVE_EE_LAYER )
-    
-    if ( SearchParams.landsatSensors.length > 0 ) {
-        request( SearchParams.SENSORS.LANDSAT )
-    } else {
-        landsatRequestCompleted = true
-    }
-    
-    if ( SearchParams.sentinel2Sensors.length > 0 ) {
-        request( SearchParams.SENSORS.SENTINEL2 )
-    } else {
-        sentinel2RequestCompleted = true
-    }
-    
 }
 
 //scenes section search retrieve events
-EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_LANDSAT_SCENES, retrieveLandsatScenes )
-EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SENTINEL2_SCENES, retrieveSentinel2Scenes )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_SCENES, retrieveScenes )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, requestBestScenes )

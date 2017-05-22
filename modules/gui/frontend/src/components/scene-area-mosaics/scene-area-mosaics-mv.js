@@ -9,39 +9,47 @@ var reset = function () {
     View.reset()
 }
 
-var addLandsatMosaic = function ( e, mapId, token ) {
-    View.addLandsatMosaic( mapId, token )
+var addMosaic = function ( e, mapId, token ) {
+    View.addMosaic( mapId, token )
+}
+// var addLandsatMosaic = function ( e, mapId, token ) {
+//     View.addLandsatMosaic( mapId, token )
+// }
+//
+// var addSentinel2Mosaic = function ( e, mapId, token ) {
+//     View.addSentinel2Mosaic( mapId, token )
+// }
+
+var toggleMosaicVisibility = function ( e ) {
+    View.toggleMosaicVisibility()
+}
+// var toggleLandsatMosaic = function ( e ) {
+//     View.toggleLandsatMosaic()
+// }
+//
+// var toggleSentinel2Mosaic = function ( e ) {
+//     View.toggleSentinel2Mosaic()
+// }
+
+var hideMosaic = function () {
+    View.hideMosaic()
 }
 
-var addSentinel2Mosaic = function ( e, mapId, token ) {
-    View.addSentinel2Mosaic( mapId, token )
+var showMosaic = function () {
+    View.showMosaic()
 }
 
-var toggleLandsatMosaic = function ( e ) {
-    View.toggleLandsatMosaic()
-}
-
-var toggleSentinel2Mosaic = function ( e ) {
-    View.toggleSentinel2Mosaic()
-}
-
-var hideActiveMosaic = function () {
-    View.hideActiveMosaic()
-}
-
-var showActiveMosaic = function () {
-    View.showActiveMosaic()
-}
-
-EventBus.addEventListener( Events.SCENE_AREAS.INIT, reset )
-EventBus.addEventListener( Events.SCENE_AREAS.RESET, reset )
+EventBus.addEventListener( Events.SECTION.SEARCH.REQUEST_SCENE_AREAS, reset )
+// EventBus.addEventListener( Events.SCENE_AREAS.RESET, reset )
 
 // add mosaic events
-EventBus.addEventListener( Events.SCENE_AREA_MOSAICS.LANDSAT.ADD, addLandsatMosaic )
-EventBus.addEventListener( Events.SCENE_AREA_MOSAICS.SENTINEL2.ADD, addSentinel2Mosaic )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, addMosaic )
+// EventBus.addEventListener( Events.SCENE_AREA_MOSAICS.LANDSAT.ADD, addLandsatMosaic )
+// EventBus.addEventListener( Events.SCENE_AREA_MOSAICS.SENTINEL2.ADD, addSentinel2Mosaic )
 
 //toggle visibility events
-EventBus.addEventListener( Events.SCENE_AREA_MOSAICS.LANDSAT.TOGGLE_VISIBILITY, toggleLandsatMosaic )
-EventBus.addEventListener( Events.SCENE_AREA_MOSAICS.SENTINEL2.TOGGLE_VISIBILITY, toggleSentinel2Mosaic )
-EventBus.addEventListener( Events.SECTION.SHOW, hideActiveMosaic )
-EventBus.addEventListener( Events.SECTION.REDUCE, showActiveMosaic )
+EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.TOGGLE_MOSAIC_VISIBILITY, toggleMosaicVisibility )
+// EventBus.addEventListener( Events.SCENE_AREA_MOSAICS.LANDSAT.TOGGLE_VISIBILITY, toggleLandsatMosaic )
+// EventBus.addEventListener( Events.SCENE_AREA_MOSAICS.SENTINEL2.TOGGLE_VISIBILITY, toggleSentinel2Mosaic )
+EventBus.addEventListener( Events.SECTION.SHOW, hideMosaic )
+EventBus.addEventListener( Events.SECTION.REDUCE, showMosaic )

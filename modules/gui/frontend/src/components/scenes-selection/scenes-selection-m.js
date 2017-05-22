@@ -1,38 +1,49 @@
 /**
  * @author Mino Togna
  */
-var SearchParams = require( './../search/search-params' )
 
-//scene area selection
+var state            = {}
 var sceneAreaId      = null
 var sceneAreaImages  = []
-var sceneAreaSensors = []
-var selectedImages   = {}
+var availableSensors = []
 
-var key = function ( image ) {
+var getSceneImageId = function ( image ) {
     return image.sceneId
 }
 
-var setSceneArea = function ( id, images ) {
-    sceneAreaId      = id
-    sceneAreaImages  = images
-    // sceneAreaImages  = {}
-    sceneAreaSensors = []
-    
-    $.each( images, function ( i, image ) {
-        // sceneAreaImages[ key( image ) ] = image
-        
-        if ( sceneAreaSensors.indexOf( image.sensor ) < 0 ) {
-            sceneAreaSensors.push( image.sensor )
-        }
-        
-    } )
-    // console.log( sceneAreaSensors )
+var getSceneAreaId = function ( id ) {
+    return sceneAreaId
 }
 
-var getSceneAreaImages = function ( sortWeight ) {
-    var ccWeight = 1 - sortWeight
-    var tdWeight = sortWeight
+var setSceneAreaId = function ( id ) {
+    sceneAreaId = id
+}
+
+var setState = function ( s ) {
+    state = s
+}
+
+var isSceneSelected = function ( scene ) {
+    var sceneId        = getSceneImageId( scene )
+    var selectedScenes = state.sceneAreas[ sceneAreaId ].selection
+    var selected       = selectedScenes && selectedScenes.indexOf( sceneId ) >= 0
+    return selected
+}
+
+var setSceneAreaImages = function ( images ) {
+    sceneAreaImages  = images
+    availableSensors = []
+    
+    $.each( images, function ( i, image ) {
+        if ( availableSensors.indexOf( image.sensor ) < 0 ) {
+            availableSensors.push( image.sensor )
+        }
+    } )
+}
+
+var getSortedSceneAreaImages = function () {
+    var ccWeight = 1 - state.sortWeight
+    var tdWeight = state.sortWeight
     
     var images = sceneAreaImages.slice()
     images     = images.sort( function ( a, b ) {
@@ -44,84 +55,36 @@ var getSceneAreaImages = function ( sortWeight ) {
     return images
 }
 
-var getSceneAreaSensors = function () {
-    return sceneAreaSensors
+var getAvailableSensors = function () {
+    return availableSensors
 }
 
-var getSceneAreaId = function () {
-    return sceneAreaId
+var select = function ( image ) {
+    var sceneId        = getSceneImageId( image )
+    var selectedScenes = state.sceneAreas[ sceneAreaId ].selection
+    selectedScenes.push( sceneId )
 }
 
-var getSceneAreaSelectedImages = function ( sceneAreaId ) {
-    return selectedImages[ sceneAreaId ]
+var deselect = function ( image ) {
+    var sceneId        = getSceneImageId( image )
+    var selectedScenes = state.sceneAreas[ sceneAreaId ].selection
+    selectedScenes.splice( selectedScenes.indexOf( sceneId ), 1 )
 }
 
-var getSelectedSceneIds = function () {
-    var selectedScenes                               = {}
-    selectedScenes[ SearchParams.SENSORS.LANDSAT ]   = []
-    selectedScenes[ SearchParams.SENSORS.SENTINEL2 ] = []
-    
-    $.each( Object.keys( selectedImages ), function ( i, sceneAreaId ) {
-        var selection = selectedImages[ sceneAreaId ]
-        $.each( Object.keys( selection ), function ( j, sceneImageId ) {
-            var sceneImg = selection[ sceneImageId ]
-            if ( sceneImg.dataSet == SearchParams.SENSORS.LANDSAT ) {
-                selectedScenes[ SearchParams.SENSORS.LANDSAT ].push( sceneImageId )
-            } else if ( sceneImg.dataSet == SearchParams.SENSORS.SENTINEL2 ) {
-                selectedScenes[ SearchParams.SENSORS.SENTINEL2 ].push( sceneImageId )
-            }
-        } )
-    } )
-    
-    return selectedScenes
-}
-
-var isSceneSelected = function ( scene ) {
-    var sceneId        = key( scene )
-    var selectedScenes = getSceneAreaSelectedImages( getSceneAreaId() )
-    var selected       = selectedScenes && Object.keys( selectedScenes ).indexOf( sceneId ) >= 0
-    return selected
-}
-
-var select = function ( sceneArea, image ) {
-    if ( !selectedImages[ sceneArea ] ) {
-        selectedImages[ sceneArea ] = {}
-    }
-    
-    var k                            = key( image )
-    selectedImages[ sceneArea ][ k ] = image
-}
-
-var deselect = function ( sceneArea, image ) {
-    var k = key( image )
-    delete selectedImages[ sceneArea ][ k ]
-    if ( Object.keys( selectedImages[ sceneArea ] ).length <= 0 ) {
-        delete selectedImages[ sceneArea ]
-    }
-}
-
-var reset = function () {
-    sceneAreaImages  = []
-    // sceneAreaImages  = {}
-    sceneAreaId      = null
-    sceneAreaSensors = []
-    selectedImages   = {}
-}
-
-var areasSelection = function () {
-    return Object.keys( selectedImages )
+var resetSelection = function () {
+    if ( state.sceneAreas && state.sceneAreas[ sceneAreaId ] )
+        state.sceneAreas[ sceneAreaId ].selection = []
 }
 
 module.exports = {
-    setSceneArea                : setSceneArea
-    , getSceneAreaImages        : getSceneAreaImages
-    , select                    : select
-    , deselect                  : deselect
-    , isSceneSelected           : isSceneSelected
-    , reset                     : reset
-    , getSceneAreaId            : getSceneAreaId
-    , getSceneAreaSelectedImages: getSceneAreaSelectedImages
-    , getSelectedSceneIds       : getSelectedSceneIds
-    , areasSelection            : areasSelection
-    , getSceneAreaSensors       : getSceneAreaSensors
+    setState                  : setState
+    , getSceneAreaId          : getSceneAreaId
+    , setSceneAreaId          : setSceneAreaId
+    , isSceneSelected         : isSceneSelected
+    , setSceneAreaImages      : setSceneAreaImages
+    , getSortedSceneAreaImages: getSortedSceneAreaImages
+    , getAvailableSensors     : getAvailableSensors
+    , select                  : select
+    , deselect                : deselect
+    , resetSelection          : resetSelection
 }

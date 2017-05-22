@@ -280,6 +280,11 @@ img {
     overflow-x: hidden;
 }
 
+.overflow-x-auto {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
 /* border radius */
 .border-radius-base {
     -webkit-border-top-left-radius: 0;

@@ -21,7 +21,7 @@ var showMessage = function ( msg, type ) {
     $message.html( msg )
     
     $( 'body' ).append( html )
-    html.removeClass( 'alert-success alert-info alert-warning alert-danger fade in' ).addClass( type ).alert().addClass( 'fade in' )
+    html.removeClass( 'alert-success alert-info alert-warning alert-danger fade show' ).addClass( type ).alert().addClass( 'fade show' )
     
     setTimeout( function () {
         // html.fadeOut()

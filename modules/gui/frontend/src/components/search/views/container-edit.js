@@ -1,15 +1,16 @@
 /**
  * @author Mino Togna
  */
-
-var Form = require( './search-form' )
+var EventBus = require( './../../event/event-bus' )
+var Events   = require( './../../event/events' )
+var Form     = require( './search-form' )
 
 var menu = null
 
 var sectionSearchForm      = null
 var sectionClassify        = null
 var sectionChangeDetection = null
-
+var state                  = {}
 
 var init = function ( container ) {
     
@@ -51,7 +52,14 @@ var hideSection = function ( section, opts ) {
     section.velocityFadeOut( opts )
 }
 
+var setState = function ( e, s ) {
+    state = s
+}
+
+EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setState )
+
 module.exports = {
-    init            : init
-    , setSensorGroup: Form.setSensorGroup
+    init: init
+    //deprecated
+    // , setSensorGroup: Form.setSensorGroup
 }

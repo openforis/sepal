@@ -1,0 +1,61 @@
+#search-retrieve {
+  .active-mosaics {
+    //> div {
+    //  display: flex;
+    //}
+    .active-mosaics-container {
+      //display: flex;
+      padding-bottom: .5rem;
+      //padding-top: .5rem;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+      border-radius: 0px !important;
+
+      .active-mosaics-btns {
+        padding-bottom: .5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .btn {
+
+          &.btn-mosaic {
+            background-color: transparent;
+            //background-color: rgba(255, 255, 255, 0.05);
+            border-top: 3px solid transparent;
+            border-bottom: 3px solid transparent;
+            border-left: none;
+            border-right: none;
+            padding-top: .7rem;
+            padding-bottom: .7rem;
+            font-weight: 600 !important;
+            font-size: .85rem;
+            text-transform: none!important;
+            &:active,
+            &:hover {
+              background-color: rgba(255, 255, 255, 0.1);
+            }
+            &.active {
+              border-bottom: 3px solid #b8a280;
+              background-color: rgba(184, 162, 128, 0.15);
+              &:active,
+              &:hover {
+                background-color: rgba(184, 162, 128, 0.15);
+              }
+            }
+          }
+
+          &.btn-save {
+            width: 2rem;
+            height: 2rem;
+          }
+
+          &:not(:last-child) {
+            margin-right: .2rem;
+          }
+        }
+
+      }
+    }
+
+  }
+}

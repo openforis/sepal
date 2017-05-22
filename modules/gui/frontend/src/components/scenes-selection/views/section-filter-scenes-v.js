@@ -2,12 +2,14 @@
  * @author Mino Togna
  */
 require( './section-filter-scenes/scenes-selection-filter.scss' )
+var moment   = require( 'moment' )
+var EventBus = require( '../../event/event-bus' )
+var Events   = require( '../../event/events' )
+var SModel   = require( './../../search/model/search-model' )
 
-var EventBus         = require( '../../event/event-bus' )
-var Events           = require( '../../event/events' )
-var LandsatSensors   = require( '../../sensors/landsat-sensors' )
-var Sentinel2Sensors = require( '../../sensors/sentinel2-sensors' )
-var SearchParams     = require( '../../search/search-params' )
+// var LandsatSensors   = require( '../../sensors/landsat-sensors' )
+// var Sentinel2Sensors = require( '../../sensors/sentinel2-sensors' )
+// var SearchParams     = require( '../../search/search-params' )
 
 var noUiSlider = require( 'nouislider' )
 require( '../../nouislider/nouislider.css' )
@@ -25,7 +27,9 @@ var sectionSentinel2Sensors = null
 var offsetTargetDayBtnPlus  = null
 var offsetTargetDayBtnMinus = null
 
-var init = function ( uiContainer ) {
+var state       = {}
+
+var init        = function ( uiContainer ) {
     container = $( uiContainer )
     
     var template = require( './section-filter-scenes/scenes-selection-filter.html' )
@@ -35,8 +39,8 @@ var init = function ( uiContainer ) {
     sectionBtns   = container.find( '.section-btn' )
     sectionAction = container.find( '.section-options' )
     
-    sectionLandsatSensors   = sectionAction.find( '.landsat-sensors' )
-    sectionSentinel2Sensors = sectionAction.find( '.sentinel2-sensors' )
+    sectionLandsatSensors   = sectionAction.find( '.LANDSAT-sensors' )
+    sectionSentinel2Sensors = sectionAction.find( '.SENTINEL2-sensors' )
     offsetTargetDayBtnPlus  = sectionAction.find( '.offset-target-day-btn-plus' )
     offsetTargetDayBtnMinus = sectionAction.find( '.offset-target-day-btn-minus' )
     
@@ -72,27 +76,26 @@ var init = function ( uiContainer ) {
         } )
         sortSlider.noUiSlider.on( 'change', function () {
             var sortWeight = sortSlider.noUiSlider.get()
-            // EventBus.dispatch( Events.SECTION.SCENES_SELECTION.SORT_CHANGE, null, sortWeight )
-            setSortWeight( sortWeight )
-            EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.WEIGHT_CHANGE, null, sortWeight )
+            state.sortWeight = sortWeight
+            
+            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
         } )
     }
     
     // target day
     offsetTargetDayBtnPlus.click( function ( e ) {
-        // EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, 1 )
-        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, 'section-filter-scenes', 1 )
+        state.offsetToTargetDay += 1
+        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
     } )
     offsetTargetDayBtnMinus.click( function ( e ) {
-        // EventBus.dispatch( Events.SECTION.SCENES_SELECTION.FILTER_TARGET_DAY_CHANGE, null, -1 )
-        EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.OFFSET_TARGET_DAY_CHANGE, 'section-filter-scenes', -1 )
+        state.offsetToTargetDay -= 1
+        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
     } )
     
-    // availableSensors
-    // sectionLandsatSensors.empty()
-    // sectionSentinel2Sensors.empty()
-    
-    var addSensors = function ( sensors, section, selectEvt, deselectEvt ) {
+    var addSensors = function ( sensors, section ) {
         section.empty()
         $.each( Object.keys( sensors ), function ( i, sensorId ) {
             var sensor = sensors[ sensorId ]
@@ -104,30 +107,27 @@ var init = function ( uiContainer ) {
                 e.preventDefault()
                 var evt = null
                 if ( btn.hasClass( 'active' ) ) {
-                    evt = Events.SECTION.SEARCH.SEARCH_PARAMS[ deselectEvt ]
+                    state.sensors.splice( state.sensors.indexOf( sensorId ), 1 )
                 } else {
-                    evt = evt = Events.SECTION.SEARCH.SEARCH_PARAMS[ selectEvt ]
+                    state.sensors.push( sensorId )
                 }
-                EventBus.dispatch( evt, null, sensorId )
+                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
             } )
             
             section.append( btn )
         } )
     }
-    addSensors( LandsatSensors, sectionLandsatSensors, 'SELECT_LANDSAT_SENSOR', 'DESELECT_LANDSAT_SENSOR' )
-    addSensors( Sentinel2Sensors, sectionSentinel2Sensors, 'SELECT_SENTINEL2_SENSOR', 'DESELECT_SENTINEL2_SENSOR' )
+    $.each( SModel.getSensorGroups(), function ( i, sGroup ) {
+        addSensors( SModel.getSensors( sGroup ), sectionAction.find( '.' + sGroup + '-sensors' ) )
+    } )
     toggleSensors()
 }
 
 var toggleSensors = function () {
     if ( sectionLandsatSensors && sectionLandsatSensors ) {
-        sectionLandsatSensors.hide()
-        sectionSentinel2Sensors.hide()
-        
-        if ( dataSet == SearchParams.SENSORS.LANDSAT )
-            sectionLandsatSensors.show()
-        else if ( dataSet == SearchParams.SENSORS.SENTINEL2 )
-            sectionSentinel2Sensors.show()
+        sectionAction.find( '.sensors' ).hide()
+        sectionAction.find( '.' + dataSet + '-sensors' ).show()
     }
 }
 
@@ -145,15 +145,8 @@ var showButtons = function () {
 
 var setSensors = function ( availableSensors, selectedSensors ) {
     
-    var section = null
-    var sensors = null
-    if ( dataSet == SearchParams.SENSORS.LANDSAT ) {
-        section = sectionLandsatSensors
-        sensors = LandsatSensors
-    } else if ( dataSet == SearchParams.SENSORS.SENTINEL2 ) {
-        section = sectionSentinel2Sensors
-        sensors = Sentinel2Sensors
-    }
+    var section = sectionAction.find( '.' + dataSet + '-sensors' )
+    var sensors = SModel.getSensors( dataSet )
     
     $.each( Object.keys( sensors ), function ( i, sensorId ) {
         var btn      = section.find( '.' + sensorId )
@@ -202,7 +195,7 @@ var setOffsetToTargetDay = function ( value ) {
     
     var textValue = ''
     if ( value == 0 ) {
-        textValue = SearchParams.targetDate.asMoment().format( 'YYYY' )
+        textValue = moment( state.targetDate ).format( 'YYYY' )
     } else {
         textValue = value + ' year'
         textValue += ( value > 1 ) ? 's' : ''
@@ -218,11 +211,15 @@ var setSortWeight = function ( sortWeight ) {
     container.find( '.td-sort' ).html( Math.round( sortWeight * 100 ) + '%' )
 }
 
+var updateState = function ( e, s ) {
+    state = s
+}
+EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, updateState )
+
 module.exports = {
     init                  : init
     , setSensors          : setSensors
     , setDataSet          : setDataSet
-    // , setSelectedSensors  : setSelectedSensors
     , setOffsetToTargetDay: setOffsetToTargetDay
     , showButtons         : showButtons
     , setSortWeight       : setSortWeight

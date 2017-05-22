@@ -40,7 +40,7 @@ var budgetExceededChange = function ( e, value ) {
 }
 
 var triggerChange = function () {
-    EventBus.dispatch( Events.SECTION.USERS.FILTER.CHANGED )
+    EventBus.dispatch( Events.SECTION.USERS.FILTER.ACTIVE_CHANGED )
 }
 
 // filter users methods

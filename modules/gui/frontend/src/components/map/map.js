@@ -18,6 +18,7 @@ var google = null
 var map    = null
 
 // AOI layers
+var aoiCode           = null
 var aoiLayer          = null
 var aoiDrawingManager = null
 var aoiDrawnPolygon   = null
@@ -39,17 +40,19 @@ var show = function () {
 }
 
 var zoomTo = function ( e, isoCode ) {
-    if ( aoiLayer ) {
-        aoiLayer.setMap( null )
+    if ( isoCode !== aoiCode ) {
+        if ( aoiLayer )
+            aoiLayer.setMap( null )
+        
+        SepalAois.loadBounds( isoCode, function ( bounds ) {
+            map.panToBounds( bounds )
+            map.fitBounds( bounds )
+        } )
+        
+        aoiLayer = SepalAois.getFusionTableLayer( isoCode )
+        aoiLayer.setMap( map )
+        aoiCode = isoCode
     }
-    
-    SepalAois.loadBounds( isoCode, function ( bounds ) {
-        map.panToBounds( bounds )
-        map.fitBounds( bounds )
-    } )
-    
-    aoiLayer = SepalAois.getFusionTableLayer( isoCode )
-    aoiLayer.setMap( map )
 }
 
 var addLayer = function ( e, layer ) {
@@ -62,6 +65,7 @@ var removeAoiLayer = function ( e ) {
     if ( aoiLayer ) {
         aoiLayer.setMap( null )
         aoiLayer = null
+        aoiCode  = null
     }
 }
 
@@ -74,9 +78,30 @@ var addDrawnAoiLayer = function ( e, layer ) {
 
 var removeDrawnAoiLayer = function ( e, layer ) {
     if ( layer ) {
+        if ( aoiDrawnPolygon )
+            aoiDrawnPolygon.setMap( null )
         layer.setMap( null )
+        
         aoiDrawingManager = null
         aoiDrawnPolygon   = null
+    }
+}
+
+var ploygonDrawn = function ( e, polygonGeoJSON, polygon, zoom ) {
+    if ( aoiLayer ) {
+        aoiLayer.setMap( null )
+        aoiLayer = null
+    }
+    aoiDrawnPolygon = polygon
+    aoiDrawnPolygon.setMap( map )
+    
+    if ( zoom ) {
+        var bounds = new google.maps.LatLngBounds()
+        aoiDrawnPolygon.getPath().forEach( function ( a ) {
+            bounds.extend( a )
+        } )
+        map.panToBounds( bounds )
+        map.fitBounds( bounds )
     }
 }
 
@@ -175,23 +200,15 @@ var onAppReduce = function ( e, type ) {
     addLayer( aoiDrawnPolygon )
 }
 
-var ploygonDrawn = function ( e, polygonGeoJSON, polygon ) {
-    if ( aoiLayer ) {
-        aoiLayer.setMap( null )
-        aoiLayer = null
-    }
-    aoiDrawnPolygon = polygon
-}
-
 EventBus.addEventListener( Events.APP.LOAD, show )
 EventBus.addEventListener( Events.MAP.ZOOM_TO, zoomTo )
 EventBus.addEventListener( Events.MAP.ADD_LAYER, addLayer )
 EventBus.addEventListener( Events.MAP.REMOVE_AOI_LAYER, removeAoiLayer )
-EventBus.addEventListener( Events.MAP.POLYGON_DRAWN, ploygonDrawn )
 
 EventBus.addEventListener( Events.MAP.ADD_EE_MOSAIC, addEEMosaic )
 EventBus.addEventListener( Events.MAP.REMOVE_EE_MOSAIC, removeEEMosaic )
 
+EventBus.addEventListener( Events.MAP.POLYGON_DRAWN, ploygonDrawn )
 EventBus.addEventListener( Events.MAP.ADD_DRAWN_AOI_LAYER, addDrawnAoiLayer )
 EventBus.addEventListener( Events.MAP.REMOVE_DRAWN_AOI_LAYER, removeDrawnAoiLayer )
 

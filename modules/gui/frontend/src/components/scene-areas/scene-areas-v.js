@@ -16,6 +16,7 @@ var SceneAreasView = function () {
 
 SceneAreasView.prototype.add = function ( scenes, visible ) {
     if ( this.layer ) {
+        this.layer.hide()
         this.layer.setMap( null )
     }
     

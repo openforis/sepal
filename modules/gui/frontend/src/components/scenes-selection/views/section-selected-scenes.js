@@ -4,9 +4,10 @@
 var moment  = require( 'moment' )
 var numeral = require( 'numeral' )
 
-var SearchParams     = require( '../../search/search-params' )
-var LandsatSensors   = require( '../../sensors/landsat-sensors' )
-var Sentinel2Sensors = require( '../../sensors/sentinel2-sensors' )
+var SModel           = require( './../../search/model/search-model' )
+// var SearchParams     = require( '../../search/search-params' )
+// var LandsatSensors   = require( '../../sensors/landsat-sensors' )
+// var Sentinel2Sensors = require( '../../sensors/sentinel2-sensors' )
 var Sensors          = null
 
 var EventBus  = require( '../../event/event-bus' )
@@ -40,11 +41,12 @@ var reset = function ( sceneAreaId ) {
 }
 
 var setDataSet = function ( dataSet ) {
-    if ( dataSet == SearchParams.SENSORS.LANDSAT ) {
-        Sensors = LandsatSensors
-    } else if ( dataSet == SearchParams.SENSORS.SENTINEL2 ) {
-        Sensors = Sentinel2Sensors
-    }
+    Sensors = SModel.getSensors( dataSet )
+    // if ( dataSet == SearchParams.SENSORS.LANDSAT ) {
+    //     Sensors = LandsatSensors
+    // } else if ( dataSet == SearchParams.SENSORS.SENTINEL2 ) {
+    //     Sensors = Sentinel2Sensors
+    // }
 }
 
 var add = function ( sceneImage ) {

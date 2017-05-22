@@ -113,6 +113,8 @@ SceneAreasOverlayView.prototype.onAdd = function () {
             nodes.show( 0 )
         else
             nodes.hide( 0 )
+        
+        this.ready = true
     }
 }
 
@@ -126,14 +128,14 @@ SceneAreasOverlayView.prototype.onRemove = function () {
 }
 
 SceneAreasOverlayView.prototype.show = function () {
-    if ( this.container ) {
+    if ( this.container && !this.visible ) {
         this.visible = true
         $( this.container.node() ).children().fadeIn()
     }
 }
 
 SceneAreasOverlayView.prototype.hide = function () {
-    if ( this.container ) {
+    if ( this.container && this.visible ) {
         this.visible = false
         $( this.container.node() ).children().fadeOut()
     }
