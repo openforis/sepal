@@ -36,11 +36,11 @@ def requires_role(*role):
         return wrapped
     return wrapper
 
-def propertyFileToDict(filename):
+def propertiesFileToDict(filename):
     properties = {}
     with open(filename, 'r') as f:
         for line in f:
-            line = line.strip('\n')
+            line = line.rstrip()
             if line.startswith('#'):
                 pass
             else:

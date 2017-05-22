@@ -7,7 +7,7 @@ from flask_cors import cross_origin
 from .. import app
 from .. import mongo
 
-from ..common.utils import import_sepal_auth, requires_auth, propertyFileToDict, allowed_file, generate_id, listToCSVRowString
+from ..common.utils import import_sepal_auth, requires_auth, propertiesFileToDict, allowed_file, generate_id, listToCSVRowString
 
 from werkzeug.utils import secure_filename
 
@@ -88,9 +88,13 @@ def projectAdd():
             project.update({
                 'id': generate_id(result[0]),
                 'filename': result[0],
-                'plots': result[1],
-                'codeLists': result[2]
+                'codeLists': result[1],
+                'properties': result[2],
+                'plots': result[3]
             })
+        else:
+            print('No valid extension')
+            return 'KO', 400
     elif projectType == PROJECT_TYPE_TRAINING_DATA:
         codeList = getCodeListFromRequest(request)
         codeLists = [codeList]
@@ -252,22 +256,24 @@ def saveFileFromRequest(file):
                         })
                     codeLists.append(codeList)
     # properties
-    properties = propertyFileToDict(os.path.join(extractDir, 'project_definition.properties'))
-    property = properties.get('csv', 'test_plots.ced')
-    head, tail = os.path.split(property)
+    propertiesFileFullPath = os.path.join(extractDir, 'project_definition.properties')
+    properties = propertiesFileToDict(propertiesFileFullPath)
     # plots
     plots = []
-    if os.path.isfile(os.path.join(extractDir, tail)):
-        with open(os.path.join(extractDir, tail), 'rb') as csvfile:
+    csvProperty = properties.get('csv', 'test_plots.ced')
+    csvFilePath = csvProperty.replace('${project_path}/', '')
+    csvFileFullPath = os.path.join(extractDir, csvFilePath)
+    if os.path.isfile(csvFileFullPath):
+        with open(csvFileFullPath, 'rb') as csvfile:
             csvreader = csv.reader(csvfile, delimiter=',', quotechar='"')
-            next(csvreader, None)
+            next(csvreader, None) # skip header
             for row in csvreader:
                 plots.append({
                     'id': row[0],
                     'YCoordinate': row[1],
                     'XCoordinate': row[2]
                 })
-    return (uniqueFilename, plots, codeLists)
+    return (uniqueFilename, codeLists, properties, plots)
 
 def getLayersFromRequest(request):
     overlays = []
