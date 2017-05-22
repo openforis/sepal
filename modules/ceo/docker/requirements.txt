@@ -1,0 +1,12 @@
+#
+Flask>=0.12.1
+Flask-Cors==3.0.2
+Flask-Migrate==1.8.0
+Flask-PyMongo==0.4.1
+
+pyasn1==0.2.3
+pyasn1-modules==0.0.8
+rsa==3.4.2
+
+#
+git+git://github.com/openforis/gee-gateway.git#egg=gee-gateway

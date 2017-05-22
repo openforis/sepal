@@ -1,18 +1,16 @@
 #!/bin/bash
 set -e
 
-database=$1
-password=$(cat $2)
-timestamp=$(date +"%d-%B-%y_%H-%M")
+password=$(cat $1)
 
 echo "Backup started"
 
 bash -c "mysqldump \
     -p'$password' \
     -h mysql \
-    --all-databases
+    --all-databases \
     --single-transaction \
     --quick \
-    > /backup/backup_$timestamp.sql"
+    > /backup/dump.sql"
 
 echo "Backup completed"

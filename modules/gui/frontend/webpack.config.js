@@ -127,7 +127,6 @@ module.exports = {
             // '*'                      : { target: 'http://localhost:8001', secure: false, changeOrigin: true }
             // '*'                      : { target: 'http://localhost:9999' }
             '*': { target: 'https://vagrant', secure: false } // Vagrant box
-            
         }
     }
 }

@@ -2,14 +2,16 @@ import logging
 from threading import Thread
 
 import time
+import ee
 from ee.batch import Task
 
 logger = logging.getLogger(__name__)
 
 
 class EarthEngineStatus(object):
-    def __init__(self, task_id, listener):
+    def __init__(self, task_id, credentials, listener):
         self.task_id = task_id
+        self.credentials = credentials
         self.listener = listener
         self.running = True
         self.thread = Thread(
@@ -30,6 +32,7 @@ class EarthEngineStatus(object):
             self.running = False
 
     def _poll_status(self):
+        ee.InitializeThread(self.credentials)
         logging.debug('Starting polling status of Google Earth Engine export task: ' + self.task_id)
         try:
             while self.running:

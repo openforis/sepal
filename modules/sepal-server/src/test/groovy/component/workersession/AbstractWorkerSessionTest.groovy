@@ -28,12 +28,14 @@ abstract class AbstractWorkerSessionTest extends Specification {
     final eventDispatcher = new SynchronousEventDispatcher()
     final instanceManager = new FakeInstanceManager()
     final budgetManager = new FakeBudgetManager()
+    final googleOAuthGateway = new FakeGoogleOAuthGateway()
     final clock = new FakeClock()
     final component = new WorkerSessionComponent(
             connectionManager,
             eventDispatcher,
             budgetManager,
             instanceManager,
+            googleOAuthGateway,
             [new InstanceType(testInstanceType, testInstanceType, testInstanceType, 123d, 1)],
             clock)
 

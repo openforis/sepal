@@ -11,14 +11,16 @@ class ProxyServer {
     ProxyServer(ProxyConfig config) {
         def sslContext = SslContextFactory.create(config.keyFile, config.certificateFile)
         handler = new RootHandler(config)
+        def processorCount = Runtime.getRuntime().availableProcessors()
         server = Undertow.builder()
                 .addHttpListener(config.httpPort, '0.0.0.0')
                 .addHttpsListener(config.httpsPort, '0.0.0.0', sslContext)
                 .setHandler(handler)
-                .setIoThreads(Runtime.getRuntime().availableProcessors())
-                .setSocketOption(Options.WRITE_TIMEOUT, 30 * 1000)
-                .setServerOption(UndertowOptions.REQUEST_PARSE_TIMEOUT, 30 * 1000)
-                .setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 30 * 1000)
+                .setIoThreads(processorCount)
+                .setWorkerThreads(processorCount * 32)
+                .setSocketOption(Options.WRITE_TIMEOUT, 60 * 1000)
+                .setServerOption(UndertowOptions.REQUEST_PARSE_TIMEOUT, 60 * 1000)
+                .setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 60 * 1000)
                 .build()
         config.endpointConfigs.each { proxy(it) }
     }

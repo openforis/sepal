@@ -48,7 +48,7 @@ class GoogleEarthEngineDownload implements TaskExecutor {
         FileOwner.setOnDir(workingDir, username) // Make sure we have a workingDir with proper ownership
         scheduler.schedule {
             def status = gateway.status(this.geeTaskId)
-            LOG.info("Status of task $task: $status")
+            LOG.info("Status of task $task.id: $status")
             this.status.set(status)
             if (status.hasFailed())
                 throw new Failed(status.message)

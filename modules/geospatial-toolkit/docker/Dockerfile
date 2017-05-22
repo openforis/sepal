@@ -5,7 +5,6 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     GDAL_DATA=/usr/share/gdal/2.1
 
 ADD config/OFGTMethod /usr/local/share/OFGTMethod
-ADD script/processing/* /usr/local/bin/
 RUN chmod +x /usr/local/bin/*; sync && mkdir /script
 
 ADD script/init_image.sh /script
@@ -13,6 +12,9 @@ RUN chmod u+x /script/init_image.sh; sync && /script/init_image.sh
 
 ADD script/init_java.sh /script
 RUN chmod u+x /script/init_java.sh; sync && /script/init_java.sh
+
+ADD script/init_gcloud.sh /script
+RUN chmod u+x /script/init_gcloud.sh; sync && /script/init_gcloud.sh
 
 ADD script/init_oft.sh /script
 RUN chmod u+x /script/init_oft.sh; sync && /script/init_oft.sh

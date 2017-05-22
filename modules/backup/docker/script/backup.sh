@@ -17,7 +17,6 @@ python /script/system_backup.py $bucket $(date "+%Y-%m-%d") \
  '/data/letsencrypt:letsencrypt' \
  '/data/mysql:mysql --exclude * --include *.pem' \
  '/data/ssh-gateway:ssh-gateway' \
- '/data/ssl:ssl' \
  '/data/user:user' \
  '/backup:backup'
 echo "Created system backup"

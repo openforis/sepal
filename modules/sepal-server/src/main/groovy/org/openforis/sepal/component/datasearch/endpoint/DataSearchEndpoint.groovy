@@ -37,6 +37,7 @@ class DataSearchEndpoint {
                 response.contentType = "application/json"
                 def dataSet = params['dataSet'] as DataSet ?: DataSet.LANDSAT
                 def sceneAreas = component.submit(new FindSceneAreasForAoi(
+                        sepalUser,
                         dataSet,
                         toAoi(params)))
                 def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
@@ -58,7 +59,7 @@ class DataSearchEndpoint {
                         targetDayOfYear: targetDayOfYear,
                         targetDayOfYearWeight: targetDayOfYearWeight,
                         bands: bands
-                ))
+                ), sepalUser)
 
                 send(toJson(
                         mapId: mapLayer.id,

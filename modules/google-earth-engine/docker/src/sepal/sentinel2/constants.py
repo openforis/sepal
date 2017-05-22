@@ -25,7 +25,9 @@ scale_by_band = {
     WATER: 60,
     CIRRUS: 60,
     SWIR1: 20,
-    SWIR2: 20
+    SWIR2: 20,
+    DATE: 20,
+    DAYS: 20
 }
 
 viz_by_bands = {
@@ -41,15 +43,13 @@ viz_by_bands = {
                                          'gamma': 1.7},
     'SWIR2, NIR, GREEN': lambda params: {'bands': _bands(SWIR2, NIR, GREEN), 'min': 500, 'max': 5000,
                                          'gamma': 1.7},
-    'temp': lambda params: {'bands': 'temp', 'min': 200, 'max': 400, 'palette': '0000FF, FF0000'},
-    'cluster': lambda params: {'bands': 'cluster', 'min': 0, 'max': 5000},
-    'date': lambda params: {
+    'DATE': lambda params: {
         'bands': 'date',
         'min': params['from_days_since_epoch'],
         'max': params['to_days_since_epoch'],
         'palette': '00FFFF, 000099'
     },
-    'days': lambda params: {
+    'DAYS': lambda params: {
         'bands': 'days',
         'min': 0,
         'max': 183,

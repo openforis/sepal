@@ -7,6 +7,7 @@ import groovymvc.RequestContext
 import groovymvc.security.PathRestrictions
 import groovymvc.security.RequestAuthenticator
 import groovymvc.security.UserProvider
+import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.user.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -51,6 +52,11 @@ class PathRestrictionsFactory {
                         username: u.username,
                         email: u.email,
                         organization: u.organization,
+                        googleTokens: u.googleTokens ? new GoogleTokens(
+                                refreshToken: u.googleTokens.refreshToken,
+                                accessToken: u.googleTokens.accessToken,
+                                accessTokenExpiryDate: u.googleTokens.accessTokenExpiryDate
+                        ) : null,
                         status: u.status as User.Status,
                         roles: u.roles?.toSet() ?: new HashSet<>()
                 )

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
     sssd \
@@ -19,6 +20,9 @@ sed -e '/.*pam_motd\.so.*/ s/^#*/#/' -i /etc/pam.d/login
 sed -e '/PrintMotd / s/^#*/#/' -i /etc/ssh/sshd_config
 sed -e '/PrintLastLog / s/^#*/#/' -i /etc/ssh/sshd_config
 
+# Prevent locale from being forwarded by client
+sed -e '/AcceptEnv / s/^#*/#/' -i /etc/ssh/sshd_config
+
 # Get authorized keys from LDAP, disable message of the day and last log printout, disable options for speeding up access
 printf '%s\n' \
     'AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys' \
@@ -38,14 +42,13 @@ echo
 echo "*********************************"
 echo "*** Installing RStudio Server ***"
 echo "*********************************"
-echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
-	&& locale-gen en_US.utf8 \
-	&& /usr/sbin/update-locale LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
-wget https://download2.rstudio.org/rstudio-server-0.99.484-amd64.deb
-gdebi -n rstudio-server-0.99.484-amd64.deb
-rm -f rstudio-*
+rstudio=rstudio-server-0.99.491-amd64.deb
+wget https://download2.rstudio.org/$rstudio
+gdebi -n $rstudio
+printf '%s\n' \
+    "server-app-armor-enabled=0" \
+    >> /etc/rstudio/rserver.conf
+rm -f $rstudio
 
 echo
 echo "*******************************"
@@ -56,9 +59,3 @@ wget https://download3.rstudio.org/ubuntu-12.04/x86_64/$shinyServer
 gdebi -n $shinyServer
 chown shiny:root /usr/lib/R/library
 rm $shinyServer
-
-echo
-echo "***********************"
-echo "*** Installing QGIS ***"
-echo "***********************"
-apt-get -y install qgis

@@ -16,6 +16,13 @@
     "cached": "true"
   },
   {
+    "prefix": "true",
+    "path": "/ceo/",
+    "target": "http://ceo:7766/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
     "prefix": "false",
     "path": "/gateone/ws",
     "target": "https://gateone:8000/ws/",

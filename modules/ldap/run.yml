@@ -54,5 +54,5 @@
 
 - name: "ldap | Wait until initialized"
   wait_for: path=/data/ldap/module_initialized
-  when: "{{ new_start_time != start_timestamp }}"
+  when: new_start_time != start_timestamp
 

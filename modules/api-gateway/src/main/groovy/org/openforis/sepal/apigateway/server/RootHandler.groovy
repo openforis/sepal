@@ -32,13 +32,17 @@ class RootHandler implements HttpHandler {
     private static final int SESSION_TIMEOUT = 30 * 60 // 30 minutes
     private final int httpsPort
     private final String authenticationUrl
+    private final String currentUserUrl
+    private final String refreshGoogleAccessTokenUrl
     private final PathHandler handler = Handlers.path()
     private final SessionManager sessionManager
 
     RootHandler(ProxyConfig config) {
         this.httpsPort = config.httpsPort
         this.authenticationUrl = config.authenticationUrl
-        sessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
+        this.currentUserUrl = config.currentUserUrl
+        this.refreshGoogleAccessTokenUrl = config.refreshGoogleAccessTokenUrl
+        sessionManager = new InMemorySessionManager('sandbox-web-proxy', 4096, true)
         this.sessionManager.defaultSessionTimeout = SESSION_TIMEOUT
         handler.addExactPath(config.logoutPath, LogoutHandler.create())
     }
@@ -48,7 +52,7 @@ class RootHandler implements HttpHandler {
         if (endpointConfig.rewriteRedirects)
             endpointHandler = new RedirectRewriteHandler(endpointHandler)
         if (endpointConfig.authenticate)
-            endpointHandler = new AuthenticatingHandler(authenticationUrl, endpointHandler)
+            endpointHandler = new AuthenticatingHandler(authenticationUrl, currentUserUrl, refreshGoogleAccessTokenUrl, endpointHandler)
         if (endpointConfig.https)
             endpointHandler = new HttpsRedirectHandler(httpsPort, endpointHandler)
         if (endpointConfig.cached)
@@ -151,28 +155,37 @@ class RootHandler implements HttpHandler {
                     .loadTrustMaterial(null, new TrustSelfSignedStrategy())
                     .build()
             def xnioSsl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY, sslContext)
-            def proxyClient = new LoadBalancingProxyClient()
+            def proxyClient = new LoadBalancingProxyClient(
+                    maxQueueSize: 4096,
+                    connectionsPerThread: 20,
+                    softMaxConnectionsPerThread: 10
+            )
             proxyClient.addHost(URI.create(target), xnioSsl)
             proxyClient.ttl = 30 * 1000
             proxyHandler = new PatchedProxyHandler(
                     proxyClient,
-                    ResponseCodeHandler.HANDLE_404
+                    -1,
+                    ResponseCodeHandler.HANDLE_404,
+                    false,
+                    false,
+                    3
             )
         }
 
         void handleRequest(HttpServerExchange exchange) throws Exception {
+            LOG.debug(exchange.toString())
             exchange.addResponseCommitListener(new ResponseCommitListener() {
                 void beforeCommit(HttpServerExchange ex) {
-                    LOG.debug("Before response commit. statusCode: $ex.statusCode, exchange: $exchange")
+                    if (LOG.traceEnabled) LOG.trace("Before response commit. statusCode: $ex.statusCode, exchange: $exchange")
                 }
             })
             exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
                 void exchangeEvent(HttpServerExchange ex, ExchangeCompletionListener.NextListener nextListener) {
-                    LOG.debug("Exchange complete. statusCode: $ex.statusCode, exchange: $ex")
+                    if (LOG.traceEnabled) LOG.trace("Exchange complete. statusCode: $ex.statusCode, exchange: $ex")
                     nextListener.proceed()
                 }
             })
-            LOG.info("Forwarding. target: $target, exchange: $exchange")
+            LOG.trace("Forwarding. target: $target, exchange: $exchange")
             proxyHandler.handleRequest(exchange)
         }
     }

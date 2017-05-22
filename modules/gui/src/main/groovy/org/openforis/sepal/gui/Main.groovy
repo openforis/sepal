@@ -14,9 +14,12 @@ class Main {
 
     Main() {
         def resourceHandler = resource(new ClassPathResourceManager(getClass().classLoader, 'dist'))
+        def processorCount = Runtime.getRuntime().availableProcessors()
         server = Undertow.builder()
                 .addHttpListener(7667, "0.0.0.0")
                 .setHandler(resourceHandler)
+                .setIoThreads(processorCount)
+                .setWorkerThreads(processorCount * 32)
                 .build()
         server.start()
         addShutdownHook { server.stop() }

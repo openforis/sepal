@@ -37,8 +37,8 @@ printf '%s\n' \
 
 cp /etc/environment /etc/R/Renviron.site
 
-ln -sf /conf/ldap.conf /etc/ldap.conf
-ln -sf /conf/ldap.conf /etc/ldap/ldap.conf
+ln -sf /config/ldap.conf /etc/ldap.conf
+ln -sf /config/ldap.conf /etc/ldap/ldap.conf
 
 echo "$ldap_host ldap" >> /etc/hosts
 

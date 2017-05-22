@@ -37,5 +37,5 @@
 
 - name: "mysql-backup | Wait until initialized"
   wait_for: path=/data/mysql-backup/module_initialized
-  when: "{{ new_start_time != start_timestamp }}"
+  when: new_start_time != start_timestamp
 

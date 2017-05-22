@@ -2,6 +2,7 @@ package org.openforis.sepal.component.datasearch.adapter
 
 import groovyx.net.http.RESTClient
 import org.openforis.sepal.component.datasearch.api.*
+import org.openforis.sepal.user.User
 
 import static groovy.json.JsonOutput.toJson
 import static groovyx.net.http.ContentType.JSON
@@ -14,11 +15,12 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
         this.targetUri = targetUri
     }
 
-    Collection<SceneArea> findSceneAreasInAoi(DataSet dataSet, Aoi aoi) {
+    Collection<SceneArea> findSceneAreasInAoi(DataSet dataSet, Aoi aoi, User user) {
         def response = endpoint.get(
                 path: 'sceneareas',
                 contentType: JSON,
-                query: [dataSet: dataSet.name(), aoi: toJson(aoi.params)]
+                query: [dataSet: dataSet.name(), aoi: toJson(aoi.params)],
+                headers: ['sepal-user': toJson(user)]
         )
         return response.data.collect {
             def polygon = it.polygon.size() == 1 ? it.polygon.first() : it.polygon
@@ -29,7 +31,7 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
 
     }
 
-    MapLayer preview(AutomaticSceneSelectingMapQuery query) {
+    MapLayer preview(AutomaticSceneSelectingMapQuery query, User user) {
         def image = [
                 type                 : 'automatic',
                 dataSet              : query.dataSet.name(),
@@ -46,14 +48,16 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
                 path: 'preview',
                 requestContentType: URLENC,
                 contentType: JSON,
-                body: [image: toJson(image)])
+                body: [image: toJson(image)],
+                headers: ['sepal-user': toJson(user)]
+        )
         return new MapLayer(
                 id: response.data.mapId,
                 token: response.data.token
         )
     }
 
-    MapLayer preview(PreselectedScenesMapQuery query) {
+    MapLayer preview(PreselectedScenesMapQuery query, User user) {
         def image = [
                 type                 : 'manual',
                 dataSet              : query.dataSet.name(),
@@ -67,7 +71,9 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
                 path: 'preview',
                 requestContentType: URLENC,
                 contentType: JSON,
-                body: [image: toJson(image)])
+                body: [image: toJson(image)],
+                headers: ['sepal-user': toJson(user)]
+        )
         return new MapLayer(
                 id: response.data.mapId,
                 token: response.data.token

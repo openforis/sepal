@@ -3,7 +3,9 @@ package org.openforis.sepal.component.user.endpoint
 import groovymvc.Controller
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.user.command.*
+import org.openforis.sepal.component.user.query.GoogleAccessRequestUrl
 import org.openforis.sepal.component.user.query.ListUsers
+import org.openforis.sepal.component.user.query.LoadUser
 import org.openforis.sepal.endpoint.InvalidRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -85,7 +87,7 @@ class UserEndpoint {
                     send toJson([status: 'success', token: tokenStatus.token, user: tokenStatus.user, message: 'Token is valid'])
                 else {
                     def reason = tokenStatus?.expired ? 'expired' : 'invalid'
-                    send toJson([status: 'failure', token: tokenStatus.token, reason: reason, message: "Token is $reason"])
+                    send toJson([status: 'failure', token: tokenStatus?.token, reason: reason, message: "Token is $reason"])
                 }
             }
 
@@ -112,12 +114,14 @@ class UserEndpoint {
 
             post('/login') { // Just a nice looking endpoint the frontend can call to trigger authentication
                 response.contentType = 'application/json'
-                send toJson(currentUser)
+                send toJson(sepalUser)
             }
 
             get('/current') {
                 response.contentType = 'application/json'
-                send toJson(currentUser)
+                def query = new LoadUser(username: sepalUser.username)
+                def user = component.submit(query)
+                send toJson(user)
             }
 
             post('/current/password') {
@@ -126,7 +130,7 @@ class UserEndpoint {
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = currentUser.username
+                command.username = sepalUser.username
                 def success = component.submit(command)
                 send toJson(success ?
                         [status: 'success', message: 'Password changed'] :
@@ -136,13 +140,14 @@ class UserEndpoint {
 
             post('/current/details') {
                 response.contentType = 'application/json'
-                def command = new UpdateUserDetails(usernameToUpdate: currentUser.username)
+                def command = new UpdateUserDetails(usernameToUpdate: sepalUser.username)
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = currentUser.username
-                command.usernameToUpdate = currentUser.username
+                command.username = sepalUser.username
+                command.usernameToUpdate = sepalUser.username
                 def user = component.submit(command)
+                response.addHeader('sepal-user-updated', 'true')
                 send toJson(user)
             }
 
@@ -152,7 +157,7 @@ class UserEndpoint {
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = currentUser.username
+                command.username = sepalUser.username
                 def user = component.submit(command)
                 send toJson(user)
             }
@@ -170,15 +175,57 @@ class UserEndpoint {
                 def errors = bindAndValidate(command)
                 if (errors)
                     throw new InvalidRequest(errors)
-                command.username = currentUser.username
+                command.username = sepalUser.username
                 component.submit(command)
                 send toJson([status: 'success', message: 'Invitation sent'])
             }
 
             post('/delete', [ADMIN]) {
                 response.contentType = 'application/json'
-                // TODO: Implement...
+                def command = new DeleteUser(username: params.required('username', String))
+                component.submit(command)
                 send toJson([status: 'success', message: 'User deleted'])
+            }
+
+            get('/google/access-request-url') {
+                response.contentType = 'application/json'
+                def url = component.submit(new GoogleAccessRequestUrl(destinationUrl: params.destinationUrl))
+                send toJson([url: url as String])
+            }
+
+            get('/google/access-request-callback') {
+                response.contentType = 'application/json'
+                component.submit(
+                        new AssociateGoogleAccount(
+                                username: sepalUser.username,
+                                authorizationCode: params.required('code', String)
+                        ))
+                response.addHeader('sepal-user-updated', 'true')
+                response.sendRedirect(params.required('state', String))
+            }
+
+            post('/google/revoke-access') {
+                response.contentType = 'application/json'
+                if (!sepalUser.googleTokens)
+                    return send(toJson([status: 'success', message: 'No tokens to revoke']))
+                component.submit(
+                        new RevokeGoogleAccountAccess(
+                                username: sepalUser.username,
+                                tokens: sepalUser.googleTokens
+                        ))
+                response.addHeader('sepal-user-updated', 'true')
+                send toJson([status: 'success', message: 'Access to Google account revoked'])
+            }
+
+            post('/google/refresh-access-token') {
+                response.contentType = 'application/json'
+                def tokens = component.submit(
+                        new RefreshGoogleAccessToken(
+                                username: sepalUser.username,
+                                tokens: sepalUser.googleTokens
+                        ))
+                response.addHeader('sepal-user-updated', 'true')
+                send toJson(tokens)
             }
         }
     }

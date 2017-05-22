@@ -1,9 +1,35 @@
 #!/usr/bin/env bash
+set -e
 
 username=$1
+echo "*** Deleting user '$username' ***"
 
-ldapdeleteuserfromgroup $username sepalUsers
-ldapdeleteuser $username
-ldapdeletegroup $username
+if [[ `lsldap|grep -i "memberUid: $username$"` ]]; then
+    echo "Deleting user '$username' from sepalUsers group"
+    ldapdeleteuserfromgroup $username sepalUsers
+else
+    echo "User '$username' not in sepalUsers group"
+fi
 
+
+if [[ `lsldap|grep -i "dn: uid=$username,ou=People,dc=sepal,dc=org$"` ]]; then
+    echo "Deleting user '$username'"
+    ldapdeleteuser $username
+else
+    echo "User '$username' does not exist"
+fi
+
+if [[ `lsldap|grep -i "dn: cn=$username,ou=Groups,dc=sepal,dc=org$"` ]]; then
+    echo "Deleting group '$username'"
+    ldapdeletegroup $username
+else
+    echo "Group '$username' does not exist"
+fi
+
+echo "Deleting keys: /home/$username"
 rm -rf /home/$username
+
+echo "Deleting user data: /sepal/home/$username"
+rm -rf /sepal/home/$username
+
+echo "*** User '$username' deleted ***"

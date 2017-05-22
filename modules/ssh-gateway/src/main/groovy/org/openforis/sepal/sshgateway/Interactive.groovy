@@ -9,6 +9,7 @@ import java.text.DecimalFormat
 
 class Interactive {
     private static final Logger LOG = LoggerFactory.getLogger(this)
+    private static final int CONFIRM_WHEN_LESS_THAN_HOURS = 10
     private final SepalClient sepalClient
     private final SshSessionCommand sessionCommand
 
@@ -156,7 +157,24 @@ class Interactive {
                 readCreateSelection(sandboxInfo)
                 return
             }
-            createSession(instanceTypes[selectedIndex])
+            def selectedInstanceType = instanceTypes[selectedIndex]
+            def spendingLeft = sandboxInfo.spending.monthlyInstanceBudget - sandboxInfo.spending.monthlyInstanceSpending
+            def hoursLeft = Math.floor(spendingLeft / selectedInstanceType.hourlyCost) as int
+            if (hoursLeft <= 0) {
+                println("You don't have enough resources to run this session. Please consider " +
+                        "reducing the size of your selected instance, or contact a SEPAL administrator to increase " +
+                        "your resource limits.\n\n")
+                promptCreate(sandboxInfo)
+                return
+            }
+            println("You can run this session for $hoursLeft hours. If you require more processing time, please consider " +
+                    "reducing the size of your selected instance, or contact a SEPAL administrator to increase " +
+                    "your resource limits.")
+            if (hoursLeft <= CONFIRM_WHEN_LESS_THAN_HOURS)
+                confirmSessionCreation(sandboxInfo, selectedInstanceType)
+            else {
+                createSession(selectedInstanceType)
+            }
         } else {
             if ('j' == selection && sandboxInfo.sessions)
                 promptJoin(sandboxInfo)
@@ -169,8 +187,16 @@ class Interactive {
         }
     }
 
+    private void confirmSessionCreation(sandboxInfo, instanceType) {
+        def selection = readLine("\nAre you sure you want to continue (y/N): ")
+        if (selection.equals('y'))
+            createSession(instanceType)
+        else
+            promptCreate(sandboxInfo)
+    }
+
     private void createSession(Map instanceType) {
-        print '\nSession is starting. This might start a new server, which would take several minutes.\nPlease wait...'
+        print '\nSession is starting. This might start a new server, which could take several minutes.\nPlease wait...'
         def session = sepalClient.createSession(instanceType) {
             print '.'
         }

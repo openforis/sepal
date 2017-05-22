@@ -1,16 +1,33 @@
 import json
 import logging
 
+import ee
 from flask import Flask, Blueprint, Response, request
 
+import sepal
 from sepal import Aoi, image_spec_factory
-from sepal import credentials
+from sepal import service_account_credentials
 from sepal.download.drive_cleanup import DriveCleanup
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 
 drive_cleanup = None
+
+
+@http.before_request
+def before():
+    sepal.init_ee()
+
+
+@http.route('/healthcheck', methods=['GET'])
+def healthcheck():
+    try:
+        ee.Feature(ee.Geometry.Point(0, 0)).getMapId()
+    except Exception:
+        logging.info('User not whitelisted. user: ' + str(request.headers.get('sepal-user', '[No sepal-user header]')))
+        return 'NOT-WHITELISTED', 400
+    return 'OK', 200
 
 
 @http.route('/preview', methods=['POST'])
@@ -25,6 +42,7 @@ def scene_areas():
     aoi = Aoi.create(json.loads(request.values['aoi']))
     areas = aoi.scene_areas(request.values.get('dataSet', 'LANDSAT'))
     return Response(json.dumps(areas), mimetype='application/json')
+
 
 @http.route('/best-scenes')
 def best_scenes():
@@ -46,7 +64,7 @@ def best_scenes():
 
 def init():
     global drive_cleanup
-    drive_cleanup = DriveCleanup(credentials)
+    drive_cleanup = DriveCleanup(service_account_credentials)
     drive_cleanup.start()
 
 

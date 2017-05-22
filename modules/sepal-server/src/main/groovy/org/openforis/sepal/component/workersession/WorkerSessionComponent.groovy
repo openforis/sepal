@@ -10,7 +10,9 @@ import org.openforis.sepal.component.workerinstance.command.CloseSessionOnInstan
 import org.openforis.sepal.component.workersession.adapter.BudgetComponentAdapter
 import org.openforis.sepal.component.workersession.adapter.InstanceComponentAdapter
 import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository
+import org.openforis.sepal.component.workersession.adapter.RestGoogleOAuthGateway
 import org.openforis.sepal.component.workersession.api.BudgetManager
+import org.openforis.sepal.component.workersession.api.GoogleOAuthGateway
 import org.openforis.sepal.component.workersession.api.InstanceManager
 import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.workersession.command.*
@@ -21,6 +23,7 @@ import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
 import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.SystemClock
 
 import javax.sql.DataSource
@@ -31,16 +34,18 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
     private final Clock clock
     private final List<InstanceType> instanceTypes
 
-    WorkerSessionComponent(
+    static WorkerSessionComponent create(
             BudgetComponent budgetComponent,
             WorkerInstanceComponent workerInstanceComponent,
             HostingServiceAdapter hostingServiceAdapter,
             DataSource dataSource) {
-        this(
+        def config = new WorkerSessionConfig()
+        new WorkerSessionComponent(
                 new SqlConnectionManager(dataSource),
                 new AsynchronousEventDispatcher(),
                 new BudgetComponentAdapter(budgetComponent),
                 new InstanceComponentAdapter(hostingServiceAdapter.instanceTypes, workerInstanceComponent),
+                new RestGoogleOAuthGateway(config.googleOAuthEndpoint),
                 hostingServiceAdapter.instanceTypes,
                 new SystemClock()
         )
@@ -51,6 +56,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
             HandlerRegistryEventDispatcher eventDispatcher,
             BudgetManager budgetManager,
             InstanceManager instanceManager,
+            GoogleOAuthGateway googleOAuthGateway,
             List<InstanceType> instanceTypes,
             Clock clock) {
         super(connectionManager, eventDispatcher)
@@ -68,7 +74,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         command(CloseSessionOnInstance, new CloseSessionOnInstanceHandler(sessionRepository, closeSessionHandler))
         command(CloseSessionsWithoutInstance, new CloseSessionsWithoutInstanceHandler(sessionRepository, instanceManager, eventDispatcher))
         command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(sessionRepository, instanceManager))
-        command(Heartbeat, new HeartbeatHandler(sessionRepository))
+        command(Heartbeat, new HeartbeatHandler(sessionRepository, googleOAuthGateway))
         command(CloseSessionsForUsersExceedingBudget,
                 new CloseSessionsForUsersExceedingBudgetHandler(budgetManager, closeUserSessionsHandler))
 
@@ -104,5 +110,14 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
 
     InstanceType getDefaultInstanceType() {
         return instanceTypes.first()
+    }
+
+    private static class WorkerSessionConfig {
+        final String googleOAuthEndpoint
+
+        WorkerSessionConfig() {
+            def c = new Config('workerSession.properties')
+            googleOAuthEndpoint = c.googleOAuthEndpoint
+        }
     }
 }

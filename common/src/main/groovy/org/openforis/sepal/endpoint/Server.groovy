@@ -40,8 +40,11 @@ final class Server implements Lifecycle {
         manager.deploy()
 
         def httpHandler = manager.start()
+        def processorCount = Runtime.getRuntime().availableProcessors()
         server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
+                .setIoThreads(processorCount)
+                .setWorkerThreads(processorCount * 32)
                 .setHandler(httpHandler)
                 .build()
     }

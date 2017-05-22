@@ -54,10 +54,10 @@ class DriveDownload(object):
         completed = True
         for file_index, drive_file in enumerate(drive_files):
             if not self._download_file(folder_id, drive_file, file_index, len(drive_files)):
-                self._delete(folder_id)
                 completed = False
                 break
 
+        self._delete(folder_id)
         if completed:
             self.listener.update_status({
                 'state': 'ACTIVE',
@@ -66,37 +66,47 @@ class DriveDownload(object):
 
     def _download_file(self, folder_id, drive_file, file_index, file_count):
         logging.debug('Downloading %s from Google Drive: ' % str(drive_file['name']))
-        try:
-            request = self.drive.files().get_media(fileId=drive_file['id'])
-            downloaded_file = open(self.dir + '/' + drive_file['name'], 'w')
-            downloader = MediaIoBaseDownload(downloaded_file, request)
 
-            modified_time = self._touch(folder_id)
-            done = False
-            while self.running and not done:
-                if self._seconds_since(modified_time) > 5 * 60:  # Heartbeat after 5 minutes download
-                    modified_time = self._touch(folder_id)
-                status, done = downloader.next_chunk()
-                if not self.canceled:
+        max_retries = 3
+        for retry in range(0, max_retries):
+            try:
+                request = self.drive.files().get_media(fileId=drive_file['id'])
+                downloaded_file = open(self.dir + '/' + drive_file['name'], 'w')
+                downloader = MediaIoBaseDownload(downloaded_file, request)
+
+                modified_time = self._touch(folder_id)
+                done = False
+                while self.running and not done:
+                    if self._seconds_since(modified_time) > 5 * 60:  # Heartbeat after 5 minutes download
+                        modified_time = self._touch(folder_id)
+                    status, done = downloader.next_chunk()
+                    if not self.canceled:
+                        self.listener.update_status({
+                            'state': 'ACTIVE',
+                            'step': 'DOWNLOADING',
+                            'description': "Downloaded %d%% of file %d of %d." % (
+                                int(status.progress() * 100), file_index + 1, file_count)})
+                if self.canceled:
                     self.listener.update_status({
-                        'state': 'ACTIVE',
-                        'step': 'DOWNLOADING',
-                        'description': "Downloaded %d%% of file %d of %d." % (
-                            int(status.progress() * 100), file_index + 1, file_count)})
-            if self.canceled:
-                self.listener.update_status({
-                    'state': 'CANCELED',
-                    'description': "Canceled"})
-                return False
-            self._delete(drive_file['id'])
-        except Exception:
-            logger.exception('Download from Google Drive failed. Path: ' + self.file_name)
-            self.listener.update_status({
-                'state': 'FAILED',
-                'description': 'Download from Google Drive failed'})
-            self.stop()
-            return False
-        return True
+                        'state': 'CANCELED',
+                        'description': "Canceled"})
+                    return False  # Canceled
+                self._delete(drive_file['id'])
+                return True # Succeeded
+            except Exception:
+                logger.exception(
+                    'Download from Google Drive failed. file: ' + drive_file['name'] + ', retry: ' + str(retry)
+                )
+
+        logger.exception(
+            'Giving up download from Google Drive after ' + str(max_retries) +
+            ' retries. file: ' + drive_file['name']
+        )
+        self.listener.update_status({
+            'state': 'FAILED',
+            'description': 'Download from Google Drive failed'})
+        self.stop()
+        return False # Failed
 
     def _touch(self, folder_id):
         now = datetime.utcnow()

@@ -60,13 +60,15 @@ class SandboxWebProxy {
         httpSessionManager = new InMemorySessionManager('sandbox-web-proxy', 1000, true)
         httpSessionManager.setDefaultSessionTimeout(sessionDefaultTimeout)
         endpointProvider = new EndpointProvider(httpSessionManager, sandboxSessionManager, portByEndpoint)
+        def processorCount = Runtime.getRuntime().availableProcessors()
         this.server = Undertow.builder()
                 .addHttpListener(port, "0.0.0.0")
                 .setHandler(createHandler(portByEndpoint))
-                .setIoThreads(Runtime.getRuntime().availableProcessors())
-                .setSocketOption(Options.WRITE_TIMEOUT, 30 * 1000)
-                .setServerOption(UndertowOptions.REQUEST_PARSE_TIMEOUT, 30 * 1000)
-                .setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 30 * 1000)
+                .setIoThreads(processorCount)
+                .setWorkerThreads(processorCount * 32)
+                .setSocketOption(Options.WRITE_TIMEOUT, 60 * 1000)
+                .setServerOption(UndertowOptions.REQUEST_PARSE_TIMEOUT, 60 * 1000)
+                .setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 60 * 1000)
                 .build()
     }
 
@@ -113,6 +115,8 @@ class SandboxWebProxy {
             LOG.debug("Handling request. exchange $exchange")
             exchange.addResponseCommitListener(new ResponseCommitListener() {
                 void beforeCommit(HttpServerExchange ex) {
+                    // Force applications to be allowed to run inside frames
+                    ex.responseHeaders.remove(HttpString.tryFromString('X-Frame-Options'))
                     LOG.debug("Before response commit. statusCode: $ex.statusCode, exchange $ex")
                 }
             })

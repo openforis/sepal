@@ -21,6 +21,7 @@
     links:
     - "ldap:ldap"
     - "mysql:mysql"
+    - "google-earth-engine:google-earth-engine"
     volumes:
     - "/data/user:/data"
     - "/data/sepal/home:/sepal/home" # User data dir, to setup initial structure/remove when user is deleted
@@ -37,6 +38,8 @@
       SMTP_PORT_SEPAL_ENV: "{{ smtp_port }}"
       SMTP_USERNAME_SEPAL_ENV: "{{ smtp_username }}"
       SMTP_PASSWORD_SEPAL_ENV: "{{ smtp_password }}"
+      GOOGLE_OAUTH_CLIENT_ID_SEPAL_ENV: "{{ google_oauth_client_id }}"
+      GOOGLE_OAUTH_CLIENT_SECRET_SEPAL_ENV: "{{ google_oauth_client_secret }}"
   register: container
 
 # Check is container is started/restarted by checking if container start time changed after executing the
@@ -51,5 +54,5 @@
 
 - name: "user | Wait until initialized"
   wait_for: path=/data/user/module_initialized
-  when: "{{ new_start_time != start_timestamp }}"
+  when: new_start_time != start_timestamp
 

@@ -25,12 +25,6 @@ var Sensors = {
         id       : 'LANDSAT_TM',
         name     : 'Landsat 4-5 TM',
         shortName: 'L4-5 TM'
-    },
-    
-    'LANDSAT_MSS': {
-        id       : 'LANDSAT_MSS',
-        name     : 'Landsat 1-5 MSS',
-        shortName: 'L1-5 MSS'
     }
 }
 

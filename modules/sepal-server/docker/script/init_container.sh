@@ -15,6 +15,7 @@ chmod -R 770 /etc/sepal
 
 template /config/sepal.properties /etc/sepal/sepal.properties
 template /config/workerInstance.properties /etc/sepal/workerInstance.properties
+template /config/workerSession.properties /etc/sepal/workerSession.properties
 template /config/budget.properties /etc/sepal/budget.properties
 template /config/dataSearch.properties /etc/sepal/dataSearch.properties
 

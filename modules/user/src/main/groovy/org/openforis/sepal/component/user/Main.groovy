@@ -15,7 +15,7 @@ class Main extends AbstractMain {
 
     Main() {
         def serverConfig = new ServerConfig()
-        def userComponent = start UserComponent.create(serverConfig.host, serverConfig.ldapHost)
+        def userComponent = start UserComponent.create(serverConfig)
         def endpoints = new Endpoints(
                 PathRestrictionsFactory.create(),
                 userComponent
@@ -28,7 +28,7 @@ class Main extends AbstractMain {
             def instance = new Main()
             addShutdownHook { instance.stop() }
         } catch (Exception e) {
-            LOG.error('Failed to start Sepal', e)
+            LOG.error('Failed to start user module', e)
             System.exit(1)
         }
     }
@@ -39,12 +39,20 @@ class ServerConfig {
     final int port
     final String host
     final String ldapHost
+    final String googleOAuthClientId
+    final String googleOAuthClientSecret
+    final String googleEarthEngineEndpoint
+    final String homeDirectory
 
     ServerConfig() {
         def c = new Config('user-server.properties')
         port = c.integer('port')
         host = c.host
         ldapHost = c.ldapHost
+        googleOAuthClientId = c.googleOAuthClientId
+        googleOAuthClientSecret = c.googleOAuthClientSecret
+        googleEarthEngineEndpoint = c.googleEarthEngineEndpoint
+        homeDirectory = c.homeDirectory
     }
 }
 

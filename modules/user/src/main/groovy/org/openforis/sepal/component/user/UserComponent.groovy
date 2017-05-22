@@ -6,11 +6,11 @@ import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.user.adapter.*
 import org.openforis.sepal.component.user.api.EmailGateway
 import org.openforis.sepal.component.user.api.ExternalUserDataGateway
+import org.openforis.sepal.component.user.api.GoogleEarthEngineWhitelistChecker
 import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.endpoint.UserEndpoint
 import org.openforis.sepal.component.user.internal.TokenManager
-import org.openforis.sepal.component.user.query.ListUsers
-import org.openforis.sepal.component.user.query.ListUsersHandler
+import org.openforis.sepal.component.user.query.*
 import org.openforis.sepal.database.DatabaseConfig
 import org.openforis.sepal.database.DatabaseMigration
 import org.openforis.sepal.endpoint.EndpointRegistry
@@ -25,17 +25,21 @@ import org.openforis.sepal.util.SystemClock
 class UserComponent extends DataSourceBackedComponent implements EndpointRegistry {
     private final MessageBroker messageBroker
 
-    static UserComponent create(String sepalHost, String ldapHost) {
+    static UserComponent create(ServerConfig serverConfig) {
         def databaseConfig = new DatabaseConfig()
         new DatabaseMigration(databaseConfig).migrate()
         def connectionManager = new SqlConnectionManager(databaseConfig.createConnectionPool())
         return new UserComponent(
                 connectionManager,
                 new TerminalBackedExternalUserDataGateway(),
-                new SmtpEmailGateway(sepalHost, new EmailServer()),
-                new LdapUsernamePasswordVerifier(ldapHost),
+                new SmtpEmailGateway(serverConfig.host, new EmailServer()),
+                new LdapUsernamePasswordVerifier(serverConfig.ldapHost),
                 new RmbMessageBroker(connectionManager),
                 new AsynchronousEventDispatcher(),
+                new RestBackedGoogleOAuthClient(
+                        serverConfig.host, serverConfig.googleOAuthClientId, serverConfig.googleOAuthClientSecret),
+                new RestGoogleEarthEngineWhitelistChecker(serverConfig.googleEarthEngineEndpoint),
+                new GoogleAccessTokenFileGateway(serverConfig.homeDirectory),
                 new SystemClock())
     }
 
@@ -46,7 +50,11 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
             UsernamePasswordVerifier usernamePasswordVerifier,
             MessageBroker messageBroker,
             HandlerRegistryEventDispatcher eventDispatcher,
-            Clock clock) {
+            GoogleOAuthClient googleOAuthClient,
+            GoogleEarthEngineWhitelistChecker googleEarthEngineWhitelistChecker,
+            GoogleAccessTokenFileGateway googleAccessTokenFileGateway,
+            Clock clock
+    ) {
         super(connectionManager, eventDispatcher)
         this.messageBroker = messageBroker
         def userRepository = new JdbcUserRepository(connectionManager)
@@ -59,7 +67,13 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
         command(UpdateUserDetails, new UpdateUserDetailsHandler(userRepository))
         command(ChangePassword, new ChangePasswordHandler(usernamePasswordVerifier, externalUserDataGateway))
         command(RequestPasswordReset, new RequestPasswordResetHandler(userRepository, emailGateway, messageBroker, clock))
+        command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository, googleEarthEngineWhitelistChecker, googleAccessTokenFileGateway))
+        command(RefreshGoogleAccessToken, new RefreshGoogleAccessTokenHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway))
+        command(RevokeGoogleAccountAccess, new RevokeGoogleAccountAccessHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway))
+        command(DeleteUser, new DeleteUserHandler(externalUserDataGateway, userRepository, messageBroker))
+        query(LoadUser, new LoadUserHandler(userRepository))
         query(ListUsers, new ListUsersHandler(userRepository))
+        query(GoogleAccessRequestUrl, new GoogleAccessRequestUrlHandler(googleOAuthClient))
     }
 
     void onStart() {

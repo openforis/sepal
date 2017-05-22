@@ -2,11 +2,14 @@ package component.user
 
 import fake.*
 import org.openforis.sepal.component.user.UserComponent
+import org.openforis.sepal.component.user.adapter.GoogleAccessTokenFileGateway
 import org.openforis.sepal.component.user.adapter.SmtpEmailGateway
 import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.query.ListUsers
+import org.openforis.sepal.component.user.query.LoadUser
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.user.User
 import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.EmailServer
@@ -28,7 +31,10 @@ class AbstractUserTest extends Specification {
     final emailGateway = new SmtpEmailGateway('localhost', new EmailServer(new Config(smtpConfig)))
     final messageBroker = new FakeMessageBroker()
     final eventDispatcher = new SynchronousEventDispatcher()
+    final googleOAuthClient = new FakeGoogleOAuthClient()
+    final googleEarthEngineWhitelistChecker = new FakeGoogleEarthEngineWhitelistChecker()
     final clock = new FakeClock()
+    final homeDirectory = File.createTempDir()
     final component = new UserComponent(
             connectionManager,
             externalUserDataGateway,
@@ -36,6 +42,9 @@ class AbstractUserTest extends Specification {
             externalUserDataGateway,
             messageBroker,
             eventDispatcher,
+            googleOAuthClient,
+            googleEarthEngineWhitelistChecker,
+            new GoogleAccessTokenFileGateway(homeDirectory.absolutePath),
             clock
     )
 
@@ -47,6 +56,13 @@ class AbstractUserTest extends Specification {
 
     def cleanup() {
         mailServer.stop()
+        homeDirectory.deleteDir()
+    }
+
+    User loadUser(String username) {
+        component.submit(
+                new LoadUser(username: username)
+        )
     }
 
     User inviteUser(Map args = [:]) {
@@ -85,10 +101,14 @@ class AbstractUserTest extends Specification {
         )
     }
 
-    User activeUser(Map args =[:]) {
+    User activeUser(Map args = [:]) {
         inviteUser(args)
         def token = mailServer.token
         return activateUser(token, args.password ?: testPassword)
+    }
+
+    User pendingUser(Map args = [:]) {
+        return inviteUser(args)
     }
 
     User activeUserWithPassword(String password) {
@@ -100,6 +120,14 @@ class AbstractUserTest extends Specification {
         component.submit(new ListUsers())
     }
 
+    GoogleTokens associateGoogleAccount(Map args = [:]) {
+        component.submit(new AssociateGoogleAccount(username: args.username ?: testUsername))
+    }
+
+
+    File googleAccessTokenFile(String username) {
+        new File(new File(homeDirectory, username), '.google-access-token')
+    }
 
     private final username(Map args) {
         args.username ?: testUsername

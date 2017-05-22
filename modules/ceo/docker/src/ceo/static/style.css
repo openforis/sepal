@@ -1,0 +1,21 @@
+body {
+    font-family: "Ubuntu", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #fff;
+    background-color: rgba(17,18,21,.9);
+}
+
+navbar-inverse {
+    background-color: rgba(17,18,21,.9);
+}
+
+.table > tbody > tr > td {
+    vertical-align: middle;
+}
+
+.modal {
+    color: black;
+}
+
+#list a.evaluated {
+    background-color: #dff0d8;
+}

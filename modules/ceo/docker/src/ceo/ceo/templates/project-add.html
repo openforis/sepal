@@ -1,0 +1,213 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<form enctype="multipart/form-data" action="api/project" method="post">
+    <div class="container">
+        <div class="form-group row">
+            <label class="col-2 col-form-label">Name</label>
+            <div class="col-10">
+                <input class="form-control" type="text" name="name" />
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-2 col-form-label">Scale (m)</label>
+            <div class="col-10">
+                <input class="form-control" type="text" name="radius" />
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-2">Type</label>
+            <div class="col-8">
+                <div class="form-check form-check-inline">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="radio" name="projectType" id="inlineRadio1" value="CEP" checked>&nbsp;CEP
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="radio" name="projectType" id="inlineRadio2" value="TRAINING-DATA">&nbsp;TRAINNG DATA
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="form-group row cep-row">
+            <label class="col-2 col-form-label">CEP</label>
+            <div class="col-10">
+                <input class="form-control-file" type="file" name="file" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <button id="add-subform-gee" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add Google Earth Engine layer
+                    </button>
+                    <button id="add-subform-digitalglobe" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add DigitalGlobe layer
+                    </button>
+                    <button id="add-subform-gibs" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add GIBS layer
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" id="submit-btn">
+                        <i class="fa fa-floppy-o" aria-hidden="true"></i>&nbsp;Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row data-row" id="codelist-subform-container" style="display: none;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <h2><i class="fa fa-list" aria-hidden="true"></i>&nbsp;Code List</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-info" id="add-subform-codelist-value">
+                                <i class="fa fa-list" aria-hidden="true"></i>&nbsp;Add value
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row codelist-values-subform-container"></div>
+            </div>
+        </div>
+        <div class="row" id="subform-container"></div>
+    </div>
+</form>
+
+<div style="display: none;" id="gee-gateway-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="gee-gateway" />
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Google Earth Engine</h2>
+            </div>
+            <div class="col-6">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
+            </div>
+        </div>
+        {% include "project-subform-gee.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="digitalglobe-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="digitalglobe" />
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;DigitalGlobe</h2>
+            </div>
+            <div class="col-6">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
+            </div>
+        </div>
+        {% include "project-subform-digitalglobe.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="gibs-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="gibs" />
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GIBS (Global Imagery Browse Services)</h2>
+            </div>
+            <div class="col-4">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
+            </div>
+        </div>
+        {% include "project-subform-gibs.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="codelist-values-subform-template" class="subform-template">
+    <div class="container">
+        <div class="form-group row">
+            <div class="offset-5 col-5">
+                <input type="text" class="form-control" name="codeListCode[]" />
+            </div>
+            <div class="col-2">
+                <button type="submit" class="btn btn-danger remove-subform float-right">
+                    <i class="fa fa-trash-o" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+$('input[type="radio"][name="projectType"]').change(function(e) {
+    var projectType = $(this).val();
+    if (projectType == 'CEP') {
+        $('.cep-row').show();
+        $('.cep-row input').prop('disabled', false);
+        $('.data-row').hide();
+    } else if (projectType == 'TRAINING-DATA') {
+        $('.cep-row').hide();
+        $('.cep-row input').prop('disabled', true);
+        $('.data-row').show();
+    }
+});
+
+$('#add-subform-gee').click(function(e) {
+    e.preventDefault();
+    var subform = $('#gee-gateway-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(function(e) {
+        e.preventDefault();
+        $(this).closest('.subform-template').remove();
+    });
+});
+
+$('#add-subform-digitalglobe').click(function(e) {
+    e.preventDefault();
+    var subform = $('#digitalglobe-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(function(e) {
+        e.preventDefault();
+        $(this).closest('.subform-template').remove();
+    });
+});
+
+$('#add-subform-gibs').click(function(e) {
+    e.preventDefault();
+    var subform = $('#gibs-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(function(e) {
+        e.preventDefault();
+        $(this).closest('.subform-template').remove();
+    });
+});
+
+$('#add-subform-codelist-value').click(function(e) {
+    e.preventDefault();
+    var container = $('#codelist-subform-container').find('.codelist-values-subform-container');
+    var subform = $('#codelist-values-subform-template').clone().removeAttr('id').appendTo(container).show();
+    $('.remove-subform', subform).click(function(e) {
+        e.preventDefault();
+        $(this).closest('.subform-template').remove();
+    });
+});
+
+$(document).ready(function() {
+    var projectType = $('input[type="radio"][name="projectType"]');
+    if (projectType == 'CEP') {
+        $('.cep-row').show();
+        $('.cep-row input').prop('disabled', false);
+        $('.data-row').hide();
+    } else if (projectType == 'TRAINING-DATA') {
+        $('.cep-row').hide();
+        $('.cep-row input').prop('disabled', true);
+        $('.data-row').show();
+    }
+});
+
+</script>
+
+{% endblock %}

@@ -5,6 +5,7 @@ import groovy.sql.Sql
 import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.security.Roles
 import org.openforis.sepal.transaction.SqlConnectionProvider
+import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.user.User
 
 class JdbcUserRepository implements UserRepository {
@@ -24,13 +25,18 @@ class JdbcUserRepository implements UserRepository {
 
     void updateUserDetails(User user) {
         sql.executeUpdate('''
-                UPDATE sepal_user SET name = ?, email = ?, organization = ? 
-                WHERE username = ?''', [user.name, user.email, user.organization, user.username])
+                UPDATE sepal_user SET name = ?, email = ?, organization = ?, update_time = ? 
+                WHERE username = ?''', [user.name, user.email, user.organization, new Date(), user.username])
+    }
+
+    void deleteUser(String username) {
+        sql.execute('DELETE FROM sepal_user WHERE username = ?', [username])
     }
 
     List<User> listUsers() {
         sql.rows('''
-                SELECT id, username, name, email, organization, admin, system_user, status 
+                SELECT id, username, name, email, organization, admin, system_user, status, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration
                 FROM sepal_user 
                 ORDER BY creation_time DESC''').collect {
             createUser(it)
@@ -39,7 +45,8 @@ class JdbcUserRepository implements UserRepository {
 
     User lookupUser(String username) {
         def row = sql.firstRow('''
-                SELECT id, username, name, email, organization, admin, system_user, status 
+                SELECT id, username, name, email, organization, admin, system_user, status, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration 
                 FROM sepal_user 
                 WHERE username = ?''', [username])
         if (!row)
@@ -49,7 +56,8 @@ class JdbcUserRepository implements UserRepository {
 
     User findUserByEmail(String email) {
         def row = sql.firstRow('''
-                SELECT id, username, name, email, organization, admin, system_user, status 
+                SELECT id, username, name, email, organization, admin, system_user, status, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration
                 FROM sepal_user 
                 WHERE email = ?''', [email])
         return row ? createUser(row) : null
@@ -57,13 +65,14 @@ class JdbcUserRepository implements UserRepository {
 
     void updateToken(String username, String token, Date tokenGenerationTime) {
         sql.executeUpdate('''
-                UPDATE sepal_user SET token = ?, token_generation_time = ? 
-                WHERE username = ?''', [token, tokenGenerationTime, username])
+                UPDATE sepal_user SET token = ?, token_generation_time = ?, update_time = ? 
+                WHERE username = ?''', [token, tokenGenerationTime, new Date(), username])
     }
 
     Map tokenStatus(String token) {
         def row = sql.firstRow('''
-                SELECT id, username, name, email, organization, admin, status, system_user, token_generation_time 
+                SELECT id, username, name, email, organization, admin, status, system_user, token_generation_time, 
+                       google_refresh_token,  google_access_token, google_access_token_expiration 
                 FROM sepal_user 
                 WHERE token = ?''', [token])
 
@@ -81,8 +90,24 @@ class JdbcUserRepository implements UserRepository {
         sql.executeUpdate('UPDATE sepal_user SET status = ? WHERE username = ?', [status.name(), username])
     }
 
+    void updateGoogleTokens(String username, GoogleTokens tokens) {
+        sql.executeUpdate('''
+                UPDATE sepal_user 
+                SET google_refresh_token = ?,  
+                    google_access_token = ?, 
+                    google_access_token_expiration = ?,
+                 update_time = ?
+                WHERE username = ?''', [
+                tokens?.refreshToken,
+                tokens?.accessToken,
+                tokens ? new Date(tokens.accessTokenExpiryDate) : null,
+                new Date(),
+                username
+        ])
+    }
+
     private User createUser(GroovyRowResult row) {
-        new User(
+        def user = new User(
                 id: row.id,
                 name: row.name,
                 username: row.username,
@@ -90,8 +115,13 @@ class JdbcUserRepository implements UserRepository {
                 organization: row.organization,
                 roles: (row.admin ? [Roles.ADMIN] : []).toSet(),
                 systemUser: row.system_user,
+                googleTokens: row.google_refresh_token ? new GoogleTokens(
+                        refreshToken: row.google_refresh_token,
+                        accessToken: row.google_access_token,
+                        accessTokenExpiryDate: row.google_access_token_expiration.time) : null,
                 status: row.status as User.Status
         )
+        return user
     }
 
     private Sql getSql() {

@@ -10,6 +10,7 @@ apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
  curl\
  libgdal-dev\
  gdal-bin\
+ git\
  python-gdal\
  python-pip\
  sssd\

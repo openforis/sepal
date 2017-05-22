@@ -31,7 +31,7 @@ class Main {
         def dataSearchComponent = start DataSearchComponent.create(dataSource)
         def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, dataSource)
         def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, dataSource)
-        def workerSessionComponent = start new WorkerSessionComponent(
+        def workerSessionComponent = start WorkerSessionComponent.create(
                 budgetComponent,
                 workerInstanceComponent,
                 hostingServiceAdapter,

@@ -13,7 +13,7 @@ def azimuth(footprint):
     lowerCenter = line_from_coords(footprint, LOWER_LEFT, LOWER_RIGHT).centroid().coordinates()
     slope = ((y(lowerCenter)).subtract(y(upperCenter))).divide((x(lowerCenter)).subtract(x(upperCenter)))
     slopePerp = ee.Number(-1).divide(slope)
-    azimuthLeft = ee.Image(PI.divide(2).subtract((slopePerp).atan()))
+    azimuthLeft = ee.Image(PI().divide(2).subtract((slopePerp).atan()))
     return azimuthLeft.rename(['viewAz'])
 
 
