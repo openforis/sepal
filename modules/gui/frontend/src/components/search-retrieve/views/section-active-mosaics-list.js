@@ -38,35 +38,30 @@ var setActiveState = function ( e, state ) {
     
     btnList.find( 'button' ).removeClass( 'active' )
     
-    var btn = btnList.find( 'button.btn-mosaic-' + state.name )
-    btn.addClass( 'active' )
+    var btn = btnList.find( 'button.btn-mosaic-' + state.id )
+    btn.addClass( 'active' ).html( state.name )
     btnSave.insertAfter( btn )
     activeMosaic = btn.data( 'mosaic' )
 }
 EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setActiveState )
 
-//TODO USE ID instead of name
 var addMosaic = function ( state ) {
-    if ( !listMosaics[ state.name ] ) {
-        listMosaics[ state.name ] = state
+    if ( !listMosaics[ state.id ] ) {
+        listMosaics[ state.id ] = state
         
-        var name = state.name
         var btn  = $( '<button class="btn btn-base btn-mosaic"></button>' )
-        btn.addClass( 'btn-mosaic-' + name )
+        btn.addClass( 'btn-mosaic-' + state.id )
         btn.data( 'mosaic' , state )
-        btn.html( name )
+        btn.html( state.name )
         btn.click( function ( e ) {
             e.preventDefault()
             
             if ( !btn.hasClass( 'active' ) ) {
-                EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, listMosaics[ name ] )
+                EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, listMosaics[ id ] )
             }
         } )
         
         btnList.append( btn )
-        // btnList.append( btn.clone().removeClass('active') )
-        // btnList.append( btn.clone().removeClass('active') )
-        // btnList.append( btn.clone().removeClass('active') )
     }
 }
 

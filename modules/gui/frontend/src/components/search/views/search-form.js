@@ -19,9 +19,19 @@ var btnLandsat          = null
 var btnSentinel2        = null
 var targetDate          = null
 
+var guid = function() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
+}
+
 // default state
 var defaultState = {
-    id         : -1,
+    id         : guid(),
     type       : Model.TYPES.MOSAIC,
     name       : 'default-mosaic',
     aoiCode    : null,
