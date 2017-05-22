@@ -110,7 +110,7 @@ var selectImage = function ( e, sceneAreaId, sceneImage ) {
     Model.select( sceneImage )
     View.select( sceneAreaId, sceneImage )
     
-    EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+    EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
     
 }
 
@@ -118,7 +118,7 @@ var deselectImage = function ( e, sceneAreaId, sceneImage ) {
     Model.deselect( sceneImage )
     View.deselect( sceneAreaId, sceneImage )
     
-    EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+    EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
 }
 
 var updateState = function ( e, s ) {
@@ -149,8 +149,8 @@ EventBus.addEventListener( Events.SECTION.SHOW, show )
 EventBus.addEventListener( Events.SECTION.SEARCH.REQUEST_SCENE_AREAS, reset )
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, reset )
 
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, updateState )
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED, searchParamsChanged )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, updateState )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_SEARCH_PARAMS_CHANGED, searchParamsChanged )
 
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.SELECT, selectImage )
 EventBus.addEventListener( Events.SECTION.SCENES_SELECTION.DESELECT, deselectImage )

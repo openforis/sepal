@@ -115,7 +115,7 @@ var onMapZoomChanged = function ( e, zoomLevel ) {
     ActiveView.setZoomLevel( zoomLevel )
 }
 
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, stateChanged )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, stateChanged )
 
 //application visibility events
 EventBus.addEventListener( Events.SECTION.SHOW, onApplicationSectionShow )

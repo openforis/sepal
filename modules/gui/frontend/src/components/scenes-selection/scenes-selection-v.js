@@ -97,7 +97,7 @@ var updateState = function ( e, s ) {
     state = s
 }
 
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, updateState )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, updateState )
 
 
 module.exports = {

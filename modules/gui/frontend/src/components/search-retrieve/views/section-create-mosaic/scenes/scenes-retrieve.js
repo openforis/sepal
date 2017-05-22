@@ -45,7 +45,7 @@ var setActiveState = function ( e, activeState ) {
         elemScenesNo.html( sceneIds.length + ' ' + state.sensorGroup + ' ' )
     }
 }
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setActiveState )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState )
 
 var hide = function ( options ) {
     parentContainer.velocitySlideUp( options )

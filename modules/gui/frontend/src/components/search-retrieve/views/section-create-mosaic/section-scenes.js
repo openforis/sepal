@@ -60,7 +60,7 @@ var initEventHandlers = function () {
 var setActiveState = function ( e, activeState ) {
     state = activeState
 }
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setActiveState )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState )
 
 var collapse = function ( options ) {
     btnBestScenes.removeClass( 'active' )

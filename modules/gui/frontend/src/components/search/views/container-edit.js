@@ -56,7 +56,7 @@ var setState = function ( e, s ) {
     state = s
 }
 
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setState )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setState )
 
 module.exports = {
     init: init

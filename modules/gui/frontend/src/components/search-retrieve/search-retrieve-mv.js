@@ -9,6 +9,7 @@ var Model    = require( '../search/model/search-model' )
 
 require( './search-retrieve-scenes-mv' )
 require( './search-retrieve-mosaic-mv' )
+require( './search-retrieve-list-mv' )
 
 var show     = false
 var appShown = true
@@ -52,7 +53,7 @@ EventBus.addEventListener( Events.SECTION.REDUCE, appReduce )
 // view events
 EventBus.addEventListener( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW, View.collapse )
 
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, activeStateChanged )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, activeStateChanged )
 
 //search events
 // on request scene areas, reset create mosaic view

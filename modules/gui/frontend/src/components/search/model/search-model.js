@@ -25,7 +25,7 @@ var getActive = function () {
 
 var activeModelChange = function ( e, obj, params ) {
     active = obj
-    EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, null, active, params )
+    EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, null, active, params )
 }
 
 module.exports = {
@@ -44,4 +44,4 @@ module.exports = {
 }
 
 
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, activeModelChange )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, activeModelChange )

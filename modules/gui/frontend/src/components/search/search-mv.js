@@ -44,7 +44,7 @@ var requestSceneAreas = function ( e, state ) {
             
             // EventBus.dispatch( Events.SECTION.SEARCH.SCENE_AREAS_LOADED , null , response)
             // EventBus.dispatch( Events.SECTION.SEARCH.LANDSAT_SCENE_AREAS_LOADED, null, response )
-            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state, { resetSceneAreas: true } )
+            EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, { resetSceneAreas: true } )
             EventBus.dispatch( Events.SECTION.REDUCE )
             Loader.hide( { delay: 300 } )
         }

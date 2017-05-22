@@ -60,7 +60,7 @@ var setActiveState = function ( e, activeState ) {
         else disableScenesRequiredButtons()
     }
 }
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setActiveState )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState )
 
 var reset = function () {
     disableScenesRequiredButtons()

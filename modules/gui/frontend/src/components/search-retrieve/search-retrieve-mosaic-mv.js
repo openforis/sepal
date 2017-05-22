@@ -33,7 +33,7 @@ var previewMosaic = function ( e, state ) {
         }
         , success   : function ( response ) {
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, null, response.mapId, response.token )
-            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+            EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW )
             
             Loader.hide( { delay: 500 } )

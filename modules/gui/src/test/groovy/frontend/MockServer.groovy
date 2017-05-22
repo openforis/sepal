@@ -600,8 +600,40 @@ class MockServer extends AbstractMvcFilter {
             }
 
 
+
+            get('/api/mosaics/list') {
+                List list = getMosaicsList()
+                send(toJson(list))
+            }
+
+            post('/api/mosaics/{mosaicId}/save') {
+                String data = params.data
+                mosaics.put(params.mosaicId, params.data)
+
+                List list = getMosaicsList()
+                send(toJson(list))
+            }
+
+
         }
         return controller
+    }
+
+    Map mosaics = new HashMap()
+    private List getMosaicsList() {
+        List list = new ArrayList()
+        for (String id : mosaics.keySet()) {
+            Map o = fromJson(mosaics.get(id))
+            MosaicListViewItem item = new MosaicListViewItem(id: id, name: o.get('name'), type: o.get('type'))
+            list.add(item)
+        }
+        list
+    }
+
+    class MosaicListViewItem {
+        String id
+        String name
+        String type
     }
 
     private fromJson(String json) {

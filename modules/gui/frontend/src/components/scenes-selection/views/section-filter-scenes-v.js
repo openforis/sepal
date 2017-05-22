@@ -78,21 +78,21 @@ var init        = function ( uiContainer ) {
             var sortWeight = sortSlider.noUiSlider.get()
             state.sortWeight = sortWeight
             
-            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
-            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
+            EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
+            EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_SEARCH_PARAMS_CHANGED )
         } )
     }
     
     // target day
     offsetTargetDayBtnPlus.click( function ( e ) {
         state.offsetToTargetDay += 1
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_SEARCH_PARAMS_CHANGED )
     } )
     offsetTargetDayBtnMinus.click( function ( e ) {
         state.offsetToTargetDay -= 1
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_SEARCH_PARAMS_CHANGED )
     } )
     
     var addSensors = function ( sensors, section ) {
@@ -111,8 +111,8 @@ var init        = function ( uiContainer ) {
                 } else {
                     state.sensors.push( sensorId )
                 }
-                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
-                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
+                EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
+                EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_SEARCH_PARAMS_CHANGED )
             } )
             
             section.append( btn )
@@ -214,7 +214,7 @@ var setSortWeight = function ( sortWeight ) {
 var updateState = function ( e, s ) {
     state = s
 }
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, updateState )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, updateState )
 
 module.exports = {
     init                  : init

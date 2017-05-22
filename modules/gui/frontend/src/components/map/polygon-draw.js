@@ -89,6 +89,6 @@ EventBus.addEventListener( Events.MAP.POLYGON_DRAW, enable )
 EventBus.addEventListener( Events.MAP.POLYGON_CLEAR, clear )
 
 // restore model object
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.RESTORE_DRAWN_AOI, restoreDrawnAoi )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.RESTORE_DRAWN_AOI, restoreDrawnAoi )
 
 EventBus.addEventListener( Events.SECTION.SHOW, disable )

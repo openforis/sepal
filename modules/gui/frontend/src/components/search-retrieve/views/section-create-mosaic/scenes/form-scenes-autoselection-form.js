@@ -58,8 +58,8 @@ var init = function ( parent ) {
         sortSlider.noUiSlider.on( 'change', function () {
             var sortWeight   = sortSlider.noUiSlider.get()
             state.sortWeight = sortWeight
-            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
-            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
+            EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
+            EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_SEARCH_PARAMS_CHANGED )
         } )
         
     }
@@ -67,14 +67,14 @@ var init = function ( parent ) {
     // target day
     offsetTargetDayBtnPlus.click( function ( e ) {
         state.offsetToTargetDay += 1
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_SEARCH_PARAMS_CHANGED )
     } )
     
     offsetTargetDayBtnMinus.click( function ( e ) {
         state.offsetToTargetDay -= 1
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_SEARCH_PARAMS_CHANGED )
     } )
     
     $.each( Model.getSensorGroups(), function ( i, sensorGroup ) {
@@ -96,8 +96,8 @@ var init = function ( parent ) {
                     state.sensors.push( sensorId )
                 }
                 
-                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
-                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_SEARCH_PARAMS_CHANGED )
+                EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
+                EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_SEARCH_PARAMS_CHANGED )
             } )
             
             rowSensors.append( btn )
@@ -108,13 +108,13 @@ var init = function ( parent ) {
     minScenesInput.change( function ( e ) {
         state.minScenes = minScenesInput.val()
         // EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.MIN_SCENES_CHANGE, null, minScenesInput.val() )
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, null, state )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, null, state )
     } )
     
     maxScenesInput.change( function ( e ) {
         state.maxScenes = maxScenesInput.val()
         // EventBus.dispatch( Events.SECTION.SEARCH.SEARCH_PARAMS.MAX_SCENES_CHANGE, null, maxScenesInput.val() )
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, null, state )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, null, state )
     } )
     
     // submit form
@@ -156,7 +156,7 @@ var setActiveState = function ( e, activeState ) {
     maxScenesInput.val( state.maxScenes )
     
 }
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setActiveState )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState )
 
 var setSensors = function ( sensorGroup, sensors ) {
     var row        = parentContainer.find( '.row-sensor-' + sensorGroup )

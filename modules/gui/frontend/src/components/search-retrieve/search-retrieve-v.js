@@ -73,7 +73,7 @@ var setActiveState = function ( e, state ) {
             break;
     }
 }
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setActiveState )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState )
 
 module.exports = {
     init               : init

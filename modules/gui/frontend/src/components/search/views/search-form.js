@@ -55,7 +55,7 @@ var init = function ( formSelector ) {
     inputName = form.find( '[name=name]' )
     inputName.keyup( function ( e ) {
         state.name = inputName.val()
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
     } )
     
     inputAoiCode = form.find( '#search-form-country' )
@@ -70,7 +70,7 @@ var init = function ( formSelector ) {
                 } else {
                     setCountryIso( null, null )
                 }
-                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+                EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
             }
         } )
         
@@ -93,7 +93,7 @@ var init = function ( formSelector ) {
                 state.sensors     = Object.keys( Model.getSensors( state.sensorGroup ) )
                 
                 setSensorGroupState( state.sensorGroup )
-                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+                EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
             }
         }
         btnLandsat.click( function ( e ) {
@@ -106,12 +106,12 @@ var init = function ( formSelector ) {
         targetDate          = DatePicker.newInstance( form.find( '.target-date' ) )
         targetDate.onChange = function ( year, month, day ) {
             state.targetDate = year + '-' + month + '-' + day
-            EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state )
+            EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
         }
         
         form.submit( submit )
         
-        EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, defaultState )
+        EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, defaultState )
         
     } )
 }
@@ -161,7 +161,7 @@ var polygonDrawn = function ( e, jsonPolygon, polygon ) {
     
     inputAoiCode.sepalAutocomplete( 'reset' )
     
-    EventBus.dispatch( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGE, null, state, { restoreAoi: false } )
+    EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, { restoreAoi: false } )
 }
 
 var polygonClear = function ( e ) {
@@ -213,7 +213,7 @@ var setState = function ( e, newState, params ) {
             btnDrawPolygon.addClass( 'active' )
             
             if ( !params || params.restoreAoi )
-                EventBus.dispatch( Events.SECTION.SEARCH.MODEL.RESTORE_DRAWN_AOI, null, state.polygon )
+                EventBus.dispatch( Events.SECTION.SEARCH.STATE.RESTORE_DRAWN_AOI, null, state.polygon )
         }
         
         var date = moment( state.targetDate )
@@ -231,7 +231,7 @@ var setState = function ( e, newState, params ) {
         EventBus.dispatch( Events.MAP.REMOVE_AOI_LAYER )
     }
 }
-EventBus.addEventListener( Events.SECTION.SEARCH.MODEL.ACTIVE_CHANGED, setState )
+EventBus.addEventListener( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setState )
 
 var setSensorGroupState = function ( sensorGroup ) {
     form.find( ".btn-sensor-group" ).removeClass( 'active' )
