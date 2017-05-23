@@ -199,33 +199,26 @@
             }
         }
 
-        function drawPoint(map, latLng) {
+        function drawPoint(latLng, options, map) {
             var point = new google.maps.Circle({
                 center: latLng,
-                radius: 1,
-                strokeColor: 'yellow',
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
-                fillColor: 'yellow',
-                fillOpacity: 1,
-                map: map
+                radius: 1
             });
+            if (options !== undefined) point.setOptions(options);
+            if (map !== undefined) point.setMap(map);
             return point;
         }
 
-        function drawSquare(map, latLng, side) {
+        function drawSquare(latLng, side, options, map) {
             var circle = new google.maps.Circle({
                 center: latLng,
-                radius: side
+                radius: side / 2
             });
             var square = new google.maps.Rectangle({
-                bounds: circle.getBounds(),
-                strokeColor: 'yellow',
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
-                fillOpacity: 0,
-                map: map
+                bounds: circle.getBounds()
             });
+            if (options !== undefined) square.setOptions(options);
+            if (map !== undefined) square.setMap(map);
             return square;
         }
 
@@ -274,11 +267,11 @@
             $.ajax({
                 url: ceoSepalApiUrl + "/project/" + project_id,
                 method: 'get',
-                contentType: 'application/json;charset=UTF-8'
+                dataType: 'json'
             }).success(function(data) {
                 // project
                 projectName = data.name;
-                radius = parseFloat(data.radius) / 2;
+                radius = parseFloat(data.radius);
                 // codeLists
                 data.codeLists.forEach(function(codeList) {
                     var name = codeList.name;
@@ -383,8 +376,21 @@
                     li.click(plotSelection);
                     $('#list').append(li);
                     //
-                    var point = drawPoint(map, latLng);
-                    var square = drawSquare(map, latLng, radius);
+                    var pointOptions1 ={
+                        strokeColor: 'yellow',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillColor: 'yellow',
+                        fillOpacity: 1
+                    }
+                    var squareOptions1 = {
+                        strokeColor: 'yellow',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillOpacity: 0
+                    };
+                    var point = drawPoint(latLng, pointOptions1, map);
+                    var square = drawSquare(latLng, radius, squareOptions1, map);
                     shapes[id] = [point, square];
                     square.addListener('click', function() {
                         removePlots();
@@ -407,8 +413,21 @@
                         li.click(plotSelection);
                         $('#list').append(li);
                         //
-                        var point = drawPoint(map, latLng);
-                        var square = drawSquare(map, latLng, radius);
+                        var pointOptions1 ={
+                            strokeColor: 'yellow',
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillColor: 'yellow',
+                            fillOpacity: 1
+                        }
+                        var squareOptions1 = {
+                            strokeColor: 'yellow',
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillOpacity: 0
+                        };
+                        var point = drawPoint(latLng, pointOptions1, map);
+                        var square = drawSquare(latLng, radius, squareOptions1, map);
                         shapes[id] = [point, square];
                         square.addListener('click', function() {
                             removePlots();

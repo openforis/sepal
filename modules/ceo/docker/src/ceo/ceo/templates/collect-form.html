@@ -126,6 +126,8 @@
         var overlayMapTypes = {};
         var bounds = new google.maps.LatLngBounds();
         var radius = 30;
+        var shapes = {};
+        var properties = {};
 
         function addOverlayMapType(overlay, overlayMapTypes, index) {
             var layerName = overlay.layerName;
@@ -213,29 +215,16 @@
             }
         }
 
-        function drawSquare(map, latLng, side) {
-            var point = new google.maps.Circle({
-                center: latLng,
-                radius: 1,
-                strokeColor: 'yellow',
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
-                fillColor: 'yellow',
-                fillOpacity: 1,
-                map: map
-            });
+        function drawSquare(latLng, side, options, map) {
             var circle = new google.maps.Circle({
                 center: latLng,
-                radius: side
+                radius: side / 2
             });
             var square = new google.maps.Rectangle({
-                bounds: circle.getBounds(),
-                strokeColor: 'yellow',
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
-                fillOpacity: 0,
-                map: map
+                bounds: circle.getBounds()
             });
+            if (options !== undefined) square.setOptions(options);
+            if (map !== undefined) square.setMap(map);
             return square;
         }
 
@@ -246,19 +235,9 @@
             var y_coordinate = $(this).attr('data-y-coordinate');
             $(this).addClass('active').siblings().removeClass('active');
             $('.confidence-submit-btn').removeClass('btn-success').addClass('btn-secondary');
-            var center = new google.maps.LatLng(parseFloat(y_coordinate), parseFloat(x_coordinate));
-            var circle = new google.maps.Circle({
-                center: center,
-                radius: radius
-            });
-            var square = new google.maps.Rectangle({
-                bounds: circle.getBounds(),
-                strokeColor: 'yellow',
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
-                fillOpacity: 0
-            });
+            var square = shapes[plot_id];
             map.fitBounds(square.getBounds());
+            map.setZoom(map.getZoom() - 1);
             $('#codeLists input[name="id"]').val(0);
             record = $.grep(records, function(e) { return e['plot']['id'] == plot_id; });
             if (record[0] !== undefined) {
@@ -286,11 +265,11 @@
             $.ajax({
                 url: ceoSepalApiUrl + "/project/" + project_id,
                 method: 'get',
-                contentType: 'application/json;charset=UTF-8'
+                dataType: 'json'
             }).success(function(data) {
                 // project
                 projectName = data.name;
-                radius = parseFloat(data.radius) / 2;
+                radius = parseFloat(data.radius);
                 // codeLists
                 data.codeLists.forEach(function(codeList) {
                     var name = codeList.name;
@@ -343,8 +322,39 @@
                 var styleControl = document.getElementById('style-selector-control');
                 map.controls[google.maps.ControlPosition.TOP_RIGHT].push(styleControl);
 
+                // properties
+                if (data.properties !== undefined && data.properties.length != 0) {
+                    properties = data.properties;
+                }
+
                 // plots
                 if (data.plots !== undefined) {
+                    //
+                    var innerPointSide = properties['inner_point_side'];
+                    var numberOfSamplingPointsInPlot = properties['number_of_sampling_points_in_plot'];
+                    var distanceToPlotBoundaries = properties['distance_to_plot_boundaries'];
+                    var distanceBetweenSamplePoints = properties['distance_between_sample_points'];
+                    //
+                    var pointPerLine = Math.sqrt(numberOfSamplingPointsInPlot);
+                    var isEven = (pointPerLine % 2 == 0);
+                    var numberInnerColumns = (isEven) ? pointPerLine / 2 : (pointPerLine - 1) / 2;
+                    var innerSideLength = (pointPerLine - 1) * distanceBetweenSamplePoints;
+                    var plotSideLength = innerSideLength + distanceToPlotBoundaries * 2;
+                    var indexOfCenter = (isEven) ? -1 : numberInnerColumns;
+                    //
+                    var squareOptions1 = {
+                        strokeColor: 'yellow',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillOpacity: 0
+                    };
+                    var squareOptions2 = {
+                        strokeColor: 'red',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillOpacity: 0
+                    };
+                    //
                     data.plots.forEach(function(plot) {
                         var id = plot.id;
                         var lat = parseFloat(plot.YCoordinate);
@@ -356,8 +366,25 @@
                         li.click(plotSelection);
                         $('#list').append(li);
                         //
-                        var square = drawSquare(map, latLng, radius);
-                        square.addListener('click', function() {
+                        var innerSquare = drawSquare(latLng, innerSideLength);
+                        var externalSquare = drawSquare(latLng, plotSideLength, squareOptions1, map);
+                        var eastLng = innerSquare.getBounds().getNorthEast().lng();
+                        var westLng = innerSquare.getBounds().getSouthWest().lng();
+                        var lngDistanceBetweenSamplePoints = (westLng - eastLng) / (pointPerLine - 1);
+                        var northLat = innerSquare.getBounds().getNorthEast().lat();
+                        var southLat = innerSquare.getBounds().getSouthWest().lat();
+                        var latDistanceBetweenSamplePoints = (northLat - southLat) / (pointPerLine - 1);
+                        for (var x = 0; x < pointPerLine; x++) {
+                            var lng = eastLng + x * lngDistanceBetweenSamplePoints;
+                            for (var y = 0; y < pointPerLine; y++) {
+                                var latLng = new google.maps.LatLng(northLat - y * latDistanceBetweenSamplePoints, lng);
+                                if (indexOfCenter != -1 && x == indexOfCenter && y == indexOfCenter) drawSquare(latLng, innerPointSide, squareOptions2, map);
+                                else drawSquare(latLng, innerPointSide, squareOptions1, map);
+                            }
+                        }
+                        //
+                        shapes[id] = externalSquare;
+                        externalSquare.addListener('click', function() {
                             $('#list a[data-plot-id=' + plot.id +']').click();
                         });
                         bounds.extend(latLng);
