@@ -6,7 +6,6 @@ echo "********************"
 echo "*** Installing R ***"
 echo "********************"
 
-
-apt-get install -y \
-    r-base \
-    r-base-dev
+apt-get install -y\
+ r-base-core=3.3.3-1xenial0\
+ r-base-dev=3.3.3-1xenial0\
