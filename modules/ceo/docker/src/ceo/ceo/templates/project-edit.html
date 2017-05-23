@@ -9,7 +9,7 @@
                 <input class="form-control" type="text" name="name" />
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group row data-row" style="display: none;">
             <label class="col-2 col-form-label">Scale (m)</label>
             <div class="col-10">
                 <input class="form-control" type="text" name="radius" />
@@ -262,9 +262,12 @@ $(document).ready(function() {
         contentType: 'application/json;charset=UTF-8'
     }).success(function(data) {
         $('input[name="name"]').val(data.name);
-        $('input[name="radius"]').val(data.radius);
         var projectType = data.type;
-        if (projectType == 'TRAINING-DATA') {
+        if (projectType == 'CEP') {
+            $('.data-row').hide();
+        }
+        else if (projectType == 'TRAINING-DATA') {
+            $('input[name="radius"]').val(data.radius);
             $('.data-row').show();
             var codeLists = data.codeLists;
             var codeList = codeLists[0];

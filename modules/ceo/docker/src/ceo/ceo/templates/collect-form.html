@@ -125,7 +125,7 @@
         var overlays = [];
         var overlayMapTypes = {};
         var bounds = new google.maps.LatLngBounds();
-        var radius = 30;
+        //var radius = 30;
         var shapes = {};
         var properties = {};
 
@@ -269,7 +269,7 @@
             }).success(function(data) {
                 // project
                 projectName = data.name;
-                radius = parseFloat(data.radius);
+                //radius = parseFloat(data.radius);
                 // codeLists
                 data.codeLists.forEach(function(codeList) {
                     var name = codeList.name;
