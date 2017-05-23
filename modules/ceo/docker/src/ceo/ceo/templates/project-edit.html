@@ -135,16 +135,47 @@ function addSubformGEE(data) {
         e.preventDefault();
         $(this).closest('.subform-template').remove();
     });
+    $('select[name="collectionName[]"]', subform).change(function() {
+        $('select[name="visParams[]"]', subform).find('option[value!=""]').remove();
+        var value = $(this).val();
+        var sets = visParams[value];
+        sets.forEach(function(set, index) {
+            var text = set.name + ' (min: ' + set.min + ', max: ' + set.max + ', ' + set.band1 + ', ' + set.band2 + ', ' + set.band3 + ')';
+            var option = $('<option>').text(text).val(set.id);
+            $('select[name="visParams[]"]', subform).append(option);
+        });
+        $('select[name="visParams[]"]').change(function() {
+            var value2 = $(this).val();
+            if (value2 == '') {
+                $('input[name="min[]"]', subform).val('');
+                $('input[name="max[]"]', subform).val('');
+                $('input[name="band1[]"]', subform).val('');
+                $('input[name="band2[]"]', subform).val('');
+                $('input[name="band3[]"]', subform).val('');
+            } else {
+                var value1 = $('select[name="collectionName[]"]', subform).val();
+                var set = visParams[value1][value2];
+                $('input[name="min[]"]', subform).val(set.min);
+                $('input[name="max[]"]', subform).val(set.max);
+                $('input[name="band1[]"]', subform).val(set.band1);
+                $('input[name="band2[]"]', subform).val(set.band2);
+                $('input[name="band3[]"]', subform).val(set.band3);
+            }
+        });
+    });
     if (data !== undefined) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
-        $('select[name="collectionName[]"]', subform).val(data.collectionName);
+        $('select[name="collectionName[]"]', subform).val(data.collectionName).trigger('change');
         $('input[name="dateFrom[]"]', subform).val(data.dateFrom);
         $('input[name="dateTo[]"]', subform).val(data.dateTo);
+        $('select[name="visParams[]"]', subform).val(data.visParams).trigger('change');
+        /*
         $('input[name="min[]"]', subform).val(data.min);
         $('input[name="max[]"]', subform).val(data.max);
         $('input[name="band1[]"]', subform).val(data.band1);
         $('input[name="band2[]"]', subform).val(data.band2);
         $('input[name="band3[]"]', subform).val(data.band3);
+        */
     }
 }
 

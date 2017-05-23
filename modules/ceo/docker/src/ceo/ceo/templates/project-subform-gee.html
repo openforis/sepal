@@ -1,3 +1,18 @@
+<script>
+    var visParams = {
+        'LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA': [
+            { id: 1, name: 'XXX1', min: 0, max: 0.3, band1: 'B1', band2: 'B2', band3: 'B3' },
+            { id: 2, name: 'XXX2', min: 0, max: 0.3, band1: 'B2', band2: 'B3', band3: 'B1' }
+        ],
+        'LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA': [
+            { id: 3, name: 'XXX', min: 0, max: 0.3, band1: 'B1', band2: 'B2', band3: 'B3' }
+        ],
+        'LANDSAT/LC8_L1T_TOA': [
+            { id: 4, name: 'XXX', min: 0, max: 0.3, band1: 'B1', band2: 'B2', band3: 'B3' }
+        ]
+    }
+</script>
+
 <div class="form-group row">
     <label class="col-2 col-form-label">Name</label>
     <div class="col-10">
@@ -7,12 +22,12 @@
 <div class="form-group row">
     <label class="col-2 col-form-label">Collection</label>
     <div class="col-10">
-      <select class="form-control" name="collectionName[]">
-          <option value="" selected>CHOOSE A COLLECTION</option>
-          <option value="LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA">LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA</option>
-          <option value="LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA">LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA</option>
-          <option value="LANDSAT/LC8_L1T_TOA">LANDSAT/LC8_L1T_TOA</option>
-      </select>
+        <select class="form-control" name="collectionName[]">
+            <option value="" selected>CHOOSE A COLLECTION</option>
+            <option value="LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA">LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA</option>
+            <option value="LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA">LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA</option>
+            <option value="LANDSAT/LC8_L1T_TOA">LANDSAT/LC8_L1T_TOA</option>
+        </select>
     </div>
 </div>
 <div class="form-group row">
@@ -27,6 +42,20 @@
         <input type="text" class="form-control" name="dateTo[]" />
     </div>
 </div>
+<div class="form-group row">
+    <label class="col-2 col-form-label">Visualization Parameters</label>
+    <div class="col-10">
+        <select class="form-control" name="visParams[]">
+            <option value="" selected>CHOOSE A PARAMETER SET</option>
+        </select>
+        <input type="hidden" name="min[]" />
+        <input type="hidden" name="max[]" />
+        <input type="hidden" name="band1[]" />
+        <input type="hidden" name="band2[]" />
+        <input type="hidden" name="band3[]" />
+    </div>
+</div>
+<!--
 <div class="form-group row">
     <label class="col-2 col-form-label">Min</label>
     <div class="col-10">
@@ -55,3 +84,4 @@
         </div>
     </div>
 </div>
+-->
