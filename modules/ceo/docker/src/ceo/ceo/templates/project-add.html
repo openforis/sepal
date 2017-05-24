@@ -172,8 +172,7 @@ $('#add-subform-gee').click(function(e) {
         var value = $(this).val();
         var sets = visParams[value];
         sets.forEach(function(set, index) {
-            var text = set.name + ' (min: ' + set.min + ', max: ' + set.max + ', ' + set.band1 + ', ' + set.band2 + ', ' + set.band3 + ')';
-            var option = $('<option>').text(text).val(set.id);
+            var option = $('<option>').text(set.name).val(set.id);
             $('select[name="visParams[]"]', subform).append(option);
         });
         $('select[name="visParams[]"]').change(function() {
@@ -184,14 +183,18 @@ $('#add-subform-gee').click(function(e) {
                 $('input[name="band1[]"]', subform).val('');
                 $('input[name="band2[]"]', subform).val('');
                 $('input[name="band3[]"]', subform).val('');
+                $('input[name="gamma[]"]', subform).val('');
             } else {
                 var value1 = $('select[name="collectionName[]"]', subform).val();
-                var set = visParams[value1][value2];
-                $('input[name="min[]"]', subform).val(set.min);
-                $('input[name="max[]"]', subform).val(set.max);
-                $('input[name="band1[]"]', subform).val(set.band1);
-                $('input[name="band2[]"]', subform).val(set.band2);
-                $('input[name="band3[]"]', subform).val(set.band3);
+                var set0 = visParams[value1];
+                var set1 = $.grep(set0, function(e) { return e.id == value2; });
+                var set = set1[0];
+                $('input[name="min[]"]', subform).val(set['min']);
+                $('input[name="max[]"]', subform).val(set['max']);
+                $('input[name="band1[]"]', subform).val(set['band1']);
+                $('input[name="band2[]"]', subform).val(set['band2']);
+                $('input[name="band3[]"]', subform).val(set['band3']);
+                $('input[name="gamma[]"]', subform).val(set['gamma']);
             }
         });
     });

@@ -145,6 +145,8 @@
                     max: overlay.max,
                     bands: bands
                 };
+                var gamma = overlay.gamma;
+                if (gamma != '') visParams['gamma'] = gamma;
                 var dateFrom = overlay.dateFrom;
                 var dateTo = overlay.dateTo;
                 $.ajax({

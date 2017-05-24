@@ -304,6 +304,7 @@ def getLayersFromRequest(request):
     band1 = request.form.getlist('band1[]')
     band2 = request.form.getlist('band2[]')
     band3 = request.form.getlist('band3[]')
+    gamma = request.form.getlist('gamma[]')
     # digitalglobe
     mapID = request.form.getlist('mapID[]')
     # gibs
@@ -324,7 +325,8 @@ def getLayersFromRequest(request):
                 'max': Max[i1],
                 'band1': band1[i1],
                 'band2': band2[i1],
-                'band3': band3[i1]
+                'band3': band3[i1],
+                'gamma': gamma[i1]
             }
         elif layerType[i] == 'digitalglobe':
             i2 += 1
