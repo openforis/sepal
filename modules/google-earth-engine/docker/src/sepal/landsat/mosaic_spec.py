@@ -26,20 +26,20 @@ class LandsatMosaicSpec(ImageSpec):
     def _create_mosaic(self, image_collections):
         """Creates a mosaic, clipped to the area of interest, containing the specified bands.
 
-        :param image_collection: The image collections to create a mosaic for.
+        :param image_collections: The image collections to create a mosaic for.
             All collections must have normalized band names.
-        :type image_collection: iterable
+        :type image_collections: iterable
 
         :return: An ee.Image.
         """
         image_collection = self._merge(image_collections)
         image_collection = image_adjustment.apply(image_collection, self)
-        mosaic = constants.mosaic_strategies[self.strategy](image_collection)
+        mosaic = constants.mosaic_strategies[self.strategy](image_collection, self)
         return mosaic \
             .clip(self.aoi.geometry()) \
             .select(self.bands) \
             .multiply(constants.multiplier) \
-            .int16()
+            .uint16()
 
     def _merge(self, image_collections):
         return reduce(self._merge_two, image_collections)
