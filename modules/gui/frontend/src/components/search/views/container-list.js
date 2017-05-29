@@ -6,11 +6,13 @@ require('./container-list.scss')
 var EventBus = require('../../event/event-bus')
 var Events   = require('../../event/events')
 
+var tableHeader    = null
 var containerItems = null
 var rowTemplate    = null
 
 var init = function (container) {
   
+  tableHeader    = container.find('.row-header')
   containerItems = container.find('.container-items')
   rowTemplate    = container.find('.template')
   
@@ -18,6 +20,8 @@ var init = function (container) {
 }
 
 var listChanged = function (e, list) {
+  list.length > 0 ? tableHeader.show() : tableHeader.hide()
+  
   containerItems.empty()
   $.each(list, function (i, item) {
     var row = rowTemplate.clone().removeClass('template').hide()
