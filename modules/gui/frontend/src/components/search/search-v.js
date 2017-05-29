@@ -1,66 +1,59 @@
 /**
  * @author Mino Togna
  */
-require( './search.scss' )
+require('./search.scss')
 
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
+var EventBus = require('../event/event-bus')
+var Events   = require('../event/events')
 
 // html
 var html = null
 
 // ui components
-var section               = null
-// var ContainerModeSelector = null
-var ContainerEdit         = require( './views/container-edit' )
-var ContainerList         = require( './views/container-list' )
+var section       = null
+var ContainerEdit = require('./views/container-edit')
+var ContainerList = require('./views/container-list')
 
 var init = function () {
-    var template = require( './search.html' )
-    html         = $( template( {} ) )
+  var template = require('./search.html')
+  html         = $(template({}))
+  
+  var appSection = $('#app-section').find('.search')
+  if (appSection.children().length <= 0) {
+    appSection.append(html)
     
-    var appSection = $( '#app-section' ).find( '.search' )
-    if ( appSection.children().length <= 0 ) {
-        appSection.append( html )
-        
-        section = appSection.find( '#search' )
-        
-        // ContainerModeSelector = section.find( '.mode-selection-container' )
-        ContainerEdit.init( section.find( '.mode-edit-container' ).show() )
-        ContainerList.init( section.find( '.mode-list-container' ).hide() )
-        
-        // var btns = ContainerModeSelector.find( 'button' )
-        // btns.click( function ( e ) {
-        //     e.preventDefault()
-        //     var btn = $( this )
-        //     if ( !btn.hasClass( "active" ) ) {
-        //         var target = btn.data( 'target' )
-        //
-        //         hideSection( section.find( '.mode-container' ).not( '.' + target ) )
-        //
-        //         btns.removeClass( 'active' )
-        //         btn.addClass( 'active' )
-        //
-        //         showSection( section.find( '.' + target ) )
-        //     }
-        // } )
-        
-    }
-    ContainerList.show()
-    ContainerEdit.hide()
+    section = appSection.find('#search')
+    
+    ContainerEdit.init(section.find('.mode-edit-container'))
+    ContainerList.init(section.find('.mode-list-container'))
+  }
+  
 }
 
-var showSection = function ( section, opts ) {
-    section.velocityFadeIn( opts )
+var showList = function () {
+  ContainerList.show()
+  ContainerEdit.hide()
 }
 
-var hideSection = function ( section, opts ) {
-    section.velocityFadeOut( opts )
+var showMosaic = function () {
+  ContainerList.hide()
+  ContainerEdit.showMosaic()
+}
+
+var showClassification = function () {
+  ContainerList.hide()
+  ContainerEdit.showClassification()
+}
+
+var showChangeDetection = function () {
+  ContainerList.hide()
+  ContainerEdit.showChangeDetection()
 }
 
 module.exports = {
-    init            : init
-    , setEditState  : ContainerEdit.setState
-    // deprecated
-    // , setSensorGroup: ContainerEdit.setSensorGroup
+  init                 : init
+  , showList           : showList
+  , showMosaic         : showMosaic
+  , showClassification : showClassification
+  , showChangeDetection: showChangeDetection
 }

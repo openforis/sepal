@@ -1,47 +1,13 @@
 #search {
   overflow: hidden;
 
-  //.mode-selection-container {
-  //
-  //  background-color: rgba(255, 255, 255, 0.04);
-  //  border-radius: 1rem;
-  //  word-spacing: .25rem;
-  //  padding: .25rem 0;
-  //  position: absolute;
-  //  z-index: 5;
-  //  width: 8.33333333333333%;
-  //  right: 0px;
-  //
-  //  .btn {
-  //    padding: 0px !important;
-  //    width: 2rem !important;
-  //    height: 2rem !important;
-  //    font-size: .9rem;
-  //  }
-  //}
-
   .mode-edit-container {
 
     .menu-container {
       .btn {
-        background-color: transparent;
-        //background-color: rgba(255, 255, 255, 0.05);
-        border-top: 3px solid transparent;
-        border-bottom: 3px solid transparent;
-        border-left: none;
-        border-right: none;
-        padding-top: .7rem;
-        padding-bottom: .7rem;
-        font-weight: 600 !important;
-        font-size: .85rem;
-        &.active {
-          border-bottom: 3px solid #b8a280;
+        i {
+          font-size: 1rem;
         }
-      }
-      .btn:active,
-      .btn:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-
       }
     }
 
@@ -51,19 +17,11 @@
     }
 
     form {
-      >div.row:not(:last-child) {
+      > div.row:not(:last-child) {
         background-color: rgba(255, 255, 255, 0.04);
         border-radius: .5rem;
         padding: 1rem 0;
         border: 1px solid rgba(255, 255, 255, 0.04);
-      }
-      >div.row:last-child {
-        //padding: ;
-      }
-      .form-label {
-        //padding-bottom: 2rem;
-        //padding-bottom: 35px;
-        //border-bottom: 1px dotted rgba(255, 255, 255, .3);
       }
 
       .form-label-btn-draw-polygon {

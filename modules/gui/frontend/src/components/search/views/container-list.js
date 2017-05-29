@@ -18,6 +18,20 @@ var init = function (html) {
   containerItems = container.find('.container-items')
   rowTemplate    = container.find('.template')
   
+  var showSection = function (e) {
+    EventBus.dispatch(e)
+  }
+  
+  container.find('.btn-add-mosaic').click(function () {
+    showSection(Events.SECTION.SEARCH.VIEW.SHOW_MOSAIC)
+  })
+  container.find('.btn-add-classification').click(function () {
+    showSection(Events.SECTION.SEARCH.VIEW.SHOW_CLASSIFICATION)
+  })
+  container.find('.btn-add-change-detection').click(function () {
+    showSection(Events.SECTION.SEARCH.VIEW.SHOW_CHANGE_DETECTION)
+  })
+  
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_LOAD)
 }
 
@@ -39,11 +53,13 @@ var listChanged = function (e, list) {
 }
 
 var show = function () {
-  container.fadeIn()
+  if (!container.is(':visible'))
+    container.velocityFadeIn({delay: 0, duration: 300})
 }
 
 var hide = function () {
-  container.fadeOut()
+  if (container.is(':visible'))
+    container.velocityFadeOut({delay: 0, duration: 300})
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_CHANGED, listChanged)

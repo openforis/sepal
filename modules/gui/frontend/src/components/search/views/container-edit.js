@@ -5,8 +5,6 @@ var EventBus = require('./../../event/event-bus')
 var Events   = require('./../../event/events')
 var Form     = require('./search-form')
 
-var menu = null
-
 var container              = null
 var sectionSearchForm      = null
 var sectionClassify        = null
@@ -15,7 +13,6 @@ var state                  = {}
 
 var init = function (html) {
   container              = $(html)
-  menu                   = container.find('.menu-container')
   sectionSearchForm      = container.find('.section-search-form')
   sectionClassify        = container.find('.section-classify')
   sectionChangeDetection = container.find('.section-change-detection')
@@ -23,29 +20,18 @@ var init = function (html) {
   Form.init(sectionSearchForm.find('form'))
   
   var initOpts = {delay: 0, duration: 0}
-  showSection(sectionSearchForm, initOpts)
+  hideSection(sectionSearchForm, initOpts)
   hideSection(sectionClassify, initOpts)
   hideSection(sectionChangeDetection, initOpts)
   
-  var btns = menu.find('button')
-  btns.click(function (e) {
-    e.preventDefault()
-    var btn = $(this)
-    if (!btn.hasClass('active')) {
-      hideSection(sectionSearchForm)
-      hideSection(sectionClassify)
-      hideSection(sectionChangeDetection)
-      
-      btns.removeClass('active')
-      btn.addClass('active')
-      
-      var target = btn.data('target')
-      showSection(container.find('.' + target))
-    }
+  container.find('.btn-show-list').click(function () {
+    EventBus.dispatch(Events.SECTION.SEARCH.VIEW.SHOW_LIST)
   })
+
 }
 
 var showSection = function (section, opts) {
+  show()
   section.velocityFadeIn(opts)
 }
 
@@ -58,17 +44,40 @@ var setState = function (e, s) {
 }
 
 var show = function () {
-  container.fadeIn()
+  if (!container.is(':visible'))
+    container.velocityFadeIn({delay: 0, duration: 300})
 }
 
 var hide = function () {
-  container.fadeOut()
+  if (container.is(':visible'))
+    container.velocityFadeOut({delay: 0, duration: 300})
+}
+
+var showMosaic = function () {
+  showSection(sectionSearchForm)
+  hideSection(sectionClassify)
+  hideSection(sectionChangeDetection)
+}
+
+var showClassification = function () {
+  hideSection(sectionSearchForm)
+  showSection(sectionClassify)
+  hideSection(sectionChangeDetection)
+}
+
+var showChangeDetection = function () {
+  hideSection(sectionSearchForm)
+  hideSection(sectionClassify)
+  showSection(sectionChangeDetection)
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setState)
 
 module.exports = {
-  init: init
-  , show: show
-  , hide: hide
+  init                 : init
+  , show               : show
+  , hide               : hide
+  , showMosaic         : showMosaic
+  , showClassification : showClassification
+  , showChangeDetection: showChangeDetection
 }

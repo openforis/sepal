@@ -19,38 +19,6 @@ var btnLandsat          = null
 var btnSentinel2        = null
 var targetDate          = null
 
-var guid = function () {
-  function s4 () {
-    return Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .substring(1)
-  }
-  
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-    s4() + '-' + s4() + s4() + s4()
-}
-
-// default state
-var getDefaultState = function () {
-  var date         = moment(new Date()).format('YYYY-MM-DD')
-  var defaultState = {
-    id         : guid(),
-    type       : Model.TYPES.MOSAIC,
-    name       : 'mosaic-' + date,
-    aoiCode    : null,
-    aoiName    : null,
-    sensorGroup: Model.getSensorGroups()[0],
-    targetDate : date,
-    
-    sortWeight       : 0.5,
-    sensors          : Object.keys(Model.getSensors(Model.getSensorGroups()[0])),
-    offsetToTargetDay: 0,
-    minScenes        : 1,
-    maxScenes        : null
-  }
-  return defaultState
-}
-
 var state = {}
 
 var init = function (formSelector) {
@@ -114,8 +82,6 @@ var init = function (formSelector) {
     }
     
     form.submit(submit)
-    
-    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState())
     
   })
 }
@@ -198,6 +164,7 @@ var setPolygon = function (p) {
 
 // model change methods
 var setState = function (e, newState, params) {
+  FormValidator.resetFormErrors(form, formNotify)
   // state = { polygon: "[[20.21484375,42.811521745097906],[23.90625,38.95940879245423],[18.10546875,39.774769485295465],[18.28125,42.553080288955805],[20.21484375,42.811521745097906]]" }
   state = newState
   // $.extend( state, newState )
@@ -210,7 +177,12 @@ var setState = function (e, newState, params) {
       inputAoiCode.val(state.aoiName).data('reset-btn').enable()
       
       setCountryIso(state.aoiCode, state.aoiName)
-    } else if (state.polygon) {
+    } else {
+      inputAoiCode.sepalAutocomplete('reset')
+      setCountryIso(null, null)
+    }
+    
+    if (state.polygon) {
       inputAoiCode.sepalAutocomplete('reset')
       setPolygon(state.polygon)
       btnDrawPolygon.addClass('active')
@@ -226,7 +198,7 @@ var setState = function (e, newState, params) {
       targetDate.select('month', date.format('MM'))
       targetDate.select('day', date.format('DD'))
       targetDate.triggerChange = true
-    }, 1000)
+    }, 400)
     
     setSensorGroupState(state.sensorGroup)
   } else {
