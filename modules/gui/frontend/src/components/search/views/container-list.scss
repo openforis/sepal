@@ -2,6 +2,7 @@
 
   .row-header {
     font-weight: 400;
+    align-items: center;
   }
 
   .row-list {
@@ -21,6 +22,19 @@
         padding: 0 !important;
         width: 2rem;
         height: 2rem;
+      }
+    }
+  }
+
+  .row-btns {
+    align-items: center;
+    > div{
+      display: flex;
+      justify-content: space-between;
+    }
+    .btn {
+      i {
+        font-size: 1rem;
       }
     }
   }

@@ -6,12 +6,14 @@ require('./container-list.scss')
 var EventBus = require('../../event/event-bus')
 var Events   = require('../../event/events')
 
+var container      = null
 var tableHeader    = null
 var containerItems = null
 var rowTemplate    = null
 
-var init = function (container) {
+var init = function (html) {
   
+  container      = $(html)
   tableHeader    = container.find('.row-header')
   containerItems = container.find('.container-items')
   rowTemplate    = container.find('.template')
@@ -29,14 +31,25 @@ var listChanged = function (e, list) {
     row.find('.type').html(item.type)
     
     containerItems.append(row)
+    
     setTimeout(function () {
       row.fadeIn(50)
     }, i * 70)
   })
 }
 
+var show = function () {
+  container.fadeIn()
+}
+
+var hide = function () {
+  container.fadeOut()
+}
+
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_CHANGED, listChanged)
 
 module.exports = {
-  init: init
+  init  : init
+  , show: show
+  , hide: hide
 }

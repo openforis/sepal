@@ -11,7 +11,7 @@ var html = null
 
 // ui components
 var section               = null
-var ContainerModeSelector = null
+// var ContainerModeSelector = null
 var ContainerEdit         = require( './views/container-edit' )
 var ContainerList         = require( './views/container-list' )
 
@@ -25,27 +25,29 @@ var init = function () {
         
         section = appSection.find( '#search' )
         
-        ContainerModeSelector = section.find( '.mode-selection-container' )
+        // ContainerModeSelector = section.find( '.mode-selection-container' )
         ContainerEdit.init( section.find( '.mode-edit-container' ).show() )
         ContainerList.init( section.find( '.mode-list-container' ).hide() )
         
-        var btns = ContainerModeSelector.find( 'button' )
-        btns.click( function ( e ) {
-            e.preventDefault()
-            var btn = $( this )
-            if ( !btn.hasClass( "active" ) ) {
-                var target = btn.data( 'target' )
-                
-                hideSection( section.find( '.mode-container' ).not( '.' + target ) )
-                
-                btns.removeClass( 'active' )
-                btn.addClass( 'active' )
-                
-                showSection( section.find( '.' + target ) )
-            }
-        } )
+        // var btns = ContainerModeSelector.find( 'button' )
+        // btns.click( function ( e ) {
+        //     e.preventDefault()
+        //     var btn = $( this )
+        //     if ( !btn.hasClass( "active" ) ) {
+        //         var target = btn.data( 'target' )
+        //
+        //         hideSection( section.find( '.mode-container' ).not( '.' + target ) )
+        //
+        //         btns.removeClass( 'active' )
+        //         btn.addClass( 'active' )
+        //
+        //         showSection( section.find( '.' + target ) )
+        //     }
+        // } )
         
     }
+    ContainerList.show()
+    ContainerEdit.hide()
 }
 
 var showSection = function ( section, opts ) {

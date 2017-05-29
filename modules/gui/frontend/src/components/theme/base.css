@@ -803,6 +803,11 @@ img {
 .width20 {
     width: 20% !important;
 }
+
+.width25 {
+    width: 25% !important;
+}
+
 .width30 {
     width: 30% !important;
 }
