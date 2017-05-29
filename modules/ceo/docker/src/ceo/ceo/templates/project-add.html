@@ -10,12 +10,6 @@
             </div>
         </div>
         <div class="form-group row">
-            <label class="col-2 col-form-label">Scale (m)</label>
-            <div class="col-10">
-                <input class="form-control" type="text" name="radius" />
-            </div>
-        </div>
-        <div class="form-group row">
             <label class="col-2">Type</label>
             <div class="col-8">
                 <div class="form-check form-check-inline">
@@ -25,9 +19,15 @@
                 </div>
                 <div class="form-check form-check-inline">
                     <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="projectType" id="inlineRadio2" value="TRAINING-DATA">&nbsp;TRAINNG DATA
+                        <input class="form-check-input" type="radio" name="projectType" id="inlineRadio2" value="TRAINING-DATA">&nbsp;TRAINING DATA
                     </label>
                 </div>
+            </div>
+        </div>
+        <div class="form-group row data-row" style="display: none;">
+            <label class="col-2 col-form-label">Scale (m)</label>
+            <div class="col-10">
+                <input class="form-control" type="text" name="radius" disabled />
             </div>
         </div>
         <div class="form-group row cep-row">
@@ -151,10 +151,12 @@ $('input[type="radio"][name="projectType"]').change(function(e) {
         $('.cep-row').show();
         $('.cep-row input').prop('disabled', false);
         $('.data-row').hide();
+        $('.data-row input').prop('disabled', true);
     } else if (projectType == 'TRAINING-DATA') {
         $('.cep-row').hide();
         $('.cep-row input').prop('disabled', true);
         $('.data-row').show();
+        $('.data-row input').prop('disabled', false);
     }
 });
 
@@ -164,6 +166,37 @@ $('#add-subform-gee').click(function(e) {
     $('.remove-subform', subform).click(function(e) {
         e.preventDefault();
         $(this).closest('.subform-template').remove();
+    });
+    $('select[name="collectionName[]"]', subform).change(function() {
+        $('select[name="visParams[]"]', subform).find('option[value!=""]').remove();
+        var value = $(this).val();
+        var sets = visParams[value];
+        sets.forEach(function(set, index) {
+            var option = $('<option>').text(set.name).val(set.id);
+            $('select[name="visParams[]"]', subform).append(option);
+        });
+        $('select[name="visParams[]"]').change(function() {
+            var value2 = $(this).val();
+            if (value2 == '') {
+                $('input[name="min[]"]', subform).val('');
+                $('input[name="max[]"]', subform).val('');
+                $('input[name="band1[]"]', subform).val('');
+                $('input[name="band2[]"]', subform).val('');
+                $('input[name="band3[]"]', subform).val('');
+                $('input[name="gamma[]"]', subform).val('');
+            } else {
+                var value1 = $('select[name="collectionName[]"]', subform).val();
+                var set0 = visParams[value1];
+                var set1 = $.grep(set0, function(e) { return e.id == value2; });
+                var set = set1[0];
+                $('input[name="min[]"]', subform).val(set['min']);
+                $('input[name="max[]"]', subform).val(set['max']);
+                $('input[name="band1[]"]', subform).val(set['band1']);
+                $('input[name="band2[]"]', subform).val(set['band2']);
+                $('input[name="band3[]"]', subform).val(set['band3']);
+                $('input[name="gamma[]"]', subform).val(set['gamma']);
+            }
+        });
     });
 });
 
@@ -196,16 +229,7 @@ $('#add-subform-codelist-value').click(function(e) {
 });
 
 $(document).ready(function() {
-    var projectType = $('input[type="radio"][name="projectType"]');
-    if (projectType == 'CEP') {
-        $('.cep-row').show();
-        $('.cep-row input').prop('disabled', false);
-        $('.data-row').hide();
-    } else if (projectType == 'TRAINING-DATA') {
-        $('.cep-row').hide();
-        $('.cep-row input').prop('disabled', true);
-        $('.data-row').show();
-    }
+    var projectType = $('input[type="radio"][name="projectType"]').cahnge();
 });
 
 </script>

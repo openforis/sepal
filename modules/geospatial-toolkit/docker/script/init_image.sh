@@ -83,7 +83,7 @@ apt-get install -y \
     swig \
     tcl-dev \
     tmux \
-    unrar \
+    unrar-free \
     unzip \
     vim \
     wget \

@@ -40,6 +40,7 @@ var loadUserSandbox = function () {
                 loadUserSandbox()
             }, 60000 )
         }
+        , error  : function () {}
     }
     
     EventBus.dispatch( Events.AJAX.REQUEST, null, params )

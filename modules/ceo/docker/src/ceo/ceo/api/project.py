@@ -60,14 +60,20 @@ def projectAdd():
     overlays = getLayersFromRequest(request)
     projectType = request.form.get('projectType')
     # validation
-    if not name or not radius or not projectType:
+    if not projectType:
         return 'KO', 400
+    else:
+        if projectType == PROJECT_TYPE_CEP:
+            if not name:
+                return 'KO', 400
+        elif projectType == PROJECT_TYPE_TRAINING_DATA:
+            if not name or not radius:
+                return 'KO', 400
     # define basic project
     project = {
         'name': name,
         'type': projectType,
         'username': username,
-        'radius': radius,
         'upload_datetime': datetime.datetime.utcnow(),
         'overlays': overlays
     }
@@ -100,6 +106,7 @@ def projectAdd():
         codeLists = [codeList]
         project.update({
             'id': generate_id(name),
+            'radius': radius,
             'codeLists': codeLists
         })
     mongo.db.projects.insert(project)
@@ -119,21 +126,29 @@ def projectModify(id=None):
     name = request.form.get('name')
     radius = request.form.get('radius', type=int)
     overlays = getLayersFromRequest(request)
+    projectType = project['type']
     # validation
-    if not name or not radius:
+    # validation
+    if not projectType:
         return 'KO', 400
+    else:
+        if projectType == PROJECT_TYPE_CEP:
+            if not name:
+                return 'KO', 400
+        elif projectType == PROJECT_TYPE_TRAINING_DATA:
+            if not name or not radius:
+                return 'KO', 400
     # update the project
     project.update({
         'name': name,
-        'radius': radius,
         'overlays': overlays,
         'update_datetime': datetime.datetime.utcnow()
     })
-    projectType = project['type']
     if projectType == PROJECT_TYPE_TRAINING_DATA:
         codeList = getCodeListFromRequest(request)
         codeLists = [codeList]
         project.update({
+            'radius': radius,
             'codeLists': codeLists
         })
     mongo.db.projects.update({'id': id}, {'$set': project}, upsert=False)
@@ -283,11 +298,13 @@ def getLayersFromRequest(request):
     collectionName = request.form.getlist('collectionName[]')
     dateFrom = request.form.getlist('dateFrom[]')
     dateTo = request.form.getlist('dateTo[]')
+    visParams = request.form.getlist('visParams[]')
     Min = request.form.getlist('min[]')
     Max = request.form.getlist('max[]')
     band1 = request.form.getlist('band1[]')
     band2 = request.form.getlist('band2[]')
     band3 = request.form.getlist('band3[]')
+    gamma = request.form.getlist('gamma[]')
     # digitalglobe
     mapID = request.form.getlist('mapID[]')
     # gibs
@@ -303,11 +320,13 @@ def getLayersFromRequest(request):
                 'collectionName': collectionName[i1],
                 'dateFrom': dateFrom[i1],
                 'dateTo': dateTo[i1],
+                'visParams': visParams[i1],
                 'min': Min[i1],
                 'max': Max[i1],
                 'band1': band1[i1],
                 'band2': band2[i1],
-                'band3': band3[i1]
+                'band3': band3[i1],
+                'gamma': gamma[i1]
             }
         elif layerType[i] == 'digitalglobe':
             i2 += 1
