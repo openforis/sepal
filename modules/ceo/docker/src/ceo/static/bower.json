@@ -19,6 +19,7 @@
     "jquery": "~2.2.4",
     "bootstrap": "v4.0.0-alpha.6",
     "tether": "1.4.0",
-    "font-awesome": "4.7.0"
+    "font-awesome": "4.7.0",
+    "leaflet": "^1.0.3"
   }
 }
