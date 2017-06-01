@@ -17,10 +17,10 @@ class DatabaseConfig {
     private final String rootUser
     private final String rootPassword
 
-    DatabaseConfig() {
+    DatabaseConfig(String schema) {
         def c = new Config('database.properties')
+        this.schema = schema ?: c.schema
         driver = c.driver
-        schema = c.schema
         uri = c.uri
         user = c.user
         password = c.password
@@ -39,7 +39,7 @@ class DatabaseConfig {
         )
     }
 
-    DataSource createConnectionPool() {
+    DataSource createSchemaDataSource() {
         new ComboPooledDataSource(
                 driverClass: driver,
                 jdbcUrl: uri,

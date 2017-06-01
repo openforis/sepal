@@ -7,7 +7,7 @@ class DatabaseMigration {
 
     DatabaseMigration(DatabaseConfig config) {
         flyway = new Flyway(
-                locations: ["classpath:/sql"],
+                locations: ["classpath:/sql/$config.schema"],
                 dataSource: config.createRootDataSource(),
                 schemas: [config.schema]
         )

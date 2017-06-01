@@ -1,6 +1,8 @@
 package org.openforis.sepal.transaction
 
 import groovy.sql.Sql
+import org.openforis.sepal.database.DatabaseConfig
+import org.openforis.sepal.database.DatabaseMigration
 import org.openforis.sepal.util.lifecycle.Stoppable
 
 import javax.sql.DataSource
@@ -13,11 +15,17 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager,
         protected List<Closure> initialValue() { [] }
     }
 
+    static SqlConnectionManager create(String schema) {
+        def databaseConfig = new DatabaseConfig(schema)
+        new DatabaseMigration(databaseConfig).migrate()
+        return new SqlConnectionManager(databaseConfig.createSchemaDataSource())
+    }
+
     SqlConnectionManager(DataSource dataSource) {
         this.dataSource = dataSource
     }
 
-    public <T> T withTransaction(Closure<T> closure) {
+    def <T> T withTransaction(Closure<T> closure) {
         def connection = null
         boolean newTransaction = !isTransactionRunning()
         try {

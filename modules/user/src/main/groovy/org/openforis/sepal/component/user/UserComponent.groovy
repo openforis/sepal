@@ -11,8 +11,6 @@ import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.endpoint.UserEndpoint
 import org.openforis.sepal.component.user.internal.TokenManager
 import org.openforis.sepal.component.user.query.*
-import org.openforis.sepal.database.DatabaseConfig
-import org.openforis.sepal.database.DatabaseMigration
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
@@ -26,9 +24,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
     private final MessageBroker messageBroker
 
     static UserComponent create(ServerConfig serverConfig) {
-        def databaseConfig = new DatabaseConfig()
-        new DatabaseMigration(databaseConfig).migrate()
-        def connectionManager = new SqlConnectionManager(databaseConfig.createConnectionPool())
+        def connectionManager = SqlConnectionManager.create('sepal_user')
         return new UserComponent(
                 connectionManager,
                 new TerminalBackedExternalUserDataGateway(),
