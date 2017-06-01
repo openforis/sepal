@@ -79,7 +79,7 @@
                     <button type="button" class="btn btn-warning float-right" id="show-list-btn">List</button>
                 </div>
             </div>
-            <div class="row" style="margin-top: 10px;">
+            <div class="row" style="margin-top: 1rem;">
                 <div class="col-8">
                     <h3><i class="fa fa-map-marker"></i>&nbsp;<span id="selected-plot">XXX</span></h3>
                 </div>
@@ -89,10 +89,11 @@
                           <i class="fa fa-area-chart" aria-hidden="true"></i>&nbsp;Charts
                         </button>
                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                            <a class="dropdown-item chart-btn" href="#" id="chart-ndvi-btn">NDVI</a>
-                            <a class="dropdown-item chart-btn" href="#" id="chart-ndwi-btn">NDWI</a>
-                            <a class="dropdown-item chart-btn" href="#" id="chart-evi-btn">EVI</a>
-                            <a class="dropdown-item chart-btn" href="#" id="chart-evi2-btn">EVI2</a>
+                            <a class="dropdown-item chart-btn" href="#">EVI</a>
+                            <a class="dropdown-item chart-btn" href="#">EVI2</a>
+                            <a class="dropdown-item chart-btn" href="#">NDMI</a>
+                            <a class="dropdown-item chart-btn" href="#">NDVI</a>
+                            <a class="dropdown-item chart-btn" href="#">NDWI</a>
                         </div>
                     </div>
                 </div>
@@ -346,6 +347,7 @@
             var x_coordinate = $(this).attr('data-x-coordinate');
             var y_coordinate = $(this).attr('data-y-coordinate');
             $(this).addClass('active').siblings().removeClass('active');
+            //
             $('.confidence-submit-btn').removeClass('btn-success').addClass('btn-secondary');
             //
             var gSquare = shapes[plot_id][0];
