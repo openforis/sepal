@@ -1,45 +1,39 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<style type="text/css">
+<style>
 
-    html, body {
+    html, body, #gmap, #lmap {
         height: 100%;
         width: 100%;
         margin: 0;
         padding: 0;
     }
 
-    #map {
+    #maps {
         width: 60%;
         height: calc(100% - 56px);
         position: relative;
-        top: 0;
-        left: 0;
         float: left;
     }
 
     .map-control {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        z-index: 999;
+    }
+
+    .map-control select {
         background-color: #fff;
         border: 1px solid #ccc;
         box-shadow: 0 2px 2px rgba(33, 33, 33, 0.4);
-        font-family: 'Roboto','sans-serif';
-        margin: 10px;
-        /* Hide the control initially, to prevent it from appearing before the map loads. */
-        display: none;
-    }
-
-    /* Display the control once it is inside the map. */
-    #map .map-control {
-        display: block;
     }
 
     #collect {
         width: 40%;
         height: calc(100% - 56px);
         position: relative;
-        top: 0;
-        left: 0;
         float: left;
     }
 
@@ -51,18 +45,20 @@
 
 </style>
 
-<div id="style-selector-control" class="map-control">
-    <select id="layer-selector" class="selector-control">
-        <option value="">Default</option>
-    </select>
+<div id="maps">
+    <div id="style-selector-control" class="map-control">
+        <select id="layer-selector" class="selector-control">
+            <option value="">Default</option>
+        </select>
+    </div>
+    <div id="gmap"></div>
+    <div id="lmap" style="display: none;"></div>
 </div>
-
-<div id="map"></div>
 
 <div id="collect" class="container-fluid">
     <div class="form-group row">
         <div class="col">
-            <button type="button" class="btn btn-primary" id="export-btn">Export</button>
+            <button type="button" class="btn btn-primary" id="export-btn"><i class="fa fa-download" aria-hidden="true"></i>&nbsp;Export</button>
         </div>
     </div>
     <div class="row" id="list-row">
@@ -73,9 +69,6 @@
     <div class="row" id="codeLists-row" style="display: none;">
         <div class="col">
             <div class="row">
-                <div class="col-6">
-                    <h3><i class="fa fa-map-marker"></i>&nbsp;<span id="selected-plot">XXX</span></h3>
-                </div>
                 <div class="col-2">
                     <button type="button" class="btn btn-primary float-right" id="prev-btn">Prev</button>
                 </div>
@@ -84,6 +77,24 @@
                 </div>
                 <div class="col-2">
                     <button type="button" class="btn btn-warning float-right" id="show-list-btn">List</button>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+                <div class="col-8">
+                    <h3><i class="fa fa-map-marker"></i>&nbsp;<span id="selected-plot">XXX</span></h3>
+                </div>
+                <div class="col-4">
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop1" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          <i class="fa fa-area-chart" aria-hidden="true"></i>&nbsp;Charts
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                            <a class="dropdown-item chart-btn" href="#" id="chart-ndvi-btn">NDVI</a>
+                            <a class="dropdown-item chart-btn" href="#" id="chart-ndwi-btn">NDWI</a>
+                            <a class="dropdown-item chart-btn" href="#" id="chart-evi-btn">EVI</a>
+                            <a class="dropdown-item chart-btn" href="#" id="chart-evi2-btn">EVI2</a>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="row">
@@ -107,7 +118,95 @@
     </div>
 </div>
 
+<div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="chart-modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div id="chart" style="width:100%; height:400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+
+    var mapUtils = {
+        L: {
+            drawSquare: function(latLng, side, options, map, draw) {
+                var circle = L.circle(latLng, {
+                    radius: side / 2
+                }).addTo(map);
+                var square = L.rectangle(circle.getBounds());
+                if (draw === undefined || draw == false) square.setStyle({
+                    color: 'transparent'
+                });
+                else if (options !== undefined) square.setStyle(options);
+                square.addTo(map);
+                return square;
+            },
+            drawPoint: function(latLng, options, map) {
+                var point = L.circle(latLng, {
+                    radius: 1
+                });
+                if (options !== undefined) point.setStyle(options);
+                point.addTo(map);
+                return point;
+            },
+            cloneSquare: function(gSquare, options, map) {
+                var latLngBounds = L.latLngBounds([
+                    [gSquare.getBounds().getNorthEast().lat(), gSquare.getBounds().getNorthEast().lng()],
+                    [gSquare.getBounds().getSouthWest().lat(), gSquare.getBounds().getSouthWest().lng()]
+                ]);
+                var square = L.rectangle(latLngBounds);
+                if (options !== undefined) square.setStyle(options);
+                square.addTo(map);
+                return square;
+            }
+        },
+        G: {
+            drawSquare: function(latLng, side, options, map) {
+                var circle = new google.maps.Circle({
+                    center: latLng,
+                    radius: side / 2
+                });
+                var square = new google.maps.Rectangle({
+                    bounds: circle.getBounds()
+                });
+                if (options !== undefined) square.setOptions(options);
+                if (map !== undefined) square.setMap(map);
+                return square;
+            },
+            drawPoint: function(latLng, options, map) {
+                var point = new google.maps.Circle({
+                    center: latLng,
+                    radius: 1
+                });
+                if (options !== undefined) point.setOptions(options);
+                if (map !== undefined) point.setMap(map);
+                return point;
+            }
+        },
+        utils: {
+            switchToGoogleMaps: function(gmap, lmap, gmapElementId, lmapElementId) {
+                if ($('#' + gmapElementId).is(":hidden")) {
+                    gmap.setZoom(lmap.getZoom());
+                    gmap.setCenter(new google.maps.LatLng(lmap.getCenter()['lat'], lmap.getCenter()['lng']));
+                    $('#' + gmapElementId).show();
+                    $('#' + lmapElementId).hide();
+                    google.maps.event.trigger(gmap, 'resize');
+                }
+            },
+            switchToLeaflet: function(gmap, lmap, gmapElementId, lmapElementId) {
+                if ($('#' + lmapElementId).is(":hidden")) {
+                    lmap.setZoom(gmap.getZoom());
+                    lmap.panTo(new L.LatLng(gmap.getCenter().lat(), gmap.getCenter().lng()));
+                    $('#' + gmapElementId).hide();
+                    $('#' + lmapElementId).show();
+                    lmap.invalidateSize();
+                }
+            }
+        }
+    }
 
     $.urlParam = function(name) {
         var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
@@ -121,11 +220,9 @@
 
         var project_id = $.urlParam('id');
 
-        var map;
+        var gmap, lmap;
         var overlays = [];
         var overlayMapTypes = {};
-        var bounds = new google.maps.LatLngBounds();
-        //var radius = 30;
         var shapes = {};
         var properties = {};
 
@@ -214,6 +311,19 @@
                 };
                 var imageMapType = new google.maps.ImageMapType(layerOptions);
                 overlayMapTypes[index] = imageMapType;
+            } else if (overlay.type == 'geonetwork') {
+                var layerName = overlay.geonetworkLayer;
+                var geonetworkLayer = L.tileLayer.wms('http://data.fao.org/maps/wms?', {
+                    layers: layerName,
+                    tiled: true,
+                    format: 'image/png',
+                    transparent: true,
+                    maxZoom: 20,
+                    minZoom: 0,
+                    continuousWorld: true,
+                    version: '1.3.0'
+                });
+                overlayMapTypes[index] = geonetworkLayer;
             }
         }
 
@@ -237,9 +347,14 @@
             var y_coordinate = $(this).attr('data-y-coordinate');
             $(this).addClass('active').siblings().removeClass('active');
             $('.confidence-submit-btn').removeClass('btn-success').addClass('btn-secondary');
-            var square = shapes[plot_id];
-            map.fitBounds(square.getBounds());
-            map.setZoom(map.getZoom() - 1);
+            //
+            var gSquare = shapes[plot_id][0];
+            gmap.fitBounds(gSquare.getBounds());
+            gmap.setZoom(gmap.getZoom() - 2);
+            var lSquare = shapes[plot_id][1];
+            lmap.fitBounds(lSquare.getBounds());
+            lmap.setZoom(lmap.getZoom() - 2);
+            //
             $('#codeLists input[name="id"]').val(0);
             record = $.grep(records, function(e) { return e['plot']['id'] == plot_id; });
             if (record[0] !== undefined) {
@@ -305,7 +420,7 @@
                     }
                 ];
 
-                options = {
+                gOptions = {
                     zoom             : 10,
                     center           : new google.maps.LatLng(0, 0),
                     mapTypeId        : google.maps.MapTypeId.ROADMAP,
@@ -315,14 +430,31 @@
                     streetViewControl: false,
                     rotateControl    : false,
                     fullscreenControl: false,
+                    animatedZoom     : false,
                     backgroundColor  : '#131314'
                 };
 
-                map = new google.maps.Map(window.document.getElementById("map"), options);
-                map.setOptions( { styles: mapStyle } );
+                var CartoDB_DarkMatterNoLabels = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+                    subdomains: 'abcd',
+                    maxZoom: 19
+                });
+                lOptions = {
+                    zoom: 10,
+                    center: [0, 0],
+                    zoomAnimation: false,
+                    zoomControl: false,
+                    layers: [CartoDB_DarkMatterNoLabels]
+                }
 
-                var styleControl = document.getElementById('style-selector-control');
-                map.controls[google.maps.ControlPosition.TOP_RIGHT].push(styleControl);
+                // google maps init
+                gmap = new google.maps.Map(window.document.getElementById('gmap'), gOptions);
+                gmap.setOptions( { styles: mapStyle } );
+                var gBounds = new google.maps.LatLngBounds();
+
+                // leaflet init
+                lmap = L.map('lmap', lOptions);
+                var lBounds = [];
 
                 // properties
                 if (data.properties !== undefined && data.properties.length != 0) {
@@ -330,7 +462,7 @@
                 }
 
                 // plots
-                if (data.plots !== undefined) {
+                if (data.plots !== undefined && data.plots.length != 0) {
                     //
                     var innerPointSide = properties['inner_point_side'];
                     var numberOfSamplingPointsInPlot = properties['number_of_sampling_points_in_plot'];
@@ -345,12 +477,18 @@
                     var indexOfCenter = (isEven) ? -1 : numberInnerColumns;
                     //
                     var squareOptions1 = {
+                        color: 'yellow',
+                        opacity: 0.8,
+                        weight: 2,
                         strokeColor: 'yellow',
                         strokeOpacity: 0.8,
                         strokeWeight: 2,
                         fillOpacity: 0
                     };
                     var squareOptions2 = {
+                        color: 'red',
+                        opacity: 0.8,
+                        weight: 2,
                         strokeColor: 'red',
                         strokeOpacity: 0.8,
                         strokeWeight: 2,
@@ -368,8 +506,11 @@
                         li.click(plotSelection);
                         $('#list').append(li);
                         //
-                        var innerSquare = drawSquare(latLng, innerSideLength);
-                        var externalSquare = drawSquare(latLng, plotSideLength, squareOptions1, map);
+                        var gPlot = mapUtils.G.drawSquare(latLng, plotSideLength, squareOptions1, gmap);
+                        var lPlot = mapUtils.L.cloneSquare(gPlot, squareOptions1, lmap);
+                        shapes[id] = [gPlot, lPlot];
+                        //
+                        var innerSquare = mapUtils.G.drawSquare(latLng, innerSideLength);
                         var eastLng = innerSquare.getBounds().getNorthEast().lng();
                         var westLng = innerSquare.getBounds().getSouthWest().lng();
                         var lngDistanceBetweenSamplePoints = (westLng - eastLng) / (pointPerLine - 1);
@@ -380,25 +521,35 @@
                             var lng = eastLng + x * lngDistanceBetweenSamplePoints;
                             for (var y = 0; y < pointPerLine; y++) {
                                 var latLng = new google.maps.LatLng(northLat - y * latDistanceBetweenSamplePoints, lng);
-                                if (indexOfCenter != -1 && x == indexOfCenter && y == indexOfCenter) drawSquare(latLng, innerPointSide, squareOptions2, map);
-                                else drawSquare(latLng, innerPointSide, squareOptions1, map);
+                                if (indexOfCenter != -1 && x == indexOfCenter && y == indexOfCenter) {
+                                    var square = mapUtils.G.drawSquare(latLng, innerPointSide, squareOptions2, gmap);
+                                    mapUtils.L.cloneSquare(square, squareOptions2, lmap);
+                                }
+                                else {
+                                    var square = mapUtils.G.drawSquare(latLng, innerPointSide, squareOptions1, gmap);
+                                    mapUtils.L.cloneSquare(square, squareOptions1, lmap);
+                                }
                             }
                         }
                         //
-                        shapes[id] = externalSquare;
-                        externalSquare.addListener('click', function() {
+                        gPlot.addListener('click', function() {
                             $('#list a[data-plot-id=' + plot.id +']').click();
                         });
-                        bounds.extend(latLng);
+                        lPlot.on('click', function(e) {
+                            $('#list a[data-plot-id=' + plot.id +']').click();
+                        });
+                        //
+                        gBounds.extend(latLng);
+                        lBounds.push([lat, lng]);
                     });
-                    map.panToBounds(bounds);
-                    map.fitBounds(bounds);
+                    gmap.panToBounds(gBounds);
+                    gmap.fitBounds(gBounds);
+                    lmap.fitBounds(lBounds);
                 }
-
                 //overlays
+
                 data.overlays.forEach(function(overlay, index) {
-                    var layerName = overlay.layerName;
-                    var option = $('<option>').text(layerName).attr('value', index);
+                    var option = $('<option>').text(overlay.layerName).val(index);
                     $('#layer-selector').append(option);
                     overlays.push(overlay);
                 });
@@ -543,7 +694,7 @@
         });
 
         $('#layer-selector').change(function(e) {
-            map.overlayMapTypes.pop();
+            gmap.overlayMapTypes.pop();
             var index = $(this).val();
             if (index != '') {
                 var overlay = overlays[index]
@@ -551,8 +702,101 @@
                     addOverlayMapType(overlay, overlayMapTypes, index);
                 }
                 var overlyMapType = overlayMapTypes[index];
-                map.overlayMapTypes.insertAt(0, overlyMapType);
+                if (overlay.type != 'geonetwork') {
+                    gmap.overlayMapTypes.insertAt(0, overlyMapType);
+                    mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
+                } else {
+                    lmap.addLayer(overlyMapType);
+                    mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
+                }
+            } else {
+                mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
             }
+        });
+
+        $('.chart-btn').click(function(e) {
+            e.preventDefault();
+            var indexName = $(this).text();
+            var active = $('#list .active');
+            var plot_id = active.attr('data-plot-id');
+            var x_coordinate = active.attr('data-x-coordinate');
+            var y_coordinate = active.attr('data-y-coordinate');
+            $.ajax({
+                url: geeGatewayApiUrl + '/timeSeriesIndex2',
+                type: 'POST',
+                crossDomain : true,
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    indexName: indexName,
+                    scale: 30,
+                    polygon: [
+                        parseFloat(x_coordinate), parseFloat(y_coordinate)
+                    ]
+                })
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
+            }).done(function(data, textStatus, jqXHR) {
+                if (data.errMsg) {
+                    console.error(data, textStatus, jqXHR);
+                } else {
+                    $('#chart-modal').modal('show');
+                    var text = indexName;
+                    Highcharts.chart('chart', {
+                        chart: {
+                            zoomType: 'x'
+                        },
+                        title: {
+                            text: text
+                        },
+                        subtitle: {
+                            text: document.ontouchstart === undefined ? 'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+                        },
+                        xAxis: {
+                            type: 'datetime'
+                        },
+                        yAxis: {
+                            title: {
+                                text: indexName
+                            }
+                        },
+                        legend: {
+                            enabled: false
+                        },
+                        plotOptions: {
+                            area: {
+                                fillColor: {
+                                    linearGradient: {
+                                        x1: 0,
+                                        y1: 0,
+                                        x2: 0,
+                                        y2: 1
+                                    },
+                                    stops: [
+                                        [0, Highcharts.getOptions().colors[0]],
+                                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                                    ]
+                                },
+                                marker: {
+                                    radius: 2
+                                },
+                                lineWidth: 1,
+                                states: {
+                                    hover: {
+                                        lineWidth: 1
+                                    }
+                                },
+                                threshold: null
+                            }
+                        },
+                        series: [{
+                            type: 'area',
+                            name: indexName,
+                            data: data.timeseries
+                        }]
+                    });
+                }
+            });
+
         });
 
     });

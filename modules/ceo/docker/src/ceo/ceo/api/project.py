@@ -128,7 +128,6 @@ def projectModify(id=None):
     overlays = getLayersFromRequest(request)
     projectType = project['type']
     # validation
-    # validation
     if not projectType:
         return 'KO', 400
     else:
@@ -310,8 +309,10 @@ def getLayersFromRequest(request):
     # gibs
     imageryLayer = request.form.getlist('imageryLayer[]')
     date = request.form.getlist('date[]')
+    # geonetwork
+    geonetworkLayer = request.form.getlist('geonetworkLayer[]')
     #
-    i1 = i2 = i3 = -1
+    i1 = i2 = i3 = i4 = -1
     for i in range(0, len(layerType)):
         overlay = None
         if layerType[i] == 'gee-gateway':
@@ -338,6 +339,11 @@ def getLayersFromRequest(request):
             overlay = {
                 'imageryLayer': imageryLayer[i3],
                 'date': date[i3]
+            }
+        elif layerType[i] == 'geonetwork':
+            i4 += 1
+            overlay = {
+                'geonetworkLayer': geonetworkLayer[i4]
             }
         if overlay:
             overlay['layerName'] = layerName[i]
