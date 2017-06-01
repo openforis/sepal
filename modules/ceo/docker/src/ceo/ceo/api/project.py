@@ -354,7 +354,7 @@ def getLayersFromRequest(request):
 def getCodeListFromRequest(request):
     codeList = {
         'id': 'class',
-        'name': 'Class',
+        'name': 'class',
         'items': []
     }
     codeListCode = request.form.getlist('codeListCode[]')
