@@ -90,6 +90,4 @@ class GenerateUserSpendingReport_Test extends AbstractBudgetTest {
         Math.round(report.storageSpending) == 53
         report.storageUsage == 250
     }
-
-
 }
