@@ -37,7 +37,7 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager,
             }
             return result
         } catch (Exception e) {
-            connection.rollback()
+            connection?.rollback()
             throw e
         } finally {
             if (newTransaction) {
