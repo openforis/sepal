@@ -120,7 +120,7 @@ def projectModify(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         return 'Error!', 404
-    if session.get('is_admin') or project['username'] != session.get('username'):
+    if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     # retrieve project data
     name = request.form.get('name')
@@ -161,7 +161,7 @@ def projectChange(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         return 'Error!', 404
-    if session.get('is_admin') or project['username'] != session.get('username'):
+    if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     # retrieve project data
     plots = request.json.get('plots')
@@ -182,7 +182,7 @@ def projectDelete(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         return 'Error!', 404
-    if session.get('is_admin') or project['username'] != session.get('username'):
+    if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     mongo.db.projects.delete_many({'id': id})
     mongo.db.records.delete_many({'project_id': id})
