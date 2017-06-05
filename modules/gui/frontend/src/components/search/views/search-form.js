@@ -167,7 +167,6 @@ var setState = function (e, newState, params) {
   FormValidator.resetFormErrors(form, formNotify)
   // state = { polygon: "[[20.21484375,42.811521745097906],[23.90625,38.95940879245423],[18.10546875,39.774769485295465],[18.28125,42.553080288955805],[20.21484375,42.811521745097906]]" }
   state = newState
-  // $.extend( state, newState )
   
   if (state.type == Model.TYPES.MOSAIC) {
     
