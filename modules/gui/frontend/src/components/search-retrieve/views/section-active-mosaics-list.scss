@@ -12,45 +12,56 @@
 
       .active-mosaics-btns {
         padding-bottom: .5rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        //display: flex;
+        //justify-content: center;
+        //align-items: center;
+        text-align: center;
+        word-spacing: .5rem;
 
-        .btn {
+        .mosaic-item {
+          display: inline-flex;
+          border-bottom: 3px solid rgba(255, 255, 255, 0.5);
+          margin-right: 1rem;
+          height: 2.5rem;
 
-          &.btn-mosaic {
-            background-color: transparent;
-            //background-color: rgba(255, 255, 255, 0.05);
-            border-top: 3px solid transparent;
-            border-bottom: 3px solid transparent;
-            border-left: none;
-            border-right: none;
-            padding-top: .7rem;
-            padding-bottom: .7rem;
-            font-weight: 600 !important;
-            font-size: .85rem;
-            text-transform: none!important;
-            &:active,
-            &:hover {
-              background-color: rgba(255, 255, 255, 0.1);
+          .btn {
+            &.btn-close {
+              width: 1.5rem;
+              height: 1.5rem;
+              padding: 0 !important;
+              border-radius: 0;
+              border: none;
+              color: rgba(255, 255, 255, 0.65);
             }
-            &.active {
-              border-bottom: 3px solid #b8a280;
-              background-color: rgba(184, 162, 128, 0.15);
-              &:active,
+
+            &.btn-mosaic {
+              background-color: transparent;
+              border: none;
+              padding: .7rem 1rem;
+              font-weight: 600 !important;
+              font-size: .85rem;
+              text-transform: none!important;
+
               &:hover {
-                background-color: rgba(184, 162, 128, 0.15);
+                background-color: rgba(255, 255, 255, 0.1);
               }
             }
+
+            &.btn-save {
+              width: 2rem;
+              height: 100%;
+              border: none;
+            }
           }
 
-          &.btn-save {
-            width: 2rem;
-            height: 2rem;
-          }
+          &.active {
+            border-bottom: 3px solid #b8a280;
+            background-color: rgba(184, 162, 128, 0.15);
 
-          &:not(:last-child) {
-            margin-right: .2rem;
+            .btn-mosaic:hover {
+              background-color: transparent;
+              cursor: default;
+            }
           }
         }
 

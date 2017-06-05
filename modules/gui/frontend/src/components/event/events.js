@@ -36,9 +36,11 @@ var Events = {
     }
     
     , SEARCH: {
+      MOSAIC_LOAD                   : 'section.search.mosaic_load'
+      , MOSAIC_DELETE               : 'section.search.mosaic_delete'
       // SHOW_SCENE_AREA: 'section.search.show_scene_area'
       //TODO: move to mosaic_view
-      REQUEST_SCENE_AREAS           : 'section.search.request_scene_areas'
+      , REQUEST_SCENE_AREAS         : 'section.search.request_scene_areas'
       , SCENE_AREAS_LOADED          : 'section.search.scene_areas_loaded'
       , LANDSAT_SCENE_AREAS_LOADED  : 'section.search.landsat_scene_areas_loaded'
       , SENTINEL2_SCENE_AREAS_LOADED: 'section.search.sentinel2_scene_areas_loaded'
@@ -55,7 +57,7 @@ var Events = {
       }
       
       , VIEW: {
-        SHOW_LIST                   : 'section.search.list_view.show_list'
+        SHOW_LIST              : 'section.search.list_view.show_list'
         , SHOW_MOSAIC          : 'section.search.list_view.show_mosaic'
         , SHOW_CLASSIFICATION  : 'section.search.list_view.show_classification'
         , SHOW_CHANGE_DETECTION: 'section.search.list_view.show_change_detection'

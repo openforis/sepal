@@ -43,6 +43,12 @@ var listChanged = function (e, list) {
     var row = rowTemplate.clone().removeClass('template').hide()
     row.find('.name').html(item.name)
     row.find('.type').html(item.type)
+    row.find('.btn-edit').click(function (e) {
+      EventBus.dispatch(Events.SECTION.SEARCH.MOSAIC_LOAD, null, item.id)
+    })
+    row.find('.btn-delete').click(function (e) {
+      EventBus.dispatch(Events.SECTION.SEARCH.MOSAIC_DELETE, null, item.id)
+    })
     
     containerItems.append(row)
     

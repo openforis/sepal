@@ -606,6 +606,10 @@ class MockServer extends AbstractMvcFilter {
                 send(toJson(list))
             }
 
+            get('/api/mosaics/{mosaicId}') {
+                send(toJson(mosaics.get(params.mosaicId)))
+            }
+
             post('/api/mosaics/{mosaicId}/save') {
                 String data = params.data
                 mosaics.put(params.mosaicId, params.data)

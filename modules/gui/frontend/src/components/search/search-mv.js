@@ -15,11 +15,12 @@ require('../scenes-selection/scenes-selection-mv')
 require('../search-retrieve/search-retrieve-mv')
 require('../scene-area-mosaics/scene-area-mosaics-mv')
 
-var show = function (e, type) {
+var show = function (e, type, params) {
   if (type == 'search') {
     View.init()
   }
-  View.showList()
+  if (!(params && params.source === 'app-section'))
+    View.showList()
 }
 
 var requestSceneAreas = function (e, state) {
@@ -31,7 +32,6 @@ var requestSceneAreas = function (e, state) {
     url         : '/api/data/sceneareas'
     , data      : data
     , beforeSend: function () {
-      // EventBus.dispatch( Events.SCENE_AREAS.INIT )
       Loader.show()
     }
     , success   : function (response) {
@@ -53,7 +53,8 @@ var requestSceneAreas = function (e, state) {
 EventBus.addEventListener(Events.SECTION.SHOW, show)
 EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_SCENE_AREAS, requestSceneAreas)
 
-EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, function (e) {
+// list actions
+var loadList = function (e) {
   var params = {
     url    : '/api/mosaics/list',
     success: function (response) {
@@ -61,7 +62,48 @@ EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, function (e) {
     }
   }
   EventBus.dispatch(Events.AJAX.GET, null, params)
-})
+}
+
+var loadMosaic = function (e, id) {
+  var params = {
+    url         : '/api/mosaics/' + id
+    , beforeSend: function () {
+      Loader.show()
+    }
+    , success   : function (response) {
+      Loader.hide({delay: 300})
+      
+      var state = JSON.parse(response)
+      // console.log('====== ', state)
+      
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, isNew:true})
+      EventBus.dispatch(Events.SECTION.REDUCE)
+      
+      setTimeout(function () {
+        switch (state.type) {
+          case Model.TYPES.MOSAIC:
+            View.showMosaic()
+            break
+          case Model.TYPES.CLASSIFY:
+            View.showClassification()
+            break
+          case Model.TYPES.CHANGE_DETECTION:
+            View.showChangeDetection()
+            break
+        }
+      }, 600)
+    }
+  }
+  EventBus.dispatch(Events.AJAX.GET, null, params)
+}
+
+var deleteMosaic = function (e, id) {
+
+}
+
+EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, loadList)
+EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_LOAD, loadMosaic)
+EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_DELETE, deleteMosaic)
 
 var guid = function () {
   function s4 () {

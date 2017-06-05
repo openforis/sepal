@@ -18,7 +18,7 @@ var stateChanged = function ( e, s, params ) {
             visible = true
             if ( params && params.resetSceneAreas === true ) {
                 var polygons = areasToMapPolygons( state.sceneAreas, state.sensorGroup )
-                ActiveView.add( polygons, true )
+                ActiveView.add( polygons, visible )
             }
             
             updateCount()
