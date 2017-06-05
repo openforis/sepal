@@ -71,13 +71,10 @@ var loadMosaic = function (e, id) {
       Loader.show()
     }
     , success   : function (response) {
-      Loader.hide({delay: 300})
+      Loader.hide({delay: 1000})
       
       var state = JSON.parse(response)
       // console.log('====== ', state)
-      
-      EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, isNew:true})
-      EventBus.dispatch(Events.SECTION.REDUCE)
       
       setTimeout(function () {
         switch (state.type) {
@@ -91,6 +88,10 @@ var loadMosaic = function (e, id) {
             View.showChangeDetection()
             break
         }
+      }, 200)
+      setTimeout(function () {
+        EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, isNew: true})
+        EventBus.dispatch(Events.SECTION.REDUCE)
       }, 600)
     }
   }
@@ -98,7 +99,22 @@ var loadMosaic = function (e, id) {
 }
 
 var deleteMosaic = function (e, id) {
-
+  var params = {
+    url         : '/api/mosaics/' + id
+    , beforeSend: function () {
+      Loader.show()
+    }
+    , success   : function (response) {
+      Loader.hide({delay: 1000})
+      
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_CHANGED, null, response)
+      
+      if (Model.isActive(id)) {
+        EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, null)
+      }
+    }
+  }
+  EventBus.dispatch(Events.AJAX.DELETE, null, params)
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, loadList)
@@ -143,7 +159,7 @@ var addMosaic = function () {
     return defaultState
   }
   View.showMosaic()
-  EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState())
+  EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_LIST, showList)

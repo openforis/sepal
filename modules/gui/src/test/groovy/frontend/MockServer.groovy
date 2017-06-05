@@ -602,8 +602,7 @@ class MockServer extends AbstractMvcFilter {
 
 
             get('/api/mosaics/list') {
-                List list = getMosaicsList()
-                send(toJson(list))
+                send(toJson(getMosaicsList()))
             }
 
             get('/api/mosaics/{mosaicId}') {
@@ -611,19 +610,24 @@ class MockServer extends AbstractMvcFilter {
             }
 
             post('/api/mosaics/{mosaicId}/save') {
-                String data = params.data
-                mosaics.put(params.mosaicId, params.data)
-
-                List list = getMosaicsList()
-                send(toJson(list))
+                String mosaicId = params.mosaicId
+                if (mosaics.containsKey(mosaicId))
+                    mosaics.remove(mosaicId)
+                mosaics.put(mosaicId, params.data)
+                send(toJson(getMosaicsList()))
             }
 
+            delete('/api/mosaics/{mosaicId}') {
+                mosaics.remove(params.mosaicId)
+                send(toJson(getMosaicsList()))
+            }
 
         }
         return controller
     }
 
     Map mosaics = new HashMap()
+
     private List getMosaicsList() {
         List list = new ArrayList()
         for (String id : mosaics.keySet()) {

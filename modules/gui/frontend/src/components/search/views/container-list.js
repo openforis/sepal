@@ -5,11 +5,13 @@ require('./container-list.scss')
 
 var EventBus = require('../../event/event-bus')
 var Events   = require('../../event/events')
+var Dialog   = require('../../dialog/dialog')
 
 var container      = null
 var tableHeader    = null
 var containerItems = null
 var rowTemplate    = null
+var activeState    = null
 
 var init = function (html) {
   
@@ -41,13 +43,21 @@ var listChanged = function (e, list) {
   containerItems.empty()
   $.each(list, function (i, item) {
     var row = rowTemplate.clone().removeClass('template').hide()
+    row.addClass('mosaic-' + item.id)
     row.find('.name').html(item.name)
     row.find('.type').html(item.type)
     row.find('.btn-edit').click(function (e) {
       EventBus.dispatch(Events.SECTION.SEARCH.MOSAIC_LOAD, null, item.id)
     })
     row.find('.btn-delete').click(function (e) {
-      EventBus.dispatch(Events.SECTION.SEARCH.MOSAIC_DELETE, null, item.id)
+      e.preventDefault()
+      var options = {
+        message    : 'Delete ' + item.name + ' ?'
+        , onConfirm: function () {
+          EventBus.dispatch(Events.SECTION.SEARCH.MOSAIC_DELETE, null, item.id)
+        }
+      }
+      Dialog.show(options)
     })
     
     containerItems.append(row)
@@ -56,6 +66,7 @@ var listChanged = function (e, list) {
       row.fadeIn(50)
     }, i * 70)
   })
+  highlightActive()
 }
 
 var show = function () {
@@ -68,7 +79,19 @@ var hide = function () {
     container.velocityFadeOut({delay: 0, duration: 300})
 }
 
+var activeChanged   = function (e, state) {
+  activeState = state
+  highlightActive()
+}
+
+var highlightActive = function () {
+  containerItems.find('.row-mosaic').removeClass('active')
+  if (activeState)
+    containerItems.find('.mosaic-' + activeState.id).addClass('active')
+}
+
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_CHANGED, listChanged)
+EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, activeChanged)
 
 module.exports = {
   init  : init
