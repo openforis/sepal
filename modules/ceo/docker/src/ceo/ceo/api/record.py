@@ -55,7 +55,7 @@ def recordModify(id=None):
     record = mongo.db.records.find_one({'id': id}, {'_id': False})
     if not record:
         return 'Error!', 404
-    if session.get('is_admin') or record['username'] != session.get('username'):
+    if record['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     # update the record
     record.update({
@@ -73,7 +73,7 @@ def recordDelete(id=None):
     record = mongo.db.records.find_one({'id': id}, {'_id': False})
     if not record:
         return 'Error!', 404
-    if session.get('is_admin') or record['username'] != session.get('username'):
+    if record['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     mongo.db.records.delete_many({'id': id})
     return 'OK', 200

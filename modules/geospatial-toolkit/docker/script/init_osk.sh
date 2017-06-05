@@ -22,7 +22,7 @@ cd ${OSK_HOME}/opensarkit/bins
 BINDIR=/usr/local/bin/
 for OST_BINS in `ls -1`;do
     cd $OST_BINS
-    for exe in `ls -1 {oft*,poft*}`;do
+    for exe in `ls -1 {ost*,post*}`;do
         exepath=`readlink -f $exe`
         ln -sf $exepath ${BINDIR}/
     done

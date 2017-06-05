@@ -27,6 +27,9 @@
                     <button id="add-subform-gibs" type="button" class="btn btn-success">
                         <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add GIBS layer
                     </button>
+                    <button id="add-subform-geonetwork" type="button" class="btn btn-success">
+                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add GeoNetwork layer
+                    </button>
                 </div>
             </div>
         </div>
@@ -107,6 +110,21 @@
     </div>
 </div>
 
+<div style="display: none;" id="geonetwork-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="geonetwork" />
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GeoNetwork</h2>
+            </div>
+            <div class="col-4">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
+            </div>
+        </div>
+        {% include "project-subform-geonetwork.html" %}
+    </div>
+</div>
+
 <div style="display: none;" id="codelist-values-subform-template" class="subform-template">
     <div class="container">
         <div class="form-group row">
@@ -172,14 +190,6 @@ function addSubformGEE(data) {
         $('input[name="dateFrom[]"]', subform).val(data.dateFrom);
         $('input[name="dateTo[]"]', subform).val(data.dateTo);
         $('select[name="visParams[]"]', subform).val(data.visParams).trigger('change');
-        /*
-        $('input[name="min[]"]', subform).val(data.min);
-        $('input[name="max[]"]', subform).val(data.max);
-        $('input[name="band1[]"]', subform).val(data.band1);
-        $('input[name="band2[]"]', subform).val(data.band2);
-        $('input[name="band3[]"]', subform).val(data.band3);
-        $('input[name="gamma[]"]', subform).val(data.gamma);
-        */
     }
 }
 
@@ -205,6 +215,18 @@ function addSubformGIBS(data) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
         $('select[name="imageryLayer[]"]', subform).val(data.imageryLayer);
         $('input[name="date[]"]', subform).val(data.date);
+    }
+}
+
+function addSubformGeoNetwork(data) {
+    var subform = $('#geonetwork-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(function(e) {
+        e.preventDefault();
+        $(this).closest('.subform-template').remove();
+    });
+    if (data !== undefined) {
+        $('input[name="layerName[]"]', subform).val(data.layerName);
+        $('select[name="geonetworkLayer[]"]', subform).val(data.geonetworkLayer);
     }
 }
 
@@ -235,6 +257,11 @@ $('#add-subform-gibs').click(function(e) {
     addSubformGIBS();
 });
 
+$('#add-subform-geonetwork').click(function(e) {
+    e.preventDefault();
+    addSubformGeoNetwork();
+});
+
 $('#add-subform-codelist-value').click(function(e) {
     e.preventDefault();
     addSubformCodeListValue();
@@ -244,6 +271,7 @@ $('#submit-btn').click(function(e) {
     e.preventDefault();
     var project_id = $.urlParam('id');
     var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
+    console.log($('form').serialize());
     $.ajax({
         url: ceoSepalApiUrl + "/project/" + project_id,
         method: 'put',
@@ -261,34 +289,43 @@ $(document).ready(function() {
     var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
 
     $.ajax({
-        url: ceoSepalApiUrl + "/project/" + project_id,
+        url: ceoSepalApiUrl + '/project/' + project_id,
         method: 'get',
-        contentType: 'application/json;charset=UTF-8'
+        dataType: 'json'
     }).success(function(data) {
         $('input[name="name"]').val(data.name);
-        var projectType = data.type;
-        if (projectType == 'CEP') {
-            $('.data-row').hide();
+        switch (data.type) {
+            case 'CEP':
+                $('.data-row').hide();
+                break;
+            case 'TRAINING-DATA':
+                $('input[name="radius"]').val(data.radius);
+                $('.data-row').show();
+                var codeLists = data.codeLists;
+                var codeList = codeLists[0];
+                codeList.items.forEach(function(item) {
+                    addSubformCodeListValue(item);
+                });
+                break;
         }
-        else if (projectType == 'TRAINING-DATA') {
-            $('input[name="radius"]').val(data.radius);
-            $('.data-row').show();
-            var codeLists = data.codeLists;
-            var codeList = codeLists[0];
-            codeList.items.forEach(function(item) {
-                addSubformCodeListValue(item);
+        if (data.overlays !== undefined) {
+            data.overlays.forEach(function(overlay) {
+                switch (overlay.type) {
+                    case 'gee-gateway':
+                        addSubformGEE(overlay);
+                        break;
+                    case 'digitalglobe':
+                        addSubformDigitalGlobe(overlay);
+                        break;
+                    case 'gibs':
+                        addSubformGIBS(overlay);
+                        break;
+                    case 'geonetwork':
+                        addSubformGeoNetwork(overlay);
+                        break;
+                }
             });
         }
-        var overlays = data.overlays;
-        overlays.forEach(function(overlay) {
-            if (overlay.type == 'gee-gateway') {
-                addSubformGEE(overlay);
-            } else if (overlay.type == 'digitalglobe') {
-                addSubformDigitalGlobe(overlay);
-            } else if (overlay.type == 'gibs') {
-                addSubformGIBS(overlay);
-            }
-        });
     }).fail(function(jqXHR, textStatus, errorThrown) {
         console.error(jqXHR, textStatus, errorThrown);
     });

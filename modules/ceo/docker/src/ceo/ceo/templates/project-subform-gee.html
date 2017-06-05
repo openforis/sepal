@@ -1,24 +1,3 @@
-<script>
-    var visParams = {
-        'LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA': [
-            { id: 1, name: 'RED, GREEN, BLUE', min: 0.05, max: 0.5, band1: 'B3', band2: 'B2', band3: 'B1', 'gamma': '2.0, 2.1, 1.8' },
-            { id: 2, name: 'NIR, RED, GREEN', min: 0.05, max: 0.5, band1: 'B4', band2: 'B3', band3: 'B2', 'gamma': 1.7 },
-            { id: 3, name: 'NIR, SWIR1, RED', min: 0.05, max: 0.5, band1: 'B4', band2: 'B5', band3: 'B3', 'gamma': 1.7 },
-            { id: 4, name: 'SWIR2, NIR, RED', min: 0.05, max: 0.5, band1: 'B7', band2: 'B4', band3: 'B3', 'gamma': 1.7 },
-            { id: 5, name: 'SWIR2, SWIR1, RED', min: 0.05, max: 0.5, band1: 'B7', band2: 'B5', band3: 'B3', 'gamma': 1.7 },
-            { id: 6, name: 'SWIR2, NIR, GREEN', min: 0.05, max: 0.5, band1: 'B7', band2: 'B4', band3: 'B2', 'gamma': 1.7 }
-        ],
-        'LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA': [
-            { id: 101, name: 'RED, GREEN, BLUE', min: 0.05, max: 0.5, band1: 'B4', band2: 'B3', band3: 'B2', 'gamma': '2.0, 2.1, 1.8' },
-            { id: 102, name: 'NIR, RED, GREEN', min: 0.05, max: 0.5, band1: 'B5', band2: 'B4', band3: 'B3', 'gamma': 1.7 },
-            { id: 103, name: 'NIR, SWIR1, RED', min: 0.05, max: 0.5, band1: 'B5', band2: 'B6', band3: 'B4', 'gamma': 1.7 },
-            { id: 104, name: 'SWIR2, NIR, RED', min: 0.05, max: 0.5, band1: 'B7', band2: 'B5', band3: 'B4', 'gamma': 1.7 },
-            { id: 105, name: 'SWIR2, SWIR1, RED', min: 0.05, max: 0.5, band1: 'B7', band2: 'B6', band3: 'B4', 'gamma': 1.7 },
-            { id: 106, name: 'SWIR2, NIR, GREEN', min: 0.05, max: 0.5, band1: 'B7', band2: 'B5', band3: 'B3', 'gamma': 1.7 }
-        ]
-    }
-</script>
-
 <div class="form-group row">
     <label class="col-2 col-form-label">Name</label>
     <div class="col-10">
@@ -61,39 +40,24 @@
         <input type="hidden" name="gamma[]" />
     </div>
 </div>
-<!--
-<div class="form-group row">
-    <label class="col-2 col-form-label">Min</label>
-    <div class="col-10">
-        <input type="text" class="form-control" name="min[]" />
-    </div>
-</div>
-<div class="form-group row">
-    <label class="col-2 col-form-label">Max</label>
-    <div class="col-10">
-        <input type="text" class="form-control" name="max[]" />
-    </div>
-</div>
-<div class="form-group row">
-    <label class="col-2 col-form-label">Bands</label>
-    <div class="col-10">
-        <div class="row">
-            <div class="col-md-4">
-                <input type="text" class="form-control" name="band1[]" />
-            </div>
-            <div class="col-md-4">
-                <input type="text" class="form-control" name="band2[]" />
-            </div>
-            <div class="col-md-4">
-                <input type="text" class="form-control" name="band3[]" />
-            </div>
-        </div>
-    </div>
-</div>
-<div class="form-group row">
-    <label class="col-2 col-form-label">Gamma</label>
-    <div class="col-10">
-        <input type="text" class="form-control" name="gamma[]" />
-    </div>
-</div>
--->
+
+<script>
+    var visParams = {
+        'LANDSAT/LE7_L1T_ANNUAL_GREENEST_TOA': [
+            { id: 1, name: 'RED, GREEN, BLUE', min: 0.05, max: 0.5, band1: 'B3', band2: 'B2', band3: 'B1', 'gamma': '2.0, 2.1, 1.8' },
+            { id: 2, name: 'NIR, RED, GREEN', min: 0.05, max: 0.5, band1: 'B4', band2: 'B3', band3: 'B2', 'gamma': 1.7 },
+            { id: 3, name: 'NIR, SWIR1, RED', min: 0.05, max: 0.5, band1: 'B4', band2: 'B5', band3: 'B3', 'gamma': 1.7 },
+            { id: 4, name: 'SWIR2, NIR, RED', min: 0.05, max: 0.5, band1: 'B7', band2: 'B4', band3: 'B3', 'gamma': 1.7 },
+            { id: 5, name: 'SWIR2, SWIR1, RED', min: 0.05, max: 0.5, band1: 'B7', band2: 'B5', band3: 'B3', 'gamma': 1.7 },
+            { id: 6, name: 'SWIR2, NIR, GREEN', min: 0.05, max: 0.5, band1: 'B7', band2: 'B4', band3: 'B2', 'gamma': 1.7 }
+        ],
+        'LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA': [
+            { id: 101, name: 'RED, GREEN, BLUE', min: 0.05, max: 0.5, band1: 'B4', band2: 'B3', band3: 'B2', 'gamma': '2.0, 2.1, 1.8' },
+            { id: 102, name: 'NIR, RED, GREEN', min: 0.05, max: 0.5, band1: 'B5', band2: 'B4', band3: 'B3', 'gamma': 1.7 },
+            { id: 103, name: 'NIR, SWIR1, RED', min: 0.05, max: 0.5, band1: 'B5', band2: 'B6', band3: 'B4', 'gamma': 1.7 },
+            { id: 104, name: 'SWIR2, NIR, RED', min: 0.05, max: 0.5, band1: 'B7', band2: 'B5', band3: 'B4', 'gamma': 1.7 },
+            { id: 105, name: 'SWIR2, SWIR1, RED', min: 0.05, max: 0.5, band1: 'B7', band2: 'B6', band3: 'B4', 'gamma': 1.7 },
+            { id: 106, name: 'SWIR2, NIR, GREEN', min: 0.05, max: 0.5, band1: 'B7', band2: 'B5', band3: 'B3', 'gamma': 1.7 }
+        ]
+    }
+</script>

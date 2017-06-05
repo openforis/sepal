@@ -120,14 +120,13 @@ def projectModify(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         return 'Error!', 404
-    if session.get('is_admin') or project['username'] != session.get('username'):
+    if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     # retrieve project data
     name = request.form.get('name')
     radius = request.form.get('radius', type=int)
     overlays = getLayersFromRequest(request)
     projectType = project['type']
-    # validation
     # validation
     if not projectType:
         return 'KO', 400
@@ -162,7 +161,7 @@ def projectChange(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         return 'Error!', 404
-    if session.get('is_admin') or project['username'] != session.get('username'):
+    if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     # retrieve project data
     plots = request.json.get('plots')
@@ -183,7 +182,7 @@ def projectDelete(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         return 'Error!', 404
-    if session.get('is_admin') or project['username'] != session.get('username'):
+    if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     mongo.db.projects.delete_many({'id': id})
     mongo.db.records.delete_many({'project_id': id})
@@ -310,8 +309,10 @@ def getLayersFromRequest(request):
     # gibs
     imageryLayer = request.form.getlist('imageryLayer[]')
     date = request.form.getlist('date[]')
+    # geonetwork
+    geonetworkLayer = request.form.getlist('geonetworkLayer[]')
     #
-    i1 = i2 = i3 = -1
+    i1 = i2 = i3 = i4 = -1
     for i in range(0, len(layerType)):
         overlay = None
         if layerType[i] == 'gee-gateway':
@@ -339,6 +340,11 @@ def getLayersFromRequest(request):
                 'imageryLayer': imageryLayer[i3],
                 'date': date[i3]
             }
+        elif layerType[i] == 'geonetwork':
+            i4 += 1
+            overlay = {
+                'geonetworkLayer': geonetworkLayer[i4]
+            }
         if overlay:
             overlay['layerName'] = layerName[i]
             overlay['type'] = layerType[i]
@@ -348,7 +354,7 @@ def getLayersFromRequest(request):
 def getCodeListFromRequest(request):
     codeList = {
         'id': 'class',
-        'name': 'Class',
+        'name': 'class',
         'items': []
     }
     codeListCode = request.form.getlist('codeListCode[]')
