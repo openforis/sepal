@@ -7,6 +7,7 @@ require('./section-active-mosaics-list.scss')
 var EventBus = require('../../event/event-bus')
 var Events   = require('../../event/events')
 var Dialog   = require('../../dialog/dialog')
+var SModel   = require('../../search/model/search-model')
 
 var container     = null
 var listContainer = null
@@ -61,12 +62,28 @@ var addMosaic = function (state) {
       e.preventDefault()
       
       if (!div.hasClass('active')) {
-        EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, listMosaics[state.id])
+        EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, listMosaics[state.id], {isNew: true})
       }
+    })
+    
+    div.find('.btn-close').click(function (e) {
+      removeMosaic(state.id)
     })
     
     div.append(btn)
     listContainer.append(div)
+  }
+}
+
+var removeMosaic = function (id) {
+  delete listMosaics[id]
+  var div = listContainer.find('.mosaic-' + id)
+  div.fadeOut(200)
+  setTimeout(function () {
+    div.remove()
+  }, 200)
+  if (SModel.isActive(id)) {
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, null, {isNew: true})
   }
 }
 
