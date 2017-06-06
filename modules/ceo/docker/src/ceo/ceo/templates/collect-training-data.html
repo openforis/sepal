@@ -308,6 +308,47 @@
                     version: '1.3.0'
                 });
                 overlayMapTypes[index] = geonetworkLayer;
+            } else if (overlay.type == 'dgcs') {
+                var connectid = '{{config.DGCS_CONNECT_ID}}';
+                var url = 'https://services.digitalglobe.com/mapservice/wmsaccess?';
+                url += 'connectid=' + connectid;
+                //
+                var stackingProfile = overlay.dgcsStackingProfile;
+                if (stackingProfile !== undefined) {
+                    url += '&featureProfile=' + stackingProfile;
+                }
+                //
+                var filters = '';
+                if (overlay.dgcsCloudCover != '') {
+                    if (filters != '') filters += 'AND';
+                    filters += "(cloudCover<" + overlay.dgcsCloudCover + ")";
+                }
+                if (overlay.dgcsAcquisitionDateFrom != '') {
+                    if (filters != '') filters += 'AND';
+                    filters += "(acquisitionDate>='" + overlay.dgcsAcquisitionDateFrom + "')";
+                }
+                if (overlay.dgcsAcquisitionDateTo != '') {
+                    if (filters != '') filters += 'AND';
+                    filters += "(acquisitionDate<='" + overlay.dgcsAcquisitionDateTo + "')";
+                }
+                if (overlay.dgcsProductType != '') {
+                    if (filters != '') filters += 'AND';
+                    filters += "(productType='" + overlay.dgcsProductType + "')";
+                }
+                if (filters != '') url += '&Coverage_CQL_Filter=' + filters;
+                //
+                var dgcsLayer = L.tileLayer.wms(url, {
+                    layers: 'DigitalGlobe:Imagery',
+                    format: 'image/png',
+                    style: 'default',
+                    transparent: true,
+                    maxZoom: 20,
+                    minZoom: 0,
+                    continuousWorld: true,
+                    crs: L.CRS.EPSG3857,
+                    version: '1.1.1'
+                });
+                overlayMapTypes[index] = dgcsLayer;
             }
         }
 
@@ -788,11 +829,12 @@
                     addOverlayMapType(overlay, overlayMapTypes, index);
                 }
                 var overlyMapType = overlayMapTypes[index];
-                if (overlay.type != 'geonetwork') {
+                if (overlay.type != 'geonetwork' && overlay.type != 'dgcs') {
                     gmap.overlayMapTypes.insertAt(0, overlyMapType);
                     mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
                 } else {
-                    lmap.addLayer(overlyMapType);
+                    lmap.addLayer(overlyMapType); //TODO
+                    overlyMapType.bringToFront();
                     mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
                 }
             } else {

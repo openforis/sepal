@@ -311,8 +311,14 @@ def getLayersFromRequest(request):
     date = request.form.getlist('date[]')
     # geonetwork
     geonetworkLayer = request.form.getlist('geonetworkLayer[]')
+    # dgcs
+    dgcsAcquisitionDateFrom = request.form.getlist('dgcsAcquisitionDateFrom[]')
+    dgcsAcquisitionDateTo = request.form.getlist('dgcsAcquisitionDateTo[]')
+    dgcsCloudCover = request.form.getlist('dgcsCloudCover[]')
+    dgcsProductType = request.form.getlist('dgcsProductType[]')
+    dgcsStackingProfile = request.form.getlist('dgcsStackingProfile[]')
     #
-    i1 = i2 = i3 = i4 = -1
+    i1 = i2 = i3 = i4 = i5 = -1
     for i in range(0, len(layerType)):
         overlay = None
         if layerType[i] == 'gee-gateway':
@@ -344,6 +350,15 @@ def getLayersFromRequest(request):
             i4 += 1
             overlay = {
                 'geonetworkLayer': geonetworkLayer[i4]
+            }
+        elif layerType[i] == 'dgcs':
+            i5 += 1
+            overlay = {
+                'dgcsAcquisitionDateFrom': dgcsAcquisitionDateFrom[i5],
+                'dgcsAcquisitionDateTo': dgcsAcquisitionDateTo[i5],
+                'dgcsCloudCover': dgcsCloudCover[i5],
+                'dgcsProductType': dgcsProductType[i5],
+                'dgcsStackingProfile': dgcsStackingProfile[i5]
             }
         if overlay:
             overlay['layerName'] = layerName[i]
