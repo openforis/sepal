@@ -43,6 +43,14 @@
         overflow-x: hidden;
     }
 
+    .dgcs-iframe {
+        width: 0;
+        height: 0;
+        margin: 0;
+        padding: 0;
+        border: none;
+    }
+
 </style>
 
 <div id="maps">
@@ -367,19 +375,6 @@
                 });
                 overlayMapTypes[index] = dgcsLayer;
             }
-        }
-
-        function drawSquare(latLng, side, options, map) {
-            var circle = new google.maps.Circle({
-                center: latLng,
-                radius: side / 2
-            });
-            var square = new google.maps.Rectangle({
-                bounds: circle.getBounds()
-            });
-            if (options !== undefined) square.setOptions(options);
-            if (map !== undefined) square.setMap(map);
-            return square;
         }
 
         var plotSelection = function(e) {
@@ -749,9 +744,14 @@
                     gmap.overlayMapTypes.insertAt(0, overlyMapType);
                     mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
                 } else {
-                    lmap.addLayer(overlyMapType); //TODO
-                    overlyMapType.bringToFront();
-                    mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
+                    if (overlay.type == 'dgcs') {
+                        $('body .dgcs-iframe').remove();
+                        var iframe = $('<iframe>').addClass('dgcs-iframe').attr('src', 'https://services.digitalglobe.com/mapservice/wmsaccess?connectid={{config.DGCS_CONNECT_ID}}');
+                        $('body').append(iframe);
+                        lmap.addLayer(overlyMapType); //TODO
+                        overlyMapType.bringToFront();
+                        mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
+                    }
                 }
             } else {
                 mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
