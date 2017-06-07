@@ -6,13 +6,15 @@
         <div class="form-group row">
             <label class="col-2 col-form-label">Name</label>
             <div class="col-10">
-                <input class="form-control" type="text" name="name" />
+                <input class="form-control is-mandatory" type="text" name="name" />
+                <div class="form-control-feedback" style="display: none;">Mandatory field!</div>
             </div>
         </div>
         <div class="form-group row data-row" style="display: none;">
             <label class="col-2 col-form-label">Scale (m)</label>
             <div class="col-10">
-                <input class="form-control" type="text" name="radius" />
+                <input class="form-control is-mandatory" type="text" name="radius" />
+                <div class="form-control-feedback" style="display: none;">Mandatory field!</div>
             </div>
         </div>
         <div class="row">
@@ -63,95 +65,7 @@
     </div>
 </form>
 
-<div style="display: none;" id="gee-gateway-subform-template" class="subform-template">
-    <input type="hidden" class="form-control" name="layerType[]" value="gee-gateway" />
-    <div class="container">
-        <div class="row">
-            <div class="col-8">
-                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Google Earth Engine</h2>
-            </div>
-            <div class="col-4">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
-            </div>
-        </div>
-        {% include "project-subform-gee.html" %}
-    </div>
-</div>
-
-<div style="display: none;" id="digitalglobe-subform-template" class="subform-template">
-    <input type="hidden" class="form-control" name="layerType[]" value="digitalglobe" />
-    <div class="container">
-        <div class="row">
-            <div class="col-8">
-                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;DigitalGlobe Basemap</h2>
-            </div>
-            <div class="col-4">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
-            </div>
-        </div>
-        {% include "project-subform-digitalglobe.html" %}
-    </div>
-</div>
-
-<div style="display: none;" id="dgcs-subform-template" class="subform-template">
-    <input type="hidden" class="form-control" name="layerType[]" value="dgcs" />
-    <div class="container">
-        <div class="row">
-            <div class="col-8">
-                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;DGCS (DigitalGlobe Cloud Services)</h2>
-            </div>
-            <div class="col-4">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
-            </div>
-        </div>
-        {% include "project-subform-dgcs.html" %}
-    </div>
-</div>
-
-<div style="display: none;" id="gibs-subform-template" class="subform-template">
-    <input type="hidden" class="form-control" name="layerType[]" value="gibs" />
-    <div class="container">
-        <div class="row">
-            <div class="col-8">
-                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GIBS (Global Imagery Browse Services)</h2>
-            </div>
-            <div class="col-4">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
-            </div>
-        </div>
-        {% include "project-subform-gibs.html" %}
-    </div>
-</div>
-
-<div style="display: none;" id="geonetwork-subform-template" class="subform-template">
-    <input type="hidden" class="form-control" name="layerType[]" value="geonetwork" />
-    <div class="container">
-        <div class="row">
-            <div class="col-8">
-                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GeoNetwork</h2>
-            </div>
-            <div class="col-4">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
-            </div>
-        </div>
-        {% include "project-subform-geonetwork.html" %}
-    </div>
-</div>
-
-<div style="display: none;" id="codelist-values-subform-template" class="subform-template">
-    <div class="container">
-        <div class="form-group row">
-            <div class="offset-4 col-4">
-                <input type="text" class="form-control" name="codeListCode[]" />
-            </div>
-            <div class="col-2">
-                <button type="submit" class="btn btn-danger remove-subform float-left">
-                    <i class="fa fa-trash-o" aria-hidden="true"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+{% include "project-subforms.html" %}
 
 <script>
 
@@ -160,12 +74,17 @@ $.urlParam = function(name) {
     return results[1] || 0;
 }
 
+var project_id = $.urlParam('id');
+var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
+
+var removeSubform = function(e) {
+    e.preventDefault();
+    $(this).closest('.subform-template').remove();
+};
+
 function addSubformGEE(data) {
     var subform = $('#gee-gateway-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
     $('select[name="collectionName[]"]', subform).change(function() {
         $('select[name="visParams[]"]', subform).find('option[value!=""]').remove();
         var value = $(this).val();
@@ -208,10 +127,7 @@ function addSubformGEE(data) {
 
 function addSubformDigitalGlobe(data) {
     var subform = $('#digitalglobe-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
     if (data !== undefined) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
         $('select[name="mapID[]"]', subform).val(data.mapID);
@@ -220,10 +136,7 @@ function addSubformDigitalGlobe(data) {
 
 function addSubformDGCS(data) {
     var subform = $('#dgcs-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
     if (data !== undefined) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
         $('input[name="dgcsAcquisitionDateFrom[]"]', subform).val(data.dgcsAcquisitionDateFrom);
@@ -237,10 +150,7 @@ function addSubformDGCS(data) {
 
 function addSubformGIBS(data) {
     var subform = $('#gibs-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
     if (data !== undefined) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
         $('select[name="imageryLayer[]"]', subform).val(data.imageryLayer);
@@ -250,10 +160,7 @@ function addSubformGIBS(data) {
 
 function addSubformGeoNetwork(data) {
     var subform = $('#geonetwork-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
     if (data !== undefined) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
         $('select[name="geonetworkLayer[]"]', subform).val(data.geonetworkLayer);
@@ -263,10 +170,7 @@ function addSubformGeoNetwork(data) {
 function addSubformCodeListValue(data) {
     var container = $('#codelist-subform-container').find('.codelist-values-subform-container');
     var subform = $('#codelist-values-subform-template').clone().removeAttr('id').appendTo(container).show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
     if (data !== undefined) {
         $('input[name="codeListCode[]"]', subform).val(data.code);
     }
@@ -304,24 +208,32 @@ $('#add-subform-codelist-value').click(function(e) {
 
 $('#submit-btn').click(function(e) {
     e.preventDefault();
-    var project_id = $.urlParam('id');
-    var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
-    //$('input:checkbox:not(:checked)').val(0).prop('checked', true);
-    $.ajax({
-        url: ceoSepalApiUrl + "/project/" + project_id,
-        method: 'put',
-        data: $('form').serialize()
-    }).success(function(data) {
-        window.location.href = '{{config.BASE}}';
-    }).fail(function(jqXHR, textStatus, errorThrown) {
-        console.error(jqXHR, textStatus, errorThrown);
+    var isValid = true;
+    $('input.is-mandatory:visible').each(function() {
+        if (!$.trim($(this).val()).length) {
+            isValid = false;
+            $(this).closest('.form-group').addClass('has-danger').find('.form-control-feedback').show();
+
+        } else {
+            $(this).closest('.form-group').removeClass('has-danger').find('.form-control-feedback').hide();
+        }
     });
+    if (isValid) {
+        //$('input:checkbox:not(:checked)').val(0).prop('checked', true);
+        $.ajax({
+            url: ceoSepalApiUrl + "/project/" + project_id,
+            method: 'put',
+            data: $('form').serialize()
+        }).success(function(data) {
+            window.location.href = '{{config.BASE}}';
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.error(jqXHR, textStatus, errorThrown);
+        });
+    }
+
 });
 
 $(document).ready(function() {
-
-    var project_id = $.urlParam('id');
-    var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
 
     $.ajax({
         url: ceoSepalApiUrl + '/project/' + project_id,

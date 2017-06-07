@@ -1,0 +1,89 @@
+<div style="display: none;" id="gee-gateway-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="gee-gateway" />
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Google Earth Engine</h2>
+            </div>
+            <div class="col-4">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
+            </div>
+        </div>
+        {% include "project-subform-gee.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="digitalglobe-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="digitalglobe" />
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;DigitalGlobe Basemap</h2>
+            </div>
+            <div class="col-4">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
+            </div>
+        </div>
+        {% include "project-subform-digitalglobe.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="dgcs-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="dgcs" />
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;DGCS (DigitalGlobe Cloud Services)</h2>
+            </div>
+            <div class="col-4">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
+            </div>
+        </div>
+        {% include "project-subform-dgcs.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="gibs-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="gibs" />
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GIBS (Global Imagery Browse Services)</h2>
+            </div>
+            <div class="col-4">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
+            </div>
+        </div>
+        {% include "project-subform-gibs.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="geonetwork-subform-template" class="subform-template">
+    <input type="hidden" class="form-control" name="layerType[]" value="geonetwork" />
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GeoNetwork</h2>
+            </div>
+            <div class="col-4">
+                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
+            </div>
+        </div>
+        {% include "project-subform-geonetwork.html" %}
+    </div>
+</div>
+
+<div style="display: none;" id="codelist-values-subform-template" class="subform-template">
+    <div class="container">
+        <div class="form-group row">
+            <div class="offset-4 col-4">
+                <input type="text" class="form-control" name="codeListCode[]" />
+            </div>
+            <div class="col-2">
+                <button type="submit" class="btn btn-danger remove-subform float-left">
+                    <i class="fa fa-trash-o" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

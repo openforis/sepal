@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <base href="{{config.BASE}}" />
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+        <title>S E P A L - CEO</title>
         <script type="text/javascript" src="static/bower_components/jquery/dist/jquery.min.js"></script>
         <script type="text/javascript" src="static/bower_components/tether/dist/js/tether.min.js"></script>
         <script type="text/javascript" src="static/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-        {% if config.GMAPS_API_KEY is defined and config.GMAPS_API_KEY != '' %}
+        {% if config.GMAPS_API_KEY is defined and config.GMAPS_API_KEY != '' -%}
             <script type="text/javascript" src="https://maps.google.com/maps/api/js?key={{ config.GMAPS_API_KEY }}"></script>
-        {% else %}
+        {% else -%}
             <script type="text/javascript" src="https://maps.google.com/maps/api/js"></script>
-        {% endif %}
+        {% endif -%}
         <script type="text/javascript" src="static/bower_components/leaflet/dist/leaflet.js"></script>
         <script type="text/javascript" src="static/bower_components/highcharts/highcharts.js"></script>
         <link rel="stylesheet" href="static/bower_components/bootstrap/dist/css/bootstrap.min.css" />
