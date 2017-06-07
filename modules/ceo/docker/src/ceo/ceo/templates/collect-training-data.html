@@ -794,10 +794,10 @@
                         $('body .dgcs-iframe').remove();
                         var iframe = $('<iframe>').addClass('dgcs-iframe').attr('src', 'https://services.digitalglobe.com/mapservice/wmsaccess?connectid={{config.DGCS_CONNECT_ID}}');
                         $('body').append(iframe);
-                        lmap.addLayer(overlyMapType); //TODO
-                        overlyMapType.bringToFront();
-                        mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
                     }
+                    lmap.addLayer(overlyMapType); //TODO
+                    overlyMapType.bringToFront();
+                    mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
                 }
             } else {
                 mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
