@@ -6,7 +6,16 @@ import org.openforis.sepal.util.annotation.ImmutableData
 class InstanceType {
     String id
     String name
-    String description
+    int cpuCount
+    double ramGiB
     double hourlyCost
     int idleCount
+
+    String getDescription() {
+        return "$cpuCount CPU / $ramGiB GiB"
+    }
+
+    double getRamBytes() {
+        return ramGiB * Math.pow(2, 30)
+    }
 }
