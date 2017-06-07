@@ -14,19 +14,17 @@ import org.openforis.sepal.component.workersession.adapter.RestGoogleOAuthGatewa
 import org.openforis.sepal.component.workersession.api.BudgetManager
 import org.openforis.sepal.component.workersession.api.GoogleOAuthGateway
 import org.openforis.sepal.component.workersession.api.InstanceManager
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.command.*
 import org.openforis.sepal.component.workersession.endpoint.SandboxSessionEndpoint
 import org.openforis.sepal.component.workersession.query.*
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.SystemClock
-
-import javax.sql.DataSource
 
 import static java.util.concurrent.TimeUnit.MINUTES
 
@@ -38,10 +36,10 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
             BudgetComponent budgetComponent,
             WorkerInstanceComponent workerInstanceComponent,
             HostingServiceAdapter hostingServiceAdapter,
-            DataSource dataSource) {
+            SqlConnectionManager connectionManager) {
         def config = new WorkerSessionConfig()
         new WorkerSessionComponent(
-                new SqlConnectionManager(dataSource),
+                connectionManager,
                 new AsynchronousEventDispatcher(),
                 new BudgetComponentAdapter(budgetComponent),
                 new InstanceComponentAdapter(hostingServiceAdapter.instanceTypes, workerInstanceComponent),

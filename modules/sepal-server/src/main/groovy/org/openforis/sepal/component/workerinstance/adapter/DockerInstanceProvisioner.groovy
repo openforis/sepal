@@ -6,7 +6,7 @@ import groovyx.net.http.RESTClient
 import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.util.Is
 import org.openforis.sepal.workertype.Image
 import org.openforis.sepal.workertype.WorkerType

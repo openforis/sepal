@@ -1,4 +1,4 @@
-package org.openforis.sepal.transaction
+package org.openforis.sepal.sql
 
 import groovy.sql.Sql
 

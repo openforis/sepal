@@ -8,7 +8,7 @@ import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.query.ListUsers
 import org.openforis.sepal.component.user.query.LoadUser
 import org.openforis.sepal.event.SynchronousEventDispatcher
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.user.User
 import org.openforis.sepal.util.Config

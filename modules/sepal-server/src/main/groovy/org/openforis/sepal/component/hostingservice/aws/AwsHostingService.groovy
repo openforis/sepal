@@ -2,7 +2,7 @@ package org.openforis.sepal.component.hostingservice.aws
 
 import org.openforis.sepal.component.hostingservice.internal.AbstractHostingService
 import org.openforis.sepal.component.hostingservice.internal.UserStorageUseChecker
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 
 class AwsHostingService extends AbstractHostingService {
     private final UserStorageUseChecker userStorageUseChecker

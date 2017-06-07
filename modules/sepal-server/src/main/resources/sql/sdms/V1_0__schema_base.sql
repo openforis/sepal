@@ -1,3 +1,5 @@
+CREATE SCHEMA IF NOT EXISTS sdms;
+
 CREATE TABLE groups (
   id         INT(11)     NOT NULL AUTO_INCREMENT,
   group_name VARCHAR(50) NOT NULL,

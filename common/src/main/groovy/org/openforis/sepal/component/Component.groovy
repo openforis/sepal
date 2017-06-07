@@ -10,7 +10,7 @@ import org.openforis.sepal.query.HandlerRegistryQueryDispatcher
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 import org.openforis.sepal.transaction.NullTransactionManager
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.ExecutorServiceBasedJobScheduler
 import org.openforis.sepal.util.JobScheduler
 import org.openforis.sepal.util.NamedThreadFactory

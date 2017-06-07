@@ -42,7 +42,6 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
                 sensors              : query.sensors,
                 fromDate             : query.fromDate,
                 toDate               : query.toDate
-
         ]
         def response = endpoint.post(
                 path: 'preview',

@@ -1,4 +1,4 @@
-package org.openforis.sepal.database
+package org.openforis.sepal.sql
 
 import org.flywaydb.core.Flyway
 
@@ -9,11 +9,13 @@ class DatabaseMigration {
         flyway = new Flyway(
                 locations: ["classpath:/sql/$config.schema"],
                 dataSource: config.createRootDataSource(),
-                schemas: [config.schema]
+                schemas: [config.schema],
+                validateOnMigrate: false
         )
     }
 
     void migrate() {
+        flyway.repair()
         flyway.migrate()
     }
 }

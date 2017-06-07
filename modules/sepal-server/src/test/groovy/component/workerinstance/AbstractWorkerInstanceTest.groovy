@@ -8,7 +8,7 @@ import org.openforis.sepal.component.workerinstance.query.FindMissingInstances
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.SynchronousEventDispatcher
 import fake.FakeClock
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit

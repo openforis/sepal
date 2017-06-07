@@ -9,7 +9,7 @@ import org.openforis.sepal.component.workerinstance.event.FailedToProvisionInsta
 import org.openforis.sepal.component.workerinstance.event.InstanceProvisioned
 import org.openforis.sepal.component.workerinstance.query.FindMissingInstances
 import org.openforis.sepal.component.workersession.api.InstanceManager
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.api.WorkerInstance
 import org.openforis.sepal.component.workersession.api.WorkerSession
 

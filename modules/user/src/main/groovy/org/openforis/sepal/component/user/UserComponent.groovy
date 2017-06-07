@@ -11,20 +11,22 @@ import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.endpoint.UserEndpoint
 import org.openforis.sepal.component.user.internal.TokenManager
 import org.openforis.sepal.component.user.query.*
+import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.messagebroker.MessageBroker
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.EmailServer
 import org.openforis.sepal.util.SystemClock
 
 class UserComponent extends DataSourceBackedComponent implements EndpointRegistry {
+    public static final String SCHEMA = 'sepal_user'
     private final MessageBroker messageBroker
 
     static UserComponent create(ServerConfig serverConfig) {
-        def connectionManager = SqlConnectionManager.create('sepal_user')
+        def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA))
         return new UserComponent(
                 connectionManager,
                 new TerminalBackedExternalUserDataGateway(),

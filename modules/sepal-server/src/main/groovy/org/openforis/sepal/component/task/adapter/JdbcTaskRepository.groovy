@@ -6,7 +6,7 @@ import groovy.sql.Sql
 import org.openforis.sepal.component.task.api.Task
 import org.openforis.sepal.component.task.api.TaskRepository
 import org.openforis.sepal.component.task.api.Timeout
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.slf4j.LoggerFactory
 

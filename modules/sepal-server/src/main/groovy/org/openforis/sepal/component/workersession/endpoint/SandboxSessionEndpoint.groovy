@@ -3,7 +3,7 @@ package org.openforis.sepal.component.workersession.endpoint
 import groovymvc.Controller
 import groovymvc.RequestContext
 import org.openforis.sepal.component.Component
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.api.Spending
 import org.openforis.sepal.component.workersession.api.UserSessionReport
 import org.openforis.sepal.component.workersession.api.WorkerSession

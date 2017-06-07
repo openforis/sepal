@@ -2,6 +2,7 @@ package component.workersession
 
 import fake.Database
 import fake.FakeClock
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workerinstance.command.CloseSessionOnInstance
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.workersession.api.*
@@ -13,7 +14,7 @@ import org.openforis.sepal.component.workersession.query.GenerateUserSessionRepo
 import org.openforis.sepal.component.workersession.query.UserWorkerSessions
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.SynchronousEventDispatcher
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -36,7 +37,7 @@ abstract class AbstractWorkerSessionTest extends Specification {
             budgetManager,
             instanceManager,
             googleOAuthGateway,
-            [new InstanceType(testInstanceType, testInstanceType, testInstanceType, 123d, 1)],
+            [new InstanceType(id: testInstanceType, name: testInstanceType, hourlyCost: 123d, idleCount: 1)],
             clock)
 
     final events = [] as List<Event>

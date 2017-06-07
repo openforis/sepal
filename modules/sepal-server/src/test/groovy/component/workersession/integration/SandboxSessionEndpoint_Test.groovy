@@ -1,7 +1,7 @@
 package component.workersession.integration
 
 import groovymvc.Controller
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.api.*
 import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.Heartbeat

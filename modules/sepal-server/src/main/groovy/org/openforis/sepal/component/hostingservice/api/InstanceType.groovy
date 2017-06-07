@@ -1,4 +1,4 @@
-package org.openforis.sepal.component.workersession.api
+package org.openforis.sepal.component.hostingservice.api
 
 import org.openforis.sepal.util.annotation.ImmutableData
 
@@ -14,6 +14,7 @@ class InstanceType {
     String getDescription() {
         return "$cpuCount CPU / $ramGiB GiB"
     }
+
 
     double getRamBytes() {
         return ramGiB * Math.pow(2, 30)

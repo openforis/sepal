@@ -4,7 +4,7 @@ import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import org.openforis.sepal.component.user.api.UserRepository
 import org.openforis.sepal.security.Roles
-import org.openforis.sepal.transaction.SqlConnectionProvider
+import org.openforis.sepal.sql.SqlConnectionProvider
 import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.user.User
 

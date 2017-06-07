@@ -2,6 +2,7 @@ package org.openforis.sepal.component.workersession.api
 
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 
 import java.util.concurrent.TimeUnit
 

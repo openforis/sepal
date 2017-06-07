@@ -32,6 +32,7 @@
       LDAP_HOST_SEPAL_ENV: "{{ ldap_host }}"
       LDAP_ADMIN_PASSWORD_SEPAL_ENV: "{{ ldap_admin_password }}"
       MYSQL_PASSWORD_SEPAL_ENV: "{{ mysql_password }}"
+      MYSQL_ROOT_PASSWORD_SEPAL_ENV: "{{ mysql_root_password }}"
       IMAGE_NAME_SEPAL_ENV: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/sandbox:{{ version }}"
       DOCKER_REGISTRY_HOST_SEPAL_ENV: "{{ docker_repository_host }}"
       DEPLOY_ENVIRONMENT_SEPAL_ENV: "{{ deploy_environment }}"

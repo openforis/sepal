@@ -1,7 +1,7 @@
 package org.openforis.sepal.component.hostingservice.internal
 
 import org.openforis.sepal.component.budget.api.HostingService
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 
 
 abstract class AbstractHostingService implements HostingService {
