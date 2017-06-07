@@ -5,7 +5,6 @@ import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.files.FilesComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
-import org.openforis.sepal.component.processingrecipe.ProcessingRecipeComponent
 import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
 import org.openforis.sepal.component.task.TaskComponent
 import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
@@ -45,7 +44,6 @@ class Main {
                 new HttpWorkerGateway(config.sepalUsername, config.sepalPassword, 1026),
                 connectionManager
         )
-//        def processingRecipieComponent = start ProcessingRecipeComponent.create()
         start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
         def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir))
         def appsComponent = new AppsComponent(config.appsFile)
@@ -58,7 +56,6 @@ class Main {
                 workerSessionComponent,
                 filesComponent,
                 taskComponent,
-//                processingRecipieComponent,
                 budgetComponent,
                 appsComponent)
         start new Server(config.webAppPort, '/api', endpoints)
