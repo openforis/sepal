@@ -63,7 +63,7 @@ abstract class AbstractBudgetTest extends Specification {
             new FakeBudgetManager(),
             new FakeInstanceManager(),
             new FakeGoogleOAuthGateway(),
-            [new InstanceType(testInstanceType, testInstanceType, testInstanceType, 123d, 1)],
+            [new InstanceType(id: testInstanceType, name: testInstanceType, hourlyCost: 123d, idleCount: 1)],
             clock)
 
     final events = [] as List<Event>

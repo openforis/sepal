@@ -1,6 +1,7 @@
 package component.workersession.integration
 
 import groovymvc.Controller
+import org.openforis.sepal.component.workersession.api.InstanceType
 import org.openforis.sepal.component.workersession.api.*
 import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.Heartbeat
@@ -26,6 +27,11 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
 
     def 'GET /sandbox/report, return well formatted JSON'() {
         clock.set('2016-01-03')
+        def instanceType = new InstanceType(
+                id: 'some-instance-type',
+                name: 'Some instance type',
+                hourlyCost: 0.1
+        )
         def report = new UserSessionReport(
                 sessions: [
                         new WorkerSession(
@@ -37,14 +43,7 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
                                 creationTime: DateTime.parseDateString('2016-01-01')
                         )
                 ],
-                instanceTypes: [
-                        new InstanceType(
-                                id: 'some-instance-type',
-                                name: 'Some instance type',
-                                description: 'Some instance type description',
-                                hourlyCost: 0.1
-                        )
-                ],
+                instanceTypes: [instanceType],
                 spending: new Spending(
                         monthlyInstanceBudget: 1,
                         monthlyInstanceSpending: 2,
@@ -69,21 +68,21 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
                         status: 'STARTING',
                         host: 'some-host',
                         instanceType: [
-                                path: "sandbox/instance-type/some-instance-type",
-                                id: 'some-instance-type',
-                                name: 'Some instance type',
-                                description: 'Some instance type description',
-                                hourlyCost: 0.1
+                                path: "sandbox/instance-type/$instanceType.id",
+                                id: instanceType.id,
+                                name: instanceType.name,
+                                description: instanceType.description,
+                                hourlyCost: instanceType.hourlyCost
                         ],
                         creationTime: '2016-01-01T00:00:00',
                         costSinceCreation: 0.1 * 2 * 24 // hourly cost * two days
                 ]],
                 instanceTypes: [[
-                        path: "sandbox/instance-type/some-instance-type",
-                        id: 'some-instance-type',
-                        name: 'Some instance type',
-                        description: 'Some instance type description',
-                        hourlyCost: 0.1
+                        path: "sandbox/instance-type/$instanceType.id",
+                        id: instanceType.id,
+                        name: instanceType.name,
+                        description: instanceType.description,
+                        hourlyCost: instanceType.hourlyCost
                 ]],
                 spending: [
                         monthlyInstanceBudget: 1d,
