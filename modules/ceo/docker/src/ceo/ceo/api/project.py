@@ -33,9 +33,9 @@ def projectById(id=None):
 def projects():
     projects = []
     if session.get('is_admin'):
-        projects = mongo.db.projects.find({}, {'_id': False})
+        projects = mongo.db.projects.find({}, {'_id': False}).sort('upload_datetime', -1)
     else:
-        projects = mongo.db.projects.find({'username': session.get('username')}, {'_id': False})
+        projects = mongo.db.projects.find({'username': session.get('username')}, {'_id': False}).sort('upload_datetime', -1)
     return jsonify(list(projects)), 200
 
 @app.route('/api/project/<id>/file', methods=['GET'])
