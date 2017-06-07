@@ -21,4 +21,4 @@
       EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"
       GOOGLE_MAPS_API_KEY_SEPAL_ENV: "{{ google_maps_api_key }}"
       DIGITAL_GLOBE_API_KEY_SEPAL_ENV: "{{ digital_globe_api_key }}"
-      DGCS_CONNECT_ID_SEPAL_ENV: "{{ dgcs_connect_id }}"
+      DIGITAL_GLOBE_CONNECT_ID_SEPAL_ENV: "{{ digital_globe_connect_id }}"
