@@ -69,8 +69,8 @@ abstract class AbstractBudgetTest extends Specification {
     final events = [] as List<Event>
 
 
-
     def setup() {
+        updateDefaultBudget(defaultBudget)
         userRepository.eachUsername(_ as Closure) >> { it[0].call(testUsername) }
         component.on(Event) { events << it }
     }
