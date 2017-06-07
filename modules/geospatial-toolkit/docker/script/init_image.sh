@@ -70,6 +70,7 @@ apt-get install -y \
     nano \
     parallel \
     pkg-config \
+    p7zip-full \
     python-dev \
     python-otb \
     python-opencv \
