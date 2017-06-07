@@ -25,10 +25,6 @@ cp -R /data/etc/* /etc/sepal/
 chown -R sepal: /etc/sepal
 chmod -R 0400 /etc/sepal/*
 
-rm -rf /data/processing_scripts && cp -R /config/processing_scripts /data/
-chmod -R 775 /data/processing_scripts
-chown -R sepal: /data/processing_scripts
-
 mkdir -p /data/workDir/downloads -m 770
 chown -R sepal: /data/workDir
 
