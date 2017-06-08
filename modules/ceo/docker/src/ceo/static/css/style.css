@@ -20,6 +20,16 @@ navbar-inverse {
     background-color: #dff0d8;
 }
 
+.card-inverse {
+    background-color: #333;
+    border-color: #333;
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    font-size: 1.6rem;
+}
+
 /* */
 
 html, body, #gmap, #lmap {
