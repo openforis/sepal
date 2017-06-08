@@ -714,7 +714,7 @@
                         var iframe = $('<iframe>').addClass('dgcs-iframe').attr('src', 'https://services.digitalglobe.com/mapservice/wmsaccess?connectid={{config.DGCS_CONNECT_ID}}');
                         $('body').append(iframe);
                     }
-                    lmap.addLayer(overlyMapType); //TODO
+                    if (!lmap.hasLayer(overlyMapType)) lmap.addLayer(overlyMapType);
                     overlyMapType.bringToFront();
                     mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
                 }
@@ -801,7 +801,10 @@
                             type: 'area',
                             name: indexName,
                             data: data.timeseries
-                        }]
+                        }],
+                        credits: {
+                            enabled: false
+                        }
                     });
                 }
             });
