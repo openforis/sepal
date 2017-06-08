@@ -13,6 +13,7 @@ mongo = PyMongo(app)
 def beforeFirstRequest(*args, **kwargs):
     mongo.db.projects.create_index('id')
     mongo.db.projects.create_index('username')
+    mongo.db.projects.create_index([("upload_datetime", 1)])
     mongo.db.records.create_index('id')
     mongo.db.records.create_index('project_id')
 

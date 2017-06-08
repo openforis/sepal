@@ -31,12 +31,15 @@ def projectById(id=None):
 @import_sepal_auth
 @requires_auth
 def projects():
+    excludedFields = {'_id': False, 'codeLists': False, 'plots': False, 'properties': False}
+    skip = request.args.get('skip', 0, int)
+    limit = request.args.get('limit', 0, int)
     projects = []
     if session.get('is_admin'):
-        projects = mongo.db.projects.find({}, {'_id': False}).sort('upload_datetime', -1)
+        projects = mongo.db.projects.find({}, excludedFields).sort('upload_datetime', -1).skip(skip).limit(limit)
     else:
-        projects = mongo.db.projects.find({'username': session.get('username')}, {'_id': False}).sort('upload_datetime', -1)
-    return jsonify(list(projects)), 200
+        projects = mongo.db.projects.find({'username': session.get('username')}, excludedFields).sort('upload_datetime', -1).skip(skip).limit(limit)
+    return jsonify({'count':projects.count(), 'data':list(projects)}), 200
 
 @app.route('/api/project/<id>/file', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
