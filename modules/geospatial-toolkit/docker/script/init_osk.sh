@@ -20,7 +20,7 @@ echo "OST_DB=${OSK_HOME}/Database/OFST_db.sqlite" | tee -a /etc/environment
 
 cd ${OSK_HOME}/opensarkit/bins
 BINDIR=/usr/local/bin/
-for OST_BINS in `ls -1 -d`;do
+for OST_BINS in `ls -1 -d */`;do
     cd $OST_BINS
     for exe in `ls -1 {ost*,post*}`;do
         exepath=`readlink -f $exe`
