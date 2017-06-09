@@ -3,14 +3,11 @@ package org.openforis.sepal.sql
 import groovy.sql.Sql
 import org.openforis.sepal.transaction.TransactionManager
 import org.openforis.sepal.util.lifecycle.Stoppable
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
 import java.sql.Connection
 
 class SqlConnectionManager implements SqlConnectionProvider, TransactionManager, Stoppable {
-    private static final Logger LOG = LoggerFactory.getLogger(this)
     final DataSource dataSource
     private final ThreadLocal<Connection> connectionHolder = new ThreadLocal<Connection>()
     private final ThreadLocal<List<Closure>> afterCommitCallbacksHolder = new ThreadLocal<List<Closure>>() {
@@ -29,7 +26,6 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager,
     def <T> T withTransaction(Closure<T> closure) {
         def connection = null
         boolean newTransaction = !isTransactionRunning()
-        LOG.info("newTransaction = " + newTransaction)
         def committed = false
         def result = null
         try {
@@ -48,10 +44,7 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager,
             if (committed) {
                 def listeners = afterCommitCallbacksHolder.get()
                 releaseConnection(connection)
-                LOG.info("Transaction committed and connection is released. Notifying listeners")
                 listeners.each { it.call(result) }
-            } else {
-                LOG.info("Transaction has not committed")
             }
         }
     }
