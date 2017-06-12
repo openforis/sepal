@@ -131,7 +131,7 @@ var polygonDrawn = function (e, jsonPolygon, polygon) {
   
   inputAoiCode.sepalAutocomplete('reset')
   
-  EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {restoreAoi: false})
+  EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
 }
 
 var polygonClear = function (e) {
@@ -188,8 +188,10 @@ var setState = function (e, newState, params) {
       setPolygon(state.polygon)
       btnDrawPolygon.addClass('active')
       
-      if (!params || params.restoreAoi)
+      if (params && params.isNew)
         EventBus.dispatch(Events.SECTION.SEARCH.STATE.RESTORE_DRAWN_AOI, null, state.polygon)
+    } else {
+      btnDrawPolygon.removeClass('active')
     }
     
     var date = moment(state.targetDate)

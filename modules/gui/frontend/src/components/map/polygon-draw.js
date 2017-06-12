@@ -38,7 +38,7 @@ var enable = function ( e ) {
         polygon = e.overlay
         
         EventBus.dispatch( Events.MAP.POLYGON_DRAWN, null, toGeoJSONString( polygon ), polygon )
-        EventBus.dispatch( Events.SECTION.SHOW, null, 'search', { keepAoiLayerVisible: true } )
+        EventBus.dispatch( Events.SECTION.SHOW, null, 'search', { keepAoiLayerVisible: true, source : 'app-section' } )
     } )
     
     // EventBus.dispatch( Events.MAP.ADD_LAYER, null, drawingManager )
