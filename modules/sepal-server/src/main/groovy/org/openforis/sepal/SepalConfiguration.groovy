@@ -1,11 +1,8 @@
 package org.openforis.sepal
 
-import com.mchange.v2.c3p0.ComboPooledDataSource
 import org.openforis.sepal.util.FileSystem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
-import javax.sql.DataSource
 
 class SepalConfiguration {
     private static Logger LOG = null
@@ -18,7 +15,6 @@ class SepalConfiguration {
     public static final String SANDBOX_PROXY_SESSION_TIMEOUT = 'sandbox.webproxy_session_timeout'
 
     Properties properties
-    DataSource dataSource
 
     SepalConfiguration() {
         properties = new Properties()
@@ -38,17 +34,6 @@ class SepalConfiguration {
         }
         LOG = LoggerFactory.getLogger(this.class)
         LOG.info("Using config file $file")
-        dataSource = connectionPool()
-    }
-
-    private DataSource connectionPool(jdbcUrl = getJdbcConnectionString()) {
-        new ComboPooledDataSource(
-                driverClass: getJdbcDriver(),
-                jdbcUrl: jdbcUrl,
-                user: getJdbcUser(),
-                password: getJdbcPassword(),
-                testConnectionOnCheckout: true,
-        )
     }
 
     String getVersion() {

@@ -1,8 +1,9 @@
 from datetime import datetime
+import quality_mosaic
 
 from util import *
 
-multiplier = 32767
+multiplier = 10000
 default_strategy = 'median'
 default_classes_to_mask = ['cloud-shadow', 'cloud', 'snow']
 collection_names_by_sensor = {
@@ -25,8 +26,8 @@ collection_name_by_scene_id_prefix = {
 }
 normalized_band_names = [BLUE, GREEN, RED, NIR, SWIR1, SWIR2, THERMAL, 'fmask']
 mosaic_strategies = {
-    'median': lambda collection: collection.median(),
-    'quality-band': lambda collection: collection.qualityMosaic('quality')
+    'median': lambda collection, mosaic_def: collection.median(),
+    'quality-band': lambda collection, mosaic_def: quality_mosaic.create(collection, mosaic_def)
 }
 fmask_value_by_class_name = {
     'land': 0,

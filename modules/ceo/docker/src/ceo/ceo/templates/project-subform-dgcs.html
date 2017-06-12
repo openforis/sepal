@@ -1,0 +1,53 @@
+<div class="form-group row">
+    <label class="col-4 col-form-label">Name</label>
+    <div class="col-8">
+        <input type="text" class="form-control" name="layerName[]" />
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-4 col-form-label">From (YYYY-MM-DD)</label>
+    <div class="col-8">
+        <input type="text" class="form-control" name="dgcsAcquisitionDateFrom[]" />
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-4 col-form-label">To (YYYY-MM-DD)</label>
+    <div class="col-8">
+        <input type="text" class="form-control" name="dgcsAcquisitionDateTo[]" />
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-4 col-form-label">Cloud cover (LESS THAN %)</label>
+    <div class="col-8">
+        <input type="text" class="form-control" name="dgcsCloudCover[]" />
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-4 col-form-label">Product type</label>
+    <div class="col-8">
+        <select class="form-control" name="dgcsProductType[]">
+            <option value="" selected>Product type</option>
+            <option value="Pan Sharpened Natural Color">Pan Sharpened Natural Color</option>
+            <option value="Panchromatic">Panchromatic</option>
+            <option value="Natural Color">Natural Color</option>
+            <option value="Color Infrared">Color Infrared</option>
+        </select>
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-4 col-form-label">Stacking Profile</label>
+    <div class="col-8">
+        <select class="form-control" name="dgcsStackingProfile[]">
+            <option value="" selected>User's Assigned Profile</option>
+            <option value="MyDG_Color_Consumer_Profile">Most Aesthetic Color</option>
+            <option value="MyDG_Consumer_Profile">Most Aesthetic All</option>
+            <option value="Cloud_Cover_Profile">Least Cloud Cover</option>
+            <option value="Global_Currency_Profile">Most Recent</option>
+            <option value="Color_Infrared_Profile">Color Infrared</option>
+            <option value="Global_Currency_Profile_HA">Most Recent High Altitude</option>
+            <option value="Global_Currency_Profile_PAN_HA">Most Recent Panchromatic High Altitude</option>
+            <option value="Mapmaker_Profile">Mapmaker Mode</option>
+            <option value="Global_Currency_Mid_Profile">Most Recent Midrange</option>
+        </select>
+    </div>
+</div>

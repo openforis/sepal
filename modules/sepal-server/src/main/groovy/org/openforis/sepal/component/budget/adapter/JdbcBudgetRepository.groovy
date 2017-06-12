@@ -6,7 +6,7 @@ import org.openforis.sepal.component.budget.api.Budget
 import org.openforis.sepal.component.budget.api.BudgetRepository
 import org.openforis.sepal.component.budget.api.InstanceUse
 import org.openforis.sepal.component.budget.api.StorageUse
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.DateTime
 

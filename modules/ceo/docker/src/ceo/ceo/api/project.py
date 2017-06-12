@@ -1,4 +1,4 @@
-import os, logging, json, datetime, zipfile, shutil, csv, time
+import os, logging, json, datetime, zipfile, shutil, csv
 import xml.etree.ElementTree as ET
 
 from flask import Response, session, request, redirect, url_for, jsonify, render_template, send_file, abort
@@ -7,7 +7,7 @@ from flask_cors import cross_origin
 from .. import app
 from .. import mongo
 
-from ..common.utils import import_sepal_auth, requires_auth, propertiesFileToDict, allowed_file, generate_id, listToCSVRowString
+from ..common.utils import import_sepal_auth, requires_auth, propertiesFileToDict, allowed_file, generate_id, listToCSVRowString, crc32
 
 from werkzeug.utils import secure_filename
 
@@ -31,12 +31,15 @@ def projectById(id=None):
 @import_sepal_auth
 @requires_auth
 def projects():
+    excludedFields = {'_id': False, 'codeLists': False, 'plots': False, 'properties': False}
+    skip = request.args.get('skip', 0, int)
+    limit = request.args.get('limit', 0, int)
     projects = []
     if session.get('is_admin'):
-        projects = mongo.db.projects.find({}, {'_id': False})
+        projects = mongo.db.projects.find({}, excludedFields).sort('upload_datetime', -1).skip(skip).limit(limit)
     else:
-        projects = mongo.db.projects.find({'username': session.get('username')}, {'_id': False})
-    return jsonify(list(projects)), 200
+        projects = mongo.db.projects.find({'username': session.get('username')}, excludedFields).sort('upload_datetime', -1).skip(skip).limit(limit)
+    return jsonify({'count':projects.count(), 'data':list(projects)}), 200
 
 @app.route('/api/project/<id>/file', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
@@ -184,15 +187,17 @@ def projectDelete(id=None):
         return 'Error!', 404
     if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
-    mongo.db.projects.delete_many({'id': id})
+    mongo.db.projects.delete_one({'id': id})
     mongo.db.records.delete_many({'project_id': id})
     if project['type'] == PROJECT_TYPE_CEP:
         filename = project['filename']
-        if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], filename)):
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        name, ext = os.path.splitext(filename)
-        if os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], name)):
-            shutil.rmtree(os.path.join(app.config['UPLOAD_FOLDER'], name))
+        toDelete = mongo.db.projects.find({'filename': filename}).count() == 0
+        if toDelete:
+            if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], filename)):
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            name, ext = os.path.splitext(filename)
+            if os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], name)):
+                shutil.rmtree(os.path.join(app.config['UPLOAD_FOLDER'], name))
     return 'OK', 200
 
 @app.route("/api/project/<id>/export", methods=['GET'])
@@ -232,19 +237,21 @@ def projectExportCSV(id=None):
     return Response(csvString, mimetype="text/csv", headers={"Content-disposition": "attachment; filename=" + filename})
 
 def saveFileFromRequest(file):
-    # save the file
+    # project file
     filename = secure_filename(file.filename)
     name, ext = os.path.splitext(filename)
-    uniqueName = name + '--' + str(int(time.time()))
+    uniqueName = name + '--' + crc32(filename)
     uniqueFilename =  uniqueName + ext
-    file.save(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename))
-    # extract the files
     extractDir = os.path.join(app.config['UPLOAD_FOLDER'], uniqueName)
-    if not os.path.exists(extractDir):
-        os.mkdir(extractDir)
-        zip_ref = zipfile.ZipFile(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename), 'r')
-        zip_ref.extractall(extractDir)
-        zip_ref.close()
+    if not os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename)):
+        # save the file
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename))
+        # extract the files
+        if not os.path.exists(extractDir):
+            os.mkdir(extractDir)
+            zip_ref = zipfile.ZipFile(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename), 'r')
+            zip_ref.extractall(extractDir)
+            zip_ref.close()
     # codeLists
     codeLists = []
     if os.path.isfile(os.path.join(extractDir, 'placemark.idm.xml')):
@@ -311,8 +318,14 @@ def getLayersFromRequest(request):
     date = request.form.getlist('date[]')
     # geonetwork
     geonetworkLayer = request.form.getlist('geonetworkLayer[]')
+    # dgcs
+    dgcsAcquisitionDateFrom = request.form.getlist('dgcsAcquisitionDateFrom[]')
+    dgcsAcquisitionDateTo = request.form.getlist('dgcsAcquisitionDateTo[]')
+    dgcsCloudCover = request.form.getlist('dgcsCloudCover[]')
+    dgcsProductType = request.form.getlist('dgcsProductType[]')
+    dgcsStackingProfile = request.form.getlist('dgcsStackingProfile[]')
     #
-    i1 = i2 = i3 = i4 = -1
+    i1 = i2 = i3 = i4 = i5 = -1
     for i in range(0, len(layerType)):
         overlay = None
         if layerType[i] == 'gee-gateway':
@@ -344,6 +357,15 @@ def getLayersFromRequest(request):
             i4 += 1
             overlay = {
                 'geonetworkLayer': geonetworkLayer[i4]
+            }
+        elif layerType[i] == 'dgcs':
+            i5 += 1
+            overlay = {
+                'dgcsAcquisitionDateFrom': dgcsAcquisitionDateFrom[i5],
+                'dgcsAcquisitionDateTo': dgcsAcquisitionDateTo[i5],
+                'dgcsCloudCover': dgcsCloudCover[i5],
+                'dgcsProductType': dgcsProductType[i5],
+                'dgcsStackingProfile': dgcsStackingProfile[i5]
             }
         if overlay:
             overlay['layerName'] = layerName[i]

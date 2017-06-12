@@ -3,6 +3,10 @@ package component.budget
 import org.openforis.sepal.component.budget.api.Budget
 
 class GenerateUserSpendingReport_Test extends AbstractBudgetTest {
+    def setup() {
+        updateDefaultBudget(defaultBudget)
+    }
+
     def 'Given no spending and no configured budget, when generating report, all spending is 0, and budgets have default values'() {
         when:
         def report = userSpendingReport()
@@ -90,6 +94,4 @@ class GenerateUserSpendingReport_Test extends AbstractBudgetTest {
         Math.round(report.storageSpending) == 53
         report.storageUsage == 250
     }
-
-
 }

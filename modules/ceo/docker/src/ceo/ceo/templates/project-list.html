@@ -4,7 +4,7 @@
     <div class="container">
         <div class="row" style="padding-bottom: 1em;">
             <div class="col">
-                <a class="btn btn-outline-success float-right" href="project-add">Add project</a>
+                <a class="btn btn-outline-success float-right" href="project-add">add project</a>
             </div>
         </div>
         <div class="row">
@@ -15,7 +15,7 @@
                             <tr>
                                 <th>name</th>
                                 <th>type</th>
-                                <th>upload time</th>
+                                <th>date created</th>
                                 <th>username</th>
                                 <th></th>
                                 <th></th>
@@ -54,8 +54,8 @@
                 url: ceoSepalApiUrl + '/project',
                 dataType: 'json'
             }).success(function(data) {
-                if (data !== undefined) {
-                    $(data).each(function() {
+                if (data !== undefined && data.data !== undefined) {
+                    $(data.data).each(function() {
                         var project_id = this.id;
                         var projectType = this.type;
                         var tr = $('<tr>');

@@ -3,7 +3,7 @@ package org.openforis.sepal.component.sandboxwebproxy.adapter
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSession
 import org.openforis.sepal.component.sandboxwebproxy.api.SandboxSessionManager
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.command.Heartbeat
 import org.openforis.sepal.component.workersession.command.RequestSession

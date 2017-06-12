@@ -1,32 +1,34 @@
-package org.openforis.sepal.database
+package org.openforis.sepal.sql
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import org.openforis.sepal.util.Config
-import org.openforis.sepal.util.annotation.Data
+import org.openforis.sepal.util.annotation.ImmutableData
 
 import javax.sql.DataSource
 
-@Data
+@ImmutableData
 class DatabaseConfig {
-    private final String driver
-    final String schema
-    private final String uri
-    private final String user
-    private final String password
-    private final String rootUri
-    private final String rootUser
-    private final String rootPassword
+    String driver
+    String schema
+    String uri
+    String user
+    String password
+    String rootUri
+    String rootUser
+    String rootPassword
 
-    DatabaseConfig() {
+    static DatabaseConfig fromPropertiesFile(String schema) {
         def c = new Config('database.properties')
-        driver = c.driver
-        schema = c.schema
-        uri = c.uri
-        user = c.user
-        password = c.password
-        rootUri = c.rootUri
-        rootUser = c.rootUser
-        rootPassword = c.rootPassword
+        return new DatabaseConfig(
+                schema: schema ?: c.schema,
+                driver: c.driver,
+                uri: c.uri,
+                user: c.user,
+                password: c.password,
+                rootUri: c.rootUri,
+                rootUser: c.rootUser,
+                rootPassword: c.rootPassword
+        )
     }
 
     DataSource createRootDataSource() {
@@ -39,7 +41,7 @@ class DatabaseConfig {
         )
     }
 
-    DataSource createConnectionPool() {
+    DataSource createSchemaDataSource() {
         new ComboPooledDataSource(
                 driverClass: driver,
                 jdbcUrl: uri,

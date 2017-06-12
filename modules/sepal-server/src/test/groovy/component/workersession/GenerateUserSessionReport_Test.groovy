@@ -1,6 +1,6 @@
 package component.workersession
 
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.api.Spending
 
 class GenerateUserSessionReport_Test extends AbstractWorkerSessionTest {

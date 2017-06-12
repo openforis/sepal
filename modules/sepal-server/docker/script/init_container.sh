@@ -14,6 +14,7 @@ chown -R sepal: /etc/sepal
 chmod -R 770 /etc/sepal
 
 template /config/sepal.properties /etc/sepal/sepal.properties
+template /config/database.properties /etc/sepal/database.properties
 template /config/workerInstance.properties /etc/sepal/workerInstance.properties
 template /config/workerSession.properties /etc/sepal/workerSession.properties
 template /config/budget.properties /etc/sepal/budget.properties
@@ -23,10 +24,6 @@ cp -R /data/etc/* /etc/sepal/
 
 chown -R sepal: /etc/sepal
 chmod -R 0400 /etc/sepal/*
-
-rm -rf /data/processing_scripts && cp -R /config/processing_scripts /data/
-chmod -R 775 /data/processing_scripts
-chown -R sepal: /data/processing_scripts
 
 mkdir -p /data/workDir/downloads -m 770
 chown -R sepal: /data/workDir

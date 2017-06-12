@@ -17,19 +17,18 @@ import org.openforis.sepal.component.datasearch.query.*
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 
-import javax.sql.DataSource
 import java.util.concurrent.TimeUnit
 
 final class DataSearchComponent extends DataSourceBackedComponent implements EndpointRegistry {
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
 
-    static DataSearchComponent create(DataSource dataSource) {
+    static DataSearchComponent create(SqlConnectionManager connectionManager) {
         def config = new DataSearchConfig()
         new DataSearchComponent(
-                new SqlConnectionManager(dataSource),
+                connectionManager,
                 new HttpGoogleEarthEngineGateway(config.googleEarthEngineEndpoint),
                 CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
                 CsvBackedSentinel2Gateway.create(new File(config.downloadWorkingDirectory)),

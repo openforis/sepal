@@ -5,7 +5,7 @@ echo
 echo "*****************************"
 echo "*** Installing OpenSARKit ***"
 echo "*****************************"
-echo "Version: 2017-03-22"
+echo "Version: 2017-06-09"
 OSK_HOME=/usr/local/lib/osk
 mkdir -p ${OSK_HOME}
 OPENSARKIT=${OSK_HOME}/opensarkit
@@ -20,7 +20,7 @@ echo "OST_DB=${OSK_HOME}/Database/OFST_db.sqlite" | tee -a /etc/environment
 
 cd ${OSK_HOME}/opensarkit/bins
 BINDIR=/usr/local/bin/
-for OST_BINS in `ls -1`;do
+for OST_BINS in `ls -1 -d */`;do
     cd $OST_BINS
     for exe in `ls -1 {ost*,post*}`;do
         exepath=`readlink -f $exe`

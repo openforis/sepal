@@ -1,50 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<style>
-
-    html, body, #gmap, #lmap {
-        height: 100%;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-    }
-
-    #maps {
-        width: 60%;
-        height: calc(100% - 56px);
-        position: relative;
-        float: left;
-    }
-
-    .map-control {
-        position: absolute;
-        right: 10px;
-        top: 10px;
-        z-index: 999;
-    }
-
-    .map-control select {
-        background-color: #fff;
-        border: 1px solid #ccc;
-        box-shadow: 0 2px 2px rgba(33, 33, 33, 0.4);
-    }
-
-    #collect {
-        width: 40%;
-        height: calc(100% - 56px);
-        position: relative;
-        float: left;
-    }
-
-    #list {
-        height: auto;
-        max-height: 500px;
-        overflow-x: hidden;
-    }
-
-</style>
-
 <div id="maps">
     <div id="style-selector-control" class="map-control">
         <select id="layer-selector" class="selector-control">
@@ -129,90 +85,9 @@
     </div>
 </div>
 
+<script src="static/js/ceo-map-utils.js?v1"></script>
+
 <script>
-
-    var mapUtils = {
-        L: {
-            drawSquare: function(latLng, side, options, map, draw) {
-                var circle = L.circle(latLng, {
-                    radius: side / 2
-                }).addTo(map);
-                var square = L.rectangle(circle.getBounds());
-                if (draw === undefined || draw == false) square.setStyle({
-                    color: 'transparent'
-                });
-                else if (options !== undefined) square.setStyle(options);
-                square.addTo(map);
-                return square;
-            },
-            drawPoint: function(latLng, options, map) {
-                var point = L.circle(latLng, {
-                    radius: 1
-                });
-                if (options !== undefined) point.setStyle(options);
-                point.addTo(map);
-                return point;
-            },
-            cloneSquare: function(gSquare, options, map) {
-                var latLngBounds = L.latLngBounds([
-                    [gSquare.getBounds().getNorthEast().lat(), gSquare.getBounds().getNorthEast().lng()],
-                    [gSquare.getBounds().getSouthWest().lat(), gSquare.getBounds().getSouthWest().lng()]
-                ]);
-                var square = L.rectangle(latLngBounds);
-                if (options !== undefined) square.setStyle(options);
-                square.addTo(map);
-                return square;
-            }
-        },
-        G: {
-            drawSquare: function(latLng, side, options, map) {
-                var circle = new google.maps.Circle({
-                    center: latLng,
-                    radius: side / 2
-                });
-                var square = new google.maps.Rectangle({
-                    bounds: circle.getBounds()
-                });
-                if (options !== undefined) square.setOptions(options);
-                if (map !== undefined) square.setMap(map);
-                return square;
-            },
-            drawPoint: function(latLng, options, map) {
-                var point = new google.maps.Circle({
-                    center: latLng,
-                    radius: 1
-                });
-                if (options !== undefined) point.setOptions(options);
-                if (map !== undefined) point.setMap(map);
-                return point;
-            }
-        },
-        utils: {
-            switchToGoogleMaps: function(gmap, lmap, gmapElementId, lmapElementId) {
-                if ($('#' + gmapElementId).is(":hidden")) {
-                    gmap.setZoom(lmap.getZoom());
-                    gmap.setCenter(new google.maps.LatLng(lmap.getCenter()['lat'], lmap.getCenter()['lng']));
-                    $('#' + gmapElementId).show();
-                    $('#' + lmapElementId).hide();
-                    google.maps.event.trigger(gmap, 'resize');
-                }
-            },
-            switchToLeaflet: function(gmap, lmap, gmapElementId, lmapElementId) {
-                if ($('#' + lmapElementId).is(":hidden")) {
-                    lmap.setZoom(gmap.getZoom());
-                    lmap.panTo(new L.LatLng(gmap.getCenter().lat(), gmap.getCenter().lng()));
-                    $('#' + gmapElementId).hide();
-                    $('#' + lmapElementId).show();
-                    lmap.invalidateSize();
-                }
-            }
-        }
-    }
-
-    $.urlParam = function(name) {
-        var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-        return results[1] || 0;
-    }
 
     $(document).ready(function() {
 
@@ -325,20 +200,48 @@
                     version: '1.3.0'
                 });
                 overlayMapTypes[index] = geonetworkLayer;
+            } else if (overlay.type == 'dgcs') {
+                var connectid = '{{config.DGCS_CONNECT_ID}}';
+                var url = 'https://services.digitalglobe.com/mapservice/wmsaccess?';
+                url += 'connectid=' + connectid;
+                //
+                var stackingProfile = overlay.dgcsStackingProfile;
+                if (stackingProfile !== undefined) {
+                    url += '&featureProfile=' + stackingProfile;
+                }
+                //
+                var filters = '';
+                if (overlay.dgcsCloudCover != '') {
+                    if (filters != '') filters += 'AND';
+                    filters += "(cloudCover<" + overlay.dgcsCloudCover + ")";
+                }
+                if (overlay.dgcsAcquisitionDateFrom != '') {
+                    if (filters != '') filters += 'AND';
+                    filters += "(acquisitionDate>='" + overlay.dgcsAcquisitionDateFrom + "')";
+                }
+                if (overlay.dgcsAcquisitionDateTo != '') {
+                    if (filters != '') filters += 'AND';
+                    filters += "(acquisitionDate<='" + overlay.dgcsAcquisitionDateTo + "')";
+                }
+                if (overlay.dgcsProductType != '') {
+                    if (filters != '') filters += 'AND';
+                    filters += "(productType='" + overlay.dgcsProductType + "')";
+                }
+                if (filters != '') url += '&Coverage_CQL_Filter=' + filters;
+                //
+                var dgcsLayer = L.tileLayer.wms(url, {
+                    layers: 'DigitalGlobe:Imagery',
+                    format: 'image/png',
+                    style: 'default',
+                    transparent: true,
+                    maxZoom: 20,
+                    minZoom: 0,
+                    continuousWorld: true,
+                    crs: L.CRS.EPSG3857,
+                    version: '1.1.1'
+                });
+                overlayMapTypes[index] = dgcsLayer;
             }
-        }
-
-        function drawSquare(latLng, side, options, map) {
-            var circle = new google.maps.Circle({
-                center: latLng,
-                radius: side / 2
-            });
-            var square = new google.maps.Rectangle({
-                bounds: circle.getBounds()
-            });
-            if (options !== undefined) square.setOptions(options);
-            if (map !== undefined) square.setMap(map);
-            return square;
         }
 
         var plotSelection = function(e) {
@@ -704,11 +607,17 @@
                     addOverlayMapType(overlay, overlayMapTypes, index);
                 }
                 var overlyMapType = overlayMapTypes[index];
-                if (overlay.type != 'geonetwork') {
+                if (overlay.type != 'geonetwork' && overlay.type != 'dgcs') {
                     gmap.overlayMapTypes.insertAt(0, overlyMapType);
                     mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
                 } else {
-                    lmap.addLayer(overlyMapType);
+                    if (overlay.type == 'dgcs') {
+                        $('body .dgcs-iframe').remove();
+                        var iframe = $('<iframe>').addClass('dgcs-iframe').attr('src', 'https://services.digitalglobe.com/mapservice/wmsaccess?connectid={{config.DGCS_CONNECT_ID}}');
+                        $('body').append(iframe);
+                    }
+                    if (!lmap.hasLayer(overlyMapType)) lmap.addLayer(overlyMapType);
+                    overlyMapType.bringToFront();
                     mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
                 }
             } else {
@@ -794,7 +703,10 @@
                             type: 'area',
                             name: indexName,
                             data: data.timeseries
-                        }]
+                        }],
+                        credits: {
+                            enabled: false
+                        }
                     });
                 }
             });

@@ -6,6 +6,7 @@ import groovyx.net.http.RESTClient
 import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.util.Is
 import org.openforis.sepal.workertype.Image
 import org.openforis.sepal.workertype.WorkerType
@@ -19,9 +20,11 @@ import static groovyx.net.http.ContentType.JSON
 class DockerInstanceProvisioner implements InstanceProvisioner {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final WorkerInstanceConfig config
+    private final Map<String, InstanceType> instanceTypeById
 
-    DockerInstanceProvisioner(WorkerInstanceConfig config) {
+    DockerInstanceProvisioner(WorkerInstanceConfig config, List<InstanceType> instanceTypes) {
         this.config = config
+        this.instanceTypeById = instanceTypes.collectEntries { [(it.id): it] }
     }
 
     void provisionInstance(WorkerInstance instance) {
@@ -60,10 +63,19 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                 Tty: true,
                 Cmd: image.runCommand,
                 HostConfig: [
-                        Binds  : image.volumes.collect { hostDir, mountedDir ->
+                        Binds : image.volumes.collect { hostDir, mountedDir ->
                             "$hostDir:$mountedDir"
                         },
-                        "Links": image.links.collect { "$it.key:$it.value" }
+                        Links : image.links.collect { "$it.key:$it.value" },
+                        Mounts: [
+                                [
+                                        "Type"        : "tmpfs",
+                                        "Target"      : "/ram",
+                                        "TmpfsOptions": [
+                                                "SizeBytes": (long) instanceTypeById[instance.type].ramBytes / 2
+                                        ]
+                                ]
+                        ]
                 ],
                 ExposedPorts: image.exposedPorts.collectEntries {
                     ["$it/tcp", [:]]

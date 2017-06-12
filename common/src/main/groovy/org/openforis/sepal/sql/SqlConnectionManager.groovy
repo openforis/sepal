@@ -1,6 +1,7 @@
-package org.openforis.sepal.transaction
+package org.openforis.sepal.sql
 
 import groovy.sql.Sql
+import org.openforis.sepal.transaction.TransactionManager
 import org.openforis.sepal.util.lifecycle.Stoppable
 
 import javax.sql.DataSource
@@ -13,31 +14,45 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager,
         protected List<Closure> initialValue() { [] }
     }
 
+    static SqlConnectionManager create(DatabaseConfig config) {
+        new DatabaseMigration(config).migrate()
+        return new SqlConnectionManager(config.createSchemaDataSource())
+    }
+
     SqlConnectionManager(DataSource dataSource) {
         this.dataSource = dataSource
     }
 
-    public <T> T withTransaction(Closure<T> closure) {
+    def <T> T withTransaction(Closure<T> closure) {
         def connection = null
         boolean newTransaction = !isTransactionRunning()
+        def committed = false
+        def result = null
         try {
             connection = openConnection()
-            def result = closure.call()
+            result = closure.call()
             if (newTransaction) {
                 connection.commit()
-                notifyListeners(result)
+                committed = true
             }
             return result
         } catch (Exception e) {
-            connection.rollback()
+            connection?.rollback()
+            releaseConnection(connection)
             throw e
         } finally {
-            if (newTransaction) {
-                connectionHolder.remove()
-                afterCommitCallbacksHolder.remove()
-                connection?.close()
+            if (committed) {
+                def listeners = afterCommitCallbacksHolder.get()
+                releaseConnection(connection)
+                listeners.each { it.call(result) }
             }
         }
+    }
+
+    private void releaseConnection(Connection connection) {
+        connectionHolder.remove()
+        afterCommitCallbacksHolder.remove()
+        connection?.close()
     }
 
     void registerAfterCommitCallback(Closure callback) {
@@ -46,10 +61,6 @@ class SqlConnectionManager implements SqlConnectionProvider, TransactionManager,
 
     boolean isTransactionRunning() {
         connectionHolder.get() != null
-    }
-
-    private <T> void notifyListeners(T result) {
-        afterCommitCallbacksHolder.get().each { it.call(result) }
     }
 
     private Connection openConnection() {

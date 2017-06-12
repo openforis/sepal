@@ -13,7 +13,7 @@ import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.user.RestUserRepository
 import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.Clock
@@ -21,16 +21,14 @@ import org.openforis.sepal.util.Config
 import org.openforis.sepal.util.SystemClock
 import org.openforis.sepal.util.annotation.Data
 
-import javax.sql.DataSource
-
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class BudgetComponent extends DataSourceBackedComponent implements EndpointRegistry {
 
-    static BudgetComponent create(HostingServiceAdapter hostingServiceAdapter, DataSource dataSource) {
+    static BudgetComponent create(HostingServiceAdapter hostingServiceAdapter, SqlConnectionManager connectionManager) {
         def config = new BudgetConfig()
         new BudgetComponent(
-                new SqlConnectionManager(dataSource),
+                connectionManager,
                 hostingServiceAdapter.hostingService,
                 new RestUserRepository(config.userEndpoint, config.userEndpointUser),
                 new AsynchronousEventDispatcher(),

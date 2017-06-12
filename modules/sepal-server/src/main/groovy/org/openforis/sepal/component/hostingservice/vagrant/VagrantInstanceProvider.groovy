@@ -3,7 +3,7 @@ package org.openforis.sepal.component.hostingservice.vagrant
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.api.WorkerReservation
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 
 class VagrantInstanceProvider implements InstanceProvider {
     private final InstanceType instanceType

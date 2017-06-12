@@ -6,7 +6,8 @@
         <div class="form-group row">
             <label class="col-2 col-form-label">Name</label>
             <div class="col-10">
-                <input class="form-control" type="text" name="name" />
+                <input class="form-control is-mandatory" type="text" name="name" />
+                <div class="form-control-feedback" style="display: none;">Mandatory field!</div>
             </div>
         </div>
         <div class="form-group row">
@@ -27,36 +28,36 @@
         <div class="form-group row data-row" style="display: none;">
             <label class="col-2 col-form-label">Scale (m)</label>
             <div class="col-10">
-                <input class="form-control" type="text" name="radius" disabled />
+                <input class="form-control is-mandatory" type="text" name="radius" disabled />
+                <div class="form-control-feedback" style="display: none;">Mandatory field!</div>
             </div>
         </div>
         <div class="form-group row cep-row">
             <label class="col-2 col-form-label">CEP</label>
             <div class="col-10">
-                <input class="form-control-file" type="file" name="file" />
+                <input class="form-control-file is-mandatory" type="file" name="file" />
+                <div class="form-control-feedback" style="display: none;">Mandatory field!</div>
             </div>
         </div>
         <div class="row">
-            <div class="col">
+            <div class="col-8">
                 <div class="form-group">
-                    <button id="add-subform-gee" type="button" class="btn btn-success">
-                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add Google Earth Engine layer
-                    </button>
-                    <button id="add-subform-digitalglobe" type="button" class="btn btn-success">
-                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add DigitalGlobe layer
-                    </button>
-                    <button id="add-subform-gibs" type="button" class="btn btn-success">
-                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add GIBS layer
-                    </button>
-                    <button id="add-subform-geonetwork" type="button" class="btn btn-success">
-                        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add GeoNetwork layer
-                    </button>
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop1" type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add a layer
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                            <a id="add-subform-gee" class="dropdown-item chart-btn" href="#">Google Earth Engine</a>
+                            <a id="add-subform-digitalglobe" class="dropdown-item chart-btn" href="#">DigitalGlobe Basemap</a>
+                            <a id="add-subform-dgcs" class="dropdown-item chart-btn" href="#">DGCS (DigitalGlobe Cloud Services)</a>
+                            <a id="add-subform-gibs" class="dropdown-item chart-btn" href="#">GIBS</a>
+                            <a id="add-subform-geonetwork" class="dropdown-item chart-btn" href="#">GeoNetwork</a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col">
-                <div class="form-group">
+            <div class="col-4">
+                <div class="form-group float-right">
                     <button type="submit" class="btn btn-primary" id="submit-btn">
                         <i class="fa fa-floppy-o" aria-hidden="true"></i>&nbsp;Submit
                     </button>
@@ -86,82 +87,14 @@
     </div>
 </form>
 
-<div style="display: none;" id="gee-gateway-subform-template" class="subform-template">
-    <input type="hidden" class="form-control" name="layerType[]" value="gee-gateway" />
-    <div class="container">
-        <div class="row">
-            <div class="col-6">
-                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Google Earth Engine</h2>
-            </div>
-            <div class="col-6">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
-            </div>
-        </div>
-        {% include "project-subform-gee.html" %}
-    </div>
-</div>
-
-<div style="display: none;" id="digitalglobe-subform-template" class="subform-template">
-    <input type="hidden" class="form-control" name="layerType[]" value="digitalglobe" />
-    <div class="container">
-        <div class="row">
-            <div class="col-6">
-                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;DigitalGlobe</h2>
-            </div>
-            <div class="col-6">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
-            </div>
-        </div>
-        {% include "project-subform-digitalglobe.html" %}
-    </div>
-</div>
-
-<div style="display: none;" id="gibs-subform-template" class="subform-template">
-    <input type="hidden" class="form-control" name="layerType[]" value="gibs" />
-    <div class="container">
-        <div class="row">
-            <div class="col-8">
-                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GIBS (Global Imagery Browse Services)</h2>
-            </div>
-            <div class="col-4">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
-            </div>
-        </div>
-        {% include "project-subform-gibs.html" %}
-    </div>
-</div>
-
-<div style="display: none;" id="geonetwork-subform-template" class="subform-template">
-    <input type="hidden" class="form-control" name="layerType[]" value="geonetwork" />
-    <div class="container">
-        <div class="row">
-            <div class="col-8">
-                <h2><i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GeoNetwork</h2>
-            </div>
-            <div class="col-4">
-                <input class="btn btn-danger remove-subform float-right" type="submit" value="Remove layer" />
-            </div>
-        </div>
-        {% include "project-subform-geonetwork.html" %}
-    </div>
-</div>
-
-<div style="display: none;" id="codelist-values-subform-template" class="subform-template">
-    <div class="container">
-        <div class="form-group row">
-            <div class="offset-5 col-5">
-                <input type="text" class="form-control" name="codeListCode[]" />
-            </div>
-            <div class="col-2">
-                <button type="submit" class="btn btn-danger remove-subform float-right">
-                    <i class="fa fa-trash-o" aria-hidden="true"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+{% include "project-subforms.html" %}
 
 <script>
+
+var removeSubform = function(e) {
+    e.preventDefault();
+    $(this).closest('.subform-template').remove();
+};
 
 $('input[type="radio"][name="projectType"]').change(function(e) {
     var projectType = $(this).val();
@@ -181,10 +114,7 @@ $('input[type="radio"][name="projectType"]').change(function(e) {
 $('#add-subform-gee').click(function(e) {
     e.preventDefault();
     var subform = $('#gee-gateway-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
     $('select[name="collectionName[]"]', subform).change(function() {
         $('select[name="visParams[]"]', subform).find('option[value!=""]').remove();
         var value = $(this).val();
@@ -221,42 +151,47 @@ $('#add-subform-gee').click(function(e) {
 $('#add-subform-digitalglobe').click(function(e) {
     e.preventDefault();
     var subform = $('#digitalglobe-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
+});
+
+$('#add-subform-dgcs').click(function(e) {
+    e.preventDefault();
+    var subform = $('#dgcs-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(removeSubform);
 });
 
 $('#add-subform-gibs').click(function(e) {
     e.preventDefault();
     var subform = $('#gibs-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
 });
 
 $('#add-subform-geonetwork').click(function(e) {
     e.preventDefault();
     var subform = $('#geonetwork-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
 });
 
 $('#add-subform-codelist-value').click(function(e) {
     e.preventDefault();
     var container = $('#codelist-subform-container').find('.codelist-values-subform-container');
     var subform = $('#codelist-values-subform-template').clone().removeAttr('id').appendTo(container).show();
-    $('.remove-subform', subform).click(function(e) {
-        e.preventDefault();
-        $(this).closest('.subform-template').remove();
-    });
+    $('.remove-subform', subform).click(removeSubform);
 });
 
-$(document).ready(function() {
-    var projectType = $('input[type="radio"][name="projectType"]').cahnge();
+$('#submit-btn').click(function(e) {
+    var isValid = true;
+    $('input.is-mandatory:visible').each(function() {
+        if (!$.trim($(this).val()).length) {
+            isValid = false;
+            $(this).closest('.form-group').addClass('has-danger').find('.form-control-feedback').show();
+
+        } else {
+            $(this).closest('.form-group').removeClass('has-danger').find('.form-control-feedback').hide();
+        }
+    });
+    if (!isValid) e.preventDefault();
+    else $('form').submit();
 });
 
 </script>

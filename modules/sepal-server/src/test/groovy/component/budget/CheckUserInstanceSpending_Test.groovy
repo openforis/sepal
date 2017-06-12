@@ -5,16 +5,6 @@ import org.openforis.sepal.component.budget.event.UserInstanceBudgetExceeded
 import org.openforis.sepal.component.budget.event.UserInstanceBudgetNotExceeded
 
 class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
-    def 'Given no usage, when checking instance usage, instance usage is not exceeded'() {
-        when:
-        def spending = checkUserInstanceSpending()
-
-        then:
-        def event = published UserInstanceBudgetNotExceeded
-        event.userInstanceSpending == spending
-        spending.spending == 0
-        spending.budget == defaultBudget.instanceSpending
-    }
 
     def 'Given spending exceeding budget, when checking instance usage, instance usage is exceeded'() {
         updateUserBudget(new Budget(instanceSpending: 100))
@@ -42,5 +32,16 @@ class CheckUserInstanceSpending_Test extends AbstractBudgetTest {
         event.userInstanceSpending == spending
         spending.spending == 100
         spending.budget == 100
+    }
+
+    def 'Given no usage, when checking instance usage, instance usage is not exceeded'() {
+        when:
+        def spending = checkUserInstanceSpending()
+
+        then:
+        def event = published UserInstanceBudgetNotExceeded
+        event.userInstanceSpending == spending
+        spending.spending == 0
+        spending.budget == defaultBudget.instanceSpending
     }
 }

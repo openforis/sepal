@@ -9,14 +9,12 @@ import org.openforis.sepal.component.workerinstance.command.*
 import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
 import org.openforis.sepal.component.workerinstance.query.FindMissingInstances
 import org.openforis.sepal.component.workerinstance.query.FindMissingInstancesHandler
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
-
-import javax.sql.DataSource
 
 import static java.util.concurrent.TimeUnit.MINUTES
 
@@ -24,13 +22,13 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
     private final InstanceProvider instanceProvider
     private final List<InstanceType> instanceTypes
 
-    WorkerInstanceComponent(HostingServiceAdapter hostingServiceAdapter, DataSource dataSource) {
+    WorkerInstanceComponent(HostingServiceAdapter hostingServiceAdapter, SqlConnectionManager connectionManager) {
         this(
-                new SqlConnectionManager(dataSource),
+                connectionManager,
                 new AsynchronousEventDispatcher(),
                 hostingServiceAdapter.instanceProvider,
                 hostingServiceAdapter.instanceTypes,
-                new DockerInstanceProvisioner(new WorkerInstanceConfig()),
+                new DockerInstanceProvisioner(new WorkerInstanceConfig(), hostingServiceAdapter.instanceTypes),
                 new SystemClock()
         )
     }

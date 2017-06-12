@@ -2,7 +2,7 @@ package component.workersession.integration
 
 import component.workerinstance.AbstractWorkerInstanceTest
 import org.openforis.sepal.component.workersession.adapter.InstanceComponentAdapter
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.api.WorkerInstance
 import org.openforis.sepal.component.workersession.api.WorkerSession
 

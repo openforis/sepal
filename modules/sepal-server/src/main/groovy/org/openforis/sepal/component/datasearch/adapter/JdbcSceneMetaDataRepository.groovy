@@ -5,7 +5,7 @@ import org.openforis.sepal.component.datasearch.api.DataSet
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.SceneMetaDataRepository
 import org.openforis.sepal.component.datasearch.api.SceneQuery
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 
 import java.sql.Connection
 

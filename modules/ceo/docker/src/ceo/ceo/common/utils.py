@@ -1,4 +1,4 @@
-import json, hashlib, io, csv
+import json, hashlib, zlib, io, csv
 
 from functools import wraps
 
@@ -65,3 +65,9 @@ def listToCSVRowString(lst):
     writer = csv.writer(output)
     writer.writerow(lst)
     return output.getvalue()
+
+def crc32(file):
+    prev = 0
+    for eachLine in file:
+        prev = zlib.crc32(eachLine, prev)
+    return '%X' % (prev & 0xFFFFFFFF)

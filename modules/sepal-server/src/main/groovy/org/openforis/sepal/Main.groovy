@@ -10,10 +10,12 @@ import org.openforis.sepal.component.task.TaskComponent
 import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
+import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.security.GateOneAuthEndpoint
 import org.openforis.sepal.security.PathRestrictionsFactory
+import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.lifecycle.Lifecycle
 import org.openforis.sepal.util.lifecycle.Stoppable
 import org.slf4j.Logger
@@ -26,21 +28,21 @@ class Main {
     Main() {
         def config = new SepalConfiguration()
         def hostingServiceAdapter = HostingServiceAdapter.Factory.create(config.hostingService)
-        def dataSource = config.dataSource
+        def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile('sdms'))
 
-        def dataSearchComponent = start DataSearchComponent.create(dataSource)
-        def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, dataSource)
-        def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, dataSource)
+        def dataSearchComponent = start DataSearchComponent.create(connectionManager)
+        def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, connectionManager)
+        def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, connectionManager)
         def workerSessionComponent = start WorkerSessionComponent.create(
                 budgetComponent,
                 workerInstanceComponent,
                 hostingServiceAdapter,
-                dataSource
+                connectionManager
         )
         def taskComponent = start new TaskComponent(
                 workerSessionComponent,
                 new HttpWorkerGateway(config.sepalUsername, config.sepalPassword, 1026),
-                dataSource
+                connectionManager
         )
         start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
         def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir))

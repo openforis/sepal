@@ -10,7 +10,7 @@ import org.openforis.rmb.xstream.XStreamMessageSerializer
 import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageConsumer
 import org.openforis.sepal.messagebroker.MessageQueue
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 
 import java.sql.Connection
 import java.sql.SQLException

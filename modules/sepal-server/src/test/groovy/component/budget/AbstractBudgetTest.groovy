@@ -17,12 +17,12 @@ import org.openforis.sepal.component.budget.query.FindUsersExceedingBudget
 import org.openforis.sepal.component.budget.query.GenerateSpendingReport
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.SynchronousEventDispatcher
-import org.openforis.sepal.transaction.SqlConnectionManager
+import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
 import fake.FakeClock
@@ -45,9 +45,9 @@ abstract class AbstractBudgetTest extends Specification {
     final clock = new FakeClock()
 
     final defaultBudget = new Budget(
-            instanceSpending: 111,
-            storageSpending: 222,
-            storageQuota: 333,
+            instanceSpending: 10,
+            storageSpending: 10,
+            storageQuota: 100,
     )
 
     final component = new BudgetComponent(
@@ -63,14 +63,14 @@ abstract class AbstractBudgetTest extends Specification {
             new FakeBudgetManager(),
             new FakeInstanceManager(),
             new FakeGoogleOAuthGateway(),
-            [new InstanceType(testInstanceType, testInstanceType, testInstanceType, 123d, 1)],
+            [new InstanceType(id: testInstanceType, name: testInstanceType, hourlyCost: 123d, idleCount: 1)],
             clock)
 
     final events = [] as List<Event>
 
 
-
     def setup() {
+        updateDefaultBudget(defaultBudget)
         userRepository.eachUsername(_ as Closure) >> { it[0].call(testUsername) }
         component.on(Event) { events << it }
     }

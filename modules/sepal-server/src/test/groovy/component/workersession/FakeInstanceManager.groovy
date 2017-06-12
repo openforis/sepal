@@ -1,7 +1,7 @@
 package component.workersession
 
 import org.openforis.sepal.component.workersession.api.InstanceManager
-import org.openforis.sepal.component.workersession.api.InstanceType
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workersession.api.WorkerInstance
 import org.openforis.sepal.component.workersession.api.WorkerSession
 
