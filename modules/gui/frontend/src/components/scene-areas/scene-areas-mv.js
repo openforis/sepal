@@ -13,7 +13,7 @@ var visible = false
 
 var stateChanged = function ( e, s, params ) {
     state = s
-    if ( state.type === SModel.TYPES.MOSAIC ) {
+    if ( state && state.type === SModel.TYPES.MOSAIC ) {
         if ( state.sceneAreas ) {
             visible = true
             if ( params && params.resetSceneAreas === true ) {

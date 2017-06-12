@@ -35,7 +35,7 @@ var appReduce = function ( e, section ) {
 }
 
 var activeStateChanged = function ( e, s ) {
-    if ( s.type === Model.TYPES.MOSAIC ) {
+    if ( s && s.type === Model.TYPES.MOSAIC ) {
         if ( s.sceneAreas )
             show = true
     } else {

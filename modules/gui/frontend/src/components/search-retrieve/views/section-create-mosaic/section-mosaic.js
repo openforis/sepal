@@ -54,7 +54,7 @@ var initEventHandlers = function () {
 
 var setActiveState = function ( e, activeState ) {
     state = activeState
-    if ( state.mosaicPreviewBand ) {
+    if ( state && state.mosaicPreviewBand ) {
         btnToggleVisibility.enable()
     } else {
         btnToggleVisibility.disable()

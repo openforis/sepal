@@ -34,15 +34,17 @@ var init = function (c) {
 }
 
 var setActiveState = function (e, state) {
-  addMosaic(state)
-  
-  listContainer.find('.mosaic-item').removeClass('active')
-  
-  var div = listContainer.find('.mosaic-' + state.id).addClass('active')
-  var btn = div.find('.btn-mosaic')
-  btn.html(state.name)
-  btnSave.insertAfter(btn)
-  activeMosaic = btn.data('mosaic')
+  if (state) {
+    addMosaic(state)
+    
+    listContainer.find('.mosaic-item').removeClass('active')
+    
+    var div = listContainer.find('.mosaic-' + state.id).addClass('active')
+    var btn = div.find('.btn-mosaic')
+    btn.html(state.name)
+    btnSave.insertAfter(btn)
+    activeMosaic = btn.data('mosaic')
+  }
 }
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState)
 

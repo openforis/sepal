@@ -40,7 +40,7 @@ var init = function ( parent ) {
 
 var setActiveState = function ( e, activeState ) {
     state = activeState
-    if ( state.type == Model.TYPES.MOSAIC ) {
+    if ( state && state.type == Model.TYPES.MOSAIC ) {
         var sceneIds = SearchRequestUtils.addSceneIds( state, {} )
         elemScenesNo.html( sceneIds.length + ' ' + state.sensorGroup + ' ' )
     }

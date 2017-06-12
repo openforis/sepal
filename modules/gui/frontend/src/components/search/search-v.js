@@ -50,6 +50,13 @@ var showChangeDetection = function () {
   ContainerEdit.showChangeDetection()
 }
 
+var activeStateChanged = function (e, state) {
+  if (!state)
+    showList()
+}
+
+EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, activeStateChanged)
+
 module.exports = {
   init                 : init
   , showList           : showList

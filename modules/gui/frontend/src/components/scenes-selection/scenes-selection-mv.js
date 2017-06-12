@@ -124,7 +124,7 @@ var deselectImage = function ( e, sceneAreaId, sceneImage ) {
 var updateState = function ( e, s ) {
     state = s
     Model.setState( state )
-    if ( state.type === SModel.TYPES.MOSAIC && viewInitialized ) {
+    if ( state && state.type === SModel.TYPES.MOSAIC && viewInitialized ) {
         View.setSortWeight( state.sortWeight )
         View.setOffsetToTargetDay( state.offsetToTargetDay )
         View.updateSensors()

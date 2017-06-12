@@ -89,7 +89,7 @@ var reset = function () {
 var setActiveState = function ( e, activeState ) {
     state = activeState
     html.find( '.row-sensors' ).hide()
-    if ( state.sensorGroup ) {
+    if ( state && state.sensorGroup ) {
         html.find( '.row-' + state.sensorGroup ).show()
     }
 }
