@@ -42,7 +42,7 @@ var setActiveState = function (e, state) {
     var div = listContainer.find('.mosaic-' + state.id).addClass('active')
     var btn = div.find('.btn-mosaic')
     btn.html(state.name)
-    btnSave.insertAfter(btn)
+    btnSave.show(0).insertAfter(btn)
     activeMosaic = btn.data('mosaic')
   }
 }
@@ -83,8 +83,9 @@ var removeMosaic = function (id) {
   div.fadeOut(200)
   setTimeout(function () {
     div.remove()
-  }, 200)
+  }, 500)
   if (SModel.isActive(id)) {
+    btnSave.hide(0).insertAfter(container)
     EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, null, {isNew: true})
   }
 }
