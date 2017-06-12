@@ -45,8 +45,8 @@ SceneAreasView.prototype.setCount = function ( sceneAreaId, count ) {
                 return (count >= 10) ? 53 : 57
             } )
             .transition()
-            .delay( 400 )
-            .duration( 800 )
+            // .delay( 100 )
+            .duration( 400 )
             .text( function ( d ) {
                 return count
             } )
@@ -57,8 +57,8 @@ SceneAreasView.prototype.setCount = function ( sceneAreaId, count ) {
         }
         this.layer.circle( sceneAreaId )
             .transition()
-            .delay( 400 )
-            .duration( 800 )
+            // .delay( 100 )
+            .duration( 400 )
             .style( 'fill', bgColor )
             .style( 'stroke', bgColor )
     }
