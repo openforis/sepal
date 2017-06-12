@@ -53,7 +53,7 @@ var addMosaic = function (state) {
     listMosaics[state.id] = state
     
     var div = $('<div class="mosaic-item">' +
-      '<button class="btn btn-base btn-close"><i class="fa fa-times" aria-hidden="true"></i></button>' +
+      '<button class="btn btn-base circle btn-close"><i class="fa fa-times" aria-hidden="true"></i></button>' +
       '</div>')
     div.addClass('mosaic-' + state.id)
     
