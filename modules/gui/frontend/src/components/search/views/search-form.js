@@ -126,7 +126,7 @@ var find = function (selector) {
 }
 
 var polygonDrawn = function (e, jsonPolygon, polygon) {
-  setPolygon(jsonPolygon)
+  setPolygon(JSON.stringify(jsonPolygon))
   btnDrawPolygon.addClass('active')
   
   inputAoiCode.sepalAutocomplete('reset')
