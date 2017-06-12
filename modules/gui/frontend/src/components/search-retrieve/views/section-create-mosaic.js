@@ -47,7 +47,9 @@ var hide = function () {
 var setActiveState = function (e, activeState) {
   state      = activeState
   var enable = false
-  if (state && state.type == Model.TYPES.MOSAIC) {
+  if (!state)
+    container.hide(0)
+  else if (state.type == Model.TYPES.MOSAIC) {
     if (state.sceneAreas) {
       $.each(state.sceneAreas, function (i, scene) {
         if (scene.selection.length > 0) {

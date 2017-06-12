@@ -69,7 +69,7 @@ var addMosaic = function (state) {
     })
     
     div.find('.btn-close').click(function (e) {
-      removeMosaic(state.id)
+      removeMosaic(null, state.id, true)
     })
     
     div.append(btn)
@@ -77,7 +77,7 @@ var addMosaic = function (state) {
   }
 }
 
-var removeMosaic = function (id) {
+var removeMosaic = function (e, id, dispatchChange) {
   delete listMosaics[id]
   var div = listContainer.find('.mosaic-' + id)
   div.fadeOut(200)
@@ -86,9 +86,12 @@ var removeMosaic = function (id) {
   }, 500)
   if (SModel.isActive(id)) {
     btnSave.hide(0).insertAfter(container)
-    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, null, {isNew: true})
+    if (dispatchChange)
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, null, {isNew: true})
   }
 }
+
+EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_DELETE, removeMosaic)
 
 module.exports = {
   init: init

@@ -52,34 +52,28 @@ var collapse = function () {
 }
 
 var setActiveState = function (e, state, params) {
-  if (params && params.isNew) {
+  if (state && params && params.isNew) {
     collapse()
     
-    if (state)
-      switch (state.type) {
-        case Model.TYPES.MOSAIC:
-          SectionCreateMosaic.show()
-          SectionChangeDetection.hide()
-          SectionClassify.hide()
-          
-          break
-        case Model.TYPES.CHANGE_DETECTION:
-          SectionCreateMosaic.hide()
-          SectionChangeDetection.show()
-          SectionClassify.hide()
-          
-          break
-        case Model.TYPES.CLASSIFY:
-          SectionCreateMosaic.hide()
-          SectionChangeDetection.hide()
-          SectionClassify.show()
-          
-          break
-      }
-    else {
-      SectionCreateMosaic.hide()
-      SectionChangeDetection.hide()
-      SectionClassify.hide()
+    switch (state.type) {
+      case Model.TYPES.MOSAIC:
+        SectionCreateMosaic.show()
+        SectionChangeDetection.hide()
+        SectionClassify.hide()
+        
+        break
+      case Model.TYPES.CHANGE_DETECTION:
+        SectionCreateMosaic.hide()
+        SectionChangeDetection.show()
+        SectionClassify.hide()
+        
+        break
+      case Model.TYPES.CLASSIFY:
+        SectionCreateMosaic.hide()
+        SectionChangeDetection.hide()
+        SectionClassify.show()
+        
+        break
     }
   }
 }

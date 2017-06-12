@@ -24,7 +24,7 @@ var getActive = function () {
 }
 
 var isActive = function (id) {
-  return id === active.id
+  return active ? id === active.id : false
 }
 
 var activeModelChange = function (e, obj, params) {
