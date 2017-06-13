@@ -68,7 +68,7 @@ var restoreDrawnAoi = function ( e, string ) {
     polygon.setOptions( layerOptions )
     polygon.setPath( path )
     
-    EventBus.dispatch( Events.MAP.POLYGON_DRAWN, null, array, polygon, true )
+    EventBus.dispatch( Events.MAP.POLYGON_DRAWN, null, JSON.stringify(array), polygon, true )
 }
 
 var disable = function () {

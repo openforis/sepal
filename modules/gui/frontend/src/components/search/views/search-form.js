@@ -95,7 +95,7 @@ var submit = function (e) {
   var errorMsg = ''
   var date     = targetDate.asMoment()
   
-  console.log('======= name : ', state.name)
+  // console.log('======= name : ', state.name)
   if (!state.name || state.name.indexOf(' ') >= 0) {
     valid    = false
     errorMsg = 'Please enter a valid name, no whitespace are allowed'
@@ -132,7 +132,8 @@ var find = function (selector) {
 }
 
 var polygonDrawn = function (e, jsonPolygon, polygon) {
-  setPolygon(JSON.stringify(jsonPolygon))
+  setPolygon(jsonPolygon)
+  // setPolygon(JSON.stringify(jsonPolygon))
   btnDrawPolygon.addClass('active')
   
   inputAoiCode.sepalAutocomplete('reset')
@@ -176,7 +177,11 @@ var setState = function (e, newState, params) {
   state = newState
   
   if (state && state.type == Model.TYPES.MOSAIC) {
-    
+    // if (params && params.isNew){
+    //   EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
+    //   EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
+    // }
+    //
     inputName.val(state.name)
     
     if (state.aoiCode && state.aoiName) {

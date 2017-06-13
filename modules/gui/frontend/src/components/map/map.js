@@ -92,6 +92,9 @@ var ploygonDrawn = function ( e, polygonGeoJSON, polygon, zoom ) {
         aoiLayer.setMap( null )
         aoiLayer = null
     }
+    if(aoiDrawnPolygon){
+        aoiDrawnPolygon.setMap( null )
+    }
     aoiDrawnPolygon = polygon
     aoiDrawnPolygon.setMap( map )
     
