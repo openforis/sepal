@@ -6,8 +6,8 @@ var Events   = require('../../event/events')
 
 var Sensors = require('./sensors')
 
-// var all    = []
-var active = {}
+var mosaicsList = []
+var active      = {}
 
 var TYPES = {
   MOSAIC            : 'MOSAIC'
@@ -32,11 +32,28 @@ var activeModelChange = function (e, obj, params) {
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, null, active, params)
 }
 
+var mosaicsListChange = function (e, list) {
+  mosaicsList = list
+  EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_CHANGED, null, mosaicsList)
+}
+
+var containsMosaicName = function (m) {
+  var contains = false
+  $.each(mosaicsList, function (i, mosaic) {
+    if (mosaic.name === m.name && mosaic.id !== m.id) {
+      contains = true
+      return false
+    }
+  })
+  return contains
+}
+
 module.exports = {
   
   // getAll     : getAll
-   getActive: getActive
-  , isActive : isActive
+  getActive           : getActive
+  , isActive          : isActive
+  , containsMosaicName: containsMosaicName
   
   , getSensorGroups: function () {
     return Object.keys(Sensors)
@@ -49,3 +66,4 @@ module.exports = {
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, activeModelChange)
+EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_CHANGE, mosaicsListChange)

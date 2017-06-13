@@ -58,7 +58,7 @@ var loadList = function (e) {
   var params = {
     url    : '/api/mosaics/list',
     success: function (response) {
-      EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_CHANGED, null, response)
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_CHANGE, null, response)
     }
   }
   EventBus.dispatch(Events.AJAX.GET, null, params)
@@ -107,7 +107,7 @@ var deleteMosaic = function (e, id) {
     , success   : function (response) {
       Loader.hide({delay: 1000})
       
-      EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_CHANGED, null, response)
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_CHANGE, null, response)
       
       if (Model.isActive(id)) {
         EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, null)
@@ -140,15 +140,15 @@ var showList = function () {
 var addMosaic = function () {
   
   var getDefaultState = function () {
-    var date         = moment(new Date()).format('YYYY-MM-DD')
+    var date         = moment(new Date())
     var defaultState = {
       id         : guid(),
       type       : Model.TYPES.MOSAIC,
-      name       : 'mosaic-' + date,
+      name       : 'mosaic-' + date.format('YYYY-MM-DD-HH:mm'),
       aoiCode    : null,
       aoiName    : null,
       sensorGroup: Model.getSensorGroups()[0],
-      targetDate : date,
+      targetDate : date.format('YYYY-MM-DD'),
       
       sortWeight       : 0.5,
       sensors          : Object.keys(Model.getSensors(Model.getSensorGroups()[0])),

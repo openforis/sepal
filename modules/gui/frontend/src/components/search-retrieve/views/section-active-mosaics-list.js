@@ -43,22 +43,23 @@ var setActiveState = function (e, state) {
     var btn = div.find('.btn-mosaic')
     btn.html(state.name)
     btnSave.show(0).insertAfter(btn)
-    activeMosaic = btn.data('mosaic')
+    activeMosaic = listMosaics[state.id]
   }
 }
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState)
 
 var addMosaic = function (state) {
-  if (!listMosaics[state.id]) {
-    listMosaics[state.id] = state
+  listMosaics[state.id] = state
+  var div               = listContainer.find('.mosaic-' + state.id)
+  
+  if (div.length == 0) {
     
-    var div = $('<div class="mosaic-item">' +
+    div = $('<div class="mosaic-item">' +
       '<button class="btn btn-base circle btn-close"><i class="fa fa-times" aria-hidden="true"></i></button>' +
       '</div>')
     div.addClass('mosaic-' + state.id)
     
     var btn = $('<button class="btn btn-base btn-mosaic"></button>')
-    btn.data('mosaic', state)
     btn.html(state.name)
     btn.click(function (e) {
       e.preventDefault()

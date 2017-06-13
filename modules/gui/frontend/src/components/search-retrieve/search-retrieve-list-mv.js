@@ -13,7 +13,7 @@ var saveActive = function (e, state) {
     url      : '/api/mosaics/' + state.id + '/save'
     , data   : {data: JSON.stringify(state)}
     , success: function (response) {
-      EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_CHANGED, null, response)
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_CHANGE, null, response)
     }
   }
   

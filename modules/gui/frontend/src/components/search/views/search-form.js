@@ -95,11 +95,17 @@ var submit = function (e) {
   var errorMsg = ''
   var date     = targetDate.asMoment()
   
-  if (!inputName.val() || inputName.val().indexOf(' ') >= 0) {
+  console.log('======= name : ', state.name)
+  if (!state.name || state.name.indexOf(' ') >= 0) {
     valid    = false
     errorMsg = 'Please enter a valid name, no whitespace are allowed'
     
     FormValidator.addError(inputName)
+  // } else if (Model.containsMosaicName(state)) {
+  //   valid    = false
+  //   errorMsg = 'Name already exists. Please enter a unique name'
+  //
+  //   FormValidator.addError(inputName)
   } else if ($.isEmptyString(state.aoiCode) && $.isEmptyString(state.polygon)) {
     valid    = false
     errorMsg = 'Please select a valid COUNTRY or DRAW A POLYGON'
@@ -167,7 +173,6 @@ var setPolygon = function (p) {
 // model change methods
 var setState = function (e, newState, params) {
   FormValidator.resetFormErrors(form, formNotify)
-  // state = { polygon: "[[20.21484375,42.811521745097906],[23.90625,38.95940879245423],[18.10546875,39.774769485295465],[18.28125,42.553080288955805],[20.21484375,42.811521745097906]]" }
   state = newState
   
   if (state && state.type == Model.TYPES.MOSAIC) {
