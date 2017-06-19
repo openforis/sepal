@@ -14,7 +14,10 @@ var visible = false
 var stateChanged = function (e, s, params) {
   state = s
   if (state && state.type === SModel.TYPES.MOSAIC) {
-    if (params && (params.resetSceneAreas || params.isNew)) {
+    if (params && (params.updateSceneAreas )) {
+      updateCount()
+    }
+    else if (params && (params.resetSceneAreas || params.isNew)) {
       if (state.sceneAreas) {
         visible      = true
         var polygons = areasToMapPolygons(state.sceneAreas, state.sensorGroup)

@@ -57,7 +57,7 @@ var requestBestScenes = function ( e, state ) {
             } )
             
             EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW )
-            EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state )
+            EventBus.dispatch( Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state ,{resetSceneAreas: true})
             Loader.hide( { delay: 500 } )
         }
     }
