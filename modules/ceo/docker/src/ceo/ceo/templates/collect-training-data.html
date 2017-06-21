@@ -105,8 +105,14 @@
                 if (gamma != '') visParams['gamma'] = gamma;
                 var dateFrom = overlay.dateFrom;
                 var dateTo = overlay.dateTo;
+                var url = geeGatewayApiUrl;
+                if (collectionName == 'ASTER/AST_L1T_003') {
+                    url += '/asterMosaic';
+                } else {
+                    url += '/imageByMosaicCollection';
+                }
                 $.ajax({
-                    url: geeGatewayApiUrl + '/imageByMosaicCollection',
+                    url: url,
                     type: 'POST',
                     async: false,
                     crossDomain : true,
