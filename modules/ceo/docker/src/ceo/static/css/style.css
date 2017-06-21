@@ -79,3 +79,7 @@ html, body, #gmap, #lmap {
     padding: 0;
     border: none;
 }
+
+.subform-template .card-block .form-group:last-of-type {
+    margin-bottom: 0px;
+}

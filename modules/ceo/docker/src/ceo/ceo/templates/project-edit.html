@@ -117,6 +117,10 @@ function addSubformGEE(data) {
         $('input[name="dateFrom[]"]', subform).val(data.dateFrom);
         $('input[name="dateTo[]"]', subform).val(data.dateTo);
         $('select[name="visParams[]"]', subform).val(data.visParams).trigger('change');
+    } else {
+        $('html, body').animate({
+            scrollTop: subform.offset().top
+        }, 1000);
     }
 }
 
@@ -126,6 +130,10 @@ function addSubformDigitalGlobe(data) {
     if (data !== undefined) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
         $('select[name="mapID[]"]', subform).val(data.mapID);
+    } else {
+        $('html, body').animate({
+            scrollTop: subform.offset().top
+        }, 1000);
     }
 }
 
@@ -140,6 +148,10 @@ function addSubformDGCS(data) {
         $('select[name="dgcsProductType[]"]', subform).val(data.dgcsProductType);
         $('select[name="dgcsStackingProfile[]"]', subform).val(data.dgcsStackingProfile);
         //if (data.dgcsImageBands1 != 0) $('input[name="dgcsImageBands1[]"]', subform).prop('checked', true);
+    } else {
+        $('html, body').animate({
+            scrollTop: subform.offset().top
+        }, 1000);
     }
 }
 
@@ -150,6 +162,10 @@ function addSubformGIBS(data) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
         $('select[name="imageryLayer[]"]', subform).val(data.imageryLayer);
         $('input[name="date[]"]', subform).val(data.date);
+    } else {
+        $('html, body').animate({
+            scrollTop: subform.offset().top
+        }, 1000);
     }
 }
 
@@ -159,6 +175,10 @@ function addSubformGeoNetwork(data) {
     if (data !== undefined) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
         $('select[name="geonetworkLayer[]"]', subform).val(data.geonetworkLayer);
+    } else {
+        $('html, body').animate({
+            scrollTop: subform.offset().top
+        }, 1000);
     }
 }
 
