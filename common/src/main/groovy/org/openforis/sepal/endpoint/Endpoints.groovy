@@ -37,6 +37,7 @@ final class Endpoints extends AbstractMvcFilter {
             before('/**') {
                 LOG.debug(requestContext.description)
                 response.characterEncoding = 'UTF-8'
+                response.contentType = 'application/json'
             }
 
             error(InvalidRequest) {
