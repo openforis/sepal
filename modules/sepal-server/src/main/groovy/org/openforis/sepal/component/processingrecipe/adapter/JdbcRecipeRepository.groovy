@@ -59,8 +59,8 @@ class JdbcRecipeRepository implements RecipeRepository {
                 type: row.type as Recipe.Type,
                 username: row.username,
                 contents: row.longText('contents'),
-                creationTime: row.creation_time,
-                updateTime: row.update_time
+                creationTime: new Date(row.creation_time.time),
+                updateTime: new Date(row.update_time.time)
         )
     }
 

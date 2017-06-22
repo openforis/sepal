@@ -12,11 +12,13 @@ import org.openforis.sepal.component.processingrecipe.query.ListRecipes
 import org.openforis.sepal.component.processingrecipe.query.ListRecipesHandler
 import org.openforis.sepal.component.processingrecipe.query.LoadRecipe
 import org.openforis.sepal.component.processingrecipe.query.LoadRecipeHandler
-import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
+import org.openforis.sepal.util.Clock
+import org.openforis.sepal.util.SystemClock
 
 class ProcessingRecipeComponent extends DataSourceBackedComponent implements EndpointRegistry {
     static final String SCHEMA = 'processing_recipe'
@@ -25,17 +27,19 @@ class ProcessingRecipeComponent extends DataSourceBackedComponent implements End
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA))
         return new ProcessingRecipeComponent(
                 connectionManager,
-                new AsynchronousEventDispatcher())
+                new AsynchronousEventDispatcher(),
+                new SystemClock())
     }
 
     ProcessingRecipeComponent(
             SqlConnectionManager connectionManager,
-            HandlerRegistryEventDispatcher eventDispatcher
+            HandlerRegistryEventDispatcher eventDispatcher,
+            Clock clock
     ) {
         super(connectionManager, eventDispatcher)
         def repository = new JdbcRecipeRepository(connectionManager)
 
-        command(SaveRecipe, new SaveRecipeHandler(repository))
+        command(SaveRecipe, new SaveRecipeHandler(repository, clock))
         command(RemoveRecipe, new RemoveRecipeHandler(repository))
 
         query(LoadRecipe, new LoadRecipeHandler(repository))

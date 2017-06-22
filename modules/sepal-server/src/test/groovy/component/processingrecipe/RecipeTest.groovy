@@ -1,6 +1,7 @@
 package component.processingrecipe
 
 import fake.Database
+import fake.FakeClock
 import org.openforis.sepal.component.processingrecipe.ProcessingRecipeComponent
 import org.openforis.sepal.component.processingrecipe.api.Recipe
 import org.openforis.sepal.component.processingrecipe.command.RemoveRecipe
@@ -15,10 +16,11 @@ abstract class RecipeTest extends Specification {
     final database = new Database(ProcessingRecipeComponent.SCHEMA)
     final eventDispatcher = new SynchronousEventDispatcher()
     final connectionManager = new SqlConnectionManager(database.dataSource)
+    final clock = new FakeClock()
     final component = new ProcessingRecipeComponent(
             connectionManager,
-            eventDispatcher
-    )
+            eventDispatcher,
+            clock)
 
     final testUsername = 'test-user'
 
@@ -48,8 +50,8 @@ abstract class RecipeTest extends Specification {
                 type: Recipe.Type.MOSAIC,
                 username: args.username ?: testUsername,
                 contents: args.contents ?: 'some-contents',
-                creationTime: new Date(),
-                updateTime: new Date()
+                creationTime: clock.now(),
+                updateTime: clock.now()
         )
     }
 }
