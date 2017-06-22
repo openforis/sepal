@@ -49,13 +49,12 @@ class Aoi:
         if data_set not in self._fusion_table_by_data_set:
             raise ValueError('Unsupported data set: ' + data_set)
         table = self._fusion_table_by_data_set[data_set]
-        scene_area_table = ee.FeatureCollection(table['table_id'])
-        intersected = scene_area_table.filter(ee.Filter.intersects(
-            leftField='.geo',
-            rightValue=self._geometry,
-        )).toList(1e6).getInfo()
+        scene_area_table = ee.FeatureCollection(table['table_id']) \
+            .filterBounds(self._geometry) \
+            .toList(1e6) \
+            .getInfo()
         scene_areas = []
-        for scene_area in intersected:
+        for scene_area in scene_area_table:
             polygon = map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](scene_area))
             scene_areas.append({
                 'sceneAreaId': scene_area['properties'][table['id_column']],
