@@ -10,8 +10,4 @@ class RowExtension {
     static String longText(GroovyResultSet self, String column) throws InvalidRequest {
         return self[column] instanceof Clob ? ((Clob) self[column]).asciiStream.text : self[column]
     }
-
-    static String getLongText(NClob self) throws InvalidRequest {
-        return self.asciiStream.text
-    }
 }
