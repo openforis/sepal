@@ -7,7 +7,9 @@ from flask_cors import cross_origin
 from .. import app
 from .. import mongo
 
-from ..common.utils import import_sepal_auth, requires_auth, propertiesFileToDict, allowed_file, generate_id, listToCSVRowString, crc32
+import uuid
+
+from ..common.utils import import_sepal_auth, requires_auth, propertiesFileToDict, allowed_file, listToCSVRowString, crc32
 
 from werkzeug.utils import secure_filename
 
@@ -74,6 +76,7 @@ def projectAdd():
                 return 'KO', 400
     # define basic project
     project = {
+        'id': str(uuid.uuid4()),
         'name': name,
         'type': projectType,
         'username': username,
@@ -95,7 +98,6 @@ def projectAdd():
             result = saveFileFromRequest(file)
             # update project data
             project.update({
-                'id': generate_id(result[0]),
                 'filename': result[0],
                 'codeLists': result[1],
                 'properties': result[2],
@@ -108,7 +110,6 @@ def projectAdd():
         codeList = getCodeListFromRequest(request)
         codeLists = [codeList]
         project.update({
-            'id': generate_id(name),
             'radius': radius,
             'codeLists': codeLists
         })
@@ -289,11 +290,13 @@ def saveFileFromRequest(file):
             csvreader = csv.reader(csvfile, delimiter=',', quotechar='"')
             next(csvreader, None) # skip header
             for row in csvreader:
-                plots.append({
+                plot = {
                     'id': row[0],
                     'YCoordinate': row[1],
                     'XCoordinate': row[2]
-                })
+                }
+                #TODO
+                plots.append(plot)
     return (uniqueFilename, codeLists, properties, plots)
 
 def getLayersFromRequest(request):
