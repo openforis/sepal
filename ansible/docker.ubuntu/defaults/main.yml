@@ -2,6 +2,7 @@
 # docker-engine is the default package name
 docker_pkg_name: docker-engine
 docker_apt_cache_valid_time: 600
+docker_aufs_enabled: true
 
 # docker dns path for docker.io package ( changed at ubuntu 14.04 from docker to docker.io )
 docker_defaults_file_path: /etc/default/docker
@@ -37,12 +38,17 @@ docker_https_proxy:
 # Flags for whether to install pip packages
 pip_install_pip: true
 pip_install_setuptools: true
-pip_install_docker_py: true
+# pip_install_docker is ignored if pip_install_docker_compose is true as docker-compose as a dependency over docker.
+# See var/main.yml for more information.
+pip_install_docker: true
 pip_install_docker_compose: true
+
 # Versions for the python packages that are installed
 pip_version_pip: latest
 pip_version_setuptools: latest
-pip_version_docker_py: latest
+# pip_version_docker is ignored if pip_install_docker_compose is true as docker-compose as a dependency over docker.
+# See var/main.yml for more information.
+pip_version_docker: latest
 pip_version_docker_compose: latest
 
 # If this variable is set to true kernel updates and host restarts are permitted.
@@ -51,6 +57,7 @@ kernel_update_and_reboot_permitted: no
 
 # Set to 'yes' or 'true' to enable updates (sets 'latest' in apt module)
 update_docker_package: no
+
 # Change these to 'present' if you're running Ubuntu 12.04-13.10 and are fine with less-than-latest packages
 kernel_pkg_state: latest
 cgroup_lite_pkg_state: latest

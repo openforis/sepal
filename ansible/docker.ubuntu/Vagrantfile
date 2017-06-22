@@ -21,11 +21,25 @@ boxes = [
     :ram => "256"
   },
   {
-    :name => "debian-jessie",
-    :box => "debian/jessie64",
+    :name => "ubuntu-1604",
+    :box => "ubuntu/xenial64",
     :ip => '10.0.77.13',
     :cpu => "33",
+    :ram => "512"
+  },
+  {
+    :name => "debian-jessie",
+    :box => "debian/jessie64",
+    :ip => '10.0.77.14',
+    :cpu => "33",
     :ram => "256"
+  },
+  {
+    :name => "ubuntu-1604-python3",
+    :box => "ubuntu/xenial64",
+    :ip => '10.0.77.15',
+    :cpu => "33",
+    :ram => "512"
   },
 ]
 
@@ -34,7 +48,6 @@ Vagrant.configure("2") do |config|
     config.vm.define box[:name] do |vms|
       vms.vm.box = box[:box]
       vms.vm.box_url = box[:url]
-      vms.vm.hostname = "ansible-#{role}-#{box[:name]}"
 
       vms.vm.provider "virtualbox" do |v|
         v.customize ["modifyvm", :id, "--cpuexecutioncap", box[:cpu]]
@@ -46,6 +59,9 @@ Vagrant.configure("2") do |config|
       vms.vm.provision :ansible do |ansible|
         ansible.playbook = "tests/vagrant.yml"
         ansible.verbose = "vv"
+        ansible.host_vars = {
+          "ubuntu-1604-python3" => {"ansible_python_interpreter" => "/usr/bin/python3"}
+        }
       end
     end
   end

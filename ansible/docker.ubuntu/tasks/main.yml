@@ -1,5 +1,8 @@
 ---
 # tasks file for docker.ubuntu
+- name: "Include proper python vars file"
+  include_vars: "{{ python_vars_file }}"
+
 - name: Fail if not a new release of Ubuntu
   fail:
     msg: "{{ ansible_distribution_version }} is not an acceptable version of Ubuntu for this role"
@@ -9,6 +12,11 @@
   fail:
     msg: "{{ ansible_distribution_version }} is not an acceptable version of Debian for this role"
   when: ansible_lsb.id|lower == "debian" and ansible_distribution_version|version_compare('8.5', '<')
+
+- name: Fail if using python3 with Ansible<2.3
+  fail:
+    msg: "Ansible 2.3+ is required to use Python3 interpreter."
+  when: ansible_version.full | version_compare('2.3', '<') and ansible_python_interpreter is defined and 'python3' in ansible_python_interpreter
 
 - name: Update kernel, kernel extras, Xorg pkgs, and related tasks
   include: kernel_check_and_update.yml
@@ -20,15 +28,9 @@
     pkg: dmsetup
     state: "{{ dmsetup_pkg_state }}"
     update_cache: "{{ 'yes' if dmsetup_pkg_state=='latest' else 'no' }}"
-    cache_valid_time: 600
+    cache_valid_time: "{{ docker_apt_cache_valid_time }}"
   register: dmsetup_result
   when: ansible_distribution_version|version_compare('16.04', '=')
-
-- name: Read uname
-  shell: uname -r
-  register: uname_output
-  changed_when: false
-  check_mode: no
 
 - name: Install linux-image-extra-* packages to enable AuFS driver
   apt:
@@ -37,9 +39,19 @@
     update_cache: yes
     cache_valid_time: "{{ docker_apt_cache_valid_time }}"
   with_items:
-    - linux-image-extra-{{ uname_output.stdout }}
+    - linux-image-extra-{{ ansible_kernel }}
     - linux-image-extra-virtual
-  when: ansible_distribution_version|version_compare('14.04', '>=')
+  when: docker_aufs_enabled and ansible_distribution_version|version_compare('14.04', '==')
+  register: linux_image_extra_install
+  ignore_errors: yes
+
+- name: Try again to install linux-image-extra if previous attempt failed
+  apt:
+    pkg: "linux-image-extra-{{ ansible_kernel.split('-')[:-1]|join('-') }}*"
+    state: present
+    update_cache: yes
+    cache_valid_time: "{{ docker_apt_cache_valid_time }}"
+  when: linux_image_extra_install|failed
 
 - name: Run dmsetup for Ubuntu 16.04
   command: dmsetup mknodes
@@ -88,7 +100,7 @@
 
 - name: Set docker daemon options
   copy:
-    content: "DOCKER_OPTS=\"{{ docker_opts.rstrip('\n') }}\""
+    content: "DOCKER_OPTS=\"{{ docker_opts.rstrip() }}\""
     dest: /etc/default/docker
     owner: root
     group: root
@@ -110,7 +122,7 @@
   copy:
     content: |
       [Service]
-      Environment="DOCKER_OPTS={{ docker_opts.rstrip('\n') }}"
+      Environment="DOCKER_OPTS={{ docker_opts.rstrip() }}"
     dest: /etc/systemd/system/docker.service.d/env.conf
     owner: root
     group: root
@@ -146,15 +158,38 @@
   when: "dns_fix|changed"
 
 # We must install pip via apt before we can use the pip module below
-- name: Install pip, python-dev package with apt
+- name: "Install {{ _python_packages | join(', ') }} packages with apt"
   apt:
     pkg: "{{ item }}"
     state: latest
     update_cache: yes
     cache_valid_time: "{{ docker_apt_cache_valid_time }}"
-  with_items:
-    - python-dev
-    - python-pip
+  with_items: "{{ _python_packages }}"
+
+# Display an informative message if the docker-compose version needs to be downgraded
+- name: Docker-compose version downgrade
+  debug:
+    msg: >-
+      Downgrading docker-compose version to {{ _pip_version_docker_compose }} because of docker-compose > 1.10
+      requiring docker python package (instead of the docker-py one) which is incompatible with the docker_container
+      module in Ansible < 2.3
+  when: pip_install_docker_compose and _pip_version_docker_compose != pip_version_docker_compose
+
+# See vars/main.yml for more information on this.
+- name: Clean previous docker-py package if installing docker.
+  pip:
+    name: docker-py
+    state: absent
+    executable: "{{ _pip_executable }}"
+  when: (_pip_install_docker or pip_install_docker_compose) and _pip_docker_package_name == 'docker'
+
+# See vars/main.yml for more information on this.
+- name: Clean previous docker package if installing docker-py.
+  pip:
+    name: docker
+    state: absent
+    executable: "{{ _pip_executable }}"
+  when: (_pip_install_docker or pip_install_docker_compose) and _pip_docker_package_name == 'docker-py'
 
 # Upgrade pip with pip to fix angstwad/docker.ubuntu/pull/35 and docker-py/issues/525
 - name: Install pip, setuptools, docker-py and docker-compose with pip
@@ -162,12 +197,21 @@
     name: "{{ item.name }}"
     state: "{{ 'latest' if item.version=='latest' else 'present' }}"
     version: "{{ item.version if item.version!='latest' else omit }}"
+    executable: "{{ _pip_executable }}"
   with_items:
-    - { name: pip, version: "{{ pip_version_pip }}", install: "{{ pip_install_pip }}" }
-    - { name: setuptools, version: "{{ pip_version_setuptools }}", install: "{{ pip_install_setuptools }}" }
-    - { name: docker-py, version: "{{ pip_version_docker_py }}", install: "{{ pip_install_docker_py }}" }
-    - { name: docker-compose, version: "{{ pip_version_docker_compose }}", install: "{{ pip_install_docker_compose }}" }
-  when: item.install
+    - name: pip
+      version: "{{ pip_version_pip }}"
+      install: "{{ pip_install_pip }}"
+    - name: setuptools
+      version: "{{ pip_version_setuptools }}"
+      install: "{{ pip_install_setuptools }}"
+    - name: "{{ _pip_docker_package_name }}"
+      version: "{{ pip_version_docker }}"
+      install: "{{ _pip_install_docker }}"
+    - name: docker-compose
+      version: "{{ _pip_version_docker_compose }}"
+      install: "{{ pip_install_docker_compose }}"
+  when: item.install|bool
 
 - name: Check if /etc/updatedb.conf exists
   stat:
@@ -239,5 +283,6 @@
   when: docker_group_members is defined
 
 - name: update facts if docker0 is not defined
-  action: setup filter="ansible_docker0"
+  setup:
+    filter: "ansible_docker0"
   when: ansible_docker0 is not defined
