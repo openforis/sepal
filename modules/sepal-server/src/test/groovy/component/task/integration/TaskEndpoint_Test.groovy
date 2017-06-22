@@ -24,7 +24,6 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
 
         then:
         1 * component.submit(new UserTasks(username: testUsername)) >> []
-
         sameJson(response.data, [])
     }
 

@@ -33,7 +33,7 @@ abstract class AbstractComponentEndpointTest extends Specification {
 
     def setup() {
         client.handler.failure = { resp -> return resp }
-        client.auth.basic 'some-user', 'some-password'
+        client.auth.basic testUsername, 'some-password'
         server.start()
     }
 
