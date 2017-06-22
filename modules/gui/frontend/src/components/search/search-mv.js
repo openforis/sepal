@@ -56,7 +56,7 @@ EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_SCENE_AREAS, requestScen
 // list actions
 var loadList = function (e) {
   var params = {
-    url    : '/api/mosaics/list',
+    url    : '/processing-recipes',
     success: function (response) {
       EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_CHANGE, null, response)
     }
@@ -66,15 +66,14 @@ var loadList = function (e) {
 
 var loadMosaic = function (e, id) {
   var params = {
-    url         : '/api/mosaics/' + id
+    url         : '/processing-recipes/' + id
     , beforeSend: function () {
       Loader.show()
     }
     , success   : function (response) {
       Loader.hide({delay: 1000})
       
-      var state = JSON.parse(response)
-      // console.log('====== ', state)
+      var state = response
       
       setTimeout(function () {
         switch (state.type) {
@@ -100,7 +99,7 @@ var loadMosaic = function (e, id) {
 
 var deleteMosaic = function (e, id) {
   var params = {
-    url         : '/api/mosaics/' + id
+    url         : '/processing-recipes/' + id
     , beforeSend: function () {
       Loader.show()
     }

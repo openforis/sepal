@@ -73,6 +73,13 @@
   },
   {
     "prefix": "true",
+    "path": "/processing-recipes/",
+    "target": "http://sepal:1025/api/processing-recipes",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
     "path": "/budget/",
     "target": "http://sepal:1025/api/budget",
     "https": "true",

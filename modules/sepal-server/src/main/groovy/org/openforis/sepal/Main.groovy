@@ -5,16 +5,17 @@ import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.files.FilesComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
+import org.openforis.sepal.component.processingrecipe.ProcessingRecipeComponent
 import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
 import org.openforis.sepal.component.task.TaskComponent
 import org.openforis.sepal.component.task.adapter.HttpWorkerGateway
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
-import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.security.GateOneAuthEndpoint
 import org.openforis.sepal.security.PathRestrictionsFactory
+import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.lifecycle.Lifecycle
 import org.openforis.sepal.util.lifecycle.Stoppable
@@ -32,6 +33,7 @@ class Main {
 
         def dataSearchComponent = start DataSearchComponent.create(connectionManager)
         def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, connectionManager)
+        def processingRecipeComponent = start ProcessingRecipeComponent.create()
         def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, connectionManager)
         def workerSessionComponent = start WorkerSessionComponent.create(
                 budgetComponent,
@@ -57,6 +59,7 @@ class Main {
                 filesComponent,
                 taskComponent,
                 budgetComponent,
+                processingRecipeComponent,
                 appsComponent)
         start new Server(config.webAppPort, '/api', endpoints)
         addShutdownHook { stop() }

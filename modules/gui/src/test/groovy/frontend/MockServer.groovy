@@ -601,15 +601,15 @@ class MockServer extends AbstractMvcFilter {
 
 
 
-            get('/api/mosaics/list') {
+            get('/processing-recipes') {
                 send(toJson(getMosaicsList()))
             }
 
-            get('/api/mosaics/{mosaicId}') {
+            get('/processing-recipes/{mosaicId}') {
                 send(toJson(mosaics.get(params.mosaicId)))
             }
 
-            post('/api/mosaics/{mosaicId}/save') {
+            post('/processing-recipes/{mosaicId}') {
                 String mosaicId = params.mosaicId
                 if (mosaics.containsKey(mosaicId))
                     mosaics.remove(mosaicId)
@@ -617,7 +617,7 @@ class MockServer extends AbstractMvcFilter {
                 send(toJson(getMosaicsList()))
             }
 
-            delete('/api/mosaics/{mosaicId}') {
+            delete('/processing-recipes/{mosaicId}') {
                 mosaics.remove(params.mosaicId)
                 send(toJson(getMosaicsList()))
             }

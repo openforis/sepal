@@ -10,7 +10,7 @@ var Events   = require('../event/events')
 var saveActive = function (e, state) {
   
   var params = {
-    url      : '/api/mosaics/' + state.id + '/save'
+    url      : '/processing-recipes/' + state.id
     , data   : {data: JSON.stringify(state)}
     , success: function (response) {
       EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_CHANGE, null, response)
