@@ -206,10 +206,11 @@ def projectDelete(id=None):
 @import_sepal_auth
 @requires_auth
 def projectExportCSV(id=None):
+    csvString = ''
     #
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     username = session.get('username')
-    records = mongo.db.records.find({'project_id': id, 'username': username}, {'_id': False})
+    records = list(mongo.db.records.find({'project_id': id, 'username': username}, {'_id': False}))
     filename = project['name'] + '.csv'
     #
     codeListNames = []
@@ -219,21 +220,52 @@ def projectExportCSV(id=None):
     if projectType == PROJECT_TYPE_CEP:
         if 'confidence' not in codeListNames:
             codeListNames.append('confidence')
+        objs = project['plots'][0].get('values')
+        if objs:
+            csvHeaderData = [o['key'] for o in objs] + codeListNames
+            csvString = listToCSVRowString(csvHeaderData)
+            for plot in project['plots']:
+                csvRowData = [o['value'] for o in plot['values']]
+                hasRecord = False;
+                for record in records:
+                    if record.get('plot'):
+                        print '%s - %s' % (record.get('plot').get('id'), plot['id'])
+                        if record.get('plot').get('id') == plot['id']:
+                            hasRecord == True
+                            values = record['value']
+                            for codeListName in codeListNames:
+                                value = values.get(codeListName, '')
+                                csvRowData.append(value)
+                if not hasRecord:
+                    for codeListName in codeListNames:
+                        csvRowData.append('')
+                csvString += listToCSVRowString(csvRowData)
+        else:
+            csvHeaderData = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
+            csvString = listToCSVRowString(csvHeaderData)
+            for record in records:
+                csvRowData = []
+                csvRowData.append(record.get('plot').get('id'))
+                csvRowData.append(record.get('plot').get('YCoordinate'))
+                csvRowData.append(record.get('plot').get('XCoordinate'))
+                values = record['value']
+                for codeListName in codeListNames:
+                    value = values.get(codeListName, '')
+                    csvRowData.append(value)
+                csvString += listToCSVRowString(csvRowData)
     if projectType == PROJECT_TYPE_TRAINING_DATA:
-        pass
-    #
-    csvHeaderData = ['YCoordinate', 'XCoordinate'] + codeListNames
-    csvString = listToCSVRowString(csvHeaderData)
-    #
-    for record in records:
-        csvRowData = []
-        csvRowData.append(record.get('plot').get('YCoordinate'))
-        csvRowData.append(record.get('plot').get('XCoordinate'))
-        values = record['value']
-        for codeListName in codeListNames:
-            value = values.get(codeListName, '')
-            csvRowData.append(value)
-        csvString += listToCSVRowString(csvRowData)
+        csvHeaderData = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
+        csvString = listToCSVRowString(csvHeaderData)
+        for record in records:
+            csvRowData = []
+            csvRowData.append(record.get('plot').get('id'))
+            csvRowData.append(record.get('plot').get('YCoordinate'))
+            csvRowData.append(record.get('plot').get('XCoordinate'))
+            values = record['value']
+            for codeListName in codeListNames:
+                value = values.get(codeListName, '')
+                csvRowData.append(value)
+            csvString += listToCSVRowString(csvRowData)
     #
     return Response(csvString, mimetype="text/csv", headers={"Content-disposition": "attachment; filename=" + filename})
 
@@ -287,15 +319,20 @@ def saveFileFromRequest(file):
     csvFileFullPath = os.path.join(extractDir, csvFilePath)
     if os.path.isfile(csvFileFullPath):
         with open(csvFileFullPath, 'rb') as csvfile:
-            csvreader = csv.reader(csvfile, delimiter=',', quotechar='"')
-            next(csvreader, None) # skip header
+            csvreader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
+            fieldnames = csvreader.fieldnames
             for row in csvreader:
                 plot = {
-                    'id': row[0],
-                    'YCoordinate': row[1],
-                    'XCoordinate': row[2]
+                    'id': row[fieldnames[0]],
+                    'YCoordinate': row[fieldnames[1]],
+                    'XCoordinate': row[fieldnames[2]],
+                    'values': []
                 }
-                #TODO
+                for fieldname in fieldnames:
+                    plot['values'].append({
+                        'key': fieldname,
+                        'value': row[fieldname]
+                    })
                 plots.append(plot)
     return (uniqueFilename, codeLists, properties, plots)
 

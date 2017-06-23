@@ -200,7 +200,6 @@ $('#submit-btn').click(function(e) {
         if (!$.trim($(this).val()).length) {
             isValid = false;
             $(this).closest('.form-group').addClass('has-danger').find('.form-control-feedback').show();
-
         } else {
             $(this).closest('.form-group').removeClass('has-danger').find('.form-control-feedback').hide();
         }

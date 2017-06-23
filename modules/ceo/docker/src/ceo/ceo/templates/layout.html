@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <base href="{{config.BASE}}" />
-        <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
         <title>S E P A L - CEO</title>
         <script type="text/javascript" src="static/bower_components/jquery/dist/jquery.min.js"></script>
         <script type="text/javascript" src="static/bower_components/tether/dist/js/tether.min.js"></script>
@@ -27,7 +27,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <a class="navbar-brand" href="{{config.BASE}}">ceo-sepal</a>
-            {% if session.username %}
+            {% if session.username -%}
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="nav navbar-nav ml-auto">
                         <li class="nav-item">
@@ -39,7 +39,7 @@
                         </li>
                     </ul>
                 </div>
-            {% endif %}
+            {% endif -%}
         </nav>
 
         {% block body %}{% endblock %}
