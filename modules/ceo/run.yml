@@ -22,3 +22,4 @@
       GOOGLE_MAPS_API_KEY_SEPAL_ENV: "{{ google_maps_api_key }}"
       DIGITAL_GLOBE_API_KEY_SEPAL_ENV: "{{ digital_globe_api_key }}"
       DIGITAL_GLOBE_CONNECT_ID_SEPAL_ENV: "{{ digital_globe_connect_id }}"
+      PLANET_API_KEY: "{{ planet_api_key }}"
