@@ -39,7 +39,7 @@ var init = function (formSelector) {
         if (selection) {
           FormValidator.resetFormErrors(form, formNotify)
           
-          setCountryIso(selection.data, selection.value)
+          setCountryIso(selection.data, selection.value, true)
         } else {
           setCountryIso(null, null)
         }
@@ -146,14 +146,14 @@ var polygonClear = function (e) {
   btnDrawPolygon.removeClass('active')
 }
 
-var setCountryIso = function (code, name) {
+var setCountryIso = function (code, name, zoom) {
   
   state.aoiCode = code
   state.aoiName = name
   
   if (code) {
     EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
-    EventBus.dispatch(Events.MAP.ZOOM_TO, null, state.aoiCode)
+    EventBus.dispatch(Events.MAP.ZOOM_TO, null, state.aoiCode, zoom)
     
     state.polygon = null
   } else {

@@ -15,11 +15,13 @@ var listContainer = null
 var listMosaics  = {}
 var activeMosaic = null
 var btnSave      = null
+var btnZoom      = null
 
 var init = function (c) {
   container     = $(c)
   listContainer = container.find('.active-mosaics-btns')
   btnSave       = container.find('.btn-save')
+  btnZoom       = container.find('.btn-zoom')
   
   btnSave.click(function (e) {
     e.preventDefault()
@@ -30,6 +32,10 @@ var init = function (c) {
       }
     }
     Dialog.show(options)
+  })
+  
+  btnZoom.click(function (e) {
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_ZOOM_TO)
   })
 }
 
@@ -43,6 +49,7 @@ var setActiveState = function (e, state) {
     var btn = div.find('.btn-mosaic')
     btn.html(state.name)
     btnSave.show(0).insertAfter(btn)
+    btnZoom.show(0).insertAfter(btn)
     activeMosaic = listMosaics[state.id]
   }
 }
@@ -87,6 +94,7 @@ var removeMosaic = function (e, id, dispatchChange) {
   }, 500)
   if (SModel.isActive(id)) {
     btnSave.hide(0).insertAfter(container)
+    btnZoom.hide(0).insertAfter(container)
     if (dispatchChange)
       EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, null, {isNew: true})
   }

@@ -38,7 +38,8 @@
               }
             }
 
-            &.btn-save {
+            &.btn-save ,
+            &.btn-zoom {
               width: 2rem;
               height: 100%;
               border: none;

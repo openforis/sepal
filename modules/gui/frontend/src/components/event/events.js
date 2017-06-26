@@ -51,6 +51,7 @@ var Events = {
         , ACTIVE_CHANGED              : 'section.search.model.active_changed'
         , ACTIVE_SEARCH_PARAMS_CHANGED: 'section.search.model.active_search_params_changed'
         , ACTIVE_SAVE                 : 'section.search.model.active_save'
+        , ACTIVE_ZOOM_TO              : 'section.search.model.active_zoom_to'
         , RESTORE_DRAWN_AOI           : 'section.search.model.restore_drawn_aoi'
         
         , LIST_LOAD   : 'section.search.model.list_load'
@@ -75,8 +76,8 @@ var Events = {
       , MOSAIC_LOADED           : 'section.search_retrieve.mosaic_loaded'
       , TOGGLE_MOSAIC_VISIBILITY: 'section.search_retrieve.toggle_mosaic_visibility'
       , COLLAPSE_VIEW           : 'section.search_retrieve.collapse_view'
-      , SHOW_SCENE_AREAS: 'section.search_retrieve.show_scene_areas'
-      , HIDE_SCENE_AREAS: 'section.search_retrieve.hide_scene_areas'
+      , SHOW_SCENE_AREAS        : 'section.search_retrieve.show_scene_areas'
+      , HIDE_SCENE_AREAS        : 'section.search_retrieve.hide_scene_areas'
     }
     
     , BROWSE: {
