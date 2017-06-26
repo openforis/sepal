@@ -44,12 +44,12 @@ var setState = function (e, s) {
 }
 
 var show = function () {
-  if (!container.is(':visible'))
+  if (container && !container.is(':visible'))
     container.velocityFadeIn({delay: 0, duration: 300})
 }
 
 var hide = function () {
-  if (container.is(':visible'))
+  if (container && container.is(':visible'))
     container.velocityFadeOut({delay: 0, duration: 300})
 }
 
