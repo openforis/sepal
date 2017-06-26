@@ -28,7 +28,7 @@ var init = function (formSelector) {
   inputName = form.find('[name=name]')
   inputName.keyup(function (e) {
     state.name = inputName.val()
-    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {field: 'name'})
   })
   
   inputAoiCode = form.find('#search-form-country')
@@ -101,11 +101,11 @@ var submit = function (e) {
     errorMsg = 'Please enter a valid name, no whitespace are allowed'
     
     FormValidator.addError(inputName)
-  // } else if (Model.containsMosaicName(state)) {
-  //   valid    = false
-  //   errorMsg = 'Name already exists. Please enter a unique name'
-  //
-  //   FormValidator.addError(inputName)
+    // } else if (Model.containsMosaicName(state)) {
+    //   valid    = false
+    //   errorMsg = 'Name already exists. Please enter a unique name'
+    //
+    //   FormValidator.addError(inputName)
   } else if ($.isEmptyString(state.aoiCode) && $.isEmptyString(state.polygon)) {
     valid    = false
     errorMsg = 'Please select a valid COUNTRY or DRAW A POLYGON'
@@ -182,7 +182,8 @@ var setState = function (e, newState, params) {
     //   EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
     // }
     //
-    inputName.val(state.name)
+    if (!params || params.field !== 'name')
+      inputName.val(state.name)
     
     if (state.aoiCode && state.aoiName) {
       inputAoiCode.val(state.aoiName).data('reset-btn').enable()

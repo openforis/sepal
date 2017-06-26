@@ -72,8 +72,8 @@ var loadMosaic = function (e, id) {
     }
     , success   : function (response) {
       Loader.hide({delay: 1000})
-      
-      var state = response
+    
+      var state = typeof response === 'string' ? JSON.parse(response) : response
       
       setTimeout(function () {
         switch (state.type) {
