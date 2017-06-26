@@ -19,7 +19,7 @@ var stateChanged = function (e, s, params) {
     }
     else if (params && (params.resetSceneAreas || params.isNew)) {
       if (state.sceneAreas) {
-        visible      = true
+        visible      = !params.hideSceneAreas
         var polygons = areasToMapPolygons(state.sceneAreas, state.sensorGroup)
         ActiveView.add(polygons, visible)
         
@@ -94,12 +94,12 @@ var updateCount = function () {
 //application visibility events
 var onApplicationSectionShow = function (e) {
   if (visible)
-    ActiveView.hide()
+    hideArea()
 }
 
 var onApplicationSectionReduce = function (e) {
-  if (visible)
-    ActiveView.show()
+  if (!visible)
+    showArea()
 }
 // visibility events
 var showArea                   = function () {

@@ -38,6 +38,7 @@ var Events = {
     , SEARCH: {
       MOSAIC_LOAD                   : 'section.search.mosaic_load'
       , MOSAIC_DELETE               : 'section.search.mosaic_delete'
+      , MOSAIC_CLONE                : 'section.search.mosaic_clone'
       // SHOW_SCENE_AREA: 'section.search.show_scene_area'
       //TODO: move to mosaic_view
       , REQUEST_SCENE_AREAS         : 'section.search.request_scene_areas'
@@ -58,31 +59,12 @@ var Events = {
       }
       
       , VIEW: {
-        SHOW_LIST              : 'section.search.list_view.show_list'
-        , SHOW_MOSAIC          : 'section.search.list_view.show_mosaic'
-        , SHOW_CLASSIFICATION  : 'section.search.list_view.show_classification'
-        , SHOW_CHANGE_DETECTION: 'section.search.list_view.show_change_detection'
+        SHOW_LIST             : 'section.search.list_view.show_list'
+        , ADD_MOSAIC          : 'section.search.list_view.show_mosaic'
+        , ADD_CLASSIFICATION  : 'section.search.list_view.show_classification'
+        , ADD_CHANGE_DETECTION: 'section.search.list_view.show_change_detection'
       }
       
-      // SEARCH_PARAMS DEPRECATED
-      // , SEARCH_PARAMS: {
-      //   WEIGHT_CHANGE                  : 'section.search.search_params.weight_change'
-      //   , WEIGHT_CHANGED               : 'section.search.search_params.weight_changed'
-      //   , OFFSET_TARGET_DAY_CHANGE     : 'section.search.search_params.offset_target_day_change'
-      //   , OFFSET_TARGET_DAY_CHANGED    : 'section.search.search_params.offset_target_day_changed'
-      //   , SELECT_LANDSAT_SENSOR_GROUP  : 'section.search.search_params.select_landsat_sensor_group'
-      //   , SELECT_LANDSAT_SENSOR        : 'section.search.search_params.select_landsat_sensor'
-      //   , DESELECT_LANDSAT_SENSOR      : 'section.search.search_params.deselect_landsat_sensor'
-      //   , SELECT_SENTINEL2_SENSOR_GROUP: 'section.search.search_params.select_sentinel2_sensor_group'
-      //   , SELECT_SENTINEL2_SENSOR      : 'section.search.search_params.select_sentinel2_sensor'
-      //   , DESELECT_SENTINEL2_SENSOR    : 'section.search.search_params.deselect_sentinel2_sensor'
-      //   , SENSORS_CHANGED              : 'section.search.search_params.sensors_changed'
-      //   , SENSOR_GROUP_CHANGED         : 'section.search.search_params.sensor_group_changed'
-      //   , MIN_SCENES_CHANGE            : 'section.search.search_params.min_scenes_change'
-      //   , MIN_SCENES_CHANGED           : 'section.search.search_params.min_scenes_changed'
-      //   , MAX_SCENES_CHANGE            : 'section.search.search_params.max_scenes_change'
-      //   , MAX_SCENES_CHANGED           : 'section.search.search_params.max_scenes_changed'
-      // }
     }
     
     , SEARCH_RETRIEVE: {

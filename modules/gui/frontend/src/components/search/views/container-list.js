@@ -25,13 +25,13 @@ var init = function (html) {
   }
   
   container.find('.btn-add-mosaic').click(function () {
-    showSection(Events.SECTION.SEARCH.VIEW.SHOW_MOSAIC)
+    showSection(Events.SECTION.SEARCH.VIEW.ADD_MOSAIC)
   })
   container.find('.btn-add-classification').click(function () {
-    showSection(Events.SECTION.SEARCH.VIEW.SHOW_CLASSIFICATION)
+    showSection(Events.SECTION.SEARCH.VIEW.ADD_CLASSIFICATION)
   })
   container.find('.btn-add-change-detection').click(function () {
-    showSection(Events.SECTION.SEARCH.VIEW.SHOW_CHANGE_DETECTION)
+    showSection(Events.SECTION.SEARCH.VIEW.ADD_CHANGE_DETECTION)
   })
   
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_LOAD)
@@ -48,6 +48,9 @@ var listChanged = function (e, list) {
     row.find('.type').html(item.type)
     row.find('.btn-edit').click(function (e) {
       EventBus.dispatch(Events.SECTION.SEARCH.MOSAIC_LOAD, null, item.id)
+    })
+    row.find('.btn-clone').click(function (e) {
+      EventBus.dispatch(Events.SECTION.SEARCH.MOSAIC_CLONE, null, item.id)
     })
     row.find('.btn-delete').click(function (e) {
       e.preventDefault()

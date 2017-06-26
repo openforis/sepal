@@ -177,11 +177,7 @@ var setState = function (e, newState, params) {
   state = newState
   
   if (state && state.type == Model.TYPES.MOSAIC) {
-    // if (params && params.isNew){
-    //   EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
-    //   EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
-    // }
-    //
+    
     if (!params || params.field !== 'name')
       inputName.val(state.name)
     

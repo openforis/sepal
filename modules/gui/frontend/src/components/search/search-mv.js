@@ -64,7 +64,7 @@ var loadList = function (e) {
   EventBus.dispatch(Events.AJAX.GET, null, params)
 }
 
-var loadMosaic = function (e, id) {
+var _loadMosaic = function (id, callback) {
   var params = {
     url         : '/processing-recipes/' + id
     , beforeSend: function () {
@@ -72,7 +72,7 @@ var loadMosaic = function (e, id) {
     }
     , success   : function (response) {
       Loader.hide({delay: 1000})
-    
+      
       var state = typeof response === 'string' ? JSON.parse(response) : response
       
       setTimeout(function () {
@@ -89,12 +89,26 @@ var loadMosaic = function (e, id) {
         }
       }, 200)
       setTimeout(function () {
-        EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, isNew: true})
-        EventBus.dispatch(Events.SECTION.REDUCE)
+        callback(state)
       }, 600)
     }
   }
   EventBus.dispatch(Events.AJAX.GET, null, params)
+}
+
+var loadMosaic = function (e, id) {
+  _loadMosaic(id, function (state) {
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, isNew: true})
+    EventBus.dispatch(Events.SECTION.REDUCE)
+  })
+}
+
+var cloneMosaic = function (e, id) {
+  _loadMosaic(id, function (state) {
+    state.id   = guid()
+    state.name = state.name + '-clone'
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, hideSceneAreas:true, isNew: true})
+  })
 }
 
 var deleteMosaic = function (e, id) {
@@ -118,6 +132,7 @@ var deleteMosaic = function (e, id) {
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, loadList)
 EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_LOAD, loadMosaic)
+EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_CLONE, cloneMosaic)
 EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_DELETE, deleteMosaic)
 
 var guid = function () {
@@ -162,4 +177,4 @@ var addMosaic = function () {
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_LIST, showList)
-EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_MOSAIC, addMosaic)
+EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_MOSAIC, addMosaic)
