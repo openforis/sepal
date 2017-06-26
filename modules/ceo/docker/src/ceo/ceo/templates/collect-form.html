@@ -478,6 +478,24 @@
                     overlays.push(overlay);
                 });
 
+                getRecords();
+
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
+            });
+        }
+
+        function getRecords() {
+            $.ajax({
+                url: ceoSepalApiUrl + "/record/project_id/" + project_id,
+                method: 'get',
+
+                contentType: 'application/json;charset=UTF-8'
+            }).success(function(data) {
+                records = data;
+                $.each(records, function(key, value) {
+                    $('#list a[data-plot-id="' + value.plot.id +'"]').addClass('evaluated');
+                });
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
             });
@@ -519,23 +537,6 @@
                 next.click();
             }
         }
-
-        function getRecords() {
-            $.ajax({
-                url: ceoSepalApiUrl + "/record/project_id/" + project_id,
-                method: 'get',
-                contentType: 'application/json;charset=UTF-8'
-            }).success(function(data) {
-                records = data;
-                $.each(records, function(key, value) {
-                    $('#list a[data-plot-id="' + value.plot.id +'"]').addClass('evaluated');
-                });
-            }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.error(jqXHR, textStatus, errorThrown);
-            });
-        }
-
-        getRecords();
 
         function showList() {
             $('#list-row').toggle();
