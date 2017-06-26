@@ -78,6 +78,7 @@ var _loadMosaic = function (id, callback) {
       setTimeout(function () {
         switch (state.type) {
           case Model.TYPES.MOSAIC:
+            delete state['mosaic']
             View.showMosaic()
             break
           case Model.TYPES.CLASSIFY:

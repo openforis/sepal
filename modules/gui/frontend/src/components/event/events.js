@@ -70,26 +70,13 @@ var Events = {
     , SEARCH_RETRIEVE: {
       BEST_SCENES               : 'section.search_retrieve.best_scenes'
       , RETRIEVE_SCENES         : 'section.search_retrieve.retrieve_scenes'
-      // , RETRIEVE_LANDSAT_SCENES  : 'section.search_retrieve.retrieve_landsat_scenes'
-      // , RETRIEVE_SENTINEL2_SCENES: 'section.search_retrieve.retrieve_sentinel2_scenes'
       , PREVIEW_MOSAIC          : 'section.search_retrieve.preview_mosaic'
-      // , PREVIEW_LANDSAT_MOSAIC   : 'section.search_retrieve.preview_landsat_mosaic'
-      // , PREVIEW_SENTINEL2_MOSAIC : 'section.search_retrieve.preview_sentinel2_mosaic'
       , RETRIEVE_MOSAIC         : 'section.search_retrieve.retrieve_mosaic'
       , MOSAIC_LOADED           : 'section.search_retrieve.mosaic_loaded'
       , TOGGLE_MOSAIC_VISIBILITY: 'section.search_retrieve.toggle_mosaic_visibility'
-      // , RETRIEVE_LANDSAT_MOSAIC  : 'section.search_retrieve.retrieve_landsat_mosaic'
-      // , RETRIEVE_SENTINEL2_MOSAIC: 'section.search_retrieve.retrieve_sentinel2_mosaic'
-      // , ADD_LANDSAT_MOSAIC  : 'section.search_retrieve.add_landsat_mosaic'
-      // , ADD_SENTINEL2_MOSAIC: 'section.search_retrieve.add_sentinel2_mosaic'
       , COLLAPSE_VIEW           : 'section.search_retrieve.collapse_view'
-      
       , SHOW_SCENE_AREAS: 'section.search_retrieve.show_scene_areas'
-      // , SHOW_LANDSAT_AREA        : 'section.search_retrieve.show_landsat_area'
       , HIDE_SCENE_AREAS: 'section.search_retrieve.hide_scene_areas'
-      // , HIDE_LANDSAT_AREA        : 'section.search_retrieve.hide_landsat_area'
-      // , SHOW_SENTINEL2_AREA      : 'section.search_retrieve.show_sentinel2_area'
-      // , HIDE_SENTINEL2_AREA      : 'section.search_retrieve.hide_sentinel2_area'
     }
     
     , BROWSE: {
