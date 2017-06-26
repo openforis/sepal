@@ -364,8 +364,10 @@ def getLayersFromRequest(request):
     dgcsCloudCover = request.form.getlist('dgcsCloudCover[]')
     dgcsProductType = request.form.getlist('dgcsProductType[]')
     dgcsStackingProfile = request.form.getlist('dgcsStackingProfile[]')
+    # planet
+    planetMosaicName = request.form.getlist('planetMosaicName[]')
     #
-    i1 = i2 = i3 = i4 = i5 = -1
+    i1 = i2 = i3 = i4 = i5 = i6 = -1
     for i in range(0, len(layerType)):
         overlay = None
         if layerType[i] == 'gee-gateway':
@@ -406,6 +408,11 @@ def getLayersFromRequest(request):
                 'dgcsCloudCover': dgcsCloudCover[i5],
                 'dgcsProductType': dgcsProductType[i5],
                 'dgcsStackingProfile': dgcsStackingProfile[i5]
+            }
+        elif layerType[i] == 'planet':
+            i6 += 1
+            overlay = {
+                'planetMosaicName': planetMosaicName[i6]
             }
         if overlay:
             overlay['layerName'] = layerName[i]

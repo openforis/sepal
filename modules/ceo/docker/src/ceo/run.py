@@ -8,6 +8,7 @@ if __name__ == '__main__':
     parser.add_argument('--gmaps_api_key', action='store', default='', help='Google Maps API key')
     parser.add_argument('--digital_globe_api_key', action='store', default='', help='DigitalGlobe API key')
     parser.add_argument('--dgcs_connect_id', action='store', default='', help='DGCS Connect ID')
+    parser.add_argument('--planet_api_key', action='store', default='', help='Planet API key')
     parser.add_argument('--ee_account', action='store', default='', help='Google Earth Engine account')
     parser.add_argument('--ee_key_path', action='store', default='', help='Google Earth Engine key path')
     args, unknown = parser.parse_known_args()
@@ -15,6 +16,7 @@ if __name__ == '__main__':
     app.config['GMAPS_API_KEY'] = args.gmaps_api_key
     app.config['DIGITALGLOBE_API_KEY'] = args.digital_globe_api_key
     app.config['DGCS_CONNECT_ID'] = args.dgcs_connect_id
+    app.config['PLANET_API_KEY'] = args.planet_api_key
 
     logging.basicConfig(level=app.config['LOGGING_LEVEL'])
     logging.getLogger('flask_cors').level = app.config['LOGGING_LEVEL']

@@ -52,6 +52,7 @@
                             <a id="add-subform-dgcs" class="dropdown-item chart-btn" href="#">DGCS (DigitalGlobe Cloud Services)</a>
                             <a id="add-subform-gibs" class="dropdown-item chart-btn" href="#">GIBS</a>
                             <a id="add-subform-geonetwork" class="dropdown-item chart-btn" href="#">GeoNetwork</a>
+                            <a id="add-subform-planet" class="dropdown-item chart-btn" href="#">Planet</a>
                         </div>
                     </div>
                 </div>
@@ -181,6 +182,15 @@ $('#add-subform-gibs').click(function(e) {
 $('#add-subform-geonetwork').click(function(e) {
     e.preventDefault();
     var subform = $('#geonetwork-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('html, body').animate({
+        scrollTop: subform.offset().top
+    }, 1000);
+    $('.remove-subform', subform).click(removeSubform);
+});
+
+$('#add-subform-planet').click(function(e) {
+    e.preventDefault();
+    var subform = $('#planet-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
     $('html, body').animate({
         scrollTop: subform.offset().top
     }, 1000);

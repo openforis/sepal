@@ -230,6 +230,19 @@
                     version: '1.1.1'
                 });
                 overlayMapTypes[index] = dgcsLayer;
+            } else if (overlay.type == 'planet') {
+                var mosaic_name = overlay.planetMosaicName;
+                var api_key = '{{config.PLANET_API_KEY}}';
+                var layerOptions = {
+                    getTileUrl: function (tile, zoom) {
+                        var url = 'https://tiles.planet.com/basemaps/v1/planet-tiles/{mosaic_name}/gmap/{z}/{x}/{y}.png?api_key=' + api_key;
+                        return url.replace('{mosaic_name}', mosaic_name).replace('{z}', zoom).replace('{x}', tile.x).replace('{y}', tile.y);
+                    },
+                    name: layerName,
+                    tileSize : new google.maps.Size(256, 256)
+                }
+                var imageMapType = new google.maps.ImageMapType(layerOptions);
+                overlayMapTypes[index] = imageMapType;
             }
         }
 
