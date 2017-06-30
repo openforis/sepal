@@ -60,7 +60,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     void onStart() {
         schedule(1, TimeUnit.DAYS,
                 new UpdateUsgsSceneMetaData(),
-//                new UpdateSentinel2SceneMetaData()
+                new UpdateSentinel2SceneMetaData()
         )
     }
 
