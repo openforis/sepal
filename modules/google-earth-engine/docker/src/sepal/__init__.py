@@ -4,6 +4,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from oauth2client.client import OAuth2Credentials
 from aoi import Aoi
 from image_spec import ImageSpec
+from mosaic_spec import MosaicSpec
 import ee
 import json
 from flask import request

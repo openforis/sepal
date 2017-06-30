@@ -8,20 +8,6 @@ UPPER_RIGHT = 3
 PI = lambda: ee.Number(math.pi)
 MAX_SATELLITE_ZENITH = 7.5
 
-BLUE = 'B1'
-GREEN = 'B2'
-RED = 'B3'
-NIR = 'B4'
-SWIR1 = 'B5'
-SWIR2 = 'B7'
-THERMAL = 'B10'
-FMASK = 'fmask'
-DATE = 'date'
-DAYS = 'days'
-NDVI = 'ndvi'
-QUALITY = 'quality'
-
-
 def line_from_coords(coordinates, fromIndex, toIndex):
     return ee.Geometry.LineString(ee.List([
         coordinates.get(fromIndex),

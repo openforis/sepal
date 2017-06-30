@@ -44,12 +44,20 @@
                     <input type="text" id="target-day-of-year-weight" value="0.5">
                 </p>
 
+                <p>
+                    <label for="shadow-tolerance">Shadow tolerance</label><br/>
+                    <input type="text" id="shadow-tolerance" value="0.5">
+                </p>
+
                 <p id="dataSet">
                     <input id="dataSet.LANDSAT" type="radio" name="dataSet" checked value="LANDSAT">
                     <label for="dataSet.LANDSAT">Landsat</label>
 
                     <input id="dataSet.SENTINEL2" type="radio" name="dataSet" value="SENTINEL2">
                     <label for="dataSet.SENTINEL2">Sentinel 2</label>
+
+                    <input id="dataSet.ASTER" type="radio" name="dataSet" value="ASTER">
+                    <label for="dataSet.ASTER">ASTER</label>
                 </p>
 
                 <p id="sensors">
@@ -57,17 +65,14 @@
                     <input type="checkbox" id="LANDSAT_8" checked>
                     <label for="LANDSAT_8">Landsat 8 OLI/TIRS</label><br/>
 
-                    <input type="checkbox" id="LANDSAT_ETM_SLC_OFF">
-                    <label for="LANDSAT_ETM_SLC_OFF">Landsat 7 ETM+ (SLC-off)</label><br/>
-
-                    <input type="checkbox" id="LANDSAT_ETM">
-                    <label for="LANDSAT_ETM">Landsat 7 ETM+ (SLC-on)</label><br/>
+                    <input type="checkbox" id="LANDSAT_7">
+                    <label for="LANDSAT_7">Landsat 7 ETM+</label><br/>
 
                     <input type="checkbox" id="LANDSAT_TM">
                     <label for="LANDSAT_TM">Landsat 4-5 TM</label><br/>
                 </p>
 
-                <p id="classes-to-mask">
+                <p id="classes-to-mask" style="display: none">
                     <label>Classes to mask</label><br/>
                     <input type="checkbox" id="land">
                     <label for="land">Land</label>
@@ -81,72 +86,43 @@
                     <label for="snow">Snow</label>
                 </p>
 
-                <p id="strategy">
-                    <label>Composition strategy</label><br/>
-                    <input id="strategy.median" type="radio" name="strategy" checked value="median">
-                    <label for="strategy.median">Median</label>
-
-                    <input id="strategy.quality-band" type="radio" name="strategy" value="quality-band">
-                    <label for="strategy.quality-band">Quality Band</label>
+                <p>
+                    <input id="median-mosaic" type="checkbox" name="median-mosaic">
+                    <label for="median-mosaic">Median mosaic</label>
                 </p>
-                <div id="landsat-bands-section">
-                    <p>
-                        <label for="bands1">Bands 1</label><br/>
-                        <select id="bands1">
-                            <option value="RED, GREEN, BLUE">Natural (Red, Green, Blue)</option>
-                            <option value="NIR, RED, GREEN">Infrared (NIR, Red, Green)</option>
-                            <option value="NIR, SWIR1, RED">False color(NIR, SWIR 1, Red)</option>
-                            <option value="SWIR2, NIR, RED">False color(SWIR 2, NIR, Red)</option>
-                            <option value="SWIR2, SWIR1, RED">False color(SWIR 2, SWIR 1, Red)</option>
-                            <option value="SWIR2, NIR, GREEN">False color(SWIR 2, NIR, Green)</option>
-                            <option value="TEMP">Temperature</option>
-                            <option value="DATE">Date of pixel in days</option>
-                            <option value="DAYS">Days from target day</option>
-                        </select>
-                    </p>
-                    <p>
-                        <label for="bands2">Bands 2</label><br/>
-                        <select id="bands2">
-                            <option value="RED, GREEN, BLUE">Natural (Red, Green, Blue)</option>
-                            <option value="NIR, RED, GREEN">Infrared (NIR, Red, Green)</option>
-                            <option value="NIR, SWIR1, RED">False color(NIR, SWIR 1, Red)</option>
-                            <option value="SWIR2, NIR, RED">False color(SWIR 2, NIR, Red)</option>
-                            <option value="SWIR2, SWIR1, RED">False color(SWIR 2, SWIR 1, Red)</option>
-                            <option value="SWIR2, NIR, GREEN">False color(SWIR 2, NIR, Green)</option>
-                            <option value="TEMP">Temperature</option>
-                            <option value="DATE">Date of pixel in days</option>
-                            <option value="DAYS">Days from target day</option>
-                        </select>
-                    </p>
-                </div>
-                <div id="sentinel2-bands-section" style="display:none">
-                    <p>
-                        <label for="sentinel2-bands1">Bands 1</label><br/>
-                        <select id="sentinel2-bands1">
-                            <option value="RED, GREEN, BLUE">Natural (Red, Green, Blue)</option>
-                            <option value="NIR, RED, GREEN">Infrared (NIR, Red, Green)</option>
-                            <option value="NIR, SWIR1, RED">False color(NIR, SWIR 1, Red)</option>
-                            <option value="SWIR2, NIR, RED">False color(SWIR 2, NIR, Red)</option>
-                            <option value="SWIR2, SWIR1, RED">False color(SWIR 2, SWIR 1, Red)</option>
-                            <option value="SWIR2, NIR, GREEN">False color(SWIR 2, NIR, Green)</option>
-                            <option value="DATE">Date of pixel in days</option>
-                            <option value="DAYS">Days from target day</option>
-                        </select>
-                    </p>
-                    <p>
-                        <label for="sentinel2-bands2">Bands 2</label><br/>
-                        <select id="sentinel2-bands2">
-                            <option value="RED, GREEN, BLUE">Natural (Red, Green, Blue)</option>
-                            <option value="NIR, RED, GREEN">Infrared (NIR, Red, Green)</option>
-                            <option value="NIR, SWIR1, RED">False color(NIR, SWIR 1, Red)</option>
-                            <option value="SWIR2, NIR, RED">False color(SWIR 2, NIR, Red)</option>
-                            <option value="SWIR2, SWIR1, RED">False color(SWIR 2, SWIR 1, Red)</option>
-                            <option value="SWIR2, NIR, GREEN">False color(SWIR 2, NIR, Green)</option>
-                            <option value="DATE">Date of pixel in days</option>
-                            <option value="DAYS">Days from target day</option>
-                        </select>
-                    </p>
-                </div>
+
+                <p>
+                    <input id="brdf-correct" type="checkbox" name="brdf-correct">
+                    <label for="brdf-correct">BRDF correct</label>
+                </p>
+                <p>
+                    <label for="bands1">Bands 1</label><br/>
+                    <select id="bands1">
+                        <option value="red, green, blue">Natural (Red, Green, Blue)</option>
+                        <option value="nir, red, green">Infrared (NIR, Red, Green)</option>
+                        <option value="nir, swir1, red">False color(NIR, SWIR 1, Red)</option>
+                        <option value="swir2, nir, red">False color(SWIR 2, NIR, Red)</option>
+                        <option value="swir2, swir1, red">False color(SWIR 2, SWIR 1, Red)</option>
+                        <option value="swir2, nir, green">False color(SWIR 2, NIR, Green)</option>
+                        <option value="unixTimeDays">Unix Time Days</option>
+                        <option value="dayOfYear">Day of year</option>
+                        <option value="daysFromTarget">Days from target</option>
+                    </select>
+                </p>
+                <p>
+                    <label for="bands2">Bands 2</label><br/>
+                    <select id="bands2">
+                        <option value="red, green, blue">Natural (Red, Green, Blue)</option>
+                        <option value="nir, red, green">Infrared (NIR, Red, Green)</option>
+                        <option value="nir, swir1, red">False color(NIR, SWIR 1, Red)</option>
+                        <option value="swir2, nir, red">False color(SWIR 2, NIR, Red)</option>
+                        <option value="swir2, swir1, red">False color(SWIR 2, SWIR 1, Red)</option>
+                        <option value="swir2, nir, green">False color(SWIR 2, NIR, Green)</option>
+                        <option value="unixTimeDays">Julian date</option>
+                        <option value="dayOfYear">Day of year</option>
+                        <option value="daysFromTarget">Days from target</option>
+                    </select>
+                </p>
                 <p>
                     <input id="exportName">
                     <input type="button" id="exportMosaic" value="Export">

@@ -9,16 +9,10 @@ var Sensors = {
         shortName: 'L8'
     },
     
-    'LANDSAT_ETM_SLC_OFF': {
-        id       : 'LANDSAT_ETM_SLC_OFF',
-        name     : 'Landsat 7 ETM+ (SLC-off)',
-        shortName: 'L7 SLC-off'
-    },
-    
-    'LANDSAT_ETM': {
-        id       : 'LANDSAT_ETM',
-        name     : 'Landsat 7 ETM+ (SLC-on)',
-        shortName: 'L7 SLC-on'
+    'LANDSAT_7': {
+        id       : 'LANDSAT_7',
+        name     : 'Landsat 7 ETM+',
+        shortName: 'L7'
     },
     
     'LANDSAT_TM': {

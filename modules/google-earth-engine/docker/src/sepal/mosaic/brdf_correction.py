@@ -15,12 +15,12 @@ def apply(image):
 
 
 def _apply(image, kvol, kvol0):
-    blue = _correct_band(image, BLUE, kvol, kvol0, f_iso=0.0774, f_geo=0.0079, f_vol=0.0372)
-    green = _correct_band(image, GREEN, kvol, kvol0, f_iso=0.1306, f_geo=0.0178, f_vol=0.0580)
-    red = _correct_band(image, RED, kvol, kvol0, f_iso=0.1690, f_geo=0.0227, f_vol=0.0574)
-    nir = _correct_band(image, NIR, kvol, kvol0, f_iso=0.3093, f_geo=0.0330, f_vol=0.1535)
-    swir1 = _correct_band(image, SWIR1, kvol, kvol0, f_iso=0.3430, f_geo=0.0453, f_vol=0.1154)
-    swir2 = _correct_band(image, SWIR2, kvol, kvol0, f_iso=0.2658, f_geo=0.0387, f_vol=0.0639)
+    blue = _correct_band(image, 'blue', kvol, kvol0, f_iso=0.0774, f_geo=0.0079, f_vol=0.0372)
+    green = _correct_band(image, 'green', kvol, kvol0, f_iso=0.1306, f_geo=0.0178, f_vol=0.0580)
+    red = _correct_band(image, 'red', kvol, kvol0, f_iso=0.1690, f_geo=0.0227, f_vol=0.0574)
+    nir = _correct_band(image, 'nir', kvol, kvol0, f_iso=0.3093, f_geo=0.0330, f_vol=0.1535)
+    swir1 = _correct_band(image, 'swir1', kvol, kvol0, f_iso=0.3430, f_geo=0.0453, f_vol=0.1154)
+    swir2 = _correct_band(image, 'swir2', kvol, kvol0, f_iso=0.2658, f_geo=0.0387, f_vol=0.0639)
     return replace_bands(image, [blue, green, red, nir, swir1, swir2])
 
 

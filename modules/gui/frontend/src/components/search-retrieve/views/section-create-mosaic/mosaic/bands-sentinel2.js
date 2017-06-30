@@ -3,12 +3,15 @@
  */
 
 var bands = [
-    { data: 'RED, GREEN, BLUE', value: 'Natural (Red, Green, Blue)' }
-    , { data: 'NIR, RED, GREEN', value: 'Infrared (NIR, Red, Green)' }
-    , { data: 'NIR, SWIR1, RED', value: 'False color(NIR, SWIR 1, Red)' }
-    , { data: 'SWIR2, NIR, RED', value: 'False color(SWIR 2, NIR, Red)' }
-    , { data: 'SWIR2, SWIR1, RED', value: 'False color(SWIR 2, SWIR 1, Red)' }
-    , { data: 'SWIR2, NIR, GREEN', value: 'False color(SWIR 2, NIR, Green)' }
+    { data: 'red, green, blue', value: 'Natural (Red, Green, Blue)' }
+    , { data: 'nir, red, green', value: 'Infrared (NIR, Red, Green)' }
+    , { data: 'nir, swir1, red', value: 'False color(NIR, SWIR 1, Red)' }
+    , { data: 'swir2, nir, red', value: 'False color(SWIR 2, NIR, Red)' }
+    , { data: 'swir2, swir1, red', value: 'False color(SWIR 2, SWIR 1, Red)' }
+    , { data: 'swir2, nir, green', value: 'False color(SWIR 2, NIR, Green)' }
+    , { data: 'unixTimeDays', value: 'Date' }
+    , { data: 'dayOfYear', value: 'Day of year' }
+    , { data: 'daysFromTarget', value: 'Days from target date' }
 ]
 
 module.exports = bands

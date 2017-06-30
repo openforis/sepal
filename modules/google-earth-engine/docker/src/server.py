@@ -44,24 +44,6 @@ def scene_areas():
     return Response(json.dumps(areas), mimetype='application/json')
 
 
-@http.route('/best-scenes')
-def best_scenes():
-    data_set = request.values['dataSet']
-    from_date = int(request.values['fromDate'])
-    to_date = int(request.values['toDate'])
-    target_day_of_year = int(request.values['targetDayOfYear'])
-    target_day_of_year_weight = float(request.values['targetDayOfYearWeight'])
-    aoi = Aoi.create(json.loads(request.values['aoi']))
-    scenes = aoi.best_scenes(
-        data_set=data_set,
-        from_date=from_date,
-        to_date=to_date,
-        target_day_of_year=target_day_of_year,
-        target_day_of_year_weight=target_day_of_year_weight
-    )
-    return Response(json.dumps(scenes), mimetype='application/json')
-
-
 def init():
     global drive_cleanup
     drive_cleanup = DriveCleanup(service_account_credentials)

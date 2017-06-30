@@ -1,9 +1,4 @@
-import logging
-
 import ee
-
-import landsat.best_scenes
-import sentinel2.best_scenes
 
 
 class Aoi:
@@ -70,13 +65,6 @@ class Aoi:
         :rtype: ee.Geometry
         """
         return self._geometry
-
-    def best_scenes(self, data_set, from_date, to_date, target_day_of_year, target_day_of_year_weight):
-        logging.info('Determining best scenes of ' + str(self))
-        if data_set == 'SENTINEL2':
-            return sentinel2.best_scenes.find(self, from_date, to_date, target_day_of_year, target_day_of_year_weight)
-        else:
-            return landsat.best_scenes.find(self, from_date, to_date, target_day_of_year, target_day_of_year_weight)
 
 
 class Polygon(Aoi):
