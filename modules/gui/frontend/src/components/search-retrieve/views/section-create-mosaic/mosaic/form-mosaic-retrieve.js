@@ -48,18 +48,25 @@ var init = function (parent) {
 
 var submit = function (section) {
   FormValidator.resetFormErrors(form)
+  var name  = section.find('input[name=name]')
+  var valid = FormValidator.validateForm(form, name)
   
-  var valid = FormValidator.validateForm(form, section.find('[name=name]'))
+  if (valid) {
+    if (!/^[0-9A-Za-z][0-9A-Za-z\s_\-]+$/.test(name.val())) {
+      valid = false
+      FormValidator.addError(name)
+      FormValidator.showError(formNotify, 'Name can contain only letters, numbers, _ or -')
+    }
+  }
   
   if (valid) {
     var bands = getBands(section)
     
-    if (bands.length <= 0) {
+    if (bands.length <= 0)
       FormValidator.showError(formNotify, 'At least one band must be selected')
-    } else {
-      var name = section.find('input[name=name]').val()
-      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, null, state, {bands: bands.join(','), name: name})
-    }
+    else
+      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, null, state, {bands: bands.join(','), name: name.val()})
+    
   }
   
 }
