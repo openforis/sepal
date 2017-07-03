@@ -95,17 +95,11 @@ var submit = function (e) {
   var errorMsg = ''
   var date     = targetDate.asMoment()
   
-  // console.log('======= name : ', state.name)
   if (!state.name || state.name.indexOf(' ') >= 0) {
     valid    = false
     errorMsg = 'Please enter a valid name, no whitespace are allowed'
     
     FormValidator.addError(inputName)
-    // } else if (Model.containsMosaicName(state)) {
-    //   valid    = false
-    //   errorMsg = 'Name already exists. Please enter a unique name'
-    //
-    //   FormValidator.addError(inputName)
   } else if ($.isEmptyString(state.aoiCode) && $.isEmptyString(state.polygon)) {
     valid    = false
     errorMsg = 'Please select a valid COUNTRY or DRAW A POLYGON'
