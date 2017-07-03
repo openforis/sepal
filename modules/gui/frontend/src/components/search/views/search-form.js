@@ -26,7 +26,7 @@ var init = function (formSelector) {
   formNotify = form.find('.form-notify')
   
   inputName = form.find('[name=name]')
-  inputName.keyup(function (e) {
+  inputName.change(function (e) {
     state.name = inputName.val()
     EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {field: 'name'})
   })
