@@ -1,10 +1,10 @@
 /**
  * @author Mino Togna
  */
-var EventBus = require( '../event/event-bus' )
-var Events   = require( '../event/events' )
+var EventBus = require('../event/event-bus')
+var Events   = require('../event/events')
 
-var Mosaic          = require( './ee-mosaic' )
+var Mosaic          = require('./ee-mosaic')
 var LandsatMosaic   = null
 var Sentinel2Mosaic = null
 var ActiveMosaic    = null
@@ -14,28 +14,30 @@ var LAYER_INDEX = 100
 var visible = false
 
 var reset = function () {
-    hideActiveMosaic()
-    ActiveMosaic = null
+  hideActiveMosaic()
+  ActiveMosaic = null
 }
 
 var hideActiveMosaic = function () {
-    if ( ActiveMosaic ) {
-        EventBus.dispatch( Events.MAP.REMOVE_EE_MOSAIC, null, LAYER_INDEX )
-        visible = false
-    }
+  if (ActiveMosaic) {
+    EventBus.dispatch(Events.MAP.REMOVE_EE_MOSAIC, null, LAYER_INDEX)
+    visible = false
+  }
 }
 
 var showActiveMosaic = function () {
-    if ( ActiveMosaic ) {
-        EventBus.dispatch( Events.MAP.ADD_EE_MOSAIC, null, LAYER_INDEX, ActiveMosaic.layer )
-        visible = true
-    }
+  if (ActiveMosaic) {
+    EventBus.dispatch(Events.MAP.ADD_EE_MOSAIC, null, LAYER_INDEX, ActiveMosaic.layer)
+    visible = true
+  }
 }
 
-var addMosaic = function ( mapId, token ) {
-    reset()
-    ActiveMosaic = Mosaic.newInstance( mapId, token )
+var addMosaic = function (mapId, token) {
+  reset()
+  setTimeout(function () {
+    ActiveMosaic = Mosaic.newInstance(mapId, token)
     showActiveMosaic()
+  }, 500)
 }
 
 // var addLandsatMosaic = function ( mapId, token ) {
@@ -54,12 +56,12 @@ var addMosaic = function ( mapId, token ) {
 //     showActiveMosaic()
 // }
 
-var toggleMosaicVisibility = function ( e ) {
-    if ( visible ) {
-        hideActiveMosaic()
-    } else {
-        showActiveMosaic()
-    }
+var toggleMosaicVisibility = function (e) {
+  if (visible) {
+    hideActiveMosaic()
+  } else {
+    showActiveMosaic()
+  }
 }
 // var toggleLandsatMosaic = function ( e ) {
 //     if ( ActiveMosaic === LandsatMosaic ) {
@@ -78,13 +80,13 @@ var toggleMosaicVisibility = function ( e ) {
 // }
 
 module.exports = {
-    reset                   : reset
-    , addMosaic             : addMosaic
-    , toggleMosaicVisibility: toggleMosaicVisibility
-    // , addLandsatMosaic     : addLandsatMosaic
-    // , addSentinel2Mosaic   : addSentinel2Mosaic
-    // , toggleLandsatMosaic  : toggleLandsatMosaic
-    // , toggleSentinel2Mosaic: toggleSentinel2Mosaic
-    , hideMosaic            : hideActiveMosaic
-    , showMosaic            : showActiveMosaic
+  reset                   : reset
+  , addMosaic             : addMosaic
+  , toggleMosaicVisibility: toggleMosaicVisibility
+  // , addLandsatMosaic     : addLandsatMosaic
+  // , addSentinel2Mosaic   : addSentinel2Mosaic
+  // , toggleLandsatMosaic  : toggleLandsatMosaic
+  // , toggleSentinel2Mosaic: toggleSentinel2Mosaic
+  , hideMosaic            : hideActiveMosaic
+  , showMosaic            : showActiveMosaic
 }
