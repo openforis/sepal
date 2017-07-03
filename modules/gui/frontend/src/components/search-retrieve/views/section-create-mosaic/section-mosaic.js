@@ -47,8 +47,18 @@ var initEventHandlers = function () {
   })
   
   btnToggleVisibility.click(function (e) {
-    btnToggleVisibility.toggleClass('active')
+    // btnToggleVisibility.toggleClass('active')
+    state.mosaicPreview = !btnToggleVisibility.hasClass('active')
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
     EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.TOGGLE_MOSAIC_VISIBILITY)
+    
+    // btnToggleLayerVisibility.toggleClass('active')
+    // EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+    // if (state.scenesPreview) {
+    //   EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.SHOW_SCENE_AREAS)
+    // } else {
+    //   EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.HIDE_SCENE_AREAS)
+    // }
   })
   
 }
@@ -58,7 +68,7 @@ var setActiveState = function (e, activeState, params) {
   // if (params && params.isNew)
   //   btnToggleVisibility.removeClass('active')
   
-  if (state && state.type == SModel.TYPES.MOSAIC && state.mosaic && params && (params.isNew || params.loadMosaic))
+  if (state && state.mosaicPreview && state.mosaic)
     btnToggleVisibility.addClass('active')
   else
     btnToggleVisibility.removeClass('active')

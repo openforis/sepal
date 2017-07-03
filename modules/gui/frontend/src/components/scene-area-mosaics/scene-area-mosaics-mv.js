@@ -1,10 +1,11 @@
 /**
  * @author Mino Togna
  */
-var EventBus = require('../event/event-bus')
-var Events   = require('../event/events')
-var View     = require('./scene-area-mosaics-v')
-var SModel   = require('../search/model/search-model')
+var EventBus     = require('../event/event-bus')
+var Events       = require('../event/events')
+var View         = require('./scene-area-mosaics-v')
+var SModel       = require('../search/model/search-model')
+var currentState = null
 
 var reset = function () {
   View.reset()
@@ -27,10 +28,20 @@ var showMosaic = function () {
 }
 
 var stateChange = function (e, state, params) {
-  if (state && state.type == SModel.TYPES.MOSAIC && state.mosaic && params && (params.isNew ||params.loadMosaic))
-    addMosaic(null, state.mosaic.mapId, state.mosaic.token)
-  else
+  if (!state)
     View.reset()
+  else if (currentState && currentState.id !== state.id) {
+    if (state.mosaic)
+      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, null, state.mosaic.mapId, state.mosaic.token)
+    else
+      View.reset()
+  }
+  
+  currentState = state
+  // if (state && state.type == SModel.TYPES.MOSAIC && state.mosaic && params && (params.isNew ||params.loadMosaic))
+  //   addMosaic(null, state.mosaic.mapId, state.mosaic.token)
+  // else
+  //   View.reset()
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, stateChange)

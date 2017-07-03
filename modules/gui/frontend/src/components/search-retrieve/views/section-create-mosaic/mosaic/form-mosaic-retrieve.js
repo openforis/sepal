@@ -48,6 +48,7 @@ var init = function (parent) {
 
 var submit = function (section) {
   FormValidator.resetFormErrors(form)
+  
   var name  = section.find('input[name=name]')
   var valid = FormValidator.validateForm(form, name)
   

@@ -125,7 +125,8 @@ module.exports = {
         proxy      : {
             // '/sandbox/geo-web-viz/**': { target: 'http://localhost:5678', secure: false, changeOrigin: true, pathRewrite: { '^/sandbox/geo-web-viz': '' } },
             // '*'                      : { target: 'http://localhost:8001', secure: false, changeOrigin: true }
-            '*'                      : { target: 'http://localhost:9999' }
+            // '*'                      : { target: 'http://localhost:9999' }
+            '*'                      : { target: 'https://test.sepal.io', secure: true, changeOrigin: true }
             // '*': { target: 'https://vagrant', secure: false } // Vagrant box
         }
     }

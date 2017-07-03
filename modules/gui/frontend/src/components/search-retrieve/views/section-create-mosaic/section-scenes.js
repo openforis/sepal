@@ -46,9 +46,10 @@ var initEventHandlers = function () {
   })
   
   btnToggleLayerVisibility.click(function () {
-    btnToggleLayerVisibility.toggleClass('active')
-    
-    if (btnToggleLayerVisibility.hasClass('active')) {
+    state.scenesPreview = !btnToggleLayerVisibility.hasClass('active')
+    // btnToggleLayerVisibility.toggleClass('active')
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+    if (state.scenesPreview) {
       EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.SHOW_SCENE_AREAS)
     } else {
       EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.HIDE_SCENE_AREAS)
@@ -57,10 +58,13 @@ var initEventHandlers = function () {
   
 }
 
-var setActiveState = function (e, activeState , params) {
-  if (params && params.isNew)
-    btnToggleLayerVisibility.addClass('active')
+var setActiveState = function (e, activeState, params) {
   state = activeState
+  
+  if (state && state.scenesPreview)
+    btnToggleLayerVisibility.addClass('active')
+  else
+    btnToggleLayerVisibility.removeClass('active')
 }
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState)
 

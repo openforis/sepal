@@ -126,8 +126,6 @@ var init = function (parent) {
     } else if (state.maxScenes && state.minScenes > state.maxScenes) {
       formNotify.html('Min number of scenes cannot be greater than Max number of scenes').velocitySlideDown({delay: 20, duration: 400})
     } else {
-      state.mosaicPreviewBand = null
-      
       EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.BEST_SCENES, null, state)
     }
   })

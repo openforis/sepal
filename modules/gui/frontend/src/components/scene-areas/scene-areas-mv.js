@@ -19,7 +19,7 @@ var stateChanged = function (e, s, params) {
     }
     else if (params && (params.resetSceneAreas || params.isNew)) {
       if (state.sceneAreas) {
-        visible      = !params.hideSceneAreas
+        visible      = state.scenesPreview && !params.hideSceneAreas
         var polygons = areasToMapPolygons(state.sceneAreas, state.sensorGroup)
         ActiveView.add(polygons, visible)
         
