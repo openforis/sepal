@@ -8,6 +8,9 @@ class ImageOperation(object):
         self.image = image
         self.input_band_names = image.bandNames()
 
+    def select(self, name):
+        return self.image.select(name)
+
     def set(self, name, toAdd, args={}):
         toAdd = self.toImage(toAdd, args)
         self.image = self.image.addBands(toAdd.rename([name]), None, True)
@@ -40,6 +43,10 @@ class ImageOperation(object):
         if result.find('{') > -1:
             return format(result, args)
         return result
+
+
+    def updateMask(self, condition):
+        self.image = self.image.updateMask(self.toImage(condition))
 
     def merge(self, o1, o2):
         return dict(list(o1.iteritems()) + list(o2.iteritems()))

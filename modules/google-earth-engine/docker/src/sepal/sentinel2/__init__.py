@@ -3,6 +3,7 @@ from abc import abstractmethod
 import ee
 from datetime import datetime
 
+from first_pass import FirstPass
 from .. import MosaicSpec
 from ..mosaic import CollectionDef
 
@@ -19,15 +20,10 @@ class Sentinel2MosaicSpec(MosaicSpec):
 
     def _collection_defs(self):
         return [CollectionDef(
-            collection=ee.ImageCollection('COPERNICUS/S2')
-                .filter(self._create_image_filter()),
+            collection=ee.ImageCollection('COPERNICUS/S2').filter(self._create_image_filter()),
             bands=_all_bands,
-            normalizer=self._normalize
-
+            first_pass=_first_pass
         )]
-
-    def _normalize(self, image):
-        return image.divide(10000)
 
     @abstractmethod
     def _create_image_filter(self):
@@ -48,11 +44,9 @@ class Sentinel2AutomaticMosaicSpec(Sentinel2MosaicSpec):
 
         :return: An ee.Filter.
         """
-        bounds_filter = ee.Filter.geometry(self.aoi.geometry())
-        date_filter = ee.Filter.date(self.from_date, self.to_date)
         image_filter = ee.Filter.And(
-            bounds_filter,
-            date_filter
+            ee.Filter.geometry(self.aoi.geometry()),
+            ee.Filter.date(self.from_date, self.to_date)
         )
         return image_filter
 
@@ -82,13 +76,16 @@ class Sentinel2ManualMosaicSpec(Sentinel2MosaicSpec):
 
 
 _all_bands = {
+    'aerosol': 'B1',
     'blue': 'B2',
     'green': 'B3',
     'red': 'B4',
     'nir': 'B8A',
     'swir1': 'B11',
     'swir2': 'B12',
-    'cirrus': 'B10'}
+    'cirrus': 'B10',
+    'QA60': 'QA60'
+}
 
 _scale_by_band = {
     'blue': 10,
@@ -101,3 +98,7 @@ _scale_by_band = {
     'daysFromTarget': 10,
     'unixTimeDays': 10
 }
+
+
+def _first_pass(image, mosaicDef, collectionDef):
+    return FirstPass(image, collectionDef).apply()

@@ -2,6 +2,7 @@ import ee
 from datetime import datetime
 from itertools import groupby
 
+from first_pass import FirstPass
 from .. import MosaicSpec
 from ..mosaic import CollectionDef
 
@@ -25,7 +26,8 @@ class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
     def _collection_def(self, name, image_filter):
         return CollectionDef(
             collection=ee.ImageCollection(name).filter(image_filter),
-            bands=_bands_by_collection_name[name]
+            bands=_bands_by_collection_name[name],
+            first_pass=_first_pass
         )
 
     def _create_image_filter(self):
@@ -33,13 +35,10 @@ class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
 
         :return: An ee.Filter.
         """
-        bounds_filter = ee.Filter.geometry(self.aoi.geometry())
-        date_filter = ee.Filter.date(self.from_date, self.to_date)
-        no_LO8_filter = ee.Filter.stringStartsWith('LO8').Not()
         image_filter = ee.Filter.And(
-            bounds_filter,
-            date_filter,
-            no_LO8_filter
+            ee.Filter.geometry(self.aoi.geometry()),
+            ee.Filter.date(self.from_date, self.to_date),
+            ee.Filter.stringStartsWith('LO8').Not()
         )
         return image_filter
 
@@ -107,7 +106,8 @@ class LandsatManualMosaicSpec(LandsatMosaicSpec):
             collection=ee.ImageCollection(collection_name).filter(
                 ee.Filter.inList('LANDSAT_SCENE_ID', ee.List(list(image_ids)))
             ),
-            bands=_bands_by_collection_name[collection_name]
+            bands=_bands_by_collection_name[collection_name],
+            first_pass=_first_pass
         )
 
     def __str__(self):
@@ -117,22 +117,29 @@ class LandsatManualMosaicSpec(LandsatMosaicSpec):
 _collection_names_by_sensor = {
     'LANDSAT_8': ['LANDSAT/LC08/C01/T1_TOA'],
     'LANDSAT_7': ['LANDSAT/LE07/C01/T1_TOA'],
-    'LANDSAT_TM': ['LANDSAT/LT4_L1T_TOA', 'LANDSAT/LT5_L1T_TOA'],
+    'LANDSAT_TM': ['LANDSAT/LT4_L1T_TOA_FMASK', 'LANDSAT/LT5_L1T_TOA_FMASK'],
 }
 _bands_by_collection_name = {
     'LANDSAT/LC08/C01/T1_TOA': {
         'blue': 'B2', 'green': 'B3', 'red': 'B4', 'nir': 'B5', 'swir1': 'B6', 'swir2': 'B7', 'cirrus': 'B9',
-        'thermal': 'B10'},
+        'thermal': 'B10', 'BQA': 'BQA'},
     'LANDSAT/LE07/C01/T1_TOA': {
-        'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6_VCID_1'},
-    'LANDSAT/LT5_L1T_TOA': {
-        'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6'},
-    'LANDSAT/LT4_L1T_TOA': {
-        'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6'}
+        'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6_VCID_1',
+        'BQA': 'BQA'},
+    'LANDSAT/LT5_L1T_TOA_FMASK': {
+        'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6',
+        'fmask': 'fmask'},
+    'LANDSAT/LT4_L1T_TOA_FMASK': {
+        'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6',
+        'fmask': 'fmask'}
 }
 _collection_name_by_scene_id_prefix = {
     'LC8': 'LANDSAT/LC08/C01/T1_TOA',
     'LE7': 'LANDSAT/LE07/C01/T1_TOA',
-    'LT5': 'LANDSAT/LT5_L1T_TOA',
-    'LT4': 'LANDSAT/LT4_L1T_TOA',
+    'LT5': 'LANDSAT/LT5_L1T_TOA_FMASK',
+    'LT4': 'LANDSAT/LT4_L1T_TOA_FMASK',
 }
+
+
+def _first_pass(image, mosaicDef, collectionDef):
+    return FirstPass(image, mosaicDef, collectionDef).apply()

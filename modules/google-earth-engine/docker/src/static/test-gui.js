@@ -217,7 +217,7 @@
         var targetDayOfYear       = $( '#target-day-of-year' ).val()
         var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
         var shadowTolerance       = $( '#shadow-tolerance' ).val()
-        var medianMosaic          = $( 'input[name="median-mosaic"]:checked' ).val()
+        var medianComposite          = $( 'input[name="median-composite"]:checked' ).val()
         var brdfCorrect           = $( 'input[name="brdf-correct"]:checked' ).val()
         
         
@@ -233,7 +233,7 @@
             shadowTolerance      : shadowTolerance,
             dataSet              : dataSet,
             bands                : bands,
-            medianMosaic         : medianMosaic,
+            medianComposite         : medianComposite,
             brdfCorrect          : brdfCorrect,
             classesToMask        : classesToMask
             

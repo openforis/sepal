@@ -3,6 +3,7 @@ from abc import abstractmethod
 import ee
 from datetime import datetime
 
+from first_pass import FirstPass
 from normalizer import Normalizer
 from .. import MosaicSpec
 from ..mosaic import CollectionDef
@@ -20,7 +21,7 @@ class AsterMosaicSpec(MosaicSpec):
         return [CollectionDef(
             collection=ee.ImageCollection('ASTER/AST_L1T_003').filter(self._create_image_filter()),
             bands=_all_bands,
-            normalizer=self.normalize
+            first_pass=_first_pass
         )]
 
     @abstractmethod
@@ -42,11 +43,9 @@ class AsterAutomaticMosaicSpec(AsterMosaicSpec):
 
         :return: An ee.Filter.
         """
-        bounds_filter = ee.Filter.geometry(self.aoi.geometry())
-        date_filter = ee.Filter.date(self.from_date, self.to_date)
         image_filter = ee.Filter.And(
-            bounds_filter,
-            date_filter,
+            ee.Filter.geometry(self.aoi.geometry()),
+            ee.Filter.date(self.from_date, self.to_date),
             ee.Filter.listContains('ORIGINAL_BANDS_PRESENT', 'B01'),
             ee.Filter.listContains('ORIGINAL_BANDS_PRESENT', 'B02'),
             ee.Filter.listContains('ORIGINAL_BANDS_PRESENT', 'B3N'),
@@ -83,3 +82,7 @@ class AsterManualMosaicSpec(AsterMosaicSpec):
 
 
 _all_bands = {'green': 'B01', 'red': 'B02', 'nir': 'B3N', 'swir1': 'B04', 'swir2': 'B05', 'thermal': 'B10'}
+
+
+def _first_pass(image, mosaicDef, collectionDef):
+    return FirstPass(image, mosaicDef, collectionDef).apply()

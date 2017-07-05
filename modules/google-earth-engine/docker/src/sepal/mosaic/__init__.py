@@ -1,10 +1,7 @@
 import ee
 
-import brdf_correction
-import quality_mosaic
-from analyze import Analyze
-from mask import Mask
-from normalize import Normalize
+from first_pass import FirstPass
+from second_pass import SecondPass
 
 
 class Mosaic(object):
@@ -13,34 +10,29 @@ class Mosaic(object):
         self.mosaic_def = mosaic_def
 
     def create(self, collection_defs):
-        collection = self._map_first_pass(collection_defs)
+        # collection_def = collection_defs[0]
+        # image = ee.Image(collection_def.collection.first())
+        # mosaic = FirstPass(image).apply(
+        #     mosaic_def=self.mosaic_def,
+        #     collection_def=collection_def)
 
+        collection = self._map_first_pass(collection_defs)
         collection = self._map_second_pass(collection)
         if self.mosaic_def.target_day_weight:
             collection = self._map_third_pass(collection)
-
-        if self.mosaic_def.median_mosaic:
-            mosaic = collection.median()
-        else:
-            mosaic = quality_mosaic.create(collection)
-
+        mosaic = self._to_mosaic(collection)
         return mosaic \
             .select(self.mosaic_def.bands) \
             .clip(self.mosaic_def.aoi.geometry())
 
     def _map_first_pass(self, collection_defs):
         def first_pass(collection_def):
-            def normalize_and_score(image):
-                image = Normalize(image).apply(
-                    collection_def.bands,
-                    normalizer=collection_def.normalizer,
-                    targetDay=self.mosaic_def.target_day)
-                if self.mosaic_def.brdf_correct:
-                    image = brdf_correction.apply(image)
-                image = Analyze(image, collection_def.bands).execute()
-                return image
+            def apply(image):
+                return FirstPass(image).apply(
+                    mosaic_def=self.mosaic_def,
+                    collection_def=collection_def)
 
-            return collection_def.collection.map(normalize_and_score)
+            return collection_def.collection.map(apply)
 
         def merge(c1, c2):
             return ee.ImageCollection(c1.merge(c2))
@@ -49,21 +41,16 @@ class Mosaic(object):
         return reduce(merge, collections)
 
     def _map_second_pass(self, collection):
-        percentiles = collection.select(['cloudScore', 'shadowFreeCloudScore', 'clearSkyWater']) \
-            .reduce(ee.Reducer.percentile([17, 50, 100]))
+        percentiles = collection.select(['waterCloudScore', 'landCloudScore', 'shadowFreeCloudScore']) \
+            .reduce(ee.Reducer.percentile([50, 100]))
 
         def second_pass(image):
-            return Mask(image) \
+            return SecondPass(image) \
                 .apply(
-                max_cloud_score=percentiles.select('cloudScore_p100'),
-                median_shadow_free_cloud_score=percentiles.select('shadowFreeCloudScore_p50'),
-                mostly_water=percentiles.select('clearSkyWater_p17'),
-                shadow_tolerance=self.mosaic_def.shadow_tolerance,
-                mask_snow=True,
-                mask_water=False) \
-                .select(_scale_by_band.keys()) \
-                .multiply(_scale_by_band.values()) \
-                .uint16()
+                percentiles.select('waterCloudScore_p100'),
+                percentiles.select('landCloudScore_p100'),
+                percentiles.select('shadowFreeCloudScore_p50'),
+                self.mosaic_def)
 
         return collection.map(second_pass)
 
@@ -78,13 +65,29 @@ class Mosaic(object):
 
         return collection.map(third_pass)
 
+    def _to_mosaic(self, collection):
+        bands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
+        median = collection.median()
+        if self.mosaic_def.median_composite:
+            mosaic = median
+        else:
+            def distance_to_median(image):
+                distanceByBand = image.expression(
+                    '1 - abs((i - m) / (i + m))', {
+                        'i': image.select(bands),
+                        'm': median.select(bands)})
+                return image.addBands(
+                    distanceByBand.reduce(ee.Reducer.sum()).rename(['distanceToMedian'])
+                )
+
+            collection = collection.map(distance_to_median)
+            mosaic = collection.qualityMosaic('distanceToMedian')
+
+        return mosaic
+
 
 class CollectionDef(object):
-    """Collection definition, containing the EE collection, a dictionary with band name by normalized name,
-    and a method reference to a function that normalize an image.
-    """
-
-    def __init__(self, collection, bands, normalizer=None):
+    def __init__(self, collection, bands, first_pass):
         """Creates a CollectionDef.
         :param collection: The EE image collection.
         :type collection: ee.ImageCollection
@@ -97,10 +100,4 @@ class CollectionDef(object):
         """
         self.collection = collection
         self.bands = bands
-        self.normalizer = normalizer
-
-
-_scale_by_band = {
-    'blue': 10000, 'green': 10000, 'red': 10000, 'nir': 10000, 'swir1': 10000, 'swir2': 10000,
-    'daysFromTarget': 1, 'dayOfYear': 1, 'unixTimeDays': 1
-}
+        self.first_pass = first_pass

@@ -15,8 +15,8 @@ class MosaicSpec(ImageSpec):
         self.target_day_weight = float(spec.get('targetDayOfYearWeight', 0))
         self.shadow_tolerance = float(spec.get('shadowTolerance', 1))
         self.bands = spec['bands']
-        self.median_mosaic = spec.get('medianMosaic', False)
-        self.classes_to_mask = spec.get('classesToMask', ['cloud', 'shadow'])
+        self.median_composite = spec.get('median_composite', False)
+        self.mask_snow = spec.get('maskSnow', True)
         self.brdf_correct = bool(spec.get('brdfCorrect', False))
         self.from_date = spec.get('fromDate', None)
         self.to_date = spec.get('toDate', None)
@@ -29,7 +29,7 @@ class MosaicSpec(ImageSpec):
 
     def _ee_image(self):
         logging.info('Creating mosaic of ' + str(self))
-        return self._create_mosaic(self._collection_defs())
+        return Mosaic(self).create(self._collection_defs())
 
     @abstractmethod
     def _collection_defs(self):
@@ -39,16 +39,6 @@ class MosaicSpec(ImageSpec):
         :rtype: list
         """
         raise AssertionError('Method in subclass expected to have been invoked')
-
-    def _create_mosaic(self, collection_defs):
-        """Creates a mosaic, clipped to the area of interest, containing the specified bands.
-
-        :param collection_defs: The image collection definitions (mosaic.CollectionDef) to create a mosaic for.
-        :type collection_defs: list
-
-        :return: An ee.Image.
-        """
-        return Mosaic(self).create(collection_defs)
 
 
 _viz_by_bands = {
