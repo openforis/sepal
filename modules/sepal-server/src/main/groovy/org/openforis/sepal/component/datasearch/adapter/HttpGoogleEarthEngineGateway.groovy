@@ -38,10 +38,15 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
                 aoi                  : query.aoi.params,
                 targetDayOfYear      : query.targetDayOfYear,
                 targetDayOfYearWeight: query.targetDayOfYearWeight,
+                shadowTolerance      : query.shadowTolerance,
+                medianComposite      : query.medianComposite,
+                brdfCorrect          : query.brdfCorrect,
+                maskWater            : query.maskWater,
+                maskSnow             : query.maskSnow,
                 bands                : query.bands,
                 sensors              : query.sensors,
                 fromDate             : query.fromDate,
-                toDate               : query.toDate
+                toDate               : query.toDate,
         ]
         def response = endpoint.post(
                 path: 'preview',
@@ -63,6 +68,11 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
                 aoi                  : query.aoi.params,
                 targetDayOfYear      : query.targetDayOfYear,
                 targetDayOfYearWeight: query.targetDayOfYearWeight,
+                shadowTolerance      : query.shadowTolerance,
+                medianComposite      : query.medianComposite,
+                brdfCorrect          : query.brdfCorrect,
+                maskWater            : query.maskWater,
+                maskSnow             : query.maskSnow,
                 bands                : query.bands,
                 sceneIds             : query.sceneIds
         ]

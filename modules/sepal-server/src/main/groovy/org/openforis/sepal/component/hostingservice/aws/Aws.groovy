@@ -14,8 +14,6 @@ class Aws implements HostingServiceAdapter {
     private final double storageCostPerGbMonth = 0.33d + 2 * 0.023d // EFS + 2 * S3 backup (daily, weekly)
     final List<InstanceType> instanceTypes = [
             new InstanceType(id: 'T2Small', name: 't2.small', hourlyCost: 0.025, cpuCount: 1, ramGiB: 2, idleCount: 1),
-            new InstanceType(id: 'T2Medium', name: 't2.medium', hourlyCost: 0.05, cpuCount: 2, ramGiB: 4),
-            new InstanceType(id: 'T2Large', name: 't2.large', hourlyCost: 0.101, cpuCount: 3, ramGiB: 8),
             new InstanceType(id: 'M3Medium', name: 'm3.medium', hourlyCost: 0.073, cpuCount: 1, ramGiB: 3.75),
             new InstanceType(id: 'M4Large', name: 'm4.large', hourlyCost: 0.119, cpuCount: 2, ramGiB: 8),
             new InstanceType(id: 'M4Xlarge', name: 'm4.xlarge', hourlyCost: 0.238, cpuCount: 4, ramGiB: 16),

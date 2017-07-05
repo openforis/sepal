@@ -3,11 +3,13 @@ package integration.datasearch
 import org.openforis.sepal.component.datasearch.adapter.CsvBackedUsgsGateway
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.util.CsvReader
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import static org.openforis.sepal.component.datasearch.adapter.CsvBackedUsgsGateway.Sensor.LANDSAT_8
 import static org.openforis.sepal.util.DateTime.toDateString
 
+@Ignore
 class CsvBackedUsgsGatewayTest extends Specification {
     def workingDir = File.createTempDir()
     def sceneId = 'LC80390222013076EDC00'

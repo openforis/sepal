@@ -11,5 +11,10 @@ class AutomaticSceneSelectingMapQuery {
     Aoi aoi
     int targetDayOfYear
     double targetDayOfYearWeight
+    double shadowTolerance
+    boolean medianComposite
+    boolean brdfCorrect
+    boolean maskWater
+    boolean maskSnow
     List<String> bands
 }
