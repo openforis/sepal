@@ -49,7 +49,7 @@ class FirstPass(ImageOperation):
 
         multiplierByBand = {
             'blue': 10000, 'green': 10000, 'red': 10000, 'nir': 10000, 'swir1': 10000, 'swir2': 10000,
-            'water': 1, 'waterCloudScore': 10000, 'landCloudScore': 10000,
+            'water': 1, 'waterBlue': 10000, 'waterCloudScore': 10000, 'landCloudScore': 10000,
             'shadowScore': 10000, 'shadowFree': 1, 'shadowFreeCloudScore': 10000,
             'daysFromTarget': 1, 'dayOfYear': 1, 'unixTimeDays': 1
         }

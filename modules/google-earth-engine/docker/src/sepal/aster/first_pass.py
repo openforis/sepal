@@ -22,7 +22,8 @@ class FirstPass(ImageOperation):
         normalizedBands = bands.keys()
         asterBands = bands.values()
         coefficients = ee.Image.cat(
-            [ee.Image(ee.Number(self.image.get('GAIN_COEFFICIENT_' + asterBand))).float().rename([asterBand]) for asterBand
+            [ee.Image(ee.Number(self.image.get('GAIN_COEFFICIENT_' + asterBand))).float().rename([asterBand]) for
+             asterBand
              in
              asterBands]).select(asterBands, normalizedBands)
 
@@ -58,40 +59,37 @@ class FirstPass(ImageOperation):
         self.image = self.image.addBands(reflectance, None, True)
 
     def cloudScore(self):
-        self.set('BT', 'i.thermal - 273.15')
-
         self.set('ndsi',
                  '(i.green - i.swir1) / (i.green + i.swir1)')
         self.set('ndvi',
                  '(i.nir - i.red) / (i.nir + i.red)')
-        self.set('ndmi',
-                 '(i.nir - i.swir1) / (i.nir + i.swir1)')
+        self.set('ndwi',
+                 '(i.green - i.nir) / (i.green + i.nir)')
 
-        self.set('basicTest',
-                 'i.swir2 > 0.03 and i.ndsi < 0.8 and i.ndvi < 0.8')
+        self.set('water',
+                 'i.ndwi > 0.15')
+
+        self.set('waterBlue',
+                 self.image.select('green').updateMask(self.image.select('water')))
 
         self.set('meanVis',
                  '(i.green + i.red) / 2')
         self.set('whiteness',
                  '(abs(i.green - i.meanVis) + abs(i.red - i.meanVis)) / i.meanVis')
-
         self.set('variabilityProbability',
                  '1 - max(max(abs(i.ndvi), abs(i.ndsi)), i.whiteness)')
 
         self.set('noiseTest',
-                 'i.variabilityProbability < 0 or i.meanVis > 0.4')
+                 'i.variabilityProbability < -0.5')
         self.updateMask('!i.noiseTest')
-
-        self.set('ndwi',
-                 '(i.green - i.nir) / (i.green + i.nir)')
-        self.set('water',
-                 'i.ndwi > 0')
 
         self.set('shadowScore',
                  'sqrt((pow(i.green, 2) + pow(i.red, 2) + pow(i.nir, 2)) / 3)')
 
         self.set('shadowProbability',
                  '1 - min(i.shadowScore, 0.14) / 0.14')
+
+        self.set('BT', 'i.thermal - 273.15')
 
         self.set('brightnessProbability',
                  'min(i.swir1, 0.11) / 0.11')
@@ -107,7 +105,7 @@ class FirstPass(ImageOperation):
                    'water',
                    'max(1 - i.waterCloudProbability, 0)',
                    0)
-        self.updateMask('!i.water or i.waterCloudScore > 0.5')
+
         self.setIf('waterCloudScore',
                    'water',
                    'waterCloudScore',
@@ -130,6 +128,5 @@ class FirstPass(ImageOperation):
                    0,
                    'landCloudScore')
 
-        # Eq. 20 [2012]
         self.set('snow',
                  '!i.water and i.ndsi > 0.15 and i.nir > 0.11 and i.green > 0.1 and i.BT < 9.85')
