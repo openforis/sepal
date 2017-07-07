@@ -202,7 +202,7 @@ function addSubformSEPAL(data) {
     $('.remove-subform', subform).click(removeSubform);
     //
     $.ajax({
-        url: '{{config.SEPAL_HOST}}' + '/processing-recipes'
+        url: 'https://{{config.SEPAL_HOST}}/processing-recipes'
     }).fail(function(jqXHR, textStatus, errorThrown) {
         console.error(jqXHR, textStatus, errorThrown);
     }).done(function(data, textStatus, jqXHR) {

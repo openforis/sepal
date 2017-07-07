@@ -246,7 +246,7 @@
                 overlayMapTypes[index] = imageMapType;
             } else if (overlay.type == 'sepal') {
                 $.ajax({
-                    url: '{{config.SEPAL_HOST}}' + '/processing-recipes/' + overlay.sepalMosaicName,
+                    url: 'https://{{config.SEPAL_HOST}}/processing-recipes/' + overlay.sepalMosaicName,
                     async: false
                 }).fail(function(jqXHR, textStatus, errorThrown) {
                     console.error(jqXHR, textStatus, errorThrown);
@@ -270,7 +270,7 @@
                     }
                     //
                     $.ajax({
-                        url:  '{{config.SEPAL_HOST}}' + '/api/data/mosaic/preview',
+                        url: 'https://{{config.SEPAL_HOST}}/api/data/mosaic/preview',
                         type: 'post',
                         data: $.param(req)
                     }).fail(function(jqXHR, textStatus, errorThrown) {
