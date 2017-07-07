@@ -253,6 +253,7 @@
                 var layerOptions = {
                     getTileUrl: function (tile, zoom) {
                         var url = 'https://tiles.planet.com/basemaps/v1/planet-tiles/{mosaic_name}/gmap/{z}/{x}/{y}.png?api_key=' + api_key;
+                        //url = 'https://tiles.planet.com/v0/mosaics/global_quarterly_2016q3_mosaic/{z}/{x}/{y}.png?api_key=' + api_key;
                         return url.replace('{mosaic_name}', mosaic_name).replace('{z}', zoom).replace('{x}', tile.x).replace('{y}', tile.y);
                     },
                     name: layerName,
@@ -260,6 +261,56 @@
                 }
                 var imageMapType = new google.maps.ImageMapType(layerOptions);
                 overlayMapTypes[index] = imageMapType;
+            } else if (overlay.type == 'sepal') {
+                $.ajax({
+                    url: '{{config.SEPAL_HOST}}' + '/processing-recipes/' + overlay.sepalMosaicName,
+                    async: false
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error(jqXHR, textStatus, errorThrown);
+                }).done(function(data, textStatus, jqXHR) {
+                    var dayOfYear = $.dayOfYear(data['targetDate']);
+                    var sceneIds = [];
+                    for (var key in data['sceneAreas']) {
+                        sceneIds = sceneIds.concat(data['sceneAreas'][key]['selection']);
+                    };
+                    var req = {
+                        targetDayOfYearWeight: data['sortWeight'],
+                        bands: overlay.sepalBands, //data['mosaicPreviewBand'],
+                        dataSet: data['sensorGroup'],
+                        sceneId: sceneIds.join(),
+                        targetDayOfYear: dayOfYear
+                    };
+                    if (data.hasOwnProperty('aoiCode') && data['aoiCode'] != null) {
+                        req['countryIso'] = data['aoiCode'];
+                    } else if (data.hasOwnProperty('polygon')) {
+                        req['polygon'] = data['polygon'];
+                    }
+                    //
+                    $.ajax({
+                        url:  '{{config.SEPAL_HOST}}' + '/api/data/mosaic/preview',
+                        type: 'post',
+                        data: $.param(req)
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        console.error(jqXHR, textStatus, errorThrown);
+                    }).done(function(data, textStatus, jqXHR) {
+                        if (data.hasOwnProperty('mapId')) {
+                            var mapId = data.mapId;
+                            var token = data.token;
+                            var layerOptions = {
+                                getTileUrl: function(tile, zoom) {
+                                  var baseUrl = 'https://earthengine.googleapis.com/map';
+                                  var url = [baseUrl, mapId, zoom, tile.x, tile.y].join('/');
+                                  url += '?token=' + token;
+                                  return url;
+                                },
+                                name: layerName,
+                                tileSize: new google.maps.Size(256, 256)
+                            };
+                            var imageMapType = new google.maps.ImageMapType(layerOptions);
+                            overlayMapTypes[index] = imageMapType;
+                        }
+                    });
+                });
             }
         }
 
@@ -470,10 +521,10 @@
                     gmap.fitBounds(gBounds);
                     lmap.fitBounds(lBounds);
                 }
-                //overlays
 
+                //overlays
                 data.overlays.forEach(function(overlay, index) {
-                    var option = $('<option>').text(overlay.layerName).val(index);
+                    var option = $('<option>').text(overlay.layerName).attr('value', index);
                     $('#layer-selector').append(option);
                     overlays.push(overlay);
                 });
@@ -488,9 +539,7 @@
         function getRecords() {
             $.ajax({
                 url: ceoSepalApiUrl + "/record/project_id/" + project_id,
-                method: 'get',
-
-                contentType: 'application/json;charset=UTF-8'
+                method: 'get'
             }).success(function(data) {
                 records = data;
                 $.each(records, function(key, value) {
@@ -622,7 +671,7 @@
             gmap.overlayMapTypes.pop();
             var index = $(this).val();
             if (index != '') {
-                var overlay = overlays[index]
+                var overlay = overlays[index];
                 if (overlayMapTypes[index] === undefined) {
                     addOverlayMapType(overlay, overlayMapTypes, index);
                 }

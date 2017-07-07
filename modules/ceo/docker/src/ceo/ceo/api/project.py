@@ -366,8 +366,11 @@ def getLayersFromRequest(request):
     dgcsStackingProfile = request.form.getlist('dgcsStackingProfile[]')
     # planet
     planetMosaicName = request.form.getlist('planetMosaicName[]')
+    # sepal
+    sepalMosaicName = request.form.getlist('sepalMosaicName[]')
+    sepalBands = request.form.getlist('sepalBands[]')
     #
-    i1 = i2 = i3 = i4 = i5 = i6 = -1
+    i1 = i2 = i3 = i4 = i5 = i6 = i7 = -1
     for i in range(0, len(layerType)):
         overlay = None
         if layerType[i] == 'gee-gateway':
@@ -413,6 +416,12 @@ def getLayersFromRequest(request):
             i6 += 1
             overlay = {
                 'planetMosaicName': planetMosaicName[i6]
+            }
+        elif layerType[i] == 'sepal':
+            i7 += 1
+            overlay = {
+                'sepalMosaicName': sepalMosaicName[i7],
+                'sepalBands': sepalBands[i7]
             }
         if overlay:
             overlay['layerName'] = layerName[i]

@@ -53,6 +53,7 @@
                             <a id="add-subform-gibs" class="dropdown-item chart-btn" href="#">GIBS</a>
                             <a id="add-subform-geonetwork" class="dropdown-item chart-btn" href="#">GeoNetwork</a>
                             <a id="add-subform-planet" class="dropdown-item chart-btn" href="#">Planet</a>
+                            <a id="add-subform-sepal" class="dropdown-item chart-btn" href="#">SEPAL</a>
                         </div>
                     </div>
                 </div>
@@ -195,6 +196,26 @@ $('#add-subform-planet').click(function(e) {
         scrollTop: subform.offset().top
     }, 1000);
     $('.remove-subform', subform).click(removeSubform);
+});
+
+$('#add-subform-sepal').click(function(e) {
+    e.preventDefault();
+    var subform = $('#sepal-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(removeSubform);
+    $('html, body').animate({
+        scrollTop: subform.offset().top
+    }, 1000);
+    //
+    $.ajax({
+        url: '{{config.SEPAL_HOST}}' + '/processing-recipes'
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        console.error(jqXHR, textStatus, errorThrown);
+    }).done(function(data, textStatus, jqXHR) {
+        data.forEach(function(mosaic) {
+            var option = $('<option>').text(mosaic['name']).val(mosaic['id']);
+            $('select[name="sepalMosaicName[]"]', subform).append(option);
+        });
+    });
 });
 
 $('#add-subform-codelist-value').click(function(e) {

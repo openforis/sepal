@@ -1,0 +1,31 @@
+<div class="form-group row">
+    <label class="col-4 col-form-label">Name</label>
+    <div class="col-8">
+        <input type="text" class="form-control" name="layerName[]" />
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-4 col-form-label">Layer</label>
+    <div class="col-8">
+        <select class="form-control" name="sepalMosaicName[]">
+            <option value="" selected>CHOOSE A MOSAIC</option>
+        </select>
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-4 col-form-label">Bands</label>
+    <div class="col-8">
+        <select class="form-control" name="sepalBands[]">
+            <option value="" selected>CHOOSE THE BANDS</option>
+            <option value="red, green, blue">RED, GREEN, BLUE</option>
+            <option value="nir, red, greem">NIR, RED, GREEN</option>
+            <option value="nir, swir1, red">NIR, SWIR1, RED</option>
+            <option value="swir2, nir, red">SWIR2, NIR, RED</option>
+            <option value="swir2, swir1, red">SWIR2, SWIR1, RED</option>
+            <option value="swir2, nir, green">SWIR2, NIR, GREEN</option>
+            <option value="unixTimeDays">DATE</option>
+            <option value="dayOfYear">DAY OF YEAR</option>
+            <option value="daysFromTarget">DAYS FROM TARGET</option>
+        </select>
+    </div>
+</div>
