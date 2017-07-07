@@ -287,9 +287,10 @@
                     }
                     //
                     $.ajax({
-                        url:  '{{config.SEPAL_HOST}}' + '/api/data/mosaic/preview',
-                        type: 'post',
-                        data: $.param(req)
+                        url: '{{config.SEPAL_HOST}}' + '/api/data/mosaic/preview',
+                        type: 'POST',
+                        async: false,
+                        data: $.param(req),
                     }).fail(function(jqXHR, textStatus, errorThrown) {
                         console.error(jqXHR, textStatus, errorThrown);
                     }).done(function(data, textStatus, jqXHR) {
