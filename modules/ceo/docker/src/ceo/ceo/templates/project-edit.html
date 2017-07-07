@@ -213,7 +213,7 @@ function addSubformSEPAL(data) {
     }).always(function() {
         if (data !== undefined) {
             $('input[name="layerName[]"]', subform).val(data.layerName);
-            $('input[name="sepalMosaicName[]"]', subform).val(data.sepalMosaicName);
+            $('select[name="sepalMosaicName[]"]', subform).val(data.sepalMosaicName);
             $('select[name="sepalBands[]"]', subform).val(data.sepalBands);
         } else {
             $('html, body').animate({
