@@ -46,7 +46,8 @@ class JdbcRecipeRepository implements RecipeRepository {
         sql.eachRow('''
                 SELECT id, name, type, username, contents, creation_time, update_time 
                 FROM recipe 
-                WHERE username = ? AND NOT removed''', [username]) {
+                WHERE username = ? AND NOT removed
+                ORDER BY name, update_time''', [username]) {
             recipes << toRecipe(it)
         }
         return recipes
