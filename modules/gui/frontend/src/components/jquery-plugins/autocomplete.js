@@ -22,6 +22,7 @@
             
             elem.val( null )
             
+            elem.data('autocomplete').options.onSelect(null)
             elem.trigger( 'focus', $.Event( "focus" ) )
         } )
         elem.after( resetBtn )
