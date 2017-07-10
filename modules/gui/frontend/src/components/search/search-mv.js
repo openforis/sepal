@@ -101,7 +101,7 @@ var loadMosaic = function (e, id) {
   _loadMosaic(id, function (state) {
     EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, isNew: true})
     EventBus.dispatch(Events.SECTION.REDUCE)
-    if(state.mosaicPreview && state.mosaicPreviewBand){
+    if (state.mosaicPreview && state.mosaicPreviewBand) {
       EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, null, state)
     }
   })
@@ -111,7 +111,7 @@ var cloneMosaic = function (e, id) {
   _loadMosaic(id, function (state) {
     state.id   = guid()
     state.name = state.name + '-clone'
-    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, hideSceneAreas:true, isNew: true})
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, hideSceneAreas: true, isNew: true})
   })
 }
 

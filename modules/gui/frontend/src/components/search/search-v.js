@@ -5,9 +5,11 @@ require('./search.scss')
 
 var EventBus = require('../event/event-bus')
 var Events   = require('../event/events')
-
+var Model    = require('./model/search-model')
 // html
-var html = null
+var html     = null
+
+var state = null
 
 // ui components
 var section       = null
@@ -50,9 +52,23 @@ var showChangeDetection = function () {
   ContainerEdit.showChangeDetection()
 }
 
-var activeStateChanged = function (e, state) {
-  if (!state)
+var activeStateChanged = function (e, s, params) {
+  if (!s)
     showList()
+  else if (state && s.id !== state.id) {
+    switch (state.type) {
+      case Model.TYPES.MOSAIC:
+        showMosaic()
+        break
+      case Model.TYPES.CLASSIFY:
+        showClassification()
+        break
+      case Model.TYPES.CHANGE_DETECTION:
+        showChangeDetection()
+        break
+    }
+  }
+  state = s
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, activeStateChanged)
