@@ -25,8 +25,14 @@ var init = function (c) {
   
   btnSave.click(function (e) {
     e.preventDefault()
+    
+    var msgContent = $('<div>Save <input type="text" class="mosaic-name" value="'+activeMosaic.name+'"></input> ?</div>')
+    msgContent.find('input').change(function (e) {
+      activeMosaic.name = e.target.value
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, activeMosaic)
+    })
     var options = {
-      message    : 'Save ' + activeMosaic.name + ' ?'
+      message    : msgContent
       , onConfirm: function () {
         EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_SAVE, null, activeMosaic)
       }
