@@ -99,7 +99,7 @@ var showSection = function (type, animate) {
 }
 
 var activeStateChanged = function (state) {
-  if (state && currentSection !== 'search')
+  if (state && currentSection !== 'search' && currentSection !== 'scene-images-selection')
     showSection('search')
 }
 
