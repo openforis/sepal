@@ -23,7 +23,6 @@ var sentinel2Bands      = require('./bands-sentinel2.js')
 var inputBandsSentinel2 = null
 
 var btnSubmit     = null
-var selectedBands = null
 
 var state = {}
 
@@ -39,7 +38,7 @@ var init = function (parent) {
   btnSubmit = html.find('.btn-submit')
   
   var onSelectionChange = function (selection) {
-    selectedBands = (selection) ? selection.data : null
+    state.mosaicPreviewBand = (selection) ? selection.data : null
   }
   
   inputBandsLandsat = html.find('input[name=bands-landsat]')
@@ -59,8 +58,7 @@ var init = function (parent) {
     e.preventDefault()
     FormValidator.resetFormErrors(html)
     
-    if (selectedBands) {
-      state.mosaicPreviewBand = selectedBands
+    if (state.mosaicPreviewBand) {
       state.mosaicPreview     = true
       EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, null, state)
     } else {
@@ -82,14 +80,15 @@ var toggleVisibility = function (options) {
 
 var reset = function () {
   FormValidator.resetFormErrors(html)
-  selectedBands = null
   inputBandsLandsat.sepalAutocomplete('reset')
   inputBandsSentinel2.sepalAutocomplete('reset')
+  html.find('.row-sensors').hide()
 }
 
 var setActiveState = function (e, activeState) {
+  reset()
   state = activeState
-  html.find('.row-sensors').hide()
+  
   if (state && state.sensorGroup) {
     html.find('.row-' + state.sensorGroup).show()
     if (state.mosaicPreviewBand) {
