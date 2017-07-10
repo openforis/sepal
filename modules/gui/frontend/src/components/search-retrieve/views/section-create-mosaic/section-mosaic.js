@@ -8,11 +8,16 @@ var FormMosaicRetrieve      = require('./mosaic/form-mosaic-retrieve')
 var FormScenesAutoSelection = require('./scenes/form-scenes-autoselection-form')
 var FormScenesRetrieve      = require('./scenes/scenes-retrieve')
 var SModel                  = require('../../../search/model/search-model')
+var noUiSlider              = require('nouislider')
+var mosaicOptions           = $(require('./mosaic-options.html')({}))
 
-var html                = null
-var btnPreviewMosaic    = null
-var btnRetrieveMosaic   = null
-var btnToggleVisibility = null
+var html                  = null
+var btnPreviewMosaic      = null
+var btnRetrieveMosaic     = null
+var btnToggleVisibility   = null
+var sliderTargetDay       = null
+var sliderShadowTolerance = null
+var btnOptions            = null
 
 var state = {}
 
@@ -23,9 +28,14 @@ var init = function (container) {
   btnRetrieveMosaic   = html.find('.btn-retrieve-mosaic')
   btnToggleVisibility = html.find('.btn-toggle-mosaic-visibility')
   
-  FormMosaicPreview.init(html.find('.row-mosaic-preview'))
-  FormMosaicRetrieve.init(html.find('.row-mosaic-retrieve'))
+  FormMosaicPreview.init(html.find('.row-mosaic-preview').prepend(mosaicOptions.clone()))
+  FormMosaicRetrieve.init(html.find('.row-mosaic-retrieve').prepend(mosaicOptions.clone()))
   
+  sliderTargetDay       = html.find('.target-day-slider')
+  sliderShadowTolerance = html.find('.shadow-tolerance-slider')
+  btnOptions            = html.find('.row-button-options button')
+  
+  initSliders()
   initEventHandlers()
   reset()
 }
@@ -47,20 +57,44 @@ var initEventHandlers = function () {
   })
   
   btnToggleVisibility.click(function (e) {
-    // btnToggleVisibility.toggleClass('active')
     state.mosaicPreview = !btnToggleVisibility.hasClass('active')
     EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
     EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.TOGGLE_MOSAIC_VISIBILITY)
-    
-    // btnToggleLayerVisibility.toggleClass('active')
-    // EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
-    // if (state.scenesPreview) {
-    //   EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.SHOW_SCENE_AREAS)
-    // } else {
-    //   EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.HIDE_SCENE_AREAS)
-    // }
   })
   
+  btnOptions.click(function (e) {
+    var btn         = $(e.target)
+    var property    = btn.val()
+    state[property] = !btn.hasClass('active')
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+  })
+  
+}
+
+var initSliders = function () {
+  var initSlider = function (sliders, property) {
+    $.each(sliders, function (i, slider) {
+      slider = $(slider).get(0)
+      if (!slider.hasOwnProperty('noUiSlider')) {
+        
+        noUiSlider.create(slider, {
+          start: [0.5],
+          step : 0.05,
+          range: {
+            'min': [0],
+            'max': [1]
+          }
+        }, true)
+        
+        slider.noUiSlider.on('change', function () {
+          state[property] = slider.noUiSlider.get()
+          EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+        })
+      }
+    })
+  }
+  initSlider(sliderTargetDay, 'mosaicTargetDay')
+  initSlider(sliderShadowTolerance, 'mosaicShadowTolerance')
 }
 
 var setActiveState = function (e, activeState, params) {
@@ -78,6 +112,22 @@ var setActiveState = function (e, activeState, params) {
     btnToggleVisibility.enable()
   } else {
     btnToggleVisibility.disable()
+  }
+  
+  if (state && state.type === SModel.TYPES.MOSAIC) {
+    $.each(sliderTargetDay, function (i, slider) {
+      $(slider).get(0).noUiSlider.set(state.mosaicTargetDay)
+    })
+    $.each(sliderShadowTolerance, function (i, slider) {
+      $(slider).get(0).noUiSlider.set(state.mosaicShadowTolerance)
+    })
+    
+    $.each(btnOptions, function (i, btn) {
+      btn      = $(btn)
+      var property = btn.val()
+      state[property] ? btn.addClass('active') : btn.removeClass('active')
+    })
+    
   }
 }
 
