@@ -98,6 +98,11 @@ var showSection = function (type, animate) {
   }
 }
 
+var activeStateChanged = function (state) {
+  if (state && currentSection !== 'search')
+    showSection('search')
+}
+
 var reduce = function () {
   if (section.hasClass('opened')) {
     
@@ -126,4 +131,6 @@ EventBus.addEventListener(Events.APP.LOAD, init)
 
 EventBus.addEventListener(Events.SECTION.SHOW, show)
 EventBus.addEventListener(Events.SECTION.REDUCE, reduce)
+
+EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, activeStateChanged)
 
