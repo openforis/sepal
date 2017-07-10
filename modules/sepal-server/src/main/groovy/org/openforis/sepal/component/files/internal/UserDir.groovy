@@ -15,7 +15,7 @@ class UserDir {
         def dir = toUserDirFile(path)
         if (!dir.isDirectory())
             throw new InvalidPath("Path does not point to a directory. userDir: $userDir, dir: $dir")
-        return dir.listFiles().toList()
+        return dir.listFiles().toList().sort()
     }
 
     void delete(String path) {
