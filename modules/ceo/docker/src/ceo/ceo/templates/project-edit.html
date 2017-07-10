@@ -190,6 +190,7 @@ function addSubformPlanet(data) {
     if (data !== undefined) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
         $('select[name="planetMosaicName[]"]', subform).val(data.planetMosaicName);
+        $('select[name="planetApiVersion[]"]', subform).val(data.planetApiVersion);
     } else {
         $('html, body').animate({
             scrollTop: subform.offset().top
