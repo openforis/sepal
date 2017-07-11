@@ -42,7 +42,7 @@ class FirstPass(ImageOperation):
                    0)
 
         if mosaic_def.brdf_correct:
-            self.image = brdf_correction.apply(image)
+            self.image = brdf_correction.apply(self.image)
 
         if mosaic_def.mask_snow:
             self.updateMask(self.select('snow').Not())
