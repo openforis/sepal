@@ -49,7 +49,7 @@ abstract class RecipeTest extends Specification {
                 name: args.name ?: 'some-name',
                 type: Recipe.Type.MOSAIC,
                 username: args.username ?: testUsername,
-                contents: args.contents ?: 'some-contents',
+                contents: args.containsKey('contents') ? args.contents : 'some-contents',
                 creationTime: clock.now(),
                 updateTime: clock.now()
         )
