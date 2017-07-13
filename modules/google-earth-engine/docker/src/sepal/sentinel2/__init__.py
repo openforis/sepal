@@ -17,6 +17,7 @@ class Sentinel2MosaicSpec(MosaicSpec):
             in _scale_by_band.iteritems()
             if band in self.bands
         ])
+        self.brdf_correct = False
 
     def _collection_defs(self):
         return [CollectionDef(
