@@ -51,8 +51,7 @@ class Mosaic(object):
         maybeWater = maybeWater.mask().reduce('min').eq(1)
 
         def second_pass(image):
-            return SecondPass(image) \
-                .apply(
+            return SecondPass(image).apply(
                 maybeWater,
                 reduced.select('waterCloudScore_p100'),
                 reduced.select('landCloudScore_p100'),
