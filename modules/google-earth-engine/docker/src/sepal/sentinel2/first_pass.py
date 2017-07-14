@@ -74,6 +74,6 @@ class FirstPass(ImageOperation):
                    'landCloudScore')
 
         self.set('snow',
-                 '!i.water and i.ndsi > 0.15 and i.nir > 0.11 and i.green > 0.1')
+                 'i.blue > 0.18 and i.red > 0.07 and i.blue/i.red > 0.85 and i.nir > 0.15 and i.ndsi > 0.2')
 
         return self.image
