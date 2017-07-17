@@ -187,8 +187,18 @@ function addSubformGeoNetwork(data) {
 function addSubformPlanet(data) {
     var subform = $('#planet-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
     $('.remove-subform', subform).click(removeSubform);
+    $('select[name="planetApiVersion[]"]', subform).change(function() {
+        $('select[name="planetMosaicName[]"]', subform).find('option[value!=""]').remove();
+        var value = $(this).val();
+        var sets = planetApiVersions[value];
+        sets.forEach(function(set, index) {
+            var option = $('<option>').text(set.text).val(set.value);
+            $('select[name="planetMosaicName[]"]', subform).append(option);
+        });
+    });
     if (data !== undefined) {
         $('input[name="layerName[]"]', subform).val(data.layerName);
+        $('select[name="planetApiVersion[]"]', subform).val(data.planetApiVersion).trigger('change');
         $('select[name="planetMosaicName[]"]', subform).val(data.planetMosaicName);
     } else {
         $('html, body').animate({

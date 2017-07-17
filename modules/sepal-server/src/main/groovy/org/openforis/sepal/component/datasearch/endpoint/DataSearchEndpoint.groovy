@@ -51,11 +51,11 @@ class DataSearchEndpoint {
                 def bands = params.required('bands', String).split(',')*.trim()
                 def targetDayOfYear = params.required('targetDayOfYear', int)
                 def targetDayOfYearWeight = params.required('targetDayOfYearWeight', double)
-                def shadowTolerance = params.optional('shadowTolerance', Double) ?: 0.5
+                def shadowTolerance = params.optional('shadowTolerance', Double) ?: 1
                 def medianComposite = params.optional('medianComposit', Boolean) ?: false
-                def brdfCorrect = params.optional('brdfCorrect', Boolean) ?: false
+                def brdfCorrect = params.optional('brdfCorrect', Boolean) ?: true
                 def maskWater = params.optional('maskWater', Boolean) ?: false
-                def maskSnow = params.optional('maskSnow', Boolean) ?: false
+                def maskSnow = params.optional('maskSnow', Boolean) ?: true
 
                 def mapLayer = geeGateway.preview(new PreselectedScenesMapQuery(
                         dataSet: dataSet,

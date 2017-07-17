@@ -5,12 +5,20 @@
     </div>
 </div>
 <div class="form-group row">
+    <label class="col-4 col-form-label">Resolution (Hi/Lo)</label>
+    <div class="col-8">
+        <select class="form-control" name="planetApiVersion[]">
+            <option value="" selected>CHOOSE A RESOLUTION</option>
+            <option value="v0">HI-RES</option>
+            <option value="v1">LO-RES</option>
+        </select>
+    </div>
+</div>
+<div class="form-group row">
     <label class="col-4 col-form-label">Layer</label>
     <div class="col-8">
         <select class="form-control" name="planetMosaicName[]">
             <option value="" selected>CHOOSE A BASEMAP</option>
-            <option value="global_quarterly_2016q4_mosaic">Q4 2016</option>
-            <option value="global_quarterly_2017q1_mosaic">Q1 2017</option>
         </select>
     </div>
 </div>

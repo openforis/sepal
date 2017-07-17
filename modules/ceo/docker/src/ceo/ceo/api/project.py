@@ -365,6 +365,7 @@ def getLayersFromRequest(request):
     dgcsProductType = request.form.getlist('dgcsProductType[]')
     dgcsStackingProfile = request.form.getlist('dgcsStackingProfile[]')
     # planet
+    planetApiVersion = request.form.getlist('planetApiVersion[]')
     planetMosaicName = request.form.getlist('planetMosaicName[]')
     # sepal
     sepalMosaicName = request.form.getlist('sepalMosaicName[]')
@@ -415,6 +416,7 @@ def getLayersFromRequest(request):
         elif layerType[i] == 'planet':
             i6 += 1
             overlay = {
+                'planetApiVersion': planetApiVersion[i6],
                 'planetMosaicName': planetMosaicName[i6]
             }
         elif layerType[i] == 'sepal':

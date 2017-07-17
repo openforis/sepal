@@ -7,11 +7,6 @@ class FirstPass(ImageOperation):
         self.collection_def = collection_def
 
     def apply(self):
-        qa60 = self.image.select('QA60')
-        self.updateMask(
-            qa60.bitwiseAnd(0x400).eq(0).And(  # no clouds
-                qa60.bitwiseAnd(0x800).eq(0))  # no cirrus
-        )
         self.image = self.image.addBands(
             self.image.select(self.collection_def.bands.keys()).divide(10000),
             None, True)
@@ -43,8 +38,7 @@ class FirstPass(ImageOperation):
                  'i.cirrus / 0.04')
 
         self.set('noiseTest',
-                 '(i.aerosol > 0.18 and i.hazeProbability < 0.02)' +
-                 'or i.variabilityProbability < -0.5')
+                 'i.variabilityProbability < -0.05')
         self.updateMask('!i.noiseTest')
 
         self.set('shadowScore',
@@ -80,6 +74,6 @@ class FirstPass(ImageOperation):
                    'landCloudScore')
 
         self.set('snow',
-                 '!i.water and i.ndsi > 0.15 and i.nir > 0.11 and i.green > 0.1')
+                 'i.blue > 0.18 and i.red > 0.07 and i.blue/i.red > 0.85 and i.nir > 0.15 and i.ndsi > 0.2')
 
         return self.image
