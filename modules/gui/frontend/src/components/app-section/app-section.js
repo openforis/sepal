@@ -84,7 +84,7 @@ var show = function (e, type) {
 }
 
 var showSection = function (type, animate) {
-  currentSection = type
+  currentSection = type ? type : currentSection
   
   var carouselItem = carousel.find('.carousel-item.' + type)
   if (!carouselItem.hasClass('active')) {
