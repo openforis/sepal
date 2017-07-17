@@ -182,7 +182,7 @@ var addMosaic = function () {
         }
         return defaultState
     }
-    View.showMosaic()
+    // View.showMosaic()
     EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
 }
 

@@ -27,12 +27,13 @@ var init = function (html) {
   container.find('.btn-show-list').click(function () {
     EventBus.dispatch(Events.SECTION.SEARCH.VIEW.SHOW_LIST)
   })
-
+  
 }
 
 var showSection = function (section, opts) {
   show()
-  section.velocityFadeIn(opts)
+  if (!section.is(':visible'))
+    section.velocityFadeIn(opts)
 }
 
 var hideSection = function (section, opts) {
