@@ -15,10 +15,11 @@ var html            = $(template({}))
 
 var state = {}
 
-var rowLandsat   = null
-var rowSentinel2 = null
-var form         = null
-var formNotify   = null
+var rowLandsat    = null
+var rowSentinel2  = null
+var form          = null
+var formNotify    = null
+var activeSection = null
 
 var init = function (parent) {
   parentContainer = parent
@@ -35,15 +36,11 @@ var init = function (parent) {
     $(this).toggleClass('active')
   })
   
-  rowLandsat.find('.btn-submit').click(function (e) {
+  html.find('.btn-submit').click(function (e) {
     e.preventDefault()
-    submit(rowLandsat)
+    submit(activeSection)
   })
   
-  rowSentinel2.find('.btn-submit').click(function (e) {
-    e.preventDefault()
-    submit(rowSentinel2)
-  })
 }
 
 var submit = function (section) {
@@ -107,7 +104,7 @@ var setActiveState = function (e, activeState) {
     
     html.find('.row-sensors').hide()
     if (state.sensorGroup) {
-      html.find('.row-' + state.sensorGroup).show()
+      activeSection = html.find('.row-' + state.sensorGroup).show()
     }
     var inputs = form.find('input')
     $.each(inputs, function (i, input) {

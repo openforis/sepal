@@ -27,9 +27,12 @@ var init = function (container) {
   btnPreviewMosaic    = html.find('.btn-preview-mosaic')
   btnRetrieveMosaic   = html.find('.btn-retrieve-mosaic')
   btnToggleVisibility = html.find('.btn-toggle-mosaic-visibility')
+ 
+  FormMosaicPreview.init(html.find('.row-mosaic-preview'))
+  FormMosaicRetrieve.init(html.find('.row-mosaic-retrieve'))
   
-  FormMosaicPreview.init(html.find('.row-mosaic-preview').prepend(mosaicOptions.clone()))
-  FormMosaicRetrieve.init(html.find('.row-mosaic-retrieve').prepend(mosaicOptions.clone()))
+  addSlider(html.find('.row-mosaic-preview'))
+  addSlider(html.find('.row-mosaic-retrieve'))
   
   sliderTargetDay       = html.find('.target-day-slider')
   sliderShadowTolerance = html.find('.shadow-tolerance-slider')
@@ -38,6 +41,10 @@ var init = function (container) {
   initSliders()
   initEventHandlers()
   reset()
+}
+
+var addSlider = function (container) {
+  mosaicOptions.clone().insertBefore(container.find('.row-form-notify'))
 }
 
 var initEventHandlers = function () {
