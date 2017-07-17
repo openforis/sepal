@@ -10,6 +10,7 @@ var BudgetCheck   = require('../../../../budget-check/budget-check')
 var SModel        = require('./../../../../search/model/search-model')
 
 var parentContainer = null
+var container       = null
 var template        = require('./form-mosaic-retrieve.html')
 var html            = $(template({}))
 
@@ -23,7 +24,7 @@ var activeSection = null
 
 var init = function (parent) {
   parentContainer = parent
-  var container   = parentContainer.find('.mosaic-retrieve')
+  container       = parentContainer.find('.mosaic-retrieve')
   container.append(html)
   
   rowLandsat   = html.find('.row-LANDSAT')
@@ -36,7 +37,7 @@ var init = function (parent) {
     $(this).toggleClass('active')
   })
   
-  html.find('.btn-submit').click(function (e) {
+  container.find('.btn-submit').click(function (e) {
     e.preventDefault()
     submit(activeSection)
   })
@@ -116,6 +117,18 @@ var setActiveState = function (e, activeState) {
   }
 }
 
+var disableDateBands = function () {
+  $(container.find('.row-date-bands button')).each(function (i, btn) {
+    $(btn).removeClass('active').disable()
+  })
+}
+
+var enableDateBands = function () {
+  $(container.find('.row-date-bands button')).each(function (i, btn) {
+    $(btn).enable()
+  })
+}
+
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState)
 
 module.exports = {
@@ -123,4 +136,6 @@ module.exports = {
   , hide            : hide
   , toggleVisibility: toggleVisibility
   , reset           : reset
+  , disableDateBands: disableDateBands
+  , enableDateBands : enableDateBands
 }

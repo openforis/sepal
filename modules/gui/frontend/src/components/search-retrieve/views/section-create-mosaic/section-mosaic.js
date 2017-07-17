@@ -27,23 +27,23 @@ var init = function (container) {
   btnPreviewMosaic    = html.find('.btn-preview-mosaic')
   btnRetrieveMosaic   = html.find('.btn-retrieve-mosaic')
   btnToggleVisibility = html.find('.btn-toggle-mosaic-visibility')
- 
+  
   FormMosaicPreview.init(html.find('.row-mosaic-preview'))
   FormMosaicRetrieve.init(html.find('.row-mosaic-retrieve'))
   
-  addSlider(html.find('.row-mosaic-preview'))
-  addSlider(html.find('.row-mosaic-retrieve'))
+  addMosaicOptions(html.find('.row-mosaic-preview'))
+  addMosaicOptions(html.find('.row-mosaic-retrieve'))
   
   sliderTargetDay       = html.find('.target-day-slider')
   sliderShadowTolerance = html.find('.shadow-tolerance-slider')
-  btnOptions            = html.find('.row-button-options button')
+  btnOptions            = html.find('.btn-mosaic-option')
   
   initSliders()
   initEventHandlers()
   reset()
 }
 
-var addSlider = function (container) {
+var addMosaicOptions = function (container) {
   mosaicOptions.clone().insertBefore(container.find('.row-form-notify'))
 }
 
@@ -70,10 +70,21 @@ var initEventHandlers = function () {
   })
   
   btnOptions.click(function (e) {
+    e.preventDefault()
     var btn         = $(e.target)
     var property    = btn.val()
     state[property] = !btn.hasClass('active')
     EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+    
+    if (property === 'median') {
+      if (state.median) {
+        FormMosaicPreview.disableDateBands()
+        FormMosaicRetrieve.disableDateBands()
+      } else {
+        FormMosaicPreview.enableDateBands()
+        FormMosaicRetrieve.enableDateBands()
+      }
+    }
   })
   
 }
@@ -130,7 +141,7 @@ var setActiveState = function (e, activeState, params) {
     })
     
     $.each(btnOptions, function (i, btn) {
-      btn      = $(btn)
+      btn          = $(btn)
       var property = btn.val()
       state[property] ? btn.addClass('active') : btn.removeClass('active')
     })

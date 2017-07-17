@@ -22,9 +22,13 @@ var rowSentinel2        = null
 var sentinel2Bands      = require('./bands-sentinel2.js')
 var inputBandsSentinel2 = null
 
-var btnSubmit     = null
+var btnSubmit = null
 
 var state = {}
+
+var onBandsSelectionChange = function (selection) {
+  state.mosaicPreviewBand = (selection) ? selection.data : null
+}
 
 var init = function (parent) {
   parentContainer = parent
@@ -37,21 +41,17 @@ var init = function (parent) {
   
   btnSubmit = html.find('.btn-submit')
   
-  var onSelectionChange = function (selection) {
-    state.mosaicPreviewBand = (selection) ? selection.data : null
-  }
-  
   inputBandsLandsat = html.find('input[name=bands-landsat]')
   inputBandsLandsat.sepalAutocomplete({
     lookup    : landsatBands
-    , onChange: onSelectionChange
+    , onChange: onBandsSelectionChange
   })
   
   //sentinel2
   inputBandsSentinel2 = html.find('input[name=bands-sentinel2]')
   inputBandsSentinel2.sepalAutocomplete({
     lookup    : sentinel2Bands
-    , onChange: onSelectionChange
+    , onChange: onBandsSelectionChange
   })
   
   btnSubmit.click(function (e) {
@@ -59,7 +59,7 @@ var init = function (parent) {
     FormValidator.resetFormErrors(html)
     
     if (state.mosaicPreviewBand) {
-      state.mosaicPreview     = true
+      state.mosaicPreview = true
       EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, null, state)
     } else {
       FormValidator.addError(inputBandsLandsat)
@@ -95,6 +95,9 @@ var setActiveState = function (e, activeState) {
       setBandValue(sentinel2Bands, inputBandsSentinel2)
       setBandValue(landsatBands, inputBandsLandsat)
     }
+    if (state.median) {
+      disableDateBands()
+    }
   }
 }
 
@@ -106,6 +109,68 @@ var setBandValue = function (bands, input) {
     input.val(obj.value).data('reset-btn').enable()
 }
 
+var disableDateBands = function () {
+  var excludeDates = function (band) {
+    return band.date !== true
+  }
+  
+  inputBandsLandsat.sepalAutocomplete('dispose')
+  inputBandsSentinel2.sepalAutocomplete('dispose')
+  
+  inputBandsLandsat.sepalAutocomplete({
+    lookup    : landsatBands.filter(excludeDates)
+    , onChange: onBandsSelectionChange
+  })
+  
+  inputBandsSentinel2.sepalAutocomplete({
+    lookup    : sentinel2Bands.filter(excludeDates)
+    , onChange: onBandsSelectionChange
+  })
+  
+  if (state.mosaicPreviewBand) {
+    setBandValue(landsatBands, inputBandsLandsat)
+    setBandValue(sentinel2Bands, inputBandsSentinel2)
+    
+    $.each(landsatBands.filter(function (band) {
+      return band.date === true
+    }), function (i, band) {
+      if (state.mosaicPreviewBand === band.data) {
+        state.mosaicPreviewBand = null
+        inputBandsLandsat.sepalAutocomplete('reset')
+        inputBandsSentinel2.sepalAutocomplete('reset')
+      }
+    })
+    // $.each(sentinel2Bands.filter(function (band) {
+    //   return band.date === true
+    // }), function (i, band) {
+    //   if (state.mosaicPreviewBand === band.data) {
+    //     state.mosaicPreviewBand = null
+    //     inputBandsSentinel2.sepalAutocomplete('reset')
+    //   }
+    // })
+  }
+}
+
+var enableDateBands = function () {
+  inputBandsLandsat.sepalAutocomplete('dispose')
+  inputBandsSentinel2.sepalAutocomplete('dispose')
+  
+  inputBandsLandsat.sepalAutocomplete({
+    lookup    : landsatBands
+    , onChange: onBandsSelectionChange
+  })
+  
+  //sentinel2
+  inputBandsSentinel2 = html.find('input[name=bands-sentinel2]')
+  inputBandsSentinel2.sepalAutocomplete({
+    lookup    : sentinel2Bands
+    , onChange: onBandsSelectionChange
+  })
+  
+  setBandValue(landsatBands, inputBandsLandsat)
+  setBandValue(sentinel2Bands, inputBandsSentinel2)
+}
+
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState)
 
 module.exports = {
@@ -113,4 +178,6 @@ module.exports = {
   , hide            : hide
   , toggleVisibility: toggleVisibility
   , reset           : reset
+  , disableDateBands: disableDateBands
+  , enableDateBands : enableDateBands
 }
