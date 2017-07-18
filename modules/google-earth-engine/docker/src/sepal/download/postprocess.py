@@ -1,15 +1,18 @@
 import logging
 import os
-import osgeo.gdal
 from threading import Thread
+
+import osgeo.gdal
+from osgeo.gdalconst import GA_Update
 
 logger = logging.getLogger(__name__)
 
 
 class PostProcess(object):
-    def __init__(self, file_name, download_dir, listener):
+    def __init__(self, file_name, download_dir, bands, listener):
         self.file_name = file_name
         self.dir = str(download_dir + '/' + self.file_name)
+        self.bands = bands
         self.listener = listener
         self.running = True
         self.canceled = False
@@ -36,10 +39,13 @@ class PostProcess(object):
             tifs = ['%s/%s' % (self.dir, file)
                     for file in os.listdir(self.dir) if file.lower().endswith('.tif')]
             logging.debug('Downloaded ' + str(tifs))
+            self._set_band_names(tifs)
             if len(tifs) > 1:
                 product = self._build_vrt(tifs)
+                self._set_band_names(tifs)
             else:
                 product = tifs[0]
+            self._set_band_names([product])
             self._build_overviews(product)
             self.listener.update_status({
                 'state': 'COMPLETED',
@@ -69,3 +75,10 @@ class PostProcess(object):
             'description': "Building overviews..."})
         ds = osgeo.gdal.OpenShared(product)
         ds.BuildOverviews(resampling='average', overviewlist=[2, 4, 8])
+
+    def _set_band_names(self, files):
+        for file in files:
+            ds = osgeo.gdal.Open(file, GA_Update)
+            for bandIndex in range(0, len(self.bands)):
+                band = ds.GetRasterBand(bandIndex + 1)
+                band.SetMetadata({'BAND_NAME': self.bands[bandIndex]})
