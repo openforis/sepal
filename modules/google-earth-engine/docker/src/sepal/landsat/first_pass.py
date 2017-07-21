@@ -37,9 +37,6 @@ class FirstPass(ImageOperation):
         self.set('water',
                  'i.ndwi > 0.15')
 
-        self.set('waterBlue',
-                 0)  # Not needed for Landsat - CFMask handled it
-
         self.set('hazeProbability',
                  'max(i.blue - 0.5 * i.red - 0.06, 0)')
 
@@ -78,15 +75,10 @@ class FirstPass(ImageOperation):
         self.set('waterCloudProbability',
                  'max((i.brightnessProbability + i.waterTemperatureProbability + i.cirrusCloudProbability * 5 + i.hazeProbability) - 0.4, 0)')
 
-        self.setIf('waterCloudScore',
-                   'water',
-                   'max(1 - i.waterCloudProbability, 0)',
-                   0)
-
-        self.setIf('waterCloudScore',
-                   'water',
-                   'waterCloudScore',
-                   0)
+        self.setIfElse('waterScore',
+                       'water',
+                       'max(1 - i.waterCloudProbability, 0)',
+                       0)
 
         self.set('tHigh',
                  27)  # Get tHigh from metadata?
@@ -98,12 +90,10 @@ class FirstPass(ImageOperation):
         self.set('landCloudProbability',
                  'max((i.variabilityProbability + i.landTemperatureProbability + i.cirrusCloudProbability + i.hazeProbability * 10 + i.shadowProbability * 2) / 10, 0)')
 
-        self.set('landCloudScore',
-                 'max(1 - i.landCloudProbability, 0)')
-        self.setIf('landCloudScore',
-                   'water',
-                   0,
-                   'landCloudScore')
+        self.setIfElse('landScore',
+                       'water',
+                       0,
+                       'max(1 - i.landCloudProbability, 0)')
 
         self.set('snow',
                  '!i.water and i.ndsi > 0.15 and i.nir > 0.11 and i.green > 0.1 and i.BT < 9.85')

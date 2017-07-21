@@ -85,7 +85,7 @@ _all_bands = {
     'swir1': 'B11',
     'swir2': 'B12',
     'cirrus': 'B10',
-    'QA60': 'QA60'
+    'waterVapor': 'B9'
 }
 
 _scale_by_band = {

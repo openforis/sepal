@@ -43,20 +43,16 @@ class Mosaic(object):
     def _map_second_pass(self, collection):
 
         reduced = collection \
-            .select(['waterCloudScore', 'landCloudScore', 'shadowFreeCloudScore', 'waterBlue']) \
-            .reduce(ee.Reducer.percentile([50, 100]).combine(ee.Reducer.stdDev(), "", True))
-
-        waterBlueStd = reduced.select('waterBlue_stdDev')
-        maybeWater = waterBlueStd.updateMask(waterBlueStd.gt(20).And(waterBlueStd.lt(900)))
-        maybeWater = maybeWater.mask().reduce('min').eq(1)
+            .select(['waterScore', 'landScore', 'shadowFreeScore', 'snow']) \
+            .reduce(ee.Reducer.percentile([50, 100]))
 
         def second_pass(image):
             return SecondPass(image).apply(
-                maybeWater,
-                reduced.select('waterCloudScore_p100'),
-                reduced.select('landCloudScore_p100'),
-                reduced.select('shadowFreeCloudScore_p50'),
-                self.mosaic_def)
+                max_land_score=reduced.select('landScore_p100'),
+                max_water_score=reduced.select('waterScore_p100'),
+                median_shadow_free_score=reduced.select('shadowFreeScore_p50'),
+                snow_exists=reduced.select('snow_p50'),
+                mosaic_def=self.mosaic_def)
 
         return collection.map(second_pass)
 
