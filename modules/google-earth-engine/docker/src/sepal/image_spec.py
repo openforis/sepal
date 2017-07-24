@@ -45,7 +45,7 @@ class ImageSpec(object):
         """
         file_id = 'sepal-' + name + '-' + str(uuid.uuid4())
         task_id = export.to_drive(self._ee_image(), self.aoi.geometry().bounds(), name, username, file_id, self.scale)
-        downloader.start_download(task_id, name, file_id, credentials)
+        downloader.start_download(task_id, name, file_id, self.bands, credentials)
         return task_id
 
     @abstractmethod

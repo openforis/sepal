@@ -15,12 +15,13 @@ class ImageOperation(object):
         toAdd = self.toImage(toAdd, args)
         self.image = self.image.addBands(toAdd.rename([name]), None, True)
 
-    def setIf(self, name, condition, trueValue, falseValue):
-        condition = self.toImage(condition)
-        trueMasked = self.toImage(trueValue).mask(self.toImage(condition))
-        falseMasked = self.toImage(falseValue).mask(self.invertMask(condition))
-        value = trueMasked.unmask(falseMasked)
-        self.set(name, value)
+    def setIf(self, name, condition, trueValue, args={}):
+        self.setIfElse(name, condition, trueValue, name, args)
+
+    def setIfElse(self, name, condition, trueValue, falseValue, args={}):
+        self.set(name,
+                 self.toImage(falseValue, args)
+                 .where(self.toImage(condition, args), self.toImage(trueValue, args)))
 
     def invertMask(self, mask):
         return mask.multiply(-1).add(1)
@@ -44,6 +45,8 @@ class ImageOperation(object):
             return format(result, args)
         return result
 
+    def isMasked(self, band):
+        return self.toImage(band).mask().reduce('min').eq(0)
 
     def updateMask(self, condition):
         self.image = self.image.updateMask(self.toImage(condition))

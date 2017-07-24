@@ -13,7 +13,7 @@ class Downloader(object):
         self.downloads = {}
         self.statuses = {}
 
-    def start_download(self, task_id, name, file_id, credentials):
+    def start_download(self, task_id, name, file_id, bands, credentials):
         if task_id in self.downloads:
             logging.info('Trying to start downloading a pre-existing task:' + task_id)
             return
@@ -23,6 +23,7 @@ class Downloader(object):
             task_id=task_id,
             file_name=name,
             file_id=file_id,
+            bands=bands,
             credentials=credentials,
             download_dir=self.download_dir,
             listener=self)
@@ -61,7 +62,7 @@ class Downloader(object):
 
 
 class Download(object):
-    def __init__(self, task_id, file_name, file_id, credentials, download_dir, listener):
+    def __init__(self, task_id, file_name, file_id, credentials, bands, download_dir, listener):
         self.task_id = task_id
         self.file_id = file_id
         self.credentials = credentials
@@ -82,6 +83,7 @@ class Download(object):
         self.post_process = PostProcess(
             file_name=file_name,
             download_dir=download_dir,
+            bands=bands,
             listener=self
         )
         self.current_step = None

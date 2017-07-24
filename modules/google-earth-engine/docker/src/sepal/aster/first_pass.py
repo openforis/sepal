@@ -69,9 +69,6 @@ class FirstPass(ImageOperation):
         self.set('water',
                  'i.ndwi > 0.15')
 
-        self.set('waterBlue',
-                 self.image.select('green').updateMask(self.image.select('water')))
-
         self.set('meanVis',
                  '(i.green + i.red) / 2')
         self.set('whiteness',
@@ -101,14 +98,14 @@ class FirstPass(ImageOperation):
         self.set('waterCloudProbability',
                  'max((i.brightnessProbability + i.waterTemperatureProbability) - 0.4, 0)')
 
-        self.setIf('waterCloudScore',
+        self.setIfElse('waterScore',
                    'water',
                    'max(1 - i.waterCloudProbability, 0)',
                    0)
 
-        self.setIf('waterCloudScore',
+        self.setIfElse('waterScore',
                    'water',
-                   'waterCloudScore',
+                   'waterScore',
                    0)
 
         self.set('tHigh',
@@ -121,12 +118,12 @@ class FirstPass(ImageOperation):
         self.set('landCloudProbability',
                  'max((i.variabilityProbability + i.landTemperatureProbability + i.shadowProbability * 2) / 10, 0)')
 
-        self.set('landCloudScore',
+        self.set('landScore',
                  'max(1 - i.landCloudProbability, 0)')
-        self.setIf('landCloudScore',
+        self.setIfElse('landScore',
                    'water',
                    0,
-                   'landCloudScore')
+                   'landScore')
 
         self.set('snow',
                  '!i.water and i.ndsi > 0.15 and i.nir > 0.11 and i.green > 0.1 and i.BT < 9.85')
