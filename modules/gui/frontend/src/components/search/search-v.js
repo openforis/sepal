@@ -55,8 +55,8 @@ var showChangeDetection = function () {
 var activeStateChanged = function (e, s, params) {
   if (!s)
     showList()
-  else if (state && s.id !== state.id) {
-    switch (state.type) {
+  else if (!state || (state && s.id !== state.id)) {
+    switch (s.type) {
       case Model.TYPES.MOSAIC:
         showMosaic()
         break
