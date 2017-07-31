@@ -34,7 +34,7 @@
                                 </div>
                                 <label class="form-label col-sm-1 text-align-center form-label-btn-draw-polygon">Or</label>
                                 <div class="col-4">
-                                    <button type="button" class="btn btn-base round btn-draw-polygon" >
+                                    <button type="button" class="btn btn-base round btn-draw-polygon">
                                         <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Draw a polygon
                                     </button>
                                 </div>
@@ -42,11 +42,17 @@
                             <div class="row row-sensor form-group">
                                 <label class="form-label col-sm-2">Sensors</label>
                                 <div class="col-2 text-align-center">
-                                    <button type="button" class="btn btn-base round width100 p-y-0-5 btn-landsat btn-sensor-group" value="LANDSAT">Landsat</button>
+                                    <button type="button"
+                                            class="btn btn-base round width100 p-y-0-5 btn-landsat btn-sensor-group"
+                                            value="LANDSAT">Landsat
+                                    </button>
                                 </div>
                                 <label class="form-label col-sm-1 p-t-0-5 text-align-center">Or</label>
                                 <div class="col-2 text-align-center">
-                                    <button type="button" class="btn btn-base round width100 p-y-0-5 btn-sentinel2 btn-sensor-group" value="SENTINEL2">Sentinel-2</button>
+                                    <button type="button"
+                                            class="btn btn-base round width100 p-y-0-5 btn-sentinel2 btn-sensor-group"
+                                            value="SENTINEL2">Sentinel-2
+                                    </button>
                                 </div>
                             </div>
                             <div class="row form-group m-t-10 p-b-2">
@@ -76,7 +82,62 @@
                 <!-- Classify -->
                 <div class="row search-section section-classify height95">
                     <div class="col-12 height100">
-                        Classify
+
+
+                        <form class="form-theme">
+                            <div class="row form-group">
+                                <label class="form-label col-2" for="classify-name">Name</label>
+                                <div class="col-4">
+                                    <input type="text" class="form-control" id="classify-name" name="name" value=""
+                                           placeholder="Select a name">
+                                </div>
+                            </div>
+
+                            <div class="row form-group">
+                                <label class="form-label col-sm-2" for="input-recipe">Input recipe</label>
+                                <div class="col-4">
+                                    <input type="text" class="form-control" id="input-recipe" name="input-recipe"
+                                           placeholder="Select an input recipe">
+                                </div>
+                            </div>
+
+
+                            <div class="row form-group">
+                                <label class="form-label col-sm-2" for="fusion-table-id">Fusion table id</label>
+                                <div class="col-4">
+                                    <input type="text" class="form-control" id="fusion-table-id" name="fusion-table-id"
+                                           placeholder="Select a country">
+                                </div>
+                                <label class="form-label col-sm-2 text-align-center form-label-btn-draw-polygon">Class column</label>
+                                <div class="col-4">
+                                    <input type="text" class="form-control" id="fusion-table-class-column" name="fusion-table-class-column"
+                                           placeholder="Select a column">
+                                </div>
+                            </div>
+
+                            <div class="row row-algorithm-btns form-group">
+                                <label class="form-label col-sm-2" for="fusion-table-id">Algorithm</label>
+                                <div class="col-10">
+                                    <button class="btn btn-base round p-x-1 p-y-0-5" value="cart">Cart</button>
+                                    <button class="btn btn-base round p-x-1 p-y-0-5" value="decisionTree">Decision tree</button>
+                                </div>
+                            </div>
+
+                            <div class="row form-group form-group-buttons no-padding">
+
+                                <div class="col-12 text-align-center form-notify form-error"/>
+
+                                <div class="col-12 text-align-center">
+                                    <button type="submit" class="btn btn-base round icon p-y-1">
+                                        <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                                        Classify
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </form>
+
                     </div>
                 </div>
 
@@ -98,10 +159,10 @@
                         <button class="btn btn-base round p-y-0-5 width30 btn-add-mosaic">
                             <i class="fa fa-plus-circle"></i> Mosaic
                         </button>
-                        <button class="btn btn-base round p-y-0-5 width30 btn-add-classification disabled">
+                        <button type="button" class="btn btn-base round p-y-0-5 width30 btn-add-classification">
                             <i class="fa fa-plus-circle"></i> Classification
                         </button>
-                        <button class="btn btn-base round p-y-0-5 width30 btn-add-change-detection disabled">
+                        <button type="button" class="btn btn-base round p-y-0-5 width30 btn-add-change-detection disabled">
                             <i class="fa fa-plus-circle"></i> Change detection
                         </button>
                     </div>
@@ -120,13 +181,16 @@
                         <div class="col-5 name">Name</div>
                         <div class="col-4 type">Type</div>
                         <div class="col-1 text-align-center">
-                            <button class="btn btn-base circle btn-edit"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></button>
+                            <button class="btn btn-base circle btn-edit"><i class="fa fa-pencil-square-o"
+                                                                            aria-hidden="true"></i></button>
                         </div>
                         <div class="col-1 text-align-center">
-                            <button class="btn btn-base circle btn-clone"><i class="fa fa-clone" aria-hidden="true"></i></button>
+                            <button class="btn btn-base circle btn-clone"><i class="fa fa-clone" aria-hidden="true"></i>
+                            </button>
                         </div>
                         <div class="col-1 text-align-center">
-                            <button class="btn btn-base circle btn-delete"><i class="fa fa-trash" aria-hidden="true"></i></button>
+                            <button class="btn btn-base circle btn-delete"><i class="fa fa-trash"
+                                                                              aria-hidden="true"></i></button>
                         </div>
                     </div>
                 </div>
@@ -135,9 +199,7 @@
         </div>
 
 
-
     </div>
-
 
 
 </div>
