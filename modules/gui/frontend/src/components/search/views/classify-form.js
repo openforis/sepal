@@ -174,7 +174,7 @@ var updateInputRecipe = function () {
 }
 
 var restoreAoi = function (s, params) {
-  if (params.isNew) {
+  if (params && params.isNew) {
     
     if (s.aoiCode && s.aoiName) {
       EventBus.dispatch(Events.MAP.POLYGON_CLEAR)

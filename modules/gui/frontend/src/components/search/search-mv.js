@@ -206,7 +206,8 @@ var addClassification = function () {
 }
 
 var requestClassification = function (e , state) {
-  console.log("===== requestClassification ", state)
+  EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+  EventBus.dispatch(Events.SECTION.REDUCE)
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_LIST, showList)

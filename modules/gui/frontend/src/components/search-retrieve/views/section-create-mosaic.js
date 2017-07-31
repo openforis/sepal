@@ -33,15 +33,15 @@ var init = function (c) {
 }
 
 var show = function () {
-  if (!container.is(':visible')) {
-    container.velocityFadeIn()
-  }
+  // if (!container.is(':visible')) {
+    container.velocityFadeIn({ delay: 0, duration: 50 })
+  // }
 }
 
 var hide = function () {
-  if (container.is(':visible')) {
-    container.velocityFadeOut()
-  }
+  // if (container.is(':visible')) {
+    container.velocityFadeOut({ delay: 0, duration: 50 })
+  // }
 }
 
 var setActiveState = function (e, activeState) {
