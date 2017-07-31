@@ -194,6 +194,7 @@ var addClassification = function () {
       id                    : guid(),
       type                  : Model.TYPES.CLASSIFY,
       name                  : 'classification-' + date.format('YYYY-MM-DD-HH:mm'),
+      inputRecipe           : null,
       fusionTableId         : null,
       fusionTableClassColumn: null,
       algorithm             : null
