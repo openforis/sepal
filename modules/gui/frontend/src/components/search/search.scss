@@ -61,6 +61,11 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.5);
       }
 
+      .form-control:disabled {
+        opacity: .4;
+        cursor: not-allowed;
+      }
+
     }
 
   }

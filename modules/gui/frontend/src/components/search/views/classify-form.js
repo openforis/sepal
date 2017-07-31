@@ -1,19 +1,21 @@
-var EventBus      = require('./../../event/event-bus')
-var Events        = require('./../../event/events')
-var FormValidator = require('../../form/form-validator')
-var Model         = require('./../model/search-model')
+var EventBus         = require('./../../event/event-bus')
+var Events           = require('./../../event/events')
+var FormValidator    = require('../../form/form-validator')
+var Model            = require('./../model/search-model')
+var GoogleMapsLoader = require('google-maps')
 
 var state   = {}
 var mosaics = []
 
-var form                    = null
-var formNotify              = null
-var name                    = null
-var inputRecipe             = null
-var inputRecipeAutocomplete = null
-var fusionTableId           = null
-var fusionTableClassColumn  = null
-var rowAlgorithms           = null
+var form                               = null
+var formNotify                         = null
+var name                               = null
+var inputRecipe                        = null
+var inputRecipeAutocomplete            = null
+var fusionTableId                      = null
+var fusionTableClassColumn             = null
+var fusionTableClassColumnAutocomplete = null
+var rowAlgorithms                      = null
 
 var init = function (container) {
   form       = container.find('form')
@@ -26,26 +28,23 @@ var init = function (container) {
   rowAlgorithms          = form.find('.row-algorithm-btns')
   
   initEvents()
-  
-  form.submit(submit)
 }
 
 var initEvents = function () {
   name.change(function (e) {
     state.name = name.val()
-    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {field: 'name'})
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
   })
   fusionTableId.change(function (e) {
     state.fusionTableId = fusionTableId.val()
-  })
-  fusionTableClassColumn.change(function (e) {
-    state.fusionTableClassColumn = fusionTableClassColumn.val()
+    updateFusionTableClass(state.fusionTableId)
   })
   
   var btns = rowAlgorithms.find('button')
   btns.click(function (e) {
     var btn = $(e.target)
     if (!btn.hasClass('active')) {
+      e.preventDefault()
       btns.removeClass('active')
       btn.addClass('active')
       state.algorithm = btn.val()
@@ -53,12 +52,44 @@ var initEvents = function () {
   })
   
   updateInputRecipe()
+  
+  form.submit(submit)
 }
 
 var submit = function (e) {
   e.preventDefault()
   
   FormValidator.resetFormErrors(form, formNotify)
+  
+  var valid    = true
+  var errorMsg = ''
+  
+  if (!state.name || $.isEmptyString(state.name) || state.name.indexOf(' ') >= 0) {
+    valid    = false
+    errorMsg = 'Please enter a valid name, no whitespace are allowed'
+    FormValidator.addError(name)
+  } else if ($.isEmptyString(state.inputRecipe)) {
+    valid    = false
+    errorMsg = 'Please select a valid input recipe'
+    FormValidator.addError(inputRecipe)
+  } else if ($.isEmptyString(state.fusionTableId)) {
+    valid    = false
+    errorMsg = 'Please select a valid fusion table id'
+    FormValidator.addError(fusionTableId)
+  } else if ($.isEmptyString(state.fusionTableClassColumn)) {
+    valid    = false
+    errorMsg = 'Please select a valid fusion table class column'
+    FormValidator.addError(fusionTableClassColumn)
+  } else if (! state.algorithm) {
+    valid    = false
+    errorMsg = 'Please select a valid algorithm'
+  }
+  
+  if (valid) {
+    EventBus.dispatch(Events.SECTION.SEARCH.REQUEST_CLASSIFICATION, null, state)
+  } else {
+    FormValidator.showError(formNotify, errorMsg)
+  }
   
 }
 
@@ -73,11 +104,15 @@ var setState = function (e, newState, params) {
     var mosaic = mosaics.find(function (o) {
       return o.id == newState.inputRecipe
     })
-    if (mosaic)
-      inputRecipe.val(mosaic.name).data('reset-btn').enable()
+    mosaic
+      ? inputRecipe.val(mosaic.name).data('reset-btn').enable()
+      : inputRecipeAutocomplete.sepalAutocomplete('reset')
     
     fusionTableId.val(newState.fusionTableId)
-    fusionTableClassColumn.val(newState.fusionTableClassColumn)
+    updateFusionTableClass(newState.fusionTableId)
+    if (newState.fusionTableClassColumn)
+      fusionTableClassColumn.val(newState.fusionTableClassColumn).data('reset-btn').enable()
+    
     rowAlgorithms.find('button').removeClass('active')
     if (newState.algorithm)
       rowAlgorithms.find('button[value=' + newState.algorithm + ']').addClass('active')
@@ -93,19 +128,48 @@ var listMosaicsChanged = function (e, list) {
 }
 
 var updateInputRecipe = function () {
-  var getRecipeOpt = function (mosaic) {
-    return {data: mosaic.id, value: mosaic.name}
-  }
-  
   if (inputRecipeAutocomplete)
     inputRecipeAutocomplete.sepalAutocomplete('dispose')
   
   inputRecipeAutocomplete = inputRecipe.sepalAutocomplete({
-    lookup  : mosaics.map(getRecipeOpt),
+    lookup  : mosaics.map(function (mosaic) {
+      return {data: mosaic.id, value: mosaic.name}
+    }),
     onChange: function (selection) {
       state.inputRecipe = selection ? selection.data : null
     }
   })
+}
+
+var updateFusionTableClass = function (ftId) {
+  if (fusionTableClassColumnAutocomplete)
+    fusionTableClassColumnAutocomplete.sepalAutocomplete('dispose')
+  
+  fusionTableClassColumn.disable()
+  if (ftId) {
+    var params = {
+      url     : 'https://www.googleapis.com/fusiontables/v2/tables/' + ftId + '/columns?key=' + GoogleMapsLoader.KEY,
+      success : function (resp) {
+        FormValidator.resetFormErrors(form)
+        
+        fusionTableClassColumnAutocomplete = fusionTableClassColumn.sepalAutocomplete({
+          lookup  : resp.items.map(function (item) {
+            return {data: item.name, value: item.name}
+          }),
+          onChange: function (selection) {
+            state.fusionTableClassColumn = selection ? selection.data : null
+          }
+        })
+        
+        fusionTableClassColumn.enable()
+      }, error: function (xhr, ajaxOptions, thrownError) {
+        FormValidator.addError(fusionTableId)
+        FormValidator.showError(formNotify, xhr.responseJSON.error.message)
+      }
+      
+    }
+    EventBus.dispatch(Events.AJAX.GET, null, params)
+  }
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setState)

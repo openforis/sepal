@@ -205,6 +205,11 @@ var addClassification = function () {
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
 }
 
+var requestClassification = function (e , state) {
+  console.log("===== requestClassification ", state)
+}
+
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_LIST, showList)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_MOSAIC, addMosaic)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_CLASSIFICATION, addClassification)
+EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CLASSIFICATION, requestClassification)
