@@ -205,10 +205,11 @@ var setState = function (e, newState, params) {
     }, 400)
     
     setSensorGroupState(state.sensorGroup)
-  } else {
-    EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
-    EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
   }
+  // else {
+  //   EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
+  //   EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
+  // }
 }
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setState)
 

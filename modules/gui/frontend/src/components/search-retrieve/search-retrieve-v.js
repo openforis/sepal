@@ -29,7 +29,10 @@ var init = function () {
     SectionCreateMosaic.init(html.find('.section-create-mosaic'))
     SectionClassify.init(html.find('.section-classify'))
     SectionChangeDetection.init(html.find('.section-change-detection'))
-    
+  
+    SectionCreateMosaic.hide()
+    SectionChangeDetection.hide()
+    SectionClassify.hide()
   }
 }
 

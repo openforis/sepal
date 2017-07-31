@@ -80,7 +80,7 @@ var submit = function (e) {
     valid    = false
     errorMsg = 'Please select a valid fusion table class column'
     FormValidator.addError(fusionTableClassColumn)
-  } else if (! state.algorithm) {
+  } else if (!state.algorithm) {
     valid    = false
     errorMsg = 'Please select a valid algorithm'
   }
@@ -107,6 +107,7 @@ var setState = function (e, newState, params) {
     mosaic
       ? inputRecipe.val(mosaic.name).data('reset-btn').enable()
       : inputRecipeAutocomplete.sepalAutocomplete('reset')
+    restoreAoi(newState, params)
     
     fusionTableId.val(newState.fusionTableId)
     updateFusionTableClass(newState.fusionTableId)
@@ -137,8 +138,53 @@ var updateInputRecipe = function () {
     }),
     onChange: function (selection) {
       state.inputRecipe = selection ? selection.data : null
+      
+      state.aoiCode = null
+      state.aoiName = null
+      state.polygon = null
+      
+      EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
+      EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
+      
+      // load aoi
+      if (state.inputRecipe) {
+        var params = {
+          url         : '/processing-recipes/' + state.inputRecipe
+          , beforeSend: function () {
+            // Loader.show()
+          }
+          , success   : function (response) {
+            // Loader.hide({delay: 1000})
+            
+            var inputRecipeState = typeof response === 'string' ? JSON.parse(response) : response
+            if (inputRecipeState.aoiCode) {
+              state.aoiCode = inputRecipeState.aoiCode
+              state.aoiName = inputRecipeState.aoiName
+            } else {
+              state.polygon = inputRecipeState.polygon
+            }
+            restoreAoi(state, {isNew: true})
+          }
+        }
+        EventBus.dispatch(Events.AJAX.GET, null, params)
+      }
+      
     }
   })
+}
+
+var restoreAoi = function (s, params) {
+  if (params.isNew) {
+    
+    if (s.aoiCode && s.aoiName) {
+      EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
+      EventBus.dispatch(Events.MAP.ZOOM_TO, null, s.aoiCode, true)
+    } else if (s.polygon) {
+      EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.RESTORE_DRAWN_AOI, null, s.polygon)
+    }
+  }
+  
 }
 
 var updateFusionTableClass = function (ftId) {
