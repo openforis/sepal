@@ -23,7 +23,7 @@ var hide = function () {
   // }
 }
 
-var setActiveState = function (activeState) {
+var setActiveState = function (e, activeState) {
   state = activeState
   if (!state)
     container.hide(0)

@@ -74,11 +74,11 @@ var _loadMosaic = function (id, callback) {
       Loader.hide({delay: 1000})
       
       var state = typeof response === 'string' ? JSON.parse(response) : response
+      delete state['mosaic']
       
       setTimeout(function () {
         switch (state.type) {
           case Model.TYPES.MOSAIC:
-            delete state['mosaic']
             View.showMosaic()
             break
           case Model.TYPES.CLASSIFY:
@@ -205,9 +205,40 @@ var addClassification = function () {
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
 }
 
-var requestClassification = function (e , state) {
-  EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
-  EventBus.dispatch(Events.SECTION.REDUCE)
+var fakeMosaic = function (state) {
+  // faking mosaic preview
+  var d = {
+    targetDayOfYearWeight: 0.5,
+    bands                : 'red, green, blue',
+    dataSet              : 'LANDSAT',
+    sceneIds             : 'LC81850322016191LGN01,LC81850322016223LGN01,LC81850322016175LGN01,LC81850332016223LGN01,LC81850332016191LGN01,LC81860322016214LGN01,LC81860322016230LGN01,LC81860322016182LGN01,LC81870312016205LGN01,LC81870312016189LGN01,LC81860312016214LGN01,LC81860312016182LGN01,LE71860312016206NSG00,LC81850312016191LGN01,LC81850312016223LGN01,LC81850312016239LGN01,LC81870302016205LGN01,LE71870302016213NSG00,LC81870302016189LGN01,LC81860302016214LGN01,LC81860302016230LGN01,LC81860302016182LGN01',
+    countryIso           : 'ALB',
+    targetDayOfYear      : 213,
+    maskSnow             : true,
+    brdfCorrect          : true
+  }
+  var p = {
+    url         : '/api/data/mosaic/preview',
+    data        : d
+    , beforeSend: function () {
+      Loader.show()
+    }
+    , success   : function (response) {
+      state.mosaicPreview = true
+      state.mosaic = {mapId: response.mapId, token: response.token}
+      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, null, state.mosaic.mapId, state.mosaic.token)
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+      
+      EventBus.dispatch(Events.SECTION.REDUCE)
+      
+      Loader.hide({delay: 500})
+    }
+  }
+  EventBus.dispatch(Events.AJAX.POST, null, p )
+}
+
+var requestClassification = function (e, state) {
+  fakeMosaic(state)
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_LIST, showList)
