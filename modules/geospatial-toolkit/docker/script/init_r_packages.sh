@@ -42,6 +42,7 @@ R -e "pacman::p_load(\
         'rmarkdown',\
         'rPython',\
         'RSQLite',\
+        'RStoolbox',\
         'shiny',\
         'shinyBS',\
         'shinydashboard',\
