@@ -83,7 +83,6 @@
                 <div class="row search-section section-classify height95">
                     <div class="col-12 height100">
 
-
                         <form class="form-theme">
                             <div class="row form-group">
                                 <label class="form-label col-2" for="classify-name">Name</label>
@@ -144,7 +143,68 @@
                 <!--Change detection-->
                 <div class="row search-section section-change-detection height95">
                     <div class="col-12 height100">
-                        Change Detection
+
+                        <form class="form-theme">
+                            <div class="row form-group">
+                                <label class="form-label col-2" for="change-detection-name">Name</label>
+                                <div class="col-4">
+                                    <input type="text" class="form-control" id="change-detection-name" name="name" value=""
+                                           placeholder="Select a name">
+                                </div>
+                            </div>
+
+                            <div class="row form-group">
+                                <label class="form-label col-sm-2" for="input-recipe1">Source input recipe</label>
+                                <div class="col-4">
+                                    <input type="text" class="form-control" id="input-recipe1" name="input-recipe1"
+                                           placeholder="Select the source recipe">
+                                </div>
+                            </div>
+
+                            <div class="row form-group">
+                                <label class="form-label col-sm-2" for="input-recipe2">Target input recipe</label>
+                                <div class="col-4">
+                                    <input type="text" class="form-control" id="input-recipe2" name="input-recipe2"
+                                           placeholder="Select the target recipe">
+                                </div>
+                            </div>
+
+                            <div class="row form-group">
+                                <label class="form-label col-sm-2" for="fusion-table-id-cd">Fusion table id</label>
+                                <div class="col-4 p-r-0">
+                                    <input type="text" class="form-control" id="fusion-table-id-cd" name="fusion-table-id"
+                                           placeholder="Enter a fusion table id">
+                                </div>
+                                <label class="form-label col-sm-2 text-align-right" for="fusion-table-class-column-cd">Class column</label>
+                                <div class="col-4">
+                                    <input type="text" class="form-control" id="fusion-table-class-column-cd" name="fusion-table-class-column"
+                                           placeholder="Select a column">
+                                </div>
+                            </div>
+
+                            <div class="row row-algorithm-btns form-group">
+                                <label class="form-label col-sm-2" for="fusion-table-id">Algorithm</label>
+                                <div class="col-10">
+                                    <button type="button" class="btn btn-base round p-x-1 p-y-0-5 m-r-1" value="cart">Cart</button>
+                                    <button type="button" class="btn btn-base round p-x-1 p-y-0-5" value="decisionTree">Decision tree</button>
+                                </div>
+                            </div>
+
+                            <div class="row form-group form-group-buttons no-padding">
+
+                                <div class="col-12 text-align-center form-notify form-error"/>
+
+                                <div class="col-12 text-align-center">
+                                    <button type="submit" class="btn btn-base round icon p-y-1">
+                                        <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                                        Change detection
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </form>
+
                     </div>
                 </div>
             </div>
@@ -162,7 +222,7 @@
                         <button type="button" class="btn btn-base round p-y-0-5 width30 btn-add-classification">
                             <i class="fa fa-plus-circle"></i> Classification
                         </button>
-                        <button type="button" class="btn btn-base round p-y-0-5 width30 btn-add-change-detection disabled">
+                        <button type="button" class="btn btn-base round p-y-0-5 width30 btn-add-change-detection">
                             <i class="fa fa-plus-circle"></i> Change detection
                         </button>
                     </div>

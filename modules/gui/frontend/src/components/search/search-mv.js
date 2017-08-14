@@ -186,6 +186,7 @@ var addMosaic = function () {
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
 }
 
+//classification
 var addClassification = function () {
   
   var getDefaultState = function () {
@@ -225,7 +226,7 @@ var fakeMosaic = function (state) {
     }
     , success   : function (response) {
       state.mosaicPreview = true
-      state.mosaic = {mapId: response.mapId, token: response.token}
+      state.mosaic        = {mapId: response.mapId, token: response.token}
       EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, null, state.mosaic.mapId, state.mosaic.token)
       EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
       
@@ -234,10 +235,35 @@ var fakeMosaic = function (state) {
       Loader.hide({delay: 500})
     }
   }
-  EventBus.dispatch(Events.AJAX.POST, null, p )
+  EventBus.dispatch(Events.AJAX.POST, null, p)
 }
 
 var requestClassification = function (e, state) {
+  fakeMosaic(state)
+}
+
+//change detection
+var addChangeDetection = function () {
+  
+  var getDefaultState = function () {
+    var date         = moment(new Date())
+    var defaultState = {
+      id                    : guid(),
+      type                  : Model.TYPES.CHANGE_DETECTION,
+      name                  : 'change-detection-' + date.format('YYYY-MM-DD-HH:mm'),
+      inputRecipe1          : null,
+      inputRecipe2          : null,
+      fusionTableId         : null,
+      fusionTableClassColumn: null,
+      algorithm             : null
+    }
+    return defaultState
+  }
+  // View.showMosaic()
+  EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
+}
+
+var requestChangeDetection = function (e, state) {
   fakeMosaic(state)
 }
 
@@ -245,3 +271,5 @@ EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_LIST, showList)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_MOSAIC, addMosaic)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_CLASSIFICATION, addClassification)
 EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CLASSIFICATION, requestClassification)
+EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_CHANGE_DETECTION, addChangeDetection)
+EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CHANGE_DETECTION, requestChangeDetection)

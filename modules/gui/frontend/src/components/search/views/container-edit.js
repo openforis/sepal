@@ -1,10 +1,11 @@
 /**
  * @author Mino Togna
  */
-var EventBus     = require('./../../event/event-bus')
-var Events       = require('./../../event/events')
-var SearchForm   = require('./search-form')
-var ClassifyForm = require('./classify-form')
+var EventBus            = require('./../../event/event-bus')
+var Events              = require('./../../event/events')
+var SearchForm          = require('./search-form')
+var ClassifyForm        = require('./classify-form')
+var ChangeDetectionForm = require('./change-detection-form')
 
 var container              = null
 var sectionSearchForm      = null
@@ -22,6 +23,7 @@ var init = function (html) {
   
   SearchForm.init(sectionSearchForm.find('form'))
   ClassifyForm.init(sectionClassify)
+  ChangeDetectionForm.init(sectionChangeDetection)
   
   hideSection(sectionSearchForm, showSectionOpts)
   hideSection(sectionClassify, showSectionOpts)
