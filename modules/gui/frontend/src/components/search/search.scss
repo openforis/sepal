@@ -1,6 +1,4 @@
 #search {
-  overflow: hidden;
-
   .mode-edit-container {
 
     display: none;
@@ -61,6 +59,11 @@
       input {
         padding: .35rem 0 .5rem .2rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+      }
+
+      .form-control:disabled {
+        opacity: .4;
+        cursor: not-allowed;
       }
 
     }

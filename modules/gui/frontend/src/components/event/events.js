@@ -46,6 +46,9 @@ var Events = {
       , LANDSAT_SCENE_AREAS_LOADED  : 'section.search.landsat_scene_areas_loaded'
       , SENTINEL2_SCENE_AREAS_LOADED: 'section.search.sentinel2_scene_areas_loaded'
       
+      , REQUEST_CLASSIFICATION  : 'section.search.request_classification'
+      , REQUEST_CHANGE_DETECTION: 'section.search.request_change_detection'
+      
       , STATE: {
         ACTIVE_CHANGE                 : 'section.search.model.active_change'
         , ACTIVE_CHANGED              : 'section.search.model.active_changed'

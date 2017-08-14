@@ -59,7 +59,6 @@ var setActiveState = function (e, state) {
     activeMosaic = listMosaics[state.id]
   }
 }
-EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState)
 
 var addMosaic = function (state) {
   listMosaics[state.id] = state
@@ -106,6 +105,7 @@ var removeMosaic = function (e, id, dispatchChange) {
   }
 }
 
+EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setActiveState)
 EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_DELETE, removeMosaic)
 
 module.exports = {

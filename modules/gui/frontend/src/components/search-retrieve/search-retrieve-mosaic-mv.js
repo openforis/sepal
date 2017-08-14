@@ -18,11 +18,16 @@ var getRequestData = function (state, bands) {
   SearchRequestUtils.addAoiRequestParameter(state, data)
   SearchRequestUtils.addTargetDayOfYearRequestParameter(state, data)
   
+  data.mosaicTargetDay       = state.mosaicTargetDay
+  data.mosaicShadowTolerance = state.mosaicShadowTolerance
+  data.maskSnow              = state.maskSnow
+  data.brdfCorrect           = state.brdfCorrect
+  data.median                = state.median
+  
   return data
 }
 
 var previewMosaic = function (e, state) {
-  
   var data   = getRequestData(state, state.mosaicPreviewBand)
   var params = {
     url         : '/api/data/mosaic/preview'

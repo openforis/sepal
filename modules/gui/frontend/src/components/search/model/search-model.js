@@ -29,6 +29,11 @@ var isActive = function (id) {
 
 var activeModelChange = function (e, obj, params) {
   active = obj
+  if (!active) {
+    // if (!active || (params && params.isNew)) {
+    EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
+    EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
+  }
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, null, active, params)
 }
 

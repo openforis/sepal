@@ -1,9 +1,11 @@
 /**
  * @author Mino Togna
  */
-var EventBus = require('./../../event/event-bus')
-var Events   = require('./../../event/events')
-var Form     = require('./search-form')
+var EventBus            = require('./../../event/event-bus')
+var Events              = require('./../../event/events')
+var SearchForm          = require('./search-form')
+var ClassifyForm        = require('./classify-form')
+var ChangeDetectionForm = require('./change-detection-form')
 
 var container              = null
 var sectionSearchForm      = null
@@ -11,18 +13,21 @@ var sectionClassify        = null
 var sectionChangeDetection = null
 var state                  = {}
 
+var showSectionOpts = {delay: 0, duration: 0}
+
 var init = function (html) {
   container              = $(html)
   sectionSearchForm      = container.find('.section-search-form')
   sectionClassify        = container.find('.section-classify')
   sectionChangeDetection = container.find('.section-change-detection')
   
-  Form.init(sectionSearchForm.find('form'))
+  SearchForm.init(sectionSearchForm.find('form'))
+  ClassifyForm.init(sectionClassify)
+  ChangeDetectionForm.init(sectionChangeDetection)
   
-  var initOpts = {delay: 0, duration: 0}
-  hideSection(sectionSearchForm, initOpts)
-  hideSection(sectionClassify, initOpts)
-  hideSection(sectionChangeDetection, initOpts)
+  hideSection(sectionSearchForm, showSectionOpts)
+  hideSection(sectionClassify, showSectionOpts)
+  hideSection(sectionChangeDetection, showSectionOpts)
   
   container.find('.btn-show-list').click(function () {
     EventBus.dispatch(Events.SECTION.SEARCH.VIEW.SHOW_LIST)
@@ -33,11 +38,11 @@ var init = function (html) {
 var showSection = function (section, opts) {
   show()
   if (!section.is(':visible'))
-    section.velocityFadeIn(opts)
+    section.velocityFadeIn(showSectionOpts)
 }
 
 var hideSection = function (section, opts) {
-  section.velocityFadeOut(opts)
+  section.velocityFadeOut(showSectionOpts)
 }
 
 var setState = function (e, s) {

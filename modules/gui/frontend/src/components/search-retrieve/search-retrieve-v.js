@@ -11,7 +11,7 @@ var Model = require('../search/model/search-model')
 var SectionActiveMosaicsList = require('./views/section-active-mosaics-list')
 var SectionCreateMosaic      = require('./views/section-create-mosaic')
 var SectionClassify          = require('./views/section-classify')
-var SectionChangeDetection   = require('./views/section-classify')
+var SectionChangeDetection   = require('./views/section-change-detection')
 
 var html = null
 
@@ -29,7 +29,10 @@ var init = function () {
     SectionCreateMosaic.init(html.find('.section-create-mosaic'))
     SectionClassify.init(html.find('.section-classify'))
     SectionChangeDetection.init(html.find('.section-change-detection'))
-    
+  
+    SectionCreateMosaic.hide()
+    SectionChangeDetection.hide()
+    SectionClassify.hide()
   }
 }
 
