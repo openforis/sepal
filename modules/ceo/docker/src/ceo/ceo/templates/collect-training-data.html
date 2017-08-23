@@ -14,7 +14,15 @@
 <div id="collect" class="container-fluid">
     <div class="form-group row">
         <div class="col">
-            <button type="button" class="btn btn-primary" id="export-btn"><i class="fa fa-download" aria-hidden="true"></i>&nbsp;Export</button>
+            <div class="btn-group" role="group">
+                <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                    <i class="fa fa-download" aria-hidden="true"></i>&nbsp;Export
+                </button>
+                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                    <a id="export-csv" class="dropdown-item" href="#">CSV</a>
+                    <a id="export-fusiontables" class="dropdown-item" href="#">Google Fusion Tables</a>
+                </div>
+            </div>
         </div>
     </div>
     <div class="row" id="list-row">
@@ -748,9 +756,14 @@
             });
         });
 
-        $('#export-btn').click(function(e) {
+        $('#export-csv').click(function(e) {
             e.preventDefault();
             window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export';
+        });
+
+        $('#export-fusiontables').click(function(e) {
+            e.preventDefault();
+            window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export?type=fusiontables';
         });
 
         $('#prev-btn').click(function(e) {

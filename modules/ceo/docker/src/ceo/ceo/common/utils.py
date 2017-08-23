@@ -1,4 +1,4 @@
-import json, hashlib, zlib, io, csv
+import json, hashlib, zlib, io, csv, time
 
 from functools import wraps
 
@@ -10,10 +10,18 @@ def import_sepal_auth(f):
         sepalUser = request.headers.get('sepal-user')
         if not sepalUser:
             return render_template('401.html'), 401
-        user = json.loads(sepalUser)
+        try:
+            user = json.loads(sepalUser)
+        except:
+            return render_template('400.html'), 400
         session['username'] = user.get('username')
         session['roles'] = user.get('roles')
         session['is_admin'] = user.get('admin', False)
+        session['googleTokens'] = user.get('googleTokens')
+        accessToken = session['accessToken']
+        if not session['accessToken'] and session['googleTokens']:
+            accessToken = session['googleTokens'].get('accessToken')
+        session['accessToken'] = accessToken
         return f(*args, **kwargs)
     return wrapper
 
@@ -71,3 +79,6 @@ def crc32(file):
     for eachLine in file:
         prev = zlib.crc32(eachLine, prev)
     return '%X' % (prev & 0xFFFFFFFF)
+
+def getTimestamp():
+    return str(int(time.time()))
