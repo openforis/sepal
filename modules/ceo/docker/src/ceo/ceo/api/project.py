@@ -1,4 +1,4 @@
-import os, logging, json, datetime, zipfile, shutil, csv
+import os, logging, requests, json, datetime, zipfile, shutil, csv
 import xml.etree.ElementTree as ET
 
 from flask import Response, session, request, redirect, url_for, jsonify, render_template, send_file, abort
@@ -9,7 +9,7 @@ from .. import mongo
 
 import uuid
 
-from ..common.utils import import_sepal_auth, requires_auth, propertiesFileToDict, allowed_file, listToCSVRowString, crc32
+from ..common.utils import import_sepal_auth, requires_auth, propertiesFileToDict, allowed_file, listToCSVRowString, crc32, getTimestamp
 
 from werkzeug.utils import secure_filename
 
@@ -205,13 +205,27 @@ def projectDelete(id=None):
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
-def projectExportCSV(id=None):
-    csvString = ''
-    #
+def projectExport(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     username = session.get('username')
     records = list(mongo.db.records.find({'project_id': id, 'username': username}, {'_id': False}))
-    filename = project['name'] + '.csv'
+    #
+    exportType = request.args.get('type')
+    if exportType == 'fusiontables':
+        fusionTables = projectToFusionTables(project, records)
+        googleapis_ft_url = 'https://www.googleapis.com/fusiontables/v2'
+        url = '%s/tables?&access_token=%s' % (googleapis_ft_url, session['accessToken'])
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        r = requests.post(url, data=json.dumps(fusionTables), headers=headers)
+        return jsonify(r.json())
+    else:
+        filename = project['name'] + '-' + getTimestamp()
+        csvString = projectToCsv(project, records)
+        headers = {'Content-disposition': 'attachment; filename=' + filename + '.csv'}
+        return Response(csvString, mimetype="text/csv", headers=headers)
+
+def projectToCsv(project, records):
+    csvString = ''
     #
     codeListNames = []
     for codeList in project['codeLists']:
@@ -266,8 +280,48 @@ def projectExportCSV(id=None):
                 value = values.get(codeListName, '')
                 csvRowData.append(value)
             csvString += listToCSVRowString(csvRowData)
+    return csvString
+
+def projectToFusionTables(project, records):
+    ft = {
+        'name': project['name'] + '-' + getTimestamp(),
+        'columns': [],
+        'isExportable': False
+    }
     #
-    return Response(csvString, mimetype="text/csv", headers={"Content-disposition": "attachment; filename=" + filename})
+    codeListNames = []
+    for codeList in project['codeLists']:
+        codeListNames.append(codeList['name'])
+    projectType = project['type']
+    if projectType == PROJECT_TYPE_CEP:
+        if 'confidence' not in codeListNames:
+            codeListNames.append('confidence')
+        objs = project['plots'][0].get('values')
+        if objs:
+            colNames = [o['key'] for o in objs] + codeListNames
+            for index, colName in enumerate(colNames):
+                ft['columns'].append({
+                    'columnId': index,
+                    'name': colName,
+                    'type': 'STRING'
+                })
+        else:
+            colNames = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
+            for index, colName in enumerate(colNames):
+                ft['columns'].append({
+                    'columnId': index,
+                    'name': colName,
+                    'type': 'STRING'
+                })
+    if projectType == PROJECT_TYPE_TRAINING_DATA:
+        colNames = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
+        for index, colName in enumerate(colNames):
+            ft['columns'].append({
+                'columnId': index,
+                'name': colName,
+                'type': 'STRING'
+            })
+    return ft
 
 def saveFileFromRequest(file):
     # project file
