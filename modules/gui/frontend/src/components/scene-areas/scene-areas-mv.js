@@ -25,7 +25,7 @@ var stateChanged = function (e, s, params) {
         
         updateCount()
       } else
-        hideActive()
+        ActiveView.clear()
     }
   } else {
     ActiveView.clear()
