@@ -40,6 +40,7 @@ var requestSceneAreas = function (e, state) {
         state.sceneAreas[sceneArea.sceneAreaId] = {polygon: sceneArea.polygon, selection: []}
       })
       state.mosaicPreviewBand = null
+      state.scenesPreview     = true
       
       EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true})
       EventBus.dispatch(Events.SECTION.REDUCE)

@@ -1,8 +1,6 @@
 /**
  * @author Mino Togna
  */
-var d3 = require('d3')
-
 var EventBus  = require('../event/event-bus')
 var Events    = require('../event/events')
 var MapLoader = require('../map-loader/map-loader')
@@ -92,9 +90,7 @@ var addDrawnAoiLayer = function (e, layer) {
   if (layer) {
     layer.setMap(map)
     aoiDrawingManager = layer
-    
-    aoiLayer = null
-    aoiCode  = null
+
   }
 }
 
@@ -110,10 +106,7 @@ var removeDrawnAoiLayer = function (e, layer) {
 }
 
 var ploygonDrawn = function (e, polygonGeoJSON, polygon, zoom) {
-  if (aoiLayer) {
-    aoiLayer.setMap(null)
-    aoiLayer = null
-  }
+  removeAoiLayer()
   if (aoiDrawnPolygon) {
     aoiDrawnPolygon.setMap(null)
   }

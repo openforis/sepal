@@ -41,7 +41,6 @@ var enable = function ( e ) {
         EventBus.dispatch( Events.SECTION.SHOW, null, 'search', { keepAoiLayerVisible: true, source : 'app-section' } )
     } )
     
-    // EventBus.dispatch( Events.MAP.ADD_LAYER, null, drawingManager )
     EventBus.dispatch( Events.MAP.ADD_DRAWN_AOI_LAYER, null, drawingManager )
 }
 

@@ -7,7 +7,7 @@ var EventBus        = require('../event/event-bus')
 var Events          = require('../event/events')
 var GoogleMapsLayer = require('./scene-areas-googlemaps-layer')
 
-var zoomLevel = 6
+var zoomLevel = 3
 
 var SceneAreasView = function () {
   this.layer   = null
