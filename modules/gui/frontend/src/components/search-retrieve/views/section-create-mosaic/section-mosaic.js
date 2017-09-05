@@ -15,8 +15,9 @@ var html                  = null
 var btnPreviewMosaic      = null
 var btnRetrieveMosaic     = null
 var btnToggleVisibility   = null
-var sliderTargetDay       = null
+var sliderTargetDayWeight = null
 var sliderShadowTolerance = null
+var sliderHazeTolerance   = null
 var btnOptions            = null
 
 var state = {}
@@ -34,8 +35,9 @@ var init = function (container) {
   addMosaicOptions(html.find('.row-mosaic-preview'))
   addMosaicOptions(html.find('.row-mosaic-retrieve'))
   
-  sliderTargetDay       = html.find('.target-day-slider')
+  sliderTargetDayWeight = html.find('.target-day-weight-slider')
   sliderShadowTolerance = html.find('.shadow-tolerance-slider')
+  sliderHazeTolerance   = html.find('.haze-tolerance-slider')
   btnOptions            = html.find('.btn-mosaic-option')
   
   initSliders()
@@ -111,8 +113,9 @@ var initSliders = function () {
       }
     })
   }
-  initSlider(sliderTargetDay, 'mosaicTargetDay')
+  initSlider(sliderTargetDayWeight, 'mosaicTargetDayWeight')
   initSlider(sliderShadowTolerance, 'mosaicShadowTolerance')
+  initSlider(sliderHazeTolerance,  'mosaicHazeTolerance')
 }
 
 var setActiveState = function (e, activeState, params) {
@@ -133,11 +136,14 @@ var setActiveState = function (e, activeState, params) {
   }
   
   if (state && state.type === SModel.TYPES.MOSAIC) {
-    $.each(sliderTargetDay, function (i, slider) {
-      $(slider).get(0).noUiSlider.set(state.mosaicTargetDay)
+    $.each(sliderTargetDayWeight, function (i, slider) {
+      $(slider).get(0).noUiSlider.set(state.mosaicTargetDayWeight)
     })
     $.each(sliderShadowTolerance, function (i, slider) {
       $(slider).get(0).noUiSlider.set(state.mosaicShadowTolerance)
+    })
+    $.each(sliderHazeTolerance, function (i, slider) {
+      $(slider).get(0).noUiSlider.set(state.mosaicHazeTolerance)
     })
     
     $.each(btnOptions, function (i, btn) {

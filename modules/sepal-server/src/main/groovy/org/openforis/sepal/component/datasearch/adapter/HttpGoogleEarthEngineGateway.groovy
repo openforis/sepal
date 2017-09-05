@@ -69,9 +69,9 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
                 targetDayOfYear      : query.targetDayOfYear,
                 targetDayOfYearWeight: query.targetDayOfYearWeight,
                 shadowTolerance      : query.shadowTolerance,
+                hazeTolerance        : query.hazeTolerance,
                 medianComposite      : query.medianComposite,
                 brdfCorrect          : query.brdfCorrect,
-                maskWater            : query.maskWater,
                 maskSnow             : query.maskSnow,
                 bands                : query.bands,
                 sceneIds             : query.sceneIds

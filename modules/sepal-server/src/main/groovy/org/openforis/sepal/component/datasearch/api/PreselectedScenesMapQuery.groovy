@@ -10,9 +10,9 @@ class PreselectedScenesMapQuery {
     int targetDayOfYear
     double targetDayOfYearWeight
     double shadowTolerance
+    double hazeTolerance
     boolean medianComposite
     boolean brdfCorrect
-    boolean maskWater
     boolean maskSnow
     List<String> bands
 }

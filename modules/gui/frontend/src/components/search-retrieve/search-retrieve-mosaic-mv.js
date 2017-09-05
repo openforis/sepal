@@ -10,20 +10,20 @@ var SearchRequestUtils = require('./../search/search-request-utils')
 
 var getRequestData = function (state, bands) {
   var data = {
-    targetDayOfYearWeight: 0.5
-    , bands              : bands
+    bands              : bands
     , dataSet            : state.sensorGroup
   }
   SearchRequestUtils.addSceneIds(state, data)
   SearchRequestUtils.addAoiRequestParameter(state, data)
   SearchRequestUtils.addTargetDayOfYearRequestParameter(state, data)
-  
-  data.mosaicTargetDay       = state.mosaicTargetDay
-  data.mosaicShadowTolerance = state.mosaicShadowTolerance
+
+  data.targetDayOfYearWeight = state.mosaicTargetDayWeight
+  data.shadowTolerance       = state.mosaicShadowTolerance
+  data.hazeTolerance         = state.mosaicHazeTolerance
   data.maskSnow              = state.maskSnow
   data.brdfCorrect           = state.brdfCorrect
-  data.median                = state.median
-  
+  data.medianComposite       = state.median
+
   return data
 }
 
@@ -41,18 +41,18 @@ var previewMosaic = function (e, state) {
       // EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {loadMosaic:true})
       EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
       EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW)
-      
+
       Loader.hide({delay: 500})
     }
   }
-  
+
   EventBus.dispatch(Events.AJAX.POST, null, params)
 }
 
 var retrieveMosaic = function (e, state, obj) {
   var data  = getRequestData(state, obj.bands)
   data.name = obj.name
-  
+
   var params = {
     url         : '/api/data/mosaic/retrieve'
     , data      : data
@@ -60,7 +60,7 @@ var retrieveMosaic = function (e, state, obj) {
       setTimeout(function () {
         EventBus.dispatch(Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager')
       }, 100)
-      
+
       EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW)
     }
     , success   : function (e) {
@@ -68,7 +68,7 @@ var retrieveMosaic = function (e, state, obj) {
     }
   }
   EventBus.dispatch(Events.AJAX.POST, null, params)
-  
+
 }
 
 //mosaic section search retrieve events

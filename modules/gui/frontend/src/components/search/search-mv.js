@@ -179,7 +179,11 @@ var addMosaic = function () {
       minScenes        : 1,
       maxScenes        : null,
       maskSnow         : true,
-      brdfCorrect      : true
+      brdfCorrect      : true,
+      median           : false,
+      mosaicTargetDayWeight:0,
+      mosaicShadowTolerance:1,
+      mosaicHazeTolerance:0.05
     }
     return defaultState
   }

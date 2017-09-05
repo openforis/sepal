@@ -51,11 +51,11 @@ class DataSearchEndpoint {
                 def bands = params.required('bands', String).split(',')*.trim()
                 def targetDayOfYear = params.required('targetDayOfYear', int)
                 def targetDayOfYearWeight = params.required('targetDayOfYearWeight', double)
-                def shadowTolerance = params.optional('shadowTolerance', Double) ?: 1
-                def medianComposite = params.optional('medianComposit', Boolean) ?: false
-                def brdfCorrect = params.optional('brdfCorrect', Boolean) ?: true
-                def maskWater = params.optional('maskWater', Boolean) ?: false
-                def maskSnow = params.optional('maskSnow', Boolean) ?: true
+                def shadowTolerance = params.required('shadowTolerance', double)
+                def hazeTolerance = params.required('hazeTolerance', double)
+                def medianComposite = params.required('medianComposite', boolean)
+                def brdfCorrect = params.required('brdfCorrect', boolean)
+                def maskSnow = params.required('maskSnow', Boolean)
 
                 def mapLayer = geeGateway.preview(new PreselectedScenesMapQuery(
                         dataSet: dataSet,
@@ -64,9 +64,9 @@ class DataSearchEndpoint {
                         targetDayOfYear: targetDayOfYear,
                         targetDayOfYearWeight: targetDayOfYearWeight,
                         shadowTolerance: shadowTolerance,
+                        hazeTolerance: hazeTolerance,
                         medianComposite: medianComposite,
                         brdfCorrect: brdfCorrect,
-                        maskWater: maskWater,
                         maskSnow: maskSnow,
                         bands: bands
                 ), sepalUser)
