@@ -3,9 +3,9 @@ from abc import abstractmethod
 import ee
 from datetime import datetime
 
-from first_pass import FirstPass
+from analyze import Analyze
 from .. import MosaicSpec
-from ..mosaic import CollectionDef
+from ..mosaic import DataSet
 
 
 class Sentinel2MosaicSpec(MosaicSpec):
@@ -19,12 +19,8 @@ class Sentinel2MosaicSpec(MosaicSpec):
         ])
         self.brdf_correct = False
 
-    def _collection_defs(self):
-        return [CollectionDef(
-            collection=ee.ImageCollection('COPERNICUS/S2').filter(self._create_image_filter()),
-            bands=_all_bands,
-            first_pass=_first_pass
-        )]
+    def _data_sets(self):
+        return [Sentinel2DataSet(self._create_image_filter())]
 
     @abstractmethod
     def _create_image_filter(self):
@@ -76,18 +72,6 @@ class Sentinel2ManualMosaicSpec(Sentinel2MosaicSpec):
         return 'sentinel.Sentinel2ManualMosaicSpec(' + str(self.spec) + ')'
 
 
-_all_bands = {
-    'aerosol': 'B1',
-    'blue': 'B2',
-    'green': 'B3',
-    'red': 'B4',
-    'nir': 'B8A',
-    'swir1': 'B11',
-    'swir2': 'B12',
-    'cirrus': 'B10',
-    'waterVapor': 'B9'
-}
-
 _scale_by_band = {
     'blue': 10,
     'green': 10,
@@ -101,5 +85,29 @@ _scale_by_band = {
 }
 
 
-def _first_pass(image, mosaicDef, collectionDef):
-    return FirstPass(image, collectionDef).apply()
+class Sentinel2DataSet(DataSet):
+    def __init__(self, image_filter):
+        super(Sentinel2DataSet, self).__init__()
+        self.image_filter = image_filter
+
+    def to_collection(self):
+        return ee.ImageCollection('COPERNICUS/S2').filter(self.image_filter)
+
+    def analyze(self, image):
+        return Analyze(image).apply()
+
+    def masks_cloud_on_analysis(self):
+        return False
+
+    def bands(self):
+        return {
+            'aerosol': 'B1',
+            'blue': 'B2',
+            'green': 'B3',
+            'red': 'B4',
+            'nir': 'B8A',
+            'swir1': 'B11',
+            'swir2': 'B12',
+            'cirrus': 'B10',
+            'waterVapor': 'B9'
+        }

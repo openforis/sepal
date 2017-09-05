@@ -1,7 +1,12 @@
+from abc import abstractmethod
+
 import ee
 
-from first_pass import FirstPass
-from second_pass import SecondPass
+from analyze import analyze
+from clouds import mask_clouds
+from days_from_target import mask_days_from_target
+from haze import mask_haze
+from shadows import mask_shadows
 
 
 class Mosaic(object):
@@ -9,97 +14,57 @@ class Mosaic(object):
         super(Mosaic, self).__init__()
         self.mosaic_def = mosaic_def
 
-    def create(self, collection_defs):
-        # collection_def = collection_defs[0]
-        # image = ee.Image(collection_def.collection.first())
-        # mosaic = FirstPass(image).apply(
-        #     mosaic_def=self.mosaic_def,
-        #     collection_def=collection_def)
+    def create(self, data_sets):
+        collection = ee.ImageCollection([])
+        for data_set in data_sets:
+            data_set_collection = analyze(self.mosaic_def, data_set, data_set.to_collection())
+            if not data_set.masks_cloud_on_analysis():
+                data_set_collection = mask_clouds(self.mosaic_def, data_set_collection)
+            collection = ee.ImageCollection(collection.merge(data_set_collection))
 
-        collection = self._map_first_pass(collection_defs)
-        collection = self._map_second_pass(collection)
-        if self.mosaic_def.target_day_weight:
-            collection = self._map_third_pass(collection)
-        mosaic = self._to_mosaic(collection)
-        return mosaic \
-            .select(self.mosaic_def.bands) \
-            .clip(self.mosaic_def.aoi.geometry())
+        collection = mask_shadows(self.mosaic_def, collection)
+        collection = mask_haze(self.mosaic_def, collection)
+        collection = mask_days_from_target(self.mosaic_def, collection)
 
-    def _map_first_pass(self, collection_defs):
-        def first_pass(collection_def):
-            def apply(image):
-                return FirstPass(image).apply(
-                    mosaic_def=self.mosaic_def,
-                    collection_def=collection_def)
-
-            return collection_def.collection.map(apply)
-
-        def merge(c1, c2):
-            return ee.ImageCollection(c1.merge(c2))
-
-        collections = [first_pass(collection_def) for collection_def in collection_defs]
-        return reduce(merge, collections)
-
-    def _map_second_pass(self, collection):
-
-        reduced = collection \
-            .select(['waterScore', 'landScore', 'shadowFreeScore', 'snow']) \
-            .reduce(ee.Reducer.percentile([50, 100]))
-
-        def second_pass(image):
-            return SecondPass(image).apply(
-                max_land_score=reduced.select('landScore_p100'),
-                max_water_score=reduced.select('waterScore_p100'),
-                median_shadow_free_score=reduced.select('shadowFreeScore_p50'),
-                snow_exists=reduced.select('snow_p50'),
-                mosaic_def=self.mosaic_def)
-
-        return collection.map(second_pass)
-
-    def _map_third_pass(self, collection):
-        threshold = (1 - self.mosaic_def.target_day_weight) * 100
-        days_from_target_threshold = collection.reduce(ee.Reducer.percentile([threshold]))
-
-        def third_pass(image):
-            return image.updateMask(
-                image.select('daysFromTarget').lte(days_from_target_threshold)
-            )
-
-        return collection.map(third_pass)
+        return self._to_mosaic(collection)
 
     def _to_mosaic(self, collection):
-        bands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
-        median = collection.median()
+        distanceBands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
+        median = collection.select(distanceBands).median()
         if self.mosaic_def.median_composite:
             mosaic = median
         else:
-            def distance_to_median(image):
+            def add_distance(image):
                 distanceByBand = image.expression(
                     '1 - abs((i - m) / (i + m))', {
-                        'i': image.select(bands),
-                        'm': median.select(bands)})
+                        'i': image.select(distanceBands),
+                        'm': median.select(distanceBands)})
                 return image.addBands(
                     distanceByBand.reduce(ee.Reducer.sum()).rename(['distanceToMedian'])
                 )
 
-            collection = collection.map(distance_to_median)
+            collection = collection.map(add_distance)
             mosaic = collection.qualityMosaic('distanceToMedian')
 
-        return mosaic
+        return mosaic \
+            .select(self.mosaic_def.bands) \
+            .uint16() \
+            .clip(self.mosaic_def.aoi.geometry())
 
 
-class CollectionDef(object):
-    def __init__(self, collection, bands, first_pass):
-        """Creates a CollectionDef.
-        :param collection: The EE image collection.
-        :type collection: ee.ImageCollection
+class DataSet(object):
+    @abstractmethod
+    def to_collection(self):
+        raise AssertionError('Method in subclass expected to have been invoked')
 
-        :param bands: A dict of image band name by normalized band name.
-        :type bands: dict
+    @abstractmethod
+    def bands(self):
+        raise AssertionError('Method in subclass expected to have been invoked')
 
-        :param multiplier: Value to multiply image with to between 0 and 10,000.
-        :type multiplier: float
-        """
-        self.collection = collection
-        self.bands = bands
-        self.first_pass = first_pass
+    @abstractmethod
+    def analyze(self, image):
+        raise AssertionError('Method in subclass expected to have been invoked')
+
+    @abstractmethod
+    def masks_cloud_on_analysis(self):
+        raise AssertionError('Method in subclass expected to have been invoked')

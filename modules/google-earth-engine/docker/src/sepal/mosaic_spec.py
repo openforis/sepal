@@ -14,6 +14,7 @@ class MosaicSpec(ImageSpec):
         self.target_day = int(spec.get('targetDayOfYear', 1))
         self.target_day_weight = float(spec.get('targetDayOfYearWeight', 0))
         self.shadow_tolerance = float(spec.get('shadowTolerance', 1))
+        self.haze_tolerance = float(spec.get('hazeTolerance', 0.5))
         self.bands = spec['bands']
         self.median_composite = spec.get('median_composite', False)
         self.mask_snow = spec.get('maskSnow', True)
@@ -29,26 +30,21 @@ class MosaicSpec(ImageSpec):
 
     def _ee_image(self):
         logging.info('Creating mosaic of ' + str(self))
-        return Mosaic(self).create(self._collection_defs())
+        return Mosaic(self).create(self._data_sets())
 
     @abstractmethod
-    def _collection_defs(self):
-        """Creates an ee.Image based on the spec.
-
-        :return: A list of mosaic.CollectionDef instances
-        :rtype: list
-        """
+    def _data_sets(self):
         raise AssertionError('Method in subclass expected to have been invoked')
 
 
 _viz_by_bands = {
-    'red, green, blue': lambda params: {'bands': 'red, green, blue', 'min': 0, 'max': 5000,
-                                        'gamma': '2.0, 2.1, 1.8'},
-    'nir, red, green': lambda params: {'bands': 'nir, red, green', 'min': 0, 'max': 5000, 'gamma': 1.7},
-    'nir, swir1, red': lambda params: {'bands': 'nir, swir1, red', 'min': 0, 'max': 5000, 'gamma': 1.7},
-    'swir2, nir, red': lambda params: {'bands': 'swir2, nir, red', 'min': 0, 'max': 5000, 'gamma': 1.7},
-    'swir2, swir1, red': lambda params: {'bands': 'swir2, swir1, red', 'min': 0, 'max': 5000, 'gamma': 1.7},
-    'swir2, nir, green': lambda params: {'bands': 'swir2, nir, green', 'min': 0, 'max': 5000, 'gamma': 1.7},
+    'red, green, blue': lambda params: {'bands': 'red, green, blue', 'min': '200, 400, 600', 'max': '2400, 2200, 2400',
+                                        'gamma': 1.2},
+    'nir, red, green': lambda params: {'bands': 'nir, red, green', 'min': '500, 200, 400', 'max': '5000, 2400, 2200'},
+    'nir, swir1, red': lambda params: {'bands': 'nir, swir1, red', 'min': 0, 'max': 5000, 'gamma': 1.5},
+    'swir2, nir, red': lambda params: {'bands': 'swir2, nir, red', 'min': '0, 500, 200', 'max': '1800, 6000, 3500'},
+    'swir2, swir1, red': lambda params: {'bands': 'swir2, swir1, red', 'min': '0, 500, 200', 'max': '1800, 3000, 2400'},
+    'swir2, nir, green': lambda params: {'bands': 'swir2, nir, green', 'min': '0, 500, 400', 'max': '1800, 6000, 3500'},
     'unixTimeDays': lambda params: {
         'bands': 'unixTimeDays',
         'min': params['from_days_since_epoch'],

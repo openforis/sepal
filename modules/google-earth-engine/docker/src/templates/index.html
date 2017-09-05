@@ -41,12 +41,17 @@
 
                 <p>
                     <label for="target-day-of-year-weight">Target day of year weight</label><br/>
-                    <input type="text" id="target-day-of-year-weight" value="0.5">
+                    <input type="text" id="target-day-of-year-weight" value="0">
                 </p>
 
                 <p>
                     <label for="shadow-tolerance">Shadow tolerance</label><br/>
-                    <input type="text" id="shadow-tolerance" value="0.5">
+                    <input type="text" id="shadow-tolerance" value="1">
+                </p>
+
+                <p>
+                    <label for="haze-tolerance">Haze tolerance</label><br/>
+                    <input type="text" id="haze-tolerance" value="0.5">
                 </p>
 
                 <p id="dataSet">
@@ -55,9 +60,6 @@
 
                     <input id="dataSet.SENTINEL2" type="radio" name="dataSet" value="SENTINEL2">
                     <label for="dataSet.SENTINEL2">Sentinel 2</label>
-
-                    <input id="dataSet.ASTER" type="radio" name="dataSet" value="ASTER">
-                    <label for="dataSet.ASTER">ASTER</label>
                 </p>
 
                 <p id="sensors">
@@ -87,13 +89,18 @@
                 </p>
 
                 <p>
-                    <input id="median-composite" type="checkbox" name="median-composite">
-                    <label for="median-composite">Median composite</label>
+                    <input id="mask-snow" type="checkbox" name="mask-snow" checked>
+                    <label for="mask-snow">Mask snow</label>
                 </p>
 
                 <p>
                     <input id="brdf-correct" type="checkbox" name="brdf-correct">
                     <label for="brdf-correct">BRDF correct</label>
+                </p>
+
+                <p>
+                    <input id="median-composite" type="checkbox" name="median-composite">
+                    <label for="median-composite">Median composite</label>
                 </p>
                 <p>
                     <label for="bands1">Bands 1</label><br/>

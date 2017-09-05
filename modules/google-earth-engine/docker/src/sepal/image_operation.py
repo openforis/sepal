@@ -23,6 +23,10 @@ class ImageOperation(object):
                  self.toImage(falseValue, args)
                  .where(self.toImage(condition, args), self.toImage(trueValue, args)))
 
+    def setAll(self, image):
+        # Replace bands in source image, to ensure all image properties are preserved
+        self.image = self.image.addBands(image, None, True)
+
     def invertMask(self, mask):
         return mask.multiply(-1).add(1)
 

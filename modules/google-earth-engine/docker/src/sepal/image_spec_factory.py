@@ -1,5 +1,3 @@
-from aster import AsterAutomaticMosaicSpec
-from aster import AsterManualMosaicSpec
 from image_spec import ImageSpec
 from landsat import LandsatAutomaticMosaicSpec
 from landsat import LandsatManualMosaicSpec
@@ -15,12 +13,6 @@ def create(spec):
         type = {
             'manual': Sentinel2ManualMosaicSpec,
             'automatic': Sentinel2AutomaticMosaicSpec,
-        }[spec['type']]
-        return type(spec)
-    elif spec.get('dataSet', None) == 'ASTER':
-        type = {
-            'manual': AsterManualMosaicSpec,
-            'automatic': AsterAutomaticMosaicSpec,
         }[spec['type']]
         return type(spec)
     else:
