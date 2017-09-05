@@ -1,8 +1,8 @@
 import logging
+import os
 from threading import Thread
 
 import httplib2
-import os
 from apiclient import discovery
 from apiclient.http import MediaIoBaseDownload
 from datetime import datetime
@@ -92,7 +92,7 @@ class DriveDownload(object):
                         'description': "Canceled"})
                     return False  # Canceled
                 self._delete(drive_file['id'])
-                return True # Succeeded
+                return True  # Succeeded
             except Exception:
                 logger.exception(
                     'Download from Google Drive failed. file: ' + drive_file['name'] + ', retry: ' + str(retry)
@@ -106,7 +106,7 @@ class DriveDownload(object):
             'state': 'FAILED',
             'description': 'Download from Google Drive failed'})
         self.stop()
-        return False # Failed
+        return False  # Failed
 
     def _touch(self, folder_id):
         now = datetime.utcnow()
@@ -124,12 +124,25 @@ class DriveDownload(object):
 
     def _files_in_folder(self, folder_id):
         """Lists files in drive folder, returning dict with id and name"""
+        files = []
         if not folder_id:
-            return []
-        return self.drive.files().list(
-            q="'%s' in parents" % folder_id,
-            fields="files(id, name)"
-        ).execute().get('files', [])
+            return files
+
+        def list_files(previousFiles=[], pageToken=None):
+            result = self.drive.files().list(
+                q="'%s' in parents" % folder_id,
+                fields="nextPageToken, files(id, name)",
+                pageSize=1000,
+                pageToken=pageToken
+            ).execute()
+            previousFiles += result.get('files', [])
+            nextPageToken = result.get('nextPageToken', None)
+            if nextPageToken:
+                previousFiles += list_files(previousFiles, nextPageToken)
+            return previousFiles
+
+        fileList = list_files()
+        return fileList
 
     def _drive_folder_id(self, folder_name):
         folders = self.drive.files().list(
