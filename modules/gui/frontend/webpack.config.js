@@ -37,6 +37,7 @@ module.exports = {
             Dropdown       : "exports-loader?Dropdown!bootstrap/js/dist/dropdown",
             Modal          : "exports-loader?Modal!bootstrap/js/dist/modal",
             Popover        : "exports-loader?Popover!bootstrap/js/dist/popover",
+            Popper         : ['popper.js', 'default'],
             Scrollspy      : "exports-loader?Scrollspy!bootstrap/js/dist/scrollspy",
             Tab            : "exports-loader?Tab!bootstrap/js/dist/tab",
             Tooltip        : "exports-loader?Tooltip!bootstrap/js/dist/tooltip",
@@ -124,10 +125,10 @@ module.exports = {
         host       : '0.0.0.0',
         proxy      : {
             // '/sandbox/geo-web-viz/**': { target: 'http://localhost:5678', secure: false, changeOrigin: true, pathRewrite: { '^/sandbox/geo-web-viz': '' } },
-            // '*'                      : { target: 'http://localhost:8001', secure: false, changeOrigin: true }
+            '*'                      : { target: 'http://localhost:8001', secure: false, changeOrigin: true }
             // '*'                      : { target: 'http://localhost:9999' }
             // '*'                      : { target: 'https://test.sepal.io', secure: true, changeOrigin: true }
-            '*'                      : { target: 'https://sepal.io', secure: true, changeOrigin: true }
+            // '*'                      : { target: 'https://sepal.io', secure: true, changeOrigin: true }
             // '*': { target: 'https://vagrant', secure: false } // Vagrant box
         }
     }

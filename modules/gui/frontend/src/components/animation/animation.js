@@ -5,10 +5,10 @@ var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimation
 
 var animateIn = function ( element, callback ) {
     // element.find( '[data-animation-in]' ).css( 'opacity', '0' )
-    element.find( '[data-animation-in]' ).andSelf().show()
-    element.find( '[data-animation-in]' ).andSelf().css( 'opacity', '1' )
+    element.find( '[data-animation-in]' ).addBack().show()
+    element.find( '[data-animation-in]' ).addBack().css( 'opacity', '1' )
 
-    element.find( '[data-animation-in]' ).andSelf().each( function () {
+    element.find( '[data-animation-in]' ).addBack().each( function () {
         var $this            = $( this )
         var animationIn      = 'fadeIn'
         var animationOut     = 'fadeOut'
@@ -31,7 +31,7 @@ var animateIn = function ( element, callback ) {
     // element.addClass( 'is-active' )
 
 
-    element.find( '[data-animation-in]' ).andSelf().one( animationEnd, function () {
+    element.find( '[data-animation-in]' ).addBack().one( animationEnd, function () {
         var $this = $( this )
         $this.show(0)
 
@@ -41,8 +41,8 @@ var animateIn = function ( element, callback ) {
     } )
 
     setTimeout( function () {
-        // element.find( '[data-animation-in]' ).andSelf().show()
-        // element.find( '[data-animation-in]' ).andSelf().css( 'opacity', '1' )
+        // element.find( '[data-animation-in]' ).addBack().show()
+        // element.find( '[data-animation-in]' ).addBack().css( 'opacity', '1' )
 
         if ( callback ) {
             callback()
@@ -51,9 +51,9 @@ var animateIn = function ( element, callback ) {
 }
 
 var animateOut = function ( element, callback ) {
-    // element.find( '[data-animation-out]' ).andSelf().hide()
+    // element.find( '[data-animation-out]' ).addBack().hide()
     // var functx = callback
-    element.find( '[data-animation-out]' ).andSelf().each( function () {
+    element.find( '[data-animation-out]' ).addBack().each( function () {
         var $this             = $( this )
         var animationIn       = 'fadeIn'
         var animationOut      = 'fadeOut'
@@ -80,7 +80,7 @@ var animateOut = function ( element, callback ) {
         }
     } )
 
-    element.find( '[data-animation-out]' ).andSelf().one( animationEnd, function () {
+    element.find( '[data-animation-out]' ).addBack().one( animationEnd, function () {
         var $this = $( this )
         $this.hide()
 
@@ -91,8 +91,8 @@ var animateOut = function ( element, callback ) {
     } )
 
     setTimeout( function () {
-        // element.find( '[data-animation-out]' ).andSelf().hide()
-        // element.find( '[data-animation-out]' ).andSelf().css( 'opacity', '0' )
+        // element.find( '[data-animation-out]' ).addBack().hide()
+        // element.find( '[data-animation-out]' ).addBack().css( 'opacity', '0' )
         // element.removeClass( 'is-active' )
         if ( callback ) {
             callback()
@@ -103,7 +103,7 @@ var animateOut = function ( element, callback ) {
 
 var removeAnimation = function ( element ) {
 
-    element.find( '.animation-item' ).andSelf().each( function () {
+    element.find( '.animation-item' ).addBack().each( function () {
         var $this        = $( this )
         var animationIn  = 'fadeIn'
         var animationOut = 'fadeOut'
