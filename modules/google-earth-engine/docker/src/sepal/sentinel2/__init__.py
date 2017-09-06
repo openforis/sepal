@@ -94,7 +94,7 @@ class Sentinel2DataSet(DataSet):
         return ee.ImageCollection('COPERNICUS/S2').filter(self.image_filter)
 
     def analyze(self, image):
-        return Analyze(image).apply()
+        return Analyze(image, self.bands()).apply()
 
     def masks_cloud_on_analysis(self):
         return False

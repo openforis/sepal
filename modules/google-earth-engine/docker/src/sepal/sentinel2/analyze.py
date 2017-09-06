@@ -4,10 +4,12 @@ from ..image_operation import ImageOperation
 
 
 class Analyze(ImageOperation):
-    def __init__(self, image):
+    def __init__(self, image, bands):
         super(Analyze, self).__init__(image)
+        self.bands = bands
 
     def apply(self):
+        self._mask_if_any_band_is_masked()
         self.setAll(self.image.divide(10000))
 
         self.set('ndsi',
@@ -60,6 +62,11 @@ class Analyze(ImageOperation):
 
         return self.image
 
+    def _mask_if_any_band_is_masked(self):
+        for band in list(self.bands.keys()):
+            isMasked = self.toImage(band).mask().reduce('min').eq(0)
+            self.updateMask(isMasked.Not())
+
     def _snow_probability(self, value, lower, upper):
         name = 'snowProbability'
         args = {'name': name, 'value': value, 'lower': lower, 'upper': upper}
@@ -105,4 +112,3 @@ class Analyze(ImageOperation):
         self.set('soil', 'i.blue/i.swir1 < 0.55 or i.nir/i.swir1 < 0.90')
         self.setIfElse('cloudScore', 'soil', 0, score)
         self.set('cloud', 'i.cloudScore > 0.25 or (i.cloudScore > 0 and i.aerosol > 0.2) or i.hazeScore == 0')
-
