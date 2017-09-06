@@ -178,6 +178,7 @@ var addMosaic = function () {
       offsetToTargetDay: 0,
       minScenes        : 1,
       maxScenes        : null,
+      maskClouds       : false,
       maskSnow         : true,
       brdfCorrect      : true,
       median           : false,
@@ -220,6 +221,7 @@ var fakeMosaic = function (state) {
     sceneIds             : 'LC81850322016191LGN01,LC81850322016223LGN01,LC81850322016175LGN01,LC81850332016223LGN01,LC81850332016191LGN01,LC81860322016214LGN01,LC81860322016230LGN01,LC81860322016182LGN01,LC81870312016205LGN01,LC81870312016189LGN01,LC81860312016214LGN01,LC81860312016182LGN01,LE71860312016206NSG00,LC81850312016191LGN01,LC81850312016223LGN01,LC81850312016239LGN01,LC81870302016205LGN01,LE71870302016213NSG00,LC81870302016189LGN01,LC81860302016214LGN01,LC81860302016230LGN01,LC81860302016182LGN01',
     countryIso           : 'ALB',
     targetDayOfYear      : 213,
+    maskClouds           : false,
     maskSnow             : true,
     brdfCorrect          : true
   }

@@ -221,6 +221,7 @@
         var hazeTolerance = $('#haze-tolerance').val()
         var medianComposite = $('input[name="median-composite"]:checked').val()
         var brdfCorrect = $('input[name="brdf-correct"]:checked').val()
+        var masClouds = $('input[name="mask-clouds"]:checked').val()
         var maskSnow = $('input[name="mask-snow"]:checked').val()
 
 
@@ -239,6 +240,7 @@
             bands: bands,
             medianComposite: medianComposite,
             brdfCorrect: brdfCorrect,
+            maskClouds: maskClouds,
             maskSnow: maskSnow,
             classesToMask: classesToMask
 

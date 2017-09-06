@@ -17,6 +17,7 @@ class MosaicSpec(ImageSpec):
         self.haze_tolerance = float(spec.get('hazeTolerance', 0.5))
         self.bands = spec['bands']
         self.median_composite = spec.get('median_composite', False)
+        self.mask_clouds = spec.get('maskClouds', False)
         self.mask_snow = spec.get('maskSnow', True)
         self.brdf_correct = bool(spec.get('brdfCorrect', True))
         self.from_date = spec.get('fromDate', None)

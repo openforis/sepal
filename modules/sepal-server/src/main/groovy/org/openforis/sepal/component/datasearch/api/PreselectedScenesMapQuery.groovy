@@ -13,6 +13,7 @@ class PreselectedScenesMapQuery {
     double hazeTolerance
     boolean medianComposite
     boolean brdfCorrect
+    boolean maskClouds
     boolean maskSnow
     List<String> bands
 }

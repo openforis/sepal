@@ -49,13 +49,14 @@ class DataSearchEndpoint {
                 def dataSet = params['dataSet'] as DataSet ?: DataSet.LANDSAT
                 def sceneIds = params.required('sceneIds', String).split(',')*.trim()
                 def bands = params.required('bands', String).split(',')*.trim()
-                def targetDayOfYear = params.required('targetDayOfYear', int)
-                def targetDayOfYearWeight = params.required('targetDayOfYearWeight', double)
-                def shadowTolerance = params.required('shadowTolerance', double)
-                def hazeTolerance = params.required('hazeTolerance', double)
-                def medianComposite = params.required('medianComposite', boolean)
-                def brdfCorrect = params.required('brdfCorrect', boolean)
-                def maskSnow = params.required('maskSnow', Boolean)
+                def targetDayOfYear = (params.targetDayOfYear ?: 1) as int
+                def targetDayOfYearWeight = (params.targetDayOfYearWeight ?: 0) as double
+                def shadowTolerance = (params.shadowTolerance ?: 0) as double
+                def hazeTolerance = (params.hazeTolerance ?: 0.05) as double
+                def medianComposite = params.medianComposite == 'true'
+                def brdfCorrect = params.brdfCorrect == 'true'
+                def maskClouds = params.maskClouds == 'true'
+                def maskSnow = params.maskSnow == 'true'
 
                 def mapLayer = geeGateway.preview(new PreselectedScenesMapQuery(
                         dataSet: dataSet,
@@ -67,6 +68,7 @@ class DataSearchEndpoint {
                         hazeTolerance: hazeTolerance,
                         medianComposite: medianComposite,
                         brdfCorrect: brdfCorrect,
+                        maskClouds: maskClouds,
                         maskSnow: maskSnow,
                         bands: bands
                 ), sepalUser)

@@ -30,7 +30,6 @@ class Analyze(ImageOperation):
         self.set('shadowScore',
                  'sqrt((pow(i.green, 2) + pow(i.red, 2) + pow(i.nir, 2)) / 3)')
         self.set('shadowThreshold', 0.09)
-        self._cloud()
 
         # Intermediate bands to use in hazeScore
         self.set('meanVis',
@@ -56,6 +55,7 @@ class Analyze(ImageOperation):
         self.set('hazeScore',
                  'max(1 - (i.hazeProbability + i.variabilityProbability + i.cirrusCloudProbability + i.aerosolProbability) / 10, 0)')
 
+        self._cloud()
         self.updateMask('i.variabilityProbability > -0.5')  # Remove bad pixels
 
         return self.image
@@ -104,5 +104,5 @@ class Analyze(ImageOperation):
 
         self.set('soil', 'i.blue/i.swir1 < 0.55 or i.nir/i.swir1 < 0.90')
         self.setIfElse('cloudScore', 'soil', 0, score)
-        self.set('cloud', 'i.cloudScore > 0.25 or (i.cloudScore > 0 and i.aerosol > 0.2)')
+        self.set('cloud', 'i.cloudScore > 0.25 or (i.cloudScore > 0 and i.aerosol > 0.2) or i.hazeScore == 0')
 

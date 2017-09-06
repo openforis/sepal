@@ -72,6 +72,7 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
                 hazeTolerance        : query.hazeTolerance,
                 medianComposite      : query.medianComposite,
                 brdfCorrect          : query.brdfCorrect,
+                maskClouds           : query.maskClouds,
                 maskSnow             : query.maskSnow,
                 bands                : query.bands,
                 sceneIds             : query.sceneIds

@@ -10,7 +10,7 @@ def mask_clouds(mosaic_def, collection):
                 .combine(ee.Reducer.min(), "", True))
 
     # Proportion of pixels that are cloudy
-    cloudProportion = reduced.select('cloud_sum').divide(10000) \
+    cloudProportion = reduced.select('cloud_sum') \
         .divide(reduced.select('cloud_count'))
     # A representative proportion of pixels that are cloudy cloudy for the neighborhood
     normalCloudProportion = cloudProportion.reproject(crs='EPSG:4326', scale=10000) \
@@ -23,9 +23,10 @@ def mask_clouds(mosaic_def, collection):
     # It's probably something (typically buildings) misclassified as clouds.
     # Also, don't trust the cloud classification enough to completely mask area with only clouds
     # Desert sand can be classified as cloud.
-    # TODO: Improve this...
-    keepClouds = cloudProportionDiff.gt(0.4).And(normalCloudProportion.lt(0.3)) \
-        .Or(onlyClouds)
+    keepClouds = cloudProportionDiff.gt(0.4).And(normalCloudProportion.lt(0.3))
+
+    if not mosaic_def.mask_clouds:
+        keepClouds = keepClouds.Or(onlyClouds)
 
     return collection.map(lambda image: _MaskClouds(image, mosaic_def).apply(keepClouds))
 
