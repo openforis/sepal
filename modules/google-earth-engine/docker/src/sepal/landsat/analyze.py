@@ -4,10 +4,9 @@ from ..image_operation import ImageOperation
 
 
 class Analyze(ImageOperation):
-    def __init__(self, image, bands, mosaic_def):
+    def __init__(self, image, bands):
         super(Analyze, self).__init__(image)
         self.bands = bands
-        self.mosaic_def = mosaic_def
 
     def apply(self):
         bands = self.bands

@@ -127,7 +127,7 @@ class LandsatDataSet(DataSet):
         return ee.ImageCollection(self.collection_name).filter(self.image_filter)
 
     def analyze(self, image):
-        return Analyze(image, self.bands(), self.mosaic_def).apply()
+        return Analyze(image, self.bands()).apply()
 
     def masks_cloud_on_analysis(self):
         return True
