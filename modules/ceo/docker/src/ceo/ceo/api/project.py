@@ -224,7 +224,7 @@ def projectExport(id=None):
         headers = {'Content-disposition': 'attachment; filename=' + filename + '.csv'}
         return Response(csvString, mimetype="text/csv", headers=headers)
 
-def projectToCsv(project, records):
+def projectToCsv(project, records, withHeader=True):
     csvString = ''
     #
     codeListNames = []
@@ -236,16 +236,16 @@ def projectToCsv(project, records):
             codeListNames.append('confidence')
         objs = project['plots'][0].get('values')
         if objs:
-            csvHeaderData = [o['key'] for o in objs] + codeListNames
-            csvString = listToCSVRowString(csvHeaderData)
+            if withHeader:
+                csvHeaderData = [o['key'] for o in objs] + codeListNames
+                csvString = listToCSVRowString(csvHeaderData)
             for plot in project['plots']:
                 csvRowData = [o['value'] for o in plot['values']]
                 hasRecord = False;
                 for record in records:
                     if record.get('plot'):
-                        print '%s - %s' % (record.get('plot').get('id'), plot['id'])
                         if record.get('plot').get('id') == plot['id']:
-                            hasRecord == True
+                            hasRecord = True
                             values = record['value']
                             for codeListName in codeListNames:
                                 value = values.get(codeListName, '')
@@ -255,8 +255,9 @@ def projectToCsv(project, records):
                         csvRowData.append('')
                 csvString += listToCSVRowString(csvRowData)
         else:
-            csvHeaderData = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
-            csvString = listToCSVRowString(csvHeaderData)
+            if withHeader:
+                csvHeaderData = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
+                csvString = listToCSVRowString(csvHeaderData)
             for record in records:
                 csvRowData = []
                 csvRowData.append(record.get('plot').get('id'))
@@ -268,8 +269,9 @@ def projectToCsv(project, records):
                     csvRowData.append(value)
                 csvString += listToCSVRowString(csvRowData)
     if projectType == PROJECT_TYPE_TRAINING_DATA:
-        csvHeaderData = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
-        csvString = listToCSVRowString(csvHeaderData)
+        if withHeader:
+            csvHeaderData = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
+            csvString = listToCSVRowString(csvHeaderData)
         for record in records:
             csvRowData = []
             csvRowData.append(record.get('plot').get('id'))
