@@ -20,7 +20,7 @@
                 </button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                     <a id="export-csv" class="dropdown-item" href="#">CSV</a>
-                    <a id="export-fusiontables" class="dropdown-item" href="#">Google Fusion Tables</a>
+                    <a id="export-fusiontables" class="dropdown-item" href="#" style="display: none;">Google Fusion Tables</a>
                 </div>
             </div>
         </div>
@@ -374,6 +374,10 @@
                 // project
                 projectName = data.name;
                 //radius = parseFloat(data.radius);
+                // fusiontable
+                if (data.fusionTableId !== undefined) {
+                    $('#export-fusiontables').hide();
+                }
                 // codeLists
                 data.codeLists.forEach(function(codeList) {
                     var name = codeList.name;
@@ -614,7 +618,16 @@
 
         $('#export-fusiontables').click(function(e) {
             e.preventDefault();
-            window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export?type=fusiontables';
+            $.ajax({
+                url: ceoSepalApiUrl + '/project/' + project_id + '/export?type=fusiontables',
+                type: 'GET',
+                crossDomain : true
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
+                alert('ko');
+            }).done(function(data, textStatus, jqXHR) {
+                alert('ok');
+            });
         });
 
         $('#prev-btn').click(function(e) {
