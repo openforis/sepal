@@ -217,6 +217,12 @@ def projectExport(id=None):
         url = '%s/tables?&access_token=%s' % (googleapis_ft_url, session['accessToken'])
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         r = requests.post(url, data=json.dumps(fusionTables), headers=headers)
+        tableId = r.json().get('tableId')
+        csvString = projectToCsv(project, records, withHeader=False)
+        googleapis_ft_upload_url = 'https://www.googleapis.com/upload/fusiontables/v2'
+        url = '%s/tables/%s/import?uploadType=media&access_token=%s' % (googleapis_ft_upload_url, tableId, session['accessToken'])
+        headers = {'Content-type': 'application/octet-stream', 'Content-Length': len(csvString)}
+        r = requests.post(url, data=csvString, headers=headers)
         return jsonify(r.json())
     else:
         filename = project['name'] + '-' + getTimestamp()
