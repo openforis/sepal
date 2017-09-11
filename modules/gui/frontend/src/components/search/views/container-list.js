@@ -74,12 +74,12 @@ var listChanged = function (e, list) {
 
 var show = function () {
   if (container && !container.is(':visible'))
-    container.velocityFadeIn({delay: 0, duration: 300})
+    container.fadeIn()
 }
 
 var hide = function () {
   if (container && container.is(':visible'))
-    container.velocityFadeOut({delay: 0, duration: 300})
+    container.fadeOut()
 }
 
 var activeChanged = function (e, state) {

@@ -200,7 +200,7 @@ var addDir = function ( dir ) {
 }
 
 var removeDir = function ( level ) {
-    browseContentRow.find( '.level-' + level ).nextAll().andSelf().remove()
+    browseContentRow.find( '.level-' + level ).nextAll().addBack().remove()
 }
 
 var isImage = function ( file ) {

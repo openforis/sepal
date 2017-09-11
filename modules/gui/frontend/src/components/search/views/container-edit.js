@@ -38,11 +38,11 @@ var init = function (html) {
 var showSection = function (section, opts) {
   show()
   if (!section.is(':visible'))
-    section.velocityFadeIn(showSectionOpts)
+    section.show()
 }
 
 var hideSection = function (section, opts) {
-  section.velocityFadeOut(showSectionOpts)
+  section.hide()
 }
 
 var setState = function (e, s) {
