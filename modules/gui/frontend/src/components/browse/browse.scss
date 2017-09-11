@@ -1,11 +1,11 @@
 #browse {
 
   .browse-header-row {
+    background-color: rgba(255, 255, 255, 0.04);
 
     .filename-container {
       border-top-left-radius: .5rem;
       border-bottom-left-radius: .5rem;
-      background-color: rgba(255, 255, 255, 0.04);
       text-overflow: ellipsis !important;
       /* word-break: break-all; */
       /* word-wrap: normal; */
@@ -15,11 +15,9 @@
     .buttons-container {
       border-top-right-radius: .5rem;
       border-bottom-right-radius: .5rem;
-      background-color: rgba(255, 255, 255, 0.04);
     }
     .filters-container{
       border-radius: .5rem;
-      background-color: rgba(255, 255, 255, 0.04);
       word-spacing: 2rem;
     }
 
