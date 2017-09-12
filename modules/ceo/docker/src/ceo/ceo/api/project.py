@@ -10,6 +10,7 @@ from .. import mongo
 import uuid
 
 from ..common.utils import import_sepal_auth, requires_auth, propertiesFileToDict, allowed_file, listToCSVRowString, crc32, getTimestamp
+from ..common.fusiontables import createTable, importTable, FTException
 
 from werkzeug.utils import secure_filename
 
@@ -212,22 +213,19 @@ def projectExport(id=None):
     #
     exportType = request.args.get('type')
     if exportType == 'fusiontables':
-        fusionTables = projectToFusionTables(project, records)
-        googleapis_ft_url = 'https://www.googleapis.com/fusiontables/v2'
-        url = '%s/tables?&access_token=%s' % (googleapis_ft_url, session['accessToken'])
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        r = requests.post(url, data=json.dumps(fusionTables), headers=headers)
-        if r.status_code == 200:
-            tableId = r.json().get('tableId')
-            csvString = projectToCsv(project, records, withHeader=False)
-            googleapis_ft_upload_url = 'https://www.googleapis.com/upload/fusiontables/v2'
-            url = '%s/tables/%s/import?uploadType=media&access_token=%s' % (googleapis_ft_upload_url, tableId, session['accessToken'])
-            headers = {'Content-type': 'application/octet-stream', 'Content-Length': len(csvString)}
-            r = requests.post(url, data=csvString, headers=headers)
-            if r.status_code == 200:
-                project['fusionTableId'] = tableId
-                mongo.db.projects.update({'id': id}, {'$set': project}, upsert=False)
-        return '', r.status_code
+        ft = projectToFusionTables(project, records)
+        token = session.get('accessToken')
+        try:
+            tableId = createTable(token, ft)
+            if tableId:
+                csvString = projectToCsv(project, records, withHeader=False)
+                isImported = importTable(token, tableId, csvString)
+                if isImported:
+                    project['fusionTableId'] = tableId
+                    mongo.db.projects.update({'id': id}, {'$set': project}, upsert=False)
+                    return '', 200
+        except FTException as e:
+            return jsonify(str(e)), 500
     else:
         filename = project['name'] + '-' + getTimestamp()
         csvString = projectToCsv(project, records)
