@@ -10,7 +10,7 @@ from .. import mongo
 import uuid
 
 from ..common.utils import import_sepal_auth, requires_auth, propertiesFileToDict, allowed_file, listToCSVRowString, crc32, getTimestamp
-from ..common.fusiontables import createTable, importTable, FTException
+from ..common.fusiontables import createTable, importTable, deleteTable, FTException
 
 from werkzeug.utils import secure_filename
 
@@ -189,6 +189,13 @@ def projectDelete(id=None):
         return 'Error!', 404
     if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
+    token = session.get('accessToken')
+    fusionTableId = project.get('fusionTableId')
+    if fusionTableId:
+        try:
+            deleteTable(token, fusionTableId)
+        except FTException:
+            pass
     mongo.db.projects.delete_one({'id': id})
     mongo.db.records.delete_many({'project_id': id})
     if project['type'] == PROJECT_TYPE_CEP:

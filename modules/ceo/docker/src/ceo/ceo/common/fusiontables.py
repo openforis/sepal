@@ -2,6 +2,7 @@ import requests, json
 
 googleapis_ft_url_query  = 'https://www.googleapis.com/fusiontables/v2/query?access_token=%s'
 googleapis_ft_url_tables = 'https://www.googleapis.com/fusiontables/v2/tables?access_token=%s'
+googleapis_ft_url_delete = 'https://www.googleapis.com/fusiontables/v2/tables/%s?access_token=%s'
 googleapis_ft_url_upload = 'https://www.googleapis.com/upload/fusiontables/v2/tables/%s/import?uploadType=media&access_token=%s'
 
 def createTable(token, ft):
@@ -14,6 +15,17 @@ def createTable(token, ft):
     elif r.status_code != 200:
         raise FTException('NOT CREATED')
     return r.json().get('tableId')
+
+def deleteTable(token, tableId):
+    """  """
+    url = googleapis_ft_url_delete % (tableId, token)
+    print googleapis_ft_url_delete
+    r = requests.delete(url)
+    if r.status_code == 401:
+        raise FTException('TOKEN EXPIRED or NOT VALID')
+    elif r.status_code != 204:
+        raise FTException('NOT DELETED')
+    return True
 
 def importTable(token, tableId, csvString):
     """  """
