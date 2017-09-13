@@ -375,8 +375,8 @@
                 projectName = data.name;
                 //radius = parseFloat(data.radius);
                 // fusiontable
-                if (data.fusionTableId !== undefined) {
-                    $('#export-fusiontables').hide();
+                if (data.fusionTableId === undefined) {
+                    $('#export-fusiontables').show();
                 }
                 // codeLists
                 data.codeLists.forEach(function(codeList) {
@@ -627,6 +627,7 @@
                 alert('ko');
             }).done(function(data, textStatus, jqXHR) {
                 alert('ok');
+                $('#export-fusiontables').hide();
             });
         });
 
