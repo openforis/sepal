@@ -5,6 +5,7 @@ import ee
 from analyze import analyze
 from clouds import mask_clouds
 from days_from_target import mask_days_from_target
+from greenness import mask_less_green
 from haze import mask_haze
 from shadows import mask_shadows
 
@@ -24,6 +25,7 @@ class Mosaic(object):
 
         collection = mask_shadows(self.mosaic_def, collection)
         collection = mask_haze(self.mosaic_def, collection)
+        collection = mask_less_green(self.mosaic_def, collection)
         collection = mask_days_from_target(self.mosaic_def, collection)
 
         return self._to_mosaic(collection)

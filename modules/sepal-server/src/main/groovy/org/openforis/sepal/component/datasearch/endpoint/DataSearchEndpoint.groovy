@@ -53,6 +53,7 @@ class DataSearchEndpoint {
                 def targetDayOfYearWeight = (params.targetDayOfYearWeight ?: 0) as double
                 def shadowTolerance = (params.shadowTolerance ?: 0) as double
                 def hazeTolerance = (params.hazeTolerance ?: 0.05) as double
+                def greennessWeight = (params.greennessWeight ?: 0) as double
                 def medianComposite = params.medianComposite == 'true'
                 def brdfCorrect = params.brdfCorrect == 'true'
                 def maskClouds = params.maskClouds == 'true'
@@ -66,6 +67,7 @@ class DataSearchEndpoint {
                         targetDayOfYearWeight: targetDayOfYearWeight,
                         shadowTolerance: shadowTolerance,
                         hazeTolerance: hazeTolerance,
+                        greennessWeight: greennessWeight,
                         medianComposite: medianComposite,
                         brdfCorrect: brdfCorrect,
                         maskClouds: maskClouds,

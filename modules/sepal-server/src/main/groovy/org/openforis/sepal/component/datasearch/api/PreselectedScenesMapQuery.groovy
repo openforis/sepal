@@ -11,6 +11,7 @@ class PreselectedScenesMapQuery {
     double targetDayOfYearWeight
     double shadowTolerance
     double hazeTolerance
+    double greennessWeight
     boolean medianComposite
     boolean brdfCorrect
     boolean maskClouds

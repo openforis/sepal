@@ -20,6 +20,7 @@ var getRequestData = function (state, bands) {
   data.targetDayOfYearWeight = state.mosaicTargetDayWeight
   data.shadowTolerance       = state.mosaicShadowTolerance
   data.hazeTolerance         = state.mosaicHazeTolerance
+  data.greennessWeight       = state.mosaicGreennessWeight
   data.maskClouds            = state.maskClouds
   data.maskSnow              = state.maskSnow
   data.brdfCorrect           = state.brdfCorrect

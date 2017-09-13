@@ -18,6 +18,7 @@ var btnToggleVisibility   = null
 var sliderTargetDayWeight = null
 var sliderShadowTolerance = null
 var sliderHazeTolerance   = null
+var sliderGreennessWeight = null
 var btnOptions            = null
 
 var state = {}
@@ -38,6 +39,7 @@ var init = function (container) {
   sliderTargetDayWeight = html.find('.target-day-weight-slider')
   sliderShadowTolerance = html.find('.shadow-tolerance-slider')
   sliderHazeTolerance   = html.find('.haze-tolerance-slider')
+  sliderGreennessWeight = html.find('.greenness-weight-slider')
   btnOptions            = html.find('.btn-mosaic-option')
   
   initSliders()
@@ -116,6 +118,7 @@ var initSliders = function () {
   initSlider(sliderTargetDayWeight, 'mosaicTargetDayWeight')
   initSlider(sliderShadowTolerance, 'mosaicShadowTolerance')
   initSlider(sliderHazeTolerance,  'mosaicHazeTolerance')
+  initSlider(sliderGreennessWeight,  'mosaicGreennessWeight')
 }
 
 var setActiveState = function (e, activeState, params) {
@@ -144,6 +147,9 @@ var setActiveState = function (e, activeState, params) {
     })
     $.each(sliderHazeTolerance, function (i, slider) {
       $(slider).get(0).noUiSlider.set(state.mosaicHazeTolerance)
+    })
+    $.each(sliderGreennessWeight, function (i, slider) {
+      $(slider).get(0).noUiSlider.set(state.mosaicGreennessWeight)
     })
     
     $.each(btnOptions, function (i, btn) {

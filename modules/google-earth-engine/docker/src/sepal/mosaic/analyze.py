@@ -50,7 +50,7 @@ class _Analyze(ImageOperation):
     def _scale_image(self):
         multiplierByBand = {
             'blue': 10000, 'green': 10000, 'red': 10000, 'nir': 10000, 'swir1': 10000, 'swir2': 10000,
-            'water': 1, 'snow': 1, 'cloud': 1,
+            'water': 1, 'snow': 1, 'cloud': 1, 'ndvi': 10000,
             'shadowThreshold': 10000, 'shadowScore': 10000, 'hazeScore': 10000,
             'daysFromTarget': 1, 'dayOfYear': 1, 'unixTimeDays': 1
         }

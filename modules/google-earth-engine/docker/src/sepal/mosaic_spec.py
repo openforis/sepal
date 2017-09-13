@@ -14,12 +14,13 @@ class MosaicSpec(ImageSpec):
         self.target_day = int(spec.get('targetDayOfYear', 1))
         self.target_day_weight = float(spec.get('targetDayOfYearWeight', 0))
         self.shadow_tolerance = float(spec.get('shadowTolerance', 1))
-        self.haze_tolerance = float(spec.get('hazeTolerance', 0.5))
+        self.haze_tolerance = float(spec.get('hazeTolerance', 0.05))
+        self.greenness_weight = float(spec.get('greennessWeight', 0))
         self.bands = spec['bands']
         self.median_composite = spec.get('median_composite', False)
         self.mask_clouds = spec.get('maskClouds', False)
-        self.mask_snow = spec.get('maskSnow', True)
-        self.brdf_correct = bool(spec.get('brdfCorrect', True))
+        self.mask_snow = spec.get('maskSnow', False)
+        self.brdf_correct = bool(spec.get('brdfCorrect', False))
         self.from_date = spec.get('fromDate', None)
         self.to_date = spec.get('toDate', None)
 

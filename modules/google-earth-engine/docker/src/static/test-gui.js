@@ -140,7 +140,8 @@
             targetDayOfYear: $('#target-day-of-year').val(),
             targetDayOfYearWeight: $('#target-day-of-year-weight').val(),
             shadowTolerance: $('#shadow-tolerance').val(),
-            hazeTolerance: $('#haze-tolerance').val()
+            hazeTolerance: $('#haze-tolerance').val(),
+            greennessWeight: $('#greenness-weight').val()
         }
         $.getJSON('best-scenes', query, function (data) {
             var scenes = ''
@@ -219,6 +220,7 @@
         var targetDayOfYearWeight = $('#target-day-of-year-weight').val()
         var shadowTolerance = $('#shadow-tolerance').val()
         var hazeTolerance = $('#haze-tolerance').val()
+        var greennessWeight = $('#greenness-weight').val()
         var medianComposite = $('input[name="median-composite"]:checked').val()
         var brdfCorrect = $('input[name="brdf-correct"]:checked').val()
         var maskClouds = $('input[name="mask-clouds"]:checked').val()
@@ -236,6 +238,7 @@
             targetDayOfYearWeight: targetDayOfYearWeight,
             shadowTolerance: shadowTolerance,
             hazeTolerance: hazeTolerance,
+            greennessWeight: greennessWeight,
             dataSet: dataSet,
             bands: bands,
             medianComposite: medianComposite,

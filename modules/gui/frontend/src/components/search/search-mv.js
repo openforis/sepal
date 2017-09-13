@@ -173,18 +173,19 @@ var addMosaic = function () {
       sensorGroup: Model.getSensorGroups()[0],
       targetDate : date.format('YYYY-MM-DD'),
       
-      sortWeight       : 0.5,
-      sensors          : Object.keys(Model.getSensors(Model.getSensorGroups()[0])),
-      offsetToTargetDay: 0,
-      minScenes        : 1,
-      maxScenes        : null,
-      maskClouds       : false,
-      maskSnow         : true,
-      brdfCorrect      : true,
-      median           : false,
-      mosaicTargetDayWeight:0,
-      mosaicShadowTolerance:1,
-      mosaicHazeTolerance:0.05
+      sortWeight            : 0.5,
+      sensors               : Object.keys(Model.getSensors(Model.getSensorGroups()[0])),
+      offsetToTargetDay     : 0,
+      minScenes             : 1,
+      maxScenes             : null,
+      maskClouds            : false,
+      maskSnow              : true,
+      brdfCorrect           : true,
+      median                : false,
+      mosaicTargetDayWeight : 0,
+      mosaicShadowTolerance : 1,
+      mosaicHazeTolerance   : 0.05,
+      mosaicGreennessWeight : 0
     }
     return defaultState
   }

@@ -115,12 +115,15 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
 
     Map<String, Date> lastUpdateBySensor(DataSet dataSet) {
         def lastUpdates = [:]
-        sql.rows('''
-                SELECT sensor_id, MAX(update_time) last_update
-                FROM scene_meta_data
-                WHERE meta_data_source = ?
-                GROUP BY sensor_id''', [dataSet.metaDataSource]).each {
-            lastUpdates[it.sensor_id] = new Date(it.last_update.time as long)
+        def sql = new Sql(connectionManager.dataSource)
+        sql.withTransaction {
+            sql.rows('''
+                    SELECT sensor_id, MAX(update_time) last_update
+                    FROM scene_meta_data
+                    WHERE meta_data_source = ?
+                    GROUP BY sensor_id''', [dataSet.metaDataSource]).each {
+                lastUpdates[it.sensor_id] = new Date(it.last_update.time as long)
+            }
         }
         return lastUpdates
     }
