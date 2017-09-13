@@ -87,6 +87,15 @@ def updateRow(token, tableId, data, columns, rowId):
         raise FTException('TOKEN EXPIRED or NOT VALID')
     return True
 
+def deleteRow(token, tableId, rowId):
+    """  """
+    url = googleapis_ft_url_query % token
+    sql = "DELETE FROM %s WHERE ROWID = '%s'" % (tableId, rowId)
+    r = requests.post(url, data={'sql': sql})
+    if r.status_code == 401:
+        raise FTException('TOKEN EXPIRED or NOT VALID')
+    return True
+
 class FTException(Exception):
     """  """
     pass

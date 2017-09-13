@@ -7,7 +7,7 @@ from .. import app
 from .. import mongo
 
 from ..common.utils import import_sepal_auth, requires_auth, generate_id
-from ..common.fusiontables import selectRow, getRowId, updateRow, insertRow, FTException
+from ..common.fusiontables import selectRow, getRowId, updateRow, insertRow, deleteRow, FTException
 
 logger = logging.getLogger(__name__)
 
@@ -96,8 +96,6 @@ def recordModify(id=None):
     token = session.get('accessToken')
     project = mongo.db.projects.find_one({'id': record.get('project_id')}, {'_id': False})
     fusionTableId = project.get('fusionTableId')
-    print token
-    print fusionTableId
     if token and fusionTableId:
         data = {
             'id': record.get('plot').get('id'),
@@ -105,16 +103,11 @@ def recordModify(id=None):
             'XCoordinate': record.get('plot').get('XCoordinate'),
         }
         data.update(request.json.get('value'))
-        print data
         try:
             columns = selectRow(token, fusionTableId, data.get('id'))
-            print data.get('id')
-            print columns
             if columns:
                 rowId = getRowId(token, fusionTableId, data.get('id'))
-                print rowId
                 if rowId:
-                    print 'update'
                     updateRow(token, fusionTableId, data, columns, rowId)
                 else:
                     insertRow(token, fusionTableId, data, columns)
@@ -133,5 +126,17 @@ def recordDelete(id=None):
     # security check
     if record['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
+    #
     mongo.db.records.delete_many({'id': id})
+    # fusiontables
+    token = session.get('accessToken')
+    project = mongo.db.projects.find_one({'id': record.get('project_id')}, {'_id': False})
+    fusionTableId = project.get('fusionTableId')
+    if token and fusionTableId:
+        try:
+            rowId = getRowId(token, fusionTableId, record.get('plot').get('id'))
+            if rowId:
+                deleteRow(token, fusionTableId, rowId)
+        except FTException as e:
+            pass
     return 'OK', 200
