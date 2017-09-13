@@ -7,6 +7,7 @@ from .. import app
 from .. import mongo
 
 from ..common.utils import import_sepal_auth, requires_auth, generate_id
+from ..common.fusiontables import selectRow, getRowId, updateRow, insertRow, FTException
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,13 @@ def recordsByProject(project_id=None):
 @import_sepal_auth
 @requires_auth
 def recordAdd():
+    project = mongo.db.projects.find_one({'id': request.json.get('project_id')}, {'_id': False})
+    if not project:
+        return 'Not Found!', 404
+    # security check
+    if project['username'] != session.get('username') and not session.get('is_admin'):
+        return 'Forbidden!', 403
+    #
     mongo.db.records.insert({
         'id': generate_id(session.get('username') + request.json.get('project_id') + request.json.get('plot').get('id')),
         'value': request.json.get('value'),
@@ -45,6 +53,26 @@ def recordAdd():
             'XCoordinate': request.json.get('plot').get('XCoordinate')
         }
     })
+    # fusiontables
+    token = session.get('accessToken')
+    fusionTableId = project.get('fusionTableId')
+    if token and fusionTableId:
+        data = {
+            'id': request.json.get('plot').get('id'),
+            'YCoordinate': request.json.get('plot').get('YCoordinate'),
+            'XCoordinate': request.json.get('plot').get('XCoordinate')
+        }
+        data.update(request.json.get('value'))
+        try:
+            columns = selectRow(token, fusionTableId, data.get('id'))
+            if columns:
+                rowId = getRowId(token, fusionTableId, data.get('id'))
+                if rowId:
+                    updateRow(token, fusionTableId, data, columns, rowId)
+                else:
+                    insertRow(token, fusionTableId, data, columns)
+        except FTException as e:
+            pass
     return 'OK', 200
 
 @app.route('/api/record/<id>', methods=['PUT'])
@@ -54,7 +82,8 @@ def recordAdd():
 def recordModify(id=None):
     record = mongo.db.records.find_one({'id': id}, {'_id': False})
     if not record:
-        return 'Error!', 404
+        return 'Not Found!', 404
+    # security check
     if record['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     # update the record
@@ -63,6 +92,34 @@ def recordModify(id=None):
         'update_datetime': datetime.datetime.utcnow()
     })
     mongo.db.records.update({'id': id}, {'$set': record}, upsert=False)
+    # fusiontables
+    token = session.get('accessToken')
+    project = mongo.db.projects.find_one({'id': record.get('project_id')}, {'_id': False})
+    fusionTableId = project.get('fusionTableId')
+    print token
+    print fusionTableId
+    if token and fusionTableId:
+        data = {
+            'id': record.get('plot').get('id'),
+            'YCoordinate': record.get('plot').get('YCoordinate'),
+            'XCoordinate': record.get('plot').get('XCoordinate'),
+        }
+        data.update(request.json.get('value'))
+        print data
+        try:
+            columns = selectRow(token, fusionTableId, data.get('id'))
+            print data.get('id')
+            print columns
+            if columns:
+                rowId = getRowId(token, fusionTableId, data.get('id'))
+                print rowId
+                if rowId:
+                    print 'update'
+                    updateRow(token, fusionTableId, data, columns, rowId)
+                else:
+                    insertRow(token, fusionTableId, data, columns)
+        except FTException as e:
+            pass
     return 'OK', 200
 
 @app.route('/api/record/<id>', methods=['DELETE'])
@@ -72,7 +129,8 @@ def recordModify(id=None):
 def recordDelete(id=None):
     record = mongo.db.records.find_one({'id': id}, {'_id': False})
     if not record:
-        return 'Error!', 404
+        return 'Not Found!', 404
+    # security check
     if record['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     mongo.db.records.delete_many({'id': id})

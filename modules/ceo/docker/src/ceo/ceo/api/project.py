@@ -124,7 +124,8 @@ def projectAdd():
 def projectModify(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
-        return 'Error!', 404
+        return 'Not Found!', 404
+    # security check
     if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     # retrieve project data
@@ -165,7 +166,8 @@ def projectModify(id=None):
 def projectChange(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
-        return 'Error!', 404
+        return 'Not Found!', 404
+    # security check
     if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     # retrieve project data
@@ -186,7 +188,8 @@ def projectChange(id=None):
 def projectDelete(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
-        return 'Error!', 404
+        return 'Not Found!', 404
+    # security check
     if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     token = session.get('accessToken')
@@ -220,7 +223,7 @@ def projectExport(id=None):
     #
     exportType = request.args.get('type')
     if exportType == 'fusiontables':
-        ft = projectToFusionTables(project, records)
+        ft = projectToFusionTables(project)
         token = session.get('accessToken')
         try:
             tableId = createTable(token, ft)
@@ -299,16 +302,15 @@ def projectToCsv(project, records, withHeader=True):
             csvString += listToCSVRowString(csvRowData)
     return csvString
 
-def projectToFusionTables(project, records):
+def projectToFusionTables(project):
     ft = {
         'name': project['name'] + '-' + getTimestamp(),
         'columns': [],
         'isExportable': False
     }
     #
-    codeListNames = []
-    for codeList in project['codeLists']:
-        codeListNames.append(codeList['name'])
+    codeListNames = [codeList['name'] for codeList in project['codeLists']]
+    colNames = []
     projectType = project['type']
     if projectType == PROJECT_TYPE_CEP:
         if 'confidence' not in codeListNames:
@@ -316,28 +318,16 @@ def projectToFusionTables(project, records):
         objs = project['plots'][0].get('values')
         if objs:
             colNames = [o['key'] for o in objs] + codeListNames
-            for index, colName in enumerate(colNames):
-                ft['columns'].append({
-                    'columnId': index,
-                    'name': colName,
-                    'type': 'STRING'
-                })
         else:
             colNames = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
-            for index, colName in enumerate(colNames):
-                ft['columns'].append({
-                    'columnId': index,
-                    'name': colName,
-                    'type': 'STRING'
-                })
-    if projectType == PROJECT_TYPE_TRAINING_DATA:
+    elif projectType == PROJECT_TYPE_TRAINING_DATA:
         colNames = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
-        for index, colName in enumerate(colNames):
-            ft['columns'].append({
-                'columnId': index,
-                'name': colName,
-                'type': 'STRING'
-            })
+    for index, colName in enumerate(colNames):
+        ft['columns'].append({
+            'columnId': index,
+            'name': colName,
+            'type': 'STRING'
+        })
     return ft
 
 def saveFileFromRequest(file):
