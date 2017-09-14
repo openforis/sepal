@@ -30,7 +30,7 @@ def deleteTable(token, tableId):
 def importTable(token, tableId, csvString):
     """  """
     url = googleapis_ft_url_upload % (tableId, token)
-    headers = {'Content-type': 'application/octet-stream', 'Content-Length': len(csvString)}
+    headers = {'Content-type': 'application/octet-stream', 'Content-Length': str(len(csvString))}
     r = requests.post(url, data=csvString, headers=headers)
     if r.status_code == 401:
         raise FTException('TOKEN EXPIRED or NOT VALID')

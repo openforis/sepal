@@ -20,7 +20,7 @@
                 </button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                     <a id="export-csv" class="dropdown-item" href="#">CSV</a>
-                    <a id="export-fusiontables" class="dropdown-item" href="#" style="display: none;">Google Fusion Tables</a>
+                    <!--a id="export-fusiontables" class="dropdown-item" href="#" style="display: none;">Google Fusion Tables</a-->
                 </div>
             </div>
         </div>
@@ -677,7 +677,7 @@
                     YCoordinate: YCoordinate,
                     XCoordinate: XCoordinate
                 }
-            }
+            };
             var url = ceoSepalApiUrl + '/record';
             var method = 'post';
             var record_id = $('#codeLists input[name="id"]').val();

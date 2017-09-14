@@ -20,7 +20,7 @@
                 </button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                     <a id="export-csv" class="dropdown-item" href="#">CSV</a>
-                    <a id="export-fusiontables" class="dropdown-item" href="#" style="display: none;">Google Fusion Tables</a>
+                    <!--a id="export-fusiontables" class="dropdown-item" href="#" style="display: none;">Google Fusion Tables</a-->
                 </div>
             </div>
         </div>
@@ -378,7 +378,7 @@
                                     YCoordinate: YCoordinate,
                                     XCoordinate: XCoordinate
                                 }
-                            }
+                            };
                             var url = ceoSepalApiUrl + '/record';
                             var method = 'post';
                             var record_id = $('#codeLists input[name="id"]').val();
@@ -435,7 +435,8 @@
                     rotateControl    : false,
                     fullscreenControl: false,
                     animatedZoom     : false,
-                    backgroundColor  : '#131314'
+                    backgroundColor  : '#131314',
+                    draggableCursor  : 'crosshair'
                 };
 
                 var CartoDB_DarkMatterNoLabels = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
@@ -443,6 +444,7 @@
                     subdomains: 'abcd',
                     maxZoom: 19
                 });
+
                 lOptions = {
                     zoom: 10,
                     center: [0, 0],
@@ -459,6 +461,8 @@
                 // leaflet init
                 lmap = L.map('lmap', lOptions);
                 var lBounds = [];
+                $('.leaflet-container').css('cursor', 'crosshair');
+                L.DomUtil.addClass(lmap._container, 'crosshair-cursor-enabled');
 
                 gmap.addListener('click', function(e) {
                     removePlots();
@@ -481,7 +485,7 @@
                         strokeWeight: 2,
                         fillColor: 'yellow',
                         fillOpacity: 1
-                    }
+                    };
                     var squareOptions1 = {
                         color: 'yellow',
                         opacity: 0.8,
