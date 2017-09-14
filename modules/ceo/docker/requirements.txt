@@ -1,10 +1,11 @@
 #
-Flask>=0.12.1
+Flask>=0.12.2
 Flask-Cors==3.0.2
 Flask-Migrate==1.8.0
 Flask-PyMongo==0.4.1
 gunicorn==19.7.1
 futures==3.1.1
+requests==2.18.4
 
 pyasn1==0.2.3
 pyasn1-modules==0.0.8
