@@ -27,6 +27,7 @@ def projectById(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         abort(404)
+    project['recordCount'] = mongo.db.records.find({'project_id': id}).count()
     return jsonify(project), 200
 
 @app.route('/api/project', methods=['GET'])

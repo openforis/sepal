@@ -67,22 +67,16 @@
             </div>
         </div>
         <div class="row data-row" id="codelist-subform-container" style="display: none;">
-            <div class="container">
-                <div class="row">
-                    <div class="col-12">
-                        <h2><i class="fa fa-list" aria-hidden="true"></i>&nbsp;Code List</h2>
-                    </div>
+            <div class="card w-100 card-inverse">
+                <div class="card-header">
+                    <i class="fa fa-list" aria-hidden="true"></i>&nbsp;Code List
+                    <button type="submit" class="btn btn-info float-right" id="add-subform-codelist-value">
+                        <i class="fa fa-plus-square-o" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <div class="row">
-                    <div class="col">
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-info" id="add-subform-codelist-value">
-                                <i class="fa fa-list" aria-hidden="true"></i>&nbsp;Add value
-                            </button>
-                        </div>
-                    </div>
+                <div class="card-block">
+                    <div class="codelist-values-subform-container"></div>
                 </div>
-                <div class="row codelist-values-subform-container"></div>
             </div>
         </div>
         <div class="row" id="subform-container"></div>

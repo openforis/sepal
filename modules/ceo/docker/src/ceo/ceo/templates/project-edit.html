@@ -45,22 +45,16 @@
             </div>
         </div>
         <div class="row data-row" id="codelist-subform-container" style="display: none;">
-            <div class="container">
-                <div class="row">
-                    <div class="col-12">
-                        <h2><i class="fa fa-list" aria-hidden="true"></i>&nbsp;Code List</h2>
-                    </div>
+            <div class="card w-100 card-inverse">
+                <div class="card-header">
+                    <i class="fa fa-list" aria-hidden="true"></i>&nbsp;Code List
+                    <button type="submit" class="btn btn-info float-right" id="add-subform-codelist-value">
+                        <i class="fa fa-plus-square-o" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <div class="row">
-                    <div class="col">
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-info" id="add-subform-codelist-value">
-                                <i class="fa fa-list" aria-hidden="true"></i>&nbsp;Add value
-                            </button>
-                        </div>
-                    </div>
+                <div class="card-block">
+                    <div class="codelist-values-subform-container"></div>
                 </div>
-                <div class="row codelist-values-subform-container"></div>
             </div>
         </div>
         <div class="row" id="subform-container"></div>
@@ -233,10 +227,13 @@ function addSubformSEPAL(data) {
     });
 }
 
-function addSubformCodeListValue(data) {
+function addSubformCodeListValue(removable, data) {
     var container = $('#codelist-subform-container').find('.codelist-values-subform-container');
     var subform = $('#codelist-values-subform-template').clone().removeAttr('id').appendTo(container).show();
     $('.remove-subform', subform).click(removeSubform);
+    if (removable) {
+        $('.remove-subform', subform).remove();
+    }
     if (data !== undefined) {
         $('input[name="codeListCode[]"]', subform).val(data.code);
     }
@@ -279,7 +276,7 @@ $('#add-subform-sepal').click(function(e) {
 
 $('#add-subform-codelist-value').click(function(e) {
     e.preventDefault();
-    addSubformCodeListValue();
+    addSubformCodeListValue(false);
 });
 
 $('#submit-btn').click(function(e) {
@@ -289,7 +286,6 @@ $('#submit-btn').click(function(e) {
         if (!$.trim($(this).val()).length) {
             isValid = false;
             $(this).closest('.form-group').addClass('has-danger').find('.form-control-feedback').show();
-
         } else {
             $(this).closest('.form-group').removeClass('has-danger').find('.form-control-feedback').hide();
         }
@@ -326,7 +322,7 @@ $(document).ready(function() {
                 var codeLists = data.codeLists;
                 var codeList = codeLists[0];
                 codeList.items.forEach(function(item) {
-                    addSubformCodeListValue(item);
+                    addSubformCodeListValue(data.recordCount == 0, item);
                 });
                 break;
         }
