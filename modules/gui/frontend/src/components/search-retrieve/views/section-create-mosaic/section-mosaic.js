@@ -155,6 +155,7 @@ var setActiveState = function (e, activeState, params) {
     $.each(btnOptions, function (i, btn) {
       btn          = $(btn)
       var property = btn.val()
+      btn.data('hide-sensors') === state.sensorGroup ? btn.hide() : btn.show()
       state[property] ? btn.addClass('active') : btn.removeClass('active')
     })
     
