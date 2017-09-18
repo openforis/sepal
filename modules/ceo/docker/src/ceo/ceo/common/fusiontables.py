@@ -5,6 +5,19 @@ googleapis_ft_url_tables = 'https://www.googleapis.com/fusiontables/v2/tables?ac
 googleapis_ft_url_delete = 'https://www.googleapis.com/fusiontables/v2/tables/%s?access_token=%s'
 googleapis_ft_url_upload = 'https://www.googleapis.com/upload/fusiontables/v2/tables/%s/import?uploadType=media&access_token=%s'
 
+def getTable(token, tableId):
+    """  """
+    url = googleapis_ft_url_delete % (tableId, token)
+    r = requests.get(url)
+    if r.status_code == 401:
+        raise FTException('TOKEN EXPIRED or NOT VALID')
+    elif r.status_code == 404:
+        raise FTNotFoundException()
+    elif r.status_code != 200:
+        raise FTException('ERROR')
+    print r.json()
+    return r.json()
+
 def createTable(token, ft):
     """  """
     url = googleapis_ft_url_tables % token
@@ -23,6 +36,8 @@ def deleteTable(token, tableId):
     r = requests.delete(url)
     if r.status_code == 401:
         raise FTException('TOKEN EXPIRED or NOT VALID')
+    elif r.status_code == 404:
+        raise FTNotFoundException()
     elif r.status_code != 204:
         raise FTException('NOT DELETED')
     return True
@@ -99,3 +114,8 @@ def deleteRow(token, tableId, rowId):
 class FTException(Exception):
     """  """
     pass
+
+class FTNotFoundException(Exception):
+    """  """
+    pass
+

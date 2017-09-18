@@ -10,7 +10,7 @@ from .. import mongo
 import uuid
 
 from ..common.utils import import_sepal_auth, requires_auth, propertiesFileToDict, allowed_file, listToCSVRowString, crc32, getTimestamp
-from ..common.fusiontables import createTable, importTable, deleteTable, FTException
+from ..common.fusiontables import getTable, createTable, importTable, deleteTable, FTException, FTNotFoundException
 
 from werkzeug.utils import secure_filename
 
@@ -27,6 +27,19 @@ def projectById(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     if not project:
         abort(404)
+    # fusiontables
+    token = session.get('accessToken')
+    fusionTableId = project.get('fusionTableId')
+    if token and fusionTableId:
+        try:
+            print 777
+            tableId = getTable(token, fusionTableId)
+        except FTException:
+            print 888
+            pass
+        except FTNotFoundException:
+            print 999
+            project['fusionTableId'] = None
     project['recordCount'] = mongo.db.records.find({'project_id': id}).count()
     return jsonify(project), 200
 
