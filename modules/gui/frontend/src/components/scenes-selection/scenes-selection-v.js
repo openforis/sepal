@@ -51,6 +51,7 @@ var setDataSet = function (value) {
 var forceReset = function () {
   availableSensors = []
   SectionScenes.reset()
+  SectionSelectedScenes.reset()
   
   SectionFilterScenes.setSortWeight(0.5)
   SectionFilterScenes.setOffsetToTargetDay(0.5)

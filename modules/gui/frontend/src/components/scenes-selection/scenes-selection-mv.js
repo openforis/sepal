@@ -63,7 +63,7 @@ var loadSceneImages = function (sceneAreaId, showAppSection) {
 var reset = function (e) {
   // Model.reset()
   if (viewInitialized)
-    View.reset()
+    View.forceReset()
 }
 
 var interval       = null
@@ -123,13 +123,17 @@ var deselectImage = function (e, sceneAreaId, sceneImage) {
 var updateState = function (e, s, params) {
   state = s
   Model.setState(state)
-  if (state && state.type === SModel.TYPES.MOSAIC && viewInitialized) {
-    if(params && (params.resetSceneAreas || params.isNew) && Model.getSceneAreaId()){
+  
+  if (viewInitialized) {
+    if (!state || (params && (params.resetSceneAreas || params.isNew))) {
       View.forceReset()
     }
-    View.setSortWeight(state.sortWeight)
-    View.setOffsetToTargetDay(state.offsetToTargetDay)
-    View.updateSensors()
+    
+    if (state && state.type === SModel.TYPES.MOSAIC) {
+      View.setSortWeight(state.sortWeight)
+      View.setOffsetToTargetDay(state.offsetToTargetDay)
+      View.updateSensors()
+    }
   }
 }
 
