@@ -120,10 +120,13 @@ var deselectImage = function (e, sceneAreaId, sceneImage) {
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {updateSceneAreas: true})
 }
 
-var updateState = function (e, s) {
+var updateState = function (e, s, params) {
   state = s
   Model.setState(state)
   if (state && state.type === SModel.TYPES.MOSAIC && viewInitialized) {
+    if(params && (params.resetSceneAreas || params.isNew) && Model.getSceneAreaId()){
+      View.forceReset()
+    }
     View.setSortWeight(state.sortWeight)
     View.setOffsetToTargetDay(state.offsetToTargetDay)
     View.updateSensors()

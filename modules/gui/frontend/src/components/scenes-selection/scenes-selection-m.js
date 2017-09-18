@@ -11,7 +11,7 @@ var getSceneImageId = function ( image ) {
     return image.sceneId
 }
 
-var getSceneAreaId = function ( id ) {
+var getSceneAreaId = function () {
     return sceneAreaId
 }
 
