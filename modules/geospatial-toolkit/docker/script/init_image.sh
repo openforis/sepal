@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-
+echo "Version 2"
 echo
 echo "**********************"
 echo "*** Setting up APT ***"
