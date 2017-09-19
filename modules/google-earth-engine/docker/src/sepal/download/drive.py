@@ -67,7 +67,7 @@ class DriveDownload(object):
     def _download_file(self, folder_id, drive_file, file_index, file_count):
         logging.debug('Downloading %s from Google Drive: ' % str(drive_file['name']))
 
-        max_retries = 3
+        max_retries = 10
         for retry in range(0, max_retries):
             try:
                 request = self.drive.files().get_media(fileId=drive_file['id'])
