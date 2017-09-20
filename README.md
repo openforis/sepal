@@ -39,6 +39,14 @@ imagery and other earth observation data for processing.  The software tools, su
 [Open Foris Geospatial Toolkit](http://www.openforis.org/tools/geospatial-toolkit.html)
 perform powerful image processing, are completely customizable and function similarly ‘on the cloud’ or on the desktop.
 
+Screenshots
+-----------
+![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/01_login.png)            ![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/02_landing.png)
+![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/03_list.png)             ![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/04_search.png)
+![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/05_scene-selection.png)  ![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/06_rome.png)
+![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/07_files.png)            ![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/08_apps.png)
+![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/09_visualizer.png)       ![SEPAL components](https://raw.githubusercontent.com/openforis/sepal/master/docs/screenshots/10_terminal.png) 
+
 
 Architectural overview
 ----------------------
