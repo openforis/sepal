@@ -65,9 +65,6 @@
         state: "mounted"
         src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/shiny"
 
-    - name: Copy pull sandbox script
-      template: src=/tmp/pull_worker_images.sh dest=/data/sepal/pull_worker_images.sh mode=0777 remote_src=True
-
     - name: Copy LDAP Certificate
       copy: src=/tmp/ldap-ca.crt.pem dest=/data/sepal/certificates/ldap-ca.crt.pem
 

@@ -16,6 +16,6 @@
   become: no
   when: should_rebuild.changed
 
-- include: "{{ build_image_task }}"
+- include_tasks: "{{ build_image_task }}"
   vars:
     image_name: "localhost/openforis/sepal"

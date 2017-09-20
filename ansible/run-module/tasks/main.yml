@@ -4,7 +4,7 @@
   register: start_time_before_docker_container
 
 - name: "Run {{ module }}"
-  include: "../../../modules/{{ module }}/run.yml"
+  include_tasks: "../../../modules/{{ module }}/run.yml"
   vars:
     api_version: "1.22"
     name: "{{ container_name | default(module) }}"

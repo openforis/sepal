@@ -2,5 +2,5 @@
 - debug: var=s3fs verbosity=1
   tags: vars
 
-- include: setup.yml
-- include: mount.yml
+- include_tasks: setup.yml
+- include_tasks: mount.yml
