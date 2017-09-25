@@ -16,10 +16,10 @@ class UserStorageUseChecker {
 
         def storageUsedFile = new File(userHome, '.storageUsed')
         if (!storageUsedFile.exists())
-            return 0
+            return -1
         def lines = storageUsedFile.readLines()
         if (!lines)
-            return 0
+            return -1
         def size = lines.last().find('[0-9]*') as int
         return size / 1000 / 1000
     }

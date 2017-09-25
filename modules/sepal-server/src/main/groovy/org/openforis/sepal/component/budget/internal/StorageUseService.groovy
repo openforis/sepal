@@ -21,6 +21,7 @@ final class StorageUseService {
     StorageUse updateStorageUseForThisMonth(String username) {
         def gbUsed = hostingService.gbStorageUsed(username)
         def lastStorageUse = budgetRepository.lastUserStorageUse(username)
+        if (gbUsed < 0) gbUsed = lastStorageUse ?: 0
         def storageUseThisMonth = determineCurrentStorageUse(lastStorageUse, gbUsed)
         budgetRepository.updateUserStorageUse(username, storageUseThisMonth)
         return storageUseThisMonth
