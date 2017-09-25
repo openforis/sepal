@@ -18,7 +18,16 @@ class ImageSpec(object):
         viz_params = self._viz_params()
         ee_image = self._ee_image()
         logging.debug('Requesting map id of ' + str(self))
-        ee_preview = ee_image.getMapId(viz_params)
+        ee_preview = None
+        retry = 0
+        while not ee_preview:
+            try:
+                ee_preview = ee_image.getMapId(viz_params)
+            except ee.EEException:
+                retry += 1
+                if retry > 9:
+                    raise
+                logging.info('Retry ' + str(retry) + ' of requesting map id of ' + str(self))
         logging.debug('Got map id of ' + str(self) + ': ' + str(ee_preview))
         return {
             'mapId': ee_preview['mapid'],

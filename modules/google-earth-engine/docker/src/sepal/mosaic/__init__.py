@@ -31,16 +31,16 @@ class Mosaic(object):
         return self._to_mosaic(collection)
 
     def _to_mosaic(self, collection):
-        distanceBands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
-        median = collection.select(distanceBands).median()
+        bands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
+        median = collection.select(bands).median()
         if self.mosaic_def.median_composite:
             mosaic = median
         else:
             def add_distance(image):
                 distanceByBand = image.expression(
                     '1 - abs((i - m) / (i + m))', {
-                        'i': image.select(distanceBands),
-                        'm': median.select(distanceBands)})
+                        'i': image.select(bands),
+                        'm': median.select(bands)})
                 return image.addBands(
                     distanceByBand.reduce(ee.Reducer.sum()).rename(['distanceToMedian'])
                 )
@@ -49,7 +49,7 @@ class Mosaic(object):
             mosaic = collection.qualityMosaic('distanceToMedian')
 
         return mosaic \
-            .select(self.mosaic_def.bands) \
+            .select(bands) \
             .uint16() \
             .clip(self.mosaic_def.aoi.geometry())
 

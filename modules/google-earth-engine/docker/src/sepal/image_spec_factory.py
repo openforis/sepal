@@ -1,3 +1,4 @@
+from classify import Classification
 from image_spec import ImageSpec
 from landsat import LandsatAutomaticMosaicSpec
 from landsat import LandsatManualMosaicSpec
@@ -9,6 +10,18 @@ def create(spec):
     """Creates ImageSpec.
     :rtype: ImageSpec
     """
+    image_type = spec.get('imageType', 'MOSAIC')
+    if image_type == 'MOSAIC':
+        return _createMosaic(spec)
+    if image_type == 'CLASSIFICATION':
+        return Classification(spec, create)
+    # if image_type == 'CHANGE_DETECTION':
+    #     return ChangeDetection(spec)
+    else:
+        raise Exception('Unexpected image image_type: ' + str(image_type))
+
+
+def _createMosaic(spec):
     if spec.get('dataSet', None) == 'SENTINEL2':
         type = {
             'manual': Sentinel2ManualMosaicSpec,
@@ -21,3 +34,4 @@ def create(spec):
             'automatic': LandsatAutomaticMosaicSpec,
         }[spec['type']]
         return type(spec)
+

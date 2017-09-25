@@ -25,6 +25,14 @@
         preview(1)
         preview(2)
     })
+
+
+    $('#classifyForm').submit(function (e) {
+        e.preventDefault()
+        classify()
+        return false
+    })
+
     $('#exportMosaic').click(function (e) {
         e.preventDefault()
         exportMosaic()
@@ -165,6 +173,29 @@
         $.post({
             url: 'preview',
             data: createQuery(mapIndex),
+            dataType: 'json',
+            success: handler
+        })
+    }
+
+    function classify() {
+        var data = {
+            imageType: 'CLASSIFICATION',
+            tableName: $('#fusionTable').val(),
+            classProperty: $('#classProperty').val(),
+            imageToClassify: JSON.parse(($('#sceneIds').val() ? createScenesQuery(1) : createQuery(1)).image)
+        }
+
+        var handler = function (data) {
+            $('#response').html(JSON.stringify(data))
+            var mapId = data.mapId
+            var token = data.token
+            render(mapId, token, 1)
+        }
+
+        $.post({
+            url: 'preview',
+            data: {image: JSON.stringify(data)},
             dataType: 'json',
             success: handler
         })
