@@ -74,7 +74,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
             readers.each { reader ->
                 reader.eachLine {
                     def scene = toSceneMetaData(sensor, it)
-                    if (scene && scene.acquisitionDate < lastUpdate)
+                    if (scene && scene.updateTime < lastUpdate)
                         return false
                     if (scene)
                         scenes << scene
