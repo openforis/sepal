@@ -15,7 +15,6 @@ def getTable(token, tableId):
         raise FTNotFoundException()
     elif r.status_code != 200:
         raise FTException('ERROR')
-    print r.json()
     return r.json()
 
 def createTable(token, ft):
@@ -32,7 +31,6 @@ def createTable(token, ft):
 def deleteTable(token, tableId):
     """  """
     url = googleapis_ft_url_delete % (tableId, token)
-    print googleapis_ft_url_delete
     r = requests.delete(url)
     if r.status_code == 401:
         raise FTException('TOKEN EXPIRED or NOT VALID')
@@ -118,4 +116,3 @@ class FTException(Exception):
 class FTNotFoundException(Exception):
     """  """
     pass
-

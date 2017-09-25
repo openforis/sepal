@@ -32,13 +32,10 @@ def projectById(id=None):
     fusionTableId = project.get('fusionTableId')
     if token and fusionTableId:
         try:
-            print 777
             tableId = getTable(token, fusionTableId)
         except FTException:
-            print 888
             pass
         except FTNotFoundException:
-            print 999
             project['fusionTableId'] = None
     project['recordCount'] = mongo.db.records.find({'project_id': id}).count()
     return jsonify(project), 200
