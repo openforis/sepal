@@ -239,7 +239,7 @@ def projectExport(id=None):
         try:
             tableId = createTable(token, ft)
             if tableId:
-                csvString = projectToCsv(project, records, withHeader=False)
+                csvString = projectToCsv(project, records, withHeader=False, withFtLocation=True)
                 isImported = importTable(token, tableId, csvString)
                 if isImported:
                     project['fusionTableId'] = tableId
@@ -253,7 +253,7 @@ def projectExport(id=None):
         headers = {'Content-disposition': 'attachment; filename=' + filename + '.csv'}
         return Response(csvString, mimetype="text/csv", headers=headers)
 
-def projectToCsv(project, records, withHeader=True):
+def projectToCsv(project, records, withHeader=True, withFtLocation=False):
     csvString = ''
     #
     codeListNames = []
@@ -310,6 +310,7 @@ def projectToCsv(project, records, withHeader=True):
             for codeListName in codeListNames:
                 value = values.get(codeListName, '')
                 csvRowData.append(value)
+            csvRowData.append('%s %s' % (record.get('plot').get('YCoordinate'), record.get('plot').get('XCoordinate')))
             csvString += listToCSVRowString(csvRowData)
     return csvString
 
@@ -334,11 +335,17 @@ def projectToFusionTables(project):
     elif projectType == PROJECT_TYPE_TRAINING_DATA:
         colNames = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
     for index, colName in enumerate(colNames):
+        colType = 'NUMBER' if colName == 'class' else 'STRING'
         ft['columns'].append({
             'columnId': index,
             'name': colName,
-            'type': 'STRING'
+            'type': colType
         })
+    ft['columns'].append({
+        'columnId': len(colNames),
+        'name': 'Location',
+        'type': 'LOCATION'
+    })
     return ft
 
 def saveFileFromRequest(file):

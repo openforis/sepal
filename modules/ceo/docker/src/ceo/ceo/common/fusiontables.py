@@ -74,12 +74,15 @@ def selectRow(token, tableId, id):
         raise FTException('TOKEN EXPIRED or NOT VALID')
     return r.json().get('columns')
 
-def insertRow(token, tableId, data, columns):
+def insertRow(token, tableId, data, columns, location=None):
     """  """
     toInsert = []
     for column in columns:
         if data.get(column) is not None:
             toInsert.append("'%s'" % (data.get(column)))
+    if location:
+        columns.append('Location')
+        toInsert.append(location)
     url = googleapis_ft_url_query % token
     sql = "INSERT INTO %s (%s) VALUES (%s)" % (tableId, ','.join(columns), ','.join(toInsert))
     r = requests.post(url, data={'sql': sql})
@@ -87,12 +90,14 @@ def insertRow(token, tableId, data, columns):
         raise FTException('TOKEN EXPIRED or NOT VALID')
     return True
 
-def updateRow(token, tableId, data, columns, rowId):
+def updateRow(token, tableId, data, columns, rowId, location=None):
     """  """
     toUpdate = []
     for column in columns:
         if data.get(column) is not None:
             toUpdate.append("%s = '%s'" % (column, data.get(column)))
+    if location:
+        toUpdate.append("Location = '%s'" % location)
     url = googleapis_ft_url_query % token
     sql = "UPDATE %s SET %s WHERE ROWID = '%s'" % (tableId, ','.join(toUpdate), rowId)
     r = requests.post(url, data={'sql': sql})
