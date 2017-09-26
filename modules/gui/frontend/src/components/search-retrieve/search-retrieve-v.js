@@ -71,7 +71,7 @@ var setActiveState = function (e, state, params) {
         SectionClassify.hide()
         
         break
-      case Model.TYPES.CLASSIFY:
+      case Model.TYPES.CLASSIFICATION:
         SectionCreateMosaic.hide()
         SectionChangeDetection.hide()
         SectionClassify.show()

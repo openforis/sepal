@@ -21,6 +21,10 @@ class FakeGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
         return null
     }
 
+    MapLayer preview(ClassificationQuery query, User user) {
+        return null
+    }
+
     List<SceneArea> areas(String fusionTable, String keyColumn, String keyValue, List<SceneArea> sceneAreas) {
         sceneAreasByFusionTable[new FusionTableShape(fusionTable, keyColumn, keyValue)] = sceneAreas
         return sceneAreas

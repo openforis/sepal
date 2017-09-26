@@ -1,14 +1,8 @@
 package component.datasearch
 
 import fake.Database
-import org.openforis.sepal.component.datasearch.*
-import org.openforis.sepal.component.datasearch.api.DataSetMetadataGateway
-import org.openforis.sepal.component.datasearch.api.FusionTableShape
-import org.openforis.sepal.component.datasearch.api.LatLng
-import org.openforis.sepal.component.datasearch.api.Polygon
-import org.openforis.sepal.component.datasearch.api.SceneArea
-import org.openforis.sepal.component.datasearch.api.SceneMetaData
-import org.openforis.sepal.component.datasearch.api.SceneQuery
+import org.openforis.sepal.component.datasearch.DataSearchComponent
+import org.openforis.sepal.component.datasearch.api.*
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi

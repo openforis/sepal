@@ -1,6 +1,7 @@
 package org.openforis.sepal.component.datasearch
 
 import groovymvc.Controller
+import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.datasearch.adapter.CsvBackedSentinel2Gateway
 import org.openforis.sepal.component.datasearch.adapter.CsvBackedUsgsGateway
@@ -25,11 +26,11 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
 
-    static DataSearchComponent create(SqlConnectionManager connectionManager) {
+    static DataSearchComponent create(Component processingRecipeComponent, SqlConnectionManager connectionManager) {
         def config = new DataSearchConfig()
         new DataSearchComponent(
                 connectionManager,
-                new HttpGoogleEarthEngineGateway(config.googleEarthEngineEndpoint),
+                new HttpGoogleEarthEngineGateway(processingRecipeComponent, config.googleEarthEngineEndpoint),
                 CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
                 CsvBackedSentinel2Gateway.create(new File(config.downloadWorkingDirectory)),
                 config.googleMapsApiKey,

@@ -97,7 +97,7 @@ var submit = function (e) {
 var setState = function (e, newState, params) {
   FormValidator.resetFormErrors(form, formNotify)
   
-  if (newState && newState.type == Model.TYPES.CLASSIFY && (!state || newState.id !== state.id)) {
+  if (newState && newState.type == Model.TYPES.CLASSIFICATION && (!state || newState.id !== state.id)) {
     
     name.val(newState.name)
     

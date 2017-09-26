@@ -60,7 +60,7 @@ var activeStateChanged = function (e, s, params) {
       case Model.TYPES.MOSAIC:
         showMosaic()
         break
-      case Model.TYPES.CLASSIFY:
+      case Model.TYPES.CLASSIFICATION:
         showClassification()
         break
       case Model.TYPES.CHANGE_DETECTION:

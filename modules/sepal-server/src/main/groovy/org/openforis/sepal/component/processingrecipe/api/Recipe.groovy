@@ -21,6 +21,6 @@ class Recipe {
     }
 
     enum Type {
-        MOSAIC
+        MOSAIC, CLASSIFICATION, CHANGE_DETECTION
     }
 }

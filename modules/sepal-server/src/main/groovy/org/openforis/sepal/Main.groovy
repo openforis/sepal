@@ -31,9 +31,9 @@ class Main {
         def hostingServiceAdapter = HostingServiceAdapter.Factory.create(config.hostingService)
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile('sdms'))
 
-        def dataSearchComponent = start DataSearchComponent.create(connectionManager)
-        def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, connectionManager)
         def processingRecipeComponent = start ProcessingRecipeComponent.create()
+        def dataSearchComponent = start DataSearchComponent.create(processingRecipeComponent, connectionManager)
+        def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, connectionManager)
         def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, connectionManager)
         def workerSessionComponent = start WorkerSessionComponent.create(
                 budgetComponent,

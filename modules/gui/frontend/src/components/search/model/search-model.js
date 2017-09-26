@@ -11,7 +11,7 @@ var active      = {}
 
 var TYPES = {
   MOSAIC            : 'MOSAIC'
-  , CLASSIFY        : 'CLASSIFY'
+  , CLASSIFICATION  : 'CLASSIFICATION'
   , CHANGE_DETECTION: 'CHANGE-DETECTION'
 }
 

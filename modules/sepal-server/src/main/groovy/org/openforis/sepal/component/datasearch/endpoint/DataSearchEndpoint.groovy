@@ -13,8 +13,6 @@ import org.openforis.sepal.util.DateTime
 import static groovy.json.JsonOutput.toJson
 
 class DataSearchEndpoint {
-    private static final FUSION_TABLE = '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F'
-    private static final KEY_COLUMN = 'ISO'
     private final Component component
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
@@ -42,6 +40,24 @@ class DataSearchEndpoint {
                         toAoi(params)))
                 def data = sceneAreas.collect { [sceneAreaId: it.id, polygon: polygonData(it)] }
                 send(toJson(data))
+            }
+
+            get('/data/recipie/preview/{recipeId}') {
+                // Load recipe recursively and forward to google-earth-engine
+            }
+
+            post('/data/classification/preview') {
+                def mapLayer = geeGateway.preview(new ClassificationQuery(
+                        imageRecipeId: params.required('imageRecipeId', String),
+                        tableName: params.required('tableName', String),
+                        classProperty: params.required('classProperty', String),
+                        algorithm: params.required('algorithm', String)
+                ), sepalUser)
+
+                send(toJson(
+                        mapId: mapLayer.id,
+                        token: mapLayer.token
+                ))
             }
 
             post('/data/mosaic/preview') {
@@ -124,8 +140,8 @@ class DataSearchEndpoint {
         def aoi = polygon ?
                 new AoiPolygon(new JsonSlurper().parseText(polygon) as List) :
                 new FusionTableShape(
-                        tableName: FUSION_TABLE,
-                        keyColumn: KEY_COLUMN,
+                        tableName: GoogleEarthEngineGateway.FUSION_TABLE,
+                        keyColumn: GoogleEarthEngineGateway.KEY_COLUMN,
                         keyValue: params.required('countryIso', String))
         return aoi
     }

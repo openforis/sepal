@@ -331,7 +331,7 @@ class MockServer extends AbstractMvcFilter {
                 def targetDayOfYear = params.required('targetDayOfYear', int)
                 def targetDayOfYearWeight = params.required('targetDayOfYearWeight', double)
 
-                def geeGateway = new HttpGoogleEarthEngineGateway('http://localhost:5001')
+                def geeGateway = new HttpGoogleEarthEngineGateway(null, 'http://localhost:5001')
                 def mapLayer = geeGateway.preview(new PreselectedScenesMapQuery(
                         dataSet: dataSet,
                         sceneIds: sceneIds,

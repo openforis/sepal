@@ -54,7 +54,7 @@ var setActiveState = function (e, activeState) {
   state = activeState
   if (!state)
     container.hide(0)
-  else if (state.type === Model.TYPES.CLASSIFY) {
+  else if (state.type === Model.TYPES.CLASSIFICATION) {
     (state.mosaicPreview) ? btnPreview.addClass('active') : btnPreview.removeClass('active')
   }
 }
