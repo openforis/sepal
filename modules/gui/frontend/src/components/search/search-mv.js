@@ -213,14 +213,18 @@ var addClassification = function () {
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
 }
 
-var requestClassification = function (e, state) {
-  var data = {
+var classificationRequestData = function (state) {
+  return {
       imageType: Model.TYPES.CLASSIFICATION,
       imageRecipeId: state.inputRecipe,
       tableName: state.fusionTableId,
       classProperty: state.fusionTableClassColumn,
       algorithm: state.algorithm
   }
+}
+
+var requestClassification = function (e, state) {
+  var data = classificationRequestData(state)
   var params = {
       url         : '/api/data/classification/preview',
       data        : data
@@ -239,6 +243,27 @@ var requestClassification = function (e, state) {
       }
   }
   EventBus.dispatch(Events.AJAX.POST, null, params)
+}
+
+var retrieveClassification = function (e, state, obj) {
+    var data = classificationRequestData(state)
+    data.name = obj.name
+
+    var params = {
+        url         : '/api/data/classification/retrieve'
+        , data      : data
+        , beforeSend: function () {
+            setTimeout(function () {
+                EventBus.dispatch(Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager')
+            }, 100)
+
+            EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW)
+        }
+        , success   : function (e) {
+            EventBus.dispatch(Events.SECTION.TASK_MANAGER.CHECK_STATUS)
+        }
+    }
+    EventBus.dispatch(Events.AJAX.POST, null, params)
 }
 
 //change detection
@@ -270,5 +295,6 @@ EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_LIST, showList)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_MOSAIC, addMosaic)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_CLASSIFICATION, addClassification)
 EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CLASSIFICATION, requestClassification)
+EventBus.addEventListener(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CLASSIFICATION, retrieveClassification)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_CHANGE_DETECTION, addChangeDetection)
 EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CHANGE_DETECTION, requestChangeDetection)

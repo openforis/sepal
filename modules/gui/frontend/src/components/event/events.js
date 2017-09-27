@@ -5,36 +5,36 @@
  */
 
 var Events = {
-  
+
   AJAX: {
     REQUEST : 'ajax.request'
     , GET   : 'ajax.get'
     , POST  : 'ajax.post'
     , DELETE: 'ajax.delete'
   }
-  
+
   , APP: {
     LOAD            : 'app.load'
     , DESTROY       : 'app.destroy'
     , USER_LOGGED_IN: 'app.user_logged_in'
   }
-  
+
   , LOGIN: {
     HIDE  : 'login.hide'
     , SHOW: 'login.show'
   }
-  
+
   , SECTION: {
     CLOSE_ALL: 'section.close_all'
     , SHOW   : 'section.show'
     , SHOWN  : 'section.shown'
     , REDUCE : 'section.reduce'
-    
+
     , NAV_MENU: {
       LOADED    : 'section.nav_menu.loaded'
       , COLLAPSE: 'section.nav_menu_collapse'
     }
-    
+
     , SEARCH: {
       MOSAIC_LOAD                   : 'section.search.mosaic_load'
       , MOSAIC_DELETE               : 'section.search.mosaic_delete'
@@ -45,10 +45,10 @@ var Events = {
       , SCENE_AREAS_LOADED          : 'section.search.scene_areas_loaded'
       , LANDSAT_SCENE_AREAS_LOADED  : 'section.search.landsat_scene_areas_loaded'
       , SENTINEL2_SCENE_AREAS_LOADED: 'section.search.sentinel2_scene_areas_loaded'
-      
+
       , REQUEST_CLASSIFICATION  : 'section.search.request_classification'
       , REQUEST_CHANGE_DETECTION: 'section.search.request_change_detection'
-      
+
       , STATE: {
         ACTIVE_CHANGE                 : 'section.search.model.active_change'
         , ACTIVE_CHANGED              : 'section.search.model.active_changed'
@@ -56,43 +56,44 @@ var Events = {
         , ACTIVE_SAVE                 : 'section.search.model.active_save'
         , ACTIVE_ZOOM_TO              : 'section.search.model.active_zoom_to'
         , RESTORE_DRAWN_AOI           : 'section.search.model.restore_drawn_aoi'
-        
+
         , LIST_LOAD   : 'section.search.model.list_load'
         , LIST_CHANGE : 'section.search.model.list_change'
         , LIST_CHANGED: 'section.search.model.list_changed'
       }
-      
+
       , VIEW: {
         SHOW_LIST             : 'section.search.list_view.show_list'
         , ADD_MOSAIC          : 'section.search.list_view.show_mosaic'
         , ADD_CLASSIFICATION  : 'section.search.list_view.show_classification'
         , ADD_CHANGE_DETECTION: 'section.search.list_view.show_change_detection'
       }
-      
+
     }
-    
+
     , SEARCH_RETRIEVE: {
       BEST_SCENES               : 'section.search_retrieve.best_scenes'
       , RETRIEVE_SCENES         : 'section.search_retrieve.retrieve_scenes'
       , PREVIEW_MOSAIC          : 'section.search_retrieve.preview_mosaic'
       , RETRIEVE_MOSAIC         : 'section.search_retrieve.retrieve_mosaic'
+      , RETRIEVE_CLASSIFICATION : 'section.search_retrieve.retrieve_classification'
       , MOSAIC_LOADED           : 'section.search_retrieve.mosaic_loaded'
       , TOGGLE_MOSAIC_VISIBILITY: 'section.search_retrieve.toggle_mosaic_visibility'
       , COLLAPSE_VIEW           : 'section.search_retrieve.collapse_view'
       , SHOW_SCENE_AREAS        : 'section.search_retrieve.show_scene_areas'
       , HIDE_SCENE_AREAS        : 'section.search_retrieve.hide_scene_areas'
     }
-    
+
     , BROWSE: {
       NAV_ITEM_CLICK : 'section.browse.nav_item_click'
       , DOWNLOAD_ITEM: 'section.browse.download_item'
       , DELETE_ITEM  : 'section.browse.delete_item'
     }
-    
+
     , PROCESS: {}
-    
+
     , TERMINAL: {}
-    
+
     , SCENES_SELECTION: {
       RESET          : 'section.scenes_selection.reset'
       , SELECT       : 'section.scenes_selection.select'
@@ -100,7 +101,7 @@ var Events = {
       , RELOAD_SCENES: 'section.scenes_selection.reload_scenes'
       , PREVIEW_SCENE: 'section.scenes_selection.preview_scene'
     }
-    
+
     , TASK_MANAGER: {
       REMOVE_TASK   : 'section.task_manager.remove_task'
       , CANCEL_TASK : 'section.task_manager.cancel_task'
@@ -108,7 +109,7 @@ var Events = {
       , CHECK_STATUS: 'section.task_manager.check_status'
       , UPDATED     : 'section.task_manager.updated'
     }
-    
+
     , USER : {
       REMOVE_SESSION     : 'section.user.remove_session'
       , SAVE_USER_DETAILS: 'section.user.save_user_details'
@@ -135,7 +136,7 @@ var Events = {
       }
     }
   }
-  
+
   , MAP: {
     ZOOM_TO                 : 'map.zoom_to'
     , ZOOM_CHANGED          : 'map.zoom_changed'
@@ -156,13 +157,13 @@ var Events = {
     , POLYGON_DRAWN         : 'map.polygon_drawn'
     , POLYGON_CLEAR         : 'map.polygon_clear'
   }
-  
+
   , SCENE_AREAS: {
     INIT           : 'scene_areas.init'
     , RESET        : 'scene_areas.reset'
     , SCENES_UPDATE: 'scene_areas.scenes_update'
   }
-  
+
   // , SCENE_AREA_MOSAICS: {
   //     LANDSAT    : {
   //         ADD                : "scene_area_mosaics.landsat.add"
@@ -173,7 +174,7 @@ var Events = {
   //         , TOGGLE_VISIBILITY: "scene_area_mosaics.sentinel2.toggle_visibility"
   //     }
   // }
-  
+
   , USER: {
     USER_DETAILS_LOADED         : 'user.user_details_loaded'
     , USER_SANDBOX_REPORT_LOADED: 'user.user_sandbox_report_loaded'
@@ -181,18 +182,18 @@ var Events = {
     , PASSWORD_CHANGED          : 'user.password_changed'
     , LOGGED_OUT                : 'user.logged_out'
   }
-  
+
   , ALERT: {
     SHOW_INFO: 'alert.show_info'
   }
-  
+
   , APP_MANAGER: {
     OPEN_IFRAME   : 'app_manager.open_iframe'
     , OPEN_RSTUDIO: 'app_manager.open_rstudio'
     , OPEN_DATAVIS: 'app_manager.open_datavis'
     , CLOSED      : 'app_manager.closed'
   }
-  
+
   , APPS: {
     DATA_VIS: {
       MAP_INITIALIZED                    : 'apps.data_vis.map_initialized'
@@ -210,7 +211,7 @@ var Events = {
       , GET_FEATURE_INFO                 : 'apps.data_vis.get_feature_info'
     }
   }
-  
+
 }
 
 module.exports = Events

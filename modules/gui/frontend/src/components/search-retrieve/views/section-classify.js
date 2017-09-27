@@ -30,7 +30,7 @@ var init = function (c) {
     var options = {
       message    : 'Retrieve classification mosaic ' + state.name +' ?'
       , onConfirm: function () {
-        //TODO
+        EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CLASSIFICATION, null, state, {name: state.name})
       }
     }
     Dialog.show(options)
