@@ -116,11 +116,15 @@
                 };
                 var gamma = overlay.gamma;
                 if (gamma != '') visParams['gamma'] = gamma;
+                var palette = overlay.palette;
+                if (palette != '') visParams['palette'] = palette;
                 var dateFrom = overlay.dateFrom;
                 var dateTo = overlay.dateTo;
                 var url = geeGatewayApiUrl;
                 if (collectionName == 'ASTER/AST_L1T_003') {
                     url += '/asterMosaic';
+                } else if (collectionName == 'NDVI_CHANGE') {
+                    url += '/ndviChange';
                 } else {
                     url += '/imageByMosaicCollection';
                 }
@@ -134,7 +138,9 @@
                         collectionName: collectionName,
                         visParams, visParams,
                         dateFrom: dateFrom,
-                        dateTo: dateTo
+                        dateTo: dateTo,
+                        yearFrom: dateFrom,
+                        yearTo: dateTo
                     })
                 }).fail(function(jqXHR, textStatus, errorThrown) {
                     console.error(jqXHR, textStatus, errorThrown);

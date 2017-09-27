@@ -131,6 +131,7 @@ $('#add-subform-gee').click(function(e) {
                 $('input[name="band2[]"]', subform).val('');
                 $('input[name="band3[]"]', subform).val('');
                 $('input[name="gamma[]"]', subform).val('');
+                $('input[name="palette[]"]', subform).val('');
             } else {
                 var value1 = $('select[name="collectionName[]"]', subform).val();
                 var set0 = visParams[value1];
@@ -142,6 +143,7 @@ $('#add-subform-gee').click(function(e) {
                 $('input[name="band2[]"]', subform).val(set['band2']);
                 $('input[name="band3[]"]', subform).val(set['band3']);
                 $('input[name="gamma[]"]', subform).val(set['gamma']);
+                $('input[name="palette[]"]', subform).val(set['palette']);
             }
         });
     });
