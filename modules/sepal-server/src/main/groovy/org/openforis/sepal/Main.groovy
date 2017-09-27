@@ -32,7 +32,6 @@ class Main {
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile('sdms'))
 
         def processingRecipeComponent = start ProcessingRecipeComponent.create()
-        def dataSearchComponent = start DataSearchComponent.create(processingRecipeComponent, connectionManager)
         def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, connectionManager)
         def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, connectionManager)
         def workerSessionComponent = start WorkerSessionComponent.create(
@@ -46,6 +45,7 @@ class Main {
                 new HttpWorkerGateway(config.sepalUsername, config.sepalPassword, 1026),
                 connectionManager
         )
+        def dataSearchComponent = start DataSearchComponent.create(processingRecipeComponent, taskComponent, connectionManager)
         start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
         def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir))
         def appsComponent = new AppsComponent(config.appsFile)

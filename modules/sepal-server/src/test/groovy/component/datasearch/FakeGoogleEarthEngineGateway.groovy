@@ -13,15 +13,7 @@ class FakeGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
         return sceneAreasByFusionTable[aoi]
     }
 
-    MapLayer preview(AutomaticSceneSelectingMapQuery query, User user) {
-        return null
-    }
-
-    MapLayer preview(PreselectedScenesMapQuery query, User user) {
-        return null
-    }
-
-    MapLayer preview(ClassificationQuery query, User user) {
+    MapLayer preview(Map image, User user) {
         return null
     }
 

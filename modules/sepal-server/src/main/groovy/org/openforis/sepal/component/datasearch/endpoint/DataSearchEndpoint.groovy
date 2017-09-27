@@ -8,19 +8,26 @@ import org.openforis.sepal.component.datasearch.api.*
 import org.openforis.sepal.component.datasearch.query.FindBestScenes
 import org.openforis.sepal.component.datasearch.query.FindSceneAreasForAoi
 import org.openforis.sepal.component.datasearch.query.FindScenesForSceneArea
+import org.openforis.sepal.component.datasearch.query.ToImageMap
+import org.openforis.sepal.component.task.command.SubmitTask
 import org.openforis.sepal.util.DateTime
 
 import static groovy.json.JsonOutput.toJson
+import static org.openforis.sepal.component.datasearch.api.FusionTableShape.getCOUNTRY_FUSION_TABLE
+import static org.openforis.sepal.component.datasearch.api.FusionTableShape.getCOUNTRY_CODE_FUSION_TABLE_COLUMN
 
 class DataSearchEndpoint {
     private final Component component
+    private final Component taskComponent
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
 
     DataSearchEndpoint(Component component,
+                       Component taskComponent,
                        GoogleEarthEngineGateway geeGateway,
                        String googleMapsApiKey) {
         this.component = component
+        this.taskComponent = taskComponent
         this.googleMapsApiKey = googleMapsApiKey
         this.geeGateway = geeGateway
     }
@@ -42,17 +49,8 @@ class DataSearchEndpoint {
                 send(toJson(data))
             }
 
-            get('/data/recipie/preview/{recipeId}') {
-                // Load recipe recursively and forward to google-earth-engine
-            }
-
             post('/data/classification/preview') {
-                def mapLayer = geeGateway.preview(new ClassificationQuery(
-                        imageRecipeId: params.required('imageRecipeId', String),
-                        tableName: params.required('tableName', String),
-                        classProperty: params.required('classProperty', String),
-                        algorithm: params.required('algorithm', String)
-                ), sepalUser)
+                def mapLayer = geeGateway.preview(toClassificationMap(params), sepalUser)
 
                 send(toJson(
                         mapId: mapLayer.id,
@@ -62,34 +60,7 @@ class DataSearchEndpoint {
 
             post('/data/mosaic/preview') {
                 response.contentType = "application/json"
-                def dataSet = params['dataSet'] as DataSet ?: DataSet.LANDSAT
-                def sceneIds = params.required('sceneIds', String).split(',')*.trim()
-                def bands = params.required('bands', String).split(',')*.trim()
-                def targetDayOfYear = (params.targetDayOfYear ?: 1) as int
-                def targetDayOfYearWeight = (params.targetDayOfYearWeight ?: 0) as double
-                def shadowTolerance = (params.shadowTolerance ?: 0) as double
-                def hazeTolerance = (params.hazeTolerance ?: 0.05) as double
-                def greennessWeight = (params.greennessWeight ?: 0) as double
-                def medianComposite = params.medianComposite == 'true'
-                def brdfCorrect = params.brdfCorrect == 'true'
-                def maskClouds = params.maskClouds == 'true'
-                def maskSnow = params.maskSnow == 'true'
-
-                def mapLayer = geeGateway.preview(new PreselectedScenesMapQuery(
-                        dataSet: dataSet,
-                        sceneIds: sceneIds,
-                        aoi: toAoi(params),
-                        targetDayOfYear: targetDayOfYear,
-                        targetDayOfYearWeight: targetDayOfYearWeight,
-                        shadowTolerance: shadowTolerance,
-                        hazeTolerance: hazeTolerance,
-                        greennessWeight: greennessWeight,
-                        medianComposite: medianComposite,
-                        brdfCorrect: brdfCorrect,
-                        maskClouds: maskClouds,
-                        maskSnow: maskSnow,
-                        bands: bands
-                ), sepalUser)
+                def mapLayer = geeGateway.preview(toPreselectedScenesImageMap(params), sepalUser)
 
                 send(toJson(
                         mapId: mapLayer.id,
@@ -132,16 +103,86 @@ class DataSearchEndpoint {
                 def data = scenes.collect { sceneData(it, query.targetDayOfYear) }
                 send(toJson(data))
             }
+
+            post('/data/mosaic/retrieve') {
+                response.contentType = "application/json"
+                taskComponent.submit(new SubmitTask(
+                        operation: 'google-earth-engine-download',
+                        params: [
+                                name : params.required('name'),
+                                image: toPreselectedScenesImageMap(params)
+                        ],
+                        username: currentUser.username
+                ))
+                send toJson([status: 'OK'])
+            }
+
+            post('/data/classification/retrieve') {
+                taskComponent.submit(new SubmitTask(
+                        operation: 'google-earth-engine-download',
+                        params: [
+                                name : params.required('name'),
+                                image: toClassificationMap(params)
+                        ],
+                        username: currentUser.username
+                ))
+                send toJson([status: 'OK'])
+            }
+
+            post('/data/scenes/retrieve') {
+                response.contentType = "application/json"
+                def sceneIds = fromJson(params.required('sceneIds', String)) as List<String>
+                taskComponent.submit(new SubmitTask(
+                        operation: 'landsat-scene-download',
+                        params: [
+                                dataSet : params.required('dataSet'),
+                                sceneIds: sceneIds
+                        ],
+                        username: currentUser.username
+                ))
+                send toJson([status: 'OK'])
+            }
+
         }
     }
+
+    private Map toClassificationMap(params) {
+        component.submit(new ToImageMap(
+                new ClassificationQuery(
+                        imageRecipeId: params.required('imageRecipeId', String),
+                        tableName: params.required('tableName', String),
+                        classProperty: params.required('classProperty', String),
+                        algorithm: params.required('algorithm', String)
+                )))
+    }
+
+    private Map toPreselectedScenesImageMap(params) {
+        component.submit(new ToImageMap(
+                new PreselectedScenesMapQuery([
+                        dataSet              : params['dataSet'] as DataSet ?: DataSet.LANDSAT,
+                        sceneIds             : params.required('sceneIds', String).split(',')*.trim(),
+                        aoi                  : toAoi(params),
+                        targetDayOfYear      : (params.targetDayOfYear ?: 1) as int,
+                        targetDayOfYearWeight: (params.targetDayOfYearWeight ?: 0) as double,
+                        shadowTolerance      : (params.shadowTolerance ?: 0) as double,
+                        hazeTolerance        : (params.hazeTolerance ?: 0.05) as double,
+                        greennessWeight      : (params.greennessWeight ?: 0) as double,
+                        medianComposite      : params.medianComposite == 'true',
+                        brdfCorrect          : params.brdfCorrect == 'true',
+                        maskClouds           : params.maskClouds == 'true',
+                        maskSnow             : params.maskSnow == 'true',
+                        bands                : params.required('bands', String).split(',')*.trim()
+                ])))
+    }
+
 
     private Aoi toAoi(Params params) {
         def polygon = params.polygon as String
         def aoi = polygon ?
                 new AoiPolygon(new JsonSlurper().parseText(polygon) as List) :
                 new FusionTableShape(
-                        tableName: GoogleEarthEngineGateway.FUSION_TABLE,
-                        keyColumn: GoogleEarthEngineGateway.KEY_COLUMN,
+                        tableName: COUNTRY_FUSION_TABLE,
+                        keyColumn: COUNTRY_CODE_FUSION_TABLE_COLUMN,
                         keyValue: params.required('countryIso', String))
         return aoi
     }

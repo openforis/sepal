@@ -23,14 +23,20 @@ import org.openforis.sepal.sql.SqlConnectionManager
 import java.util.concurrent.TimeUnit
 
 final class DataSearchComponent extends DataSourceBackedComponent implements EndpointRegistry {
+    private final Component taskComponent
     private final GoogleEarthEngineGateway geeGateway
     private final String googleMapsApiKey
 
-    static DataSearchComponent create(Component processingRecipeComponent, SqlConnectionManager connectionManager) {
+    static DataSearchComponent create(
+            Component processingRecipeComponent,
+            Component taskComponent,
+            SqlConnectionManager connectionManager) {
         def config = new DataSearchConfig()
         new DataSearchComponent(
+                processingRecipeComponent,
+                taskComponent,
                 connectionManager,
-                new HttpGoogleEarthEngineGateway(processingRecipeComponent, config.googleEarthEngineEndpoint),
+                new HttpGoogleEarthEngineGateway(config.googleEarthEngineEndpoint),
                 CsvBackedUsgsGateway.create(new File(config.downloadWorkingDirectory)),
                 CsvBackedSentinel2Gateway.create(new File(config.downloadWorkingDirectory)),
                 config.googleMapsApiKey,
@@ -39,6 +45,8 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     }
 
     DataSearchComponent(
+            Component processingRecipeComponent,
+            Component taskComponent,
             SqlConnectionManager connectionManager,
             GoogleEarthEngineGateway geeGateway,
             DataSetMetadataGateway landsatMetadata,
@@ -46,6 +54,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
             String googleMapsApiKey,
             HandlerRegistryEventDispatcher eventDispatcher) {
         super(connectionManager, eventDispatcher)
+        this.taskComponent = taskComponent
         this.geeGateway = geeGateway
         this.googleMapsApiKey = googleMapsApiKey
         def sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
@@ -56,6 +65,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
         query(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(geeGateway))
         query(FindScenesForSceneArea, new FindScenesForSceneAreaHandler(sceneMetaDataRepository))
         query(FindBestScenes, new FindBestScenesHandler(sceneMetaDataRepository))
+        query(ToImageMap, new ToImageMapHandler(processingRecipeComponent))
     }
 
     void onStart() {
@@ -68,6 +78,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
     void registerEndpointsWith(Controller controller) {
         new DataSearchEndpoint(
                 this,
+                taskComponent,
                 geeGateway,
                 googleMapsApiKey
         ).registerWith(controller)
