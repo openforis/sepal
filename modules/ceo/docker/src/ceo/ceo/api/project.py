@@ -521,7 +521,7 @@ def getCodeListFromRequest(request):
     codeListCode = request.form.getlist('codeListCode[]')
     for i in range(0, len(codeListCode)):
         codeList['items'].append({
-            'code': codeListCode[i],
-            'label': 'Dummy'
+            'code': i,
+            'label': codeListCode[i]
         })
     return codeList

@@ -374,7 +374,7 @@
                     element.append(label);
                     codeList.items.forEach(function(item) {
 
-                        var button = $('<button>').attr('type', 'button').addClass('btn btn-secondary submit-btn form-control').text(item.code).attr('value', item.code);
+                        var button = $('<button>').attr('type', 'button').addClass('btn btn-secondary submit-btn form-control').text(item.label).attr('value', item.code);
                         $(button).click(function(e) {
                             e.preventDefault();
 
@@ -420,7 +420,7 @@
                             });
 
                         });
-                        $('#codeLists').prepend($('<div class="form-group">').append(button));
+                        $('#codeLists').append($('<div class="form-group">').append(button));
                     });
                 });
 

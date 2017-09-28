@@ -25,13 +25,13 @@
                           <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Add a layer
                         </button>
                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                            <a id="add-subform-gee" class="dropdown-item chart-btn" href="#">Google Earth Engine</a>
-                            <a id="add-subform-digitalglobe" class="dropdown-item chart-btn" href="#">DigitalGlobe Basemap</a>
-                            <a id="add-subform-dgcs" class="dropdown-item chart-btn" href="#">DGCS (DigitalGlobe Cloud Services)</a>
-                            <a id="add-subform-gibs" class="dropdown-item chart-btn" href="#">GIBS</a>
-                            <a id="add-subform-geonetwork" class="dropdown-item chart-btn" href="#">GeoNetwork</a>
-                            <a id="add-subform-planet" class="dropdown-item chart-btn" href="#">Planet</a>
-                            <a id="add-subform-sepal" class="dropdown-item chart-btn" href="#">SEPAL</a>
+                            <a id="add-subform-gee" class="dropdown-item chart-btn add-subform" href="#">Google Earth Engine</a>
+                            <a id="add-subform-digitalglobe" class="dropdown-item chart-btn add-subform" href="#">DigitalGlobe Basemap</a>
+                            <a id="add-subform-dgcs" class="dropdown-item chart-btn add-subform" href="#">DGCS (DigitalGlobe Cloud Services)</a>
+                            <a id="add-subform-gibs" class="dropdown-item chart-btn add-subform" href="#">GIBS</a>
+                            <a id="add-subform-geonetwork" class="dropdown-item chart-btn add-subform" href="#">GeoNetwork</a>
+                            <a id="add-subform-planet" class="dropdown-item chart-btn add-subform" href="#">Planet</a>
+                            <a id="add-subform-sepal" class="dropdown-item chart-btn add-subform" href="#">SEPAL</a>
                         </div>
                     </div>
                 </div>
@@ -237,43 +237,36 @@ function addSubformCodeListValue(removable, data) {
         $('.remove-subform', subform).remove();
     }
     if (data !== undefined) {
-        $('input[name="codeListCode[]"]', subform).val(data.code);
+        $('input[name="codeListCode[]"]', subform).val(data.label);
     }
 }
 
-$('#add-subform-gee').click(function(e) {
+$('.add-subform').click(function(e) {
     e.preventDefault();
-    addSubformGEE();
-});
-
-$('#add-subform-digitalglobe').click(function(e) {
-    e.preventDefault();
-    addSubformDigitalGlobe();
-});
-
-$('#add-subform-dgcs').click(function(e) {
-    e.preventDefault();
-    addSubformDGCS();
-});
-
-$('#add-subform-gibs').click(function(e) {
-    e.preventDefault();
-    addSubformGIBS();
-});
-
-$('#add-subform-geonetwork').click(function(e) {
-    e.preventDefault();
-    addSubformGeoNetwork();
-});
-
-$('#add-subform-planet').click(function(e) {
-    e.preventDefault();
-    addSubformPlanet();
-});
-
-$('#add-subform-sepal').click(function(e) {
-    e.preventDefault();
-    addSubformSEPAL();
+    var id = $(this).attr('id');
+    switch (id) {
+        case 'add-subform-gee':
+            addSubformGEE();
+            break;
+        case 'add-subform-digitalglobe':
+            addSubformDigitalGlobe();
+            break;
+        case 'add-subform-dgcs':
+            addSubformDGCS();
+            break;
+        case 'add-subform-gibs':
+            addSubformGIBS();
+            break;
+        case 'add-subform-geonetwork':
+            addSubformGeoNetwork();
+            break;
+        case 'add-subform-planet':
+            addSubformPlanet();
+            break;
+        case 'add-subform-sepal':
+            addSubformSEPAL();
+            break;
+    }
 });
 
 $('#add-subform-codelist-value').click(function(e) {
