@@ -205,7 +205,7 @@ var addClassification = function () {
       inputRecipe           : null,
       fusionTableId         : null,
       fusionTableClassColumn: null,
-      algorithm             : null
+      algorithm             : 'cart'
     }
     return defaultState
   }
@@ -279,7 +279,7 @@ var addChangeDetection = function () {
       inputRecipe2          : null,
       fusionTableId         : null,
       fusionTableClassColumn: null,
-      algorithm             : null
+      algorithm             : 'cart'
     }
     return defaultState
   }
