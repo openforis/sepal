@@ -1,4 +1,5 @@
-from classify import Classification
+from changedetection import ChangeDetection
+from classification import Classification
 from image_spec import ImageSpec
 from landsat import LandsatAutomaticMosaicSpec
 from landsat import LandsatManualMosaicSpec
@@ -15,8 +16,8 @@ def create(spec):
         return _createMosaic(spec)
     if image_type == 'CLASSIFICATION':
         return Classification(spec, create)
-    # if image_type == 'CHANGE_DETECTION':
-    #     return ChangeDetection(spec)
+    if image_type == 'CHANGE_DETECTION':
+        return ChangeDetection(spec, create)
     else:
         raise Exception('Unexpected image image_type: ' + str(image_type))
 
@@ -34,4 +35,3 @@ def _createMosaic(spec):
             'automatic': LandsatAutomaticMosaicSpec,
         }[spec['type']]
         return type(spec)
-

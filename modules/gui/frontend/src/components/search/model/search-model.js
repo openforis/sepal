@@ -12,7 +12,7 @@ var active      = {}
 var TYPES = {
   MOSAIC            : 'MOSAIC'
   , CLASSIFICATION  : 'CLASSIFICATION'
-  , CHANGE_DETECTION: 'CHANGE-DETECTION'
+  , CHANGE_DETECTION: 'CHANGE_DETECTION'
 }
 
 // var getAll = function () {

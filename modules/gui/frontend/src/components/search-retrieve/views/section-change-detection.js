@@ -13,24 +13,24 @@ var btnRetrieve = null
 
 var init = function (c) {
   container = $(c)
-  
+
   btnPreview  = container.find('.btn-preview')
   btnRetrieve = container.find('.btn-retrieve')
-  
+
   btnPreview.click(function (e) {
     e.preventDefault()
     state.mosaicPreview = !btnPreview.hasClass('active')
     EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
     EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.TOGGLE_MOSAIC_VISIBILITY)
   })
-  
+
   btnRetrieve.click(function (e) {
     e.preventDefault()
-    
+
     var options = {
       message    : 'Retrieve change detection mosaic ' + state.name +' ?'
       , onConfirm: function () {
-        //TODO
+        EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CHANGE_DETECTION, null, state, {name: state.name})
       }
     }
     Dialog.show(options)

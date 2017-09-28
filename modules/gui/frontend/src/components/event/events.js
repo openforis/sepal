@@ -72,16 +72,17 @@ var Events = {
     }
 
     , SEARCH_RETRIEVE: {
-      BEST_SCENES               : 'section.search_retrieve.best_scenes'
-      , RETRIEVE_SCENES         : 'section.search_retrieve.retrieve_scenes'
-      , PREVIEW_MOSAIC          : 'section.search_retrieve.preview_mosaic'
-      , RETRIEVE_MOSAIC         : 'section.search_retrieve.retrieve_mosaic'
-      , RETRIEVE_CLASSIFICATION : 'section.search_retrieve.retrieve_classification'
-      , MOSAIC_LOADED           : 'section.search_retrieve.mosaic_loaded'
-      , TOGGLE_MOSAIC_VISIBILITY: 'section.search_retrieve.toggle_mosaic_visibility'
-      , COLLAPSE_VIEW           : 'section.search_retrieve.collapse_view'
-      , SHOW_SCENE_AREAS        : 'section.search_retrieve.show_scene_areas'
-      , HIDE_SCENE_AREAS        : 'section.search_retrieve.hide_scene_areas'
+      BEST_SCENES                : 'section.search_retrieve.best_scenes'
+      , RETRIEVE_SCENES          : 'section.search_retrieve.retrieve_scenes'
+      , PREVIEW_MOSAIC           : 'section.search_retrieve.preview_mosaic'
+      , RETRIEVE_MOSAIC          : 'section.search_retrieve.retrieve_mosaic'
+      , RETRIEVE_CLASSIFICATION  : 'section.search_retrieve.retrieve_classification'
+      , RETRIEVE_CHANGE_DETECTION: 'section.search_retrieve.retrieve_change_detection'
+      , MOSAIC_LOADED            : 'section.search_retrieve.mosaic_loaded'
+      , TOGGLE_MOSAIC_VISIBILITY : 'section.search_retrieve.toggle_mosaic_visibility'
+      , COLLAPSE_VIEW            : 'section.search_retrieve.collapse_view'
+      , SHOW_SCENE_AREAS         : 'section.search_retrieve.show_scene_areas'
+      , HIDE_SCENE_AREAS         : 'section.search_retrieve.hide_scene_areas'
     }
 
     , BROWSE: {

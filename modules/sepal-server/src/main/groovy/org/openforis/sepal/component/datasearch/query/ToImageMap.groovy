@@ -3,6 +3,7 @@ package org.openforis.sepal.component.datasearch.query
 import groovy.json.JsonSlurper
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.datasearch.api.AutomaticSceneSelectingMapQuery
+import org.openforis.sepal.component.datasearch.api.ChangeDetectionQuery
 import org.openforis.sepal.component.datasearch.api.ClassificationQuery
 import org.openforis.sepal.component.datasearch.api.PreselectedScenesMapQuery
 import org.openforis.sepal.component.processingrecipe.query.LoadRecipe
@@ -13,8 +14,7 @@ import org.openforis.sepal.util.annotation.Data
 import static java.util.Calendar.DAY_OF_YEAR
 import static org.openforis.sepal.component.datasearch.api.FusionTableShape.COUNTRY_CODE_FUSION_TABLE_COLUMN
 import static org.openforis.sepal.component.datasearch.api.FusionTableShape.COUNTRY_FUSION_TABLE
-import static org.openforis.sepal.component.processingrecipe.api.Recipe.Type.CLASSIFICATION
-import static org.openforis.sepal.component.processingrecipe.api.Recipe.Type.MOSAIC
+import static org.openforis.sepal.component.processingrecipe.api.Recipe.Type.*
 
 @Data
 class ToImageMap implements Query<Map> {
@@ -80,6 +80,17 @@ class ToImageMapHandler implements QueryHandler<Map, ToImageMap> {
         ]
     }
 
+    private Map toImageMap(ChangeDetectionQuery query) {
+        return [
+                imageType    : CHANGE_DETECTION.name(),
+                fromImage    : toImageMap(query.fromImageRecipeId),
+                toImage      : toImageMap(query.toImageRecipeId),
+                tableName    : query.tableName,
+                classProperty: query.classProperty,
+                algorithm    : query.algorithm
+        ]
+    }
+
     private Map toImageMap(String recipeId) {
         def recipe = processingRecipeComponent.submit(new LoadRecipe(recipeId))
         def contents = new JsonSlurper().parseText(recipe.contents)
@@ -118,6 +129,15 @@ class ToImageMapHandler implements QueryHandler<Map, ToImageMap> {
                         tableName      : contents.tableName,
                         classProperty  : contents.classProperty,
                         algorithm      : contents.algorithm
+                ]
+            case CHANGE_DETECTION:
+                return [
+                        imageType    : CHANGE_DETECTION.name(),
+                        fromImage    : toImageMap(contents.inputRecipe1),
+                        toImage      : toImageMap(contents.inputRecipe2),
+                        tableName    : contents.tableName,
+                        classProperty: contents.classProperty,
+                        algorithm    : contents.algorithm
                 ]
             default:
                 throw new IllegalStateException("Unsupported imageType: $imageType")

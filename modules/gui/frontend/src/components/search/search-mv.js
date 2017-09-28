@@ -287,8 +287,59 @@ var addChangeDetection = function () {
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
 }
 
+var changeDetectionRequestData = function (state) {
+    return {
+        imageType: Model.TYPES.CHANGE_DETECTION,
+        fromImageRecipeId: state.inputRecipe1,
+        toImageRecipeId: state.inputRecipe2,
+        tableName: state.fusionTableId,
+        classProperty: state.fusionTableClassColumn,
+        algorithm: state.algorithm
+    }
+}
+
+
 var requestChangeDetection = function (e, state) {
-  fakeMosaic(state)
+  var data = changeDetectionRequestData(state)
+  var params = {
+      url         : '/api/data/change-detection/preview',
+      data        : data
+      , beforeSend: function () {
+          Loader.show()
+      }
+      , success   : function (response) {
+          state.mosaicPreview = true
+          state.mosaic        = {mapId: response.mapId, token: response.token}
+          EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, null, state.mosaic.mapId, state.mosaic.token)
+          EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+
+          EventBus.dispatch(Events.SECTION.REDUCE)
+
+          Loader.hide({delay: 500})
+      }
+  }
+  EventBus.dispatch(Events.AJAX.POST, null, params)
+}
+
+var retrieveChangeDetection= function (e, state, obj) {
+    var data = changeDetectionRequestData(state)
+    data.name = obj.name
+
+    var params = {
+        url         : '/api/data/change-detection/retrieve'
+        , data      : data
+        , beforeSend: function () {
+            setTimeout(function () {
+                EventBus.dispatch(Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager')
+            }, 100)
+
+            EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW)
+        }
+        , success   : function (e) {
+            EventBus.dispatch(Events.SECTION.TASK_MANAGER.CHECK_STATUS)
+        }
+    }
+    EventBus.dispatch(Events.AJAX.POST, null, params)
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_LIST, showList)
@@ -298,3 +349,4 @@ EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CLASSIFICATION, requestC
 EventBus.addEventListener(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CLASSIFICATION, retrieveClassification)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_CHANGE_DETECTION, addChangeDetection)
 EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CHANGE_DETECTION, requestChangeDetection)
+EventBus.addEventListener(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CHANGE_DETECTION, retrieveChangeDetection)

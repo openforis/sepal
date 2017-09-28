@@ -13,8 +13,8 @@ import org.openforis.sepal.component.task.command.SubmitTask
 import org.openforis.sepal.util.DateTime
 
 import static groovy.json.JsonOutput.toJson
-import static org.openforis.sepal.component.datasearch.api.FusionTableShape.getCOUNTRY_FUSION_TABLE
 import static org.openforis.sepal.component.datasearch.api.FusionTableShape.getCOUNTRY_CODE_FUSION_TABLE_COLUMN
+import static org.openforis.sepal.component.datasearch.api.FusionTableShape.getCOUNTRY_FUSION_TABLE
 
 class DataSearchEndpoint {
     private final Component component
@@ -49,6 +49,29 @@ class DataSearchEndpoint {
                 send(toJson(data))
             }
 
+            post('/data/mosaic/preview') {
+                response.contentType = "application/json"
+                def mapLayer = geeGateway.preview(toPreselectedScenesImageMap(params), sepalUser)
+
+                send(toJson(
+                        mapId: mapLayer.id,
+                        token: mapLayer.token
+                ))
+            }
+
+            post('/data/mosaic/retrieve') {
+                response.contentType = "application/json"
+                taskComponent.submit(new SubmitTask(
+                        operation: 'google-earth-engine-download',
+                        params: [
+                                name : params.required('name'),
+                                image: toPreselectedScenesImageMap(params)
+                        ],
+                        username: currentUser.username
+                ))
+                send toJson([status: 'OK'])
+            }
+
             post('/data/classification/preview') {
                 def mapLayer = geeGateway.preview(toClassificationMap(params), sepalUser)
 
@@ -58,14 +81,37 @@ class DataSearchEndpoint {
                 ))
             }
 
-            post('/data/mosaic/preview') {
-                response.contentType = "application/json"
-                def mapLayer = geeGateway.preview(toPreselectedScenesImageMap(params), sepalUser)
+            post('/data/classification/retrieve') {
+                taskComponent.submit(new SubmitTask(
+                        operation: 'google-earth-engine-download',
+                        params: [
+                                name : params.required('name'),
+                                image: toClassificationMap(params)
+                        ],
+                        username: currentUser.username
+                ))
+                send toJson([status: 'OK'])
+            }
+
+            post('/data/change-detection/preview') {
+                def mapLayer = geeGateway.preview(toChangeDetectionMap(params), sepalUser)
 
                 send(toJson(
                         mapId: mapLayer.id,
                         token: mapLayer.token
                 ))
+            }
+
+            post('/data/change-detection/retrieve') {
+                taskComponent.submit(new SubmitTask(
+                        operation: 'google-earth-engine-download',
+                        params: [
+                                name : params.required('name'),
+                                image: toChangeDetectionMap(params)
+                        ],
+                        username: currentUser.username
+                ))
+                send toJson([status: 'OK'])
             }
 
             post('/data/best-scenes') {
@@ -104,31 +150,6 @@ class DataSearchEndpoint {
                 send(toJson(data))
             }
 
-            post('/data/mosaic/retrieve') {
-                response.contentType = "application/json"
-                taskComponent.submit(new SubmitTask(
-                        operation: 'google-earth-engine-download',
-                        params: [
-                                name : params.required('name'),
-                                image: toPreselectedScenesImageMap(params)
-                        ],
-                        username: currentUser.username
-                ))
-                send toJson([status: 'OK'])
-            }
-
-            post('/data/classification/retrieve') {
-                taskComponent.submit(new SubmitTask(
-                        operation: 'google-earth-engine-download',
-                        params: [
-                                name : params.required('name'),
-                                image: toClassificationMap(params)
-                        ],
-                        username: currentUser.username
-                ))
-                send toJson([status: 'OK'])
-            }
-
             post('/data/scenes/retrieve') {
                 response.contentType = "application/json"
                 def sceneIds = fromJson(params.required('sceneIds', String)) as List<String>
@@ -150,6 +171,17 @@ class DataSearchEndpoint {
         component.submit(new ToImageMap(
                 new ClassificationQuery(
                         imageRecipeId: params.required('imageRecipeId', String),
+                        tableName: params.required('tableName', String),
+                        classProperty: params.required('classProperty', String),
+                        algorithm: params.required('algorithm', String)
+                )))
+    }
+
+    private Map toChangeDetectionMap(params) {
+        component.submit(new ToImageMap(
+                new ChangeDetectionQuery(
+                        fromImageRecipeId: params.required('fromImageRecipeId', String),
+                        toImageRecipeId: params.required('toImageRecipeId', String),
                         tableName: params.required('tableName', String),
                         classProperty: params.required('classProperty', String),
                         algorithm: params.required('algorithm', String)
