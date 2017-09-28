@@ -14,20 +14,25 @@
 <div id="collect" class="container-fluid">
     <div class="row" style="margin-bottom: 1em;">
         <div class="col-md-12 col-lg-6">
-            <div class="btn-group" role="group">
-                <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
-                    <i class="fa fa-download" aria-hidden="true"></i>&nbsp;Export
-                </button>
-                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                    <a id="export-csv" class="dropdown-item" href="#">CSV</a>
-                    <!--a id="export-fusiontables" class="dropdown-item" href="#" style="display: none;">Google Fusion Tables</a-->
-                </div>
-            </div>
+            <a class="btn btn-primary" id="export-csv" href="#"><i class="fa fa-download" aria-hidden="true"></i>&nbsp;CSV</a>
         </div>
         <div class="col-md-12 col-lg-6">
-            <a class="btn btn-primary float-right" href="#" role="button" id="exported-fusiontables" target="_blank" style="display: none;">
-                <i class="fa fa-link" aria-hidden="true"></i>&nbsp;Google Fusion Tables
-            </a>
+            <div class="btn-group float-right" role="group">
+                <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                    <i class="fa fa-link" aria-hidden="true"></i>&nbsp;Google Fusion Tables
+                </button>
+                <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                    <a id="ft-export" class="dropdown-item" href="#" style="display: none;">
+                        <i class="fa fa-upload" aria-hidden="true"></i>&nbsp;Export
+                    </a>
+                    <a id="ft-exported" class="dropdown-item" href="#" target="_blank" style="display: none;">
+                        <i class="fa fa-external-link" aria-hidden="true"></i>&nbsp;Open
+                    </a>
+                    <a id="ft-clipboard" class="dropdown-item" href="#" style="display: none;">
+                        <i class="fa fa-clipboard" aria-hidden="true"></i>&nbsp;Clipboard
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     <div class="row" id="list-row">
@@ -386,12 +391,18 @@
                 projectName = data.name;
                 //radius = parseFloat(data.radius);
                 {% if session.accessToken -%}
-                // fusiontable
-                if (data.fusionTableId !== undefined && data.fusionTableId != null) {
-                    $('#exported-fusiontables').attr('href', 'https://fusiontables.google.com/DataSource?docid=' + data.fusionTableId).show();
-                } else {
-                    $('#export-fusiontables').show();
-                }
+                    // fusiontable
+                    if (data.fusionTableId !== undefined && data.fusionTableId != null) {
+                        $('#ft-exported').attr('href', 'https://fusiontables.google.com/DataSource?docid=' + data.fusionTableId).show();
+                        $('#ft-clipboard').attr('data-id', data.fusionTableId).show();
+                        new Clipboard('#ft-clipboard', {
+                            text: function(trigger) {
+                                return trigger.getAttribute('data-id');
+                            }
+                        });
+                    } else {
+                        $('#ft-export').show();
+                    }
                 {% endif -%}
                 // codeLists
                 data.codeLists.forEach(function(codeList) {
@@ -426,7 +437,7 @@
                     }
                 ];
 
-                gOptions = {
+                var gOptions = {
                     zoom             : 10,
                     center           : new google.maps.LatLng(0, 0),
                     mapTypeId        : google.maps.MapTypeId.ROADMAP,
@@ -445,7 +456,8 @@
                     subdomains: 'abcd',
                     maxZoom: 19
                 });
-                lOptions = {
+
+                var lOptions = {
                     zoom: 10,
                     center: [0, 0],
                     zoomAnimation: false,
@@ -631,7 +643,7 @@
             window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export';
         });
 
-        $('#export-fusiontables').click(function(e) {
+        $('#ft-export').click(function(e) {
             e.preventDefault();
             $.ajax({
                 url: ceoSepalApiUrl + '/project/' + project_id + '/export?type=fusiontables',
@@ -641,9 +653,23 @@
                 console.error(jqXHR, textStatus, errorThrown);
                 alert('ko');
             }).done(function(data, textStatus, jqXHR) {
-                alert('ok');
-                $('#export-fusiontables').hide();
+                $('#ftModal').modal('show');
+                // fusiontable
+                if (data.fusionTableId !== undefined && data.fusionTableId != null) {
+                    $('#ft-exported').attr('href', 'https://fusiontables.google.com/DataSource?docid=' + data.fusionTableId).show();
+                    $('#ft-clipboard').attr('data-id', data.fusionTableId).show();
+                    new Clipboard('#ft-clipboard', {
+                        text: function(trigger) {
+                            return trigger.getAttribute('data-id');
+                        }
+                    });
+                }
+                $('#ft-export').hide();
             });
+        });
+
+        $('#ft-clipboard').click(function(e) {
+            e.preventDefault();
         });
 
         $('#prev-btn').click(function(e) {
@@ -831,5 +857,18 @@
     });
 
 </script>
+
+<div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="ftModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                The project has been synchronized with Google Fusion Table
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Ok</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

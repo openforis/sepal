@@ -244,7 +244,7 @@ def projectExport(id=None):
                 if isImported:
                     project['fusionTableId'] = tableId
                     mongo.db.projects.update({'id': id}, {'$set': project}, upsert=False)
-                    return '', 200
+                    return jsonify({'fusionTableId': tableId}), 200
         except FTException as e:
             return jsonify(str(e)), 500
     else:
@@ -282,6 +282,8 @@ def projectToCsv(project, records, withHeader=True, withFtLocation=False):
                 if not hasRecord:
                     for codeListName in codeListNames:
                         csvRowData.append('')
+                if withFtLocation:
+                    csvRowData.append('%s %s' % (record.get('plot').get(codeListNames[1]), record.get('plot').get(codeListNames[2])))
                 csvString += listToCSVRowString(csvRowData)
         else:
             if withHeader:
@@ -296,6 +298,8 @@ def projectToCsv(project, records, withHeader=True, withFtLocation=False):
                 for codeListName in codeListNames:
                     value = values.get(codeListName, '')
                     csvRowData.append(value)
+                if withFtLocation:
+                    csvRowData.append('%s %s' % (record.get('plot').get('YCoordinate'), record.get('plot').get('XCoordinate')))
                 csvString += listToCSVRowString(csvRowData)
     if projectType == PROJECT_TYPE_TRAINING_DATA:
         if withHeader:
@@ -310,7 +314,8 @@ def projectToCsv(project, records, withHeader=True, withFtLocation=False):
             for codeListName in codeListNames:
                 value = values.get(codeListName, '')
                 csvRowData.append(value)
-            csvRowData.append('%s %s' % (record.get('plot').get('YCoordinate'), record.get('plot').get('XCoordinate')))
+            if withFtLocation:
+                csvRowData.append('%s %s' % (record.get('plot').get('YCoordinate'), record.get('plot').get('XCoordinate')))
             csvString += listToCSVRowString(csvRowData)
     return csvString
 

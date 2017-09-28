@@ -21,6 +21,7 @@
     "tether": "1.4.0",
     "font-awesome": "4.7.0",
     "leaflet": "^1.0.3",
-    "highcharts": "^5.0.12"
+    "highcharts": "^5.0.12",
+    "clipboard": "1.7.1"
   }
 }
