@@ -117,6 +117,6 @@ class FTException(Exception):
     """  """
     pass
 
-class FTNotFoundException(Exception):
+class FTNotFoundException(FTException):
     """  """
     pass

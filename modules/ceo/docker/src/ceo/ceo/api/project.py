@@ -33,10 +33,10 @@ def projectById(id=None):
     if token and fusionTableId:
         try:
             tableId = getTable(token, fusionTableId)
-        except FTException:
-            pass
         except FTNotFoundException:
             project['fusionTableId'] = None
+        except FTException:
+            pass
     project['recordCount'] = mongo.db.records.find({'project_id': id}).count()
     return jsonify(project), 200
 
@@ -430,6 +430,7 @@ def getLayersFromRequest(request):
     band2 = request.form.getlist('band2[]')
     band3 = request.form.getlist('band3[]')
     gamma = request.form.getlist('gamma[]')
+    palette = request.form.getlist('palette[]')
     # digitalglobe
     mapID = request.form.getlist('mapID[]')
     # gibs
@@ -465,7 +466,8 @@ def getLayersFromRequest(request):
                 'band1': band1[i1],
                 'band2': band2[i1],
                 'band3': band3[i1],
-                'gamma': gamma[i1]
+                'gamma': gamma[i1],
+                'palette': palette[i1]
             }
         elif layerType[i] == 'digitalglobe':
             i2 += 1
