@@ -13,8 +13,8 @@ import org.openforis.sepal.component.task.command.SubmitTask
 import org.openforis.sepal.util.DateTime
 
 import static groovy.json.JsonOutput.toJson
-import static org.openforis.sepal.component.datasearch.api.FusionTableShape.getCOUNTRY_CODE_FUSION_TABLE_COLUMN
-import static org.openforis.sepal.component.datasearch.api.FusionTableShape.getCOUNTRY_FUSION_TABLE
+import static org.openforis.sepal.component.datasearch.api.FusionTableShape.COUNTRY_CODE_FUSION_TABLE_COLUMN
+import static org.openforis.sepal.component.datasearch.api.FusionTableShape.COUNTRY_FUSION_TABLE
 
 class DataSearchEndpoint {
     private final Component component
