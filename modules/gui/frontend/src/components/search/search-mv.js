@@ -102,8 +102,21 @@ var loadMosaic = function (e, id) {
   _loadMosaic(id, function (state) {
     EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, isNew: true})
     EventBus.dispatch(Events.SECTION.REDUCE)
-    if (state.mosaicPreview && state.mosaicPreviewBand) {
-      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, null, state)
+    if (state.mosaicPreview ) {
+      switch (state.type) {
+        
+        case Model.TYPES.MOSAIC:
+          if(state.mosaicPreviewBand)
+            EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, null, state)
+          break
+        case Model.TYPES.CLASSIFICATION:
+          requestClassification(e , state)
+          break
+        case Model.TYPES.CHANGE_DETECTION:
+          requestChangeDetection(e, state)
+          break
+        
+      }
     }
   })
 }
@@ -138,11 +151,6 @@ var deleteMosaic = function (e, id) {
   }
   EventBus.dispatch(Events.AJAX.DELETE, null, params)
 }
-
-EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, loadList)
-EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_LOAD, loadMosaic)
-EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_CLONE, cloneMosaic)
-EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_DELETE, deleteMosaic)
 
 var guid = function () {
   function s4 () {
@@ -341,6 +349,13 @@ var retrieveChangeDetection= function (e, state, obj) {
     }
     EventBus.dispatch(Events.AJAX.POST, null, params)
 }
+
+
+EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, loadList)
+EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_LOAD, loadMosaic)
+EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_CLONE, cloneMosaic)
+EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_DELETE, deleteMosaic)
+
 
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_LIST, showList)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_MOSAIC, addMosaic)
