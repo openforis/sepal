@@ -196,10 +196,10 @@ var updateFusionTableClass = function (ftId, callback) {
   fusionTableClassColumn.disable()
   if (ftId) {
     var user = UserMV.getCurrentUser()
-    var key = user.googleTokens ? user.googleTokens.accessToken : GoogleMapsLoader.KEY
+    var keyParam = user.googleTokens ? 'access_token=' + user.googleTokens.accessToken : 'key='+GoogleMapsLoader.KEY
     
     var params = {
-      url     : 'https://www.googleapis.com/fusiontables/v2/tables/' + ftId + '/columns?key=' + key,
+      url     : 'https://www.googleapis.com/fusiontables/v2/tables/' + ftId + '/columns?' + keyParam,
       success : function (resp) {
         FormValidator.resetFormErrors(form)
         
