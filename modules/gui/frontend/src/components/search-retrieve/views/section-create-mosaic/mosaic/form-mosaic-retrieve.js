@@ -110,9 +110,9 @@ var setActiveState = function (e, activeState) {
     var inputs = form.find('input')
     $.each(inputs, function (i, input) {
       input = $(input)
-      if ($.isEmptyString(input.val())) {
+      // if ($.isEmptyString(input.val())) {
         input.val(state.name)
-      }
+      // }
     })
   }
 }
