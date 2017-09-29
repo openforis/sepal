@@ -3,6 +3,7 @@ var Events           = require('./../../event/events')
 var FormValidator    = require('../../form/form-validator')
 var Model            = require('./../model/search-model')
 var GoogleMapsLoader = require('google-maps')
+var UserMV           = require('../../user/user-mv')
 
 var state   = {}
 var mosaics = []
@@ -194,8 +195,11 @@ var updateFusionTableClass = function (ftId, callback) {
   
   fusionTableClassColumn.disable()
   if (ftId) {
+    var user = UserMV.getCurrentUser()
+    var key = user.googleTokens ? user.googleTokens.accessToken : GoogleMapsLoader.KEY
+    
     var params = {
-      url     : 'https://www.googleapis.com/fusiontables/v2/tables/' + ftId + '/columns?key=' + GoogleMapsLoader.KEY,
+      url     : 'https://www.googleapis.com/fusiontables/v2/tables/' + ftId + '/columns?key=' + key,
       success : function (resp) {
         FormValidator.resetFormErrors(form)
         
