@@ -175,7 +175,7 @@ var addMosaic = function () {
     var defaultState = {
       id         : guid(),
       type       : Model.TYPES.MOSAIC,
-      name       : 'mosaic-' + date.format('YYYY-MM-DD-HH:mm'),
+      name       : 'mosaic-' + date.format('YYYY-MM-DD-HHmm'),
       aoiCode    : null,
       aoiName    : null,
       sensorGroup: Model.getSensorGroups()[0],
@@ -209,7 +209,7 @@ var addClassification = function () {
     var defaultState = {
       id                    : guid(),
       type                  : Model.TYPES.CLASSIFICATION,
-      name                  : 'classification-' + date.format('YYYY-MM-DD-HH:mm'),
+      name                  : 'classification-' + date.format('YYYY-MM-DD-HHmm'),
       inputRecipe           : null,
       fusionTableId         : null,
       fusionTableClassColumn: null,
@@ -282,7 +282,7 @@ var addChangeDetection = function () {
     var defaultState = {
       id                    : guid(),
       type                  : Model.TYPES.CHANGE_DETECTION,
-      name                  : 'change-detection-' + date.format('YYYY-MM-DD-HH:mm'),
+      name                  : 'change-detection-' + date.format('YYYY-MM-DD-HHmm'),
       inputRecipe1          : null,
       inputRecipe2          : null,
       fusionTableId         : null,

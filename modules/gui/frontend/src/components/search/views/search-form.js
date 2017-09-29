@@ -95,9 +95,9 @@ var submit = function (e) {
   var errorMsg = ''
   var date     = targetDate.asMoment()
   
-  if (!state.name || state.name.indexOf(' ') >= 0) {
+  if (!state.name || $.isEmptyString(state.name) || !/^[0-9A-Za-z][0-9A-Za-z\s_\-]+$/.test(state.name)) {
     valid    = false
-    errorMsg = 'Please enter a valid name, no whitespace are allowed'
+    errorMsg = 'Please enter a valid name, only letters, numbers, _ or - are allowed'
     
     FormValidator.addError(inputName)
   } else if ($.isEmptyString(state.aoiCode) && $.isEmptyString(state.polygon)) {
