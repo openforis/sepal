@@ -17,11 +17,7 @@ def import_sepal_auth(f):
         session['username'] = user.get('username')
         session['roles'] = user.get('roles')
         session['is_admin'] = user.get('admin', False)
-        #
-        googleTokens = user.get('googleTokens')
-        if googleTokens:
-            accessToken = googleTokens.get('accessToken')
-            session['accessToken'] = accessToken
+        session['accessToken'] = user.get('googleTokens').get('accessToken') if user.get('googleTokens') else None
         return f(*args, **kwargs)
     return wrapper
 
