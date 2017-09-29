@@ -224,7 +224,9 @@ var updateFusionTableClass = function (ftId) {
         FormValidator.resetFormErrors(form)
         
         fusionTableClassColumnAutocomplete = fusionTableClassColumn.sepalAutocomplete({
-          lookup  : resp.items.map(function (item) {
+          lookup  : resp.items.filter(function (item) {
+            return item.type === 'NUMBER'
+          }).map(function (item) {
             return {data: item.name, value: item.name}
           }),
           onChange: function (selection) {
