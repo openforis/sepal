@@ -27,7 +27,7 @@ class ChangeDetection(ImageSpec):
     def _ee_image(self):
         image = _AddBandRatios(self.fromImage._ee_image()).apply() \
             .addBands(_AddBandRatios(self.toImage._ee_image()).apply())
-        training = image.sampleRegions(self.trainingData, [self.classProperty], 30)
+        training = image.sampleRegions(self.trainingData, [self.classProperty], self.fromImage.scale)
         classifier = ee.Classifier.cart().train(training, self.classProperty)
         classification = image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         # regression = image.classify(classifier.setOutputMode('REGRESSION')).rename(['regression'])

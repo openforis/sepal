@@ -24,14 +24,15 @@ class Classification(ImageSpec):
         # return {'bands': 'uncertainty', 'min': 0, 'max': 1, 'palette': 'green, yellow, orange, red'}
 
     def _ee_image(self):
-        return _Operation(self.imageToClassify._ee_image(), self.trainingData, self.classProperty).apply()
+        return _Operation(self.imageToClassify, self.trainingData, self.classProperty).apply()
 
 
 class _Operation(ImageOperation):
-    def __init__(self, image, trainingData, classProperty):
-        super(_Operation, self).__init__(image.select(['red', 'nir', 'swir1', 'swir2']))
+    def __init__(self, imageToClassify, trainingData, classProperty):
+        super(_Operation, self).__init__(imageToClassify._ee_image().select(['red', 'nir', 'swir1', 'swir2']))
         self.trainingData = trainingData
         self.classProperty = classProperty
+        self.scale = imageToClassify.scale
 
     def apply(self):
         self.set('red/nir', 'i.red / i.nir')
@@ -40,7 +41,7 @@ class _Operation(ImageOperation):
         self.set('nir/swir1', 'i.nir / i.swir1')
         self.set('nir/swir2', 'i.nir / i.swir2')
         self.set('swir1/swir2', 'i.swir1 / i.swir2')
-        training = self.image.sampleRegions(self.trainingData, [self.classProperty], 30)
+        training = self.image.sampleRegions(self.trainingData, [self.classProperty], self.scale)
         classifier = ee.Classifier.cart().train(training, self.classProperty)
         classification = self.image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         # regression = self.image.classify(classifier.setOutputMode('REGRESSION')).rename(['regression'])
