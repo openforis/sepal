@@ -11,13 +11,19 @@ from ..mosaic import DataSet
 class Sentinel2MosaicSpec(MosaicSpec):
     def __init__(self, spec):
         super(Sentinel2MosaicSpec, self).__init__(spec)
-        self.scale = min([
-            resolution
-            for band, resolution
-            in _scale_by_band.iteritems()
-            if band in self.bands
-        ])
+        self.set_scale()
         self.brdf_correct = False
+
+    def set_scale(self):
+        if self.bands:
+            self.scale = min([
+                resolution
+                for band, resolution
+                in _scale_by_band.iteritems()
+                if band in self.bands
+            ])
+        else:
+            self.scale = 10
 
     def _data_sets(self):
         return [Sentinel2DataSet(self._create_image_filter())]
