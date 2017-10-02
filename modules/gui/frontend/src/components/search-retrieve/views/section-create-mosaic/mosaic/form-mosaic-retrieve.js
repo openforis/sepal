@@ -39,12 +39,12 @@ var init = function (parent) {
   
   container.find('.btn-submit').click(function (e) {
     e.preventDefault()
-    submit(activeSection)
+    submit(activeSection, $(e.target).data('destination'))
   })
   
 }
 
-var submit = function (section) {
+var submit = function (section, destination) {
   FormValidator.resetFormErrors(form)
   
   var name  = section.find('input[name=name]')
@@ -64,7 +64,7 @@ var submit = function (section) {
     if (bands.length <= 0)
       FormValidator.showError(formNotify, 'At least one band must be selected')
     else
-      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, null, state, {bands: bands.join(','), name: name.val()})
+      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, null, state, {bands: bands.join(','), name: name.val(), destination:destination})
     
   }
   
