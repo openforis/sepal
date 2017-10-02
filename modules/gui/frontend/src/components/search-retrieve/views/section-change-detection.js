@@ -26,11 +26,12 @@ var init = function (c) {
 
   btnRetrieve.click(function (e) {
     e.preventDefault()
-
+  
+    var destination = $(e.target).data('destination')
     var options = {
       message    : 'Retrieve change detection mosaic ' + state.name +' ?'
       , onConfirm: function () {
-        EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CHANGE_DETECTION, null, state, {name: state.name})
+        EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CHANGE_DETECTION, null, state, {name: state.name, destination: destination})
       }
     }
     Dialog.show(options)

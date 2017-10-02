@@ -102,15 +102,15 @@ var loadMosaic = function (e, id) {
   _loadMosaic(id, function (state) {
     EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {resetSceneAreas: true, isNew: true})
     EventBus.dispatch(Events.SECTION.REDUCE)
-    if (state.mosaicPreview ) {
+    if (state.mosaicPreview) {
       switch (state.type) {
         
         case Model.TYPES.MOSAIC:
-          if(state.mosaicPreviewBand)
+          if (state.mosaicPreviewBand)
             EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, null, state)
           break
         case Model.TYPES.CLASSIFICATION:
-          requestClassification(e , state)
+          requestClassification(e, state)
           break
         case Model.TYPES.CHANGE_DETECTION:
           requestChangeDetection(e, state)
@@ -181,19 +181,19 @@ var addMosaic = function () {
       sensorGroup: Model.getSensorGroups()[0],
       targetDate : date.format('YYYY-MM-DD'),
       
-      sortWeight            : 0.5,
-      sensors               : Object.keys(Model.getSensors(Model.getSensorGroups()[0])),
-      offsetToTargetDay     : 0,
-      minScenes             : 1,
-      maxScenes             : null,
-      maskClouds            : false,
-      maskSnow              : true,
-      brdfCorrect           : true,
-      median                : false,
-      mosaicTargetDayWeight : 0,
-      mosaicShadowTolerance : 1,
-      mosaicHazeTolerance   : 0.05,
-      mosaicGreennessWeight : 0
+      sortWeight           : 0.5,
+      sensors              : Object.keys(Model.getSensors(Model.getSensorGroups()[0])),
+      offsetToTargetDay    : 0,
+      minScenes            : 1,
+      maxScenes            : null,
+      maskClouds           : false,
+      maskSnow             : true,
+      brdfCorrect          : true,
+      median               : false,
+      mosaicTargetDayWeight: 0,
+      mosaicShadowTolerance: 1,
+      mosaicHazeTolerance  : 0.05,
+      mosaicGreennessWeight: 0
     }
     return defaultState
   }
@@ -223,55 +223,56 @@ var addClassification = function () {
 
 var classificationRequestData = function (state) {
   return {
-      imageType: Model.TYPES.CLASSIFICATION,
-      imageRecipeId: state.inputRecipe,
-      tableName: state.fusionTableId,
-      classProperty: state.fusionTableClassColumn,
-      algorithm: state.algorithm
+    imageType    : Model.TYPES.CLASSIFICATION,
+    imageRecipeId: state.inputRecipe,
+    tableName    : state.fusionTableId,
+    classProperty: state.fusionTableClassColumn,
+    algorithm    : state.algorithm
   }
 }
 
 var requestClassification = function (e, state) {
-  var data = classificationRequestData(state)
+  var data   = classificationRequestData(state)
   var params = {
-      url         : '/api/data/classification/preview',
-      data        : data
-      , beforeSend: function () {
-          Loader.show()
-      }
-      , success   : function (response) {
-          state.mosaicPreview = true
-          state.mosaic        = {mapId: response.mapId, token: response.token}
-          EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, null, state.mosaic.mapId, state.mosaic.token)
-          EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
-
-          EventBus.dispatch(Events.SECTION.REDUCE)
-
-          Loader.hide({delay: 500})
-      }
+    url         : '/api/data/classification/preview',
+    data        : data
+    , beforeSend: function () {
+      Loader.show()
+    }
+    , success   : function (response) {
+      state.mosaicPreview = true
+      state.mosaic        = {mapId: response.mapId, token: response.token}
+      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, null, state.mosaic.mapId, state.mosaic.token)
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+      
+      EventBus.dispatch(Events.SECTION.REDUCE)
+      
+      Loader.hide({delay: 500})
+    }
   }
   EventBus.dispatch(Events.AJAX.POST, null, params)
 }
 
 var retrieveClassification = function (e, state, obj) {
-    var data = classificationRequestData(state)
-    data.name = obj.name
-
-    var params = {
-        url         : '/api/data/classification/retrieve'
-        , data      : data
-        , beforeSend: function () {
-            setTimeout(function () {
-                EventBus.dispatch(Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager')
-            }, 100)
-
-            EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW)
-        }
-        , success   : function (e) {
-            EventBus.dispatch(Events.SECTION.TASK_MANAGER.CHECK_STATUS)
-        }
+  var data         = classificationRequestData(state)
+  data.name        = obj.name
+  data.destination = obj.destination
+  
+  var params = {
+    url         : '/api/data/classification/retrieve'
+    , data      : data
+    , beforeSend: function () {
+      setTimeout(function () {
+        EventBus.dispatch(Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager')
+      }, 100)
+      
+      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW)
     }
-    EventBus.dispatch(Events.AJAX.POST, null, params)
+    , success   : function (e) {
+      EventBus.dispatch(Events.SECTION.TASK_MANAGER.CHECK_STATUS)
+    }
+  }
+  EventBus.dispatch(Events.AJAX.POST, null, params)
 }
 
 //change detection
@@ -296,66 +297,64 @@ var addChangeDetection = function () {
 }
 
 var changeDetectionRequestData = function (state) {
-    return {
-        imageType: Model.TYPES.CHANGE_DETECTION,
-        fromImageRecipeId: state.inputRecipe1,
-        toImageRecipeId: state.inputRecipe2,
-        tableName: state.fusionTableId,
-        classProperty: state.fusionTableClassColumn,
-        algorithm: state.algorithm
-    }
+  return {
+    imageType        : Model.TYPES.CHANGE_DETECTION,
+    fromImageRecipeId: state.inputRecipe1,
+    toImageRecipeId  : state.inputRecipe2,
+    tableName        : state.fusionTableId,
+    classProperty    : state.fusionTableClassColumn,
+    algorithm        : state.algorithm
+  }
 }
 
-
 var requestChangeDetection = function (e, state) {
-  var data = changeDetectionRequestData(state)
+  var data   = changeDetectionRequestData(state)
   var params = {
-      url         : '/api/data/change-detection/preview',
-      data        : data
-      , beforeSend: function () {
-          Loader.show()
-      }
-      , success   : function (response) {
-          state.mosaicPreview = true
-          state.mosaic        = {mapId: response.mapId, token: response.token}
-          EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, null, state.mosaic.mapId, state.mosaic.token)
-          EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
-
-          EventBus.dispatch(Events.SECTION.REDUCE)
-
-          Loader.hide({delay: 500})
-      }
+    url         : '/api/data/change-detection/preview',
+    data        : data
+    , beforeSend: function () {
+      Loader.show()
+    }
+    , success   : function (response) {
+      state.mosaicPreview = true
+      state.mosaic        = {mapId: response.mapId, token: response.token}
+      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, null, state.mosaic.mapId, state.mosaic.token)
+      EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+      
+      EventBus.dispatch(Events.SECTION.REDUCE)
+      
+      Loader.hide({delay: 500})
+    }
   }
   EventBus.dispatch(Events.AJAX.POST, null, params)
 }
 
-var retrieveChangeDetection= function (e, state, obj) {
-    var data = changeDetectionRequestData(state)
-    data.name = obj.name
-
-    var params = {
-        url         : '/api/data/change-detection/retrieve'
-        , data      : data
-        , beforeSend: function () {
-            setTimeout(function () {
-                EventBus.dispatch(Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager')
-            }, 100)
-
-            EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW)
-        }
-        , success   : function (e) {
-            EventBus.dispatch(Events.SECTION.TASK_MANAGER.CHECK_STATUS)
-        }
+var retrieveChangeDetection = function (e, state, obj) {
+  var data         = changeDetectionRequestData(state)
+  data.name        = obj.name
+  data.destination = obj.destination
+  
+  var params = {
+    url         : '/api/data/change-detection/retrieve'
+    , data      : data
+    , beforeSend: function () {
+      setTimeout(function () {
+        EventBus.dispatch(Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager')
+      }, 100)
+      
+      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.COLLAPSE_VIEW)
     }
-    EventBus.dispatch(Events.AJAX.POST, null, params)
+    , success   : function (e) {
+      EventBus.dispatch(Events.SECTION.TASK_MANAGER.CHECK_STATUS)
+    }
+  }
+  EventBus.dispatch(Events.AJAX.POST, null, params)
 }
-
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, loadList)
 EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_LOAD, loadMosaic)
 EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_CLONE, cloneMosaic)
 EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_DELETE, deleteMosaic)
-
 
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.SHOW_LIST, showList)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_MOSAIC, addMosaic)
