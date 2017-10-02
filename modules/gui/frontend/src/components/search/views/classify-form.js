@@ -13,6 +13,7 @@ var formNotify                         = null
 var name                               = null
 var inputRecipe                        = null
 var inputRecipeAutocomplete            = null
+var geeAssetId                         = null
 var fusionTableId                      = null
 var fusionTableClassColumn             = null
 var fusionTableClassColumnAutocomplete = null
@@ -24,6 +25,7 @@ var init = function (container) {
   
   name                   = form.find('input[name=name]')
   inputRecipe            = form.find('input[name=input-recipe]')
+  geeAssetId             = form.find('input[name=gee-asset-id]')
   fusionTableId          = form.find('input[name=fusion-table-id]')
   fusionTableClassColumn = form.find('input[name=fusion-table-class-column]')
   rowAlgorithms          = form.find('.row-algorithm-btns')
@@ -52,6 +54,11 @@ var initEvents = function () {
     }
   })
   
+  geeAssetId.change(function () {
+    state.geeAssetId = geeAssetId.val()
+    updateInputRecipe()
+  })
+  
   updateInputRecipe()
   
   form.submit(submit)
@@ -69,9 +76,9 @@ var submit = function (e) {
     valid    = false
     errorMsg = 'Please enter a valid name, only letters, numbers, _ or - are allowed'
     FormValidator.addError(name)
-  } else if ($.isEmptyString(state.inputRecipe)) {
+  } else if ($.isEmptyString(state.inputRecipe) && $.isEmptyString(state.geeAssetId)) {
     valid    = false
-    errorMsg = 'Please select a valid input recipe'
+    errorMsg = 'Please select a valid input recipe or Google Earth Engine asset id'
     FormValidator.addError(inputRecipe)
   } else if ($.isEmptyString(state.fusionTableId)) {
     valid    = false
@@ -110,8 +117,11 @@ var setState = function (e, newState, params) {
       : inputRecipeAutocomplete.sepalAutocomplete('reset')
     restoreAoi(newState, params)
     
+    if(state.geeAssetId)
+      geeAssetId.val(state.geeAssetId)
+    
     fusionTableId.val(newState.fusionTableId)
-    updateFusionTableClass(newState.fusionTableId , function(){
+    updateFusionTableClass(newState.fusionTableId, function () {
       if (newState.fusionTableClassColumn)
         fusionTableClassColumn.val(newState.fusionTableClassColumn).data('reset-btn').enable()
     })
@@ -141,9 +151,11 @@ var updateInputRecipe = function () {
     onChange: function (selection) {
       state.inputRecipe = selection ? selection.data : null
       
-      state.aoiCode = null
-      state.aoiName = null
-      state.polygon = null
+      state.aoiCode    = null
+      state.aoiName    = null
+      state.polygon    = null
+      state.geeAssetId = null
+      geeAssetId.val('')
       
       EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
       EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
@@ -195,8 +207,8 @@ var updateFusionTableClass = function (ftId, callback) {
   
   fusionTableClassColumn.disable()
   if (ftId) {
-    var user = UserMV.getCurrentUser()
-    var keyParam = user.googleTokens ? 'access_token=' + user.googleTokens.accessToken : 'key='+GoogleMapsLoader.KEY
+    var user     = UserMV.getCurrentUser()
+    var keyParam = user.googleTokens ? 'access_token=' + user.googleTokens.accessToken : 'key=' + GoogleMapsLoader.KEY
     
     var params = {
       url     : 'https://www.googleapis.com/fusiontables/v2/tables/' + ftId + '/columns?' + keyParam,
@@ -215,7 +227,7 @@ var updateFusionTableClass = function (ftId, callback) {
         })
         
         fusionTableClassColumn.enable()
-        if(callback)
+        if (callback)
           callback()
       }, error: function (xhr, ajaxOptions, thrownError) {
         FormValidator.addError(fusionTableId)
