@@ -339,6 +339,19 @@
                         }
                     });
                 });
+            } else if (overlay.type == 'geoserver') {
+                var layerName = overlay.geoserverLayers;
+                var geoserverLayer = L.tileLayer.wms(overlay.geoserverUrl, {
+                    layers: overlay.geoserverLayers,
+                    tiled: true,
+                    format: overlay.geoserverFormat,
+                    transparent: true,
+                    maxZoom: 20,
+                    minZoom: 0,
+                    continuousWorld: true,
+                    version: overlay.geoserverVersion
+                });
+                overlayMapTypes[index] = geoserverLayer;
             }
         }
 
@@ -750,7 +763,7 @@
                     addOverlayMapType(overlay, overlayMapTypes, index);
                 }
                 var overlyMapType = overlayMapTypes[index];
-                if (overlay.type != 'geonetwork' && overlay.type != 'dgcs') {
+                if (overlay.type != 'geonetwork' && overlay.type != 'dgcs' && overlay.type != 'geoserver') {
                     gmap.overlayMapTypes.insertAt(0, overlyMapType);
                     mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
                 } else {

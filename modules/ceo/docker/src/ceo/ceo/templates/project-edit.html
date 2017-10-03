@@ -251,8 +251,9 @@ function addSubformCodeListValue(removable, data) {
     var container = $('#codelist-subform-container').find('.codelist-values-subform-container');
     var subform = $('#codelist-values-subform-template').clone().removeAttr('id').appendTo(container).show();
     $('.remove-subform', subform).click(removeSubform);
-    if (removable) {
-        $('.remove-subform', subform).remove();
+    if (!removable) {
+        $('#add-subform-codelist-value').prop('disabled', true);
+        $('.remove-subform', subform).prop('disabled', true);
     }
     if (data !== undefined) {
         $('input[name="codeListCode[]"]', subform).val(data.label);
