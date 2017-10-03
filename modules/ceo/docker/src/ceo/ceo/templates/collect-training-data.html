@@ -322,6 +322,19 @@
                         }
                     });
                 });
+            } else if (overlay.type == 'geoserver') {
+                var layerName = overlay.geoserverLayers;
+                var geoserverLayer = L.tileLayer.wms(overlay.geoserverUrl, {
+                    layers: overlay.geoserverLayers,
+                    tiled: true,
+                    format: overlay.geoserverFormat,
+                    transparent: true,
+                    maxZoom: 20,
+                    minZoom: 0,
+                    continuousWorld: true,
+                    version: overlay.geoserverVersion
+                });
+                overlayMapTypes[index] = geoserverLayer;
             }
         }
 
@@ -338,7 +351,7 @@
             if (record[0] !== undefined) {
                 var id = record[0]['id'] !== undefined ? record[0]['id'] : 0;
                 $('#codeLists input[name="id"]').val(id);
-
+                
                 var values = record[0]['value'];
                 $.each(values, function(key, value) {
                     $('#codeLists button[value="' + value + '"]').addClass('btn-success');
@@ -425,15 +438,15 @@
                             }).done(function(data) {
                                 updatePlots().done(function(data) {
                                     //
-                                }).fail(function(jqXHR, textStatus, errorThrown) {
-                                    console.error(jqXHR, textStatus, errorThrown);
-                                });
+                            }).fail(function(jqXHR, textStatus, errorThrown) {
+                                console.error(jqXHR, textStatus, errorThrown);
+                            });
                             }).fail(function(jqXHR, textStatus, errorThrown) {
                                 console.error(jqXHR, textStatus, errorThrown);
                             }).always(function() {
                                 getRecords();
-                                showList();
-                            });
+                            showList();
+                        });
 
                         });
                         $('#codeLists').append($('<div class="form-group">').append(button));
@@ -694,10 +707,10 @@
             $('#list a:not(.evaluated)').each(function(index, li) {
                 var id = $(li).attr('data-plot-id');
                 li.remove();
-                shapes[id][0][0].setMap(null);
-                shapes[id][0][1].setMap(null);
-                lmap.removeLayer(shapes[id][1][0]);
-                lmap.removeLayer(shapes[id][1][1]);
+            shapes[id][0][0].setMap(null);
+            shapes[id][0][1].setMap(null);
+            lmap.removeLayer(shapes[id][1][0]);
+            lmap.removeLayer(shapes[id][1][1]);
             });
         }
 
@@ -744,16 +757,16 @@
                 $('#list a.active').remove();
                 updatePlots().done(function(data) {
                     //
-                }).fail(function(jqXHR, textStatus, errorThrown) {
-                    console.error(jqXHR, textStatus, errorThrown);
-                });
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
-                removeCurrentPlot();
+            });
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
+            removeCurrentPlot();
             }).always(function() {
                 getRecords();
-                showList();
-            });
+            showList();
+        });
         });
 
         $('#export-csv').click(function(e) {
@@ -814,7 +827,7 @@
                     addOverlayMapType(overlay, overlayMapTypes, index);
                 }
                 var overlyMapType = overlayMapTypes[index];
-                if (overlay.type != 'geonetwork' && overlay.type != 'dgcs') {
+                if (overlay.type != 'geonetwork' && overlay.type != 'dgcs' && overlay.type != 'geoserver') {
                     gmap.overlayMapTypes.insertAt(0, overlyMapType);
                     mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
                 } else {

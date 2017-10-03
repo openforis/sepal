@@ -240,7 +240,7 @@ def projectExport(id=None):
             tableId = createTable(token, ft)
             if tableId:
                 csvString = projectToCsv(project, records, withHeader=False, withFtLocation=True)
-                isImported = importTable(token, tableId, csvString)
+                isImported = importTable(token, tableId, csvString) if csvString != '' else True
                 if isImported:
                     project['fusionTableId'] = tableId
                     mongo.db.projects.update({'id': id}, {'$set': project}, upsert=False)
@@ -455,8 +455,14 @@ def getLayersFromRequest(request):
     # sepal
     sepalMosaicName = request.form.getlist('sepalMosaicName[]')
     sepalBands = request.form.getlist('sepalBands[]')
+    # geoserver
+    geoserverUrl = request.form.getlist('geoserverUrl[]')
+    geoserverLayers = request.form.getlist('geoserverLayers[]')
+    geoserverService = request.form.getlist('geoserverService[]')
+    geoserverVersion = request.form.getlist('geoserverVersion[]')
+    geoserverFormat = request.form.getlist('geoserverFormat[]')
     #
-    i1 = i2 = i3 = i4 = i5 = i6 = i7 = -1
+    i1 = i2 = i3 = i4 = i5 = i6 = i7 = i8 = -1
     for i in range(0, len(layerType)):
         overlay = None
         if layerType[i] == 'gee-gateway':
@@ -510,6 +516,15 @@ def getLayersFromRequest(request):
             overlay = {
                 'sepalMosaicName': sepalMosaicName[i7],
                 'sepalBands': sepalBands[i7]
+            }
+        elif layerType[i] == 'geoserver':
+            i8 += 1
+            overlay = {
+                'geoserverUrl': geoserverUrl[i8],
+                'geoserverLayers': geoserverLayers[i8],
+                'geoserverService': geoserverService[i8],
+                'geoserverVersion': geoserverVersion[i8],
+                'geoserverFormat': geoserverFormat[i8]
             }
         if overlay:
             overlay['layerName'] = layerName[i]

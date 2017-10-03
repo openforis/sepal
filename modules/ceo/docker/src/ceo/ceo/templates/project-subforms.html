@@ -63,6 +63,19 @@
     </div>
 </div>
 
+<div class="card w-100 card-inverse subform-template" id="geoserver-subform-template" style="display: none;">
+    <input type="hidden" class="form-control" name="layerType[]" value="geoserver" />
+    <div class="card-header">
+        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;GeoServer
+        <button type="submit" class="btn btn-danger remove-subform float-right">
+            <i class="fa fa-trash-o" aria-hidden="true"></i>
+        </button>
+    </div>
+    <div class="card-block">
+        {% include "project-subform-geoserver.html" %}
+    </div>
+</div>
+
 <div class="card w-100 card-inverse subform-template" id="planet-subform-template" style="display: none;">
     <input type="hidden" class="form-control" name="layerType[]" value="planet" />
     <div class="card-header">
