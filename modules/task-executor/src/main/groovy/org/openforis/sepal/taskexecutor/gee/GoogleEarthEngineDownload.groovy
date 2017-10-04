@@ -18,6 +18,7 @@ class GoogleEarthEngineDownload implements TaskExecutor {
     private final Task task
     private final Map image
     private final String name
+    private final String destination
     private final File workingDir
     private final String username
     private final Scheduler scheduler
@@ -29,12 +30,13 @@ class GoogleEarthEngineDownload implements TaskExecutor {
         this.task = task
         this.image = task.params.image
         this.name = task.params.name
+        this.destination = task.params.destination
         this.workingDir = factory.workingDir
         this.username = factory.username
         this.scheduler = factory.scheduler
         this.gateway = factory.gateway
 
-        geeTaskId = gateway.download(name, image)
+        geeTaskId = gateway.download(name, image, destination)
 
         if (!this.image)
             throw new IllegalArgumentException("Expected task parameter geeTaskId")

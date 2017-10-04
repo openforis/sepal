@@ -6,7 +6,7 @@ import static groovy.json.JsonOutput.toJson
 import static groovyx.net.http.ContentType.*
 
 interface GoogleEarthEngineGateway {
-    String download(String name, Map image)
+    String download(String name, Map image, String destination)
 
     Status status(String geeTaskId)
 
@@ -20,12 +20,12 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
         this.uri = uri
     }
 
-    String download(String name, Map image) {
+    String download(String name, Map image, String destination) {
         def response = http.post(
                 path: 'download',
                 requestContentType: URLENC,
                 contentType: TEXT,
-                body: [name: name, image: toJson(image)]
+                body: [name: name, image: toJson(image), destination: destination]
         )
         def geeTaskId = response.data.text
         return geeTaskId
