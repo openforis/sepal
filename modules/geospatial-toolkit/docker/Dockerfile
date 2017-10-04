@@ -2,7 +2,7 @@ FROM ubuntu:xenial
 MAINTAINER OpenForis
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/lib/jvm/java-8-oracle \
-    GDAL_DATA=/usr/share/gdal/2.1
+    GDAL_DATA=/usr/share/gdal/2.2
 
 ADD config/OFGTMethod /usr/local/share/OFGTMethod
 RUN chmod +x /usr/local/bin/*; sync && mkdir /script
