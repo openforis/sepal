@@ -91,3 +91,8 @@ class FusionTable(Aoi):
         return 'FusionTable(table_name: ' + self.table_name \
                + ', key_column: ' + self.key_column \
                + ', value_column: ' + self.value_column + ')'
+
+
+class Geometry(Aoi):
+    def __init__(self, geometry):
+        Aoi.__init__(self, geometry)
