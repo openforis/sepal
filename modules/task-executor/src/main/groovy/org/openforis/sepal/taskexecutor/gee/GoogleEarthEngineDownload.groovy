@@ -57,7 +57,7 @@ class GoogleEarthEngineDownload implements TaskExecutor {
             return status.active
         }
         def status = this.status.get()
-        if (status.hasCompleted()) {
+        if (status.hasCompleted() && this.destination == 'sepal') {
             def file = new File(workingDir, name)
             if (!file.exists()) {
                 LOG.error('google-earth-engine-download says it completed successfully, but file is not there: ' + file)
