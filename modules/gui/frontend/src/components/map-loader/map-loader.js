@@ -49,7 +49,8 @@ var loadMap = function (domId, callback) {
         streetViewControl: false,
         rotateControl    : false,
         fullscreenControl: false,
-        backgroundColor  : '#131314'
+        backgroundColor  : '#131314',
+        gestureHandling: 'greedy'
       })
       
       map.setOptions({styles: mapStyle.defaultStyle})

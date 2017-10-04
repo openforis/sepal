@@ -91,7 +91,8 @@
             zoom             : 3,
             minZoom          : 1,
             maxZoom          : 15,
-            center           : new google.maps.LatLng( 16.7794913, 9.6771556 )
+            center           : new google.maps.LatLng( 16.7794913, 9.6771556 ),
+            gestureHandling: 'greedy'
         });
 
         var mapType = new google.maps.ImageMapType(eeMapOptions)
