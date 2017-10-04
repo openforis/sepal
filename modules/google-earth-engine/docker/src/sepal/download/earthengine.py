@@ -1,8 +1,8 @@
 import logging
 from threading import Thread
 
-import time
 import ee
+import time
 from ee.batch import Task
 
 logger = logging.getLogger(__name__)
@@ -17,6 +17,7 @@ class EarthEngineStatus(object):
         self.thread = Thread(
             name='GEE_Export-' + task_id,
             target=self._poll_status)
+        self.destination = destination
         self.destinationLabel = 'Google Drive' if destination == 'sepal' else 'Google Earth Engine Asset'
         self.thread.start()
 
@@ -76,9 +77,15 @@ class EarthEngineStatus(object):
             return {'state': 'CANCELED',
                     'description': 'Canceled'}
         elif state == Task.State.COMPLETED:
-            return {'state': 'ACTIVE',
-                    'description': 'Downloading from ' + self.destinationLabel + '...',
-                    'step': 'EXPORTED'}
+            if self.destination == 'sepal':
+                return {'state': 'ACTIVE',
+                        'description': 'Downloading from ' + self.destinationLabel + '...',
+                        'step': 'EXPORTED'}
+            else:
+                return {
+                    'state': 'COMPLETED',
+                    'description': "Completed"}
+
         elif state == Task.State.READY:
             return {'state': 'ACTIVE',
                     'description': 'Export to ' + self.destinationLabel + ' pending...',
