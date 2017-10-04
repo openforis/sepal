@@ -48,6 +48,7 @@
                         </button>
                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                             <a id="add-subform-gee" class="dropdown-item chart-btn" href="#">Google Earth Engine</a>
+                            <a id="add-subform-geea" class="dropdown-item chart-btn" href="#">Google Earth Engine (Assets)</a>
                             <a id="add-subform-digitalglobe" class="dropdown-item chart-btn" href="#">DigitalGlobe Basemap</a>
                             <a id="add-subform-dgcs" class="dropdown-item chart-btn" href="#">DGCS (DigitalGlobe Cloud Services)</a>
                             <a id="add-subform-gibs" class="dropdown-item chart-btn" href="#">GIBS</a>
@@ -148,6 +149,15 @@ $('#add-subform-gee').click(function(e) {
             }
         });
     });
+});
+
+$('#add-subform-geea').click(function(e) {
+    e.preventDefault();
+    var subform = $('#geea-gateway-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('html, body').animate({
+        scrollTop: subform.offset().top
+    }, 1000);
+    $('.remove-subform', subform).click(removeSubform);
 });
 
 $('#add-subform-digitalglobe').click(function(e) {

@@ -424,7 +424,7 @@ def getLayersFromRequest(request):
     overlays = []
     layerType = request.form.getlist('layerType[]')
     layerName = request.form.getlist('layerName[]')
-    # gee
+    # gee (google earth engine)
     collectionName = request.form.getlist('collectionName[]')
     dateFrom = request.form.getlist('dateFrom[]')
     dateTo = request.form.getlist('dateTo[]')
@@ -461,8 +461,15 @@ def getLayersFromRequest(request):
     geoserverService = request.form.getlist('geoserverService[]')
     geoserverVersion = request.form.getlist('geoserverVersion[]')
     geoserverFormat = request.form.getlist('geoserverFormat[]')
+    # geea (google earth engine assets)
+    geeaImageName = request.form.getlist('geeaImageName[]')
+    geeaMin = request.form.getlist('geeaMin[]')
+    geeaMax = request.form.getlist('geeaMax[]')
+    geeaBands = request.form.getlist('geeaBands[]')
+    geeaGamma = request.form.getlist('geeaGamma[]')
+    geeaPalette = request.form.getlist('geeaPalette[]')
     #
-    i1 = i2 = i3 = i4 = i5 = i6 = i7 = i8 = -1
+    i1 = i2 = i3 = i4 = i5 = i6 = i7 = i8 = i9 = -1
     for i in range(0, len(layerType)):
         overlay = None
         if layerType[i] == 'gee-gateway':
@@ -525,6 +532,16 @@ def getLayersFromRequest(request):
                 'geoserverService': geoserverService[i8],
                 'geoserverVersion': geoserverVersion[i8],
                 'geoserverFormat': geoserverFormat[i8]
+            }
+        elif layerType[i] == 'geea-gateway':
+            i9 += 1
+            overlay = {
+                'geeaImageName': geeaImageName[i9],
+                'geeaMin': geeaMin[i9],
+                'geeaMax': geeaMax[i9],
+                'geeaBands': geeaBands[i9],
+                'geeaGamma': geeaGamma[i9],
+                'geeaPalette': geeaPalette[i9]
             }
         if overlay:
             overlay['layerName'] = layerName[i]

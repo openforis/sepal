@@ -188,6 +188,51 @@
                         }
                     }
                 });
+            } else if (overlay.type == 'geea-gateway') {
+                var imageName = overlay.geeaImageName;
+                var visParams = {
+                    min: overlay.geeaMin,
+                    max: overlay.geeaMax,
+                    bands: overlay.geeaBands
+                };
+                var gamma = overlay.geeaGamma;
+                if (gamma != '') visParams['gamma'] = gamma;
+                var palette = overlay.geeaPalette;
+                if (palette != '') visParams['palette'] = palette;
+                $.ajax({
+                    url: geeGatewayApiUrl + '/image',
+                    type: 'POST',
+                    async: false,
+                    crossDomain : true,
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        imageName: imageName,
+                        visParams, visParams
+                    })
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error(jqXHR, textStatus, errorThrown);
+                }).done(function(data, textStatus, jqXHR) {
+                    if (data.errMsg) {
+                        console.error(data, textStatus, jqXHR);
+                    } else {
+                        if (data.hasOwnProperty('mapid')) {
+                            var mapId = data.mapid;
+                            var token = data.token;
+                            var layerOptions = {
+                                getTileUrl: function(tile, zoom) {
+                                  var baseUrl = 'https://earthengine.googleapis.com/map';
+                                  var url = [baseUrl, mapId, zoom, tile.x, tile.y].join('/');
+                                  url += '?token=' + token;
+                                  return url;
+                                },
+                                name: layerName,
+                                tileSize: new google.maps.Size(256, 256)
+                            };
+                            var imageMapType = new google.maps.ImageMapType(layerOptions);
+                            overlayMapTypes[index] = imageMapType;
+                        }
+                    }
+                });
             } else if (overlay.type == 'digitalglobe') {
                 var mapId = overlay.mapID;
                 var token = '{{config.DIGITALGLOBE_API_KEY}}';
