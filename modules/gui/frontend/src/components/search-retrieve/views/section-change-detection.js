@@ -5,6 +5,7 @@ var EventBus = require('../../event/event-bus')
 var Events   = require('../../event/events')
 var Model    = require('./../../search/model/search-model')
 var Dialog   = require('./../../dialog/dialog')
+var UserMV   = require('../../user/user-mv')
 
 var state       = {}
 var container   = null
@@ -36,6 +37,11 @@ var init = function (c) {
     }
     Dialog.show(options)
   })
+
+  if(UserMV.getCurrentUser().googleTokens)
+      $('.google-account-dependent').show()
+  else
+      $('.google-account-dependent').hide()
 }
 
 var show = function () {

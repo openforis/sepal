@@ -22,9 +22,9 @@ var init = function ( editUserInfoForm, editUserPwdForm ) {
     
     editUserPwdForm.velocitySlideUp( { delay: 0, duration: 0 } )
     
-    BtnChangePwd          = editUserInfoForm.find( '.btn-change-pwd' )
-    BtnCancelChangePwd    = editUserPwdForm.find( '.btn-cancel-change-pwd' )
-    BtnUseMyGoogleAccount = editUserInfoForm.find( '.btn-use-my-google-account' )
+    BtnChangePwd              = editUserInfoForm.find( '.btn-change-pwd' )
+    BtnCancelChangePwd        = editUserPwdForm.find( '.btn-cancel-change-pwd' )
+    BtnUseMyGoogleAccount     = editUserInfoForm.find( '.btn-use-my-google-account' )
     BtnUseSepalGoogleAccount  = editUserInfoForm.find( '.btn-use-sepal-google-account' )
     
     

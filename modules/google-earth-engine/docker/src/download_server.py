@@ -42,7 +42,8 @@ def healthcheck():
 @http.route('/download', methods=['POST'])
 def download():
     image = image_spec_factory.create(json.loads(request.values['image']))
-    taskId = image.download(request.values['name'], username, thread_local.credentials, downloader)
+    destination = request.values['destination']
+    taskId = image.download(request.values['name'], username, thread_local.credentials, destination, downloader)
     return Response(taskId, mimetype='text/plain')
 
 

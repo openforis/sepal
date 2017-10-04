@@ -7,5 +7,6 @@ class ClassificationQuery {
     String tableName
     String classProperty
     String imageRecipeId
+    String assetId
     String algorithm
 }

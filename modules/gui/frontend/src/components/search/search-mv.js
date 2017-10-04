@@ -225,6 +225,7 @@ var classificationRequestData = function (state) {
   return {
     imageType    : Model.TYPES.CLASSIFICATION,
     imageRecipeId: state.inputRecipe,
+    assetId      : state.geeAssetId,
     tableName    : state.fusionTableId,
     classProperty: state.fusionTableClassColumn,
     algorithm    : state.algorithm
@@ -301,6 +302,8 @@ var changeDetectionRequestData = function (state) {
     imageType        : Model.TYPES.CHANGE_DETECTION,
     fromImageRecipeId: state.inputRecipe1,
     toImageRecipeId  : state.inputRecipe2,
+    fromAssetId      : state.geeAssetId1,
+    toAssetId        : state.geeAssetId2,
     tableName        : state.fusionTableId,
     classProperty    : state.fusionTableClassColumn,
     algorithm        : state.algorithm

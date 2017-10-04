@@ -73,7 +73,7 @@ class ToImageMapHandler implements QueryHandler<Map, ToImageMap> {
     private Map toImageMap(ClassificationQuery query) {
         return [
                 imageType      : CLASSIFICATION.name(),
-                imageToClassify: toImageMap(query.imageRecipeId),
+                imageToClassify: toImageMap(query.imageRecipeId ?: query.assetId),
                 tableName      : query.tableName,
                 classProperty  : query.classProperty,
                 algorithm      : query.algorithm
@@ -83,16 +83,21 @@ class ToImageMapHandler implements QueryHandler<Map, ToImageMap> {
     private Map toImageMap(ChangeDetectionQuery query) {
         return [
                 imageType    : CHANGE_DETECTION.name(),
-                fromImage    : toImageMap(query.fromImageRecipeId),
-                toImage      : toImageMap(query.toImageRecipeId),
+                fromImage    : toImageMap(query.fromImageRecipeId ?: query.fromAssetId),
+                toImage      : toImageMap(query.toImageRecipeId ?: query.toAssetId),
                 tableName    : query.tableName,
                 classProperty: query.classProperty,
                 algorithm    : query.algorithm
         ]
     }
 
-    private Map toImageMap(String recipeId) {
-        def recipe = processingRecipeComponent.submit(new LoadRecipe(recipeId))
+    private Map toImageMap(String id) {
+        if (id.contains('/')) // An Google Earth Engine Asset
+            return [
+                    imageType: ASSET.name(),
+                    id       : id
+            ]
+        def recipe = processingRecipeComponent.submit(new LoadRecipe(id))
         def contents = new JsonSlurper().parseText(recipe.contents)
         def imageType = recipe.type
         switch (imageType) {

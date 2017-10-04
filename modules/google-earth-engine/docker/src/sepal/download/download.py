@@ -14,7 +14,7 @@ class Downloader(object):
         self.downloads = {}
         self.statuses = {}
 
-    def start_download(self, task_id, name, file_id, bands, credentials):
+    def start_download(self, task_id, name, file_id, bands, credentials, destination):
         if task_id in self.downloads:
             logging.info('Trying to start downloading a pre-existing task:' + task_id)
             return
@@ -27,6 +27,7 @@ class Downloader(object):
             bands=bands,
             credentials=credentials,
             download_dir=self.download_dir,
+            destination=destination,
             listener=self)
         self.downloads[task_id] = download
 
@@ -63,15 +64,17 @@ class Downloader(object):
 
 
 class Download(object):
-    def __init__(self, task_id, file_name, file_id, credentials, bands, download_dir, listener):
+    def __init__(self, task_id, file_name, file_id, credentials, bands, download_dir, destination, listener):
         self.task_id = task_id
         self.file_id = file_id
         self.credentials = credentials
         self.dir = download_dir
+        self.destination = destination
         self.listener = listener
         self.earth_engine_status = EarthEngineStatus(
             task_id=task_id,
             credentials=credentials,
+            destination=destination,
             listener=self
         )
         self.drive_download = DriveDownload(
@@ -97,7 +100,10 @@ class Download(object):
         if step_taken:
             if step == 'EXPORTED':
                 self.earth_engine_status.stop()
-                self.drive_download.start()
+                if self.destination == 'sepal':
+                    self.drive_download.start()
+                else:
+                    self.stop()
             elif step == 'DOWNLOADED':
                 self.drive_download.stop()
                 self.post_process.start()

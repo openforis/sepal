@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class EarthEngineStatus(object):
-    def __init__(self, task_id, credentials, listener):
+    def __init__(self, task_id, credentials, destination, listener):
         self.task_id = task_id
         self.credentials = credentials
         self.listener = listener
@@ -17,6 +17,7 @@ class EarthEngineStatus(object):
         self.thread = Thread(
             name='GEE_Export-' + task_id,
             target=self._poll_status)
+        self.destinationLabel = 'Google Drive' if destination == 'sepal' else 'Google Earth Engine Asset'
         self.thread.start()
 
     def cancel(self):
@@ -43,10 +44,10 @@ class EarthEngineStatus(object):
                     return
                 time.sleep(10)
         except Exception:
-            logger.exception('Export to Google Drive failed. Task id: ' + self.task_id)
+            logger.exception('Export to ' + self.destinationLabel + ' failed. Task id: ' + self.task_id)
             self.listener.update_status({
                 'state': 'FAILED',
-                'description': 'Export to Google Drive failed'})
+                'description': 'Export to ' + self.destinationLabel + ' failed'})
             self.stop()
 
     def _task(self):
@@ -62,9 +63,9 @@ class EarthEngineStatus(object):
         if task['state'] not in (Task.State.UNSUBMITTED, Task.State.FAILED):
             return self._to_status(task)
         else:
-            logger.exception('Export to Google Drive failed. Task: ' + str(task))
+            logger.exception('Export to ' + self.destinationLabel + ' failed. Task: ' + str(task))
             return {'state': 'FAILED',
-                    'description': 'Export to Google Drive failed: ' + task['error_message']}
+                    'description': 'Export to ' + self.destinationLabel + ' failed: ' + task['error_message']}
 
     def _to_status(self, task):
         state = task['state']
@@ -76,13 +77,13 @@ class EarthEngineStatus(object):
                     'description': 'Canceled'}
         elif state == Task.State.COMPLETED:
             return {'state': 'ACTIVE',
-                    'description': 'Downloading from Google Drive...',
+                    'description': 'Downloading from ' + self.destinationLabel + '...',
                     'step': 'EXPORTED'}
         elif state == Task.State.READY:
             return {'state': 'ACTIVE',
-                    'description': 'Export to Google Drive pending...',
+                    'description': 'Export to ' + self.destinationLabel + ' pending...',
                     'step': 'EXPORTING'}
         else:
             return {'state': 'ACTIVE',
-                    'description': 'Exporting to Google Drive...',
+                    'description': 'Exporting to ' + self.destinationLabel + '...',
                     'step': 'EXPORTING'}

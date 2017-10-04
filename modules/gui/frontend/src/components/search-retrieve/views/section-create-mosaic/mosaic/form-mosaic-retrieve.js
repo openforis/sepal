@@ -8,6 +8,7 @@ var Events        = require('../../../../event/events')
 var FormValidator = require('../../../../form/form-validator')
 var BudgetCheck   = require('../../../../budget-check/budget-check')
 var SModel        = require('./../../../../search/model/search-model')
+var UserMV        = require('../../../../user/user-mv')
 
 var parentContainer = null
 var container       = null
@@ -41,7 +42,11 @@ var init = function (parent) {
     e.preventDefault()
     submit(activeSection, $(e.target).data('destination'))
   })
-  
+
+  if(UserMV.getCurrentUser().googleTokens)
+      $('.google-account-dependent').show()
+  else
+      $('.google-account-dependent').hide()
 }
 
 var submit = function (section, destination) {

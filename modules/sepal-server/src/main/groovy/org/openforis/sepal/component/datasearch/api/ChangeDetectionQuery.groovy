@@ -8,5 +8,7 @@ class ChangeDetectionQuery {
     String classProperty
     String fromImageRecipeId
     String toImageRecipeId
+    String fromAssetId
+    String toAssetId
     String algorithm
 }

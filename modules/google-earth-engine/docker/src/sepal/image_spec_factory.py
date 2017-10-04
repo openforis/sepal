@@ -1,5 +1,6 @@
 from changedetection import ChangeDetection
 from classification import Classification
+from asset import Asset
 from image_spec import ImageSpec
 from landsat import LandsatAutomaticMosaicSpec
 from landsat import LandsatManualMosaicSpec
@@ -18,6 +19,8 @@ def create(spec):
         return Classification(spec, create)
     if image_type == 'CHANGE_DETECTION':
         return ChangeDetection(spec, create)
+    if image_type == 'ASSET':
+        return Asset(spec)
     else:
         raise Exception('Unexpected image image_type: ' + str(image_type))
 

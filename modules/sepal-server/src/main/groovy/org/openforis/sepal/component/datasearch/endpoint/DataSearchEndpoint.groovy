@@ -65,7 +65,8 @@ class DataSearchEndpoint {
                         operation: 'google-earth-engine-download',
                         params: [
                                 name : params.required('name'),
-                                image: toPreselectedScenesImageMap(params)
+                                image: toPreselectedScenesImageMap(params),
+                                destination: params.destination ?: 'sepal'
                         ],
                         username: currentUser.username
                 ))
@@ -86,7 +87,8 @@ class DataSearchEndpoint {
                         operation: 'google-earth-engine-download',
                         params: [
                                 name : params.required('name'),
-                                image: toClassificationMap(params)
+                                image: toClassificationMap(params),
+                                destination: params.destination ?: 'sepal'
                         ],
                         username: currentUser.username
                 ))
@@ -107,7 +109,8 @@ class DataSearchEndpoint {
                         operation: 'google-earth-engine-download',
                         params: [
                                 name : params.required('name'),
-                                image: toChangeDetectionMap(params)
+                                image: toChangeDetectionMap(params),
+                                destination: params.destination ?: 'sepal'
                         ],
                         username: currentUser.username
                 ))
@@ -170,7 +173,8 @@ class DataSearchEndpoint {
     private Map toClassificationMap(params) {
         component.submit(new ToImageMap(
                 new ClassificationQuery(
-                        imageRecipeId: params.required('imageRecipeId', String),
+                        imageRecipeId: params.imageRecipeId,
+                        assetId: params.assetId,
                         tableName: params.required('tableName', String),
                         classProperty: params.required('classProperty', String),
                         algorithm: params.required('algorithm', String)
@@ -180,8 +184,10 @@ class DataSearchEndpoint {
     private Map toChangeDetectionMap(params) {
         component.submit(new ToImageMap(
                 new ChangeDetectionQuery(
-                        fromImageRecipeId: params.required('fromImageRecipeId', String),
-                        toImageRecipeId: params.required('toImageRecipeId', String),
+                        fromImageRecipeId: params.fromImageRecipeId,
+                        toImageRecipeId: params.toImageRecipeId,
+                        fromAssetId: params.fromAssetId,
+                        toAssetId: params.toAssetId,
                         tableName: params.required('tableName', String),
                         classProperty: params.required('classProperty', String),
                         algorithm: params.required('algorithm', String)

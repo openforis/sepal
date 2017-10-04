@@ -34,7 +34,7 @@ class ImageSpec(object):
             'token': ee_preview['token']
         }
 
-    def download(self, name, username, credentials, downloader):
+    def download(self, name, username, credentials, destination, downloader):
         """Starts to download the image in the background.
 
         :param name: The name to assign the downloaded file (excluding .tif)
@@ -52,9 +52,14 @@ class ImageSpec(object):
         :return: The task id of the download
         :rtype: str
         """
-        file_id = 'sepal-' + name + '-' + str(uuid.uuid4())
-        task_id = export.to_drive(self._ee_image(), self.aoi.geometry().bounds(), name, username, file_id, self.scale)
-        downloader.start_download(task_id, name, file_id, self.bands, credentials)
+        if destination == 'sepal':
+            file_id = 'sepal-' + name + '-' + str(uuid.uuid4())
+            task_id = export.to_drive(self._ee_image(), self.aoi.geometry().bounds(), name, username, file_id,
+                                      self.scale)
+        else:
+            file_id = 'sepal'
+            task_id = export.to_asset(self._ee_image(), self.aoi.geometry().bounds(), name, username, self.scale)
+        downloader.start_download(task_id, name, file_id, self.bands, credentials, destination)
         return task_id
 
     @abstractmethod

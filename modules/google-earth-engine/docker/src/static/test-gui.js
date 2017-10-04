@@ -5,7 +5,8 @@
                 zoom: 4,
                 minZoom: 3,
                 maxZoom: 15,
-                center: new google.maps.LatLng(16.7794913, 9.6771556)
+                center: new google.maps.LatLng(16.7794913, 9.6771556),
+                gestureHandling: 'greedy'
             })
     }
 
@@ -35,7 +36,12 @@
 
     $('#exportMosaic').click(function (e) {
         e.preventDefault()
-        exportMosaic()
+        exportMosaic('sepal')
+    })
+
+    $('#exportAssetMosaic').click(function (e) {
+        e.preventDefault()
+        exportMosaic('gee')
     })
 
     $('#sceneIdForm').submit(function (e) {
@@ -201,9 +207,10 @@
         })
     }
 
-    function exportMosaic() {
+    function exportMosaic(destination) {
         var data = $('#sceneIds').val() ? createScenesQuery(1) : createQuery(1)
         data.name = $('#exportName').val()
+        data.destination = destination
         $.post({
             url: 'download',
             data: data,
