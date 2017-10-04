@@ -26,6 +26,7 @@
                         </button>
                         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                             <a id="add-subform-gee" class="dropdown-item chart-btn add-subform" href="#">Google Earth Engine</a>
+                            <a id="add-subform-geea" class="dropdown-item chart-btn add-subform" href="#">Google Earth Engine (Assets)</a>
                             <a id="add-subform-digitalglobe" class="dropdown-item chart-btn add-subform" href="#">DigitalGlobe Basemap</a>
                             <a id="add-subform-dgcs" class="dropdown-item chart-btn add-subform" href="#">DGCS (DigitalGlobe Cloud Services)</a>
                             <a id="add-subform-gibs" class="dropdown-item chart-btn add-subform" href="#">GIBS</a>
@@ -116,6 +117,24 @@ function addSubformGEE(data) {
         $('input[name="dateFrom[]"]', subform).val(data.dateFrom);
         $('input[name="dateTo[]"]', subform).val(data.dateTo);
         $('select[name="visParams[]"]', subform).val(data.visParams).trigger('change');
+    } else {
+        $('html, body').animate({
+            scrollTop: subform.offset().top
+        }, 1000);
+    }
+}
+
+function addSubformGEEA(data) {
+    var subform = $('#geea-gateway-subform-template').clone().removeAttr('id').appendTo('#subform-container').show();
+    $('.remove-subform', subform).click(removeSubform);
+    if (data !== undefined) {
+        $('input[name="layerName[]"]', subform).val(data.layerName);
+        $('input[name="geeaImageName[]"]', subform).val(data.geeaImageName);
+        $('input[name="geeaMin[]"]', subform).val(data.geeaMin);
+        $('input[name="geeaMax[]"]', subform).val(data.geeaMax);
+        $('input[name="geeaBands[]"]', subform).val(data.geeaBands);
+        $('input[name="geeaGamma[]"]', subform).val(data.geeaGamma);
+        $('input[name="geeaPalette[]"]', subform).val(data.geeaPalette);
     } else {
         $('html, body').animate({
             scrollTop: subform.offset().top
@@ -267,6 +286,9 @@ $('.add-subform').click(function(e) {
         case 'add-subform-gee':
             addSubformGEE();
             break;
+        case 'add-subform-geea':
+            addSubformGEEA();
+            break;
         case 'add-subform-digitalglobe':
             addSubformDigitalGlobe();
             break;
@@ -293,7 +315,7 @@ $('.add-subform').click(function(e) {
 
 $('#add-subform-codelist-value').click(function(e) {
     e.preventDefault();
-    addSubformCodeListValue(false);
+    addSubformCodeListValue(true);
 });
 
 $('#submit-btn').click(function(e) {
@@ -348,6 +370,9 @@ $(document).ready(function() {
                 switch (overlay.type) {
                     case 'gee-gateway':
                         addSubformGEE(overlay);
+                        break;
+                    case 'geea-gateway':
+                        addSubformGEEA(overlay);
                         break;
                     case 'digitalglobe':
                         addSubformDigitalGlobe(overlay);

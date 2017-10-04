@@ -11,6 +11,19 @@
     </div>
 </div>
 
+<div class="card w-100 card-inverse subform-template" id="geea-gateway-subform-template" style="display: none;">
+    <input type="hidden" class="form-control" name="layerType[]" value="geea-gateway" />
+    <div class="card-header">
+        <i class="fa fa-map-o" aria-hidden="true"></i>&nbsp;Google Earth Engine (Asset)
+        <button type="submit" class="btn btn-danger remove-subform float-right">
+            <i class="fa fa-trash-o" aria-hidden="true"></i>
+        </button>
+    </div>
+    <div class="card-block">
+        {% include "project-subform-geea.html" %}
+    </div>
+</div>
+
 <div class="card w-100 card-inverse subform-template" id="digitalglobe-subform-template" style="display: none;">
     <input type="hidden" class="form-control" name="layerType[]" value="digitalglobe" />
     <div class="card-header">
