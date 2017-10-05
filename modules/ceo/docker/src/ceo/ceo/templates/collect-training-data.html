@@ -394,13 +394,14 @@
             $('#codeLists input[name="id"]').val(0);
             record = $.grep(records, function(e) { return e['plot']['id'] == plot_id; });
             if (record[0] !== undefined) {
-                var id = record[0]['id'] !== undefined ? plot_id : 0;
+                var id = record[0]['id'] !== undefined ? record[0]['id'] : 0;
+                $('#codeLists input[name="id"]').val(id);
                 
-                $('#codeLists input[name="id"]').val(plot_id);
                 var values = record[0]['value'];
                 $.each(values, function(key, value) {
                     $('#codeLists button[value="' + value + '"]').addClass('btn-success');
                 });
+
             } else {
                 $('#codeLists select').find('option:eq(0)').prop('selected', true);
                 $('#codeLists .form-group').removeClass('has-danger');
@@ -413,12 +414,12 @@
 
         function getProject() {
             $.ajax({
-                url: ceoSepalApiUrl + '/project/' + project_id,
+                url: ceoSepalApiUrl + "/project/" + project_id,
                 method: 'get',
                 dataType: 'json'
             }).success(function(data) {
                 // project
-                //var projectName = data.name;
+                projectName = data.name;
                 radius = parseFloat(data.radius);
                 {% if session.accessToken -%}
                     // fusiontable
@@ -447,38 +448,51 @@
                         var button = $('<button>').attr('type', 'button').addClass('btn btn-secondary submit-btn form-control').text(item.label).attr('value', item.code);
                         $(button).click(function(e) {
                             e.preventDefault();
+
                             // records
+                            var value = {};
+                            value['class'] = $(this).val();
+                            var project_id = $.urlParam('id');
                             var plot_id = $('#list a.active').attr('data-plot-id');
+                            var YCoordinate = $('#list a.active').attr('data-y-coordinate');
+                            var XCoordinate = $('#list a.active').attr('data-x-coordinate');
                             var record = {
                                 project_id: project_id,
-                                value: {
-                                    'class': $(this).val()
-                                },
+                                value: value,
                                 plot: {
                                     id: plot_id,
-                                    YCoordinate: $('#list a.active').attr('data-y-coordinate'),
-                                    XCoordinate: $('#list a.active').attr('data-x-coordinate')
+                                    YCoordinate: YCoordinate,
+                                    XCoordinate: XCoordinate
                                 }
                             };
                             var url = ceoSepalApiUrl + '/record';
                             var method = 'post';
                             var record_id = $('#codeLists input[name="id"]').val();
                             if (record_id != 0) {
-                                url = ceoSepalApiUrl + '/record/' + project_id + '/' + plot_id;
+                                url = ceoSepalApiUrl + '/record/' + record_id;
                                 method = 'put';
                             }
                             $.ajax({
                                 url: url,
                                 method: method,
+                                async: false, // TODO
                                 data: JSON.stringify(record),
                                 contentType: 'application/json;charset=UTF-8'
+                            }).then(function() {
+                                $('#spinnerModal').modal('show');
+                            }).done(function(data) {
+                                updatePlots().done(function(data) {
+                                    //
                             }).fail(function(jqXHR, textStatus, errorThrown) {
                                 console.error(jqXHR, textStatus, errorThrown);
                             });
-                            records.push(record);
-                            $('#list a.active').removeClass('active').addClass('evaluated')
-                                .text(plot_id + ' (' + $(this).val() + ')');
+                            }).fail(function(jqXHR, textStatus, errorThrown) {
+                                console.error(jqXHR, textStatus, errorThrown);
+                            }).always(function() {
+                                getRecords();
                             showList();
+                        });
+
                         });
                         $('#codeLists').append($('<div class="form-group">').append(button));
                     });
@@ -682,7 +696,7 @@
             }).success(function(data) {
                 records = data;
                 $.each(records, function(key, value) {
-                    $('#list a[data-plot-id="' + value.plot.id +'"]').addClass('evaluated').text(value.plot.id + ' (' + value.value.class + ')');
+                    $('#list a[data-plot-id="' + value.plot.id +'"]').attr('data-record-id', value.id).addClass('evaluated').text(value.plot.id + ' (' + value.value.class + ')');
                 });
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
@@ -735,18 +749,14 @@
             }, 'slow');
         }
 
-        function removePlotFromMaps(id) {
-            shapes[id][0][0].setMap(null);
-            shapes[id][0][1].setMap(null);
-            lmap.removeLayer(shapes[id][1][0]);
-            lmap.removeLayer(shapes[id][1][1]);
-        }
-
         function removePlots() {
             $('#list a:not(.evaluated)').each(function(index, li) {
                 var id = $(li).attr('data-plot-id');
                 li.remove();
-                removePlotFromMaps(id);
+            shapes[id][0][0].setMap(null);
+            shapes[id][0][1].setMap(null);
+            lmap.removeLayer(shapes[id][1][0]);
+            lmap.removeLayer(shapes[id][1][1]);
             });
         }
 
@@ -754,23 +764,55 @@
             $('#list a.active').each(function(index, li) {
                 var id = $(li).attr('data-plot-id');
                 li.remove();
-                removePlotFromMaps(id);
+                shapes[id][0][0].setMap(null);
+                shapes[id][0][1].setMap(null);
+                lmap.removeLayer(shapes[id][1][0]);
+                lmap.removeLayer(shapes[id][1][1]);
+            });
+        }
+
+        function updatePlots() {
+            var plots = [];
+            var project_id = $.urlParam('id');
+            $('#list a').each(function(index) {
+                plots.push({
+                    XCoordinate: $(this).attr('data-x-coordinate'),
+                    YCoordinate: $(this).attr('data-y-coordinate'),
+                    id: $(this).attr('data-plot-id')
+                });
+            });
+            return $.ajax({
+                url: ceoSepalApiUrl + "/project/" + project_id,
+                method: 'patch',
+                data: JSON.stringify({
+                    'plots': plots
+                }),
+                contentType: 'application/json;charset=UTF-8'
             });
         }
 
         $('#delete-btn').click(function(e) {
             e.preventDefault();
-            var plot_id = $('#list a.active').attr('data-plot-id');
+            var record_id = $('#list a.active').attr('data-record-id');
             $.ajax({
-                url: ceoSepalApiUrl + '/record/' + project_id + '/' + plot_id,
+                url: ceoSepalApiUrl + '/record/' + record_id,
                 method: 'delete',
                 contentType: 'application/json;charset=UTF-8'
+            }).done(function(data) {
+                removeCurrentPlot();
+                $('#list a.active').remove();
+                updatePlots().done(function(data) {
+                    //
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
             });
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
             removeCurrentPlot();
-            $('#list a.active').remove();
+            }).always(function() {
+                getRecords();
             showList();
+        });
         });
 
         $('#export-csv').click(function(e) {
