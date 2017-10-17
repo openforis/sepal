@@ -23,6 +23,8 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "ldap"
+    networks:
+      - name: 'sepal'
     ports:
     - "389:389"
     - "636:636"

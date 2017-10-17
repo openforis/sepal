@@ -20,10 +20,8 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "sepal"
-    links:
-    - "mysql:mysql"
-    - "google-earth-engine:google-earth-engine"
-    - "user:user"
+    networks:
+      - name: 'sepal'
     volumes:
     - "/data/sepal:/data"
     env:

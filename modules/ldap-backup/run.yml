@@ -15,6 +15,8 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "ldap-backup"
+    networks:
+      - name: 'sepal'
     volumes:
     - "/data/ldap/database:/var/lib/ldap"
     - "/data/ldap/config:/etc/ldap/slapd.d"

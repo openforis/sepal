@@ -18,10 +18,8 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "user"
-    links:
-    - "ldap:ldap"
-    - "mysql:mysql"
-    - "google-earth-engine:google-earth-engine"
+    networks:
+      - name: 'sepal'
     volumes:
     - "/data/user:/data"
     - "/data/sepal/home:/sepal/home" # User data dir, to setup initial structure/remove when user is deleted

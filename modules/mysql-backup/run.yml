@@ -14,8 +14,8 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "mysql-backup"
-    links:
-    - "mysql:mysql"
+    networks:
+      - name: 'sepal'
     volumes:
     - "/backup/mysql:/backup"
     - "/data/mysql-backup:/module"

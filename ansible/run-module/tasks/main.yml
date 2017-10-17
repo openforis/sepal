@@ -3,6 +3,9 @@
   script: "start_time.sh {{ container_name | default(module) }}"
   register: start_time_before_docker_container
 
+
+- docker_network: name=sepal
+
 - name: "Run {{ module }}"
   include_tasks: "../../../modules/{{ module }}/run.yml"
   vars:

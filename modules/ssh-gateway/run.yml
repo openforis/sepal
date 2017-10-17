@@ -15,9 +15,8 @@
     state: "{{ state }}"
     restart_policy: "{{ restart_policy }}"
     network_mode: "{{ network_mode }}"
-    links:
-    - "sepal:sepal"
-    - "ldap:ldap"
+    networks:
+      - name: 'sepal'
     etc_hosts:
         syslog_host: "{{ syslog_host }}"
     volumes:

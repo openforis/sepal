@@ -10,6 +10,8 @@
     state: "{{ state }}"
     restart_policy: "{{ restart_policy }}"
     network_mode: "{{ network_mode }}"
+    networks:
+      - name: 'sepal'
     volumes:
     - "/data/letsencrypt:/etc/letsencrypt"
     env:

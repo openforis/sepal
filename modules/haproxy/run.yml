@@ -12,12 +12,10 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "haproxy"
+    networks:
+      - name: 'sepal'
     ports:
     - "80:80"
     - "443:443"
-    links:
-    - "api-gateway:api-gateway"
-    - "ssh-gateway:ssh-gateway"
-    - "letsencrypt:letsencrypt"
     etc_hosts:
         syslog_host: "{{ syslog_host }}"

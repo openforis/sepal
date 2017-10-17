@@ -12,6 +12,8 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "google-earth-engine"
+    networks:
+      - name: 'sepal'
     env:
       EE_ACCOUNT_SEPAL_ENV: "{{ google_earth_engine_account }}"
       EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"

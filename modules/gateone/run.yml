@@ -12,8 +12,8 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "gateone"
-    links:
-    - "ssh-gateway:ssh-gateway"
+    networks:
+      - name: 'sepal'
     volumes:
     - "/data/user/home:/gateone/users" # Users home directories with ssh keys
     env:

@@ -11,13 +11,8 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "api-gateway"
-    links:
-    - "gateone:gateone"
-    - "google-earth-engine:google-earth-engine"
-    - "user:user"
-    - "sepal:sepal"
-    - "gui:gui"
-    - "ceo:ceo"
+    networks:
+      - name: 'sepal'
     volumes:
     - "/data/api-gateway:/data"
     - "/data/letsencrypt:/etc/letsencrypt"

@@ -12,3 +12,5 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "gui"
+    networks:
+      - name: 'sepal'

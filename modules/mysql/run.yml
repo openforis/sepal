@@ -18,6 +18,8 @@
     log_opt:
       syslog-address: "{{ syslog_address }}"
       tag: "mysql"
+    networks:
+      - name: 'sepal'
     volumes:
     - "/data/mysql:/data"
     # Parent image volume
