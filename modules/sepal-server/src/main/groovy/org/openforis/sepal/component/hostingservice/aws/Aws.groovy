@@ -2,8 +2,11 @@ package org.openforis.sepal.component.hostingservice.aws
 
 import org.openforis.sepal.component.budget.api.HostingService
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
+import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
+import org.openforis.sepal.component.workerinstance.adapter.DockerInstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.hostingservice.api.InstanceType
+import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.util.ExecutorServiceBasedJobScheduler
 import org.openforis.sepal.util.NamedThreadFactory
 
@@ -49,5 +52,9 @@ class Aws implements HostingServiceAdapter {
                 ),
                 config
         )
+    }
+
+    InstanceProvisioner getInstanceProvisioner() {
+        new DockerInstanceProvisioner(new WorkerInstanceConfig(), instanceTypes)
     }
 }

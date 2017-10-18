@@ -1,21 +1,22 @@
-package org.openforis.sepal.component.hostingservice.vagrant
+package org.openforis.sepal.component.hostingservice.local
 
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.api.WorkerReservation
-import org.openforis.sepal.component.hostingservice.api.InstanceType
 
-class VagrantInstanceProvider implements InstanceProvider {
+class LocalInstanceProvider implements InstanceProvider {
     private final InstanceType instanceType
     private WorkerInstance instance
     private final List<Closure> launchListeners = []
 
-    VagrantInstanceProvider(String host, InstanceType instanceType) {
+    LocalInstanceProvider(String host, InstanceType instanceType) {
         instance = new WorkerInstance(
                 id: 'vagrant-box',
                 type: instanceType.id,
                 host: host,
-                launchTime: new Date())
+                launchTime: new Date(),
+                running: true)
         this.instanceType = instanceType
     }
 
@@ -27,6 +28,7 @@ class VagrantInstanceProvider implements InstanceProvider {
     void launchIdle(String instanceType, int count) {
         instance = instance.release()
         notifyLaunchListeners(instance)
+
     }
 
     void terminate(String instanceId) {

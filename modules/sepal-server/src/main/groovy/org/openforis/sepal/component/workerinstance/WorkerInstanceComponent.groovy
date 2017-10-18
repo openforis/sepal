@@ -28,7 +28,7 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
                 new AsynchronousEventDispatcher(),
                 hostingServiceAdapter.instanceProvider,
                 hostingServiceAdapter.instanceTypes,
-                new DockerInstanceProvisioner(new WorkerInstanceConfig(), hostingServiceAdapter.instanceTypes),
+                hostingServiceAdapter.instanceProvisioner,
                 new SystemClock()
         )
     }
