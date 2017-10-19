@@ -17,7 +17,8 @@ R CMD javareconf
 
 R -e "install.packages('pacman', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 R -e "pacman::p_load_gh(\
-        'verbe039/bfast', \
+        'appelmar/bfast',\
+        'appelmar/strucchange',\
         'loicdtx/bfastSpatial'\
     )"
 R -e "pacman::p_load(\
