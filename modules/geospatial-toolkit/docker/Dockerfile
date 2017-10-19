@@ -2,7 +2,9 @@ FROM ubuntu:xenial
 MAINTAINER OpenForis
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/lib/jvm/java-8-oracle \
-    GDAL_DATA=/usr/share/gdal/2.2
+    GDAL_DATA=/usr/share/gdal/2.2 \
+    VERSION=2017-10-19.2
+# VERSION used to force complete rebuild of image
 
 ADD config/OFGTMethod /usr/local/share/OFGTMethod
 RUN chmod +x /usr/local/bin/*; sync && mkdir /script
@@ -27,6 +29,9 @@ RUN chmod u+x /script/init_esa_snap_toolbox.sh; sync && /script/init_esa_snap_to
 
 ADD script/init_osk.sh /script
 RUN chmod u+x /script/init_osk.sh; sync && /script/init_osk.sh
+
+ADD script/init_drive.sh /script
+RUN chmod u+x /script/init_drive.sh; sync && /script/init_drive.sh
 
 ADD script/init_r.sh /script
 RUN chmod u+x /script/init_r.sh; sync && /script/init_r.sh
