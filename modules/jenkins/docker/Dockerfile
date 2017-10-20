@@ -1,4 +1,4 @@
-FROM ubuntu:trusty
+FROM ubuntu:xenial
 MAINTAINER OpenForis
 EXPOSE 8080
 EXPOSE 5000
