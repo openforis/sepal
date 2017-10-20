@@ -16,9 +16,9 @@ export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/jre/lib/amd64/server:${JAVA_HOME}/jre/l
 R CMD javareconf
 
 R -e "install.packages('pacman', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+R -e "devtools::install_github('appelmar/strucchange')"
 R -e "pacman::p_load_gh(\
         'appelmar/bfast',\
-        'appelmar/strucchange',\
         'loicdtx/bfastSpatial'\
     )"
 R -e "pacman::p_load(\
