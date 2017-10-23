@@ -44,6 +44,7 @@ apt-get install -y \
     build-essential \
     csh \
     curl \
+    dbview \
     dtach \
     ed \
     flex \
@@ -78,6 +79,8 @@ apt-get install -y \
     python-pip \
     python-pyshp \
     python-rasterio \
+    python-scikits-learn \
+    python-scikits.statsmodels \
     rsync \
     saga \
     screen \
