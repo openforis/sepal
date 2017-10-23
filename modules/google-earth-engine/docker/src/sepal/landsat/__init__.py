@@ -106,12 +106,12 @@ class LandsatManualMosaicSpec(LandsatMosaicSpec):
 _collection_names_by_sensor = {
     'LANDSAT_8': ['LANDSAT/LC08/C01/T1_TOA'],
     'LANDSAT_7': ['LANDSAT/LE07/C01/T1_TOA'],
-    'LANDSAT_TM': ['LANDSAT/LT4_L1T_TOA_FMASK', 'LANDSAT/LT5_L1T_TOA_FMASK'],
+    'LANDSAT_TM': ['LANDSAT/LT4_L1T_TOA_FMASK', 'LANDSAT/LT05/C01/T1_TOA'],
 }
 _collection_name_by_scene_id_prefix = {
     'LC8': 'LANDSAT/LC08/C01/T1_TOA',
     'LE7': 'LANDSAT/LE07/C01/T1_TOA',
-    'LT5': 'LANDSAT/LT5_L1T_TOA_FMASK',
+    'LT5': 'LANDSAT/LT05/C01/T1_TOA',
     'LT4': 'LANDSAT/LT4_L1T_TOA_FMASK',
 }
 
@@ -141,9 +141,9 @@ class LandsatDataSet(DataSet):
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7',
                 'thermal': 'B6_VCID_1',
                 'BQA': 'BQA'},
-            'LANDSAT/LT5_L1T_TOA_FMASK': {
+            'LANDSAT/LT05/C01/T1_TOA': {
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6',
-                'fmask': 'fmask'},
+                'BQA': 'BQA'},
             'LANDSAT/LT4_L1T_TOA_FMASK': {
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6',
                 'fmask': 'fmask'}
