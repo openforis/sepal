@@ -47,9 +47,10 @@ class Mosaic(object):
 
             collection = collection.map(add_distance)
             mosaic = collection.qualityMosaic('distanceToMedian')
-
+        # The bands might have been set - use a default set of bands if that's the case
+        bands_to_select = self.mosaic_def.bands if self.mosaic_def.bands else bands
         return mosaic \
-            .select(self.mosaic_def.bands) \
+            .select(bands_to_select) \
             .uint16() \
             .clip(self.mosaic_def.aoi.geometry())
 

@@ -17,7 +17,6 @@ class ImageSpec(object):
         """
         viz_params = self._viz_params()
         ee_image = self._ee_image()
-        logging.debug('Requesting map id of ' + str(self))
         ee_preview = None
         retry = 0
         while not ee_preview:
