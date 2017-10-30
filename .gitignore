@@ -35,3 +35,6 @@ target
 #Python
 *.pyc
 modules/ceo/docker/src/ceo/gee_gateway
+modules/ceo/docker/env
+modules/ceo/docker/src/ceo/static/node_modules
+yarn.lock

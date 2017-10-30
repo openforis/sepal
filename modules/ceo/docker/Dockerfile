@@ -16,6 +16,6 @@ ADD src /src
 
 RUN cd /src/ceo/static && \
     ln -s /usr/bin/nodejs /usr/bin/node && \
-    bower install --allow-root
+    yarn install
 
 CMD ["/script/init_container.sh"]

@@ -1,0 +1,16 @@
+{
+  "name": "static",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "robertofontanarosa@gmail.com",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "jquery": "~2.2.4",
+    "bootstrap": "v4.0.0-alpha.6",
+    "font-awesome": "4.7.0",
+    "leaflet": "1.0.3",
+    "highcharts": "^5.0.12",
+    "clipboard": "1.7.1"
+  }
+}

@@ -12,4 +12,4 @@ apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
  npm\
  supervisor
 
-npm install --global bower
+npm install --global yarn
