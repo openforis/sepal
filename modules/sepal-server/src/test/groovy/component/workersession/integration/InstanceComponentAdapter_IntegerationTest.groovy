@@ -1,8 +1,8 @@
 package component.workersession.integration
 
 import component.workerinstance.AbstractWorkerInstanceTest
-import org.openforis.sepal.component.workersession.adapter.InstanceComponentAdapter
 import org.openforis.sepal.component.hostingservice.api.InstanceType
+import org.openforis.sepal.component.workersession.adapter.InstanceComponentAdapter
 import org.openforis.sepal.component.workersession.api.WorkerInstance
 import org.openforis.sepal.component.workersession.api.WorkerSession
 
@@ -88,8 +88,8 @@ class InstanceComponentAdapter_IntegerationTest extends AbstractWorkerInstanceTe
     }
 
     def 'Given session with instance, when getting sessions without instance, session is not returned'() {
+        idleInstance()
         def session = session()
-        instanceProvider.launchIdle(session.instanceType, 1)
         def instance = adapter.requestInstance(session)
         session = session.withInstance(instance)
 

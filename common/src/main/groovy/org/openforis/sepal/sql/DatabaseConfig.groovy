@@ -22,7 +22,7 @@ class DatabaseConfig {
         return new DatabaseConfig(
                 schema: schema ?: c.schema,
                 driver: c.driver,
-                uri: c.uri.toString().replaceAll(/\{schema\}/, schema),
+                uri: c.uri.toString().replaceAll(/\{schema}/, schema),
                 user: c.user,
                 password: c.password,
                 rootUri: c.rootUri,

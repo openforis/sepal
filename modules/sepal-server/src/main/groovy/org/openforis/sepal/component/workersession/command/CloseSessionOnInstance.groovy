@@ -1,10 +1,8 @@
-package org.openforis.sepal.component.workerinstance.command
+package org.openforis.sepal.component.workersession.command
 
 import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workersession.api.WorkerSessionRepository
-import org.openforis.sepal.component.workersession.command.CloseSession
-import org.openforis.sepal.component.workersession.command.CloseSessionHandler
 import org.openforis.sepal.util.annotation.Data
 
 import static org.openforis.sepal.component.workersession.api.WorkerSession.State.ACTIVE

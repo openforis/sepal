@@ -3,7 +3,7 @@ package component.workersession
 import fake.Database
 import fake.FakeClock
 import org.openforis.sepal.component.hostingservice.api.InstanceType
-import org.openforis.sepal.component.workerinstance.command.CloseSessionOnInstance
+import org.openforis.sepal.component.workersession.command.CloseSessionOnInstance
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.workersession.api.*
 import org.openforis.sepal.component.workersession.api.WorkerSession.State

@@ -1,13 +1,13 @@
 package component.workerinstance
 
 import fake.Database
+import fake.FakeClock
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.command.*
 import org.openforis.sepal.component.workerinstance.query.FindMissingInstances
 import org.openforis.sepal.event.Event
 import org.openforis.sepal.event.SynchronousEventDispatcher
-import fake.FakeClock
 import org.openforis.sepal.sql.SqlConnectionManager
 import spock.lang.Specification
 
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 import static java.util.concurrent.TimeUnit.MINUTES
 
 abstract class AbstractWorkerInstanceTest extends Specification {
-    final database = new Database()
+    final database = new Database(WorkerInstanceComponent.SCHEMA)
     final connectionManager = new SqlConnectionManager(database.dataSource)
     final eventDispatcher = new SynchronousEventDispatcher()
     final clock = new FakeClock()

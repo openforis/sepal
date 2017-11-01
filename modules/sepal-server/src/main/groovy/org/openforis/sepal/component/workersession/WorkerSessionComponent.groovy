@@ -5,8 +5,8 @@ import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
 import org.openforis.sepal.component.workerinstance.WorkerInstanceComponent
-import org.openforis.sepal.component.workerinstance.command.CloseSessionOnInstance
-import org.openforis.sepal.component.workerinstance.command.CloseSessionOnInstanceHandler
+import org.openforis.sepal.component.workersession.command.CloseSessionOnInstance
+import org.openforis.sepal.component.workersession.command.CloseSessionOnInstanceHandler
 import org.openforis.sepal.component.workersession.adapter.BudgetComponentAdapter
 import org.openforis.sepal.component.workersession.adapter.InstanceComponentAdapter
 import org.openforis.sepal.component.workersession.adapter.JdbcWorkerSessionRepository

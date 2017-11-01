@@ -32,13 +32,13 @@ class FakeInstanceProvider implements InstanceProvider {
         return instance
     }
 
-    void launchIdle(String instanceType, int count) {
+    List<WorkerInstance> launchIdle(String instanceType, int count) {
         if (failing)
             throw new IllegalStateException("Failed to launch instance")
-        count.times { launchOneIdle(instanceType) }
+        return (1..count).collect { launchOneIdle(instanceType) }
     }
 
-    private void launchOneIdle(String instanceType) {
+    private WorkerInstance launchOneIdle(String instanceType) {
         def instance = new WorkerInstance(
                 id: UUID.randomUUID().toString(),
                 type: instanceType,
@@ -46,6 +46,7 @@ class FakeInstanceProvider implements InstanceProvider {
                 launchTime: clock.now())
         launchedById[instance.id] = instance
         idleById[instance.id] = instance
+        return instance
     }
 
     void terminate(String instanceId) {

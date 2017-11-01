@@ -37,13 +37,15 @@ final class AwsInstanceProvider implements InstanceProvider {
         imageId = fetchImageId(availabilityZone)
     }
 
-    void launchIdle(String instanceType, int count) {
-        Instance awsInstance = launch(instanceType, count)
-        tagInstance(awsInstance.instanceId, launchTags(), idleTags())
+    List<WorkerInstance> launchIdle(String instanceType, int count) {
+        return launch(instanceType, count).collect {
+            tagInstance(it.instanceId, launchTags(), idleTags())
+            return toWorkerInstance(it)
+        }
     }
 
     WorkerInstance launchReserved(String instanceType, WorkerReservation reservation) {
-        Instance awsInstance = launch(instanceType, 1)
+        def awsInstance = launch(instanceType, 1).first()
         tagInstance(awsInstance.instanceId, launchTags(), reserveTags(reservation))
         def instance = toWorkerInstance(awsInstance).reserve(reservation)
         return waitForPublicIpToBecomeAvailable(instance, instanceType, reservation)
@@ -216,7 +218,7 @@ final class AwsInstanceProvider implements InstanceProvider {
         tagValue(instance, 'Version') as int
     }
 
-    private Instance launch(String instanceType, int count) {
+    private List<Instance> launch(String instanceType, int count) {
         LOG.info("Launching $instanceType")
         def request = new RunInstancesRequest()
                 .withKeyName(region)
@@ -227,7 +229,7 @@ final class AwsInstanceProvider implements InstanceProvider {
                 .withPlacement(new Placement(availabilityZone: availabilityZone))
 
         def response = client.runInstances(request)
-        response.reservation.instances.first()
+        return response.reservation.instances
     }
 
     private String fetchImageId(String availabilityZone) {

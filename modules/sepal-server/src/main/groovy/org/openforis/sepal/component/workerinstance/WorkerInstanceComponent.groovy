@@ -2,16 +2,17 @@ package org.openforis.sepal.component.workerinstance
 
 import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
-import org.openforis.sepal.component.workerinstance.adapter.DockerInstanceProvisioner
+import org.openforis.sepal.component.hostingservice.api.InstanceType
+import org.openforis.sepal.component.workerinstance.adapter.JdbcInstanceRepository
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.command.*
 import org.openforis.sepal.component.workerinstance.event.InstancePendingProvisioning
 import org.openforis.sepal.component.workerinstance.query.FindMissingInstances
 import org.openforis.sepal.component.workerinstance.query.FindMissingInstancesHandler
-import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
+import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.SystemClock
@@ -19,11 +20,14 @@ import org.openforis.sepal.util.SystemClock
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class WorkerInstanceComponent extends DataSourceBackedComponent {
+    static final String SCHEMA = 'worker_instance'
+
     private final InstanceProvider instanceProvider
     private final List<InstanceType> instanceTypes
 
-    WorkerInstanceComponent(HostingServiceAdapter hostingServiceAdapter, SqlConnectionManager connectionManager) {
-        this(
+    static WorkerInstanceComponent create(HostingServiceAdapter hostingServiceAdapter) {
+        def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA))
+        return new WorkerInstanceComponent(
                 connectionManager,
                 new AsynchronousEventDispatcher(),
                 hostingServiceAdapter.instanceProvider,
@@ -43,11 +47,12 @@ class WorkerInstanceComponent extends DataSourceBackedComponent {
         super(connectionManager, eventDispatcher)
         this.instanceProvider = instanceProvider
         this.instanceTypes = instanceTypes
-        command(RequestInstance, new RequestInstanceHandler(instanceProvider, eventDispatcher, clock))
-        command(ReleaseInstance, new ReleaseInstanceHandler(instanceProvider, instanceProvisioner, eventDispatcher))
+        def instanceRepository = new JdbcInstanceRepository(connectionManager)
+        command(RequestInstance, new RequestInstanceHandler(instanceRepository, instanceProvider, eventDispatcher, clock))
+        command(ReleaseInstance, new ReleaseInstanceHandler(instanceRepository, instanceProvider, instanceProvisioner, eventDispatcher))
         command(ProvisionInstance, new ProvisionInstanceHandler(instanceProvisioner, eventDispatcher))
-        command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceProvider, instanceProvisioner, eventDispatcher, clock))
-        command(SizeIdlePool, new SizeIdlePoolHandler(instanceProvider, eventDispatcher, clock))
+        command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(instanceRepository, instanceProvider, instanceProvisioner, eventDispatcher, clock))
+        command(SizeIdlePool, new SizeIdlePoolHandler(instanceRepository, instanceProvider, eventDispatcher, clock))
 
         query(FindMissingInstances, new FindMissingInstancesHandler(instanceProvisioner))
 

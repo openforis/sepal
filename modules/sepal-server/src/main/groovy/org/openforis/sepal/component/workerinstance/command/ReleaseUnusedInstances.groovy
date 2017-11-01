@@ -4,6 +4,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
+import org.openforis.sepal.component.workerinstance.api.InstanceRepository
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.event.EventDispatcher
 import org.openforis.sepal.util.Clock
@@ -26,6 +27,7 @@ class ReleaseUnusedInstancesHandler implements CommandHandler<Void, ReleaseUnuse
     private final ReleaseInstanceHandler releaseInstanceHandler
 
     ReleaseUnusedInstancesHandler(
+            InstanceRepository instanceRepository,
             InstanceProvider instanceProvider,
             InstanceProvisioner instanceProvisioner,
             EventDispatcher eventDispatcher,
@@ -34,7 +36,7 @@ class ReleaseUnusedInstancesHandler implements CommandHandler<Void, ReleaseUnuse
         this.instanceProvisioner = instanceProvisioner
         this.eventDispatcher = eventDispatcher
         this.clock = clock
-        releaseInstanceHandler = new ReleaseInstanceHandler(instanceProvider, instanceProvisioner, eventDispatcher)
+        releaseInstanceHandler = new ReleaseInstanceHandler(instanceRepository, instanceProvider, instanceProvisioner, eventDispatcher)
     }
 
     Void execute(ReleaseUnusedInstances command) {

@@ -25,10 +25,10 @@ class LocalInstanceProvider implements InstanceProvider {
         notifyLaunchListeners(instance)
     }
 
-    void launchIdle(String instanceType, int count) {
+    List<WorkerInstance> launchIdle(String instanceType, int count) {
         instance = instance.release()
         notifyLaunchListeners(instance)
-
+        return [instance]
     }
 
     void terminate(String instanceId) {

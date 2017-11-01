@@ -32,7 +32,7 @@ class Main {
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile('sdms'))
 
         def processingRecipeComponent = start ProcessingRecipeComponent.create()
-        def workerInstanceComponent = start new WorkerInstanceComponent(hostingServiceAdapter, connectionManager)
+        def workerInstanceComponent = start WorkerInstanceComponent.create(hostingServiceAdapter)
         def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, connectionManager)
         def workerSessionComponent = start WorkerSessionComponent.create(
                 budgetComponent,

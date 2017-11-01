@@ -1,9 +1,9 @@
 package org.openforis.sepal.component.hostingservice.vagrant
 
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.api.WorkerReservation
-import org.openforis.sepal.component.hostingservice.api.InstanceType
 
 class VagrantInstanceProvider implements InstanceProvider {
     private final InstanceType instanceType
@@ -22,11 +22,13 @@ class VagrantInstanceProvider implements InstanceProvider {
     WorkerInstance launchReserved(String instanceType, WorkerReservation reservation) {
         instance = instance.reserve(reservation)
         notifyLaunchListeners(instance)
+        return instance
     }
 
-    void launchIdle(String instanceType, int count) {
+    List<WorkerInstance> launchIdle(String instanceType, int count) {
         instance = instance.release()
         notifyLaunchListeners(instance)
+        return [instance]
     }
 
     void terminate(String instanceId) {
