@@ -3,8 +3,8 @@ from datetime import datetime
 from itertools import groupby
 
 from analyze import Analyze
-from .. import MosaicSpec
 from ..mosaic import DataSet
+from ..mosaic_spec import MosaicSpec
 
 
 class LandsatMosaicSpec(MosaicSpec):
@@ -13,7 +13,7 @@ class LandsatMosaicSpec(MosaicSpec):
         self.scale = 30
 
     def _data_set(self, collection_name, image_filter):
-        return LandsatDataSet(collection_name, image_filter, self)
+        return LandsatDataSet(collection_name, image_filter)
 
 
 class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
@@ -115,22 +115,28 @@ _collection_name_by_scene_id_prefix = {
     'LT4': 'LANDSAT/LT4_L1T_TOA_FMASK',
 }
 
+_collection_name_by_data_set = {
+    'landsat8': 'LANDSAT/LC08/C01/T1_TOA',
+    'landsat7': 'LANDSAT/LE07/C01/T1_TOA',
+    'landsat5': 'LANDSAT/LT05/C01/T1_TOA',
+}
+
 
 class LandsatDataSet(DataSet):
-    def __init__(self, collection_name, image_filter, mosaic_def):
+    def __init__(self, collection_name, image_filter):
         super(LandsatDataSet, self).__init__()
         self.collection_name = collection_name
         self.image_filter = image_filter
-        self.mosaic_def = mosaic_def
+
+    @staticmethod
+    def create(data_set_name, image_filter):
+        return LandsatDataSet(_collection_name_by_data_set[data_set_name], image_filter)
 
     def to_collection(self):
         return ee.ImageCollection(self.collection_name).filter(self.image_filter)
 
     def analyze(self, image):
         return Analyze(image, self.bands()).apply()
-
-    def masks_cloud_on_analysis(self):
-        return True
 
     def bands(self):
         return {
@@ -148,3 +154,4 @@ class LandsatDataSet(DataSet):
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6',
                 'fmask': 'fmask'}
         }[self.collection_name]
+

@@ -1,6 +1,6 @@
 import ee
 
-from .. import ImageSpec
+from ..image_spec import ImageSpec
 from ..aoi import Geometry
 
 

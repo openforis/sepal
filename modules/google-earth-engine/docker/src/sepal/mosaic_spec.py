@@ -16,7 +16,7 @@ class MosaicSpec(ImageSpec):
         self.shadow_tolerance = float(spec.get('shadowTolerance', 1))
         self.haze_tolerance = float(spec.get('hazeTolerance', 0.05))
         self.greenness_weight = float(spec.get('greennessWeight', 0))
-        self.bands = spec['bands']
+        self.bands = spec.get('bands', [])
         self.median_composite = spec.get('median_composite', False)
         self.mask_clouds = spec.get('maskClouds', False)
         self.mask_snow = spec.get('maskSnow', False)

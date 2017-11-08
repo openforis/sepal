@@ -1,14 +1,14 @@
 import json
 import logging
+from os import path
 from threading import local
 
 import ee
 import sys
 from flask import Flask, Blueprint, Response
 from flask import request
-from os import path
 
-import sepal
+from sepal import gee
 from sepal import image_spec_factory
 from sepal.download.download import Downloader
 from sepal.download.file_credentials import FileCredentials
@@ -24,7 +24,7 @@ access_token_file = None
 
 @http.before_request
 def before():
-    credentials = sepal.service_account_credentials
+    credentials = gee.service_account_credentials
     if path.exists(access_token_file):
         credentials = FileCredentials(access_token_file)
     else:

@@ -4,8 +4,8 @@ import ee
 from datetime import datetime
 
 from analyze import Analyze
-from .. import MosaicSpec
 from ..mosaic import DataSet
+from ..mosaic_spec import MosaicSpec
 
 
 class Sentinel2MosaicSpec(MosaicSpec):
@@ -101,9 +101,6 @@ class Sentinel2DataSet(DataSet):
 
     def analyze(self, image):
         return Analyze(image, self.bands()).apply()
-
-    def masks_cloud_on_analysis(self):
-        return False
 
     def bands(self):
         return {

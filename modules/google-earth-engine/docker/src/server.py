@@ -4,20 +4,19 @@ import logging
 import ee
 from flask import Flask, Blueprint, Response, request
 
-import sepal
-from sepal import Aoi, image_spec_factory
-from sepal import service_account_credentials
+from sepal import gee
+from sepal import image_spec_factory
+from sepal.aoi import Aoi
 from sepal.download.drive_cleanup import DriveCleanup
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
-
 drive_cleanup = None
 
 
 @http.before_request
 def before():
-    sepal.init_ee()
+    gee.init_ee()
 
 
 @http.route('/healthcheck', methods=['GET'])
@@ -46,7 +45,7 @@ def scene_areas():
 
 def init():
     global drive_cleanup
-    drive_cleanup = DriveCleanup(service_account_credentials)
+    drive_cleanup = DriveCleanup(gee.service_account_credentials)
     drive_cleanup.start()
 
 

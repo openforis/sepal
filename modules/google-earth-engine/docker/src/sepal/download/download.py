@@ -37,6 +37,7 @@ class Downloader(object):
         return status
 
     def update_status(self, task_id, status):
+        # type: (object, object) -> object
         current_state = self.statuses[task_id]['state']
         state = status['state']
         if current_state == 'ACTIVE':  # Only update state if current state is ACTIVE
@@ -93,6 +94,7 @@ class Download(object):
         self.current_step = None
 
     def update_status(self, status):
+        # type: (object) -> object
         self.listener.update_status(self.task_id, status)
         step = status['step'] if 'step' in status else None
         step_taken = step and self.current_step != step

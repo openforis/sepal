@@ -19,10 +19,9 @@ class Mosaic(object):
         collection = ee.ImageCollection([])
         for data_set in data_sets:
             data_set_collection = analyze(self.mosaic_def, data_set, data_set.to_collection())
-            if not data_set.masks_cloud_on_analysis():
-                data_set_collection = mask_clouds(self.mosaic_def, data_set_collection)
             collection = ee.ImageCollection(collection.merge(data_set_collection))
 
+        collection = mask_clouds(self.mosaic_def, collection)
         collection = mask_shadows(self.mosaic_def, collection)
         collection = mask_haze(self.mosaic_def, collection)
         collection = mask_less_green(self.mosaic_def, collection)

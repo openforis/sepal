@@ -1,10 +1,13 @@
-import ee
+from __future__ import print_function
+
 import logging
+
+import ee
 from flask import Flask, render_template
 
 import download_server
-import sepal
 import server
+from sepal import gee
 
 modules = [server, download_server]
 app = Flask(__name__)
@@ -12,7 +15,7 @@ app = Flask(__name__)
 
 @app.before_request
 def before():
-    sepal.init_ee()
+    gee.init_ee()
 
 
 @app.route('/')
@@ -26,7 +29,7 @@ def index():
 
 
 def init():
-    print 'Init running'
+    print('Init running')
     for module in modules:
         app.register_blueprint(module.http)
         module.init()
