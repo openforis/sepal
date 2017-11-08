@@ -1,7 +1,7 @@
 import ee
 
-from .. import ImageSpec
 from ..image_operation import ImageOperation
+from ..image_spec import ImageSpec
 
 
 class ChangeDetection(ImageSpec):
@@ -33,7 +33,7 @@ class ChangeDetection(ImageSpec):
         # regression = image.classify(classifier.setOutputMode('REGRESSION')).rename(['regression'])
         # uncertainty = regression.subtract(classification).abs().rename(['uncertainty'])
 
-        return classification \
+        return classification.add(1) \
             # .addBands(uncertainty)
 
 
