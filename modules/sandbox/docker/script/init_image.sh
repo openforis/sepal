@@ -42,9 +42,8 @@ echo
 echo "*********************************"
 echo "*** Installing RStudio Server ***"
 echo "*********************************"
-# Latest working before this bug: https://support.rstudio.com/hc/en-us/community/posts/115006512047-RStudio-Server-authentication-fails-after-update?page=1
-rstudio=rstudio-server-1.1.372-amd64.deb
-wget https://s3.amazonaws.com/rstudio-dailybuilds/$rstudio
+rstudio=rstudio-server-1.1.383-amd64.deb
+wget https://download2.rstudio.org/$rstudio
 gdebi -n $rstudio
 printf '%s\n' \
     "server-app-armor-enabled=0" \
