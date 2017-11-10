@@ -34,6 +34,7 @@ class ChangeDetection(ImageSpec):
         # uncertainty = regression.subtract(classification).abs().rename(['uncertainty'])
 
         return classification.add(1) \
+            .uint8() \
             # .addBands(uncertainty)
 
 

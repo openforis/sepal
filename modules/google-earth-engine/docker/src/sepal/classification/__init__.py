@@ -48,6 +48,7 @@ class _Operation(ImageOperation):
         # uncertainty = regression.subtract(classification).abs().rename(['uncertainty'])
 
         return classification.add(1) \
+            .uint8() \
             # .addBands(uncertainty)
 
 
