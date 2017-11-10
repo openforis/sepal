@@ -38,7 +38,7 @@ class _MaskClouds(ImageOperation):
 
     def apply(self, keepClouds):
         cloudFree = self.toImage('!i.cloud')
-
-        mask = cloudFree.Or(keepClouds)
+        to_mask = self.image.select('toMask')
+        mask = cloudFree.Or(keepClouds).And(to_mask.Not())
 
         return self.image.updateMask(mask)

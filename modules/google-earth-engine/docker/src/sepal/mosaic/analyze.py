@@ -36,8 +36,8 @@ class _Analyze(ImageOperation):
         self._snow_probability('i.nir', 0.15, 0.35)
         self._snow_probability('i.blue', 0.18, 0.22)
         self._snow_probability('i.blue/i.red', 0.85, 0.95)
-        self.set('snow',
-                 'i.snowProbability > 0.12')
+        self.setIf('snow', '!i.snow',
+                   'i.snowProbability > 0.12')
 
         self.set('water', '!i.snow and (i.blue/i.swir1 > 4.0 or i.ndwi > 0.15)')
 
@@ -72,12 +72,12 @@ class _Analyze(ImageOperation):
         self.set('cloudScore', cloud_score(self.image))
         self.setIf('cloudScore', 'soil', 0)
         self.set('cloud', 'i.cloudScore > 0.25 or (i.cloudScore > 0 and i.aerosol > 0.2) or i.hazeScore == 0')
-        self.updateMask('i.variabilityProbability > -0.5')  # Remove bad pixels
+        self.setIf('toMask', '!i.toMask', 'i.variabilityProbability < -0.5')  # Remove bad pixels
 
         self._add_date_bands()
 
         if self.mosaic_def.mask_snow:
-            self.updateMask('!i.snow')
+            self.setIf('toMask', '!i.toMask', 'i.snow')
 
         if self.mosaic_def.brdf_correct:
             self.image = brdf_correction.apply(self.image)
@@ -108,7 +108,7 @@ class _Analyze(ImageOperation):
     def _scale_image(self):
         multiplierByBand = {
             'blue': 10000, 'green': 10000, 'red': 10000, 'nir': 10000, 'swir1': 10000, 'swir2': 10000,
-            'water': 1, 'snow': 1, 'cloud': 1, 'ndvi': 10000,
+            'toMask': 1, 'water': 1, 'snow': 1, 'cloud': 1, 'ndvi': 10000,
             'shadowThreshold': 10000, 'shadowScore': 10000, 'hazeScore': 10000,
             'daysFromTarget': 1, 'dayOfYear': 1, 'unixTimeDays': 1
         }

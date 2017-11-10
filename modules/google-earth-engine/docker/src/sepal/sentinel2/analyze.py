@@ -9,6 +9,8 @@ class Analyze(ImageOperation):
     def apply(self):
         self._mask_if_any_band_is_masked()
         self.setAll(self.image.divide(10000))
+        self.set('snow', 0)
+        self.set('toMask', 0)
         return self.image
 
     def _mask_if_any_band_is_masked(self):

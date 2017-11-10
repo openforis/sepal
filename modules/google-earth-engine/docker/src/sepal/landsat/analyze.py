@@ -15,10 +15,10 @@ class Analyze(ImageOperation):
         if not 'cirrus' in bands:
             self.set('cirrus', 0)
 
-        # if 'fmask' in bands:
-        #     self.updateMask('i.fmask < 2')
-        #     self.set('snow', 'i.fmask == 3')
-        # else:
+        if 'fmask' in bands:
+            self.set('toMask', 'i.fmask >= 2')
+            self.set('snow', 'i.fmask == 3')
+        else:
             def is_set(types):
                 # https://landsat.usgs.gov/collectionqualityband
                 typeByValue = {'badPixels': 15, 'cloud': 16, 'shadow': 256, 'snow': 1024, 'cirrus': 4096}
@@ -27,6 +27,7 @@ class Analyze(ImageOperation):
                     any_set = any_set.Or(self.image.select('BQA').bitwiseAnd(typeByValue[type]).neq(0))
                 return any_set
 
-            self.updateMask(is_set(['badPixels']).Not())
+            self.set('toMask', is_set(['badPixels', 'cloud', 'shadow', 'cirrus']))
+            self.set('snow', is_set(['snow']))
 
         return self.image
