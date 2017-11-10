@@ -21,7 +21,7 @@ class ChangeDetection(ImageSpec):
             reducer=ee.Reducer.max(),
             selectors=[self.classProperty]
         ).get('max')).getInfo()) + 1
-        return {'bands': 'class', 'min': 0, 'max': (classCount - 1), 'palette': ', '.join(_colors[0:classCount])}
+        return {'bands': 'class', 'min': 1, 'max': (classCount), 'palette': ', '.join(_colors[0:classCount])}
         # return {'bands': 'uncertainty', 'min': 0, 'max': 1, 'palette': 'green, yellow, orange, red'}
 
     def _ee_image(self):
