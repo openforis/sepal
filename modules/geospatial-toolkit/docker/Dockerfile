@@ -3,7 +3,7 @@ MAINTAINER OpenForis
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/lib/jvm/java-8-oracle \
     GDAL_DATA=/usr/share/gdal/2.2 \
-    VERSION=2017-10-19.2
+    VERSION=2017-11-16
 # VERSION used to force complete rebuild of image
 
 ADD config/OFGTMethod /usr/local/share/OFGTMethod

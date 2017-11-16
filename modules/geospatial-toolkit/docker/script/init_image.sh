@@ -73,7 +73,6 @@ apt-get install -y \
     pkg-config \
     p7zip-full \
     python-dev \
-    python-otb \
     python-opencv \
     python-pandas \
     python-pip \
