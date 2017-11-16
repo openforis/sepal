@@ -1,3 +1,5 @@
+from random import random
+
 import ee
 
 from ..image_operation import ImageOperation
@@ -20,7 +22,7 @@ class Classification(ImageSpec):
             reducer=ee.Reducer.max(),
             selectors=[self.classProperty]
         ).get('max')).getInfo()) + 1
-        return {'bands': 'class', 'min': 1, 'max': (classCount), 'palette': ', '.join(_colors[0:classCount])}
+        return {'bands': 'class', 'min': 0, 'max': (classCount - 1), 'palette': ', '.join(_colors[0:classCount])}
         # return {'bands': 'uncertainty', 'min': 0, 'max': 1, 'palette': 'green, yellow, orange, red'}
 
     def _ee_image(self):
@@ -41,15 +43,22 @@ class _Operation(ImageOperation):
         self.set('nir/swir1', 'i.nir / i.swir1')
         self.set('nir/swir2', 'i.nir / i.swir2')
         self.set('swir1/swir2', 'i.swir1 / i.swir2')
+        # Force updates to fusion table to be reflected
+        self.trainingData = self.trainingData.map(self._force_cache_flush)
         training = self.image.sampleRegions(self.trainingData, [self.classProperty], self.scale)
         classifier = ee.Classifier.cart().train(training, self.classProperty)
         classification = self.image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         # regression = self.image.classify(classifier.setOutputMode('REGRESSION')).rename(['regression'])
         # uncertainty = regression.subtract(classification).abs().rename(['uncertainty'])
 
-        return classification.add(1) \
+        return classification \
             .uint8() \
             # .addBands(uncertainty)
+
+    def _force_cache_flush(self, feature):
+        return feature \
+            .set('__flush_cache__', random()) \
+            .copyProperties(feature)
 
 
 _colors = [
