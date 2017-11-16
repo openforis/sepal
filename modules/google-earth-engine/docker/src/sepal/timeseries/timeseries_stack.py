@@ -21,9 +21,17 @@ class TimeSeries(object):
         collection = mask_shadows(spec, collection)
         collection = self._to_daily_mosaics(collection)
         stack = self._to_stack(collection, spec.aoi)
+        # reduced = stack.select(0).reduceRegion(
+        #     reducer=ee.Reducer.median(),
+        #     geometry=stack.geometry(),
+        #     scale=30,
+        #     maxPixels=1e6
+        # )
+        # print(reduced.getInfo())
         self.stack = ee.Image(ee.Algorithms.If(
             stack.bandNames().size(),
             stack,
+            # ee.Image(0).double()
             ee.Image(0).uint16()
         ))
         self.dates = collection.map(lambda image: ee.Feature(None, {'date': image.get('date')}))
@@ -35,8 +43,10 @@ class TimeSeries(object):
             )
 
         stack = ee.Image(
+            # collection.iterate(append_band, ee.Image().double())
             collection.iterate(append_band, ee.Image().uint16())
         )
+        # return stack.slice(1).clip(aoi).double()
         return stack.slice(1).clip(aoi).uint16()
 
     def _to_daily_mosaics(self, collection):

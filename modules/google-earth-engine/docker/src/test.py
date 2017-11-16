@@ -1,4 +1,4 @@
-from sepal.tests.test_timeseries import test_timeseries()
+from sepal.tests.test_timeseries import test_timeseries
 
 import logging
 

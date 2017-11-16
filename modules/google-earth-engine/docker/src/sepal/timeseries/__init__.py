@@ -75,10 +75,8 @@ class DownloadYear(Task):
             description='_'.join([self.description, self.feature_description, str(self.year), 'stack']),
             folder=self.drive_folder,
             scale=30,
-            # shardSize=256,
-            # fileDimensions=4096,
-            shardSize=32,
-            fileDimensions=32,
+            shardSize=256,
+            fileDimensions=4096
         )
         self.imageDownload = Download(
             credentials=self.spec.credentials,
@@ -124,12 +122,11 @@ class DownloadYear(Task):
     def _preprocess_year(self, value):
         logger.debug('Pre-processing year {}'.format(self))
         parent_dir = join(self.year_dir, pardir)
-        # TODO: Handle case without tiles
-        tile_pattern = re.compile('.*-(\d{10}-\d{10}).tif')
         tif_names = [f for f in listdir(self.year_dir) if f.endswith('.tif')]
-        print('tif_names: {}'.format(tif_names))
+        tile_pattern = re.compile('.*-(\d{10}-\d{10}).tif')
         for tif_name in tif_names:
-            tile = tile_pattern.match(tif_name).group(1)
+            tile = tile_pattern.match(tif_name).group(1) \
+                if tile_pattern.match(tif_name) else '0000000000-0000000000'
             tile_dir = abspath(join(parent_dir, tile))
             subprocess.check_call(['mkdir', '-p', tile_dir])
             subprocess.check_call(

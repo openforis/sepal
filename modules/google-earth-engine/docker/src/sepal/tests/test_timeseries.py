@@ -38,9 +38,7 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
-
 credentials = get_credentials()
-
 
 # http = credentials.authorize(httplib2.Http())
 # service = discovery.build('drive', 'v3', http=http)
@@ -60,7 +58,7 @@ def re_raise(e):
     e.re_raise()
 
 
-def test_timeseries()():
+def test_timeseries():
     ee.InitializeThread(credentials)
 
     download_features = DownloadFeatures(
@@ -68,7 +66,7 @@ def test_timeseries()():
         description='test_timeseries',
         username='wiell',
         credentials=credentials,
-        expression='10000 * (1 + i.ndvi)',
+        expression='10000 * (1 + (i.nir - i.red) / (i.nir + i.red))',
         data_sets=['landsat8', 'landsat7', 'sentinel2'],
         aoi=ee.Geometry(
             {"type": "Polygon", "coordinates": [
