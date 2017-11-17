@@ -63,7 +63,6 @@ class DownloadYear(Task):
             credentials=self.spec.credentials,
             drive_path=self.drive_folder,
             destination_path=self.year_dir,
-            # ['/home', self.spec.username, 'downloads', self.description, self.feature_description, str(self.year)]),
             matching='{0}/{1}*.csv'.format(self.drive_folder, self.tableExport.description),
             move=True,
             touch=True
@@ -82,7 +81,6 @@ class DownloadYear(Task):
             credentials=self.spec.credentials,
             drive_path=self.drive_folder,
             destination_path=self.year_dir,
-            # ['/home', self.spec.username, 'downloads', self.description, self.feature_description, str(self.year)]),
             matching='{0}/{1}*.tif'.format(self.drive_folder, self.imageExport.description),
             move=True,
             touch=True
@@ -241,11 +239,11 @@ class DownloadFeature(Task):
 
 class DownloadFeatures(Task):
     def __init__(
-            self, download_dir, description, username, credentials, expression,
+            self, download_dir, description, credentials, expression,
             data_sets, aoi, from_date, to_date, mask_snow, brdf_correct):
         super(DownloadFeatures, self).__init__('download_features')
         self.spec = TimeSeriesSpec(
-            username, credentials, expression, data_sets, aoi, from_date, to_date,
+            credentials, expression, data_sets, aoi, from_date, to_date,
             1, True, mask_snow, brdf_correct, 0)
         self.download_dir = download_dir
         self.description = description
@@ -296,4 +294,4 @@ class DownloadFeatures(Task):
 
 TimeSeriesSpec = namedtuple(
     'TimeSeriesSpec',
-    'username, credentials, expression, data_sets, aoi, from_date, to_date, shadow_tolerance, mask_clouds, mask_snow, brdf_correct, target_day')
+    'credentials, expression, data_sets, aoi, from_date, to_date, shadow_tolerance, mask_clouds, mask_snow, brdf_correct, target_day')

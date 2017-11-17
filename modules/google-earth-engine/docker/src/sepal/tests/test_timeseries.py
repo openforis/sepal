@@ -38,7 +38,9 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
+
 credentials = get_credentials()
+
 
 # http = credentials.authorize(httplib2.Http())
 # service = discovery.build('drive', 'v3', http=http)
@@ -64,7 +66,6 @@ def test_timeseries():
     download_features = DownloadFeatures(
         download_dir='/Users/wiell/Downloads',
         description='test_timeseries',
-        username='wiell',
         credentials=credentials,
         expression='10000 * (1 + (i.nir - i.red) / (i.nir + i.red))',
         data_sets=['landsat8', 'landsat7', 'sentinel2'],
