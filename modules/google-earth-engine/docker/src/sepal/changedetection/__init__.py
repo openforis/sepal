@@ -1,3 +1,5 @@
+from random import random
+
 import ee
 
 from ..image_operation import ImageOperation
@@ -27,6 +29,8 @@ class ChangeDetection(ImageSpec):
     def _ee_image(self):
         image = _AddBandRatios(self.fromImage._ee_image()).apply() \
             .addBands(_AddBandRatios(self.toImage._ee_image()).apply())
+        # Force updates to fusion table to be reflected
+        self.trainingData = self.trainingData.map(self._force_cache_flush)
         training = image.sampleRegions(self.trainingData, [self.classProperty], self.fromImage.scale)
         classifier = ee.Classifier.cart().train(training, self.classProperty)
         classification = image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
@@ -36,6 +40,11 @@ class ChangeDetection(ImageSpec):
         return classification \
             .uint8() \
             # .addBands(uncertainty)
+
+    def _force_cache_flush(self, feature):
+        return feature \
+            .set('__flush_cache__', random()) \
+            .copyProperties(feature)
 
 
 class _AddBandRatios(ImageOperation):
