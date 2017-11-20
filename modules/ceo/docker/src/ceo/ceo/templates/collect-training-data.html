@@ -2,8 +2,9 @@
 {% block body %}
 
 <div id="maps">
-    <div id="style-selector-control" class="map-control">
-        <select id="layer-selector" class="selector-control">
+    <div class="map-control">
+        <button type="button" id="layer-refresher"><i class="fa fa-refresh" aria-hidden="true"></i></button>
+        <select class="selector-control" id="layer-selector">
             <option value="">Default</option>
         </select>
     </div>
@@ -883,11 +884,12 @@
             showList();
         });
 
-        $('#layer-selector').change(function(e) {
+        function layerSelection(value, refresh) {
             gmap.overlayMapTypes.pop();
-            var index = $(this).val();
-            if (index != '') {
+            var index = value;
+            if (typeof index !== 'undefined' && index != '') {
                 var overlay = overlays[index];
+                if (refresh == true) overlayMapTypes[index] = undefined;
                 if (overlayMapTypes[index] === undefined) {
                     addOverlayMapType(overlay, overlayMapTypes, index);
                 }
@@ -908,6 +910,15 @@
             } else {
                 mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
             }
+        }
+
+        $('#layer-refresher').click(function(e) {
+            e.preventDefault();
+            layerSelection($('#layer-selector option:selected').val(), true);
+        });
+
+        $('#layer-selector').change(function(e) {
+            layerSelection($(this).val());
         });
 
         $('.chart-btn').click(function(e) {
