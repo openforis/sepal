@@ -245,10 +245,9 @@ $('#add-subform-sepal').click(function(e) {
         $('select[name="sepalMosaicName[]"]', subform).change(function() {
             var type = $('option:selected', this).attr('data-type');
             if (type != 'MOSAIC') {
-                $('select[name="sepalBands[]"]', subform).prop('selectedIndex', 0).prop('disabled', true);
+                $('select[name="sepalBands[]"]', subform).prop('selectedIndex', 0);
                 $('.sepal-bands-row', subform).hide();
             } else {
-                $('select[name="sepalBands[]"]', subform).prop('disabled', false);
                 $('.sepal-bands-row', subform).show();
             }
         });
