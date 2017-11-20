@@ -340,26 +340,45 @@
                 }).fail(function(jqXHR, textStatus, errorThrown) {
                     console.error(jqXHR, textStatus, errorThrown);
                 }).done(function(data, textStatus, jqXHR) {
-                    var dayOfYear = $.dayOfYear(data['targetDate']);
-                    var sceneIds = [];
-                    for (var key in data['sceneAreas']) {
-                        sceneIds = sceneIds.concat(data['sceneAreas'][key]['selection']);
-                    };
+                    var type = data['type'];
+                    var serviceSubPath = 'mosaic';
                     var req = {
-                        targetDayOfYearWeight: data['sortWeight'],
-                        bands: overlay.sepalBands, //data['mosaicPreviewBand'],
-                        dataSet: data['sensorGroup'],
-                        sceneIds: sceneIds.join(),
-                        targetDayOfYear: dayOfYear
-                    };
-                    if (data.hasOwnProperty('aoiCode') && data['aoiCode'] != null) {
-                        req['countryIso'] = data['aoiCode'];
-                    } else if (data.hasOwnProperty('polygon')) {
-                        req['polygon'] = data['polygon'];
+                        'imageType': type
                     }
-                    //
+                    if (type == 'MOSAIC') {
+                        var sceneIds = [];
+                        for (var key in data['sceneAreas']) {
+                            sceneIds = sceneIds.concat(data['sceneAreas'][key]['selection']);
+                        };
+                        req['targetDayOfYearWeight'] = data['sortWeight'];
+                        req['bands'] = overlay.sepalBands; //data['mosaicPreviewBand']
+                        req['dataSet'] = data['sensorGroup'];
+                        req['sceneIds'] = sceneIds.join();
+                        req['targetDayOfYear'] = $.dayOfYear(data['targetDate']);
+                        if (data.hasOwnProperty('aoiCode') && data['aoiCode'] != null) {
+                            req['countryIso'] = data['aoiCode'];
+                        } else if (data.hasOwnProperty('polygon')) {
+                            req['polygon'] = data['polygon'];
+                        }
+                    } else if (type == 'CLASSIFICATION') {
+                        serviceSubPath = 'mosaic';
+                        req['imageRecipeId'] = data['inputRecipe'];
+                        req['assetId'] = data['geeAssetId'];
+                        req['tableName'] = data['fusionTableId'];
+                        req['classProperty'] = data['fusionTableClassColumn'];
+                        req['algorithm'] = data['algorithm'];
+                    } else if (type == 'CHANGE_DETECTION') {
+                        serviceSubPath = 'change-detection';
+                        req['fromImageRecipeId'] = data['inputRecipe1'];
+                        req['toImageRecipeId'] = data['inputRecipe2'];
+                        req['fromAssetId'] = data['geeAssetId1'];
+                        req['toAssetId'] = data['geeAssetId2'];
+                        req['tableName'] = data['fusionTableId'];
+                        req['classProperty'] = data['fusionTableClassColumn'];
+                        req['algorithm'] = data['algorithm'];
+                    }
                     $.ajax({
-                        url: 'https://{{config.SEPAL_HOST}}/api/data/mosaic/preview',
+                        url: 'https://{{config.SEPAL_HOST}}/api/data/' + serviceSubPath + '/preview',
                         type: 'POST',
                         async: false,
                         data: $.param(req),

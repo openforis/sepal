@@ -237,9 +237,20 @@ $('#add-subform-sepal').click(function(e) {
     }).fail(function(jqXHR, textStatus, errorThrown) {
         console.error(jqXHR, textStatus, errorThrown);
     }).done(function(data, textStatus, jqXHR) {
-        data.forEach(function(mosaic) {
-            var option = $('<option>').text(mosaic['name']).val(mosaic['id']);
+        data.forEach(function(recipe) {
+            var text = recipe['name'] + ' (' + recipe['type'] + ')';
+            var option = $('<option>').text(text).val(recipe['id']).attr('data-type', recipe['type']);
             $('select[name="sepalMosaicName[]"]', subform).append(option);
+        });
+        $('select[name="sepalMosaicName[]"]', subform).change(function() {
+            var type = $('option:selected', this).attr('data-type');
+            if (type != 'MOSAIC') {
+                $('select[name="sepalBands[]"]', subform).prop('selectedIndex', 0).prop('disabled', true);
+                $('.sepal-bands-row', subform).hide();
+            } else {
+                $('select[name="sepalBands[]"]', subform).prop('disabled', false);
+                $('.sepal-bands-row', subform).show();
+            }
         });
     });
 });
