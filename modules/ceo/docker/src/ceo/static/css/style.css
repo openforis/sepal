@@ -55,8 +55,14 @@ html, body, #gmap, #lmap {
 
 .map-control select {
     background-color: #fff;
-    border: 1px solid #ccc;
-    box-shadow: 0 2px 2px rgba(33, 33, 33, 0.4);
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+.map-control button {
+    background-color: #fff;
+    border: 2px solid;
+    border-radius: 25px;
 }
 
 #collect {

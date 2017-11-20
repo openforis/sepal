@@ -104,14 +104,15 @@ def recordModify(id=None):
             'XCoordinate': record.get('plot').get('XCoordinate'),
         }
         data.update(request.json.get('value'))
+        location = '%s %s' % (data['YCoordinate'], data['XCoordinate'])
         try:
             columns = selectRow(token, fusionTableId, data.get('id'))
             if columns:
                 rowId = getRowId(token, fusionTableId, data.get('id'))
                 if rowId:
-                    updateRow(token, fusionTableId, data, columns, rowId)
+                    updateRow(token, fusionTableId, data, columns, rowId, location=location)
                 else:
-                    insertRow(token, fusionTableId, data, columns)
+                    insertRow(token, fusionTableId, data, columns, location=location)
         except FTException as e:
             pass
     return 'OK', 200
@@ -128,7 +129,7 @@ def recordDelete(id=None):
     if record['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     #
-    mongo.db.records.delete_many({'id': id})
+    mongo.db.records.delete_one({'id': id})
     # fusiontables
     token = session.get('accessToken')
     project = mongo.db.projects.find_one({'id': record.get('project_id')}, {'_id': False})
