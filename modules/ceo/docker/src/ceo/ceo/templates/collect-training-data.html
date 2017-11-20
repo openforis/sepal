@@ -361,7 +361,7 @@
                         req['algorithm'] = data['algorithm'];
                     }
                     $.ajax({
-                        url: 'https://{{config.SEPAL_HOST}}/api/data/mosaic/preview',
+                        url: 'https://{{config.SEPAL_HOST}}/api/data/' + serviceSubPath + '/preview',
                         type: 'POST',
                         async: false,
                         data: $.param(req)
