@@ -49,11 +49,13 @@ def projects():
     skip = request.args.get('skip', 0, int)
     limit = request.args.get('limit', 0, int)
     projects = []
+    otherProjects = []
     if session.get('is_admin'):
         projects = mongo.db.projects.find({}, excludedFields).sort('upload_datetime', -1).skip(skip).limit(limit)
+        #otherProjects = mongo.db.projects.find({'username': { '$ne': session.get('username') }}, excludedFields).sort('upload_datetime', -1).skip(skip).limit(limit)
     else:
         projects = mongo.db.projects.find({'username': session.get('username')}, excludedFields).sort('upload_datetime', -1).skip(skip).limit(limit)
-    return jsonify({'count':projects.count(), 'data':list(projects)}), 200
+    return jsonify({'count': projects.count(), 'projects': list(projects), 'otherProjects': list(otherProjects)}), 200
 
 @app.route('/api/project/<id>/file', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
@@ -546,7 +548,8 @@ def getLayersFromRequest(request):
         if overlay:
             overlay['layerName'] = layerName[i]
             overlay['type'] = layerType[i]
-            overlays.append(overlay)
+            cleanOverlay = { k:v.strip() for k, v in overlay.iteritems() }
+            overlays.append(cleanOverlay)
     return overlays
 
 def getCodeListFromRequest(request):

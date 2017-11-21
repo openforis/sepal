@@ -54,8 +54,8 @@
                 url: ceoSepalApiUrl + '/project',
                 dataType: 'json'
             }).success(function(data) {
-                if (data !== undefined && data.data !== undefined) {
-                    $(data.data).each(function() {
+                if (data !== undefined && data.projects !== undefined) {
+                    $(data.projects).each(function() {
                         var project_id = this.id;
                         var projectType = this.type;
                         var tr = $('<tr>');
