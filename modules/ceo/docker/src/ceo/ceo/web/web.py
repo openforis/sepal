@@ -30,12 +30,12 @@ def project_add():
 def project_edit():
     return render_template('project-edit.html')
 
-@app.route('/collect-form', methods=['GET'])
+@app.route('/collect-cep', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
 def collect_form():
-    return render_template('collect-form.html')
+    return render_template('collect-cep.html')
 
 @app.route('/collect-training-data', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
