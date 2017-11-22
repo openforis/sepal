@@ -2,13 +2,14 @@ import logging
 
 import ee
 
+import monitor
 from monitor import MonitorEarthEngineExportTask
-from ..task import Task
+from ..task.task import ThreadTask
 
 logger = logging.getLogger(__name__)
 
 
-class ImageToDrive(Task):
+class ImageToDrive(ThreadTask):
     def __init__(
             self,
             credentials,
@@ -26,18 +27,27 @@ class ImageToDrive(Task):
         self.shardSize, self.fileDimensions, self.skipEmptyTiles = (
             credentials, image, description, folder, scale, region, maxPixels, shardSize, fileDimensions, skipEmptyTiles
         )
+        self._monitor = None
 
-        self.monitor_task = None
+    def status(self):
+        if self._monitor:
+            return self._monitor.status()
+        else:
+            return monitor.State.PENDING
+
+    def status_description(self):
+        if not self._monitor:
+            return 'Export pending...'
+        else:
+            return self._monitor.status_description()
 
     def run(self):
         ee.InitializeThread(self.credentials)
         task_id = self._image_to_drive()
-        self.monitor_task = MonitorEarthEngineExportTask(self.credentials, task_id, self.description)
-        self.monitor_task.submit() \
+        self._monitor = MonitorEarthEngineExportTask(self.credentials, task_id, self.description)
+        self.dependent(self._monitor) \
+            .submit() \
             .then(self.resolve, self.reject)
-
-    def close(self):
-        Task.cancel_all([self.monitor_task])
 
     def _image_to_drive(self):
         task = ee.batch.Export.image.toDrive(

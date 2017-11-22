@@ -11,7 +11,7 @@ from datetime import datetime
 from dateutil.parser import parse
 
 from ..exception import re_raisable
-from ..task import Task as SepalTask
+from ..task.task import ThreadTask
 
 logger = logging.getLogger(__name__)
 
@@ -25,30 +25,28 @@ def create_folder(credentials, name):
 
 
 def delete(credentials, item):
-    drive = _create_drive(credentials)
-    logger.debug('Deleting {0}'.format(item['id']))
-    drive.files().delete(fileId=item['id']).execute()
+    try:
+        drive = _create_drive(credentials)
+        logger.debug('Deleting {0}'.format(item))
+        drive.files().delete(fileId=item['id']).execute()
+    except Exception:
+        pass # Ignore failure to delete file
 
 
 def _create_drive(credentials):
     return discovery.build('drive', 'v3', http=(credentials.authorize(httplib2.Http())))
 
 
-class Download(SepalTask):
-    class State(object):
-        PENDING = 'PENDING'
-        ACTIVE = 'ACTIVE'
-        COMPLETED = 'COMPLETED'
-
+class Download(ThreadTask):
     Status = namedtuple('DownloadStatus', 'state, total_files, total_bytes, downloaded_files, downloaded_bytes')
     DownloadSpec = namedtuple('DownloadSpec', 'credentials, drive_path, destination_path, matching, move, touch')
 
-    def __init__(self, credentials, drive_path, destination_path, matching='.*', move=False, touch=False):
+    def __init__(self, credentials, drive_path, destination_path, matching=None, move=False, touch=False):
         self.spec = self.DownloadSpec(credentials, drive_path, destination_path, matching, move, touch)
-        super(Download, self).__init__('drive.Download')
+        super(Download, self).__init__()
         self.drive = _create_drive(self.spec.credentials)
-        self.status = self.Status(
-            state=self.State.PENDING,
+        self._status = self.Status(
+            state=self.state,
             total_files=None,
             total_bytes=None,
             downloaded_files=0,
@@ -56,7 +54,6 @@ class Download(SepalTask):
         )
 
     def run(self):
-        logger.info('Downloading from Google Drive. drive_path: {0}'.format(self.spec))
         root_item = self._drive_item(self.spec.drive_path)
         items = self._list_items(root_item)
         files = [item for item in items if item['mimeType'] != 'application/vnd.google-apps.folder']
@@ -68,8 +65,8 @@ class Download(SepalTask):
         if not os.path.exists(self.spec.destination_path):
             os.makedirs(self.spec.destination_path)
 
-        self._updateStatus(
-            state=self.State.ACTIVE,
+        self._update_status(
+            state=self.state,
             total_files=len(files),
             total_bytes=sum([int(file['size']) for file in files])
         )
@@ -91,8 +88,8 @@ class Download(SepalTask):
 
     def _download_file(self, drive_file, items_left):
         destination_path = self._create_destination_path(drive_file)
-        downloaded_bytes_without_file = self.status.downloaded_bytes
-        downloaded_files_without_file = self.status.downloaded_files
+        downloaded_bytes_without_file = self.status().downloaded_bytes
+        downloaded_files_without_file = self.status().downloaded_files
         file_size = int(drive_file['size'])
         last_exception = None
         max_retries = 10
@@ -107,11 +104,11 @@ class Download(SepalTask):
                     while self.running():
                         self._touch(items_left)
                         status, done = downloader.next_chunk()
-                        self._updateStatus(
+                        self._update_status(
                             downloaded_bytes=int(downloaded_bytes_without_file + file_size * status.progress())
                         )
                         if done:
-                            self._updateStatus(
+                            self._update_status(
                                 downloaded_files=downloaded_files_without_file + 1
                             )
 
@@ -123,6 +120,9 @@ class Download(SepalTask):
                             .format(drive_file, destination_path, retry, last_exception.message))
 
         last_exception.re_raise()
+
+    def status(self):
+        return self._update_status(state=self.state)
 
     def close(self):
         logging.debug('closing {0}, {1}'.format(self.spec.drive_path, self.spec.matching))
@@ -217,8 +217,9 @@ class Download(SepalTask):
     def _seconds_since(self, time):
         return (datetime.utcnow() - time.replace(tzinfo=None)).total_seconds()
 
-    def _updateStatus(self, **kwargs):
-        self.status = self.status._replace(**kwargs)
+    def _update_status(self, **kwargs):
+        self._status = self._status._replace(**kwargs)
+        return self._status
 
     def __str__(self):
         return '{0}({1})'.format(type(self).__name__, self.spec)

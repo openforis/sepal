@@ -10,8 +10,9 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
-from ..task import Task
-from ..timeseries import DownloadFeatures
+from ..timeseries.download import DownloadFeatures
+from ..image.export import Export
+from ..task.task import ThreadTask, Task
 
 flags = None
 logger = logging.getLogger(__name__)
@@ -57,9 +58,14 @@ credentials = get_credentials()
 
 
 def re_raise(e):
-    e.re_raise()
+    if type(e) == Task.Canceled:
+        print('Task has been canceled')
+    else:
+        e.re_raise()
 
 
+#
+#
 def test_timeseries():
     ee.InitializeThread(credentials)
 
@@ -80,37 +86,79 @@ def test_timeseries():
         brdf_correct=False
     )
 
-    class StatusMonitor(Task):
+    class StatusMonitor(ThreadTask):
+        def __init__(self, to_monitor):
+            super(StatusMonitor, self).__init__()
+            self.to_monitor = to_monitor
+
         def run(self):
             previous_status = None
-            while download_features.running() and self.running():
-                status = download_features.status()
+            i = 0
+            while self.to_monitor.running() and self.running():
+                i += 1
+                # if i > 60:
+                #     raise Exception('Test with a failure')
+                status = self.to_monitor.status_description()
                 if previous_status != status:
                     previous_status = status
                     print(status)
-                time.sleep(1)
+                time.sleep(0.1)
             self.resolve()
 
-    Task.submit_all([download_features, StatusMonitor()]).catch(re_raise).get()
+        def close(self):
+            self.to_monitor.cancel()
+
+    export_task = Export(
+        description='test_export',
+        credentials=credentials,
+        download_dir='/Users/wiell/Downloads',
+        spec={
+            'imageType': 'MOSAIC',
+            'type': 'automatic',
+            'sensors': ['LANDSAT_8'],
+            'fromDate': '2016-01-01',
+            'toDate': '2017-01-01',
+            'aoi': {
+                'type': 'polygon',
+                'path': [
+                    [12.474353314755717, 41.87795699850863], [12.474353314755717, 41.873139840393165],
+                    [12.485682965634624, 41.873083917686145], [12.485618592618266, 41.87776527776029]],
+            }
+        }
+    )
+
+    # Task.submit_all([download_features, StatusMonitor(download_features)]).catch(re_raise).get()
+    Task.submit_all([export_task, StatusMonitor(export_task)]).catch(re_raise).get()
 
     # download_features.submit().get()
 
-#
-# def first(resolve, reject):
-#     print('Executing first')
-#     resolve(1)
-#
-#
-# def second(value):
-#     print('Executing second')
-#     return 1 + value
-#
-#
-# def on_failure(exception):
-#     print('Failed with {}'.format(exception))
-#
-#
-# result = Promise(first)\
-#     .then(second, on_failure)\
-#     # .get()
-# print('Result: {}'.format(result))
+    # printing_task = PrintingTask()
+    # Task.submit_all([printing_task, CancelingTask(printing_task)]).catch(re_raise).get()
+    # printing_task.submit().catch(re_raise).get()
+
+    # class PrintingTask(ProcessTask):
+    #     def __init__(self, name=None):
+    #         super(PrintingTask, self).__init__(name)
+    #
+    #     def run(self):
+    #         for i in range(0, 5):
+    #             print('Running')
+    #             time.sleep(1)
+    #         self.resolve()
+    #
+    #     def close(self):
+    #         print('closing printing task')
+    #
+    #
+    # class CancelingTask(ThreadTask):
+    #     def __init__(self, to_stop):
+    #         super(CancelingTask, self).__init__()
+    #         self.to_stop = to_stop
+    #
+    #     def run(self):
+    #         print('Running stopping task')
+    #         time.sleep(2)
+    #         self.to_stop.cancel()
+    #
+    #         print('Stopping task')
+    #         self.resolve()

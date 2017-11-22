@@ -12,6 +12,7 @@ from sepal import gee
 from sepal import image_spec_factory
 from sepal.download.download import Downloader
 from sepal.download.file_credentials import FileCredentials
+from sepal.timeseries import DownloadFeatures
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
@@ -41,6 +42,16 @@ def healthcheck():
 
 @http.route('/download', methods=['POST'])
 def download():
+    image = image_spec_factory.create(json.loads(request.values['image']))
+    destination = request.values['destination']
+    taskId = image.download(request.values['name'], username, thread_local.credentials, destination, downloader)
+    return Response(taskId, mimetype='text/plain')
+
+
+@http.route('/timeseries', methods=['POST'])
+def timeseries():
+    task = DownloadFeatures()
+    task.submit()
     image = image_spec_factory.create(json.loads(request.values['image']))
     destination = request.values['destination']
     taskId = image.download(request.values['name'], username, thread_local.credentials, destination, downloader)
