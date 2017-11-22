@@ -285,7 +285,7 @@ def projectToCsv(project, records, withHeader=True, withFtLocation=False):
                     for codeListName in codeListNames:
                         csvRowData.append('')
                 if withFtLocation:
-                    csvRowData.append('%s %s' % (record.get('plot').get(codeListNames[1]), record.get('plot').get(codeListNames[2])))
+                    csvRowData.append('%s %s' % (objs[1]['value'], objs[2]['value']))
                 csvString += listToCSVRowString(csvRowData)
         else:
             if withHeader:
