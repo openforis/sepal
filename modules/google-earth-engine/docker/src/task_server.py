@@ -1,5 +1,6 @@
 import json
 import logging
+from collections import namedtuple
 from os import path
 from threading import local
 
@@ -9,17 +10,16 @@ from flask import Flask, Blueprint, Response
 from flask import request
 
 from sepal import gee
-from sepal import image_spec_factory
-from sepal.download.download import Downloader
 from sepal.download.file_credentials import FileCredentials
+from sepal.task import repository
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
-drive_cleanup = None
 thread_local = local()
 
-downloader = None
 access_token_file = None
+
+Context = namedtuple('Context', 'credentials, download_dir')
 
 
 @http.before_request
@@ -30,32 +30,35 @@ def before():
     else:
         logging.info('Access token file not found: ' + access_token_file)
     logging.info('Using credentials: ' + str(credentials))
-    thread_local.credentials = credentials
+    thread_local.context = Context(credentials=credentials, download_dir=sys.argv[3])
     ee.InitializeThread(credentials)
 
 
 @http.route('/healthcheck', methods=['GET'])
 def healthcheck():
-    return 'OK', 200
+    return '', 204
 
 
-@http.route('/download', methods=['POST'])
-def download():
-    image = image_spec_factory.create(json.loads(request.values['image']))
-    destination = request.values['destination']
-    taskId = image.download(request.values['name'], username, thread_local.credentials, destination, downloader)
-    return Response(taskId, mimetype='text/plain')
+@http.route('/submit', methods=['POST'])
+def submit():
+    repository.submit(
+        id=request.values['task'],
+        module=request.values['module'],
+        spec=json.loads(request.values['spec']),
+        context=thread_local.context
+    )
+    return '', 204
 
 
 @http.route('/status', methods=['GET'])
 def status():
-    task_status = downloader.status(request.values.get('task'))
+    task_status = repository.status(request.values.get('task'))
     return Response(json.dumps(task_status), mimetype='application/json')
 
 
 @http.route('/cancel', methods=['POST'])
 def cancel():
-    downloader.cancel(request.values.get('task'))
+    repository.cancel(request.values.get('task'))
     return '', 204
 
 
@@ -66,14 +69,9 @@ def init():
     global username
     username = sys.argv[4]
 
-    global downloader
-    downloader = Downloader(
-        download_dir=sys.argv[3])
-
 
 def destroy():
-    if downloader:
-        downloader.stop()
+    repository.close()
 
 
 if __name__ == '__main__':
@@ -83,3 +81,4 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', threaded=True, port=5002)
 
 destroy()
+

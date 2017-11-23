@@ -10,20 +10,30 @@ from ..drive import Download
 from ..export.image_to_drive import ImageToDrive
 from ..format import format_bytes
 from ..task.task import ThreadTask
+import json
 
 
-class Export(ThreadTask):
+def create(spec, context):
+    return SepalExport(
+        credentials=context.credentials,
+        download_dir=context.download_dir,
+        description=spec['description'],
+        image_spec=json.loads(spec['image'])
+    )
+
+
+class SepalExport(ThreadTask):
     Status = namedtuple('DownloadMosaicToSepalStatus',
                         'state, export_status, download_status, '
                         'set_band_names_status, build_vrt_status, build_overviews_status')
 
-    def __init__(self, credentials, download_dir, description, spec):
-        super(Export, self).__init__()
+    def __init__(self, credentials, download_dir, description, image_spec):
+        super(SepalExport, self).__init__()
         self.credentials = credentials
         self.drive_path = '_'.join(['Sepal', description, str(uuid.uuid4())])
         self.download_dir = download_dir
         self.description = description
-        self.spec = spec
+        self.image_spec = image_spec
         self._drive_folder = None
 
         self._export = None
@@ -34,7 +44,7 @@ class Export(ThreadTask):
 
     def run(self):
         self._drive_folder = drive.create_folder(self.credentials, self.drive_path)
-        image_spec = image_spec_factory.create(self.spec)
+        image_spec = image_spec_factory.create(self.image_spec)
         self._export = self.dependent(
             ImageToDrive(
                 credentials=self.credentials,
@@ -71,7 +81,7 @@ class Export(ThreadTask):
             .then(self._build_overviews.submit, self.reject) \
             .then(self.resolve, self.reject)
 
-    def status_description(self):
+    def status_message(self):
         status = self.status()
         if self.resolved():
             'Image downloaded'
@@ -117,4 +127,4 @@ class Export(ThreadTask):
 
     def __str__(self):
         return '{0}(download_dir={1}, drive_folder={2}, description={3}, spec={4})' \
-            .format(type(self).__name__, self.download_dir, self.drive_path, self.description, self.spec)
+            .format(type(self).__name__, self.download_dir, self.drive_path, self.description, self.image_spec)

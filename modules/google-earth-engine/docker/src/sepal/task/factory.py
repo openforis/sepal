@@ -1,2 +1,0 @@
-def create(spec):
-   pass

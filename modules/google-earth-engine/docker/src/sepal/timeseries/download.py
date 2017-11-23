@@ -72,7 +72,7 @@ class DownloadFeatures(ThreadTask):
             pre_process_progress=sum([s.pre_process_progress for s in statuses]) / len(statuses)
         )
 
-    def status_description(self):
+    def status_message(self):
         return str(self.status())
 
     def close(self):
@@ -122,7 +122,7 @@ class DownloadFeature(ThreadTask):
             pre_process_progress=sum([s.pre_process_progress for s in statuses]) / float(len(statuses))
         )
 
-    def status_description(self):
+    def status_message(self):
         return str(self.status())
 
     def close(self):
@@ -267,7 +267,7 @@ class DownloadYear(ThreadTask):
             pre_process_progress=1 if self.resolved() else 0
         )
 
-    def status_description(self):
+    def status_message(self):
         return str(self.status())
 
     def __str__(self):

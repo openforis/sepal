@@ -49,15 +49,15 @@ class MonitorEarthEngineExportTask(ThreadTask):
                     'message': error_message
                 }
                 raise Exception(
-                    'Earth Engine drive export to {0} failed: {1}'.format(self.destination, error_message)
+                    'Earth Engine export failed: {}'.format(error_message)
                     if error_message
-                    else 'Earth Engine drive export to {0} failed'.format(self.destination)
+                    else 'Earth Engine export failed'
                 )
 
     def status(self):
         return self._status
 
-    def status_description(self):
+    def status_message(self):
         state = self.status()['state']
         if state == State.PENDING:
             return 'Export pending...'

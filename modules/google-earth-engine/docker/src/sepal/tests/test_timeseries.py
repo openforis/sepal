@@ -10,9 +10,10 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
-from ..timeseries.download import DownloadFeatures
-from ..image.export import Export
+from ..image.asset_export import AssetExport
+from ..image.sepal_export import SepalExport
 from ..task.task import ThreadTask, Task
+from ..timeseries.download import DownloadFeatures
 
 flags = None
 logger = logging.getLogger(__name__)
@@ -98,7 +99,7 @@ def test_timeseries():
                 i += 1
                 # if i > 60:
                 #     raise Exception('Test with a failure')
-                status = self.to_monitor.status_description()
+                status = self.to_monitor.status_message()
                 if previous_status != status:
                     previous_status = status
                     print(status)
@@ -108,7 +109,7 @@ def test_timeseries():
         def close(self):
             self.to_monitor.cancel()
 
-    export_task = Export(
+    sepal_export = SepalExport(
         description='test_export',
         credentials=credentials,
         download_dir='/Users/wiell/Downloads',
@@ -127,8 +128,26 @@ def test_timeseries():
         }
     )
 
+    asset_export = AssetExport(
+        description='test_export',
+        credentials=credentials,
+        spec={
+            'imageType': 'MOSAIC',
+            'type': 'automatic',
+            'sensors': ['LANDSAT_8'],
+            'fromDate': '2016-01-01',
+            'toDate': '2017-01-01',
+            'aoi': {
+                'type': 'polygon',
+                'path': [
+                    [12.474353314755717, 41.87795699850863], [12.474353314755717, 41.873139840393165],
+                    [12.485682965634624, 41.873083917686145], [12.485618592618266, 41.87776527776029]],
+            }
+        })
+
     # Task.submit_all([download_features, StatusMonitor(download_features)]).catch(re_raise).get()
-    Task.submit_all([export_task, StatusMonitor(export_task)]).catch(re_raise).get()
+    # Task.submit_all([sepal_export, StatusMonitor(sepal_export)]).catch(re_raise).get()
+    Task.submit_all([asset_export, StatusMonitor(asset_export)]).catch(re_raise).get()
 
     # download_features.submit().get()
 

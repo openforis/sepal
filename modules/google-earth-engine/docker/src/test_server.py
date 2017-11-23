@@ -5,11 +5,11 @@ import logging
 import ee
 from flask import Flask, render_template
 
-import download_server
+import task_server
 import server
 from sepal import gee
 
-modules = [server, download_server]
+modules = [server, task_server]
 app = Flask(__name__)
 
 

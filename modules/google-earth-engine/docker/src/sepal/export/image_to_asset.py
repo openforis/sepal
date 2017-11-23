@@ -9,24 +9,22 @@ from ..task.task import ThreadTask
 logger = logging.getLogger(__name__)
 
 
-class ImageToDrive(ThreadTask):
+class ImageToAsset(ThreadTask):
     def __init__(
             self,
             credentials,
             image,
             description,
             region,
-            folder,
             scale,
-            maxPixels=1e12,
-            shardSize=256,
-            fileDimensions=4096,
-            skipEmptyTiles=None):
-        super(ImageToDrive, self).__init__()
-        self.credentials, self.image, self.description, self.folder, self.scale, self.region, self.maxPixels, \
-        self.shardSize, self.fileDimensions, self.skipEmptyTiles = (
-            credentials, image, description, folder, scale, region, maxPixels, shardSize, fileDimensions, skipEmptyTiles
-        )
+            maxPixels=1e12):
+        super(ImageToAsset, self).__init__()
+        self.credentials = credentials
+        self.image = image
+        self.description = description
+        self.scale = scale
+        self.region = region
+        self.maxPixels = maxPixels
         self._monitor = None
 
     def status(self):
@@ -43,26 +41,27 @@ class ImageToDrive(ThreadTask):
 
     def run(self):
         ee.InitializeThread(self.credentials)
-        task_id = self._image_to_drive()
+        task_id = self._image_to_asset()
         self._monitor = MonitorEarthEngineExportTask(self.credentials, task_id, self.description)
         self.dependent(self._monitor) \
             .submit() \
             .then(self.resolve, self.reject)
 
-    def _image_to_drive(self):
-        task = ee.batch.Export.image.toDrive(
+    def _image_to_asset(self):
+        asset_roots = ee.data.getAssetRoots()
+        if not asset_roots:
+            raise Exception('User ' + username + ' has no GEE asset roots')
+        asset_id = asset_roots[0]['id'] + '/' + self.description
+        task = ee.batch.Export.image.toAsset(
             image=self.image,
             description=self.description,
-            folder=self.folder,
+            assetId=asset_id,
             region=self.region.bounds().getInfo()['coordinates'],
             scale=self.scale,
-            maxPixels=self.maxPixels,
-            shardSize=self.shardSize,
-            fileDimensions=self.fileDimensions,
-            skipEmptyTiles=self.skipEmptyTiles
+            maxPixels=self.maxPixels
         )
         task.start()
         return task.status()['id']
 
     def __str__(self):
-        return '{0}(description={1}, folder={2})'.format(type(self).__name__, self.description, self.folder)
+        return '{0}(description={1})'.format(type(self).__name__, self.description)
