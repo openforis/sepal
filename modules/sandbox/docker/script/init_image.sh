@@ -54,7 +54,7 @@ echo
 echo "*******************************"
 echo "*** Installing Shiny Server ***"
 echo "*******************************"
-shinyServer=shiny-server-1.5.3.838-amd64.deb
+shinyServer=shiny-server-1.5.5.872-amd64.deb
 wget https://download3.rstudio.org/ubuntu-12.04/x86_64/$shinyServer
 gdebi -n $shinyServer
 chown shiny:root /usr/lib/R/library
