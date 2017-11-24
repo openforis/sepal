@@ -285,20 +285,20 @@ def projectToCsv(project, records, withHeader=True, withFtLocation=False):
                     for codeListName in codeListNames:
                         csvRowData.append('')
                 if withFtLocation:
-                    csvRowData.append('%s %s' % (objs[1]['value'], objs[2]['value']))
+                    csvRowData.append('%s %s' % (plot['values'][1]['value'], plot['values'][2]['value']))
                 csvString += listToCSVRowString(csvRowData)
         else:
             if withHeader:
                 csvHeaderData = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
                 csvString = listToCSVRowString(csvHeaderData)
             for record in records:
-                csvRowData = []
-                csvRowData.append(record.get('plot').get('id'))
-                csvRowData.append(record.get('plot').get('YCoordinate'))
-                csvRowData.append(record.get('plot').get('XCoordinate'))
-                values = record['value']
+                csvRowData = [
+                    record.get('plot').get('id'),
+                    record.get('plot').get('YCoordinate'),
+                    record.get('plot').get('XCoordinate')
+                ]
                 for codeListName in codeListNames:
-                    value = values.get(codeListName, '')
+                    value = record.get('value').get(codeListName, '')
                     csvRowData.append(value)
                 if withFtLocation:
                     csvRowData.append('%s %s' % (record.get('plot').get('YCoordinate'), record.get('plot').get('XCoordinate')))
@@ -308,13 +308,13 @@ def projectToCsv(project, records, withHeader=True, withFtLocation=False):
             csvHeaderData = ['id', 'YCoordinate', 'XCoordinate'] + codeListNames
             csvString = listToCSVRowString(csvHeaderData)
         for record in records:
-            csvRowData = []
-            csvRowData.append(record.get('plot').get('id'))
-            csvRowData.append(record.get('plot').get('YCoordinate'))
-            csvRowData.append(record.get('plot').get('XCoordinate'))
-            values = record['value']
+            csvRowData = [
+                record.get('plot').get('id'),
+                record.get('plot').get('YCoordinate'),
+                record.get('plot').get('XCoordinate')
+            ]
             for codeListName in codeListNames:
-                value = values.get(codeListName, '')
+                value = record.get('value').get(codeListName, '')
                 csvRowData.append(value)
             if withFtLocation:
                 csvRowData.append('%s %s' % (record.get('plot').get('YCoordinate'), record.get('plot').get('XCoordinate')))
