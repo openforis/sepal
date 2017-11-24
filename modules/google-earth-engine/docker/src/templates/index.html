@@ -147,6 +147,7 @@
                     <input type="button" id="exportAssetMosaic" value="Export as Earth Engine asset">
                 </p>
                 <input type="submit" value="Preview">
+                <div id="exportStatus"></div>
             </form>
 
         </td>
@@ -187,6 +188,35 @@
                     <input type="text" id="classProperty">
                 </p>
                 <input type="submit" value="Classify">
+            </form>
+
+
+            <form id="timeseriesForm">
+                <h3>Time-series</h3>
+                <p>
+                    <label for="timeseriesName">Name</label><br/>
+                    <input type="text" id="timeseriesName">
+                </p>
+                <p>
+                    <label for="expression">Data</label><br/>
+                    <input type="text" id="expression" value="10000 * (1 + (i.nir - i.red) / (i.nir + i.red))">
+                </p>
+                <p id="timeseriesDataSets">
+                    <input type="checkbox" id="sentinel2" checked>
+                    <label for="sentinel2">Sentinel2</label><br/>
+
+                    <input type="checkbox" id="landsat8" checked>
+                    <label for="landsat8">Landsat 8</label><br/>
+
+                    <input type="checkbox" id="landsat7" checked>
+                    <label for="landsat7">Landsat 7</label><br/>
+
+                    <input type="checkbox" id="landsat5" checked>
+                    <label for="landsat5">Landsat 5</label><br/>
+
+                </p>
+                <input type="submit" value="Download">
+                <div id="timeseriesStatus"></div>
             </form>
 
             <h2>Response</h2>

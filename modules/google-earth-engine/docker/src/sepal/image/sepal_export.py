@@ -10,7 +10,6 @@ from ..drive import Download
 from ..export.image_to_drive import ImageToDrive
 from ..format import format_bytes
 from ..task.task import ThreadTask
-import json
 
 
 def create(spec, context):
@@ -18,7 +17,7 @@ def create(spec, context):
         credentials=context.credentials,
         download_dir=context.download_dir,
         description=spec['description'],
-        image_spec=json.loads(spec['image'])
+        image_spec=spec['image']
     )
 
 

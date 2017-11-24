@@ -68,6 +68,12 @@
   } )
   
   
+  $( '#timeseriesForm' ).submit( function ( e ) {
+    e.preventDefault()
+    downloadTimeseries()
+  } )
+  
+  
   $( '#dataSet' ).find( 'input' ).change( function () {
     if ( this.value === 'LANDSAT' ) {
       $( '#sensors' ).show()
@@ -208,22 +214,15 @@
   }
   
   function exportMosaic( destination ) {
-    var spec = $( '#sceneIds' ).val() ? createScenesQuery( 1 ) : createQuery( 1 )
+    var spec         = $( '#sceneIds' ).val() ? createScenesQuery( 1 ) : createQuery( 1 )
     spec.description = $( '#exportName' ).val()
-    var task       = guid()
-    var data       = {
-      'task'  : task,
-      'module': destination === 'sepal' ? 'sepal.image.sepal_export' : 'sepal.image.asset_export',
-      'spec'  : JSON.stringify(spec)
-    }
-    $.post( {
-      url    : 'submit',
-      data   : data,
-      success: function ( data ) {
-        console.log( "Submitted " + task )
-        console.log( data )
-      }
-    } )
+    spec.image       = JSON.parse( spec.image )
+    var task         = guid()
+    postJson( {
+      task  : task,
+      module: destination === 'sepal' ? 'sepal.image.sepal_export' : 'sepal.image.asset_export',
+      spec  : spec
+    } ).done( function ( data ) { updateStatus( task, '#exportStatus' )} )
   }
   
   // function exportMosaic(destination) {
@@ -240,6 +239,28 @@
   //     })
   // }
   
+  
+  function downloadTimeseries() {
+    var dataSets = []
+    $( '#timeseriesDataSets' ).find( 'input:checked' ).each( function () {
+      dataSets.push( $( this ).attr( 'id' ) )
+    } )
+    var task = guid()
+    postJson( {
+      task  : task,
+      module: 'sepal.timeseries.download',
+      spec  : {
+        description: $( '#timeseriesName' ).val(),
+        expression : $( '#expression' ).val(),
+        dataSets   : dataSets,
+        aoi        : createAoi(),
+        fromDate   : isoDate( fromDatePicker.getDate() ),
+        toDate     : isoDate( toDatePicker.getDate() ),
+        maskSnow   : Boolean( $( 'input[name="mask-snow"]:checked' ).val() ),
+        brdfCorrect: Boolean( $( 'input[name="brdf-correct"]:checked' ).val() )
+      }
+    } ).done( function ( data ) { updateStatus( task, '#timeseriesStatus' )} )
+  }
   
   function exportParams() {
     var data = $( '#exportParams' ).val()
@@ -261,11 +282,19 @@
       }
     else {
       var iso = $( '#countries' ).val()
-      return {
-        type     : 'fusionTable',
-        tableName: '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-        keyColumn: 'ISO',
-        keyValue : iso
+      if ( iso )
+        return {
+          type     : 'fusionTable',
+          tableName: '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
+          keyColumn: 'ISO',
+          keyValue : iso
+        }
+      else {
+        var fusionTable = $( '#fusionTable' ).val()
+        return {
+          type     : 'fusionTableCollection',
+          tableName: fusionTable
+        }
       }
     }
   }
@@ -370,5 +399,41 @@
     }
     
     return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
+  }
+  
+  function postJson( data ) {
+    return $.ajax( {
+      type       : 'POST',
+      url        : 'submit',
+      data       : JSON.stringify( data ),
+      contentType: "application/json; charset=utf-8",
+      dataType   : "json"
+    } )
+  }
+  
+  function isoDate( date ) {
+    var month = '' + (date.getMonth() + 1),
+        day   = '' + date.getDate(),
+        year  = date.getFullYear();
+    
+    if ( month.length < 2 ) month = '0' + month;
+    if ( day.length < 2 ) day = '0' + day;
+    
+    return [ year, month, day ].join( '-' );
+  }
+  
+  function updateStatus( task, elementId ) {
+    job = setInterval( function () {
+      $.getJSON( 'status', { task: task } )
+        .done( function ( status ) {
+          state = status.state
+          if ( state === 'RESOLVED' || state === 'REJECTED' )
+            clearInterval( job )
+          $( elementId ).html( status.message )
+        } )
+        .fail( function () {
+          clearInterval( job )
+        } )
+    }, 1000 )
   }
 })()

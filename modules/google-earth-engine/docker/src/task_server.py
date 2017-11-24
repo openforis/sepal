@@ -41,10 +41,11 @@ def healthcheck():
 
 @http.route('/submit', methods=['POST'])
 def submit():
+    task_request = request.get_json()
     repository.submit(
-        id=request.values['task'],
-        module=request.values['module'],
-        spec=json.loads(request.values['spec']),
+        id=task_request['task'],
+        module=task_request['module'],
+        spec=task_request['spec'],
         context=thread_local.context
     )
     return '', 204
@@ -81,4 +82,3 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', threaded=True, port=5002)
 
 destroy()
-

@@ -25,5 +25,5 @@ class SetBandNames(ProcessTask):
                 if not self.running():
                     return
                 band = ds.GetRasterBand(i + 1)
-                band.SetMetadata({'BAND_NAME': self.bands[i]})
+                band.SetMetadata({'BAND_NAME': self.band_names[i]})
         self.resolve()

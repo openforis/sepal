@@ -50,7 +50,7 @@ class ImageToAsset(ThreadTask):
     def _image_to_asset(self):
         asset_roots = ee.data.getAssetRoots()
         if not asset_roots:
-            raise Exception('User ' + username + ' has no GEE asset roots')
+            raise Exception('User has no GEE asset roots: {}'.format(self.credentials))
         asset_id = asset_roots[0]['id'] + '/' + self.description
         task = ee.batch.Export.image.toAsset(
             image=self.image,

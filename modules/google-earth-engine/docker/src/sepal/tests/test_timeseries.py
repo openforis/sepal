@@ -131,7 +131,7 @@ def test_timeseries():
     asset_export = AssetExport(
         description='test_export',
         credentials=credentials,
-        spec={
+        image_spec={
             'imageType': 'MOSAIC',
             'type': 'automatic',
             'sensors': ['LANDSAT_8'],

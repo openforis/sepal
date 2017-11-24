@@ -16,6 +16,7 @@ from dateutil.parser import parse
 
 from timeseries import TimeSeries
 from .. import drive
+from ..aoi import Aoi
 from ..drive import Download
 from ..export.image_to_drive import ImageToDrive
 from ..export.table_to_drive import TableToDrive
@@ -23,6 +24,26 @@ from ..format import format_bytes
 from ..task.task import ProcessTask, ThreadTask, Task
 
 logger = logging.getLogger(__name__)
+
+
+def create(spec, context):
+    aoi_spec = spec['aoi']
+    if aoi_spec['type'] == 'fusionTableCollection':
+        aoi = ee.FeatureCollection('ft:' + aoi_spec['tableName'])
+    else:
+        aoi = Aoi.create(aoi_spec).geometry()
+    return DownloadFeatures(
+        download_dir=context.download_dir,
+        description=spec['description'],
+        credentials=context.credentials,
+        expression=spec['expression'],
+        data_sets=spec['dataSets'],
+        aoi=aoi,
+        from_date=spec['fromDate'],
+        to_date=spec['toDate'],
+        mask_snow=spec['maskSnow'],
+        brdf_correct=spec['brdfCorrect']
+    )
 
 
 class DownloadFeatures(ThreadTask):
@@ -41,10 +62,15 @@ class DownloadFeatures(ThreadTask):
 
     def run(self):
         # Explicitly create folder, to prevent GEE race-condition
+        ee.InitializeThread(self.spec.credentials)
         self.drive_folder = drive.create_folder(self.spec.credentials, self.drive_folder_name)
         if isinstance(self.spec.aoi, ee.FeatureCollection):
-            aois = self.aoi.aggregate_array('system:index').getInfo() \
-                .map(lambda aoiId: ee.Feature(table.filterMetadata('system:index', 'equals', aoiId).first()))
+            feature_collection = self.spec.aoi
+            aois = [
+                ee.Feature(
+                    feature_collection.filterMetadata('system:index', 'equals', feature_index).first()).geometry()
+                for feature_index in feature_collection.aggregate_array('system:index').getInfo()
+            ]
         else:
             aois = [self.spec.aoi]
 
@@ -63,13 +89,14 @@ class DownloadFeatures(ThreadTask):
     def status(self):
         statuses = [task.status() for task in self.download_tasks]
         if not statuses:
-            return Status(self.state)
+            return Status(self.state, exception=self.exception())
         return Status(
             state=self.state,
             export_progress=sum([s.export_progress for s in statuses]) / len(statuses),
             download_progress=sum([s.download_progress for s in statuses]) / len(statuses),
             downloaded_bytes=sum([s.downloaded_bytes for s in statuses]),
-            pre_process_progress=sum([s.pre_process_progress for s in statuses]) / len(statuses)
+            pre_process_progress=sum([s.pre_process_progress for s in statuses]) / len(statuses),
+            exception=self.exception()
         )
 
     def status_message(self):
@@ -81,7 +108,11 @@ class DownloadFeatures(ThreadTask):
             drive.delete(self.spec.credentials, self.drive_folder)
 
     def __str__(self):
-        return '{0}({1})'.format(type(self).__name__, self.spec)
+        return '{0}(download_dir={1}, description={2}, credentials={3}, expression={4}, data_sets={5}, ' \
+               'from_date={6}, to_date={7}, mask_snow={8}, brdf_correct={9})'.format(
+            type(self).__name__, self.download_dir, self.description, self.spec.credentials, self.spec.expression,
+            self.spec.data_sets, self.spec.from_date, self.spec.to_date, self.spec.mask_snow,
+            self.spec.brdf_correct)
 
 
 class DownloadFeature(ThreadTask):
@@ -113,13 +144,14 @@ class DownloadFeature(ThreadTask):
     def status(self):
         statuses = [task.status() for task in self.download_tasks]
         if not statuses:
-            return Status(self.state)
+            return Status(self.state, exception=self.exception())
         return Status(
             state=self.state,
             export_progress=sum([s.export_progress for s in statuses]) / float(len(statuses)),
             download_progress=sum([s.download_progress for s in statuses]) / float(len(statuses)),
             downloaded_bytes=sum([s.downloaded_bytes for s in statuses]),
-            pre_process_progress=sum([s.pre_process_progress for s in statuses]) / float(len(statuses))
+            pre_process_progress=sum([s.pre_process_progress for s in statuses]) / float(len(statuses)),
+            exception=self.exception()
         )
 
     def status_message(self):
@@ -128,17 +160,20 @@ class DownloadFeature(ThreadTask):
     def close(self):
         Task.cancel_all(self.download_tasks)
 
-    def __str__(self):
-        return '{0}({1})'.format(type(self).__name__, self.spec)
-
     def _preprocess_feature(self, value):
-        self._create_dates_csv()
+        if not self._create_dates_csv():
+            return self.resolve()
         self._tiles_to_vrts()
         return self.resolve()
 
     def _create_dates_csv(self):
+        dates_path = join(self.feature_dir, 'dates.csv')
         csv_paths = sorted(glob(join(self.feature_dir, '*.csv')))
-        with open(join(self.feature_dir, 'dates.csv'), 'w') as dates_file:
+        if dates_path in csv_paths:
+            csv_paths.remove(dates_path)
+        if not csv_paths:
+            return False
+        with open(dates_path, 'w') as dates_file:
             for csv_path in csv_paths:
                 with open(csv_path, 'r') as csv_file:
                     for row in csv.DictReader(csv_file):
@@ -146,6 +181,7 @@ class DownloadFeature(ThreadTask):
                             dates_file.write(row['date'] + '\n')
                 subprocess.check_call('rm -rf {0}'.format(csv_path).split(' '))
             dates_file.flush()
+        return True
 
     def _tiles_to_vrts(self):
         tile_dirs = sorted([d for d in glob(join(self.feature_dir, '*')) if isdir(d)])
@@ -177,9 +213,14 @@ class DownloadFeature(ThreadTask):
                 ranges.append((year_from.isoformat(), year_to.isoformat()))
         return ranges
 
+    def __str__(self):
+        return '{0}(drive_folder={1}, download_dir={2}, description={3}, feature_description={4}, spec={5})'.format(
+            type(self).__name__, self.drive_folder, self.download_dir, self.description, self.feature_description,
+            self.spec)
+
 
 class DownloadYear(ThreadTask):
-    def __init__(self, spec, drive_folder, download_dir, description, feature_description):
+    def __init__(self, drive_folder, download_dir, description, feature_description, spec):
         super(DownloadYear, self).__init__()
         self._spec = spec
         self._drive_folder = drive_folder
@@ -198,6 +239,8 @@ class DownloadYear(ThreadTask):
         time_series = TimeSeries(self._spec)
         stack = time_series.stack
         dates = time_series.dates
+        if not dates.size().getInfo():
+            return self.resolve()
 
         self._table_export = self.dependent(
             TableToDrive(
@@ -264,14 +307,17 @@ class DownloadYear(ThreadTask):
             export_progress=table_export_progress * 0.01 + image_export_progress * 0.99,
             download_progress=table_download_progress * 0.01 + image_download_progress * 0.99,
             downloaded_bytes=table_downloaded_bytes + image_downloaded_bytes,
-            pre_process_progress=1 if self.resolved() else 0
+            pre_process_progress=1 if self.resolved() else 0,
+            exception=self.exception()
         )
 
     def status_message(self):
         return str(self.status())
 
     def __str__(self):
-        return '{0}({1})'.format(type(self).__name__, self._spec)
+        return '{0}(drive_folder={1}, year_dir={2}, description={3}, feature_description={4}, spec={5})'.format(
+            type(self).__name__, self._drive_folder, self._year_dir, self._description, self._feature_description,
+            self._spec)
 
 
 class ProcessYear(ProcessTask):
@@ -306,13 +352,15 @@ class ProcessYear(ProcessTask):
 
 
 class Status(object):
-    def __init__(self, state, export_progress=0, download_progress=0, downloaded_bytes=0, pre_process_progress=0):
+    def __init__(self, state, export_progress=0, download_progress=0, downloaded_bytes=0, pre_process_progress=0,
+                 exception=None):
         super(Status, self).__init__()
         self.state = state
         self.export_progress = export_progress
         self.download_progress = download_progress
         self.downloaded_bytes = downloaded_bytes
         self.pre_process_progress = pre_process_progress
+        self.exception = exception
 
     def __str__(self):
         if self.state == Task.RESOLVED:
@@ -327,9 +375,10 @@ class Status(object):
         if self.state == Task.CANCELED:
             return 'Download was canceled'
         if self.state == Task.REJECTED:
-            return 'Download failed: {}'.format(self.exception())
-
-
+            if self.exception:
+                return 'Download failed: {}'.format(self.exception)
+            else:
+                'Download failed'
 
 
 TimeSeriesSpec = namedtuple(
