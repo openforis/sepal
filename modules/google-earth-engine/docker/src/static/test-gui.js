@@ -423,16 +423,16 @@
   }
   
   function updateStatus( task, elementId ) {
-    job = setInterval( function () {
+    setTimeout( function () {
       $.getJSON( 'status', { task: task } )
         .done( function ( status ) {
-          state = status.state
-          if ( state === 'RESOLVED' || state === 'REJECTED' )
-            clearInterval( job )
           $( elementId ).html( status.message )
+          state = status.state
+          if ( state !== 'RESOLVED' && state !== 'REJECTED' )
+            updateStatus( task, elementId )
         } )
-        .fail( function () {
-          clearInterval( job )
+        .fail( function ( error ) {
+          console.log( 'Failed to update status', error )
         } )
     }, 1000 )
   }
