@@ -42,7 +42,6 @@ class AssetExport(ThreadTask):
             .then(self.resolve, self.reject)
 
     def status_message(self):
-        status = self.status()
         if self.resolved():
             'Image exported'
         if self.active():

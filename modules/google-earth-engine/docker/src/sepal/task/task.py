@@ -57,7 +57,7 @@ class Task(object):
         if not self._set_state(Task.REJECTED, lambda state: state in [Task.UNSUBMITTED, Task.SUBMITTED, Task.RUNNING]):
             return
         self._exception = exception
-        logger.exception('Task rejected: {0}'.format(self))
+        logger.exception('Rejected {0}'.format(self))
         try:
             return self._reject(exception) if self._reject else Promise.reject(exception)
         finally:
@@ -171,7 +171,7 @@ class Task(object):
         self._state_lock.acquire()
         try:
             if when(self.state) and (not dependee_lock or dependee.running()):
-                logger.debug('{0} -> {1}: {2}'.format(self.state, new_state, self))
+                logger.info('{0} -> {1}: {2}'.format(self.state, new_state, self))
                 self.state = new_state
                 return True
             return False

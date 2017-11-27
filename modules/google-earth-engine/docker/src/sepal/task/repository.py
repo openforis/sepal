@@ -26,9 +26,7 @@ def close():
 
 
 def _re_raise(exception):
-    print(type(exception))
     exception.re_raise()
-    print(exception)
 
 
 def _get_task(id):

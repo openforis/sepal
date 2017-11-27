@@ -43,6 +43,7 @@ class SepalExport(ThreadTask):
 
     def run(self):
         self._drive_folder = drive.create_folder(self.credentials, self.drive_path)
+        self.dependent(drive.Touch([self.drive_path])).submit()
         image_spec = image_spec_factory.create(self.image_spec)
         self._export = self.dependent(
             ImageToDrive(
@@ -62,8 +63,7 @@ class SepalExport(ThreadTask):
                 credentials=self.credentials,
                 drive_path=self.drive_path,
                 destination_path=destination_path,
-                move=True,
-                touch=True
+                move=True
             ))
         tifs = destination_path + '/*.tif'
         self._set_band_names = self.dependent(

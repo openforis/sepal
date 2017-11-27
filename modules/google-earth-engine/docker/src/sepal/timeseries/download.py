@@ -61,9 +61,10 @@ class DownloadFeatures(ThreadTask):
         self.drive_folder = None
 
     def run(self):
-        # Explicitly create folder, to prevent GEE race-condition
         ee.InitializeThread(self.spec.credentials)
+        # Explicitly create folder, to prevent GEE race-condition
         self.drive_folder = drive.create_folder(self.spec.credentials, self.drive_folder_name)
+        self.dependent(drive.Touch([self.drive_folder_name])).submit()
         if isinstance(self.spec.aoi, ee.FeatureCollection):
             feature_collection = self.spec.aoi
             aois = [
@@ -255,8 +256,7 @@ class DownloadYear(ThreadTask):
                 drive_path=self._drive_folder,
                 destination_path=self._year_dir,
                 matching='{0}/{1}*.csv'.format(self._drive_folder, self._table_export.description),
-                move=True,
-                touch=True
+                move=True
             ))
         self._image_export = self.dependent(
             ImageToDrive(
@@ -276,8 +276,7 @@ class DownloadYear(ThreadTask):
                 drive_path=self._drive_folder,
                 destination_path=self._year_dir,
                 matching='{0}/{1}*.tif'.format(self._drive_folder, self._image_export.description),
-                move=True,
-                touch=True
+                move=True
             ))
 
         self._process_year = self.dependent(

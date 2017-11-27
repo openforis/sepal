@@ -7,9 +7,9 @@ from apiclient import discovery
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
-DELAY_SECS = 60
-MAX_FOLDER_AGE_MINS = 60 * 24 * 7  # A week
-MAX_FILE_AGE_MINS = 60  # An hour
+DELAY_SECS = 60 * 5
+# MAX_FOLDER_AGE_MINS = 60  # An hour
+MAX_FOLDER_AGE_MINS = 60 * 24 * 7  # An week
 
 
 class DriveCleanup:
@@ -43,16 +43,14 @@ class DriveCleanup:
             logger.exception('Failed to delete old drive files')
 
     def _delete_old(self):
-        logger.info("Searching for old drive files")
+        logger.info("Searching for old drive folders")
         now = datetime.utcnow()
-        max_file_modification = (now - timedelta(minutes=MAX_FILE_AGE_MINS)).isoformat("T")
         max_folder_modification = (now - timedelta(minutes=MAX_FOLDER_AGE_MINS)).isoformat("T")
-        query = "(mimeType != 'application/vnd.google-apps.folder' and modifiedTime <= '%s') " \
-                "or (mimeType = 'application/vnd.google-apps.folder' and modifiedTime <= '%s')" \
-                % (max_file_modification, max_folder_modification)
+        query = "mimeType = 'application/vnd.google-apps.folder' and modifiedTime <= '{}'" \
+            .format(max_folder_modification)
         results = self.drive.files().list(q=query, fields="files(id, name)").execute()
         files = results.get('files', [])
         for file in files:
             file_id = file['id']
-            logger.info("Deleting old file id: " + file_id + ', name: ' + file['name'])
+            logger.info("Deleting old folder. id=" + file_id + ', name=' + file['name'])
             self.drive.files().delete(fileId=file_id).execute()

@@ -9,7 +9,7 @@ import time
 from apiclient import discovery
 from apiclient.http import MediaIoBaseDownload
 from datetime import datetime
-from dateutil.parser import parse
+from googleapiclient.errors import HttpError
 
 from ..exception import re_raisable
 from ..task.task import ThreadTask
@@ -22,36 +22,17 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class Drive:
-    _lock = threading.Lock()
-    _lock_by_credentials = {}
-
-    def __init__(self, credentials):
-        self.credentials = credentials
-
-    def __enter__(self):
-        self.lock = None
-        Drive._lock.acquire()
-        try:
-            if not self.credentials in Drive._lock_by_credentials:
-                Drive._lock_by_credentials[self.credentials] = threading.Lock()
-            self.lock = Drive._lock_by_credentials[self.credentials]
-        finally:
-            Drive._lock.release()
-
-        self.lock.acquire()
-        return discovery.build('drive', 'v3', http=(self.credentials.authorize(httplib2.Http())))
-
-    def __exit__(self, type, value, traceback):
-        self.lock.release()
-
-
 def create_folder(credentials, name):
-    with Drive(credentials) as drive:
-        return drive.files().create(
-            body={'name': name, 'mimeType': 'application/vnd.google-apps.folder'},
-            fields='id'
-        ).execute()
+    try:
+        with Drive(credentials) as drive:
+            return drive.files().create(
+                body={'name': name, 'mimeType': 'application/vnd.google-apps.folder'},
+                fields='id'
+            ).execute()
+    except HttpError as e:
+        e.message = e._get_reason()
+        re_raisable()
+        raise e
 
 
 def delete(credentials, item):
@@ -65,10 +46,10 @@ def delete(credentials, item):
 
 class Download(ThreadTask):
     Status = namedtuple('DownloadStatus', 'state, total_files, total_bytes, downloaded_files, downloaded_bytes')
-    DownloadSpec = namedtuple('DownloadSpec', 'credentials, drive_path, destination_path, matching, move, touch')
+    DownloadSpec = namedtuple('DownloadSpec', 'credentials, drive_path, destination_path, matching, move')
 
-    def __init__(self, credentials, drive_path, destination_path, matching=None, move=False, touch=False):
-        self.spec = self.DownloadSpec(credentials, drive_path, destination_path, matching, move, touch)
+    def __init__(self, credentials, drive_path, destination_path, matching=None, move=False):
+        self.spec = self.DownloadSpec(credentials, drive_path, destination_path, matching, move)
         super(Download, self).__init__()
         self._status = self.Status(
             state=self.state,
@@ -129,7 +110,6 @@ class Download(ThreadTask):
                     request = self.drive.files().get_media(fileId=drive_file['id'])
                     downloader = MediaIoBaseDownload(destination_file, request)
                     while self.running():
-                        self._touch(items_left)
                         status, done = downloader.next_chunk()
                         self._update_status(
                             downloaded_bytes=int(downloaded_bytes_without_file + file_size * status.progress())
@@ -141,12 +121,13 @@ class Download(ThreadTask):
 
                             destination_file.flush()
                             return
-            except Exception:
+            except HttpError as e:
+                e.message = e._get_reason()
                 last_exception = re_raisable()
                 logger.warn('Failed to download {0} to {1}. retry={2}, error={3}'
                             .format(drive_file, destination_path, retry, last_exception.message))
 
-        last_exception.re_raise()
+        self.reject(last_exception)
 
     def status(self):
         return self._update_status(state=self.state)
@@ -164,28 +145,6 @@ class Download(ThreadTask):
         if not os.path.exists(destination_parent_path):
             os.makedirs(destination_parent_path)
         return destination_path
-
-    def _touch(self, items):
-        now = datetime.utcnow()
-
-        if not self.spec.touch:
-            return
-
-        def touch_item(item):
-            modifiedTime = parse(item.get('modifiedTime'))
-            if self._seconds_since(modifiedTime) > 5 * 60:  # Touch files if not touched in 5 minutes
-                self.drive.files().update(
-                    fileId=item['id'],
-                    body={'modifiedTime': now.strftime("%Y-%m-%dT%H:%M:%S" + 'Z')}
-                ).execute()
-                item['modifiedTime'] = now.isoformat()
-                logger.debug('touched {0}'.format(item))
-                time.sleep(0.5)
-
-        for item in items:
-            if not self.running():
-                return
-            touch_item(item)
 
     def _list_items(self, root_item):
         if not root_item:
@@ -250,3 +209,50 @@ class Download(ThreadTask):
 
     def __str__(self):
         return '{0}({1})'.format(type(self).__name__, self.spec)
+
+
+class Touch(ThreadTask):
+    def __init__(self, drive_items):
+        super(Touch, self).__init__()
+        self.drive_items = drive_items
+
+    def run(self):
+        time.sleep(15 * 60)  # Don't touch very often
+        while self.running():
+            for item in self.drive_items:
+                try:
+                    self.drive.files().update(
+                        fileId=item['id'],
+                        body={'modifiedTime': datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S" + 'Z')}
+                    ).execute()
+                    logger.debug('Touched {0}'.format(item))
+                    time.sleep(1)
+                except:
+                    pass
+
+    def __str__(self):
+        return '{0}(drive_files={1})'.format(type(self).__name__, self.drive_items)
+
+
+class Drive:
+    _lock = threading.Lock()
+    _lock_by_credentials = {}
+
+    def __init__(self, credentials):
+        self.credentials = credentials
+
+    def __enter__(self):
+        self.lock = None
+        Drive._lock.acquire()
+        try:
+            if not self.credentials in Drive._lock_by_credentials:
+                Drive._lock_by_credentials[self.credentials] = threading.Lock()
+            self.lock = Drive._lock_by_credentials[self.credentials]
+        finally:
+            Drive._lock.release()
+
+        self.lock.acquire()
+        return discovery.build('drive', 'v3', http=(self.credentials.authorize(httplib2.Http())))
+
+    def __exit__(self, type, value, traceback):
+        self.lock.release()
