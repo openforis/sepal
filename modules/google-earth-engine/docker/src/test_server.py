@@ -5,8 +5,8 @@ import logging
 import ee
 from flask import Flask, render_template
 
-import task_server
 import server
+import task_server
 from sepal import gee
 
 modules = [server, task_server]
@@ -42,7 +42,10 @@ def destroy():
 
 if __name__ == '__main__':
     init()
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger("werkzeug").setLevel(logging.ERROR)
+    logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
+    logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
     app.run(threaded=True, port=5001)
 
 destroy()

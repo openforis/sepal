@@ -13,6 +13,10 @@ from sepal import gee
 from sepal.download.file_credentials import FileCredentials
 from sepal.task import repository
 
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
+logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
+logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
+logger = logging.getLogger(__name__)
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 thread_local = local()
@@ -27,9 +31,7 @@ def before():
     credentials = gee.service_account_credentials
     if path.exists(access_token_file):
         credentials = FileCredentials(access_token_file)
-    else:
-        logging.info('Access token file not found: ' + access_token_file)
-    logging.info('Using credentials: ' + str(credentials))
+    logger.debug('Using credentials: ' + str(credentials))
     thread_local.context = Context(credentials=credentials, download_dir=sys.argv[3])
     ee.InitializeThread(credentials)
 
