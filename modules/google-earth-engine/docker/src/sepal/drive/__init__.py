@@ -1,6 +1,7 @@
 import fnmatch
 import logging
 import os
+import threading
 from collections import namedtuple
 
 import httplib2
@@ -13,28 +14,53 @@ from dateutil.parser import parse
 from ..exception import re_raisable
 from ..task.task import ThreadTask
 
+try:
+    import Queue as queue
+except ImportError:
+    import queue
+
 logger = logging.getLogger(__name__)
 
 
+class Drive:
+    _lock = threading.Lock()
+    _lock_by_credentials = {}
+
+    def __init__(self, credentials):
+        self.credentials = credentials
+
+    def __enter__(self):
+        self.lock = None
+        Drive._lock.acquire()
+        try:
+            if not self.credentials in Drive._lock_by_credentials:
+                Drive._lock_by_credentials[self.credentials] = threading.Lock()
+            self.lock = Drive._lock_by_credentials[self.credentials]
+        finally:
+            Drive._lock.release()
+
+        self.lock.acquire()
+        return discovery.build('drive', 'v3', http=(self.credentials.authorize(httplib2.Http())))
+
+    def __exit__(self, type, value, traceback):
+        self.lock.release()
+
+
 def create_folder(credentials, name):
-    drive = _create_drive(credentials)
-    return drive.files().create(
-        body={'name': name, 'mimeType': 'application/vnd.google-apps.folder'},
-        fields='id'
-    ).execute()
+    with Drive(credentials) as drive:
+        return drive.files().create(
+            body={'name': name, 'mimeType': 'application/vnd.google-apps.folder'},
+            fields='id'
+        ).execute()
 
 
 def delete(credentials, item):
     try:
-        drive = _create_drive(credentials)
-        logger.debug('Deleting {0}'.format(item))
-        drive.files().delete(fileId=item['id']).execute()
+        with Drive(credentials) as drive:
+            logger.debug('Deleting {0}'.format(item))
+            drive.files().delete(fileId=item['id']).execute()
     except Exception:
-        pass # Ignore failure to delete file
-
-
-def _create_drive(credentials):
-    return discovery.build('drive', 'v3', http=(credentials.authorize(httplib2.Http())))
+        pass  # Ignore failure to delete file
 
 
 class Download(ThreadTask):
@@ -44,7 +70,6 @@ class Download(ThreadTask):
     def __init__(self, credentials, drive_path, destination_path, matching=None, move=False, touch=False):
         self.spec = self.DownloadSpec(credentials, drive_path, destination_path, matching, move, touch)
         super(Download, self).__init__()
-        self.drive = _create_drive(self.spec.credentials)
         self._status = self.Status(
             state=self.state,
             total_files=None,
@@ -54,37 +79,39 @@ class Download(ThreadTask):
         )
 
     def run(self):
-        root_item = self._drive_item(self.spec.drive_path)
-        items = self._list_items(root_item)
-        files = [item for item in items if item['mimeType'] != 'application/vnd.google-apps.folder']
+        with Drive(self.spec.credentials) as drive:
+            self.drive = drive
+            root_item = self._drive_item(self.spec.drive_path)
+            items = self._list_items(root_item)
+            files = [item for item in items if item['mimeType'] != 'application/vnd.google-apps.folder']
 
-        if not files:
-            raise Exception('No files found to download. path: {0}, matching: {1}'
-                            .format(self.spec.drive_path, self.spec.matching))
+            if not files:
+                raise Exception('No files found to download. path: {0}, matching: {1}'
+                                .format(self.spec.drive_path, self.spec.matching))
 
-        if not os.path.exists(self.spec.destination_path):
-            os.makedirs(self.spec.destination_path)
+            if not os.path.exists(self.spec.destination_path):
+                os.makedirs(self.spec.destination_path)
 
-        self._update_status(
-            state=self.state,
-            total_files=len(files),
-            total_bytes=sum([int(file['size']) for file in files])
-        )
+            self._update_status(
+                state=self.state,
+                total_files=len(files),
+                total_bytes=sum([int(file['size']) for file in files])
+            )
 
-        items_left = list(items)
-        for drive_file in files:
-            items_left.remove(drive_file)
-            self._download_file(drive_file, items_left)
-            if not self.running():
-                return
-            if self.spec.move:
-                self._delete(drive_file)
-            time.sleep(1)
+            items_left = list(items)
+            for drive_file in files:
+                items_left.remove(drive_file)
+                self._download_file(drive_file, items_left)
+                if not self.running():
+                    return
+                if self.spec.move:
+                    self._delete(drive_file)
+                time.sleep(1)
 
-        if self.spec.move and not self.spec.matching:
-            self._delete(root_item)
+            if self.spec.move and not self.spec.matching:
+                self._delete(root_item)
 
-        self.resolve()
+            self.resolve()
 
     def _download_file(self, drive_file, items_left):
         destination_path = self._create_destination_path(drive_file)
@@ -125,7 +152,7 @@ class Download(ThreadTask):
         return self._update_status(state=self.state)
 
     def close(self):
-        logging.debug('closing {0}, {1}'.format(self.spec.drive_path, self.spec.matching))
+        logger.debug('closing {0}, {1}'.format(self.spec.drive_path, self.spec.matching))
 
     def _create_destination_path(self, drive_file):
         parent_path_parts = drive_file['parent_path'].split('/')
