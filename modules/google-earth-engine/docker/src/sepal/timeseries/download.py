@@ -140,7 +140,8 @@ class DownloadFeature(ThreadTask):
         ]
 
         return Task.submit_all(self.download_tasks) \
-            .then(self._preprocess_feature, self.reject).catch(self.reject)
+            .then(self._preprocess_feature, self.reject)\
+            .catch(self.reject)
 
     def status(self):
         statuses = [task.status() for task in self.download_tasks]
@@ -375,7 +376,7 @@ class Status(object):
             return 'Download was canceled'
         if self.state == Task.REJECTED:
             if self.exception:
-                return 'Download failed: {}'.format(self.exception)
+                return 'Download failed: {}'.format(self.exception.message)
             else:
                 'Download failed'
 

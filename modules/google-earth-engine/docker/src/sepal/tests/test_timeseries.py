@@ -109,45 +109,45 @@ def test_timeseries():
         def close(self):
             self.to_monitor.cancel()
 
-    sepal_export = SepalExport(
-        description='test_export',
-        credentials=credentials,
-        download_dir='/Users/wiell/Downloads',
-        spec={
-            'imageType': 'MOSAIC',
-            'type': 'automatic',
-            'sensors': ['LANDSAT_8'],
-            'fromDate': '2016-01-01',
-            'toDate': '2017-01-01',
-            'aoi': {
-                'type': 'polygon',
-                'path': [
-                    [12.474353314755717, 41.87795699850863], [12.474353314755717, 41.873139840393165],
-                    [12.485682965634624, 41.873083917686145], [12.485618592618266, 41.87776527776029]],
-            }
-        }
-    )
+    # sepal_export = SepalExport(
+    #     description='test_export',
+    #     credentials=credentials,
+    #     download_dir='/Users/wiell/Downloads',
+    #     spec={
+    #         'imageType': 'MOSAIC',
+    #         'type': 'automatic',
+    #         'sensors': ['LANDSAT_8'],
+    #         'fromDate': '2016-01-01',
+    #         'toDate': '2017-01-01',
+    #         'aoi': {
+    #             'type': 'polygon',
+    #             'path': [
+    #                 [12.474353314755717, 41.87795699850863], [12.474353314755717, 41.873139840393165],
+    #                 [12.485682965634624, 41.873083917686145], [12.485618592618266, 41.87776527776029]],
+    #         }
+    #     }
+    # )
 
-    asset_export = AssetExport(
-        description='test_export',
-        credentials=credentials,
-        image_spec={
-            'imageType': 'MOSAIC',
-            'type': 'automatic',
-            'sensors': ['LANDSAT_8'],
-            'fromDate': '2016-01-01',
-            'toDate': '2017-01-01',
-            'aoi': {
-                'type': 'polygon',
-                'path': [
-                    [12.474353314755717, 41.87795699850863], [12.474353314755717, 41.873139840393165],
-                    [12.485682965634624, 41.873083917686145], [12.485618592618266, 41.87776527776029]],
-            }
-        })
+    # asset_export = AssetExport(
+    #     description='test_export',
+    #     credentials=credentials,
+    #     image_spec={
+    #         'imageType': 'MOSAIC',
+    #         'type': 'automatic',
+    #         'sensors': ['LANDSAT_8'],
+    #         'fromDate': '2016-01-01',
+    #         'toDate': '2017-01-01',
+    #         'aoi': {
+    #             'type': 'polygon',
+    #             'path': [
+    #                 [12.474353314755717, 41.87795699850863], [12.474353314755717, 41.873139840393165],
+    #                 [12.485682965634624, 41.873083917686145], [12.485618592618266, 41.87776527776029]],
+    #         }
+    #     })
 
     # Task.submit_all([download_features, StatusMonitor(download_features)]).catch(re_raise).get()
     # Task.submit_all([sepal_export, StatusMonitor(sepal_export)]).catch(re_raise).get()
-    Task.submit_all([asset_export, StatusMonitor(asset_export)]).catch(re_raise).get()
+    # Task.submit_all([asset_export, StatusMonitor(asset_export)]).catch(re_raise).get()
 
     # download_features.submit().get()
 

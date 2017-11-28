@@ -83,7 +83,7 @@ class SepalExport(ThreadTask):
     def status_message(self):
         status = self.status()
         if self.resolved():
-            'Image downloaded'
+            return 'Image downloaded'
         if self.active():
             if status.is_current_task(self._export):
                 return 'Exporting from Google Earth Engine...'

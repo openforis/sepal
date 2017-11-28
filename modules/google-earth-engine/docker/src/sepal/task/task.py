@@ -211,7 +211,7 @@ import multiprocessing
 
 
 class ProcessTask(Task):
-    def __init__(self, name=None):
+    def __init__(self):
         super(ProcessTask, self).__init__()
         self._process = None
 

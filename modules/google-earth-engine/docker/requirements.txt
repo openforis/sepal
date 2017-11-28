@@ -1,6 +1,6 @@
 git+git://github.com/openforis/earthengine-api.git@v0.1.112.1#egg=earthengine-api&subdirectory=python
 Flask>=0.11.1
-google-api-python-client>=1.6.1
+google-api-python-client>=1.6.4
 git+git://github.com/cdanielw/promise
 pyCrypto>=2.6.1
 python-dateutil>=2.5.3

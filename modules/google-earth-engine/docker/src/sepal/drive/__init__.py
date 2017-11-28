@@ -1,7 +1,8 @@
 import fnmatch
+import json
 import logging
 import os
-import threading
+import random
 from collections import namedtuple
 
 import httplib2
@@ -25,10 +26,10 @@ logger = logging.getLogger(__name__)
 def create_folder(credentials, name):
     try:
         with Drive(credentials) as drive:
-            return drive.files().create(
+            return retry(lambda: drive.files().create(
                 body={'name': name, 'mimeType': 'application/vnd.google-apps.folder'},
                 fields='id'
-            ).execute()
+            ).execute())
     except HttpError as e:
         e.message = e._get_reason()
         re_raisable()
@@ -39,9 +40,26 @@ def delete(credentials, item):
     try:
         with Drive(credentials) as drive:
             logger.debug('Deleting {0}'.format(item))
-            drive.files().delete(fileId=item['id']).execute()
+            retry(lambda: drive.files().delete(fileId=item['id']).execute())
     except Exception:
         pass  # Ignore failure to delete file
+
+
+def retry(action, times=1):
+    try:
+        return action()
+    except HttpError as e:
+        content = json.loads(e.content)
+        reason = content.get('reason', None)
+        if reason in ['userRateLimitExceeded', 'rateLimitExceeded']:
+            if times < 20:
+                throttle_seconds = max(2 ^ retries * random.uniform(0.1, 0.2), 30)
+                logger.warn('Retrying drive operation in {0} seconds: {1}'.format(throttle_seconds, reason))
+                time.sleep(throttle_seconds)
+                return retry(action, times + 1)
+        e.message = e._get_reason()
+        re_raisable()
+        raise e
 
 
 class Download(ThreadTask):
@@ -82,7 +100,7 @@ class Download(ThreadTask):
             items_left = list(items)
             for drive_file in files:
                 items_left.remove(drive_file)
-                self._download_file(drive_file, items_left)
+                self._download_file(drive_file)
                 if not self.running():
                     return
                 if self.spec.move:
@@ -94,23 +112,25 @@ class Download(ThreadTask):
 
             self.resolve()
 
-    def _download_file(self, drive_file, items_left):
+    def _download_file(self, drive_file):
         destination_path = self._create_destination_path(drive_file)
         downloaded_bytes_without_file = self.status().downloaded_bytes
         downloaded_files_without_file = self.status().downloaded_files
         file_size = int(drive_file['size'])
         last_exception = None
         max_retries = 10
-        for retry in range(0, max_retries):
+        for times in range(0, max_retries):
             if not self.running():
                 return
-            logger.debug('Downloading {0} to {1}. retry={2}'.format(drive_file, destination_path, retry))
+            logger.debug('Downloading {0} to {1}. retry={2}'.format(drive_file, destination_path, times))
             try:
                 with open(destination_path, 'w') as destination_file:
-                    request = self.drive.files().get_media(fileId=drive_file['id'])
-                    downloader = MediaIoBaseDownload(destination_file, request)
+                    request = retry(lambda: self.drive.files().get_media(fileId=drive_file['id']))
+                    downloader = MediaIoBaseDownload(fd=destination_file, request=request, chunksize=10 * 1024 * 1024)
                     while self.running():
-                        status, done = downloader.next_chunk()
+                        logger.info(
+                            'Downloading chunk of {0} to {1}. retry={2}'.format(drive_file, destination_path, times))
+                        status, done = retry(lambda: downloader.next_chunk())
                         self._update_status(
                             downloaded_bytes=int(downloaded_bytes_without_file + file_size * status.progress())
                         )
@@ -125,7 +145,7 @@ class Download(ThreadTask):
                 e.message = e._get_reason()
                 last_exception = re_raisable()
                 logger.warn('Failed to download {0} to {1}. retry={2}, error={3}'
-                            .format(drive_file, destination_path, retry, last_exception.message))
+                            .format(drive_file, destination_path, times, last_exception.message))
 
         self.reject(last_exception)
 
@@ -151,12 +171,12 @@ class Download(ThreadTask):
             return []
 
         def append_items(items=[], pageToken=None):
-            result = self.drive.files().list(
+            result = retry(lambda: self.drive.files().list(
                 q="'{}' in parents".format(root_item['id']),
                 fields="nextPageToken, files(id, name, size, mimeType, modifiedTime)",
                 pageSize=1000,
                 pageToken=pageToken
-            ).execute()
+            ).execute())
             files = []
             for item in result.get('files', []):
                 item['parent_path'] = root_item['parent_path'] + root_item['name'] + '/'
@@ -184,10 +204,10 @@ class Download(ThreadTask):
         parent_id = 'root'
         names = drive_path.split('/')
         for i, name in enumerate(names):
-            items = self.drive.files().list(
+            items = retry(lambda: self.drive.files().list(
                 q="'{0}' in parents and name = '{1}'".format(parent_id, name),
                 fields="files(id, name, size, mimeType, modifiedTime)"
-            ).execute().get('files', [])
+            ).execute().get('files', []))
             if not items:
                 return None
             item = items[0]
@@ -198,7 +218,8 @@ class Download(ThreadTask):
 
     def _delete(self, item):
         logger.debug('Deleting {0}'.format(item['id']))
-        self.drive.files().delete(fileId=item['id']).execute()
+        retry(lambda: self.drive.files().delete(fileId=item['id']).execute())
+        3
 
     def _seconds_since(self, time):
         return (datetime.utcnow() - time.replace(tzinfo=None)).total_seconds()
@@ -221,38 +242,25 @@ class Touch(ThreadTask):
         while self.running():
             for item in self.drive_items:
                 try:
-                    self.drive.files().update(
+                    retry(lambda: self.drive.files().update(
                         fileId=item['id'],
                         body={'modifiedTime': datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S" + 'Z')}
-                    ).execute()
+                    ).execute())
                     logger.debug('Touched {0}'.format(item))
-                    time.sleep(1)
                 except:
                     pass
+                time.sleep(1)
 
     def __str__(self):
         return '{0}(drive_files={1})'.format(type(self).__name__, self.drive_items)
 
 
 class Drive:
-    _lock = threading.Lock()
-    _lock_by_credentials = {}
-
     def __init__(self, credentials):
         self.credentials = credentials
 
     def __enter__(self):
-        self.lock = None
-        Drive._lock.acquire()
-        try:
-            if not self.credentials in Drive._lock_by_credentials:
-                Drive._lock_by_credentials[self.credentials] = threading.Lock()
-            self.lock = Drive._lock_by_credentials[self.credentials]
-        finally:
-            Drive._lock.release()
-
-        self.lock.acquire()
         return discovery.build('drive', 'v3', http=(self.credentials.authorize(httplib2.Http())))
 
     def __exit__(self, type, value, traceback):
-        self.lock.release()
+        pass

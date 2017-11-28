@@ -49,9 +49,7 @@ class MonitorEarthEngineExportTask(ThreadTask):
                     'message': error_message
                 }
                 raise Exception(
-                    'Earth Engine export failed: {}'.format(error_message)
-                    if error_message
-                    else 'Earth Engine export failed'
+                    error_message if error_message else 'Earth Engine export failed'
                 )
 
     def status(self):
