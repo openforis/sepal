@@ -128,7 +128,7 @@ class Download(ThreadTask):
                     request = retry(lambda: self.drive.files().get_media(fileId=drive_file['id']))
                     downloader = MediaIoBaseDownload(fd=destination_file, request=request, chunksize=10 * 1024 * 1024)
                     while self.running():
-                        logger.info(
+                        logger.debug(
                             'Downloading chunk of {0} to {1}. retry={2}'.format(drive_file, destination_path, times))
                         status, done = retry(lambda: downloader.next_chunk())
                         self._update_status(
