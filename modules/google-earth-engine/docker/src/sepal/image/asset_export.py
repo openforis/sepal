@@ -10,7 +10,7 @@ def create(spec, context):
     return AssetExport(
         credentials=context.credentials,
         description=spec['description'],
-        image_spec=json.loads(spec['image'])
+        image_spec=spec['image']
     )
 
 
