@@ -41,8 +41,11 @@ def recordAdd():
     if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
     #
-    mongo.db.records.insert({
-        'id': generate_id(session.get('username') + request.json.get('project_id') + request.json.get('plot').get('id')),
+    record_id = generate_id(session.get('username') + request.json.get('project_id') + request.json.get('plot').get('id'))
+    mongo.db.records.update({
+        'id': record_id
+    }, {
+        'id': record_id,
         'value': request.json.get('value'),
         'project_id': request.json.get('project_id'),
         'username': session.get('username'),
@@ -52,7 +55,7 @@ def recordAdd():
             'YCoordinate': request.json.get('plot').get('YCoordinate'),
             'XCoordinate': request.json.get('plot').get('XCoordinate')
         }
-    })
+    }, upsert=True)
     # fusiontables
     token = session.get('accessToken')
     fusionTableId = project.get('fusionTableId')

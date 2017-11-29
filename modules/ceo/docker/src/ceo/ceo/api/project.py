@@ -65,7 +65,7 @@ def projectFileById(id=None):
     project = mongo.db.projects.find_one({'id': id}, {'_id': False})
     filename = project['filename']
     name, ext = os.path.splitext(filename)
-    return send_file(os.path.join(app.config['UPLOAD_FOLDER'], name, filename), mimetype='text/xml', attachment_filename=filename, as_attachment=True)
+    return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename), mimetype='application/zip', attachment_filename=filename, as_attachment=True)
 
 @app.route('/api/project', methods=['POST'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
@@ -253,7 +253,7 @@ def projectExport(id=None):
         filename = project['name'] + '-' + getTimestamp()
         csvString = projectToCsv(project, records)
         headers = {'Content-disposition': 'attachment; filename=' + filename + '.csv'}
-        return Response(csvString, mimetype="text/csv", headers=headers)
+        return Response(csvString, mimetype='text/csv', headers=headers)
 
 def projectToCsv(project, records, withHeader=True, withFtLocation=False):
     csvString = ''
