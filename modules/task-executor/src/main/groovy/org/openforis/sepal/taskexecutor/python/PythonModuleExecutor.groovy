@@ -5,9 +5,9 @@ import org.openforis.sepal.taskexecutor.api.Progress
 import org.openforis.sepal.taskexecutor.api.Task
 import org.openforis.sepal.taskexecutor.api.TaskExecutor
 import org.openforis.sepal.taskexecutor.api.TaskExecutorFactory
-import org.openforis.sepal.taskexecutor.gee.Status
 import org.openforis.sepal.taskexecutor.util.Scheduler
 import org.openforis.sepal.taskexecutor.util.SleepingScheduler
+import org.openforis.sepal.util.annotation.ImmutableData
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -15,14 +15,13 @@ import java.util.concurrent.atomic.AtomicReference
 
 import static groovyx.net.http.ContentType.JSON
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.openforis.sepal.taskexecutor.gee.Status.State.ACTIVE
 
 class PythonModuleExecutor implements TaskExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final Task task
     private final Scheduler scheduler = new SleepingScheduler(5, SECONDS)
     private final Gateway gateway
-    private final status = new AtomicReference<Status>(new Status(state: ACTIVE))
+    private final status = new AtomicReference<Status>(new Status(state: Status.State.ACTIVE))
 
     PythonModuleExecutor(Task task, Factory factory) {
         this.task = task
@@ -108,6 +107,28 @@ class PythonModuleExecutor implements TaskExecutor {
 
         private RESTClient getHttp() {
             new RESTClient(uri)
+        }
+    }
+
+    @ImmutableData
+    private static class Status {
+        State state
+        String message
+
+        boolean isActive() {
+            state == State.ACTIVE
+        }
+
+        boolean hasCompleted() {
+            state == State.COMPLETED
+        }
+
+        boolean hasFailed() {
+            state == State.FAILED
+        }
+
+        enum State {
+            ACTIVE, COMPLETED, CANCELED, FAILED
         }
     }
 }

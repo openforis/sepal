@@ -1,6 +1,5 @@
 package integration
 
-import fake.server.GoogleEarthEngineDownloadServer
 import fake.server.GoogleLandsatServer
 import fake.server.S3LandsatServer
 import fake.server.SepalServer
@@ -19,21 +18,19 @@ class Main_Test extends Specification {
     def s3Server = new S3LandsatServer().start() as S3LandsatServer
     def googleLandsatServer = new GoogleLandsatServer().start() as GoogleLandsatServer
     def sepalServer = new SepalServer().start() as SepalServer
-    def googleEarthEngineDownloadServer = new GoogleEarthEngineDownloadServer(workingDir).start() as GoogleEarthEngineDownloadServer
     def port = Port.findFree()
     def propertiesFile = File.createTempFile('task-executor', '.properties')
     def config = [
-            taskExecutorUsername             : 'task-executor',
-            taskExecutorPassword             : 'task-executor password',
-            sepalUsername                    : 'sepal',
-            sepalPassword                    : 'sepal password',
-            sepalEndpoint                    : "http://localhost:$sepalServer.port/" as String,
-            s3Endpoint                       : "http://localhost:$s3Server.port/" as String,
-            googleEndpoint                   : "http://localhost:$googleLandsatServer.port/" as String,
-            googleEarthEngineDownloadEndpoint: "http://localhost:$googleEarthEngineDownloadServer.port/" as String,
-            workingDir                       : workingDir.absolutePath,
-            username                         : System.getProperty('user.name'),
-            port                             : port as String,
+            taskExecutorUsername: 'task-executor',
+            taskExecutorPassword: 'task-executor password',
+            sepalUsername       : 'sepal',
+            sepalPassword       : 'sepal password',
+            sepalEndpoint       : "http://localhost:$sepalServer.port/" as String,
+            s3Endpoint          : "http://localhost:$s3Server.port/" as String,
+            googleEndpoint      : "http://localhost:$googleLandsatServer.port/" as String,
+            workingDir          : workingDir.absolutePath,
+            username            : System.getProperty('user.name'),
+            port                : port as String,
     ]
     def client = new RESTClient("http://localhost:$port/api/")
 

@@ -9,6 +9,7 @@ import org.openforis.sepal.component.task.query.UserTasks
 import util.AbstractComponentEndpointTest
 
 import static groovy.json.JsonOutput.toJson
+import static groovyx.net.http.ContentType.JSON
 import static org.openforis.sepal.security.Roles.TASK_EXECUTOR
 
 @SuppressWarnings("GroovyAssignabilityCheck")
@@ -47,22 +48,22 @@ class TaskEndpoint_Test extends AbstractComponentEndpointTest {
     }
 
     def 'POST /tasks, submits SubmitTask'() {
-        def query = [
+        def body = [
                 instanceType: 'some-instance-type',
                 operation   : 'some-operation',
                 params      : toJson(some: 'params'),
                 username    : testUsername
         ]
         when:
-        post(path: 'tasks', query: query)
+        post(path: 'tasks', body: body, contentType: JSON)
 
         then:
         status == 204
         1 * component.submit(new SubmitTask(
-                instanceType: query.instanceType,
-                operation: query.operation,
-                params: fromJson(query.params),
-                username: query.username
+                instanceType: body.instanceType,
+                operation: body.operation,
+                params: fromJson(body.params),
+                username: body.username
         ))
     }
 

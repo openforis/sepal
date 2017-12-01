@@ -74,8 +74,6 @@ class Task {
         switch (operation) {
             case 'landsat-scene-download':
                 return "Retrieving ${params.sceneIds?.size()} Landsat scenes"
-            case 'google-earth-engine-download':
-                return "Retrieving ${params?.name}.tif from Google Earth Engine"
             default:
                 return params.title ?: operation
         }
