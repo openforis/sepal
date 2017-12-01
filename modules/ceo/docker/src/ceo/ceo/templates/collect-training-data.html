@@ -286,7 +286,7 @@
                     if (filters != '') filters += 'AND';
                     filters += "(productType='" + overlay.dgcsProductType + "')";
                 }
-                if (filters != '') url += '&Coverage_CQL_Filter=' + filters;
+                if (filters != '') url += '&CQL_Filter=' + filters;
                 //
                 var dgcsLayer = L.tileLayer.wms(url, {
                     layers: 'DigitalGlobe:Imagery',
@@ -503,15 +503,15 @@
                             }).done(function(data) {
                                 updatePlots().done(function(data) {
                                     //
-                            }).fail(function(jqXHR, textStatus, errorThrown) {
-                                console.error(jqXHR, textStatus, errorThrown);
-                            });
+                                }).fail(function(jqXHR, textStatus, errorThrown) {
+                                    console.error(jqXHR, textStatus, errorThrown);
+                                });
                             }).fail(function(jqXHR, textStatus, errorThrown) {
                                 console.error(jqXHR, textStatus, errorThrown);
                             }).always(function() {
                                 getRecords();
-                            showList();
-                        });
+                                showList();
+                            });
 
                         });
                         $('#codeLists').append($('<div class="form-group">').append(button));
@@ -823,16 +823,16 @@
                 $('#list a.active').remove();
                 updatePlots().done(function(data) {
                     //
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error(jqXHR, textStatus, errorThrown);
+                });
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
-            });
-            }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.error(jqXHR, textStatus, errorThrown);
-            removeCurrentPlot();
+                removeCurrentPlot();
             }).always(function() {
                 getRecords();
-            showList();
-        });
+                showList();
+            });
         });
 
         $('#export-csv').click(function(e) {
