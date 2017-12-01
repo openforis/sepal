@@ -26,12 +26,12 @@ def healthcheck():
     except Exception:
         logging.info('User not whitelisted. user: ' + str(request.headers.get('sepal-user', '[No sepal-user header]')))
         return 'NOT-WHITELISTED', 400
-    return 'OK', 200
+    return Response(json.dumps({'status': 'OK'}), mimetype='application/json')
 
 
 @http.route('/preview', methods=['POST'])
 def preview():
-    image_spec = image_spec_factory.create(json.loads(request.values['image']))
+    image_spec = image_spec_factory.create(request.get_json())
     image_preview = image_spec.preview()
     return Response(json.dumps(image_preview), mimetype='application/json')
 

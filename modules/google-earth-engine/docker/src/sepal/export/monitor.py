@@ -43,7 +43,7 @@ class MonitorEarthEngineExportTask(ThreadTask):
                 self.resolve()
                 return
             else:
-                error_message = status['error_message'] if state == Task.State.FAILED else 'Task was canceled'
+                error_message = status['error_message'] if state == Task.State.FAILED else 'Earth Engine export was canceled'
                 self._status = {
                     'state': State.FAILED,
                     'message': error_message

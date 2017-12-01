@@ -38,7 +38,7 @@ def before():
 
 @http.route('/healthcheck', methods=['GET'])
 def healthcheck():
-    return '', 204
+    return Response(json.dumps({'status': 'OK'}), mimetype='application/json')
 
 
 @http.route('/submit', methods=['POST'])

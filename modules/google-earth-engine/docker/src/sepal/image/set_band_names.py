@@ -27,3 +27,7 @@ class SetBandNames(ProcessTask):
                 band = ds.GetRasterBand(i + 1)
                 band.SetMetadata({'BAND_NAME': self.band_names[i]})
         self.resolve()
+
+    def __str__(self):
+        return '{0}(band_names={1}, files={2})'.format(
+            type(self).__name__, self.band_names, self.files)

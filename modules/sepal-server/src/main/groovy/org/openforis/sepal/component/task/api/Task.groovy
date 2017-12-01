@@ -77,7 +77,7 @@ class Task {
             case 'google-earth-engine-download':
                 return "Retrieving ${params?.name}.tif from Google Earth Engine"
             default:
-                return operation
+                return params.title ?: operation
         }
     }
 

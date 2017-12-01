@@ -13,7 +13,9 @@ class ChangeDetection(ImageSpec):
         self.trainingData = ee.FeatureCollection('ft:' + spec['tableName'])
         self.classProperty = spec['classProperty']
         self.fromImage = create_image_spec(spec['fromImage'])
+        self.fromImage.bands = ['red', 'nir', 'swir1', 'swir2']
         self.toImage = create_image_spec(spec['toImage'])
+        self.toImage.bands = ['red', 'nir', 'swir1', 'swir2']
         self.aoi = self.fromImage.aoi
         self.scale = self.fromImage.scale
         self.bands = ['class']

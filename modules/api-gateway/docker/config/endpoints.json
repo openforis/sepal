@@ -17,6 +17,13 @@
   },
   {
     "prefix": "true",
+    "path": "/gee/",
+    "target": "http://google-earth-engine:5001/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
     "path": "/ceo/",
     "target": "http://ceo:7766/",
     "https": "true",

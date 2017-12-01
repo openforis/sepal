@@ -114,14 +114,6 @@ class Task(object):
         raise AssertionError('Method in subclass expected to have been invoked')
 
     @staticmethod
-    def cancel_all(tasks):
-        for task in tasks:
-            if task and not isinstance(task, Task):
-                raise TypeError('Not a Task: {0}'.format(task))
-            if task:
-                task.cancel()
-
-    @staticmethod
     def submit_all(tasks):
         return Promise.all([
             (task.submit() if isinstance(task, Task) else task)
@@ -170,7 +162,7 @@ class Task(object):
             dependee_lock.acquire()
         self._state_lock.acquire()
         try:
-            if when(self.state) and (not dependee_lock or dependee.running()):
+            if when(self.state) and (not dependee_lock or dependee.running() or new_state == Task.CANCELED):
                 logger.info('{0} -> {1}: {2}'.format(self.state, new_state, self))
                 self.state = new_state
                 return True

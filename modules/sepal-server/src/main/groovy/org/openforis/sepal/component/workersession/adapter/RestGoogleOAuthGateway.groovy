@@ -18,6 +18,7 @@ class RestGoogleOAuthGateway implements GoogleOAuthGateway {
         // We don't have a user with access token
         http.post(path: 'refresh-access-token',
                 requestContentType: JSON,
+                contentType: JSON,
                 headers: ['sepal-user': new User(username: username, roles: [Roles.ADMIN]).jsonString()]
         )
     }

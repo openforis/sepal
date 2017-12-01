@@ -6,7 +6,6 @@ import org.openforis.sepal.user.User
 
 import static groovy.json.JsonOutput.toJson
 import static groovyx.net.http.ContentType.JSON
-import static groovyx.net.http.ContentType.URLENC
 
 class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
     private final String targetUri
@@ -34,9 +33,9 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
     MapLayer preview(Map image, User user) {
         def response = endpoint.post(
                 path: 'preview',
-                requestContentType: URLENC,
+                requestContentType: JSON,
                 contentType: JSON,
-                body: [image: toJson(image)],
+                body: toJson(image),
                 headers: ['sepal-user': toJson(user)]
         )
         return new MapLayer(

@@ -1,6 +1,8 @@
 import uuid
 from collections import namedtuple
 
+import ee
+
 from build_overviews import BuildOverviews
 from build_vrt import BuildVrt
 from set_band_names import SetBandNames
@@ -42,6 +44,7 @@ class SepalExport(ThreadTask):
         self._build_overviews = None
 
     def run(self):
+        ee.InitializeThread(self.credentials)
         self._drive_folder = drive.create_folder(self.credentials, self.drive_path)
         self.dependent(drive.Touch([self.drive_path])).submit()
         image_spec = image_spec_factory.create(self.image_spec)

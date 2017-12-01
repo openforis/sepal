@@ -44,8 +44,11 @@ class ImageToDrive(ThreadTask):
     def run(self):
         ee.InitializeThread(self.credentials)
         task_id = self._image_to_drive()
-        self._monitor = MonitorEarthEngineExportTask(self.credentials, task_id, self.description)
-        self.dependent(self._monitor) \
+        self._monitor = self.dependent(
+            MonitorEarthEngineExportTask(self.credentials, task_id, self.description)
+        )
+
+        self._monitor \
             .submit() \
             .then(self.resolve, self.reject)
 

@@ -23,6 +23,7 @@ class LocalInstanceProvider implements InstanceProvider {
     WorkerInstance launchReserved(String instanceType, WorkerReservation reservation) {
         instance = instance.reserve(reservation)
         notifyLaunchListeners(instance)
+        return instance
     }
 
     List<WorkerInstance> launchIdle(String instanceType, int count) {

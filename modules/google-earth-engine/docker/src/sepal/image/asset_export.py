@@ -1,5 +1,6 @@
-import json
 from collections import namedtuple
+
+import ee
 
 from .. import image_spec_factory
 from ..export.image_to_asset import ImageToAsset
@@ -28,6 +29,7 @@ class AssetExport(ThreadTask):
         self._export = None
 
     def run(self):
+        ee.InitializeThread(self.credentials)
         image_spec = image_spec_factory.create(self.image_spec)
         self._export = self.dependent(
             ImageToAsset(

@@ -9,6 +9,7 @@ var View               = require('./search-v')
 var Model              = require('./model/search-model')
 var SearchRequestUtils = require('./search-request-utils')
 var moment             = require('moment')
+var guid               = require('../guid/guid')
 
 require('../scene-areas/scene-areas-mv')
 require('../scenes-selection/scenes-selection-mv')
@@ -123,7 +124,7 @@ var loadMosaic = function (e, id) {
 
 var cloneMosaic = function (e, id) {
   _loadMosaic(id, function (state) {
-    state.id   = guid()
+    state.id   = guid.random()
     state.name = state.name + '-clone'
     EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state, {
       resetSceneAreas: true,
@@ -152,16 +153,6 @@ var deleteMosaic = function (e, id) {
   EventBus.dispatch(Events.AJAX.DELETE, null, params)
 }
 
-var guid = function () {
-  function s4 () {
-    return Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .substring(1)
-  }
-  
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-    s4() + '-' + s4() + s4() + s4()
-}
 
 var showList = function () {
   View.showList()
@@ -173,7 +164,7 @@ var addMosaic = function () {
   var getDefaultState = function () {
     var date         = moment(new Date())
     var defaultState = {
-      id         : guid(),
+      id         : guid.random(),
       type       : Model.TYPES.MOSAIC,
       name       : 'mosaic-' + date.format('YYYY-MM-DD-HHmm'),
       aoiCode    : null,
@@ -207,7 +198,7 @@ var addClassification = function () {
   var getDefaultState = function () {
     var date         = moment(new Date())
     var defaultState = {
-      id                    : guid(),
+      id                    : guid.random(),
       type                  : Model.TYPES.CLASSIFICATION,
       name                  : 'classification-' + date.format('YYYY-MM-DD-HHmm'),
       inputRecipe           : null,
@@ -282,7 +273,7 @@ var addChangeDetection = function () {
   var getDefaultState = function () {
     var date         = moment(new Date())
     var defaultState = {
-      id                    : guid(),
+      id                    : guid.random(),
       type                  : Model.TYPES.CHANGE_DETECTION,
       name                  : 'change-detection-' + date.format('YYYY-MM-DD-HHmm'),
       inputRecipe1          : null,

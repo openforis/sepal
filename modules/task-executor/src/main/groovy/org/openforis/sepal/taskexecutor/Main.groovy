@@ -3,7 +3,6 @@ package org.openforis.sepal.taskexecutor
 import groovymvc.security.BasicRequestAuthenticator
 import groovymvc.security.PathRestrictions
 import org.openforis.sepal.endpoint.ResourceServer
-import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.taskexecutor.endpoint.Endpoints
 import org.openforis.sepal.taskexecutor.endpoint.SepalAdminUsernamePasswordVerifier
 import org.openforis.sepal.taskexecutor.endpoint.TaskExecutorEndpoint
@@ -16,6 +15,7 @@ import org.openforis.sepal.taskexecutor.landsatscene.S3Landsat8Download
 import org.openforis.sepal.taskexecutor.manager.BackgroundExecutingTaskManager
 import org.openforis.sepal.taskexecutor.manager.ExecutorBackedBackgroundExecutor
 import org.openforis.sepal.taskexecutor.manager.SepalNotifyingTaskProgressMonitor
+import org.openforis.sepal.taskexecutor.python.PythonModuleExecutor
 import org.openforis.sepal.taskexecutor.util.SleepingScheduler
 import org.openforis.sepal.taskexecutor.util.download.BackgroundDownloader
 import org.openforis.sepal.util.Config
@@ -46,7 +46,8 @@ class Main {
         )
         def backgroundExecutor = stoppable new ExecutorBackedBackgroundExecutor(progressMonitor)
         def backgroundDownloader = stoppable new BackgroundDownloader()
-        def taskManager = new BackgroundExecutingTaskManager([
+        def taskManager = new BackgroundExecutingTaskManager(
+                new PythonModuleExecutor.Factory(config.googleEarthEngineDownloadEndpoint), [
                 'landsat-scene-download'      : new LandsatSceneDownload.Factory(
                         config.workingDir,
                         new S3Landsat8Download(config.s3Endpoint, backgroundDownloader, config.username),

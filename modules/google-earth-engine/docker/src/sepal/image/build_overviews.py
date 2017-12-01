@@ -20,3 +20,8 @@ class BuildOverviews(ProcessTask):
             ds = osgeo.gdal.OpenShared(f)
             ds.BuildOverviews(resampling='average', overviewlist=[2, 4, 8])
         self.resolve()
+
+    def __str__(self):
+        return '{0}(files={1})'.format(
+            type(self).__name__, self.files)
+

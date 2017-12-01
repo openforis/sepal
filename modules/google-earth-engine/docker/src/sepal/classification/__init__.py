@@ -13,6 +13,7 @@ class Classification(ImageSpec):
         self.trainingData = ee.FeatureCollection('ft:' + spec['tableName'])
         self.classProperty = spec['classProperty']
         self.imageToClassify = create_image_spec(spec['imageToClassify'])
+        self.imageToClassify.bands = ['red', 'nir', 'swir1', 'swir2']
         self.aoi = self.imageToClassify.aoi
         self.scale = self.imageToClassify.scale
         self.bands = ['class']

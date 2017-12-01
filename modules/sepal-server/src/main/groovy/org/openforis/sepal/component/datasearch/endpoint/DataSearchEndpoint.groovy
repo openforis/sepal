@@ -58,20 +58,20 @@ class DataSearchEndpoint {
                         token: mapLayer.token
                 ))
             }
-
-            post('/data/mosaic/retrieve') {
-                response.contentType = "application/json"
-                taskComponent.submit(new SubmitTask(
-                        operation: 'google-earth-engine-download',
-                        params: [
-                                name : params.required('name'),
-                                image: toPreselectedScenesImageMap(params),
-                                destination: params.destination ?: 'sepal'
-                        ],
-                        username: currentUser.username
-                ))
-                send toJson([status: 'OK'])
-            }
+//
+//            post('/data/mosaic/retrieve') {
+//                response.contentType = "application/json"
+//                taskComponent.submit(new SubmitTask(
+//                        operation: 'google-earth-engine-download',
+//                        params: [
+//                                name : params.required('name'),
+//                                image: toPreselectedScenesImageMap(params),
+//                                destination: params.destination ?: 'sepal'
+//                        ],
+//                        username: currentUser.username
+//                ))
+//                send toJson([status: 'OK'])
+//            }
 
             post('/data/classification/preview') {
                 def mapLayer = geeGateway.preview(toClassificationMap(params), sepalUser)
@@ -83,12 +83,15 @@ class DataSearchEndpoint {
             }
 
             post('/data/classification/retrieve') {
+                def name = params.required('name')
                 taskComponent.submit(new SubmitTask(
-                        operation: 'google-earth-engine-download',
+                        operation: params.destination == 'gee' ? 'sepal.image.asset_export' : 'sepal.image.sepal_export',
                         params: [
-                                name : params.required('name'),
-                                image: toClassificationMap(params),
-                                destination: params.destination ?: 'sepal'
+                                title      : params.destination == 'gee'
+                                        ? "Export classification '$name' to Earth Engine"
+                                        : "Retrieve classification '$name' to Sepal",
+                                description: name,
+                                image      : toClassificationMap(params)
                         ],
                         username: currentUser.username
                 ))
@@ -105,12 +108,15 @@ class DataSearchEndpoint {
             }
 
             post('/data/change-detection/retrieve') {
+                def name = params.required('name')
                 taskComponent.submit(new SubmitTask(
-                        operation: 'google-earth-engine-download',
+                        operation: params.destination == 'gee' ? 'sepal.image.asset_export' : 'sepal.image.sepal_export',
                         params: [
-                                name : params.required('name'),
-                                image: toChangeDetectionMap(params),
-                                destination: params.destination ?: 'sepal'
+                                title      : params.destination == 'gee'
+                                        ? "Export change-detection '$name' to Earth Engine"
+                                        : "Retrieve change-detection '$name' to Sepal",
+                                description: name,
+                                image      : toChangeDetectionMap(params)
                         ],
                         username: currentUser.username
                 ))

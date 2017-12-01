@@ -18,3 +18,7 @@ class BuildVrt(ProcessTask):
             files = self.files
         osgeo.gdal.BuildVRT(self.output_file, files).FlushCache()
         self.resolve()
+
+    def __str__(self):
+        return '{0}(output_file={1}, files={2})'.format(
+            type(self).__name__, self.output_file, self.files)

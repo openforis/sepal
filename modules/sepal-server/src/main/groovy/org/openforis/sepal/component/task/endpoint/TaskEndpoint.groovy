@@ -36,10 +36,11 @@ class TaskEndpoint {
             }
 
             post('/tasks') {
+                def task = fromJson(body)
                 submit(new SubmitTask(
-                        instanceType: params.required('instanceType'),
-                        operation: params.required('operation'),
-                        params: fromJson(params.required('params', String)) as Map,
+                        instanceType: task.instanceType,
+                        operation: task.operation,
+                        params: task.params,
                         username: currentUser.username
                 ))
                 response.status = 204

@@ -12,7 +12,14 @@ def submit(id, module, spec, context):
 
 def status(id):
     task = _get_task(id)
-    state, message = task.state, task.status_message()
+    message = task.status_message()
+    state = 'ACTIVE'
+    if task.resolved():
+        state = 'COMPLETED'
+    elif task.canceled():
+        state = 'CANCELED'
+    elif task.rejected():
+        state = 'FAILED'
     return {'state': state, 'message': message}
 
 

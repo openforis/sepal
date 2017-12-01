@@ -23,8 +23,8 @@
   maps[ 1 ].setCenter( maps[ 0 ].getCenter() )
   $( '#form' ).submit( function ( e ) {
     e.preventDefault()
-    preview( 1 )
-    preview( 2 )
+    previewAutomaticMosaic( 1 )
+    previewAutomaticMosaic( 2 )
   } )
   
   
@@ -46,8 +46,8 @@
   
   $( '#sceneIdForm' ).submit( function ( e ) {
     e.preventDefault()
-    previewScenes( 1 )
-    previewScenes( 2 )
+    previewManualMosaic( 1 )
+    previewManualMosaic( 2 )
   } )
   
   
@@ -60,13 +60,6 @@
     e.preventDefault()
     bestScenes()
   } )
-  
-  
-  $( '#exportForm' ).submit( function ( e ) {
-    e.preventDefault()
-    exportParams()
-  } )
-  
   
   $( '#timeseriesForm' ).submit( function ( e ) {
     e.preventDefault()
@@ -126,7 +119,7 @@
   var toDatePicker   = createDatePicker( $( '#to-date' )[ 0 ], new Date() )
   $( '#target-day-of-year' ).val( dayOfYear() )
   
-  function createQuery( mapIndex ) {
+  function createAutomaticMosaic( mapIndex ) {
     var mosaic  = createMosaic( mapIndex )
     var sensors = []
     $( '#sensors' ).find( 'input:checked' ).each( function () {
@@ -136,7 +129,7 @@
     mosaic.fromDate = fromDatePicker.getDate().getTime()
     mosaic.toDate   = toDatePicker.getDate().getTime()
     mosaic.type     = 'automatic'
-    return { image: JSON.stringify( mosaic ) }
+    return mosaic
   }
   
   function findSceneAreas() {
@@ -174,71 +167,38 @@
     } )
   }
   
-  function preview( mapIndex ) {
-    var handler = function ( data ) {
-      $( '#response' ).html( JSON.stringify( data ) )
-      var mapId = data.mapId
-      var token = data.token
-      render( mapId, token, mapIndex )
-    }
-    
-    $.post( {
-      url     : 'preview',
-      data    : createQuery( mapIndex ),
-      dataType: 'json',
-      success : handler
-    } )
+  function previewAutomaticMosaic( mapIndex ) {
+    postJson( 'preview', createAutomaticMosaic( mapIndex ) )
+      .done( function ( data ) {
+        $( '#response' ).html( JSON.stringify( data ) )
+        renderMap( data.mapId, data.token, mapIndex )
+      } )
   }
   
   function classify() {
-    var data = {
-      imageType      : 'CLASSIFICATION',
-      tableName      : $( '#fusionTable' ).val(),
-      classProperty  : $( '#classProperty' ).val(),
-      imageToClassify: JSON.parse( ($( '#sceneIds' ).val() ? createScenesQuery( 1 ) : createQuery( 1 )).image )
-    }
-    
-    var handler = function ( data ) {
+    postJson( 'preview', {
+        imageType      : 'CLASSIFICATION',
+        tableName      : $( '#fusionTable' ).val(),
+        classProperty  : $( '#classProperty' ).val(),
+        imageToClassify: ($( '#sceneIds' ).val() ? createManualMosaic( 1 ) : createAutomaticMosaic( 1 ))
+      }
+    ).done( function ( data ) {
       $( '#response' ).html( JSON.stringify( data ) )
-      var mapId = data.mapId
-      var token = data.token
-      render( mapId, token, 1 )
-    }
-    
-    $.post( {
-      url     : 'preview',
-      data    : { image: JSON.stringify( data ) },
-      dataType: 'json',
-      success : handler
+      renderMap( data.mapId, data.token, 1 )
     } )
   }
   
   function exportMosaic( destination ) {
-    var spec         = $( '#sceneIds' ).val() ? createScenesQuery( 1 ) : createQuery( 1 )
-    spec.description = $( '#exportName' ).val()
-    spec.image       = JSON.parse( spec.image )
-    var task         = guid()
-    postJson( {
+    postJson( 'submit', {
       task  : task,
       module: destination === 'sepal' ? 'sepal.image.sepal_export' : 'sepal.image.asset_export',
-      spec  : spec
+      spec  : {
+        task       : guid(),
+        description: description,
+        image      : $( '#sceneIds' ).val() ? createManualMosaic( 1 ) : createAutomaticMosaic( 1 )
+      }
     } ).done( function ( data ) { updateStatus( task, '#exportStatus' )} )
   }
-  
-  // function exportMosaic(destination) {
-  //     var data = $('#sceneIds').val() ? createScenesQuery(1) : createQuery(1)
-  //     data.name = $('#exportName').val()
-  //     data.destination = destination
-  //     $.post({
-  //         url: 'download',
-  //         data: data,
-  //         success: function (data) {
-  //             console.log("Downloading...")
-  //             console.log(data)
-  //         }
-  //     })
-  // }
-  
   
   function downloadTimeseries() {
     var dataSets = []
@@ -246,7 +206,7 @@
       dataSets.push( $( this ).attr( 'id' ) )
     } )
     var task = guid()
-    postJson( {
+    postJson( 'submit', {
       task  : task,
       module: 'sepal.timeseries.download',
       spec  : {
@@ -260,18 +220,6 @@
         brdfCorrect: Boolean( $( 'input[name="brdf-correct"]:checked' ).val() )
       }
     } ).done( function ( data ) { updateStatus( task, '#timeseriesStatus' )} )
-  }
-  
-  function exportParams() {
-    var data = $( '#exportParams' ).val()
-    $.post( {
-      url    : 'download',
-      data   : data,
-      success: function ( data ) {
-        console.log( "Downloading..." )
-        console.log( data )
-      }
-    } )
   }
   
   function createAoi() {
@@ -312,7 +260,6 @@
     var maskClouds            = $( 'input[name="mask-clouds"]:checked' ).val()
     var maskSnow              = $( 'input[name="mask-snow"]:checked' ).val()
     
-    
     var classesToMask = []
     $( '#classes-to-mask' ).find( 'input:checked' ).each( function () {
       classesToMask.push( $( this ).attr( 'id' ) )
@@ -336,29 +283,21 @@
     }
   }
   
-  function createScenesQuery( mapIndex ) {
+  function createManualMosaic( mapIndex ) {
     var mosaic      = createMosaic( mapIndex )
     mosaic.sceneIds = $( '#sceneIds' ).val().trim().split( '\n' )
     mosaic.type     = 'manual'
-    return { image: JSON.stringify( mosaic ) }
+    return mosaic
   }
   
-  function previewScenes( mapIndex ) {
-    var handler = function ( data ) {
-      var mapId = data.mapId
-      var token = data.token
-      render( mapId, token, mapIndex )
-    }
-    
-    $.post( {
-      url     : 'preview',
-      data    : createScenesQuery( mapIndex ),
-      dataType: 'json',
-      success : handler
-    } )
+  function previewManualMosaic( mapIndex ) {
+    postJson( 'preview', createManualMosaic( mapIndex ) )
+      .done( function ( data ) {
+        renderMap( data.mapId, data.token, mapIndex )
+      } )
   }
   
-  function render( mapId, token, mapIndex ) {
+  function renderMap( mapId, token, mapIndex ) {
     var eeMapOptions = {
       getTileUrl: function ( tile, zoom ) {
         var baseUrl = 'https://earthengine.googleapis.com/map'
@@ -401,10 +340,10 @@
     return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
   }
   
-  function postJson( data ) {
+  function postJson( url, data ) {
     return $.ajax( {
       type       : 'POST',
-      url        : 'submit',
+      url        : url,
       data       : JSON.stringify( data ),
       contentType: "application/json; charset=utf-8",
       dataType   : "json"
@@ -428,8 +367,11 @@
         .done( function ( status ) {
           $( elementId ).html( status.message )
           state = status.state
-          if ( state !== 'RESOLVED' && state !== 'REJECTED' )
+          if ( state !== 'RESOLVED' && state !== 'REJECTED' && state !== 'CANCELED' ) {
             updateStatus( task, elementId )
+          } else {
+          
+          }
         } )
         .fail( function ( error ) {
           console.log( 'Failed to update status', error )
