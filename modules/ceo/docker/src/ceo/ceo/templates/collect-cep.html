@@ -303,7 +303,7 @@
                     if (filters != '') filters += 'AND';
                     filters += "(productType='" + overlay.dgcsProductType + "')";
                 }
-                if (filters != '') url += '&Coverage_CQL_Filter=' + filters;
+                if (filters != '') url += '&CQL_Filter=' + filters;
                 //
                 var dgcsLayer = L.tileLayer.wms(url, {
                     layers: 'DigitalGlobe:Imagery',
