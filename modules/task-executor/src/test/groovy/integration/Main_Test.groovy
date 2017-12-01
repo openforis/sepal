@@ -21,16 +21,17 @@ class Main_Test extends Specification {
     def port = Port.findFree()
     def propertiesFile = File.createTempFile('task-executor', '.properties')
     def config = [
-            taskExecutorUsername: 'task-executor',
-            taskExecutorPassword: 'task-executor password',
-            sepalUsername       : 'sepal',
-            sepalPassword       : 'sepal password',
-            sepalEndpoint       : "http://localhost:$sepalServer.port/" as String,
-            s3Endpoint          : "http://localhost:$s3Server.port/" as String,
-            googleEndpoint      : "http://localhost:$googleLandsatServer.port/" as String,
-            workingDir          : workingDir.absolutePath,
-            username            : System.getProperty('user.name'),
-            port                : port as String,
+            taskExecutorUsername             : 'task-executor',
+            taskExecutorPassword             : 'task-executor password',
+            sepalUsername                    : 'sepal',
+            sepalPassword                    : 'sepal password',
+            sepalEndpoint                    : "http://localhost:$sepalServer.port/" as String,
+            s3Endpoint                       : "http://localhost:$s3Server.port/" as String,
+            googleEndpoint                   : "http://localhost:$googleLandsatServer.port/" as String,
+            googleEarthEngineDownloadEndpoint: "http://unused",
+            workingDir                       : workingDir.absolutePath,
+            username                         : System.getProperty('user.name'),
+            port                             : port as String,
     ]
     def client = new RESTClient("http://localhost:$port/api/")
 
