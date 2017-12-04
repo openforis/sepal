@@ -45,3 +45,11 @@ printf '%s\n' \
     '    KeepAlive yes' \
     '    ServerAliveInterval 30' \
     >> /etc/ssh/ssh_config
+
+
+# Configure locale
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+apt-get install locales
+locale-gen en_US.utf8
+update-locale LC_ALL=en_US.UTF-8
+update-locale LANG=en_US.UTF-8
