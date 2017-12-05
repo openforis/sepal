@@ -141,7 +141,7 @@ var reset = function () {
 var setActiveState = function (e, activeState) {
   state = activeState
   reset()
-  if (state && state.type=== Model.TYPES.MOSAIC) {
+  if (state && state.type === Model.TYPES.MOSAIC) {
     
     setSortWeight(state.sortWeight)
     setOffsetToTargetDay(state.offsetToTargetDay)

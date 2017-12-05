@@ -72,7 +72,7 @@ class TimeSeries(object):
             ee.Filter.geometry(self.spec.aoi),
             ee.Filter.date(self.spec.from_date, self.spec.to_date)
         )
-        if dataSetName in ['landsat5', 'landsat7', 'landsat8']:
+        if dataSetName.startswith('landsat'):
             return LandsatDataSet.create(dataSetName, image_filter)
         if dataSetName == 'sentinel2':
             return Sentinel2DataSet(image_filter)

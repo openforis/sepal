@@ -163,6 +163,7 @@ var addMosaic = function () {
   
   var getDefaultState = function () {
     var date         = moment(new Date())
+    var sensors = Model.getSensors(Model.getSensorGroups()[0])
     var defaultState = {
       id         : guid.random(),
       type       : Model.TYPES.MOSAIC,
@@ -173,7 +174,9 @@ var addMosaic = function () {
       targetDate : date.format('YYYY-MM-DD'),
       
       sortWeight           : 0.5,
-      sensors              : Object.keys(Model.getSensors(Model.getSensorGroups()[0])),
+      sensors              : Object.keys(sensors).filter(function(sensor) {
+        return sensors[sensor].selected
+      }),
       offsetToTargetDay    : 0,
       minScenes            : 1,
       maxScenes            : null,

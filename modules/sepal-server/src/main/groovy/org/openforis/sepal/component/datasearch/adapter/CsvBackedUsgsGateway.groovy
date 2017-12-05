@@ -88,12 +88,13 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
 
     private SceneMetaData toSceneMetaData(Sensor sensor, data) {
         try {
-            if (isSceneIncluded(data))
+            if (isSceneIncluded(data)) {
+                def sensorId = data.COLLECTION_CATEGORY == 'T2' ? sensor.name() + '_T2' : sensor.name()
                 return new SceneMetaData(
                         id: data.sceneID,
                         dataSet: LANDSAT,
                         sceneAreaId: "${data.path}_${data.row}",
-                        sensorId: sensor.name(),
+                        sensorId: sensorId,
                         acquisitionDate: parseDateString(data.acquisitionDate),
                         cloudCover: cloudCover(sensor, data),
                         coverage: 100,
@@ -102,6 +103,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
                         browseUrl: URI.create(data.browseURL),
                         updateTime: parseDateString(data.dateUpdated)
                 )
+            }
         } catch (Exception ignore) {
         }
         return null
@@ -117,7 +119,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
 
     private boolean isSceneIncluded(data) {
         def prefix = (data.sceneID as String).substring(0, 3)
-        return data.COLLECTION_CATEGORY == 'T1' &&
+        return data.COLLECTION_CATEGORY in ['T1', 'T2'] &&
                 data.dayOrNight == 'DAY' &&
                 data.cloudCoverFull.toDouble() >= 0d &&
                 prefix in ['LT4', 'LT5', 'LE7', 'LC8']
