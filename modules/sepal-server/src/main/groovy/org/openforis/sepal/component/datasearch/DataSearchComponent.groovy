@@ -9,9 +9,9 @@ import org.openforis.sepal.component.datasearch.adapter.HttpGoogleEarthEngineGat
 import org.openforis.sepal.component.datasearch.adapter.JdbcSceneMetaDataRepository
 import org.openforis.sepal.component.datasearch.api.DataSetMetadataGateway
 import org.openforis.sepal.component.datasearch.api.GoogleEarthEngineGateway
-import org.openforis.sepal.component.datasearch.command.UpdateSentinel2SceneMetaData
+import org.openforis.sepal.component.datasearch.command.UpdateSceneMetaData
+import org.openforis.sepal.component.datasearch.command.UpdateSceneMetaDataHandler
 import org.openforis.sepal.component.datasearch.command.UpdateSentinel2SceneMetaDataHandler
-import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaData
 import org.openforis.sepal.component.datasearch.command.UpdateUsgsSceneMetaDataHandler
 import org.openforis.sepal.component.datasearch.endpoint.DataSearchEndpoint
 import org.openforis.sepal.component.datasearch.query.*
@@ -59,8 +59,10 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
         this.googleMapsApiKey = googleMapsApiKey
         def sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
 
-        command(UpdateUsgsSceneMetaData, new UpdateUsgsSceneMetaDataHandler(landsatMetadata, sceneMetaDataRepository))
-        command(UpdateSentinel2SceneMetaData, new UpdateSentinel2SceneMetaDataHandler(sentinel2Metadata, sceneMetaDataRepository))
+        command(UpdateSceneMetaData, new UpdateSceneMetaDataHandler([
+                new UpdateSentinel2SceneMetaDataHandler(sentinel2Metadata, sceneMetaDataRepository),
+                new UpdateUsgsSceneMetaDataHandler(landsatMetadata, sceneMetaDataRepository)
+        ]))
 
         query(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(geeGateway))
         query(FindScenesForSceneArea, new FindScenesForSceneAreaHandler(sceneMetaDataRepository))
@@ -70,8 +72,7 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
 
     void onStart() {
         schedule(1, TimeUnit.DAYS,
-                new UpdateUsgsSceneMetaData(),
-                new UpdateSentinel2SceneMetaData()
+                new UpdateSceneMetaData()
         )
     }
 
