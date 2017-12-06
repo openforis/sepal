@@ -222,6 +222,74 @@
 
                     </div>
                 </div>
+
+                <!-- Time series -->
+                <div class="row search-section section-time-series height95">
+                    <div class="col-12 height100">
+
+                        <form class="form-theme" id="search-form">
+                            <div class="row form-group ">
+                                <label class="form-label col-2" for="mosaic-name">Name</label>
+                                <div class="col-4">
+                                    <input type="text" class="form-control" id="mosaic-name" name="name" value=""
+                                           placeholder="Select a name">
+                                </div>
+                            </div>
+                            <div class="row form-group">
+                                <label class="form-label col-sm-2" for="search-form-country">Area of interest</label>
+                                <div class="col-4">
+                                    <input type="text" class="form-control" id="search-form-country" name="country"
+                                           placeholder="Select a country">
+                                </div>
+                                <label class="form-label col-sm-1 text-align-center form-label-btn-draw-polygon">Or</label>
+                                <div class="col-4">
+                                    <button type="button" class="btn btn-base round btn-draw-polygon">
+                                        <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Draw a polygon
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row row-sensor form-group">
+                                <label class="form-label col-sm-2">Sensors</label>
+                                <div class="col-2 text-align-center">
+                                    <button type="button"
+                                            class="btn btn-base round width100 p-y-0-5 btn-landsat btn-sensor-group"
+                                            value="LANDSAT">Landsat
+                                    </button>
+                                </div>
+                                <label class="form-label col-sm-1 p-t-0-5 text-align-center">Or</label>
+                                <div class="col-2 text-align-center">
+                                    <button type="button"
+                                            class="btn btn-base round width100 p-y-0-5 btn-sentinel2 btn-sensor-group"
+                                            value="SENTINEL2">Sentinel-2
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row form-group m-t-10 p-b-2">
+                                <label class="form-label col-sm-2">Target date</label>
+                                <div class="col-sm-10 target-date">
+                                </div>
+                            </div>
+
+                            <div class="row form-group form-group-buttons no-padding">
+
+                                <div class="col-12 text-align-center form-notify form-error"/>
+
+                                <div class="col-12 text-align-center">
+                                    <button type="submit" class="btn btn-base round icon p-y-1">
+                                        <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                                        Search
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+                </div>
+
+
+
             </div>
         </div>
 
@@ -231,14 +299,17 @@
 
                 <div class="row row-btns height10 overflow-y-auto">
                     <div class="col-12">
-                        <button class="btn btn-base round p-y-0-5 width30 btn-add-mosaic">
+                        <button class="btn btn-base round p-y-0-5 btn-add-mosaic">
                             <i class="fa fa-plus-circle"></i> Mosaic
                         </button>
-                        <button type="button" class="btn btn-base round p-y-0-5 width30 btn-add-classification">
+                        <button type="button" class="btn btn-base round p-y-0-5 btn-add-classification">
                             <i class="fa fa-plus-circle"></i> Classification
                         </button>
-                        <button type="button" class="btn btn-base round p-y-0-5 width30 btn-add-change-detection">
+                        <button type="button" class="btn btn-base round p-y-0-5 btn-add-change-detection">
                         <i class="fa fa-plus-circle"></i> Change detection
+                        </button>
+                        <button type="button" class="btn btn-base round p-y-0-5 btn-add-time-series">
+                            <i class="fa fa-plus-circle"></i> Time series
                         </button>
                     </div>
                 </div>

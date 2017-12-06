@@ -6,11 +6,13 @@ var Events              = require('./../../event/events')
 var SearchForm          = require('./search-form')
 var ClassifyForm        = require('./classify-form')
 var ChangeDetectionForm = require('./change-detection-form')
+var TimeSeriesForm      = require('./time-series-form')
 
 var container              = null
 var sectionSearchForm      = null
 var sectionClassify        = null
 var sectionChangeDetection = null
+var sectionTimeSeries      = null
 var state                  = {}
 
 var showSectionOpts = {delay: 0, duration: 0}
@@ -20,14 +22,17 @@ var init = function (html) {
   sectionSearchForm      = container.find('.section-search-form')
   sectionClassify        = container.find('.section-classify')
   sectionChangeDetection = container.find('.section-change-detection')
+  sectionTimeSeries      = container.find('.section-time-series')
   
   SearchForm.init(sectionSearchForm.find('form'))
   ClassifyForm.init(sectionClassify)
   ChangeDetectionForm.init(sectionChangeDetection)
+  TimeSeriesForm.init(sectionTimeSeries)
   
   hideSection(sectionSearchForm, showSectionOpts)
   hideSection(sectionClassify, showSectionOpts)
   hideSection(sectionChangeDetection, showSectionOpts)
+  hideSection(sectionTimeSeries, showSectionOpts)
   
   container.find('.btn-show-list').click(function () {
     EventBus.dispatch(Events.SECTION.SEARCH.VIEW.SHOW_LIST)
@@ -60,21 +65,31 @@ var hide = function () {
 }
 
 var showMosaic = function () {
-  showSection(sectionSearchForm)
   hideSection(sectionClassify)
   hideSection(sectionChangeDetection)
+  hideSection(sectionTimeSeries)
+  showSection(sectionSearchForm)
 }
 
 var showClassification = function () {
   hideSection(sectionSearchForm)
-  showSection(sectionClassify)
   hideSection(sectionChangeDetection)
+  hideSection(sectionTimeSeries)
+  showSection(sectionClassify)
 }
 
 var showChangeDetection = function () {
   hideSection(sectionSearchForm)
   hideSection(sectionClassify)
+  hideSection(sectionTimeSeries)
   showSection(sectionChangeDetection)
+}
+
+var showTimeSeries = function () {
+  hideSection(sectionSearchForm)
+  hideSection(sectionClassify)
+  hideSection(sectionChangeDetection)
+  showSection(sectionTimeSeries)
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGED, setState)
@@ -86,4 +101,5 @@ module.exports = {
   , showMosaic         : showMosaic
   , showClassification : showClassification
   , showChangeDetection: showChangeDetection
+  , showTimeSeries     : showTimeSeries
 }

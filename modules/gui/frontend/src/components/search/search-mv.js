@@ -153,7 +153,6 @@ var deleteMosaic = function (e, id) {
   EventBus.dispatch(Events.AJAX.DELETE, null, params)
 }
 
-
 var showList = function () {
   View.showList()
 }
@@ -163,7 +162,7 @@ var addMosaic = function () {
   
   var getDefaultState = function () {
     var date         = moment(new Date())
-    var sensors = Model.getSensors(Model.getSensorGroups()[0])
+    var sensors      = Model.getSensors(Model.getSensorGroups()[0])
     var defaultState = {
       id         : guid.random(),
       type       : Model.TYPES.MOSAIC,
@@ -174,7 +173,7 @@ var addMosaic = function () {
       targetDate : date.format('YYYY-MM-DD'),
       
       sortWeight           : 0.5,
-      sensors              : Object.keys(sensors).filter(function(sensor) {
+      sensors              : Object.keys(sensors).filter(function (sensor) {
         return sensors[sensor].selected
       }),
       offsetToTargetDay    : 0,
@@ -348,6 +347,29 @@ var retrieveChangeDetection = function (e, state, obj) {
   EventBus.dispatch(Events.AJAX.POST, null, params)
 }
 
+//change detection
+var addTimeSeries = function () {
+  
+  var getDefaultState = function () {
+    var date         = moment(new Date())
+    var defaultState = {
+      id         : guid.random(),
+      type       : Model.TYPES.TIME_SERIES,
+      description: 'time-series-' + date.format('YYYY-MM-DD-HHmm'),
+      aoi        : null,
+      fromDate   : date.format('YYYY-MM-DD'),
+      toDate     : date.format('YYYY-MM-DD'),
+      indicator  : null,
+      maskClouds : true,
+      maskSnow   : true,
+      brdfCorrect: true
+    }
+    return defaultState
+  }
+  // View.showMosaic()
+  EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
+}
+
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, loadList)
 EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_LOAD, loadMosaic)
 EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_CLONE, cloneMosaic)
@@ -359,5 +381,6 @@ EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_CLASSIFICATION, addClas
 EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CLASSIFICATION, requestClassification)
 EventBus.addEventListener(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CLASSIFICATION, retrieveClassification)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_CHANGE_DETECTION, addChangeDetection)
+EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_TIME_SERIES, addTimeSeries)
 EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CHANGE_DETECTION, requestChangeDetection)
 EventBus.addEventListener(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CHANGE_DETECTION, retrieveChangeDetection)

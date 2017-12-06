@@ -52,6 +52,11 @@ var showChangeDetection = function () {
   ContainerEdit.showChangeDetection()
 }
 
+var showTimeSeries = function () {
+  ContainerList.hide()
+  ContainerEdit.showTimeSeries()
+}
+
 var activeStateChanged = function (e, s, params) {
   if (!s)
     showList()
@@ -66,6 +71,10 @@ var activeStateChanged = function (e, s, params) {
       case Model.TYPES.CHANGE_DETECTION:
         showChangeDetection()
         break
+      case Model.TYPES.TIME_SERIES:
+        showTimeSeries()
+        break
+      
     }
   }
   state = s

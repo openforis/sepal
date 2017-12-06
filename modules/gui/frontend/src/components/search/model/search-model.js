@@ -13,6 +13,7 @@ var TYPES = {
   MOSAIC            : 'MOSAIC'
   , CLASSIFICATION  : 'CLASSIFICATION'
   , CHANGE_DETECTION: 'CHANGE_DETECTION'
+  , TIME_SERIES     : 'TIME_SERIES'
 }
 
 // var getAll = function () {
