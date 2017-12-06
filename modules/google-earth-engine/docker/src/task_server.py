@@ -10,7 +10,7 @@ from flask import Flask, Blueprint, Response
 from flask import request
 
 from sepal import gee
-from sepal.download.file_credentials import FileCredentials
+from sepal.file_credentials import FileCredentials
 from sepal.task import repository
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
