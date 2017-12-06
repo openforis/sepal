@@ -8,8 +8,7 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 DELAY_SECS = 60 * 5
-# MAX_FOLDER_AGE_MINS = 60  # An hour
-MAX_FOLDER_AGE_MINS = 60 * 24 * 7  # An week
+MAX_FOLDER_AGE_MINS = 60  # An hour
 
 
 class DriveCleanup:
