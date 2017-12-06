@@ -66,6 +66,9 @@
         cursor: not-allowed;
       }
 
+      .cursor:hover {
+        cursor: pointer;
+      }
     }
 
   }

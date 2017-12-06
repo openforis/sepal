@@ -15,19 +15,27 @@ var state = {}
 var form       = null
 var formNotify = null
 
-var description  = null
-var dataSets     = null
-var indicator    = null
-var otherOptions = null
+var description   = null
+var dataSets      = null
+var fromDate      = null
+var fromDateLabel = null
+var toDate        = null
+var toDateLabel   = null
+var indicator     = null
+var otherOptions  = null
 
 var init = function (container) {
   form       = container.find('form')
   formNotify = form.find('.form-notify')
   
-  description  = form.find('[name=description]')
-  dataSets     = form.find('.row-sensor')
-  indicator    = form.find('.row-indicator')
-  otherOptions = form.find('.row-other-options')
+  description   = form.find('[name=description]')
+  dataSets      = form.find('.row-sensor')
+  fromDate      = DatePicker.newInstance(form.find('.from-date')).hide()
+  fromDateLabel = form.find('.from-date-label')
+  toDate        = DatePicker.newInstance(form.find('.to-date')).hide()
+  toDateLabel   = form.find('.to-date-label')
+  indicator     = form.find('.row-indicator')
+  otherOptions  = form.find('.row-other-options')
   
   initEventHandlers()
 }
@@ -44,6 +52,20 @@ var initEventHandlers = function () {
       state.dataSets.push(btn.val())
     else
       state.dataSets.splice(state.dataSets.indexOf(btn.val()), 1)
+  })
+  
+  fromDate.onChange = function (year, month, day) {
+    state.fromDate = year + '-' + month + '-' + day
+  }
+  fromDateLabel.click(function (e) {
+    fromDate.toggle()
+  })
+  
+  toDate.onChange = function (year, month, day) {
+    state.toDate = year + '-' + month + '-' + day
+  }
+  toDateLabel.click(function (e) {
+    toDate.toggle()
   })
   
   var indicatorBtns = indicator.find('button')
@@ -85,6 +107,23 @@ var setState = function (e, newState, params) {
   
   if (state && state.type == Model.TYPES.TIME_SERIES) {
     description.val(state.description)
+    
+    var date               = moment(state.fromDate)
+    // setTimeout(function () {
+    fromDate.triggerChange = false
+    fromDate.select('year', date.format('YYYY'))
+    fromDate.select('month', date.format('MM'))
+    fromDate.select('day', date.format('DD'))
+    fromDate.triggerChange = true
+    // }, 400)
+    
+    date                 = moment(state.toDate)
+    // setTimeout(function () {
+    toDate.triggerChange = false
+    toDate.select('year', date.format('YYYY'))
+    toDate.select('month', date.format('MM'))
+    toDate.select('day', date.format('DD'))
+    toDate.triggerChange = true
   }
 }
 
