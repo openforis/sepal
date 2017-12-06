@@ -135,11 +135,11 @@ class Download(ThreadTask):
                             downloaded_bytes=int(downloaded_bytes_without_file + file_size * status.progress())
                         )
                         if done:
+                            destination_file.flush()
+                            os.fsync(destination_file.fileno())
                             self._update_status(
                                 downloaded_files=downloaded_files_without_file + 1
                             )
-
-                            destination_file.flush()
                             return
             except HttpError as e:
                 e.message = e._get_reason()
