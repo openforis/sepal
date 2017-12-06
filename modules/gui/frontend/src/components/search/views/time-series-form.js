@@ -50,6 +50,9 @@ var init = function (container) {
 var initEventHandlers = function () {
   description.change(function (e) {
     state.description = description.val()
+    
+    if ($.isNotEmptyString(state.description))
+      FormValidator.removeError(description)
   })
   
   SepalAois.loadAoiList(function (aois) {
@@ -67,6 +70,8 @@ var initEventHandlers = function () {
   
   fusionTableId.change(function (e) {
     if ($.isNotEmptyString(fusionTableId.val())) {
+      FormValidator.removeError(aoiInput)
+      
       aoiInput.sepalAutocomplete('reset')
       drawPoligonBtn.removeClass('active')
       EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
@@ -88,13 +93,18 @@ var initEventHandlers = function () {
   dataSets.find('button').click(function (e) {
     var btn = $(e.target)
     btn.toggleClass('active')
-    if (btn.hasClass('active'))
+    if (btn.hasClass('active')){
       state.dataSets.push(btn.val())
+      FormValidator.removeError(dataSets)
+    }
     else
       state.dataSets.splice(state.dataSets.indexOf(btn.val()), 1)
   })
   
   fromDate.onChange = function (year, month, day) {
+    FormValidator.removeError(fromDateLabel)
+    FormValidator.removeError(toDateLabel)
+    
     state.fromDate = year + '-' + month + '-' + day
   }
   fromDateLabel.click(function (e) {
@@ -102,6 +112,9 @@ var initEventHandlers = function () {
   })
   
   toDate.onChange = function (year, month, day) {
+    FormValidator.removeError(toDateLabel)
+    FormValidator.removeError(fromDateLabel)
+    
     state.toDate = year + '-' + month + '-' + day
   }
   toDateLabel.click(function (e) {
@@ -113,6 +126,8 @@ var initEventHandlers = function () {
     e.preventDefault()
     var btn = $(e.target)
     if (!btn.hasClass('active')) {
+      FormValidator.removeError(indicator)
+      
       indicatorBtns.removeClass('active')
       btn.addClass('active')
       state.indicator = btn.val()
@@ -137,7 +152,55 @@ var submit = function (e) {
   
   FormValidator.resetFormErrors(form, formNotify)
   
-  console.log('==== Submitting time series', state)
+  var valid          = true
+  var errorMsg       = ''
+  var fromDateMoment = fromDate.asMoment()
+  var toDateMoment   = toDate.asMoment()
+  
+  if (!state.description || $.isEmptyString(state.description) || !/^[0-9A-Za-z][0-9A-Za-z\s_\-]+$/.test(state.description)) {
+    valid    = false
+    errorMsg = 'Please enter a valid name, only letters, numbers, _ or - are allowed'
+    
+    FormValidator.addError(description)
+  } else if (!state.aoi) {
+    valid    = false
+    errorMsg = 'Please select a valid AREA OF INTEREST'
+    
+    FormValidator.addError(aoiInput)
+  } else if (state.dataSets.length === 0) {
+    valid    = false
+    errorMsg = 'Please select at least one SENSOR'
+    
+    FormValidator.addError(dataSets)
+  } else if (!fromDateMoment.isValid()) {
+    valid    = false
+    errorMsg = 'Please select a valid FROM DATE'
+    
+    FormValidator.addError(fromDateLabel)
+  } else if (!toDateMoment.isValid()) {
+    valid    = false
+    errorMsg = 'Please select a valid TO DATE'
+    
+    FormValidator.addError(toDateLabel)
+  } else if (fromDateMoment.isAfter(toDateMoment)) {
+    valid    = false
+    errorMsg = 'FROM DATE cannot be later than TO DATE'
+    
+    FormValidator.addError(fromDateLabel)
+    FormValidator.addError(toDateLabel)
+  } else if (!state.indicator || $.isEmptyString(state.indicator)) {
+    valid    = false
+    errorMsg = 'Please select one indicator'
+    
+    FormValidator.addError(indicator)
+  }
+  
+  if (valid) {
+    EventBus.dispatch(Events.SECTION.SEARCH.REQUEST_TIME_SERIES, null, state)
+  } else {
+    FormValidator.showError(formNotify, errorMsg)
+  }
+  
 }
 
 // model change methods. now only adding time series is allowed (not editing)
@@ -168,7 +231,7 @@ var setState = function (e, newState, params) {
     fusionTableId.val('')
     EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
     EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
-  
+    
     dataSets.find('button').removeClass('active')
     otherOptions.find('button').removeClass('active')
     indicator.find('button').removeClass('active')
@@ -178,6 +241,8 @@ var setState = function (e, newState, params) {
 var setCountryIso = function (code, name, zoom) {
   
   if (code) {
+    FormValidator.removeError(aoiInput)
+    
     state.aoi = {
       type     : 'fusionTable',
       tableName: SepalAois.getTableName(),
@@ -199,9 +264,11 @@ var setCountryIso = function (code, name, zoom) {
 
 var polygonDrawn = function (e, jsonPolygon, polygon) {
   if (state && state.type == Model.TYPES.TIME_SERIES) {
+    FormValidator.removeError(aoiInput)
+    
     state.aoi = {
-      type:'polygon',
-      path:jsonPolygon
+      type: 'polygon',
+      path: jsonPolygon
     }
     drawPoligonBtn.addClass('active')
     

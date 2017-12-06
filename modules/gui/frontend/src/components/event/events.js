@@ -48,6 +48,7 @@ var Events = {
       
       , REQUEST_CLASSIFICATION  : 'section.search.request_classification'
       , REQUEST_CHANGE_DETECTION: 'section.search.request_change_detection'
+      , REQUEST_TIME_SERIES     : 'section.search.request_time_series'
       
       , STATE: {
         ACTIVE_CHANGE                 : 'section.search.model.active_change'

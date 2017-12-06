@@ -371,6 +371,10 @@ var addTimeSeries = function () {
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
 }
 
+var requestTimeSeries = function (e, state) {
+  console.log('reqeust time series ', state)
+}
+
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, loadList)
 EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_LOAD, loadMosaic)
 EventBus.addEventListener(Events.SECTION.SEARCH.MOSAIC_CLONE, cloneMosaic)
@@ -382,6 +386,7 @@ EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_CLASSIFICATION, addClas
 EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CLASSIFICATION, requestClassification)
 EventBus.addEventListener(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CLASSIFICATION, retrieveClassification)
 EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_CHANGE_DETECTION, addChangeDetection)
-EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_TIME_SERIES, addTimeSeries)
 EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_CHANGE_DETECTION, requestChangeDetection)
 EventBus.addEventListener(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_CHANGE_DETECTION, retrieveChangeDetection)
+EventBus.addEventListener(Events.SECTION.SEARCH.VIEW.ADD_TIME_SERIES, addTimeSeries)
+EventBus.addEventListener(Events.SECTION.SEARCH.REQUEST_TIME_SERIES, requestTimeSeries)
