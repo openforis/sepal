@@ -106,7 +106,7 @@ _collection_names_by_sensor = {
     'LANDSAT_TM': ('LANDSAT/LT4_L1T_TOA_FMASK', 'LANDSAT/LT05/C01/T1_TOA'),
     'LANDSAT_8_T2': ('LANDSAT/LC08/C01/T2_TOA',),
     'LANDSAT_7_T2': ('LANDSAT/LE07/C01/T2_TOA',),
-    'LANDSAT_5_T2': ('LANDSAT/LT05/C01/T2_TOA',),
+    'LANDSAT_TM_T2': ('LANDSAT/LT05/C01/T2_TOA',),
 }
 _collection_names_by_scene_id_prefix = {
     'LC8': ('LANDSAT/LC08/C01/T1_TOA', 'LANDSAT/LC08/C01/T2_TOA'),

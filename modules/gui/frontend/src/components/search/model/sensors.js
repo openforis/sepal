@@ -40,8 +40,8 @@ var Sensors = {
             selected : false
         },
         
-        'LANDSAT_5_T2': {
-            id       : 'LANDSAT_5_T2',
+        'LANDSAT_TM_T2': {
+            id       : 'LANDSAT_TM_T2',
             name     : 'Landsat 4-5 Tier 2',
             shortName: 'L5 T2',
             selected : false
