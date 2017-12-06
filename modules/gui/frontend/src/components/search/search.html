@@ -114,17 +114,18 @@
                                 </div>
                                 <label class="form-label col-sm-2 text-align-right">Class column</label>
                                 <div class="col-4">
-                                    <input type="text" class="form-control" id="fusion-table-class-column" name="fusion-table-class-column"
+                                    <input type="text" class="form-control" id="fusion-table-class-column"
+                                           name="fusion-table-class-column"
                                            placeholder="Select a column">
                                 </div>
                             </div>
 
                             <!--<div class="row row-algorithm-btns form-group">-->
-                                <!--<label class="form-label col-2">Algorithm</label>-->
-                                <!--<div class="col-10">-->
-                                    <!--<button type="button" class="btn btn-base round p-x-1 p-y-0-5 m-r-1" value="cart">Cart</button>-->
-                                    <!--<button type="button" class="btn btn-base round p-x-1 p-y-0-5" value="decisionTree">Decision tree</button>-->
-                                <!--</div>-->
+                            <!--<label class="form-label col-2">Algorithm</label>-->
+                            <!--<div class="col-10">-->
+                            <!--<button type="button" class="btn btn-base round p-x-1 p-y-0-5 m-r-1" value="cart">Cart</button>-->
+                            <!--<button type="button" class="btn btn-base round p-x-1 p-y-0-5" value="decisionTree">Decision tree</button>-->
+                            <!--</div>-->
                             <!--</div>-->
 
                             <div class="row form-group form-group-buttons no-padding">
@@ -153,7 +154,8 @@
                             <div class="row form-group">
                                 <label class="form-label col-2" for="change-detection-name">Name</label>
                                 <div class="col-4">
-                                    <input type="text" class="form-control" id="change-detection-name" name="name" value=""
+                                    <input type="text" class="form-control" id="change-detection-name" name="name"
+                                           value=""
                                            placeholder="Select a name">
                                 </div>
                             </div>
@@ -187,22 +189,25 @@
                             <div class="row form-group">
                                 <label class="form-label col-sm-2" for="fusion-table-id-cd">Fusion table id</label>
                                 <div class="col-4 p-r-0">
-                                    <input type="text" class="form-control" id="fusion-table-id-cd" name="fusion-table-id"
+                                    <input type="text" class="form-control" id="fusion-table-id-cd"
+                                           name="fusion-table-id"
                                            placeholder="Enter a fusion table id">
                                 </div>
-                                <label class="form-label col-sm-2 text-align-right" for="fusion-table-class-column-cd">Class column</label>
+                                <label class="form-label col-sm-2 text-align-right" for="fusion-table-class-column-cd">Class
+                                    column</label>
                                 <div class="col-4">
-                                    <input type="text" class="form-control" id="fusion-table-class-column-cd" name="fusion-table-class-column"
+                                    <input type="text" class="form-control" id="fusion-table-class-column-cd"
+                                           name="fusion-table-class-column"
                                            placeholder="Select a column">
                                 </div>
                             </div>
 
                             <!--<div class="row row-algorithm-btns form-group">-->
-                                <!--<label class="form-label col-sm-2">Algorithm</label>-->
-                                <!--<div class="col-10">-->
-                                    <!--<button type="button" class="btn btn-base round p-x-1 p-y-0-5 m-r-1" value="cart">Cart</button>-->
-                                    <!--<button type="button" class="btn btn-base round p-x-1 p-y-0-5" value="decisionTree">Decision tree</button>-->
-                                <!--</div>-->
+                            <!--<label class="form-label col-sm-2">Algorithm</label>-->
+                            <!--<div class="col-10">-->
+                            <!--<button type="button" class="btn btn-base round p-x-1 p-y-0-5 m-r-1" value="cart">Cart</button>-->
+                            <!--<button type="button" class="btn btn-base round p-x-1 p-y-0-5" value="decisionTree">Decision tree</button>-->
+                            <!--</div>-->
                             <!--</div>-->
 
                             <div class="row form-group form-group-buttons no-padding">
@@ -227,46 +232,77 @@
                 <div class="row search-section section-time-series height95">
                     <div class="col-12 height100">
 
-                        <form class="form-theme" id="search-form">
+                        <form class="form-theme" id="time-series-form">
                             <div class="row form-group ">
-                                <label class="form-label col-2" for="mosaic-name">Name</label>
+                                <label class="form-label col-2" for="name">Name</label>
                                 <div class="col-4">
-                                    <input type="text" class="form-control" id="mosaic-name" name="name" value=""
-                                           placeholder="Select a name">
+                                    <input type="text" class="form-control" id="name" name="description" value=""
+                                           placeholder="Enter a name">
                                 </div>
                             </div>
                             <div class="row form-group">
-                                <label class="form-label col-sm-2" for="search-form-country">Area of interest</label>
-                                <div class="col-4">
-                                    <input type="text" class="form-control" id="search-form-country" name="country"
+                                <label class="form-label col-sm-2" for="time-series-aoi">Area of interest</label>
+                                <div class="col-3">
+                                    <input type="text" class="form-control" id="time-series-aoi" name="country"
                                            placeholder="Select a country">
                                 </div>
                                 <label class="form-label col-sm-1 text-align-center form-label-btn-draw-polygon">Or</label>
-                                <div class="col-4">
+                                <div class="col-2">
                                     <button type="button" class="btn btn-base round btn-draw-polygon">
                                         <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Draw a polygon
                                     </button>
                                 </div>
+                                <label class="form-label col-sm-1 text-align-center">Or</label>
+                                <div class="col-3">
+                                    <input type="text" class="form-control" name="fusion-table-id"
+                                           placeholder="Enter a fusion table id">
+                                </div>
                             </div>
                             <div class="row row-sensor form-group">
                                 <label class="form-label col-sm-2">Sensors</label>
-                                <div class="col-2 text-align-center">
-                                    <button type="button"
-                                            class="btn btn-base round width100 p-y-0-5 btn-landsat btn-sensor-group"
-                                            value="LANDSAT">Landsat
+                                <div class="col-10 text-align-left">
+                                    <button type="button" class="btn btn-base round p-y-0-5 m-r-0-5" value="landsat8">L8
                                     </button>
-                                </div>
-                                <label class="form-label col-sm-1 p-t-0-5 text-align-center">Or</label>
-                                <div class="col-2 text-align-center">
-                                    <button type="button"
-                                            class="btn btn-base round width100 p-y-0-5 btn-sentinel2 btn-sensor-group"
-                                            value="SENTINEL2">Sentinel-2
+                                    <button type="button" class="btn btn-base round p-y-0-5 m-r-0-5" value="landsat7">L7
+                                    </button>
+                                    <button type="button" class="btn btn-base round p-y-0-5" value="landsat5">L5
                                     </button>
                                 </div>
                             </div>
                             <div class="row form-group m-t-10 p-b-2">
-                                <label class="form-label col-sm-2">Target date</label>
-                                <div class="col-sm-10 target-date">
+                                <label class="form-label from-date-label col-sm-2">From date</label>
+                                <div class="col-sm-10 from-date">
+                                </div>
+                            </div>
+
+                            <div class="row form-group m-t-10 p-b-2">
+                                <label class="form-label to-date-label col-sm-2">To date</label>
+                                <div class="col-sm-10 to-date">
+                                </div>
+                            </div>
+
+                            <div class="row row-indicator form-group">
+                                <label class="form-label col-sm-2">Indicator</label>
+                                <div class="col-10 text-align-left">
+                                    <button type="button" class="btn btn-base round p-y-0-5 m-r-0-5" value="NDVI">NDVI
+                                    </button>
+                                    <button type="button" class="btn btn-base round p-y-0-5 m-r-0-5" value="NDMI">NDMI
+                                    </button>
+                                    <button type="button" class="btn btn-base round p-y-0-5 m-r-0-5" value="EVI">EVI
+                                    </button>
+                                    <button type="button" class="btn btn-base round p-y-0-5" value="EVI2">EVI2
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="row row-other-options form-group">
+                                <div class="col-12 text-align-center">
+                                    <button type="button" class="btn btn-base round p-y-0-5 m-r-0-5" value="maskClouds">Mask clouds
+                                    </button>
+                                    <button type="button" class="btn btn-base round p-y-0-5 m-r-0-5" value="maskSnow">Mask snow
+                                    </button>
+                                    <button type="button" class="btn btn-base round p-y-0-5" value="brdfCorrect">BRDF correct
+                                    </button>
                                 </div>
                             </div>
 
@@ -276,8 +312,8 @@
 
                                 <div class="col-12 text-align-center">
                                     <button type="submit" class="btn btn-base round icon p-y-1">
-                                        <i class="fa fa-paper-plane" aria-hidden="true"></i>
-                                        Search
+                                        <i class="fa fa-cloud-download" aria-hidden="true"></i>
+                                        Export to Sepal
                                     </button>
                                 </div>
 
@@ -287,7 +323,6 @@
 
                     </div>
                 </div>
-
 
 
             </div>
@@ -306,7 +341,7 @@
                             <i class="fa fa-plus-circle"></i> Classification
                         </button>
                         <button type="button" class="btn btn-base round p-y-0-5 btn-add-change-detection">
-                        <i class="fa fa-plus-circle"></i> Change detection
+                            <i class="fa fa-plus-circle"></i> Change detection
                         </button>
                         <button type="button" class="btn btn-base round p-y-0-5 btn-add-time-series">
                             <i class="fa fa-plus-circle"></i> Time series

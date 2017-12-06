@@ -357,12 +357,13 @@ var addTimeSeries = function () {
       type       : Model.TYPES.TIME_SERIES,
       description: 'time-series-' + date.format('YYYY-MM-DD-HHmm'),
       aoi        : null,
+      dataSets   : [],
       fromDate   : date.format('YYYY-MM-DD'),
       toDate     : date.format('YYYY-MM-DD'),
       indicator  : null,
-      maskClouds : true,
-      maskSnow   : true,
-      brdfCorrect: true
+      maskClouds : false,
+      maskSnow   : false,
+      brdfCorrect: false
     }
     return defaultState
   }
