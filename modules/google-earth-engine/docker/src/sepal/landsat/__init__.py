@@ -1,3 +1,5 @@
+import _strptime
+
 import ee
 from datetime import datetime
 from itertools import groupby
@@ -5,6 +7,8 @@ from itertools import groupby
 from analyze import Analyze
 from ..mosaic import DataSet
 from ..mosaic_spec import MosaicSpec
+
+str(_strptime.__all__)  # Workaround for "Failed to import _strptime because the import lock is held by another thread."
 
 
 class LandsatMosaicSpec(MosaicSpec):
