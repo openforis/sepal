@@ -179,7 +179,6 @@ var addMosaic = function () {
       offsetToTargetDay    : 0,
       minScenes            : 1,
       maxScenes            : null,
-      maskClouds           : false,
       maskSnow             : true,
       brdfCorrect          : true,
       median               : false,
@@ -358,10 +357,9 @@ var addTimeSeries = function () {
       description: 'time-series-' + date.format('YYYY-MM-DD-HHmm'),
       aoi        : null,
       dataSets   : ['landsat8', 'landsat7', 'landsat5'],
-      fromDate   : date.format('YYYY-MM-DD'),
+      fromDate   : moment(new Date()).subtract(1, 'year').startOf('year').format('YYYY-MM-DD'),
       toDate     : date.format('YYYY-MM-DD'),
       indicator  : 'NDVI',
-      maskClouds : false,
       maskSnow   : false,
       brdfCorrect: false
     }
@@ -384,7 +382,7 @@ var getRequestTimeSeriesData = function (state) {
       state.expression = '10000 * (1 + 2.5 * (i.nir - i.red) / (i.nir + 6 * i.red - 7.5 * i.blue + 1))'
       break
     case 'EVI2' :
-      state.expression = '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
+      state.expression = '10000 * (1 + 2.5 * (i.nir - i.red) / (i.nir + 2.4 * i.red + 1))'
       break
   }
   
