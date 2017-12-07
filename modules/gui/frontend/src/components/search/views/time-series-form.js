@@ -268,7 +268,7 @@ var polygonDrawn = function (e, jsonPolygon, polygon) {
     
     state.aoi = {
       type: 'polygon',
-      path: jsonPolygon
+      path: JSON.parse( jsonPolygon )
     }
     drawPoligonBtn.addClass('active')
     
