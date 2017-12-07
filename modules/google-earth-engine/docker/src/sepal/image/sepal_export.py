@@ -114,7 +114,7 @@ class SepalExport(ThreadTask):
             if status.is_current_task(self._export):
                 return 'Export from Google Earth Engine failed: {}'.format(self.exception())
             if status.is_current_task(self._download):
-                return 'Export from Google Drive failed: {}'.format(self.exception())
+                return 'Download from Google Drive failed: {}'.format(self.exception())
             if status.is_current_task(self._set_band_names):
                 return 'Failed to set band names: {}'.format(self.exception())
             if status.is_current_task(self._build_vrt):
