@@ -402,6 +402,8 @@ var requestTimeSeries = function (e, state) {
   var params = {
     url         : '/api/tasks'
     , data      : JSON.stringify(data)
+    , contentType: "application/json; charset=utf-8"
+    , dataType   : "json"
     , beforeSend: function () {
       setTimeout(function () {
         EventBus.dispatch(Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager')
