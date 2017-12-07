@@ -371,8 +371,47 @@ var addTimeSeries = function () {
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, getDefaultState(), {isNew: true})
 }
 
+var getRequestTimeSeriesData = function (state) {
+  
+  switch (state.indicator) {
+    case 'NDVI' :
+      state.expression = '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
+      break
+    case 'NDMI' :
+      state.expression = '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
+      break
+    case 'EVI' :
+      state.expression = '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
+      break
+    case 'EVI2' :
+      state.expression = '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
+      break
+  }
+  
+  state.tile = 'Download time-series: \'' + state.description + '\''
+  
+  return {
+    operation: 'sepal.timeseries.download',
+    params   : state
+  }
+}
+
 var requestTimeSeries = function (e, state) {
-  console.log('reqeust time series ', state)
+  var data = getRequestTimeSeriesData(state)
+  
+  var params = {
+    url         : '/api/tasks'
+    , data      : JSON.stringify(data)
+    , beforeSend: function () {
+      setTimeout(function () {
+        EventBus.dispatch(Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager')
+      }, 100)
+    }
+    , success   : function (e) {
+      EventBus.dispatch(Events.SECTION.TASK_MANAGER.CHECK_STATUS)
+    }
+  }
+  EventBus.dispatch(Events.AJAX.POST, null, params)
 }
 
 EventBus.addEventListener(Events.SECTION.SEARCH.STATE.LIST_LOAD, loadList)
