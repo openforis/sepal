@@ -46,7 +46,7 @@ var init = function (c) {
 }
 
 var setActiveState = function (e, state) {
-  if (state) {
+  if (state && state.type !== SModel.TYPES.TIME_SERIES) {
     addMosaic(state)
     
     listContainer.find('.mosaic-item').removeClass('active')
@@ -57,6 +57,11 @@ var setActiveState = function (e, state) {
     btnSave.show(0).insertAfter(btn)
     btnZoom.show(0).insertAfter(btn)
     activeMosaic = listMosaics[state.id]
+  } else if (state && state.type === SModel.TYPES.TIME_SERIES) {
+    listContainer.find('.mosaic-item').removeClass('active')
+    btnSave.hide()
+    btnZoom.hide()
+    // EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, null, {isNew: true})
   }
 }
 

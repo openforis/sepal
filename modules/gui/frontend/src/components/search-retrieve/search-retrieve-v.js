@@ -77,6 +77,12 @@ var setActiveState = function (e, state, params) {
         SectionClassify.show()
         
         break
+      case Model.TYPES.TIME_SERIES:
+        SectionCreateMosaic.hide()
+        SectionChangeDetection.hide()
+        SectionClassify.hide()
+    
+        break
     }
   }
 }

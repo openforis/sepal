@@ -545,6 +545,35 @@ img {
     margin-right: 0!important
 }
 
+.m-a-0-5 {
+    margin: 0.5rem !important;
+}
+.m-t-0-5 {
+    margin-top: 0.5rem !important;
+}
+
+.m-r-0-5 {
+    margin-right: 0.5rem !important;
+}
+
+.m-b-0-5 {
+    margin-bottom: 0.5rem !important;
+}
+
+.m-l-0-5 {
+    margin-left: 0.5rem !important;
+}
+
+.m-x-0-5 {
+    margin-right: 0.5rem !important;
+    margin-left: 0.5rem !important;
+}
+
+.m-y-0-5 {
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
 .m-y-0 {
     margin-top: 0!important;
     margin-bottom: 0!important

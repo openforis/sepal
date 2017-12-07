@@ -33,6 +33,9 @@ var init = function (html) {
   container.find('.btn-add-change-detection').click(function () {
     showSection(Events.SECTION.SEARCH.VIEW.ADD_CHANGE_DETECTION)
   })
+  container.find('.btn-add-time-series').click(function () {
+    showSection(Events.SECTION.SEARCH.VIEW.ADD_TIME_SERIES)
+  })
   
   EventBus.dispatch(Events.SECTION.SEARCH.STATE.LIST_LOAD)
 }

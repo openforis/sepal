@@ -126,13 +126,15 @@ var find = function (selector) {
 }
 
 var polygonDrawn = function (e, jsonPolygon, polygon) {
-  setPolygon(jsonPolygon)
-  // setPolygon(JSON.stringify(jsonPolygon))
-  btnDrawPolygon.addClass('active')
+  if (state && state.type == Model.TYPES.MOSAIC) {
+    setPolygon(jsonPolygon)
+    // setPolygon(JSON.stringify(jsonPolygon))
+    btnDrawPolygon.addClass('active')
   
-  inputAoiCode.sepalAutocomplete('reset')
+    inputAoiCode.sepalAutocomplete('reset')
   
-  EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+    EventBus.dispatch(Events.SECTION.SEARCH.STATE.ACTIVE_CHANGE, null, state)
+  }
 }
 
 var polygonClear = function (e) {
@@ -141,22 +143,23 @@ var polygonClear = function (e) {
 }
 
 var setCountryIso = function (code, name, zoom) {
-  
-  state.aoiCode = code
-  state.aoiName = name
-  
-  if (code) {
-    EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
-    EventBus.dispatch(Events.MAP.ZOOM_TO, null, state.aoiCode, zoom)
+  if (state && state.type == Model.TYPES.MOSAIC) {
+    state.aoiCode = code
+    state.aoiName = name
     
-    state.polygon = null
-  } else {
-    EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
+    if (code) {
+      EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
+      EventBus.dispatch(Events.MAP.ZOOM_TO, null, state.aoiCode, zoom)
+      
+      state.polygon = null
+    } else {
+      EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
+    }
   }
 }
 
 var setPolygon = function (p) {
-  if (state) {
+  if (state && state.type == Model.TYPES.MOSAIC) {
     state.polygon = p
     if (p) {
       state.aoiCode = null

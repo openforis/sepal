@@ -4,6 +4,10 @@
     font-weight: 400;
 }
 
+.error .date-picker .labels{
+    color: #e81351;
+}
+
 .date-picker .label {
     padding-top: 20px;
     font-size: .9rem;
