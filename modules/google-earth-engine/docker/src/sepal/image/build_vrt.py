@@ -16,7 +16,9 @@ class BuildVrt(ProcessTask):
             files = glob(self.files)
         else:
             files = self.files
-        osgeo.gdal.BuildVRT(self.output_file, files).FlushCache()
+        vrt = osgeo.gdal.BuildVRT(self.output_file, files)
+        if vrt:
+            vrt.FlushCache()
         self.resolve()
 
     def __str__(self):

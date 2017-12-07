@@ -7,7 +7,7 @@ from flask import Flask, Blueprint, Response, request
 from sepal import gee
 from sepal import image_spec_factory
 from sepal.aoi import Aoi
-from sepal.download.drive_cleanup import DriveCleanup
+from sepal.drive.drive_cleanup import DriveCleanup
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)

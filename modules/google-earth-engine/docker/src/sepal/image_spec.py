@@ -1,11 +1,7 @@
 import logging
-import uuid
 from abc import abstractmethod
 
 import ee
-
-from download import export
-from download.download import Downloader
 
 
 class ImageSpec(object):
@@ -32,34 +28,6 @@ class ImageSpec(object):
             'mapId': ee_preview['mapid'],
             'token': ee_preview['token']
         }
-
-    def download(self, name, username, credentials, destination, downloader):
-        """Starts to download the image in the background.
-
-        :param name: The name to assign the downloaded file (excluding .tif)
-        :type name: str
-
-        :param username: The username of the user downloading.
-        :type username: str
-
-        :param credentials: The Google credenteials
-        :type credentials: oauth2client.client.Credentials
-
-        :param downloader: The download to use
-        :type downloader: Downloader
-
-        :return: The task id of the download
-        :rtype: str
-        """
-        if destination == 'sepal':
-            file_id = 'sepal-' + name + '-' + str(uuid.uuid4())
-            task_id = export.to_drive(self._ee_image(), self.aoi.geometry().bounds(), name, username, file_id,
-                                      self.scale)
-        else:
-            file_id = 'sepal'
-            task_id = export.to_asset(self._ee_image(), self.aoi.geometry().bounds(), name, username, self.scale)
-        downloader.start_download(task_id, name, file_id, self.bands, credentials, destination)
-        return task_id
 
     @abstractmethod
     def _ee_image(self):

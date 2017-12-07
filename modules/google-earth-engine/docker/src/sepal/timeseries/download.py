@@ -179,6 +179,7 @@ class DownloadFeature(ThreadTask):
                             dates_file.write(row['date'] + '\n')
                 subprocess.check_call('rm -rf {0}'.format(csv_path).split(' '))
             dates_file.flush()
+            os.fsync(dates_file.fileno())
         return True
 
     def _tiles_to_vrts(self):
