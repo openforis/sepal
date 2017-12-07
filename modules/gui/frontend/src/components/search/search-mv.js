@@ -357,10 +357,10 @@ var addTimeSeries = function () {
       type       : Model.TYPES.TIME_SERIES,
       description: 'time-series-' + date.format('YYYY-MM-DD-HHmm'),
       aoi        : null,
-      dataSets   : [],
+      dataSets   : ['landsat8', 'landsat7', 'landsat5'],
       fromDate   : date.format('YYYY-MM-DD'),
       toDate     : date.format('YYYY-MM-DD'),
-      indicator  : null,
+      indicator  : 'NDVI',
       maskClouds : false,
       maskSnow   : false,
       brdfCorrect: false
@@ -400,16 +400,15 @@ var requestTimeSeries = function (e, state) {
   var data = getRequestTimeSeriesData(state)
   
   var params = {
-    url         : '/api/tasks'
-    , data      : JSON.stringify(data)
-    , contentType: "application/json; charset=utf-8"
-    , dataType   : "json"
-    , beforeSend: function () {
+    url          : '/api/tasks'
+    , data       : JSON.stringify(data)
+    , contentType: 'application/json; charset=utf-8'
+    , beforeSend : function () {
       setTimeout(function () {
         EventBus.dispatch(Events.ALERT.SHOW_INFO, null, 'The download will start shortly.<br/>You can monitor the progress in the task manager')
       }, 100)
     }
-    , success   : function (e) {
+    , success    : function (e) {
       EventBus.dispatch(Events.SECTION.TASK_MANAGER.CHECK_STATUS)
     }
   }

@@ -77,6 +77,7 @@ DatePicker.prototype._bindEvents = function (property) {
     aGroup = $(aGroup)
     aGroup.click(function (e) {
       e.preventDefault()
+      e.stopPropagation()
       
       var value = $(this).attr('value')
       
@@ -97,6 +98,7 @@ DatePicker.prototype._bindEvents = function (property) {
   
   container.find('a').click(function (e) {
     e.preventDefault()
+    e.stopPropagation()
     
     var value = $(this).attr('value')
     if ($this[property] != value) {
@@ -155,7 +157,7 @@ DatePicker.prototype.expandGroup = function (property, aGroup) {
   var opened    = container.find('.inner.opened')
   if (opened.length == 0) {
     // container.velocity({height: '*=1.55'}, {duration: 1000})
-    container.velocity({height: 48*1.55}, {duration: 1000})
+    container.velocity({height: 48 * 1.55}, {duration: 1000})
   } else {
     opened.find('a').css({opacity: 0})
     opened.hide()

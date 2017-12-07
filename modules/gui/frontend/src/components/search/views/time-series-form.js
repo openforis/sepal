@@ -22,9 +22,9 @@ var drawPoligonBtn  = null
 var fusionTableId   = null
 var dataSets        = null
 var fromDate        = null
-var fromDateLabel   = null
+var fromDateRow     = null
 var toDate          = null
-var toDateLabel     = null
+var toDateRow       = null
 var indicator       = null
 var otherOptions    = null
 
@@ -38,9 +38,9 @@ var init = function (container) {
   description    = form.find('[name=description]')
   dataSets       = form.find('.row-sensor')
   fromDate       = DatePicker.newInstance(form.find('.from-date')).hide()
-  fromDateLabel  = form.find('.from-date-label')
+  fromDateRow    = form.find('.row-from-date')
   toDate         = DatePicker.newInstance(form.find('.to-date')).hide()
-  toDateLabel    = form.find('.to-date-label')
+  toDateRow      = form.find('.row-to-date')
   indicator      = form.find('.row-indicator')
   otherOptions   = form.find('.row-other-options')
   
@@ -93,7 +93,7 @@ var initEventHandlers = function () {
   dataSets.find('button').click(function (e) {
     var btn = $(e.target)
     btn.toggleClass('active')
-    if (btn.hasClass('active')){
+    if (btn.hasClass('active')) {
       state.dataSets.push(btn.val())
       FormValidator.removeError(dataSets)
     }
@@ -102,22 +102,22 @@ var initEventHandlers = function () {
   })
   
   fromDate.onChange = function (year, month, day) {
-    FormValidator.removeError(fromDateLabel)
-    FormValidator.removeError(toDateLabel)
+    FormValidator.removeError(fromDateRow)
+    FormValidator.removeError(toDateRow)
     
     state.fromDate = year + '-' + month + '-' + day
   }
-  fromDateLabel.click(function (e) {
+  fromDateRow.click(function (e) {
     fromDate.toggle()
   })
   
   toDate.onChange = function (year, month, day) {
-    FormValidator.removeError(toDateLabel)
-    FormValidator.removeError(fromDateLabel)
+    FormValidator.removeError(toDateRow)
+    FormValidator.removeError(fromDateRow)
     
     state.toDate = year + '-' + month + '-' + day
   }
-  toDateLabel.click(function (e) {
+  toDateRow.click(function (e) {
     toDate.toggle()
   })
   
@@ -176,18 +176,18 @@ var submit = function (e) {
     valid    = false
     errorMsg = 'Please select a valid FROM DATE'
     
-    FormValidator.addError(fromDateLabel)
+    FormValidator.addError(fromDateRow)
   } else if (!toDateMoment.isValid()) {
     valid    = false
     errorMsg = 'Please select a valid TO DATE'
     
-    FormValidator.addError(toDateLabel)
+    FormValidator.addError(toDateRow)
   } else if (fromDateMoment.isAfter(toDateMoment)) {
     valid    = false
     errorMsg = 'FROM DATE cannot be later than TO DATE'
     
-    FormValidator.addError(fromDateLabel)
-    FormValidator.addError(toDateLabel)
+    FormValidator.addError(fromDateRow)
+    FormValidator.addError(toDateRow)
   } else if (!state.indicator || $.isEmptyString(state.indicator)) {
     valid    = false
     errorMsg = 'Please select one indicator'
@@ -233,8 +233,15 @@ var setState = function (e, newState, params) {
     EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
     
     dataSets.find('button').removeClass('active')
+    dataSets.find('button').each(function (i, elem) {
+      var btn = $(elem)
+      if (state.dataSets.includes(btn.val()))
+        btn.addClass('active')
+    })
     otherOptions.find('button').removeClass('active')
+    
     indicator.find('button').removeClass('active')
+    indicator.find('button[value=' + state.indicator + ']').addClass('active')
   }
 }
 
@@ -268,7 +275,7 @@ var polygonDrawn = function (e, jsonPolygon, polygon) {
     
     state.aoi = {
       type: 'polygon',
-      path: JSON.parse( jsonPolygon )
+      path: JSON.parse(jsonPolygon)
     }
     drawPoligonBtn.addClass('active')
     
