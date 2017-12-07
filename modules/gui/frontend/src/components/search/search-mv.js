@@ -378,17 +378,17 @@ var getRequestTimeSeriesData = function (state) {
       state.expression = '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
       break
     case 'NDMI' :
-      state.expression = '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
+      state.expression = '10000 * (1 + (i.nir - i.swir1) / (i.nir + i.swir1))'
       break
     case 'EVI' :
-      state.expression = '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
+      state.expression = '10000 * (1 + 2.5 * (i.nir - i.red) / (i.nir + 6 * i.red - 7.5 * i.blue + 1))'
       break
     case 'EVI2' :
       state.expression = '10000 * (1 + (i.nir - i.red) / (i.nir + i.red))'
       break
   }
   
-  state.tile = 'Download time-series: \'' + state.description + '\''
+  state.title = 'Download time-series: \'' + state.description + '\''
   
   return {
     operation: 'sepal.timeseries.download',
