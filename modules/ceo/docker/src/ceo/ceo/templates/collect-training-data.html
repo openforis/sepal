@@ -115,13 +115,23 @@
                         method: method,
                         data: JSON.stringify(record),
                         contentType: 'application/json;charset=UTF-8'
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        console.error(jqXHR, textStatus, errorThrown);
+                        reject();
+                    }).done(function(data, textStatus, jqXHR) {
+                        resolve();
                     });
-                    resolve('Completed!');
                 }
             }, Math.random() * 1000);
         };
 
         var queue = Queue(worker);
+
+        window.onbeforeunload = function(e) {
+            if (!queue.empty()) {
+                return 'Changes you made may not be saved';
+            }
+        };
 
         var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
         var geeGatewayApiUrl = '{{config.GEEG_API_URL}}';
