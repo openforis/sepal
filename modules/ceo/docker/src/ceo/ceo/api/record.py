@@ -11,6 +11,9 @@ from ..common.fusiontables import selectRow, getRowId, updateRow, insertRow, del
 
 logger = logging.getLogger(__name__)
 
+PROJECT_TYPE_CEP = 'CEP'
+PROJECT_TYPE_TRAINING_DATA = 'TRAINING-DATA'
+
 @app.route('/api/record/<id>', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
@@ -34,28 +37,36 @@ def recordsByProject(project_id=None):
 @import_sepal_auth
 @requires_auth
 def recordAdd():
-    project = mongo.db.projects.find_one({'id': request.json.get('project_id')}, {'_id': False})
+    project_id = request.json.get('project_id')
+    record_id = request.json.get('record_id')
+    project = mongo.db.projects.find_one({'id': project_id}, {'_id': False})
     if not project:
         return 'Not Found!', 404
     # security check
     if project['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
-    #
-    record_id = generate_id(session.get('username') + request.json.get('project_id') + request.json.get('plot').get('id'))
+    # update
+    username = session.get('username')
+    plot_id = request.json.get('plot').get('id')
     mongo.db.records.update({
-        'id': record_id
+        'project_id': project_id,
+        'username': username,
+        'plot.id': plot_id
     }, {
         'id': record_id,
-        'value': request.json.get('value'),
-        'project_id': request.json.get('project_id'),
-        'username': session.get('username'),
+        'project_id': project_id,
+        'username': username,
         'update_datetime': datetime.datetime.utcnow(),
+        'value': request.json.get('value'),
         'plot': {
-            'id': request.json.get('plot').get('id'),
+            'id': plot_id,
             'YCoordinate': request.json.get('plot').get('YCoordinate'),
             'XCoordinate': request.json.get('plot').get('XCoordinate')
         }
     }, upsert=True)
+    # sync
+    if project['type'] == PROJECT_TYPE_TRAINING_DATA:
+        syncPlotsWithProject(request.json.get('project_id'))
     # fusiontables
     token = session.get('accessToken')
     fusionTableId = project.get('fusionTableId')
@@ -95,10 +106,15 @@ def recordModify(id=None):
         'value': request.json.get('value'),
         'update_datetime': datetime.datetime.utcnow()
     })
+    # update
     mongo.db.records.update({'id': id}, {'$set': record}, upsert=False)
+    #
+    project = mongo.db.projects.find_one({'id': record.get('project_id')}, {'_id': False})
+    # sync
+    if project['type'] == PROJECT_TYPE_TRAINING_DATA:
+        syncPlotsWithProject(record.get('project_id'))
     # fusiontables
     token = session.get('accessToken')
-    project = mongo.db.projects.find_one({'id': record.get('project_id')}, {'_id': False})
     fusionTableId = project.get('fusionTableId')
     if token and fusionTableId:
         data = {
@@ -131,11 +147,15 @@ def recordDelete(id=None):
     # security check
     if record['username'] != session.get('username') and not session.get('is_admin'):
         return 'Forbidden!', 403
-    #
+    # delete
     mongo.db.records.delete_one({'id': id})
+    #
+    project = mongo.db.projects.find_one({'id': record.get('project_id')}, {'_id': False})
+    # sync
+    if project['type'] == PROJECT_TYPE_TRAINING_DATA:
+        syncPlotsWithProject(record.get('project_id'))
     # fusiontables
     token = session.get('accessToken')
-    project = mongo.db.projects.find_one({'id': record.get('project_id')}, {'_id': False})
     fusionTableId = project.get('fusionTableId')
     if token and fusionTableId:
         try:
@@ -144,4 +164,16 @@ def recordDelete(id=None):
                 deleteRow(token, fusionTableId, rowId)
         except FTException as e:
             pass
+    return 'OK', 200
+
+def syncPlotsWithProject(id):
+    project = mongo.db.projects.find_one({'id': id})
+    plots = []
+    records = mongo.db.records.find({'project_id': id})
+    for record in records:
+        plots.append(record['plot'])
+    project.update({
+        'plots': plots
+    })
+    mongo.db.projects.update({'id': id}, {'$set': project}, upsert=False)
     return 'OK', 200

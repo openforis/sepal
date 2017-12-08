@@ -1,4 +1,8 @@
 env
 instance
-static/bower_components
 *.pyc
+static/bower_components
+static/node_modules
+build
+sepal_ceo.egg-info
+dist
