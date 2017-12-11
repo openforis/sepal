@@ -119,6 +119,12 @@ var setActiveState = function (e, activeState) {
         input.val(state.name)
       // }
     })
+  
+    if (state.median) {
+      disableDateBands()
+    } else {
+      enableDateBands()
+    }
   }
 }
 

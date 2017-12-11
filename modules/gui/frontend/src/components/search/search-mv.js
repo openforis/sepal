@@ -346,7 +346,7 @@ var retrieveChangeDetection = function (e, state, obj) {
   EventBus.dispatch(Events.AJAX.POST, null, params)
 }
 
-//change detection
+//time series
 var addTimeSeries = function () {
   
   var getDefaultState = function () {
