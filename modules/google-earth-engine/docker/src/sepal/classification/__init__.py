@@ -13,7 +13,6 @@ class Classification(ImageSpec):
         self.trainingData = ee.FeatureCollection('ft:' + spec['tableName'])
         self.classProperty = spec['classProperty']
         self.imageToClassify = create_image_spec(spec['imageToClassify'])
-        self.imageToClassify.bands = ['red', 'nir', 'swir1', 'swir2']
         self.aoi = self.imageToClassify.aoi
         self.scale = self.imageToClassify.scale
         self.bands = ['class']
@@ -32,18 +31,32 @@ class Classification(ImageSpec):
 
 class _Operation(ImageOperation):
     def __init__(self, imageToClassify, trainingData, classProperty):
-        super(_Operation, self).__init__(imageToClassify._ee_image().select(['red', 'nir', 'swir1', 'swir2']))
+        super(_Operation, self).__init__(imageToClassify._ee_image())
         self.trainingData = trainingData
         self.classProperty = classProperty
         self.scale = imageToClassify.scale
 
     def apply(self):
-        self.set('red/nir', 'i.red / i.nir')
-        self.set('red/swir1', 'i.red / i.swir1')
-        self.set('red/swir2', 'i.red / i.swir2')
-        self.set('nir/swir1', 'i.nir / i.swir1')
-        self.set('nir/swir2', 'i.nir / i.swir2')
-        self.set('swir1/swir2', 'i.swir1 / i.swir2')
+        bands = ee.List(['red', 'nir', 'swir1', 'swir2'])
+        missingBands = bands.removeAll(self.image.bandNames())
+        bands = bands.removeAll(missingBands)
+
+        def ratios_for_band(band):
+            def ratio_for_band(band2):
+                band2 = ee.String(band2)
+                ratioName = band.cat('/').cat(ee.String(band2))
+                ratio = self.image.select(band).divide(self.image.select(band2))
+                return ratio.rename([ratioName])
+
+            band = ee.String(band)
+            return bands.slice(bands.indexOf(band).add(1)).map(ratio_for_band)
+
+        def add_ratio(ratio, image):
+            return ee.Image(image).addBands(ee.Image(ratio))
+
+        ratios = bands.slice(0, -1).map(ratios_for_band).flatten()
+        self.image = ee.Image(ratios.iterate(add_ratio, self.image))
+
         # Force updates to fusion table to be reflected
         self.trainingData = self.trainingData.map(self._force_cache_flush)
         training = self.image.sampleRegions(self.trainingData, [self.classProperty], self.scale)

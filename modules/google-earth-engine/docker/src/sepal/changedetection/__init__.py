@@ -13,9 +13,7 @@ class ChangeDetection(ImageSpec):
         self.trainingData = ee.FeatureCollection('ft:' + spec['tableName'])
         self.classProperty = spec['classProperty']
         self.fromImage = create_image_spec(spec['fromImage'])
-        self.fromImage.bands = ['red', 'nir', 'swir1', 'swir2']
         self.toImage = create_image_spec(spec['toImage'])
-        self.toImage.bands = ['red', 'nir', 'swir1', 'swir2']
         self.aoi = self.fromImage.aoi
         self.scale = self.fromImage.scale
         self.bands = ['class']
@@ -51,17 +49,28 @@ class ChangeDetection(ImageSpec):
 
 class _AddBandRatios(ImageOperation):
     def __init__(self, image):
-        super(_AddBandRatios, self).__init__(
-            image.select(['red', 'nir', 'swir1', 'swir2'])
-        )
+        super(_AddBandRatios, self).__init__(image)
 
     def apply(self):
-        self.set('red/nir', 'i.red / i.nir')
-        self.set('red/swir1', 'i.red / i.swir1')
-        self.set('red/swir2', 'i.red / i.swir2')
-        self.set('nir/swir1', 'i.nir / i.swir1')
-        self.set('nir/swir2', 'i.nir / i.swir2')
-        self.set('swir1/swir2', 'i.swir1 / i.swir2')
+        bands = ee.List(['red', 'nir', 'swir1', 'swir2'])
+        missingBands = bands.removeAll(self.image.bandNames())
+        bands = bands.removeAll(missingBands)
+
+        def ratios_for_band(band):
+            def ratio_for_band(band2):
+                band2 = ee.String(band2)
+                ratioName = band.cat('/').cat(ee.String(band2))
+                ratio = self.image.select(band).divide(self.image.select(band2))
+                return ratio.rename([ratioName])
+
+            band = ee.String(band)
+            return bands.slice(bands.indexOf(band).add(1)).map(ratio_for_band)
+
+        def add_ratio(ratio, image):
+            return ee.Image(image).addBands(ee.Image(ratio))
+
+        ratios = bands.slice(0, -1).map(ratios_for_band).flatten()
+        self.image = ee.Image(ratios.iterate(add_ratio, self.image))
         return self.image
 
 
