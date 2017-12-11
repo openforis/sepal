@@ -138,10 +138,8 @@ var setState = function (e, newState, params) {
       ? inputRecipe2.val(mosaic2.name).data('reset-btn').enable()
       : inputRecipe2Autocomplete.sepalAutocomplete('reset')
     
-    if(newState.geeAssetId1)
-      geeAssetId1.val(newState.geeAssetId1)
-    if(newState.geeAssetId2)
-      geeAssetId2.val(newState.geeAssetId2)
+    geeAssetId1.val(newState.geeAssetId1)
+    geeAssetId2.val(newState.geeAssetId2)
     
     fusionTableId.val(newState.fusionTableId)
     updateFusionTableClass(newState.fusionTableId)
@@ -175,9 +173,9 @@ var updateInputRecipe = function () {
     onChange: function (selection) {
       state.inputRecipe1 = selection ? selection.data : null
       
-      state.aoiCode = null
-      state.aoiName = null
-      state.polygon = null
+      state.aoiCode     = null
+      state.aoiName     = null
+      state.polygon     = null
       state.geeAssetId1 = null
       geeAssetId1.val('')
       

@@ -117,8 +117,7 @@ var setState = function (e, newState, params) {
       : inputRecipeAutocomplete.sepalAutocomplete('reset')
     restoreAoi(newState, params)
     
-    if(newState.geeAssetId)
-      geeAssetId.val(newState.geeAssetId)
+    geeAssetId.val(newState.geeAssetId)
     
     fusionTableId.val(newState.fusionTableId)
     updateFusionTableClass(newState.fusionTableId, function () {
