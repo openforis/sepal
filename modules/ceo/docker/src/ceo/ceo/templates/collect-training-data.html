@@ -97,7 +97,7 @@
         var ceoSepalApiUrl = '{{config.CEO_API_URL}}';
         var geeGatewayApiUrl = '{{config.GEEG_API_URL}}';
 
-        overlyMapManager['config'] = {
+        overlayMapManager['config'] = {
             'geeGatewayApiUrl': '{{config.GEEG_API_URL}}',
             'digitalGlobeApiKey': '{{config.DIGITALGLOBE_API_KEY}}',
             'dgcsConnectId': '{{config.DGCS_CONNECT_ID}}',
@@ -590,30 +590,33 @@
 
         function layerSelection(index, refresh) {
             //gmap.overlayMapTypes.pop();
-            gmap.overlayMapTypes.setAt(0, null);
-            if (typeof index !== 'undefined' && index != '') {
-                var overlay = overlays[index];
-                if (refresh == true) overlyMapManager.overlayMapTypes[index] = undefined;
-                overlyMapManager.addOverlayMapType(overlay, index).then(function() {
-                    var overlyMapType = overlyMapManager.overlayMapTypes[index];
-                    if (overlay.type != 'geonetwork' && overlay.type != 'dgcs' && overlay.type != 'geoserver') {
-                        gmap.overlayMapTypes.insertAt(0, overlyMapType);
-                        mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
-                    } else {
-                        if (overlay.type == 'dgcs') {
-                            $('body .dgcs-iframe').remove();
-                            var src = 'https://services.digitalglobe.com/mapservice/wmsaccess?connectid={{config.DGCS_CONNECT_ID}}';
-                            var iframe = $('<iframe>').addClass('dgcs-iframe').attr('src', src);
-                            $('body').append(iframe);
+            //gmap.overlayMapTypes.setAt(0, null);
+            gmap.overlayMapTypes.clear();
+            setTimeout(function() {
+                if (typeof index !== 'undefined' && index != '') {
+                    var overlay = overlays[index];
+                    if (refresh == true) overlayMapManager.overlayMapTypes[index] = undefined;
+                    overlayMapManager.addOverlayMapType(overlay, index).then(function() {
+                        var overlayMapType = overlayMapManager.overlayMapTypes[index];
+                        if (overlay.type != 'geonetwork' && overlay.type != 'dgcs' && overlay.type != 'geoserver') {
+                            gmap.overlayMapTypes.insertAt(0, overlayMapType);
+                            mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
+                        } else {
+                            if (overlay.type == 'dgcs') {
+                                $('body .dgcs-iframe').remove();
+                                var src = 'https://services.digitalglobe.com/mapservice/wmsaccess?connectid={{config.DGCS_CONNECT_ID}}';
+                                var iframe = $('<iframe>').addClass('dgcs-iframe').attr('src', src);
+                                $('body').append(iframe);
+                            }
+                            if (!lmap.hasLayer(overlayMapType)) lmap.addLayer(overlayMapType);
+                            overlayMapType.bringToFront();
+                            mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
                         }
-                        if (!lmap.hasLayer(overlyMapType)) lmap.addLayer(overlyMapType);
-                        overlyMapType.bringToFront();
-                        mapUtils.utils.switchToLeaflet(gmap, lmap, 'gmap', 'lmap');
-                    }
-                });
-            } else {
-                mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
-            }
+                    });
+                } else {
+                    mapUtils.utils.switchToGoogleMaps(gmap, lmap, 'gmap', 'lmap');
+                }
+            }, 1000);
         }
 
         $('#layer-refresher').click(function(e) {

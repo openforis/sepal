@@ -1,4 +1,4 @@
-let overlyMapManager = {
+let overlayMapManager = {
     'config': {
         'geeGatewayApiUrl': '',
         'digitalGlobeApiKey': '',
