@@ -82,10 +82,17 @@ class Sentinel2ManualMosaicSpec(Sentinel2MosaicSpec):
 
 
 _scale_by_band = {
+    'aerosol': 60,
     'blue': 10,
     'green': 10,
     'red': 10,
+    'redEdge1': 20,
+    'redEdge2': 20,
+    'redEdge3': 20,
     'nir': 10,
+    'redEdge4': 20,
+    'waterVapor': 60,
+    'cirrus': 60,
     'swir1': 20,
     'swir2': 20,
     'dayOfYear': 10,
@@ -111,9 +118,13 @@ class Sentinel2DataSet(DataSet):
             'blue': 'B2',
             'green': 'B3',
             'red': 'B4',
-            'nir': 'B8A',
+            'redEdge1': 'B5',
+            'redEdge2': 'B6',
+            'redEdge3': 'B7',
+            'nir': 'B8',
+            'redEdge4': 'B8A',
+            'waterVapor': 'B9',
+            'cirrus': 'B10',
             'swir1': 'B11',
             'swir2': 'B12',
-            'cirrus': 'B10',
-            'waterVapor': 'B9'
         }

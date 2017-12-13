@@ -59,7 +59,7 @@ class _Operation(ImageOperation):
 
         # Force updates to fusion table to be reflected
         self.trainingData = self.trainingData.map(self._force_cache_flush)
-        training = self.image.sampleRegions(self.trainingData, [self.classProperty], self.scale)
+        training = self.image.sampleRegions(self.trainingData, [self.classProperty], 1)
         classifier = ee.Classifier.cart().train(training, self.classProperty)
         classification = self.image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         # regression = self.image.classify(classifier.setOutputMode('REGRESSION')).rename(['regression'])

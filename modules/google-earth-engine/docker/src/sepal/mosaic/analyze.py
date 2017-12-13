@@ -52,8 +52,8 @@ class _Analyze(ImageOperation):
                  '(abs(i.blue - i.meanVis) + abs(i.green - i.meanVis) + abs(i.red - i.meanVis)) / i.meanVis')
         self.set('variabilityProbability',
                  '1 - max(max(abs(i.ndvi), abs(i.ndsi)), i.whiteness)')
-        self.set('noiseTest',
-                 'i.variabilityProbability < -0.5')
+        self.setIf('toMask', '!i.toMask',
+                   'i.variabilityProbability < -0.5')
         self.set('variabilityProbability',
                  'max(i.variabilityProbability, 0.1)')
 
@@ -82,6 +82,9 @@ class _Analyze(ImageOperation):
         if self.mosaic_def.brdf_correct:
             self.image = brdf_correction.apply(self.image)
 
+        if self.mosaic_def.masked_on_analysis:
+            self.updateMask('!i.toMask')
+
         self._scale_image()
 
         return self.image
@@ -106,17 +109,19 @@ class _Analyze(ImageOperation):
         self.set('unixTimeDays', date.millis().divide(millisPerDay))
 
     def _scale_image(self):
-        multiplierByBand = {
-            'blue': 10000, 'green': 10000, 'red': 10000, 'nir': 10000, 'swir1': 10000, 'swir2': 10000,
+        multiplier_by_band = {
             'toMask': 1, 'water': 1, 'snow': 1, 'cloud': 1, 'ndvi': 10000,
             'shadowThreshold': 10000, 'shadowScore': 10000, 'hazeScore': 10000,
             'daysFromTarget': 1, 'dayOfYear': 1, 'unixTimeDays': 1
         }
 
+        for band in self.data_set.bands():
+            multiplier_by_band[band] = 10000
+
         self.image = ee.Image(
             self.image \
-                .select(multiplierByBand.keys()) \
-                .multiply(multiplierByBand.values()) \
+                .select(multiplier_by_band.keys()) \
+                .multiply(multiplier_by_band.values()) \
                 .copyProperties(self.image)
                 .set('system:time_start', self.image.get('system:time_start'))
         ).uint16()

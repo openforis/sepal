@@ -4,6 +4,9 @@ from ..image_operation import ImageOperation
 
 
 def mask_clouds(mosaic_def, collection):
+    if mosaic_def.masked_on_analysis:
+        return collection
+
     reduced = collection.select('cloud') \
         .reduce(ee.Reducer.sum()
                 .combine(ee.Reducer.count(), "", True)

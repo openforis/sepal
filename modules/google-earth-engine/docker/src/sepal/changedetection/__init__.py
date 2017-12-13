@@ -31,7 +31,7 @@ class ChangeDetection(ImageSpec):
             .addBands(_AddBandRatios(self.toImage._ee_image()).apply())
         # Force updates to fusion table to be reflected
         self.trainingData = self.trainingData.map(self._force_cache_flush)
-        training = image.sampleRegions(self.trainingData, [self.classProperty], self.fromImage.scale)
+        training = image.sampleRegions(self.trainingData, [self.classProperty], 1)
         classifier = ee.Classifier.cart().train(training, self.classProperty)
         classification = image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         # regression = image.classify(classifier.setOutputMode('REGRESSION')).rename(['regression'])

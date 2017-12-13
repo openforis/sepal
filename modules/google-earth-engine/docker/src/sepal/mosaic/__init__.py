@@ -27,19 +27,31 @@ class Mosaic(object):
         collection = mask_less_green(self.mosaic_def, collection)
         collection = mask_days_from_target(self.mosaic_def, collection)
 
-        return self._to_mosaic(collection)
+        bands = self._common_bands(data_sets)
+        return self._to_mosaic(bands, collection)
 
-    def _to_mosaic(self, collection):
-        bands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
-        median = collection.select(bands).median()
+    def _common_bands(self, data_sets):
+        common_bands = list(reduce(
+            lambda bands, my_bands: set(my_bands).intersection(bands),
+            [data_set.bands() for data_set in data_sets]
+        ))
+
+        if not self.mosaic_def.median_composite:
+            common_bands += ['unixTimeDays', 'dayOfYear', 'daysFromTarget']
+
+        return common_bands
+
+    def _to_mosaic(self, bands, collection):
+        distance_bands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
+        median = collection.select(distance_bands).median()
         if self.mosaic_def.median_composite:
             mosaic = median
         else:
             def add_distance(image):
                 distanceByBand = image.expression(
                     '1 - abs((i - m) / (i + m))', {
-                        'i': image.select(bands),
-                        'm': median.select(bands)})
+                        'i': image.select(distance_bands),
+                        'm': median.select(distance_bands)})
                 return image.addBands(
                     distanceByBand.reduce(ee.Reducer.sum()).rename(['distanceToMedian'])
                 )

@@ -23,6 +23,8 @@ class MosaicSpec(ImageSpec):
         self.brdf_correct = bool(spec.get('brdfCorrect', False))
         self.from_date = spec.get('fromDate', None)
         self.to_date = spec.get('toDate', None)
+        self.surface_reflectance = spec.get('surfaceReflectance', False)
+        self.masked_on_analysis = self.surface_reflectance
 
     def _viz_params(self):
         return _viz_by_bands[', '.join(self.bands)]({

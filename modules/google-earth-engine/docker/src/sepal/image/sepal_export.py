@@ -55,7 +55,7 @@ class SepalExport(ThreadTask):
                 region=image_spec.aoi.geometry(),
                 description=self.description,
                 folder=self.drive_path,
-                scale=30,
+                scale=image_spec.scale,
                 maxPixels=1e12,
                 shardSize=256,
                 fileDimensions=4096
@@ -97,7 +97,7 @@ class SepalExport(ThreadTask):
                         downloaded_files=download_status.downloaded_files,
                         total_files=download_status.total_files,
                         downloaded=format_bytes(download_status.downloaded_bytes),
-                        total=format_bytes(download_status.downloaded_bytes),
+                        total=format_bytes(download_status.total_bytes),
                     )
                 else:
                     return 'Starting download to Sepal...'

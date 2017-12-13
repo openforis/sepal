@@ -14,10 +14,24 @@ str(_strptime.__all__)  # Workaround for "Failed to import _strptime because the
 class LandsatMosaicSpec(MosaicSpec):
     def __init__(self, spec):
         super(LandsatMosaicSpec, self).__init__(spec)
-        self.scale = 30
+        collections = _sr if self.surface_reflectance else _toa
+        self._collection_names_by_scene_id_prefix = collections['collection_names_by_scene_id_prefix']
+        self._collection_names_by_sensor = collections['collection_names_by_sensor']
+        self.set_scale()
 
     def _data_set(self, collection_name, image_filter):
         return LandsatDataSet(collection_name, image_filter)
+
+    def set_scale(self):
+        if self.bands:
+            self.scale = min([
+                resolution
+                for band, resolution
+                in _scale_by_band.iteritems()
+                if band in self.bands
+            ])
+        else:
+            self.scale = 30
 
 
 class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
@@ -41,7 +55,7 @@ class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
         """
         return set(
             self._flatten(
-                map(lambda sensor: _collection_names_by_sensor[sensor], self.sensors)
+                map(lambda sensor: self._collection_names_by_sensor[sensor], self.sensors)
             )
         )
 
@@ -81,7 +95,7 @@ class LandsatManualMosaicSpec(LandsatMosaicSpec):
         data_sets = []
         for prefix, ids in scenes_by_scene_id_prefix:
             ids = list(ids)
-            for name in _collection_names_by_scene_id_prefix[prefix]:
+            for name in self._collection_names_by_scene_id_prefix[prefix]:
                 data_sets.append(
                     self._data_set(
                         collection_name=name,
@@ -98,34 +112,55 @@ class LandsatManualMosaicSpec(LandsatMosaicSpec):
         :return: A str with the collection name.
         """
         prefix = scene_id[:3]
-        return _collection_names_by_scene_id_prefix[prefix]
+        return self._collection_names_by_scene_id_prefix[prefix]
 
     def __str__(self):
         return 'landsat.ManualMosaicSpec(' + str(self.spec) + ')'
 
 
-_collection_names_by_sensor = {
-    'LANDSAT_8': ('LANDSAT/LC08/C01/T1_TOA',),
-    'LANDSAT_7': ('LANDSAT/LE07/C01/T1_TOA',),
-    'LANDSAT_TM': ('LANDSAT/LT4_L1T_TOA_FMASK', 'LANDSAT/LT05/C01/T1_TOA'),
-    'LANDSAT_8_T2': ('LANDSAT/LC08/C01/T2_TOA',),
-    'LANDSAT_7_T2': ('LANDSAT/LE07/C01/T2_TOA',),
-    'LANDSAT_TM_T2': ('LANDSAT/LT05/C01/T2_TOA',),
-}
-_collection_names_by_scene_id_prefix = {
-    'LC8': ('LANDSAT/LC08/C01/T1_TOA', 'LANDSAT/LC08/C01/T2_TOA'),
-    'LE7': ('LANDSAT/LE07/C01/T1_TOA', 'LANDSAT/LE07/C01/T2_TOA'),
-    'LT5': ('LANDSAT/LT05/C01/T1_TOA', 'LANDSAT/LT05/C01/T2_TOA'),
-    'LT4': ('LANDSAT/LT4_L1T_TOA_FMASK',)
+_toa = {
+    'collection_names_by_sensor': {
+        'LANDSAT_8': ('LANDSAT/LC08/C01/T1_TOA',),
+        'LANDSAT_7': ('LANDSAT/LE07/C01/T1_TOA',),
+        'LANDSAT_TM': ('LANDSAT/LT4_L1T_TOA_FMASK', 'LANDSAT/LT05/C01/T1_TOA'),
+        'LANDSAT_8_T2': ('LANDSAT/LC08/C01/T2_TOA',),
+        'LANDSAT_7_T2': ('LANDSAT/LE07/C01/T2_TOA',),
+        'LANDSAT_TM_T2': ('LANDSAT/LT05/C01/T2_TOA',)
+    },
+    'collection_names_by_scene_id_prefix': {
+        'LC8': ('LANDSAT/LC08/C01/T1_TOA', 'LANDSAT/LC08/C01/T2_TOA'),
+        'LE7': ('LANDSAT/LE07/C01/T1_TOA', 'LANDSAT/LE07/C01/T2_TOA'),
+        'LT5': ('LANDSAT/LT05/C01/T1_TOA', 'LANDSAT/LT05/C01/T2_TOA'),
+        'LT4': ('LANDSAT/LT4_L1T_TOA_FMASK',)
+    },
+    'collection_name_by_data_set': {
+        'landsat8': 'LANDSAT/LC08/C01/T1_TOA',
+        'landsat7': 'LANDSAT/LE07/C01/T1_TOA',
+        'landsat5': 'LANDSAT/LT05/C01/T1_TOA',
+        'landsat8T2': 'LANDSAT/LC08/C01/T2_TOA',
+        'landsat7T2': 'LANDSAT/LE07/C01/T2_TOA',
+        'landsat5T2': 'LANDSAT/LT05/C01/T2_TOA'
+    }
 }
 
-_collection_name_by_data_set = {
-    'landsat8': 'LANDSAT/LC08/C01/T1_TOA',
-    'landsat7': 'LANDSAT/LE07/C01/T1_TOA',
-    'landsat5': 'LANDSAT/LT05/C01/T1_TOA',
-    'landsat8T2': 'LANDSAT/LC08/C01/T2_TOA',
-    'landsat7T2': 'LANDSAT/LE07/C01/T2_TOA',
-    'landsat5T2': 'LANDSAT/LT05/C01/T2_TOA',
+_sr = {
+    'collection_names_by_sensor': {
+        'LANDSAT_8': ('LANDSAT/LC08/C01/T1_TOA',),
+        'LANDSAT_7': ('LANDSAT/LE07/C01/T1_TOA',),
+        'LANDSAT_TM': ('LANDSAT/LT04/C01/T1_SR', 'LANDSAT/LT05/C01/T1_SR',)
+    },
+    'collection_names_by_scene_id_prefix': {
+        'LC8': ('LANDSAT/LC08/C01/T1_SR',),
+        'LE7': ('LANDSAT/LE07/C01/T1_SR',),
+        'LT5': ('LANDSAT/LT05/C01/T1_SR',),
+        'LT4': ('LANDSAT/LT04/C01/T1_SR',)
+    },
+    'collection_name_by_data_set': {
+        'landsat8': 'LANDSAT/LC08/C01/T1_SR',
+        'landsat7': 'LANDSAT/LE07/C01/T1_SR',
+        'landsat5': 'LANDSAT/LT05/C01/T1_SR',
+        'landsat4': 'LANDSAT/LT04/C01/T1_SR'
+    }
 }
 
 
@@ -136,8 +171,9 @@ class LandsatDataSet(DataSet):
         self.image_filter = image_filter
 
     @staticmethod
-    def create(data_set_name, image_filter):
-        return LandsatDataSet(_collection_name_by_data_set[data_set_name], image_filter)
+    def create(data_set_name, image_filter, surface_reflectance=False):
+        collections = _sr if surface_reflectance else _toa
+        return LandsatDataSet(collections['collection_name_by_data_set'][data_set_name], image_filter)
 
     def to_collection(self):
         return ee.ImageCollection(self.collection_name).filter(self.image_filter)
@@ -148,26 +184,54 @@ class LandsatDataSet(DataSet):
     def bands(self):
         return {
             'LANDSAT/LC08/C01/T1_TOA': {
-                'blue': 'B2', 'green': 'B3', 'red': 'B4', 'nir': 'B5', 'swir1': 'B6', 'swir2': 'B7', 'cirrus': 'B9',
-                'thermal': 'B10', 'BQA': 'BQA'},
+                'aerosol': 'B1', 'blue': 'B2', 'green': 'B3', 'red': 'B4', 'nir': 'B5', 'swir1': 'B6', 'swir2': 'B7',
+                'pan': 'B8', 'cirrus': 'B9', 'thermal': 'B10', 'thermal2': 'B11', 'BQA': 'BQA'},
             'LANDSAT/LE07/C01/T1_TOA': {
-                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7',
-                'thermal': 'B6_VCID_1',
-                'BQA': 'BQA'},
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5',
+                'thermal': 'B6_VCID_1', 'thermal2': 'B6_VCID_2', 'swir2': 'B7', 'pan': 'B8', 'BQA': 'BQA'},
             'LANDSAT/LT05/C01/T1_TOA': {
-                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6',
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
                 'BQA': 'BQA'},
             'LANDSAT/LT4_L1T_TOA_FMASK': {
-                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6',
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
                 'fmask': 'fmask'},
             'LANDSAT/LC08/C01/T2_TOA': {
-                'blue': 'B2', 'green': 'B3', 'red': 'B4', 'nir': 'B5', 'swir1': 'B6', 'swir2': 'B7', 'cirrus': 'B9',
-                'thermal': 'B10', 'BQA': 'BQA'},
+                'aerosol': 'B1', 'blue': 'B2', 'green': 'B3', 'red': 'B4', 'nir': 'B5', 'swir1': 'B6', 'swir2': 'B7',
+                'pan': 'B8', 'cirrus': 'B9', 'thermal': 'B10', 'thermal2': 'B11', 'BQA': 'BQA'},
             'LANDSAT/LE07/C01/T2_TOA': {
-                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7',
-                'thermal': 'B6_VCID_1',
-                'BQA': 'BQA'},
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5',
+                'thermal': 'B6_VCID_1', 'thermal2': 'B6_VCID_2', 'swir2': 'B7', 'pan': 'B8', 'BQA': 'BQA'},
             'LANDSAT/LT05/C01/T2_TOA': {
-                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'swir2': 'B7', 'thermal': 'B6',
-                'BQA': 'BQA'}
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
+                'BQA': 'BQA'},
+            'LANDSAT/LC08/C01/T1_SR': {
+                'aerosol': 'B1', 'blue': 'B2', 'green': 'B3', 'red': 'B4', 'nir': 'B5', 'swir1': 'B6', 'swir2': 'B7',
+                'thermal': 'B10', 'thermal2': 'B11', 'pixel_qa': 'pixel_qa'},
+            'LANDSAT/LE07/C01/T1_SR': {
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5',
+                'thermal': 'B6', 'swir2': 'B7', 'pixel_qa': 'pixel_qa'},
+            'LANDSAT/LT05/C01/T1_SR': {
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
+                'pixel_qa': 'pixel_qa'},
+            'LANDSAT/LT04/C01/T1_SR': {
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
+                'pixel_qa': 'pixel_qa'},
         }[self.collection_name]
+
+
+_scale_by_band = {
+    'aerosol': 30,
+    'blue': 30,
+    'green': 30,
+    'red': 30,
+    'nir': 30,
+    'swir1': 30,
+    'swir2': 30,
+    'pan': 15,
+    'cirrus': 30,
+    'thermal': 100,
+    'thermal2': 100,
+    'dayOfYear': 30,
+    'daysFromTarget': 30,
+    'unixTimeDays': 30
+}

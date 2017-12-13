@@ -37,7 +37,7 @@ class AssetExport(ThreadTask):
                 image=image_spec._ee_image(),
                 region=image_spec.aoi.geometry(),
                 description=self.description,
-                scale=30
+                scale=image_spec.scale
             ))
 
         return self._export.submit() \
