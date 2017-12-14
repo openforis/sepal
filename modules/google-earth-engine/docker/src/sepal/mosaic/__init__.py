@@ -42,6 +42,7 @@ class Mosaic(object):
         return common_bands
 
     def _to_mosaic(self, bands, collection):
+        collection = collection.select(bands)
         distance_bands = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
         median = collection.select(distance_bands).median()
         if self.mosaic_def.median_composite:

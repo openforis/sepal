@@ -20,7 +20,7 @@ class LandsatMosaicSpec(MosaicSpec):
         self.set_scale()
 
     def _data_set(self, collection_name, image_filter):
-        return LandsatDataSet(collection_name, image_filter)
+        return LandsatDataSet(collection_name, image_filter, self)
 
     def set_scale(self):
         if self.bands:
@@ -145,8 +145,8 @@ _toa = {
 
 _sr = {
     'collection_names_by_sensor': {
-        'LANDSAT_8': ('LANDSAT/LC08/C01/T1_TOA',),
-        'LANDSAT_7': ('LANDSAT/LE07/C01/T1_TOA',),
+        'LANDSAT_8': ('LANDSAT/LC08/C01/T1_SR',),
+        'LANDSAT_7': ('LANDSAT/LE07/C01/T1_SR',),
         'LANDSAT_TM': ('LANDSAT/LT04/C01/T1_SR', 'LANDSAT/LT05/C01/T1_SR',)
     },
     'collection_names_by_scene_id_prefix': {
@@ -165,21 +165,25 @@ _sr = {
 
 
 class LandsatDataSet(DataSet):
-    def __init__(self, collection_name, image_filter):
+    def __init__(self, collection_name, image_filter, mosaic_spec):
         super(LandsatDataSet, self).__init__()
         self.collection_name = collection_name
         self.image_filter = image_filter
+        self.mosaic_spec = mosaic_spec
 
     @staticmethod
-    def create(data_set_name, image_filter, surface_reflectance=False):
-        collections = _sr if surface_reflectance else _toa
-        return LandsatDataSet(collections['collection_name_by_data_set'][data_set_name], image_filter)
+    def create(data_set_name, image_filter, mosaic_spec):
+        collections = _sr if mosaic_spec.surface_reflectance else _toa
+        return LandsatDataSet(
+            collections['collection_name_by_data_set'][data_set_name],
+            image_filter,
+            mosaic_spec)
 
     def to_collection(self):
         return ee.ImageCollection(self.collection_name).filter(self.image_filter)
 
     def analyze(self, image):
-        return Analyze(image, self.bands()).apply()
+        return Analyze(image, self.bands(), self.mosaic_spec).apply()
 
     def bands(self):
         return {

@@ -4,9 +4,10 @@ from ..image_operation import ImageOperation
 
 
 class Analyze(ImageOperation):
-    def __init__(self, image, bands):
+    def __init__(self, image, bands, mosaic_spec):
         super(Analyze, self).__init__(image)
         self.bands = bands
+        self.surface_reflectance = mosaic_spec.surface_reflectance
 
     def apply(self):
         bands = self.bands
@@ -26,7 +27,7 @@ class Analyze(ImageOperation):
                     any_set = any_set.Or(self.image.select('pixel_qa').bitwiseAnd(typeByValue[type]).neq(0))
                 return any_set
 
-            self.set('toMask', is_set(['cloud', 'shadow', 'cirrus']))
+            self.set('toMask', is_set(['cloud', 'shadow']))
             self.set('snow', is_set(['snow']))
         else:
             def is_set(types):
@@ -39,5 +40,8 @@ class Analyze(ImageOperation):
 
             self.set('toMask', is_set(['badPixels', 'cloud', 'shadow', 'cirrus']))
             self.set('snow', is_set(['snow']))
+
+        if self.surface_reflectance:
+            self.setAll(self.image.divide(10000))
 
         return self.image

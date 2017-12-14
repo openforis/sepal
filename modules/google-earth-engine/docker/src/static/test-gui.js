@@ -249,6 +249,7 @@
   
   function createMosaic( mapIndex ) {
     var dataSet               = $( 'input[name=dataSet]:checked' ).val()
+    var surfaceReflectance    = $( 'input[name="surface-reflectance"]:checked' ).val()
     var bands                 = $( '#bands' + mapIndex ).val().split( ', ' )
     var targetDayOfYear       = $( '#target-day-of-year' ).val()
     var targetDayOfYearWeight = $( '#target-day-of-year-weight' ).val()
@@ -260,11 +261,6 @@
     var maskClouds            = $( 'input[name="mask-clouds"]:checked' ).val()
     var maskSnow              = $( 'input[name="mask-snow"]:checked' ).val()
     
-    var classesToMask = []
-    $( '#classes-to-mask' ).find( 'input:checked' ).each( function () {
-      classesToMask.push( $( this ).attr( 'id' ) )
-    } )
-    
     return {
       aoi                  : createAoi(),
       targetDayOfYear      : targetDayOfYear,
@@ -273,12 +269,12 @@
       hazeTolerance        : hazeTolerance,
       greennessWeight      : greennessWeight,
       dataSet              : dataSet,
+      surfaceReflectance   : surfaceReflectance,
       bands                : bands,
       medianComposite      : medianComposite,
       brdfCorrect          : brdfCorrect,
       maskClouds           : maskClouds,
-      maskSnow             : maskSnow,
-      classesToMask        : classesToMask
+      maskSnow             : maskSnow
       
     }
   }
