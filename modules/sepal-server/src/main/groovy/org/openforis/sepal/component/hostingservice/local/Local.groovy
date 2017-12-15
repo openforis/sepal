@@ -22,7 +22,7 @@ class Local implements HostingServiceAdapter {
     ].asImmutable()
 
     HostingService getHostingService() {
-        return new LocalHostingService(instanceTypes, storageCostPerGbMonth, config.userHomeDirTemplate)
+        return new LocalHostingService(instanceTypes, storageCostPerGbMonth)
     }
 
     InstanceProvider getInstanceProvider() {

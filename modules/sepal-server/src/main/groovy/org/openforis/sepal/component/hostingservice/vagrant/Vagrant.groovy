@@ -22,7 +22,7 @@ class Vagrant implements HostingServiceAdapter {
     ].asImmutable()
 
     HostingService getHostingService() {
-        return new VagrantHostingService(instanceTypes, storageCostPerGbMonth, config.userHomeDirTemplate)
+        return new VagrantHostingService(instanceTypes, storageCostPerGbMonth)
     }
 
     InstanceProvider getInstanceProvider() {

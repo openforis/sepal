@@ -40,7 +40,7 @@ class Aws implements HostingServiceAdapter {
     ].asImmutable()
 
     HostingService getHostingService() {
-        return new AwsHostingService(instanceTypes, storageCostPerGbMonth, config.userHomeDirTemplate)
+        return new AwsHostingService(instanceTypes, storageCostPerGbMonth)
     }
 
     InstanceProvider getInstanceProvider() {

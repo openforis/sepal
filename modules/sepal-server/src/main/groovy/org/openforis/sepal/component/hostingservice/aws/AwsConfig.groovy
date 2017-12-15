@@ -1,7 +1,6 @@
 package org.openforis.sepal.component.hostingservice.aws
 
 import org.openforis.sepal.util.Config
-import org.openforis.sepal.util.FileSystem
 import org.openforis.sepal.util.annotation.Data
 
 @Data
@@ -12,7 +11,6 @@ class AwsConfig {
     final String secretKey
     final int sepalVersion
     final String environment
-    final String userHomeDirTemplate
 
     AwsConfig() {
         def c = new Config('aws.properties')
@@ -22,6 +20,5 @@ class AwsConfig {
         secretKey = c.string('secretKey')
         sepalVersion = c.integer('sepalVersion')
         environment = c.string('environment')
-        userHomeDirTemplate = c.string('userHomeDirTemplate')
     }
 }

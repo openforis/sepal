@@ -4,6 +4,7 @@ import component.workersession.FakeBudgetManager
 import component.workersession.FakeGoogleOAuthGateway
 import component.workersession.FakeInstanceManager
 import fake.Database
+import fake.FakeClock
 import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.budget.api.Budget
 import org.openforis.sepal.component.budget.api.UserInstanceSpending
@@ -16,8 +17,8 @@ import org.openforis.sepal.component.budget.command.UpdateBudget
 import org.openforis.sepal.component.budget.query.FindUsersExceedingBudget
 import org.openforis.sepal.component.budget.query.GenerateSpendingReport
 import org.openforis.sepal.component.budget.query.GenerateUserSpendingReport
-import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.hostingservice.api.InstanceType
+import org.openforis.sepal.component.workersession.WorkerSessionComponent
 import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.RequestSession
 import org.openforis.sepal.event.Event
@@ -25,7 +26,6 @@ import org.openforis.sepal.event.SynchronousEventDispatcher
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.user.UserRepository
 import org.openforis.sepal.util.DateTime
-import fake.FakeClock
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -41,6 +41,7 @@ abstract class AbstractBudgetTest extends Specification {
     final connectionManager = new SqlConnectionManager(database.dataSource)
     final eventDispatcher = new SynchronousEventDispatcher()
     final hostingService = new FakeHostingService()
+    final userFiles = new FakeUserFiles()
     final userRepository = Mock(UserRepository)
     final clock = new FakeClock()
 
@@ -54,6 +55,7 @@ abstract class AbstractBudgetTest extends Specification {
             connectionManager,
             hostingService,
             userRepository,
+            userFiles,
             eventDispatcher,
             clock
     )
@@ -145,7 +147,7 @@ abstract class AbstractBudgetTest extends Specification {
             hours = DateTime.hoursBetween(start, parseDateString(args.end))
 
         clock.set(start)
-        hostingService.gbStorageUsed(username(args), gb)
+        userFiles.gbUsed(username(args), gb)
         determineStorageUsage()
         if (hours) {
             clock.forward((hours * 60d * 60d) as long, TimeUnit.SECONDS)

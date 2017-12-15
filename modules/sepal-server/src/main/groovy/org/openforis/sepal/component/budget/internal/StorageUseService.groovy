@@ -1,5 +1,6 @@
 package org.openforis.sepal.component.budget.internal
 
+import org.openforis.sepal.component.budget.adapter.UserFiles
 import org.openforis.sepal.component.budget.api.BudgetRepository
 import org.openforis.sepal.component.budget.api.HostingService
 import org.openforis.sepal.component.budget.api.StorageUse
@@ -10,19 +11,20 @@ import static org.openforis.sepal.util.DateTime.*
 final class StorageUseService {
     private final BudgetRepository budgetRepository
     private final HostingService hostingService
+    private final UserFiles userFiles
     private final Clock clock
 
-    StorageUseService(BudgetRepository budgetRepository, HostingService hostingService, Clock clock) {
+    StorageUseService(BudgetRepository budgetRepository, UserFiles userFiles, HostingService hostingService, Clock clock) {
         this.budgetRepository = budgetRepository
+        this.userFiles = userFiles
         this.hostingService = hostingService
         this.clock = clock
     }
 
     StorageUse updateStorageUseForThisMonth(String username) {
-        def gbUsed = hostingService.gbStorageUsed(username)
+        def gbUsed = userFiles.gbUsed(username)
         def lastStorageUse = budgetRepository.lastUserStorageUse(username)
-        if (gbUsed < 0) gbUsed = lastStorageUse ?: 0
-        def storageUseThisMonth = determineCurrentStorageUse(lastStorageUse, gbUsed ?: 0)
+        def storageUseThisMonth = determineCurrentStorageUse(lastStorageUse, gbUsed)
         budgetRepository.updateUserStorageUse(username, storageUseThisMonth)
         return storageUseThisMonth
     }

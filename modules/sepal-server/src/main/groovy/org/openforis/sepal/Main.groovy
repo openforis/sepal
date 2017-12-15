@@ -33,7 +33,8 @@ class Main {
 
         def processingRecipeComponent = start ProcessingRecipeComponent.create()
         def workerInstanceComponent = start WorkerInstanceComponent.create(hostingServiceAdapter)
-        def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, connectionManager)
+        def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir))
+        def budgetComponent = start BudgetComponent.create(hostingServiceAdapter, filesComponent, connectionManager)
         def workerSessionComponent = start WorkerSessionComponent.create(
                 budgetComponent,
                 workerInstanceComponent,
@@ -47,7 +48,6 @@ class Main {
         )
         def dataSearchComponent = start DataSearchComponent.create(processingRecipeComponent, taskComponent, connectionManager)
         start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
-        def filesComponent = stoppable new FilesComponent(new File(config.userHomesDir))
         def appsComponent = new AppsComponent(config.appsFile)
 
         def gateOneAuthEndpoint = new GateOneAuthEndpoint(config.gateOnePublicKey, config.gateOnePrivateKey)
@@ -56,9 +56,9 @@ class Main {
                 gateOneAuthEndpoint,
                 dataSearchComponent,
                 workerSessionComponent,
+                budgetComponent,
                 filesComponent,
                 taskComponent,
-                budgetComponent,
                 processingRecipeComponent,
                 appsComponent)
         start new Server(config.webAppPort, '/api', endpoints)

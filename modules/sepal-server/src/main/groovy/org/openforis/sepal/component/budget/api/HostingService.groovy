@@ -4,6 +4,4 @@ interface HostingService {
     Map<String, Double> hourlyCostByInstanceType()
 
     double storageCostPerGbMonth()
-
-    double gbStorageUsed(String username)
 }
