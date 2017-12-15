@@ -25,12 +25,4 @@ class GbUsed_Test extends AbstractFilesTest {
         then:
         gbWithOneFile < gbWithTwoFiles
     }
-
-    def 'Given no files in the home directory, no storage is used'() {
-        when:
-        def gb = component.submit(new GbUsed(testUsername))
-
-        then:
-        gb == 0
-    }
 }
