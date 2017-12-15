@@ -88,7 +88,7 @@
 </div>
 
 <script src="static/js/ceo-map-utils.js?v1"></script>
-<script src="static/js/overlay-map-manager.js?v1"></script>
+<script src="static/js/overlay-map-manager.js?v2"></script>
 
 <script>
 
@@ -596,7 +596,7 @@
                 if (typeof index !== 'undefined' && index != '') {
                     var overlay = overlays[index];
                     if (refresh == true) overlayMapManager.overlayMapTypes[index] = undefined;
-                    overlayMapManager.addOverlayMapType(overlay, index).then(function() {
+                    overlayMapManager.addOverlayMapType(overlay, index, function() {
                         var overlayMapType = overlayMapManager.overlayMapTypes[index];
                         if (overlay.type != 'geonetwork' && overlay.type != 'dgcs' && overlay.type != 'geoserver') {
                             gmap.overlayMapTypes.insertAt(0, overlayMapType);

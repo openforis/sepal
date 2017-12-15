@@ -7,9 +7,9 @@ let overlayMapManager = {
         'sepalHost': ''
     },
     'overlayMapTypes': {},
-    'addOverlayMapType': function(overlay, index) {
+    'addOverlayMapType': function(overlay, index, callback) {
         if (this.overlayMapTypes[index] !== undefined) {
-            return $.Deferred().resolve().promise();
+            callback();
         }
         var that = this;
         var layerName = overlay.layerName;
@@ -41,7 +41,7 @@ let overlayMapManager = {
             } else {
                 url += '/imageByMosaicCollection';
             }
-            return $.ajax({
+            $.ajax({
                 url: url,
                 type: 'POST',
                 contentType: 'application/json',
@@ -74,6 +74,7 @@ let overlayMapManager = {
                         that.overlayMapTypes[index] = imageMapType;
                     }
                 }
+                callback();
             });
         } else if (overlay.type == 'geea-gateway') {
             var imageName = overlay.geeaImageName;
@@ -86,7 +87,7 @@ let overlayMapManager = {
             if (gamma != '') visParams['gamma'] = gamma;
             var palette = overlay.geeaPalette;
             if (palette != '') visParams['palette'] = palette;
-            return $.ajax({
+            $.ajax({
                 url: this.config.geeGatewayApiUrl + '/image',
                 type: 'POST',
                 contentType: 'application/json',
@@ -117,6 +118,7 @@ let overlayMapManager = {
                         var imageMapType = new google.maps.ImageMapType(layerOptions);
                         that.overlayMapTypes[index] = imageMapType;
                     }
+                    callback();
                 }
             });
         } else if (overlay.type == 'digitalglobe') {
@@ -132,6 +134,7 @@ let overlayMapManager = {
             }
             var imageMapType = new google.maps.ImageMapType(layerOptions);
             this.overlayMapTypes[index] = imageMapType;
+            callback();
         } else if (overlay.type == 'gibs') {
             var imageryLayer = overlay.imageryLayer;
             var date = overlay.date;
@@ -148,6 +151,7 @@ let overlayMapManager = {
             };
             var imageMapType = new google.maps.ImageMapType(layerOptions);
             this.overlayMapTypes[index] = imageMapType;
+            callback();
         } else if (overlay.type == 'geonetwork') {
             var geonetworkLayer = L.tileLayer.wms('http://data.fao.org/maps/wms?', {
                 layers: overlay.geonetworkLayer,
@@ -160,6 +164,7 @@ let overlayMapManager = {
                 version: '1.3.0'
             });
             this.overlayMapTypes[index] = geonetworkLayer;
+            callback();
         } else if (overlay.type == 'dgcs') {
             var connectid = this.config.dgcsConnectId;
             var url = 'https://services.digitalglobe.com/mapservice/wmsaccess?';
@@ -201,6 +206,7 @@ let overlayMapManager = {
                 version: '1.1.1'
             });
             this.overlayMapTypes[index] = dgcsLayer;
+            callback();
         } else if (overlay.type == 'planet') {
             var mosaic_name = overlay.planetMosaicName;
             var version = overlay.planetApiVersion;
@@ -218,8 +224,9 @@ let overlayMapManager = {
             }
             var imageMapType = new google.maps.ImageMapType(layerOptions);
             this.overlayMapTypes[index] = imageMapType;
+            callback();
         } else if (overlay.type == 'sepal') {
-            return $.ajax({
+            $.ajax({
                 url: 'https://' + this.config.sepalHost + '/processing-recipes/' + overlay.sepalMosaicName,
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
@@ -284,6 +291,7 @@ let overlayMapManager = {
                         var imageMapType = new google.maps.ImageMapType(layerOptions);
                         that.overlayMapTypes[index] = imageMapType;
                     }
+                    callback();
                 });
             });
         } else if (overlay.type == 'geoserver') {
@@ -298,9 +306,8 @@ let overlayMapManager = {
                 version: overlay.geoserverVersion
             });
             this.overlayMapTypes[index] = geoserverLayer;
+            callback();
         }
-        return $.Deferred().resolve().promise();
-
     }
 
 }
