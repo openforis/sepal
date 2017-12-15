@@ -52,8 +52,20 @@ class DownloadFeatures(ThreadTask):
             data_sets, aoi, from_date, to_date, mask_snow, brdf_correct):
         super(DownloadFeatures, self).__init__('download_features')
         self.spec = TimeSeriesSpec(
-            credentials, expression, data_sets, aoi, from_date, to_date,
-            1, True, mask_snow, brdf_correct, target_day=0, masked_on_analysis=False)
+            credentials=credentials,
+            expression=expression,
+            data_sets=data_sets,
+            aoi=aoi,
+            from_date=from_date,
+            to_date=to_date,
+            shadow_tolerance=1,
+            mask_clouds=True,
+            mask_snow=mask_snow,
+            brdf_correct=brdf_correct,
+            surface_reflectance=True,
+            target_day=0,
+            masked_on_analysis=False
+        )
         self.download_dir = download_dir
         self.description = description
         self.download_tasks = []
@@ -380,8 +392,8 @@ class Status(object):
 
 TimeSeriesSpec = namedtuple(
     'TimeSeriesSpec',
-    'credentials, expression, data_sets, aoi, from_date, to_date, shadow_tolerance, mask_clouds, mask_snow, '
-    'brdf_correct, target_day, masked_on_analysis')
+    'credentials, expression, data_sets, aoi, from_date, to_date, surface_reflectance, shadow_tolerance, mask_clouds, '
+    'mask_snow, brdf_correct, target_day, masked_on_analysis')
 
 
 def _active(task):
