@@ -53,6 +53,13 @@ html, body, #gmap, #lmap {
     z-index: 999;
 }
 
+.map-control.map-control-left {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    z-index: 999;
+}
+
 .map-control select {
     background-color: #fff;
     border: 2px solid;

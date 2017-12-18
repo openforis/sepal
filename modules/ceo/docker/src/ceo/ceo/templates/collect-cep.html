@@ -2,6 +2,12 @@
 {% block body %}
 
 <div id="maps">
+    <div class="map-control map-control-left">
+        <select class="selector-control" id="base-selector">
+            <option value="">SEPAL</option>
+            <option value="satellite">SATELLITE</option>
+        </select>
+    </div>
     <div class="map-control">
         <button type="button" id="layer-refresher"><i class="fa fa-refresh" aria-hidden="true"></i></button>
         <select class="selector-control" id="layer-selector">
@@ -274,10 +280,15 @@
                     gestureHandling  : 'greedy'
                 };
 
-                var CartoDB_DarkMatterNoLabels = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
+                CartoDB_DarkMatterNoLabels = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
                     subdomains: 'abcd',
                     maxZoom: 19
+                });
+
+                googleMapsSatelliteForLeaflet = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                    maxZoom: 19,
+                    subdomains: ['mt0','mt1','mt2','mt3']
                 });
 
                 var lOptions = {
@@ -600,13 +611,28 @@
             }, 1000);
         }
 
+        $('#base-selector').change(function(e) {
+            var selectedBase = $(this).val();
+            if (selectedBase == '') {
+                gmap.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+                lmap.removeLayer(googleMapsSatelliteForLeaflet);
+                lmap.addLayer(CartoDB_DarkMatterNoLabels);
+            } else if (selectedBase == 'satellite') {
+                gmap.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+                lmap.removeLayer(CartoDB_DarkMatterNoLabels);
+                lmap.addLayer(googleMapsSatelliteForLeaflet);
+            }
+        });
+
         $('#layer-refresher').click(function(e) {
             e.preventDefault();
-            layerSelection($('#layer-selector option:selected').val(), true);
+            var selectedLayer = $('#layer-selector option:selected').val();
+            layerSelection(selectedLayer, true);
         });
 
         $('#layer-selector').change(function(e) {
-            layerSelection($(this).val());
+            var selectedLayer = $(this).val();
+            layerSelection(selectedLayer);
         });
 
         $('.chart-btn').click(function(e) {
