@@ -58,6 +58,7 @@ class ImageToDrive(ThreadTask):
             description=self.description,
             folder=self.folder,
             region=self.region.bounds().getInfo()['coordinates'],
+            crs='EPSG:4326',
             scale=self.scale,
             maxPixels=self.maxPixels,
             shardSize=self.shardSize,

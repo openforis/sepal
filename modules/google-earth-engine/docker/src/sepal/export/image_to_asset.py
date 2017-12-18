@@ -57,6 +57,7 @@ class ImageToAsset(ThreadTask):
             description=self.description,
             assetId=asset_id,
             region=self.region.bounds().getInfo()['coordinates'],
+            crs='EPSG:4326',
             scale=self.scale,
             maxPixels=self.maxPixels
         )
