@@ -174,6 +174,10 @@ class RootHandler implements HttpHandler {
 
         void handleRequest(HttpServerExchange exchange) throws Exception {
             LOG.debug(exchange.toString())
+            exchange.responseHeaders.add(HttpString.tryFromString(
+                    'Content-Security-Policy'),
+                    'connect-src \'self\' https://*.googleapis.com https://apis.google.com'
+            )
             exchange.addResponseCommitListener(new ResponseCommitListener() {
                 void beforeCommit(HttpServerExchange ex) {
                     if (LOG.traceEnabled) LOG.trace("Before response commit. statusCode: $ex.statusCode, exchange: $exchange")
