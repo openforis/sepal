@@ -12,6 +12,7 @@ import static java.lang.Boolean.parseBoolean
 class ProxyConfig {
     final File keyFile
     final File certificateFile
+    final String host
     final int httpPort
     final int httpsPort
     final String logoutPath
@@ -25,6 +26,7 @@ class ProxyConfig {
         new ProxyConfig(
                 keyFile: new File(FileSystem.configDir(), 'sepal-https.key'),
                 certificateFile: new File(FileSystem.configDir(), 'sepal-https.crt'),
+                host: c.host,
                 httpPort: c.integer('httpPort'),
                 httpsPort: c.integer('httpsPort'),
                 logoutPath: c.logoutPath,

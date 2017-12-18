@@ -30,6 +30,7 @@ import org.xnio.Xnio
 
 class RootHandler implements HttpHandler {
     private static final int SESSION_TIMEOUT = 30 * 60 // 30 minutes
+    private final String host
     private final int httpsPort
     private final String authenticationUrl
     private final String currentUserUrl
@@ -38,6 +39,7 @@ class RootHandler implements HttpHandler {
     private final SessionManager sessionManager
 
     RootHandler(ProxyConfig config) {
+        this.host = config.host
         this.httpsPort = config.httpsPort
         this.authenticationUrl = config.authenticationUrl
         this.currentUserUrl = config.currentUserUrl
@@ -48,7 +50,7 @@ class RootHandler implements HttpHandler {
     }
 
     RootHandler proxy(EndpointConfig endpointConfig) {
-        def endpointHandler = new LoggingProxyHandler(endpointConfig)
+        def endpointHandler = new LoggingProxyHandler(endpointConfig, host)
         if (endpointConfig.rewriteRedirects)
             endpointHandler = new RedirectRewriteHandler(endpointHandler)
         if (endpointConfig.authenticate)
@@ -143,13 +145,14 @@ class RootHandler implements HttpHandler {
         }
     }
 
-
     private static class LoggingProxyHandler implements HttpHandler {
         private final Logger LOG = LoggerFactory.getLogger(LoggingProxyHandler)
         private final HttpHandler proxyHandler
+        private final String host
         private final String target
 
-        LoggingProxyHandler(EndpointConfig endpointConfig) {
+        LoggingProxyHandler(EndpointConfig endpointConfig, String host) {
+            this.host = host
             target = endpointConfig.target.toString().replaceAll('/$', '') // Remove trailing slashes
             def sslContext = new SSLContextBuilder()
                     .loadTrustMaterial(null, new TrustSelfSignedStrategy())
@@ -176,7 +179,7 @@ class RootHandler implements HttpHandler {
             LOG.debug(exchange.toString())
             exchange.responseHeaders.add(HttpString.tryFromString(
                     'Content-Security-Policy'),
-                    'connect-src \'self\' https://*.googleapis.com https://apis.google.com'
+                    "connect-src 'self' wss://$host https://*.googleapis.com https://apis.google.com"
             )
             exchange.addResponseCommitListener(new ResponseCommitListener() {
                 void beforeCommit(HttpServerExchange ex) {
