@@ -269,7 +269,7 @@ let overlayMapManager = {
             callback();
         }
         
-        var createEarthEngineLayer = function (mapId, token) {
+        function createEarthEngineLayer(mapId, token) {
           if (document.documentMode) {
             return new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {})
           } else {
