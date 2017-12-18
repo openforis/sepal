@@ -289,6 +289,7 @@
                     rotateControl    : false,
                     fullscreenControl: false,
                     animatedZoom     : false,
+                    tilt: 0,
                     backgroundColor  : '#131314',
                     draggableCursor  : 'crosshair'
                 };
@@ -296,11 +297,11 @@
                 CartoDB_DarkMatterNoLabels = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
                     subdomains: 'abcd',
-                    maxZoom: 19
+                    maxZoom: 22
                 });
 
                 googleMapsSatelliteForLeaflet = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                    maxZoom: 19,
+                    maxZoom: 22,
                     subdomains: ['mt0','mt1','mt2','mt3']
                 });
 
