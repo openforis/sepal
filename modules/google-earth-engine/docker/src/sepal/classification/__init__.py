@@ -40,6 +40,7 @@ class _Operation(ImageOperation):
         bands = ee.List(['red', 'nir', 'swir1', 'swir2'])
         missingBands = bands.removeAll(self.image.bandNames())
         bands = bands.removeAll(missingBands)
+        self.image = self.image.select(bands)
 
         def ratios_for_band(band):
             def ratio_for_band(band2):
@@ -59,7 +60,11 @@ class _Operation(ImageOperation):
 
         # Force updates to fusion table to be reflected
         self.trainingData = self.trainingData.map(self._force_cache_flush)
-        training = self.image.sampleRegions(self.trainingData, [self.classProperty], 1)
+        training = self.image.sampleRegions(
+            collection=self.trainingData,
+            properties=[self.classProperty],
+            scale=1
+        )
         classifier = ee.Classifier.cart().train(training, self.classProperty)
         classification = self.image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         # regression = self.image.classify(classifier.setOutputMode('REGRESSION')).rename(['regression'])

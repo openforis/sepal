@@ -27,11 +27,15 @@ class ChangeDetection(ImageSpec):
         # return {'bands': 'uncertainty', 'min': 0, 'max': 1, 'palette': 'green, yellow, orange, red'}
 
     def _ee_image(self):
-        image = _AddBandRatios(self.fromImage._ee_image()).apply() \
-            .addBands(_AddBandRatios(self.toImage._ee_image()).apply())
+        image = _SelectBands(self.fromImage._ee_image()).apply() \
+            .addBands(_SelectBands(self.toImage._ee_image()).apply())
         # Force updates to fusion table to be reflected
         self.trainingData = self.trainingData.map(self._force_cache_flush)
-        training = image.sampleRegions(self.trainingData, [self.classProperty], 1)
+        training = image.sampleRegions(
+            collection=self.trainingData,
+            properties=[self.classProperty],
+            scale=1
+        )
         classifier = ee.Classifier.cart().train(training, self.classProperty)
         classification = image.classify(classifier.setOutputMode('CLASSIFICATION')).rename(['class'])
         # regression = image.classify(classifier.setOutputMode('REGRESSION')).rename(['regression'])
@@ -47,14 +51,15 @@ class ChangeDetection(ImageSpec):
             .copyProperties(feature)
 
 
-class _AddBandRatios(ImageOperation):
+class _SelectBands(ImageOperation):
     def __init__(self, image):
-        super(_AddBandRatios, self).__init__(image)
+        super(_SelectBands, self).__init__(image)
 
     def apply(self):
         bands = ee.List(['red', 'nir', 'swir1', 'swir2'])
         missingBands = bands.removeAll(self.image.bandNames())
         bands = bands.removeAll(missingBands)
+        self.image = self.image.select(bands)
 
         def ratios_for_band(band):
             def ratio_for_band(band2):
