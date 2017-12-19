@@ -2,6 +2,7 @@
  * @author Mino Togna
  */
 require('./form-mosaic-retrieve.scss')
+var R = require('ramda')
 
 var EventBus      = require('../../../../event/event-bus')
 var Events        = require('../../../../event/events')
@@ -9,6 +10,7 @@ var FormValidator = require('../../../../form/form-validator')
 var BudgetCheck   = require('../../../../budget-check/budget-check')
 var SModel        = require('./../../../../search/model/search-model')
 var UserMV        = require('../../../../user/user-mv')
+var Sensors       = require('../../../../search/model/sensors')
 
 var parentContainer = null
 var container       = null
@@ -22,6 +24,13 @@ var rowSentinel2  = null
 var form          = null
 var formNotify    = null
 var activeSection = null
+
+var SensorsMapping = [
+  {sensorId: 'LC8', sensorGroup: 'LANDSAT_8'},
+  {sensorId: 'LE7', sensorGroup: 'LANDSAT_7'},
+  {sensorId: 'LT5', sensorGroup: 'LANDSAT_TM'},
+  {sensorId: 'LT4', sensorGroup: 'LANDSAT_TM'}
+]
 
 var init = function (parent) {
   parentContainer = parent
@@ -42,11 +51,11 @@ var init = function (parent) {
     e.preventDefault()
     submit(activeSection, $(e.target).data('destination'))
   })
-
-  if(UserMV.getCurrentUser().googleTokens)
-      $('.google-account-dependent').show()
+  
+  if (UserMV.getCurrentUser().googleTokens)
+    $('.google-account-dependent').show()
   else
-      $('.google-account-dependent').hide()
+    $('.google-account-dependent').hide()
 }
 
 var submit = function (section, destination) {
@@ -69,7 +78,7 @@ var submit = function (section, destination) {
     if (bands.length <= 0)
       FormValidator.showError(formNotify, 'At least one band must be selected')
     else
-      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, null, state, {bands: bands.join(','), name: name.val(), destination:destination})
+      EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.RETRIEVE_MOSAIC, null, state, {bands: bands.join(','), name: name.val(), destination: destination})
     
   }
   
@@ -104,6 +113,38 @@ var reset = function () {
   form.find('input').val('')
 }
 
+var getUniqueBands = function () {
+  var bands = R.pipe(
+    R.prop('sceneAreas'),
+    R.mapObjIndexed(function (sceneArea, sceneAreaId) {
+      // console.log(sceneAreaId, sceneArea.selection)
+      return sceneArea.selection
+    }),
+    R.values,
+    R.flatten,
+    R.map(function (sceneId) {
+      return sceneId.substring(0, 3)
+    }),
+    R.uniq,
+    R.map(function (prefix) {
+      return R.pipe(
+        R.find(R.propEq('sensorId', prefix)),
+        R.defaultTo({sensorGroup: 'SENTINEL2A'}),
+        R.prop('sensorGroup')
+      )(SensorsMapping)
+    }),
+    R.map(function (sensorGroup) {
+      var sensorObj = (Sensors.LANDSAT[sensorGroup]) ? Sensors.LANDSAT[sensorGroup] : Sensors.SENTINEL2[sensorGroup]
+      return sensorObj.bands
+    }),
+    R.values,
+    R.flatten,
+    R.uniq
+  )(state)
+  
+  return bands
+}
+
 var setActiveState = function (e, activeState) {
   state = activeState
   if (state && state.type == SModel.TYPES.MOSAIC) {
@@ -116,16 +157,28 @@ var setActiveState = function (e, activeState) {
     $.each(inputs, function (i, input) {
       input = $(input)
       // if ($.isEmptyString(input.val())) {
-        input.val(state.name)
+      input.val(state.name)
       // }
     })
-  
+    
     if (state.median) {
       disableDateBands()
     } else {
       enableDateBands()
     }
   }
+  
+  var bands = getUniqueBands()
+  container.find('.btn-band').each(function () {
+    var btn = $(this)
+    console.log(" -- " , btn.val())
+    if (R.contains(btn.val(), bands)) {
+      btn.enable()
+    } else {
+      btn.disable()
+      $(this).removeClass('active')
+    }
+  })
 }
 
 var disableDateBands = function () {

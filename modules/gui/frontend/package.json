@@ -37,9 +37,10 @@
     "interactjs": "^1.2.9",
     "jquery": "^3.0.0",
     "moment": "^2.18.1",
-    "nouislider": "leongersen/noUiSlider",
+    "nouislider": "github:leongersen/noUiSlider",
     "numeral": "^2.0.6",
     "popper.js": "^1.12.5",
+    "ramda": "^0.25.0",
     "sortablejs": "^1.6.1",
     "tether": "^1.4.0"
   }

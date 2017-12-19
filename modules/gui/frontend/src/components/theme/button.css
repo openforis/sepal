@@ -49,6 +49,13 @@
     padding-left: 50px;
 }
 
+.btn.disabled,
+.btn:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
 @media (min-width: 992px) {
     .btn {
         padding: 24.5px 38.5px 24.5px 40px;
