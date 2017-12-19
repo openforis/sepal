@@ -74,6 +74,7 @@ class SandboxSessionEndpoint_Test extends AbstractComponentEndpointTest {
                                 description: instanceType.description,
                                 hourlyCost: instanceType.hourlyCost
                         ],
+                        earliestTimeoutHours: 0.0,
                         creationTime: '2016-01-01T00:00:00',
                         costSinceCreation: 0.1 * 2 * 24 // hourly cost * two days
                 ]],
