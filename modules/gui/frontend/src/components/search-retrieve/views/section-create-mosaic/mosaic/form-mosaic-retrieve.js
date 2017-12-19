@@ -2,15 +2,15 @@
  * @author Mino Togna
  */
 require('./form-mosaic-retrieve.scss')
-var R = require('ramda')
 
-var EventBus      = require('../../../../event/event-bus')
-var Events        = require('../../../../event/events')
-var FormValidator = require('../../../../form/form-validator')
-var BudgetCheck   = require('../../../../budget-check/budget-check')
-var SModel        = require('./../../../../search/model/search-model')
-var UserMV        = require('../../../../user/user-mv')
-var Sensors       = require('../../../../search/model/sensors')
+var R              = require('ramda')
+var EventBus       = require('../../../../event/event-bus')
+var Events         = require('../../../../event/events')
+var FormValidator  = require('../../../../form/form-validator')
+var BudgetCheck    = require('../../../../budget-check/budget-check')
+var SModel         = require('./../../../../search/model/search-model')
+var UserMV         = require('../../../../user/user-mv')
+var SceneSelection = require('../../../../scenes-selection/scenes-selection-m')
 
 var parentContainer = null
 var container       = null
@@ -24,13 +24,6 @@ var rowSentinel2  = null
 var form          = null
 var formNotify    = null
 var activeSection = null
-
-var SensorsMapping = [
-  {sensorId: 'LC8', sensorGroup: 'LANDSAT_8'},
-  {sensorId: 'LE7', sensorGroup: 'LANDSAT_7'},
-  {sensorId: 'LT5', sensorGroup: 'LANDSAT_TM'},
-  {sensorId: 'LT4', sensorGroup: 'LANDSAT_TM'}
-]
 
 var init = function (parent) {
   parentContainer = parent
@@ -113,38 +106,6 @@ var reset = function () {
   form.find('input').val('')
 }
 
-var getUniqueBands = function () {
-  var bands = R.pipe(
-    R.prop('sceneAreas'),
-    R.mapObjIndexed(function (sceneArea, sceneAreaId) {
-      // console.log(sceneAreaId, sceneArea.selection)
-      return sceneArea.selection
-    }),
-    R.values,
-    R.flatten,
-    R.map(function (sceneId) {
-      return sceneId.substring(0, 3)
-    }),
-    R.uniq,
-    R.map(function (prefix) {
-      return R.pipe(
-        R.find(R.propEq('sensorId', prefix)),
-        R.defaultTo({sensorGroup: 'SENTINEL2A'}),
-        R.prop('sensorGroup')
-      )(SensorsMapping)
-    }),
-    R.map(function (sensorGroup) {
-      var sensorObj = (Sensors.LANDSAT[sensorGroup]) ? Sensors.LANDSAT[sensorGroup] : Sensors.SENTINEL2[sensorGroup]
-      return sensorObj.bands
-    }),
-    R.values,
-    R.flatten,
-    R.uniq
-  )(state)
-  
-  return bands
-}
-
 var setActiveState = function (e, activeState) {
   state = activeState
   if (state && state.type == SModel.TYPES.MOSAIC) {
@@ -161,24 +122,24 @@ var setActiveState = function (e, activeState) {
       // }
     })
     
+    var bands = SceneSelection.getUniqueImageSelectionBands()
+    container.find('.btn-band').each(function () {
+      var btn = $(this)
+      if (R.contains(btn.val(), bands)) {
+        btn.enable()
+      } else {
+        btn.disable()
+        $(this).removeClass('active')
+      }
+    })
+    
     if (state.median) {
       disableDateBands()
     } else {
       enableDateBands()
     }
-  }
   
-  var bands = getUniqueBands()
-  container.find('.btn-band').each(function () {
-    var btn = $(this)
-    console.log(" -- " , btn.val())
-    if (R.contains(btn.val(), bands)) {
-      btn.enable()
-    } else {
-      btn.disable()
-      $(this).removeClass('active')
-    }
-  })
+  }
 }
 
 var disableDateBands = function () {
