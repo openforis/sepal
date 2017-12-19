@@ -81,7 +81,8 @@ var reset = function (sceneAreaId, avSensors) {
 }
 
 var updateSensors = function () {
-  SectionFilterScenes.setSensors(availableSensors, state.sensors)
+  if (state.type === SModel.TYPES.MOSAIC)
+    SectionFilterScenes.setSensors(availableSensors, state.sensors)
 }
 // Functions for selection section
 var add           = function (sceneImage, filterHidden, selected) {
