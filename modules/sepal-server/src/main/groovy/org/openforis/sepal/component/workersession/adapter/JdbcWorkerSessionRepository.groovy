@@ -25,23 +25,23 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
 
     void insert(WorkerSession session) {
         sql.executeInsert('''
-                INSERT INTO worker_session(state, username, worker_type, instance_type, instance_id, host, creation_time, update_time, id)
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)''', [
+                INSERT INTO worker_session(state, username, worker_type, instance_type, instance_id, host, earliest_timeout_time, creation_time, update_time, id)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', [
                 session.state.name(), session.username, session.workerType, session.instanceType, session.instance.id,
-                session.instance.host, session.creationTime, session.updateTime, session.id
+                session.instance.host, session.earliestTimeoutTime, session.creationTime, session.updateTime, session.id
         ])
     }
 
     void update(WorkerSession session) {
         sql.executeUpdate('''
                 UPDATE worker_session
-                SET state = ?, update_time = ?
-                WHERE id = ?''', [session.state.name(), clock.now(), session.id])
+                SET state = ?, earliest_timeout_time = ?, update_time = ?
+                WHERE id = ?''', [session.state.name(), session.earliestTimeoutTime, clock.now(), session.id])
     }
 
     WorkerSession getSession(String sessionId) {
         def row = sql.firstRow('''
-                SELECT id, state, username, worker_type, instance_type, instance_id, host, creation_time, update_time
+                SELECT id, state, username, worker_type, instance_type, instance_id, host, earliest_timeout_time, creation_time, update_time
                 FROM worker_session
                 WHERE id = ?''',
                 [sessionId])
@@ -52,7 +52,7 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
 
     List<WorkerSession> userSessions(String username, List<WorkerSession.State> states, String workerType = null, String instanceType = null) {
         def query = '''
-                SELECT id, state, username, worker_type, instance_type, instance_id, host, creation_time, update_time
+                SELECT id, state, username, worker_type, instance_type, instance_id, host, earliest_timeout_time, creation_time, update_time
                 FROM worker_session
                 WHERE username = ?'''
         def params = [username]
@@ -77,7 +77,7 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
 
     List<WorkerSession> sessions(List<WorkerSession.State> states) {
         def query = """
-                SELECT id, state, username, worker_type, instance_type, instance_id, host, creation_time, update_time
+                SELECT id, state, username, worker_type, instance_type, instance_id, host, earliest_timeout_time, creation_time, update_time
                 FROM worker_session
                 WHERE state in (${placeholders(states.size())})""" as String
         sql.rows(
@@ -88,18 +88,19 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
     List<WorkerSession> timedOutSessions() {
         def now = clock.now()
         sql.rows('''
-                SELECT id, state, username, worker_type, instance_type, instance_id, host, creation_time, update_time
+                SELECT id, state, username, worker_type, instance_type, instance_id, host, earliest_timeout_time, creation_time, update_time
                 FROM worker_session
-                WHERE (state = ? AND update_time < ?)
-                OR (state = ? AND update_time < ?)''', [
-                PENDING.name(), Timeout.PENDING.lastValidUpdate(now),
+                WHERE (earliest_timeout_time IS NULL OR earliest_timeout_time < ?) AND (
+                (state = ? AND update_time < ?)
+                OR (state = ? AND update_time < ?))''', [
+                now, PENDING.name(), Timeout.PENDING.lastValidUpdate(now),
                 ACTIVE.name(), Timeout.ACTIVE.lastValidUpdate(now)]
         ).collect { toSession(it) }
     }
 
     WorkerSession sessionOnInstance(String instanceId, List<WorkerSession.State> states) {
         def query = """
-                SELECT id, state, username, worker_type, instance_type, instance_id, host, creation_time, update_time
+                SELECT id, state, username, worker_type, instance_type, instance_id, host, earliest_timeout_time, creation_time, update_time
                 FROM worker_session
                 WHERE instance_id = ? AND state in (${placeholders(states.size())})""" as String
         def row = sql.firstRow(query, [instanceId, states.collect { it.name() }].flatten() as List<Object>)
@@ -117,13 +118,14 @@ class JdbcWorkerSessionRepository implements WorkerSessionRepository {
                 workerType: row.worker_type,
                 instanceType: row.instance_type,
                 instance: new WorkerInstance(id: row.instance_id, host: row.host),
+                earliestTimeoutTime: toDate(row.earliest_timeout_time),
                 creationTime: toDate(row.creation_time),
                 updateTime: toDate(row.update_time)
         )
     }
 
     private Date toDate(date) {
-        new Date((date as Timestamp).time)
+        return date ? new Date((date as Timestamp).time) : null
     }
 
     private String placeholders(int count) {
