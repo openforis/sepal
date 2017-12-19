@@ -4,13 +4,13 @@
 require('./form-mosaic-retrieve.scss')
 
 var R              = require('ramda')
+var SceneSelection = require('../../../../scenes-selection/scenes-selection-m')
 var EventBus       = require('../../../../event/event-bus')
 var Events         = require('../../../../event/events')
 var FormValidator  = require('../../../../form/form-validator')
 var BudgetCheck    = require('../../../../budget-check/budget-check')
 var SModel         = require('./../../../../search/model/search-model')
 var UserMV         = require('../../../../user/user-mv')
-var SceneSelection = require('../../../../scenes-selection/scenes-selection-m')
 
 var parentContainer = null
 var container       = null

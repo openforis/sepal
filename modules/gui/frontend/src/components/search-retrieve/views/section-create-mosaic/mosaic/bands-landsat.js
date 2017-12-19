@@ -3,8 +3,8 @@
  */
 
 var bands = [
-  {data: 'red, green, blue', value: 'Natural (Red, Green, Blue)'}
-  , {data: 'nir, red, green', value: 'Infrared (NIR, Red, Green)'}
+  {data: 'red, green, blue', value: 'Natural (Red, Green, Blue)', panSharpening: true}
+  , {data: 'nir, red, green', value: 'Infrared (NIR, Red, Green)', panSharpening: true}
   , {data: 'nir, swir1, red', value: 'False color (NIR, SWIR 1, Red)'}
   , {data: 'swir2, nir, red', value: 'False color (SWIR 2, NIR, Red)'}
   , {data: 'swir2, swir1, red', value: 'False color (SWIR 2, SWIR 1, Red)'}

@@ -109,8 +109,11 @@ var getUniqueImageSelectionBands = function () {
       return sensorObj.bands
     }),
     R.values,
-    R.flatten,
-    R.uniq
+    function (arg) {
+      return R.reduce(function(intersection, array){
+        return R.intersection(intersection, array)
+      }, arg[0])(arg)
+    }
   )(state)
   
   return bands

@@ -12,6 +12,7 @@ var SearchRequestUtils = require( './../search/search-request-utils' )
 
 var previewMosaic = function ( e, state ) {
   var data   = SearchRequestUtils.getImageData( state, state.mosaicPreviewBand )
+  data.panSharpening = state.panSharpening
   var params = {
     url          : '/gee/preview'
     , data       : JSON.stringify( data )

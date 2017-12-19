@@ -2,9 +2,11 @@
  * @author Mino Togna
  */
 require('./form-mosaic-preview.scss')
-var EventBus      = require('../../../../event/event-bus')
-var Events        = require('../../../../event/events')
-var FormValidator = require('../../../../form/form-validator')
+var R              = require('ramda')
+var SceneSelection = require('../../../../scenes-selection/scenes-selection-m')
+var EventBus       = require('../../../../event/event-bus')
+var Events         = require('../../../../event/events')
+var FormValidator  = require('../../../../form/form-validator')
 
 require('devbridge-autocomplete')
 
@@ -22,12 +24,14 @@ var rowSentinel2        = null
 var sentinel2Bands      = require('./bands-sentinel2.js')
 var inputBandsSentinel2 = null
 
-var btnSubmit = null
+var btnPanSharpening = null
+var btnSubmit        = null
 
 var state = {}
 
 var onBandsSelectionChange = function (selection) {
   state.mosaicPreviewBand = (selection) ? selection.data : null
+  updatePanSharpeningBtnState()
 }
 
 var init = function (parent) {
@@ -39,7 +43,8 @@ var init = function (parent) {
   rowLandsat   = html.find('.row-LANDSAT')
   rowSentinel2 = html.find('.row-SENTINEL2')
   
-  btnSubmit = html.find('.btn-submit')
+  btnSubmit        = html.find('.btn-submit')
+  btnPanSharpening = html.find('.btn-pan-sharpening')
   
   inputBandsLandsat = html.find('input[name=bands-landsat]')
   inputBandsLandsat.sepalAutocomplete({
@@ -52,6 +57,14 @@ var init = function (parent) {
   inputBandsSentinel2.sepalAutocomplete({
     lookup    : sentinel2Bands
     , onChange: onBandsSelectionChange
+  })
+  
+  btnPanSharpening.click(function () {
+    btnPanSharpening.toggleClass('active')
+    if (btnPanSharpening.hasClass('active'))
+      state.panSharpening = true
+    else
+      state.panSharpening = false
   })
   
   btnSubmit.click(function (e) {
@@ -100,7 +113,31 @@ var setActiveState = function (e, activeState) {
     } else {
       enableDateBands()
     }
+    
+    if (state.panSharpening)
+      btnPanSharpening.addClass('active')
+    else
+      btnPanSharpening.removeClass('active')
+    
+    updatePanSharpeningBtnState()
   }
+}
+
+var updatePanSharpeningBtnState = function () {
+  var disablePanSharpeningBtn = function () {
+    btnPanSharpening.removeClass('active')
+    btnPanSharpening.disable()
+    state.panSharpening = false
+  }
+  
+  if (state.mosaicPreviewBand && state.sensorGroup === 'LANDSAT') {
+    var band          = R.find(R.propEq('data', state.mosaicPreviewBand))(landsatBands)
+    var selectedBands = SceneSelection.getUniqueImageSelectionBands()
+    band.panSharpening && R.contains('pan', selectedBands)
+      ? btnPanSharpening.enable()
+      : disablePanSharpeningBtn()
+  } else
+    disablePanSharpeningBtn()
 }
 
 var setBandValue = function (bands, input) {
