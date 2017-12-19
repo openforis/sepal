@@ -3,9 +3,11 @@ package component.workersession
 import fake.Database
 import fake.FakeClock
 import org.openforis.sepal.component.hostingservice.api.InstanceType
-import org.openforis.sepal.component.workersession.command.CloseSessionOnInstance
 import org.openforis.sepal.component.workersession.WorkerSessionComponent
-import org.openforis.sepal.component.workersession.api.*
+import org.openforis.sepal.component.workersession.api.Spending
+import org.openforis.sepal.component.workersession.api.Timeout
+import org.openforis.sepal.component.workersession.api.UserSessionReport
+import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.api.WorkerSession.State
 import org.openforis.sepal.component.workersession.command.*
 import org.openforis.sepal.component.workersession.query.FindPendingOrActiveSession
@@ -48,10 +50,13 @@ abstract class AbstractWorkerSessionTest extends Specification {
     }
 
     final WorkerSession requestSession(Map args = [:]) {
-        component.submit(new RequestSession(
+        def session = component.submit(new RequestSession(
                 username: username(args),
                 workerType: args.workerType ?: testWorkerType,
                 instanceType: testInstanceType))
+        if (args.earliestTimeoutTime)
+            setEarliestTimeoutTime(session, args.earliestTimeoutTime)
+        return session
     }
 
     final WorkerSession pendingSession(Map args = [:]) {
@@ -108,6 +113,10 @@ abstract class AbstractWorkerSessionTest extends Specification {
 
     final void sendHeartbeat(WorkerSession session, Map args = [:]) {
         component.submit(new Heartbeat(username: username(args), sessionId: session.id))
+    }
+
+    final void setEarliestTimeoutTime(WorkerSession session, Date time, Map args = [:]) {
+        component.submit(new SetEarliestTimeoutTime(username: username(args), sessionId: session.id, time: time))
     }
 
     final WorkerSession findSessionById(String sessionId) {

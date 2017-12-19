@@ -73,6 +73,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         command(CloseSessionsWithoutInstance, new CloseSessionsWithoutInstanceHandler(sessionRepository, instanceManager, eventDispatcher))
         command(ReleaseUnusedInstances, new ReleaseUnusedInstancesHandler(sessionRepository, instanceManager))
         command(Heartbeat, new HeartbeatHandler(sessionRepository, googleOAuthGateway))
+        command(SetEarliestTimeoutTime, new SetEarliestTimeoutTimeHandler(sessionRepository))
         command(CloseSessionsForUsersExceedingBudget,
                 new CloseSessionsForUsersExceedingBudgetHandler(budgetManager, closeUserSessionsHandler))
 

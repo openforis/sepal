@@ -10,6 +10,7 @@ import org.openforis.sepal.component.workersession.api.WorkerSession
 import org.openforis.sepal.component.workersession.command.CloseSession
 import org.openforis.sepal.component.workersession.command.Heartbeat
 import org.openforis.sepal.component.workersession.command.RequestSession
+import org.openforis.sepal.component.workersession.command.SetEarliestTimeoutTime
 import org.openforis.sepal.component.workersession.query.GenerateUserSessionReport
 import org.openforis.sepal.util.Clock
 
@@ -52,6 +53,10 @@ class SandboxSessionEndpoint {
             }
             post('/sandbox/{username}/session/{sessionId}', [ADMIN]) {
                 otherUser(requestContext).sendHeartbeat()
+            }
+
+            post('/sandbox/session/{sessionId}/earliestTimeoutTime') {
+                currentUser(requestContext).setEarliestTimeoutTime()
             }
 
 
@@ -132,6 +137,19 @@ class SandboxSessionEndpoint {
             }
         }
 
+        void setEarliestTimeoutTime() {
+            context.with {
+                response.contentType = 'application/json'
+                def earliestTimeout = params.required('hours', Double)
+                response.status = 204
+                component.submit(new SetEarliestTimeoutTime(
+                        sessionId: params.required('sessionId'),
+                        time: advanceHours(new Date(), earliestTimeout),
+                        username: username
+                ))
+            }
+        }
+
         void closeSession() {
             context.with {
                 response.status = 204
@@ -154,15 +172,17 @@ class SandboxSessionEndpoint {
         }
 
         private Map sessionAsMap(WorkerSession session, InstanceType instanceType) {
+            def earliestTimeoutHours = Math.max(0, hoursBetween(new Date(), session.earliestTimeoutTime))
             [
-                    id               : session.id,
-                    path             : "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
-                    username         : username,
-                    status           : sessionStatus(session),
-                    host             : session.instance.host,
-                    instanceType     : instanceTypeAsMap(instanceType),
-                    creationTime     : session.creationTime.format("yyyy-MM-dd'T'HH:mm:ss"),
-                    costSinceCreation: (instanceType.hourlyCost * hoursSince(session.creationTime)).round(2)
+                    id                  : session.id,
+                    path                : "sandbox/${forCurrentUser ? '' : "$username/"}session/$session.id",
+                    username            : username,
+                    status              : sessionStatus(session),
+                    host                : session.instance.host,
+                    earliestTimeoutHours: earliestTimeoutHours,
+                    instanceType        : instanceTypeAsMap(instanceType),
+                    creationTime        : session.creationTime.format("yyyy-MM-dd'T'HH:mm:ss"),
+                    costSinceCreation   : (instanceType.hourlyCost * hoursSince(session.creationTime)).round(2)
             ]
         }
 
@@ -193,6 +213,19 @@ class SandboxSessionEndpoint {
 
         private String sessionStatus(WorkerSession session) {
             session.state == WorkerSession.State.PENDING ? 'STARTING' : 'ACTIVE'
+        }
+
+        private Double hoursBetween(Date startTime, Date endTime) {
+            if (!startTime || !endTime)
+                return 0
+            double secs = (endTime.time - startTime.time) / 1000
+            return secs / 3600
+        }
+
+        private Date advanceHours(Date date, double hours) {
+            if (!hours)
+                return date
+            return new Date((long) (date.time + hours * 3600 * 1000))
         }
     }
 }
