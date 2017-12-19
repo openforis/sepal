@@ -73,7 +73,6 @@ var _loadMosaic = function (id, callback) {
       Loader.show()
     }
     , success   : function (response) {
-      Loader.hide({delay: 1000})
       
       var state = typeof response === 'string' ? JSON.parse(response) : response
       delete state['mosaic']
@@ -105,7 +104,7 @@ var loadMosaic = function (e, id) {
     EventBus.dispatch(Events.SECTION.REDUCE)
     if (state.mosaicPreview) {
       switch (state.type) {
-        
+
         case Model.TYPES.MOSAIC:
           if (state.mosaicPreviewBand)
             EventBus.dispatch(Events.SECTION.SEARCH_RETRIEVE.PREVIEW_MOSAIC, null, state)
@@ -116,8 +115,10 @@ var loadMosaic = function (e, id) {
         case Model.TYPES.CHANGE_DETECTION:
           requestChangeDetection(e, state)
           break
-        
+
       }
+    } else {
+      Loader.hide({delay: 1000})
     }
   })
 }
@@ -131,6 +132,8 @@ var cloneMosaic = function (e, id) {
       hideSceneAreas : true,
       isNew          : true
     })
+    
+    Loader.hide({delay: 1000})
   })
 }
 

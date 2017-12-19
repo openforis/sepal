@@ -17,7 +17,9 @@ var previewMosaic = function ( e, state ) {
     , data       : JSON.stringify( data )
     , contentType: "application/json; charset=utf-8"
     , dataType   : "json"
-    , beforeSend : function () {Loader.show()}
+    , beforeSend : function () {
+      Loader.show()
+    }
     , success    : function ( response ) {
       state.mosaic = { mapId: response.mapId, token: response.token }
       EventBus.dispatch( Events.SECTION.SEARCH_RETRIEVE.MOSAIC_LOADED, null, state.mosaic.mapId, state.mosaic.token )
