@@ -69,17 +69,17 @@ class SepalExport(ThreadTask):
                 move=True
             ))
         tifs = destination_path + '/*.tif'
-        self._set_band_names = self.dependent(
-            SetBandNames(image_spec.bands, tifs))
         self._build_vrt = self.dependent(
             BuildVrt(destination_path + '/' + self.description + '.vrt', tifs))
+        self._set_band_names = self.dependent(
+            SetBandNames(image_spec.bands, [tifs, destination_path + '/*.vrt']))
         self._build_overviews = self.dependent(
             BuildOverviews(destination_path + '/*.vrt'))
 
         return self._export.submit() \
             .then(self._download.submit, self.reject) \
-            .then(self._set_band_names.submit, self.reject) \
             .then(self._build_vrt.submit, self.reject) \
+            .then(self._set_band_names.submit, self.reject) \
             .then(self._build_overviews.submit, self.reject) \
             .then(self.resolve, self.reject)
 
@@ -101,10 +101,10 @@ class SepalExport(ThreadTask):
                     )
                 else:
                     return 'Starting download to Sepal...'
-            if status.is_current_task(self._set_band_names):
-                return 'Setting band names...'
             if status.is_current_task(self._build_vrt):
                 return 'Building VRT...'
+            if status.is_current_task(self._set_band_names):
+                return 'Setting band names...'
             if status.is_current_task(self._build_overviews):
                 return 'Building overviews...'
             return 'Exporting from Google Earth Engine...'

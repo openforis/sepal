@@ -14,10 +14,14 @@ class SetBandNames(ProcessTask):
 
     def run(self):
         if isinstance(self.files, basestring):
-            files = glob(self.files)
+            files = [self.files]
         else:
             files = self.files
+        globbed_files = []
         for f in files:
+            globbed_files += glob(f)
+
+        for f in globbed_files:
             if not self.running():
                 return
             ds = osgeo.gdal.Open(f, GA_Update)
