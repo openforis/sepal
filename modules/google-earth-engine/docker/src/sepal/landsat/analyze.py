@@ -8,7 +8,7 @@ class Analyze(ImageOperation):
         super(Analyze, self).__init__(image)
         self.bands = bands
         self.surface_reflectance = mosaic_spec.surface_reflectance
-        self.selected_bands = mosaic_spec.bands
+        self.selected_bands = mosaic_spec.bands if mosaic_spec.bands else []
         self.pan_sharpen = mosaic_spec.pan_sharpen if 'pan' in bands and len(self.selected_bands) == 3 else False
 
     def apply(self):
