@@ -113,10 +113,11 @@ var getUniqueImageSelectionBands = function () {
       return R.reduce(function(intersection, array){
         return R.intersection(intersection, array)
       }, arg[0])(arg)
-    }
+    },
+    R.defaultTo([])
   )(state)
   
-  return bands ? bands : []
+  return bands
 }
 
 module.exports = {
