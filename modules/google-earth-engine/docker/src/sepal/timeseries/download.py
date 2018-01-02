@@ -64,7 +64,8 @@ class DownloadFeatures(ThreadTask):
             brdf_correct=brdf_correct,
             surface_reflectance=True,
             target_day=0,
-            masked_on_analysis=False
+            masked_on_analysis=False,
+            bands=[]
         )
         self.download_dir = download_dir
         self.description = description
@@ -393,7 +394,7 @@ class Status(object):
 TimeSeriesSpec = namedtuple(
     'TimeSeriesSpec',
     'credentials, expression, data_sets, aoi, from_date, to_date, surface_reflectance, shadow_tolerance, mask_clouds, '
-    'mask_snow, brdf_correct, target_day, masked_on_analysis')
+    'mask_snow, brdf_correct, target_day, masked_on_analysis, bands')
 
 
 def _active(task):
