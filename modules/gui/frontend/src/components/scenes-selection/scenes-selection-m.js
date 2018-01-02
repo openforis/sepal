@@ -116,7 +116,7 @@ var getUniqueImageSelectionBands = function () {
     }
   )(state)
   
-  return bands
+  return bands ? bands : []
 }
 
 module.exports = {
