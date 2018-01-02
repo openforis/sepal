@@ -8,6 +8,8 @@ class Analyze(ImageOperation):
         super(Analyze, self).__init__(image)
         self.bands = bands
         self.surface_reflectance = mosaic_spec.surface_reflectance
+        self.selected_bands = mosaic_spec.bands
+        self.pan_sharpen = mosaic_spec.pan_sharpen if 'pan' in bands and len(self.selected_bands) == 3 else False
 
     def apply(self):
         bands = self.bands
@@ -44,4 +46,13 @@ class Analyze(ImageOperation):
         if self.surface_reflectance:
             self.setAll(self.image.divide(10000))
 
+        if self.pan_sharpen:
+            sharpened = self._pan_sharpen(self.selected_bands)
+            self.setAll(sharpened)
+
         return self.image
+
+    def _pan_sharpen(self, bands):
+        hueSat = self.image.select(bands).rgbToHsv().select(['hue', 'saturation'])
+        return ee.Image.cat(hueSat, self.image.select('pan')).hsvToRgb() \
+            .rename(self.image.select(bands).bandNames())

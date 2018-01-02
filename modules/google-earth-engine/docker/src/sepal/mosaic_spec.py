@@ -25,6 +25,7 @@ class MosaicSpec(ImageSpec):
         self.to_date = spec.get('toDate', None)
         self.surface_reflectance = bool(spec.get('surfaceReflectance', False))
         self.masked_on_analysis = self.surface_reflectance
+        self.pan_sharpen = bool(spec.get('panSharpening', False))
 
     def _viz_params(self):
         viz_by_band = _sr_viz_by_bands if self.surface_reflectance else _toa_viz_by_bands
