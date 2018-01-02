@@ -2,6 +2,7 @@ import logging
 import threading
 from abc import abstractmethod
 
+import time
 from promise import Promise
 
 from ..exception import re_raisable
@@ -235,21 +236,42 @@ class ProcessTask(Task):
             except queue.Empty:
                 pass
 
-    def _close(self):
-        self._close_lock.acquire()
-        try:
-            if self._closed:
-                return
-            self._closed = True
-        finally:
-            self._close_lock.release()
+    def _close(self, retry=0):
+        if retry < 5:
+            self._close_lock.acquire()
+            try:
+                if self._closed:
+                    return
+                if self._is_process_closed():
+                    self._closed = True
+                    self.close()
+                    return
+            finally:
+                self._close_lock.release()
 
-        try:
-            if self._process and self._process.is_alive():
-                self._process.terminate()
-            self.close()
-        except Exception:
-            logger.exception('Error closing {0}'.format(self))
+            time.sleep(1)
+            self._close(retry + 1)  # Check if process completed after a second
+        else:  # Last retry
+            self._close_lock.acquire()
+            try:
+                if self._closed:
+                    return
+                if self._is_process_closed():
+                    self._closed = True
+                    self.close()
+                    return
+                else:  # Just terminate the process - it's not done after waiting
+                    try:
+                        self._process.terminate()
+                        self.close()
+                    except Exception:
+                        logger.exception('Error closing {0}'.format(self))
+                        return
+            finally:
+                self._close_lock.release()
+
+    def _is_process_closed(self):
+        return not self._process or not self._process.is_alive()
 
 
 class ThreadTask(Task):
