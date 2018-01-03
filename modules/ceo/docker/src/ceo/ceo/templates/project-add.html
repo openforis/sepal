@@ -247,9 +247,9 @@ $('#add-subform-sepal').click(function(e) {
             var type = $('option:selected', this).attr('data-type');
             if (type != 'MOSAIC') {
                 $('select[name="sepalBands[]"]', subform).prop('selectedIndex', 0);
-                $('.sepal-bands-row', subform).hide();
+                $('.sepal-mosaic-row', subform).hide();
             } else {
-                $('.sepal-bands-row', subform).show();
+                $('.sepal-mosaic-row', subform).show();
             }
             $('select[name="sepalBands[]"]', subform).change();
         });
