@@ -213,7 +213,7 @@ let overlayMapManager = {
                     var sceneIds = [];
                     for (var key in data['sceneAreas']) {
                         sceneIds = sceneIds.concat(data['sceneAreas'][key]['selection']);
-                    };
+                    }
                     req['targetDayOfYearWeight'] = data['sortWeight'];
                     req['bands'] = overlay.sepalBands; //data['mosaicPreviewBand']
                     req['dataSet'] = data['sensorGroup'];
@@ -224,6 +224,7 @@ let overlayMapManager = {
                     } else if (data.hasOwnProperty('polygon')) {
                         req['polygon'] = data['polygon'];
                     }
+                    req['panSharpening'] = overlay.sepalPansharpening;
                 } else if (type === 'CLASSIFICATION') {
                     serviceSubPath = 'classification';
                     req['imageRecipeId'] = data['inputRecipe'];
@@ -268,7 +269,7 @@ let overlayMapManager = {
             this.overlayMapTypes[index] = geoserverLayer;
             callback();
         }
-        
+
         function createEarthEngineLayer(mapId, token) {
           if (document.documentMode) {
             return new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {})
@@ -278,6 +279,7 @@ let overlayMapManager = {
             )
           }
         }
+
     }
 
 }

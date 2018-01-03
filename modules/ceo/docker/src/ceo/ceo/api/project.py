@@ -75,11 +75,12 @@ def projectAdd():
     # retrieve project data
     username = session.get('username')
     name = request.form.get('name')
-    radius = request.form.get('radius', type=int)
+    radius = request.form.get('radius', 30, type=int)
     overlays = getLayersFromRequest(request)
     projectType = request.form.get('projectType')
     # validation
     if not projectType:
+        print('Project type not provided')
         return 'KO', 400
     else:
         if projectType == PROJECT_TYPE_CEP:
@@ -457,6 +458,7 @@ def getLayersFromRequest(request):
     # sepal
     sepalMosaicName = request.form.getlist('sepalMosaicName[]')
     sepalBands = request.form.getlist('sepalBands[]')
+    sepalPansharpening = request.form.getlist('sepalPansharpening[]')
     # geoserver
     geoserverUrl = request.form.getlist('geoserverUrl[]')
     geoserverLayers = request.form.getlist('geoserverLayers[]')
@@ -524,7 +526,8 @@ def getLayersFromRequest(request):
             i7 += 1
             overlay = {
                 'sepalMosaicName': sepalMosaicName[i7],
-                'sepalBands': sepalBands[i7]
+                'sepalBands': sepalBands[i7],
+                'sepalPansharpening': sepalPansharpening[i7]
             }
         elif layerType[i] == 'geoserver':
             i8 += 1

@@ -238,10 +238,11 @@ $('#add-subform-sepal').click(function(e) {
         console.error(jqXHR, textStatus, errorThrown);
     }).done(function(data, textStatus, jqXHR) {
         data.forEach(function(recipe) {
-            var text = recipe['name'] + ' (' + recipe['type'] + ')';
-            var option = $('<option>').text(text).val(recipe['id']).attr('data-type', recipe['type']);
+            var text = recipe.name + ' (' + recipe.type + ')';
+            var option = $('<option>').text(text).val(recipe.id).attr('data-type', recipe.type);
             $('select[name="sepalMosaicName[]"]', subform).append(option);
         });
+    }).always(function() {
         $('select[name="sepalMosaicName[]"]', subform).change(function() {
             var type = $('option:selected', this).attr('data-type');
             if (type != 'MOSAIC') {
@@ -250,6 +251,16 @@ $('#add-subform-sepal').click(function(e) {
             } else {
                 $('.sepal-bands-row', subform).show();
             }
+            $('select[name="sepalBands[]"]', subform).change();
+        });
+        $('select[name="sepalBands[]"]', subform).change(function() {
+            var element = $('input[name="sepalPansharpening[]"]', subform);
+            var isMosaic = $('select[name="sepalMosaicName[]"] option:selected', subform).attr('data-type') == 'MOSAIC';
+            var isPansharpenable = $('option:selected', this).hasClass('pansharpenable');
+            element.prop('disabled', !isMosaic || !isPansharpenable);
+            var isDisabled = element.is(':disabled');
+            element.attr('checked', isDisabled);
+            if (isDisabled) element.val(0);
         });
     });
 });
@@ -262,6 +273,7 @@ $('#add-subform-codelist-value').click(function(e) {
 });
 
 $('#submit-btn').click(function(e) {
+    e.preventDefault();
     var isValid = true;
     $('input.is-mandatory:visible').each(function() {
         if (!$.trim($(this).val()).length) {
@@ -271,8 +283,12 @@ $('#submit-btn').click(function(e) {
             $(this).closest('.form-group').removeClass('has-danger').find('.form-control-feedback').hide();
         }
     });
-    if (!isValid) e.preventDefault();
-    else $('form').submit();
+    if (isValid) {
+        $('input:checkbox:disabled').prop('disabled', false);
+        $('input:checkbox:checked').val(1).prop('checked', true);
+        $('input:checkbox:not(:checked)').val(0).prop('checked', true);
+        $('form').submit();
+    }
 });
 
 </script>

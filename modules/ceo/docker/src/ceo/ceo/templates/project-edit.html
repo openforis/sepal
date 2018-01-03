@@ -250,10 +250,11 @@ function addSubformSEPAL(data) {
         console.error(jqXHR, textStatus, errorThrown);
     }).done(function(data, textStatus, jqXHR) {
         data.forEach(function(recipe) {
-            var text = recipe['name'] + ' (' + recipe['type'] + ')';
-            var option = $('<option>').text(text).val(recipe['id']).attr('data-type', recipe['type']);
+            var text = recipe.name + ' (' + recipe.type + ')';
+            var option = $('<option>').text(text).val(recipe.id).attr('data-type', recipe.type);
             $('select[name="sepalMosaicName[]"]', subform).append(option);
         });
+    }).always(function() {
         $('select[name="sepalMosaicName[]"]', subform).change(function() {
             var type = $('option:selected', this).attr('data-type');
             if (type != 'MOSAIC') {
@@ -262,12 +263,23 @@ function addSubformSEPAL(data) {
             } else {
                 $('.sepal-bands-row', subform).show();
             }
+            $('select[name="sepalBands[]"]', subform).change();
         });
-    }).always(function() {
+        $('select[name="sepalBands[]"]', subform).change(function() {
+            var element = $('input[name="sepalPansharpening[]"]', subform);
+            var isMosaic = $('select[name="sepalMosaicName[]"] option:selected', subform).attr('data-type') == 'MOSAIC';
+            var isPansharpenable = $('option:selected', this).hasClass('pansharpenable');
+            element.prop('disabled', !isMosaic || !isPansharpenable);
+            var isDisabled = element.is(':disabled');
+            element.attr('checked', isDisabled);
+            if (isDisabled) element.val(0);
+        });
         if (data !== undefined) {
             $('input[name="layerName[]"]', subform).val(data.layerName);
-            $('select[name="sepalMosaicName[]"]', subform).val(data.sepalMosaicName);
-            $('select[name="sepalBands[]"]', subform).val(data.sepalBands);
+            $('select[name="sepalMosaicName[]"]', subform).val(data.sepalMosaicName).change();
+            $('select[name="sepalBands[]"]', subform).val(data.sepalBands).change();
+            var checked = data.sepalPansharpening == '1';
+            $('input[name="sepalPansharpening[]"]', subform).prop('checked', checked);
         } else {
             $('html, body').animate({
                 scrollTop: subform.offset().top
@@ -340,9 +352,11 @@ $('#submit-btn').click(function(e) {
         }
     });
     if (isValid) {
-        //$('input:checkbox:not(:checked)').val(0).prop('checked', true);
+        $('input:checkbox:disabled').prop('disabled', false);
+        $('input:checkbox:checked').val(1).prop('checked', true);
+        $('input:checkbox:not(:checked)').val(0).prop('checked', true);
         $.ajax({
-            url: ceoSepalApiUrl + "/project/" + project_id,
+            url: ceoSepalApiUrl + '/project/' + project_id,
             method: 'put',
             data: $('form').serialize()
         }).success(function(data) {
