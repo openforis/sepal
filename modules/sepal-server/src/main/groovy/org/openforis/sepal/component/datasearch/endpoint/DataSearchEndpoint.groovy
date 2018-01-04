@@ -215,7 +215,8 @@ class DataSearchEndpoint {
                         brdfCorrect          : params.brdfCorrect == 'true',
                         maskClouds           : params.maskClouds == 'true',
                         maskSnow             : params.maskSnow == 'true',
-                        bands                : params.required('bands', String).split(',')*.trim()
+                        bands                : params.required('bands', String).split(',')*.trim(),
+                        panSharpening        : params.panSharpening == 'true'
                 ])))
     }
 

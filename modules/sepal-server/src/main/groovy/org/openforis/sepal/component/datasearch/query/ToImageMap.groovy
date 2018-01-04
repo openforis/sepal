@@ -66,7 +66,8 @@ class ToImageMapHandler implements QueryHandler<Map, ToImageMap> {
                 maskClouds           : query.maskClouds,
                 maskSnow             : query.maskSnow,
                 bands                : query.bands,
-                sceneIds             : query.sceneIds
+                sceneIds             : query.sceneIds,
+                panSharpening        : query.panSharpening
         ]
     }
 

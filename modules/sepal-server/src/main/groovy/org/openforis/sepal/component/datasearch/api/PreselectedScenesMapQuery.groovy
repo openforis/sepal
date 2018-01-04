@@ -17,4 +17,5 @@ class PreselectedScenesMapQuery {
     boolean maskClouds
     boolean maskSnow
     List<String> bands
+    boolean panSharpening
 }

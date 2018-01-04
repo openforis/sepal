@@ -224,7 +224,7 @@ let overlayMapManager = {
                     } else if (data.hasOwnProperty('polygon')) {
                         req['polygon'] = data['polygon'];
                     }
-                    req['panSharpening'] = overlay.sepalPansharpening;
+                    req['panSharpening'] = !!parseInt(overlay.sepalPansharpening);
                 } else if (type === 'CLASSIFICATION') {
                     serviceSubPath = 'classification';
                     req['imageRecipeId'] = data['inputRecipe'];
