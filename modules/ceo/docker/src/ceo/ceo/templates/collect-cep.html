@@ -327,6 +327,7 @@
                     var numberInnerColumns = (isEven) ? pointPerLine / 2 : (pointPerLine - 1) / 2;
                     var innerSideLength = (pointPerLine - 1) * distanceBetweenSamplePoints;
                     var plotSideLength = innerSideLength + distanceToPlotBoundaries * 2;
+                    var uniquePlotSideLength = Math.sqrt(innerPointSide);
                     var indexOfCenter = (isEven) ? -1 : numberInnerColumns;
                     //
                     var squareOptions1 = {
@@ -363,24 +364,29 @@
                         var lPlot = mapUtils.L.cloneSquare(gPlot, squareOptions1, lmap);
                         shapes[id] = [gPlot, lPlot];
                         //
-                        var innerSquare = mapUtils.G.drawSquare(latLng, innerSideLength);
-                        var eastLng = innerSquare.getBounds().getNorthEast().lng();
-                        var westLng = innerSquare.getBounds().getSouthWest().lng();
-                        var lngDistanceBetweenSamplePoints = (westLng - eastLng) / (pointPerLine - 1);
-                        var northLat = innerSquare.getBounds().getNorthEast().lat();
-                        var southLat = innerSquare.getBounds().getSouthWest().lat();
-                        var latDistanceBetweenSamplePoints = (northLat - southLat) / (pointPerLine - 1);
-                        for (var x = 0; x < pointPerLine; x++) {
-                            var lng = eastLng + x * lngDistanceBetweenSamplePoints;
-                            for (var y = 0; y < pointPerLine; y++) {
-                                var latLng = new google.maps.LatLng(northLat - y * latDistanceBetweenSamplePoints, lng);
-                                if (indexOfCenter != -1 && x == indexOfCenter && y == indexOfCenter) {
-                                    var square = mapUtils.G.drawSquare(latLng, innerPointSide, squareOptions2, gmap);
-                                    mapUtils.L.cloneSquare(square, squareOptions2, lmap);
-                                }
-                                else {
-                                    var square = mapUtils.G.drawSquare(latLng, innerPointSide, squareOptions1, gmap);
-                                    mapUtils.L.cloneSquare(square, squareOptions1, lmap);
+                        if (numberOfSamplingPointsInPlot == 1) {
+                            var gPoint = mapUtils.G.drawSquare(latLng, uniquePlotSideLength, squareOptions2, gmap);
+                            var lPoint = mapUtils.L.cloneSquare(gPlot, squareOptions2, lmap);
+                        } else {
+                            var innerSquare = mapUtils.G.drawSquare(latLng, innerSideLength);
+                            var eastLng = innerSquare.getBounds().getNorthEast().lng();
+                            var westLng = innerSquare.getBounds().getSouthWest().lng();
+                            var lngDistanceBetweenSamplePoints = (westLng - eastLng) / (pointPerLine - 1);
+                            var northLat = innerSquare.getBounds().getNorthEast().lat();
+                            var southLat = innerSquare.getBounds().getSouthWest().lat();
+                            var latDistanceBetweenSamplePoints = (northLat - southLat) / (pointPerLine - 1);
+                            for (var x = 0; x < pointPerLine; x++) {
+                                var lng = eastLng + x * lngDistanceBetweenSamplePoints;
+                                for (var y = 0; y < pointPerLine; y++) {
+                                    var latLng = new google.maps.LatLng(northLat - y * latDistanceBetweenSamplePoints, lng);
+                                    if (indexOfCenter != -1 && x == indexOfCenter && y == indexOfCenter) {
+                                        var square = mapUtils.G.drawSquare(latLng, innerPointSide, squareOptions2, gmap);
+                                        mapUtils.L.cloneSquare(square, squareOptions2, lmap);
+                                    }
+                                    else {
+                                        var square = mapUtils.G.drawSquare(latLng, innerPointSide, squareOptions1, gmap);
+                                        mapUtils.L.cloneSquare(square, squareOptions1, lmap);
+                                    }
                                 }
                             }
                         }
