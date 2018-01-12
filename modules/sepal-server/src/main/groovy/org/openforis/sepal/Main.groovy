@@ -5,6 +5,7 @@ import org.openforis.sepal.component.budget.BudgetComponent
 import org.openforis.sepal.component.datasearch.DataSearchComponent
 import org.openforis.sepal.component.files.FilesComponent
 import org.openforis.sepal.component.hostingservice.HostingServiceAdapter
+import org.openforis.sepal.component.notification.NotificationComponent
 import org.openforis.sepal.component.processingrecipe.ProcessingRecipeComponent
 import org.openforis.sepal.component.sandboxwebproxy.SandboxWebProxyComponent
 import org.openforis.sepal.component.task.TaskComponent
@@ -49,6 +50,7 @@ class Main {
         def dataSearchComponent = start DataSearchComponent.create(processingRecipeComponent, taskComponent, connectionManager)
         start new SandboxWebProxyComponent(config, workerSessionComponent, hostingServiceAdapter)
         def appsComponent = new AppsComponent(config.appsFile)
+        def notificationComponent = start NotificationComponent.create()
 
         def gateOneAuthEndpoint = new GateOneAuthEndpoint(config.gateOnePublicKey, config.gateOnePrivateKey)
         def endpoints = new Endpoints(
@@ -60,7 +62,9 @@ class Main {
                 filesComponent,
                 taskComponent,
                 processingRecipeComponent,
-                appsComponent)
+                appsComponent,
+                notificationComponent
+        )
         start new Server(config.webAppPort, '/api', endpoints)
         addShutdownHook { stop() }
     }
