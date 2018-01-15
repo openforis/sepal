@@ -138,6 +138,9 @@ var updatePanSharpeningBtnState = function () {
       : disablePanSharpeningBtn()
   } else
     disablePanSharpeningBtn()
+  
+  if(state.surfaceReflectance)
+    disablePanSharpeningBtn()
 }
 
 var setBandValue = function (bands, input) {
