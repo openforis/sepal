@@ -25,13 +25,13 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
     public static final String SCHEMA = 'sepal_user'
     private final MessageBroker messageBroker
 
-    static UserComponent create(ServerConfig serverConfig) {
+    static UserComponent create(UsernamePasswordVerifier usernamePasswordVerifier, ServerConfig serverConfig) {
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA))
         return new UserComponent(
                 connectionManager,
                 new TerminalBackedExternalUserDataGateway(),
                 new SmtpEmailGateway(serverConfig.host, new EmailServer()),
-                new LdapUsernamePasswordVerifier(serverConfig.ldapHost),
+                usernamePasswordVerifier,
                 new RmbMessageBroker(connectionManager),
                 new AsynchronousEventDispatcher(),
                 new RestBackedGoogleOAuthClient(

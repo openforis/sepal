@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.user
 
+import groovymvc.security.UsernamePasswordVerifier
+import org.openforis.sepal.component.user.adapter.LdapUsernamePasswordVerifier
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.security.PathRestrictionsFactory
@@ -14,24 +16,30 @@ class Main extends AbstractMain {
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
     Main() {
-        def serverConfig = new ServerConfig()
-        def userComponent = start UserComponent.create(serverConfig)
-        def endpoints = new Endpoints(
-                PathRestrictionsFactory.create(),
-                userComponent
-        )
-        start new Server(serverConfig.port, endpoints)
-    }
-
-    static void main(String[] args) {
         try {
-            def instance = new Main()
+            def serverConfig = new ServerConfig()
+            def userComponent = start UserComponent.create(createUsernamePasswordVerifier(serverConfig), serverConfig)
+            def endpoints = new Endpoints(
+                    PathRestrictionsFactory.create(),
+                    userComponent
+            )
+            start new Server(serverConfig.port, endpoints)
             addShutdownHook { instance.stop() }
         } catch (Exception e) {
             LOG.error('Failed to start user module', e)
             System.exit(1)
         }
     }
+
+    UsernamePasswordVerifier createUsernamePasswordVerifier(ServerConfig serverConfig) {
+        new LdapUsernamePasswordVerifier(serverConfig.ldapHost)
+    }
+
+    static void main(String[] args) {
+        new Main()
+    }
+
+
 }
 
 @Data
