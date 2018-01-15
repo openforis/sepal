@@ -1,4 +1,4 @@
-package org.openforis.sepal.component.endpoint
+package org.openforis.sepal.component.apps.endpoint
 
 import groovymvc.Controller
 import org.openforis.sepal.component.Component
