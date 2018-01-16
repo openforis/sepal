@@ -2,6 +2,7 @@ import _strptime
 
 import ee
 from datetime import datetime
+from datetime import timedelta
 from itertools import groupby
 
 from analyze import Analyze
@@ -94,14 +95,19 @@ class LandsatManualMosaicSpec(LandsatMosaicSpec):
         scenes_by_scene_id_prefix = groupby(sorted(self.sceneIds), lambda scene_id: scene_id[:3])
         data_sets = []
         for prefix, ids in scenes_by_scene_id_prefix:
-            ids = list(ids)
+            ids = list([self._to_gee_id(id) for id in ids])
             for name in self._collection_names_by_scene_id_prefix[prefix]:
                 data_sets.append(
                     self._data_set(
                         collection_name=name,
-                        image_filter=ee.Filter.inList('LANDSAT_SCENE_ID', ee.List(list(ids))))
+                        image_filter=ee.Filter.inList('system:index', ee.List(list(ids))))
                 )
         return data_sets
+
+    def _to_gee_id(self, id):
+        year = int(id[9:13])
+        month_day = (datetime(year, 1, 1) + timedelta(int(id[13:16]) - 1)).strftime('%m%d')
+        return '{0}0{1}_{2}_{3}{4}'.format(id[0:2], id[2], id[3:9], year, month_day)
 
     def _collection_names_of_scene(self, scene_id):
         """Determines the collection name of the specified scene id.
