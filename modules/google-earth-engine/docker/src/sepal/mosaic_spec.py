@@ -102,8 +102,9 @@ _sr_viz_by_bands = {
         'max': '5000, 2400, 2500'},
     'nir, swir1, red': lambda params: {
         'bands': 'nir, swir1, red',
-        'min': '500, 200, 100',
-        'max': '5000, 5000, 3000'},
+        'min': 0,
+        'max': '5000, 5000, 3000',
+        'gamma': 1.3},
     'swir2, nir, red': lambda params: {
         'bands': 'swir2, nir, red',
         'min': '100, 500, 300',
