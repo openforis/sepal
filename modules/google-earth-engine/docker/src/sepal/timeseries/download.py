@@ -346,7 +346,6 @@ class ProcessYear(ProcessTask):
             subprocess.check_call(['mkdir', '-p', tile_dir])
             subprocess.check_call(
                 'gdal_translate '
-                '-co COMPRESS=NONE '
                 '-co BIGTIFF=IF_NEEDED '
                 '-a_nodata 0 '
                 '{0} '
