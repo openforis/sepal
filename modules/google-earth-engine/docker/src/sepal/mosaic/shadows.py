@@ -6,7 +6,6 @@ from ..image_operation import ImageOperation
 def mask_shadows(mosaic_def, collection):
     reduced = collection.select('shadowScore')\
         .reduce(ee.Reducer.percentile([0, 50, 100]).combine(ee.Reducer.stdDev(), '', True))
-    # .reduce(ee.Reducer.percentile([0, 50, 100]).combine(reducer2=ee.Reducer.stdDev(), outputPrefix='', sharedInputs=True))
     shadowScoreMedian = reduced.select('shadowScore_p50')
     shadowScoreMax = reduced.select('shadowScore_p100')
     darkOutlierThreshold = shadowScoreMedian.multiply(0.7)  # Outlier if it's a lot darker than the median
