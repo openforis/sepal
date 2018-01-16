@@ -10,7 +10,6 @@ require('./url-param')
 require('./autocomplete')
 require('./sepal-colorpicker/css/bootstrap-colorpicker.css')
 require('./sepal-bootstrap-colorpicker')
-require('./debounce')
 
 //String utility methods - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith
 if (!String.prototype.endsWith) {

@@ -169,20 +169,25 @@
                 <h3 class="width100 text-align-center">Sessions</h3>
 
                 <div class="row row-sessions-header m-t-10">
-                    <div class="col-sm-5 offset-sm-1 text-align-center">Type of instance</div>
-                    <div class="col-sm-3 text-align-center">Time</div>
-                    <div class="col-sm-3 text-align-center">Cost</div>
+                    <div class="col-1"></div>
+                    <div class="col-3 text-align-center">Instance type</div>
+                    <div class="col-3 text-align-center">Time</div>
+                    <div class="col-3 text-align-center">Cost</div>
+                    <div class="col-2 text-align-center">Timeout</div>
                 </div>
 
-                <div class="row row-session-placeholder" style="display: none">
-                    <div class="col-sm-1 text-align-center no-padding">
+                <div class="row form-theme row-session-placeholder" style="display: none">
+                    <div class="col-1 text-align-center no-padding">
                         <a class="btn btn-base circle btn-remove">
                             <i class="fa fa-times-circle" aria-hidden="true"></i>
                         </a>
                     </div>
-                    <div class="col-sm-5 type text-align-center no-padding"></div>
-                    <div class="col-sm-3 time text-align-center no-padding"></div>
-                    <div class="col-sm-3 cost text-align-center no-padding"></div>
+                    <div class="col-3 type text-align-center no-padding"></div>
+                    <div class="col-3 time text-align-center no-padding"></div>
+                    <div class="col-3 cost text-align-center no-padding"></div>
+                    <div class="col-2 text-align-center form-group p-x-0-5 p-y-0 m-b-0">
+                        <input type="number" class="form-control" name="earliestTimeoutTime" min="0">
+                    </div>
                 </div>
             </div>
         </div>
