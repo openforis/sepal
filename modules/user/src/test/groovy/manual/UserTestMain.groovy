@@ -12,18 +12,6 @@ class UserTestMain extends Main {
         def userDataGateway = new FakeExternalUserDataGateway()
         userDataGateway.createdUser(new User(
                 id: 1,
-                name: 'Admin',
-                username: 'admin',
-                email: 'admin@sepal.io',
-                organization: 'Some Org',
-                googleTokens: null,
-                status: User.Status.ACTIVE,
-                roles: [Roles.ADMIN] as Set,
-                systemUser: false
-        ))
-        userDataGateway.changePassword('admin', 'password')
-        userDataGateway.createdUser(new User(
-                id: 1,
                 name: 'Sepal Admin',
                 username: 'sepalAdmin',
                 email: 'admin@sepal.io',
@@ -34,6 +22,18 @@ class UserTestMain extends Main {
                 systemUser: true
         ))
         userDataGateway.changePassword('sepalAdmin', 'password')
+        userDataGateway.createdUser(new User(
+                id: 2,
+                name: 'Admin',
+                username: 'admin',
+                email: 'admin@sepal.io',
+                organization: 'Some Org',
+                googleTokens: null,
+                status: User.Status.ACTIVE,
+                roles: [Roles.ADMIN] as Set,
+                systemUser: false
+        ))
+        userDataGateway.changePassword('admin', 'password')
         return userDataGateway
     }
 
