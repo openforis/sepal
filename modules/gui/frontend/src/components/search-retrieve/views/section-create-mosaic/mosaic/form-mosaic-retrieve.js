@@ -138,7 +138,14 @@ var setActiveState = function (e, activeState) {
     } else {
       enableDateBands()
     }
-  
+    
+    var surfaceReflectanceDisabledBtn = container.find('.btn-band.surface-reflectance-disabled')
+    if (state.surfaceReflectance) {
+      surfaceReflectanceDisabledBtn.removeClass('active').disable()
+    } else {
+      surfaceReflectanceDisabledBtn.enable()
+    }
+    
   }
 }
 
