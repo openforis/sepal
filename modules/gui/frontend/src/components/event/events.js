@@ -114,9 +114,10 @@ var Events = {
     }
     
     , USER : {
-      REMOVE_SESSION     : 'section.user.remove_session'
-      , SAVE_USER_DETAILS: 'section.user.save_user_details'
-      , CHANGE_PASSWORD  : 'section.user.change_password'
+      REMOVE_SESSION       : 'section.user.remove_session'
+      , SET_SESSION_TIMEOUT: 'section.user.set_session_timeout'
+      , SAVE_USER_DETAILS  : 'section.user.save_user_details'
+      , CHANGE_PASSWORD    : 'section.user.change_password'
     }
     , USERS: {
       SELECT_USER                : 'section.users.select_user'
