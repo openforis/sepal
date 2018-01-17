@@ -85,7 +85,7 @@ var removeSession = function (evt, sessionId) {
 var setSessionTimeout = function (evt, sessionId, timeout) {
   var params = {
     url         : '/api/sandbox/session/' + sessionId + '/earliestTimeoutTime',
-    data        : {hours: timeout}
+    data        : {hours: timeout ? timeout : 0}
     , beforeSend: function () {
       // Loader.show()
     }
