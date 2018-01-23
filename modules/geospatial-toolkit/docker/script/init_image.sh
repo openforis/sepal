@@ -10,10 +10,6 @@ apt-get -y update && apt-get install -y software-properties-common
 # Repository for misc GIS utilities
 apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
 
-# Repository for Java
-#add-apt-repository -y ppa:webupd8team/java
-add-apt-repository ppa:luiz-armesto/java # TODO: Remove once webupd8team have a new release
-
 # Repository for R
 echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/apt/sources.list
 gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
@@ -52,6 +48,7 @@ apt-get install -y \
     git \
     gsl-bin \
     imagemagick \
+    jq \
     libboost-dev \
     libcairo2-dev \
     libcunit1-dev \
@@ -90,7 +87,8 @@ apt-get install -y \
     unzip \
     vim \
     wget \
-    xml-twig-tools
+    xml-twig-tools \
+    zip
 
 pip install python-dateutil
 pip install pyCrypto
