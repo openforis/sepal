@@ -199,7 +199,10 @@ class DownloadFeature(ThreadTask):
         tile_dirs = sorted([d for d in glob(join(self.feature_dir, '*')) if isdir(d)])
         for tile_dir in tile_dirs:
             self._tile_to_vrt(tile_dir)
-        vrt = osgeo.gdal.BuildVRT(self.feature_dir + '/stack.vrt', sorted(glob(join(self.feature_dir, '*.vrt'))))
+        vrt = osgeo.gdal.BuildVRT(
+            self.feature_dir + '/stack.vrt', sorted(glob(join(self.feature_dir, '*.vrt'))),
+            VRTNodata=0
+        )
         if vrt:
             vrt.FlushCache()
 
@@ -211,12 +214,18 @@ class DownloadFeature(ThreadTask):
             if tif_file:
                 for band_index in range(1, tif_file.RasterCount + 1):
                     tif_vrt_path = '{0}_{1}.vrt'.format(tif_path_no_extension, str(band_index).zfill(10))
-                    vrt = osgeo.gdal.BuildVRT(tif_vrt_path, tif_path, bandList=[band_index])
+                    vrt = osgeo.gdal.BuildVRT(
+                        tif_vrt_path, tif_path,
+                        bandList=[band_index],
+                        VRTNodata=0)
                     if vrt:
                         vrt.FlushCache()
         stack_vrt_path = tile_dir + '_stack.vrt'
         vrt_paths = sorted(glob(join(tile_dir, '*.vrt')))
-        vrt = osgeo.gdal.BuildVRT(stack_vrt_path, vrt_paths, separate=True)
+        vrt = osgeo.gdal.BuildVRT(
+            stack_vrt_path, vrt_paths,
+            separate=True,
+            VRTNodata=0)
         if vrt:
             vrt.FlushCache()
 
@@ -351,12 +360,8 @@ class ProcessYear(ProcessTask):
             tile_dir = abspath(join(parent_dir, tile))
             subprocess.check_call(['mkdir', '-p', tile_dir])
             subprocess.check_call(
-                'gdal_translate '
-                '-co BIGTIFF=IF_NEEDED '
-                '-a_nodata 0 '
-                '{0} '
-                '{1}'
-                    .format(abspath(join(self._year_dir, tif_name)), abspath(join(tile_dir, tif_name))).split(' '))
+                'mv {0} {1}'.format(abspath(join(self._year_dir, tif_name)), abspath(join(tile_dir, tif_name))),
+                shell=True)
 
         subprocess.check_call('mv {0} {1}'.format(join(self._year_dir, '*.csv'), parent_dir), shell=True)
         subprocess.check_call('rm -rf {0}'.format(self._year_dir).split(' '))
