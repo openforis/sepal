@@ -2,6 +2,7 @@ package component.files.integration
 
 import groovymvc.Controller
 import org.openforis.sepal.component.files.api.InvalidPath
+import org.openforis.sepal.component.files.api.UserFile
 import org.openforis.sepal.component.files.command.DeleteFile
 import org.openforis.sepal.component.files.endpoint.FilesEndpoint
 import org.openforis.sepal.component.files.query.ListFiles
@@ -27,8 +28,8 @@ class FilesEndpoint_Test extends AbstractComponentEndpointTest {
 
     def 'GET /user/files, returns well formatted files'() {
         def expectation = [
-                [name: 'a', isDirectory: false, size: 123],
-                [name: 'b', isDirectory: true]
+                [name: 'a', isDirectory: false, size: 123, archivable: true],
+                [name: 'b', isDirectory: true, archivable: true]
         ]
 
         when:
@@ -116,7 +117,7 @@ class FilesEndpoint_Test extends AbstractComponentEndpointTest {
                 def f = new RandomAccessFile(file, "rw")
                 f.setLength(it.size)
             }
-            return file
+            return UserFile.fromFile(file)
         }
     }
 

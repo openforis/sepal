@@ -4,6 +4,8 @@ import groovymvc.Controller
 import org.openforis.sepal.component.NonTransactionalComponent
 import org.openforis.sepal.component.files.command.DeleteFile
 import org.openforis.sepal.component.files.command.DeleteFileHandler
+import org.openforis.sepal.component.files.command.SetArchivable
+import org.openforis.sepal.component.files.command.SetArchivableHandler
 import org.openforis.sepal.component.files.endpoint.FilesEndpoint
 import org.openforis.sepal.component.files.query.GbUsed
 import org.openforis.sepal.component.files.query.GbUsedHandler
@@ -19,6 +21,7 @@ class FilesComponent extends NonTransactionalComponent implements EndpointRegist
         query(ReadFile, new ReadFileHandler(homeDir))
         query(GbUsed, new GbUsedHandler(homeDir))
         command(DeleteFile, new DeleteFileHandler(homeDir))
+        command(SetArchivable, new SetArchivableHandler(homeDir))
     }
 
     void registerEndpointsWith(Controller controller) {

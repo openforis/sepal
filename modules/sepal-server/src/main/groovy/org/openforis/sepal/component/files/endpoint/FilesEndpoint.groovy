@@ -4,6 +4,7 @@ import groovymvc.Controller
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.files.api.InvalidPath
 import org.openforis.sepal.component.files.command.DeleteFile
+import org.openforis.sepal.component.files.command.SetArchivable
 import org.openforis.sepal.component.files.query.ListFiles
 import org.openforis.sepal.component.files.query.ReadFile
 import org.openforis.sepal.query.QueryFailed
@@ -33,9 +34,9 @@ class FilesEndpoint {
                         new ListFiles(username: currentUser.username, path: path)
                 )
                 def result = files.collect {
-                    def map = [name: it.name, isDirectory: it.directory]
+                    def map = [name: it.name, isDirectory: it.directory, archivable: it.archivable]
                     if (!map.isDirectory)
-                        map.size = it.size()
+                        map.size = it.size
                     return map
                 }
                 send toJson(result)
@@ -62,6 +63,19 @@ class FilesEndpoint {
                 response.outputStream << fileStream
                 response.outputStream.flush()
             }
+
+            post('/user/files/archivable/{path}') {
+                def path = URLDecoder.decode(params.required('path', String), "UTF-8")
+                component.submit(new SetArchivable(username: currentUser.username, path: path, archivable: true))
+                response.status = 204
+            }
+
+            post('/user/files/non-archivable/{path}') {
+                def path = URLDecoder.decode(params.required('path', String), "UTF-8")
+                component.submit(new SetArchivable(username: currentUser.username, path: path, archivable: false))
+                response.status = 204
+            }
+
         }
     }
 }
