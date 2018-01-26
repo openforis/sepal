@@ -46,9 +46,17 @@ class ReleaseInstanceHandler implements CommandHandler<Void, ReleaseInstance> {
         } catch (Exception e) {
             LOG.warn("Failed to release instance, terminating instead: $command", e)
             eventDispatcher.publish(new FailedToReleaseInstance(command.instanceId, e))
-            instanceProvider.terminate(command.instanceId)
+            terminateInstance(command)
             instanceRepository.terminated(command.instanceId)
         }
         return null
+    }
+
+    private terminateInstance(ReleaseInstance command) {
+        try {
+            instanceProvider.terminate(command.instanceId)
+        } catch (Exception e) {
+            LOG.error("Failed to terminate instance: $command", e)
+        }
     }
 }
