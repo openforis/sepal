@@ -28,19 +28,19 @@ class Task(object):
         self._state_lock = threading.Lock()
         self._close_lock = threading.Lock()
         self.state = Task.UNSUBMITTED
-        self.event_queue = queue.Queue()
         self._resolve = None
         self._reject = None
         self._exception = None
         self._closed = False
         self._dependee = None
         self._dependents = []
+        self._event_queue = queue.Queue()
 
     # noinspection PyUnusedLocal
     def submit(self, *args):
         if not self._set_state(Task.SUBMITTED, lambda state: state == Task.UNSUBMITTED):
             return
-        self.event_queue.put({'type': Task.SUBMITTED})
+        self._enqueue({'type': Task.SUBMITTED})
         # noinspection PyTypeChecker
         return Promise(self._start)
 
@@ -51,7 +51,7 @@ class Task(object):
         try:
             return self._resolve(value)
         finally:
-            self.event_queue.put({'type': Task.RESOLVED, 'value': value})
+            self._enqueue({'type': Task.RESOLVED, 'value': value})
             self._close()
 
     def reject(self, exception):
@@ -62,7 +62,7 @@ class Task(object):
         try:
             return self._reject(exception) if self._reject else Promise.reject(exception)
         finally:
-            self.event_queue.put({'type': Task.REJECTED, 'exception': exception})
+            self._enqueue({'type': Task.REJECTED, 'exception': str(exception)})
             self._close()
 
     def cancel(self):
@@ -74,7 +74,7 @@ class Task(object):
             self.reject(re_raisable())
             return self._reject(exception) if self._reject else Promise.reject(exception)
         finally:
-            self.event_queue.put({'type': Task.CANCELED})
+            self._enqueue({'type': Task.CANCELED})
             self._close()
 
     def close(self):
@@ -109,6 +109,12 @@ class Task(object):
 
     def exception(self):
         return self._exception
+
+    def _enqueue(self, item):
+        self._event_queue.put(item)
+
+    def dequeue(self, timeout=None):
+        return self._event_queue.get(timeout=timeout)
 
     @abstractmethod
     def run(self):
@@ -211,15 +217,15 @@ class ProcessTask(Task):
     def _start(self, resolve, reject):
         self._resolve = resolve
         self._reject = reject
-        process_event_queue = multiprocessing.Queue()
-        self._thread = threading.Thread(target=self._handle_event, args=(process_event_queue,))
+        _event_queue = multiprocessing.Queue()
+        self._thread = threading.Thread(target=self._handle_event, args=(_event_queue,))
         self._thread.start()
-        process = multiprocessing.Process(target=self._start_process, args=(process_event_queue,))
+        process = multiprocessing.Process(target=self._start_process, args=(_event_queue,))
         process.start()
         self._process = process
 
     def _start_process(self, event_queue):
-        self.event_queue = event_queue
+        self._event_queue = event_queue
         self._run_and_catch()
 
     def _handle_event(self, event_queue):
@@ -272,6 +278,12 @@ class ProcessTask(Task):
 
     def _is_process_closed(self):
         return not self._process or not self._process.is_alive()
+
+    def _enqueue(self, item):
+        self._event_queue.put(item)
+
+    def dequeue(self, timeout=None):
+        return self._event_queue.get(timeout=timeout)
 
 
 class ThreadTask(Task):
