@@ -42,7 +42,7 @@ echo
 echo "*********************************"
 echo "*** Installing RStudio Server ***"
 echo "*********************************"
-rstudio=rstudio-server-1.1.383-amd64.deb
+rstudio=rstudio-server-1.1.414-amd64.deb
 wget https://download2.rstudio.org/$rstudio
 gdebi -n $rstudio
 printf '%s\n' \
