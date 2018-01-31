@@ -87,11 +87,14 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
             date1 = data.PRODUCT_ID.substring(47, 47 + 15)
             date2 = data.GRANULE_ID.substring(25, 25 + 15)
             tile = data.GRANULE_ID.substring(49, 49 + 6)
-        } else {
+        } else if (data.GRANULE_ID.length() == 34){
             date1 = data.PRODUCT_ID.substring(11, 11 + 15)
-            date2 = data.PRODUCT_ID.substring(45)
+            date2 = data.GRANULE_ID.substring(19, 19 + 15)
             tile = data.GRANULE_ID.substring(4, 4 + 6)
-        }
+        } else
+            throw IllegalStateException("Unexpected GRANULE_ID length: " + data.GRANULE_ID)
+        if (date1 == '20180102T043149')
+            println(data)
         def id = "${date1}_${date2}_${tile}"
         return id
     }
