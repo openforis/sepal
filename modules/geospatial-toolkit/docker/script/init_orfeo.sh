@@ -6,7 +6,7 @@ echo "********************************"
 echo "*** Installing Orfeo ToolBox ***"
 echo "********************************"
 
-otb=OTB-6.2.0-Linux64
+otb=OTB-6.4.0-Linux64
 wget https://www.orfeo-toolbox.org/packages/$otb.run
 chmod +x $otb.run
 mv $otb.run /usr/local/lib
