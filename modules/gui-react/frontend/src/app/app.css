@@ -1,0 +1,34 @@
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: url('./fonts/OpenSans-Light.ttf');
+    src: local('Open Sans'), local('OpenSans'), url('./fonts/OpenSans-Light.ttf') format('truetype');
+}
+
+body {
+    --secondary-text-color: #e8edf0;
+    --header-font-family: Open Sans, Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
+
+    font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
+    line-height: 2;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: transparent;
+    font-size: 16px;
+    color: #fff;
+}
+
+a {
+    color: #c5b397;
+}
+
+a:focus {
+    outline: 0;
+}
+
+a:hover {
+    text-decoration: none;
+    color: #b8a280;
+}

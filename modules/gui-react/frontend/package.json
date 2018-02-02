@@ -4,17 +4,24 @@
   "private": true,
   "dependencies": {
     "bootstrap": "^4.0.0",
+    "font-awesome": "^4.7.0",
     "jquery": "^3.3.1",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
+    "react-fontawesome": "^1.6.1",
     "react-scripts": "1.1.0",
     "velocity-animate": "^1.5.1"
   },
   "scripts": {
-    "start": "NODE_PATH=src/ react-scripts start",
-    "build": "NODE_PATH=src/ react-scripts build",
-    "test": "NODE_PATH=src/ react-scripts test --env=jsdom",
-    "eject": "NODE_PATH=src/ react-scripts eject"
+    "start": "NODE_PATH=src/ react-app-rewired start",
+    "build": "NODE_PATH=src/ react-app-rewired build",
+    "test": "NODE_PATH=src/ react-app-rewired test --env=jsdom",
+    "eject": "NODE_PATH=src/ react-app-rewired eject"
+  },
+  "devDependencies": {
+    "imports-loader": "^0.7.1",
+    "react-app-rewired": "^1.4.1",
+    "webpack": "^3.10.0"
   }
 }

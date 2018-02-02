@@ -1,7 +1,9 @@
 import React from 'react'
 import Login from 'app/login/login'
-import Home from 'app/home/home'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
+import './app.css'
+
+// import Home from 'app/home/home'
 
 export default class App extends React.Component {
   constructor(props) {

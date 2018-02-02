@@ -1,10 +1,10 @@
-.kenburnsy {
+:global .kenburnsy {
     position: relative;
     overflow: hidden;
     width: 100%;
 }
 
-.kenburnsy.fullscreen {
+:global .kenburnsy.fullscreen {
     position: absolute;
     top: 0;
     left: 0;
@@ -13,11 +13,11 @@
     z-index: -1;
 }
 
-.kenburnsy img {
+:global .kenburnsy img {
     display: none;
 }
 
-.kenburnsy .slide {
+:global .kenburnsy .slide {
     position: absolute;
     top: 0;
     left: 0;
