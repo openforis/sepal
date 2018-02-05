@@ -1,15 +1,14 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-const CenteredPanel = ({style, className, children}) =>
-  <div className={`panelContainer ${className}`} style={styles.panelContainer}>
-    <div className="panel" style={Object.assign(styles.panel, style)}>
+const CenteredPanel = ({className, children}) =>
+  <div style={styles.panelContainer}>
+    <div className={`panelContainer ${className}`} style={styles.panel}>
       {children}
     </div>
   </div>
 
 CenteredPanel.propTypes = {
-  style: PropTypes.object,
   className: PropTypes.string
 }
 

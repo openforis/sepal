@@ -5,9 +5,8 @@ export default class Button extends React.Component {
   render() {
     return (
       <button
-        style={Object.assign(this.styles.button, this.props.style)}
-        onClick={this.props.onClick}
-      >
+        style={this.styles.button}
+        onClick={this.props.onClick}>
         {this.props.children}
       </button>
     )
@@ -28,6 +27,5 @@ export default class Button extends React.Component {
 }
 
 Button.propTypes = {
-  style: PropTypes.object,
   onClick: PropTypes.func.isRequired
 }

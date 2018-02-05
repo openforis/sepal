@@ -1,0 +1,23 @@
+.image-wrap {
+    width: 100%;
+    height: 50vw;
+    margin: 0 auto;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-wrap img {
+    width: 100%;
+    animation: move 40s ease;
+    position: absolute;
+}
+
+@-webkit-keyframes move {
+    0% {
+        transform-origin: bottom left;
+        transform: scale(1.0);
+    }
+    100% {
+        transform: scale(1.2);
+    }
+}

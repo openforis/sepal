@@ -20,15 +20,10 @@ body {
     color: #fff;
 }
 
-a {
-    color: #c5b397;
-}
-
 a:focus {
     outline: 0;
 }
 
 a:hover {
     text-decoration: none;
-    color: #b8a280;
 }

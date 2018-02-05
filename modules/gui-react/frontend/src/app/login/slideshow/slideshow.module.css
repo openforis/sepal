@@ -1,14 +1,72 @@
-.slideshow {
-
-}
-
-.images {
-}
-
 .overlay {
     position: fixed;
     width: 100%;
     height: 100%;
     background-color: rgba(1, 1, 1, 0.65);
-    z-index: -1;
+}
+
+.slideshow {
+    z-index: -2;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.slideshow img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation-iteration-count: infinite;
+    position: absolute;
+}
+
+.image1 {
+    animation: slideshow1 18s 0s linear;
+    transform: scale(1.1)
+}
+
+.image2 {
+    opacity: 0;
+    animation: slideshow2 18s 0s linear;
+    transform: scale(1.1);
+}
+
+@keyframes slideshow1 {
+    0% {
+        transform: scale(1.25) rotate(0deg);
+    }
+    60% {
+        transform: scale(1.1) rotate(-3deg);
+    }
+    80% {
+        transform: scale(1.30) rotate(1deg);
+    }
+    100% {
+        transform: scale(1.25) rotate(0deg);
+    }
+}
+
+@keyframes slideshow2 {
+    0% {
+        opacity: 0;
+        transform: scale(1.1) rotate(0deg);
+    }
+    40% {
+        opacity: 0;
+        transform: scale(1.1) rotate(0deg);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1.15) rotate(1deg);
+    }
+    80% {
+        opacity: 1;
+        transform: scale(1.20) rotate(2deg);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.25) rotate(3deg);
+    }
 }

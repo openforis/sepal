@@ -2,7 +2,7 @@ import React from 'react'
 import CenteredPanel from 'widget/centered-panel'
 import SlideShow from 'app/login/slideshow/slideshow'
 import FontAwesome from 'react-fontawesome'
-import PropTypes from 'prop-types'
+import AnimateEnter from 'widget/animate'
 import 'font-awesome/css/font-awesome.css';
 import styles from './login.module.css'
 
@@ -16,10 +16,23 @@ export default class Login extends React.Component {
       <div className={styles.login}>
         <SlideShow/>
         <LoginPanel>
-          <Caption/>
-          <Title/>
-          <Features/>
-          <LoginForm/>
+
+          <AnimateEnter name={AnimateEnter.fadeInUp} delay={1000}>
+            <Caption/>
+          </AnimateEnter>
+
+          <AnimateEnter name={AnimateEnter.fadeInUp} delay={0}>
+            <Title/>
+          </AnimateEnter>
+
+          <AnimateEnter name={AnimateEnter.fadeInLeft} delay={100}>
+            <Features/>
+          </AnimateEnter>
+
+          <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500}>
+            <LoginForm/>
+          </AnimateEnter>
+
         </LoginPanel>
       </div>
     )
@@ -29,14 +42,7 @@ export default class Login extends React.Component {
 Login.propTypes = {}
 
 const LoginPanel = ({children}) =>
-  <CenteredPanel
-    style={{
-      transition: 'background-color 2s ease',
-      borderRadius: '3rem',
-      backgroundColor: 'rgba(187, 192, 195, 0.05)',
-      border: '1px dotted rgba(187, 192, 195, 0.05)',
-    }}
-  >
+  <CenteredPanel className={styles.loginPanel}>
     <div className={styles.contentContainer}>
       {children}
     </div>
@@ -91,13 +97,6 @@ const Feature = ({icon, title, description, className}) =>
     <p className={styles.featureDescription}>{description}</p>
   </div>
 
-Feature.propTypes = {
-  icon: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  className: PropTypes.string.isRequired,
-}
-
 const LoginForm = () =>
   <form className={styles.form}>
     <FormField label='Username'>
@@ -115,10 +114,6 @@ const FormField = ({label, children}) =>
     <label>{label}</label>
     {children}
   </div>
-
-// FormField.propTypes = {
-//   label: PropTypes.string.isRequired,
-// }
 
 const LoginButton = ({tabIndex, onClick}) =>
   <button

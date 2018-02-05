@@ -2,6 +2,11 @@
     height: 100%;
 }
 
+.loginPanel {
+    border-radius: 3rem;
+    background-color: rgba(187, 192, 195, 0.05);
+}
+
 .contentContainer {
     display: grid;
     grid-template-columns: 1fr 1fr;

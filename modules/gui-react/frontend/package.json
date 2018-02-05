@@ -10,7 +10,9 @@
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-fontawesome": "^1.6.1",
+    "react-motion": "^0.5.2",
     "react-scripts": "1.1.0",
+    "react-transition-group": "^2.2.1",
     "velocity-animate": "^1.5.1"
   },
   "scripts": {
