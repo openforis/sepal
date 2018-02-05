@@ -30,7 +30,7 @@ apt-get install -y \
 
 wget http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
 chmod u+x OpenForisToolkit.run
-yes | ./OpenForisToolkit.run
+yes 1 | ./OpenForisToolkit.run
 rm OpenForisToolkit.run
 
 rm -f /usr/local/bin/gdal_merge.py /usr/local/bin/gdal_rasterize /usr/local/bin/gdalsrsinfo
