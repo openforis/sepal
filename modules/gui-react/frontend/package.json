@@ -5,15 +5,11 @@
   "dependencies": {
     "bootstrap": "^4.0.0",
     "font-awesome": "^4.7.0",
-    "jquery": "^3.3.1",
-    "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-fontawesome": "^1.6.1",
-    "react-motion": "^0.5.2",
     "react-scripts": "1.1.0",
-    "react-transition-group": "^2.2.1",
-    "velocity-animate": "^1.5.1"
+    "react-transition-group": "^2.2.1"
   },
   "scripts": {
     "start": "NODE_PATH=src/ react-app-rewired start",
@@ -22,6 +18,7 @@
     "eject": "NODE_PATH=src/ react-app-rewired eject"
   },
   "devDependencies": {
+    "prop-types": "^15.6.0",
     "imports-loader": "^0.7.1",
     "react-app-rewired": "^1.4.1",
     "webpack": "^3.10.0"

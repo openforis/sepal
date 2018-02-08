@@ -1,22 +1,18 @@
 module.exports = function override(config, env) {
-  configureImportsLoaders({
-    'app/login/slideshow/kenburnsy': 'jQuery=>window.jQuery',
-    'velocity-animate': 'jQuery=>window.jQuery'
-  })
-  configureCssModuleLoader(config.module.rules)
-  return config;
+    configureCssModuleLoader(config.module.rules)
+    return config;
 
-  function configureImportsLoaders(importsLoaders) {
-    Object.keys(importsLoaders).forEach(path =>
-      config.module.rules = (config.module.rules || []).concat({
-        test: require.resolve(path),
-        enforce: 'pre',
-        use: 'imports-loader?' + importsLoaders[path]
-      })
-    )
-  }
+    function configureImportsLoaders(importsLoaders) {
+      Object.keys(importsLoaders).forEach(path =>
+        config.module.rules = (config.module.rules || []).concat({
+          test: require.resolve(path),
+          enforce: 'pre',
+          use: 'imports-loader?' + importsLoaders[path]
+        })
+      )
+    }
 
-  /**
+    /**
    * Find the /\.css$/ matching rule with a css-loader.
    * Exclude /\.module\.css$/.
    * Clone it to match /\.module\.css$/, and enable module support.

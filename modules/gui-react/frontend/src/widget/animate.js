@@ -4,10 +4,6 @@ import PropTypes from 'prop-types'
 import styles from './animate.module.css'
 
 export default class AnimateEnter extends React.Component {
-  constructor(props) {
-    super(props)
-  }
-
   render() {
     const name = this.props.name in styles ? styles[this.props.name] : this.props.name
     const duration = this.props.duration || 1000

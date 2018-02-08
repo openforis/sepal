@@ -1,14 +1,26 @@
 import React from 'react'
 import CenteredPanel from 'widget/centered-panel'
+import {Constraints, Input, managedForm} from 'widget/form'
 import SlideShow from 'app/login/slideshow/slideshow'
-import FontAwesome from 'react-fontawesome'
+import Icon from 'widget/icon'
 import AnimateEnter from 'widget/animate'
-import 'font-awesome/css/font-awesome.css';
 import styles from './login.module.css'
 
 export default class Login extends React.Component {
-  login() {
-    alert('Logging in')
+  state = {errors: {}}
+
+  constructor() {
+    super()
+    this.login = this.login.bind(this)
+  }
+
+  login({username, password}) {
+    console.log(username)
+    this.setState({
+      errors: {
+        password: 'Incorrect username/password'
+      }
+    })
   }
 
   render() {
@@ -30,7 +42,7 @@ export default class Login extends React.Component {
           </AnimateEnter>
 
           <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500}>
-            <LoginForm/>
+            <LoginForm errors={this.state.errors} onSubmit={this.login} initialState={{}}/>
           </AnimateEnter>
 
         </LoginPanel>
@@ -38,8 +50,6 @@ export default class Login extends React.Component {
     )
   }
 }
-
-Login.propTypes = {}
 
 const LoginPanel = ({children}) =>
   <CenteredPanel className={styles.loginPanel}>
@@ -89,7 +99,7 @@ const Features = () =>
 
 const Feature = ({icon, title, description, className}) =>
   <div className={styles.feature}>
-    <FontAwesome
+    <Icon
       name={icon}
       className={`${styles.featureIcon} ${className}`}
     />
@@ -97,43 +107,85 @@ const Feature = ({icon, title, description, className}) =>
     <p className={styles.featureDescription}>{description}</p>
   </div>
 
-const LoginForm = () =>
-  <form className={styles.form}>
-    <FormField label='Username'>
-      <input name='username' placeholder='Enter your user name' tabIndex='1'/>
-    </FormField>
-    <FormField label='Password'>
-      <input type="password" name='password' placeholder='Enter your password' tabIndex='2'/>
-    </FormField>
-    <LoginButton tabIndex='3'/>
-    <ForgotPassword tabIndex='4'/>
-  </form>
+const LoginForm = managedForm({
+  username: {
+    constraints: new Constraints()
+      .notBlank('Username is required')
+      .match(/^.*$/, 'Username must match some regex')
+  },
+  password: {
+    constraints: new Constraints().notBlank('Password is required')
+  },
+}, ({form, inputs: {username, password}}) => {
+  const errors = form.errors.map(error =>
+    <li>{error}</li>
+  )
+  return (
+    <form style={styles.form}>
+      <div>
+        <label>Username</label>
+        <Input
+          input={username}
+          placeholder='Enter your username'
+          autoFocus='on'
+          autoComplete='off'
+          tabIndex={1}
+          validate='onBlur'
+        />
+      </div>
+      <div>
+        <label>Password</label>
+        <Input
+          input={password}
+          placeholder='Enter your password'
+          tabIndex={2}
+          validate='onBlur'
+        />
+      </div>
 
-const FormField = ({label, children}) =>
-  <div className={styles.formField}>
-    <label>{label}</label>
-    {children}
-  </div>
+      <ul className={form.errorClass}>
+        {errors}
+      </ul>
 
-const LoginButton = ({tabIndex, onClick}) =>
-  <button
-    className={styles.loginButton}
-    onClick={onClick}
-    tabIndex={tabIndex}
-  >
-    <FontAwesome
-      name='sign-in'
-      className={styles.loginIcon}
-    />
-    Login
-  </button>
+      <LoginButton
+        onClick={form.submit}
+        disabled={form.hasInvalid()}
+        tabIndex={3}
+      />
+
+      <ForgotPassword tabIndex={4}/>
+    </form>
+  )
+})
+
+const LoginButton = ({tabIndex, onClick, ...props}) => {
+  function handleClick(e) {
+    e.preventDefault()
+    onClick()
+  }
+
+  return (
+    <button
+      className={styles.loginButton}
+      onClick={handleClick}
+      tabIndex={tabIndex}
+      {...props}
+    >
+      <Icon
+        name='sign-in'
+        className={styles.loginIcon}
+      />
+      Login
+    </button>
+  )
+}
 
 const ForgotPassword = ({tabIndex, onClick}) =>
   <div className={styles.forgotPassword}>
     <a
       onClick={onClick}
       tabIndex={tabIndex}>
-      <FontAwesome
+      <Icon
         name='question-circle'
         className={styles.forgotPasswordIcon}
       />

@@ -1,0 +1,44 @@
+form label {
+    transition-property: background-color;
+    border-top-left-radius: 50px;
+    border-top-right-radius: 50px;
+    border-bottom-left-radius: 50px;
+    border-bottom-right-radius: 50px;
+    padding: 10px 20px;
+    background-color: #c5b397;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+form input {
+    display: block;
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #B5B5B5;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    background-color: transparent;
+    font-size: 1.25rem;
+    transition: background-color 800ms ease-out;
+}
+
+form input:focus {
+    border-bottom: 1px solid #fff;
+}
+
+form input::placeholder {
+    font-style: italic;
+}
+
+form input.error {
+    border-bottom-color: #e81351 !important;
+    background-color: rgba(232, 19, 81, 0.1) !important;
+}
+
+form ul.error {
+    list-style: none;
+    color: #e81351;
+    font-size: .85rem;
+    font-weight: 400;
+}

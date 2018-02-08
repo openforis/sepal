@@ -96,55 +96,19 @@
     margin: 0;
 }
 
-.featureDescription {
-}
-
-.form {
-
-}
-
-.formField {
-
-}
-
-.formField label {
-    transition-property: background-color;
-    border-top-left-radius: 50px;
-    border-top-right-radius: 50px;
-    border-bottom-left-radius: 50px;
-    border-bottom-right-radius: 50px;
-    padding: 10px 20px;
-    background-color: #c5b397;
-    font-size: 12px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.formField input {
-    display: block;
-    width: 100%;
-    border: none;
-    border-bottom: 1px solid #fff;
-    margin-top: 1rem;
-    margin-bottom: 2rem;
-    background-color: transparent;
-    font-style: italic;
-    font-size: 1.25rem;
-}
-
 .loginButton {
     border-top-left-radius: 50px;
     border-top-right-radius: 50px;
     border-bottom-left-radius: 50px;
     border-bottom-right-radius: 50px;
+    border-style: solid;
+    border-width: 2px;
     font-weight: bold;
     font-size: 12px;
     text-transform: uppercase;
     line-height: 1;
     letter-spacing: 1.5px;
-
     position: relative;
-    border-width: 2px;
     padding: 24.5px 38.5px 24.5px 40px;
     cursor: pointer;
 
@@ -152,7 +116,27 @@
     background-color: #c5b397;
     color: #fff;
     padding-left: 60px;
+
+    transition: background-color 800ms ease-out;
 }
+
+.loginButton:focus, .loginButton:hover {
+    border-color: #b8a280;
+    background-color: #b8a280;
+}
+
+.loginButton:active {
+    border-color: #b4a397;
+    background-color: #b4a397;
+}
+
+.loginButton:disabled {
+    border-color: #c5b4ab;
+    background-color: #c5b4ab;
+    color: #ddd !important;
+    cursor: not-allowed;
+}
+
 
 .loginIcon {
     -webkit-transform: translateY(-50%);
