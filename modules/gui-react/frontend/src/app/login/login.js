@@ -2,30 +2,25 @@ import fetch from 'cross-fetch'
 import base64 from 'base-64'
 import {connect} from 'react-redux'
 import LoginView from './login-view'
-import reducerRegistry from 'reducer-registry'
+import actionRegistry from 'action-registry'
 
-const LOGGING_IN = reducerRegistry.register('LOGGING_IN', (state) =>
-    Object.assign({}, state, {loginState: 'LOGGING_IN'}))
+const loggingIn = actionRegistry.register(
+    'LOGGING_IN',
+    (state) => Object.assign({}, state, {loginState: 'LOGGING_IN'})
+)
 
-const LOGGED_IN = reducerRegistry.register('LOGGED_IN', (state, action) =>
-    Object.assign({}, state, {loginState: 'LOGGED_IN', user: action.user}))
+const loggedIn = actionRegistry.register(
+    'LOGGED_IN',
+    (state, action) => Object.assign({}, state, {loginState: 'LOGGED_IN', user: action.user}),
+    (user) => ({user: user})
+)
 
-const INVALID_CREDENTIALS = reducerRegistry.register('INVALID_CREDENTIALS', (state) =>
-    Object.assign({}, state, {loginState: 'INVALID_CREDENTIALS'}))
+const invalidCredentials = actionRegistry.register('INVALID_CREDENTIALS',
+    (state) => Object.assign({}, state, {loginState: 'INVALID_CREDENTIALS'})
+)
 
 
-const loggingIn = () => ({
-    type: LOGGING_IN
-})
 
-const loggedIn = (user) => ({
-    type: LOGGED_IN,
-    user: user
-})
-
-const invalidCredentials = () => ({
-    type: INVALID_CREDENTIALS
-})
 
 const serverConnectionFailed = (error) => ({
     type: 'SERVER_CONNECTION_FAILED',

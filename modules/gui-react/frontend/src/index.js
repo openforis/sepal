@@ -5,12 +5,12 @@ import ReactDOM from 'react-dom'
 import App from './app/app'
 import {Provider} from 'react-redux'
 import {applyMiddleware, createStore} from 'redux'
-import reducerRegistry from 'reducer-registry'
+import actionRegistry from 'action-registry'
 
 const loggerMiddleware = createLogger()
 
 const store = createStore(
-    reducerRegistry.rootReducer(),
+    actionRegistry.rootReducer(),
     applyMiddleware(
         thunk,
         loggerMiddleware
