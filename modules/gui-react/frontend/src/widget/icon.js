@@ -3,7 +3,7 @@ import FontAwesome from 'react-fontawesome'
 import 'font-awesome/css/font-awesome.css';
 
 const Icon = props =>
-  <FontAwesome{...props}/>
+    <FontAwesome{...props}/>
 
 Icon.propTypes = FontAwesome.propTypes
 

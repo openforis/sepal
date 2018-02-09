@@ -1,194 +1,88 @@
-import React from 'react'
-import CenteredPanel from 'widget/centered-panel'
-import {Constraints, Input, managedForm} from 'widget/form'
-import SlideShow from 'app/login/slideshow/slideshow'
-import Icon from 'widget/icon'
-import AnimateEnter from 'widget/animate'
-import styles from './login.module.css'
+import fetch from 'cross-fetch'
+import base64 from 'base-64'
+import {connect} from 'react-redux'
+import LoginView from './login-view'
+import reducerRegistry from 'reducer-registry'
 
-export default class Login extends React.Component {
-  state = {errors: {}}
+const LOGGING_IN = reducerRegistry.register('LOGGING_IN', (state) =>
+    Object.assign({}, state, {loginState: 'LOGGING_IN'}))
 
-  constructor() {
-    super()
-    this.login = this.login.bind(this)
-  }
+const LOGGED_IN = reducerRegistry.register('LOGGED_IN', (state, action) =>
+    Object.assign({}, state, {loginState: 'LOGGED_IN', user: action.user}))
 
-  login({username, password}) {
-    console.log(username)
-    this.setState({
-      errors: {
-        password: 'Incorrect username/password'
-      }
-    })
-  }
+const INVALID_CREDENTIALS = reducerRegistry.register('INVALID_CREDENTIALS', (state) =>
+    Object.assign({}, state, {loginState: 'INVALID_CREDENTIALS'}))
 
-  render() {
-    return (
-      <div className={styles.login}>
-        <SlideShow/>
-        <LoginPanel>
 
-          <AnimateEnter name={AnimateEnter.fadeInUp} delay={1000}>
-            <Caption/>
-          </AnimateEnter>
-
-          <AnimateEnter name={AnimateEnter.fadeInUp} delay={0}>
-            <Title/>
-          </AnimateEnter>
-
-          <AnimateEnter name={AnimateEnter.fadeInLeft} delay={100}>
-            <Features/>
-          </AnimateEnter>
-
-          <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500}>
-            <LoginForm errors={this.state.errors} onSubmit={this.login} initialState={{}}/>
-          </AnimateEnter>
-
-        </LoginPanel>
-      </div>
-    )
-  }
-}
-
-const LoginPanel = ({children}) =>
-  <CenteredPanel className={styles.loginPanel}>
-    <div className={styles.contentContainer}>
-      {children}
-    </div>
-  </CenteredPanel>
-
-const Caption = () =>
-  <p className={styles.caption}>
-    System for earth observations, data access, processing & analysis for land monitoring
-  </p>
-
-const Title = () =>
-  <div className={styles.titleSection}>
-    <h2 className={styles.title}>Sepal</h2>
-    <hr className={styles.titleUnderline}/>
-  </div>
-
-const Features = () =>
-  <div className={styles.features}>
-    <Feature
-      icon='globe'
-      title='Search geo data'
-      description='Fast and easy access to scenes and mosaics'
-      className={styles.searchIcon}
-    />
-    <Feature
-      icon='folder-open'
-      title='Browse your data'
-      description='Preview and download your products'
-      className={styles.browseIcon}
-    />
-    <Feature
-      icon='wrench'
-      title='Process your data'
-      description='Easy-to-use data processing Apps'
-      className={styles.processIcon}
-    />
-    <Feature
-      icon='terminal'
-      title='Terminal'
-      description='Powerful command-line tools for data processing'
-      className={styles.terminalIcon}
-    />
-  </div>
-
-const Feature = ({icon, title, description, className}) =>
-  <div className={styles.feature}>
-    <Icon
-      name={icon}
-      className={`${styles.featureIcon} ${className}`}
-    />
-    <h3 className={styles.featureTitle}>{title}</h3>
-    <p className={styles.featureDescription}>{description}</p>
-  </div>
-
-const LoginForm = managedForm({
-  username: {
-    constraints: new Constraints()
-      .notBlank('Username is required')
-      .match(/^.*$/, 'Username must match some regex')
-  },
-  password: {
-    constraints: new Constraints().notBlank('Password is required')
-  },
-}, ({form, inputs: {username, password}}) => {
-  const errors = form.errors.map(error =>
-    <li>{error}</li>
-  )
-  return (
-    <form style={styles.form}>
-      <div>
-        <label>Username</label>
-        <Input
-          input={username}
-          placeholder='Enter your username'
-          autoFocus='on'
-          autoComplete='off'
-          tabIndex={1}
-          validate='onBlur'
-        />
-      </div>
-      <div>
-        <label>Password</label>
-        <Input
-          input={password}
-          placeholder='Enter your password'
-          tabIndex={2}
-          validate='onBlur'
-        />
-      </div>
-
-      <ul className={form.errorClass}>
-        {errors}
-      </ul>
-
-      <LoginButton
-        onClick={form.submit}
-        disabled={form.hasInvalid()}
-        tabIndex={3}
-      />
-
-      <ForgotPassword tabIndex={4}/>
-    </form>
-  )
+const loggingIn = () => ({
+    type: LOGGING_IN
 })
 
-const LoginButton = ({tabIndex, onClick, ...props}) => {
-  function handleClick(e) {
-    e.preventDefault()
-    onClick()
-  }
+const loggedIn = (user) => ({
+    type: LOGGED_IN,
+    user: user
+})
 
-  return (
-    <button
-      className={styles.loginButton}
-      onClick={handleClick}
-      tabIndex={tabIndex}
-      {...props}
-    >
-      <Icon
-        name='sign-in'
-        className={styles.loginIcon}
-      />
-      Login
-    </button>
-  )
-}
+const invalidCredentials = () => ({
+    type: INVALID_CREDENTIALS
+})
 
-const ForgotPassword = ({tabIndex, onClick}) =>
-  <div className={styles.forgotPassword}>
-    <a
-      onClick={onClick}
-      tabIndex={tabIndex}>
-      <Icon
-        name='question-circle'
-        className={styles.forgotPasswordIcon}
-      />
-      Forgot password
-    </a>
-  </div>
+const serverConnectionFailed = (error) => ({
+    type: 'SERVER_CONNECTION_FAILED',
+    error: error
+
+})
+
+const unexpectedResponseStatus = (response) => ({
+    type: 'UNEXPECTED_RESPONSE_STATUS',
+    response: response
+
+})
+
+const postLogin = (username, password) =>
+    fetch('/user/login', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Basic ' + base64.encode(username + ":" + password),
+            'No-auth-challenge': true
+        }
+    })
+
+const login = (username, password) =>
+    dispatch => {
+        dispatch(loggingIn())
+        postLogin(username, password)
+            .then(
+                (response) => {
+                    switch (response.status) {
+                        case 200:
+                            return Promise.resolve(response.json())
+                        case 401:
+                            return Promise.reject(invalidCredentials())
+                        default:
+                            return Promise.reject(unexpectedResponseStatus(response))
+                    }
+
+                },
+                (error) => Promise.reject(dispatch(serverConnectionFailed(error)))
+            )
+            .then(
+                (user) => dispatch(loggedIn(user)),
+                (action) => dispatch(action)
+            )
+    }
+
+const mapStateToProps = (state) => ({
+    errors: state.loginState === 'INVALID_CREDENTIALS' ? {password: 'Invalid username/password'} : {}
+})
+
+const mapDispatchToProps = (dispatch) => ({
+    onLogin: ({username, password}) => dispatch(login(username, password))
+})
+
+const Login = connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(LoginView)
+
+export default Login
