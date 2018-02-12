@@ -22,6 +22,14 @@
         padding-top: 1.8rem;
         text-overflow: ellipsis;
         white-space: normal;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img.image-app {
+          max-height: 4rem;
+          margin-right: 1rem;
+        }
 
         &.r-studio {
           //padding-top: 10%;
