@@ -2,7 +2,7 @@ import fetch from 'cross-fetch'
 import base64 from 'base-64'
 
 export default class Http {
-    static get(path, {username, password, handle, headers = {}, retries = 0, ...args}) {
+    static get(path, {username, password, handle, headers = {}, retries = 5, ...args} = {}) {
         return execute('GET', path, {
             ...args,
             username: username,
@@ -13,7 +13,7 @@ export default class Http {
         })
     }
 
-    static post(path, {username, password, handle, headers = {}, retries = 0, ...args}) {
+    static post(path, {username, password, handle, headers = {}, retries = 5, ...args} = {}) {
         return execute('POST', path, {
             ...args,
             username: username,
@@ -46,12 +46,16 @@ function execute(method, path, {username, password, handle, headers = {}, retrie
 
     if (username || password)
         headers = Object.assign(headers, {
-            'Authorization': 'Basic ' + base64.encode(username + ":" + password),
-            'No-auth-challenge': true
+            'Authorization': 'Basic ' + base64.encode(username + ":" + password)
         })
+    headers = Object.assign(headers, {
+        'No-auth-challenge': true
+    })
+
     return fetch(path, {
         method: method,
         headers: headers,
+        credentials: 'include',
         ...args
     })
         .then(
@@ -66,7 +70,6 @@ function execute(method, path, {username, password, handle, headers = {}, retrie
         )
         .then(
             ([json, response]) => {
-                console.log('*** json, response: ', json, response)
                 if (handle) {
                     const handler = handle[response.status]
                     if (handler) {

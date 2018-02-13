@@ -7,13 +7,13 @@ import {Provider} from 'react-redux'
 import {applyMiddleware, createStore} from 'redux'
 import actionRegistry from 'action-registry'
 
-const loggerMiddleware = createLogger()
+const logger = createLogger()
 
 const store = createStore(
     actionRegistry.rootReducer(),
     applyMiddleware(
         thunk,
-        loggerMiddleware
+        logger
     )
 )
 
