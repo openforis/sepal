@@ -1,8 +1,8 @@
-.login {
+.landing {
     height: 100%;
 }
 
-.loginPanel {
+.landingPanel {
     border-radius: 3rem;
     background-color: rgba(187, 192, 195, 0.05);
 }

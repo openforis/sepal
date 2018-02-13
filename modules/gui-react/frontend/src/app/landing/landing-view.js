@@ -1,15 +1,15 @@
 import React from 'react'
 import CenteredPanel from 'widget/centered-panel'
 import {Constraints, Input, managedForm} from 'widget/form'
-import SlideShow from 'app/login/slideshow/slideshow'
 import Icon from 'widget/icon'
 import AnimateEnter from 'widget/animate'
-import styles from './login.module.css'
+import SlideShow from './slideshow/slideshow'
+import styles from './landing.module.css'
 
-const LoginView = ({errors, onLogin}) =>
-    <div className={styles.login}>
+const LandingView = ({errors, onLogin}) =>
+    <div className={styles.landing}>
         <SlideShow/>
-        <LoginPanel>
+        <LandingPanel>
             <AnimateEnter name={AnimateEnter.fadeInUp} delay={1000}>
                 <Caption/>
             </AnimateEnter>
@@ -29,12 +29,12 @@ const LoginView = ({errors, onLogin}) =>
                     initialState={{username: ''}}
                 />
             </AnimateEnter>
-        </LoginPanel>
+        </LandingPanel>
     </div>
-export default LoginView
+export default LandingView
 
-const LoginPanel = ({children}) =>
-    <CenteredPanel className={styles.loginPanel}>
+const LandingPanel = ({children}) =>
+    <CenteredPanel className={styles.landingPanel}>
         <div className={styles.contentContainer}>
             {children}
         </div>
@@ -94,7 +94,6 @@ const LoginForm = managedForm({
     username: {
         constraints: new Constraints()
             .notBlank('Username is required')
-            .match(/^.*$/, 'Username must match some regex')
     },
     password: {
         constraints: new Constraints().notBlank('Password is required')

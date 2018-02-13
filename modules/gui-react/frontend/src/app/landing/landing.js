@@ -1,7 +1,8 @@
-import Http from 'http-client'
-import {connect} from 'react-redux'
-import LoginView from './login-view'
 import actionRegistry from 'action-registry'
+import Http from 'http-client'
+import {httpCallFailed} from 'errors'
+import {connect} from 'react-redux'
+import LandingView from './landing-view'
 
 const loggingIn = actionRegistry.register(
     'LOGGING_IN',
@@ -18,18 +19,12 @@ const invalidCredentials = actionRegistry.register('INVALID_CREDENTIALS',
     (state) => Object.assign({}, state, {loginState: 'INVALID_CREDENTIALS'})
 )
 
-const httpCallFailed = (error) => ({
-    type: 'HTTP_CALL_FAILED',
-    error: error
-})
-
 const login = (username, password) =>
     dispatch => {
         dispatch(loggingIn())
         Http.post('/user/login', {
             username: username,
             password: password,
-            retries: 5,
             handle: {
                 200: (user) => dispatch(loggedIn(user)),
                 401: () => dispatch(invalidCredentials())
@@ -45,9 +40,5 @@ const mapDispatchToProps = (dispatch) => ({
     onLogin: ({username, password}) => dispatch(login(username, password))
 })
 
-const Login = connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(LoginView)
-
-export default Login
+const Landing = connect(mapStateToProps, mapDispatchToProps)(LandingView)
+export default Landing
