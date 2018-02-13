@@ -1,5 +1,4 @@
-import fetch from 'cross-fetch'
-import base64 from 'base-64'
+import Http from 'http-client'
 import {connect} from 'react-redux'
 import LoginView from './login-view'
 import actionRegistry from 'action-registry'
@@ -19,52 +18,23 @@ const invalidCredentials = actionRegistry.register('INVALID_CREDENTIALS',
     (state) => Object.assign({}, state, {loginState: 'INVALID_CREDENTIALS'})
 )
 
-
-
-
-const serverConnectionFailed = (error) => ({
-    type: 'SERVER_CONNECTION_FAILED',
+const httpCallFailed = (error) => ({
+    type: 'HTTP_CALL_FAILED',
     error: error
-
 })
-
-const unexpectedResponseStatus = (response) => ({
-    type: 'UNEXPECTED_RESPONSE_STATUS',
-    response: response
-
-})
-
-const postLogin = (username, password) =>
-    fetch('/user/login', {
-        method: 'POST',
-        headers: {
-            'Authorization': 'Basic ' + base64.encode(username + ":" + password),
-            'No-auth-challenge': true
-        }
-    })
 
 const login = (username, password) =>
     dispatch => {
         dispatch(loggingIn())
-        postLogin(username, password)
-            .then(
-                (response) => {
-                    switch (response.status) {
-                        case 200:
-                            return Promise.resolve(response.json())
-                        case 401:
-                            return Promise.reject(invalidCredentials())
-                        default:
-                            return Promise.reject(unexpectedResponseStatus(response))
-                    }
-
-                },
-                (error) => Promise.reject(dispatch(serverConnectionFailed(error)))
-            )
-            .then(
-                (user) => dispatch(loggedIn(user)),
-                (action) => dispatch(action)
-            )
+        Http.post('/user/login', {
+            username: username,
+            password: password,
+            retries: 5,
+            handle: {
+                200: (user) => dispatch(loggedIn(user)),
+                401: () => dispatch(invalidCredentials())
+            },
+        }).catch((error) => dispatch(httpCallFailed(error)))
     }
 
 const mapStateToProps = (state) => ({
