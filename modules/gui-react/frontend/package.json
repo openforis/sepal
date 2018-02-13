@@ -18,7 +18,7 @@
     "redux-thunk": "^1.0.0"
   },
   "scripts": {
-    "start": "NODE_PATH=src/ react-app-rewired start",
+    "start": "NODE_PATH=src/ HTTPS=true react-app-rewired start",
     "build": "NODE_PATH=src/ react-app-rewired build",
     "test": "NODE_PATH=src/ react-app-rewired test --env=jsdom",
     "eject": "NODE_PATH=src/ react-app-rewired eject"
