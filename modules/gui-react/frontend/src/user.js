@@ -33,8 +33,8 @@ export const isLoadingUser = (state) =>
 export const getCurrentUser = (state) =>
     state.user
 
-export const getLoginState = (state) =>
-    state.loginState
+export const invalidCredentialsProvided = (state) =>
+    state.loginState === 'INVALID_CREDENTIALS'
 
 
 const loadingCurrentUser = actionRegistry.register(

@@ -1,6 +1,6 @@
 import React from 'react'
 import {connect} from 'react-redux'
-import {getLoginState, login} from 'user'
+import {invalidCredentialsProvided, login} from 'user'
 import AnimateEnter from "../../widget/animate"
 import CenteredPanel from 'widget/centered-panel'
 import {Constraints, Input, managedForm} from 'widget/form'
@@ -9,7 +9,7 @@ import SlideShow from './slideshow/slideshow'
 import styles from './landing.module.css'
 
 const mapStateToProps = (state) => ({
-    errors: getLoginState(state) === 'INVALID_CREDENTIALS' ? {password: 'Invalid username/password'} : {}
+    errors: invalidCredentialsProvided(state) ? {password: 'Invalid username/password'} : {}
 })
 
 const mapDispatchToProps = (dispatch) => ({
