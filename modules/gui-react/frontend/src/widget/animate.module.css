@@ -32,3 +32,35 @@
         transform: none;
     }
 }
+
+@keyframes addItem {
+    0% {
+        opacity: 0;
+        max-height: 0;
+    }
+
+    100% {
+        opacity: 1;
+        max-height: 500px;
+    }
+}
+
+@keyframes removeItem {
+    0% {
+        opacity: 1;
+        max-height: 500px;
+    }
+
+    100% {
+        opacity: 0;
+        max-height: 0;
+    }
+}
+
+.itemEnterActive {
+    animation: addItem 500ms 0ms ease-in-out forwards;
+
+}
+.itemExitActive {
+    animation: removeItem 500ms 0ms ease-in-out forwards;
+}

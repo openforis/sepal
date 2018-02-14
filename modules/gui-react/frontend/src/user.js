@@ -1,4 +1,3 @@
-import React from 'react'
 import Http from 'http-client'
 import {httpCallFailed} from 'errors'
 import actionRegistry from 'action-registry'

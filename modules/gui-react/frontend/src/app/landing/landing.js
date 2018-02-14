@@ -1,7 +1,7 @@
 import React from 'react'
 import {connect} from 'react-redux'
 import {invalidCredentialsProvided, login} from 'user'
-import AnimateEnter from "../../widget/animate"
+import {AnimateEnter, AnimateUl} from "../../widget/animate"
 import CenteredPanel from 'widget/centered-panel'
 import {Constraints, Input, managedForm} from 'widget/form'
 import Icon from 'widget/icon'
@@ -112,9 +112,6 @@ const LoginForm = managedForm({
         constraints: new Constraints().notBlank('Password is required')
     },
 }, ({form, inputs: {username, password}}) => {
-    const errors = form.errors.map((error, i) =>
-        <li key={i}>{error}</li>
-    )
     return (
         <form style={styles.form}>
             <div>
@@ -139,9 +136,11 @@ const LoginForm = managedForm({
                 />
             </div>
 
-            <ul className={form.errorClass}>
-                {errors}
-            </ul>
+            <AnimateUl className={form.errorClass}>
+                {form.errors.map((error, i) =>
+                    <li key={error}>{error}</li>
+                )}
+            </AnimateUl>
 
             <LoginButton
                 onClick={form.submit}

@@ -81,9 +81,6 @@ export function managedForm(inputs, Component) {
 
         render() {
             const inputs = {}
-            // console.log('values: ', this.state.values)
-            // console.log('errors: ', this.state.errors)
-            // console.log('props errors: ', this.props.errors)
             Object.keys(this.state.values).forEach(name => {
                 inputs[name] = {
                     name: name,
