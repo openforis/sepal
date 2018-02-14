@@ -21,10 +21,26 @@ module.exports = function override(config, env) {
     //     .tap(console.log)
     //     .value()
     
-
+    const fs = require('fs')
+    const _ = require('lodash')
+    const flat = require('flat')
+    const locales = fs.readdirSync('src/locale').filter((name) => /^[^\\.]/.test(name))
+    
+    const keys = _.chain(locales)
+        .map((locale) => require(`./src/locale/${locale}/translations`))
+        .map((messages) =>
+            _.chain(flat.flatten(messages))
+                .pickBy(_.identity)
+                .keys()
+                .value())
+        .value()
+    
+    const incompleteKeys = _.difference(_.union(...keys), _.intersection(...keys))
+    if (incompleteKeys)
+        throw `Missing translations: \n${incompleteKeys.join('\n')}`
 
     configureCssModuleLoader(config.module.rules)
-    return config;
+    return config
 
     function configureImportsLoaders(importsLoaders) {
         Object.keys(importsLoaders).forEach(path =>
