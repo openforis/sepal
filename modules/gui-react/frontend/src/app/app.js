@@ -1,47 +1,23 @@
 import React from 'react'
-import Http from 'http-client'
-import {httpCallFailed} from 'errors'
-import actionRegistry from 'action-registry'
 import {connect} from 'react-redux'
+import {getCurrentUser, isLoadingUser, loadCurrentUser} from 'user'
 import Landing from 'app/landing/landing'
 import Home from 'app/home/home'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
 import './app.css'
 
-const loadingUser = actionRegistry.register(
-    'LOADING_USER',
-    (state) => Object.assign({}, state, {userState: 'LOADING_USER', user: null})
-)
-
-const loadedUser = actionRegistry.register(
-    'LOADED_USER',
-    (state, action) => Object.assign({}, state, {userState: 'LOADED_USER', user: action.user}),
-    (user) => ({user: user})
-)
-
-const loadUser = () =>
-    dispatch => {
-        dispatch(loadingUser())
-        Http.get('/user/current', {
-            handle: {
-                200: (user) => dispatch(loadedUser(user)),
-                401: () => dispatch(loadedUser(null)),
-            }
-        }).catch((error) => dispatch(httpCallFailed(error)))
-    }
-
 const mapStateToProps = (state) => ({
-    user: state.user,
-    loadedUser: state.userState === 'LOADED_USER'
+    user: getCurrentUser(state),
+    loadingUser: isLoadingUser(state)
 })
 
 const mapDispatchToProps = (dispatch) => ({
-    loadUser: () => dispatch(loadUser())
+    loadUser: () => dispatch(loadCurrentUser())
 })
 
 const Loader = () =>
     <div className="app-loader">
-        <span></span>
+        <span/>
         <p>S E P A L</p>
     </div>
 
@@ -52,8 +28,8 @@ const App = connect(mapStateToProps, mapDispatchToProps)(
         }
 
         render() {
-            const {user, loadedUser} = this.props
-            if (!loadedUser)
+            const {user, loadingUser} = this.props
+            if (loadingUser)
                 return <Loader/>
             else if (user)
                 return <Home user={user}/>
