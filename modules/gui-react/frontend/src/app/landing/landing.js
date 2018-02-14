@@ -6,6 +6,7 @@ import CenteredPanel from 'widget/centered-panel'
 import {Constraints, Input, managedForm} from 'widget/form'
 import Icon from 'widget/icon'
 import SlideShow from './slideshow/slideshow'
+import {FormattedMessage} from 'react-intl'
 import styles from './landing.module.css'
 
 const mapStateToProps = (state) => ({
@@ -55,7 +56,7 @@ const LandingPanel = ({children}) =>
 
 const Caption = () =>
     <p className={styles.caption}>
-        System for earth observations, data access, processing & analysis for land monitoring
+        <FormattedMessage id='caption'/>
     </p>
 
 const Title = () =>

@@ -10,6 +10,7 @@
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-fontawesome": "^1.6.1",
+    "react-intl": "^2.4.0",
     "react-redux": "^5.0.6",
     "react-scripts": "1.1.0",
     "react-transition-group": "^2.2.1",
@@ -24,8 +25,10 @@
     "eject": "NODE_PATH=src/ react-app-rewired eject"
   },
   "devDependencies": {
-    "prop-types": "^15.6.0",
+    "flat": "^4.0.0",
     "imports-loader": "^0.7.1",
+    "lodash": "^4.17.5",
+    "prop-types": "^15.6.0",
     "react-app-rewired": "^1.4.1",
     "webpack": "^3.10.0"
   },

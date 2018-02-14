@@ -6,9 +6,17 @@ import App from './app/app'
 import {Provider} from 'react-redux'
 import {applyMiddleware, createStore} from 'redux'
 import actionRegistry from 'action-registry'
+import {addLocaleData, IntlProvider} from 'react-intl'
+import en from 'react-intl/locale-data/en'
+import es from 'react-intl/locale-data/es'
+
+// https://github.com/jcbvm/i18n-editor
+addLocaleData([...en, ...es])
+const language = (navigator.languages && navigator.languages[0]) || navigator.language || navigator.userLanguage
+const languageWithoutRegionCode = language.toLowerCase().split(/[_-]+/)[0]
+const messages = require(`locale/${languageWithoutRegionCode}/translations.json`)
 
 const logger = createLogger()
-
 const store = createStore(
     actionRegistry.rootReducer(),
     applyMiddleware(
@@ -18,8 +26,10 @@ const store = createStore(
 )
 
 ReactDOM.render(
-    <Provider store={store}>
-        <App/>
-    </Provider>,
+    <IntlProvider locale={language} messages={messages}>
+        <Provider store={store}>
+            <App/>
+        </Provider>
+    </IntlProvider>,
     document.getElementById('app')
 )
