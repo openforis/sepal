@@ -68,19 +68,23 @@ module.exports = function override(config, env) {
     function verifyAllKeysTranslated(locales) {
         const _ = require('lodash')
         const flat = require('flat')
-        locales = locales || require('fs').readdirSync('src/locale').filter((name) => /^[^\\.]/.test(name))
 
-        const keys = _.chain(locales)
+        function getLocalesInDirectory(directory) {
+            const fs = require('fs')
+            return fs.readdirSync(directory).filter((name) => /^[^\\.]/.test(name))
+        }
+
+        const incompleteKeys = _.chain(locales || getLocalesInDirectory('src/locale'))
             .map((locale) => require(`./src/locale/${locale}/translations`))
             .map((messages) =>
                 _.chain(flat.flatten(messages))
                     .pickBy(_.identity)
                     .keys()
                     .value())
+            .thru((keys) => _.difference(_.union(...keys), _.intersection(...keys)))
             .value()
 
-        const incompleteKeys = _.difference(_.union(...keys), _.intersection(...keys))
-        if (incompleteKeys.length > 0)
+        if (incompleteKeys.length)
             throw `Missing translations: \n\t${incompleteKeys.join('\n\t')}\n\n`
     }
 }
