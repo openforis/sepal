@@ -1,43 +1,5 @@
 module.exports = function override(config, env) {
-    // const fs = require('fs')
-    // const _ = require('lodash')
-    // const flat = require('flat')
-    // const locales = fs.readdirSync('src/locale').filter((name) => /^[^\\.]/.test(name))
-    // const messages = {}
-    //
-    // locales.map((locale) =>
-    //     messages[locale] = require(`locale/${locale}/translations.json`)
-    // )
-    //
-    // _.chain(locales)
-    //     .map((locale) => require(`locale/${locale}/translations.json`))
-    //     .map((messages) =>
-    //         _.chain(flat.flatten(messages))
-    //             .pickBy(_.identity)
-    //             .keys()
-    //             .value())
-    //     .tap(console.log)
-    //     .intersectionBy()
-    //     .tap(console.log)
-    //     .value()
-    
-    const fs = require('fs')
-    const _ = require('lodash')
-    const flat = require('flat')
-    const locales = fs.readdirSync('src/locale').filter((name) => /^[^\\.]/.test(name))
-    
-    const keys = _.chain(locales)
-        .map((locale) => require(`./src/locale/${locale}/translations`))
-        .map((messages) =>
-            _.chain(flat.flatten(messages))
-                .pickBy(_.identity)
-                .keys()
-                .value())
-        .value()
-    
-    const incompleteKeys = _.difference(_.union(...keys), _.intersection(...keys))
-    if (incompleteKeys)
-        throw `Missing translations: \n${incompleteKeys.join('\n')}`
+    verifyAllKeysTranslated(['en', 'es'])
 
     configureCssModuleLoader(config.module.rules)
     return config
@@ -102,6 +64,24 @@ module.exports = function override(config, env) {
         } else
             return null
     }
+    
+    function verifyAllKeysTranslated(locales) {
+        const _ = require('lodash')
+        const flat = require('flat')
+        locales = locales || require('fs').readdirSync('src/locale').filter((name) => /^[^\\.]/.test(name))
 
+        const keys = _.chain(locales)
+            .map((locale) => require(`./src/locale/${locale}/translations`))
+            .map((messages) =>
+                _.chain(flat.flatten(messages))
+                    .pickBy(_.identity)
+                    .keys()
+                    .value())
+            .value()
+
+        const incompleteKeys = _.difference(_.union(...keys), _.intersection(...keys))
+        if (incompleteKeys.length > 0)
+            throw `Missing translations: \n\t${incompleteKeys.join('\n\t')}\n\n`
+    }
 }
 
