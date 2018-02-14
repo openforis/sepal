@@ -2,10 +2,10 @@ from glob import glob
 
 import osgeo.gdal
 
-from ..task.task import ProcessTask
+from ..task.task import ThreadTask
 
 
-class BuildVrt(ProcessTask):
+class BuildVrt(ThreadTask):
     def __init__(self, output_file, files):
         super(BuildVrt, self).__init__()
         self.output_file = output_file

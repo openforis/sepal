@@ -2,10 +2,10 @@ from glob import glob
 
 import osgeo.gdal
 
-from ..task.task import ProcessTask
+from ..task.task import ThreadTask
 
 
-class BuildOverviews(ProcessTask):
+class BuildOverviews(ThreadTask):
     def __init__(self, files):
         super(BuildOverviews, self).__init__()
         self.files = files

@@ -3,10 +3,10 @@ from glob import glob
 import osgeo.gdal
 from osgeo.gdalconst import GA_Update
 
-from ..task.task import ProcessTask
+from ..task.task import ThreadTask
 
 
-class SetBandNames(ProcessTask):
+class SetBandNames(ThreadTask):
     def __init__(self, band_names, files):
         super(SetBandNames, self).__init__()
         self.band_names = band_names

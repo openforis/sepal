@@ -21,7 +21,7 @@ from ..drive import Download
 from ..export.image_to_drive import ImageToDrive
 from ..export.table_to_drive import TableToDrive
 from ..format import format_bytes
-from ..task.task import ProcessTask, ThreadTask, Task
+from ..task.task import ThreadTask, Task
 
 logger = logging.getLogger(__name__)
 
@@ -345,7 +345,7 @@ class DownloadYear(ThreadTask):
             self._spec)
 
 
-class ProcessYear(ProcessTask):
+class ProcessYear(ThreadTask):
     def __init__(self, year_dir):
         super(ProcessYear, self).__init__()
         self._year_dir = year_dir
