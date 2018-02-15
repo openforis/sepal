@@ -1,5 +1,5 @@
 module.exports = function override(config, env) {
-    verifyAllKeysTranslated(['en', 'es'])
+    // verifyAllKeysTranslated(['en', 'es'])
 
     configureCssModuleLoader(config.module.rules)
     return config
