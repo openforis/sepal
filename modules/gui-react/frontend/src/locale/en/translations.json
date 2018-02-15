@@ -32,15 +32,16 @@
         "required": "Password is required",
         "invalid": "Invalid username/password"
       },
-      "button": "Login"
+      "button": "Login",
+      "forgot-password-link": "Forgot password"
     },
     "forgot-password": {
-      "link": "Forgot password",
       "label": "Forgot your password ?",
-      "email-placeholder": "Enter your email",
+      "placeholder": "Enter your email",
       "required": "Email is required",
       "invalid": "Not a valid email",
-      "button": "Request a new one"
+      "button": "Request a new one",
+      "cancel-link": "Cancel"
     }
   }
 }

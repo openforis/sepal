@@ -10,7 +10,7 @@ import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
 
 const mapDispatchToProps = (dispatch) => ({
-    onSubmit: ({username, password}) => dispatch(login(username, password))
+    // onSubmit: ({username, password}) => dispatch(login(username, password))
 })
 
 export const ForgotPassword = connect(null, mapDispatchToProps)(managedForm({
@@ -19,13 +19,13 @@ export const ForgotPassword = connect(null, mapDispatchToProps)(managedForm({
             .notBlank('landing.forgot-password.required')
             .email('landing.forgot-password.invalid')
     },
-}, ({form, inputs: {email}}) => (
+}, ({onSubmit, onCancel, form, inputs: {email}}) => (
     <form style={styles.form}>
         <div>
             <label><Msg id='landing.forgot-password.label'/></label>
             <Input
                 input={email}
-                placeholder={msg('landing.forgot-password.email-placeholder')}
+                placeholder={msg('landing.forgot-password.placeholder')}
                 autoFocus='on'
                 autoComplete='off'
                 tabIndex={1}
@@ -43,30 +43,35 @@ export const ForgotPassword = connect(null, mapDispatchToProps)(managedForm({
             icon='paper-plane-o'
             onSubmit={form.submit}
             disabled={form.hasInvalid()}
-            tabIndex={3}
+            tabIndex={2}
         >
             <Msg id='landing.forgot-password.button'/>
         </Button>
+
+        <LoginLink onClick={onCancel} tabIndex={3}/>
     </form>
 )))
 export default ForgotPassword
+ForgotPassword.propTypes = {
+    onCancel: PropTypes.func.isRequired
+}
+
+export const LoginLink = ({tabIndex, onClick}) =>
+    <div className={styles.forgotPassword}>
+        <a onClick={onClick} tabIndex={tabIndex}>
+            <Icon name='undo' className={styles.forgotPasswordIcon}/>
+            <Msg id='landing.forgot-password.cancel-link'/>
+        </a>
+    </div>
 
 export const ForgotPasswordLink = ({tabIndex, onClick}) =>
     <div className={styles.forgotPassword}>
-        <a
-            href='#foo'
-            onClick={(e) => {
-                console.log(e)
-                onClick(e)
-            }}
-            tabIndex={tabIndex}>
-            <Icon
-                name='question-circle'
-                className={styles.forgotPasswordIcon}
-            />
-            <Msg id='landing.forgot-password.link'/>
+        <a onClick={onClick} tabIndex={tabIndex}>
+            <Icon name='question-circle' className={styles.forgotPasswordIcon}/>
+            <Msg id='landing.login.forgot-password-link'/>
         </a>
     </div>
+
 ForgotPasswordLink.propTypes = {
     onClick: PropTypes.func.isRequired,
     tabIndex: PropTypes.number

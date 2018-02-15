@@ -89,7 +89,7 @@ const Form = (formType, showForm) => {
         case 'login':
             return <Login onForgotPassword={() => showForm('forgotPassword')}/>
         case 'forgotPassword':
-            return <ForgotPassword/>
+            return <ForgotPassword onCancel={() => showForm('login')}/>
         default:
             throw new Error('Unexpected formType: ' + formType)
     }
