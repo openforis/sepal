@@ -1,13 +1,14 @@
 import React from 'react'
 import styles from './form.module.css'
 import PropTypes from 'prop-types'
+import {msg} from 'translate'
 
 export function managedForm(inputs, Component) {
     return class Form extends React.Component {
         constructor(props) {
             super(props)
             const state = {
-                values: props.initialState,
+                values: props.initialState || {},
                 errors: props.errors
             }
             Object.keys(inputs).forEach(name => {
@@ -110,26 +111,28 @@ export function managedForm(inputs, Component) {
 export class Constraints {
     constraints = []
 
-    function (constraint, message) {
-        this.constraints.push([constraint, message])
+    function (constraint, messageId) {
+        this.constraints.push([constraint, messageId])
         return this
     }
 
-    match(regex, message) {
-        this.function(value => regex.test(value), message)
-        return this
+    match(regex, messageId) {
+        return this.function(value => regex.test(value), messageId)
     }
 
-    notBlank(message) {
-        this.function(value => !!value, message)
-        return this
+    notBlank(messageId) {
+        return this.function(value => !!value, messageId)
+    }
+
+    email(messageId) {
+        return this.match(/^\S+@\S+$/, messageId)
     }
 
     check(value) {
         const failingConstraint = this.constraints.find(constraint => {
             return constraint[0](value) ? null : constraint[1]
         })
-        return failingConstraint ? failingConstraint[1] : ''
+        return failingConstraint ? msg(failingConstraint[1]) : ''
     }
 }
 

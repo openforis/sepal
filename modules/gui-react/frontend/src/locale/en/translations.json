@@ -1,3 +1,46 @@
 {
-  "caption": "System for earth observations, data access, processing & analysis for land monitoring"
+  "landing": {
+    "caption": "System for earth observations, data access, processing & analysis for land monitoring",
+    "title": "Sepal",
+    "features": {
+      "search": {
+        "title": "Search geo data",
+        "description": "Fast and easy access to scenes and mosaics"
+      },
+      "browse": {
+        "title": "Browse your data",
+        "description": "Preview and download your products"
+      },
+      "process": {
+        "title": "Process your data",
+        "description": "Easy-to-use data processing Apps"
+      },
+      "terminal": {
+        "title": "Terminal",
+        "description": "Powerful command-line tools for data processing"
+      }
+    },
+    "login": {
+      "username": {
+        "label": "Username",
+        "placeholder": "Enter your username",
+        "required": "Username is required"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Enter your password",
+        "required": "Password is required",
+        "invalid": "Invalid username/password"
+      },
+      "button": "Login"
+    },
+    "forgot-password": {
+      "link": "Forgot password",
+      "label": "Forgot your password ?",
+      "email-placeholder": "Enter your email",
+      "required": "Email is required",
+      "invalid": "Not a valid email",
+      "button": "Request a new one"
+    }
+  }
 }

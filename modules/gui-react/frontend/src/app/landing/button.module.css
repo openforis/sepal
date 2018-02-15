@@ -1,0 +1,50 @@
+button.submit {
+    border-top-left-radius: 50px;
+    border-top-right-radius: 50px;
+    border-bottom-left-radius: 50px;
+    border-bottom-right-radius: 50px;
+    border-style: solid;
+    border-width: 2px;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    line-height: 1;
+    letter-spacing: 1.5px;
+    position: relative;
+    padding: 24.5px 38.5px 24.5px 40px;
+    cursor: pointer;
+
+    border-color: #c5b397;
+    background-color: #c5b397;
+    color: #fff;
+    padding-left: 60px;
+
+    transition: background-color 800ms ease-out;
+}
+
+button.submit:focus, .loginButton:hover {
+    border-color: #b8a280;
+    background-color: #b8a280;
+}
+
+button.submit:active {
+    border-color: #b4a397;
+    background-color: #b4a397;
+}
+
+button.submit:disabled {
+    border-color: #c5b4ab;
+    background-color: #c5b4ab;
+    color: #ddd !important;
+    cursor: not-allowed;
+}
+
+.buttonIcon {
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    width: 25px;
+    font-size: 25px;
+}
