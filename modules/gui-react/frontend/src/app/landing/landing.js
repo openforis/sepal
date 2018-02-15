@@ -5,9 +5,26 @@ import Icon from 'widget/icon'
 import SlideShow from './slideshow/slideshow'
 import {Msg} from 'translate'
 import Login from './login'
+import ForgotPassword from './forgot-password'
 import styles from './landing.module.css'
+import {connect} from "react-redux"
+import actionRegistry from 'action-registry'
 
-const Landing = () =>
+const showForm = actionRegistry.register(
+    'SHOW_LANDING_FORM',
+    (state, action) => Object.assign({}, state, {landingForm: action.formType}),
+    (formType) => ({formType: formType})
+)
+
+const mapStateToProps = (state) => ({
+    formType: state.landingForm || 'login'
+})
+
+const mapDispatchToProps = (dispatch) => ({
+    showForm: (formType) => dispatch(showForm(formType))
+})
+
+const Landing = connect(mapStateToProps, mapDispatchToProps)(({formType, showForm}) =>
     <div className={styles.landing}>
         <SlideShow/>
         <LandingPanel>
@@ -24,11 +41,11 @@ const Landing = () =>
             </AnimateEnter>
 
             <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500}>
-                {/*<ForgotPassword/>*/}
-                <Login/>
+                {Form(formType, showForm)}
             </AnimateEnter>
         </LandingPanel>
     </div>
+)
 export default Landing
 
 const LandingPanel = ({children}) =>
@@ -66,3 +83,14 @@ const Feature = ({icon, name}) =>
         <h3 className={styles.featureTitle}><Msg id={`landing.features.${name}.title`}/></h3>
         <p className={styles.featureDescription}><Msg id={`landing.features.${name}.description`}/></p>
     </div>
+
+const Form = (formType, showForm) => {
+    switch (formType) {
+        case 'login':
+            return <Login onForgotPassword={() => showForm('forgotPassword')}/>
+        case 'forgotPassword':
+            return <ForgotPassword/>
+        default:
+            throw new Error('Unexpected formType: ' + formType)
+    }
+}

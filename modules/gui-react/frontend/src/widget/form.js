@@ -9,7 +9,7 @@ export function managedForm(inputs, Component) {
             super(props)
             const state = {
                 values: props.initialState || {},
-                errors: props.errors
+                errors: props.errors || {}
             }
             Object.keys(inputs).forEach(name => {
                 const input = inputs[name]
@@ -109,6 +109,8 @@ export function managedForm(inputs, Component) {
 }
 
 export class Constraints {
+    static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape
+
     constraints = []
 
     function (constraint, messageId) {
@@ -125,7 +127,7 @@ export class Constraints {
     }
 
     email(messageId) {
-        return this.match(/^\S+@\S+$/, messageId)
+        return this.match(Constraints._EMAIL_REGEX, messageId)
     }
 
     check(value) {
@@ -152,7 +154,7 @@ export const Input = ({input, validate, onChange, onBlur, ...props}) => (
             if (onBlur)
                 onBlur(e)
             if (validate === 'onBlur')
-                input.validate()
+                setTimeout(() => (input.validate()), 100)
         }}
         className={input.errorClass}
     />

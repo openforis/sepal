@@ -1,19 +1,19 @@
 import React from 'react'
 import {connect} from 'react-redux'
 import {login} from 'user'
+import {AnimateUl} from "../../widget/animate"
 import {Constraints, Input, managedForm} from 'widget/form'
 import Icon from 'widget/icon'
 import styles from './forgot-password.module.css'
 import Button from './button'
 import {Msg, msg} from 'translate'
-
-const mapStateToProps = () => ({})
+import PropTypes from 'prop-types'
 
 const mapDispatchToProps = (dispatch) => ({
     onSubmit: ({username, password}) => dispatch(login(username, password))
 })
 
-export const ForgotPassword = connect(mapStateToProps, mapDispatchToProps)(managedForm({
+export const ForgotPassword = connect(null, mapDispatchToProps)(managedForm({
     email: {
         constraints: new Constraints()
             .notBlank('landing.forgot-password.required')
@@ -33,6 +33,12 @@ export const ForgotPassword = connect(mapStateToProps, mapDispatchToProps)(manag
             />
         </div>
 
+        <AnimateUl className={form.errorClass}>
+            {form.errors.map((error, i) =>
+                <li key={error}>{error}</li>
+            )}
+        </AnimateUl>
+
         <Button
             icon='paper-plane-o'
             onSubmit={form.submit}
@@ -43,11 +49,16 @@ export const ForgotPassword = connect(mapStateToProps, mapDispatchToProps)(manag
         </Button>
     </form>
 )))
+export default ForgotPassword
 
 export const ForgotPasswordLink = ({tabIndex, onClick}) =>
     <div className={styles.forgotPassword}>
         <a
-            onClick={onClick}
+            href='#foo'
+            onClick={(e) => {
+                console.log(e)
+                onClick(e)
+            }}
             tabIndex={tabIndex}>
             <Icon
                 name='question-circle'
@@ -56,3 +67,7 @@ export const ForgotPasswordLink = ({tabIndex, onClick}) =>
             <Msg id='landing.forgot-password.link'/>
         </a>
     </div>
+ForgotPasswordLink.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    tabIndex: PropTypes.number
+}
