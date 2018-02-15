@@ -9,6 +9,7 @@ import ForgotPassword from './forgot-password'
 import styles from './landing.module.css'
 import {connect} from "react-redux"
 import actionRegistry from 'action-registry'
+import {CSSTransition, TransitionGroup} from 'react-transition-group'
 
 const showForm = actionRegistry.register(
     'SHOW_LANDING_FORM',
@@ -40,8 +41,15 @@ const Landing = connect(mapStateToProps, mapDispatchToProps)(({formType, showFor
                 <Features/>
             </AnimateEnter>
 
-            <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500}>
-                {Form(formType, showForm)}
+            <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500} className={styles.form}>
+                <TransitionGroup>
+                    <CSSTransition
+                        key={formType}
+                        timeout={500}
+                        classNames={{enter: styles.formEnter, exit: styles.formExit}}>
+                        {Form(formType, showForm)}
+                    </CSSTransition>
+                </TransitionGroup>
             </AnimateEnter>
         </LandingPanel>
     </div>

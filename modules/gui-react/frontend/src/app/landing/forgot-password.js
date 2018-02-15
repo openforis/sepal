@@ -1,6 +1,5 @@
 import React from 'react'
 import {connect} from 'react-redux'
-import {login} from 'user'
 import {AnimateUl} from "../../widget/animate"
 import {Constraints, Input, managedForm} from 'widget/form'
 import Icon from 'widget/icon'
@@ -8,6 +7,7 @@ import styles from './forgot-password.module.css'
 import Button from './button'
 import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
+
 
 const mapDispatchToProps = (dispatch) => ({
     // onSubmit: ({username, password}) => dispatch(login(username, password))
@@ -58,7 +58,10 @@ ForgotPassword.propTypes = {
 
 export const LoginLink = ({tabIndex, onClick}) =>
     <div className={styles.forgotPassword}>
-        <a onClick={onClick} tabIndex={tabIndex}>
+        <a
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={onClick}
+            tabIndex={tabIndex}>
             <Icon name='undo' className={styles.forgotPasswordIcon}/>
             <Msg id='landing.forgot-password.cancel-link'/>
         </a>
@@ -66,7 +69,10 @@ export const LoginLink = ({tabIndex, onClick}) =>
 
 export const ForgotPasswordLink = ({tabIndex, onClick}) =>
     <div className={styles.forgotPassword}>
-        <a onClick={onClick} tabIndex={tabIndex}>
+        <a
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={onClick}
+            tabIndex={tabIndex}>
             <Icon name='question-circle' className={styles.forgotPasswordIcon}/>
             <Msg id='landing.login.forgot-password-link'/>
         </a>

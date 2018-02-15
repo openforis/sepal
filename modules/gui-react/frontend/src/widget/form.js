@@ -154,7 +154,7 @@ export const Input = ({input, validate, onChange, onBlur, ...props}) => (
             if (onBlur)
                 onBlur(e)
             if (validate === 'onBlur')
-                setTimeout(() => (input.validate()), 100)
+                input.validate()
         }}
         className={input.errorClass}
     />

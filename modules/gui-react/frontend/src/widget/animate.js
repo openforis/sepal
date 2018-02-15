@@ -11,7 +11,7 @@ export class AnimateEnter extends React.Component {
         const timeout = duration + delay
         const className = `animation_${name}_${randomString()}`
         return (
-            <div>
+            <div className={this.props.className}>
                 <style>{`
           .${className}-appear {
             animation: ${name} ${duration}ms ${delay}ms ease-in-out backwards;
