@@ -85,7 +85,7 @@ module.exports = function override(config, env) {
             .value()
 
         if (incompleteKeys.length)
-            throw `Missing translations: \n\t${incompleteKeys.join('\n\t')}\n\n`
+            throw new Error(`Missing translations: \n\t${incompleteKeys.join('\n\t')}\n\n`)
     }
 }
 
