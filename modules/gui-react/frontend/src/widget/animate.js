@@ -42,6 +42,22 @@ AnimateEnter.propTypes = {
     delay: PropTypes.number,
 }
 
+export const AnimateReplacement = ({currentKey, timeout = 500, classNames, children, ...props}) =>
+    <TransitionGroup>
+        <CSSTransition
+            key={currentKey}
+            timeout={timeout}
+            classNames={classNames}
+            {...props}>
+            {children}
+        </CSSTransition>
+    </TransitionGroup>
+AnimateReplacement.propTypes = {
+    currentKey: PropTypes.any.isRequired,
+    timeout: PropTypes.number,
+    classNames: PropTypes.any.isRequired
+}
+
 export class AnimateUl extends React.Component {
     render() {
         return (

@@ -1,5 +1,5 @@
 import React from 'react'
-import {AnimateEnter} from "../../widget/animate"
+import {AnimateEnter, AnimateReplacement} from "../../widget/animate"
 import CenteredPanel from 'widget/centered-panel'
 import Icon from 'widget/icon'
 import SlideShow from './slideshow/slideshow'
@@ -9,7 +9,6 @@ import ForgotPassword from './forgot-password'
 import styles from './landing.module.css'
 import {connect} from "react-redux"
 import actionRegistry from 'action-registry'
-import {CSSTransition, TransitionGroup} from 'react-transition-group'
 
 const showForm = actionRegistry.register(
     'SHOW_LANDING_FORM',
@@ -42,14 +41,9 @@ const Landing = connect(mapStateToProps, mapDispatchToProps)(({formType, showFor
             </AnimateEnter>
 
             <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500} className={styles.form}>
-                <TransitionGroup>
-                    <CSSTransition
-                        key={formType}
-                        timeout={500}
-                        classNames={{enter: styles.formEnter, exit: styles.formExit}}>
-                        {Form(formType, showForm)}
-                    </CSSTransition>
-                </TransitionGroup>
+                <AnimateReplacement currentKey={formType} classNames={{enter: styles.formEnter, exit: styles.formExit}}>
+                    {Form(formType, showForm)}
+                </AnimateReplacement>
             </AnimateEnter>
         </LandingPanel>
     </div>
