@@ -17,7 +17,7 @@
       "region": "{{user `region`}}",
       "source_ami": "{{user `worker_instance_ami`}}",
       "instance_type": "m4.large",
-      "ssh_username": "ubuntu",
+      "ssh_username": "ec2-user",
       "ami_name": "Sandbox({{user  `availability_zone`}}) - {{user `version`}}",
       "tags": {
         "Version": "{{user `version`}}",
@@ -25,7 +25,7 @@
       },
       "ami_block_device_mappings": [
         {
-          "device_name": "/dev/sda1",
+          "device_name": "/dev/xvda",
           "volume_type": "gp2",
           "volume_size": 15,
           "delete_on_termination": true
@@ -39,7 +39,7 @@
       ],
       "launch_block_device_mappings": [
         {
-          "device_name": "/dev/sda1",
+          "device_name": "/dev/xvda",
           "volume_type": "gp2",
           "volume_size": 15,
           "delete_on_termination": true
@@ -55,44 +55,11 @@
   ],
   "provisioners": [
     {
-      "type": "shell",
-      "inline": [
-        "sudo add-apt-repository ppa:ansible/ansible && sudo apt-get update && sudo apt-get install -y ansible"
-      ]
-    },
-    {
-      "type": "file",
-      "source": "{{user `config_home`}}/certificates/docker-registry.crt",
-      "destination": "/tmp/docker-registry.crt"
-    },
-    {
-      "type": "file",
-      "source": "../../../ansible/pull-worker-images/templates/pull_worker_images.sh",
-      "destination": "/tmp/pull_worker_images.sh"
-    },
-    {
-      "type": "file",
-      "source": "{{user `config_home`}}/secret.yml",
-      "destination": "/tmp/secret.yml"
-    },
-    {
-      "type": "file",
-      "source": "{{user `config_home`}}/certificates/ldap-ca.crt.pem",
-      "destination": "/tmp/ldap-ca.crt.pem"
-    },
-    {
-      "type": "ansible-local",
+      "type": "ansible",
       "playbook_file": "worker-ami.yml",
       "extra_arguments": [
-        "--extra-vars \"efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}} availability_zone={{user `availability_zone`}}\""
-      ],
-      "role_paths": [
-        "../../../ansible/pull-worker-images",
-        "../../../ansible/docker",
-        "../../../ansible/docker.devicemapper",
-        "../../../ansible/init-script",
-        "../../../ansible/docker.ubuntu",
-        "../../../ansible/unattended-upgrades"
+        "--extra-vars",
+        "config_home={{user `config_home`}} secret_vars_file={{user `config_home`}}/secret.yml efs_id={{user `efs_id`}} version={{user `version`}} region={{user `region`}} availability_zone={{user `availability_zone`}}"
       ]
     }
   ]

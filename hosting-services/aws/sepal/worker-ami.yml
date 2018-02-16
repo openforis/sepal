@@ -1,13 +1,14 @@
 - name: Configure Sandbox Image
+  strategy: debug
   hosts: all
-  user: ubuntu
+  user: ec2-user
   become: yes
   gather_facts: true
 
   vars_files:
-    - /tmp/secret.yml
+    - "{{ secret_vars_file }}"
 
-  pre_tasks:
+  tasks:
     - name: Create docker-registry certificate dir
       file:
         path: "/etc/docker/certs.d/{{ docker_repository_host }}"
@@ -15,38 +16,36 @@
 
     - name: Copy docker-registry certificate
       copy:
-        src: /tmp/docker-registry.crt
+        src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
-        remote_src: True
 
-    - name: Install nfs-common
-      apt:
-        name: "nfs-common"
+    - name: Upgrade yum packages
+      yum: name=* state=latest
 
-    - name: Install nfs-common
-      apt:
-        name: "nfs-common"
+    - name: Install nfs-utils
+      yum:
+        name: "nfs-utils"
 
     - name: Install lvm
-      apt:
+      yum:
         name: "lvm2"
 
-    - name: Create /data/sepal directory structure
+    - name: Create /data/sepal
       file:
         path: "/data/sepal"
         state: directory
 
-    - name: Create /data/sepal directory structure
+    - name: Create /data/sepal
       file:
         path: "/data/sepal/home"
         state: directory
 
-    - name: Create /data/sepal directory structure
+    - name: Create /data/sepal
       file:
         path: "/data/sepal/shiny"
         state: directory
 
-    - name: Create /data/sepal directory structure
+    - name: Create /data/sepal
       file:
         path: "/data/sepal/certificates"
         state: directory
@@ -66,7 +65,9 @@
         src: "{{ availability_zone }}.{{ efs_id }}.efs.{{ region }}.amazonaws.com:/data/sepal/shiny"
 
     - name: Copy LDAP Certificate
-      copy: src=/tmp/ldap-ca.crt.pem dest=/data/sepal/certificates/ldap-ca.crt.pem
+      copy:
+       src: "{{ config_home }}/certificates/ldap-ca.crt.pem"
+       dest: "/data/sepal/certificates/ldap-ca.crt.pem"
 
     - name: Create Docker LVM Volume Group
       lvg: vg=vg-docker pvs=/dev/xvdf
@@ -77,25 +78,37 @@
     - name: Create Docker LVM Metadata Volume
       lvol: vg=vg-docker lv=metadata size=100%FREE
 
-#    - name: Install fio
-#      apt: name="fio"
+    - name: Install docker
+      yum:
+        name: "docker"
 
-  roles:
-#    - role: init-script
-#      service_name: init_xvda
-#      command: fio --filename=/dev/xvda --rw=randread --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=initialize-xvda
-#
-#    - role: init-script
-#      service_name: init_xvdf
-#      command: fio --filename=/dev/xvdf --rw=randread --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=initialize-xvdf
+    - name: Create /etc/docker
+      file:
+        path: "/etc/docker"
+        state: directory
 
-    - role: unattended-upgrades
-      unattended_origins_patterns:
-        - 'origin=Ubuntu,archive=${distro_codename}-security'
-        - 'o=Ubuntu,a=${distro_codename}-updates'
+    - name: Copy /etc/docker/daemon.json
+      copy: src=docker-daemon.json dest=/etc/docker/daemon.json
 
-    - role: docker.devicemapper
-      users: ['ubuntu']
+    - name: Start docker
+      service: name=docker state=started
 
-    - role: pull-worker-images
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
 
+    - name: Login to docker registry
+      command: "docker login -p '{{ docker_password }}' -u '{{ docker_username }}' {{ docker_repository_host }}"
+
+    - name: Pull sandbox
+      command: "docker pull {{ docker_repository_host }}/openforis/sandbox:{{ version }}"
+
+    - name: Pull google-earth-engine
+      command: "docker pull {{ docker_repository_host }}/openforis/google-earth-engine:{{ version }}"
+
+    - name: Pull task-executor
+      command: "docker pull {{ docker_repository_host }}/openforis/task-executor:{{ version }}"
+
+    - name: Logout from docker registry
+      command: "docker logout {{ docker_repository_host }}"
