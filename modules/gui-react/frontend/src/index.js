@@ -10,6 +10,8 @@ import en from 'react-intl/locale-data/en'
 import es from 'react-intl/locale-data/es'
 import flat from 'flat'
 import {initIntl} from 'translate'
+import {BrowserRouter} from 'react-router-dom'
+import {Route} from 'route'
 import App from 'app/app'
 
 // https://github.com/jcbvm/i18n-editor
@@ -47,7 +49,9 @@ ReactDOM.render(
     <IntlProvider locale={language} messages={messages}>
         <IntlInit>
             <Provider store={store}>
-                <App/>
+                <BrowserRouter>
+                    <Route path='/' component={App}/>
+                </BrowserRouter>
             </Provider>
         </IntlInit>
     </IntlProvider>,

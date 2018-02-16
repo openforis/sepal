@@ -7,10 +7,18 @@ import styles from './forgot-password.module.css'
 import Button from './button'
 import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
+import Http from "../../http-client";
 
+
+const requestPasswordReset = (email) =>
+    dispatch => {
+        console.log('Requesting password reset for ' + email)
+        // Http.post('/user/password/reset-request')
+        // TODO: Handle errors
+    }
 
 const mapDispatchToProps = (dispatch) => ({
-    // onSubmit: ({username, password}) => dispatch(login(username, password))
+    onSubmit: ({email}) => dispatch(requestPasswordReset(email))
 })
 
 export const ForgotPassword = connect(null, mapDispatchToProps)(managedForm({
