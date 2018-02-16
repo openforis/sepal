@@ -1,9 +1,8 @@
 class ActionRegistry {
     reducers = {}
 
-    register(actionType, reducer, actionCreator) {
+    register(actionType, reducer, actionCreator = () => ({})) {
         this.reducers[actionType] = reducer
-        actionCreator = actionCreator ? actionCreator : () => ({})
         return (...args) => Object.assign({type: actionType}, actionCreator(...args))
     }
 
