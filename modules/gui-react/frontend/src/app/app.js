@@ -5,7 +5,6 @@ import Landing from 'app/landing/landing'
 import Home from 'app/home/home'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
 import './app.css'
-import {Route, Switch} from "route"
 
 const mapStateToProps = (state) => ({
     user: getCurrentUser(state),
@@ -29,19 +28,13 @@ const App = connect(mapStateToProps, mapDispatchToProps)(
         }
 
         render() {
-            return (
-                <Switch>
-                    <Route path='/login' component={Landing}/>
-                    <Route path='/home' component={Home} user={{username: 'some username'}}/>
-                </Switch>
-            )
-            // const {user, loadingUser} = this.props
-            // if (loadingUser)
-            //     return <Loader/>
-            // else if (user)
-            //     return <Home user={user}/>
-            // else
-            //     return <Landing/>
+            const {user, loadingUser} = this.props
+            if (loadingUser)
+                return <Loader/>
+            else if (user)
+                return <Home user={user}/>
+            else
+                return <Landing/>
         }
     }
 )

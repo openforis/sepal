@@ -5,6 +5,7 @@ import {Constraints, Input, managedForm} from 'widget/form'
 import Icon from 'widget/icon'
 import styles from './forgot-password.module.css'
 import Button from './button'
+import {Link} from "route"
 import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
 import Http from "../../http-client";
@@ -18,7 +19,8 @@ const requestPasswordReset = (email) =>
     }
 
 const mapDispatchToProps = (dispatch) => ({
-    onSubmit: ({email}) => dispatch(requestPasswordReset(email))
+    onSubmit: ({email}) => dispatch(requestPasswordReset(email)),
+    errors: {}
 })
 
 export const ForgotPassword = connect(null, mapDispatchToProps)(managedForm({
@@ -61,32 +63,25 @@ export const ForgotPassword = connect(null, mapDispatchToProps)(managedForm({
 )))
 export default ForgotPassword
 ForgotPassword.propTypes = {
-    onCancel: PropTypes.func.isRequired
+    tabIndex: PropTypes.number
 }
 
 export const LoginLink = ({tabIndex, onClick}) =>
     <div className={styles.forgotPassword}>
-        <a
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={onClick}
-            tabIndex={tabIndex}>
+        <Link to='/' tabIndex={tabIndex} onMouseDown={(e) => e.preventDefault()}>
             <Icon name='undo' className={styles.forgotPasswordIcon}/>
             <Msg id='landing.forgot-password.cancel-link'/>
-        </a>
+        </Link>
     </div>
 
 export const ForgotPasswordLink = ({tabIndex, onClick}) =>
     <div className={styles.forgotPassword}>
-        <a
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={onClick}
-            tabIndex={tabIndex}>
+        <Link to='/forgot-password' tabIndex={tabIndex} onMouseDown={(e) => e.preventDefault()}>
             <Icon name='question-circle' className={styles.forgotPasswordIcon}/>
             <Msg id='landing.login.forgot-password-link'/>
-        </a>
+        </Link>
     </div>
 
 ForgotPasswordLink.propTypes = {
-    onClick: PropTypes.func.isRequired,
     tabIndex: PropTypes.number
 }

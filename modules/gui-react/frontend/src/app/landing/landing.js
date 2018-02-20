@@ -7,46 +7,38 @@ import {Msg} from 'translate'
 import Login from './login'
 import ForgotPassword from './forgot-password'
 import styles from './landing.module.css'
-import {connect} from "react-redux"
-import actionRegistry from 'action-registry'
-
-const showForm = actionRegistry.register(
-    'SHOW_LANDING_FORM',
-    (state, action) => Object.assign({}, state, {landingForm: action.formType}),
-    (formType) => ({formType: formType})
-)
+import {getLocation, Route, Switch} from "route"
+import {connect} from 'react-redux'
 
 const mapStateToProps = (state) => ({
-    formType: state.landingForm || 'login'
+    location: getLocation(state)
 })
 
-const mapDispatchToProps = (dispatch) => ({
-    showForm: (formType) => dispatch(showForm(formType))
-})
+const Landing = connect(mapStateToProps)(
+    ({location}) =>
+        <div className={styles.landing}>
+            <SlideShow/>
+            <LandingPanel>
+                <AnimateEnter name={AnimateEnter.fadeInUp} delay={1000}>
+                    <Caption/>
+                </AnimateEnter>
 
-const Landing = connect(mapStateToProps, mapDispatchToProps)(({formType, showForm}) =>
-    <div className={styles.landing}>
-        <SlideShow/>
-        <LandingPanel>
-            <AnimateEnter name={AnimateEnter.fadeInUp} delay={1000}>
-                <Caption/>
-            </AnimateEnter>
+                <AnimateEnter name={AnimateEnter.fadeInUp} delay={0}>
+                    <Title/>
+                </AnimateEnter>
 
-            <AnimateEnter name={AnimateEnter.fadeInUp} delay={0}>
-                <Title/>
-            </AnimateEnter>
+                <AnimateEnter name={AnimateEnter.fadeInLeft} delay={100}>
+                    <Features/>
+                </AnimateEnter>
 
-            <AnimateEnter name={AnimateEnter.fadeInLeft} delay={100}>
-                <Features/>
-            </AnimateEnter>
-
-            <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500} className={styles.form}>
-                <AnimateReplacement currentKey={formType} classNames={{enter: styles.formEnter, exit: styles.formExit}}>
-                    {Form(formType, showForm)}
-                </AnimateReplacement>
-            </AnimateEnter>
-        </LandingPanel>
-    </div>
+                <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500} className={styles.form}>
+                    <AnimateReplacement currentKey={location.pathname}
+                                        classNames={{enter: styles.formEnter, exit: styles.formExit}}>
+                        <Form/>
+                    </AnimateReplacement>
+                </AnimateEnter>
+            </LandingPanel>
+        </div>
 )
 export default Landing
 
@@ -86,13 +78,8 @@ const Feature = ({icon, name}) =>
         <p className={styles.featureDescription}><Msg id={`landing.features.${name}.description`}/></p>
     </div>
 
-const Form = (formType, showForm) => {
-    switch (formType) {
-        case 'login':
-            return <Login onForgotPassword={() => showForm('forgotPassword')}/>
-        case 'forgotPassword':
-            return <ForgotPassword onCancel={() => showForm('login')}/>
-        default:
-            throw new Error('Unexpected formType: ' + formType)
-    }
-}
+const Form = () =>
+    <Switch>
+        <Route path='/forgot-password' component={ForgotPassword}/>
+        <Route path='/' component={Login}/>
+    </Switch>

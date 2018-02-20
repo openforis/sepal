@@ -6,7 +6,6 @@ import {Constraints, Input, managedForm} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import Button from './button'
 import {Msg, msg} from 'translate'
-import PropTypes from 'prop-types'
 
 const mapStateToProps = (state) => ({
     errors: invalidCredentialsProvided(state) ? {password: msg('landing.login.password.invalid')} : {}
@@ -25,7 +24,7 @@ const Login = connect(mapStateToProps, mapDispatchToProps)(managedForm({
             constraints: new Constraints()
                 .notBlank('landing.login.password.required')
         },
-    }, ({onForgotPassword, form, inputs: {username, password}}) => (
+    }, ({form, inputs: {username, password}}) => (
         <form>
             <div>
                 <label><Msg id='landing.login.username.label'/></label>
@@ -64,10 +63,7 @@ const Login = connect(mapStateToProps, mapDispatchToProps)(managedForm({
                 <Msg id='landing.login.button'/>
             </Button>
 
-            <ForgotPasswordLink onClick={onForgotPassword} tabIndex={4}/>
+            <ForgotPasswordLink tabIndex={4}/>
         </form>)
 ))
-Login.propTypes = {
-    onForgotPassword: PropTypes.func.isRequired
-}
 export default Login

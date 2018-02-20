@@ -27,13 +27,13 @@ export const login = (username, password) =>
     }
 
 export const isLoadingUser = (state) =>
-    state.userState === 'LOADING_USER'
+    state.app.userState === 'LOADING_USER'
 
 export const getCurrentUser = (state) =>
-    state.user
+    state.app.user
 
 export const invalidCredentialsProvided = (state) =>
-    state.loginState === 'INVALID_CREDENTIALS'
+    state.app.loginState === 'INVALID_CREDENTIALS'
 
 
 const loadingCurrentUser = actionRegistry.register(
