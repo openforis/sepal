@@ -15,8 +15,6 @@ import {initIntl} from 'translate'
 import App from 'app/app'
 import actionRegistry from 'action-registry'
 
-const history = createHistory()
-
 // https://github.com/jcbvm/i18n-editor
 addLocaleData([...en, ...es])
 const language = (navigator.languages && navigator.languages[0]) || navigator.language || navigator.userLanguage
@@ -24,6 +22,8 @@ const languageWithoutRegionCode = language.toLowerCase().split(/[_-]+/)[0]
 const messages = flat.flatten( // react-intl requires a flat object
     require(`locale/${languageWithoutRegionCode}/translations.json`)
 )
+
+const history = createHistory()
 
 const store = createStore(
     combineReducers({

@@ -32,8 +32,9 @@ const Landing = connect(mapStateToProps)(
                 </AnimateEnter>
 
                 <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500} className={styles.form}>
-                    <AnimateReplacement currentKey={location.pathname}
-                                        classNames={{enter: styles.formEnter, exit: styles.formExit}}>
+                    <AnimateReplacement
+                        currentKey={location.pathname}
+                        classNames={{enter: styles.formEnter, exit: styles.formExit}}>
                         <Form/>
                     </AnimateReplacement>
                 </AnimateEnter>

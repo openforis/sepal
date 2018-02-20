@@ -138,27 +138,49 @@ export class Constraints {
     }
 }
 
-export const Input = ({input, validate, onChange, onBlur, ...props}) => (
-    <input
-        {...props}
-        name={input.name}
-        value={input.value}
-        onChange={(e) => {
-            input.handleChange(e)
-            if (onChange)
-                onChange(e)
-            if (validate === 'onChange')
-                input.validate()
-        }}
-        onBlur={(e) => {
-            if (onBlur)
-                onBlur(e)
-            if (validate === 'onBlur')
-                input.validate()
-        }}
-        className={input.errorClass}
-    />
-)
+export class Input extends React.Component {
+    componentDidMount() {
+        this.setFocus()
+
+    }
+    componentDidUpdate() {
+        this.setFocus()
+    }
+
+    setFocus() {
+        if (this.props.autoFocus) {
+            console.log('** autofocusing', this.domElement)
+            this.domElement.focus()
+        }
+    }
+
+    render() {
+        const {input, validate, onChange, autoFocus, onBlur, ...props} = this.props
+        return (
+            <input
+                {...props}
+                name={input.name}
+                value={input.value}
+                onChange={(e) => {
+                    input.handleChange(e)
+                    if (onChange)
+                        onChange(e)
+                    if (validate === 'onChange')
+                        input.validate()
+                }}
+                onBlur={(e) => {
+                    if (onBlur)
+                        onBlur(e)
+                    if (validate === 'onBlur')
+                        input.validate()
+                }}
+                className={input.errorClass}
+                ref={(domElement) => this.domElement = domElement}
+            />
+        )
+    }
+}
+
 Input.propTypes = {
     input: PropTypes.object.isRequired,
     validate: PropTypes.oneOf(['onChange', 'onBlur']),
