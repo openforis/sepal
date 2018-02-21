@@ -139,23 +139,8 @@ export class Constraints {
 }
 
 export class Input extends React.Component {
-    componentDidMount() {
-        this.setFocus()
-
-    }
-    componentDidUpdate() {
-        this.setFocus()
-    }
-
-    setFocus() {
-        if (this.props.autoFocus) {
-            console.log('** autofocusing', this.domElement)
-            this.domElement.focus()
-        }
-    }
-
     render() {
-        const {input, validate, onChange, autoFocus, onBlur, ...props} = this.props
+        const {input, validate, onChange, onBlur, ...props} = this.props
         return (
             <input
                 {...props}
@@ -188,6 +173,5 @@ Input.propTypes = {
     onBlur: PropTypes.func,
     placeholder: PropTypes.string,
     tabIndex: PropTypes.number,
-    autoFocus: PropTypes.string,
     autoComplete: PropTypes.string,
 }

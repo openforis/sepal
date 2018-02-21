@@ -20,7 +20,13 @@ Route.propTypes = {
 }
 
 export const Switch = router.Switch
+Switch.propTypes = {
+    location: PropTypes.object.isRequired
+}
+
 export const Link = router.Link
+Link.propTypes = router.Link.propTypes
+
 export const getLocation = reduxRouter.getLocation
 export const push = reduxRouter.push
 export const replace = reduxRouter.replace

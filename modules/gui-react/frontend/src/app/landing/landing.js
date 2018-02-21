@@ -35,7 +35,7 @@ const Landing = connect(mapStateToProps)(
                     <AnimateReplacement
                         currentKey={location.pathname}
                         classNames={{enter: styles.formEnter, exit: styles.formExit}}>
-                        <Form/>
+                        <Form location={location}/>
                     </AnimateReplacement>
                 </AnimateEnter>
             </LandingPanel>
@@ -79,8 +79,8 @@ const Feature = ({icon, name}) =>
         <p className={styles.featureDescription}><Msg id={`landing.features.${name}.description`}/></p>
     </div>
 
-const Form = () =>
-    <Switch>
+const Form = ({location}) =>
+    <Switch location={location}>
         <Route path='/forgot-password' component={ForgotPassword}/>
         <Route path='/' component={Login}/>
     </Switch>

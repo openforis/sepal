@@ -27,7 +27,7 @@ export const login = (username, password) =>
     }
 
 export const isLoadingUser = (state) =>
-    state.app.userState === 'LOADING_USER'
+    !state.app.userState || state.app.userState === 'LOADING_USER'
 
 export const getCurrentUser = (state) =>
     state.app.user
