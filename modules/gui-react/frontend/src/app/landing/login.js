@@ -58,8 +58,7 @@ const Login = connect(mapStateToProps, mapDispatchToProps)(managedForm({
                 icon='sign-in'
                 onSubmit={form.submit}
                 disabled={form.hasInvalid()}
-                tabIndex={3}
-            >
+                tabIndex={3}>
                 <Msg id='landing.login.button'/>
             </Button>
 

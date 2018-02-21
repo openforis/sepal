@@ -3,7 +3,7 @@ import {httpCallFailed} from 'errors'
 import actionRegistry from 'action-registry'
 
 export const loadCurrentUser = () =>
-    dispatch => {
+    (dispatch) => {
         dispatch(loadingCurrentUser())
         Http.get('/user/current', {
             handle: {
@@ -14,7 +14,7 @@ export const loadCurrentUser = () =>
     }
 
 export const login = (username, password) =>
-    dispatch => {
+    (dispatch) => {
         dispatch(loggingIn())
         Http.post('/user/login', {
             username: username,
@@ -24,6 +24,16 @@ export const login = (username, password) =>
                 401: () => dispatch(invalidCredentials())
             },
         }).catch((error) => dispatch(httpCallFailed(error)))
+    }
+
+export const validateToken = (token) =>
+    (dispatch) => {
+        console.log('validating token ' + token)
+    }
+
+export const resetPassword = (token, password) =>
+    (dispatch) => {
+        console.log('resetting password')
     }
 
 export const isLoadingUser = (state) =>

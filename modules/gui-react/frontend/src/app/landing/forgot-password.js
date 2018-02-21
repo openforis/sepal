@@ -8,7 +8,6 @@ import Button from './button'
 import {Link} from "route"
 import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
-import Http from "../../http-client";
 
 
 const requestPasswordReset = (email) =>
@@ -62,9 +61,6 @@ export const ForgotPassword = connect(null, mapDispatchToProps)(managedForm({
     </form>
 )))
 export default ForgotPassword
-ForgotPassword.propTypes = {
-    tabIndex: PropTypes.number
-}
 
 export const LoginLink = ({tabIndex, onClick}) =>
     <div className={styles.forgotPassword}>
@@ -73,6 +69,9 @@ export const LoginLink = ({tabIndex, onClick}) =>
             <Msg id='landing.forgot-password.cancel-link'/>
         </Link>
     </div>
+LoginLink.propTypes = {
+    tabIndex: PropTypes.number
+}
 
 export const ForgotPasswordLink = ({tabIndex, onClick}) =>
     <div className={styles.forgotPassword}>

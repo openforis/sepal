@@ -1,5 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import QueryString from 'query-string'
+
 
 const router = require('react-router-dom')
 const reduxRouter = require('react-router-redux')
@@ -27,6 +29,7 @@ Switch.propTypes = {
 export const Link = router.Link
 Link.propTypes = router.Link.propTypes
 
+export const getQuery = (state) => QueryString.parse(getLocation(state).search)
 export const getLocation = reduxRouter.getLocation
 export const push = reduxRouter.push
 export const replace = reduxRouter.replace

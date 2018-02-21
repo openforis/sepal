@@ -59,7 +59,7 @@ export function managedForm(inputs, Component) {
             let constraints = inputs[name].constraints
             if (constraints == null)
                 constraints = new Constraints()
-            return constraints.check(this.state.values[name])
+            return constraints.check(name, this.state.values)
         }
 
         validate(name) {
@@ -113,26 +113,26 @@ export class Constraints {
 
     constraints = []
 
-    function (constraint, messageId) {
+    predicate (constraint, messageId) {
         this.constraints.push([constraint, messageId])
         return this
     }
 
     match(regex, messageId) {
-        return this.function(value => regex.test(value), messageId)
+        return this.predicate(value => regex.test(value), messageId)
     }
 
     notBlank(messageId) {
-        return this.function(value => !!value, messageId)
+        return this.predicate(value => !!value, messageId)
     }
 
     email(messageId) {
         return this.match(Constraints._EMAIL_REGEX, messageId)
     }
 
-    check(value) {
+    check(name, values) {
         const failingConstraint = this.constraints.find(constraint => {
-            return constraint[0](value) ? null : constraint[1]
+            return constraint[0](values[name], values) ? null : constraint[1]
         })
         return failingConstraint ? msg(failingConstraint[1]) : ''
     }
@@ -140,7 +140,7 @@ export class Constraints {
 
 export class Input extends React.Component {
     render() {
-        const {input, validate, onChange, onBlur, ...props} = this.props
+        const {input, validate = 'onBlur', onChange, onBlur, ...props} = this.props
         return (
             <input
                 {...props}
@@ -160,7 +160,6 @@ export class Input extends React.Component {
                         input.validate()
                 }}
                 className={input.errorClass}
-                ref={(domElement) => this.domElement = domElement}
             />
         )
     }

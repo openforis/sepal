@@ -6,6 +6,8 @@ import SlideShow from './slideshow/slideshow'
 import {Msg} from 'translate'
 import Login from './login'
 import ForgotPassword from './forgot-password'
+import ResetPassword from './reset-password'
+import SetupAccount from './setup-account'
 import styles from './landing.module.css'
 import {getLocation, Route, Switch} from "route"
 import {connect} from 'react-redux'
@@ -82,5 +84,7 @@ const Feature = ({icon, name}) =>
 const Form = ({location}) =>
     <Switch location={location}>
         <Route path='/forgot-password' component={ForgotPassword}/>
+        <Route path='/reset-password' component={ResetPassword}/>
+        <Route path='/setup-account' component={SetupAccount}/>
         <Route path='/' component={Login}/>
     </Switch>

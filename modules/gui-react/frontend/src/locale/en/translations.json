@@ -42,6 +42,23 @@
       "invalid": "Not a valid email",
       "button": "Request a new one",
       "cancel-link": "Cancel"
+    },
+    "reset-password": {
+      "username": {
+        "label": "Username"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Enter your password",
+        "required": "Password is required"
+      },
+      "password2": {
+        "label": "Confirm password",
+        "placeholder": "Enter your password again",
+        "required": "Password must be confirmed",
+        "not-matching": "Passwords are not the same"
+      },
+      "button": "Reset password"
     }
   }
 }
