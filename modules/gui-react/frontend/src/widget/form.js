@@ -2,27 +2,42 @@ import React from 'react'
 import styles from './form.module.css'
 import PropTypes from 'prop-types'
 import {msg} from 'translate'
+import {connect} from 'react-redux'
 
-export function managedForm(inputs, Component) {
-    return class Form extends React.Component {
+export function form(
+    {
+        inputs,
+        mapStateToProps,
+        mapDispatchToProps,
+        componentWillMount,
+        View
+    }) {
+    class Form extends React.Component {
         constructor(props) {
             super(props)
             const state = {
-                values: props.initialState || {},
+                values: props.values || {},
                 errors: props.errors || {}
             }
+
             Object.keys(inputs).forEach(name => {
-                const input = inputs[name]
-                input.defaultValue = input.defaultValue == null ? '' : input.defaultValue
-                state.values[name] = state.values[name] == null ? input.defaultValue : state.values[name]
-                state.errors[name] = state.errors[name] == null ? '' : state.errors[name]
+                state.values[name] = name in state.values ? state.values[name] : ''
+                state.errors[name] = name in state.errors ? state.errors[name] : ''
             })
             this.state = state
+
+            this.componentWillMountCallback = componentWillMount
+
             this.handleChange = this.handleChange.bind(this)
             this.value = this.value.bind(this)
             this.validate = this.validate.bind(this)
             this.hasInvalid = this.hasInvalid.bind(this)
             this.submit = this.submit.bind(this)
+        }
+
+        componentWillMount() {
+            if (this.componentWillMountCallback)
+                this.componentWillMountCallback(this.props)
         }
 
         componentWillReceiveProps(nextProps) {
@@ -56,7 +71,7 @@ export function managedForm(inputs, Component) {
         }
 
         error(name) {
-            let constraints = inputs[name].constraints
+            let constraints = inputs[name]
             if (constraints == null)
                 constraints = new Constraints()
             return constraints.check(name, this.state.values)
@@ -81,9 +96,9 @@ export function managedForm(inputs, Component) {
         }
 
         render() {
-            const inputs = {}
-            Object.keys(this.state.values).forEach(name => {
-                inputs[name] = {
+            const formInputs = {}
+            Object.keys(inputs).forEach(name => {
+                formInputs[name] = {
                     name: name,
                     value: this.state.values[name],
                     error: this.state.errors[name],
@@ -93,7 +108,7 @@ export function managedForm(inputs, Component) {
                     validate: () => this.validate(name)
                 }
             })
-            return React.createElement(Component, {
+            return React.createElement(View, {
                 ...this.props,
                 form: {
                     errors: Object.values(this.state.errors)
@@ -102,10 +117,15 @@ export function managedForm(inputs, Component) {
                     hasInvalid: this.hasInvalid,
                     submit: this.submit
                 },
-                inputs: inputs
+                inputs: formInputs
             })
         }
     }
+
+    if (mapStateToProps || mapDispatchToProps)
+        return connect(mapStateToProps, mapDispatchToProps)(Form)
+    else
+        return Form
 }
 
 export class Constraints {
@@ -113,7 +133,7 @@ export class Constraints {
 
     constraints = []
 
-    predicate (constraint, messageId) {
+    predicate(constraint, messageId) {
         this.constraints.push([constraint, messageId])
         return this
     }

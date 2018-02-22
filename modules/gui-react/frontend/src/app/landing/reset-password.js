@@ -1,40 +1,38 @@
 import React from 'react'
-import {connect} from 'react-redux'
 import {AnimateUl} from 'widget/animate'
-import {Constraints, Input, managedForm} from 'widget/form'
+import {Constraints, form, Input} from 'widget/form'
+import {resetPassword, validateToken} from 'user'
 import {getQuery} from 'route'
 import Button from './button'
 import {Msg, msg} from 'translate'
-import {resetPassword, validateToken} from 'user'
 
-const mapStateToProps = (state) => ({
-    token: getQuery(state).token
-})
+const ResetPassword = form({
+    mapStateToProps:
+        (state) => ({
+            token: getQuery(state).token
+        }),
 
-const mapDispatchToProps = (dispatch) => ({
-    validateToken: (token) => dispatch(validateToken(token)),
-    onSubmit: ({token, password}) => dispatch(resetPassword(token, password)),
-    errors: {}
-})
+    mapDispatchToProps:
+        (dispatch) => ({
+            validateToken: (token) => dispatch(validateToken(token)),
+            onSubmit: ({token, password}) => dispatch(resetPassword(token, password)),
+            errors: {}
+        }),
 
-const ResetPassword = connect(mapStateToProps, mapDispatchToProps)(managedForm({
-    password: {
-        constraints: new Constraints()
-            .notBlank('landing.reset-password.password.required')
-    },
-    password2: {
-        constraints: new Constraints()
-            .notBlank('landing.reset-password.password2.required')
-            .predicate((password2, form) => password2 === form.password, 'landing.reset-password.password2.not-matching')
-    }
-}, class View extends React.Component {
-    componentWillMount() {
-        this.props.validateToken(this.props.token)
-    }
+    componentWillMount:
+        ({validateToken, token}) => validateToken(token),
 
-    render() {
-        const {form, inputs: {username, password, password2}} = this.props
-        return (
+    inputs:
+        {
+            password: new Constraints()
+                .notBlank('landing.reset-password.password.required'),
+            password2: new Constraints()
+                .notBlank('landing.reset-password.password2.required')
+                .predicate((password2, form) => password2 === form.password, 'landing.reset-password.password2.not-matching')
+        },
+
+    View:
+        ({form, inputs: {username, password, password2}}) =>
             <form>
                 <div>
                     <label><Msg id='landing.reset-password.username.label'/></label>
@@ -77,7 +75,5 @@ const ResetPassword = connect(mapStateToProps, mapDispatchToProps)(managedForm({
                     <Msg id='landing.reset-password.button'/>
                 </Button>
             </form>
-        )
-    }
-}))
+})
 export default ResetPassword
