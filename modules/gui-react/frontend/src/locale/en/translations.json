@@ -49,12 +49,12 @@
       },
       "password": {
         "label": "Password",
-        "placeholder": "Enter your password",
+        "placeholder": "Enter a new password",
         "required": "Password is required"
       },
       "password2": {
         "label": "Confirm password",
-        "placeholder": "Enter your password again",
+        "placeholder": "Enter the password again",
         "required": "Password must be confirmed",
         "not-matching": "Passwords are not the same"
       },

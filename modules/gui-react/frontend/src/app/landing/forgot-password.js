@@ -1,6 +1,5 @@
 import React from 'react'
-import {AnimateUl} from "../../widget/animate"
-import {form, Constraints, Input} from 'widget/form'
+import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Icon from 'widget/icon'
 import styles from './forgot-password.module.css'
 import Button from './button'
@@ -43,13 +42,8 @@ export const ForgotPassword = form({
                         tabIndex={1}
                         validate='onBlur'
                     />
+                    <ErrorMessage input={email}/>
                 </div>
-
-                <AnimateUl className={form.errorClass}>
-                    {form.errors.map((error, i) =>
-                        <li key={error}>{error}</li>
-                    )}
-                </AnimateUl>
 
                 <Button
                     icon='paper-plane-o'

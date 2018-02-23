@@ -48,12 +48,18 @@ export const invalidCredentialsProvided = (state) =>
 
 const loadingCurrentUser = actionRegistry.register(
     'LOADING_USER',
-    (state) => Object.assign({}, state, {userState: 'LOADING_USER', user: null})
+    (state) => Object.assign({}, state, {
+        userState: 'LOADING_USER',
+        user: null
+    })
 )
 
 const loadedCurrentUser = actionRegistry.register(
     'LOADED_USER',
-    (state, action) => Object.assign({}, state, {userState: 'LOADED_USER', user: action.user}),
+    (state, action) => Object.assign({}, state, {
+        userState: 'LOADED_USER',
+        user: action.user
+    }),
     (user) => ({user: user})
 )
 

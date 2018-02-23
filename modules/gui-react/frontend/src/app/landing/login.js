@@ -1,7 +1,6 @@
 import React from 'react'
 import {invalidCredentialsProvided, login} from 'user'
-import {AnimateUl} from "../../widget/animate"
-import {form, Constraints, Input} from 'widget/form'
+import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import Button from './button'
 import {Msg, msg} from 'translate'
@@ -36,8 +35,8 @@ const Login = form({
                         autoFocus='on'
                         autoComplete='off'
                         tabIndex={1}
-                        validate='onBlur'
-                    />
+                        validate='onBlur'/>
+                    <ErrorMessage input={username}/>
                 </div>
                 <div>
                     <label><Msg id='landing.login.password.label'/></label>
@@ -46,15 +45,9 @@ const Login = form({
                         type='password'
                         placeholder={msg('landing.login.password.placeholder')}
                         tabIndex={2}
-                        validate='onBlur'
-                    />
+                        validate='onBlur'/>
+                    <ErrorMessage input={password}/>
                 </div>
-
-                <AnimateUl className={form.errorClass}>
-                    {form.errors.map((error, i) =>
-                        <li key={error}>{error}</li>
-                    )}
-                </AnimateUl>
 
                 <Button
                     icon='sign-in'

@@ -11,20 +11,16 @@ const mapStateToProps = (state) => ({
     loadingUser: isLoadingUser(state)
 })
 
-const mapDispatchToProps = (dispatch) => ({
-    loadUser: () => dispatch(loadCurrentUser())
-})
-
 const Loader = () =>
     <div className="app-loader">
         <span/>
         <p>S E P A L</p>
     </div>
 
-const App = connect(mapStateToProps, mapDispatchToProps)(
+const App = connect(mapStateToProps)(
     class AppView extends React.Component {
         componentWillMount() {
-            this.props.loadUser()
+            this.props.dispatch(loadCurrentUser())
         }
 
         render() {

@@ -1,6 +1,5 @@
 import React from 'react'
-import {AnimateUl} from 'widget/animate'
-import {Constraints, form, Input} from 'widget/form'
+import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {resetPassword, validateToken} from 'user'
 import {getQuery} from 'route'
 import Button from './button'
@@ -40,6 +39,7 @@ const ResetPassword = form({
                         value={username}
                         disabled={true}
                     />
+                    <ErrorMessage/>
                 </div>
                 <div>
                     <label><Msg id='landing.reset-password.password.label'/></label>
@@ -48,8 +48,8 @@ const ResetPassword = form({
                         type='password'
                         placeholder={msg('landing.reset-password.password.placeholder')}
                         autoFocus='on'
-                        tabIndex={1}
-                    />
+                        tabIndex={1}/>
+                    <ErrorMessage input={password}/>
                 </div>
                 <div>
                     <label><Msg id='landing.reset-password.password2.label'/></label>
@@ -57,15 +57,9 @@ const ResetPassword = form({
                         input={password2}
                         type='password'
                         placeholder={msg('landing.reset-password.password2.placeholder')}
-                        tabIndex={2}
-                    />
+                        tabIndex={2}/>
+                    <ErrorMessage input={password2}/>
                 </div>
-
-                <AnimateUl className={form.errorClass}>
-                    {form.errors.map((error, i) =>
-                        <li key={error}>{error}</li>
-                    )}
-                </AnimateUl>
 
                 <Button
                     icon='sign-in'

@@ -158,6 +158,11 @@ export class Constraints {
     }
 }
 
+export const ErrorMessage = ({input}) =>
+    <div className={styles.errorMessage}>
+        {input && input.error}
+    </div>
+
 export class Input extends React.Component {
     render() {
         const {input, validate = 'onBlur', onChange, onBlur, ...props} = this.props
