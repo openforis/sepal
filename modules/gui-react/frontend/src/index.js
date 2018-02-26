@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import thunk from 'redux-thunk'
 import {createLogger} from 'redux-logger'
 import {applyMiddleware, combineReducers, createStore} from 'redux'
 import {Provider} from 'react-redux'
@@ -13,7 +12,7 @@ import es from 'react-intl/locale-data/es'
 import flat from 'flat'
 import {initIntl} from 'translate'
 import App from 'app/app'
-import actionRegistry from 'action-registry'
+import {initStore} from 'store'
 
 // https://github.com/jcbvm/i18n-editor
 addLocaleData([...en, ...es])
@@ -25,15 +24,21 @@ const messages = flat.flatten( // react-intl requires a flat object
 
 const history = createHistory()
 
-const store = createStore(
-    combineReducers({
-        app: actionRegistry.rootReducer(),
-        router: routerReducer
-    }),
-    applyMiddleware(
-        routerMiddleware(history),
-        thunk,
-        createLogger()
+const appReducer = (state = {}, action) => {
+    return action.reduce
+        ? action.reduce(state, action)
+        : state
+}
+
+const store = initStore(
+    createStore(combineReducers({
+            app: appReducer,
+            router: routerReducer
+        }),
+        applyMiddleware(
+            createLogger(),
+            routerMiddleware(history)
+        )
     )
 )
 

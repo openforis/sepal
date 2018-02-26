@@ -7,9 +7,9 @@ import {connect} from 'react-redux'
 export function form(
     {
         inputs,
-        mapStateToProps,
-        mapDispatchToProps,
+        selectors,
         componentWillMount,
+        onSubmit,
         View
     }) {
     class Form extends React.Component {
@@ -92,7 +92,7 @@ export function form(
         }
 
         submit() {
-            this.props.onSubmit(this.state.values)
+            (onSubmit || this.props.onSubmit)(this.state.values)
         }
 
         render() {
@@ -122,8 +122,8 @@ export function form(
         }
     }
 
-    if (mapStateToProps || mapDispatchToProps)
-        return connect(mapStateToProps, mapDispatchToProps)(Form)
+    if (selectors)
+        return connect(selectors)(Form)
     else
         return Form
 }

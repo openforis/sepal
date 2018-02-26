@@ -6,19 +6,16 @@ import Button from './button'
 import {Msg, msg} from 'translate'
 
 const SetupAccount = form({
-    mapStateToProps:
-        (state) => ({
-            token: getQuery(state).token
-        }),
-
-    mapDispatchToProps:
-        (dispatch) => ({
-            validateToken: (token) => dispatch(validateToken(token)),
-            onSubmit: ({token, password}) => dispatch(resetPassword(token, password))
+    selectors:
+        () => ({
+            token: getQuery().token
         }),
 
     componentWillMount:
-        ({validateToken, token}) => validateToken(token),
+        ({token}) => validateToken(token),
+
+    onSubmit:
+        ({token, password}) => resetPassword(token, password),
 
     inputs:
         {

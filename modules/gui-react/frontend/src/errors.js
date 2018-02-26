@@ -1,6 +1,8 @@
-import actionRegistry from 'action-registry'
+import {dispatch} from 'store'
 
-export const httpCallFailed = actionRegistry.register(
-    'HTTP_CALL_FAILED',
-    (state, action) => Object.assign({}, state, {error: 'HTTP_CALL_FAILED'})
-)
+export const httpCallFailed = () => dispatch({
+    type: 'HTTP_CALL_FAILED',
+    reduce(state) {
+        Object.assign({}, state, {error: 'HTTP_CALL_FAILED'})
+    }
+})

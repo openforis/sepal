@@ -6,14 +6,9 @@ import Button from './button'
 import {Msg, msg} from 'translate'
 
 const Login = form({
-    mapStateToProps:
-        (state) => ({
-            errors: invalidCredentialsProvided(state) ? {password: msg('landing.login.password.invalid')} : {}
-        }),
-
-    mapDispatchToProps:
-        (dispatch) => ({
-            onSubmit: ({username, password}) => dispatch(login(username, password))
+    selectors:
+        () => ({
+            errors: invalidCredentialsProvided() ? {password: msg('landing.login.password.invalid')} : {}
         }),
 
     inputs:
@@ -23,6 +18,8 @@ const Login = form({
             password: new Constraints()
                 .notBlank('landing.login.password.required')
         },
+
+    onSubmit: ({username, password}) => login(username, password),
 
     View:
         ({form, inputs: {username, password}}) => (
@@ -34,8 +31,7 @@ const Login = form({
                         placeholder={msg('landing.login.username.placeholder')}
                         autoFocus='on'
                         autoComplete='off'
-                        tabIndex={1}
-                        validate='onBlur'/>
+                        tabIndex={1}/>
                     <ErrorMessage input={username}/>
                 </div>
                 <div>
@@ -44,8 +40,7 @@ const Login = form({
                         input={password}
                         type='password'
                         placeholder={msg('landing.login.password.placeholder')}
-                        tabIndex={2}
-                        validate='onBlur'/>
+                        tabIndex={2}/>
                     <ErrorMessage input={password}/>
                 </div>
 

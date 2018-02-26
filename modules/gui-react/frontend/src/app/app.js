@@ -6,9 +6,9 @@ import Home from 'app/home/home'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
 import './app.css'
 
-const mapStateToProps = (state) => ({
-    user: getCurrentUser(state),
-    loadingUser: isLoadingUser(state)
+const mapStateToProps = () => ({
+    user: getCurrentUser(),
+    loadingUser: isLoadingUser()
 })
 
 const Loader = () =>
@@ -20,7 +20,7 @@ const Loader = () =>
 const App = connect(mapStateToProps)(
     class AppView extends React.Component {
         componentWillMount() {
-            this.props.dispatch(loadCurrentUser())
+            loadCurrentUser()
         }
 
         render() {

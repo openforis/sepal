@@ -6,20 +6,16 @@ import Button from './button'
 import {Msg, msg} from 'translate'
 
 const ResetPassword = form({
-    mapStateToProps:
-        (state) => ({
-            token: getQuery(state).token
-        }),
-
-    mapDispatchToProps:
-        (dispatch) => ({
-            validateToken: (token) => dispatch(validateToken(token)),
-            onSubmit: ({token, password}) => dispatch(resetPassword(token, password)),
-            errors: {}
+    selectors:
+        () => ({
+            token: getQuery().token
         }),
 
     componentWillMount:
-        ({validateToken, token}) => validateToken(token),
+        ({token}) => validateToken(token),
+
+    onSubmit:
+        ({token, password}) => resetPassword(token, password),
 
     inputs:
         {
@@ -37,8 +33,7 @@ const ResetPassword = form({
                     <label><Msg id='landing.reset-password.username.label'/></label>
                     <input
                         value={username}
-                        disabled={true}
-                    />
+                        disabled={true}/>
                     <ErrorMessage/>
                 </div>
                 <div>

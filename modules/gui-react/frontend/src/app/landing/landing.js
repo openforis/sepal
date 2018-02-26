@@ -12,8 +12,8 @@ import styles from './landing.module.css'
 import {getLocation, Route, Switch} from "route"
 import {connect} from 'react-redux'
 
-const mapStateToProps = (state) => ({
-    location: getLocation(state)
+const mapStateToProps = () => ({
+    location: getLocation()
 })
 
 const Landing = connect(mapStateToProps)(

@@ -1,79 +1,93 @@
 import Http from 'http-client'
 import {httpCallFailed} from 'errors'
-import actionRegistry from 'action-registry'
+import {dispatch, state} from 'store'
 
-export const loadCurrentUser = () =>
-    (dispatch) => {
-        dispatch(loadingCurrentUser())
-        Http.get('/user/current', {
-            handle: {
-                200: (user) => dispatch(loadedCurrentUser(user)),
-                401: () => dispatch(loadedCurrentUser(null)),
-            }
-        }).catch((error) => dispatch(httpCallFailed(error)))
+export const loadCurrentUser = () => {
+    loadingCurrentUser()
+    Http.get('/user/current', {
+        handle: {
+            200: (user) => loadedCurrentUser(user),
+            401: () => loadedCurrentUser(null),
+        }
+    }).catch((error) => httpCallFailed(error))
+}
+
+export const login = (username, password) => {
+    loggingIn()
+    Http.post('/user/login', {
+        username: username,
+        password: password,
+        handle: {
+            200: (user) => loggedIn(user),
+            401: () => invalidCredentials()
+        },
+    }).catch((error) => httpCallFailed(error))
+}
+
+export const validateToken = (token) => {
+    console.log('validating token ' + token)
+}
+
+export const resetPassword = (token, password) => {
+    console.log('resetting password')
+}
+
+
+export const isLoadingUser = () => {
+    console.log('isLoadingUser', !state().app.userState || state().app.userState === 'LOADING_USER', state())
+    return !state().app.userState || state().app.userState === 'LOADING_USER'
+}
+
+export const getCurrentUser = () => {
+    return state().app.user
+}
+
+export const invalidCredentialsProvided = () => {
+    return state().app.loginState === 'INVALID_CREDENTIALS'
+}
+
+const loadingCurrentUser = () => dispatch({
+    type: 'LOADING_USER',
+    reduce(state) {
+        return Object.assign({}, state, {
+            userState: 'LOADING_USER',
+            user: null
+        })
     }
+})
 
-export const login = (username, password) =>
-    (dispatch) => {
-        dispatch(loggingIn())
-        Http.post('/user/login', {
-            username: username,
-            password: password,
-            handle: {
-                200: (user) => dispatch(loggedIn(user)),
-                401: () => dispatch(invalidCredentials())
-            },
-        }).catch((error) => dispatch(httpCallFailed(error)))
+const loadedCurrentUser = (user) => dispatch({
+    type: 'LOADED_USER',
+    reduce(state) {
+        return Object.assign({}, state, {
+            userState: 'LOADED_USER',
+            user: user
+        })
     }
+})
 
-export const validateToken = (token) =>
-    (dispatch) => {
-        console.log('validating token ' + token)
+const loggingIn = () => dispatch({
+    type: 'LOGGING_IN',
+    reduce(state) {
+        return Object.assign({}, state, {loginState: 'LOGGING_IN'})
     }
+})
 
-export const resetPassword = (token, password) =>
-    (dispatch) => {
-        console.log('resetting password')
+const loggedIn = (user) => dispatch({
+    type: 'LOGGED_IN',
+    reduce(state) {
+        return Object.assign({}, state, {
+            loginState: 'LOGGED_IN',
+            user
+        })
     }
+})
 
-export const isLoadingUser = (state) =>
-    !state.app.userState || state.app.userState === 'LOADING_USER'
-
-export const getCurrentUser = (state) =>
-    state.app.user
-
-export const invalidCredentialsProvided = (state) =>
-    state.app.loginState === 'INVALID_CREDENTIALS'
-
-
-const loadingCurrentUser = actionRegistry.register(
-    'LOADING_USER',
-    (state) => Object.assign({}, state, {
-        userState: 'LOADING_USER',
-        user: null
-    })
-)
-
-const loadedCurrentUser = actionRegistry.register(
-    'LOADED_USER',
-    (state, action) => Object.assign({}, state, {
-        userState: 'LOADED_USER',
-        user: action.user
-    }),
-    (user) => ({user: user})
-)
-
-const loggingIn = actionRegistry.register(
-    'LOGGING_IN',
-    (state) => Object.assign({}, state, {loginState: 'LOGGING_IN'})
-)
-
-const loggedIn = actionRegistry.register(
-    'LOGGED_IN',
-    (state, action) => Object.assign({}, state, {loginState: 'LOGGED_IN', user: action.user}),
-    (user) => ({user: user})
-)
-
-const invalidCredentials = actionRegistry.register('INVALID_CREDENTIALS',
-    (state) => Object.assign({}, state, {loginState: 'INVALID_CREDENTIALS'})
-)
+const invalidCredentials = () => dispatch({
+    type: 'INVALID_CREDENTIALS',
+    reduce(state) {
+        return Object.assign({}, state, {
+            loginState: 'INVALID_CREDENTIALS'
+        })
+    }
+})

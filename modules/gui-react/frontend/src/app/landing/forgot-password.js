@@ -8,17 +8,13 @@ import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
 
 
-const requestPasswordReset = (email) =>
-    dispatch => {
-        console.log('Requesting password reset for ' + email)
-        // Http.post('/user/password/reset-request')
-        // TODO: Handle errors
-    }
+const requestPasswordReset = (email) => {
+    return console.log('Requesting password reset for ' + email);
+}
 
 export const ForgotPassword = form({
-    mapDispatchToProps:
-        (dispatch) => ({
-            onSubmit: ({email}) => dispatch(requestPasswordReset(email)),
+    selectors:
+        () => ({
             errors: {}
         }),
 
@@ -28,6 +24,9 @@ export const ForgotPassword = form({
                 .notBlank('landing.forgot-password.required')
                 .email('landing.forgot-password.invalid')
         },
+
+    onSubmit:
+        ({email}) => requestPasswordReset(email),
 
     View:
         ({onSubmit, onCancel, form, inputs: {email}}) =>
