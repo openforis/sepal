@@ -6,17 +6,35 @@
     src: local('Open Sans'), local('OpenSans'), url('./fonts/OpenSans-Light.ttf') format('truetype');
 }
 
-body, input, textarea, select, button {
+html {
     --secondary-text-color: #e8edf0;
     --header-font-family: Open Sans, Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
 
+    font-size: 14px;
+}
+
+@media screen and (min-width: 320px) {
+    html {
+        /*
+          min-text + (max-text - min-text) * (100vw - min-viewport) / (max-viewport - min-viewport)
+        */
+        font-size: calc(14px + (18 - 14) * (100vw - 320px) / (1600 - 320));
+    }
+}
+
+@media screen and (min-width: 1600px) {
+    html {
+        font-size: 18px;
+    }
+}
+
+body, input, textarea, select, button, a {
     font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
     line-height: 2;
     font-weight: 300;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: transparent;
-    font-size: 16px;
     color: #fff;
 }
 

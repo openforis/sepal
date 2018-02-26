@@ -1,10 +1,9 @@
 form label {
     display: block;
     margin: 0;
-    font-size: 12px;
+    font-size: .8rem;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
 form input {

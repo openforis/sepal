@@ -5,11 +5,12 @@ button.submit {
     border-bottom-right-radius: 50px;
     border-style: solid;
     border-width: 4px;
+    font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-weight: bold;
-    font-size: 12px;
+    font-size: .8rem;
     text-transform: uppercase;
     line-height: 1;
-    letter-spacing: 1.5px;
+    letter-spacing: 0.05rem;
     position: relative;
     padding: 22px 32px 22px 32px;
     cursor: pointer;
@@ -44,7 +45,6 @@ button.submit:disabled {
     transform: translateY(-50%);
     position: absolute;
     top: 50%;
-    left: 20px;
-    width: 25px;
-    font-size: 25px;
+    left: 1.5rem;
+    font-size: 1.5rem;
 }
