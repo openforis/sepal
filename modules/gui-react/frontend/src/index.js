@@ -34,7 +34,7 @@ ReactDOM.render(
     <IntlProvider locale={language} messages={messages}>
         <IntlInit>
             <EventPublishingRouter history={createHistory()}>
-                <Route path='/' component={App}/>
+                <App/>
             </EventPublishingRouter>
         </IntlInit>
     </IntlProvider>,
