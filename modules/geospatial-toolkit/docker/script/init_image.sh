@@ -77,6 +77,7 @@ apt-get install -y \
     python-rasterio \
     python-scikits-learn \
     python-scikits.statsmodels \
+    python-virtualenv \
     rsync \
     saga \
     screen \

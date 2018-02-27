@@ -30,6 +30,7 @@ R -e "pacman::p_load(\
         'ggmap',\
         'ggplot2',\
         'htmltools',\
+        'keras',\
         'knitr',\
         'leaflet',\
         'lubridate',\
