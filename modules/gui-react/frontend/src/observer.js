@@ -63,12 +63,14 @@ function getDisplayName(View) {
 }
 
 function log({component, prevState, stream, value, update, state}) {
-    console.group(stream, component)
-    console.log('prevState:\t', prevState)
-    console.log('value:\t\t', value)
-    console.log('update:\t\t', update)
-    console.log('state:\t\t', state)
-    console.groupEnd()
+    if (process.env.NODE_ENV === 'development') {
+        console.group(stream, component)
+        console.log('prevState:\t', prevState)
+        console.log('value:\t\t', value)
+        console.log('update:\t\t', update)
+        console.log('state:\t\t', state)
+        console.groupEnd()
+    }
 }
 
 export class Reducer {
