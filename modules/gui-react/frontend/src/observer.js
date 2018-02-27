@@ -68,7 +68,7 @@ function log({component, prevState, stream, value, update, nextState}) {
         console.log('%cprevState:\t', 'color: #9E9E9E;', prevState)
         console.log('%cvalue:\t\t', 'color: #03A9F4;', value)
         console.log('%cupdate:\t\t', 'color: #F20404;', update)
-        console.log('%cnextState:\t\t', 'color: #4CAF50;', nextState)
+        console.log('%cnextState:\t', 'color: #4CAF50;', nextState)
         console.groupEnd()
     }
 }
