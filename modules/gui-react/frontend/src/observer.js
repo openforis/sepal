@@ -20,16 +20,16 @@ export function observer(
                 const subscription = reducer.stream.subscribe((value) => {
                         this.setState((prevState) => {
                             const stateUpdate = reducer.toState(value, prevState)
-                            const state = {...prevState, ...stateUpdate}
+                            const nextState = {...prevState, ...stateUpdate}
                             log({
                                 component: Observer.displayName,
                                 prevState: prevState,
                                 stream: name(reducer.stream),
                                 value: value,
                                 update: stateUpdate,
-                                state: state
+                                nextState: nextState
                             })
-                            return state
+                            return nextState
                         })
                     }
                 )
@@ -62,13 +62,13 @@ function getDisplayName(View) {
     return View.displayName || View.name || 'View'
 }
 
-function log({component, prevState, stream, value, update, state}) {
+function log({component, prevState, stream, value, update, nextState}) {
     if (process.env.NODE_ENV === 'development') {
-        console.group(stream, component)
-        console.log('prevState:\t', prevState)
-        console.log('value:\t\t', value)
-        console.log('update:\t\t', update)
-        console.log('state:\t\t', state)
+        console.group('%c' + stream, 'font-weight: lighter;', component)
+        console.log('%cprevState:\t', 'color: #9E9E9E; font-weight: lighter;', prevState)
+        console.log('%cvalue:\t\t', 'color: #03A9F4; font-weight: lighter;', value)
+        console.log('%cupdate:\t\t', 'color: #F20404; font-weight: lighter;', update)
+        console.log('%cnextState:\t\t', 'color: #4CAF50; font-weight: lighter;', nextState)
         console.groupEnd()
     }
 }
