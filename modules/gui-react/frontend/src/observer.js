@@ -65,10 +65,10 @@ function getDisplayName(View) {
 function log({component, prevState, stream, value, update, nextState}) {
     if (process.env.NODE_ENV === 'development') {
         console.group('%c' + stream, 'font-weight: lighter;', component)
-        console.log('%cprevState:\t', 'color: #9E9E9E; font-weight: lighter;', prevState)
-        console.log('%cvalue:\t\t', 'color: #03A9F4; font-weight: lighter;', value)
-        console.log('%cupdate:\t\t', 'color: #F20404; font-weight: lighter;', update)
-        console.log('%cnextState:\t\t', 'color: #4CAF50; font-weight: lighter;', nextState)
+        console.log('%cprevState:\t', 'color: #9E9E9E;', prevState)
+        console.log('%cvalue:\t\t', 'color: #03A9F4;', value)
+        console.log('%cupdate:\t\t', 'color: #F20404;', update)
+        console.log('%cnextState:\t\t', 'color: #4CAF50;', nextState)
         console.groupEnd()
     }
 }
