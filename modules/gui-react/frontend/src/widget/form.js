@@ -2,16 +2,17 @@ import React from 'react'
 import styles from './form.module.css'
 import PropTypes from 'prop-types'
 import {msg} from 'translate'
-import {connect} from 'react-redux'
+import {observer} from 'observer'
 
 export function form(
+    View,
     {
         inputs,
-        selectors,
+        reducers,
         componentWillMount,
-        onSubmit,
-        View
+        onSubmit
     }) {
+
     class Form extends React.Component {
         constructor(props) {
             super(props)
@@ -26,8 +27,6 @@ export function form(
             })
             this.state = state
 
-            this.componentWillMountCallback = componentWillMount
-
             this.handleChange = this.handleChange.bind(this)
             this.value = this.value.bind(this)
             this.validate = this.validate.bind(this)
@@ -36,14 +35,15 @@ export function form(
         }
 
         componentWillMount() {
-            if (this.componentWillMountCallback)
-                this.componentWillMountCallback(this.props)
+            if (componentWillMount)
+                componentWillMount(this.props)
         }
 
         componentWillReceiveProps(nextProps) {
-            this.setState((state) =>
-                Object.assign({}, state, {errors: nextProps.errors})
-            )
+            if ('errors' in nextProps)
+                this.setState((state) =>
+                    Object.assign({}, state, {errors: nextProps.errors})
+                )
         }
 
         handleChange(e) {
@@ -122,10 +122,16 @@ export function form(
         }
     }
 
-    if (selectors)
-        return connect(selectors)(Form)
+    Form.displayName = `Form(${getDisplayName(View)})`
+
+    if (reducers)
+        return observer(Form, {reducers})
     else
         return Form
+}
+
+function getDisplayName(View) {
+    return View.displayName || View.name || 'View'
 }
 
 export class Constraints {

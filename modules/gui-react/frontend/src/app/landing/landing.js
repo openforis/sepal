@@ -1,5 +1,5 @@
 import React from 'react'
-import {AnimateEnter, AnimateReplacement} from "../../widget/animate"
+import {AnimateEnter, AnimateReplacement} from '../../widget/animate'
 import CenteredPanel from 'widget/centered-panel'
 import Icon from 'widget/icon'
 import SlideShow from './slideshow/slideshow'
@@ -9,14 +9,11 @@ import ForgotPassword from './forgot-password'
 import ResetPassword from './reset-password'
 import SetupAccount from './setup-account'
 import styles from './landing.module.css'
-import {getLocation, Route, Switch} from "route"
-import {connect} from 'react-redux'
+import {Route, Switch} from 'route'
+import {observer, Reducer} from 'observer'
+import location$ from 'location'
 
-const mapStateToProps = () => ({
-    location: getLocation()
-})
-
-const Landing = connect(mapStateToProps)(
+let Landing =
     ({location}) =>
         <div className={styles.landing}>
             <SlideShow/>
@@ -42,8 +39,15 @@ const Landing = connect(mapStateToProps)(
                 </AnimateEnter>
             </LandingPanel>
         </div>
-)
-export default Landing
+
+export default Landing = observer(Landing, {
+    reducers:
+        [
+            new Reducer(location$, (location) => ({
+                location: location
+            }))
+        ]
+})
 
 const LandingPanel = ({children}) =>
     <CenteredPanel className={styles.landingPanel}>

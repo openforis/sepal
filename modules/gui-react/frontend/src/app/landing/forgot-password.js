@@ -12,7 +12,33 @@ const requestPasswordReset = (email) => {
     return console.log('Requesting password reset for ' + email);
 }
 
-export const ForgotPassword = form({
+export let ForgotPassword = ({onSubmit, onCancel, form, inputs: {email}}) =>
+    <form style={styles.form}>
+        <div>
+            <label><Msg id='landing.forgot-password.label'/></label>
+            <Input
+                input={email}
+                placeholder={msg('landing.forgot-password.placeholder')}
+                autoFocus='on'
+                autoComplete='off'
+                tabIndex={1}
+                validate='onBlur'
+            />
+            <ErrorMessage input={email}/>
+        </div>
+
+        <Button
+            icon='paper-plane-o'
+            onSubmit={form.submit}
+            disabled={form.hasInvalid()}
+            tabIndex={2}>
+            <Msg id='landing.forgot-password.button'/>
+        </Button>
+
+        <LoginLink onClick={onCancel} tabIndex={3}/>
+    </form>
+
+export default ForgotPassword = form(ForgotPassword, {
     selectors:
         () => ({
             errors: {}
@@ -26,36 +52,8 @@ export const ForgotPassword = form({
         },
 
     onSubmit:
-        ({email}) => requestPasswordReset(email),
-
-    View:
-        ({onSubmit, onCancel, form, inputs: {email}}) =>
-            <form style={styles.form}>
-                <div>
-                    <label><Msg id='landing.forgot-password.label'/></label>
-                    <Input
-                        input={email}
-                        placeholder={msg('landing.forgot-password.placeholder')}
-                        autoFocus='on'
-                        autoComplete='off'
-                        tabIndex={1}
-                        validate='onBlur'
-                    />
-                    <ErrorMessage input={email}/>
-                </div>
-
-                <Button
-                    icon='paper-plane-o'
-                    onSubmit={form.submit}
-                    disabled={form.hasInvalid()}
-                    tabIndex={2}>
-                    <Msg id='landing.forgot-password.button'/>
-                </Button>
-
-                <LoginLink onClick={onCancel} tabIndex={3}/>
-            </form>
+        ({email}) => requestPasswordReset(email)
 })
-export default ForgotPassword
 
 export const LoginLink = ({tabIndex, onClick}) =>
     <div className={styles.forgotPassword}>
