@@ -9,9 +9,8 @@ import ForgotPassword from './forgot-password'
 import ResetPassword from './reset-password'
 import SetupAccount from './setup-account'
 import styles from './landing.module.css'
-import {Route, Switch} from 'route'
-import {observer, Reducer} from 'observer'
-import location$ from 'location'
+import {locationReducer, Route, Switch} from 'route'
+import {observer} from 'observer'
 
 let Landing =
     ({location}) =>
@@ -40,14 +39,7 @@ let Landing =
             </LandingPanel>
         </div>
 
-export default Landing = observer(Landing, {
-    reducers:
-        [
-            new Reducer(location$, (location) => ({
-                location: location
-            }))
-        ]
-})
+export default Landing = observer(Landing, {reducers: [locationReducer]})
 
 const LandingPanel = ({children}) =>
     <CenteredPanel className={styles.landingPanel}>

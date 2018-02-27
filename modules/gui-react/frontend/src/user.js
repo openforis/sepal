@@ -1,7 +1,7 @@
 import Http from 'http-client'
 import {httpCallFailed} from 'errors'
-import rx from 'rxjs'
 import {named} from 'named'
+import rx from 'rxjs'
 
 export const loadingCurrentUser$ = named('LOADING_CURRENT_USER', new rx.Subject())
 export const currentUser$ = named('CURRENT_USER', new rx.ReplaySubject(1))

@@ -7,7 +7,7 @@ export function observer(
         reducers,
         componentWillMount,
         ...props
-    }) {
+    } = {reducers: []}) {
     class Observer extends React.Component {
         constructor(props) {
             super(props)
@@ -19,12 +19,14 @@ export function observer(
             this.reducers.forEach((reducer) => {
                 const subscription = reducer.stream.subscribe((value) => {
                         this.setState((prevState) => {
-                            const state = reducer.toState(value, prevState)
+                            const stateUpdate = reducer.toState(value, prevState)
+                            const state = {...prevState, ...stateUpdate}
                             log({
                                 component: Observer.displayName,
                                 prevState: prevState,
                                 stream: name(reducer.stream),
                                 value: value,
+                                update: stateUpdate,
                                 state: state
                             })
                             return state
@@ -51,6 +53,7 @@ export function observer(
             })
         }
     }
+
     Observer.displayName = `Observer(${getDisplayName(View)})`
     return Observer
 }
@@ -59,11 +62,11 @@ function getDisplayName(View) {
     return View.displayName || View.name || 'View'
 }
 
-function log({component, prevState, stream, value, state}) {
-    console.group('notification', component)
+function log({component, prevState, stream, value, update, state}) {
+    console.group(stream, component)
     console.log('prevState:\t', prevState)
-    console.log('stream:\t\t', stream)
     console.log('value:\t\t', value)
+    console.log('update:\t\t', update)
     console.log('state:\t\t', state)
     console.groupEnd()
 }

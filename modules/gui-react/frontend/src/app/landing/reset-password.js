@@ -1,9 +1,9 @@
 import React from 'react'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {resetPassword, validateToken} from 'user'
-import {getQuery} from 'route'
 import Button from './button'
 import {Msg, msg} from 'translate'
+import {locationReducer} from 'route'
 
 let ResetPassword = ({form, inputs: {username, password, password2}}) =>
     <form>
@@ -44,13 +44,11 @@ let ResetPassword = ({form, inputs: {username, password, password2}}) =>
     </form>
 
 export default ResetPassword = form(ResetPassword, {
-    selectors:
-        () => ({
-            token: getQuery().token
-        }),
+    reducers:
+        [locationReducer],
 
     componentWillMount:
-        ({token}) => validateToken(token),
+        ({location}) => validateToken(location.query.token),
 
     onSubmit:
         ({token, password}) => resetPassword(token, password),

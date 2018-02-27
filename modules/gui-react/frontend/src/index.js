@@ -1,7 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import {Route} from 'route'
-import {EventPublishingRouter} from 'location'
+import {EventPublishingRouter, Route} from 'route'
 import createHistory from 'history/createBrowserHistory'
 import {addLocaleData, injectIntl, IntlProvider} from 'react-intl'
 import en from 'react-intl/locale-data/en'
