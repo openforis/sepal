@@ -3,14 +3,14 @@ import {httpCallFailed} from 'errors'
 import rx from 'rxjs'
 import {named} from 'named'
 
-export const loadingCurrentUser$ = named('LOADING_CURRENT_USER', new rx.Subject(1))
+export const loadingCurrentUser$ = named('LOADING_CURRENT_USER', new rx.Subject())
 export const currentUser$ = named('CURRENT_USER', new rx.ReplaySubject(1))
 export const loggingIn$ = named('LOGGING_IN', new rx.Subject())
 export const loggedIn$ = named('LOGGED_IN', new rx.Subject())
 export const invalidCredentials$ = named('INVALID_CREDENTIALS', new rx.Subject())
 
 export const loadCurrentUser = () => {
-    (() => loadingCurrentUser$.next())()
+    loadingCurrentUser$.next()
     Http.get('/user/current', {
         handle: {
             200: (user) => currentUser$.next(user),

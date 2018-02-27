@@ -6,12 +6,6 @@ import 'bootstrap/dist/css/bootstrap-reboot.css'
 import './app.css'
 import {observer, Reducer} from 'observer'
 
-const Loader = () =>
-    <div className="app-loader">
-        <span/>
-        <p>S E P A L</p>
-    </div>
-
 let App = ({user, loadedUser}) => {
     if (!loadedUser)
         return <Loader/>
@@ -33,3 +27,9 @@ export default App = observer(App, {
     componentWillMount:
         () => loadCurrentUser()
 })
+
+const Loader = () =>
+    <div className="app-loader">
+        <span/>
+        <p>S E P A L</p>
+    </div>
