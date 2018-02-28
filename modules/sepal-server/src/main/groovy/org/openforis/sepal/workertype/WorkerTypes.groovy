@@ -2,6 +2,7 @@ package org.openforis.sepal.workertype
 
 import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
+import org.openforis.sepal.util.Terminal
 import org.openforis.sepal.util.annotation.ImmutableData
 
 final class WorkerTypes {
@@ -24,14 +25,17 @@ final class WorkerTypes {
             def taskExecutorPublishedPorts = [(1026): 1026]
             def username = instance.reservation.username
             def userHome = "$config.userHomes/${username}" as String
+            def userTmp = tempDir(instance, config)
+            def ldapPem = '/data/sepal/certificates/ldap-ca.crt.pem'
             def eePrivateKey = config.googleEarthEnginePrivateKey.replaceAll(
                     '\n', '-----LINE BREAK-----')
             def googleEarthEngine = new Image(
                     name: 'google-earth-engine',
                     exposedPorts: [5002],
                     volumes: [
-                            (userHome)                                : "/home/${username}",
-                            '/data/sepal/certificates/ldap-ca.crt.pem': "/etc/ldap/certificates/ldap-ca.crt.pem"],
+                            (userHome): "/home/${username}",
+                            (userTmp) : ["/tmp", "/home/${username}/tmp"],
+                            (ldapPem) : "/etc/ldap/certificates/ldap-ca.crt.pem"],
                     runCommand: [
                             '/script/init_download_container.sh',
                             username],
@@ -48,8 +52,9 @@ final class WorkerTypes {
                     publishedPorts: taskExecutorPublishedPorts,
                     links: [(googleEarthEngine.containerName(instance)): 'google-earth-engine'],
                     volumes: [
-                            (userHome)                                : "/home/${username}",
-                            '/data/sepal/certificates/ldap-ca.crt.pem': "/etc/ldap/certificates/ldap-ca.crt.pem"],
+                            (userHome): "/home/${username}",
+                            (userTmp) : ["/tmp", "/home/${username}/tmp"],
+                            (ldapPem) : "/etc/ldap/certificates/ldap-ca.crt.pem"],
                     runCommand: [
                             '/script/init_container.sh',
                             username,
@@ -73,15 +78,18 @@ final class WorkerTypes {
             def publishedPorts = [(222): 22, (8787): 8787, (3838): 3838, (5678): 5678]
             def username = instance.reservation.username
             def userHome = "$config.userHomes/${username}" as String
+            def userTmp = tempDir(instance, config)
+            def ldapPem = '/data/sepal/certificates/ldap-ca.crt.pem'
             new WorkerType(SANDBOX, [
                     new Image(
                             name: 'sandbox',
                             exposedPorts: [22, 8787, 3838, 5678],
                             publishedPorts: publishedPorts,
                             volumes: [
-                                    '/data/sepal/shiny'                       : '/shiny',
-                                    (userHome)                                : "/home/${username}",
-                                    "/data/sepal/certificates/ldap-ca.crt.pem": "/etc/ldap/certificates/ldap-ca.crt.pem"],
+                                    '/data/sepal/shiny': '/shiny',
+                                    (userHome)         : "/home/${username}",
+                                    (userTmp)          : ["/tmp", "/home/${username}/tmp"],
+                                    (ldapPem)          : "/etc/ldap/certificates/ldap-ca.crt.pem"],
                             runCommand: [
                                     '/script/init_container.sh',
                                     username,
@@ -103,6 +111,14 @@ final class WorkerTypes {
 
     private interface Factory {
         WorkerType create(String id, WorkerInstance instance, WorkerInstanceConfig config)
+    }
+
+    static String tempDir(instance, config) {
+        def username = instance.reservation.username
+        def localTmp = "/data/home/$username/tmp/$instance.id" as String
+        new File(localTmp).mkdirs()
+        Terminal.execute(new File('/'), '/bin/chmod', '1777', localTmp)
+        return "$config.userHomes/${username}/tmp/$instance.id" as String
     }
 }
 

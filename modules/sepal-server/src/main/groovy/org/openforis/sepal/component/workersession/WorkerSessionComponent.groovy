@@ -45,7 +45,8 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
                 new InstanceComponentAdapter(hostingServiceAdapter.instanceTypes, workerInstanceComponent),
                 new RestGoogleOAuthGateway(config.googleOAuthEndpoint),
                 hostingServiceAdapter.instanceTypes,
-                new SystemClock()
+                new SystemClock(),
+                new File('/data/home')
         )
     }
 
@@ -56,7 +57,8 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
             InstanceManager instanceManager,
             GoogleOAuthGateway googleOAuthGateway,
             List<InstanceType> instanceTypes,
-            Clock clock) {
+            Clock clock,
+            File homeDir) {
         super(connectionManager, eventDispatcher)
         this.instanceTypes = instanceTypes
         this.clock = clock
@@ -76,6 +78,7 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         command(SetEarliestTimeoutTime, new SetEarliestTimeoutTimeHandler(sessionRepository))
         command(CloseSessionsForUsersExceedingBudget,
                 new CloseSessionsForUsersExceedingBudgetHandler(budgetManager, closeUserSessionsHandler))
+        command(RemoveOrphanedTmpDirs, new RemoveOrphanedTmpDirsHandler(homeDir, sessionRepository))
 
         query(UserWorkerSessions, new UserWorkerSessionsHandler(sessionRepository))
         query(FindSessionById, new FindSessionByIdHandler(sessionRepository))
@@ -100,6 +103,9 @@ class WorkerSessionComponent extends DataSourceBackedComponent implements Endpoi
         )
         schedule(10, MINUTES,
                 new CloseSessionsForUsersExceedingBudget()
+        )
+        schedule(10, MINUTES,
+                new RemoveOrphanedTmpDirs()
         )
     }
 

@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit
 import static org.openforis.sepal.util.DateTime.parseDateString
 
 abstract class AbstractBudgetTest extends Specification {
+    final workDir = File.createTempDir()
     final testWorkerType = 'test-worker-type'
     final testInstanceType = 'test-instance-type'
     final testUsername = 'test-username'
@@ -66,7 +67,8 @@ abstract class AbstractBudgetTest extends Specification {
             new FakeInstanceManager(),
             new FakeGoogleOAuthGateway(),
             [new InstanceType(id: testInstanceType, name: testInstanceType, hourlyCost: 123d, idleCount: 1)],
-            clock)
+            clock,
+            workDir)
 
     final events = [] as List<Event>
 
@@ -75,6 +77,10 @@ abstract class AbstractBudgetTest extends Specification {
         updateDefaultBudget(defaultBudget)
         userRepository.eachUsername(_ as Closure) >> { it[0].call(testUsername) }
         component.on(Event) { events << it }
+    }
+
+    def cleanup() {
+        workDir.deleteDir()
     }
 
     final <E extends Event> E published(Class<E> eventType) {
