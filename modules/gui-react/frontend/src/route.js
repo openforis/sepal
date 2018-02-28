@@ -8,6 +8,8 @@ import {Reducer} from './observer'
 
 const router = require('react-router-dom')
 
+let history = null
+
 export const location$ = named('LOCATION', new rx.BehaviorSubject())
 export const getQuery = (location) => QueryString.parse(location.search)
 
@@ -51,7 +53,7 @@ export class EventPublishingRouter extends React.Component {
     }
 
     componentWillMount() {
-        const history = this.props.history
+        history = this.props.history
         this.unsubscribeFromHistory = history.listen(this.publishLocationChange)
         this.publishLocationChange(history.location)
     }

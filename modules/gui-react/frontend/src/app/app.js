@@ -19,7 +19,7 @@ export default App = observer(App, {
     reducers:
         [
             new Reducer(currentUser$, (user) => ({
-                loadedUser: user || user === null,
+                loadedUser: true,
                 user: user
             }))
         ],

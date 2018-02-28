@@ -1,16 +1,13 @@
 import React from 'react'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
+import {Reducer} from 'observer'
 import Icon from 'widget/icon'
-import styles from './forgot-password.module.css'
 import Button from './button'
-import {Link} from "route"
+import {Link} from 'route'
 import {Msg, msg} from 'translate'
+import {requestedPasswordReset$, requestPasswordReset} from 'user'
 import PropTypes from 'prop-types'
-
-
-const requestPasswordReset = (email) => {
-    return console.log('Requesting password reset for ' + email);
-}
+import styles from './forgot-password.module.css'
 
 export let ForgotPassword = ({onSubmit, onCancel, form, inputs: {email}}) =>
     <form style={styles.form}>
@@ -39,10 +36,12 @@ export let ForgotPassword = ({onSubmit, onCancel, form, inputs: {email}}) =>
     </form>
 
 export default ForgotPassword = form(ForgotPassword, {
-    selectors:
-        () => ({
-            errors: {}
-        }),
+    reducers:
+        [
+            new Reducer(requestedPasswordReset$, (email) => {
+                return {}
+            })
+        ],
 
     inputs:
         {
@@ -55,7 +54,7 @@ export default ForgotPassword = form(ForgotPassword, {
         ({email}) => requestPasswordReset(email)
 })
 
-export const LoginLink = ({tabIndex, onClick}) =>
+export const LoginLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>
         <Link to='/' tabIndex={tabIndex} onMouseDown={(e) => e.preventDefault()}>
             <Icon name='undo' className={styles.forgotPasswordIcon}/>
@@ -66,7 +65,7 @@ LoginLink.propTypes = {
     tabIndex: PropTypes.number
 }
 
-export const ForgotPasswordLink = ({tabIndex, onClick}) =>
+export const ForgotPasswordLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>
         <Link to='/forgot-password' tabIndex={tabIndex} onMouseDown={(e) => e.preventDefault()}>
             <Icon name='question-circle' className={styles.forgotPasswordIcon}/>
