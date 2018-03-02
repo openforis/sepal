@@ -93,8 +93,8 @@
     </div>
 </div>
 
-<script src="static/js/ceo-map-utils.js?v1"></script>
-<script src="static/js/overlay-map-manager.js?v3"></script>
+<script src="static/js/ceo-map-utils.js?v2"></script>
+<script src="static/js/overlay-map-manager.js?v4"></script>
 
 <script>
 
@@ -663,7 +663,7 @@
             var x_coordinate = active.attr('data-x-coordinate');
             var y_coordinate = active.attr('data-y-coordinate');
             $.ajax({
-                url: geeGatewayApiUrl + '/timeSeriesIndex2',
+                url: geeGatewayApiUrl + '/timeSeriesIndex3',
                 type: 'POST',
                 crossDomain : true,
                 contentType: 'application/json',

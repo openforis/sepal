@@ -74,4 +74,4 @@ var mapUtils = {
             }
         }
     }
-}
+};

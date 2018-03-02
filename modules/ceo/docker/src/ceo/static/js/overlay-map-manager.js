@@ -39,7 +39,7 @@ let overlayMapManager = {
             } else if (collectionName === 'NDVI_CHANGE') {
                 url += '/ndviChange';
             } else {
-                url += '/imageByMosaicCollection';
+                url += '/firstImageByMosaicCollection';
             }
             $.ajax({
                 url: url,
@@ -58,7 +58,7 @@ let overlayMapManager = {
                     console.error(data, textStatus, jqXHR);
                 } else {
                     if (data.hasOwnProperty('mapid')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token)
+                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token);
                     }
                 }
                 callback();
@@ -90,7 +90,7 @@ let overlayMapManager = {
                     console.error(data, textStatus, jqXHR);
                 } else {
                     if (data.hasOwnProperty('mapid')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token)
+                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token);
                     }
                     callback();
                 }
@@ -105,7 +105,7 @@ let overlayMapManager = {
                 },
                 name: layerName,
                 tileSize : new google.maps.Size(256, 256)
-            }
+            };
             var imageMapType = new google.maps.ImageMapType(layerOptions);
             this.overlayMapTypes[index] = imageMapType;
             callback();
@@ -195,7 +195,7 @@ let overlayMapManager = {
                 },
                 name: layerName,
                 tileSize : new google.maps.Size(256, 256)
-            }
+            };
             this.overlayMapTypes[index] = new google.maps.ImageMapType(layerOptions);
             callback();
         } else if (overlay.type === 'sepal') {
@@ -208,7 +208,7 @@ let overlayMapManager = {
                 var serviceSubPath = 'mosaic';
                 var req = {
                     'imageType': type
-                }
+                };
                 if (type === 'MOSAIC') {
                     var sceneIds = [];
                     for (var key in data['sceneAreas']) {
@@ -250,7 +250,7 @@ let overlayMapManager = {
                     console.error(jqXHR, textStatus, errorThrown);
                 }).done(function(data, textStatus, jqXHR) {
                     if (data.hasOwnProperty('mapId')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapId, data.token)
+                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapId, data.token);
                     }
                     callback();
                 });
@@ -272,14 +272,13 @@ let overlayMapManager = {
 
         function createEarthEngineLayer(mapId, token) {
           if (document.documentMode) {
-            return new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {})
+            return new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {});
           } else {
-            return new ee.layers.ImageOverlay( // Requires Content-Security-Policy, not available in IE
-              new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', mapId, token)
-            )
+            // Requires Content-Security-Policy, not available in IE
+            return new ee.layers.ImageOverlay(new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', mapId, token));
           }
         }
 
     }
 
-}
+};

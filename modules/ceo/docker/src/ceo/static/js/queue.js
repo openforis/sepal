@@ -29,14 +29,13 @@ var Queue = function(worker) {
     };
 
     var empty = function() {
-        return !running && queue.length == 0;
-    }
+    };
 
     setTimeout(poll, delay);
 
     return {
         enqueue: enqueue,
         empty: empty
-    }
+    };
 
-}
+};
