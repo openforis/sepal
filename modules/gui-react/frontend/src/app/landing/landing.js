@@ -1,4 +1,5 @@
 import React from 'react'
+import subscriber from 'subscriber'
 import {AnimateEnter, AnimateReplacement} from '../../widget/animate'
 import CenteredPanel from 'widget/centered-panel'
 import Icon from 'widget/icon'
@@ -9,8 +10,13 @@ import ForgotPassword from './forgot-password'
 import ResetPassword from './reset-password'
 import SetupAccount from './setup-account'
 import styles from './landing.module.css'
-import {locationReducer, Route, Switch} from 'route'
-import {observer} from 'observer'
+import {location$, Route, Switch} from 'route'
+
+function componentWillMount() {
+    this.subscribe('Set location', location$,
+        (location) => ({location})
+    )
+}
 
 let Landing =
     ({location}) =>
@@ -39,7 +45,7 @@ let Landing =
             </LandingPanel>
         </div>
 
-export default Landing = observer(Landing, {reducers: [locationReducer]})
+export default Landing = subscriber({componentWillMount})(Landing)
 
 const LandingPanel = ({children}) =>
     <CenteredPanel className={styles.landingPanel}>

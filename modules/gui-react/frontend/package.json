@@ -32,5 +32,5 @@
     "react-app-rewired": "^1.4.1",
     "webpack": "^3.10.0"
   },
-  "proxy": "https://test.sepal.io/"
+  "proxy": "https://test.sepal.io"
 }

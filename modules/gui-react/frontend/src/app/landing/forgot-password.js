@@ -1,13 +1,26 @@
 import React from 'react'
+import {requestPasswordReset$} from 'user'
+import {history, Link} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
-import {Reducer} from 'observer'
 import Icon from 'widget/icon'
 import Button from './button'
-import {Link} from 'route'
 import {Msg, msg} from 'translate'
-import {requestedPasswordReset$, requestPasswordReset} from 'user'
 import PropTypes from 'prop-types'
 import styles from './forgot-password.module.css'
+
+const inputs = {
+    email: new Constraints()
+        .notBlank('landing.forgot-password.required')
+        .email('landing.forgot-password.invalid')
+}
+
+function onSubmit({email}) {
+    this.subscribe('Requested password request', requestPasswordReset$(email),
+        () => {
+            history().push('/')
+        }
+    )
+}
 
 export let ForgotPassword = ({onSubmit, onCancel, form, inputs: {email}}) =>
     <form style={styles.form}>
@@ -35,24 +48,7 @@ export let ForgotPassword = ({onSubmit, onCancel, form, inputs: {email}}) =>
         <LoginLink onClick={onCancel} tabIndex={3}/>
     </form>
 
-export default ForgotPassword = form(ForgotPassword, {
-    reducers:
-        [
-            new Reducer(requestedPasswordReset$, (email) => {
-                return {}
-            })
-        ],
-
-    inputs:
-        {
-            email: new Constraints()
-                .notBlank('landing.forgot-password.required')
-                .email('landing.forgot-password.invalid')
-        },
-
-    onSubmit:
-        ({email}) => requestPasswordReset(email)
-})
+export default ForgotPassword = form({inputs, onSubmit})(ForgotPassword)
 
 export const LoginLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>

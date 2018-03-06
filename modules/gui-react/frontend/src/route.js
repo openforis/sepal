@@ -2,16 +2,15 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import QueryString from 'query-string'
 import {Router} from 'react-router'
-import rx from 'rxjs'
-import {named} from 'named'
-import {Reducer} from './observer'
+import Rx from 'rxjs'
 
 const router = require('react-router-dom')
 
-let history = null
+let historyInstance = null
+export const history = () => historyInstance
 
-export const location$ = named('LOCATION', new rx.BehaviorSubject())
-export const getQuery = (location) => QueryString.parse(location.search)
+export const location$ = new Rx.BehaviorSubject(null)
+export const query = () => QueryString.parse(history().location.search)
 
 const renderMergedProps = (component, ...rest) => {
     return React.createElement(component, Object.assign({}, ...rest))
@@ -37,11 +36,6 @@ export const Link = router.Link
 Link.propTypes = router.Link.propTypes
 
 
-export const locationReducer = new Reducer(location$, (location, state) => {
-    location.query = getQuery(location)
-    return {location}
-})
-
 export class EventPublishingRouter extends React.Component {
     static propTypes = {
         history: PropTypes.object.isRequired,
@@ -53,9 +47,9 @@ export class EventPublishingRouter extends React.Component {
     }
 
     componentWillMount() {
-        history = this.props.history
-        this.unsubscribeFromHistory = history.listen(this.publishLocationChange)
-        this.publishLocationChange(history.location)
+        historyInstance = this.props.history
+        this.unsubscribeFromHistory = historyInstance.listen(this.publishLocationChange)
+        this.publishLocationChange(historyInstance.location)
     }
 
     componentWillUnmount() {

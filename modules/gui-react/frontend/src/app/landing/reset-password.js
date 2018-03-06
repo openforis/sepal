@@ -1,16 +1,57 @@
 import React from 'react'
+import {login$, resetPassword$, validateToken$} from 'user'
+import {query} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
-import {resetPassword, validateToken} from 'user'
 import Button from './button'
 import {Msg, msg} from 'translate'
-import {locationReducer} from 'route'
+
+function componentWillMount() {
+    const token = query().token
+    this.subscribe('Validated token', validateToken$(token), {
+            next:
+                (user) => ({values: {username: user.username}}),
+
+            error:
+                (error) => console.log('Token is invalid:', error)
+        }
+    )
+}
+
+function onSubmit({username, password}) {
+    const token = query().token
+    console.log('token, username, password: ', token, username, password)
+    this.subscribe('Reset password', resetPassword$(token, password),
+        () => this.subscribe('Logged in', login$(username, password),
+            (user) => {
+                console.log('reset password')
+                // currentUser$.next(user)
+                // history().replace('/')
+            }
+        )
+    )
+
+    // this.subscribe('Reset password and logged in',
+    //     resetPassword$(token, password)
+    //         .map(() => login$(username, password)),
+    //     () => history().replace('/')
+    // )
+}
+
+const inputs = {
+    username: null,
+    password: new Constraints()
+        .notBlank('landing.reset-password.password.required'),
+    password2: new Constraints()
+        .notBlank('landing.reset-password.password2.required')
+        .predicate((password2, form) => password2 === form.password, 'landing.reset-password.password2.not-matching')
+}
 
 let ResetPassword = ({form, inputs: {username, password, password2}}) =>
     <form>
         <div>
             <label><Msg id='landing.reset-password.username.label'/></label>
-            <input
-                value={username}
+            <Input
+                input={username}
                 disabled={true}/>
             <ErrorMessage/>
         </div>
@@ -43,22 +84,4 @@ let ResetPassword = ({form, inputs: {username, password, password2}}) =>
         </Button>
     </form>
 
-export default ResetPassword = form(ResetPassword, {
-    reducers:
-        [locationReducer],
-
-    componentWillMount:
-        ({location}) => validateToken(location.query.token),
-
-    onSubmit:
-        ({token, password}) => resetPassword(token, password),
-
-    inputs:
-        {
-            password: new Constraints()
-                .notBlank('landing.reset-password.password.required'),
-            password2: new Constraints()
-                .notBlank('landing.reset-password.password2.required')
-                .predicate((password2, form) => password2 === form.password, 'landing.reset-password.password2.not-matching')
-        }
-})
+export default ResetPassword = form({inputs, componentWillMount, onSubmit})(ResetPassword)

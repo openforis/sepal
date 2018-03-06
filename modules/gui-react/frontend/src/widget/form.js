@@ -1,137 +1,125 @@
 import React from 'react'
+import subscriber from 'subscriber'
 import styles from './form.module.css'
 import PropTypes from 'prop-types'
 import {msg} from 'translate'
-import {observer} from 'observer'
 
-export function form(
-    View,
-    {
-        inputs,
-        reducers,
-        componentWillMount,
-        onSubmit
-    }) {
+export function form({inputs, onSubmit, ...lifeCycleCallbacks}) {
+    return (WrappedComponent) => {
+        class Form extends React.Component {
+            constructor(props) {
+                super(props)
+                const state = {
+                    values: props.values || {},
+                    errors: props.errors || {}
+                }
 
-    class Form extends React.Component {
-        constructor(props) {
-            super(props)
-            const state = {
-                values: props.values || {},
-                errors: props.errors || {}
+                Object.keys(inputs).forEach(name => {
+                    state.values[name] = name in state.values ? state.values[name] : ''
+                    state.errors[name] = name in state.errors ? state.errors[name] : ''
+                })
+                this.state = state
+
+                this.handleChange = this.handleChange.bind(this)
+                this.value = this.value.bind(this)
+                this.validate = this.validate.bind(this)
+                this.hasInvalid = this.hasInvalid.bind(this)
             }
 
-            Object.keys(inputs).forEach(name => {
-                state.values[name] = name in state.values ? state.values[name] : ''
-                state.errors[name] = name in state.errors ? state.errors[name] : ''
-            })
-            this.state = state
+            subscribe(description, stream$, observer) {
+                this.props.subscribe(description, stream$, observer)
+            }
 
-            this.handleChange = this.handleChange.bind(this)
-            this.value = this.value.bind(this)
-            this.validate = this.validate.bind(this)
-            this.hasInvalid = this.hasInvalid.bind(this)
-            this.submit = this.submit.bind(this)
+            componentWillReceiveProps(nextProps) {
+                if ('errors' in nextProps)
+                    this.setState((prevState) =>
+                        ({...prevState, errors: nextProps.errors})
+                    )
+                if ('values' in nextProps)
+                    this.setState((prevState) =>
+                        ({...prevState, values: {...prevState.values, ...nextProps.values}})
+                    )
+            }
+
+            handleChange(e) {
+                const target = e.target
+                const name = target.name
+                const value = target.type === 'checkbox'
+                    ? target.checked
+                    : target.value
+                this.set(name, value)
+                return this
+            }
+
+            set(name, value) {
+                this.setState((prevState) => {
+                    const state = Object.assign({}, prevState)
+                    state.values[name] = value
+                    state.errors[name] = ''
+                    return state
+                })
+                return this
+            }
+
+            value(name) {
+                return this.state.values[name]
+            }
+
+            error(name) {
+                let constraints = inputs[name]
+                if (constraints == null)
+                    constraints = new Constraints()
+                return constraints.check(name, this.state.values)
+            }
+
+            validate(name) {
+                this.setState((prevState) => {
+                    const state = Object.assign({}, prevState)
+                    state.errors[name] = this.error(name)
+                    return state
+                })
+                return this
+            }
+
+            hasInvalid() {
+                return !!Object.keys(this.state.values).find(name => this.error(name))
+            }
+
+            render() {
+                const formInputs = {}
+                Object.keys(inputs).forEach(name => {
+                    formInputs[name] = {
+                        name: name,
+                        value: this.state.values[name],
+                        error: this.state.errors[name],
+                        errorClass: this.state.errors[name] ? styles.error : null,
+                        set: (value) => this.set(name, value),
+                        handleChange: (e) => this.handleChange(e),
+                        validate: () => this.validate(name)
+                    }
+                })
+                return React.createElement(WrappedComponent, {
+                    ...this.props,
+                    form: {
+                        errors: Object.values(this.state.errors)
+                            .filter(error => error),
+                        errorClass: styles.error,
+                        hasInvalid: this.hasInvalid,
+                        submit: () => onSubmit.bind(this)(this.state.values)
+                    },
+                    inputs: formInputs
+                })
+            }
         }
 
-        componentWillMount() {
-            if (componentWillMount)
-                componentWillMount(this.props)
-        }
-
-        componentWillReceiveProps(nextProps) {
-            if ('errors' in nextProps)
-                this.setState((state) =>
-                    Object.assign({}, state, {errors: nextProps.errors})
-                )
-        }
-
-        handleChange(e) {
-            const target = e.target
-            const name = target.name
-            const value = target.type === 'checkbox'
-                ? target.checked
-                : target.value
-            this.set(name, value)
-            return this
-        }
-
-        set(name, value) {
-            this.setState(state => {
-                state = Object.assign({}, state)
-                state.values[name] = value
-                state.errors[name] = ''
-                return state
-            })
-            return this
-        }
-
-        value(name) {
-            return this.state.values[name]
-        }
-
-        error(name) {
-            let constraints = inputs[name]
-            if (constraints == null)
-                constraints = new Constraints()
-            return constraints.check(name, this.state.values)
-        }
-
-        validate(name) {
-            this.setState(state => {
-                const error = this.error(name)
-                state = Object.assign({}, state)
-                state.errors[name] = error
-                return state
-            })
-            return this
-        }
-
-        hasInvalid() {
-            return !!Object.keys(this.state.values).find(name => this.error(name))
-        }
-
-        submit() {
-            (onSubmit || this.props.onSubmit)(this.state.values)
-        }
-
-        render() {
-            const formInputs = {}
-            Object.keys(inputs).forEach(name => {
-                formInputs[name] = {
-                    name: name,
-                    value: this.state.values[name],
-                    error: this.state.errors[name],
-                    errorClass: this.state.errors[name] ? styles.error : null,
-                    set: (value) => this.set(name, value),
-                    handleChange: (e) => this.handleChange(e),
-                    validate: () => this.validate(name)
-                }
-            })
-            return React.createElement(View, {
-                ...this.props,
-                form: {
-                    errors: Object.values(this.state.errors)
-                        .filter(error => error),
-                    errorClass: styles.error,
-                    hasInvalid: this.hasInvalid,
-                    submit: this.submit
-                },
-                inputs: formInputs
-            })
-        }
-    }
-
-    Form.displayName = `Form(${getDisplayName(View)})`
-
-    if (reducers)
-        return observer(Form, {reducers})
-    else
+        Form = subscriber(lifeCycleCallbacks)(Form)
+        Form.displayName = `Form(${getDisplayName(WrappedComponent)})`
         return Form
+    }
 }
 
-function getDisplayName(View) {
-    return View.displayName || View.name || 'View'
+function getDisplayName(Component) {
+    return Component.displayName || Component.name || 'Component'
 }
 
 export class Constraints {

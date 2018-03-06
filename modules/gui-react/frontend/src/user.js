@@ -1,44 +1,45 @@
+import Rx from 'rxjs'
 import Http from 'http-client'
-import {httpCallFailed} from 'errors'
-import {named} from 'named'
-import rx from 'rxjs'
 
-export const loadingCurrentUser$ = named('LOADING_CURRENT_USER', new rx.Subject())
-export const currentUser$ = named('CURRENT_USER', new rx.ReplaySubject(1))
-export const loggingIn$ = named('LOGGING_IN', new rx.Subject())
-export const invalidCredentials$ = named('INVALID_CREDENTIALS', new rx.Subject())
-export const requestedPasswordReset$ = named('REQUESTED_PASSWORD_RESET', new rx.Subject())
+export const currentUser$ = new Rx.BehaviorSubject(null)
 
-export const loadCurrentUser = () => {
-    loadingCurrentUser$.next()
-    Http.get('/user/current', {
-        handle: {
-            200: (user) => currentUser$.next(user),
-            401: () => currentUser$.next(null)
-        }
-    }).catch((error) => httpCallFailed(error))
+export function loadCurrentUser$() {
+    return Http.get$('/user/current', {
+        validStatuses: [200, 401]
+    }).map((e) => e.response)
 }
 
-export const login = (username, password) => {
-    (() => loggingIn$.next())()
-    Http.post('/user/login', {
+export function login$(username, password) {
+    return Http.post$('/user/login', {
         username: username,
         password: password,
-        handle: {
-            200: (user) => currentUser$.next(user),
-            401: () => invalidCredentials$.next()
-        },
-    }).catch((error) => httpCallFailed(error))
+        validStatuses: [200, 401]
+    }).map((e) => e.response)
 }
 
-export const requestPasswordReset = (email) => {
-    requestedPasswordReset$.next(email)
+export function requestPasswordReset$(email) {
+    return Http.post$('/user/password/reset-request', {
+        body: {
+            email: email
+        }
+    })
 }
 
-export const validateToken = (token) => {
-    console.log('validating token ' + token)
+export function validateToken$(token) {
+    return Http.post$('/user/validate-token', {
+        body: {
+            token: token
+        }
+    }).switchMap((e) => (e.response.user
+        ? Rx.Observable.of(e.response.user)
+        : Rx.Observable.throw(e)))
 }
 
-export const resetPassword = (token, password) => {
-    console.log('resetting password')
+export function resetPassword$(token, password) {
+    return Http.post$('/user/password/reset', {
+        body: {
+            token: token,
+            password: password
+        }
+    })
 }

@@ -1,10 +1,29 @@
 import React from 'react'
-import {invalidCredentials$, login} from 'user'
+import {currentUser$, login$} from 'user'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import Button from './button'
 import {Msg, msg} from 'translate'
-import {Reducer} from 'observer'
+
+const inputs = {
+    username: new Constraints()
+        .notBlank('landing.login.username.required'),
+    password: new Constraints()
+        .notBlank('landing.login.password.required')
+}
+
+function onSubmit({username, password}) {
+    this.subscribe('Submitted credentials', login$(username, password),
+        (user) => {
+            if (user)
+                currentUser$.next(user)
+            else
+                return {errors: {password: msg('landing.login.password.invalid')}}
+
+        }
+    )
+}
+
 
 let Login = ({form, inputs: {username, password}}) =>
     <form>
@@ -39,21 +58,4 @@ let Login = ({form, inputs: {username, password}}) =>
         <ForgotPasswordLink tabIndex={4}/>
     </form>
 
-export default Login = form(Login, {
-    reducers:
-        [
-            new Reducer(invalidCredentials$, () => ({
-                errors: {password: msg('landing.login.password.invalid')}
-            }))
-        ],
-
-    inputs:
-        {
-            username: new Constraints()
-                .notBlank('landing.login.username.required'),
-            password: new Constraints()
-                .notBlank('landing.login.password.required')
-        },
-
-    onSubmit: ({username, password}) => login(username, password)
-})
+export default Login = form({inputs, onSubmit})(Login)
