@@ -30,6 +30,7 @@ R -e "pacman::p_load(\
         'ggmap',\
         'ggplot2',\
         'htmltools',\
+        'igraph',\
         'keras',\
         'knitr',\
         'leaflet',\
@@ -37,6 +38,7 @@ R -e "pacman::p_load(\
         'mapview',\
         'plyr',\
         'random',\
+        'randomForest',\
         'raster',\
         'RColorBrewer',\
         'rgdal',\
