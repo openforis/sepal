@@ -59,4 +59,4 @@ let SetupAccount = ({form, inputs: {username, password, password2}}) =>
         </Button>
     </form>
 
-export default SetupAccount = form({inputs, componentWillMount, onSubmit})(SetupAccount)
+export default SetupAccount = form({inputs, componentWillMount, actions: {onSubmit}})(SetupAccount)

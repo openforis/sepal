@@ -1,10 +1,10 @@
 import React from 'react'
-import subscriber from 'subscriber'
+import {connect} from 'react-redux'
 import styles from './form.module.css'
 import PropTypes from 'prop-types'
 import {msg} from 'translate'
 
-export function form({inputs, onSubmit, ...lifeCycleCallbacks}) {
+export function form({inputs, props, actions: {onSubmit, ...otherActions}}) {
     return (WrappedComponent) => {
         class Form extends React.Component {
             constructor(props) {
@@ -112,8 +112,8 @@ export function form({inputs, onSubmit, ...lifeCycleCallbacks}) {
             }
         }
 
-        Form = subscriber(lifeCycleCallbacks)(Form)
-        Form.displayName = `Form(${getDisplayName(WrappedComponent)})`
+        Form = connect(props, () => ({onSubmit, ...otherActions}))(Form)
+        Form.displayName = `${getDisplayName(WrappedComponent)}`
         return Form
     }
 }

@@ -84,4 +84,4 @@ let ResetPassword = ({form, inputs: {username, password, password2}}) =>
         </Button>
     </form>
 
-export default ResetPassword = form({inputs, componentWillMount, onSubmit})(ResetPassword)
+export default ResetPassword = form({inputs, componentWillMount, actions: {onSubmit}})(ResetPassword)

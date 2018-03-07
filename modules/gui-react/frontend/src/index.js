@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
+import {createLogger} from 'redux-logger'
 import {createEpicMiddleware} from 'redux-observable'
 import {composeWithDevTools} from 'redux-devtools-extension'
 import {applyMiddleware, createStore} from 'redux'
@@ -12,6 +13,8 @@ import flat from 'flat'
 import {initIntl} from 'translate'
 import App from 'app/app'
 import Rx from 'rxjs'
+import createHistory from 'history/createBrowserHistory'
+import {EventPublishingRouter} from 'route'
 
 // https://github.com/jcbvm/i18n-editor
 addLocaleData([...en, ...es])
@@ -29,6 +32,7 @@ const rootEpic = (action$) =>
         })
 
 const epicMiddleware = createEpicMiddleware(rootEpic)
+
 const rootReducer = (state, action) => {
     if ('reduce' in action)
         return action.reduce(state)
@@ -38,7 +42,7 @@ const rootReducer = (state, action) => {
 const store = createStore(
     rootReducer,
     composeWithDevTools(applyMiddleware(
-        epicMiddleware
+        createLogger(), epicMiddleware
     ))
 )
 initStore(store)
@@ -61,7 +65,9 @@ ReactDOM.render(
     <IntlProvider locale={language} messages={messages}>
         <IntlInit>
             <Provider store={store}>
-                <App/>
+                <EventPublishingRouter history={createHistory()}>
+                    <App/>
+                </EventPublishingRouter>
             </Provider>
         </IntlInit>
     </IntlProvider>,

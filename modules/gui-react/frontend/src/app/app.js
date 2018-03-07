@@ -1,45 +1,10 @@
 import React from 'react'
-import store from 'store'
 import {connect} from 'react-redux'
+import {currentUser, loadCurrentUser, loadedCurrentUser} from 'user'
+import Home from 'app/home/home'
+import Landing from 'app/landing/landing'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
 import './app.css'
-import Http from 'http-client'
-
-function loadCurrentUser() {
-    dispatch((action$) => {
-        return action$
-            .mergeMap(() =>
-                Http.get$('/user/current', {
-                    validStatuses: [200, 401]
-                })
-            )
-            .map((e) => updateState({
-                'loadedCurrentUser': true,
-                'currentUser': e.response
-            }))
-    })
-}
-
-function dispatch(epic) {
-    store().dispatch({type: 'EPIC', epic})
-}
-
-function updateState(valueByPath) {
-    return {
-        type: 'some_type',
-        reduce(state) {
-            return ({...state, ...valueByPath})
-        }
-    }
-}
-
-function currentUser() {
-    return (store().getState() || {}).currentUser
-}
-
-function loadedCurrentUser() {
-    return (store().getState() || {}).loadedCurrentUser
-}
 
 const props = () => ({
     currentUser: currentUser(),
@@ -56,11 +21,9 @@ class App extends React.Component {
         if (!loadedCurrentUser)
             return <Loader/>
         else if (currentUser)
-            return <div>home</div>
-        // return <Home user={user}/>
+            return <Home user={currentUser}/>
         else
-            return <div>landing</div>
-        // return <Landing/>
+            return <Landing/>
     }
 }
 

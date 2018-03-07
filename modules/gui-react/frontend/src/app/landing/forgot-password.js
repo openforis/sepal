@@ -1,5 +1,5 @@
 import React from 'react'
-import {requestPasswordReset$} from 'user'
+import {requestPasswordReset} from 'user'
 import {history, Link} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Icon from 'widget/icon'
@@ -15,11 +15,7 @@ const inputs = {
 }
 
 function onSubmit({email}) {
-    this.subscribe('Requested password request', requestPasswordReset$(email),
-        () => {
-            history().push('/')
-        }
-    )
+    requestPasswordReset(email)
 }
 
 export let ForgotPassword = ({onSubmit, onCancel, form, inputs: {email}}) =>
@@ -48,7 +44,7 @@ export let ForgotPassword = ({onSubmit, onCancel, form, inputs: {email}}) =>
         <LoginLink onClick={onCancel} tabIndex={3}/>
     </form>
 
-export default ForgotPassword = form({inputs, onSubmit})(ForgotPassword)
+export default ForgotPassword = form({inputs, actions: {onSubmit}})(ForgotPassword)
 
 export const LoginLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>

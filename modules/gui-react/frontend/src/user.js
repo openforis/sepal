@@ -1,13 +1,58 @@
 import Rx from 'rxjs'
 import Http from 'http-client'
+import {epic, state, updateState} from 'store'
 
-export const currentUser$ = new Rx.BehaviorSubject(null)
+export const currentUser = () => state().currentUser
+export const loadedCurrentUser = () => state().loadedCurrentUser
+export const invalidCredentials = () => state().invalidCredentials
 
-export function loadCurrentUser$() {
-    return Http.get$('/user/current', {
-        validStatuses: [200, 401]
-    }).map((e) => e.response)
+export function loadCurrentUser() {
+    epic('Loading current user', (action$) => {
+        return action$
+            .mergeMap(() =>
+                Http.get$('/user/current', {
+                    validStatuses: [200, 401]
+                })
+            )
+            .map((e) => updateState('Loaded current user', {
+                'loadedCurrentUser': true,
+                'currentUser': e.response
+            }))
+    })
 }
+
+export function login(username, password) {
+    epic('Logging in', (action$) => {
+        return action$
+            .switchMap(() =>
+                Http.post$('/user/login', {
+                    username, password,
+                    validStatuses: [200, 401]
+                })
+            )
+            .map((e) => updateState('Submitted credentials', {
+                'login': 'COMPLETE',
+                'currentUser': e.response,
+                'invalidCredentials': !e.response
+            }))
+    })
+}
+
+export function requestPasswordReset(email) {
+    epic('Requesting password reset', (action$) => {
+        return action$
+            .mergeMap(() =>
+                Http.post$('/user/password/reset-request', {
+                    body: {email}
+                })
+            )
+            .map((e) => updateState('Requested password reset', {
+                'requestPasswordReset': 'COMPLETE',
+                'location': {pathname: '/'} // TODO: Fix this somehow
+            }))
+    })
+}
+
 
 export function login$(username, password) {
     return Http.post$('/user/login', {
@@ -15,14 +60,6 @@ export function login$(username, password) {
         password: password,
         validStatuses: [200, 401]
     }).map((e) => e.response)
-}
-
-export function requestPasswordReset$(email) {
-    return Http.post$('/user/password/reset-request', {
-        body: {
-            email: email
-        }
-    })
 }
 
 export function validateToken$(token) {

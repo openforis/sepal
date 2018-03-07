@@ -1,5 +1,5 @@
 import React from 'react'
-import {currentUser$, login$} from 'user'
+import {invalidCredentials, login} from 'user'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import Button from './button'
@@ -12,18 +12,13 @@ const inputs = {
         .notBlank('landing.login.password.required')
 }
 
+const props = () => ({
+    errors: invalidCredentials() ? {password: msg('landing.login.password.invalid')} : {}
+})
+
 function onSubmit({username, password}) {
-    this.subscribe('Submitted credentials', login$(username, password),
-        (user) => {
-            if (user)
-                currentUser$.next(user)
-            else
-                return {errors: {password: msg('landing.login.password.invalid')}}
-
-        }
-    )
+    login(username, password)
 }
-
 
 let Login = ({form, inputs: {username, password}}) =>
     <form>
@@ -58,4 +53,4 @@ let Login = ({form, inputs: {username, password}}) =>
         <ForgotPasswordLink tabIndex={4}/>
     </form>
 
-export default Login = form({inputs, onSubmit})(Login)
+export default Login = form({inputs, props, actions: {onSubmit}})(Login)

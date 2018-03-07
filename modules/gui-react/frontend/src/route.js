@@ -1,15 +1,18 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 import QueryString from 'query-string'
 import {Router} from 'react-router'
-import Rx from 'rxjs'
+import {dispatch, state, updateState} from 'store'
+import PropTypes from 'prop-types'
 
 const router = require('react-router-dom')
 
 let historyInstance = null
 export const history = () => historyInstance
 
-export const location$ = new Rx.BehaviorSubject(null)
+
+export const location = () => state().location
+
+
 export const query = () => QueryString.parse(history().location.search)
 
 const renderMergedProps = (component, ...rest) => {
@@ -43,7 +46,7 @@ export class EventPublishingRouter extends React.Component {
     }
 
     publishLocationChange = location => {
-        location$.next(location)
+        dispatch(updateState('Location changed', {location}))
     }
 
     componentWillMount() {

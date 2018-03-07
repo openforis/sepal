@@ -1,5 +1,5 @@
 import React from 'react'
-import subscriber from 'subscriber'
+import {connect} from 'react-redux'
 import {AnimateEnter, AnimateReplacement} from '../../widget/animate'
 import CenteredPanel from 'widget/centered-panel'
 import Icon from 'widget/icon'
@@ -10,13 +10,11 @@ import ForgotPassword from './forgot-password'
 import ResetPassword from './reset-password'
 import SetupAccount from './setup-account'
 import styles from './landing.module.css'
-import {location$, Route, Switch} from 'route'
+import {location, Route, Switch} from 'route'
 
-function componentWillMount() {
-    this.subscribe('Set location', location$,
-        (location) => ({location})
-    )
-}
+const props = () => ({
+    location: location()
+})
 
 let Landing =
     ({location}) =>
@@ -45,7 +43,7 @@ let Landing =
             </LandingPanel>
         </div>
 
-export default Landing = subscriber({componentWillMount})(Landing)
+export default Landing = connect(props)(Landing)
 
 const LandingPanel = ({children}) =>
     <CenteredPanel className={styles.landingPanel}>
