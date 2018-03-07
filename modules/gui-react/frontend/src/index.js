@@ -1,13 +1,17 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import {EventPublishingRouter} from 'route'
-import createHistory from 'history/createBrowserHistory'
+import {createEpicMiddleware} from 'redux-observable'
+import {composeWithDevTools} from 'redux-devtools-extension'
+import {applyMiddleware, createStore} from 'redux'
+import {initStore} from 'store'
+import {Provider} from 'react-redux'
 import {addLocaleData, injectIntl, IntlProvider} from 'react-intl'
 import en from 'react-intl/locale-data/en'
 import es from 'react-intl/locale-data/es'
 import flat from 'flat'
 import {initIntl} from 'translate'
 import App from 'app/app'
+import Rx from 'rxjs'
 
 // https://github.com/jcbvm/i18n-editor
 addLocaleData([...en, ...es])
@@ -16,6 +20,29 @@ const languageWithoutRegionCode = language.toLowerCase().split(/[_-]+/)[0]
 const messages = flat.flatten( // react-intl requires a flat object
     require(`locale/${languageWithoutRegionCode}/translations.json`)
 )
+
+const rootEpic = (action$) =>
+    action$
+        .filter(action => 'epic' in action && typeof action.epic === 'function')
+        .mergeMap((action) => {
+            return action.epic(Rx.Observable.of(action))
+        })
+
+const epicMiddleware = createEpicMiddleware(rootEpic)
+const rootReducer = (state, action) => {
+    if ('reduce' in action)
+        return action.reduce(state)
+    else
+        return state
+}
+const store = createStore(
+    rootReducer,
+    composeWithDevTools(applyMiddleware(
+        epicMiddleware
+    ))
+)
+initStore(store)
+
 
 const IntlInit = injectIntl(
     class IntlInitializer extends React.Component {
@@ -33,9 +60,9 @@ const IntlInit = injectIntl(
 ReactDOM.render(
     <IntlProvider locale={language} messages={messages}>
         <IntlInit>
-            <EventPublishingRouter history={createHistory()}>
+            <Provider store={store}>
                 <App/>
-            </EventPublishingRouter>
+            </Provider>
         </IntlInit>
     </IntlProvider>,
     document.getElementById('app')

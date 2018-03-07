@@ -14,9 +14,12 @@
     "react-dom": "^16.2.0",
     "react-fontawesome": "^1.6.1",
     "react-intl": "^2.4.0",
+    "react-redux": "^5.0.7",
     "react-router-dom": "^4.2.2",
     "react-scripts": "1.1.0",
     "react-transition-group": "^2.2.1",
+    "redux": "^3.7.2",
+    "redux-observable": "^0.18.0",
     "rxjs": "^5.5.6"
   },
   "scripts": {
@@ -30,6 +33,7 @@
     "lodash": "^4.17.5",
     "prop-types": "^15.6.0",
     "react-app-rewired": "^1.4.1",
+    "redux-devtools-extension": "^2.13.2",
     "webpack": "^3.10.0"
   },
   "proxy": "https://test.sepal.io"
