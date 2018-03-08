@@ -17,7 +17,7 @@
   <jdks>
     <jdk>
       <name>java-8-oracle</name>
-      <home>/usr/lib/jvm/java-8-oracle</home>
+      <home>/usr/local/lib/sdkman/candidates/java/current</home>
       <properties/>
     </jdk>
   </jdks>
