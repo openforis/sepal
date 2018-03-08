@@ -1,40 +1,21 @@
 import React from 'react'
-import {login$, resetPassword$, validateToken$} from 'user'
+import {resetPassword$, validateToken$} from 'user'
 import {query} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Button from './button'
 import {Msg, msg} from 'translate'
+import {dispatch} from 'store'
 
 function componentWillMount() {
     const token = query().token
-    this.subscribe('Validated token', validateToken$(token), {
-            next:
-                (user) => ({values: {username: user.username}}),
-
-            error:
-                (error) => console.log('Token is invalid:', error)
-        }
-    )
+    dispatch('Validating token', validateToken$(token))
+    // TODO: Do something when token is invalid
 }
 
 function onSubmit({username, password}) {
     const token = query().token
-    console.log('token, username, password: ', token, username, password)
-    this.subscribe('Reset password', resetPassword$(token, password),
-        () => this.subscribe('Logged in', login$(username, password),
-            (user) => {
-                console.log('reset password')
-                // currentUser$.next(user)
-                // history().replace('/')
-            }
-        )
-    )
-
-    // this.subscribe('Reset password and logged in',
-    //     resetPassword$(token, password)
-    //         .map(() => login$(username, password)),
-    //     () => history().replace('/')
-    // )
+    dispatch('Resetting password', resetPassword$(token, username, password))
+    // TODO: Navigate to /
 }
 
 const inputs = {

@@ -1,6 +1,6 @@
 import React from 'react'
-import {connect} from 'react-redux'
-import {currentUser, loadCurrentUser, loadedCurrentUser} from 'user'
+import {connect} from 'store'
+import {currentUser, loadCurrentUser$, loadedCurrentUser} from 'user'
 import Home from 'app/home/home'
 import Landing from 'app/landing/landing'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
@@ -13,7 +13,7 @@ const props = () => ({
 
 class App extends React.Component {
     componentWillMount() {
-        loadCurrentUser()
+        this.props.dispatchEpic('Loading current user', loadCurrentUser$())
     }
 
     render() {

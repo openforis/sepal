@@ -1,5 +1,6 @@
 import React from 'react'
-import {requestPasswordReset} from 'user'
+import {dispatch} from 'store'
+import {requestPasswordReset$} from 'user'
 import {history, Link} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Icon from 'widget/icon'
@@ -15,7 +16,7 @@ const inputs = {
 }
 
 function onSubmit({email}) {
-    requestPasswordReset(email)
+    dispatch('Requesting password reset', requestPasswordReset$(email))
 }
 
 export let ForgotPassword = ({onSubmit, onCancel, form, inputs: {email}}) =>
