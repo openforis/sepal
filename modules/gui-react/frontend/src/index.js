@@ -28,10 +28,11 @@ const rootEpic = (action$) =>
     action$
         .filter(action => 'epic' in action && typeof action.epic === 'function')
         .mergeMap((action) => {
-            return action.epic(Rx.Observable.of(action))
+            return action.epic(Rx.Observable.of(action), action$)
         })
 
 const epicMiddleware = createEpicMiddleware(rootEpic)
+
 
 const rootReducer = (state, action) => {
     if ('reduce' in action)
