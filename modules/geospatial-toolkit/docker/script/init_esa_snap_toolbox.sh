@@ -28,6 +28,9 @@ echo ' -Dsnap.mainClass=org.esa.snap.core.gpf.main.GPT\' >> /usr/local/snap/bin/
 echo ' -Dsnap.home=/usr/local/snap\' >> /usr/local/snap/bin/gpt.sepal
 echo ' -Xmx${HEAP_MEM}m\' >> /usr/local/snap/bin/gpt.sepal
 echo ' -jar /usr/local/snap/snap/modules/ext/org.esa.snap.snap-core/org-esa-snap/snap-runtime.jar $@' >> /usr/local/snap/bin/gpt.sepal
- 
+ter
+
+
 echo 'SNAP_EXE=/usr/local/snap/bin/gpt.sepal' | tee -a /etc/environment
+
 snap --nosplash --nogui --modules --update-all
