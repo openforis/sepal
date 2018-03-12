@@ -1,18 +1,10 @@
 import React from 'react'
 import {connect} from 'store'
-import styles from './form.module.css'
 import PropTypes from 'prop-types'
 import {msg} from 'translate'
+import styles from './form.module.css'
 
-export function form(
-    {
-        inputs,
-        props,
-        actions: {onSubmit, ...otherActions},
-        componentWillMount,
-        componentWillUnmount
-    }
-) {
+export function form({inputs, mapStateToProps = () => ({})}) {
     return (WrappedComponent) => {
         class Form extends React.Component {
             constructor(props) {
@@ -106,21 +98,26 @@ export function form(
                         validate: () => this.validate(name)
                     }
                 })
+                let wrappedInstance = null
                 return React.createElement(WrappedComponent, {
                     ...this.props,
                     form: {
+                        ref: (instance) => {
+                            console.log('ref', instance)
+                            wrappedInstance = instance
+                        },
                         errors: Object.values(this.state.errors)
                             .filter(error => error),
                         errorClass: styles.error,
                         hasInvalid: this.hasInvalid,
-                        submit: () => onSubmit.bind(this)(this.state.values)
+                        values: () => this.state.values
                     },
                     inputs: formInputs
                 })
             }
         }
 
-        Form = connect({props, actions: {onSubmit, ...otherActions}, componentWillMount, componentWillUnmount})(Form)
+        Form = connect(mapStateToProps)(Form)
         Form.displayName = `${getDisplayName(WrappedComponent)}`
         return Form
     }

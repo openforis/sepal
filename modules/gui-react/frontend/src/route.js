@@ -9,11 +9,10 @@ const router = require('react-router-dom')
 let historyInstance = null
 export const history = () => historyInstance
 
-
 export const location = () => state().location
 
-
 export const query = () => QueryString.parse(history().location.search)
+
 
 const renderMergedProps = (component, ...rest) => {
     return React.createElement(component, Object.assign({}, ...rest))
@@ -26,6 +25,7 @@ export const Route = ({component, ...rest}) => {
         }}/>
     )
 }
+
 Route.propTypes = {
     component: PropTypes.func.isRequired
 }
@@ -46,6 +46,7 @@ export class EventPublishingRouter extends React.Component {
     }
 
     publishLocationChange = location => {
+        console.log('publishing location change', location)
         dispatch(updateState('Location changed', {location}))
     }
 

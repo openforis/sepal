@@ -17,3 +17,4 @@ source "$SDKMAN_DIR/bin/sdkman-init.sh"
 yes | sdk install java 8u161-oracle
 
 ln -s `which java` /usr/local/bin/java
+ln -s `which groovy` /usr/local/bin/groovy

@@ -13,11 +13,8 @@ export function state() {
     return storeInstance.getState() || {}
 }
 
-export function dispatch(actionOrType, epic) {
-    if (epic)
-        storeInstance.dispatch({type: actionOrType, epic})
-    else
-        storeInstance.dispatch(actionOrType)
+export function dispatch(action) {
+    storeInstance.dispatch(action)
 }
 
 export function updateState(type, valueByPath) {
@@ -38,81 +35,79 @@ export function createAction(reducer = (state) => state, type = 'Some default ac
     }
 }
 
-export function connect(
-    {
-        props = {},
-        actions = {},
-        componentWillMount,
-        componentWillUnmount
-    }) {
+
+export function connect(mapStateToProps = () => ({})) {
     return (WrappedComponent) => {
         class ConnectedComponent extends React.Component {
             constructor(props) {
                 super(props)
-                componentWillMount = componentWillMount && componentWillMount.bind(this)
-                this.componentWillUnmount$ = new Rx.Subject().take(1)
-                actions = Object.keys(actions).map((name) => actions[name].bind(this))
+                this.componentWillUnmount$ = new Rx.Subject()
+                this.actionBuilder = this.actionBuilder.bind(this)
             }
 
-            action(action$, type) {
-                // Create an id
+            componentWillUnmount() {
+                this.componentWillUnmount$.next()
+                this.componentWillUnmount$.complete()
+            }
+
+            actionBuilder(type, action$) {
+                if (!type) throw new Error('Action type is required')
+                const component = this
+
+
+                let actionsToDispatch = []
+                const addActions = (actions) => {
+                    if (!actions) return
+                    if (!actions instanceof Array)
+                        actions = [actions]
+                    actionsToDispatch = actionsToDispatch.concat(actions)
+                }
+                let onComplete
+
                 return {
                     onComplete(callback) {
-                        return this
-                    },
-
-                    onError(callback) {
-                        return this
-                    },
-
-                    cancelOnNext() {
+                        onComplete = callback
                         return this
                     },
 
                     dispatch() {
+                        const observer = {
+                            next(actions) {
+                                addActions(actions)
+                            },
 
+                            complete() {
+                                addActions(onComplete && onComplete())
+                                console.log(actionsToDispatch)
+                                return storeInstance.dispatch({
+                                    type: type,
+                                    actions: actionsToDispatch,
+                                    reduce() {
+                                        return actionsToDispatch.reduce(
+                                            (state, action) => action.reduce ? action.reduce(state) : state,
+                                            state()
+                                        )
+                                    }
+                                })
+                            }
+                        }
+
+                        action$
+                            .takeUntil(component.componentWillUnmount$)
+                            .subscribe(observer)
                     }
                 }
             }
 
-
-
-            dispatch(type, action$, {dispatched, completed, failed} = {}) {
-                if (dispatched)
-                    dispatchBatch(type + ' [DISPATCHED]', dispatched())
-
-                action$.take(1).subscribe(
-                    (action) => {
-                        const actions = [action]
-                        if (completed)
-                            actions.push(completed(action))
-                        dispatchBatch(type + ' [COMPLETED]', actions)
-                    },
-                    (error) => {
-                        // TODO: Implement...
-                        // if (failed)
-                        //     dispatchBatch(type + ' [FAILED]', actions)
-                    }
-                )
-            }
-
-            componentWillMount() {
-                componentWillMount && componentWillMount()
-            }
-
-            componentWillUnmount() {
-                componentWillUnmount && componentWillUnmount()
-                this.componentWillUnmount$.next()
-            }
-
             render() {
                 return React.createElement(WrappedComponent, {
-                    ...this.props
+                    ...this.props,
+                    actionBuilder: this.actionBuilder
                 })
             }
         }
 
-        const Component = connectToRedux(props, actions)(ConnectedComponent)
+        const Component = connectToRedux(mapStateToProps)(ConnectedComponent)
         Component.displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
         return Component
     }

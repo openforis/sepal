@@ -1,6 +1,6 @@
 import React from 'react'
 import {requestPasswordReset$} from 'user'
-import {Link} from 'route'
+import {history, Link} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Icon from 'widget/icon'
 import Button from './button'
@@ -14,37 +14,47 @@ const inputs = {
         .email('landing.forgot-password.invalid')
 }
 
-function onSubmit({email}) {
-    this.dispatch('Requesting password reset', requestPasswordReset$(email))
+export class ForgotPassword extends React.Component {
+    requestPasswordReset(email) {
+        this.props.actionBuilder('Request password reset', requestPasswordReset$(email))
+            .onComplete(() => {
+                history().push('/')
+                return {type: 'Notify about password reset'}
+            })
+            .dispatch()
+    }
+
+    render() {
+        const {form, inputs: {email}} = this.props
+        return <form style={styles.form}>
+            <div>
+                <label><Msg id='landing.forgot-password.label'/></label>
+                <Input
+                    input={email}
+                    placeholder={msg('landing.forgot-password.placeholder')}
+                    autoFocus='on'
+                    autoComplete='off'
+                    tabIndex={1}
+                    validate='onBlur'
+                />
+                <ErrorMessage input={email}/>
+            </div>
+
+            <Button
+                icon='paper-plane-o'
+                onSubmit={() => this.requestPasswordReset(email.value)}
+                disabled={form.hasInvalid()}
+                tabIndex={2}>
+                <Msg id='landing.forgot-password.button'/>
+            </Button>
+
+            <LoginLink tabIndex={3}/>
+        </form>
+
+    }
 }
 
-export let ForgotPassword = ({onSubmit, onCancel, form, inputs: {email}}) =>
-    <form style={styles.form}>
-        <div>
-            <label><Msg id='landing.forgot-password.label'/></label>
-            <Input
-                input={email}
-                placeholder={msg('landing.forgot-password.placeholder')}
-                autoFocus='on'
-                autoComplete='off'
-                tabIndex={1}
-                validate='onBlur'
-            />
-            <ErrorMessage input={email}/>
-        </div>
-
-        <Button
-            icon='paper-plane-o'
-            onSubmit={form.submit}
-            disabled={form.hasInvalid()}
-            tabIndex={2}>
-            <Msg id='landing.forgot-password.button'/>
-        </Button>
-
-        <LoginLink onClick={onCancel} tabIndex={3}/>
-    </form>
-
-export default ForgotPassword = form({inputs, actions: {onSubmit}})(ForgotPassword)
+export default ForgotPassword = form({inputs})(ForgotPassword)
 
 export const LoginLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>

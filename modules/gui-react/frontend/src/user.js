@@ -35,7 +35,7 @@ export function requestPasswordReset$(email) {
     return Http.post$('/user/password/reset-request', {
             body: {email}
         }
-    ).map((e) => createAction())
+    ).filter(() => false)
 }
 
 export function validateToken$(token) {

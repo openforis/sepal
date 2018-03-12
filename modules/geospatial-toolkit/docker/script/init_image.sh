@@ -32,7 +32,7 @@ echo
 echo "*********************************"
 echo "*** Installing misc utilities ***"
 echo "*********************************"
-apt-get install -y \
+apt-get install -y --fix-missing \
     aria2 \
     autoconf \
     bc \

@@ -12,45 +12,50 @@ const inputs = {
         .notBlank('landing.login.password.required')
 }
 
-const props = () => ({
+const mapStateToProps = () => ({
     errors: invalidCredentials() ? {password: msg('landing.login.password.invalid')} : {}
 })
 
-function onSubmit({username, password}) {
-    this.dispatch('Logging in', login$(username, password))
+class Login extends React.Component {
+    login({username, password}) {
+        this.props.actionBuilder('Log in', login$(username, password))
+            .dispatch()
+    }
+
+    render() {
+        const {form, inputs: {username, password}} = this.props
+        return <form>
+            <div>
+                <label><Msg id='landing.login.username.label'/></label>
+                <Input
+                    input={username}
+                    placeholder={msg('landing.login.username.placeholder')}
+                    autoFocus='on'
+                    autoComplete='off'
+                    tabIndex={1}/>
+                <ErrorMessage input={username}/>
+            </div>
+            <div>
+                <label><Msg id='landing.login.password.label'/></label>
+                <Input
+                    input={password}
+                    type='password'
+                    placeholder={msg('landing.login.password.placeholder')}
+                    tabIndex={2}/>
+                <ErrorMessage input={password}/>
+            </div>
+
+            <Button
+                icon='sign-in'
+                onSubmit={() => this.login(form.values())}
+                disabled={form.hasInvalid()}
+                tabIndex={3}>
+                <Msg id='landing.login.button'/>
+            </Button>
+
+            <ForgotPasswordLink tabIndex={4}/>
+        </form>
+    }
 }
 
-let Login = ({form, inputs: {username, password}}) =>
-    <form>
-        <div>
-            <label><Msg id='landing.login.username.label'/></label>
-            <Input
-                input={username}
-                placeholder={msg('landing.login.username.placeholder')}
-                autoFocus='on'
-                autoComplete='off'
-                tabIndex={1}/>
-            <ErrorMessage input={username}/>
-        </div>
-        <div>
-            <label><Msg id='landing.login.password.label'/></label>
-            <Input
-                input={password}
-                type='password'
-                placeholder={msg('landing.login.password.placeholder')}
-                tabIndex={2}/>
-            <ErrorMessage input={password}/>
-        </div>
-
-        <Button
-            icon='sign-in'
-            onSubmit={form.submit}
-            disabled={form.hasInvalid()}
-            tabIndex={3}>
-            <Msg id='landing.login.button'/>
-        </Button>
-
-        <ForgotPasswordLink tabIndex={4}/>
-    </form>
-
-export default Login = form({inputs, props, actions: {onSubmit}})(Login)
+export default Login = form({inputs, mapStateToProps})(Login)
