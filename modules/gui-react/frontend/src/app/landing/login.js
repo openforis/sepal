@@ -1,5 +1,4 @@
 import React from 'react'
-import {dispatch} from 'store'
 import {invalidCredentials, login$} from 'user'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
@@ -18,7 +17,7 @@ const props = () => ({
 })
 
 function onSubmit({username, password}) {
-    dispatch('Logging in', login$(username, password))
+    this.dispatch('Logging in', login$(username, password))
 }
 
 let Login = ({form, inputs: {username, password}}) =>

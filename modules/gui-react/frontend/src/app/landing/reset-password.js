@@ -4,17 +4,16 @@ import {query} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Button from './button'
 import {Msg, msg} from 'translate'
-import {dispatch} from 'store'
 
 function componentWillMount() {
     const token = query().token
-    dispatch('Validating token', validateToken$(token))
+    this.dispatch('Validating token', validateToken$(token))
     // TODO: Do something when token is invalid
 }
 
 function onSubmit({username, password}) {
     const token = query().token
-    dispatch('Resetting password', resetPassword$(token, username, password))
+    this.dispatch('Resetting password', resetPassword$(token, username, password))
     // TODO: Navigate to /
 }
 

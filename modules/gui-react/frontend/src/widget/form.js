@@ -1,10 +1,18 @@
 import React from 'react'
-import {connect} from 'react-redux'
+import {connect} from 'store'
 import styles from './form.module.css'
 import PropTypes from 'prop-types'
 import {msg} from 'translate'
 
-export function form({inputs, props, actions: {onSubmit, ...otherActions}}) {
+export function form(
+    {
+        inputs,
+        props,
+        actions: {onSubmit, ...otherActions},
+        componentWillMount,
+        componentWillUnmount
+    }
+) {
     return (WrappedComponent) => {
         class Form extends React.Component {
             constructor(props) {
@@ -112,7 +120,7 @@ export function form({inputs, props, actions: {onSubmit, ...otherActions}}) {
             }
         }
 
-        Form = connect(props, () => ({onSubmit, ...otherActions}))(Form)
+        Form = connect({props, actions: {onSubmit, ...otherActions}, componentWillMount, componentWillUnmount})(Form)
         Form.displayName = `${getDisplayName(WrappedComponent)}`
         return Form
     }

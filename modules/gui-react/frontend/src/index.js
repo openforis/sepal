@@ -28,7 +28,22 @@ const rootEpic = (action$) =>
     action$
         .filter(action => 'epic' in action && typeof action.epic === 'function')
         .mergeMap((action) => {
-            return action.epic(Rx.Observable.of(action), action$)
+            let result$ = action.epic(Rx.Observable.of(action))
+            // if ('dispatched' in action) {
+            //     const dispatched$ = action.dispatched()
+            //     if (dispatched$)
+            //         result$ = Rx.Observable.merge(Rx.Observable.of(dispatched$), result$)
+            // }
+            // if ('completed' in action) {
+            //     result$ = result$.last().map((completeAction) => {
+            //         console.log('completeAction', completeAction)
+            //         const completed$ = action.completed()
+            //         return completeAction
+            //     })
+            // }
+            // if ('cancel$' in action)
+            //     result$ = result$.takeUntil(action.cancel$)
+            return result$
         })
 
 const epicMiddleware = createEpicMiddleware(rootEpic)

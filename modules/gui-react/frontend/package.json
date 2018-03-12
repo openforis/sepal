@@ -9,6 +9,7 @@
     "flat": "^4.0.0",
     "font-awesome": "^4.7.0",
     "history": "^4.7.2",
+    "object-path-immutable": "^1.0.1",
     "query-string": "^5.1.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
