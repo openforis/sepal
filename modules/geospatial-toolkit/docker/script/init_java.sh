@@ -11,4 +11,8 @@ source "$SDKMAN_DIR/bin/sdkman-init.sh"
 yes | sdk install java 8u161-oracle
 sdk install groovy
 
+source "$SDKMAN_DIR/bin/sdkman-init.sh"
+ln -s `which java` /usr/local/bin/java
+ln -s `which groovy` /usr/local/bin/groovy
+
 echo 'source "$SDKMAN_DIR/bin/sdkman-init.sh"' >> /etc/profile
