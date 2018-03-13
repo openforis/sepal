@@ -1,4 +1,5 @@
 import immutable from 'object-path-immutable'
+import {dispatch} from 'store'
 
 export default function actionBuilder(type, props = {}) {
     const operations = []
@@ -34,6 +35,10 @@ export default function actionBuilder(type, props = {}) {
                     ).value()
                 }
             }
+        },
+
+        dispatch() {
+            dispatch(this.build())
         }
     }
 }

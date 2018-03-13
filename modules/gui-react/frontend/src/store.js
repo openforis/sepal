@@ -31,9 +31,7 @@ export function connect(mapStateToProps) {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
     return (WrappedComponent) => {
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
-        console.log('store displayName WrappedComponent', displayName)
         WrappedComponent = connectToRedux(includeDispatchingProp(mapStateToProps))(WrappedComponent)
-        console.log('store displayName WrappedComponent after redux connect', displayName)
 
         class ConnectedComponent extends React.Component {
             constructor(props) {

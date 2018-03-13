@@ -111,10 +111,9 @@ export function form(inputs, mapStateToProps) {
                 })
             }
         }
+
         Form.displayName = `Form(${getDisplayName(WrappedComponent)})`
-        console.log('form displayName WrappedComponent', Form.displayName)
         Form = connect(mapStateToProps ? mapStateToProps : null)(Form)
-        console.log('form displayName WrappedComponent after connect', Form.displayName)
         return Form
     }
 }

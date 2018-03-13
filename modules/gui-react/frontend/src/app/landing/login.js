@@ -1,5 +1,5 @@
 import React from 'react'
-import {invalidCredentials, login$} from 'user'
+import {invalidCredentials, resetInvalidCredentials, login$} from 'user'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import Button from './button'
@@ -21,6 +21,10 @@ class Login extends React.Component {
         this.props.asyncActionBuilder('LOGIN',
             login$(username, password))
             .dispatch()
+    }
+
+    componentWillUnmount() {
+        resetInvalidCredentials()
     }
 
     render() {

@@ -7,6 +7,10 @@ export const currentUser = () => fromState('user.currentUser')
 export const loadedCurrentUser = () => fromState('user.loadedCurrentUser')
 export const invalidCredentials = () => fromState('user.invalidCredentials')
 
+export const resetInvalidCredentials = () => actionBuilder('RESET_INVALID_CREDENTIALS')
+    .del('user.invalidCredentials')
+    .dispatch()
+
 
 export function loadCurrentUser$() {
     return Http.get$('/user/current', {
