@@ -30,22 +30,15 @@ export function fromState(path) {
 export function connect(mapStateToProps) {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
     return (WrappedComponent) => {
-        const wrappedMapStateToProps = (state, ownProps) => {
-            const dispatchingActions = (state.dispatching || {})[ownProps.componentId] || {}
-            const dispatching = {}
-            Object.values(dispatchingActions).forEach((type) => dispatching[type] = true)
-            const props = {
-                ...mapStateToProps(state, ownProps),
-                dispatching
-            }
-            return props
-        }
-        WrappedComponent = connectToRedux(wrappedMapStateToProps)(WrappedComponent)
+        const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
+        console.log('store displayName WrappedComponent', displayName)
+        WrappedComponent = connectToRedux(includeDispatchingProp(mapStateToProps))(WrappedComponent)
+        console.log('store displayName WrappedComponent after redux connect', displayName)
 
         class ConnectedComponent extends React.Component {
             constructor(props) {
                 super(props)
-                this.id = `${componentDisplayName(WrappedComponent)}:${guid()}`
+                this.id = `${displayName}:${guid()}`
                 this.componentWillUnmount$ = new Rx.Subject()
                 this.asyncActionBuilder = this.asyncActionBuilder.bind(this)
             }
@@ -68,13 +61,19 @@ export function connect(mapStateToProps) {
             }
         }
 
-        // const Component = connectToRedux(wrappedMapStateToProps)(ConnectedComponent)
-        // Component.displayName = componentDisplayName(WrappedComponent)
-        // return Component
+        ConnectedComponent.displayName = `Store(${WrappedComponent.displayName})`
         return ConnectedComponent
     }
 }
 
-function componentDisplayName(Component) {
-    return Component.displayName || Component.name || 'Component'
+function includeDispatchingProp(mapStateToProps) {
+    return (state, ownProps) => {
+        const dispatchingActions = (state.dispatching || {})[ownProps.componentId] || {}
+        const dispatching = {}
+        Object.values(dispatchingActions).forEach((type) => dispatching[type] = true)
+        return {
+            ...mapStateToProps(state, ownProps),
+            dispatching
+        }
+    }
 }
