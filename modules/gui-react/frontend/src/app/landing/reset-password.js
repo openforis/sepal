@@ -18,14 +18,14 @@ const inputs = {
 class ResetPassword extends React.Component {
     componentWillMount() {
         const token = query().token
-        this.props.asyncActionBuilder('Validating token',
+        this.props.asyncActionBuilder('VALIDATE_TOKEN',
             validateToken$(token))
             .dispatch()
     }
 
     resetPassword({username, password}) {
         const token = query().token
-        this.props.asyncActionBuilder('Reset password',
+        this.props.asyncActionBuilder('RESET_PASSWORD',
             resetPassword$(token, username, password))
             .dispatch()
     }

@@ -16,7 +16,7 @@ const inputs = {
 
 export class ForgotPassword extends React.Component {
     requestPasswordReset(email) {
-        this.props.asyncActionBuilder('Request password reset',
+        this.props.asyncActionBuilder('REQUEST_PASSWORD_RESET',
             requestPasswordReset$(email))
             .onComplete(() => {
                 history().push('/')

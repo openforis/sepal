@@ -57,14 +57,19 @@ export default function asyncActionBuilder(type, action$, component) {
                     .set(['dispatching', componentId, actionId], type)
                     .build()
             )
-            component.componentWillUnmount$.subscribe(() => dispatch(
-                actionBuilder('ASYNC_ACTION_REMOVE_COMPONENT', {componentId, notLogged: true})
-                    .del(['dispatching', componentId])
-                    .build()
-            ))
+            cleanupStateWhenComponentUnMounts(component)
             action$
                 .takeUntil(component.componentWillUnmount$)
                 .subscribe(observer)
         }
     }
+}
+
+
+function cleanupStateWhenComponentUnMounts(component) {
+    component.componentWillUnmount$.subscribe(() => dispatch(
+        actionBuilder('ASYNC_ACTION_REMOVE_COMPONENT', {componentId: component.id, notLogged: true})
+            .del(['dispatching', component.id])
+            .build()
+    ))
 }
