@@ -1,7 +1,7 @@
 import React from 'react'
 import QueryString from 'query-string'
 import {Router} from 'react-router'
-import {dispatch, state} from 'store'
+import {state} from 'store'
 import actionBuilder from 'action-builder'
 import PropTypes from 'prop-types'
 
@@ -46,11 +46,9 @@ export class EventPublishingRouter extends React.Component {
     }
 
     publishLocationChange(location) {
-        dispatch(
-            actionBuilder('LOCATION_CHANGED')
-                .set('location', location)
-                .build()
-        )
+        actionBuilder('LOCATION_CHANGED')
+            .set('location', location)
+            .dispatch()
     }
 
     componentWillMount() {

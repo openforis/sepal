@@ -52,11 +52,9 @@ export default function asyncActionBuilder(type, action$, component) {
                     })
                 }
             }
-            dispatch(
-                actionBuilder('ASYNC_ACTION_DISPATCHING', {componentId, actionType: type, notLogged: true})
-                    .set(['dispatching', componentId, actionId], type)
-                    .build()
-            )
+            actionBuilder('ASYNC_ACTION_DISPATCHING', {componentId, actionType: type, notLogged: true})
+                .set(['dispatching', componentId, actionId], type)
+                .dispatch()
             cleanupStateWhenComponentUnMounts(component)
             action$
                 .takeUntil(component.componentWillUnmount$)
@@ -67,9 +65,9 @@ export default function asyncActionBuilder(type, action$, component) {
 
 
 function cleanupStateWhenComponentUnMounts(component) {
-    component.componentWillUnmount$.subscribe(() => dispatch(
+    component.componentWillUnmount$.subscribe(() =>
         actionBuilder('ASYNC_ACTION_REMOVE_COMPONENT', {componentId: component.id, notLogged: true})
             .del(['dispatching', component.id])
-            .build()
-    ))
+            .dispatch()
+    )
 }
