@@ -1,4 +1,4 @@
-import {dispatch, state} from 'store'
+import {dispatch} from 'store'
 import actionBuilder from 'action-builder'
 import guid from 'guid'
 
@@ -42,13 +42,7 @@ export default function asyncActionBuilder(type, action$, component) {
                     )
                     return dispatch({
                         type: type,
-                        actions: actionsToDispatch,
-                        reduce() {
-                            return actionsToDispatch.reduce(
-                                (state, action) => action.reduce ? action.reduce(state) : state,
-                                state()
-                            )
-                        }
+                        actions: actionsToDispatch
                     })
                 }
             }

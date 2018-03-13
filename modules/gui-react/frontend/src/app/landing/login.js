@@ -1,5 +1,5 @@
 import React from 'react'
-import {invalidCredentials, resetInvalidCredentials, login$} from 'user'
+import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import Button from './button'

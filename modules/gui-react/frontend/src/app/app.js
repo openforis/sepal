@@ -1,6 +1,7 @@
 import React from 'react'
 import {connect} from 'store'
 import {currentUser, loadCurrentUser$, loadedCurrentUser} from 'user'
+import Notifications from 'app/notifications'
 import Home from 'app/home/home'
 import Landing from 'app/landing/landing'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
@@ -19,6 +20,14 @@ class App extends React.Component {
     }
 
     render() {
+        return (
+            <div>
+                <Notifications/>
+                {this.body()}
+            </div>)
+    }
+
+    body() {
         const {currentUser, loadedCurrentUser} = this.props
         if (!loadedCurrentUser)
             return <Loader/>

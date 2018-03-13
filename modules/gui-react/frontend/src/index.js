@@ -1,7 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import {createLogger} from 'redux-logger'
-import {createEpicMiddleware} from 'redux-observable'
 import {composeWithDevTools} from 'redux-devtools-extension'
 import {applyMiddleware, createStore} from 'redux'
 import {initStore} from 'store'
@@ -11,8 +10,8 @@ import en from 'react-intl/locale-data/en'
 import es from 'react-intl/locale-data/es'
 import flat from 'flat'
 import {initIntl} from 'translate'
+import {reducer as notifications} from 'react-notification-system-redux'
 import App from 'app/app'
-import Rx from 'rxjs'
 import createHistory from 'history/createBrowserHistory'
 import {EventPublishingRouter} from 'route'
 
@@ -24,28 +23,36 @@ const messages = flat.flatten( // react-intl requires a flat object
     require(`locale/${languageWithoutRegionCode}/translations.json`)
 )
 
-const rootEpic = (action$) =>
-    action$
-        .filter(action => 'epic' in action && typeof action.epic === 'function')
-        .mergeMap((action) => {
-            let result$ = action.epic(Rx.Observable.of(action))
-            return result$
-        })
-
-const epicMiddleware = createEpicMiddleware(rootEpic)
-
-
-const rootReducer = (state, action) => {
+const rootReducer = (state = [], action) => {
     if ('reduce' in action)
         return action.reduce(state)
     else
-        return state
+        return {
+            ...state,
+            notifications: notifications(state.notifications, action)
+        }
 }
+
+const batchActions = (store) => (next) => (action) => {
+    if ('actions' in action)
+        next({
+            type: action.type,
+            reduce(state) {
+                return action.actions.reduce(
+                    (state, action) => rootReducer(state, action),
+                    state
+                )
+            }
+        })
+    else
+        next(action)
+}
+
 const store = createStore(
     rootReducer,
     composeWithDevTools(applyMiddleware(
         createLogger({predicate: (getState, action) => !action.notLogged}),
-        epicMiddleware
+        batchActions
     ))
 )
 initStore(store)
@@ -63,6 +70,7 @@ const IntlInit = injectIntl(
         }
     }
 )
+
 
 ReactDOM.render(
     <IntlProvider locale={language} messages={messages}>
