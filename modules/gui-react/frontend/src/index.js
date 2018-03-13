@@ -33,6 +33,8 @@ const rootReducer = (state = [], action) => {
         }
 }
 
+const logger = createLogger({predicate: (getState, action) => !action.notLogged})
+
 const batchActions = (store) => (next) => (action) => {
     if ('actions' in action)
         next({
@@ -51,7 +53,7 @@ const batchActions = (store) => (next) => (action) => {
 const store = createStore(
     rootReducer,
     composeWithDevTools(applyMiddleware(
-        createLogger({predicate: (getState, action) => !action.notLogged}),
+        logger,
         batchActions
     ))
 )

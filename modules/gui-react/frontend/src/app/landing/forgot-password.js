@@ -7,7 +7,7 @@ import Button from './button'
 import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
 import styles from './forgot-password.module.css'
-import {success} from 'app/notifications'
+import Notifications from 'app/notifications'
 
 
 const inputs = {
@@ -22,15 +22,9 @@ export class ForgotPassword extends React.Component {
             requestPasswordReset$(email))
             .onComplete(() => {
                 history().push('/')
-                return success({
-                    title: 'Some title',
-                    message: 'Some message',
-                    position: 'tr',
-                    autoDismiss: 0,
-                    action: {
-                        label: 'Click me!!',
-                        callback: () => alert('clicked!')
-                    }
+                return Notifications.success({
+                    title: msg('landing.forgot-password.success-title'),
+                    message: msg('landing.forgot-password.success-message', {email})
                 })
             })
             .dispatch()

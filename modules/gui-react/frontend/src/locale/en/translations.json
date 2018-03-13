@@ -41,7 +41,9 @@
       "required": "Email is required",
       "invalid": "Not a valid email",
       "button": "Request a new one",
-      "cancel-link": "Cancel"
+      "cancel-link": "Cancel",
+      "success-title": "Password reset requested",
+      "success-message": "If {email} is the email of a Sepal user, an email with instructions how to reset the password has been sent."
     },
     "reset-password": {
       "username": {
