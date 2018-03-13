@@ -6,16 +6,15 @@ import Landing from 'app/landing/landing'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
 import './app.css'
 
-
-const props = () => ({
+const mapStateToProps = () => ({
     currentUser: currentUser(),
     loadedCurrentUser: loadedCurrentUser()
 })
 
 class App extends React.Component {
     componentWillMount() {
-        console.log('Mounting app')
-        this.props.actionBuilder('Load current user', loadCurrentUser$())
+        this.props.asyncActionBuilder('LOAD_CURRENT_USER',
+            loadCurrentUser$())
             .dispatch()
     }
 
@@ -29,7 +28,8 @@ class App extends React.Component {
             return <Landing/>
     }
 }
-export default App = connect(props)(App)
+
+export default App = connect(mapStateToProps)(App)
 
 const Loader = () =>
     <div className="app-loader">

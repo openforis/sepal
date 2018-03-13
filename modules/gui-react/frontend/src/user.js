@@ -1,22 +1,23 @@
 import Rx from 'rxjs'
 import Http from 'http-client'
-import {createAction, state} from 'store'
+import {fromState} from 'store'
+import actionBuilder from 'action-builder'
 
-export const currentUser = () => state().currentUser
-export const loadedCurrentUser = () => state().loadedCurrentUser
-export const invalidCredentials = () => state().invalidCredentials
+export const currentUser = () => fromState('user.currentUser')
+export const loadedCurrentUser = () => fromState('user.loadedCurrentUser')
+export const invalidCredentials = () => fromState('user.invalidCredentials')
 
 
 export function loadCurrentUser$() {
-    // Dispatch whatever, whenever, but return one completion or error action
     return Http.get$('/user/current', {
             validStatuses: [200, 401]
         }
-    ).map((e) => createAction(
-        (state) => state
-            .set('loadedCurrentUser', true)
-            .set('currentUser', e.response)
-    ))
+    ).map((e) =>
+        actionBuilder('CURRENT_USER_LOADED')
+            .set('user.loadedCurrentUser', true)
+            .set('user.currentUser', e.response)
+            .build()
+    )
 }
 
 export function login$(username, password) {
@@ -24,11 +25,11 @@ export function login$(username, password) {
             username, password,
             validStatuses: [200, 401]
         }
-    ).map((e) => createAction(
-        (state) => state
-            .set('currentUser', e.response)
-            .set('invalidCredentials', !e.response)
-    ))
+    ).map((e) => actionBuilder('CREDENTIALS_POSTED')
+        .set('user.currentUser', e.response)
+        .set('user.invalidCredentials', !e.response)
+        .build()
+    )
 }
 
 export function requestPasswordReset$(email) {
@@ -39,13 +40,13 @@ export function requestPasswordReset$(email) {
 }
 
 export function validateToken$(token) {
-    Http.get$('/user/validate-token', {
+    return Http.get$('/user/validate-token', {
             body: {token}
         }
     ).switchMap((e) => (e.response.user
         ? Rx.Observable.of(e.response.user)
         : Rx.Observable.throw(e))
-    ).map((e) => createAction())
+    ).filter(() => false)
 }
 
 export function resetPassword$(token, username, password) {

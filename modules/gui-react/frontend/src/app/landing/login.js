@@ -18,12 +18,13 @@ const mapStateToProps = () => ({
 
 class Login extends React.Component {
     login({username, password}) {
-        this.props.actionBuilder('Log in', login$(username, password))
+        this.props.asyncActionBuilder('LOGIN',
+            login$(username, password))
             .dispatch()
     }
 
     render() {
-        const {form, inputs: {username, password}} = this.props
+        const {form, inputs: {username, password}, dispatching} = this.props
         return <form>
             <div>
                 <label><Msg id='landing.login.username.label'/></label>
@@ -46,9 +47,9 @@ class Login extends React.Component {
             </div>
 
             <Button
-                icon='sign-in'
+                icon={dispatching.LOGIN ? 'spinner' : 'sign-in'}
                 onSubmit={() => this.login(form.values())}
-                disabled={form.hasInvalid()}
+                disabled={form.hasInvalid() || dispatching.LOGIN}
                 tabIndex={3}>
                 <Msg id='landing.login.button'/>
             </Button>
@@ -58,4 +59,4 @@ class Login extends React.Component {
     }
 }
 
-export default Login = form({inputs, mapStateToProps})(Login)
+export default Login = form(inputs, mapStateToProps)(Login)

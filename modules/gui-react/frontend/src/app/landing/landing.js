@@ -12,7 +12,7 @@ import SetupAccount from './setup-account'
 import styles from './landing.module.css'
 import {location, Route, Switch} from 'route'
 
-const props = () => ({
+const mapStateToProps = () => ({
     location: location()
 })
 
@@ -43,7 +43,7 @@ let Landing =
             </LandingPanel>
         </div>
 
-export default Landing = connect(props)(Landing)
+export default Landing = connect(mapStateToProps)(Landing)
 
 const LandingPanel = ({children}) =>
     <CenteredPanel className={styles.landingPanel}>

@@ -16,7 +16,8 @@ const inputs = {
 
 export class ForgotPassword extends React.Component {
     requestPasswordReset(email) {
-        this.props.actionBuilder('Request password reset', requestPasswordReset$(email))
+        this.props.asyncActionBuilder('Request password reset',
+            requestPasswordReset$(email))
             .onComplete(() => {
                 history().push('/')
                 return {type: 'Notify about password reset'}
@@ -54,7 +55,7 @@ export class ForgotPassword extends React.Component {
     }
 }
 
-export default ForgotPassword = form({inputs})(ForgotPassword)
+export default ForgotPassword = form(inputs)(ForgotPassword)
 
 export const LoginLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>

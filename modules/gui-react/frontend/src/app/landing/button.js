@@ -16,10 +16,11 @@ const Button = ({icon, tabIndex, onSubmit, children, ...props}) => {
             tabIndex={tabIndex}
             {...props}
         >
-            <Icon
-                name={icon}
-                className={styles.buttonIcon}
-            />
+            <span className={styles.buttonIcon}>
+                <Icon
+                    name={icon}
+                />
+            </span>
             {children}
         </button>
     )

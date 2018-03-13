@@ -4,7 +4,7 @@ import 'font-awesome/css/font-awesome.css';
 import PropTypes from 'prop-types'
 
 const Icon = ({name, ...props}) =>
-    <FontAwesome tag='i' name={name} {...props}/>
+    <FontAwesome tag='i' name={name} {...props} spin={name === 'spinner'}/>
 
 Icon.propTypes = Object.assign(FontAwesome.propTypes, {
     name: PropTypes.string

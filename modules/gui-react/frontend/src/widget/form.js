@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import {msg} from 'translate'
 import styles from './form.module.css'
 
-export function form({inputs, mapStateToProps = () => ({})}) {
+export function form(inputs, mapStateToProps) {
     return (WrappedComponent) => {
         class Form extends React.Component {
             constructor(props) {
@@ -98,14 +98,9 @@ export function form({inputs, mapStateToProps = () => ({})}) {
                         validate: () => this.validate(name)
                     }
                 })
-                let wrappedInstance = null
                 return React.createElement(WrappedComponent, {
                     ...this.props,
                     form: {
-                        ref: (instance) => {
-                            console.log('ref', instance)
-                            wrappedInstance = instance
-                        },
                         errors: Object.values(this.state.errors)
                             .filter(error => error),
                         errorClass: styles.error,
@@ -117,7 +112,7 @@ export function form({inputs, mapStateToProps = () => ({})}) {
             }
         }
 
-        Form = connect(mapStateToProps)(Form)
+        Form = connect(mapStateToProps ? mapStateToProps : null)(Form)
         Form.displayName = `${getDisplayName(WrappedComponent)}`
         return Form
     }

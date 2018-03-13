@@ -1,7 +1,8 @@
 import React from 'react'
 import QueryString from 'query-string'
 import {Router} from 'react-router'
-import {dispatch, state, updateState} from 'store'
+import {dispatch, state} from 'store'
+import actionBuilder from 'action-builder'
 import PropTypes from 'prop-types'
 
 const router = require('react-router-dom')
@@ -12,7 +13,6 @@ export const history = () => historyInstance
 export const location = () => state().location
 
 export const query = () => QueryString.parse(history().location.search)
-
 
 const renderMergedProps = (component, ...rest) => {
     return React.createElement(component, Object.assign({}, ...rest))
@@ -45,9 +45,12 @@ export class EventPublishingRouter extends React.Component {
         children: PropTypes.node,
     }
 
-    publishLocationChange = location => {
-        console.log('publishing location change', location)
-        dispatch(updateState('Location changed', {location}))
+    publishLocationChange(location) {
+        dispatch(
+            actionBuilder('LOCATION_CHANGED')
+                .set('location', location)
+                .build()
+        )
     }
 
     componentWillMount() {

@@ -1,6 +1,7 @@
 import React from 'react'
 import {connect as connectToRedux} from 'react-redux'
-import immutable from 'object-path-immutable'
+import asyncActionBuilder from 'async-action-builder'
+import guid from 'guid'
 import Rx from 'rxjs'
 
 let storeInstance = null
@@ -17,32 +18,37 @@ export function dispatch(action) {
     storeInstance.dispatch(action)
 }
 
-export function updateState(type, valueByPath) {
-    return {
-        type,
-        reduce(state) {
-            return ({...state, ...valueByPath})
-        }
-    }
+export function fromState(path) {
+    const parts = path.split('.')
+    return parts.reduce((state, part) => {
+        if (state == null)
+            return undefined
+        return state[part]
+    }, state())
 }
 
-export function createAction(reducer = (state) => state, type = 'Some default action') {
-    return {
-        type,
-        reduce(state) {
-            return reducer(immutable(state)).value()
-        }
-    }
-}
-
-
-export function connect(mapStateToProps = () => ({})) {
+export function connect(mapStateToProps) {
+    mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
     return (WrappedComponent) => {
+        const wrappedMapStateToProps = (state, ownProps) => {
+            const dispatchingActions = (state.dispatching || {})[ownProps.componentId] || {}
+            const dispatching = {}
+            Object.values(dispatchingActions).forEach((type) => dispatching[type] = true)
+            const props = {
+                ...mapStateToProps(state, ownProps),
+                dispatching
+            }
+            console.log('props', props)
+            return props
+        }
+        WrappedComponent = connectToRedux(wrappedMapStateToProps)(WrappedComponent)
+
         class ConnectedComponent extends React.Component {
             constructor(props) {
                 super(props)
+                this.id = `${componentDisplayName(WrappedComponent)}:${guid()}`
                 this.componentWillUnmount$ = new Rx.Subject()
-                this.actionBuilder = this.actionBuilder.bind(this)
+                this.asyncActionBuilder = this.asyncActionBuilder.bind(this)
             }
 
             componentWillUnmount() {
@@ -50,82 +56,26 @@ export function connect(mapStateToProps = () => ({})) {
                 this.componentWillUnmount$.complete()
             }
 
-            actionBuilder(type, action$) {
-                if (!type) throw new Error('Action type is required')
-                const component = this
-
-
-                let actionsToDispatch = []
-                const addActions = (actions) => {
-                    if (!actions) return
-                    if (!actions instanceof Array)
-                        actions = [actions]
-                    actionsToDispatch = actionsToDispatch.concat(actions)
-                }
-                let onComplete
-
-                return {
-                    onComplete(callback) {
-                        onComplete = callback
-                        return this
-                    },
-
-                    dispatch() {
-                        const observer = {
-                            next(actions) {
-                                addActions(actions)
-                            },
-
-                            complete() {
-                                addActions(onComplete && onComplete())
-                                console.log(actionsToDispatch)
-                                return storeInstance.dispatch({
-                                    type: type,
-                                    actions: actionsToDispatch,
-                                    reduce() {
-                                        return actionsToDispatch.reduce(
-                                            (state, action) => action.reduce ? action.reduce(state) : state,
-                                            state()
-                                        )
-                                    }
-                                })
-                            }
-                        }
-
-                        action$
-                            .takeUntil(component.componentWillUnmount$)
-                            .subscribe(observer)
-                    }
-                }
+            asyncActionBuilder(type, action$) {
+                return asyncActionBuilder(type, action$, this)
             }
 
             render() {
                 return React.createElement(WrappedComponent, {
                     ...this.props,
-                    actionBuilder: this.actionBuilder
+                    asyncActionBuilder: this.asyncActionBuilder,
+                    componentId: this.id
                 })
             }
         }
 
-        const Component = connectToRedux(mapStateToProps)(ConnectedComponent)
-        Component.displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
-        return Component
+        // const Component = connectToRedux(wrappedMapStateToProps)(ConnectedComponent)
+        // Component.displayName = componentDisplayName(WrappedComponent)
+        // return Component
+        return ConnectedComponent
     }
 }
 
-export function dispatchBatch(type, actions) {
-    if (!(actions instanceof Array))
-        actions = [actions]
-    actions = actions && Array.prototype.concat(...actions).filter((action) => action)
-    if (!actions)
-        return
-    storeInstance.dispatch({
-        type: type,
-        reduce() {
-            return actions.reduce(
-                (state, action) => action.reduce(state),
-                state()
-            )
-        }
-    })
+function componentDisplayName(Component) {
+    return Component.displayName || Component.name || 'Component'
 }
