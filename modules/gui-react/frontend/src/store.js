@@ -38,7 +38,6 @@ export function connect(mapStateToProps) {
                 ...mapStateToProps(state, ownProps),
                 dispatching
             }
-            console.log('props', props)
             return props
         }
         WrappedComponent = connectToRedux(wrappedMapStateToProps)(WrappedComponent)

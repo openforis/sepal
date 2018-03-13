@@ -36,7 +36,7 @@ export default function asyncActionBuilder(type, action$, component) {
                 complete() {
                     addActions(onComplete && onComplete())
                     addActions(
-                        actionBuilder('DISPATCHED', {componentId, actionType: type})
+                        actionBuilder('ASYNC_ACTION_DISPATCHED', {componentId, actionType: type})
                             .del(['dispatching', componentId, actionId])
                             .build()
                     )
@@ -53,10 +53,15 @@ export default function asyncActionBuilder(type, action$, component) {
                 }
             }
             dispatch(
-                actionBuilder('DISPATCHING', {componentId, actionType: type})
+                actionBuilder('ASYNC_ACTION_DISPATCHING', {componentId, actionType: type, notLogged: true})
                     .set(['dispatching', componentId, actionId], type)
                     .build()
             )
+            component.componentWillUnmount$.subscribe(() => dispatch(
+                actionBuilder('ASYNC_ACTION_REMOVE_COMPONENT', {componentId, notLogged: true})
+                    .del(['dispatching', componentId])
+                    .build()
+            ))
             action$
                 .takeUntil(component.componentWillUnmount$)
                 .subscribe(observer)

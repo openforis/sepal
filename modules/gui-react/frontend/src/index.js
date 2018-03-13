@@ -29,20 +29,6 @@ const rootEpic = (action$) =>
         .filter(action => 'epic' in action && typeof action.epic === 'function')
         .mergeMap((action) => {
             let result$ = action.epic(Rx.Observable.of(action))
-            // if ('dispatched' in action) {
-            //     const dispatched$ = action.dispatched()
-            //     if (dispatched$)
-            //         result$ = Rx.Observable.merge(Rx.Observable.of(dispatched$), result$)
-            // }
-            // if ('completed' in action) {
-            //     result$ = result$.last().map((completeAction) => {
-            //         console.log('completeAction', completeAction)
-            //         const completed$ = action.completed()
-            //         return completeAction
-            //     })
-            // }
-            // if ('cancel$' in action)
-            //     result$ = result$.takeUntil(action.cancel$)
             return result$
         })
 
@@ -58,7 +44,8 @@ const rootReducer = (state, action) => {
 const store = createStore(
     rootReducer,
     composeWithDevTools(applyMiddleware(
-        createLogger(), epicMiddleware
+        createLogger({predicate: (getState, action) => !action.notLogged}),
+        epicMiddleware
     ))
 )
 initStore(store)
