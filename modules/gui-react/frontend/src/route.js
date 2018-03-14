@@ -71,7 +71,7 @@ export function syncHistoryAndStore(history, store) {
         const historyOperation = state().historyOperation
         if (historyOperation) {
             historyInstance[historyOperation.method](...historyOperation.args)
-            actionBuilder('HISTORY_CHANGED')
+            actionBuilder('HISTORY_CHANGED', {notLogged: true})
                 .del('historyOperation')
                 .dispatch()
         }

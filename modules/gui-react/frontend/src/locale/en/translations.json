@@ -45,8 +45,7 @@
       "success": {
         "title": "Password reset requested",
         "message": "If {email} is the email of a Sepal user, an email with instructions how to reset the password has been sent."
-      },
-      "error.title": "Failed to reset the password"
+      }
     },
     "reset-password": {
       "username": {
@@ -64,14 +63,17 @@
         "not-matching": "Passwords are not the same"
       },
       "button": "Reset password",
-      "success.title": "Password has been reset",
-      "error.title": "Failed to request password reset"
-    },
-    "validate-token": {
-      "error": {
-        "title": "This link is not valid anymore",
-        "message": "Make sure you use the link in the latest email you received from Sepal."
-      }
+      "success.title": "Password has been reset"
+    }
+  },
+  "action": {
+    "error.title": "Failed: {action}",
+    "type": {
+      "LOAD_CURRENT_USER": "Load current user",
+      "LOGIN": "Login",
+      "REQUEST_PASSWORD_RESET": "Request password reset",
+      "VALIDATE_TOKEN": "Validate link",
+      "RESET_PASSWORD": "Reset password"
     }
   }
 }

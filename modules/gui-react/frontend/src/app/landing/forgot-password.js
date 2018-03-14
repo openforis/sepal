@@ -25,7 +25,6 @@ export class ForgotPassword extends React.Component {
                     Notifications.success('landing.forgot-password', {email})
                 ]
             )
-            .onError((error) => Notifications.error('landing.forgot-password.error-title', error))
             .dispatch()
     }
 

@@ -28,7 +28,6 @@ class ResetPassword extends React.Component {
                         Notifications.error('landing.validate-token')
                     ]
             })
-            .onError((error) => Notifications.error('landing.validate-token'))
             .dispatch()
     }
 
@@ -46,7 +45,6 @@ class ResetPassword extends React.Component {
                     Notifications.success('landing.reset-password')
                 ]
             })
-            .onError((error) => Notifications.error('landing.reset-password', error))
             .dispatch()
     }
 

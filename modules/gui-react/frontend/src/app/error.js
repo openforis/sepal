@@ -42,5 +42,4 @@ export const toMessage = (error) => {
         default:
             return 'Sepal responded with an error. Please try again.'
     }
-
 }

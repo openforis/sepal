@@ -1,6 +1,7 @@
 import {dispatch} from 'store'
 import actionBuilder from 'action-builder'
-import {setError, toMessage} from 'app/error'
+import {msg} from 'translate'
+import Notifications from 'app/notifications'
 
 export default function asyncActionBuilder(type, action$, component) {
     if (!type) throw new Error('Action type is required')
@@ -40,7 +41,11 @@ export default function asyncActionBuilder(type, action$, component) {
                     actions.forEach((action) => addActions(action))
                     console.log(error)
                     if (actions.length === 0)
-                        addActions(setError(toMessage(error)))
+                        addActions(Notifications.error(
+                            'action',
+                            error,
+                            {action: msg('action.type.' + type, {}, type)}
+                        ))
                     addActions(
                         actionBuilder('ASYNC_ACTION_DISPATCHED', {componentId, actionType: type})
                             .set(['actions', componentId, type], 'FAILED')

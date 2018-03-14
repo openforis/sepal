@@ -35,7 +35,10 @@ const rootReducer = (state = [], action) => {
         }
 }
 
-const logger = createLogger({predicate: (getState, action) => !action.notLogged})
+const logger = createLogger({
+    predicate: (getState, action) =>
+        !action.notLogged && ['RNS_HIDE_NOTIFICATION'].indexOf(action.type) === -1
+})
 
 const batchActions = (store) => (next) => (action) => {
     if ('actions' in action)
