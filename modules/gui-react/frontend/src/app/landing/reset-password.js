@@ -37,10 +37,6 @@ class ResetPassword extends React.Component {
             .dispatch()
     }
 
-    componentWillUnmount() {
-        console.log('unmounting reset-password')
-    }
-
     componentWillReceiveProps(nextProps) {
         const {user, inputs: {username}} = nextProps
         username.set(user && user.username)
