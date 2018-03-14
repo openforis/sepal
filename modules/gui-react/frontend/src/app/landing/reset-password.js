@@ -1,9 +1,11 @@
 import React from 'react'
 import {resetPassword$, validateToken$} from 'user'
-import {query} from 'route'
+import {history, query} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Button from './button'
 import {Msg, msg} from 'translate'
+import Notifications from 'app/notifications'
+import {toMessage} from 'app/error'
 
 
 const inputs = {
@@ -27,6 +29,20 @@ class ResetPassword extends React.Component {
         const token = query().token
         this.props.asyncActionBuilder('RESET_PASSWORD',
             resetPassword$(token, username, password))
+            .onComplete(() => {
+                return [
+                    history().push('/'),
+                    Notifications.success({
+                        title: msg('landing.reset-password.success-title')
+                    })
+                ]
+            })
+            .onError((error) =>
+                Notifications.error({
+                    title: msg('landing.reset-password.error-title'),
+                    message: toMessage(error)
+                })
+            )
             .dispatch()
     }
 

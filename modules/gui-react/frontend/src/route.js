@@ -1,6 +1,5 @@
 import React from 'react'
 import QueryString from 'query-string'
-import {Router} from 'react-router'
 import {state} from 'store'
 import actionBuilder from 'action-builder'
 import PropTypes from 'prop-types'
@@ -8,11 +7,19 @@ import PropTypes from 'prop-types'
 const router = require('react-router-dom')
 
 let historyInstance = null
-export const history = () => historyInstance
+export const history = () => ({
+    location: location(),
+    push(pathname, state) {
+        return actionBuilder('HISTORY_CHANGE')
+            .set('historyOperation', {method: 'push', args: [pathname, state]})
+            .set('location', {...location(), pathname: pathname, state: state})
+            .build()
+    }
+})
 
 export const location = () => state().location
 
-export const query = () => QueryString.parse(history().location.search)
+export const query = () => QueryString.parse(location().search)
 
 const renderMergedProps = (component, ...rest) => {
     return React.createElement(component, Object.assign({}, ...rest))
@@ -39,29 +46,25 @@ export const Link = router.Link
 Link.propTypes = router.Link.propTypes
 
 
-export class EventPublishingRouter extends React.Component {
-    static propTypes = {
-        history: PropTypes.object.isRequired,
-        children: PropTypes.node,
-    }
-
-    publishLocationChange(location) {
+function dispatchLocationChange(historyLocation) {
+    const stateLocation = location() || {}
+    if (stateLocation.pathname !== historyLocation.pathname)
         actionBuilder('LOCATION_CHANGED')
-            .set('location', location)
+            .set('location', historyLocation)
             .dispatch()
-    }
+}
 
-    componentWillMount() {
-        historyInstance = this.props.history
-        this.unsubscribeFromHistory = historyInstance.listen(this.publishLocationChange)
-        this.publishLocationChange(historyInstance.location)
-    }
-
-    componentWillUnmount() {
-        if (this.unsubscribeFromHistory) this.unsubscribeFromHistory()
-    }
-
-    render() {
-        return <Router {...this.props} />
-    }
+export function syncHistoryAndStore(history, store) {
+    historyInstance = history
+    historyInstance.listen(dispatchLocationChange)
+    dispatchLocationChange(history.location)
+    store.subscribe(() => {
+        const historyOperation = state().historyOperation
+        if (historyOperation) {
+            historyInstance[historyOperation.method](...historyOperation.args)
+            actionBuilder('HISTORY_CHANGED')
+                .del('historyOperation')
+                .dispatch()
+        }
+    })
 }

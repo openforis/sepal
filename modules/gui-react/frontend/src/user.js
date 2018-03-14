@@ -1,15 +1,15 @@
 import Rx from 'rxjs'
 import Http from 'http-client'
-import {fromState} from 'store'
+import {select} from 'store'
 import actionBuilder from 'action-builder'
 
-export const currentUser = () => fromState('user.currentUser')
-export const loadedCurrentUser = () => fromState('user.loadedCurrentUser')
-export const invalidCredentials = () => fromState('user.invalidCredentials')
+export const currentUser = () => select('user.currentUser')
+export const invalidCredentials = () => select('user.invalidCredentials')
 
-export const resetInvalidCredentials = () => actionBuilder('RESET_INVALID_CREDENTIALS')
-    .del('user.invalidCredentials')
-    .dispatch()
+export const resetInvalidCredentials = () =>
+    actionBuilder('RESET_INVALID_CREDENTIALS')
+        .del('user.invalidCredentials')
+        .dispatch()
 
 
 export function loadCurrentUser$() {
@@ -18,7 +18,6 @@ export function loadCurrentUser$() {
         }
     ).map((e) =>
         actionBuilder('CURRENT_USER_LOADED')
-            .set('user.loadedCurrentUser', true)
             .set('user.currentUser', e.response)
             .build()
     )
@@ -54,7 +53,7 @@ export function validateToken$(token) {
 }
 
 export function resetPassword$(token, username, password) {
-    Http.get$('/user/password/reset', {
+    return Http.get$('/user/password/reset', {
             body: {
                 token: token,
                 password: password

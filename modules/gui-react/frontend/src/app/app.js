@@ -10,7 +10,6 @@ import './app.css'
 
 const mapStateToProps = () => ({
     currentUser: currentUser(),
-    loadedCurrentUser: loadedCurrentUser(),
     error: error()
 })
 
@@ -33,8 +32,8 @@ class App extends React.Component {
     }
 
     body() {
-        const {currentUser, loadedCurrentUser} = this.props
-        if (!loadedCurrentUser)
+        const {currentUser, dispatching} = this.props
+        if (dispatching.LOAD_CURRENT_USER)
             return <Loader/>
         else if (currentUser)
             return <Home user={currentUser}/>

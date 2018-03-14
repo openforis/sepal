@@ -1,5 +1,5 @@
 import React from 'react'
-import {fromState} from 'store'
+import {select} from 'store'
 import CenteredPanel from 'widget/centered-panel'
 import {connect} from 'react-redux'
 import actionBuilder from 'action-builder'
@@ -27,7 +27,7 @@ let Error = ({message}) => {
 
 export default Error = connect(mapStateToProps)(Error)
 
-export const error = () => fromState('error')
+export const error = () => select('error')
 
 export const setError = (message) => actionBuilder('ERROR')
     .push('error', message)

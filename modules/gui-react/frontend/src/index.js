@@ -10,10 +10,12 @@ import en from 'react-intl/locale-data/en'
 import es from 'react-intl/locale-data/es'
 import flat from 'flat'
 import {initIntl} from 'translate'
-import {reducer as notifications} from 'react-notification-system-redux'
+import {reducer as notificationsReducer} from 'react-notification-system-redux'
 import App from 'app/app'
 import createHistory from 'history/createBrowserHistory'
-import {EventPublishingRouter} from 'route'
+import {syncHistoryAndStore} from 'route'
+import {Router} from 'react-router-dom'
+
 
 // https://github.com/jcbvm/i18n-editor
 addLocaleData([...en, ...es])
@@ -29,7 +31,7 @@ const rootReducer = (state = [], action) => {
     else
         return {
             ...state,
-            notifications: notifications(state.notifications, action)
+            notifications: notificationsReducer(state.notifications, action)
         }
 }
 
@@ -59,7 +61,6 @@ const store = createStore(
 )
 initStore(store)
 
-
 const IntlInit = injectIntl(
     class IntlInitializer extends React.Component {
         constructor(props) {
@@ -73,14 +74,16 @@ const IntlInit = injectIntl(
     }
 )
 
+const history = createHistory()
+syncHistoryAndStore(history, store)
 
 ReactDOM.render(
     <IntlProvider locale={language} messages={messages}>
         <IntlInit>
             <Provider store={store}>
-                <EventPublishingRouter history={createHistory()}>
+                <Router history={history}>
                     <App/>
-                </EventPublishingRouter>
+                </Router>
             </Provider>
         </IntlInit>
     </IntlProvider>,

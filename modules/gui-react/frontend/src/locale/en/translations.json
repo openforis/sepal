@@ -44,7 +44,7 @@
       "cancel-link": "Cancel",
       "success-title": "Password reset requested",
       "success-message": "If {email} is the email of a Sepal user, an email with instructions how to reset the password has been sent.",
-      "error-title": "Failed to request password reset"
+      "error-title": "Failed to reset the password"
     },
     "reset-password": {
       "username": {
@@ -61,7 +61,9 @@
         "required": "Password must be confirmed",
         "not-matching": "Passwords are not the same"
       },
-      "button": "Reset password"
+      "button": "Reset password",
+      "success-title": "Password has been reset",
+      "error-title": "Failed to request password reset"
     }
   }
 }

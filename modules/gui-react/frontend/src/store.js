@@ -18,7 +18,7 @@ export function dispatch(action) {
     storeInstance.dispatch(action)
 }
 
-export function fromState(path) {
+export function select(path) {
     const parts = path.split('.')
     return parts.reduce((state, part) => {
         if (state == null)

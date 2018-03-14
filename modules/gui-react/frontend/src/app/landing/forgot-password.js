@@ -22,15 +22,17 @@ export class ForgotPassword extends React.Component {
         this.props.asyncActionBuilder('REQUEST_PASSWORD_RESET',
             requestPasswordReset$(email))
             .onComplete(() => {
-                history().push('/')
-                return Notifications.success({
-                    title: msg('landing.forgot-password.success-title'),
-                    message: msg('landing.forgot-password.success-message', {email})
-                })
+                return [
+                    history().push('/'),
+                    Notifications.success({
+                        title: msg('landing.forgot-password.success-title'),
+                        message: msg('landing.forgot-password.success-message', {email})
+                    })
+                ]
             })
             .onError((error) =>
                 Notifications.error({
-                    title: msg('error-title'),
+                    title: msg('landing.forgot-password.error-title'),
                     message: toMessage(error)
                 })
             )
