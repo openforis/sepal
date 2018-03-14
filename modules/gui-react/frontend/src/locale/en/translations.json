@@ -64,6 +64,12 @@
       },
       "button": "Reset password",
       "success.title": "Password has been reset"
+    },
+    "validate-token": {
+      "error": {
+        "title": "This link is not valid anymore",
+        "message": "Make sure you use the link in the latest email you received from Sepal."
+      }
     }
   },
   "action": {
