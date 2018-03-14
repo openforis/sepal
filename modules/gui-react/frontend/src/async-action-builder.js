@@ -1,13 +1,11 @@
 import {dispatch} from 'store'
 import actionBuilder from 'action-builder'
-import guid from 'guid'
 import {setError, toMessage} from 'app/error'
 
 export default function asyncActionBuilder(type, action$, component) {
     if (!type) throw new Error('Action type is required')
 
     const componentId = component.id
-    const actionId = `${componentId}:${type}:${guid()}`
 
     let actionsToDispatch = []
     const addActions = (actions) => {
@@ -45,7 +43,7 @@ export default function asyncActionBuilder(type, action$, component) {
                         addActions(setError(toMessage(error)))
                     addActions(
                         actionBuilder('ASYNC_ACTION_DISPATCHED', {componentId, actionType: type})
-                            .del(['dispatching', componentId, actionId])
+                            .set(['actions', componentId, type], 'FAILED')
                             .build()
                     )
                     return dispatch({
@@ -58,7 +56,7 @@ export default function asyncActionBuilder(type, action$, component) {
                     addActions(onComplete && onComplete())
                     addActions(
                         actionBuilder('ASYNC_ACTION_DISPATCHED', {componentId, actionType: type})
-                            .del(['dispatching', componentId, actionId])
+                            .set(['actions', componentId, type], 'COMPLETED')
                             .build()
                     )
                     return dispatch({
@@ -68,7 +66,7 @@ export default function asyncActionBuilder(type, action$, component) {
                 }
             }
             actionBuilder('ASYNC_ACTION_DISPATCHING', {componentId, actionType: type, notLogged: true})
-                .set(['dispatching', componentId, actionId], type)
+                .set(['actions', componentId, type], 'DISPATCHING')
                 .dispatch()
             cleanupStateWhenComponentUnMounts(component)
             action$

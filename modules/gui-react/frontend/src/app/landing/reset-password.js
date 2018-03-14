@@ -5,7 +5,6 @@ import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Button from './button'
 import {Msg, msg} from 'translate'
 import Notifications from 'app/notifications'
-import {toMessage} from 'app/error'
 
 
 const inputs = {
@@ -22,7 +21,19 @@ class ResetPassword extends React.Component {
         const token = query().token
         this.props.asyncActionBuilder('VALIDATE_TOKEN',
             validateToken$(token))
+            .onComplete((user) => {
+                if (!user)
+                    return [
+                        history().push('/'),
+                        Notifications.error('landing.validate-token')
+                    ]
+            })
+            .onError((error) => Notifications.error('landing.validate-token'))
             .dispatch()
+    }
+
+    componentWillUnmount() {
+        console.log('unmounting reset-password')
     }
 
     resetPassword({username, password}) {
@@ -32,17 +43,10 @@ class ResetPassword extends React.Component {
             .onComplete(() => {
                 return [
                     history().push('/'),
-                    Notifications.success({
-                        title: msg('landing.reset-password.success-title')
-                    })
+                    Notifications.success('landing.reset-password')
                 ]
             })
-            .onError((error) =>
-                Notifications.error({
-                    title: msg('landing.reset-password.error-title'),
-                    message: toMessage(error)
-                })
-            )
+            .onError((error) => Notifications.error('landing.reset-password', error))
             .dispatch()
     }
 

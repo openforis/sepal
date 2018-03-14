@@ -15,4 +15,4 @@ Msg.propTypes = {
     id: PropTypes.string.isRequired
 }
 
-export const msg = (id, values = {}) => intl.formatMessage({id}, values)
+export const msg = (id, values = {}, defaultMessage = id) => intl.formatMessage({id, defaultMessage}, values)

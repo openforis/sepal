@@ -1,5 +1,7 @@
 import {connect} from 'react-redux'
 import ReactNotifications, * as notifications from 'react-notification-system-redux'
+import {msg} from 'translate'
+import {toMessage} from 'app/error'
 
 const mapStateToProps = (state) => {
     return ({
@@ -22,10 +24,10 @@ const mapStateToProps = (state) => {
     })
 }
 
-function applyDefaults(opts) {
-    const defaultOpts = {
-        title: null,
-        message: null,
+function toOpts(level, messageId, values = {}, message) {
+    return {
+        title: msg([messageId, level, 'title'].join('.'), values),
+        message: message || msg([messageId, level, 'message'].join('.'), values, ' '),
         position: 'tr',
         autoDismiss: 5,
         dismissible: 'click',
@@ -35,15 +37,13 @@ function applyDefaults(opts) {
         onRemove: null,
         uid: null
     }
-    return Object.assign(defaultOpts, opts)
 }
 
 const Notifications = connect(mapStateToProps)(ReactNotifications)
-Notifications.show = (opts) => notifications.show(applyDefaults(opts))
-Notifications.success = (opts) => notifications.success(applyDefaults(opts))
-Notifications.error = (opts) => notifications.error(applyDefaults(opts))
-Notifications.warning = (opts) => notifications.warning(applyDefaults(opts))
-Notifications.info = (opts) => notifications.info(applyDefaults(opts))
+Notifications.success = (messageId, values) => notifications.success(toOpts('success', messageId, values))
+Notifications.error = (messageId, error, values) => notifications.error(toOpts('error', messageId, values, toMessage(error)))
+Notifications.warning = (messageId, values) => notifications.warning(toOpts('warning', messageId, values))
+Notifications.info = (messageId, values) => notifications.info(toOpts('info', messageId, values))
 Notifications.hide = notifications.hide
 Notifications.removeAll = notifications.removeAll
 export default Notifications

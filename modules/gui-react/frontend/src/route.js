@@ -9,12 +9,21 @@ const router = require('react-router-dom')
 let historyInstance = null
 export const history = () => ({
     location: location(),
+
     push(pathname, state) {
         return actionBuilder('HISTORY_CHANGE')
             .set('historyOperation', {method: 'push', args: [pathname, state]})
             .set('location', {...location(), pathname: pathname, state: state})
             .build()
-    }
+    },
+
+    replace(pathname, state) {
+        return actionBuilder('HISTORY_CHANGE')
+            .set('historyOperation', {method: 'replace', args: [pathname, state]})
+            .set('location', {...location(), pathname: pathname, state: state})
+            .build()
+    },
+
 })
 
 export const location = () => state().location

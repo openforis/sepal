@@ -28,7 +28,7 @@ class Login extends React.Component {
     }
 
     render() {
-        const {form, inputs: {username, password}, dispatching} = this.props
+        const {form, inputs: {username, password}, action} = this.props
         return (
             <form>
                 <div>
@@ -52,9 +52,9 @@ class Login extends React.Component {
                 </div>
 
                 <Button
-                    icon={dispatching.LOGIN ? 'spinner' : 'sign-in'}
+                    icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in'}
                     onSubmit={() => this.login(form.values())}
-                    disabled={form.hasInvalid() || dispatching.LOGIN}
+                    disabled={form.hasInvalid() || action('LOGIN').dispatching}
                     tabIndex={3}>
                     <Msg id='landing.login.button'/>
                 </Button>

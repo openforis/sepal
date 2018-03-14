@@ -2,7 +2,6 @@ import React from 'react'
 import {requestPasswordReset$} from 'user'
 import {history, Link} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
-import {toMessage} from 'app/error'
 import Icon from 'widget/icon'
 import Button from './button'
 import {Msg, msg} from 'translate'
@@ -21,26 +20,17 @@ export class ForgotPassword extends React.Component {
     requestPasswordReset(email) {
         this.props.asyncActionBuilder('REQUEST_PASSWORD_RESET',
             requestPasswordReset$(email))
-            .onComplete(() => {
-                return [
-                    history().push('/'),
-                    Notifications.success({
-                        title: msg('landing.forgot-password.success-title'),
-                        message: msg('landing.forgot-password.success-message', {email})
-                    })
+            .onComplete(() => [
+                    history().replace('/'),
+                    Notifications.success('landing.forgot-password', {email})
                 ]
-            })
-            .onError((error) =>
-                Notifications.error({
-                    title: msg('landing.forgot-password.error-title'),
-                    message: toMessage(error)
-                })
             )
+            .onError((error) => Notifications.error('landing.forgot-password.error-title', error))
             .dispatch()
     }
 
     render() {
-        const {form, inputs: {email}, dispatching} = this.props
+        const {form, inputs: {email}, action} = this.props
         return <form style={styles.form}>
             <div>
                 <label><Msg id='landing.forgot-password.label'/></label>
@@ -56,9 +46,9 @@ export class ForgotPassword extends React.Component {
             </div>
 
             <Button
-                icon={dispatching.REQUEST_PASSWORD_RESET ? 'spinner' : 'paper-plane-o'}
+                icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in'}
                 onSubmit={() => this.requestPasswordReset(email.value)}
-                disabled={form.hasInvalid() || dispatching.REQUEST_PASSWORD_RESET}
+                disabled={form.hasInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
                 tabIndex={2}>
                 <Msg id='landing.forgot-password.button'/>
             </Button>

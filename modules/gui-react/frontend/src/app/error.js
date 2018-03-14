@@ -34,7 +34,7 @@ export const setError = (message) => actionBuilder('ERROR')
     .build()
 
 export const toMessage = (error) => {
-    console.log(error)
+    if (!error) return null
     switch (error.status) {
         case 0:
             return 'Failed to connect to Sepal. ' +

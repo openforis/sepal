@@ -1,6 +1,6 @@
 import React from 'react'
 import {connect} from 'store'
-import {currentUser, loadCurrentUser$, loadedCurrentUser} from 'user'
+import {currentUser, loadCurrentUser$} from 'user'
 import Error, {error} from 'app/error'
 import Notifications from 'app/notifications'
 import Home from 'app/home/home'
@@ -32,8 +32,8 @@ class App extends React.Component {
     }
 
     body() {
-        const {currentUser, dispatching} = this.props
-        if (dispatching.LOAD_CURRENT_USER)
+        const {currentUser, action} = this.props
+        if (!action('LOAD_CURRENT_USER').dispatched)
             return <Loader/>
         else if (currentUser)
             return <Home user={currentUser}/>

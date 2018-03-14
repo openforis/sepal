@@ -1,4 +1,3 @@
-import Rx from 'rxjs'
 import Http from 'http-client'
 import {select} from 'store'
 import actionBuilder from 'action-builder'
@@ -43,17 +42,14 @@ export function requestPasswordReset$(email) {
 }
 
 export function validateToken$(token) {
-    return Http.get$('/user/validate-token', {
+    return Http.post$('/user/validate-token', {
             body: {token}
         }
-    ).switchMap((e) => (e.response.user
-        ? Rx.Observable.of(e.response.user)
-        : Rx.Observable.throw(e))
-    ).filter(() => false)
+    ).map((e) => (e.response && e.response.user))
 }
 
 export function resetPassword$(token, username, password) {
-    return Http.get$('/user/password/reset', {
+    return Http.post$('/user/password/reset', {
             body: {
                 token: token,
                 password: password

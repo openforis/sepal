@@ -66,12 +66,19 @@ export function connect(mapStateToProps) {
 
 function includeDispatchingProp(mapStateToProps) {
     return (state, ownProps) => {
-        const dispatchingActions = (state.dispatching || {})[ownProps.componentId] || {}
-        const dispatching = {}
-        Object.values(dispatchingActions).forEach((type) => dispatching[type] = true)
+        const actions = state.actions || {}
+        const componentActions = actions[ownProps.componentId] || {}
+        const action = (type) => {
+            const undispatched = !componentActions[type]
+            const dispatching = componentActions[type] === 'DISPATCHING'
+            const completed = componentActions[type] === 'COMPLETED'
+            const failed = componentActions[type] === 'FAILED'
+            const dispatched = completed || failed
+            return {undispatched, dispatching, completed, failed, dispatched}
+        }
         return {
             ...mapStateToProps(state, ownProps),
-            dispatching
+            action
         }
     }
 }
