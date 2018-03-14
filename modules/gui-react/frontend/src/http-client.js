@@ -2,11 +2,11 @@ import Rx from 'rxjs'
 import base64 from 'base-64'
 
 export default class Http {
-    static get$(url, {retries = 5, headers, validStatuses, ...args}) {
+    static get$(url, {retries = 4, headers, validStatuses, ...args}) {
         return execute$(url, 'GET', {retries, headers, validStatuses, ...args})
     }
 
-    static post$(url, {retries = 5, headers, validStatuses, ...args}) {
+    static post$(url, {retries = 4, headers, validStatuses, ...args}) {
         return execute$(url, 'POST', {retries, headers, validStatuses, ...args})
     }
 }

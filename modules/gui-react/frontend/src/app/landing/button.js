@@ -17,9 +17,7 @@ const Button = ({icon, tabIndex, onSubmit, children, ...props}) => {
             {...props}
         >
             <span className={styles.buttonIcon}>
-                <Icon
-                    name={icon}
-                />
+                <Icon name={icon}/>
             </span>
             {children}
         </button>

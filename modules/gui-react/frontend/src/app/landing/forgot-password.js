@@ -2,6 +2,7 @@ import React from 'react'
 import {requestPasswordReset$} from 'user'
 import {history, Link} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
+import {toMessage} from 'app/error'
 import Icon from 'widget/icon'
 import Button from './button'
 import {Msg, msg} from 'translate'
@@ -27,11 +28,17 @@ export class ForgotPassword extends React.Component {
                     message: msg('landing.forgot-password.success-message', {email})
                 })
             })
+            .onError((error) =>
+                Notifications.error({
+                    title: msg('error-title'),
+                    message: toMessage(error)
+                })
+            )
             .dispatch()
     }
 
     render() {
-        const {form, inputs: {email}} = this.props
+        const {form, inputs: {email}, dispatching} = this.props
         return <form style={styles.form}>
             <div>
                 <label><Msg id='landing.forgot-password.label'/></label>
@@ -47,9 +54,9 @@ export class ForgotPassword extends React.Component {
             </div>
 
             <Button
-                icon='paper-plane-o'
+                icon={dispatching.REQUEST_PASSWORD_RESET ? 'spinner' : 'paper-plane-o'}
                 onSubmit={() => this.requestPasswordReset(email.value)}
-                disabled={form.hasInvalid()}
+                disabled={form.hasInvalid() || dispatching.REQUEST_PASSWORD_RESET}
                 tabIndex={2}>
                 <Msg id='landing.forgot-password.button'/>
             </Button>
