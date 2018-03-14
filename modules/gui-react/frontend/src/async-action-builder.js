@@ -57,7 +57,7 @@ export default function asyncActionBuilder(type, action$, component) {
                 },
 
                 complete() {
-                    addActions(onComplete && onComplete())
+                    addActions(onComplete && onComplete(actionsToDispatch))
                     addActions(
                         actionBuilder('ASYNC_ACTION_DISPATCHED', {componentId, actionType: type})
                             .set(['actions', componentId, type], 'COMPLETED')

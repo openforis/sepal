@@ -1,10 +1,11 @@
 import React from 'react'
-import {resetPassword$, validateToken$} from 'user'
+import {resetPassword$, tokenUser, tokenValid, validateToken$} from 'user'
 import {history, query} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Button from './button'
 import {Msg, msg} from 'translate'
 import Notifications from 'app/notifications'
+import CenteredPanel from 'widget/centered-panel'
 
 
 const inputs = {
@@ -16,13 +17,18 @@ const inputs = {
         .predicate((password2, form) => password2 === form.password, 'landing.reset-password.password2.not-matching')
 }
 
+const mapStateToProps = () => ({
+    user: tokenUser()
+})
+
+
 class ResetPassword extends React.Component {
     componentWillMount() {
         const token = query().token
         this.props.asyncActionBuilder('VALIDATE_TOKEN',
             validateToken$(token))
-            .onComplete((user) => {
-                if (!user)
+            .onComplete(([tokenValidated]) => {
+                if (!tokenValidated.valid)
                     return [
                         history().push('/'),
                         Notifications.error('landing.validate-token')
@@ -33,6 +39,11 @@ class ResetPassword extends React.Component {
 
     componentWillUnmount() {
         console.log('unmounting reset-password')
+    }
+
+    componentWillReceiveProps(nextProps) {
+        const {user, inputs: {username}} = nextProps
+        username.set(user && user.username)
     }
 
     resetPassword({username, password}) {
@@ -49,6 +60,23 @@ class ResetPassword extends React.Component {
     }
 
     render() {
+        if (!this.props.action('VALIDATE_TOKEN').dispatched)
+            return this.spinner()
+        else
+            return this.form()
+    }
+
+    spinner() {
+        return (
+            <CenteredPanel>
+                <div style={{background: 'red'}}>
+                Spinner
+                </div>
+            </CenteredPanel>
+        )
+    }
+
+    form() {
         const {form, inputs: {username, password, password2}} = this.props
         return <form>
             <div>
@@ -89,4 +117,4 @@ class ResetPassword extends React.Component {
     }
 }
 
-export default ResetPassword = form(inputs)(ResetPassword)
+export default ResetPassword = form(inputs, mapStateToProps)(ResetPassword)

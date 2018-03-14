@@ -45,8 +45,16 @@ export function validateToken$(token) {
     return Http.post$('/user/validate-token', {
             body: {token}
         }
-    ).map((e) => (e.response && e.response.user))
+    ).map((e) => {
+            const user = e.response && e.response.user
+            return actionBuilder('TOKEN_VALIDATED',
+                {valid: !!user})
+                .set('user.tokenUser', user)
+                .build()
+        }
+    )
 }
+export const tokenUser = () => select('user.tokenUser')
 
 export function resetPassword$(token, username, password) {
     return Http.post$('/user/password/reset', {

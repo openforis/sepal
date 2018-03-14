@@ -52,12 +52,13 @@ export function form(inputs, mapStateToProps) {
             }
 
             set(name, value) {
-                this.setState((prevState) => {
-                    const state = Object.assign({}, prevState)
-                    state.values[name] = value
-                    state.errors[name] = ''
-                    return state
-                })
+                if (value != null && value !== this.state.values[name])
+                    this.setState((prevState) => {
+                        const state = Object.assign({}, prevState)
+                        state.values[name] = value
+                        state.errors[name] = ''
+                        return state
+                    })
                 return this
             }
 
