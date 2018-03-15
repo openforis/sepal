@@ -2,7 +2,7 @@ import React from 'react'
 import {resetPassword$, validateToken$} from 'user'
 import {query} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
-import Button from './button'
+import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
 
 
@@ -60,13 +60,13 @@ class SetupAccount extends React.Component {
                 <ErrorMessage input={password2}/>
             </div>
 
-            <Button
+            <SubmitButton
                 icon='sign-in'
-                onSubmit={() => this.resetPassword(form.values())}
+                onClick={() => this.resetPassword(form.values())}
                 disabled={form.hasInvalid()}
                 tabIndex={3}>
                 <Msg id='landing.reset-password.button'/>
-            </Button>
+            </SubmitButton>
         </form>
     }
 }

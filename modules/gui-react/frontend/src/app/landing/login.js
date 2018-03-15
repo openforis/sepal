@@ -2,7 +2,7 @@ import React from 'react'
 import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
-import Button from './button'
+import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
 
 const inputs = {
@@ -51,13 +51,13 @@ class Login extends React.Component {
                     <ErrorMessage input={password}/>
                 </div>
 
-                <Button
+                <SubmitButton
                     icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in'}
-                    onSubmit={() => this.login(form.values())}
+                    onClick={() => this.login(form.values())}
                     disabled={form.hasInvalid() || action('LOGIN').dispatching}
                     tabIndex={3}>
                     <Msg id='landing.login.button'/>
-                </Button>
+                </SubmitButton>
 
                 <ForgotPasswordLink tabIndex={4}/>
             </form>)

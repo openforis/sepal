@@ -3,7 +3,7 @@ import {requestPasswordReset$} from 'user'
 import {history, Link} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Icon from 'widget/icon'
-import Button from './button'
+import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
 import styles from './forgot-password.module.css'
@@ -44,13 +44,13 @@ export class ForgotPassword extends React.Component {
                 <ErrorMessage input={email}/>
             </div>
 
-            <Button
+            <SubmitButton
                 icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in'}
-                onSubmit={() => this.requestPasswordReset(email.value)}
+                onClick={() => this.requestPasswordReset(email.value)}
                 disabled={form.hasInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
                 tabIndex={2}>
                 <Msg id='landing.forgot-password.button'/>
-            </Button>
+            </SubmitButton>
 
             <LoginLink tabIndex={3}/>
         </form>

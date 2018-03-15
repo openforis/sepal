@@ -27,7 +27,7 @@ function toOpts(level, messageId, values = {}, message) {
         title: msg([messageId, level, 'title'].join('.'), values),
         message: message || msg([messageId, level, 'message'].join('.'), values, ' '),
         position: 'tr',
-        autoDismiss: 5,
+        autoDismiss: 10,
         dismissible: 'click',
         action: null,
         children: null,

@@ -72,6 +72,9 @@
       }
     }
   },
+  "home": {
+    "logout": "Logout"
+  },
   "action": {
     "error.title": "Failed: {action}",
     "type": {

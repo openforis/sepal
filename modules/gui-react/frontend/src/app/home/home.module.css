@@ -1,0 +1,33 @@
+.home {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 5rem 1fr;
+    grid-template-rows: 1fr 5rem;
+    grid-template-areas:
+            'navBar  body'
+            'footer  footer';
+}
+
+.navBar {
+    grid-area: navBar;
+}
+
+.footer {
+    grid-area: footer;
+    animation: footer .5s 0s ease-in-out backwards;
+}
+
+@keyframes footer {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 150%, 0);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.body {
+    grid-area: body;
+}
