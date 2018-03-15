@@ -4,7 +4,7 @@ require( './app-required-modules' )
 var Loader   = require( '../loader/loader' )
 var EventBus = require( '../event/event-bus' )
 var Events   = require( '../event/events' )
-landing
+
 var userLoggedIn = function ( e, user ) {
     EventBus.dispatch( Events.USER.USER_DETAILS_LOADED, null, user )
     load()

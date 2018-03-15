@@ -1,15 +1,10 @@
-@font-face {
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: 400;
-    src: url('./fonts/OpenSans-Light.ttf');
-    src: local('Open Sans'), local('OpenSans'), url('./fonts/OpenSans-Light.ttf') format('truetype');
-}
+@import url("https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700,300italic,400italic,500italic,700italic");
+@import url("https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900,200italic,300italic,400italic,600italic,700italic,900italic");
+@import url("https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic");
 
 html {
     --secondary-text-color: #e8edf0;
-    --header-font-family: Open Sans, Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
-
+    --header-font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-size: 14px;
 }
 
@@ -18,20 +13,19 @@ html {
         /*
           min-text + (max-text - min-text) * (100vw - min-viewport) / (max-viewport - min-viewport)
         */
-        font-size: calc(14px + (18 - 14) * (100vw - 320px) / (1600 - 320));
+        font-size: calc(12px + (14 - 12) * (100vw - 320px) / (1600 - 320));
     }
 }
 
 @media screen and (min-width: 1600px) {
     html {
-        font-size: 18px;
+        font-size: 14px;
     }
 }
 
-body, input, textarea, select, button, a {
+body, input, textarea, select, button, a, label {
     font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
     line-height: 2;
-    font-weight: 300;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: transparent;
@@ -45,4 +39,8 @@ body, input, textarea, select, button, a {
 
 a:hover {
     text-decoration: none;
+}
+
+.app {
+    height: 100%
 }

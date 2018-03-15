@@ -25,7 +25,7 @@ class App extends React.Component {
             return <Error message={this.props.error}/>
         else
             return (
-                <div>
+                <div className='app'>
                     <Notifications/>
                     {this.body()}
                 </div>)

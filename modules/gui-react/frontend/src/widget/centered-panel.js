@@ -1,36 +1,13 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import styles from './centered-panel.module.css'
 
 const CenteredPanel = ({className, children}) =>
-    <div style={styles.panelContainer}>
-        <div className={`panelContainer ${className}`} style={styles.panel}>
-            {children}
-        </div>
+    <div className={`${styles.container} ${className}`}>
+        {children}
     </div>
 
 CenteredPanel.propTypes = {
     className: PropTypes.string
 }
-
-const styles = {
-    panelContainer: {
-        display: 'grid',
-        gridTemplateColumns: 'auto',
-        gridTemplateRows: '1fr 1fr 1fr',
-        gridTemplateAreas: `
-        ".   .   ."
-        ". panel ."
-        ".   .   ."
-      `,
-        height: '100%',
-    },
-
-    panel: {
-        gridArea: 'panel',
-        alignItems: 'center',
-        justifyContent: 'center',
-        margin: '10%',
-    }
-}
-
 export default CenteredPanel

@@ -3,41 +3,35 @@ button.submit {
     border-top-right-radius: 50px;
     border-bottom-left-radius: 50px;
     border-bottom-right-radius: 50px;
-    border-style: solid;
-    border-width: 4px;
+    border: 2px solid hsla(0, 0%, 100%, .25);
+    /*opacity: .8;*/
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
-    font-weight: bold;
-    font-size: .8rem;
     text-transform: uppercase;
     line-height: 1;
-    letter-spacing: 0.05rem;
+    letter-spacing: 0.1rem;
     position: relative;
-    padding: 22px 32px 22px 32px;
+    padding: 1rem 3rem 1rem 3.5rem;
     cursor: pointer;
-    border-color: #c5b397;
-    background-color: #c5b397;
-    color: #fff;
-    padding-left: 60px;
 }
 
 button.submit:hover {
-    border-color: #b8a280;
-    background-color: #b8a280;
+    background-color: hsla(0, 0%, 100%, .1);
+    border: 2px solid hsla(0, 0%, 100%, .25);
 }
 
 button.submit:active {
-    border-color: #a79375;
-    background-color: #a79375;
+    background-color: hsla(0, 0%, 100%, .15);
+    border: 2px solid hsla(0, 0%, 100%, .40);
 }
 
 button.submit:focus {
-    border-color: #a79375;
+    border: 2px solid hsla(0, 0%, 100%, .25);
 }
 
 button.submit:disabled {
-    border-color: #c5b4ab;
-    background-color: #c5b4ab;
-    color: #ddd;
+    background-color: hsla(0, 0%, 100%, .15);
+    border: 2px solid hsla(0, 0%, 100%, .15);
+    color: hsla(0, 0%, 100%, .40);
     cursor: not-allowed;
 }
 
