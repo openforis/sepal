@@ -6,6 +6,7 @@ import Button from './button'
 import {Msg, msg} from 'translate'
 import Notifications from 'app/notifications'
 import CenteredPanel from 'widget/centered-panel'
+import Icon from 'widget/icon'
 
 
 const inputs = {
@@ -65,8 +66,8 @@ class ResetPassword extends React.Component {
     spinner() {
         return (
             <CenteredPanel>
-                <div style={{background: 'red'}}>
-                Spinner
+                <div style={{display: 'flex', justifyContent: 'center', fontSize: '2rem'}}>
+                    <Icon name='spinner'/>
                 </div>
             </CenteredPanel>
         )

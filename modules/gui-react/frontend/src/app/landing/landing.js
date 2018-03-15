@@ -36,7 +36,8 @@ let Landing =
                 <AnimateEnter name={AnimateEnter.fadeInRight} delay={1500} className={styles.form}>
                     <AnimateReplacement
                         currentKey={location.pathname}
-                        classNames={{enter: styles.formEnter, exit: styles.formExit}}>
+                        classNames={{enter: styles.formEnter, exit: styles.formExit}}
+                        style={{height: '100%'}}>
                         <Form location={location}/>
                     </AnimateReplacement>
                 </AnimateEnter>

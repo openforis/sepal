@@ -20,6 +20,7 @@
 
         html {
             background-color: rgba(17, 18, 21, 0.9);
+            color: #fff
         }
 
         body {
@@ -29,7 +30,6 @@
             font-size: 1rem;
             line-height: 2;
             font-weight: 300;
-            color: #fff;
             text-align: left;
             overflow: hidden;
             text-transform: none;
@@ -98,39 +98,6 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             opacity: .75;
-            color: #fff;
-        }
-
-        @-webkit-keyframes app-loader {
-            0% {
-                -webkit-transform: rotate(0deg);
-                transform: rotate(0deg);
-                border-left-color: rgba(197, 179, 151, 0.5);
-            }
-            50% {
-                border-left-color: #c5b397;
-            }
-            100% {
-                -webkit-transform: rotate(360deg);
-                transform: rotate(360deg);
-                border-left-color: rgba(197, 179, 151, 0.5);
-            }
-        }
-
-        @-o-keyframes app-loader {
-            0% {
-                -o-transform: rotate(0deg);
-                transform: rotate(0deg);
-                border-left-color: rgba(197, 179, 151, 0.5);
-            }
-            50% {
-                border-left-color: #c5b397;
-            }
-            100% {
-                -o-transform: rotate(360deg);
-                transform: rotate(360deg);
-                border-left-color: rgba(197, 179, 151, 0.5);
-            }
         }
 
         @keyframes app-loader {

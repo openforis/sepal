@@ -43,7 +43,7 @@ AnimateEnter.propTypes = {
 }
 
 export const AnimateReplacement = ({currentKey, timeout = 500, classNames, children, ...props}) =>
-    <TransitionGroup>
+    <TransitionGroup {...props}>
         <CSSTransition
             key={currentKey}
             timeout={timeout}
@@ -56,29 +56,6 @@ AnimateReplacement.propTypes = {
     currentKey: PropTypes.any.isRequired,
     timeout: PropTypes.number,
     classNames: PropTypes.any.isRequired
-}
-
-export class AnimateUl extends React.Component {
-    render() {
-        return (
-            <div>
-                <TransitionGroup component='ul' {...this.props}>
-                    {this.props.children.map((child, i) => (
-                            <CSSTransition
-                                key={child.key}
-                                timeout={500}
-                                classNames={{
-                                    enterActive: styles.itemEnterActive,
-                                    exitActive: styles.itemExitActive,
-                                }}>
-                                {child}
-                            </CSSTransition>
-                        )
-                    )}
-                </TransitionGroup>
-            </div>
-        )
-    }
 }
 
 function randomString() {
