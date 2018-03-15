@@ -9,7 +9,6 @@ const mapStateToProps = (state) => {
         style: {
             NotificationItem: {
                 DefaultStyle: {
-                    fontSize: '.8rem',
                     backgroundColor: 'rgba(0, 0, 0, 0.5)',
                     color: '#fff',
                     lineHeight: '1.5'
@@ -17,7 +16,6 @@ const mapStateToProps = (state) => {
             },
             Title: {
                 DefaultStyle: {
-                    fontSize: '.8rem'
                 }
             }
         }
