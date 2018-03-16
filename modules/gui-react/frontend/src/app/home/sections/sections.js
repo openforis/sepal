@@ -4,6 +4,7 @@ import {IconButton} from 'widget/button'
 
 const Sections = () =>
     <div className={styles.sections}>
+        <Section name='home' icon='home'/>
         <Section name='search' icon='globe'/>
         <Section name='browse' icon='folder-open'/>
         <Section name='process' icon='wrench'/>

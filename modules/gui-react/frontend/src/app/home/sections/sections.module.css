@@ -16,13 +16,22 @@
     line-height: 1.8rem;
 }
 
+.sections .homeIcon {
+    background-color: hsla(0, 0%, 100%, .15);
+}
+
+.sections .homeIcon:hover {
+    background-color: hsla(0, 0%, 100%, .05);
+    border: 2px solid hsla(0, 0%, 100%, .4);
+}
+
 .sections .searchIcon {
     background-color: hsla(35, 96%, 74%, .4);
 }
 
 .sections .searchIcon:hover {
     background-color: hsla(35, 96%, 74%, .1);
-    border: 2px solid hsla(35, 96%, 74%, .7)
+    border: 2px solid hsla(35, 96%, 74%, .7);
 }
 
 .sections .browseIcon {

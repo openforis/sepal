@@ -1,7 +1,7 @@
 .home {
     height: 100%;
     display: grid;
-    grid-template-columns: 10rem 1fr;
+    grid-template-columns: 7rem 1fr;
     grid-template-rows: 1fr 4.5rem;
     grid-template-areas:
             'sections  body'
