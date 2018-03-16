@@ -3,7 +3,7 @@ import Icon from 'widget/icon'
 import styles from './button.module.css'
 import PropTypes from 'prop-types'
 
-export const Button = ({icon, tabIndex, onClick, classNames, children, ...props}) => {
+export const Button = ({icon, tabIndex, onClick, className, children, ...props}) => {
     function handleClick(e) {
         e.preventDefault()
         onClick && onClick()
@@ -11,14 +11,12 @@ export const Button = ({icon, tabIndex, onClick, classNames, children, ...props}
 
     return (
         <button
-            className={`${styles.default} ${classNames}`}
+            className={`${styles.default} ${className}`}
             onClick={handleClick}
             tabIndex={tabIndex}
             {...props}
         >
-            <span className={styles.buttonIcon}>
-                <Icon name={icon}/>
-            </span>
+            <Icon name={icon}/>
             {children}
         </button>
     )
@@ -28,27 +26,27 @@ Button.propTypes = {
     icon: PropTypes.string.isRequired,
     onClick: PropTypes.func.isRequired,
     tabIndex: PropTypes.number,
-    classNames: PropTypes.string
+    className: PropTypes.string
 }
 
-export const SubmitButton = ({icon, tabIndex, onClick, classNames, children, ...props}) =>
+export const SubmitButton = ({icon, tabIndex, onClick, className, children, ...props}) =>
     <Button
         icon={icon}
         tabIndex={tabIndex}
         onClick={onClick}
-        classNames={`${styles.submit} ${classNames}`}
+        className={`${styles.submit} ${className}`}
         {...props}>
         {children}
     </Button>
 
 SubmitButton.propTypes = Button.propTypes
 
-export const IconButton = ({icon, tabIndex, onClick, classNames, children, ...props}) =>
+export const IconButton = ({icon, tabIndex, onClick, className, children, ...props}) =>
     <Button
         icon={icon}
         tabIndex={tabIndex}
         onClick={onClick}
-        classNames={`${styles.icon} ${classNames}`}
-        {...props}>&nbsp;</Button>
+        className={`${styles.icon} ${className}`}
+        {...props}/>
 
 IconButton.propTypes = Button.propTypes

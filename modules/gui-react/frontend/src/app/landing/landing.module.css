@@ -67,10 +67,7 @@
 
 .featureIcon {
     grid-row: span 2;
-    border-top-left-radius: 50%;
-    border-top-right-radius: 50%;
-    border-bottom-left-radius: 50%;
-    border-bottom-right-radius: 50%;
+    border-radius: 50%;
     width: 4.5rem;
     height: 4.5rem;
     line-height: 4.5rem;

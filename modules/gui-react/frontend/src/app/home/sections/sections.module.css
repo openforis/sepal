@@ -1,0 +1,53 @@
+.sections {
+    display: flex;
+    flex-direction: column;
+    top: 13%;
+    padding: 10rem 0 0 1rem;
+}
+
+.sections button.section {
+    width: 4.5rem;
+    height: 4.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.sections button.section i {
+    font-size: 1.8rem;
+    line-height: 1.8rem;
+}
+
+.sections .searchIcon {
+    background-color: hsla(35, 96%, 74%, .4);
+}
+
+.sections .searchIcon:hover {
+    background-color: hsla(35, 96%, 74%, .1);
+    border: 2px solid hsla(35, 96%, 74%, .7)
+}
+
+.sections .browseIcon {
+    background-color: hsla(99, 9%, 51%, .4);
+}
+
+.sections .browseIcon:hover {
+    background-color: hsla(99, 9%, 51%, .1);
+    border: 2px solid hsla(99, 9%, 51%, .7);
+}
+
+.sections .processIcon {
+    background-color: rgba(96, 71, 90, .4);
+}
+
+.sections .processIcon:hover {
+    background-color: rgba(96, 71, 90, .1);
+    border: 2px solid rgba(96, 71, 90, .7);
+}
+
+.sections .terminalIcon {
+    background-color: rgba(74, 94, 130, .4);
+}
+
+.sections .terminalIcon:hover {
+    background-color: rgba(74, 94, 130, .1);
+    border: 2px solid rgba(74, 94, 130, .7);
+}

@@ -7,10 +7,7 @@
 }
 
 .errorPanel button {
-    border-top-left-radius: 50px;
-    border-top-right-radius: 50px;
-    border-bottom-left-radius: 50px;
-    border-bottom-right-radius: 50px;
+    border-radius: 50px;
     border: 2px solid hsla(0, 0%, 100%, .25);
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     /*font-weight: bold;*/

@@ -3,11 +3,18 @@
     display: grid;
     grid-template-columns: auto 1fr auto;
     grid-template-rows: 1fr;
-    grid-template-areas:
-            'firstSection secondSection thirdSection';
+    grid-template-areas: 'firstSection secondSection thirdSection';
 
     background-color: rgba(28, 28, 28, 0.99);
     border-top: 2px solid hsla(0, 0%, 100%, .1);
+    padding: 0 3rem;
+    opacity: .7;
+}
+
+.footer > * {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .firstSection {
@@ -16,12 +23,15 @@
 
 .secondSection {
     grid-area: secondSection;
-    width: 100%;
     text-align: center;
 }
 
 .thirdSection {
+    grid-area: thirdSection;
+}
 
+.hourlyCost {
+    margin-right: 2rem;
 }
 
 .title {
@@ -34,12 +44,11 @@
 .title span {
     border: .15rem solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     display: inline-block;
-    width: 3rem;
-    height: 3rem;
+    width: 3.3rem;
+    height: 3.3rem;
     text-align: center;
-    opacity: .6;
     background-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -75,4 +84,8 @@
     100% {
         opacity: .6
     }
+}
+
+.footer button {
+    margin: .2rem;
 }

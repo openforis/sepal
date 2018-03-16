@@ -1,15 +1,15 @@
 .home {
     height: 100%;
     display: grid;
-    grid-template-columns: 5rem 1fr;
-    grid-template-rows: 1fr 5rem;
+    grid-template-columns: 10rem 1fr;
+    grid-template-rows: 1fr 4.5rem;
     grid-template-areas:
-            'navBar  body'
+            'sections  body'
             'footer  footer';
 }
 
-.navBar {
-    grid-area: navBar;
+.sections {
+    grid-area: sections;
 }
 
 .footer {

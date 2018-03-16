@@ -1,18 +1,13 @@
 button.default {
-    border-top-left-radius: 50px;
-    border-top-right-radius: 50px;
-    border-bottom-left-radius: 50px;
-    border-bottom-right-radius: 50px;
     border: 2px solid hsla(0, 0%, 100%, .25);
+    border-radius: 50px;
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     text-transform: uppercase;
     line-height: 1;
     letter-spacing: 0.1rem;
-    position: relative;
     height: 2.4rem;
-    padding: 0 1.5rem 0 2.2rem;
+    padding: 0 1.5rem;
     cursor: pointer;
-    opacity: .8;
 }
 
 button.default:hover {
@@ -36,22 +31,17 @@ button.default:disabled {
     cursor: not-allowed;
 }
 
-button.default .buttonIcon {
-    transform: translateY(-50%);
-    position: absolute;
-    top: 50%;
-    left: 1rem;
+button.default i {
     font-size: 1rem;
+    margin-right: .3rem;
 }
-
 
 button.submit {
     padding: 1rem 3rem 1rem 3.5rem;
     height: 3rem;
 }
 
-button.submit .buttonIcon {
-    left: 1.5rem;
+button.submit i {
     font-size: 1.5rem;
 }
 
@@ -60,12 +50,13 @@ button.icon {
     width: 3rem;
     padding: 0;
     border: none;
-    background-color: hsla(240,9%,89%,.1);
+    background-color: hsla(240, 9%, 89%, .1);
+
 }
 
-button.icon .buttonIcon {
-    left: 25%;
+button.icon i {
     font-size: 1.3rem;
+    margin: 0;
 }
 
 button.icon:hover {
