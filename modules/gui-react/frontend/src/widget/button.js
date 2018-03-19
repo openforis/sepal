@@ -25,8 +25,8 @@ export const Button = ({icon, tabIndex, onClick, className, children, ...props})
 }
 
 Button.propTypes = {
-    icon: PropTypes.string.isRequired,
-    onClick: PropTypes.func.isRequired,
+    icon: PropTypes.string,
+    onClick: PropTypes.func,
     tabIndex: PropTypes.number,
     className: PropTypes.string
 }

@@ -30,14 +30,14 @@ const Footer = ({user, className}) => {
                 </span>
 
                 <Tooltip msg='home.footer.account' top>
-                    <Button icon='user' classNames={styles.user}>
+                    <Button icon='user' className={styles.user}>
                         {user.username}
                     </Button>
                 </Tooltip>
 
 
                 <Tooltip msg='home.footer.logout' top>
-                    <Button icon='sign-out' classNames={styles.logout}>
+                    <Button icon='sign-out' className={styles.logout}>
                         {msg('home.footer.logout.label')}
                     </Button>
                 </Tooltip>
