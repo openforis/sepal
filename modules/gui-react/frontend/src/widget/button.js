@@ -5,8 +5,10 @@ import PropTypes from 'prop-types'
 
 export const Button = ({icon, tabIndex, onClick, className, children, ...props}) => {
     function handleClick(e) {
-        e.preventDefault()
-        onClick && onClick()
+        if (onClick) {
+            e.preventDefault()
+            onClick()
+        }
     }
 
     return (

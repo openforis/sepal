@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import styles from './home.module.css'
 import Sections from './sections/sections'
 import Footer from './footer/footer'
-
+import Body from './body/body'
 
 const Home = ({user}) =>
     <div className={styles.home}>
@@ -16,8 +16,3 @@ export default Home
 Home.propTypes = {
     user: PropTypes.object.isRequired
 }
-
-const Body = () =>
-    <div className={styles.body}>
-        Body
-    </div>

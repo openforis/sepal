@@ -2,10 +2,11 @@ import React from 'react'
 import styles from './sections.module.css'
 import {IconButton} from 'widget/button'
 import Tooltip from 'widget/tooltip'
+import {Link} from 'route'
 
 const Sections = () =>
     <div className={styles.sections}>
-        <Section name='home' icon='home'/>
+        <Section name='dashboard' icon='home'/>
         <Section name='search' icon='globe'/>
         <Section name='browse' icon='folder-open'/>
         <Section name='process' icon='wrench'/>
@@ -14,8 +15,10 @@ const Sections = () =>
 export default Sections
 
 const Section = ({name, icon}) =>
-    <Tooltip msg={'home.sections.' + name} right>
-        <IconButton
-            icon={icon}
-            className={`${styles.section} ${styles[name + 'Icon']}`}/>
-    </Tooltip>
+    <Link to={'/' + name} onMouseDown={(e) => e.preventDefault()}>
+        <Tooltip msg={'home.sections.' + name} right>
+            <IconButton
+                icon={icon}
+                className={`${styles.section} ${styles[name + 'Icon']}`}/>
+        </Tooltip>
+    </Link>

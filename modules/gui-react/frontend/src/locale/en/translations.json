@@ -81,7 +81,7 @@
       "logout.tooltip": "Logout from Sepal"
     },
     "sections": {
-      "home.tooltip": "TBD",
+      "dashboard.tooltip": "TBD",
       "search.tooltip": "TBD",
       "browse.tooltip": "TBD",
       "process.tooltip": "TBD",
