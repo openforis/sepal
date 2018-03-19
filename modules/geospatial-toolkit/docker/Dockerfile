@@ -43,4 +43,7 @@ RUN chmod u+x /script/init_r_packages.sh; sync && /script/init_r_packages.sh
 ADD script/init_post.sh /script
 RUN chmod u+x /script/init_post.sh; sync && /script/init_post.sh
 
+ADD script/install-dggrid.sh /usr/local/bin/install-dggrid
+RUN chmod +x /usr/local/bin/install-dggrid
+
 CMD ["/bin/bash"]

@@ -59,6 +59,7 @@ apt-get install -y \
     libgmp3-dev \
     libgstreamer0.10-dev \
     libgstreamer-plugins-base0.10-dev \
+    libpython3.5-dev \
     libproj-dev \
     libssl-dev \
     libxcursor-dev \
@@ -69,6 +70,7 @@ apt-get install -y \
     parallel \
     pkg-config \
     p7zip-full \
+    python3-gdal \
     python-dev \
     python-opencv \
     python-pandas \
@@ -81,6 +83,7 @@ apt-get install -y \
     rsync \
     saga \
     screen \
+    shapelib \
     swig \
     tcl-dev \
     tmux \
