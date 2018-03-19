@@ -4,6 +4,7 @@ import styles from './home.module.css'
 import Sections from './sections/sections'
 import Footer from './footer/footer'
 
+
 const Home = ({user}) =>
     <div className={styles.home}>
         <Sections/>

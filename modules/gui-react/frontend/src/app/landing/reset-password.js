@@ -1,5 +1,5 @@
 import React from 'react'
-import {resetPassword$, tokenUser, tokenValid, validateToken$} from 'user'
+import {resetPassword$, tokenUser, validateToken$} from 'user'
 import {history, query} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {SubmitButton} from 'widget/button'

@@ -1,6 +1,7 @@
 import React from 'react'
 import styles from './sections.module.css'
 import {IconButton} from 'widget/button'
+import Tooltip from 'widget/tooltip'
 
 const Sections = () =>
     <div className={styles.sections}>
@@ -13,6 +14,8 @@ const Sections = () =>
 export default Sections
 
 const Section = ({name, icon}) =>
-    <IconButton
-        icon={icon}
-        className={`${styles.section} ${styles[name + 'Icon']}`}/>
+    <Tooltip msg={'home.sections.' + name} right>
+        <IconButton
+            icon={icon}
+            className={`${styles.section} ${styles[name + 'Icon']}`}/>
+    </Tooltip>

@@ -73,7 +73,20 @@
     }
   },
   "home": {
-    "logout": "Logout"
+    "footer": {
+      "tasks.tooltip": "Manage your background tasks",
+      "manageUsers.tooltip": "Manage Sepal users",
+      "account.tooltip": "Modify your account settings",
+      "logout.label": "Logout",
+      "logout.tooltip": "Logout from Sepal"
+    },
+    "sections": {
+      "home.tooltip": "TBD",
+      "search.tooltip": "TBD",
+      "browse.tooltip": "TBD",
+      "process.tooltip": "TBD",
+      "terminal.tooltip": "TBD"
+    }
   },
   "action": {
     "error.title": "Failed: {action}",

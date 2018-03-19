@@ -16,8 +16,10 @@ export const Button = ({icon, tabIndex, onClick, className, children, ...props})
             tabIndex={tabIndex}
             {...props}
         >
-            <Icon name={icon}/>
-            {children}
+            <div className={styles.content}>
+                <Icon name={icon}/>
+                {children}
+            </div>
         </button>
     )
 }

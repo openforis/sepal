@@ -1,4 +1,4 @@
-button.default {
+.default {
     border: 2px solid hsla(0, 0%, 100%, .25);
     border-radius: 50px;
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
@@ -10,39 +10,55 @@ button.default {
     cursor: pointer;
 }
 
-button.default:hover {
+.content {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.content > * {
+    margin: auto;
+}
+
+.default:hover {
     background-color: hsla(0, 0%, 100%, .1);
     border: 2px solid hsla(0, 0%, 100%, .25);
 }
 
-button.default:active {
+.default:focus {
+    border: 2px solid hsla(0, 0%, 100%, .35);
+}
+
+.default:active {
     background-color: hsla(0, 0%, 100%, .15);
     border: 2px solid hsla(0, 0%, 100%, .40);
 }
 
-button.default:focus {
-    border: 2px solid hsla(0, 0%, 100%, .35);
-}
-
-button.default:disabled {
+.default:disabled {
     background-color: hsla(0, 0%, 100%, .15);
     border: 2px solid hsla(0, 0%, 100%, .15);
     color: hsla(0, 0%, 100%, .40);
     cursor: not-allowed;
 }
 
-button.default i {
+.default i {
     font-size: 1rem;
+    line-height: 1rem;
+    margin: auto;
     margin-right: .3rem;
 }
 
 button.submit {
-    padding: 1rem 3rem 1rem 3.5rem;
-    height: 3rem;
+    height: 4rem;
+    padding: 0 2rem;
 }
 
 button.submit i {
+    margin-right: .6rem;
     font-size: 1.5rem;
+    line-height: 1.5rem;
+    left: 1.5rem;
+    width: 1.5rem;
 }
 
 button.icon {
@@ -64,14 +80,14 @@ button.icon:hover {
     background-color: hsla(0, 0%, 100%, .15);
 }
 
-button.icon:active {
-    border: none;
-    background-color: hsla(0, 0%, 100%, .20) !important;
-}
-
 button.icon:focus {
     border: none;
     background-color: hsla(0, 0%, 100%, .15);
+}
+
+button.icon:active {
+    border: none;
+    background-color: hsla(0, 0%, 100%, .20);
 }
 
 button.icon:disabled {

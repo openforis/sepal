@@ -5,10 +5,13 @@
     padding: 10rem 0 0 1rem;
 }
 
+.sections > * {
+    margin-bottom: 2.5rem;
+}
+
 .sections button.section {
     width: 4.5rem;
     height: 4.5rem;
-    margin-bottom: 2.5rem;
 }
 
 .sections button.section i {
@@ -16,35 +19,70 @@
     line-height: 1.8rem;
 }
 
-.sections .homeIcon {
-    background-color: hsla(0, 0%, 100%, .15);
+.sections button.homeIcon {
+    background-color: hsla(0, 0%, 100%, .2);
 }
 
-.sections .homeIcon:hover {
+.sections button.homeIcon:focus {
+    background-color: hsla(0, 0%, 100%, .2);
+    border: 2px solid hsla(0, 0%, 100%, .4);
+}
+
+.sections button.homeIcon:hover {
     background-color: hsla(0, 0%, 100%, .05);
     border: 2px solid hsla(0, 0%, 100%, .4);
 }
 
-.sections .searchIcon {
+.sections button.homeIcon:active {
+    background-color: hsla(0, 0%, 100%, .2);
+    border: 2px solid hsla(0, 0%, 100%, .4);
+}
+
+.sections button.searchIcon {
     background-color: hsla(35, 96%, 74%, .4);
 }
 
-.sections .searchIcon:hover {
+.sections button.searchIcon:focus {
+    background-color: hsla(35, 96%, 74%, .4);
+    border: 2px solid hsla(35, 96%, 74%, .7);
+}
+
+.sections button.searchIcon:hover {
     background-color: hsla(35, 96%, 74%, .1);
     border: 2px solid hsla(35, 96%, 74%, .7);
 }
 
-.sections .browseIcon {
+.sections button.searchIcon:active {
+    background-color: hsla(35, 96%, 74%, .4);
+    border: 2px solid hsla(35, 96%, 74%, .7);
+}
+
+.sections button.browseIcon {
     background-color: hsla(99, 9%, 51%, .4);
 }
 
-.sections .browseIcon:hover {
+.sections button.browseIcon:focus {
+    background-color: hsla(99, 9%, 51%, .4);
+    border: 2px solid hsla(99, 9%, 51%, .7);
+}
+
+.sections button.browseIcon:hover {
     background-color: hsla(99, 9%, 51%, .1);
     border: 2px solid hsla(99, 9%, 51%, .7);
 }
 
-.sections .processIcon {
+.sections button.browseIcon:active {
+    background-color: hsla(99, 9%, 51%, .4);
+    border: 2px solid hsla(99, 9%, 51%, .7);
+}
+
+.sections button.processIcon {
     background-color: rgba(96, 71, 90, .4);
+}
+
+.sections button.processIcon:focus {
+    background-color: rgba(96, 71, 90, .4);
+    border: 2px solid rgba(96, 71, 90, .7);
 }
 
 .sections .processIcon:hover {
@@ -52,11 +90,26 @@
     border: 2px solid rgba(96, 71, 90, .7);
 }
 
-.sections .terminalIcon {
+.sections button.processIcon:active {
+    background-color: rgba(96, 71, 90, .4);
+    border: 2px solid rgba(96, 71, 90, .7);
+}
+
+.sections button.terminalIcon {
     background-color: rgba(74, 94, 130, .4);
 }
 
-.sections .terminalIcon:hover {
+.sections button.terminalIcon:focus {
+    background-color: rgba(74, 94, 130, .4);
+    border: 2px solid rgba(74, 94, 130, .7);
+}
+
+.sections button.terminalIcon:hover {
     background-color: rgba(74, 94, 130, .1);
+    border: 2px solid rgba(74, 94, 130, .7);
+}
+
+.sections button.terminalIcon:active {
+    background-color: rgba(74, 94, 130, .4);
     border: 2px solid rgba(74, 94, 130, .7);
 }

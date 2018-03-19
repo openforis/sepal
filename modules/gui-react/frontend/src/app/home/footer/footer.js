@@ -3,13 +3,21 @@ import {msg} from 'translate'
 import styles from './footer.module.css'
 import {Button, IconButton} from 'widget/button'
 import Icon from 'widget/icon'
+import Tooltip from 'widget/tooltip'
 
-const Footer = ({user, className}) =>
-    <div className={`${className} ${styles.footer}`}>
+const Footer = ({user, className}) => {
+    const manageUsers = (
+        <Tooltip msg='home.footer.manageUsers' topRight>
+            <IconButton icon='users'/>
+        </Tooltip>
+    )
+    return <div className={`${className} ${styles.footer}`}>
         <div className={styles.firstSection}>
             <div>
-                <IconButton icon='tasks'/>
-                <IconButton icon='users'/>
+                <Tooltip msg='home.footer.tasks' topRight>
+                    <IconButton icon='tasks'/>
+                </Tooltip>
+                {user.admin ? manageUsers : null}
             </div>
         </div>
 
@@ -21,19 +29,25 @@ const Footer = ({user, className}) =>
                     <Icon name='usd'/> 0/h
                 </span>
 
-                <Button icon='user' classNames={styles.user}>
-                    {user.username}
-                </Button>
+                <Tooltip msg='home.footer.account' top>
+                    <Button icon='user' classNames={styles.user}>
+                        {user.username}
+                    </Button>
+                </Tooltip>
 
-                <Button icon='sign-out' classNames={styles.logout}>
-                    {msg('home.logout')}
-                </Button>
+
+                <Tooltip msg='home.footer.logout' top>
+                    <Button icon='sign-out' classNames={styles.logout}>
+                        {msg('home.footer.logout.label')}
+                    </Button>
+                </Tooltip>
             </div>
         </div>
     </div>
+}
 export default Footer
 
-const Title = ({}) =>
+const Title = () =>
     <div className={styles.secondSection}>
         <div>
             <h2 className={styles.title}>
