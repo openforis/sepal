@@ -1,4 +1,5 @@
 import React from 'react'
+import styles from './terminal.module.css'
 
 export default class Terminal extends React.Component {
     componentWillMount() {
@@ -10,6 +11,10 @@ export default class Terminal extends React.Component {
     }
 
     render() {
-        return <div>Terminal</div>
+        return (
+            <div className={styles.container}>
+                <h1>Terminal</h1>
+            </div>
+        )
     }
 }

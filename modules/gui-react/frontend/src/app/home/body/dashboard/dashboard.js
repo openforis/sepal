@@ -1,4 +1,5 @@
 import React from 'react'
+import styles from './dashboard.module.css'
 
 export default class Dashboard extends React.Component {
     componentWillMount() {
@@ -10,6 +11,10 @@ export default class Dashboard extends React.Component {
     }
 
     render() {
-        return <div>Dashboard</div>
+        return (
+            <div className={styles.container}>
+                <h1>Dashboard</h1>
+            </div>
+        )
     }
 }

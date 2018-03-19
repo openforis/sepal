@@ -1,0 +1,52 @@
+.container {
+    background-color: #440000;
+}
+
+.sections > * {
+    position: absolute;
+    width: 100%;
+}
+
+.sections > * > * {
+    height: 10rem;
+}
+
+.selected {
+    animation-name: show;
+    animation-duration: 300ms;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+}
+
+.unselected {
+    animation-name: hide;
+    animation-duration: 300ms;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+}
+
+@keyframes hide {
+    0% {
+        opacity: 1;
+        transform: none;
+    }
+    100% {
+        opacity: 0;
+        transform: translate3d(1%, 0, 0);
+    }
+}
+
+@keyframes show {
+    0% {
+        opacity: 0;
+        transform: translate3d(100%, 0, 0);
+    }
+    50% {
+        opacity: 0;
+        transform: translate3d(100%, 0, 0);
+    }
+    100% {
+        opacity: 1;
+        transform: none;
+    }
+}
