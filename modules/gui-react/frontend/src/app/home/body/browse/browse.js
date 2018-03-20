@@ -1,5 +1,4 @@
 import React from 'react'
-import styles from './browse.module.css'
 
 export default class Browse extends React.Component {
     componentWillMount() {
@@ -12,7 +11,7 @@ export default class Browse extends React.Component {
 
     render() {
         return (
-            <div className={styles.container}>
+            <div style={{height: '100px', background: 'blue'}}>
                 <h1>Browse</h1>
             </div>
         )

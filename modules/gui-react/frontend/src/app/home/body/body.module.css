@@ -1,24 +1,31 @@
-.container {
-    background-color: #440000;
-}
-
 .sections > * {
     position: absolute;
     width: 100%;
-}
-
-.sections > * > * {
-    height: 10rem;
+    height: 100%;
 }
 
 .selected {
+    text-transform: uppercase;
+    display: block;
+}
+
+.unselected {
+    text-transform: lowercase;
+    display: none;
+}
+
+.enter {
+    color: green;
     animation-name: show;
     animation-duration: 300ms;
     animation-fill-mode: forwards;
     animation-timing-function: ease-in-out;
 }
 
-.unselected {
+.exit {
+    color: orange;
+    display: block !important;
+    opacity: 0;
     animation-name: hide;
     animation-duration: 300ms;
     animation-fill-mode: forwards;

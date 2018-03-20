@@ -129,7 +129,7 @@
             </plugin>
 
 
-            <!-- Install node, npm, bower, and gulp locally. Trigger gulp build. -->
+            <!-- Install node and npm-->
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
@@ -159,12 +159,12 @@
                     </execution>
 
                     <execution>
-                        <id>Webpack build</id>
+                        <id>npm run build</id>
                         <goals>
-                            <goal>webpack</goal>
+                            <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>-p</arguments>
+                            <arguments>run build</arguments>
                         </configuration>
                     </execution>
                 </executions>
