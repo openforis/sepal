@@ -44,6 +44,3 @@ Section = connect(mapStateToProps)(Section)
 function inPath(location, path) {
     return location.pathname === path
 }
-
-// Need to know which section is currently selected, to know what direction to navigate to
-// Component state, or redux state?

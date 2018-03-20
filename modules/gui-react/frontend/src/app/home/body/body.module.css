@@ -1,3 +1,7 @@
+.sections {
+    position: relative;
+}
+
 .sections > * {
     position: absolute;
     width: 100%;
@@ -8,7 +12,12 @@
     opacity: 0;
 }
 
+.section > * {
+    height: 100%;
+}
+
 .in {
+    z-index: 1;
     animation-name: show;
     animation-duration: 300ms;
     animation-fill-mode: forwards;
@@ -16,6 +25,7 @@
 }
 
 .out {
+    z-index: -1;
     animation-name: hide;
     animation-duration: 300ms;
     animation-fill-mode: forwards;
@@ -36,11 +46,7 @@
 @keyframes show {
     0% {
         opacity: 0;
-        transform: translate3d(100%, 0, 0);
-    }
-    50% {
-        opacity: 0;
-        transform: translate3d(100%, 0, 0);
+        transform: translate3d(25%, 0, 0);
     }
     100% {
         opacity: 1;

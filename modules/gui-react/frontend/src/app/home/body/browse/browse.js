@@ -11,8 +11,9 @@ export default class Browse extends React.Component {
 
     render() {
         return (
-            <div style={{height: '100px', background: 'blue'}}>
+            <div style={{background: 'blue'}}>
                 <h1>Browse</h1>
+                <input id='browse' autoFocus={true}/>
             </div>
         )
     }

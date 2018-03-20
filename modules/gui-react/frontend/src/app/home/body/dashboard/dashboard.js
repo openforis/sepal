@@ -11,8 +11,9 @@ export default class Dashboard extends React.Component {
 
     render() {
         return (
-            <div style={{height: '100px', background: 'green'}}>
+            <div style={{background: 'green'}}>
                 <h1>Dashboard</h1>
+                <input id='dash' autoFocus={true}/>
             </div>
         )
     }

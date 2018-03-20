@@ -1,73 +1,79 @@
 import React from 'react'
-// import './gateone'
-// import './gateone.css'
-// import Http from 'http-client'
-
-export default class Terminal extends React.Component {
-    // componentWillMount() {
-    //     Http.get$('/api/gateone/auth-object')
-    //         .subscribe(e => initTerminal(e.response.authObject))
-    // }
-
-    render() {
-        return (
-            <div style={{height: '100px', background: 'red'}}>
-                <h1>Terminal</h1>
-                <div id='gateone' style={{height: '200px', background: 'orange'}}/>
-            </div>
-        )
-    }
-}
+import './gateone'
+import './gateone.css'
+import Http from 'http-client'
+import {currentUser} from 'user'
+import {connect} from 'store'
 
 let terminalId = null
 
-/* eslint-disable */
-// function initTerminal(auth) {
-//     purgeUserPrefs()
-//     GateOne.Events.on('go:js_loaded', createGateOneTerminal)
-//     GateOne.init({
-//         url: `https://${window.location.host}/gateone`,
-//         auth: auth,
-//         embedded: true
-//     })
-// }
+const mapStateToProps = () => ({
+    username: currentUser().username
+})
 
-// function createGateOneTerminal() {
-//     if (terminalId || GateOne.Terminal == null)
-//         return
+class Terminal extends React.Component {
+    componentWillMount() {
+        Http.get$('/api/gateone/auth-object')
+            .subscribe(e => this.initTerminal(e.response.authObject))
+    }
 
-//     function newTerminal() {
-//         terminalId = GateOne.Terminal.newTerminal(randomTerminalId())
-//         GateOne.Terminal.setTerminal(terminalId)
-//         GateOne.Terminal.clearScrollback(terminalId)
-//         GateOne.Terminal.sendString(
-//             `ssh://${UserMV.getCurrentUser().username}@ssh-gateway?identities=id_rsa`,
-//             terminalId
-//         )
-//         focusTerminal()
-//     }
+    render() {
+        return (
+            <div id='gateone'/>
+        )
+    }
 
-//     if (GateOne.Terminal.closeTermCallbacks.length === 0) {
-//         GateOne.Terminal.closeTermCallbacks.push(newTerminal)
-//     }
-//     // Avoid printing host fingerprints on the browser console
-//     GateOne.Net.addAction('terminal:sshjs_display_fingerprint', () => {})
-//     GateOne.Logging.setLevel('ERROR')
-//     newTerminal()
-// }
 
-// function purgeUserPrefs() {
-//     if (typeof Storage !== 'undefined')
-//         window.localStorage.removeItem('go_default_prefs')
-// }
+    /* eslint-disable */
+    initTerminal(auth) {
+        this.purgeUserPrefs()
+        GateOne.Events.on('go:js_loaded', this.createGateOneTerminal.bind(this))
+        GateOne.init({
+            url: `https://${window.location.host}/gateone`,
+            auth: auth,
+            embedded: true
+        })
+    }
 
-// function focusTerminal() {
-//     if (terminalId) {
-//         GateOne.Terminal.Input.capture()
-//         $('.✈terminal').click()
-//     }
-// }
+    newTerminal() {
+        terminalId = GateOne.Terminal.newTerminal(this.randomTerminalId())
+        GateOne.Terminal.setTerminal(terminalId)
+        GateOne.Terminal.clearScrollback(terminalId)
+        GateOne.Terminal.sendString(
+            `ssh://${this.props.username}@ssh-gateway?identities=id_rsa\n`,
+            terminalId
+        )
+        // this.focusTerminal()
+    }
 
-// function randomTerminalId() {
-//     return Math.floor(Math.random() * (Number.MAX_SAFE_INTEGER)) + 1
-// }
+    createGateOneTerminal() {
+        if (terminalId || GateOne.Terminal == null)
+            return
+
+        if (GateOne.Terminal.closeTermCallbacks.length === 0)
+            GateOne.Terminal.closeTermCallbacks.push(this.newTerminal)
+        // Avoid printing host fingerprints on the browser console
+        GateOne.Net.addAction('terminal:sshjs_display_fingerprint', () => {})
+        GateOne.Logging.setLevel('ERROR')
+        this.newTerminal()
+    }
+
+    purgeUserPrefs() {
+        if (typeof Storage !== 'undefined')
+            window.localStorage.removeItem('go_default_prefs')
+    }
+
+    // focusTerminal() {
+    //     if (terminalId) {
+    //         GateOne.Terminal.Input.capture()
+    //         $('.✈terminal').click()
+    //     }
+    // }
+
+    randomTerminalId() {
+        return Math.floor(Math.random() * (Number.MAX_SAFE_INTEGER)) + 1
+    }
+
+}
+export default Terminal = connect(mapStateToProps)(Terminal)
+
