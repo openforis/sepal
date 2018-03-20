@@ -5,12 +5,12 @@ import Browse from './browse/browse'
 import Terminal from './terminal/terminal'
 import {connect} from 'react-redux'
 import styles from './body.module.css'
-import Selectable from 'widget/selectable'
+import {Select, Selectable} from 'widget/selectable'
 
 export default class Body extends React.Component {
     render() {
         return (
-            <div className={styles.sections}>
+            <Select className={styles.sections}>
                 <Section path='/dashboard'>
                     <Dashboard/>
                 </Section>
@@ -20,7 +20,7 @@ export default class Body extends React.Component {
                 <Section path='/terminal'>
                     <Terminal/>
                 </Section>
-            </div>
+            </Select>
         )
     }
 }

@@ -1,7 +1,33 @@
 import React from 'react'
-import actionBuilder from 'store'
+import PropTypes from 'prop-types'
 
-export default class Selectable extends React.Component {
+export class Select extends React.Component {
+    getChildContext() {
+        const focus = (element) => this.elementToFocus = element
+        focus.bind(this)
+        return {
+            focus: focus
+        }
+    }
+
+    render() {
+        return (
+            <div className={this.props.className}>
+                {this.props.children}
+            </div>
+        )
+    }
+
+    componentDidUpdate() {
+        this.elementToFocus && this.elementToFocus.focus()
+    }
+}
+
+Select.childContextTypes = {
+    focus: PropTypes.func
+}
+
+export class Selectable extends React.Component {
     constructor(props) {
         super(props)
         if (this.props.active) {
@@ -12,22 +38,23 @@ export default class Selectable extends React.Component {
     componentWillReceiveProps(nextProps) {
         if (this.props.active && !nextProps.active) {
             this.className = this.props.classNames.out
-            this.active = false
-            // this.activeElement = document.activeElement
-            console.log('capture focus', this.activeElement && this.activeElement.id)
+            this.activeElement = document.activeElement
         }
         if (!this.props.active && nextProps.active) {
             this.className = this.props.classNames.in
-            // this.activeElement && this.activeElement.focus()
-            console.log('set focus', this.activeElement && this.activeElement.id)
+            this.activeElement && this.context.focus(this.activeElement)
         }
     }
 
-    render () {
+    render() {
         return (
             <div className={[this.props.classNames.default, this.className].join(' ')}>
                 {this.props.children}
             </div>
         )
     }
+}
+
+Selectable.contextTypes = {
+    focus: PropTypes.func
 }
