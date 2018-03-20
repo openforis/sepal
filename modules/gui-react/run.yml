@@ -2,7 +2,7 @@
 - name: "gui | Start container"
   docker_container:
     api_version: "{{ api_version }}"
-    name: "{{ name }}"
+    name: "gui"
     pull: "{{ pull }}"
     image: "{{ image }}"
     state: "{{ state }}"
