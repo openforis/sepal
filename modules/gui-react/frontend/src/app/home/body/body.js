@@ -5,19 +5,19 @@ import Browse from './browse/browse'
 import Terminal from './terminal/terminal'
 import {connect} from 'react-redux'
 import styles from './body.module.css'
-import {CSSTransition} from 'react-transition-group'
+import Selectable from 'widget/selectable'
 
 export default class Body extends React.Component {
     render() {
         return (
             <div className={styles.sections}>
-                <Section path='/dashboard' index={0}>
+                <Section path='/dashboard'>
                     <Dashboard/>
                 </Section>
-                <Section path='/browse' index={2}>
+                <Section path='/browse'>
                     <Browse/>
                 </Section>
-                <Section path='/terminal' index={4}>
+                <Section path='/terminal'>
                     <Terminal/>
                 </Section>
             </div>
@@ -29,18 +29,16 @@ const mapStateToProps = () => ({
     location: location()
 })
 
-let Section = ({location, path, index, children}) =>
-    <CSSTransition
-        in={inPath(location, path)}
+let Section = ({location, path, children}) =>
+    <Selectable
+        active={inPath(location, path)}
         classNames={{
-            enter: styles.enter,
-            exit: styles.exit
-        }}
-        timeout={300}>
-        <div className={inPath(location, path) ? styles.selected : styles.unselected}>
-            {children}
-        </div>
-    </CSSTransition>
+            default: styles.section,
+            in: styles.in,
+            out: styles.out,
+        }}>
+        {children}
+    </Selectable>
 Section = connect(mapStateToProps)(Section)
 
 function inPath(location, path) {

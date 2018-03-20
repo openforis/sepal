@@ -11,7 +11,7 @@ export default class Dashboard extends React.Component {
 
     render() {
         return (
-            <div style={{height: '100px', background: 'blue'}}>
+            <div style={{height: '100px', background: 'green'}}>
                 <h1>Dashboard</h1>
             </div>
         )

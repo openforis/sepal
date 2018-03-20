@@ -4,28 +4,18 @@
     height: 100%;
 }
 
-.selected {
-    text-transform: uppercase;
-    display: block;
+.section {
+    opacity: 0;
 }
 
-.unselected {
-    text-transform: lowercase;
-    display: none;
-}
-
-.enter {
-    color: green;
+.in {
     animation-name: show;
     animation-duration: 300ms;
     animation-fill-mode: forwards;
     animation-timing-function: ease-in-out;
 }
 
-.exit {
-    color: orange;
-    display: block !important;
-    opacity: 0;
+.out {
     animation-name: hide;
     animation-duration: 300ms;
     animation-fill-mode: forwards;
