@@ -4,6 +4,7 @@ import './gateone.css'
 import Http from 'http-client'
 import {currentUser} from 'user'
 import {connect} from 'store'
+import PropTypes from 'prop-types'
 
 let terminalId = null
 
@@ -26,6 +27,15 @@ class Terminal extends React.Component {
     }
 
     /* eslint-disable */
+    componentWillReceiveProps(nextProps, nextContext) {
+        if (nextContext.active && terminalId) {
+            GateOne.Terminal.Input.capture()
+            const terminalElements = document.getElementsByClassName('✈terminal')
+            terminalElements[0].click()
+        }
+
+    }
+
     initTerminal(auth) {
         this.purgeUserPrefs()
         GateOne.Events.on('go:js_loaded', this.createGateOneTerminal.bind(this))
@@ -77,6 +87,10 @@ class Terminal extends React.Component {
         return Math.floor(Math.random() * (Number.MAX_SAFE_INTEGER)) + 1
     }
 
+}
+
+Terminal.contextTypes = {
+    active: PropTypes.string
 }
 
 export default Terminal = connect(mapStateToProps)(Terminal)

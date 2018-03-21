@@ -6,7 +6,6 @@
     background-color: rgba(0, 0, 0, 0) !important;
 }
 
-#go_default_term1scrollback .✈sbline:empty {
-    /*display: none;*/
-    background-color: red;
+#terminal {
+    font-size: 1.2rem !important;
 }

@@ -27,23 +27,30 @@ Select.childContextTypes = {
 export class Selectable extends React.Component {
     constructor(props) {
         super(props)
-        console.log('active', this.props.active)
+        this.active = false
         if (this.props.active) {
             this.hasBeenActive = true
+            this.active = true
             this.className = props.classNames.in
         }
+    }
+
+    getChildContext() {
+        return {active: this.active}
     }
 
     componentWillReceiveProps(nextProps) {
         if (this.props.active && !nextProps.active) {
             this.className = this.props.classNames.out
-            console.log('out', document.activeElement, document.activeElement && document.activeElement.id)
+            this.active = false
             this.activeElement = document.activeElement
-        }
-        if (!this.props.active && nextProps.active) {
+        } else if (!this.props.active && nextProps.active) {
             this.className = this.props.classNames.in
             this.hasBeenActive = true
+            this.active = true
             this.activeElement && this.context.focus(this.activeElement)
+        } else {
+            this.active = false
         }
     }
 
@@ -58,4 +65,7 @@ export class Selectable extends React.Component {
 
 Selectable.contextTypes = {
     focus: PropTypes.func
+}
+Selectable.childContextTypes = {
+    active: PropTypes.boolean
 }
