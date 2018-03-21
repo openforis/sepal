@@ -23,7 +23,6 @@ class Terminal extends React.Component {
         )
     }
 
-
     /* eslint-disable */
     initTerminal(auth) {
         this.purgeUserPrefs()
@@ -43,7 +42,6 @@ class Terminal extends React.Component {
             `ssh://${this.props.username}@ssh-gateway?identities=id_rsa\n`,
             terminalId
         )
-        // this.focusTerminal()
     }
 
     createGateOneTerminal() {

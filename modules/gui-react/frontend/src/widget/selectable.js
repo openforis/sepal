@@ -4,10 +4,7 @@ import PropTypes from 'prop-types'
 export class Select extends React.Component {
     getChildContext() {
         const focus = (element) => this.elementToFocus = element
-        focus.bind(this)
-        return {
-            focus: focus
-        }
+        return {focus: focus.bind(this)}
     }
 
     render() {
@@ -30,7 +27,9 @@ Select.childContextTypes = {
 export class Selectable extends React.Component {
     constructor(props) {
         super(props)
+        console.log('active', this.props.active)
         if (this.props.active) {
+            this.hasBeenActive = true
             this.className = props.classNames.in
         }
     }
@@ -38,10 +37,12 @@ export class Selectable extends React.Component {
     componentWillReceiveProps(nextProps) {
         if (this.props.active && !nextProps.active) {
             this.className = this.props.classNames.out
+            console.log('out', document.activeElement, document.activeElement && document.activeElement.id)
             this.activeElement = document.activeElement
         }
         if (!this.props.active && nextProps.active) {
             this.className = this.props.classNames.in
+            this.hasBeenActive = true
             this.activeElement && this.context.focus(this.activeElement)
         }
     }
@@ -49,7 +50,7 @@ export class Selectable extends React.Component {
     render() {
         return (
             <div className={[this.props.classNames.default, this.className].join(' ')}>
-                {this.props.children}
+                {this.hasBeenActive ? this.props.children : null}
             </div>
         )
     }
