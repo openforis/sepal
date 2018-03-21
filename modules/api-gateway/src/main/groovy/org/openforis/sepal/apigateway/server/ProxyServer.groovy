@@ -22,12 +22,6 @@ class ProxyServer {
                 .setServerOption(UndertowOptions.REQUEST_PARSE_TIMEOUT, 60 * 1000)
                 .setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 60 * 1000)
                 .build()
-        config.endpointConfigs.each { proxy(it) }
-    }
-
-    ProxyServer proxy(EndpointConfig endpointConfig) {
-        handler.proxy(endpointConfig)
-        return this
     }
 
     ProxyServer start() {

@@ -1,11 +1,13 @@
 package org.openforis.sepal.guireact
 
+import io.undertow.Handlers
 import io.undertow.Undertow
 import io.undertow.server.handlers.resource.ClassPathResourceManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static io.undertow.Handlers.resource
+import static io.undertow.Handlers.rewrite
 
 class Main {
     private static final Logger LOG = LoggerFactory.getLogger(this)
@@ -13,11 +15,19 @@ class Main {
     private final Undertow server
 
     Main() {
-        def resourceHandler = resource(new ClassPathResourceManager(getClass().classLoader, 'build'))
+        def handler = Handlers.path(
+                rewrite('path-prefix["/"]',
+                        '/',
+                        getClass().classLoader,
+                        resource(new ClassPathResourceManager(getClass().classLoader, 'build'))))
+        handler.addPrefixPath(
+                '/static',
+                resource(new ClassPathResourceManager(getClass().classLoader, 'build/static'))
+        )
         def processorCount = Runtime.getRuntime().availableProcessors()
         server = Undertow.builder()
                 .addHttpListener(7667, "0.0.0.0")
-                .setHandler(resourceHandler)
+                .setHandler(handler)
                 .setIoThreads(processorCount)
                 .setWorkerThreads(processorCount * 32)
                 .build()

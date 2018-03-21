@@ -35,7 +35,7 @@ class RootHandler implements HttpHandler {
     private final String authenticationUrl
     private final String currentUserUrl
     private final String refreshGoogleAccessTokenUrl
-    private final PathHandler handler = Handlers.path()
+    private final PathHandler handler
     private final SessionManager sessionManager
 
     RootHandler(ProxyConfig config) {
@@ -46,10 +46,18 @@ class RootHandler implements HttpHandler {
         this.refreshGoogleAccessTokenUrl = config.refreshGoogleAccessTokenUrl
         sessionManager = new InMemorySessionManager('sandbox-web-proxy', 4096, true)
         this.sessionManager.defaultSessionTimeout = SESSION_TIMEOUT
+        handler = Handlers.path()
         handler.addExactPath(config.logoutPath, LogoutHandler.create())
+        config.endpointConfigs.each { endpointConfig ->
+            endpointConfig.prefix ?
+                    handler.addPrefixPath(endpointConfig.path, pathHandler(endpointConfig)) :
+                    handler.addExactPath(endpointConfig.path, pathHandler(endpointConfig))
+        }
     }
 
-    RootHandler proxy(EndpointConfig endpointConfig) {
+    private HttpHandler pathHandler(EndpointConfig endpointConfig) {
+        if (!endpointConfig)
+            return null
         def endpointHandler = new LoggingProxyHandler(endpointConfig, host)
         if (endpointConfig.rewriteRedirects)
             endpointHandler = new RedirectRewriteHandler(endpointHandler)
@@ -63,11 +71,7 @@ class RootHandler implements HttpHandler {
             endpointHandler = new NoCacheHandler(endpointHandler)
 //        endpointHandler = gzipHandler(endpointHandler)
         def sessionConfig = new SessionCookieConfig(cookieName: "SEPAL-SESSIONID", secure: endpointConfig.https)
-        endpointHandler = new SessionAttachmentHandler(endpointHandler, sessionManager, sessionConfig)
-        endpointConfig.prefix ?
-                handler.addPrefixPath(endpointConfig.path, endpointHandler) :
-                handler.addExactPath(endpointConfig.path, endpointHandler)
-        return this
+        return new SessionAttachmentHandler(endpointHandler, sessionManager, sessionConfig)
     }
 
     private EncodingHandler gzipHandler(HttpHandler endpointHandler) {
