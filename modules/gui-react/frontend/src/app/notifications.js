@@ -1,7 +1,6 @@
 import {connect} from 'react-redux'
 import ReactNotifications, * as notifications from 'react-notification-system-redux'
 import {msg} from 'translate'
-import {toMessage} from 'app/error'
 
 const mapStateToProps = (state) => {
     return ({
@@ -15,8 +14,7 @@ const mapStateToProps = (state) => {
                 }
             },
             Title: {
-                DefaultStyle: {
-                }
+                DefaultStyle: {}
             }
         }
     })
@@ -37,9 +35,20 @@ function toOpts(level, messageId, values = {}, message) {
     }
 }
 
+const errorMessage = (error) => {
+    if (!error) return null
+    switch (error.status) {
+        case 0:
+            return 'Failed to connect to Sepal. ' +
+                'Either your internet connection failed, or Sepal is unavailable at the moment.'
+        default:
+            return 'Sepal responded with an error. Please try again.'
+    }
+}
+
 const Notifications = connect(mapStateToProps)(ReactNotifications)
 Notifications.success = (messageId, values) => notifications.success(toOpts('success', messageId, values))
-Notifications.error = (messageId, error, values) => notifications.error(toOpts('error', messageId, values, toMessage(error)))
+Notifications.error = (messageId, error, values) => notifications.error(toOpts('error', messageId, values, errorMessage(error)))
 Notifications.warning = (messageId, values) => notifications.warning(toOpts('warning', messageId, values))
 Notifications.info = (messageId, values) => notifications.info(toOpts('info', messageId, values))
 Notifications.hide = notifications.hide

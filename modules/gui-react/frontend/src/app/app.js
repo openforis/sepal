@@ -1,7 +1,6 @@
 import React from 'react'
 import {connect} from 'store'
 import {currentUser, loadCurrentUser$} from 'user'
-import Error, {error} from 'app/error'
 import Notifications from 'app/notifications'
 import Home from 'app/home/home'
 import Landing from 'app/landing/landing'
@@ -9,8 +8,7 @@ import 'bootstrap/dist/css/bootstrap-reboot.css'
 import './app.css'
 
 const mapStateToProps = () => ({
-    currentUser: currentUser(),
-    error: error()
+    currentUser: currentUser()
 })
 
 class App extends React.Component {
@@ -21,14 +19,12 @@ class App extends React.Component {
     }
 
     render() {
-        if (this.props.error)
-            return <Error message={this.props.error}/>
-        else
-            return (
-                <div className='app'>
-                    <Notifications/>
-                    {this.body()}
-                </div>)
+        return (
+            <div className='app'>
+                <Notifications/>
+                {this.body()}
+            </div>
+        )
     }
 
     body() {
