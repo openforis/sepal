@@ -19,7 +19,9 @@ class Terminal extends React.Component {
 
     render() {
         return (
-            <div id='gateone'/>
+            <div id='terminal'>
+                <div id='gateone'/>
+            </div>
         )
     }
 
@@ -42,17 +44,20 @@ class Terminal extends React.Component {
             `ssh://${this.props.username}@ssh-gateway?identities=id_rsa\n`,
             terminalId
         )
+        setTimeout(() => {
+            GateOne.Visual.updateDimensions(true)
+        }, 10000) // Hack to get terminal size correct.
     }
 
     createGateOneTerminal() {
         if (terminalId || GateOne.Terminal == null)
             return
 
-        if (GateOne.Terminal.closeTermCallbacks.length === 0)
-            GateOne.Terminal.closeTermCallbacks.push(this.newTerminal)
-        // Avoid printing host fingerprints on the browser console
-        GateOne.Net.addAction('terminal:sshjs_display_fingerprint', () => {})
         GateOne.Logging.setLevel('ERROR')
+        if (GateOne.Terminal.closeTermCallbacks.length === 0)
+            GateOne.Terminal.closeTermCallbacks.push(this.newTerminal.bind(this))
+        // Avoid printing host fingerprints on the browser console
+        GateOne.Net.addAction('terminal:sshjs_display_fingerprint', () => null)
         this.newTerminal()
     }
 
@@ -73,5 +78,6 @@ class Terminal extends React.Component {
     }
 
 }
+
 export default Terminal = connect(mapStateToProps)(Terminal)
 

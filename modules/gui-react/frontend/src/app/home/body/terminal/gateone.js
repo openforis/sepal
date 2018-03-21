@@ -1,17 +1,17 @@
 /* eslint-disable */
 // -*- coding: utf-8 -*-
 /*
- COPYRIGHT NOTICE
- ================
+COPYRIGHT NOTICE
+================
 
- gateone.js and all related original code...
+gateone.js and all related original code...
 
- Copyright 2013 Liftoff Software Corporation
+Copyright 2013 Liftoff Software Corporation
 
- Note: Icons came from the folks at GoSquared.  Thanks guys!
- http://www.gosquared.com/liquidicity/archives/122
+Note: Icons came from the folks at GoSquared.  Thanks guys!
+http://www.gosquared.com/liquidicity/archives/122
 
- */
+*/
 
 // General TODOs
 // TODO: Separate creation of the various panels into their own little functions so we can efficiently neglect to execute them if in embedded mode.
@@ -83,7 +83,7 @@
      */
     GateOne.__name__ = "GateOne";
     GateOne.__version__ = "1.2";
-    GateOne.__commit__ = "20150624125036";
+    GateOne.__commit__ = "20171125154235";
     GateOne.__repr__ = function () {
         return "[" + this.__name__ + " " + this.__version__ + "]";
     };
@@ -359,6 +359,7 @@
         goDiv: '#gateone', // Default element to place gateone inside.
         keepaliveInterval: 60000, // How often we try to ping the Gate One server to check for a connection problem.
         prefix: 'go_', // What to prefix element IDs with (in case you need to avoid a name conflict).  NOTE: There are a few classes that use the prefix too.
+        showAppChooser: true, // Whether or not to show the application chooser
         showTitle: true, // If false, the title will not be shown in the sidebar.
         showToolbar: true, // If false, the toolbar will now be shown in the sidebar.
         skipChecks: false, // Tells GateOne.init() to skip capabilities checks (in case you have your own or are happy with silent failures).
@@ -378,6 +379,7 @@
         fillContainer: null,
         goDiv: null, // Why an object and not an array?  So the logic is simpler:  "for (var objName in noSavePrefs) ..."
         prefix: null,
+        showAppChooser: null,
         showTitle: null,
         showToolbar: null,
         skipChecks: null,
@@ -454,7 +456,8 @@
             var go = GateOne,
                 u = go.Utils,
                 criticalFailure = false,
-                missingCapabilities = [],
+                missingCapabilities = [], setting,
+                queryPrefs = JSON.parse(u.getQueryVariable('go_prefs') || '{}'),
                 parseResponse = function(response) {
                     if (response == 'authenticated') {
                         // Connect (GateOne.initialize() will be called after the connection is made)
@@ -466,8 +469,12 @@
                     }
                 };
             // Update GateOne.prefs with the settings provided in the calling page
-            for (var setting in prefs) {
+            for (setting in prefs) {
                 go.prefs[setting] = prefs[setting];
+            }
+            // Now apply any settings given via query string params
+            for (setting in queryPrefs) {
+                go.prefs[setting] = queryPrefs[setting];
             }
             // Make our prefix unique to our location
             go.prefs.prefix += go.location + '_';
@@ -838,12 +845,12 @@
             v.togglePanel(); // Scales them all away
             if (!go.prefs.embedded) {
                 E.on("go:connection_established", function() {
-                    // This is really for reconnect events
+                    // This is really for reconnect events (resume after being disconnected)
                     // If there's no workspaces make the application chooser
                     if (!u.getNodes('.✈workspace').length) {
                         v.appChooser();
                     }
-                    v.updateDimensions();
+                    v.updateDimensions(); // In case the window size changed while disconnected
                 });
                 E.on("go:js_loaded", function(apps) {
                     if (!u.getNodes('.✈workspace').length) {
@@ -1029,7 +1036,9 @@
         items: function(obj) {
             /**:GateOne.Utils.items(obj)
 
-             Copied from `MochiKit.Base.items <http://mochi.github.com/mochikit/doc/html/MochiKit/Base.html#fn-items>`_.  Returns an Array of ``[propertyName, propertyValue]`` pairs for the given *obj*.
+             .. note:: Copied from `MochiKit.Base.items <http://mochi.github.com/mochikit/doc/html/MochiKit/Base.html#fn-items>`_.
+
+             Returns an Array of ``[propertyName, propertyValue]`` pairs for the given *obj*.
 
              :param object obj: Any given JavaScript object.
              :returns: Array
@@ -1268,7 +1277,7 @@
 
              >>> GateOne.Utils.hideElement('#go_icon_newterm');
              */
-            // Sets the 'display' style of the given element to 'none'
+                // Sets the 'display' style of the given element to 'none'
             var u = GateOne.Utils,
                 display,
                 node = u.getNode(elem);
@@ -1296,8 +1305,8 @@
 
              >>> GateOne.Utils.showElements('.pastearea');
              */
-            // Sets the 'display' style of the given elements to 'block' (which undoes setting it to 'none').
-            // Elements must be an iterable (or a querySelectorAll string) such as an HTMLCollection or an Array of DOM nodes
+                // Sets the 'display' style of the given elements to 'block' (which undoes setting it to 'none').
+                // Elements must be an iterable (or a querySelectorAll string) such as an HTMLCollection or an Array of DOM nodes
             var u = GateOne.Utils,
                 elems = u.toArray(u.getNodes(elems));
             elems.forEach(function(elem) {
@@ -1404,8 +1413,8 @@
 
              Called by :js:meth:`GateOne.runPostInit`, iterates over the list of plugins in :js:attr:`GateOne.loadedModules` calling the ``init()`` function of each (if present).  When that's done it does the same thing with each respective plugin's ``postInit()`` function.
              */
-                // NOTE: Probably don't need a preInit() since modules can just put stuff inside their main .js for that.  If you can think of a use case let me know and I'll add it.
-                // Go through all our loaded modules and run their init functions (if any)
+            // NOTE: Probably don't need a preInit() since modules can just put stuff inside their main .js for that.  If you can think of a use case let me know and I'll add it.
+            // Go through all our loaded modules and run their init functions (if any)
             logDebug("Running runPostInit()");
             if (!GateOne.initialized) {
                 // Retry in a moment
@@ -1709,8 +1718,8 @@
              <head>
              ...
              */
-            // Performs a GET on the given *url* and calls *callback* with the responseText as the only argument.
-            // If *callback* is given, it will be called with the result as the only argument.
+                // Performs a GET on the given *url* and calls *callback* with the responseText as the only argument.
+                // If *callback* is given, it will be called with the result as the only argument.
             var http = new XMLHttpRequest(); // We don't support older browsers anyway so no need to worry about ActiveX garbage
             http.open("GET", url);
             http.onreadystatechange = function() {
@@ -2689,7 +2698,8 @@
                     'container': go.prefs.goDiv.split('#')[1],
                     'prefix': prefix,
                     'location': go.location,
-                    'url': go.prefs.url
+                    'url': go.prefs.url, // This is the base URL (e.g. https://somehost/)
+                    'href': window.location.href
                 };
             // Cancel our SSL error timeout since everything is working fine.
             clearTimeout(go.Net.sslErrorTimeout);
@@ -2821,7 +2831,7 @@
 
              >>> GateOne.Net.addAction('sshjs_connect', GateOne.SSH.handleConnect);
              */
-                // Adds/overwrites actions in GateOne.Net.actions
+            // Adds/overwrites actions in GateOne.Net.actions
             go.Net.actions[name] = func;
         },
         setTerminal: function(term) {
@@ -2995,31 +3005,6 @@
              ========    =========     ============================================
              `window`    `resize`      :js:meth:`GateOne.Visual.updateDimensions`
              ========    =========     ============================================
-             */
-//         console.log("GateOne.Visual.init()");
-            var u = go.Utils,
-                v = go.Visual,
-                prefix = go.prefs.prefix,
-                toolbarIconGrid = u.createElement('div', {'id': 'icon_grid', 'class': '✈toolbar_icon ✈icon_grid', 'title': "Grid View"}),
-                debouncedUpdateDimensions = u.debounce(go.Visual.updateDimensions, 250),
-                gridToggle = function() {
-                    v.toggleGridView(true);
-                };
-            // Setup our toolbar icons and actions
-            toolbarIconGrid.innerHTML = GateOne.Icons.grid;
-            toolbarIconGrid.onclick = gridToggle;
-            // Stick it on the end (can go wherever--unlike GateOne.Terminal's icons)
-            go.toolbar.appendChild(toolbarIconGrid);
-            go.Events.on('go:switch_workspace', v.slideToWorkspace);
-            go.Events.on('go:switch_workspace', v.locationsCheck);
-            go.Events.on('go:cleanup_workspaces', v.cleanupWorkspaces);
-            window.addEventListener('resize', debouncedUpdateDimensions, false);
-            document.addEventListener(visibilityChange, go.Visual.handleVisibility, false);
-        },
-        postInit: function() {
-            /**:GateOne.Visual.postInit()
-
-             Sets up our default keyboard shortcuts and opens the application chooser if no other applications have opened themselves after a short timeout (500ms).
 
              Registers the following keyboard shortcuts:
 
@@ -3035,45 +3020,35 @@
              Switch to the workspace below         :kbd:`Shift-DownArrow`
              ====================================  =======================
              */
-            logDebug("GateOne.Visual.postInit()");
+//         console.log("GateOne.Visual.init()");
+            var u = go.Utils,
+                v = go.Visual,
+                E = go.Events,
+                prefix = go.prefs.prefix,
+                toolbarIconGrid = u.createElement('div', {'id': 'icon_grid', 'class': '✈toolbar_icon ✈icon_grid', 'title': "Grid View"}),
+                debouncedUpdateDimensions = u.debounce(v.updateDimensions, 250),
+                gridToggle = function() {
+                    v.toggleGridView(true);
+                };
+            // Setup our toolbar icons and actions
+            toolbarIconGrid.innerHTML = GateOne.Icons.grid;
+            toolbarIconGrid.onclick = gridToggle;
+            // Stick it on the end (can go wherever--unlike GateOne.Terminal's icons)
+            go.toolbar.appendChild(toolbarIconGrid);
+            go.Events.on('go:switch_workspace', v.slideToWorkspace);
+            go.Events.on('go:switch_workspace', v.locationsCheck);
+            go.Events.on('go:cleanup_workspaces', v.cleanupWorkspaces);
+            window.addEventListener('resize', debouncedUpdateDimensions, false);
+            document.addEventListener(visibilityChange, v.handleVisibility, false);
             if (!go.prefs.embedded) {
-                go.Base.superSandbox("GateOne.Visual.postInitStuff", ["GateOne.Input"], function(window, undefined) {
-                    go.Input.registerShortcut('KEY_N',
-                        {'modifiers': {
-                            'ctrl': true, 'alt': true, 'meta': false, 'shift': false},
-                            'action': 'GateOne.Visual.appChooser()'
-                        });
-                    go.Input.registerShortcut('KEY_W',
-                        {'modifiers': {
-                            'ctrl': true, 'alt': true, 'meta': false, 'shift': false},
-                            'action': 'GateOne.Visual.closeWorkspace(localStorage[GateOne.prefs.prefix+"selectedWorkspace"])'
-                        });
-                    go.Input.registerShortcut('KEY_ARROW_LEFT',
-                        {'modifiers': {
-                            'ctrl': true, 'alt': false, 'meta': false, 'shift': true},
-                            'action': 'GateOne.Visual.slideLeft()'
-                        });
-                    go.Input.registerShortcut('KEY_ARROW_RIGHT',
-                        {'modifiers': {
-                            'ctrl': true, 'alt': false, 'meta': false, 'shift': true},
-                            'action': 'GateOne.Visual.slideRight()'
-                        });
-                    go.Input.registerShortcut('KEY_ARROW_UP',
-                        {'modifiers': {
-                            'ctrl': true, 'alt': false, 'meta': false, 'shift': true},
-                            'action': 'GateOne.Visual.slideUp()'
-                        });
-                    go.Input.registerShortcut('KEY_ARROW_DOWN',
-                        {'modifiers': {
-                            'ctrl': true, 'alt': false, 'meta': false, 'shift': true},
-                            'action': 'GateOne.Visual.slideDown()'
-                        });
-                    go.Input.registerShortcut('KEY_G',
-                        {'modifiers': {
-                            'ctrl': true, 'alt': true, 'meta': false, 'shift': false},
-                            'action': 'GateOne.Visual.toggleGridView()'
-                        });
-                });
+                // Add some default keyboard shortcuts:
+                E.on("go:keyup:ctrl-alt-n", function() { v.appChooser(); });
+                E.on("go:keyup:ctrl-alt-w", function() { v.closeWorkspace(localStorage[prefix+"selectedWorkspace"]); });
+                E.on("go:keyup:ctrl-shift-arrow_left", function() { v.slideLeft(); });
+                E.on("go:keyup:ctrl-shift-arrow_right", function() { v.slideRight(); });
+                E.on("go:keyup:ctrl-shift-arrow_up", function() { v.slideUp(); });
+                E.on("go:keyup:ctrl-shift-arrow_down", function() { v.slideDown(); });
+                E.on("go:keyup:ctrl-alt-g", function() { v.toggleGridView(); });
             }
         },
         // NOTE: Work-in-progress:
@@ -3166,8 +3141,19 @@
              Creates a new application chooser (akin to a browser's "new tab tab") that displays the application selection screen (and possibly other things in the future).
 
              If *where* is undefined a new workspace will be created and the application chooser will be placed there.  If *where* is ``false`` the new application chooser element will be returned without placing it anywhere.
+
+             .. note:: The application chooser can be disabled by setting ``GateOne.prefs.showAppChooser = false`` or by passing 'go_prefs={"showAppChooser":false}' via the URL query string.  If ``GateOne.prefs.showAppChooser`` is an integer the application chooser will be prevented from being shown that many times before resuming the default behavior (shown).
              */
             logDebug("GateOne.Visual.appChooser()");
+            if (!go.prefs.showAppChooser) {
+                return;
+            }
+            if (!(isNaN(go.prefs.showAppChooser))) { // It's a number
+                go.prefs.showAppChooser -= 1;
+                if (go.prefs.showAppChooser <= 0) {
+                    go.prefs.showAppChooser = true; // Reset to default (show)
+                }
+            }
             var u = go.Utils,
                 v = go.Visual,
                 E = go.Events,
@@ -3466,14 +3452,16 @@
             }
             go.Events.trigger('go:set_title_action', title);
         },
-        updateDimensions: function() {
-            /**:GateOne.Visual.updateDimensions()
+        updateDimensions: function(/*opt*/force) {
+            /**:GateOne.Visual.updateDimensions([force])
 
              Sets :js:attr:`GateOne.Visual.goDimensions` to the current width/height of :js:attr:`GateOne.prefs.goDiv`.  Typically called when the browser window is resized.
 
              >>> GateOne.Visual.updateDimensions();
 
              Also sends the "go:set_dimensions" WebSocket action to the server so that it has a reference of the client's width/height as well as information about the size of the goDiv (usually #gateone) element and the size of workspaces.
+
+             If *force* is `true` then the 'go:set_dimensions' WebSocket action will be sent to the server with the current dimensions and the 'go:update_dimensions' event will be triggered with the current dimensions *even if the dimensions have not changed*.
              */
             logDebug('updateDimensions()');
             var u = go.Utils,
@@ -3506,9 +3494,11 @@
                 sidebarWidth = Math.max(sidebarWidth, go.sideinfo.clientHeight);
                 // NOTE: We use the clientHeight on the sideinfo because it is rotated sideways 90°
             }
-            if (prevWidth == v.goDimensions.w && prevHeight == v.goDimensions.h) {
-                // Nothing changed so we don't need to proceed further
-                return;
+            if (!force) {
+                if (prevWidth == v.goDimensions.w && prevHeight == v.goDimensions.h) {
+                    // Nothing changed so we don't need to proceed further
+                    return;
+                }
             }
             if (wrapperDiv) { // Explicit check here in case we're embedded into something that isn't using the grid (aka the wrapperDiv here).
                 // Update the width of gridwrapper in case #gateone has padding
@@ -3953,11 +3943,12 @@
                 go.sideinfo.innerHTML = 'Gate One'; // So we can measure how tall the text is
             }
             sidebarWidth = go.toolbar.clientWidth || go.sideinfo.clientHeight; // clientHeight is used on the sideinfo because it is rotated 90 degrees
+            // Prepare the workspace div for the grid
             if (go.prefs.showTitle || go.prefs.showToolbar) {
-                // Prepare the workspace div for the grid
-                workspaceNode = u.createElement('div', {'id': currentWorkspace, 'class': '✈workspace', 'style': {'width': (v.goDimensions.w - sidebarWidth)+ 'px', 'height': v.goDimensions.h + 'px'}});
+                // If there's a sidebar of some sort then we need to take that into account when making the workspace:
+                workspaceNode = u.createElement('div', {'id': currentWorkspace, 'class': '✈workspace', 'style': {'width': (v.goDimensions.w - sidebarWidth) + 'px', 'height': v.goDimensions.h + 'px'}});
             } else {
-                workspaceNode = u.createElement('div', {'id': currentWorkspace, 'class': '✈workspace'});
+                workspaceNode = u.createElement('div', {'id': currentWorkspace, 'class': '✈workspace', 'style': {'width': v.goDimensions.w + 'px', 'height': v.goDimensions.h + 'px'}});
             }
             workspaceNode.setAttribute('data-workspace', workspaceNum);
             workspaceObj['node'] = workspaceNode;
@@ -4448,7 +4439,7 @@
              :ws1 number: The workspace number.
              :ws2 number: The other workspace number.
              */
-            // Get all the nodes we need
+                // Get all the nodes we need
             var v = go.Visual,
                 u = go.Utils,
                 justSwap,
@@ -4757,7 +4748,6 @@
                             dialogContainer.classList.add('✈dialogactive');
                             if (i != origIndex) {
                                 if (options && options.events && options.events.focused) {
-//                                 console.log('calling focus event on ', dialogContainer);
                                     options.events.focused(dialogContainer);
                                 }
                             }
@@ -4832,12 +4822,12 @@
                 },
                 moveResizeDialog = function(e) {
                     /* This gets attached to the document.body 'mousemove' event.
-                     Handles two situations:
-                     * When the user moves a dialog via click-and-drag on the title bar.
-                     * When the user resizes a dialog.
-                     It won't do anything at all unless dialogContainer.dragging or
-                     dialogContainer.resizing is true.
-                     */
+                   Handles two situations:
+                       * When the user moves a dialog via click-and-drag on the title bar.
+                       * When the user resizes a dialog.
+                   It won't do anything at all unless dialogContainer.dragging or
+                   dialogContainer.resizing is true.
+                */
                     var X, Y, xMoved, yMoved, newX, newY, computedStyle, newWidth, newHeight;
                     if (dialogContainer.dragging) {
                         v.disableTransitions(dialogContainer); // Have to get rid of the halfsectrans so it will drag smoothly.
@@ -5299,7 +5289,7 @@
                         return;
                     }
                     setTimeout(function() {
-                        go.Storage.get(storeName, key, callback);
+                        self.get(storeName, key, callback);
                     }, 10);
                     go.Storage.failCount[DB] += 1;
                     return;
@@ -5528,8 +5518,8 @@
 
              .. note:: Expects the 'fileCache' database be open and ready (normally it gets opened/initialized in :js:meth:`GateOne.initialize`).
              */
-            // Example incoming message:
-            //  {'files': [{'filename': 'foo.js', 'mtime': 1234567890123}]}
+                // Example incoming message:
+                //  {'files': [{'filename': 'foo.js', 'mtime': 1234567890123}]}
             var S = go.Storage,
                 u = go.Utils,
                 fileCache = S.dbObject('fileCache');
@@ -5868,7 +5858,7 @@
 
              Adds the user's ID (aka UPN) to the prefs panel along with a logout link.
              */
-                // prefix gets changed inside of GateOne.initialize() so we need to reset it
+            // prefix gets changed inside of GateOne.initialize() so we need to reset it
             prefix = go.prefs.prefix;
             var prefsPanel = u.getNode('#'+prefix+'panel_prefs'),
                 prefsPanelForm = u.getNode('#'+prefix+'prefs_form'),
@@ -5930,10 +5920,10 @@
 
              .. tip:: If you want to call a function after the user has successfully loaded Gate One and authenticated attach it to the `go:user_login` event.
              */
-                // NOTE: This will normally get run before Gate One's logger is initialized so uncomment below to debug
+            // NOTE: This will normally get run before Gate One's logger is initialized so uncomment below to debug
 //         console.log("setUsernameAction(" + username + ")");
             go.User.username = username;
-            go.Events.on("go:js_loaded", function() {
+            go.Events.once("go:js_loaded", function() { // Needs to run after everything is loaded; this action should always get called before post-gateone.js JavaScript is loaded
                 var prefsPanelUserID = u.getNode('#'+prefix+'user_info_id');
                 if (prefsPanelUserID) {
                     prefsPanelUserID.innerHTML = username + " ";
@@ -6142,7 +6132,7 @@
              >>> GateOne.Events.trigger("test_event", 'an argument');
              args: an argument, this.foo: bar
              */
-                // Commented out because it's super noisy.  Uncomment to debug
+            // Commented out because it's super noisy.  Uncomment to debug
 //         logDebug("on("+events+")", callback);
             events.split(/\s+/).forEach(function(event) {
                 var callList = E.callbacks[event],
