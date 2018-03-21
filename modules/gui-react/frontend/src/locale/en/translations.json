@@ -3,16 +3,16 @@
     "caption": "System for earth observations, data access, processing & analysis for land monitoring",
     "title": "Sepal",
     "features": {
-      "search": {
-        "title": "Search geo data",
-        "description": "Fast and easy access to scenes and mosaics"
+      "process": {
+        "title": "Process geo data",
+        "description": "Fast and easy processing of geo data"
       },
       "browse": {
         "title": "Browse your data",
         "description": "Preview and download your products"
       },
-      "process": {
-        "title": "Process your data",
+      "modules": {
+        "title": "Modules",
         "description": "Easy-to-use data processing Apps"
       },
       "terminal": {
@@ -82,10 +82,10 @@
     },
     "sections": {
       "dashboard.tooltip": "TBD",
-      "search.tooltip": "TBD",
-      "browse.tooltip": "TBD",
-      "process.tooltip": "TBD",
-      "terminal.tooltip": "TBD"
+      "process.tooltip": "Process geo data",
+      "browse.tooltip": "Browse your files",
+      "modules.tooltip": "Custom modules",
+      "terminal.tooltip": "Terminal"
     }
   },
   "action": {

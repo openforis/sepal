@@ -75,7 +75,7 @@
     text-align: center;
 }
 
-.searchIcon {
+.processIcon {
     background-color: hsla(35, 96%, 74%, .4);
 }
 
@@ -83,7 +83,7 @@
     background-color: hsla(99, 9%, 51%, .4);
 }
 
-.processIcon {
+.modulesIcon {
     background-color: rgba(96, 71, 90, .4);
 }
 

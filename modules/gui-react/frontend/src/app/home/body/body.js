@@ -6,6 +6,11 @@ import Terminal from './terminal/terminal'
 import {connect} from 'react-redux'
 import styles from './body.module.css'
 import {Select, Selectable} from 'widget/selectable'
+import Process from './process/process'
+import Modules from './modules/modules'
+import Tasks from './tasks/tasks'
+import Users from './users/users'
+import Account from './account/account'
 
 export default class Body extends React.Component {
     render() {
@@ -14,11 +19,26 @@ export default class Body extends React.Component {
                 <Section path='/dashboard'>
                     <Dashboard/>
                 </Section>
+                <Section path='/process'>
+                    <Process/>
+                </Section>
                 <Section path='/browse'>
                     <Browse/>
                 </Section>
+                <Section path='/modules'>
+                    <Modules/>
+                </Section>
                 <Section path='/terminal'>
                     <Terminal/>
+                </Section>
+                <Section path='/tasks'>
+                    <Tasks/>
+                </Section>
+                <Section path='/users'>
+                    <Users/>
+                </Section>
+                <Section path='/account'>
+                    <Account/>
                 </Section>
             </Select>
         )

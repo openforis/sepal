@@ -76,13 +76,6 @@ class Terminal extends React.Component {
             window.localStorage.removeItem('go_default_prefs')
     }
 
-    // focusTerminal() {
-    //     if (terminalId) {
-    //         GateOne.Terminal.Input.capture()
-    //         $('.✈terminal').click()
-    //     }
-    // }
-
     randomTerminalId() {
         return Math.floor(Math.random() * (Number.MAX_SAFE_INTEGER)) + 1
     }
@@ -90,7 +83,7 @@ class Terminal extends React.Component {
 }
 
 Terminal.contextTypes = {
-    active: PropTypes.string
+    active: PropTypes.bool
 }
 
 export default Terminal = connect(mapStateToProps)(Terminal)

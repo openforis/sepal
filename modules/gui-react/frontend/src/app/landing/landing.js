@@ -66,9 +66,9 @@ const Title = () =>
 
 const Features = () =>
     <div className={styles.features}>
-        <Feature name='search' icon='globe'/>
+        <Feature name='process' icon='globe'/>
         <Feature name='browse' icon='folder-open'/>
-        <Feature name='process' icon='wrench'/>
+        <Feature name='modules' icon='wrench'/>
         <Feature name='terminal' icon='terminal'/>
     </div>
 

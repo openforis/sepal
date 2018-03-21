@@ -38,21 +38,21 @@
     border: 2px solid hsla(0, 0%, 100%, .4);
 }
 
-.sections button.searchIcon {
+.sections button.processIcon {
     background-color: hsla(35, 96%, 74%, .4);
 }
 
-.sections button.searchIcon:focus {
+.sections button.processIcon:focus {
     background-color: hsla(35, 96%, 74%, .4);
     border: 2px solid hsla(35, 96%, 74%, .7);
 }
 
-.sections button.searchIcon:hover {
+.sections button.processIcon:hover {
     background-color: hsla(35, 96%, 74%, .1);
     border: 2px solid hsla(35, 96%, 74%, .7);
 }
 
-.sections button.searchIcon:active {
+.sections button.processIcon:active {
     background-color: hsla(35, 96%, 74%, .4);
     border: 2px solid hsla(35, 96%, 74%, .7);
 }
@@ -76,21 +76,21 @@
     border: 2px solid hsla(99, 9%, 51%, .7);
 }
 
-.sections button.processIcon {
+.sections button.modulesIcon {
     background-color: rgba(96, 71, 90, .4);
 }
 
-.sections button.processIcon:focus {
+.sections button.modulesIcon:focus {
     background-color: rgba(96, 71, 90, .4);
     border: 2px solid rgba(96, 71, 90, .7);
 }
 
-.sections .processIcon:hover {
+.sections .modulesIcon:hover {
     background-color: rgba(96, 71, 90, .1);
     border: 2px solid rgba(96, 71, 90, .7);
 }
 
-.sections button.processIcon:active {
+.sections button.modulesIcon:active {
     background-color: rgba(96, 71, 90, .4);
     border: 2px solid rgba(96, 71, 90, .7);
 }

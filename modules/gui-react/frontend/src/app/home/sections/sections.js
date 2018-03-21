@@ -6,10 +6,10 @@ import {Link} from 'route'
 
 const Sections = () =>
     <div className={styles.sections}>
-        <Section name='dashboard' icon='home'/>
-        <Section name='search' icon='globe'/>
+        {/*<Section name='dashboard' icon='home'/>*/}
+        <Section name='process' icon='globe'/>
         <Section name='browse' icon='folder-open'/>
-        <Section name='process' icon='wrench'/>
+        <Section name='modules' icon='wrench'/>
         <Section name='terminal' icon='terminal'/>
     </div>
 export default Sections

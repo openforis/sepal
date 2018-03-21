@@ -67,5 +67,5 @@ Selectable.contextTypes = {
     focus: PropTypes.func
 }
 Selectable.childContextTypes = {
-    active: PropTypes.boolean
+    active: PropTypes.bool
 }
