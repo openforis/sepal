@@ -5,12 +5,14 @@ import Tooltip from 'widget/tooltip'
 import {Link} from 'route'
 
 const Sections = () =>
-    <div className={styles.sections}>
-        {/*<Section name='dashboard' icon='home'/>*/}
-        <Section name='process' icon='globe'/>
-        <Section name='browse' icon='folder-open'/>
-        <Section name='modules' icon='wrench'/>
-        <Section name='terminal' icon='terminal'/>
+    <div className={styles.sectionsContainer}>
+        <div className={styles.sections}>
+            {/*<Section name='dashboard' icon='home'/>*/}
+            <Section name='process' icon='globe'/>
+            <Section name='browse' icon='folder-open'/>
+            <Section name='modules' icon='wrench'/>
+            <Section name='terminal' icon='terminal'/>
+        </div>
     </div>
 export default Sections
 

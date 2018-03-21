@@ -1,8 +1,22 @@
+.sectionsContainer {
+    position: relative;
+}
+
 .sections {
+    position: absolute;
+    z-index: 100;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    top: 13%;
-    padding: 10rem 0 0 1rem;
+    padding: 10rem .5rem 1rem .5rem;
+    transform: translate3d(-65%, 0, 0);
+    background-color: rgba(0, 0, 0, 0);
+    transition: all 200ms ease-in-out 100ms;
+}
+
+.sections:hover {
+    transform: none;
+    background-color: rgba(0, 0, 0, .7);
 }
 
 .sections > * {

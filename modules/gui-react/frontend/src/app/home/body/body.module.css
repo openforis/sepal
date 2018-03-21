@@ -19,7 +19,7 @@
 .in {
     z-index: 1;
     animation-name: show;
-    animation-duration: 300ms;
+    animation-duration: 250ms;
     animation-fill-mode: forwards;
     animation-timing-function: ease-in-out;
 }
@@ -27,13 +27,13 @@
 .out {
     z-index: -1;
     animation-name: hide;
-    animation-duration: 300ms;
+    animation-duration: 250ms;
     animation-fill-mode: forwards;
     animation-timing-function: ease-in-out;
 }
 
 @keyframes hide {
-    0% {
+    0% { 
         opacity: 1;
         transform: none;
     }

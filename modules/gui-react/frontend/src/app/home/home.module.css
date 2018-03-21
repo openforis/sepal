@@ -1,20 +1,20 @@
 .home {
     height: 100%;
     display: grid;
-    grid-template-columns: 7rem 1fr;
+    grid-template-columns: 0rem 1fr;
     grid-template-rows: 1fr 4.5rem;
     grid-template-areas:
-            'sections  body'
-            'footer  footer';
-}
-
-.sections {
-    grid-area: sections;
+            'sections body'
+            'footer footer';
 }
 
 .footer {
     grid-area: footer;
     animation: footer .5s 0s ease-in-out backwards;
+}
+
+.sections {
+    grid-area: sections;
 }
 
 @keyframes footer {
