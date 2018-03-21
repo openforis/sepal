@@ -107,7 +107,7 @@
     "cached": "true"
   },
   {
-    "prefex": true,
+    "prefix": "true",
     "path": "/",
     "target": "http://gui:7667/",
     "https": "true",
