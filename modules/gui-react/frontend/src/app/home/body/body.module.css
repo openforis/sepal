@@ -33,7 +33,7 @@
 }
 
 @keyframes hide {
-    0% { 
+    0% {
         opacity: 1;
         transform: none;
     }

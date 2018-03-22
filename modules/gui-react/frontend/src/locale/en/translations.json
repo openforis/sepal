@@ -98,7 +98,9 @@
       "LOGIN": "Login",
       "REQUEST_PASSWORD_RESET": "Request password reset",
       "VALIDATE_TOKEN": "Validate link",
-      "RESET_PASSWORD": "Reset password"
+      "RESET_PASSWORD": "Reset password",
+      "LOAD_APPS": "Load applications",
+      "OPEN_APP": "Open application"
     }
   }
 }

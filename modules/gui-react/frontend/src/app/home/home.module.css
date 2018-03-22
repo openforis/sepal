@@ -1,12 +1,12 @@
 .home {
-    height: 100%;
-    display: grid;
-    grid-template-columns: 0 1fr;
-    grid-template-rows: 1fr 4.5rem;
-    grid-template-areas:
-            'sections body'
-            'footer footer';
-}
+     height: 100%;
+     display: grid;
+     grid-template-columns: 1.5rem 1fr;
+     grid-template-rows: 1fr 4.5rem;
+     grid-template-areas:
+             'sections body'
+             'footer footer';
+ }
 
 .footer {
     grid-area: footer;

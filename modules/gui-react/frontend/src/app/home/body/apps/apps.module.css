@@ -5,7 +5,7 @@
     grid-row-gap: 3rem;
     grid-column-gap: 4rem;
     justify-content: center;
-    margin-top: 5rem;
+    padding-top: 5rem;
 }
 
 .app {
@@ -14,18 +14,38 @@
     display: flex;
     align-items: center;
     justify-content: center;
-
-    border: 2px solid rgba(96, 71, 90, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.105);
     border-radius: 3px;
     background-color: rgba(255, 255, 255, 0.1);
-
+    padding: 1.5rem;
     text-transform: uppercase;
     text-align: center;
     line-height: 1.2;
+    overflow: hidden;
+    cursor: pointer;
+    transition: .1s ease-in-out;
+}
+
+.app:focus {
+    background-color: hsla(0, 0%, 100%, .15);
+}
+
+.app:hover {
+    border: 2px solid rgba(255, 255, 255, 0.105);
+    background-color: hsla(0, 0%, 100%, .02);
+}
+
+.app:active {
+    border: 2px solid rgba(96, 71, 90, .15);
+    background-color: hsla(0, 0%, 100%, .05);
 }
 
 .app i {
-    color: red;
+    border: 1px solid hsla(0, 0%, 100%, .2);
+    border-radius: 50%;
+    font-size: 1.4rem;
+    padding: .7rem;
+    margin-right: .3rem;
 }
 
 .app img {

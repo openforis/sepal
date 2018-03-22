@@ -90,21 +90,21 @@
     border: 2px solid hsla(99, 9%, 51%, .7);
 }
 
-.sections button.modulesIcon {
+.sections button.appsIcon {
     background-color: rgba(96, 71, 90, .4);
 }
 
-.sections button.modulesIcon:focus {
+.sections button.appsIcon:focus {
     background-color: rgba(96, 71, 90, .4);
     border: 2px solid rgba(96, 71, 90, .7);
 }
 
-.sections .modulesIcon:hover {
+.sections .appsIcon:hover {
     background-color: rgba(96, 71, 90, .1);
     border: 2px solid rgba(96, 71, 90, .7);
 }
 
-.sections button.modulesIcon:active {
+.sections button.appsIcon:active {
     background-color: rgba(96, 71, 90, .4);
     border: 2px solid rgba(96, 71, 90, .7);
 }
