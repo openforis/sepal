@@ -61,7 +61,7 @@ class Apps extends React.Component {
         if (this.props.runningApps && this.props.runningApps.length) {
             const app = this.props.runningApps[0]
             return (
-                <iframe src={`http://localhost:8001/sandbox/${app.path}`} title={app.label}/>
+                <iframe src={`/sandbox/${app.path}`} title={app.label}/>
             )
         }
 
