@@ -11,9 +11,9 @@
         "title": "Browse your data",
         "description": "Preview and download your products"
       },
-      "modules": {
-        "title": "Modules",
-        "description": "Easy-to-use data processing Apps"
+      "apps": {
+        "title": "Extensible with apps",
+        "description": "Extend the features in Sepal with custom data processing applications"
       },
       "terminal": {
         "title": "Terminal",
@@ -84,9 +84,12 @@
       "dashboard.tooltip": "TBD",
       "process.tooltip": "Process geo data",
       "browse.tooltip": "Browse your files",
-      "modules.tooltip": "Custom modules",
+      "apps.tooltip": "Custom apps",
       "terminal.tooltip": "Terminal"
     }
+  },
+  "apps": {
+    "dataVis": "Data visualization"
   },
   "action": {
     "error.title": "Failed: {action}",

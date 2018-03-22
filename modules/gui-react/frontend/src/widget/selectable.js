@@ -55,11 +55,14 @@ export class Selectable extends React.Component {
     }
 
     render() {
-        return (
-            <div className={[this.props.classNames.default, this.className].join(' ')}>
-                {this.hasBeenActive ? this.props.children : null}
-            </div>
-        )
+        if (!this.hasBeenActive)
+            return null
+        else
+            return (
+                <div className={[this.props.classNames.default, this.className].join(' ')}>
+                    {this.props.children}
+                </div>
+            )
     }
 }
 

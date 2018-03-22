@@ -68,7 +68,7 @@ const Features = () =>
     <div className={styles.features}>
         <Feature name='process' icon='globe'/>
         <Feature name='browse' icon='folder-open'/>
-        <Feature name='modules' icon='wrench'/>
+        <Feature name='apps' icon='wrench'/>
         <Feature name='terminal' icon='terminal'/>
     </div>
 

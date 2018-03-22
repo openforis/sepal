@@ -10,7 +10,7 @@ const Sections = () =>
             {/*<Section name='dashboard' icon='home'/>*/}
             <Section name='process' icon='globe'/>
             <Section name='browse' icon='folder-open'/>
-            <Section name='modules' icon='wrench'/>
+            <Section name='apps' icon='wrench'/>
             <Section name='terminal' icon='terminal'/>
         </div>
     </div>
