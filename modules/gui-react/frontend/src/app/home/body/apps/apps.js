@@ -1,5 +1,6 @@
 import React from 'react'
 import {connect, select} from 'store'
+import {history} from 'route'
 import Http from 'http-client'
 import actionBuilder from 'action-builder'
 import styles from './apps.module.css'
@@ -8,9 +9,10 @@ import Icon from 'widget/icon'
 import rstudioIcon from './r-studio.png'
 import Rx from 'rxjs'
 
+export const runningApps = () => select('apps.running') || []
+
 const mapStateToProps = () => ({
-    apps: select('apps.list'),
-    runningApps: select('apps.running')
+    apps: select('apps.list')
 })
 
 function loadApps$() {
@@ -24,18 +26,16 @@ function loadApps$() {
 
 function requestSandbox$(app) {
     const url = `/sandbox/start?endpoint=${app.endpoint ? app.endpoint : 'shiny'}`
+    const isStarting = (e) => e.response.status === 'STARTING'
+
     return Http.post$(url)
-        .takeWhile((e) => e.response.status === 'STARTING')
+        .takeWhile(isStarting)
         .switchMap(() => Rx.Observable.interval(1000)
-            // .map((secondsPassed) => {
-            //     if (secondsPassed > 30) throw new Error('Timed out')
-            //     else return secondsPassed
-            // })
             .switchMap((secondsPassed) => secondsPassed < 30
                 ? Rx.Observable.of(secondsPassed)
                 : Rx.Observable.throw({message: msg('')}))
             .exhaustMap(() => Http.get$(url))
-            .takeWhile((e) => e.response.status === 'STARTING')
+            .takeWhile(isStarting)
         )
 }
 
@@ -49,22 +49,17 @@ class Apps extends React.Component {
     openApp(app) {
         this.props.asyncActionBuilder('OPEN_APP',
             requestSandbox$(app))
-            .onComplete(() =>
-                actionBuilder('SHOW_APP')
-                    .push(['apps', 'running'], app)
-                    .build()
+            .onComplete(() => [
+                    history().replace('/app' + app.path),
+                    actionBuilder('SET_APP_RUNNING')
+                        .pushIfMissing(['apps', 'running'], app, 'path')
+                        .build()
+                ]
             )
             .dispatch()
     }
 
     render() {
-        if (this.props.runningApps && this.props.runningApps.length) {
-            const app = this.props.runningApps[0]
-            return (
-                <iframe width={'100%'} frameborder={'0'} src={`/sandbox/${app.path}`} title={app.label}/>
-            )
-        }
-
         const {apps, action} = this.props
         if (!action('LOAD_APPS').dispatched)
             return <div>Spinner</div>

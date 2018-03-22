@@ -1,19 +1,33 @@
 import React from 'react'
-import {location} from 'route'
 import Dashboard from './dashboard/dashboard'
 import Browse from './browse/browse'
 import Terminal from './terminal/terminal'
-import {connect} from 'react-redux'
+import {connect} from 'store'
 import styles from './body.module.css'
-import {Select, Selectable} from 'widget/selectable'
+import {Select} from 'widget/selectable'
 import Process from './process/process'
-import Apps from './apps/apps'
+import Apps, {runningApps} from './apps/apps'
 import Tasks from './tasks/tasks'
 import Users from './users/users'
 import Account from './account/account'
+import Section from './section'
 
-export default class Body extends React.Component {
+const mapStateToProps = () => ({
+    runningApps: runningApps()
+})
+
+class Body extends React.Component {
     render() {
+        const appSections = this.props.runningApps.map((app) =>
+            <Section key={app.path} path={'/app' + app.path}>
+                <iframe
+                    width={'100%'}
+                    frameBorder={'0'}
+                    src={`/sandbox/${app.path}`}
+                    title={app.label}/>
+            </Section>
+        )
+
         return (
             <Select className={styles.sections}>
                 <Section path='/dashboard'>
@@ -40,27 +54,10 @@ export default class Body extends React.Component {
                 <Section path='/account'>
                     <Account/>
                 </Section>
+                {appSections}
             </Select>
         )
     }
 }
 
-const mapStateToProps = () => ({
-    location: location()
-})
-
-let Section = ({location, path, children}) =>
-    <Selectable
-        active={inPath(location, path)}
-        classNames={{
-            default: styles.section,
-            in: styles.in,
-            out: styles.out,
-        }}>
-        {children}
-    </Selectable>
-Section = connect(mapStateToProps)(Section)
-
-function inPath(location, path) {
-    return location.pathname === path
-}
+export default Body = connect(mapStateToProps)(Body)

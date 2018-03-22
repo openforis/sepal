@@ -19,11 +19,8 @@ export function dispatch(action) {
 }
 
 export function select(path) {
-    const parts = path.split('.')
-    return parts.reduce((state, part) => {
-        if (state == null)
-            return undefined
-        return state[part]
+    return path.split('.').reduce((state, part) => {
+        return (state && state[part]) || undefined
     }, state())
 }
 

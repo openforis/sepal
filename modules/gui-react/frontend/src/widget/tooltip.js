@@ -8,6 +8,7 @@ import {msg as message} from 'translate'
 const Tooltip =
     ({
          msg,
+         rawMsg,
          left,
          right,
          top,
@@ -21,7 +22,7 @@ const Tooltip =
          ...otherProps
      }) =>
         <RcTooltip
-            overlay={message(msg + '.tooltip')}
+            overlay={msg ? message(msg + '.tooltip') : rawMsg}
             placement={
                 left ? 'left' :
                     right ? 'right' :
@@ -40,7 +41,8 @@ const Tooltip =
 export default Tooltip
 
 Tooltip.propTypes = {
-    msg: PropTypes.string.isRequired,
+    msg: PropTypes.string,
+    rawMsg: PropTypes.string,
     left: PropTypes.bool,
     right: PropTypes.bool,
     top: PropTypes.bool,

@@ -10,7 +10,22 @@ export default function actionBuilder(type, props = {}) {
         },
 
         push(path, value) {
-            operations.push((immutableState) => immutableState.push(path, value))
+            operations.push((immutableState) => {
+                return immutableState.push(path, value)
+            })
+            return this
+        },
+
+        pushIfMissing(path, value, uniqueKeyProp) {
+            operations.push((immutableState) => {
+                const currentState = immutableState.value()
+                immutableState = immutable(currentState)
+                const collection = select(path, currentState)
+                if (collection && collection.find((app) => app[uniqueKeyProp] === value[uniqueKeyProp]))
+                    return immutableState
+                else
+                    return immutableState.push(path, value)
+            })
             return this
         },
 
@@ -41,4 +56,12 @@ export default function actionBuilder(type, props = {}) {
             dispatch(this.build())
         }
     }
+}
+
+function select(path, state) {
+    if (typeof path === 'string')
+        path = path.split('.')
+    return path.reduce((state, part) => {
+        return (state && state[part]) || undefined
+    }, state)
 }
