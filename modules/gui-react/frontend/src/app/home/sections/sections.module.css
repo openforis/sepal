@@ -50,7 +50,7 @@
 
 .sections button.lock {
     background-color: rgba(49, 49, 49, 0.8);
-    border-color: hsla(37, 27%, 39%, .8)
+    border-color: rgba(49, 49, 49, 0.8);
 }
 
 .sections button.lock:hover {
@@ -59,7 +59,7 @@
 
 .sections button.process {
     background-color: hsla(37, 27%, 39%, .8);
-    border-color: hsla(37, 27%, 39%, .8)
+    border-color: hsla(37, 27%, 39%, .8);
 }
 
 .sections button.process:hover {
