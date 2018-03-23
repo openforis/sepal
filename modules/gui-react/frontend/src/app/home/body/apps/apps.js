@@ -69,6 +69,7 @@ class Apps extends React.Component {
         const items = [dataVis, rStudio, ...apps].map(
             (app) => <App key={app.path} app={app} onClick={this.openApp.bind(this)}/>
         )
+        console.log(apps)
         return (
             <div className={styles.apps}>
                 {items}
@@ -83,7 +84,10 @@ const App = ({app, onClick}) =>
     <button className={styles.app} onClick={() => onClick(app)}>
         <Image src={app.image}/>
         <Icon name={app.icon} alt={app.alt}/>
-        {app.label}
+        <div>
+            <div className={styles.title}>{app.label}</div>
+            <div className={styles.description}>{app.description}</div>
+        </div>
     </button>
 
 const Image = ({src, alt}) => {
