@@ -8,27 +8,28 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 10rem 1rem 1rem 0rem;
+    padding: 5rem 1rem 1rem 0rem;
     transform: translate3d(-3.5rem, 0, 0);
     transition: all 150ms ease-in-out 200ms;
 }
 
+.locked,
 .sections:hover {
     transform: none;
     background-color: rgba(0, 0, 0, .5);
 }
 
 .sections > * {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.5rem;                                                                                      
 }
 
 .sections button {
     position: relative;
-    width: 4.5rem;
-    height: 4.5rem;
+    width: 4.5rem;  
+    height: 3.2rem;
     border: 2px solid transparent;
-    border-top-right-radius: 50%;
-    border-bottom-right-radius: 50%;
+    border-top-right-radius: 2.25rem;
+    border-bottom-right-radius: 2.25rem;
     border-left: none;
     color: rgba(255, 255, 255, 0.8);
 }
@@ -41,11 +42,20 @@
 
 .sections button i {
     font-size: 2rem;
-    text-align: center;
     vertical-align: middle;
+    text-align: right;
 }
 
 /* individual buttons styling */
+
+.sections button.lock {
+    background-color: rgba(49, 49, 49, 0.8);
+    border-color: hsla(37, 27%, 39%, .8)
+}
+
+.sections button.lock:hover {
+    background-color: rgba(49, 49, 49, 0.3);
+}
 
 .sections button.process {
     background-color: hsla(37, 27%, 39%, .8);
@@ -65,15 +75,6 @@
     background-color: hsla(127, 6%, 30%, .3);
 }
 
-.sections button.apps {
-    background-color: hsla(310, 10%, 23%, .8);
-    border-color: hsla(310, 10%, 24%, .8);
-}
-
-.sections button.apps:hover {
-    background-color: hsla(310, 10%, 23%, .3);
-}
-
 .sections button.terminal {
     background-color: hsla(221, 19%, 26%, .8);
     border-color: hsla(221, 19%, 27%, .8);
@@ -83,9 +84,26 @@
     background-color: hsl(221, 19%, 26%, .3);
 }
 
+.sections button.apps {
+    background-color: hsla(310, 10%, 23%, .8);
+    border-color: hsla(310, 10%, 24%, .8);
+}
+
+@keyframes blink {
+    100% { 
+        opacity: 0.2; 
+        /* background-color: white; */
+    }
+}
+
+.sections button.apps:hover {
+    background-color: hsla(310, 10%, 23%, .3);
+}
+
 .sections button.app {
     background-color: hsla(221, 19%, 26%, .8);
     border-color: hsla(221, 19%, 27%, .8);
+    animation: blink 250ms ease-in-out alternate 10;
 }
 
 .sections button.app:hover {
