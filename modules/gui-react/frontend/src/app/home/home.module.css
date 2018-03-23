@@ -10,7 +10,7 @@
 }
 
 .fixedMenu {
-    grid-template-columns: 5.5rem 1fr;
+    grid-template-columns: 5rem 1fr;
 }
 
 .footer {
