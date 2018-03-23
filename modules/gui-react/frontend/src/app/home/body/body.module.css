@@ -19,7 +19,7 @@
 .in {
     z-index: 1;
     animation-name: show;
-    animation-duration: 250ms;
+    animation-duration: 200ms;
     animation-fill-mode: forwards;
     animation-timing-function: ease-in-out;
 }
@@ -27,7 +27,7 @@
 .out {
     z-index: -1;
     animation-name: hide;
-    animation-duration: 250ms;
+    animation-duration: 200ms;
     animation-fill-mode: forwards;
     animation-timing-function: ease-in-out;
 }
