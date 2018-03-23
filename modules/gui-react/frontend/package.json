@@ -33,6 +33,8 @@
     "eject": "NODE_PATH=src/ react-app-rewired eject"
   },
   "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-plugin-react": "^7.7.0",
     "imports-loader": "^0.7.1",
     "lodash": "^4.17.5",
     "prop-types": "^15.6.0",
