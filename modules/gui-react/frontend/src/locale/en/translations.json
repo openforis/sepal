@@ -85,7 +85,9 @@
       "process.tooltip": "Process geo data",
       "browse.tooltip": "Browse your files",
       "apps.tooltip": "Custom apps",
-      "terminal.tooltip": "Terminal"
+      "terminal.tooltip": "Terminal",
+      "locked.tooltip": "Menu is locked",
+      "unlocked.tooltip": "Menu is unlocked"
     }
   },
   "apps": {

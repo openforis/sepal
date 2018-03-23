@@ -26,9 +26,11 @@ class Sections extends React.Component {
         return (
             <div className={styles.sectionsContainer}>
                 <div className={[styles.sections, this.props.locked && styles.locked].join(' ')}>
-                    <button className={styles.lock} onClick={this.toggle.bind(this)}>
-                        <Icon name={this.props.locked ? 'lock' : 'unlock'}/>
-                    </button>
+                    <Tooltip msg={this.props.locked ? 'home.sections.locked' : 'home.sections.unlocked'} right>    
+                        <button className={styles.lock} onClick={this.toggle.bind(this)}>
+                            <Icon name={this.props.locked ? 'lock' : 'unlock'}/>
+                        </button>
+                    </Tooltip>
                     {/*<Section name='dashboard' icon='dashboard'/>*/}
                     <Section name='process' icon='globe'/>
                     <Section name='browse' icon='folder-open'/>
