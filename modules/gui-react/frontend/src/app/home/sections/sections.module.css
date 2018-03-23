@@ -8,122 +8,86 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 10rem .5rem 1rem .5rem;
-    transform: translate3d(-65%, 0, 0);
-    background-color: rgba(0, 0, 0, 0);
-    transition: all 200ms ease-in-out 100ms;
+    padding: 10rem 1rem 1rem 0rem;
+    transform: translate3d(-3.5rem, 0, 0);
+    transition: all 150ms ease-in-out 200ms;
 }
 
 .sections:hover {
     transform: none;
-    background-color: rgba(0, 0, 0, .7);
+    background-color: rgba(0, 0, 0, .5);
 }
 
 .sections > * {
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.5rem;
 }
 
-.sections button.section {
+.sections button {
+    position: relative;
     width: 4.5rem;
     height: 4.5rem;
+    border: 2px solid transparent;
+    border-top-right-radius: 50%;
+    border-bottom-right-radius: 50%;
+    border-left: none;
+    color: rgba(255, 255, 255, 0.8);
 }
 
-.sections button.section i {
-    font-size: 1.8rem;
-    line-height: 1.8rem;
+.sections button:hover {
+    border-color: white;
+    color: rgba(255, 255, 255, 1);
+    cursor: pointer;
 }
 
-.sections button.homeIcon {
-    background-color: hsla(0, 0%, 100%, .2);
+.sections button i {
+    font-size: 2rem;
+    text-align: center;
+    vertical-align: middle;
 }
 
-.sections button.homeIcon:focus {
-    background-color: hsla(0, 0%, 100%, .2);
-    border: 2px solid hsla(0, 0%, 100%, .4);
+/* individual buttons styling */
+
+.sections button.process {
+    background-color: hsla(37, 27%, 39%, .8);
+    border-color: hsla(37, 27%, 39%, .8)
 }
 
-.sections button.homeIcon:hover {
-    background-color: hsla(0, 0%, 100%, .05);
-    border: 2px solid hsla(0, 0%, 100%, .4);
+.sections button.process:hover {
+    background-color: hsla(37, 27%, 39%, .3);
 }
 
-.sections button.homeIcon:active {
-    background-color: hsla(0, 0%, 100%, .2);
-    border: 2px solid hsla(0, 0%, 100%, .4);
+.sections button.browse {
+    background-color: hsla(127, 6%, 30%, .8);
+    border-color: hsla(127, 6%, 31%, .8);
 }
 
-.sections button.processIcon {
-    background-color: hsla(35, 96%, 74%, .4);
+.sections button.browse:hover {
+    background-color: hsla(127, 6%, 30%, .3);
 }
 
-.sections button.processIcon:focus {
-    background-color: hsla(35, 96%, 74%, .4);
-    border: 2px solid hsla(35, 96%, 74%, .7);
+.sections button.apps {
+    background-color: hsla(310, 10%, 23%, .8);
+    border-color: hsla(310, 10%, 24%, .8);
 }
 
-.sections button.processIcon:hover {
-    background-color: hsla(35, 96%, 74%, .1);
-    border: 2px solid hsla(35, 96%, 74%, .7);
+.sections button.apps:hover {
+    background-color: hsla(310, 10%, 23%, .3);
 }
 
-.sections button.processIcon:active {
-    background-color: hsla(35, 96%, 74%, .4);
-    border: 2px solid hsla(35, 96%, 74%, .7);
+.sections button.terminal {
+    background-color: hsla(221, 19%, 26%, .8);
+    border-color: hsla(221, 19%, 27%, .8);
 }
 
-.sections button.browseIcon {
-    background-color: hsla(99, 9%, 51%, .4);
+.sections button.terminal:hover {
+    background-color: hsl(221, 19%, 26%, .3);
 }
 
-.sections button.browseIcon:focus {
-    background-color: hsla(99, 9%, 51%, .4);
-    border: 2px solid hsla(99, 9%, 51%, .7);
+.sections button.app {
+    background-color: hsla(221, 19%, 26%, .8);
+    border-color: hsla(221, 19%, 27%, .8);
 }
 
-.sections button.browseIcon:hover {
-    background-color: hsla(99, 9%, 51%, .1);
-    border: 2px solid hsla(99, 9%, 51%, .7);
-}
-
-.sections button.browseIcon:active {
-    background-color: hsla(99, 9%, 51%, .4);
-    border: 2px solid hsla(99, 9%, 51%, .7);
-}
-
-.sections button.appsIcon {
-    background-color: rgba(96, 71, 90, .4);
-}
-
-.sections button.appsIcon:focus {
-    background-color: rgba(96, 71, 90, .4);
-    border: 2px solid rgba(96, 71, 90, .7);
-}
-
-.sections .appsIcon:hover {
-    background-color: rgba(96, 71, 90, .1);
-    border: 2px solid rgba(96, 71, 90, .7);
-}
-
-.sections button.appsIcon:active {
-    background-color: rgba(96, 71, 90, .4);
-    border: 2px solid rgba(96, 71, 90, .7);
-}
-
-.sections button.terminalIcon {
-    background-color: rgba(74, 94, 130, .4);
-}
-
-.sections button.terminalIcon:focus {
-    background-color: rgba(74, 94, 130, .4);
-    border: 2px solid rgba(74, 94, 130, .7);
-}
-
-.sections button.terminalIcon:hover {
-    background-color: rgba(74, 94, 130, .1);
-    border: 2px solid rgba(74, 94, 130, .7);
-}
-
-.sections button.terminalIcon:active {
-    background-color: rgba(74, 94, 130, .4);
-    border: 2px solid rgba(74, 94, 130, .7);
+.sections button.app:hover {
+    background-color: hsl(221, 19%, 26%, .3);
 }
