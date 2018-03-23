@@ -1,13 +1,12 @@
 import React from 'react'
+import {connect, select} from 'store'
+import PropTypes from 'prop-types'
 import styles from './sections.module.css'
-// import {IconButton} from 'widget/button'
 import Tooltip from 'widget/tooltip'
 import {Link} from 'route'
-import {connect, select} from 'store'
 import {runningApps} from 'app/home/body/apps/apps'
 import Icon from 'widget/icon'
 import actionBuilder from 'action-builder'
-import { dispatch } from '../../../store';
 
 const mapStateToProps = () => ({
     runningApps: runningApps(),
@@ -42,7 +41,10 @@ class Sections extends React.Component {
     }
 }
 
-export default Sections = connect(mapStateToProps)(Sections)
+Sections.propTypes = {
+    locked: PropTypes.bool.isRequired,
+    runningApps: PropTypes.arrayOf(PropTypes.object).isRequired
+}
 
 const Section = ({name, icon}) =>
     <Link to={'/' + name} onMouseDown={(e) => e.preventDefault()}>
@@ -53,11 +55,24 @@ const Section = ({name, icon}) =>
         </Tooltip>
     </Link>
 
+Section.propTypes = {
+    name: PropTypes.string,
+    icon: PropTypes.string
+}
+
 const App = ({app: {path, label}}) =>
     <Link to={'/app' + path} onMouseDown={(e) => e.preventDefault()}>
-        {/*<Tooltip rawMsg={label} right>*/}
-        <button className={styles.app}>
-            <Icon name={'cubes'}/>
-        </button>
-        {/*</Tooltip>*/}
+        <Tooltip rawMsg={label} right>
+            <button className={styles.app}>
+                <Icon name={'cubes'}/>
+            </button>
+        </Tooltip>
     </Link>
+
+App.propTypes = {
+    app: PropTypes.object,
+    path: PropTypes.string,
+    label: PropTypes.string
+}
+
+export default Sections = connect(mapStateToProps)(Sections)

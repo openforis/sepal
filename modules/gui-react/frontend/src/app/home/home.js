@@ -22,5 +22,6 @@ const Home = ({user, fixedMenu}) => {
 export default connect(mapStateToProps)(Home)
 
 Home.propTypes = {
-    user: PropTypes.object.isRequired
+    user: PropTypes.object.isRequired,
+    fixedMenu: PropTypes.bool.isRequired
 }
