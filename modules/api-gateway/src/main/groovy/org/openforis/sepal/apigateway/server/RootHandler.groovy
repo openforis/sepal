@@ -183,7 +183,8 @@ class RootHandler implements HttpHandler {
             LOG.debug(exchange.toString())
             exchange.responseHeaders.add(HttpString.tryFromString(
                     'Content-Security-Policy'),
-                    "connect-src 'self' wss://$host https://*.googleapis.com https://apis.google.com"
+                    "connect-src 'self' https://$host wss://$host https://*.googleapis.com https://apis.google.com;\n" +
+                            "frame-ancestors 'self' https://$host"
             )
             exchange.addResponseCommitListener(new ResponseCommitListener() {
                 void beforeCommit(HttpServerExchange ex) {

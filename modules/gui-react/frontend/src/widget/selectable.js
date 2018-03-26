@@ -3,7 +3,10 @@ import PropTypes from 'prop-types'
 
 export class Select extends React.Component {
     getChildContext() {
-        const focus = (element) => this.elementToFocus = element
+        const focus = (element) => {
+            console.log('To focus:', element)
+            return this.elementToFocus = element
+        }
         return {focus: focus.bind(this)}
     }
 
@@ -17,6 +20,8 @@ export class Select extends React.Component {
 
     componentDidUpdate() {
         this.elementToFocus && this.elementToFocus.focus()
+        if (this.elementToFocus)
+            console.log('Focusing:', this.elementToFocus)
     }
 }
 
@@ -43,7 +48,11 @@ export class Selectable extends React.Component {
         if (this.props.active && !nextProps.active) {
             this.className = this.props.classNames.out
             this.active = false
-            this.activeElement = document.activeElement
+
+            this.activeElement = document.activeElement.tagName === 'IFRAME'
+                ? document.activeElement.contentWindow.document.activeElement
+                : document.activeElement
+            console.log('Deactivate', this.activeElement)
         } else if (!this.props.active && nextProps.active) {
             this.className = this.props.classNames.in
             this.hasBeenActive = true

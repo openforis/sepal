@@ -62,6 +62,6 @@ function select(path, state) {
     if (typeof path === 'string')
         path = path.split('.')
     return path.reduce((state, part) => {
-        return (state && state[part]) || undefined
+        return state != null && state[part] != null ? state[part] : undefined
     }, state)
 }

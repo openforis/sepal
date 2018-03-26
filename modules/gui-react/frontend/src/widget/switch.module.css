@@ -1,0 +1,68 @@
+.switchContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.switch {
+    --total-width: 1rem;
+    --button-size: 1rem;
+    position: relative;
+    display: inline-block;
+    width: 2rem;
+    height: var(--total-width);
+}
+
+.switch input {
+    display: none;
+}
+
+.slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: hsla(37, 28%, 68%, .3);
+    border-radius: var(--button-size);
+    transition: .1s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: var(--button-size);
+    width: var(--button-size);
+    left: calc(var(--total-width) - var(--button-size));
+    bottom: calc(var(--total-width) - var(--button-size));
+    background-color: hsla(26, 4%, 61%, .8);
+    border-radius: 50%;
+    transition: .1s;
+}
+
+.switchContainer input:checked + .slider {
+    background-color: hsla(37, 28%, 68%, .5);
+}
+
+.switchContainer input:checked + .slider:before {
+    -webkit-transform: translateX(var(--button-size));
+    -ms-transform: translateX(var(--button-size));
+    transform: translateX(var(--button-size));
+}
+
+.offIcon {
+    margin-right: .3rem
+}
+
+.onIcon {
+    margin-left: .3rem
+}
+
+i.active {
+    opacity: 1;
+}
+
+i.inactive {
+    opacity: .2;
+}

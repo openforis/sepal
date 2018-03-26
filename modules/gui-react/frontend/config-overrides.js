@@ -1,12 +1,25 @@
 module.exports = {
-    devServer: function (configFunction) {
+    devServer: function (configFunction, env) {
         return function (proxy, allowedHost) {
             const config = configFunction(proxy, allowedHost)
-            if (config.proxy && config.proxy.length) {
+            if (env === 'development') {
+                const defaultProxy = config.proxy[0]
+                const contentSecurityPolicy = 'connect-src \'self\' wss://localhost:3000 https://*.googleapis.com https://apis.google.com; ' +
+                    'frame-ancestors \'self\''
+                Object.assign(defaultProxy, {
+                    changeOrigin: true,
+                    autoRewrite: true,
+                    ws: true,
+                    onProxyRes: (proxyRes) => proxyRes.headers['Content-Security-Policy'] = contentSecurityPolicy
+                })
                 config.proxy.push({
-                    ...config.proxy[0], 
+                    ...defaultProxy,
                     context: ['/sandbox']
                 })
+                config.headers = {
+                    ...config.headers,
+                    'Content-Security-Policy': contentSecurityPolicy
+                }
             }
             return config
         }

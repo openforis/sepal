@@ -20,7 +20,7 @@ export function dispatch(action) {
 
 export function select(path) {
     return path.split('.').reduce((state, part) => {
-        return (state && state[part]) || undefined
+        return state != null && state[part] != null ? state[part] : undefined
     }, state())
 }
 

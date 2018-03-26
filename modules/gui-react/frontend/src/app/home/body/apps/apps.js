@@ -64,12 +64,11 @@ class Apps extends React.Component {
         if (!action('LOAD_APPS').dispatched)
             return <div>Spinner</div>
 
-        const dataVis = {path: '/data-vis', label: msg('apps.dataVis'), icon: 'map-o', endpoint: 'geo-web-viz'}
-        const rStudio = {path: '/rstudio', image: rstudioIcon, alt: 'RStudio', endpoint: 'rstudio'}
+        const dataVis = {path: '/sandbox/data-vis', label: msg('apps.dataVis'), icon: 'map-o', endpoint: 'geo-web-viz'}
+        const rStudio = {path: '/sandbox/rstudio', image: rstudioIcon, alt: 'RStudio', endpoint: 'rstudio'}
         const items = [dataVis, rStudio, ...apps].map(
             (app) => <App key={app.path} app={app} onClick={this.openApp.bind(this)}/>
         )
-        console.log(apps)
         return (
             <div className={styles.apps}>
                 {items}

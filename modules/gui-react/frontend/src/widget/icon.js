@@ -3,11 +3,11 @@ import FontAwesome from 'react-fontawesome'
 import 'font-awesome/css/font-awesome.css'
 import PropTypes from 'prop-types'
 
-const Icon = ({name, ...props}) => {
+const Icon = ({name, className, ...props}) => {
     if (!name)
         return null
     else
-        return <FontAwesome tag='i' name={name} {...props} spin={name === 'spinner'}/>
+        return <FontAwesome tag='i' name={name} {...props} spin={name === 'spinner'} className={className}/>
 }
 
 Icon.propTypes = Object.assign(FontAwesome.propTypes, {

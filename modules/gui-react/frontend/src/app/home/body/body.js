@@ -11,6 +11,7 @@ import Tasks from './tasks/tasks'
 import Users from './users/users'
 import Account from './account/account'
 import Section from './section'
+import PropTypes from 'prop-types'
 
 const mapStateToProps = () => ({
     runningApps: runningApps()
@@ -20,11 +21,7 @@ class Body extends React.Component {
     render() {
         const appSections = this.props.runningApps.map((app) =>
             <Section key={app.path} path={'/app' + app.path}>
-                <iframe
-                    width={'100%'}
-                    frameBorder={'0'}
-                    src={`/sandbox/${app.path}`}
-                    title={app.label}/>
+                <IFrame src={app.path} title={app.label || app.alt}/>
             </Section>
         )
 
@@ -59,5 +56,25 @@ class Body extends React.Component {
         )
     }
 }
+
+class IFrame extends React.Component {
+    render() {
+        const {src, title} = this.props
+        return (
+            <iframe
+                ref={(iframe) => this.iframe = iframe}
+                width={'100%'}
+                frameBorder={'0'}
+                src={src}
+                title={title}/>
+        )
+    }
+}
+
+IFrame.contextTypes = {
+    active: PropTypes.bool,
+    focus: PropTypes.func
+}
+
 
 export default Body = connect(mapStateToProps)(Body)

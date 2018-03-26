@@ -8,7 +8,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 5rem .5rem 1rem 0rem;
+    padding: 1rem .5rem 1rem 0;
     transform: translate3d(-3.5rem, 0, 0);
     transition: all 150ms ease-in-out 200ms;
 }
@@ -20,12 +20,12 @@
 }
 
 .sections > * {
-    margin-bottom: 1.5rem;                                                                                      
+    margin-bottom: 1.5rem;
 }
 
 .sections button {
     position: relative;
-    width: 4.5rem;  
+    width: 4.5rem;
     height: 3.2rem;
     border: 2px solid transparent;
     border-top-right-radius: 2.25rem;
@@ -46,15 +46,21 @@
     text-align: right;
 }
 
-/* individual buttons styling */
-
-.sections button.lock {
-    background-color: rgba(49, 49, 49, 0.8);
-    border-color: rgba(49, 49, 49, 0.8);
+.lockSwitch {
+    margin-left: .3rem;
+    margin-bottom: 8rem;
+    transition: all 150ms ease-in-out 200ms;
 }
 
-.sections button.lock:hover {
-    background-color: rgba(49, 49, 49, 0.3);
+.unlocked:not(:hover) .lockSwitch {
+    opacity: 0;
+}
+
+/* individual buttons styling */
+
+.sections .lock {
+    background-color: rgba(49, 49, 49, 0.8);
+    border-color: rgba(49, 49, 49, 0.8);
 }
 
 .sections button.process {
@@ -81,7 +87,7 @@
 }
 
 .sections button.terminal:hover {
-    background-color: hsl(221, 19%, 26%, .3);
+    background-color: hsla(221, 19%, 26%, .3);
 }
 
 .sections button.apps {
@@ -90,9 +96,8 @@
 }
 
 @keyframes blink {
-    100% { 
-        opacity: 0.2; 
-        /* background-color: white; */
+    100% {
+        opacity: 0.2;
     }
 }
 
@@ -107,5 +112,5 @@
 }
 
 .sections button.app:hover {
-    background-color: hsl(221, 19%, 26%, .3);
+    background-color: hsla(221, 19%, 26%, .3);
 }

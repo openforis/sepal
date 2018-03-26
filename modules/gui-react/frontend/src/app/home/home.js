@@ -5,9 +5,10 @@ import styles from './home.module.css'
 import Sections from './sections/sections'
 import Footer from './footer/footer'
 import Body from './body/body'
+import {isMenuLocked} from 'app/home/sections/sections'
 
 const mapStateToProps = () => ({
-    fixedMenu: select('menu.locked') || false
+    fixedMenu: isMenuLocked()
 })
 
 const Home = ({user, fixedMenu}) => {

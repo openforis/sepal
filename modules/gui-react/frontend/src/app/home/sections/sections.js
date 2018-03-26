@@ -1,37 +1,40 @@
 import React from 'react'
-import {connect, select} from 'store'
-import PropTypes from 'prop-types'
+import {connect, select, state} from 'store'
 import styles from './sections.module.css'
 import Tooltip from 'widget/tooltip'
 import {Link} from 'route'
 import {runningApps} from 'app/home/body/apps/apps'
 import Icon from 'widget/icon'
 import actionBuilder from 'action-builder'
+import Switch from 'widget/switch'
+import PropTypes from 'prop-types'
+
+
+export function isMenuLocked() {
+    return select('menu.locked') == null ? true : !!select('menu.locked')
+}
 
 const mapStateToProps = () => ({
     runningApps: runningApps(),
-    locked: select('menu.locked')
+    locked: isMenuLocked()
 })
 
 class Sections extends React.Component {
     appSection(app) {
         return <App key={app.path} app={app}/>
     }
-    toggle() {
+
+    setUnlocked(unlocked) {
         actionBuilder('TOGGLE_MENU')
-            .set('menu.locked', !this.props.locked)
+            .set('menu.locked', !unlocked)
             .dispatch()
     }
+
     render() {
         return (
             <div className={styles.sectionsContainer}>
-                <div className={[styles.sections, this.props.locked && styles.locked].join(' ')}>
-                    <Tooltip msg={this.props.locked ? 'home.sections.locked' : 'home.sections.unlocked'} right>    
-                        <button className={styles.lock} onClick={this.toggle.bind(this)}>
-                            <Icon name={this.props.locked ? 'lock' : 'unlock'}/>
-                        </button>
-                    </Tooltip>
-                    {/*<Section name='dashboard' icon='dashboard'/>*/}
+                <div className={[styles.sections, this.props.locked ? styles.locked : styles.unlocked].join(' ')}>
+                    <LockSwitch locked={this.props.locked} onChange={this.setUnlocked.bind(this)}/>
                     <Section name='process' icon='globe'/>
                     <Section name='browse' icon='folder-open'/>
                     <Section name='terminal' icon='terminal'/>
@@ -62,9 +65,9 @@ Section.propTypes = {
     icon: PropTypes.string
 }
 
-const App = ({app: {path, label}}) =>
+const App = ({app: {path, label, alt}}) =>
     <Link to={'/app' + path} onMouseDown={(e) => e.preventDefault()}>
-        <Tooltip rawMsg={label} right>
+        <Tooltip rawMsg={label || alt} right>
             <button className={styles.app}>
                 <Icon name={'cubes'}/>
             </button>
@@ -76,5 +79,16 @@ App.propTypes = {
     path: PropTypes.string,
     label: PropTypes.string
 }
+
+const LockSwitch = ({locked, onChange}) =>
+    <Tooltip msg={locked ? 'home.sections.locked' : 'home.sections.unlocked'} right>
+        <div className={styles.lockSwitch}>
+            <Switch
+                on={!locked}
+                offIcon='lock'
+                onIcon='unlock'
+                onChange={onChange}/>
+        </div>
+    </Tooltip>
 
 export default Sections = connect(mapStateToProps)(Sections)
