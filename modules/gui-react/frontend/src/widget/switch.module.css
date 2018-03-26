@@ -24,7 +24,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: hsla(37, 28%, 68%, .3);
+    background-color: #6f2f33;
     border-radius: var(--button-size);
     transition: .1s;
 }
@@ -36,13 +36,13 @@
     width: var(--button-size);
     left: calc(var(--total-width) - var(--button-size));
     bottom: calc(var(--total-width) - var(--button-size));
-    background-color: hsla(26, 4%, 61%, .8);
+    background-color: #cbcbcb;
     border-radius: 50%;
     transition: .1s;
 }
 
 .switchContainer input:checked + .slider {
-    background-color: hsla(37, 28%, 68%, .5);
+    background-color: #416642;
 }
 
 .switchContainer input:checked + .slider:before {
@@ -51,12 +51,17 @@
     transform: translateX(var(--button-size));
 }
 
+.switchContainer i {
+    transition: .1s;
+    color: #cbcbcb;
+}
+
 .offIcon {
-    margin-right: .3rem
+    margin-right: .3rem;
 }
 
 .onIcon {
-    margin-left: .3rem
+    margin-left: .3rem;
 }
 
 i.active {
@@ -64,5 +69,5 @@ i.active {
 }
 
 i.inactive {
-    opacity: .2;
+    opacity: .5;
 }
