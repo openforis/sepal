@@ -1,8 +1,8 @@
 import React from 'react'
 import Icon from 'widget/icon'
-import styles from './switch.module.css'
+import styles from './toggleSwitch.module.css'
 
-class Switch extends React.Component {
+class ToggleSwitch extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
@@ -42,4 +42,4 @@ class Switch extends React.Component {
     }
 }
 
-export default Switch
+export default ToggleSwitch

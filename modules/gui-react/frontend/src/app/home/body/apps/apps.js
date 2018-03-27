@@ -52,7 +52,7 @@ class Apps extends React.Component {
             requestSandbox$(app))
             .onComplete(() => [
                     history().replace('/app' + app.path),
-                    actionBuilder('SET_APP_RUNNING')
+                    actionBuilder('APP_RUNNING')
                         .pushIfMissing(['apps', 'running'], app, 'path')
                         .build()
                 ]
