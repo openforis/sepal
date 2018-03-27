@@ -123,7 +123,7 @@ class EndpointProvider {
         endpointByNameByUsername.get(endpoint.username)?.remove(endpoint.name)
     }
 
-    String endpointStatus(HttpServerExchange exchange) {
+    Map endpointStatus(HttpServerExchange exchange) {
         def endpointName = exchange.queryParameters.endpoint?.peekFirst() as String
         if (!endpointName)
             throw new BadRequest('Missing query parameter: endpoint', 400)
@@ -136,12 +136,12 @@ class EndpointProvider {
             throw new BadRequest("No session started for endpoint $endpointName", 400)
 
         if (sandboxSession.isActive())
-            return 'STARTED'
+            return [id: sandboxSession.id, status: 'STARTED']
         else
-            return 'STARTING'
+            return [id: sandboxSession.id, status: 'STARTING']
     }
 
-    String startEndpoint(HttpServerExchange exchange) {
+    Map startEndpoint(HttpServerExchange exchange) {
         def endpointName = exchange.queryParameters.endpoint?.peekFirst() as String
         if (!endpointName)
             throw new BadRequest('Missing query parameter: endpoint', 400)
@@ -167,9 +167,9 @@ class EndpointProvider {
             addEndpoint(sandboxSession, endpointName, username)
 
         if (sandboxSession.isActive())
-            return 'STARTED'
+            return [id: sandboxSession.id, status: 'STARTED']
         else
-            return 'STARTING'
+            return [id: sandboxSession.id, status: 'STARTING']
     }
 
     Endpoint endpointFor(HttpServerExchange exchange) {
