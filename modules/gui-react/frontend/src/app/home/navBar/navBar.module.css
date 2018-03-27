@@ -8,7 +8,8 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 1rem .5rem 1rem 0;
+    padding-top: 10rem;
+    background: #28292B;
     transform: translate3d(-3.5rem, 0, 0);
     transition: all 150ms ease-in-out 200ms;
 }
@@ -16,7 +17,9 @@
 .locked,
 .navbar:hover {
     transform: none;
-    background-color: rgba(0, 0, 0, .5);
+    background: none;
+    background: #28292B;
+    /*background-color: rgba(0, 0, 0, .5);*/
 }
 
 .navbar > * {
@@ -25,12 +28,10 @@
 
 .navbar button {
     position: relative;
-    width: 4.5rem;
-    height: 3.2rem;
-    border: 2px solid transparent;
-    border-top-right-radius: 2.25rem;
-    border-bottom-right-radius: 2.25rem;
-    border-left: none;
+    width: 3.5rem;
+    height: 3.5rem;
+    border: none;
+    border-radius: .25rem;
     color: rgba(255, 255, 255, 0.8);
 }
 

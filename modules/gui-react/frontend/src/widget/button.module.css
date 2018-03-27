@@ -35,7 +35,6 @@
 }
 
 .default:disabled {
-    background-color: hsla(0, 0%, 100%, .15);
     border: 2px solid hsla(0, 0%, 100%, .15);
     color: hsla(0, 0%, 100%, .40);
     cursor: not-allowed;
