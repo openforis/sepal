@@ -1,5 +1,5 @@
 import React from 'react'
-import {connect, select} from 'store'
+import {connect, dispatch, select, state} from 'store'
 import {history} from 'route'
 import Http from 'http-client'
 import actionBuilder from 'action-builder'
@@ -10,7 +10,21 @@ import rstudioIcon from './r-studio.png'
 import Rx from 'rxjs'
 import {CenteredProgress} from 'widget/progress'
 
-export const runningApps = () => select('apps.running') || []
+const appsInState = (states) => (select('apps.active') || [])
+    .map((path) => select(['apps', 'state', path]))
+    .filter(({state}) => states.includes(state))
+    .map(({app}) => app)
+
+export const requestedApps = () => appsInState(['REQUESTED', 'INITIALIZED', 'READY'])
+export const initializedApps = () => appsInState(['INITIALIZED', 'READY'])
+export const readyApps = () => appsInState(['READY'])
+
+export const appReady = (app) => {
+    console.log('READY: ', app)
+    return actionBuilder('APP_READY')
+        .set(['apps', 'state', app.path], {state: 'READY', app})
+        .dispatch()
+}
 
 const mapStateToProps = () => ({
     apps: select('apps.list')
@@ -18,25 +32,48 @@ const mapStateToProps = () => ({
 
 function loadApps$() {
     return Http.get$('/apps')
-        .map((e) =>
-            actionBuilder('SET_APPS')
-                .set('apps.list', e.response)
-                .build()
+        .map((e) => {
+                const dataVis = {
+                    path: '/sandbox/data-vis',
+                    label: msg('apps.dataVis'),
+                    icon: 'map-o',
+                    endpoint: 'geo-web-viz'
+                }
+                const rStudio = {path: '/sandbox/rstudio', image: rstudioIcon, alt: 'RStudio', endpoint: 'rstudio'}
+                const apps = [dataVis, rStudio, ...e.response]
+                return actionBuilder('SET_APPS')
+                    .set('apps.list', apps)
+                    .build()
+            }
         )
 }
 
 function requestSandbox$(app) {
-    const url = `/sandbox/start?endpoint=${app.endpoint ? app.endpoint : 'shiny'}`
-    const isStarting = (e) => e.response.status === 'STARTING'
+    actionBuilder('APP_REQUESTED')
+        .pushIfMissing('apps.active', app.path)
+        .set(['apps', 'state', app.path], {state: 'REQUESTED', app})
+        .dispatch()
 
-    return Http.post$(url)
-        .takeWhile(isStarting)
-        .switchMap(() => Rx.Observable.interval(1000)
-            .switchMap((secondsPassed) => secondsPassed < 30
-                ? Rx.Observable.of(secondsPassed)
-                : Rx.Observable.throw({message: msg('')}))
-            .exhaustMap(() => Http.get$(url))
-            .takeWhile(isStarting)
+    const url = `/sandbox/start?endpoint=${app.endpoint ? app.endpoint : 'shiny'}`
+    const isSessionStarted = (e) => e.response.status === 'STARTED'
+
+    const requestSession$ = Http.post$(url)
+        .filter(isSessionStarted)
+
+    const waitForSession$ = Rx.Observable.interval(1000)
+        .switchMap((secondsPassed) => secondsPassed < 30
+            ? Rx.Observable.of(secondsPassed)
+            : Rx.Observable.throw({message: msg('')}))
+        .exhaustMap(() => Http.get$(url))
+        .filter(isSessionStarted)
+        .first()
+
+    return requestSession$
+        .concat(waitForSession$)
+        .first()
+        .map((e) => actionBuilder('APP_INITIALIZED', {app})
+            .set(['apps', 'state', app.path], {state: 'INITIALIZED', app})
+            .build()
         )
 }
 
@@ -47,16 +84,10 @@ class Apps extends React.Component {
             .dispatch()
     }
 
-    openApp(app) {
-        this.props.asyncActionBuilder('OPEN_APP',
+    runApp(app) {
+        dispatch(history().push('/app' + app.path))
+        this.props.asyncActionBuilder('RUN_APP',
             requestSandbox$(app))
-            .onComplete(() => [
-                    history().replace('/app' + app.path),
-                    actionBuilder('APP_RUNNING')
-                        .pushIfMissing(['apps', 'running'], app, 'path')
-                        .build()
-                ]
-            )
             .dispatch()
     }
 
@@ -65,10 +96,8 @@ class Apps extends React.Component {
         if (!action('LOAD_APPS').dispatched)
             return <CenteredProgress title={msg('apps.loading')}/>
 
-        const dataVis = {path: '/sandbox/data-vis', label: msg('apps.dataVis'), icon: 'map-o', endpoint: 'geo-web-viz'}
-        const rStudio = {path: '/sandbox/rstudio', image: rstudioIcon, alt: 'RStudio', endpoint: 'rstudio'}
-        const items = [dataVis, rStudio, ...apps].map(
-            (app) => <App key={app.path} app={app} onClick={this.openApp.bind(this)}/>
+        const items = apps.map(
+            (app) => <App key={app.path} app={app} onClick={this.runApp.bind(this)}/>
         )
         return (
             <div className={styles.apps}>

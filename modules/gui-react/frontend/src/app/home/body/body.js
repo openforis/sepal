@@ -6,7 +6,7 @@ import {connect} from 'store'
 import styles from './body.module.css'
 import {Select} from 'widget/selectable'
 import Process from './process/process'
-import Apps, {runningApps} from './apps/apps'
+import Apps, {appReady, initializedApps} from './apps/apps'
 import Tasks from './tasks/tasks'
 import Users from './users/users'
 import Account from './account/account'
@@ -14,14 +14,14 @@ import Section from './section'
 import PropTypes from 'prop-types'
 
 const mapStateToProps = () => ({
-    runningApps: runningApps()
+    initializedApps: initializedApps()
 })
 
 class Body extends React.Component {
     render() {
-        const appSections = this.props.runningApps.map((app) =>
+        const appSections = this.props.initializedApps.map((app) =>
             <Section key={app.path} path={'/app' + app.path}>
-                <IFrame src={app.path} title={app.label || app.alt}/>
+                <IFrame app={app}/>
             </Section>
         )
 
@@ -59,15 +59,23 @@ class Body extends React.Component {
 
 class IFrame extends React.Component {
     render() {
-        const {src, title} = this.props
+        const {app: {path, label, alt}} = this.props
         return (
             <iframe
                 ref={(iframe) => this.iframe = iframe}
                 width={'100%'}
                 frameBorder={'0'}
-                src={src}
-                title={title}/>
+                src={path} title={label || alt}
+            />
         )
+    }
+
+    componentDidMount() {
+        const {app} = this.props
+        this.iframe.contentWindow.document.addEventListener(
+            'load',
+            appReady(app),
+            false)
     }
 }
 

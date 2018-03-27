@@ -19,7 +19,9 @@ export function dispatch(action) {
 }
 
 export function select(path) {
-    return path.split('.').reduce((state, part) => {
+    if (typeof path === 'string')
+        path = path.split('.')
+    return path.reduce((state, part) => {
         return state != null && state[part] != null ? state[part] : undefined
     }, state())
 }

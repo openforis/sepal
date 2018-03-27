@@ -21,7 +21,11 @@ export default function actionBuilder(type, props = {}) {
                 const currentState = immutableState.value()
                 immutableState = immutable(currentState)
                 const collection = select(path, currentState)
-                if (collection && collection.find((app) => app[uniqueKeyProp] === value[uniqueKeyProp]))
+                const equals = (item) => uniqueKeyProp
+                    ? item[uniqueKeyProp] === value[uniqueKeyProp]
+                    : item === value
+
+                if (collection && collection.find(equals))
                     return immutableState
                 else
                     return immutableState.push(path, value)

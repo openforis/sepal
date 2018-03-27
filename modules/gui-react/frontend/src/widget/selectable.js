@@ -52,7 +52,6 @@ export class Selectable extends React.Component {
             this.activeElement = document.activeElement.tagName === 'IFRAME'
                 ? document.activeElement.contentWindow.document.activeElement
                 : document.activeElement
-            console.log('Deactivate', this.activeElement)
         } else if (!this.props.active && nextProps.active) {
             this.className = this.props.classNames.in
             this.hasBeenActive = true

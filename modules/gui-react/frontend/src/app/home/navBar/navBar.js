@@ -3,7 +3,7 @@ import {connect, select} from 'store'
 import styles from './navBar.module.css'
 import Tooltip from 'widget/tooltip'
 import {Link} from 'route'
-import {runningApps, stopApp} from 'app/home/body/apps/apps'
+import {requestedApps, stopApp} from 'app/home/body/apps/apps'
 import Icon from 'widget/icon'
 import actionBuilder from 'action-builder'
 import ToggleSwitch from 'widget/toggleSwitch'
@@ -15,7 +15,7 @@ export function isNavBarLocked() {
 }
 
 const mapStateToProps = () => ({
-    runningApps: runningApps(),
+    requestedApps: requestedApps(),
     locked: isNavBarLocked()
 })
 
@@ -31,15 +31,16 @@ class NavBar extends React.Component {
     }
 
     render() {
+        const {requestedApps} = this.props
         return (
             <div className={styles.navbarContainer}>
                 <div className={[styles.navbar, this.props.locked ? styles.locked : styles.unlocked].join(' ')}>
-                    <LockSwitch locked={this.props.locked} onChange={this.setUnlocked.bind(this)}/>
+                    {/*<LockSwitch locked={this.props.locked} onChange={this.setUnlocked.bind(this)}/>*/}
                     <SectionLink name='process' icon='globe'/>
                     <SectionLink name='browse' icon='folder-open'/>
                     <SectionLink name='terminal' icon='terminal'/>
                     <SectionLink name='apps' icon='wrench'/>
-                    {this.props.runningApps.map(this.appSection)}
+                    {requestedApps.map(this.appSection)}
                 </div>
             </div>
         )
@@ -48,7 +49,7 @@ class NavBar extends React.Component {
 
 NavBar.propTypes = {
     locked: PropTypes.bool.isRequired,
-    runningApps: PropTypes.arrayOf(PropTypes.object).isRequired
+    requestedApps: PropTypes.arrayOf(PropTypes.object).isRequired
 }
 
 const SectionLink = ({name, icon}) =>

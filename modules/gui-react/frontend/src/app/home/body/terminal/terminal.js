@@ -1,6 +1,6 @@
 import React from 'react'
-import './gateone'
-import './gateone.css'
+// import './gateone'
+// import './gateone.css'
 import Http from 'http-client'
 import {currentUser} from 'user'
 import {connect} from 'store'
