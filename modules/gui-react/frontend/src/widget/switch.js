@@ -17,7 +17,7 @@ class Switch extends React.Component {
     }
 
     render() {
-        const {on, offIcon, onIcon, onChange} = this.props
+        const {on, offIcon, onIcon} = this.props
         return (
             <div
                 className={styles.switchContainer}

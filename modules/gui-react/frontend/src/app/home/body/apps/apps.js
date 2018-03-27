@@ -8,6 +8,7 @@ import {msg} from 'translate'
 import Icon from 'widget/icon'
 import rstudioIcon from './r-studio.png'
 import Rx from 'rxjs'
+import {CenteredProgress} from 'widget/progress'
 
 export const runningApps = () => select('apps.running') || []
 
@@ -62,7 +63,7 @@ class Apps extends React.Component {
     render() {
         const {apps, action} = this.props
         if (!action('LOAD_APPS').dispatched)
-            return <div>Spinner</div>
+            return <CenteredProgress title={msg('apps.loading')}/>
 
         const dataVis = {path: '/sandbox/data-vis', label: msg('apps.dataVis'), icon: 'map-o', endpoint: 'geo-web-viz'}
         const rStudio = {path: '/sandbox/rstudio', image: rstudioIcon, alt: 'RStudio', endpoint: 'rstudio'}

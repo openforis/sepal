@@ -1,5 +1,5 @@
 import React from 'react'
-import {connect, select} from 'store'
+import {connect} from 'store'
 import PropTypes from 'prop-types'
 import styles from './home.module.css'
 import Sections from './sections/sections'

@@ -5,8 +5,7 @@ import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
 import Notifications from 'app/notifications'
-import CenteredPanel from 'widget/centered-panel'
-import Icon from 'widget/icon'
+import {CenteredProgress} from 'widget/progress'
 
 
 const inputs = {
@@ -65,11 +64,7 @@ class ResetPassword extends React.Component {
 
     spinner() {
         return (
-            <CenteredPanel>
-                <div style={{display: 'flex', justifyContent: 'center', fontSize: '2rem'}}>
-                    <Icon name='spinner'/>
-                </div>
-            </CenteredPanel>
+            <CenteredProgress title={msg('landing.reset-password.validating-link')}/>
         )
     }
 

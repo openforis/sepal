@@ -1,5 +1,5 @@
 import React from 'react'
-import {connect, select, state} from 'store'
+import {connect, select} from 'store'
 import styles from './sections.module.css'
 import Tooltip from 'widget/tooltip'
 import {Link} from 'route'

@@ -63,7 +63,8 @@
         "not-matching": "Passwords are not the same"
       },
       "button": "Reset password",
-      "success.title": "Password has been reset"
+      "success.title": "Password has been reset",
+      "validating-link": "Validating link..."
     },
     "validate-token": {
       "error": {
@@ -91,6 +92,7 @@
     }
   },
   "apps": {
+    "loading": "Loading apps...",
     "dataVis": "Data visualization"
   },
   "action": {
