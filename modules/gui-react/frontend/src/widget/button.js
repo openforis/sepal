@@ -31,7 +31,7 @@ Button.propTypes = {
     onClick: PropTypes.func,
     tabIndex: PropTypes.number,
     className: PropTypes.string,
-    children: PropTypes.object
+    children: PropTypes.any
 }
 
 export const SubmitButton = ({icon, tabIndex, onClick, className, children, ...props}) =>

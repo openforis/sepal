@@ -12,7 +12,7 @@ import Tasks from './tasks/tasks'
 import Users from './users/users'
 import Account from './account/account'
 import Section from './section'
-import {location} from 'route'
+import {location, isPathInLocation} from 'route'
 import IFrame from './iframe'
 import {CenteredProgress} from 'widget/progress'
 import {msg} from 'translate'
@@ -31,9 +31,7 @@ class Body extends React.Component {
     }
 
     componentWillReceiveProps({action, location, requestedApps}) {
-        const loadedApps = action('LOAD_APPS').dispatched
-        const isAppPath = location.pathname.startsWith('/app/sandbox')
-        if (loadedApps && isAppPath) {
+        if (action('LOAD_APPS').dispatched && isPathInLocation('/app/sandbox')) {
             const path = location.pathname.replace(/^\/app/, '')
             const notRunning = !requestedApps.find((app) => path === app.path)
             if (notRunning)

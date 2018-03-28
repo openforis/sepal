@@ -55,7 +55,7 @@ const LandingPanel = ({children}) =>
     </CenteredPanel>
 
 LandingPanel.propTypes = {
-    children: PropTypes.array
+    children: PropTypes.any
 }
 
 const Caption = () =>

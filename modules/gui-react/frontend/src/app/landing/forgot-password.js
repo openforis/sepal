@@ -21,9 +21,9 @@ export class ForgotPassword extends React.Component {
         this.props.asyncActionBuilder('REQUEST_PASSWORD_RESET',
             requestPasswordReset$(email))
             .onComplete(() => [
-                    history().replace('/'),
-                    Notifications.success('landing.forgot-password', {email})
-                ]
+                history().replace('/'),
+                Notifications.success('landing.forgot-password', {email})
+            ]
             )
             .dispatch()
     }

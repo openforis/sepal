@@ -3,7 +3,7 @@ import {connect, select} from 'store'
 import styles from './navBar.module.css'
 import Tooltip from 'widget/tooltip'
 import {Link} from 'route'
-import {requestedApps, stopApp} from 'apps'
+import {requestedApps, quitApp} from 'apps'
 import Icon from 'widget/icon'
 import actionBuilder from 'action-builder'
 import ToggleSwitch from 'widget/toggleSwitch'
@@ -65,9 +65,9 @@ SectionLink.propTypes = {
     icon: PropTypes.string
 }
 
-const AppLink = ({app: {path, label, alt}, onRemove}) =>
+const AppLink = ({app: {path, label, alt}}) =>
     <div className={styles.app}>
-        <div className={styles.stop} onClick={onRemove}>
+        <div className={styles.stop} onClick={() => quitApp(path)}>
             <Icon name='times'/>
         </div>
         <Link to={'/app' + path} onMouseDown={(e) => e.preventDefault()}>

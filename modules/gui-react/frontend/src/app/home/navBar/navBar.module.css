@@ -124,6 +124,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    cursor: pointer;
 
     opacity: 0;
     width: 1.8rem;

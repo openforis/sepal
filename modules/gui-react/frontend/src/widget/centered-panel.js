@@ -9,7 +9,7 @@ const CenteredPanel = ({className, children}) =>
 
 CenteredPanel.propTypes = {
     className: PropTypes.string,
-    children: PropTypes.children
+    children: PropTypes.any
 }
 
 export default CenteredPanel

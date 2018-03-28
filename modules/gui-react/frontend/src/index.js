@@ -15,8 +15,7 @@ import App from 'app/app'
 import createHistory from 'history/createBrowserHistory'
 import {syncHistoryAndStore} from 'route'
 import {Router} from 'react-router-dom'
-import { PropTypes } from 'prop-types'
-
+import PropTypes from 'prop-types'
 
 // https://github.com/jcbvm/i18n-editor
 addLocaleData([...en, ...es])
@@ -65,18 +64,23 @@ const store = createStore(
 )
 initStore(store)
 
-const IntlInit = injectIntl(
-    class IntlInitializer extends React.Component {
-        constructor(props) {
-            super(props)
-            initIntl(props.intl)
-        }
-
-        render() {
-            return this.props.children
-        }
+class IntlInitializer extends React.Component {
+    constructor(props) {
+        super(props)
+        initIntl(props.intl)
     }
-)
+
+    render() {
+        return this.props.children
+    }
+}
+
+IntlInitializer.propTypes = {
+    intl: PropTypes.object,
+    children: PropTypes.any
+}
+
+const IntlInit = injectIntl(IntlInitializer)
 
 const history = createHistory()
 syncHistoryAndStore(history, store)
@@ -92,4 +96,4 @@ ReactDOM.render(
         </IntlInit>
     </IntlProvider>,
     document.getElementById('app')
-)
+) 

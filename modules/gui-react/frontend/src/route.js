@@ -21,8 +21,7 @@ export const history = () => ({
             .set('historyOperation', {method: 'replace', args: [pathname, state]})
             .set('location', {...location(), pathname: pathname, state: state})
             .build()
-    },
-
+    }
 })
 
 export const location = () => state().location
@@ -75,4 +74,10 @@ export function syncHistoryAndStore(history, store) {
                 .dispatch()
         }
     })
+}
+
+export const isPathInLocation = (path) => location().pathname.startsWith(path)
+
+export const replaceIfPathInLocation = (pathPrefix, destinationPath) => {
+    isPathInLocation(pathPrefix) && history().replace(destinationPath).dispatch()
 }

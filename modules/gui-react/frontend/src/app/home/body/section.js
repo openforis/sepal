@@ -23,7 +23,7 @@ let Section = ({location, path, children}) =>
 Section.propTypes = {
     location: PropTypes.object,
     path: PropTypes.string,
-    children: PropTypes.object
+    children: PropTypes.any
 }
 
 export default Section = connect(mapStateToProps)(Section)

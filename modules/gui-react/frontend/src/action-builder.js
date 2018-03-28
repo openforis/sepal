@@ -38,6 +38,21 @@ export default function actionBuilder(type, props = {}) {
             return this
         },
 
+        delValue(path, value) {
+            if (typeof path === 'string')
+                path = path.split('.')
+
+            operations.push((immutableState) => {
+                const currentState = immutableState.value()
+                immutableState = immutable(currentState)
+                const index = select(path, currentState).indexOf(value)
+                return (index !== -1)
+                    ? immutableState.del([...path, index])
+                    : immutableState
+            })
+            return this
+        },
+
         assign(path, source) {
             operations.push((immutableState) => immutableState.assign(path, source))
             return this
@@ -52,6 +67,9 @@ export default function actionBuilder(type, props = {}) {
                         (immutableState, operation) => operation(immutableState),
                         immutable(state)
                     ).value()
+                },
+                dispatch() {
+                    dispatch(this)
                 }
             }
         },
