@@ -8,18 +8,21 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding-top: 10rem;
-    background: #28292B;
-    transform: translate3d(-3.5rem, 0, 0);
+    padding: 3rem 0.25rem 0 0;
+    /* background: #28292B; */
+    transform: translate3d(-2.5rem, 0, 0);
     transition: all 150ms ease-in-out 200ms;
 }
 
-.locked,
-.navbar:hover {
+.navbar.locked {
     transform: none;
     background: none;
-    background: #28292B;
-    /*background-color: rgba(0, 0, 0, .5);*/
+}
+
+.navbar.unlocked:hover {
+    transform: none;
+    background: none;
+    background-color: rgba(0, 0, 0, .8);
 }
 
 .navbar > * {
@@ -45,6 +48,9 @@
     font-size: 1.7rem;
     vertical-align: middle;
     text-align: right;
+}
+.unlocked:not(:hover) button i {
+    opacity: 0;
 }
 
 .lockSwitch {

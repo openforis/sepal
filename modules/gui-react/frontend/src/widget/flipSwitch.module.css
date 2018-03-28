@@ -1,0 +1,40 @@
+.flipSwitch {
+    --width: 3rem;
+    --height: 1rem;
+    --slider-width: calc(var(--width) / 2);
+    font-size: var(--height);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-content: center;
+    width: var(--width);
+    height: var(--height);
+    border-radius: var(--height);
+    position: relative;
+    transition: all 100ms ease-in-out;
+    cursor: pointer;
+    background-color: darkred;
+}
+
+.flipSwitch.active {
+    background-color: darkgreen;
+}
+
+.icon {
+    padding-left: 10%;
+    padding-right: 10%;
+}
+.slider {
+    position: absolute;
+    left: 0;
+    width: var(--slider-width);
+    height: 100%;
+    box-sizing: border-box;
+    border-radius: var(--height);
+    border: 0.2rem solid #b0b0b0;
+    background-color: #c0c0c0;
+    transition: all 100ms ease-in-out;
+}
+.flipSwitch.active .slider {
+    left: calc(var(--width) - var(--slider-width));
+}

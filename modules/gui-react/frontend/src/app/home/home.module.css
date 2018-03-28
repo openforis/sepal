@@ -10,7 +10,7 @@
 }
 
 .navBarLocked {
-    grid-template-columns: 5rem 1fr;
+    grid-template-columns: 3.75rem 1fr;
 }
 
 .footer {

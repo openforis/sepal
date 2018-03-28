@@ -7,6 +7,7 @@ import {requestedApps, quitApp} from 'apps'
 import Icon from 'widget/icon'
 import actionBuilder from 'action-builder'
 import ToggleSwitch from 'widget/toggleSwitch'
+import FlipSwitch from 'widget/flipSwitch'
 import PropTypes from 'prop-types'
 
 export function isNavBarLocked() {
@@ -34,7 +35,7 @@ class NavBar extends React.Component {
         return (
             <div className={styles.navbarContainer}>
                 <div className={[styles.navbar, this.props.locked ? styles.locked : styles.unlocked].join(' ')}>
-                    {/*<LockSwitch locked={this.props.locked} onChange={this.setUnlocked.bind(this)}/>*/}
+                    <LockSwitch locked={this.props.locked} onChange={this.setUnlocked.bind(this)}/>
                     <SectionLink name='process' icon='globe'/>
                     <SectionLink name='browse' icon='folder-open'/>
                     <SectionLink name='terminal' icon='terminal'/>
@@ -90,10 +91,11 @@ AppLink.propTypes = {
 const LockSwitch = ({locked, onChange}) =>
     <Tooltip msg={locked ? 'home.sections.locked' : 'home.sections.unlocked'} right>
         <div className={styles.lockSwitch}>
+            {/* <FlipSwitch */}
             <ToggleSwitch
                 on={!locked}
-                offIcon='lock'
-                onIcon='unlock'
+                offIcon='unlock'
+                onIcon='lock'
                 onChange={onChange}/>
         </div>
     </Tooltip>
