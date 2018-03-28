@@ -2,6 +2,7 @@ import React from 'react'
 import {connect} from 'react-redux'
 import {location} from 'route'
 import {Selectable} from 'widget/selectable'
+import PropTypes from 'prop-types'
 import styles from './body.module.css'
 
 const mapStateToProps = () => ({
@@ -18,6 +19,13 @@ let Section = ({location, path, children}) =>
         }}>
         {children}
     </Selectable>
+
+Section.propTypes = {
+    location: PropTypes.object,
+    path: PropTypes.string,
+    children: PropTypes.object
+}
+
 export default Section = connect(mapStateToProps)(Section)
 
 function inPath(location, path) {

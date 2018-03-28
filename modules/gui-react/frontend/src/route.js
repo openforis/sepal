@@ -3,8 +3,7 @@ import QueryString from 'query-string'
 import {state} from 'store'
 import actionBuilder from 'action-builder'
 import PropTypes from 'prop-types'
-
-const router = require('react-router-dom')
+import * as router from 'react-router-dom'
 
 let historyInstance = null
 export const history = () => ({

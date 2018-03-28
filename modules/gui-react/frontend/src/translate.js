@@ -11,6 +11,7 @@ export const Msg = ({id, ...values}) => (
         values={values}
     />
 )
+
 Msg.propTypes = {
     id: PropTypes.string.isRequired
 }

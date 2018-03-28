@@ -16,6 +16,7 @@ import {location} from 'route'
 import IFrame from './iframe'
 import {CenteredProgress} from 'widget/progress'
 import {msg} from 'translate'
+import PropTypes from 'prop-types'
 
 const mapStateToProps = () => ({
     requestedApps: requestedApps(),
@@ -29,7 +30,7 @@ class Body extends React.Component {
             .dispatch()
     }
 
-    componentWillReceiveProps({action, app, location, requestedApps}) {
+    componentWillReceiveProps({action, location, requestedApps}) {
         const loadedApps = action('LOAD_APPS').dispatched
         const isAppPath = location.pathname.startsWith('/app/sandbox')
         if (loadedApps && isAppPath) {
@@ -82,6 +83,13 @@ class Body extends React.Component {
             </Select>
         )
     }
+}
+
+Body.propTypes = {
+    asyncActionBuilder: PropTypes.func,
+    action: PropTypes.func,
+    location: PropTypes.object, 
+    requestedApps: PropTypes.array
 }
 
 export default Body = connect(mapStateToProps)(Body)

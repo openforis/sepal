@@ -82,7 +82,9 @@ const AppLink = ({app: {path, label, alt}, onRemove}) =>
 AppLink.propTypes = {
     app: PropTypes.object,
     path: PropTypes.string,
-    label: PropTypes.string
+    label: PropTypes.string,
+    alt: PropTypes.string,
+    onRemove: PropTypes.func
 }
 
 const LockSwitch = ({locked, onChange}) =>
@@ -95,5 +97,10 @@ const LockSwitch = ({locked, onChange}) =>
                 onChange={onChange}/>
         </div>
     </Tooltip>
+
+LockSwitch.propTypes = {
+    locked: PropTypes.bool,
+    onChange: PropTypes.func
+}
 
 export default NavBar = connect(mapStateToProps)(NavBar)

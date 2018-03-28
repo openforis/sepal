@@ -30,7 +30,8 @@ Button.propTypes = {
     icon: PropTypes.string,
     onClick: PropTypes.func,
     tabIndex: PropTypes.number,
-    className: PropTypes.string
+    className: PropTypes.string,
+    children: PropTypes.object
 }
 
 export const SubmitButton = ({icon, tabIndex, onClick, className, children, ...props}) =>
@@ -45,7 +46,7 @@ export const SubmitButton = ({icon, tabIndex, onClick, className, children, ...p
 
 SubmitButton.propTypes = Button.propTypes
 
-export const IconButton = ({icon, tabIndex, onClick, className, children, ...props}) =>
+export const IconButton = ({icon, tabIndex, onClick, className, ...props}) =>
     <Button
         icon={icon}
         tabIndex={tabIndex}

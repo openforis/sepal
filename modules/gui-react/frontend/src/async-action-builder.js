@@ -11,8 +11,7 @@ export default function asyncActionBuilder(type, action$, component) {
     let actionsToDispatch = []
     const addActions = (actions) => {
         if (!actions) return
-        if (!actions instanceof Array)
-            actions = [actions]
+        actions instanceof Array || (actions = [actions])
         actionsToDispatch = actionsToDispatch.concat(actions)
     }
     let onComplete, onError

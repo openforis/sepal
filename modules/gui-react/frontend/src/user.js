@@ -13,9 +13,8 @@ export const resetInvalidCredentials = () =>
 
 export function loadCurrentUser$() {
     return Http.get$('/user/current', {
-            validStatuses: [200, 401]
-        }
-    ).map((e) =>
+        validStatuses: [200, 401]
+    }).map((e) =>
         actionBuilder('CURRENT_USER_LOADED')
             .set('user.currentUser', e.response)
             .build()
@@ -25,10 +24,9 @@ export function loadCurrentUser$() {
 
 export function login$(username, password) {
     return Http.post$('/user/login', {
-            username, password,
-            validStatuses: [200, 401]
-        }
-    ).map((e) => actionBuilder('CREDENTIALS_POSTED')
+        username, password,
+        validStatuses: [200, 401]
+    }).map((e) => actionBuilder('CREDENTIALS_POSTED')
         .set('user.currentUser', e.response)
         .set('user.invalidCredentials', !e.response)
         .build()
@@ -37,34 +35,30 @@ export function login$(username, password) {
 
 export function requestPasswordReset$(email) {
     return Http.post$('/user/password/reset-request', {
-            body: {email}
-        }
-    ).filter(() => false)
+        body: {email}
+    }).filter(() => false)
 }
 
 export function validateToken$(token) {
     return Http.post$('/user/validate-token', {
-            body: {token}
-        }
-    ).map((e) => {
-            const user = e.response && e.response.user
-            return actionBuilder('TOKEN_VALIDATED',
-                {valid: !!user})
-                .set('user.tokenUser', user)
-                .build()
-        }
-    )
+        body: {token}
+    }).map((e) => {
+        const user = e.response && e.response.user
+        return actionBuilder('TOKEN_VALIDATED',
+            {valid: !!user})
+            .set('user.tokenUser', user)
+            .build()
+    })
 }
 export const tokenUser = () => select('user.tokenUser')
 
 export function resetPassword$(token, username, password) {
     return Http.post$('/user/password/reset', {
-            body: {
-                token: token,
-                password: password
-            }
+        body: {
+            token: token,
+            password: password
         }
-    ).switchMap(
+    }).switchMap(
         () => login$(username, password)
     )
 }

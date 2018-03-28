@@ -4,6 +4,7 @@ import {currentUser, loadCurrentUser$} from 'user'
 import Notifications from 'app/notifications'
 import Home from 'app/home/home'
 import Landing from 'app/landing/landing'
+import PropTypes from 'prop-types'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
 import './app.css'
 
@@ -29,13 +30,18 @@ class App extends React.Component {
 
     body() {
         const {currentUser, action} = this.props
-        if (!action('LOAD_CURRENT_USER').dispatched)
-            return <Loader/>
-        else if (currentUser)
-            return <Home user={currentUser}/>
-        else
-            return <Landing/>
+        return action('LOAD_CURRENT_USER').dispatched
+            ? currentUser
+                ? <Home user={currentUser}/>
+                : <Landing/>
+            : <Loader/>
     }
+}
+
+App.propTypes = {
+    asyncActionBuilder: PropTypes.func,
+    currentUser: PropTypes.object,
+    action: PropTypes.func
 }
 
 export default App = connect(mapStateToProps)(App)

@@ -11,6 +11,7 @@ import ResetPassword from './reset-password'
 import SetupAccount from './setup-account'
 import styles from './landing.module.css'
 import {location, Route, Switch} from 'route'
+import PropTypes from 'prop-types'
 
 const mapStateToProps = () => ({
     location: location()
@@ -53,6 +54,10 @@ const LandingPanel = ({children}) =>
         </div>
     </CenteredPanel>
 
+LandingPanel.propTypes = {
+    children: PropTypes.array
+}
+
 const Caption = () =>
     <p className={styles.caption}>
         <Msg id='landing.caption'/>
@@ -82,6 +87,11 @@ const Feature = ({icon, name}) =>
         <p className={styles.featureDescription}><Msg id={`landing.features.${name}.description`}/></p>
     </div>
 
+Feature.propTypes = {
+    icon: PropTypes.string,
+    name: PropTypes.string
+}
+
 const Form = ({location}) =>
     <Switch location={location}>
         <Route path='/forgot-password' component={ForgotPassword}/>
@@ -89,3 +99,7 @@ const Form = ({location}) =>
         <Route path='/setup-account' component={SetupAccount}/>
         <Route path='/' component={Login}/>
     </Switch>
+
+Form.propTypes = {
+    location: PropTypes.object
+}

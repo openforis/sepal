@@ -24,19 +24,18 @@ export const appReady = (app) => {
 export const loadApps$ = () =>
     Http.get$('/apps')
         .map((e) => {
-                const dataVis = {
-                    path: '/sandbox/data-vis',
-                    label: msg('apps.dataVis'),
-                    icon: 'map-o',
-                    endpoint: 'geo-web-viz'
-                }
-                const rStudio = {path: '/sandbox/rstudio', image: rstudioIcon, alt: 'RStudio', endpoint: 'rstudio'}
-                const apps = [dataVis, rStudio, ...e.response]
-                return actionBuilder('SET_APPS')
-                    .set('apps.list', apps)
-                    .build()
+            const dataVis = {
+                path: '/sandbox/data-vis',
+                label: msg('apps.dataVis'),
+                icon: 'map-o',
+                endpoint: 'geo-web-viz'
             }
-        )
+            const rStudio = {path: '/sandbox/rstudio', image: rstudioIcon, alt: 'RStudio', endpoint: 'rstudio'}
+            const apps = [dataVis, rStudio, ...e.response]
+            return actionBuilder('SET_APPS')
+                .set('apps.list', apps)
+                .build()
+        })
 
 export const runApp$ = (path) => {
     const app = getApp(path)
@@ -62,7 +61,7 @@ export const runApp$ = (path) => {
     return requestSession$
         .concat(waitForSession$)
         .first()
-        .map((e) => actionBuilder('APP_INITIALIZED', {app})
+        .map(() => actionBuilder('APP_INITIALIZED', {app})
             .set(['apps', 'state', app.path], {state: 'INITIALIZED', app})
             .build()
         )

@@ -4,6 +4,7 @@ import {history} from 'route'
 import styles from './appLaunchPad.module.css'
 import Icon from 'widget/icon'
 import {appList, requestedApps, runApp$} from 'apps'
+import PropTypes from 'prop-types'
 
 const mapStateToProps = () => ({
     apps: appList(),
@@ -32,6 +33,12 @@ class AppLaunchPad extends React.Component {
     }
 }
 
+AppLaunchPad.propTypes = {
+    apps: PropTypes.arrayOf(PropTypes.object),
+    requestedApps: PropTypes.arrayOf(PropTypes.object),
+    asyncActionBuilder: PropTypes.func
+}
+
 export default AppLaunchPad = connect(mapStateToProps)(AppLaunchPad)
 
 const App = ({app, onClick}) =>
@@ -44,9 +51,18 @@ const App = ({app, onClick}) =>
         </div>
     </button>
 
+App.propTypes = {
+    app: PropTypes.object,
+    onClick: PropTypes.func
+}
+
 const Image = ({src, alt}) => {
-    if (!src)
-        return null
-    else
-        return <img src={src} alt={alt}/>
+    return src 
+        ? <img src={src} alt={alt}/>
+        : null
+}
+
+Image.propTypes = {
+    src: PropTypes.string,
+    alt: PropTypes.string
 }

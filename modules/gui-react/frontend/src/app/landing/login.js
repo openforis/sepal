@@ -4,6 +4,7 @@ import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
+import PropTypes from 'prop-types'
 
 const inputs = {
     username: new Constraints()
@@ -62,6 +63,16 @@ class Login extends React.Component {
                 <ForgotPasswordLink tabIndex={4}/>
             </form>)
     }
+}
+
+Login.propTypes = {
+    form: PropTypes.object,
+    inputs: PropTypes.objectOf({
+        username: PropTypes.string,
+        password: PropTypes.string,
+    }),
+    action: PropTypes.func,
+    asyncActionBuilder: PropTypes.func
 }
 
 export default Login = form(inputs, mapStateToProps)(Login)

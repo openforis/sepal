@@ -24,6 +24,11 @@ Select.childContextTypes = {
     focus: PropTypes.func
 }
 
+Select.propTypes = {
+    className: PropTypes.string,
+    children: PropTypes.array
+}
+
 export class Selectable extends React.Component {
     constructor(props) {
         super(props)
@@ -72,6 +77,13 @@ export class Selectable extends React.Component {
 Selectable.contextTypes = {
     focus: PropTypes.func
 }
+
 Selectable.childContextTypes = {
     active: PropTypes.bool
+}
+
+Selectable.propTypes = {
+    active: PropTypes.bool,
+    classNames: PropTypes.objectOf(PropTypes.string),
+    children: PropTypes.object
 }

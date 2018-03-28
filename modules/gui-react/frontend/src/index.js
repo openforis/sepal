@@ -15,6 +15,7 @@ import App from 'app/app'
 import createHistory from 'history/createBrowserHistory'
 import {syncHistoryAndStore} from 'route'
 import {Router} from 'react-router-dom'
+import { PropTypes } from 'prop-types'
 
 
 // https://github.com/jcbvm/i18n-editor
@@ -40,7 +41,7 @@ const logger = createLogger({
         !action.notLogged && ['RNS_HIDE_NOTIFICATION'].indexOf(action.type) === -1
 })
 
-const batchActions = (store) => (next) => (action) => {
+const batchActions = () => (next) => (action) => {
     if ('actions' in action)
         next({
             type: action.type,

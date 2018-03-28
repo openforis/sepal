@@ -52,6 +52,7 @@ export const AnimateReplacement = ({currentKey, timeout = 500, classNames, child
             {children}
         </CSSTransition>
     </TransitionGroup>
+    
 AnimateReplacement.propTypes = {
     currentKey: PropTypes.any.isRequired,
     timeout: PropTypes.number,
