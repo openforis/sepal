@@ -91,19 +91,19 @@
     background-color: hsla(221, 19%, 26%, .3);
 }
 
-.navbar button.apps {
+.navbar button.app-launch-pad {
     background-color: hsla(310, 10%, 23%, .8);
     border-color: hsla(310, 10%, 24%, .8);
+}
+
+.navbar button.app-launch-pad:hover {
+    background-color: hsla(310, 10%, 23%, .3);
 }
 
 @keyframes blink {
     100% {
         opacity: 0.2;
     }
-}
-
-.navbar button.apps:hover {
-    background-color: hsla(310, 10%, 23%, .3);
 }
 
 .app button {

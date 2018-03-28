@@ -85,14 +85,18 @@
       "dashboard.tooltip": "TBD",
       "process.tooltip": "Process geo data",
       "browse.tooltip": "Browse your files",
-      "apps.tooltip": "Custom apps",
+      "app-launch-pad.tooltip": "Launch custom apps",
       "terminal.tooltip": "Terminal",
       "locked.tooltip": "Menu is locked",
       "unlocked.tooltip": "Menu is unlocked"
     }
   },
+  "body": {
+    "loading-apps": "Loading apps..."
+  },
   "apps": {
-    "loading": "Loading apps...",
+    "initializing": "Initializing {label}...",
+    "loading": "Loading {label}...",
     "dataVis": "Data visualization"
   },
   "action": {

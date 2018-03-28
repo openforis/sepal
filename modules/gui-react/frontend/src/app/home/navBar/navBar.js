@@ -3,12 +3,11 @@ import {connect, select} from 'store'
 import styles from './navBar.module.css'
 import Tooltip from 'widget/tooltip'
 import {Link} from 'route'
-import {requestedApps, stopApp} from 'app/home/body/apps/apps'
+import {requestedApps, stopApp} from 'apps'
 import Icon from 'widget/icon'
 import actionBuilder from 'action-builder'
 import ToggleSwitch from 'widget/toggleSwitch'
 import PropTypes from 'prop-types'
-
 
 export function isNavBarLocked() {
     return select('menu.locked') == null ? true : !!select('menu.locked')
@@ -39,7 +38,7 @@ class NavBar extends React.Component {
                     <SectionLink name='process' icon='globe'/>
                     <SectionLink name='browse' icon='folder-open'/>
                     <SectionLink name='terminal' icon='terminal'/>
-                    <SectionLink name='apps' icon='wrench'/>
+                    <SectionLink name='app-launch-pad' icon='wrench'/>
                     {requestedApps.map(this.appSection)}
                 </div>
             </div>

@@ -6,25 +6,52 @@ import {connect} from 'store'
 import styles from './body.module.css'
 import {Select} from 'widget/selectable'
 import Process from './process/process'
-import Apps, {appReady, initializedApps} from './apps/apps'
+import AppLaunchPad from './appLaunchPad/appLaunchPad'
+import {loadApps$, requestedApps, runApp$} from 'apps'
 import Tasks from './tasks/tasks'
 import Users from './users/users'
 import Account from './account/account'
 import Section from './section'
-import PropTypes from 'prop-types'
+import {location} from 'route'
+import IFrame from './iframe'
+import {CenteredProgress} from 'widget/progress'
+import {msg} from 'translate'
 
 const mapStateToProps = () => ({
-    initializedApps: initializedApps()
+    requestedApps: requestedApps(),
+    location: location()
 })
 
 class Body extends React.Component {
+    componentWillMount() {
+        this.props.asyncActionBuilder('LOAD_APPS',
+            loadApps$())
+            .dispatch()
+    }
+
+    componentWillReceiveProps({action, app, location, requestedApps}) {
+        const loadedApps = action('LOAD_APPS').dispatched
+        const isAppPath = location.pathname.startsWith('/app/sandbox')
+        if (loadedApps && isAppPath) {
+            const path = location.pathname.replace(/^\/app/, '')
+            const notRunning = !requestedApps.find((app) => path === app.path)
+            if (notRunning)
+                this.props.asyncActionBuilder('RUN_APP',
+                    runApp$(path))
+                    .dispatch()
+        }
+    }
+
     render() {
-        const appSections = this.props.initializedApps.map((app) =>
+        const {action} = this.props
+        const appSections = this.props.requestedApps.map((app) =>
             <Section key={app.path} path={'/app' + app.path}>
                 <IFrame app={app}/>
             </Section>
         )
 
+        if (!action('LOAD_APPS').dispatched)
+            return <CenteredProgress title={msg('body.loading-apps')}/>
         return (
             <Select className={styles.sections}>
                 <Section path='/dashboard'>
@@ -36,8 +63,8 @@ class Body extends React.Component {
                 <Section path='/browse'>
                     <Browse/>
                 </Section>
-                <Section path='/apps'>
-                    <Apps/>
+                <Section path='/app-launch-pad'>
+                    <AppLaunchPad/>
                 </Section>
                 <Section path='/terminal'>
                     <Terminal/>
@@ -56,33 +83,5 @@ class Body extends React.Component {
         )
     }
 }
-
-class IFrame extends React.Component {
-    render() {
-        const {app: {path, label, alt}} = this.props
-        return (
-            <iframe
-                ref={(iframe) => this.iframe = iframe}
-                width={'100%'}
-                frameBorder={'0'}
-                src={path} title={label || alt}
-            />
-        )
-    }
-
-    componentDidMount() {
-        const {app} = this.props
-        this.iframe.contentWindow.document.addEventListener(
-            'load',
-            appReady(app),
-            false)
-    }
-}
-
-IFrame.contextTypes = {
-    active: PropTypes.bool,
-    focus: PropTypes.func
-}
-
 
 export default Body = connect(mapStateToProps)(Body)
