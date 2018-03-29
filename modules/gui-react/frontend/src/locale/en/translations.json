@@ -96,8 +96,18 @@
   },
   "apps": {
     "initializing": "Initializing {label}...",
-    "loading": "Loading {label}...",
-    "dataVis": "Data visualization"
+    "loading": {
+      "progress": "Loading {label}...",
+      "error.title": "Failed to load apps"
+    },
+    "dataVis": "Data visualization",
+    "run": {
+      "error.title": "Failed to run {label}"
+    }
+  },
+  "unauthorized.warning": {
+    "title": "You are not logged in",
+    "message": "Perhaps you have been inactive too long?"
   },
   "action": {
     "error.title": "Failed: {action}",

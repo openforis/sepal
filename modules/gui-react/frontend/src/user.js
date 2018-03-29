@@ -62,3 +62,8 @@ export function resetPassword$(token, username, password) {
         () => login$(username, password)
     )
 }
+export function logout() {
+    actionBuilder('LOGOUT')
+        .del('user')
+        .dispatch()
+}

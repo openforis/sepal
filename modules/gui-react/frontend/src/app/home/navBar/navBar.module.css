@@ -1,5 +1,6 @@
 .navbarContainer {
     position: relative;
+    /* overflow: hidden; */
 }
 
 .navbar {
@@ -9,8 +10,7 @@
     display: flex;
     flex-direction: column;
     padding: 3rem 0.25rem 0 0;
-    /* background: #28292B; */
-    transform: translate3d(-2.5rem, 0, 0);
+    transform: translateX(-2.5rem);
     transition: all 150ms ease-in-out 200ms;
 }
 
@@ -22,7 +22,7 @@
 .navbar.unlocked:hover {
     transform: none;
     background: none;
-    background-color: rgba(0, 0, 0, .8);
+    background-color: rgba(0, 0, 0, .6);
 }
 
 .navbar > * {
@@ -65,12 +65,18 @@
     opacity: 0;
 }
 
+.navbar button.active {
+    border-right: 3px solid transparent;
+}
+
 /* individual buttons styling */
 
 .navbar .lock {
     background-color: rgba(49, 49, 49, 0.8);
     border-color: rgba(49, 49, 49, 0.8);
 }
+
+
 
 .navbar button.process {
     background-color: hsla(37, 27%, 39%, .8);
@@ -79,6 +85,10 @@
 
 .navbar button.process:hover {
     background-color: hsla(37, 27%, 39%, .3);
+}
+
+.navbar button.process.active {
+    border-color: hsl(37, 27%, 59%, .8);
 }
 
 .navbar button.browse {
@@ -90,6 +100,10 @@
     background-color: hsla(127, 6%, 30%, .3);
 }
 
+.navbar button.browse.active {
+    border-color: hsla(127, 6%, 50%, .8);
+}
+
 .navbar button.terminal {
     background-color: hsla(221, 19%, 26%, .8);
     border-color: hsla(221, 19%, 27%, .8);
@@ -97,6 +111,10 @@
 
 .navbar button.terminal:hover {
     background-color: hsla(221, 19%, 26%, .3);
+}
+
+.navbar button.terminal.active {
+    border-color: hsla(221, 19%, 46%, .8);
 }
 
 .navbar button.app-launch-pad {
@@ -108,6 +126,10 @@
     background-color: hsla(310, 10%, 23%, .3);
 }
 
+.navbar button.app-launch-pad.active {
+    border-color: hsla(310, 10%, 43%, .8);
+}
+
 @keyframes blink {
     100% {
         opacity: 0.2;
@@ -115,9 +137,16 @@
 }
 
 .app button {
-    background-color: hsla(221, 19%, 26%, .8);
-    border-color: hsla(221, 19%, 27%, .8);
-    /*animation: blink 250ms ease-in-out alternate 10;*/
+    background-color: hsla(0, 0%, 25%, .8);
+    border-color: hsla(0, 0%, 26%, .8);
+}
+
+.app button:hover {
+    background-color: hsla(0, 0%, 25%, .3);
+}
+
+.app button.active {
+    border-color: hsla(0, 0%, 45%, .8);
 }
 
 .app {
@@ -126,26 +155,33 @@
 
 .app .stop {
     position: absolute;
-    right: -.8rem;
-    top: -.8rem;
-
+    right: -.5rem;
+    top: -.5rem;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-
     opacity: 0;
-    width: 1.8rem;
-    height: 1.8rem;
-    font-size: 1.3rem;
-    border: 1px solid #52607A;
+    width: 1.4rem;
+    height: 1.4rem;
+    font-size: 1rem;
     border-radius: 50%;
-    color: red;
-    background-color: #384052;
+    color: #303030;
+    background-color: #a0a0a0;
+    border: 1px solid #a8a8a8;
     z-index: 100;
-    transition: opacity .2s;
+    transition: opacity 200ms 200ms;
+}
+
+.app .stop i {
+    margin-left: .05rem;
 }
 
 .app:hover .stop {
     opacity: 1;
+}
+
+.app .stop:hover {
+    background-color: #d0d0d0;
+    border: 1px solid #d8d8d8;
 }

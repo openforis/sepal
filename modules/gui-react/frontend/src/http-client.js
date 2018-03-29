@@ -1,5 +1,7 @@
 import Rx from 'rxjs'
 import base64 from 'base-64'
+import {logout} from 'user'
+import Notifications from 'app/notifications'
 
 export default class Http {
     static get$(url, {retries = 4, headers, validStatuses, ...args} = {}) {
@@ -34,7 +36,10 @@ function execute$(url, method, {retries, username, password, headers, validStatu
         .catch(e => {
             if (validStatuses && validStatuses.includes(e.status))
                 return Rx.Observable.of(e)
-            else
+            else if (e.status === 401) {
+                Notifications.warning('unauthorized').dispatch()
+                logout()
+            } else
                 return Rx.Observable.throw(e)
         })
         .retryWhen(function (error$) {

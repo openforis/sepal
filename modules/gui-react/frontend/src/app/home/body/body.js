@@ -26,8 +26,8 @@ const mapStateToProps = () => ({
 class Body extends React.Component {
     componentWillMount() {
         this.props.asyncActionBuilder('LOAD_APPS',
-            loadApps$())
-            .dispatch()
+            loadApps$()
+        ).dispatch()
     }
 
     componentWillReceiveProps({action, location, requestedApps}) {
@@ -53,9 +53,6 @@ class Body extends React.Component {
             return <CenteredProgress title={msg('body.loading-apps')}/>
         return (
             <Select className={styles.sections}>
-                <Section path='/dashboard'>
-                    <Dashboard/>
-                </Section>
                 <Section path='/process'>
                     <Process/>
                 </Section>

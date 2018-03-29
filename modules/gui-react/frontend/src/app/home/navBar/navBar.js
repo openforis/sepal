@@ -2,11 +2,10 @@ import React from 'react'
 import {connect, select} from 'store'
 import styles from './navBar.module.css'
 import Tooltip from 'widget/tooltip'
-import {Link} from 'route'
+import {Link, isPathInLocation} from 'route'
 import {requestedApps, quitApp} from 'apps'
 import Icon from 'widget/icon'
 import actionBuilder from 'action-builder'
-import ToggleSwitch from 'widget/toggleSwitch'
 import FlipSwitch from 'widget/flipSwitch'
 import PropTypes from 'prop-types'
 
@@ -52,33 +51,44 @@ NavBar.propTypes = {
     requestedApps: PropTypes.arrayOf(PropTypes.object).isRequired
 }
 
-const SectionLink = ({name, icon}) =>
-    <Link to={'/' + name} onMouseDown={(e) => e.preventDefault()}>
-        <Tooltip msg={'home.sections.' + name} right>
-            <button className={`${styles[name]}`}>
-                <Icon name={icon}/>
-            </button>
-        </Tooltip>
-    </Link>
+const SectionLink = ({name, icon}) => {
+    const linkPath = '/' + name
+    const activeClass = isPathInLocation(linkPath) ? styles.active : null
+    return (
+        <Link to={linkPath} onMouseDown={(e) => e.preventDefault()}>
+            <Tooltip msg={'home.sections.' + name} right>
+                <button className={[`${styles[name]}`, activeClass].join(' ')}>
+                    <Icon name={icon}/>
+                </button>
+            </Tooltip>
+        </Link>
+    )
+}
 
 SectionLink.propTypes = {
     name: PropTypes.string,
     icon: PropTypes.string
 }
 
-const AppLink = ({app: {path, label, alt}}) =>
-    <div className={styles.app}>
-        <div className={styles.stop} onClick={() => quitApp(path)}>
-            <Icon name='times'/>
+const AppLink = ({app: {path, label, alt}}) => {
+    const linkPath = '/app' + path
+    const activeClass = isPathInLocation(linkPath) ? styles.active : null
+    return (
+        <div className={styles.app}>
+            <div className={styles.stop} onClick={() => quitApp(path)}>
+                <Icon name='times'/>
+            </div>
+            <Link to={linkPath} onMouseDown={(e) => e.preventDefault()}>
+                <Tooltip rawMsg={label || alt} right>
+                    <button className={activeClass}>
+                        <Icon name='cubes'/>
+                    </button>
+                </Tooltip>
+            </Link>
         </div>
-        <Link to={'/app' + path} onMouseDown={(e) => e.preventDefault()}>
-            <Tooltip rawMsg={label || alt} right>
-                <button>
-                    <Icon name='cubes'/>
-                </button>
-            </Tooltip>
-        </Link>
-    </div>
+    )
+}
+
 
 AppLink.propTypes = {
     app: PropTypes.object,
@@ -92,7 +102,6 @@ const LockSwitch = ({locked, onChange}) =>
     <Tooltip msg={locked ? 'home.sections.locked' : 'home.sections.unlocked'} right>
         <div className={styles.lockSwitch}>
             <FlipSwitch
-            // <ToggleSwitch
                 on={!locked}
                 offIcon='unlock'
                 onIcon='lock'

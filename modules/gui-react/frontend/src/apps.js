@@ -5,6 +5,7 @@ import Rx from 'rxjs'
 import {history, isPathInLocation} from 'route'
 import {select} from 'store'
 import {msg} from 'translate'
+import Notifications from 'app/notifications'
 
 export const appList = () =>
     select('apps.list') || []
@@ -23,17 +24,26 @@ export const appReady = (app) => {
 
 export const loadApps$ = () =>
     Http.get$('/apps')
-        .map((e) => {
+        .map((e) => e.response)
+        .catch(() => {
+            Notifications.error('apps.loading').dispatch()
+            return Rx.Observable.of([])
+        })
+        .map((apps) => {
             const dataVis = {
                 path: '/sandbox/data-vis',
                 label: msg('apps.dataVis'),
                 icon: 'map-o',
                 endpoint: 'geo-web-viz'
             }
-            const rStudio = {path: '/sandbox/rstudio', image: rstudioIcon, alt: 'RStudio', endpoint: 'rstudio'}
-            const apps = [dataVis, rStudio, ...e.response]
+            const rStudio = {
+                path: '/sandbox/rstudio', 
+                image: rstudioIcon, 
+                alt: 'RStudio', 
+                endpoint: 'rstudio'
+            }
             return actionBuilder('SET_APPS')
-                .set('apps.list', apps)
+                .set('apps.list', [dataVis, rStudio, ...apps])
                 .build()
         })
 
@@ -65,7 +75,11 @@ export const runApp$ = (path) => {
         .map(() => actionBuilder('APP_INITIALIZED', {app})
             .set(['apps', 'state', app.path], {state: 'INITIALIZED', app})
             .build()
-        )
+        ).catch(() => {
+            quitApp(app.path)
+            Notifications.error('apps.run', {label: app.label || app.alt}).dispatch()
+            return Rx.Observable.empty()
+        })
 }
 
 export const quitApp = (path) => {

@@ -39,10 +39,10 @@ export default function asyncActionBuilder(type, action$, component) {
                         actions = [actions]
                     actions.forEach((action) => addActions(action))
                     if (actions.length === 0)
-                        addActions(Notifications.error(
+                        addActions(Notifications.caught(
                             'action',
-                            error,
-                            {action: msg('action.type.' + type, {}, type)}
+                            {action: msg('action.type.' + type, {}, type)},
+                            error
                         ))
                     addActions(
                         actionBuilder('ASYNC_ACTION_DISPATCHED', {componentId, actionType: type})

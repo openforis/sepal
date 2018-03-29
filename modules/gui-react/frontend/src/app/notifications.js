@@ -1,5 +1,6 @@
 import {connect} from 'react-redux'
 import ReactNotifications, * as notifications from 'react-notification-system-redux'
+import {dispatchable} from 'store'
 import {msg} from 'translate'
 
 const mapStateToProps = (state) => {
@@ -46,11 +47,15 @@ const errorMessage = (error) => {
     }
 }
 
+const notify = (level, messageId, values) =>
+    dispatchable(notifications[level](toOpts(level, messageId, values)))
+
 const Notifications = connect(mapStateToProps)(ReactNotifications)
-Notifications.success = (messageId, values) => notifications.success(toOpts('success', messageId, values))
-Notifications.error = (messageId, error, values) => notifications.error(toOpts('error', messageId, values, errorMessage(error)))
-Notifications.warning = (messageId, values) => notifications.warning(toOpts('warning', messageId, values))
-Notifications.info = (messageId, values) => notifications.info(toOpts('info', messageId, values))
-Notifications.hide = notifications.hide
-Notifications.removeAll = notifications.removeAll
+Notifications.caught = (messageId, values, error) => dispatchable(notifications.error(toOpts('error', messageId, values, errorMessage(error))))
+Notifications.success = (messageId, values) => notify('success', messageId, values)
+Notifications.error = (messageId, values) => notify('error', messageId, values)
+Notifications.warning = (messageId, values) => notify('warning', messageId, values)
+Notifications.info = (messageId, values) => notify('info', messageId, values)
+Notifications.hide = dispatchable(notifications.hide)
+Notifications.removeAll = dispatchable(notifications.removeAll)
 export default Notifications

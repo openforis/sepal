@@ -5,6 +5,7 @@ import {Button, IconButton} from 'widget/button'
 import Icon from 'widget/icon'
 import Tooltip from 'widget/tooltip'
 import {Link} from 'route'
+import {logout} from 'user'
 
 const Footer = ({user, className}) => {
     return (
@@ -74,7 +75,7 @@ const Account = ({user}) =>
 
 const Logout = () =>
     <Tooltip msg='home.footer.logout' top>
-        <Button icon='sign-out' className={styles.logout}>
+        <Button icon='sign-out' className={styles.logout} onClick={logout}>
             {msg('home.footer.logout.label')}
         </Button>
     </Tooltip>

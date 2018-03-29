@@ -81,3 +81,10 @@ function includeDispatchingProp(mapStateToProps) {
         }
     }
 }
+
+export function dispatchable(action) {
+    return {
+        ...action, 
+        dispatch: () => dispatch(action)
+    }
+}

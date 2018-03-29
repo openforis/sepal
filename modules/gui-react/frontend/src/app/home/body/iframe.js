@@ -14,7 +14,7 @@ class IFrame extends React.Component {
         return <CenteredProgress title={msg('apps.initializing', {label: label || alt})}/>
     }
     loading(label, alt) {
-        return <CenteredProgress title={msg('apps.loading', {label: label || alt})}/>
+        return <CenteredProgress title={msg('apps.loading.progress', {label: label || alt})}/>
     }
     render() {
         const {app: {path, label, alt}, appState} = this.props
