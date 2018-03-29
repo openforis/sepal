@@ -48,8 +48,10 @@
     font-size: 1.7rem;
     vertical-align: middle;
     text-align: right;
+    transition: opacity 150ms ease-in-out 200ms;
 }
-.unlocked:not(:hover) button i {
+
+.navbar.unlocked:not(:hover) button i {
     opacity: 0;
 }
 

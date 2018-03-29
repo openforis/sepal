@@ -17,8 +17,8 @@
 }
 
 .section {
-    opacity: 0;
     overflow: auto;
+    opacity: 0;
 }
 
 .section > * {
