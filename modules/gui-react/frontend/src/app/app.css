@@ -6,10 +6,7 @@ html {
 
 @media screen and (min-width: 320px) {
     html {
-        /*
-          min-text + (max-text - min-text) * (100vw - min-viewport) / (max-viewport - min-viewport)
-        */
-        font-size: calc(12px + (14 - 12) * (100vw - 320px) / (1600 - 320));
+        font-size: 12px;
     }
 }
 

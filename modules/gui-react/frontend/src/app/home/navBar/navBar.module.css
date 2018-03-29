@@ -1,6 +1,5 @@
 .navbarContainer {
     position: relative;
-    /* overflow: hidden; */
 }
 
 .navbar {
@@ -39,8 +38,7 @@
 }
 
 .navbar button:hover {
-    border-color: white;
-    color: rgba(255, 255, 255, 1);
+    color: white;
     cursor: pointer;
 }
 
@@ -56,6 +54,8 @@
 }
 
 .lockSwitch {
+    /* position: absolute; */
+    /* bottom: 0; */
     margin-left: .3rem;
     margin-bottom: 8rem;
     transition: all 150ms ease-in-out 200ms;
@@ -75,8 +75,6 @@
     background-color: rgba(49, 49, 49, 0.8);
     border-color: rgba(49, 49, 49, 0.8);
 }
-
-
 
 .navbar button.process {
     background-color: hsla(37, 27%, 39%, .8);
