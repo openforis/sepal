@@ -1,5 +1,13 @@
+/* 
+    Note: overflow hidden is necessary to remove 
+    the scary bug causing the entire viewport to 
+    shift left during the "in" animation
+*/
+
 .sections {
+    overflow: hidden;
     position: relative;
+    height: 100%;
 }
 
 .sections > * {
@@ -10,6 +18,7 @@
 
 .section {
     opacity: 0;
+    overflow: auto;
 }
 
 .section > * {
@@ -32,6 +41,17 @@
     animation-timing-function: ease-in-out;
 }
 
+@keyframes show {
+    0% {
+        opacity: 0;
+        transform: translateX(25%);
+    }
+    100% {
+        opacity: 1;
+        transform: none;
+    }
+}
+
 @keyframes hide {
     0% {
         opacity: 1;
@@ -39,17 +59,6 @@
     }
     100% {
         opacity: 0;
-        transform: translate3d(1%, 0, 0);
-    }
-}
-
-@keyframes show {
-    0% {
-        opacity: 0;
-        transform: translate3d(25%, 0, 0);
-    }
-    100% {
-        opacity: 1;
-        transform: none;
+        transform: translateX(1%);
     }
 }
