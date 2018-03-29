@@ -91,8 +91,8 @@ AppLink.propTypes = {
 const LockSwitch = ({locked, onChange}) =>
     <Tooltip msg={locked ? 'home.sections.locked' : 'home.sections.unlocked'} right>
         <div className={styles.lockSwitch}>
-            {/* <FlipSwitch */}
-            <ToggleSwitch
+            <FlipSwitch
+            // <ToggleSwitch
                 on={!locked}
                 offIcon='unlock'
                 onIcon='lock'
