@@ -68,8 +68,8 @@ class Login extends React.Component {
 Login.propTypes = {
     form: PropTypes.object,
     inputs: PropTypes.shape({
-        username: PropTypes.string,
-        password: PropTypes.string,
+        username: PropTypes.object,
+        password: PropTypes.object,
     }),
     action: PropTypes.func,
     asyncActionBuilder: PropTypes.func
