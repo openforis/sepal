@@ -1,22 +1,22 @@
-import React from 'react'
-import Dashboard from './dashboard/dashboard'
-import Browse from './browse/browse'
-import Terminal from './terminal/terminal'
-import {connect} from 'store'
-import styles from './body.module.css'
-import {Select} from 'widget/selectable'
-import Process from './process/process'
-import AppLaunchPad from './appLaunchPad/appLaunchPad'
 import {loadApps$, requestedApps, runApp$} from 'apps'
-import Tasks from './tasks/tasks'
-import Users from './users/users'
-import Account from './account/account'
-import Section from './section'
-import {location, isPathInLocation} from 'route'
-import IFrame from './iframe'
-import {CenteredProgress} from 'widget/progress'
-import {msg} from 'translate'
 import PropTypes from 'prop-types'
+import React from 'react'
+import {isPathInLocation, location} from 'route'
+import {connect} from 'store'
+import {msg} from 'translate'
+import {CenteredProgress} from 'widget/progress'
+import {Select} from 'widget/selectable'
+import Account from './account/account'
+import AppLaunchPad from './appLaunchPad/appLaunchPad'
+import styles from './body.module.css'
+import Browse from './browse/browse'
+import Dashboard from './dashboard/dashboard'
+import IFrame from './iframe'
+import Process from './process/process'
+import Section from './section'
+import Tasks from './tasks/tasks'
+import Terminal from './terminal/terminal'
+import Users from './users/users'
 
 const mapStateToProps = () => ({
     requestedApps: requestedApps(),
@@ -26,8 +26,8 @@ const mapStateToProps = () => ({
 class Body extends React.Component {
     componentWillMount() {
         this.props.asyncActionBuilder('LOAD_APPS',
-            loadApps$()
-        ).dispatch()
+            loadApps$())
+            .dispatch()
     }
 
     componentWillReceiveProps({action, location, requestedApps}) {
@@ -42,7 +42,7 @@ class Body extends React.Component {
     }
 
     render() {
-        const {action} = this.props
+        const {action, className} = this.props
         const appSections = this.props.requestedApps.map((app) =>
             <Section key={app.path} path={'/app' + app.path}>
                 <IFrame app={app}/>
@@ -50,9 +50,9 @@ class Body extends React.Component {
         )
 
         if (!action('LOAD_APPS').dispatched)
-            return <CenteredProgress title={msg('body.loading-apps')}/>
+            return <CenteredProgress title={msg('body.loading-apps')} className={className}/>
         return (
-            <Select className={styles.sections}>
+            <Select className={[styles.sections, className].join(' ')}>
                 <Section path='/process'>
                     <Process/>
                 </Section>
@@ -83,7 +83,8 @@ class Body extends React.Component {
 Body.propTypes = {
     asyncActionBuilder: PropTypes.func,
     action: PropTypes.func,
-    location: PropTypes.object, 
+    className: PropTypes.string,
+    location: PropTypes.object,
     requestedApps: PropTypes.array
 }
 

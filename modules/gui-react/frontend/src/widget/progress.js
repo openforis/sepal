@@ -15,13 +15,14 @@ Progress.propTypes = {
     className: PropTypes.string
 }
 
-export const CenteredProgress = ({title}) =>
-    <div className={styles.centered}>
+export const CenteredProgress = ({className, title}) =>
+    <div className={[styles.centered, className].join(' ')}>
         <div>
             <Progress title={title}/>
         </div>
     </div>
 
 CenteredProgress.propTypes = {
+    className: PropTypes.string,
     title: PropTypes.string
 }

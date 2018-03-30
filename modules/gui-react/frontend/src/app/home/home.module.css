@@ -4,7 +4,7 @@
     grid-template-columns: 0 1fr;
     grid-template-rows: 1fr 4.5rem;
     grid-template-areas:
-            'sections body'
+            'navBar body'
             'footer footer';
     transition: all 1s ease-in-out;
 }
@@ -18,8 +18,8 @@
     animation: footer .5s 0s ease-in-out backwards;
 }
 
-.sections {
-    grid-area: sections;
+.navBar {
+    grid-area: navBar;
 }
 
 @keyframes footer {

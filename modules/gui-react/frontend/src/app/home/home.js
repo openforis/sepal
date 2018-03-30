@@ -13,9 +13,9 @@ const mapStateToProps = () => ({
 const Home = ({user, navBarLocked}) => {
     return (
         <div className={[styles.home, navBarLocked && styles.navBarLocked].join(' ')}>
-            <NavBar/>
+            <NavBar className={styles.navBar}/>
             <Footer className={styles.footer} user={user}/>
-            <Body/>
+            <Body className={styles.body}/>
         </div>
     )
 }

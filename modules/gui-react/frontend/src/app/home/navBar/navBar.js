@@ -30,9 +30,9 @@ class NavBar extends React.Component {
     }
 
     render() {
-        const {requestedApps} = this.props
+        const {className, requestedApps} = this.props
         return (
-            <div className={styles.navbarContainer}>
+            <div className={[styles.navbarContainer, className].join(' ')}>
                 <div className={[styles.navbar, this.props.locked ? styles.locked : styles.unlocked].join(' ')}>
                     <LockSwitch locked={this.props.locked} onChange={this.setUnlocked.bind(this)}/>
                     <SectionLink name='process' icon='globe'/>
@@ -47,6 +47,7 @@ class NavBar extends React.Component {
 }
 
 NavBar.propTypes = {
+    className: PropTypes.string,
     locked: PropTypes.bool.isRequired,
     requestedApps: PropTypes.arrayOf(PropTypes.object).isRequired
 }
