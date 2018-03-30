@@ -87,8 +87,8 @@
       "browse.tooltip": "Browse your files",
       "app-launch-pad.tooltip": "Launch custom apps",
       "terminal.tooltip": "Terminal",
-      "locked.tooltip": "Menu is locked",
-      "unlocked.tooltip": "Menu is unlocked"
+      "fixed.tooltip": "Fixed menu",
+      "floating.tooltip": "Floating menu"
     }
   },
   "body": {

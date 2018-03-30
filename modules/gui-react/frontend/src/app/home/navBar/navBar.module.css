@@ -9,18 +9,16 @@
     display: flex;
     flex-direction: column;
     padding: 3rem 0.25rem 0 0;
-    transform: translateX(-2.5rem);
     transition: all 150ms ease-in-out 200ms;
 }
 
-.navbar.locked {
-    transform: none;
-    background: none;
+.navbar.floating {
+    transform: translateX(-2.5rem);
+    /* background-color: rgba(0, 0, 0, .2); */
 }
 
-.navbar.unlocked:hover {
+.navbar.floating:hover {
     transform: none;
-    background: none;
     background-color: rgba(0, 0, 0, .6);
 }
 
@@ -35,11 +33,9 @@
     border: none;
     border-radius: .25rem;
     color: rgba(255, 255, 255, 0.8);
-}
-
-.navbar button:hover {
-    color: white;
-    cursor: pointer;
+    /* --opacity: .7; */
+    --opacity: .8;
+    --border-opacity: 0;
 }
 
 .navbar button i {
@@ -49,106 +45,71 @@
     transition: opacity 150ms ease-in-out 200ms;
 }
 
-.navbar.unlocked:not(:hover) button i {
-    opacity: 0;
+.navbar button:hover {
+    color: white;
+    cursor: pointer;
+    --opacity: .5;
+    /* --opacity: .9; */
 }
 
-.lockSwitch {
-    /* position: absolute; */
-    /* bottom: 0; */
+.navbar button.active {
+    --border-width: 3px;
+    --border-opacity: 1;
+    border-right: var(--border-width) solid transparent;
+}
+
+/* compensate icon position when border is active */
+.navbar button.active i {
+    margin-left: var(--border-width);
+}
+
+.navbar .lockSwitch {
     margin-left: .3rem;
     margin-bottom: 8rem;
     transition: all 150ms ease-in-out 200ms;
 }
 
-.unlocked:not(:hover) .lockSwitch {
+/* hide lock when bar is hidden */
+.navbar.floating:not(:hover) .lockSwitch {
     opacity: 0;
 }
 
-.navbar button.active {
-    border-right: 3px solid transparent;
-}
-
-.navbar button.active i {
-    margin-left: 3px;
-}
-
-/* individual buttons styling */
-
-.navbar .lock {
-    background-color: rgba(49, 49, 49, 0.8);
-    border-color: rgba(49, 49, 49, 0.8);
+/* hide button icons when bar is hidded */
+.navbar.floating:not(:hover) button i {
+    opacity: 0;
 }
 
 .navbar button.process {
-    background-color: hsla(37, 27%, 39%, .8);
-    border-color: hsla(37, 27%, 39%, .8);
-}
-
-.navbar button.process:hover {
-    background-color: hsla(37, 27%, 39%, .3);
-}
-
-.navbar button.process.active {
-    border-color: hsl(37, 27%, 59%, .8);
+    background-color: hsla(37, 27%, 39%, var(--opacity));
+    border-color: hsla(37, 27%, 59%, var(--border-opacity));
 }
 
 .navbar button.browse {
-    background-color: hsla(127, 6%, 30%, .8);
-    border-color: hsla(127, 6%, 31%, .8);
-}
-
-.navbar button.browse:hover {
-    background-color: hsla(127, 6%, 30%, .3);
-}
-
-.navbar button.browse.active {
-    border-color: hsla(127, 6%, 50%, .8);
+    background-color: hsla(127, 6%, 30%, var(--opacity));
+    border-color: hsla(127, 6%, 50%, var(--border-opacity));
 }
 
 .navbar button.terminal {
-    background-color: hsla(221, 19%, 26%, .8);
-    border-color: hsla(221, 19%, 27%, .8);
-}
-
-.navbar button.terminal:hover {
-    background-color: hsla(221, 19%, 26%, .3);
-}
-
-.navbar button.terminal.active {
-    border-color: hsla(221, 19%, 46%, .8);
+    background-color: hsla(221, 19%, 26%, var(--opacity));
+    border-color: hsla(221, 19%, 46%, var(--border-opacity));
 }
 
 .navbar button.app-launch-pad {
-    background-color: hsla(310, 10%, 23%, .8);
-    border-color: hsla(310, 10%, 24%, .8);
-}
-
-.navbar button.app-launch-pad:hover {
-    background-color: hsla(310, 10%, 23%, .3);
-}
-
-.navbar button.app-launch-pad.active {
-    border-color: hsla(310, 10%, 43%, .8);
+    background-color: hsla(310, 10%, 23%, var(--opacity));
+    border-color: hsla(310, 10%, 43%, var(--border-opacity));
 }
 
 @keyframes blink {
     100% {
-        opacity: 0.2;
+        opacity: 0;
     }
 }
 
-.app button {
-    background-color: hsla(0, 0%, 25%, .8);
-    border-color: hsla(0, 0%, 26%, .8);
-}
-
-.app button:hover {
-    background-color: hsla(0, 0%, 25%, .3);
-}
-
-.app button.active {
-    border-color: hsla(0, 0%, 45%, .8);
+.navbar .app button {
+    background-color: hsla(0, 0%, 25%, var(--opacity));
+    /* border-color: hsla(0, 0%, 45%, var(--border-opacity)); */
+    border-color: rgb(170, 43, 43,  var(--border-opacity));
+    animation: blink 150ms linear 2;
 }
 
 .app {

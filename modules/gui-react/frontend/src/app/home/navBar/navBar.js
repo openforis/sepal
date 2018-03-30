@@ -9,13 +9,15 @@ import actionBuilder from 'action-builder'
 import FlipSwitch from 'widget/flipSwitch'
 import PropTypes from 'prop-types'
 
-export function isNavBarLocked() {
-    return select('menu.locked') == null ? true : !!select('menu.locked')
+export function isNavBarFloating() {
+    console.log('next state', !!select('menu.floating'))
+    // return select('menu.floating') == null ? false : !!select('menu.floating')
+    return !!select('menu.floating')
 }
 
 const mapStateToProps = () => ({
     requestedApps: requestedApps(),
-    locked: isNavBarLocked()
+    floating: isNavBarFloating()
 })
 
 class NavBar extends React.Component {
@@ -23,9 +25,10 @@ class NavBar extends React.Component {
         return <AppLink key={app.path} app={app}/>
     }
 
-    setUnlocked(unlocked) {
+    toggle(state) {
+        console.log('current state', state)
         actionBuilder('TOGGLE_MENU')
-            .set('menu.locked', !unlocked)
+            .set('menu.floating', !state)
             .dispatch()
     }
 
@@ -33,8 +36,8 @@ class NavBar extends React.Component {
         const {className, requestedApps} = this.props
         return (
             <div className={[styles.navbarContainer, className].join(' ')}>
-                <div className={[styles.navbar, this.props.locked ? styles.locked : styles.unlocked].join(' ')}>
-                    <LockSwitch locked={this.props.locked} onChange={this.setUnlocked.bind(this)}/>
+                <div className={[styles.navbar, this.props.floating && styles.floating].join(' ')}>
+                    <ModeSwitch floating={this.props.floating} onChange={this.toggle.bind(this)}/>
                     <SectionLink name='process' icon='globe'/>
                     <SectionLink name='browse' icon='folder-open'/>
                     <SectionLink name='terminal' icon='terminal'/>
@@ -48,7 +51,7 @@ class NavBar extends React.Component {
 
 NavBar.propTypes = {
     className: PropTypes.string,
-    locked: PropTypes.bool.isRequired,
+    floating: PropTypes.bool.isRequired,
     requestedApps: PropTypes.arrayOf(PropTypes.object).isRequired
 }
 
@@ -99,19 +102,23 @@ AppLink.propTypes = {
     onRemove: PropTypes.func
 }
 
-const LockSwitch = ({locked, onChange}) =>
-    <Tooltip msg={locked ? 'home.sections.locked' : 'home.sections.unlocked'} right>
-        <div className={styles.lockSwitch}>
-            <FlipSwitch
-                on={!locked}
-                offIcon='unlock'
-                onIcon='lock'
-                onChange={onChange}/>
-        </div>
-    </Tooltip>
+const ModeSwitch = ({floating, onChange}) => {
+    console.log('ModeSwitch', floating)
+    return (
+        <Tooltip msg={floating ? 'home.sections.floating' : 'home.sections.fixed'} right>
+            <div className={styles.lockSwitch}>
+                <FlipSwitch
+                    on={floating}
+                    offIcon='unlock'
+                    onIcon='lock'
+                    onChange={onChange}/>
+            </div>
+        </Tooltip>
+    )
+}
 
-LockSwitch.propTypes = {
-    locked: PropTypes.bool,
+ModeSwitch.propTypes = {
+    floating: PropTypes.bool,
     onChange: PropTypes.func
 }
 
