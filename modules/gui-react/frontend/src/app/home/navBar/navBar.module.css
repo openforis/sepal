@@ -69,6 +69,10 @@
     border-right: 3px solid transparent;
 }
 
+.navbar button.active i {
+    margin-left: 3px;
+}
+
 /* individual buttons styling */
 
 .navbar .lock {
