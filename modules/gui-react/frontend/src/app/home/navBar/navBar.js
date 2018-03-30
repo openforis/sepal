@@ -40,7 +40,7 @@ class NavBar extends React.Component {
                     <ModeSwitch floating={this.props.floating} onChange={this.toggle.bind(this)}/>
                     <SectionLink name='process' icon='globe'/>
                     <SectionLink name='browse' icon='folder-open'/>
-                    <SectionLink name='terminal' icon='terminal'/>
+                    {/* <SectionLink name='terminal' icon='terminal'/> */}
                     <SectionLink name='app-launch-pad' icon='wrench'/>
                     {requestedApps.map(this.appSection)}
                 </div>
