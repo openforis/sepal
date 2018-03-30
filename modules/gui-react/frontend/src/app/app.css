@@ -4,18 +4,6 @@ html {
     font-size: 14px;
 }
 
-@media screen and (min-width: 320px) {
-    html {
-        font-size: 12px;
-    }
-}
-
-@media screen and (min-width: 1600px) {
-    html {
-        font-size: 14px;
-    }
-}
-
 body, input, textarea, select, button, a, label {
     font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
     line-height: 2;
