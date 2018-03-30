@@ -8,6 +8,7 @@
     "cross-fetch": "^1.1.1",
     "flat": "^4.0.0",
     "font-awesome": "^4.7.0",
+    "google-maps": "^3.2.1",
     "history": "^4.7.2",
     "object-path-immutable": "^1.0.1",
     "query-string": "^5.1.0",

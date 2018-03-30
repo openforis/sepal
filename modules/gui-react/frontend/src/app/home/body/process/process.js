@@ -11,7 +11,7 @@ export default class Process extends React.Component {
 
     render() {
         return (
-            <div style={{background: 'brown'}}>
+            <div>
                 <h1>Process</h1>
                 <input id='browse' autoFocus={true}/>
             </div>

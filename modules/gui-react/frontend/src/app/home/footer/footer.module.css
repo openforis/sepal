@@ -8,7 +8,7 @@
     background-color: rgba(28, 28, 28, 0.99);
     border-top: 2px solid hsla(0, 0%, 100%, .1);
     padding: 0 3rem;
-    opacity: .7;
+    opacity: 1;
     z-index: 1000;
 }
 
