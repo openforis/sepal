@@ -19,13 +19,13 @@
     grid-template-columns: 3.75rem 1fr;
     grid-template-rows: 1fr 4.5rem;
     grid-template-areas:
-            'navBar body'
+            'menu body'
             'footer footer';
     transition: all 1s ease-in-out;
     z-index: 0;
 }
 
-.navBarFloating {
+.floatingMenu {
     grid-template-columns: 0 1fr;
 }
 
@@ -35,8 +35,8 @@
     z-index: 1000;
 }
 
-.navBar {
-    grid-area: navBar;
+.menu {
+    grid-area: menu;
     z-index: 1000;
 }
 

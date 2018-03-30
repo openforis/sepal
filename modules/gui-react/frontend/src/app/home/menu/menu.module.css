@@ -1,8 +1,8 @@
-.navbarContainer {
+.menuContainer {
     position: relative;
 }
 
-.navbar {
+.menu {
     position: absolute;
     z-index: 100;
     height: 100%;
@@ -12,21 +12,21 @@
     transition: all 150ms ease-in-out 200ms;
 }
 
-.navbar.floating {
+.menu.floating {
     transform: translateX(-2.5rem);
     /* background-color: rgba(0, 0, 0, .2); */
 }
 
-.navbar.floating:hover {
+.menu.floating:hover {
     transform: none;
     background-color: rgba(0, 0, 0, .6);
 }
 
-.navbar > * {
+.menu > * {
     margin-bottom: 1.5rem;
 }
 
-.navbar button {
+.menu button {
     position: relative;
     width: 3.5rem;
     height: 3.5rem;
@@ -38,63 +38,63 @@
     --border-opacity: 0;
 }
 
-.navbar button i {
+.menu button i {
     font-size: 1.7rem;
     vertical-align: middle;
     text-align: right;
     transition: opacity 150ms ease-in-out 200ms;
 }
 
-.navbar button:hover {
+.menu button:hover {
     color: white;
     cursor: pointer;
     --opacity: .5;
     /* --opacity: .9; */
 }
 
-.navbar button.active {
+.menu button.active {
     --border-width: 3px;
     --border-opacity: 1;
     border-right: var(--border-width) solid transparent;
 }
 
 /* compensate icon position when border is active */
-.navbar button.active i {
+.menu button.active i {
     margin-left: var(--border-width);
 }
 
-.navbar .lockSwitch {
+.menu .modeSwitch {
     margin-left: .3rem;
     margin-bottom: 8rem;
     transition: all 150ms ease-in-out 200ms;
 }
 
 /* hide lock when bar is hidden */
-.navbar.floating:not(:hover) .lockSwitch {
+.menu.floating:not(:hover) .lockSwitch {
     opacity: 0;
 }
 
 /* hide button icons when bar is hidded */
-.navbar.floating:not(:hover) button i {
+.menu.floating:not(:hover) button i {
     opacity: 0;
 }
 
-.navbar button.process {
+.menu button.process {
     background-color: hsla(37, 27%, 39%, var(--opacity));
     border-color: hsla(37, 27%, 59%, var(--border-opacity));
 }
 
-.navbar button.browse {
+.menu button.browse {
     background-color: hsla(127, 6%, 30%, var(--opacity));
     border-color: hsla(127, 6%, 50%, var(--border-opacity));
 }
 
-.navbar button.terminal {
+.menu button.terminal {
     background-color: hsla(221, 19%, 26%, var(--opacity));
     border-color: hsla(221, 19%, 46%, var(--border-opacity));
 }
 
-.navbar button.app-launch-pad {
+.menu button.app-launch-pad {
     background-color: hsla(310, 10%, 23%, var(--opacity));
     border-color: hsla(310, 10%, 43%, var(--border-opacity));
 }
@@ -105,7 +105,7 @@
     }
 }
 
-.navbar .app button {
+.menu .app button {
     background-color: hsla(0, 0%, 25%, var(--opacity));
     /* border-color: hsla(0, 0%, 45%, var(--border-opacity)); */
     border-color: rgb(170, 43, 43,  var(--border-opacity));

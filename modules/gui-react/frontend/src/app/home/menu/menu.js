@@ -1,6 +1,6 @@
 import React from 'react'
 import {connect, select} from 'store'
-import styles from './navBar.module.css'
+import styles from './menu.module.css'
 import Tooltip from 'widget/tooltip'
 import {Link, isPathInLocation} from 'route'
 import {requestedApps, quitApp} from 'apps'
@@ -9,34 +9,35 @@ import actionBuilder from 'action-builder'
 import FlipSwitch from 'widget/flipSwitch'
 import PropTypes from 'prop-types'
 
-export function isNavBarFloating() {
+export function isFloating() {
     console.log('next state', !!select('menu.floating'))
-    // return select('menu.floating') == null ? false : !!select('menu.floating')
-    return !!select('menu.floating')
+    return select('menu.floating') == null ? false : !!select('menu.floating')
+    // return !!select('menu.floating')
 }
 
 const mapStateToProps = () => ({
     requestedApps: requestedApps(),
-    floating: isNavBarFloating()
+    floating: isFloating()
 })
 
-class NavBar extends React.Component {
+class Menu extends React.Component {
     appSection(app) {
         return <AppLink key={app.path} app={app}/>
     }
 
     toggle(state) {
-        console.log('current state', state)
+        console.log('toggle', state)
         actionBuilder('TOGGLE_MENU')
             .set('menu.floating', !state)
             .dispatch()
     }
 
     render() {
+        console.log('current', this.props.floating)
         const {className, requestedApps} = this.props
         return (
-            <div className={[styles.navbarContainer, className].join(' ')}>
-                <div className={[styles.navbar, this.props.floating && styles.floating].join(' ')}>
+            <div className={[styles.menuContainer, className].join(' ')}>
+                <div className={[styles.menu, this.props.floating && styles.floating].join(' ')}>
                     <ModeSwitch floating={this.props.floating} onChange={this.toggle.bind(this)}/>
                     <SectionLink name='process' icon='globe'/>
                     <SectionLink name='browse' icon='folder-open'/>
@@ -49,7 +50,7 @@ class NavBar extends React.Component {
     }
 }
 
-NavBar.propTypes = {
+Menu.propTypes = {
     className: PropTypes.string,
     floating: PropTypes.bool.isRequired,
     requestedApps: PropTypes.arrayOf(PropTypes.object).isRequired
@@ -106,11 +107,11 @@ const ModeSwitch = ({floating, onChange}) => {
     console.log('ModeSwitch', floating)
     return (
         <Tooltip msg={floating ? 'home.sections.floating' : 'home.sections.fixed'} right>
-            <div className={styles.lockSwitch}>
+            <div className={styles.modeSwitch}>
                 <FlipSwitch
-                    on={floating}
-                    offIcon='unlock'
-                    onIcon='lock'
+                    on={!floating}
+                    offIcon='lock'
+                    onIcon='unlock'
                     onChange={onChange}/>
             </div>
         </Tooltip>
@@ -122,4 +123,4 @@ ModeSwitch.propTypes = {
     onChange: PropTypes.func
 }
 
-export default NavBar = connect(mapStateToProps)(NavBar)
+export default Menu = connect(mapStateToProps)(Menu)
