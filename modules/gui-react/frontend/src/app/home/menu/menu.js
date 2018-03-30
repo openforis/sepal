@@ -104,7 +104,7 @@ AppLink.propTypes = {
 }
 
 const ModeSwitch = ({floating, onChange}) => {
-    console.log('ModeSwitch', floating)
+    // console.log('ModeSwitch', floating)
     return (
         <Tooltip msg={floating ? 'home.sections.floating' : 'home.sections.fixed'} right>
             <div className={styles.modeSwitch}>

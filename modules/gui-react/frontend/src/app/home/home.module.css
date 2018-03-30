@@ -29,14 +29,19 @@
     grid-template-columns: 0 1fr;
 }
 
-.footer {
-    grid-area: footer;
-    animation: footer .5s 0s ease-in-out backwards;
+.menu {
+    grid-area: menu;
     z-index: 1000;
 }
 
-.menu {
-    grid-area: menu;
+.body {
+    grid-area: body;
+
+}
+
+.footer {
+    grid-area: footer;
+    animation: footer .5s 0s ease-in-out backwards;
     z-index: 1000;
 }
 
@@ -49,10 +54,4 @@
         opacity: 1;
         transform: none;
     }
-}
-
-.body {
-    grid-area: body;
-    /*display: none !important;*/
-    z-index: 1000;
 }
