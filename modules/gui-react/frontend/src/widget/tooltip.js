@@ -49,7 +49,9 @@ Tooltip.propTypes = {
     topLeft: PropTypes.bool,
     topRight: PropTypes.bool,
     bottomLeft: PropTypes.bool,
-    bottomRight: PropTypes.bool
+    bottomRight: PropTypes.bool,
+    delay: PropTypes.number,
+    children: PropTypes.object
 }
 
 export default Tooltip

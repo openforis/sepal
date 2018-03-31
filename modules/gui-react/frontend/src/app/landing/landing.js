@@ -45,6 +45,10 @@ let Landing =
             </LandingPanel>
         </div>
 
+Landing.propTypes = {
+    location: PropTypes.object
+}
+
 const LandingPanel = ({children}) =>
     <CenteredPanel className={styles.landingPanel}>
         <div className={styles.contentContainer}>

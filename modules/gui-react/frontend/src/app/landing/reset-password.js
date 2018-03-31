@@ -6,6 +6,7 @@ import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
 import Notifications from 'app/notifications'
 import {CenteredProgress} from 'widget/progress'
+import {PropTypes} from 'prop-types'
 
 
 const inputs = {
@@ -107,6 +108,18 @@ class ResetPassword extends React.Component {
             </SubmitButton>
         </form>
     }
+}
+
+ResetPassword.propTypes = {
+    asyncActionBuilder: PropTypes.func,
+    action: PropTypes.func,
+    user: PropTypes.object,
+    form: PropTypes.object,
+    inputs: PropTypes.shape({
+        username: PropTypes.string,
+        password: PropTypes.string,
+        password2: PropTypes.string
+    })
 }
 
 export default form(inputs, mapStateToProps)(ResetPassword)

@@ -4,7 +4,7 @@ import {query} from 'route'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
-
+import PropTypes from 'prop-types'
 
 const inputs = {
     username: null,
@@ -69,6 +69,17 @@ class SetupAccount extends React.Component {
             </SubmitButton>
         </form>
     }
+}
+
+SetupAccount.propTypes = {
+    form: PropTypes.object,
+    inputs: PropTypes.shape({
+        username: PropTypes.object,
+        password: PropTypes.object,
+        password2: PropTypes.object
+    }),
+    action: PropTypes.func,
+    asyncActionBuilder: PropTypes.func
 }
 
 export default form(inputs)(SetupAccount)

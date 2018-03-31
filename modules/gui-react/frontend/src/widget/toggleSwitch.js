@@ -1,6 +1,7 @@
 import React from 'react'
 import Icon from 'widget/icon'
 import styles from './toggleSwitch.module.css'
+import PropTypes from 'prop-types'
 
 class ToggleSwitch extends React.Component {
     constructor(props) {
@@ -40,6 +41,13 @@ class ToggleSwitch extends React.Component {
             </div>
         )
     }
+}
+
+ToggleSwitch.propTypes = {
+    on: PropTypes.boolm,
+    onIcon: PropTypes.string,
+    offIcon: PropTypes.string,
+    onChange: PropTypes.func
 }
 
 export default ToggleSwitch

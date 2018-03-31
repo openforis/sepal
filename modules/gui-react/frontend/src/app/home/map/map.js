@@ -22,8 +22,6 @@ class Map extends React.Component {
     }
 
     componentDidMount() {
-        // const options = {KEY: 'AIzaSyAIi2lE7w25HZOrJkWT-qHH01W-ywyrC0U'}
-        const options = {}
         GoogleMapsLoader.KEY = 'AIzaSyAIi2lE7w25HZOrJkWT-qHH01W-ywyrC0U'
         GoogleMapsLoader.load((google) => {
             this.map = new google.maps.Map(this.mapElement, {
@@ -41,31 +39,17 @@ class Map extends React.Component {
                 backgroundColor: '#131314',
                 gestureHandling: 'greedy'
             })
-
             this.map.setOptions({styles: defaultStyle})
-
         })
     }
 }
 
 const defaultStyle = [
-    {
-        'stylers': [ { 'visibility': 'simplified' } ]
-    }
-    , {
-        'stylers': [ { 'color': '#131314' } ]
-    }
-    , {
-        'featureType': 'water',
-        'stylers'    : [ { 'color': '#131313' }, { 'lightness': 4 }
-        ]
-    }
-    , {
-        'elementType': 'labels.text.fill'
-        , 'stylers'  : [ { 'visibility': 'off' }, { 'lightness': 25 } ]
-    }
+    {'stylers': [{'visibility': 'simplified'}]}, 
+    {'stylers': [{'color': '#131314'}]}, 
+    {'featureType': 'water', 'stylers': [{'color': '#131313'}, {'lightness': 4}]}, 
+    {'elementType': 'labels.text.fill', 'stylers': [{'visibility': 'off'}, {'lightness': 25}]}
 ]
-
 
 Map.propTypes = {
     className: PropTypes.string

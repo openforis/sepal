@@ -9,7 +9,6 @@ import PropTypes from 'prop-types'
 import styles from './forgot-password.module.css'
 import Notifications from 'app/notifications'
 
-
 const inputs = {
     email: new Constraints()
         .notBlank('landing.forgot-password.required')
@@ -56,6 +55,15 @@ export class ForgotPassword extends React.Component {
         </form>
 
     }
+}
+
+ForgotPassword.propTypes = {
+    asyncActionBuilder: PropTypes.func,
+    action: PropTypes.func,
+    form: PropTypes.object, 
+    inputs: PropTypes.shape({
+        email: PropTypes.string
+    })
 }
 
 export const LoginLink = ({tabIndex}) =>

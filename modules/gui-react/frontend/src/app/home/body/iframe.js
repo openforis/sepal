@@ -42,9 +42,11 @@ class IFrame extends React.Component {
 }
 
 IFrame.propTypes = {
-    path: PropTypes.string,
-    label: PropTypes.string,
-    alt: PropTypes.string,
+    app: PropTypes.shape({
+        path: PropTypes.string,
+        label: PropTypes.string,
+        alt: PropTypes.string
+    }),
     appState: PropTypes.string
 }
 

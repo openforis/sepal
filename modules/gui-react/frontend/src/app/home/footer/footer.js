@@ -6,6 +6,7 @@ import Icon from 'widget/icon'
 import Tooltip from 'widget/tooltip'
 import {Link} from 'route'
 import {logout} from 'user'
+import PropTypes from 'prop-types'
 
 const Footer = ({user, className}) => {
     return (
@@ -28,12 +29,22 @@ const Footer = ({user, className}) => {
     )
 }
 
+Footer.propTypes = {
+    user: PropTypes.object,
+    className: PropTypes.string
+}
+
 const Section = ({className, children}) =>
     <div className={className}>
         <div>
             {children}
         </div>
     </div>
+
+Section.propTypes = {
+    className: PropTypes.string,
+    children: PropTypes.object
+}
 
 const Tasks = () =>
     <Link to={'/tasks'} onMouseDown={(e) => e.preventDefault()}>
@@ -71,6 +82,10 @@ const Account = ({user}) =>
             </Button>
         </Tooltip>
     </Link>
+
+Account.propTypes = {
+    user: PropTypes.object
+}
 
 const Logout = () =>
     <Tooltip msg='home.footer.logout' top>
