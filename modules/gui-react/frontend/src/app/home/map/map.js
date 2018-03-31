@@ -50,19 +50,19 @@ class Map extends React.Component {
 
 const defaultStyle = [
     {
-        "stylers": [ { "visibility": "simplified" } ]
+        'stylers': [ { 'visibility': 'simplified' } ]
     }
     , {
-        "stylers": [ { "color": "#131314" } ]
+        'stylers': [ { 'color': '#131314' } ]
     }
     , {
-        "featureType": "water",
-        "stylers"    : [ { "color": "#131313" }, { "lightness": 4 }
+        'featureType': 'water',
+        'stylers'    : [ { 'color': '#131313' }, { 'lightness': 4 }
         ]
     }
     , {
-        "elementType": "labels.text.fill"
-        , "stylers"  : [ { "visibility": "off" }, { "lightness": 25 } ]
+        'elementType': 'labels.text.fill'
+        , 'stylers'  : [ { 'visibility': 'off' }, { 'lightness': 25 } ]
     }
 ]
 
@@ -71,4 +71,4 @@ Map.propTypes = {
     className: PropTypes.string
 }
 
-export default Map = connect(mapStateToProps)(Map)
+export default connect(mapStateToProps)(Map)

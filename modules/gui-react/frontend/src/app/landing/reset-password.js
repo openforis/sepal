@@ -109,4 +109,4 @@ class ResetPassword extends React.Component {
     }
 }
 
-export default ResetPassword = form(inputs, mapStateToProps)(ResetPassword)
+export default form(inputs, mapStateToProps)(ResetPassword)

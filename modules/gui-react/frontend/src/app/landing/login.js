@@ -75,5 +75,5 @@ Login.propTypes = {
     asyncActionBuilder: PropTypes.func
 }
 
-export default Login = form(inputs, mapStateToProps)(Login)
+export default form(inputs, mapStateToProps)(Login)
 

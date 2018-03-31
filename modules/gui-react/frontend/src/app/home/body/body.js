@@ -88,4 +88,4 @@ Body.propTypes = {
     requestedApps: PropTypes.array
 }
 
-export default Body = connect(mapStateToProps)(Body)
+export default connect(mapStateToProps)(Body)

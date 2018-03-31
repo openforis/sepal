@@ -41,8 +41,6 @@ class IFrame extends React.Component {
     }
 }
 
-export default IFrame = connect(mapStateToProps)(IFrame)
-
 IFrame.propTypes = {
     path: PropTypes.string,
     label: PropTypes.string,
@@ -54,3 +52,5 @@ IFrame.contextTypes = {
     active: PropTypes.bool,
     focus: PropTypes.func
 }
+
+export default connect(mapStateToProps)(IFrame)

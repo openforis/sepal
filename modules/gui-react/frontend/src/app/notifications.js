@@ -58,4 +58,5 @@ Notifications.warning = (messageId, values) => notify('warning', messageId, valu
 Notifications.info = (messageId, values) => notify('info', messageId, values)
 Notifications.hide = dispatchable(notifications.hide)
 Notifications.removeAll = dispatchable(notifications.removeAll)
+
 export default Notifications

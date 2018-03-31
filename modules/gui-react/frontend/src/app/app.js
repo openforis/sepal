@@ -44,10 +44,10 @@ App.propTypes = {
     action: PropTypes.func
 }
 
-export default App = connect(mapStateToProps)(App)
-
 const Loader = () =>
     <div className="app-loader">
         <span/>
         <p>S E P A L</p>
     </div>
+
+export default connect(mapStateToProps)(App)

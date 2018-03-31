@@ -27,7 +27,6 @@ const Footer = ({user, className}) => {
         </div>
     )
 }
-export default Footer
 
 const Section = ({className, children}) =>
     <div className={className}>
@@ -79,3 +78,5 @@ const Logout = () =>
             {msg('home.footer.logout.label')}
         </Button>
     </Tooltip>
+
+export default Footer

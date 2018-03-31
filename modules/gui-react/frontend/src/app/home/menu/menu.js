@@ -10,9 +10,7 @@ import FlipSwitch from 'widget/flipSwitch'
 import PropTypes from 'prop-types'
 
 export function isFloating() {
-    console.log('next state', !!select('menu.floating'))
     return select('menu.floating') == null ? false : !!select('menu.floating')
-    // return !!select('menu.floating')
 }
 
 const mapStateToProps = () => ({
@@ -26,14 +24,12 @@ class Menu extends React.Component {
     }
 
     toggle(state) {
-        console.log('toggle', state)
         actionBuilder('TOGGLE_MENU')
             .set('menu.floating', !state)
             .dispatch()
     }
 
     render() {
-        console.log('current', this.props.floating)
         const {className, requestedApps} = this.props
         return (
             <div className={[styles.menuContainer, className].join(' ')}>
@@ -123,4 +119,4 @@ ModeSwitch.propTypes = {
     onChange: PropTypes.func
 }
 
-export default Menu = connect(mapStateToProps)(Menu)
+export default connect(mapStateToProps)(Menu)

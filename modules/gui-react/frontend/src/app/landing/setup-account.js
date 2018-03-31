@@ -71,4 +71,4 @@ class SetupAccount extends React.Component {
     }
 }
 
-export default SetupAccount = form(inputs)(SetupAccount)
+export default form(inputs)(SetupAccount)

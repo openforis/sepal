@@ -86,5 +86,4 @@ Terminal.contextTypes = {
     active: PropTypes.bool
 }
 
-export default Terminal = connect(mapStateToProps)(Terminal)
-
+export default connect(mapStateToProps)(Terminal)

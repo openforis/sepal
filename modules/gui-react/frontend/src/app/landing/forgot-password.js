@@ -58,8 +58,6 @@ export class ForgotPassword extends React.Component {
     }
 }
 
-export default ForgotPassword = form(inputs)(ForgotPassword)
-
 export const LoginLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>
         <Link to='/' tabIndex={tabIndex} onMouseDown={(e) => e.preventDefault()}>
@@ -82,3 +80,5 @@ export const ForgotPasswordLink = ({tabIndex}) =>
 ForgotPasswordLink.propTypes = {
     tabIndex: PropTypes.number
 }
+
+export default form(inputs)(ForgotPassword)

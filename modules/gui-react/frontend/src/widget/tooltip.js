@@ -7,20 +7,20 @@ import {msg as message} from 'translate'
 
 const Tooltip =
     ({
-         msg,
-         rawMsg,
-         left,
-         right,
-         top,
-         bottom,
-         topLeft,
-         topRight,
-         bottomLeft,
-         bottomRight,
-         delay = 0.5,
-         children,
-         ...otherProps
-     }) =>
+        msg,
+        rawMsg,
+        left,
+        right,
+        top,
+        bottom,
+        topLeft,
+        topRight,
+        bottomLeft,
+        bottomRight,
+        delay = 0.5,
+        children,
+        ...otherProps
+    }) =>
         <RcTooltip
             overlay={msg ? message(msg + '.tooltip') : rawMsg}
             placement={
@@ -38,7 +38,6 @@ const Tooltip =
             {...otherProps}>
             {children}
         </RcTooltip>
-export default Tooltip
 
 Tooltip.propTypes = {
     msg: PropTypes.string,
@@ -52,3 +51,5 @@ Tooltip.propTypes = {
     bottomLeft: PropTypes.bool,
     bottomRight: PropTypes.bool
 }
+
+export default Tooltip

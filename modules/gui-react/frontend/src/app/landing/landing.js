@@ -45,8 +45,6 @@ let Landing =
             </LandingPanel>
         </div>
 
-export default Landing = connect(mapStateToProps)(Landing)
-
 const LandingPanel = ({children}) =>
     <CenteredPanel className={styles.landingPanel}>
         <div className={styles.contentContainer}>
@@ -103,3 +101,5 @@ const Form = ({location}) =>
 Form.propTypes = {
     location: PropTypes.object
 }
+
+export default connect(mapStateToProps)(Landing)

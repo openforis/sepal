@@ -39,8 +39,6 @@ AppLaunchPad.propTypes = {
     asyncActionBuilder: PropTypes.func
 }
 
-export default AppLaunchPad = connect(mapStateToProps)(AppLaunchPad)
-
 const App = ({app, onClick}) =>
     <button className={styles.app} onClick={() => onClick(app)}>
         <Image src={app.image}/>
@@ -66,3 +64,5 @@ Image.propTypes = {
     src: PropTypes.string,
     alt: PropTypes.string
 }
+
+export default connect(mapStateToProps)(AppLaunchPad)
