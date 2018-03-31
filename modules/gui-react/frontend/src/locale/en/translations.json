@@ -44,7 +44,7 @@
       "cancel-link": "Cancel",
       "success": {
         "title": "Password reset requested",
-        "message": "If {email} is the email of a Sepal user, an email with instructions how to reset the password has been sent."
+        "message": "An email with password reset instructions has been sent to {email}."
       }
     },
     "reset-password": {
