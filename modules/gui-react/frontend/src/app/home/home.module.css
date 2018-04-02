@@ -17,7 +17,7 @@
     height: 100%;
     display: grid;
     grid-template-columns: 3.75rem 1fr;
-    grid-template-rows: 1fr 4.5rem;
+    grid-template-rows: 1fr 4rem;
     grid-template-areas:
             'menu body'
             'footer footer';

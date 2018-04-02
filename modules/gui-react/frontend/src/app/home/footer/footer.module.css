@@ -7,7 +7,7 @@
 
     background-color: rgba(28, 28, 28, 0.99);
     border-top: 2px solid hsla(0, 0%, 100%, .1);
-    padding: 0 3rem;
+    padding: 0 4.5rem;
     opacity: 1;
     z-index: 1000;
 }
@@ -43,14 +43,15 @@
 }
 
 .title span {
-    border: .15rem solid rgba(255, 255, 255, 0.1);
+    border: .1rem solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
     font-size: 1.6rem;
     display: inline-block;
-    width: 3.3rem;
-    height: 3.3rem;
-    text-align: center;
+    width: 3rem;
+    height: 3rem;
+    line-height: 2.8rem;
     background-color: rgba(255, 255, 255, 0.05);
+    margin: 0 .05rem;
 }
 
 .title span._1 {

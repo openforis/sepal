@@ -2,11 +2,12 @@
     border: 2px solid hsla(0, 0%, 100%, .25);
     border-radius: 50px;
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
+    font-weight: normal;
     text-transform: uppercase;
     line-height: 1;
     letter-spacing: 0.1rem;
     height: 2.4rem;
-    padding: 0 1.5rem;
+    padding: 0 1.3rem;
     cursor: pointer;
 }
 
