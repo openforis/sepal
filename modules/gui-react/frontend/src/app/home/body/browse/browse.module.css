@@ -1,0 +1,30 @@
+.fileList {
+    list-style: none;
+    padding: 0;
+    margin: 0 1rem;
+    background-color: #202020;
+}
+
+.fileList li div {
+    padding: 0 .5rem;
+    cursor: pointer;
+}
+
+.fileList li div:hover {
+    background-color: #404040;
+    text-decoration: none;
+}
+
+.fileName {
+    padding-left: .5rem;
+}
+
+.openDirectory {
+    transform: rotateZ(90deg);
+    transition: 100ms ease-in-out;
+}
+
+.closedDirectory {
+    transform: none;
+    transition: 100ms ease-in-out;
+}

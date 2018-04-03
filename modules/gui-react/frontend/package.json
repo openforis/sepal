@@ -11,6 +11,7 @@
     "google-maps": "^3.2.1",
     "history": "^4.7.2",
     "object-path-immutable": "^1.0.1",
+    "path": "^0.12.7",
     "query-string": "^5.1.0",
     "rc-tooltip": "^3.7.0",
     "react": "^16.2.0",
