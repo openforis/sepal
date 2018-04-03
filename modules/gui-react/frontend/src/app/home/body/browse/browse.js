@@ -35,8 +35,7 @@ class Browse extends React.Component {
         this.load('/')
     }
     load(path) {
-        this.props.asyncActionBuilder('LOAD_DIR',
-            loadFiles$(path))
+        this.props.asyncActionBuilder('LOAD_DIR', loadFiles$(path))
             .dispatch()
     }
     collapseDir(path) {
@@ -50,18 +49,18 @@ class Browse extends React.Component {
             .dispatch()
     }
     click(path, file) {
+        const subPath = this.subPath(path, file.name)
         if (file && file.isDirectory) {
-            this.clickDir(path, file.name)
+            this.clickDir(subPath)
         }
     }
-    clickDir(path, name) {
-        const subPath = this.subPath(path, name)
-        const directory = this.props.files[subPath]
+    clickDir(path) {
+        const directory = this.props.files[path]
         if (directory && !directory.collapsed) {
-            this.collapseDir(subPath)
+            this.collapseDir(path)
         } else {
-            this.expandDir(subPath)
-            this.load(subPath)
+            this.expandDir(path)
+            this.load(path)
         }
     }
     subPath(path, dir) {
@@ -69,14 +68,17 @@ class Browse extends React.Component {
     }
     renderIcon(path, file) {
         if (file.isDirectory) {
-            const directory = this.props.files[this.subPath(path, file.name)]
-            if (directory && !directory.collapsed && !directory.files) {
-                return <Icon className={styles.icon} name={'spinner'}/>
+            const subPath = this.subPath(path, file.name)
+            const directory = this.props.files[subPath]
+            const expanded = directory && !directory.collapsed
+            if (expanded && !directory.files) {
+                return <Icon name={'spinner'}/>
             } else {
-                return <Icon name={'chevron-right'} className={[styles.icon, directory && !directory.collapsed ? styles.openDirectory : styles.closedDirectory].join(' ')}/>
+                const className = expanded ? styles.expanded : styles.collapsed
+                return <Icon name={'chevron-right'} className={className}/>
             }
         } else {
-            return <Icon className={styles.icon} name={'file'}/>
+            return <Icon name={'file'}/>
         }
     }
     renderList(path) {
