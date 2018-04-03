@@ -43,7 +43,7 @@ const Section = ({className, children}) =>
 
 Section.propTypes = {
     className: PropTypes.string,
-    children: PropTypes.object
+    children: PropTypes.any
 }
 
 const Tasks = () =>
