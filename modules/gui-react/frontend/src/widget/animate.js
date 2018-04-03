@@ -12,7 +12,9 @@ export class AnimateEnter extends React.Component {
         const className = `animation_${name}_${randomString()}`
         return (
             <div className={this.props.className}>
-                <style>{`.${className}-appear {animation: ${name} ${duration}ms ${delay}ms ease-in-out backwards;}`}</style>
+                <style>
+                    {`.${className}-appear {animation: ${name} ${duration}ms ${delay}ms ease-in-out backwards;}`}
+                </style>
                 <CSSTransition
                     in={true}
                     appear={true}
