@@ -11,11 +11,47 @@ import Path from 'path'
 import {IconButton} from 'widget/button'
 import Tooltip from 'widget/tooltip'
 
-const files = () =>
-    select('files') || {}
+// const files = {
+//     'loaded': {
+//         '/': {
+//             files: [
+//                 {name: 'file1', isDirectory: false, size: 100}, 
+//                 {name: 'dir1', isDirectory: true}
+//             ]
+//         },
+//         '/dir1': {
+//             files: [
+//                 {name: 'file2', isDirectory: false, size: 200}, 
+//                 {name: 'file3', isDirectory: false, size: 300}, 
+//                 {name: 'dir2', isDirectory: true}
+//             ]
+//         },
+//         '/dir1/dir2': {
+//             files: [
+//                 {name: 'file4', isDirectory: false, size: 400}, 
+//                 {name: 'file5', isDirectory: false, size: 500}, 
+//             ],
+//             collapsed: true
+//         },
+//     },
+//     'selected': {
+//         'file1': true,
+//         'dir1': {
+//             'file3': true,
+//             'dir2': true
+//         }
+//     }
+// }
+
+const loaded = () =>
+    select('files.loaded') || {}
+
+const selected = () =>
+    select('files.selected') || {}
 
 const mapStateToProps = () => ({
-    files: files(),
+    loaded: loaded(),
+    selected: selected()
 })
 
 const loadFiles$ = (path) => {
@@ -27,7 +63,7 @@ const loadFiles$ = (path) => {
         })
         .map((files) => {
             return actionBuilder('LOAD_FILES')
-                .set(['files', path, 'files'], files)
+                .set(['files', 'loaded', path, 'files'], files)
                 .build()
         })
 }
@@ -42,12 +78,12 @@ class Browse extends React.Component {
     }
     collapseDirectory(path) {
         actionBuilder('COLLAPSE_DIRECTORY')
-            .set(['files', path, 'collapsed'], true)
+            .set(['files', 'loaded', path, 'collapsed'], true)
             .dispatch()
     }
     expandDirectory(path) {
         actionBuilder('EXPAND_DIRECTORY')
-            .del(['files', path, 'collapsed'])
+            .del(['files', 'loaded', path, 'collapsed'])
             .dispatch()
     }
     toggleSelection(path) {
@@ -78,12 +114,10 @@ class Browse extends React.Component {
             const pathSection = pathSections.splice(0, 1)
             return isSelected(pathSections, selected[pathSection])
         }
-        const pathSections = this.pathSections(path)
-        const selected = this.props.files.selected
-        return isSelected(pathSections, selected)
+        return isSelected(this.pathSections(path), this.props.selected)
     }
     toggleDirectory(path) {
-        const directory = this.props.files[path]
+        const directory = this.props.loaded[path]
         if (directory && !directory.collapsed) {
             this.collapseDirectory(path)
         } else {
@@ -96,7 +130,7 @@ class Browse extends React.Component {
     }
     renderFileInfo(fullPath, file) {
         if (file.isDirectory) {
-            const files = this.props.files[fullPath] && this.props.files[fullPath].files
+            const files = this.props.loaded[fullPath] && this.props.loaded[fullPath].files
             return files
                 ? <span className={styles.fileInfo}>({files.length} items)</span>
                 : null
@@ -115,7 +149,7 @@ class Browse extends React.Component {
             : <Icon name={isImage(path) ? 'file-image-o' : 'file'} className={styles.icon}/>
     }
     renderDirectoryIcon(path) {
-        const directory = this.props.files[path]
+        const directory = this.props.loaded[path]
         const expanded = directory && !directory.collapsed
         if (expanded && !directory.files) {
             return <Icon name={'spinner'} className={styles.icon}/>
@@ -130,7 +164,7 @@ class Browse extends React.Component {
         }
     }
     renderList(path) {
-        const directory = this.props.files[path]
+        const directory = this.props.loaded[path]
         return directory && !directory.collapsed ? (
             <ul className={styles.fileList}>
                 {this.renderListItems(path, directory.files)}
@@ -176,12 +210,13 @@ class Browse extends React.Component {
 Browse.propTypes = {
     action: PropTypes.func,
     currentPath: PropTypes.string,
-    files: PropTypes.objectOf(
+    loaded: PropTypes.objectOf(
         PropTypes.shape({
             open: PropTypes.bool,
             files: PropTypes.arrayOf(PropTypes.object)
         })
     ),
+    selected: PropTypes.object,
     asyncActionBuilder: PropTypes.func
 }
 
