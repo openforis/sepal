@@ -12,7 +12,6 @@
 
 .fileList li div:hover {
     background-color: #404040;
-    text-decoration: none;
 }
 
 .fileName {
