@@ -91,6 +91,11 @@
       "floating.tooltip": "Floating menu"
     }
   },
+  "browse": {
+    "controls.clearSelection.tooltip": "Clear selection",
+    "controls.remove.tooltip": "Remove selected items",
+    "controls.download.tooltip": "Download selected items"
+  },
   "body": {
     "loading-apps": "Loading apps..."
   },

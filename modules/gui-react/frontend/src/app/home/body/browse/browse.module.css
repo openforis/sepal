@@ -1,25 +1,90 @@
+.browse {
+    margin: 2rem;
+}
+
+.controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-right: 4rem;
+}
+
+.controls > * {
+    margin-left: 2rem;
+}
+
 .fileList {
     list-style: none;
     padding: 0;
-    margin: 0 1rem;
-    background-color: #202020;
+    margin: 0 0 0 2rem;
+    animation: list 250ms linear forwards;
+    user-select: none;
+}
+
+@keyframes list {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.fileList li {
+    transition: 200ms ease-in-out;
 }
 
 .fileList li div {
     padding: 0 .5rem;
     cursor: pointer;
+    transition: 250ms ease-in-out;
 }
 
 .fileList li div:hover {
-    background-color: #404040;
+    background-color: rgba(100, 100, 100, .3);
+}
+
+.fileList li div.selected {
+    color: #bd911a;
+    transition: 100ms ease-in-out;
+}
+
+/* recursively propagate selection to children */
+.fileList li div.selected + ul li div {
+    color: #bd911a;
+    transition: 100ms ease-in-out;
 }
 
 .fileName {
+    display: inline-block;
     padding-left: .5rem;
 }
 
+.fileInfo {
+    display: inline-block;
+    color: #707070;
+    padding-left: .5rem;
+    font-size: smaller;
+}
+
+.icon {
+    display: inline-block;
+    height: 100%;
+    width: 1rem;
+    text-align: center;
+    color: white;
+}
+
+.directory {
+    color: #a0a0a0;
+}
+
+.directory:hover {
+    color: white;
+}
+
 .expanded {
-    transform: rotateZ(90deg);
+    transform: rotateZ(45deg);
     transition: 100ms ease-in-out;
 }
 

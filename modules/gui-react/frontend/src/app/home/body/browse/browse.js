@@ -8,6 +8,8 @@ import PropTypes from 'prop-types'
 import styles from './browse.module.css'
 import Icon from 'widget/icon'
 import Path from 'path'
+import {IconButton} from 'widget/button'
+import Tooltip from 'widget/tooltip'
 
 const files = () =>
     select('files') || {}
@@ -32,53 +34,99 @@ const loadFiles$ = (path) => {
 
 class Browse extends React.Component {
     componentWillMount() {
-        this.load('/')
+        this.loadDirectory('/')
     }
-    load(path) {
-        this.props.asyncActionBuilder('LOAD_DIR', loadFiles$(path))
+    loadDirectory(path) {
+        this.props.asyncActionBuilder('LOAD_DIRECTORY', loadFiles$(path))
             .dispatch()
     }
-    collapseDir(path) {
-        actionBuilder('COLLAPSE_DIR')
+    collapseDirectory(path) {
+        actionBuilder('COLLAPSE_DIRECTORY')
             .set(['files', path, 'collapsed'], true)
             .dispatch()
     }
-    expandDir(path) {
-        actionBuilder('EXPAND_DIR')
-            .set(['files', path, 'collapsed'], false)
+    expandDirectory(path) {
+        actionBuilder('EXPAND_DIRECTORY')
+            .del(['files', path, 'collapsed'])
             .dispatch()
     }
-    click(path, file) {
-        const subPath = this.subPath(path, file.name)
-        if (file && file.isDirectory) {
-            this.clickDir(subPath)
+    toggleSelection(path) {
+        const pathSections = this.pathSections(path)
+        if (this.isSelected(path)) {
+            actionBuilder('DESELECT_ITEM', {path})
+                .del(['files', 'selected', ...pathSections])
+                .dispatch()
+        } else {
+            actionBuilder('SELECT_ITEM', {path})
+                .set(['files', 'selected', ...pathSections], true)
+                .dispatch()
         }
     }
-    clickDir(path) {
+    clearSelection() {
+        actionBuilder('CLEAR_SELECTED_ITEMS')
+            .del(['files', 'selected'])
+            .dispatch()
+    }
+    isSelected(path) {
+        const isSelected = (pathSections, selected) => {
+            if (!selected) {
+                return false
+            }
+            if (pathSections.length === 1) {
+                return selected[pathSections[0]] === true
+            }
+            const pathSection = pathSections.splice(0, 1)
+            return isSelected(pathSections, selected[pathSection])
+        }
+        const pathSections = this.pathSections(path)
+        const selected = this.props.files.selected
+        return isSelected(pathSections, selected)
+    }
+    toggleDirectory(path) {
         const directory = this.props.files[path]
         if (directory && !directory.collapsed) {
-            this.collapseDir(path)
+            this.collapseDirectory(path)
         } else {
-            this.expandDir(path)
-            this.load(path)
+            this.expandDirectory(path)
+            this.loadDirectory(path)
         }
     }
-    subPath(path, dir) {
-        return Path.normalize(path + '/' + dir)
+    pathSections(path) {
+        return path.substr(1).split('/')
+    }
+    renderFileInfo(fullPath, file) {
+        if (file.isDirectory) {
+            const files = this.props.files[fullPath] && this.props.files[fullPath].files
+            return files
+                ? <span className={styles.fileInfo}>({files.length} items)</span>
+                : null
+        } else {
+            return file.size 
+                ? <span className={styles.fileInfo}>({file.size} bytes)</span>
+                : null
+        }
     }
     renderIcon(path, file) {
-        if (file.isDirectory) {
-            const subPath = this.subPath(path, file.name)
-            const directory = this.props.files[subPath]
-            const expanded = directory && !directory.collapsed
-            if (expanded && !directory.files) {
-                return <Icon name={'spinner'}/>
-            } else {
-                const className = expanded ? styles.expanded : styles.collapsed
-                return <Icon name={'chevron-right'} className={className}/>
-            }
+        const isImage = (path) => {
+            return ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
+        }
+        return file.isDirectory 
+            ? this.renderDirectoryIcon(path) 
+            : <Icon name={isImage(path) ? 'file-image-o' : 'file'} className={styles.icon}/>
+    }
+    renderDirectoryIcon(path) {
+        const directory = this.props.files[path]
+        const expanded = directory && !directory.collapsed
+        if (expanded && !directory.files) {
+            return <Icon name={'spinner'} className={styles.icon}/>
         } else {
-            return <Icon name={'file'}/>
+            const className = expanded ? styles.expanded : styles.collapsed
+            return <Icon name={'chevron-right'} 
+                className={[styles.icon, styles.directory, className].join(' ')}
+                onClick={(e) => {
+                    e.stopPropagation()
+                    this.toggleDirectory(path)}
+                }/>
         }
     }
     renderList(path) {
@@ -90,19 +138,35 @@ class Browse extends React.Component {
         ) : null
     }
     renderListItems(path, files) {
-        return files ? files.map((file) => (
-            <li key={file.name}>
-                <div onClick={() => this.click(path, file)}>
-                    {this.renderIcon(path, file)}
-                    <span className={styles.fileName}>{file.name}</span>
-                </div>
-                {this.renderList(this.subPath(path, file.name))}
-            </li>
-        )) : null
+        return files ? files.map((file) => {
+            const fullPath = Path.join(path, file ? file.name : null)
+            return (
+                <li key={file.name}>
+                    <div className={this.isSelected(fullPath) ? styles.selected : null}
+                        onClick={() => this.toggleSelection(fullPath)}>
+                        {this.renderIcon(fullPath, file)}
+                        <span className={styles.fileName}>{file.name}</span>
+                        {this.renderFileInfo(fullPath, file)}
+                    </div>
+                    {this.renderList(fullPath)}
+                </li>
+            )
+        }) : null
     }
     render() {
         return (
-            <div>
+            <div className={styles.browse}>
+                <div className={styles.controls}>
+                    <Tooltip msg='browse.controls.remove' top>
+                        <IconButton icon='trash-o' onClick={this.removeSelection}/>
+                    </Tooltip>
+                    <Tooltip msg='browse.controls.download' top>
+                        <IconButton icon='download' onClick={this.downloadSelection}/>
+                    </Tooltip>
+                    <Tooltip msg='browse.controls.clearSelection' top>
+                        <IconButton icon='times' onClick={this.clearSelection}/>
+                    </Tooltip>
+                </div>
                 {this.renderList('/')}
             </div>
         )
