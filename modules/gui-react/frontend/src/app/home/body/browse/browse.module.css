@@ -32,14 +32,11 @@
     color: #bd911a;
 }
 
-/* .fileList li div.selected {
-    background-color: #404040;
+/* recursively propagate selection to children */
+.fileList li div.selected + ul li div {
+    color: #bd911a;
 }
 
-.fileList li div.selected:hover {
-    background-color: #505050;
-}
- */
 .fileName {
     display: inline-block;
     padding-left: .5rem;
@@ -62,7 +59,7 @@
 }
 
 .expanded {
-    transform: rotateZ(90deg);
+    transform: rotateZ(45deg);
     transition: 100ms ease-in-out;
 }
 
