@@ -112,21 +112,19 @@ class Browse extends React.Component {
         const isImage = (path) => {
             return ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
         }
-        if (file.isDirectory) {
-            return this.renderDirectoryIcon(path)
-        } else {
-            return <Icon name={isImage(path) ? 'file-image-o' : 'file'}/>
-        }
+        return file.isDirectory 
+            ? this.renderDirectoryIcon(path) 
+            : <Icon name={isImage(path) ? 'file-image-o' : 'file'} className={styles.icon}/>
     }
     renderDirectoryIcon(path) {
         const directory = this.props.files[path]
         const expanded = directory && !directory.collapsed
         if (expanded && !directory.files) {
-            return <Icon name={'spinner'}/>
+            return <Icon name={'spinner'} className={styles.icon}/>
         } else {
             const className = expanded ? styles.expanded : styles.collapsed
             return <Icon name={'chevron-right'} 
-                className={[styles.directory, className].join(' ')}
+                className={[styles.icon, styles.directory, className].join(' ')}
                 onClick={(e) => {
                     e.stopPropagation()
                     this.toggleDirectory(path)}
@@ -148,7 +146,7 @@ class Browse extends React.Component {
                 <li key={file.name}>
                     <div className={this.isSelected(fullPath) ? styles.selected : null}
                         onClick={() => this.toggleSelection(fullPath)}>
-                        <span className={styles.icon}>{this.renderIcon(fullPath, file)}</span>
+                        {this.renderIcon(fullPath, file)}
                         <span className={styles.fileName}>{file.name}</span>
                         {this.renderFileInfo(fullPath, file)}
                     </div>
