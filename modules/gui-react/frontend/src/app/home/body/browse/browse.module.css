@@ -1,3 +1,14 @@
+.controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-right: 4rem;
+}
+
+.controls > * {
+    margin-left: 2rem;
+}
+
 .fileList {
     list-style: none;
     padding: 0;
@@ -22,6 +33,7 @@
 .fileList li div {
     padding: 0 .5rem;
     cursor: pointer;
+    transition: 250ms ease-in-out;
 }
 
 .fileList li div:hover {
@@ -30,16 +42,25 @@
 
 .fileList li div.selected {
     color: #bd911a;
+    transition: 100ms ease-in-out;
 }
 
 /* recursively propagate selection to children */
 .fileList li div.selected + ul li div {
     color: #bd911a;
+    transition: 100ms ease-in-out;
 }
 
 .fileName {
     display: inline-block;
     padding-left: .5rem;
+}
+
+.fileSize {
+    display: inline-block;
+    color: #707070;
+    padding-left: .5rem;
+    font-size: smaller;
 }
 
 .icon {

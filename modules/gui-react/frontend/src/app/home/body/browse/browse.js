@@ -8,6 +8,10 @@ import PropTypes from 'prop-types'
 import styles from './browse.module.css'
 import Icon from 'widget/icon'
 import Path from 'path'
+import {msg} from 'translate'
+import {IconButton} from 'widget/button'
+import Tooltip from 'widget/tooltip'
+import { isAppPath } from 'route'
 
 const files = () =>
     select('files') || {}
@@ -60,6 +64,11 @@ class Browse extends React.Component {
                 .dispatch()
         }
     }
+    clearSelection() {
+        actionBuilder('CLEAR_SELECTED_ITEMS')
+            .del(['files', 'selected'])
+            .dispatch()
+    }
     isSelected(path) {
         const isSelected = (pathSections, selected) => {
             if (!selected) {
@@ -87,11 +96,19 @@ class Browse extends React.Component {
     pathSections(path) {
         return path.substr(1).split('/')
     }
+    renderFileSize(file) {
+        return file.size 
+            ? <span className={styles.fileSize}>({file.size} bytes)</span>
+            : null
+    }
     renderIcon(path, file) {
+        const isImage = (path) => {
+            return ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
+        }
         if (file.isDirectory) {
             return this.renderDirectoryIcon(path)
         } else {
-            return <Icon name={'file'}/>
+            return <Icon name={isImage(path) ? 'file-image-o' : 'file'}/>
         }
     }
     renderDirectoryIcon(path) {
@@ -103,7 +120,10 @@ class Browse extends React.Component {
             const className = expanded ? styles.expanded : styles.collapsed
             return <Icon name={'chevron-right'} 
                 className={[styles.directory, className].join(' ')}
-                onClick={() => this.toggleDirectory(path)}/>
+                onClick={(e) => {
+                    e.stopPropagation()
+                    this.toggleDirectory(path)}
+                }/>
         }
     }
     renderList(path) {
@@ -119,10 +139,11 @@ class Browse extends React.Component {
             const fullPath = Path.join(path, file ? file.name : null)
             return (
                 <li key={file.name}>
-                    <div className={this.isSelected(fullPath) ? styles.selected : null}>
+                    <div className={this.isSelected(fullPath) ? styles.selected : null}
+                        onClick={() => this.toggleSelection(fullPath)}>
                         <span className={styles.icon}>{this.renderIcon(fullPath, file)}</span>
-                        <span className={styles.fileName} 
-                            onClick={() => this.toggleSelection(fullPath)}>{file.name}</span>
+                        <span className={styles.fileName}>{file.name}</span>
+                        {this.renderFileSize(file)}
                     </div>
                     {this.renderList(fullPath)}
                 </li>
@@ -133,6 +154,17 @@ class Browse extends React.Component {
         return (
             <div>
                 <h1>Browse</h1>
+                <div className={styles.controls}>
+                    <Tooltip msg='browse.controls.remove' top>
+                        <IconButton icon='trash-o' onClick={this.removeSelection}/>
+                    </Tooltip>
+                    <Tooltip msg='browse.controls.download' top>
+                        <IconButton icon='download' onClick={this.downloadSelection}/>
+                    </Tooltip>
+                    <Tooltip msg='browse.controls.clearSelection' top>
+                        <IconButton icon='times' onClick={this.clearSelection}/>
+                    </Tooltip>
+                </div>
                 {this.renderList('/')}
             </div>
         )
