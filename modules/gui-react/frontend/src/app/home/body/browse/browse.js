@@ -208,8 +208,6 @@ class Browse extends React.Component {
 }
 
 Browse.propTypes = {
-    action: PropTypes.func,
-    currentPath: PropTypes.string,
     loaded: PropTypes.objectOf(
         PropTypes.shape({
             open: PropTypes.bool,
@@ -217,6 +215,7 @@ Browse.propTypes = {
         })
     ),
     selected: PropTypes.object,
+    action: PropTypes.func,
     asyncActionBuilder: PropTypes.func
 }
 
