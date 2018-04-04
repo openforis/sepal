@@ -1,0 +1,16 @@
+.tabBar {
+	display: flex;
+    width: 100%;
+}
+
+.newTab {
+
+}
+
+.tab {
+    
+}
+
+.content {
+	color: red;
+}

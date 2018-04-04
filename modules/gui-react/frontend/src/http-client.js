@@ -11,6 +11,19 @@ export default class Http {
     static post$(url, {retries = 4, headers, validStatuses, ...args} = {}) {
         return execute$(url, 'POST', {retries, headers, validStatuses, ...args})
     }
+
+    static postJson$(url, body, {retries = 4, headers, validStatuses, ...args} = {}) {
+        return execute$(url, 'POST', {
+            retries,
+            body: JSON.stringify(body),
+            headers: {
+                ...headers,
+                'Content-Type': 'application/json'
+            },
+            validStatuses,
+            ...args
+        })
+    }
 }
 
 function execute$(url, method, {retries, username, password, headers, validStatuses, ...args}) {
