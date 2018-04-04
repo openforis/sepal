@@ -1,3 +1,7 @@
+.browse {
+    margin: 2rem;
+}
+
 .controls {
     display: flex;
     flex-direction: row;

@@ -8,10 +8,8 @@ import PropTypes from 'prop-types'
 import styles from './browse.module.css'
 import Icon from 'widget/icon'
 import Path from 'path'
-import {msg} from 'translate'
 import {IconButton} from 'widget/button'
 import Tooltip from 'widget/tooltip'
-import { isAppPath } from 'route'
 
 const files = () =>
     select('files') || {}
@@ -157,8 +155,7 @@ class Browse extends React.Component {
     }
     render() {
         return (
-            <div>
-                <h1>Browse</h1>
+            <div className={styles.browse}>
                 <div className={styles.controls}>
                     <Tooltip msg='browse.controls.remove' top>
                         <IconButton icon='trash-o' onClick={this.removeSelection}/>
