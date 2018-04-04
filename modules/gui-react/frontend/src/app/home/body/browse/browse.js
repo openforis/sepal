@@ -96,10 +96,17 @@ class Browse extends React.Component {
     pathSections(path) {
         return path.substr(1).split('/')
     }
-    renderFileSize(file) {
-        return file.size 
-            ? <span className={styles.fileSize}>({file.size} bytes)</span>
-            : null
+    renderFileInfo(fullPath, file) {
+        if (file.isDirectory) {
+            const files = this.props.files[fullPath] && this.props.files[fullPath].files
+            return files
+                ? <span className={styles.fileInfo}>({files.length} items)</span>
+                : null
+        } else {
+            return file.size 
+                ? <span className={styles.fileInfo}>({file.size} bytes)</span>
+                : null
+        }
     }
     renderIcon(path, file) {
         const isImage = (path) => {
@@ -143,7 +150,7 @@ class Browse extends React.Component {
                         onClick={() => this.toggleSelection(fullPath)}>
                         <span className={styles.icon}>{this.renderIcon(fullPath, file)}</span>
                         <span className={styles.fileName}>{file.name}</span>
-                        {this.renderFileSize(file)}
+                        {this.renderFileInfo(fullPath, file)}
                     </div>
                     {this.renderList(fullPath)}
                 </li>
