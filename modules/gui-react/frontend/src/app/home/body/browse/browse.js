@@ -45,13 +45,35 @@ class Browse extends React.Component {
     }
     expandDir(path) {
         actionBuilder('EXPAND_DIR')
-            .set(['files', path, 'collapsed'], false)
+            .del(['files', path, 'collapsed'])
             .dispatch()
     }
+    toggleSelection(path, file) {
+        const fullPath = this.fullPath(path, file)
+        
+        if (this.isSelected(path, file)) {
+            actionBuilder('DESELECT_ITEM', {fullPath})
+                .delValue(['files', 'selected'], fullPath)
+                .dispatch()
+        } else {
+            actionBuilder('SELECT_ITEM', {fullPath})
+                .pushIfMissing(['files', 'selected'], fullPath)
+                .dispatch()
+        }
+    }
+    isSelected(path, file) {
+        const fullPath = this.fullPath(path, file)
+        if (fullPath === '/') {
+            return false
+        } else {
+            return this.props.files.selected 
+                && (this.props.files.selected.includes(fullPath) || this.isSelected(Path.dirname(fullPath)))
+        }
+    }
     click(path, file) {
-        const subPath = this.subPath(path, file.name)
+        const fullPath = this.fullPath(path, file)
         if (file && file.isDirectory) {
-            this.clickDir(subPath)
+            this.clickDir(fullPath)
         }
     }
     clickDir(path) {
@@ -63,19 +85,21 @@ class Browse extends React.Component {
             this.load(path)
         }
     }
-    subPath(path, dir) {
-        return Path.normalize(path + '/' + dir)
+    fullPath(path, file) {
+        return Path.normalize(path + (file ? '/' + file.name : ''))
     }
     renderIcon(path, file) {
         if (file.isDirectory) {
-            const subPath = this.subPath(path, file.name)
-            const directory = this.props.files[subPath]
+            const fullPath = this.fullPath(path, file)
+            const directory = this.props.files[fullPath]
             const expanded = directory && !directory.collapsed
             if (expanded && !directory.files) {
                 return <Icon name={'spinner'}/>
             } else {
                 const className = expanded ? styles.expanded : styles.collapsed
-                return <Icon name={'chevron-right'} className={className}/>
+                return <Icon name={'chevron-right'} 
+                    className={[styles.directory, className].join(' ')}
+                    onClick={() => this.click(path, file)}/>
             }
         } else {
             return <Icon name={'file'}/>
@@ -92,11 +116,11 @@ class Browse extends React.Component {
     renderListItems(path, files) {
         return files ? files.map((file) => (
             <li key={file.name}>
-                <div onClick={() => this.click(path, file)}>
-                    {this.renderIcon(path, file)}
-                    <span className={styles.fileName}>{file.name}</span>
+                <div className={this.isSelected(path, file) ? styles.selected : null}>
+                    <span className={styles.icon}>{this.renderIcon(path, file)}</span>
+                    <span className={styles.fileName} onClick={() => this.toggleSelection(path, file)}>{file.name}</span>
                 </div>
-                {this.renderList(this.subPath(path, file.name))}
+                {this.renderList(this.fullPath(path, file))}
             </li>
         )) : null
     }
