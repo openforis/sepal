@@ -2,8 +2,8 @@
     list-style: none;
     padding: 0;
     margin: 0 0 0 2rem;
-    background-color: #202020;
     animation: list 250ms linear forwards;
+    user-select: none;
 }
 
 @keyframes list {
@@ -25,7 +25,7 @@
 }
 
 .fileList li div:hover {
-    background-color: #606060;
+    background-color: rgba(100, 100, 100, .3);
 }
 
 .fileList li div.selected {
