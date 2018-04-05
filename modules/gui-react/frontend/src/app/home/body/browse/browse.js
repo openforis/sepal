@@ -68,7 +68,52 @@ const loadFiles$ = (path) => {
         })
 }
 
+const removeItem$ = (path, action) => {
+    return Http.delete$('/api/user/files/' + encodeURIComponent(path))
+        .map((e) => e.response)
+        .catch(() => {
+            Notifications.error('files.removing').dispatch()
+            return Rx.Observable.of([])
+        })
+        .map(action)
+}
+
+const removeFile$ = (path) => {
+    return removeItem$(path, () => {
+        const directory = Path.dirname(path)
+        const fileName = Path.basename(path)
+        return actionBuilder('FILE_REMOVED', {directory, fileName})
+            .delValueByKey(['files', 'loaded', directory, 'files'], 'name', fileName)
+            .build()
+    })
+}
+
+const removeDirectory$ = (path) => {
+    return removeItem$(path, () => {
+        const directory = Path.dirname(path)
+        const fileName = Path.basename(path)
+        return actionBuilder('DIRECTORY_REMOVED', path)
+            .delValueByKey(['files', 'loaded', directory, 'files'], 'name', fileName)
+            .del(['files', 'loaded', path])
+            .build()
+    })
+}
+
 class Browse extends React.Component {
+    removeFile(path) {
+        this.props.asyncActionBuilder('REMOVE_FILE', removeFile$(path))
+            .dispatch()
+    }
+    removeDirectory(path) {
+        this.props.asyncActionBuilder('REMOVE_DIRECTORY', removeDirectory$(path))
+            .dispatch()
+    }
+    removeSelected() {
+        const {files, directories} = this.selectedItems()
+        files.forEach((file) => this.removeFile(file))
+        directories.forEach((directory) => this.removeDirectory(directory))
+        // clear selection!
+    }
     componentWillMount() {
         this.loadDirectory('/')
     }
@@ -116,26 +161,38 @@ class Browse extends React.Component {
         }
         return isSelected(this.pathSections(path), this.props.selected)
     }
-    countSelected() {
-        const countSelected = (selected) => {
-            return Object.keys(selected).reduce((count, key) => {
+    selectedItems() {
+        const selectedItems = (selected, path) => {
+            return Object.keys(selected).reduce((acc, key) => {
                 const value = selected[key]
+                const fullPath = Path.join(path, key)
                 if (typeof(value) === 'object') {
-                    const {files, directories} = countSelected(value)
+                    const {files, directories} = selectedItems(value, fullPath)
                     return {
-                        files: count.files + files,
-                        directories: count.directories + directories
+                        files: acc.files.concat(files),
+                        directories: acc.directories.concat(directories)
                     }
                 } else {
-                    value ? count.directories++ : count.files++
-                    return count
+                    if (value) {
+                        acc.directories.push(fullPath)
+                    } else {
+                        acc.files.push(fullPath)
+                    }
+                    return acc
                 }
             }, {
-                files: 0,
-                directories: 0
+                files: [],
+                directories: []
             })
         }
-        return countSelected(this.props.selected)
+        return selectedItems(this.props.selected, '/')
+    }
+    countSelectedItems() {
+        const {files, directories} = this.selectedItems()
+        return {
+            files: files.length,
+            directories: directories.length
+        }
     }
     toggleDirectory(path) {
         const directory = this.props.loaded[path]
@@ -145,6 +202,9 @@ class Browse extends React.Component {
             this.expandDirectory(path)
             this.loadDirectory(path)
         }
+    }
+    downloadSelected() {
+
     }
     pathSections(path) {
         return path.substr(1).split('/')
@@ -219,27 +279,34 @@ class Browse extends React.Component {
         }) : null
     }
     renderSelected() {
-        const {files, directories} = this.countSelected()
+        const {files, directories} = this.countSelectedItems()
         return files || directories ? (
             <div>
                 {files} files and {directories} directories selected
             </div>
         ) : null
     }
+    renderEditControls() {
+        return (
+            <div>
+                <Tooltip msg='browse.controls.remove' top>
+                    <IconButton icon='trash-o' onClick={this.removeSelected.bind(this)} disabled={false} />
+                </Tooltip>
+                <Tooltip msg='browse.controls.download' top>
+                    <IconButton icon='download' onClick={this.downloadSelected.bind(this)} disabled={false}/>
+                </Tooltip>
+                <Tooltip msg='browse.controls.clearSelection' top>
+                    <IconButton icon='times' onClick={this.clearSelection.bind(this)}/>
+                </Tooltip>
+            </div>
+        )
+    }
     render() {
         return (
             <div className={styles.browse}>
                 <div className={styles.controls}>
                     {this.renderSelected()}
-                    <Tooltip msg='browse.controls.remove' top>
-                        <IconButton icon='trash-o' onClick={this.removeSelection} disabled={false} />
-                    </Tooltip>
-                    <Tooltip msg='browse.controls.download' top>
-                        <IconButton icon='download' onClick={this.downloadSelection} disabled={false}/>
-                    </Tooltip>
-                    <Tooltip msg='browse.controls.clearSelection' top>
-                        <IconButton icon='times' onClick={this.clearSelection}/>
-                    </Tooltip>
+                    {this.renderEditControls()}
                 </div>
                 {this.renderList('/')}
             </div>

@@ -9,8 +9,8 @@
     margin-right: 4rem;
 }
 
-.controls > * {
-    margin-left: 2rem;
+.controls > div > * {
+    margin-left: 1rem;
 }
 
 .fileList {
