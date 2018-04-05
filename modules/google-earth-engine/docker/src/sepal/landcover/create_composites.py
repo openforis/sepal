@@ -12,7 +12,7 @@ class CreateComposites(ThreadTask):
     def __init__(self, credentials, spec):
         super(CreateComposites, self).__init__('create_composites')
         self.credentials = credentials
-        self.name = spec['name']
+        self.asset_path = spec['assetPath']
         self.from_year = spec['fromYear']
         self.to_year = spec['toYear']
         self.aoi_fusion_table = spec['aoiFusionTable']
@@ -54,7 +54,8 @@ class CreateComposites(ThreadTask):
                 credentials=self.credentials,
                 image=composite,
                 region=composite.geometry().bounds(),
-                description='{0}-{1}'.format(self.name, year),
+                description=None,
+                assetPath='{0}-{1}'.format(self.asset_path, year),
                 scale=self.scale
             ))
 

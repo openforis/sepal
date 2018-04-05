@@ -17,7 +17,8 @@ class ImageToAsset(ThreadTask):
             description,
             region,
             scale,
-            maxPixels=1e12):
+            maxPixels=1e12,
+            assetPath=None):
         super(ImageToAsset, self).__init__()
         self.credentials = credentials
         self.image = image
@@ -26,6 +27,7 @@ class ImageToAsset(ThreadTask):
         self.region = region
         self.maxPixels = maxPixels
         self._monitor = None
+        self.assetPath = assetPath
 
     def status(self):
         if self._monitor:
@@ -51,10 +53,12 @@ class ImageToAsset(ThreadTask):
         asset_roots = ee.data.getAssetRoots()
         if not asset_roots:
             raise Exception('User has no GEE asset roots: {}'.format(self.credentials))
-        asset_id = asset_roots[0]['id'] + '/' + self.description
+        asset_path = self.assetPath if self.assetPath else self.description
+        description = self.description if self.description else asset_path.split('/')[-1]
+        asset_id = asset_roots[0]['id'] + '/' + asset_path
         task = ee.batch.Export.image.toAsset(
             image=self.image,
-            description=self.description,
+            description=description,
             assetId=asset_id,
             region=self.region.bounds().getInfo()['coordinates'],
             crs='EPSG:4326',
@@ -65,4 +69,4 @@ class ImageToAsset(ThreadTask):
         return task.status()['id']
 
     def __str__(self):
-        return '{0}(description={1})'.format(type(self).__name__, self.description)
+        return '{0}(description={1}, assetPath={2})'.format(type(self).__name__, self.description, self.assetPath)

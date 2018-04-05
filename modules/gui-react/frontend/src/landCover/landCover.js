@@ -8,14 +8,14 @@ class LandCover extends React.Component {
             Http.postJson$('/api/tasks', {
                 operation: 'sepal.landcover.create_composites',
                 params: {
-                    name: 'foo-composite',
+                    assetPath: 'land-cover-test/myanmar',
                     fromYear: 2015,
                     toYear: 2016,
                     aoiFusionTable: '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
                     keyColumn: 'ISO',
                     keyValue: 'MMR',
                     sensors: ['L8', 'L7'],
-                    scale: 300
+                    scale: 3000
                 }
             })
         ).dispatch()
@@ -26,14 +26,22 @@ class LandCover extends React.Component {
             Http.postJson$('/api/tasks', {
                 operation: 'sepal.landcover.create_land_cover_map',
                 params: {
-                    trainingDataFusionTables: {
-                        primitiveA: '1l97evnBiO9sYaKsPAuG5Gte-scimrRLPDwScW1Se',
-                        primitiveB: '1l97evnBiO9sYaKsPAuG5Gte-scimrRLPDwScW1Se',
-                    },
-                    compositePaths: [
-                        'foo-composite-2015',
-                        'foo-composite-2016'
-                    ]
+                    assetPath: 'land-cover-test/myanmar',
+                    scale: 3000,
+                    years: {
+                        2015: {
+                            trainingDataFusionTables: {
+                                primitiveA: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
+                                primitiveB: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
+                            }
+                        },
+                        2016: {
+                            trainingDataFusionTables: {
+                                primitiveA: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
+                                primitiveB: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
+                            }
+                        }
+                    }
                 }
             })
         ).dispatch()
@@ -53,16 +61,6 @@ class LandCover extends React.Component {
 
     // Get the task id, and use it to monitor state
 
-    useMyAccount() {
-        this.props.asyncActionBuilder('USE_MY_GOOGLE_ACCOUNT',
-            Http.get$('/user/google/access-request-url?destinationUrl=https://' + window.location.hostname))
-            .onComplete(([e]) => {
-                console.log('e:', e)
-                window.location = e.response.url
-            })
-            .dispatch()
-    }
-
     render() {
         return (
             <div>
@@ -71,8 +69,6 @@ class LandCover extends React.Component {
                 <button onClick={this.classify.bind(this)}>Classify</button>
                 <br/><br/>
                 <button onClick={this.assessAccuracy.bind(this)}>Assess accuracy</button>
-                <br/><br/><br/>
-                <button onClick={this.useMyAccount.bind(this)}>Use my Google account</button>
             </div>
         )
     }
