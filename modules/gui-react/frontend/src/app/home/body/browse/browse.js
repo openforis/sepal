@@ -146,21 +146,31 @@ class Browse extends React.Component {
         }
         return file.isDirectory 
             ? this.renderDirectoryIcon(path) 
-            : <Icon name={isImage(path) ? 'file-image-o' : 'file'} className={styles.icon}/>
+            : (
+                <span className={styles.icon}>
+                    <Icon name={isImage(path) ? 'file-image-o' : 'file'}/>
+                </span>
+            )
     }
     renderDirectoryIcon(path) {
         const directory = this.props.loaded[path]
         const expanded = directory && !directory.collapsed
         if (expanded && !directory.files) {
-            return <Icon name={'spinner'} className={styles.icon}/>
+            return (
+                <span className={styles.icon}>
+                    <Icon name={'spinner'}/>
+                </span>
+            )
         } else {
-            const className = expanded ? styles.expanded : styles.collapsed
-            return <Icon name={'chevron-right'} 
-                className={[styles.icon, styles.directory, className].join(' ')}
-                onClick={(e) => {
-                    e.stopPropagation()
-                    this.toggleDirectory(path)}
-                }/>
+            const toggleDirectory = (e) => {
+                e.stopPropagation()
+                this.toggleDirectory(path)
+            } 
+            return (
+                <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}> 
+                    <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
+                </span>
+            )
         }
     }
     renderList(path) {
