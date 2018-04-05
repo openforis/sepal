@@ -17,7 +17,6 @@
     list-style: none;
     padding: 0;
     margin: 0 0 0 2rem;
-    animation: list 250ms linear forwards;
     user-select: none;
 }
 
@@ -31,15 +30,16 @@
 }
 
 .fileList li {
-    transition: 200ms ease-in-out;
+    animation: list 250ms ease-in-out forwards;
 }
 
 .fileList li div {
+    color: #d0d0d0;
     cursor: pointer;
-    transition: 250ms ease-in-out;
 }
 
 .fileList li div:hover {
+    color: white;
     background-color: rgba(100, 100, 100, .3);
 }
 
@@ -71,11 +71,7 @@
     width: 2rem;
     padding: 0 .5rem;
     text-align: center;
-    color: white;
-}
-
-.directory {
-    color: #a0a0a0;
+    color: #b0b0b0;
 }
 
 .directory:hover {
