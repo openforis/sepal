@@ -4,12 +4,28 @@ import {logout} from 'user'
 import Notifications from 'app/notifications'
 
 export default class Http {
+    static head$(url, {retries = 4, headers, validStatuses, ...args} = {}) {
+        return execute$(url, 'HEAD', {retries, headers, validStatuses, ...args})
+    }
+
     static get$(url, {retries = 4, headers, validStatuses, ...args} = {}) {
         return execute$(url, 'GET', {retries, headers, validStatuses, ...args})
     }
 
     static post$(url, {retries = 4, headers, validStatuses, ...args} = {}) {
         return execute$(url, 'POST', {retries, headers, validStatuses, ...args})
+    }
+
+    static put$(url, {retries = 4, headers, validStatuses, ...args} = {}) {
+        return execute$(url, 'PUT', {retries, headers, validStatuses, ...args})
+    }
+
+    static patch$(url, {retries = 4, headers, validStatuses, ...args} = {}) {
+        return execute$(url, 'PATCH', {retries, headers, validStatuses, ...args})
+    }
+
+    static delete$(url, {retries = 4, headers, validStatuses, ...args} = {}) {
+        return execute$(url, 'DELETE', {retries, headers, validStatuses, ...args})
     }
 }
 
