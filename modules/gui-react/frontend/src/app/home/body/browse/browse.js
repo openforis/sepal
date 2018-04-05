@@ -225,37 +225,39 @@ class Browse extends React.Component {
         }
     }
     renderIcon(path, file) {
-        const isImage = (path) => {
-            return ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
-        }
         return file.isDirectory 
             ? this.renderDirectoryIcon(path) 
-            : (
-                <span className={styles.icon}>
-                    <Icon name={isImage(path) ? 'file-image-o' : 'file'}/>
-                </span>
-            )
+            : this.renderFileIcon(path)
+    }
+    renderFileIcon(path) {
+        const isImage = (path) => ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
+        return (
+            <span className={styles.icon}>
+                <Icon name={isImage(path) ? 'file-image-o' : 'file'}/>
+            </span>
+        )
+    }
+    renderSpinner() {
+        return (
+            <span className={styles.icon}>
+                <Icon name={'spinner'}/>
+            </span>
+        )
     }
     renderDirectoryIcon(path) {
         const directory = this.props.loaded[path]
         const expanded = directory && !directory.collapsed
-        if (expanded && !directory.files) {
-            return (
-                <span className={styles.icon}>
-                    <Icon name={'spinner'}/>
-                </span>
-            )
-        } else {
-            const toggleDirectory = (e) => {
-                e.stopPropagation()
-                this.toggleDirectory(path)
-            } 
-            return (
+        const toggleDirectory = (e) => {
+            e.stopPropagation()
+            this.toggleDirectory(path)
+        } 
+        return expanded && !directory.files
+            ? this.renderSpinner()
+            : (
                 <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}> 
                     <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
                 </span>
             )
-        }
     }
     renderList(path) {
         const directory = this.props.loaded[path]
