@@ -13,24 +13,16 @@ class CreateLandCoverMap(ThreadTask):
         super(CreateLandCoverMap, self).__init__('create_land_cover_map')
 
     def run(self):
+        # For each composite and training data collection
+        #   Sample - export to drive
+        #   Train and classify (training in a separate step?) - export as asset
+        # Then assemble - export as asset
+
         time.sleep(1)
-        # TODO: Asset directory path as input?
-        # Create a composite per year
-        # Export as asset
-        # {2015: /foo/bar/baz}
         self.resolve()
 
-    # def status(self):
-    #     print('CreateComposites: status')
-    #     return super.status()
-
     def status_message(self):
-        print('CreateLandCoverMap: status_message')
         return 'Some CreateLandCoverMap status message'
-
-    def close(self):
-        print('CreateLandCoverMap: close')
-        pass
 
     def __str__(self):
         return '{0}()'.format(

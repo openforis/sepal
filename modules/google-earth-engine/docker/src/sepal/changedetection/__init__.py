@@ -14,7 +14,7 @@ class ChangeDetection(ImageSpec):
         self.classProperty = spec['classProperty']
         self.fromImage = create_image_spec(spec['fromImage'])
         self.toImage = create_image_spec(spec['toImage'])
-        self.aoi = self.fromImage.aoi
+        self.aoi = self.fromImage._aoi
         self.scale = self.fromImage.scale
         self.bands = ['class']
 

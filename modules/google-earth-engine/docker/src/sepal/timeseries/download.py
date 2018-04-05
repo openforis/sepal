@@ -288,7 +288,7 @@ class DownloadYear(ThreadTask):
             ImageToDrive(
                 credentials=self._spec.credentials,
                 image=stack,
-                region=self._spec.aoi,
+                region=self._spec._aoi,
                 description='_'.join([self._description, self._feature_description, str(self._year), 'stack']),
                 folder=self._drive_folder,
                 scale=30,

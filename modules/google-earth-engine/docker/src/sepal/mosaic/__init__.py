@@ -64,7 +64,7 @@ class Mosaic(object):
         return mosaic \
             .select(bands_to_select) \
             .uint16() \
-            .clip(self.mosaic_def.aoi.geometry())
+            .clip(self.mosaic_def._aoi.geometry())
 
 
 class DataSet(object):

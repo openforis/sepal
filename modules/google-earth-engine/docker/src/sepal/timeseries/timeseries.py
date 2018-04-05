@@ -21,7 +21,7 @@ class TimeSeries(object):
             self._process_collection(collection, spec),
             ee.ImageCollection([])
         ))
-        self.stack = self._to_stack(collection, spec.aoi)
+        self.stack = self._to_stack(collection, spec._aoi)
         self.dates = collection.map(lambda image: ee.Feature(None, {'date': image.get('date')}))
 
     def _process_collection(self, collection, spec):
@@ -69,7 +69,7 @@ class TimeSeries(object):
 
     def _to_data_set(self, dataSetName):
         image_filter = ee.Filter.And(
-            ee.Filter.geometry(self.spec.aoi),
+            ee.Filter.geometry(self.spec._aoi),
             ee.Filter.date(self.spec.from_date, self.spec.to_date)
         )
         if dataSetName.startswith('landsat'):
