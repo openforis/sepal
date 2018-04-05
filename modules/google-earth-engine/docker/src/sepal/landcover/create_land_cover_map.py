@@ -48,7 +48,7 @@ class CreateLandCoverMap(ThreadTask):
         return 'Some CreateLandCoverMap status message'
 
     def _assemble(self, value):
-        primative_collection = ee.ImageCollection([task.primitive_asset() for task in self.primitive_tasks])
+        primitive_collection = ee.ImageCollection([task.primitive_asset() for task in self.primitive_tasks])
         primitive_accuracy_collection = ee.ImageCollection([task.accuracy_asset() for task in self.primitive_tasks])
 
         tasks = []
@@ -56,20 +56,20 @@ class CreateLandCoverMap(ThreadTask):
             year = int(year)
             export_primitive, export_probability = self._assemble_year(
                 year,
-                primative_collection,
+                primitive_collection,
                 primitive_accuracy_collection
             )
             tasks.append(export_primitive)
             tasks.append(export_probability)
         return Task.submit_all(tasks)
 
-    def _assemble_year(self, year, primative_collection, primitive_accuracy_collection):
-        print('_assemble_year(year={0}, primative_collection.size={1}, primitive_accuracy_collection.size={2})'.format(
-            year, primative_collection.size().getInfo(), primitive_accuracy_collection.size().getInfo()))
+    def _assemble_year(self, year, primitive_collection, primitive_accuracy_collection):
+        print('_assemble_year(year={0}, primitive_collection.size={1}, primitive_accuracy_collection.size={2})'.format(
+            year, primitive_collection.size().getInfo(), primitive_accuracy_collection.size().getInfo()))
         year_filter = ee.Filter.eq('year', year)
         (primitive, probability) = assemble(
             year=year,
-            primative_collection=primative_collection.filter(year_filter),
+            primitive_collection=primitive_collection.filter(year_filter),
             primitive_accuracy_collection=primitive_accuracy_collection.filter(year_filter)
         )
         export_primitive = self.dependent(
@@ -219,14 +219,14 @@ def create_primitive(year, type, composite, training_data):
     return (primitive, accuracy)
 
 
-def assemble(year, primative_collection, primitive_accuracy_collection):
+def assemble(year, primitive_collection, primitive_accuracy_collection):
     '''
     Assembles the primitives for a year.
     :param year: The year of the assembly
-    :param primative_collection: ee.ImageCollection of primitives for the year
+    :param primitive_collection: ee.ImageCollection of primitives for the year
     :param primitive_accuracy_collection: ee.ImageCollection of primitive accuracies for the year
     :return: ee.Image with land cover layers and ee.Image with class probabilities
     '''
-    print('assemble(year={0}, primative_collection.size={1}, primitive_accuracy_collection.size={2})'.format(
-        year, primative_collection.size().getInfo(), primitive_accuracy_collection.size().getInfo()))
-    return (primative_collection.first(), primitive_accuracy_collection.first())
+    print('assemble(year={0}, primitive_collection.size={1}, primitive_accuracy_collection.size={2})'.format(
+        year, primitive_collection.size().getInfo(), primitive_accuracy_collection.size().getInfo()))
+    return (primitive_collection.first(), primitive_accuracy_collection.first())
