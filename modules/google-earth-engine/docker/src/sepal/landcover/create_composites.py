@@ -67,6 +67,13 @@ class CreateComposites(ThreadTask):
 
 
 def create_composite(year, aoi, sensors):
+    '''
+    Creates composite for the given year and AOI, using provided sensors.
+    :param year: The year to create composite for
+    :param aoi: The area of interest as an ee.Feature
+    :param sensors: A list of sensors
+    :return: A composite as an ee.Image
+    '''
     return ee.Image(ee.ImageCollection('LANDSAT/LC08/C01/T1_SR') \
                     .filterDate(str(year) + '-01-01', str(year + 1) + '-01-01') \
                     .filterBounds(aoi) \
