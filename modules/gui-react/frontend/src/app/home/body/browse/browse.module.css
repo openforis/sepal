@@ -35,7 +35,6 @@
 }
 
 .fileList li div {
-    padding: 0 .5rem;
     cursor: pointer;
     transition: 250ms ease-in-out;
 }
@@ -57,7 +56,6 @@
 
 .fileName {
     display: inline-block;
-    padding-left: .5rem;
 }
 
 .fileInfo {
@@ -70,7 +68,8 @@
 .icon {
     display: inline-block;
     height: 100%;
-    width: 1rem;
+    width: 2rem;
+    padding: 0 .5rem;
     text-align: center;
     color: white;
 }
