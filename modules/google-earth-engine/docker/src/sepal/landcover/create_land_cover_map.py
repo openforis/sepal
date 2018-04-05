@@ -1,6 +1,8 @@
 import ee
+import uuid
 from promise import Promise
 
+from .. import drive
 from ..export.image_to_asset import ImageToAsset
 from ..export.table_to_drive import TableToDrive
 from ..task.task import ThreadTask, Task
@@ -17,16 +19,23 @@ class CreateLandCoverMap(ThreadTask):
         self.asset_path = spec['assetPath']
         self.scale = spec['scale']
         self.years = spec['years']
+        self.drive_folder = None
+        self.drive_folder_name = '_'.join(['Sepal', self.asset_path.split('/')[-1], str(uuid.uuid4())])
 
         self.primitive_tasks = self._create_primitive_tasks()
 
     def run(self):
         ee.InitializeThread(self.credentials)
+        self.drive_folder = drive.create_folder(self.credentials, self.drive_folder_name)
         return Task.submit_all(self.primitive_tasks) \
             .then(self._assemble, self.reject) \
             .then(self.resolve, self.reject)
 
         # TODO: Add a thematic smoothing step
+
+    def close(self):
+        if self.drive_folder:
+            drive.delete(self.credentials, self.drive_folder)
 
     def _create_primitive_tasks(self):
         primitive_tasks = []
@@ -40,7 +49,8 @@ class CreateLandCoverMap(ThreadTask):
                         year=year,
                         primitive_type=primitive_type,
                         training_data_fusion_table=training_data_fusion_table,
-                        asset_path=self.asset_path
+                        asset_path=self.asset_path,
+                        drive_folder_name=self.drive_folder_name
                     ))
         return primitive_tasks
 
@@ -64,8 +74,6 @@ class CreateLandCoverMap(ThreadTask):
         return Task.submit_all(tasks)
 
     def _assemble_year(self, year, primitive_collection, primitive_accuracy_collection):
-        print('_assemble_year(year={0}, primitive_collection.size={1}, primitive_accuracy_collection.size={2})'.format(
-            year, primitive_collection.size().getInfo(), primitive_accuracy_collection.size().getInfo()))
         year_filter = ee.Filter.eq('year', year)
         (primitive, probability) = assemble(
             year=year,
@@ -99,7 +107,16 @@ class CreateLandCoverMap(ThreadTask):
 
 
 class CreatePrimitive(ThreadTask):
-    def __init__(self, credentials, scale, year, asset_path, primitive_type, training_data_fusion_table):
+    def __init__(
+            self,
+            credentials,
+            scale,
+            year,
+            asset_path,
+            primitive_type,
+            training_data_fusion_table,
+            drive_folder_name
+    ):
         super(CreatePrimitive, self).__init__('create_primitive')
         self.credentials = credentials
         self.scale = scale
@@ -108,6 +125,7 @@ class CreatePrimitive(ThreadTask):
         self.training_data_fusion_table = training_data_fusion_table
         self.asset_path = asset_path
         self.composite = ee.Image(_to_asset_id('{0}-{1}'.format(asset_path, year)))
+        self.drive_folder_name = drive_folder_name
 
     def run(self):
         ee.InitializeThread(self.credentials)
@@ -137,8 +155,8 @@ class CreatePrimitive(ThreadTask):
             TableToDrive(
                 credentials=self.credentials,
                 table=samples,
-                description='sampled-data-{0}-{1}'.format(self.year, self.primitive_name),
-                folder=None,  # TODO: Create single folder for land cover map
+                description='sample-{0}-{1}'.format(self.year, self.primitive_name),
+                folder=self.drive_folder_name,
                 fileFormat='CSV'
             )).submit()
 
@@ -227,6 +245,4 @@ def assemble(year, primitive_collection, primitive_accuracy_collection):
     :param primitive_accuracy_collection: ee.ImageCollection of primitive accuracies for the year
     :return: ee.Image with land cover layers and ee.Image with class probabilities
     '''
-    print('assemble(year={0}, primitive_collection.size={1}, primitive_accuracy_collection.size={2})'.format(
-        year, primitive_collection.size().getInfo(), primitive_accuracy_collection.size().getInfo()))
     return (primitive_collection.first(), primitive_accuracy_collection.first())
