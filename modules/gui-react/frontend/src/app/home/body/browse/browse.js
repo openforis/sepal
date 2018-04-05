@@ -100,6 +100,16 @@ const removeDirectory$ = (path) => {
 }
 
 class Browse extends React.Component {
+    componentWillMount() {
+        this.loadDirectory('/')
+    }
+    loadDirectory(path) {
+        this.props.asyncActionBuilder('LOAD_DIRECTORY', loadFiles$(path))
+            .dispatch()
+    }
+    pathSections(path) {
+        return path.substr(1).split('/')
+    }
     removeFile(path) {
         this.props.asyncActionBuilder('REMOVE_FILE', removeFile$(path))
             .dispatch()
@@ -114,13 +124,7 @@ class Browse extends React.Component {
         directories.forEach((directory) => this.removeDirectory(directory))
         this.clearSelection()
     }
-    componentWillMount() {
-        this.loadDirectory('/')
-    }
-    loadDirectory(path) {
-        this.props.asyncActionBuilder('LOAD_DIRECTORY', loadFiles$(path))
-            .dispatch()
-    }
+
     collapseDirectory(path) {
         actionBuilder('COLLAPSE_DIRECTORY')
             .set(['files', 'loaded', path, 'collapsed'], true)
@@ -131,17 +135,30 @@ class Browse extends React.Component {
             .del(['files', 'loaded', path, 'collapsed'])
             .dispatch()
     }
-    toggleSelection(path, isDirectory) {
-        const pathSections = this.pathSections(path)
-        if (this.isSelected(path)) {
-            actionBuilder('DESELECT_ITEM', {path})
-                .del(['files', 'selected', ...pathSections])
-                .dispatch()
+    toggleDirectory(path) {
+        const directory = this.props.loaded[path]
+        if (directory && !directory.collapsed) {
+            this.collapseDirectory(path)
         } else {
-            actionBuilder('SELECT_ITEM', {path})
-                .set(['files', 'selected', ...pathSections], isDirectory)
-                .dispatch()
+            this.expandDirectory(path)
+            this.loadDirectory(path)
         }
+    }
+    
+    selectItem(path, isDirectory) {
+        actionBuilder('SELECT_ITEM', {path})
+            .set(['files', 'selected', ...this.pathSections(path)], isDirectory)
+            .dispatch()
+    }
+    deselectItem(path) {
+        actionBuilder('DESELECT_ITEM', {path})
+            .del(['files', 'selected', ...this.pathSections(path)])
+            .dispatch()
+    }
+    toggleSelection(path, isDirectory) {
+        this.isSelected(path)
+            ? this.deselectItem(path)
+            : this.selectItem(path, isDirectory)
     }
     clearSelection() {
         actionBuilder('CLEAR_SELECTED_ITEMS')
@@ -154,7 +171,7 @@ class Browse extends React.Component {
                 return false
             }
             if (pathSections.length === 1) {
-                return selected[pathSections[0]] === true || selected[pathSections[0]] === false
+                return typeof(selected[pathSections[0]]) === 'boolean'
             }
             const pathSection = pathSections.splice(0, 1)
             return isSelected(pathSections, selected[pathSection])
@@ -173,11 +190,9 @@ class Browse extends React.Component {
                         directories: acc.directories.concat(directories)
                     }
                 } else {
-                    if (value) {
-                        acc.directories.push(fullPath)
-                    } else {
-                        acc.files.push(fullPath)
-                    }
+                    value
+                        ? acc.directories.push(fullPath)
+                        : acc.files.push(fullPath)
                     return acc
                 }
             }, {
@@ -194,20 +209,8 @@ class Browse extends React.Component {
             directories: directories.length
         }
     }
-    toggleDirectory(path) {
-        const directory = this.props.loaded[path]
-        if (directory && !directory.collapsed) {
-            this.collapseDirectory(path)
-        } else {
-            this.expandDirectory(path)
-            this.loadDirectory(path)
-        }
-    }
     downloadSelected() {
 
-    }
-    pathSections(path) {
-        return path.substr(1).split('/')
     }
     renderFileInfo(fullPath, file) {
         if (file.isDirectory) {
