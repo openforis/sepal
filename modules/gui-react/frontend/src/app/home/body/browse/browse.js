@@ -86,7 +86,7 @@ class Browse extends React.Component {
             .del(['files', 'loaded', path, 'collapsed'])
             .dispatch()
     }
-    toggleSelection(path) {
+    toggleSelection(path, isDirectory) {
         const pathSections = this.pathSections(path)
         if (this.isSelected(path)) {
             actionBuilder('DESELECT_ITEM', {path})
@@ -94,7 +94,7 @@ class Browse extends React.Component {
                 .dispatch()
         } else {
             actionBuilder('SELECT_ITEM', {path})
-                .set(['files', 'selected', ...pathSections], true)
+                .set(['files', 'selected', ...pathSections], isDirectory)
                 .dispatch()
         }
     }
@@ -109,12 +109,33 @@ class Browse extends React.Component {
                 return false
             }
             if (pathSections.length === 1) {
-                return selected[pathSections[0]] === true
+                return selected[pathSections[0]] === true || selected[pathSections[0]] === false
             }
             const pathSection = pathSections.splice(0, 1)
             return isSelected(pathSections, selected[pathSection])
         }
         return isSelected(this.pathSections(path), this.props.selected)
+    }
+    countSelected() {
+        const countSelected = (selected) => {
+            return Object.keys(selected).reduce((count, key) => {
+                const value = selected[key]
+                if (typeof(value) === 'object') {
+                    const {files, directories} = countSelected(value)
+                    return {
+                        files: count.files + files,
+                        directories: count.directories + directories
+                    }
+                } else {
+                    value ? count.directories++ : count.files++
+                    return count
+                }
+            }, {
+                files: 0,
+                directories: 0
+            })
+        }
+        return countSelected(this.props.selected)
     }
     toggleDirectory(path) {
         const directory = this.props.loaded[path]
@@ -187,7 +208,7 @@ class Browse extends React.Component {
             return (
                 <li key={file.name}>
                     <div className={this.isSelected(fullPath) ? styles.selected : null}
-                        onClick={() => this.toggleSelection(fullPath)}>
+                        onClick={() => this.toggleSelection(fullPath, file.isDirectory)}>
                         {this.renderIcon(fullPath, file)}
                         <span className={styles.fileName}>{file.name}</span>
                         {this.renderFileInfo(fullPath, file)}
@@ -197,15 +218,24 @@ class Browse extends React.Component {
             )
         }) : null
     }
+    renderSelected() {
+        const {files, directories} = this.countSelected()
+        return files || directories ? (
+            <div>
+                {files} files and {directories} directories selected
+            </div>
+        ) : null
+    }
     render() {
         return (
             <div className={styles.browse}>
                 <div className={styles.controls}>
+                    {this.renderSelected()}
                     <Tooltip msg='browse.controls.remove' top>
-                        <IconButton icon='trash-o' onClick={this.removeSelection}/>
+                        <IconButton icon='trash-o' onClick={this.removeSelection} disabled={false} />
                     </Tooltip>
                     <Tooltip msg='browse.controls.download' top>
-                        <IconButton icon='download' onClick={this.downloadSelection}/>
+                        <IconButton icon='download' onClick={this.downloadSelection} disabled={false}/>
                     </Tooltip>
                     <Tooltip msg='browse.controls.clearSelection' top>
                         <IconButton icon='times' onClick={this.clearSelection}/>
