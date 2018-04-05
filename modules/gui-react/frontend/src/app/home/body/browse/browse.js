@@ -112,7 +112,7 @@ class Browse extends React.Component {
         const {files, directories} = this.selectedItems()
         files.forEach((file) => this.removeFile(file))
         directories.forEach((directory) => this.removeDirectory(directory))
-        // clear selection!
+        this.clearSelection()
     }
     componentWillMount() {
         this.loadDirectory('/')
