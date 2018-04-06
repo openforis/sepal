@@ -3,13 +3,13 @@ import json
 import logging
 import os
 import random
+import time
 from collections import namedtuple
+from datetime import datetime
 
 import httplib2
-import time
 from apiclient import discovery
 from apiclient.http import MediaIoBaseDownload
-from datetime import datetime
 from googleapiclient.errors import HttpError
 
 from ..exception import re_raisable

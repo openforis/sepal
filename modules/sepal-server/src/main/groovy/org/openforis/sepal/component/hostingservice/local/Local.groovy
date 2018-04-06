@@ -10,14 +10,14 @@ import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 @SuppressWarnings("GroovyUnusedDeclaration")
 class Local implements HostingServiceAdapter {
     private final config = new LocalConfig()
-    private final double storageCostPerGbMonth = 0.33d
+    private final double storageCostPerGbMonth = 0d
     final List<InstanceType> instanceTypes = [
             new InstanceType(
                     id: 'local',
                     name: 'Dummy instance',
                     cpuCount: 2,
                     ramGiB: 2,
-                    hourlyCost: 0.1d
+                    hourlyCost: 0d
             )
     ].asImmutable()
 

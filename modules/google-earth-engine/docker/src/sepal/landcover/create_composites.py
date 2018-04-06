@@ -1,4 +1,5 @@
 import ee
+import landcoverPackage
 
 from ..export.image_to_asset import ImageToAsset
 from ..task.task import ThreadTask, Task
@@ -20,6 +21,7 @@ class CreateComposites(ThreadTask):
         self.key_value = spec['keyValue']
         self.sensors = spec['sensors']
         self.scale = spec['scale']
+        self.tasks = []
 
     def run(self):
         ee.InitializeThread(self.credentials)
@@ -74,7 +76,4 @@ def create_composite(year, aoi, sensors):
     :param sensors: A list of sensors
     :return: A composite as an ee.Image
     '''
-    return ee.Image(ee.ImageCollection('LANDSAT/LC08/C01/T1_SR') \
-                    .filterDate(str(year) + '-01-01', str(year + 1) + '-01-01') \
-                    .filterBounds(aoi) \
-                    .first())
+    return landcoverPackage.composite(aoi=aoi, year=year, sensors=sensors)
