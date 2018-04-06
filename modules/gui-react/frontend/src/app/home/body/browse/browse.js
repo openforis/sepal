@@ -35,9 +35,9 @@ import Tooltip from 'widget/tooltip'
 //         },
 //     },
 //     'selected': {
-//         'file1': true,
+//         'file1': false,
 //         'dir1': {
-//             'file3': true,
+//             'file3': false,
 //             'dir2': true
 //         }
 //     }
