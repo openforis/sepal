@@ -285,12 +285,12 @@ class Browse extends React.Component {
             )
         }) : null
     }
-    renderEditControls() {
+    renderToolbar() {
         const selected = this.countSelectedItems()
         const nothingSelected = selected.files === 0 && selected.directories === 0
         const oneFileSelected = selected.files === 1 && selected.directories === 0
         return (
-            <div>
+            <div className={styles.toolbar}>
                 {nothingSelected ? null : (
                     <span>
                         {msg('browse.selected', {
@@ -299,17 +299,17 @@ class Browse extends React.Component {
                         })}
                     </span>
                 )}
-                <Tooltip msg='browse.controls.download' top>
+                <Tooltip msg='browse.controls.download' bottom>
                     <IconButton icon='download'
                         onClick={this.downloadSelected.bind(this)}
                         disabled={!oneFileSelected}/>
                 </Tooltip>
-                <Tooltip msg='browse.controls.remove' top>
+                <Tooltip msg='browse.controls.remove' bottom>
                     <HoldButton icon='trash-o'
                         onClickHold={this.removeSelected.bind(this)}
                         disabled={nothingSelected} />
                 </Tooltip>
-                <Tooltip msg='browse.controls.clearSelection' top>
+                <Tooltip msg='browse.controls.clearSelection' bottom>
                     <IconButton icon='times'
                         onClick={this.clearSelection.bind(this)}
                         disabled={nothingSelected}
@@ -321,9 +321,7 @@ class Browse extends React.Component {
     render() {
         return (
             <div className={styles.browse}>
-                <div className={styles.controls}>
-                    {this.renderEditControls()}
-                </div>
+                {this.renderToolbar()}
                 {this.renderList('/')}
             </div>
         )
