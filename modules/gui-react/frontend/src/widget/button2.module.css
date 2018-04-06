@@ -1,0 +1,48 @@
+.hold {
+    position: relative;
+    height: 3rem;
+    width: 3rem;
+    font-size: 1.3rem;
+    line-height: 1.3rem;
+    border: none;
+    border-radius: 50%;
+    outline: none;
+    overflow: hidden;
+    cursor: pointer;
+    background: hsla(0, 0%, 100%, 10%);
+    vertical-align: bottom;
+}
+  
+.hold:disabled {
+    color: hsla(0, 0%, 100%, .40);
+    cursor: not-allowed;
+}
+
+.hold:not(:disabled):hover {
+    background: hsla(0, 0%, 100%, 20%);
+}
+  
+.hold:before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: -1;
+}
+
+.hold:not(:disabled):hover:active:before {
+    animation: fill 750ms ease-out forwards normal;
+}
+  
+@keyframes fill {
+    90% {
+        top: 0;
+        background: hsla(0, 0%, 100%, 30%);
+    }
+    100% {
+        top: 0;
+        background-color: red;
+    }
+}
