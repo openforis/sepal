@@ -68,6 +68,37 @@ const loadFiles$ = (path) => {
         })
 }
 
+const removeItem$ = (path, action) => {
+    return Http.delete$('/api/user/files/' + encodeURIComponent(path))
+        .map((e) => e.response)
+        .catch(() => {
+            Notifications.error('files.removing').dispatch()
+            return Rx.Observable.of([])
+        })
+        .map(action)
+}
+
+const removeFile$ = (path) => {
+    return removeItem$(path, () => {
+        const directory = Path.dirname(path)
+        const fileName = Path.basename(path)
+        return actionBuilder('FILE_REMOVED', {directory, fileName})
+            .delValueByKey(['files', 'loaded', directory, 'files'], 'name', fileName)
+            .build()
+    })
+}
+
+const removeDirectory$ = (path) => {
+    return removeItem$(path, () => {
+        const directory = Path.dirname(path)
+        const fileName = Path.basename(path)
+        return actionBuilder('DIRECTORY_REMOVED', path)
+            .delValueByKey(['files', 'loaded', directory, 'files'], 'name', fileName)
+            .del(['files', 'loaded', path])
+            .build()
+    })
+}
+
 class Browse extends React.Component {
     componentWillMount() {
         this.loadDirectory('/')
@@ -76,6 +107,24 @@ class Browse extends React.Component {
         this.props.asyncActionBuilder('LOAD_DIRECTORY', loadFiles$(path))
             .dispatch()
     }
+    pathSections(path) {
+        return path.substr(1).split('/')
+    }
+    removeFile(path) {
+        this.props.asyncActionBuilder('REMOVE_FILE', removeFile$(path))
+            .dispatch()
+    }
+    removeDirectory(path) {
+        this.props.asyncActionBuilder('REMOVE_DIRECTORY', removeDirectory$(path))
+            .dispatch()
+    }
+    removeSelected() {
+        const {files, directories} = this.selectedItems()
+        files.forEach((file) => this.removeFile(file))
+        directories.forEach((directory) => this.removeDirectory(directory))
+        this.clearSelection()
+    }
+
     collapseDirectory(path) {
         actionBuilder('COLLAPSE_DIRECTORY')
             .set(['files', 'loaded', path, 'collapsed'], true)
@@ -86,17 +135,30 @@ class Browse extends React.Component {
             .del(['files', 'loaded', path, 'collapsed'])
             .dispatch()
     }
-    toggleSelection(path) {
-        const pathSections = this.pathSections(path)
-        if (this.isSelected(path)) {
-            actionBuilder('DESELECT_ITEM', {path})
-                .del(['files', 'selected', ...pathSections])
-                .dispatch()
+    toggleDirectory(path) {
+        const directory = this.props.loaded[path]
+        if (directory && !directory.collapsed) {
+            this.collapseDirectory(path)
         } else {
-            actionBuilder('SELECT_ITEM', {path})
-                .set(['files', 'selected', ...pathSections], true)
-                .dispatch()
+            this.expandDirectory(path)
+            this.loadDirectory(path)
         }
+    }
+    
+    selectItem(path, isDirectory) {
+        actionBuilder('SELECT_ITEM', {path})
+            .set(['files', 'selected', ...this.pathSections(path)], isDirectory)
+            .dispatch()
+    }
+    deselectItem(path) {
+        actionBuilder('DESELECT_ITEM', {path})
+            .del(['files', 'selected', ...this.pathSections(path)])
+            .dispatch()
+    }
+    toggleSelection(path, isDirectory) {
+        this.isSelected(path)
+            ? this.deselectItem(path)
+            : this.selectItem(path, isDirectory)
     }
     clearSelection() {
         actionBuilder('CLEAR_SELECTED_ITEMS')
@@ -109,24 +171,46 @@ class Browse extends React.Component {
                 return false
             }
             if (pathSections.length === 1) {
-                return selected[pathSections[0]] === true
+                return typeof(selected[pathSections[0]]) === 'boolean'
             }
             const pathSection = pathSections.splice(0, 1)
             return isSelected(pathSections, selected[pathSection])
         }
         return isSelected(this.pathSections(path), this.props.selected)
     }
-    toggleDirectory(path) {
-        const directory = this.props.loaded[path]
-        if (directory && !directory.collapsed) {
-            this.collapseDirectory(path)
-        } else {
-            this.expandDirectory(path)
-            this.loadDirectory(path)
+    selectedItems() {
+        const selectedItems = (selected, path) => {
+            return Object.keys(selected).reduce((acc, key) => {
+                const value = selected[key]
+                const fullPath = Path.join(path, key)
+                if (typeof(value) === 'object') {
+                    const {files, directories} = selectedItems(value, fullPath)
+                    return {
+                        files: acc.files.concat(files),
+                        directories: acc.directories.concat(directories)
+                    }
+                } else {
+                    value
+                        ? acc.directories.push(fullPath)
+                        : acc.files.push(fullPath)
+                    return acc
+                }
+            }, {
+                files: [],
+                directories: []
+            })
+        }
+        return selectedItems(this.props.selected, '/')
+    }
+    countSelectedItems() {
+        const {files, directories} = this.selectedItems()
+        return {
+            files: files.length,
+            directories: directories.length
         }
     }
-    pathSections(path) {
-        return path.substr(1).split('/')
+    downloadSelected() {
+
     }
     renderFileInfo(fullPath, file) {
         if (file.isDirectory) {
@@ -187,7 +271,7 @@ class Browse extends React.Component {
             return (
                 <li key={file.name}>
                     <div className={this.isSelected(fullPath) ? styles.selected : null}
-                        onClick={() => this.toggleSelection(fullPath)}>
+                        onClick={() => this.toggleSelection(fullPath, file.isDirectory)}>
                         {this.renderIcon(fullPath, file)}
                         <span className={styles.fileName}>{file.name}</span>
                         {this.renderFileInfo(fullPath, file)}
@@ -197,19 +281,35 @@ class Browse extends React.Component {
             )
         }) : null
     }
+    renderSelected() {
+        const {files, directories} = this.countSelectedItems()
+        return files || directories ? (
+            <div>
+                {files} files and {directories} directories selected
+            </div>
+        ) : null
+    }
+    renderEditControls() {
+        return (
+            <div>
+                <Tooltip msg='browse.controls.remove' top>
+                    <IconButton icon='trash-o' onClick={this.removeSelected.bind(this)} disabled={false} />
+                </Tooltip>
+                <Tooltip msg='browse.controls.download' top>
+                    <IconButton icon='download' onClick={this.downloadSelected.bind(this)} disabled={false}/>
+                </Tooltip>
+                <Tooltip msg='browse.controls.clearSelection' top>
+                    <IconButton icon='times' onClick={this.clearSelection.bind(this)}/>
+                </Tooltip>
+            </div>
+        )
+    }
     render() {
         return (
             <div className={styles.browse}>
                 <div className={styles.controls}>
-                    <Tooltip msg='browse.controls.remove' top>
-                        <IconButton icon='trash-o' onClick={this.removeSelection}/>
-                    </Tooltip>
-                    <Tooltip msg='browse.controls.download' top>
-                        <IconButton icon='download' onClick={this.downloadSelection}/>
-                    </Tooltip>
-                    <Tooltip msg='browse.controls.clearSelection' top>
-                        <IconButton icon='times' onClick={this.clearSelection}/>
-                    </Tooltip>
+                    {this.renderSelected()}
+                    {this.renderEditControls()}
                 </div>
                 {this.renderList('/')}
             </div>

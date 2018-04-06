@@ -38,6 +38,21 @@ export default function actionBuilder(type, props = {}) {
             return this
         },
 
+        delValueByKey(path, key, keyValue) {
+            if (typeof path === 'string')
+                path = path.split('.')
+
+            operations.push((immutableState) => {
+                const currentState = immutableState.value()
+                immutableState = immutable(currentState)
+                const index = select(path, currentState).findIndex((value) => value[key] === keyValue)
+                return (index !== -1)
+                    ? immutableState.del([...path, index])
+                    : immutableState
+            })
+            return this
+        },
+
         delValue(path, value) {
             if (typeof path === 'string')
                 path = path.split('.')
