@@ -29,16 +29,16 @@ class LandCover extends React.Component {
                     assetPath: 'land-cover-test/myanmar',
                     scale: 3000,
                     years: {
-                        // 2015: {
-                        //     trainingDataFusionTables: {
-                        //         primitiveA: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
-                        //         primitiveB: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
-                        //     }
-                        // },
+                        2015: {
+                            trainingDataFusionTables: {
+                                primitiveA: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
+                                primitiveB: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
+                            }
+                        },
                         2016: {
                             trainingDataFusionTables: {
                                 primitiveA: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
-                                // primitiveB: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
+                                primitiveB: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
                             }
                         }
                     }
