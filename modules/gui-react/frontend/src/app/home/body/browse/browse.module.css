@@ -2,14 +2,14 @@
     margin: 2rem;
 }
 
-.controls {
+.toolbar {
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
-    margin-right: 4rem;
+    margin: 0 4rem 1rem 1rem;
 }
 
-.controls > div > * {
+.toolbar button {
     margin-left: 1rem;
 }
 

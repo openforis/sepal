@@ -94,9 +94,8 @@
   "browse": {
     "controls.clearSelection.tooltip": "Clear selection",
     "controls.remove.tooltip": "Remove selected items",
-    "controls.download.tooltip": "Download selected items",
-    "controls.edit.tooltip": "Enter edit mode",
-    "controls.view.tooltip": "Return to view mode"
+    "controls.download.tooltip": "Download selected item",
+    "selected": "{files} files and {directories} directories selected"
   },
   "body": {
     "loading-apps": "Loading apps..."

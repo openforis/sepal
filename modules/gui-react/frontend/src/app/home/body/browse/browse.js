@@ -9,7 +9,9 @@ import styles from './browse.module.css'
 import Icon from 'widget/icon'
 import Path from 'path'
 import {IconButton} from 'widget/button'
+import {HoldButton} from 'widget/button2'
 import Tooltip from 'widget/tooltip'
+import {msg} from 'translate'
 
 // const files = {
 //     'loaded': {
@@ -35,9 +37,9 @@ import Tooltip from 'widget/tooltip'
 //         },
 //     },
 //     'selected': {
-//         'file1': true,
+//         'file1': false,
 //         'dir1': {
-//             'file3': true,
+//             'file3': false,
 //             'dir2': true
 //         }
 //     }
@@ -225,37 +227,39 @@ class Browse extends React.Component {
         }
     }
     renderIcon(path, file) {
-        const isImage = (path) => {
-            return ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
-        }
         return file.isDirectory 
             ? this.renderDirectoryIcon(path) 
-            : (
-                <span className={styles.icon}>
-                    <Icon name={isImage(path) ? 'file-image-o' : 'file'}/>
-                </span>
-            )
+            : this.renderFileIcon(path)
+    }
+    renderFileIcon(path) {
+        const isImage = (path) => ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
+        return (
+            <span className={styles.icon}>
+                <Icon name={isImage(path) ? 'file-image-o' : 'file'}/>
+            </span>
+        )
+    }
+    renderSpinner() {
+        return (
+            <span className={styles.icon}>
+                <Icon name={'spinner'}/>
+            </span>
+        )
     }
     renderDirectoryIcon(path) {
         const directory = this.props.loaded[path]
         const expanded = directory && !directory.collapsed
-        if (expanded && !directory.files) {
-            return (
-                <span className={styles.icon}>
-                    <Icon name={'spinner'}/>
-                </span>
-            )
-        } else {
-            const toggleDirectory = (e) => {
-                e.stopPropagation()
-                this.toggleDirectory(path)
-            } 
-            return (
+        const toggleDirectory = (e) => {
+            e.stopPropagation()
+            this.toggleDirectory(path)
+        } 
+        return expanded && !directory.files
+            ? this.renderSpinner()
+            : (
                 <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}> 
                     <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
                 </span>
             )
-        }
     }
     renderList(path) {
         const directory = this.props.loaded[path]
@@ -281,25 +285,35 @@ class Browse extends React.Component {
             )
         }) : null
     }
-    renderSelected() {
-        const {files, directories} = this.countSelectedItems()
-        return files || directories ? (
-            <div>
-                {files} files and {directories} directories selected
-            </div>
-        ) : null
-    }
-    renderEditControls() {
+    renderToolbar() {
+        const selected = this.countSelectedItems()
+        const nothingSelected = selected.files === 0 && selected.directories === 0
+        const oneFileSelected = selected.files === 1 && selected.directories === 0
         return (
-            <div>
-                <Tooltip msg='browse.controls.remove' top>
-                    <IconButton icon='trash-o' onClick={this.removeSelected.bind(this)} disabled={false} />
+            <div className={styles.toolbar}>
+                {nothingSelected ? null : (
+                    <span>
+                        {msg('browse.selected', {
+                            files: selected.files,
+                            directories: selected.directories
+                        })}
+                    </span>
+                )}
+                <Tooltip msg='browse.controls.download' bottom>
+                    <IconButton icon='download'
+                        onClick={this.downloadSelected.bind(this)}
+                        disabled={!oneFileSelected}/>
                 </Tooltip>
-                <Tooltip msg='browse.controls.download' top>
-                    <IconButton icon='download' onClick={this.downloadSelected.bind(this)} disabled={false}/>
+                <Tooltip msg='browse.controls.remove' bottom>
+                    <HoldButton icon='trash-o'
+                        onClickHold={this.removeSelected.bind(this)}
+                        disabled={nothingSelected} />
                 </Tooltip>
-                <Tooltip msg='browse.controls.clearSelection' top>
-                    <IconButton icon='times' onClick={this.clearSelection.bind(this)}/>
+                <Tooltip msg='browse.controls.clearSelection' bottom>
+                    <IconButton icon='times'
+                        onClick={this.clearSelection.bind(this)}
+                        disabled={nothingSelected}
+                    />
                 </Tooltip>
             </div>
         )
@@ -307,10 +321,7 @@ class Browse extends React.Component {
     render() {
         return (
             <div className={styles.browse}>
-                <div className={styles.controls}>
-                    {this.renderSelected()}
-                    {this.renderEditControls()}
-                </div>
+                {this.renderToolbar()}
                 {this.renderList('/')}
             </div>
         )
