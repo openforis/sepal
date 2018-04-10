@@ -1,6 +1,8 @@
 .tabBar {
-	display: flex;
+    display: flex;
+    flex-wrap: wrap;
     width: 100%;
+    margin: 1rem 4rem;
 }
 
 .newTab {
@@ -8,9 +10,82 @@
 }
 
 .tab {
-    
+    display: flex;
+    position: relative;
+    background: #1c1c1c;
+    border-bottom: 3px solid hsla(0, 0%, 100%, .5);
+    height: 2.5rem;
+    white-space: nowrap;
+    margin-right: 1rem;
+    line-height: 2.5rem;
+    max-width: 15rem;
+    overflow: hidden;
+    cursor: pointer;
+    /*padding: .2rem;*/
 }
 
-.content {
-	color: red;
+.tab.selected {
+    background-color: #323232;
+    border-bottom: 3px solid #b8a280;
+}
+
+.close {
+    color: #afaeae;
+    border: 0;
+    border-radius: 50%;
+    width: 1.2rem;
+    min-width: 1.2rem;
+    height: 1.2rem;
+    font-size: .9rem;
+    line-height: 1;
+    padding: 0;
+    margin-right: .8rem;
+    align-self: start;
+    z-index: 1000;
+    cursor: pointer;
+}
+
+.close:hover {
+    background: #990003;
+}
+
+.title {
+    font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    color: #e8e8e8;
+    padding-right: 2rem;
+    padding-left: 2rem;
+    margin-left: -2rem;
+}
+
+.title:hover {
+    background-color: #323232;
+}
+
+
+/* Fade-out overflow */
+.title:before {
+    content: '';
+    width: 2rem;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    background: linear-gradient(to right, transparent, #1C1C1C 100%);
+}
+
+.title:hover:before {
+    background: linear-gradient(to right, transparent, #323232 100%);
+}
+
+.tab.selected .title:before {
+    background: linear-gradient(to right, transparent, #323232 100%);
+}
+
+.panel {
+    display:none;
+}
+
+.panel.selected {
+    display:block;
 }
