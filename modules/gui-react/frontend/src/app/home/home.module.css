@@ -1,4 +1,4 @@
-.homeContainer {
+.container {
     position: relative;
     height: 100%;
 }
@@ -7,10 +7,9 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    /*z-index: 1;*/
 }
 
-.home {
+.grid {
     top: 0;
     position: absolute;
     width: 100%;
@@ -21,7 +20,6 @@
     grid-template-areas:
             'menu body'
             'footer footer';
-    transition: all 1s ease-in-out;
     z-index: 0;
 }
 
@@ -36,19 +34,18 @@
 
 .body {
     grid-area: body;
-
 }
 
 .footer {
     grid-area: footer;
     animation: footer .5s 0s ease-in-out backwards;
-    z-index: 1000;
+    /* z-index: 1000; */
 }
 
 @keyframes footer {
     from {
         opacity: 0;
-        transform: translate3d(0, 150%, 0);
+        transform: translateY(150%);
     }
     to {
         opacity: 1;

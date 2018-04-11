@@ -13,9 +13,9 @@ const mapStateToProps = () => ({
 
 const Home = ({user, floatingMenu}) => {
     return (
-        <div className={styles.homeContainer}>
+        <div className={styles.container}>
             <Map className={styles.map}/>
-            <div className={[styles.home, floatingMenu && styles.floatingMenu].join(' ')}>
+            <div className={[styles.grid, floatingMenu && styles.floatingMenu].join(' ')}>
                 <Menu className={styles.menu}/>
                 <Footer className={styles.footer} user={user}/>
                 <Body className={styles.body}/>

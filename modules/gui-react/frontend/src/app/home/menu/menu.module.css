@@ -13,12 +13,12 @@
 
 .menu.floating {
     transform: translateX(-2.5rem);
-    /* background-color: rgba(0, 0, 0, .2); */
 }
 
+.menu:not(.floating),
 .menu.floating:hover {
     transform: none;
-    background-color: rgba(0, 0, 0, .6);
+    background-color: rgba(0, 0, 0, .3);
 }
 
 .menu > * {
