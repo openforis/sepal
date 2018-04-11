@@ -21,6 +21,7 @@
             'menu body'
             'footer footer';
     z-index: 0;
+    pointer-events: none;
 }
 
 .floatingMenu {
@@ -30,16 +31,18 @@
 .menu {
     grid-area: menu;
     z-index: 1000;
+    pointer-events: all;
 }
 
 .body {
     grid-area: body;
+    pointer-events: none;
 }
 
 .footer {
     grid-area: footer;
     animation: footer .5s 0s ease-in-out backwards;
-    /* z-index: 1000; */
+    pointer-events: all;
 }
 
 @keyframes footer {
