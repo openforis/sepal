@@ -1,5 +1,6 @@
 .browse {
     margin: 2rem;
+    /* pointer-events: none; */
 }
 
 .toolbar {
@@ -7,6 +8,7 @@
     flex-direction: row;
     justify-content: flex-end;
     margin: 0 4rem 1rem 1rem;
+    /* pointer-events: all; */
 }
 
 .toolbar button {
@@ -18,6 +20,7 @@
     padding: 0;
     margin: 0 0 0 2rem;
     user-select: none;
+    /* pointer-events: all; */
 }
 
 @keyframes list {
