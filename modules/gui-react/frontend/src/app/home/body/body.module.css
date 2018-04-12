@@ -15,8 +15,8 @@
     position: absolute;
     /* doesn't scroll without width!! */ 
     top: 0;
-    bottom: calc(var(--footer-visible-height));
-    left: calc(1rem + var(--menu-visible-width));
+    bottom: var(--footer-margin);
+    left: var(--menu-margin);
     right: 0;
     padding-top: 1rem;
     padding-right: 1rem;

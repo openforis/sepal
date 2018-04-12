@@ -14,22 +14,22 @@
 
 .container.floatingMenu {
     --menu-position: calc(var(--menu-handle-width) - var(--menu-width));
-    --menu-visible-width: var(--menu-handle-width);
+    --menu-margin: 0rem;
 }
 
 .container:not(.floatingMenu) {
     --menu-position: 0;
-    --menu-visible-width: var(--menu-width);
+    --menu-margin: calc(1rem + var(--menu-width));
 }
 
 .container.floatingFooter {
     --footer-position: calc(var(--footer-handle-height) - var(--footer-height));
-    --footer-visible-height: var(--footer-handle-height);
+    --footer-margin: 0rem;
 }
 
 .container:not(.floatingFooter) {
     --footer-position: 0;
-    --footer-visible-height: var(--footer-height);
+    --footer-margin: var(--footer-height);
 }
 
 .map {
