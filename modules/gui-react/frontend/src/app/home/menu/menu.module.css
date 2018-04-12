@@ -1,24 +1,9 @@
-.menuContainer {
-    position: relative;
-}
-
 .menu {
-    position: absolute;
     height: 100%;
     display: flex;
     flex-direction: column;
     padding: 3rem 0.25rem 0 0;
     transition: transform 150ms ease-in-out 0ms;
-}
-
-.menu.floating {
-    transform: translateX(-2.5rem);
-}
-
-.menu:not(.floating),
-.menu.floating:hover {
-    transform: none;
-    background-color: rgba(0, 0, 0, .3);
 }
 
 .menu > * {
@@ -33,7 +18,6 @@
     border-radius: .25rem;
     color: rgba(255, 255, 255, 0.8);
     --opacity: .8;
-    /* --opacity: .7; */
     --border-opacity: 0;
 }
 
@@ -48,7 +32,6 @@
     color: white;
     cursor: pointer;
     --opacity: .5;
-    /* --opacity: .9; */
 }
 
 .menu button.active {
@@ -65,12 +48,13 @@
 .menu .modeSwitch {
     margin-left: .3rem;
     margin-bottom: 8rem;
-    transition: all 150ms ease-in-out 200ms;
+    transition: opacity 150ms ease-in-out 250ms;
 }
 
 /* hide lock when bar is hidden */
 .menu.floating:not(:hover) .modeSwitch {
     opacity: 0;
+    transition: opacity 100ms ease-in-out 100ms;
 }
 
 /* hide button icons when bar is hidded */

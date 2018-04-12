@@ -10,21 +10,23 @@ import PropTypes from 'prop-types'
 
 const Footer = ({user, className}) => {
     return (
-        <div className={`${className} ${styles.footer}`}>
-            <Section className={styles.firstSection}>
-                <Tasks/>
-                {user.admin ? <ManageUsers/> : null}
-            </Section>
+        <div className={className}>
+            <div className={styles.footer}>
+                <Section className={styles.firstSection}>
+                    <Tasks/>
+                    {user.admin ? <ManageUsers/> : null}
+                </Section>
 
-            <Section className={styles.secondSection}>
-                <Title/>
-            </Section>
+                <Section className={styles.secondSection}>
+                    <Title/>
+                </Section>
 
-            <Section className={styles.thirdSection}>
-                <HourlyCost/>
-                <Account user={user}/>
-                <Logout/>
-            </Section>
+                <Section className={styles.thirdSection}>
+                    <HourlyCost/>
+                    <Account user={user}/>
+                    <Logout/>
+                </Section>
+            </div>
         </div>
     )
 }

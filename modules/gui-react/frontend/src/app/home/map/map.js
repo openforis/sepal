@@ -2,29 +2,25 @@ import GoogleMapsLoader from 'google-maps'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
-import styles from './map.module.css'
 
 const mapStateToProps = () => {
 }
 
 class Map extends React.Component {
-
+    constructor(props) {
+        super(props)
+        this.mapElement = React.createRef()
+    }
     render() {
-        const {className} = this.props
         return (
-            <div className={[styles.mapContainer, className].join(' ')}>
-                <div
-                    ref={(mapElement) => this.mapElement = mapElement}
-                    className={styles.map}/>
-                {/*<div className={styles.mapOverlay}/>*/}
-            </div>
+            <div ref={this.mapElement} className={this.props.className}/>
         )
     }
 
     componentDidMount() {
         GoogleMapsLoader.KEY = 'AIzaSyAIi2lE7w25HZOrJkWT-qHH01W-ywyrC0U'
         GoogleMapsLoader.load((google) => {
-            this.map = new google.maps.Map(this.mapElement, {
+            this.map = new google.maps.Map(this.mapElement.current, {
                 zoom: 3,
                 minZoom: 3,
                 maxZoom: 15,

@@ -5,21 +5,24 @@
 */
 
 .sections {
-    overflow: hidden;
     position: relative;
     height: 100%;
+    overflow: hidden;
     pointer-events: none;
 }
 
-.sections > * {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-}
-
 .section {
-    overflow: auto;
-    opacity: 0;
+    position: absolute;
+    /* doesn't scroll without width!! */ 
+    top: 0;
+    bottom: calc(var(--footer-visible-height));
+    left: calc(1rem + var(--menu-visible-width));
+    right: 0;
+    padding-top: 1rem;
+    padding-right: 1rem;
+    overflow-y: scroll;
+    pointer-events: all;
+    transition: all var(--transition-time) ease-in-out var(--transition-delay);
 }
 
 .section > * {

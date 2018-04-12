@@ -1,48 +1,87 @@
 .container {
+    --menu-margin-top: 1rem;
+    --menu-margin-bottom: 4rem;
+    --menu-width: 3.5rem;
+    --menu-handle-width: 1rem;
+    --footer-height: 3.5rem;
+    --footer-handle-height: 1rem;
+    --transition-time: 150ms;
+    --transition-delay: 75ms;
     position: relative;
     height: 100%;
+    pointer-events: none;
+}
+
+.container.floatingMenu {
+    --menu-position: calc(var(--menu-handle-width) - var(--menu-width));
+    --menu-visible-width: var(--menu-handle-width);
+}
+
+.container:not(.floatingMenu) {
+    --menu-position: 0;
+    --menu-visible-width: var(--menu-width);
+}
+
+.container.floatingFooter {
+    --footer-position: calc(var(--footer-handle-height) - var(--footer-height));
+    --footer-visible-height: var(--footer-handle-height);
+}
+
+.container:not(.floatingFooter) {
+    --footer-position: 0;
+    --footer-visible-height: var(--footer-height);
 }
 
 .map {
     position: absolute;
-    width: 100%;
-    height: 100%;
-}
-
-.grid {
     top: 0;
-    position: absolute;
-    width: 100%;
+    left: 0;
     height: 100%;
-    display: grid;
-    grid-template-columns: 3.75rem 1fr;
-    grid-template-rows: 1fr 4rem;
-    grid-template-areas:
-            'menu body'
-            'footer footer';
-    z-index: 0;
-    pointer-events: none;
-}
-
-.floatingMenu {
-    grid-template-columns: 0 1fr;
+    width: 100%;
+    pointer-events: all;
 }
 
 .menu {
-    grid-area: menu;
-    z-index: 1000;
+    position: absolute;
+    z-index: 2;
+    top: var(--menu-margin-top);
+    bottom: var(--menu-margin-bottom);
+    left: var(--menu-position);
+    width: var(--menu-width);
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: .5rem;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    transition: all var(--transition-time) ease-in-out var(--transition-delay);
     pointer-events: all;
 }
 
-.body {
-    grid-area: body;
-    pointer-events: none;
+.container:not(.floatingMenu) .menu,
+.menu:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+    left: 0;
 }
 
 .footer {
-    grid-area: footer;
-    animation: footer .5s 0s ease-in-out backwards;
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    right: 0;
+    bottom: var(--footer-position);
+    height: var(--footer-height);
+    transition: all var(--transition-time) ease-in-out var(--transition-delay);
     pointer-events: all;
+}
+
+.container:not(.floatingFooter) .footer,
+.footer:hover {
+    bottom: 0;
+}
+
+.body {
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
 }
 
 @keyframes footer {

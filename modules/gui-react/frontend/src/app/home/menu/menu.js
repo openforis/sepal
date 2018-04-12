@@ -30,11 +30,11 @@ class Menu extends React.Component {
     }
 
     render() {
-        const {className, requestedApps} = this.props
+        const {className, floating, requestedApps} = this.props
         return (
-            <div className={[styles.menuContainer, className].join(' ')}>
-                <div className={[styles.menu, this.props.floating && styles.floating].join(' ')}>
-                    <ModeSwitch floating={this.props.floating} onChange={this.toggle.bind(this)}/>
+            <div className={className}>
+                <div className={[styles.menu, floating && styles.floating].join(' ')}>
+                    <ModeSwitch floating={floating} onChange={this.toggle.bind(this)}/>
                     <SectionLink name='process' icon='globe'/>
                     <SectionLink name='browse' icon='folder-open'/>
                     {/* <SectionLink name='terminal' icon='terminal'/> */}
@@ -89,7 +89,6 @@ const AppLink = ({app: {path, label, alt}}) => {
         </div>
     )
 }
-
 
 AppLink.propTypes = {
     app: PropTypes.object,

@@ -51,30 +51,32 @@ class Body extends React.Component {
         if (!action('LOAD_APPS').dispatched)
             return <CenteredProgress title={msg('body.loading-apps')} className={className}/>
         return (
-            <Select className={[styles.sections, className].join(' ')}>
-                <Section path='/process'>
-                    <Process/>
-                </Section>
-                <Section path='/browse'>
-                    <Browse/>
-                </Section>
-                <Section path='/app-launch-pad'>
-                    <AppLaunchPad/>
-                </Section>
-                <Section path='/terminal'>
-                    <Terminal/>
-                </Section>
-                <Section path='/tasks'>
-                    <Tasks/>
-                </Section>
-                <Section path='/users'>
-                    <Users/>
-                </Section>
-                <Section path='/account'>
-                    <Account/>
-                </Section>
-                {appSections}
-            </Select>
+            <div className={className}>
+                <Select className={styles.sections}>
+                    <Section path='/process'>
+                        <Process/>
+                    </Section>
+                    <Section path='/browse'>
+                        <Browse/>
+                    </Section>
+                    <Section path='/app-launch-pad'>
+                        <AppLaunchPad/>
+                    </Section>
+                    <Section path='/terminal'>
+                        <Terminal/>
+                    </Section>
+                    <Section path='/tasks'>
+                        <Tasks/>
+                    </Section>
+                    <Section path='/users'>
+                        <Users/>
+                    </Section>
+                    <Section path='/account'>
+                        <Account/>
+                    </Section>
+                    {appSections}
+                </Select>
+            </div>
         )
     }
 }
