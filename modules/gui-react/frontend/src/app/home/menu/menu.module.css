@@ -45,18 +45,6 @@
     margin-left: var(--border-width);
 }
 
-.menu .modeSwitch {
-    margin-left: .3rem;
-    margin-bottom: 8rem;
-    transition: opacity 150ms ease-in-out 250ms;
-}
-
-/* hide lock when bar is hidden */
-.menu.floating:not(:hover) .modeSwitch {
-    opacity: 0;
-    transition: opacity 100ms ease-in-out 100ms;
-}
-
 /* hide button icons when bar is hidded */
 .menu.floating:not(:hover) button i {
     opacity: 0;

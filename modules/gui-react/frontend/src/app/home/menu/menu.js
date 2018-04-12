@@ -1,17 +1,12 @@
 import React from 'react'
-import {connect, select} from 'store'
+import {connect} from 'store'
 import styles from './menu.module.css'
 import Tooltip from 'widget/tooltip'
 import {Link, isPathInLocation} from 'route'
 import {requestedApps, quitApp} from 'apps'
 import Icon from 'widget/icon'
-import actionBuilder from 'action-builder'
-import FlipSwitch from 'widget/flipSwitch'
 import PropTypes from 'prop-types'
-
-export function isFloating() {
-    return select('menu.floating') == null ? false : !!select('menu.floating')
-}
+import MenuMode, {isFloating} from './menuMode'
 
 const mapStateToProps = () => ({
     requestedApps: requestedApps(),
@@ -22,19 +17,12 @@ class Menu extends React.Component {
     appSection(app) {
         return <AppLink key={app.path} app={app}/>
     }
-
-    toggle(state) {
-        actionBuilder('TOGGLE_MENU')
-            .set('menu.floating', !state)
-            .dispatch()
-    }
-
     render() {
         const {className, floating, requestedApps} = this.props
         return (
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
-                    <ModeSwitch floating={floating} onChange={this.toggle.bind(this)}/>
+                    <MenuMode/>
                     <SectionLink name='process' icon='globe'/>
                     <SectionLink name='browse' icon='folder-open'/>
                     {/* <SectionLink name='terminal' icon='terminal'/> */}
@@ -96,26 +84,6 @@ AppLink.propTypes = {
     label: PropTypes.string,
     alt: PropTypes.string,
     onRemove: PropTypes.func
-}
-
-const ModeSwitch = ({floating, onChange}) => {
-    // console.log('ModeSwitch', floating)
-    return (
-        <Tooltip msg={floating ? 'home.sections.floating' : 'home.sections.fixed'} right>
-            <div className={styles.modeSwitch}>
-                <FlipSwitch
-                    on={!floating}
-                    offIcon='lock'
-                    onIcon='unlock'
-                    onChange={onChange}/>
-            </div>
-        </Tooltip>
-    )
-}
-
-ModeSwitch.propTypes = {
-    floating: PropTypes.bool,
-    onChange: PropTypes.func
 }
 
 export default connect(mapStateToProps)(Menu)

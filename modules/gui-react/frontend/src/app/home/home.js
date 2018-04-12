@@ -4,7 +4,8 @@ import {connect} from 'store'
 import Body from './body/body'
 import Footer from './footer/footer'
 import Map from './map/map'
-import Menu, {isFloating} from './menu/menu'
+import Menu from './menu/menu'
+import {isFloating} from './menu/menuMode'
 import styles from './home.module.css'
 
 const mapStateToProps = () => ({
