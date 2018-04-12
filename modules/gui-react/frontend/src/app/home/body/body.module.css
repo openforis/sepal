@@ -18,14 +18,13 @@
     bottom: var(--footer-margin);
     left: var(--menu-margin);
     right: 0;
-    padding-top: 1rem;
-    padding-right: 1rem;
-    overflow-y: scroll;
+    padding: 0;
+    overflow-y: hidden;
     pointer-events: all;
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
 }
 
-.app {
+.section.app {
     padding: 0;
 }
 
