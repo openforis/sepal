@@ -43,7 +43,7 @@ class Body extends React.Component {
     render() {
         const {action, className} = this.props
         const appSections = this.props.requestedApps.map((app) =>
-            <Section key={app.path} path={'/app' + app.path}>
+            <Section key={app.path} path={'/app' + app.path} className={styles.app}>
                 <IFrame app={app}/>
             </Section>
         )
