@@ -22,22 +22,25 @@ class MenuMode extends React.Component {
     }
     
     render () {
-        const {floating} = this.props
+        const {className, floating} = this.props
         return (
-            <Tooltip msg={floating ? 'home.sections.floating' : 'home.sections.fixed'} right>
-                <div className={styles.modeSwitch}>
-                    <FlipSwitch
-                        on={!floating}
-                        offIcon='lock'
-                        onIcon='unlock'
-                        onChange={() => this.toggle(floating)}/>
-                </div>
-            </Tooltip>
+            <div className={className}>
+                <Tooltip msg={floating ? 'home.sections.floating' : 'home.sections.fixed'} right>
+                    <div className={styles.modeSwitch}>
+                        <FlipSwitch
+                            on={!floating}
+                            offIcon='lock'
+                            onIcon='unlock'
+                            onChange={() => this.toggle(floating)}/>
+                    </div>
+                </Tooltip>
+            </div>
         )
     }   
 }
 
 MenuMode.propTypes = {
+    className: PropTypes.string,
     floating: PropTypes.bool
 }
 

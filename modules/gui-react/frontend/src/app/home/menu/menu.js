@@ -6,7 +6,7 @@ import {Link, isPathInLocation} from 'route'
 import {requestedApps, quitApp} from 'apps'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
-import MenuMode, {isFloating} from './menuMode'
+import {isFloating} from './menuMode'
 
 const mapStateToProps = () => ({
     requestedApps: requestedApps(),
@@ -22,7 +22,6 @@ class Menu extends React.Component {
         return (
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
-                    <MenuMode/>
                     <SectionLink name='process' icon='globe'/>
                     <SectionLink name='browse' icon='folder-open'/>
                     {/* <SectionLink name='terminal' icon='terminal'/> */}

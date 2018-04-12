@@ -1,6 +1,6 @@
 .container {
     --menu-margin-top: 1rem;
-    --menu-margin-bottom: 4rem;
+    --menu-margin-bottom: 5.5rem;
     --menu-width: 3.5rem;
     --menu-handle-width: 1rem;
     --footer-height: 3.5rem;
@@ -60,6 +60,14 @@
 .menu:hover {
     background-color: rgba(0, 0, 0, 0.2);
     left: 0;
+}
+
+.menuMode {
+    position: absolute;
+    z-index: 2;
+    bottom: 4rem;
+    left: .25rem;
+    pointer-events: all;
 }
 
 .footer {

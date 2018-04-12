@@ -7,6 +7,7 @@ import Map from './map/map'
 import Menu from './menu/menu'
 import {isFloating} from './menu/menuMode'
 import styles from './home.module.css'
+import MenuMode from './menu/menuMode'
 
 const mapStateToProps = () => ({
     floatingMenu: isFloating(),
@@ -22,6 +23,7 @@ const Home = ({user, floatingMenu, floatingFooter}) => {
         ].join(' ')}>
             <Map className={styles.map}/>
             <Menu className={styles.menu}/>
+            <MenuMode className={styles.menuMode}/>
             <Footer className={styles.footer} user={user}/>
             <Body className={styles.body}/>
         </div>
