@@ -67,7 +67,7 @@ export class Selectable extends React.Component {
             return null
         else
             return (
-                <div className={[this.props.classNames.default, this.className].join(' ')}>
+                <div className={[this.props.className, this.props.classNames.default, this.className].join(' ')}>
                     {this.props.children}
                 </div>
             )
@@ -84,6 +84,7 @@ Selectable.childContextTypes = {
 
 Selectable.propTypes = {
     active: PropTypes.bool,
+    className: PropTypes.string,
     classNames: PropTypes.objectOf(PropTypes.string),
     children: PropTypes.any
 }
