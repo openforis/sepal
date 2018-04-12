@@ -7,11 +7,13 @@ import Tooltip from 'widget/tooltip'
 import {Link} from 'route'
 import {logout} from 'user'
 import PropTypes from 'prop-types'
+import MenuMode from '../menu/menuMode'
 
 const Footer = ({user, className}) => {
     return (
         <div className={className}>
             <div className={styles.footer}>
+                <MenuMode className={styles.menuMode}/>
                 <Section className={styles.firstSection}>
                     <Tasks/>
                     {user.admin ? <ManageUsers/> : null}

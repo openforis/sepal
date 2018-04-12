@@ -23,7 +23,6 @@ const Home = ({user, floatingMenu, floatingFooter}) => {
         ].join(' ')}>
             <Map className={styles.map}/>
             <Menu className={styles.menu}/>
-            <MenuMode className={styles.menuMode}/>
             <Footer className={styles.footer} user={user}/>
             <Body className={styles.body}/>
         </div>

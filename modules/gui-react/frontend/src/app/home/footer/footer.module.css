@@ -19,6 +19,13 @@
     justify-content: center;
 }
 
+.menuMode {
+    position: absolute;
+    left: .5rem;
+    top: 1.5rem;
+    z-index: 3;
+}
+
 .firstSection {
     grid-area: firstSection;
 }
