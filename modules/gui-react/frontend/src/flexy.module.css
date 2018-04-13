@@ -1,0 +1,19 @@
+.root {
+    height: 100%;
+    overflow-y: hidden;
+}
+
+.root,
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+.container > :not(.container):not(.scrollable) {
+    flex-shrink: 0;
+}
+
+.scrollable {
+    height: 100%;
+    overflow-y: auto;
+}
