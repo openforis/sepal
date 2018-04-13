@@ -1,0 +1,119 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 3rem;
+    width: 100%;
+    height: 100%;
+}
+
+.createButtons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.createButton {
+    font-size: .9rem;
+    line-height: .9rem;
+    width: 14rem;
+    display: inline-flex;
+    justify-content: center;
+    margin: .5rem;
+}
+
+.createButton i {
+    font-size: .9rem;
+    line-height: .9rem;
+}
+
+.recipesTable {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 61rem;
+    max-width: 100%;
+    padding: 0 1rem;
+    flex-shrink: 0;
+}
+
+
+.recipeRows {
+    overflow-y: auto;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.recipesHeader {
+    display: flex;
+    flex-shrink: 0;
+    padding: .5rem 1rem;
+}
+
+.recipe {
+    display: flex;
+    align-items: center;
+    background-color: hsla(0, 0%, 100%, .05);
+    border: 1px solid hsla(0, 0%, 100%, .15);
+    border-radius: 5px;
+    padding: .5rem 1rem;
+    margin-bottom: .5rem;
+    font-weight: 300;
+}
+
+.recipe:hover {
+    border: 1px solid hsla(36, 28%, 61%, .7);
+    background-color: hsla(36, 28%, 61%, .25);
+    cursor: pointer;
+}
+
+.recipe:active {
+    border: 1px solid hsla(36, 28%, 61%, .7);
+    background-color: hsla(36, 28%, 61%, .15);
+    cursor: pointer;
+}
+
+.name {
+    flex-basis: 47%;
+}
+
+.type {
+    flex-basis: 37%;
+}
+
+.duplicate {
+    flex-basis: 8%;
+    text-align: right;
+}
+
+.delete {
+    flex-basis: 8%;
+    text-align: right;
+}
+
+.recipe .recipeButton {
+    background-color: transparent;
+    border: 2px solid hsla(0, 0%, 100%, .25);
+    height: 2.3rem;
+    width: 2.3rem;
+}
+
+.recipe .recipeButton:focus {
+    background-color: transparent;
+    border: 2px solid hsla(0, 0%, 100%, .25);
+}
+
+.recipe .recipeButton:hover {
+    background-color: hsla(0, 0%, 100%, .1);
+    border: 2px solid hsla(0, 0%, 100%, .25);
+}
+
+.recipe .recipeButton:active {
+    background-color: hsla(0, 0%, 100%, .15);
+    border: 2px solid hsla(0, 0%, 100%, .40);
+}
+
+.recipe .recipeButton i {
+    font-size: .9rem;
+}

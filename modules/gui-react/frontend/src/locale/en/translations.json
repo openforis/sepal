@@ -111,6 +111,26 @@
       "error.title": "Failed to run {label}"
     }
   },
+  "process": {
+    "newTab": "New Tab",
+    "recipe": {
+      "name": "Name",
+      "type": "Type",
+      "loading": "Loading recipes"
+    },
+    "mosaic": {
+      "create": "Mosaic"
+    },
+    "classification": {
+      "create": "Classification"
+    },
+    "changeDetection": {
+      "create": "Change detection"
+    },
+    "timeSeries": {
+      "create": "Time series"
+    }
+  },
   "unauthorized.warning": {
     "title": "You are not logged in",
     "message": "Perhaps you have been inactive too long?"
