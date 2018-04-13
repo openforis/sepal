@@ -6,6 +6,7 @@ import {msg} from 'translate'
 import Icon from 'widget/icon'
 import CreateOrLoadRecipe from './createOrLoadRecipe'
 import styles from './process.module.css'
+import flexy from 'flexy.module.css'
 
 const addTab = () => {
     const id = guid()
@@ -63,7 +64,7 @@ class Process extends React.Component {
     render() {
         const selectedTabId = this.props.selectedTabId
         return (
-            <div className={styles.container}>
+            <div className={[styles.container, flexy.container].join(' ')}>
                 <div className={styles.tabBar}>
                     {this.props.tabs.map((tab) =>
                         <Tab key={tab.id} tab={tab} selected={tab.id === selectedTabId}/>
@@ -71,7 +72,7 @@ class Process extends React.Component {
                     <NewTab onAdd={addTab}/>
                 </div>
 
-                <div className={styles.tabContents}>
+                <div className={[styles.tabContents, flexy.container].join(' ')}>
                     {this.props.tabs.map((tab) =>
                         <TabContent key={tab.id} tab={tab} selected={tab.id === selectedTabId}/>
                     )}
@@ -110,7 +111,7 @@ const TabContent = ({tab: {type}, selected}) => {
         }
     }
     return (
-        <div className={[styles.tabContent, selected && styles.selected].join(' ')}>
+        <div className={[styles.tabContent, selected && flexy.container, selected && styles.selected].join(' ')}>
             {contents()}
         </div>
     )

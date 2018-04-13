@@ -6,9 +6,10 @@ import {msg} from 'translate'
 import {Button, IconButton} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import styles from './createOrLoadRecipe.module.css'
+import flexy from 'flexy.module.css'
 
 const CreateOrLoadRecipe = () =>
-    <div className={styles.container}>
+    <div className={[styles.container, flexy.container].join(' ')}>
         <div className={styles.createButtons}>
             <CreateButton label={msg('process.mosaic.create')}/>
             <CreateButton label={msg('process.classification.create')}/>
@@ -41,15 +42,15 @@ class RecipeList extends React.Component {
 
     render() {
         const {recipes, action} = this.props
-        if (!recipes && !action('LOAD_RECIPES').dispatched)
-            return <CenteredProgress title={msg('process.recipe.loading')}/>
+        // if (!recipes && !action('LOAD_RECIPES').dispatched)
+        //     return <CenteredProgress title={msg('process.recipe.loading')}/>
         return (
-            <div className={styles.recipesTable}>
+            <div className={[styles.recipesTable, flexy.container].join(' ')}>
                 <div className={styles.recipesHeader}>
                     <div className={styles.name}>{msg('process.recipe.name')}</div>
                     <div className={styles.type}>{msg('process.recipe.type')}</div>
                 </div>
-                <div className={styles.recipeRows}>
+                <div className={[styles.recipeRows, flexy.scrollable].join(' ')}>
                     {(recipes || []).map((recipe) =>
                         <div key={recipe.id} className={styles.recipe}>
                             <div className={styles.name}>{recipe.name}</div>

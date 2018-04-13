@@ -12,6 +12,7 @@ import {IconButton} from 'widget/button'
 import {HoldButton} from 'widget/button2'
 import Tooltip from 'widget/tooltip'
 import {msg} from 'translate'
+import flexy from 'flexy.module.css'
 
 // const files = {
 //     'loaded': {
@@ -264,7 +265,7 @@ class Browse extends React.Component {
     renderList(path) {
         const directory = this.props.loaded[path]
         return directory && !directory.collapsed ? (
-            <ul className={styles.fileList}>
+            <ul className={[styles.fileList, flexy.scrollable].join(' ')}>
                 {this.renderListItems(path, directory.files)}
             </ul>
         ) : null
@@ -320,7 +321,7 @@ class Browse extends React.Component {
     }
     render() {
         return (
-            <div className={styles.browse}>
+            <div className={[styles.browse, flexy.container].join(' ')}>
                 {this.renderToolbar()}
                 {this.renderList('/')}
             </div>

@@ -1,7 +1,7 @@
 .container {
     padding: 0 3rem;
-    display: flex;
-    flex-direction: column;
+    /*display: flex;*/
+    /*flex-direction: column;*/
 }
 
 .tabBar {
@@ -122,18 +122,18 @@
 }
 
 .tabContents {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    /*display: flex;*/
+    /*flex-direction: column;*/
+    /*height: 100%;*/
 }
 
 .tabContent {
     display: none;
-    height: 100%;
+    /*height: 100%;*/
 }
 
 .tabContent.selected {
     display: flex;
-    flex-direction: column;
-    min-height: fit-content;
+    /*flex-direction: column;*/
+    /*min-height: fit-content;*/
 }
