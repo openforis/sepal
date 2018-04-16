@@ -1,27 +1,52 @@
+.container {
+    padding: 0 3rem;
+}
+
 .tabBar {
     display: flex;
     flex-wrap: wrap;
+    flex-shrink: 0;
     width: 100%;
-    margin: 1rem 4rem;
+    background-color: #1c1c1c;
+    padding: 1rem;
+    border: 1px solid hsla(0, 0%, 100%, .05);
+    border-bottom: 2px solid hsla(0, 0%, 100%, .05);
 }
 
 .newTab {
+    color: #afaeae;
+    font-weight: 100;
+    font-size: 2.2rem;
+    height: 2.5rem;
+    width: 2.5rem;
+    line-height: 2rem;
+    text-align: center;
+    cursor: pointer;
+}
 
+.newTab:hover {
+    background-color: #323232;
+}
+
+.newTab:active {
+    background-color: #3c3c3c;
 }
 
 .tab {
     display: flex;
+    flex-basis: 7rem;
+    flex-grow: 1;
+    flex-shrink: 1;
+    max-width: 20rem;
     position: relative;
     background: #1c1c1c;
     border-bottom: 3px solid hsla(0, 0%, 100%, .5);
     height: 2.5rem;
     white-space: nowrap;
-    margin-right: 1rem;
+    margin-right: .5rem;
     line-height: 2.5rem;
-    max-width: 15rem;
     overflow: hidden;
     cursor: pointer;
-    /*padding: .2rem;*/
 }
 
 .tab.selected {
@@ -29,19 +54,36 @@
     border-bottom: 3px solid #b8a280;
 }
 
+.tab:hover {
+    background-color: #323232;
+}
+
+/* Prevent overflowing title from covering close button */
+.tab:after {
+    content: '';
+    width: 1.7rem;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    background: inherit;
+    z-index: 1;
+}
+
 .close {
+    position: absolute;
+    right: 0;
     color: #afaeae;
     border: 0;
     border-radius: 50%;
-    width: 1.2rem;
-    min-width: 1.2rem;
-    height: 1.2rem;
-    font-size: .9rem;
+    min-width: 1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    align-self: center;
+    font-size: 1rem;
     line-height: 1;
     padding: 0;
-    margin-right: .8rem;
-    align-self: start;
-    z-index: 1000;
+    margin-right: .2rem;
+    z-index: 2;
     cursor: pointer;
 }
 
@@ -50,31 +92,25 @@
 }
 
 .title {
+    flex: 1;
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-weight: 600;
     color: #e8e8e8;
-    padding-right: 2rem;
-    padding-left: 2rem;
-    margin-left: -2rem;
+    padding-left: 1rem;
 }
 
-.title:hover {
-    background-color: #323232;
-}
-
-
-/* Fade-out overflow */
+/*Fade-out overflow */
 .title:before {
     content: '';
     width: 2rem;
     height: 100%;
     position: absolute;
-    right: 0;
+    right: 1.7rem;
     top: 0;
     background: linear-gradient(to right, transparent, #1C1C1C 100%);
 }
 
-.title:hover:before {
+.tab:hover .title:before {
     background: linear-gradient(to right, transparent, #323232 100%);
 }
 
@@ -82,10 +118,13 @@
     background: linear-gradient(to right, transparent, #323232 100%);
 }
 
-.panel {
-    display:none;
+.tabContents {
 }
 
-.panel.selected {
-    display:block;
+.tabContent {
+    display: none;
+}
+
+.tabContent.selected {
+    display: flex;
 }

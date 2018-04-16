@@ -4,6 +4,15 @@ import {dispatch} from 'store'
 export default function actionBuilder(type, props = {}) {
     const operations = []
     return {
+        withState(path, callback) {
+            operations.push((immutableState) => {
+                const currentState = immutableState.value()
+                const selectedState = select(path, currentState)
+                return callback(selectedState, immutable(currentState))
+            })
+            return this
+        },
+
         set(path, value) {
             operations.push((immutableState) => immutableState.set(path, value))
             return this
@@ -79,7 +88,7 @@ export default function actionBuilder(type, props = {}) {
                 ...props,
                 reduce(state) {
                     return operations.reduce(
-                        (immutableState, operation) => operation(immutableState),
+                        (immutableState, operation) => operation(immutableState) || immutableState,
                         immutable(state)
                     ).value()
                 },
