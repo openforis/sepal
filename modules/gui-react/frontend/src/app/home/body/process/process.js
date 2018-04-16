@@ -1,4 +1,5 @@
 import actionBuilder from 'action-builder'
+import flexy from 'flexy.module.css'
 import guid from 'guid'
 import React from 'react'
 import {connect, select} from 'store'
@@ -6,7 +7,6 @@ import {msg} from 'translate'
 import Icon from 'widget/icon'
 import CreateOrLoadRecipe from './createOrLoadRecipe'
 import styles from './process.module.css'
-import flexy from 'flexy.module.css'
 
 const addTab = () => {
     const id = guid()
@@ -99,7 +99,7 @@ const Tab = ({tab: {id, type, title}, selected}) =>
         </button>
     </div>
 
-const TabContent = ({tab: {type}, selected}) => {
+const TabContent = ({tab: {id, type}, selected}) => {
     const contents = () => {
         switch (type) {
             case 'mosaic':
@@ -107,7 +107,7 @@ const TabContent = ({tab: {type}, selected}) => {
             case 'classification':
                 return <Classification/>
             default:
-                return <CreateOrLoadRecipe/>
+                return <CreateOrLoadRecipe id={id}/>
         }
     }
     return (

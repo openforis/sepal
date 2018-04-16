@@ -1,4 +1,5 @@
 import actionBuilder from 'action-builder'
+import flexy from 'flexy.module.css'
 import Http from 'http-client'
 import React from 'react'
 import {connect, select} from 'store'
@@ -6,15 +7,14 @@ import {msg} from 'translate'
 import {Button, IconButton} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import styles from './createOrLoadRecipe.module.css'
-import flexy from 'flexy.module.css'
 
-const CreateOrLoadRecipe = () =>
+const CreateOrLoadRecipe = ({id}) =>
     <div className={[styles.container, flexy.container].join(' ')}>
         <div className={styles.createButtons}>
-            <CreateButton label={msg('process.mosaic.create')}/>
-            <CreateButton label={msg('process.classification.create')}/>
-            <CreateButton label={msg('process.changeDetection.create')}/>
-            <CreateButton label={msg('process.timeSeries.create')}/>
+            <CreateButton label={msg('process.mosaic.create')} id={id} type='mosaic'/>
+            <CreateButton label={msg('process.classification.create')} id={id} type='classification'/>
+            <CreateButton label={msg('process.changeDetection.create')} id={id} type='changeDetection'/>
+            <CreateButton label={msg('process.timeSeries.create')} id={id} type='timeSeries'/>
         </div>
 
         <RecipeList/>
@@ -42,8 +42,8 @@ class RecipeList extends React.Component {
 
     render() {
         const {recipes, action} = this.props
-        // if (!recipes && !action('LOAD_RECIPES').dispatched)
-        //     return <CenteredProgress title={msg('process.recipe.loading')}/>
+        if (!recipes && !action('LOAD_RECIPES').dispatched)
+            return <CenteredProgress title={msg('process.recipe.loading')}/>
         return (
             <div className={[styles.recipesTable, flexy.container].join(' ')}>
                 <div className={styles.recipesHeader}>
@@ -67,8 +67,20 @@ class RecipeList extends React.Component {
 
 RecipeList = connect(mapStateToProps)(RecipeList)
 
-const CreateButton = ({label, onCreate}) =>
-    <Button icon='plus-circle' onClick={onCreate} className={styles.createButton}>{label}</Button>
+const setTabType = (id, type, title) =>
+    actionBuilder('SET_TAB_TYPE')
+        .withState('process.tabs', (tabs, stateBuilder) => {
+            const tabIndex = tabs.findIndex((tab) => tab.id === id)
+            if (tabIndex === -1)
+                throw new Error('Unable to create recipe')
+            return stateBuilder
+                .set(['process', 'tabs', tabIndex, 'type'], type)
+                .set(['process', 'tabs', tabIndex, 'title'], title)
+        })
+        .dispatch()
+
+const CreateButton = ({id, type, label}) =>
+    <Button icon='plus-circle' onClick={() => setTabType(id, type, label)} className={styles.createButton}>{label}</Button>
 
 const RecipeButton = ({icon, onClick}) =>
     <IconButton icon={icon} onClick={onClick} className={styles.recipeButton}/>

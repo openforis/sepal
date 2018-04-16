@@ -1,13 +1,10 @@
 .container {
     padding: 0 3rem;
-    /*display: flex;*/
-    /*flex-direction: column;*/
 }
 
 .tabBar {
     display: flex;
     flex-wrap: wrap;
-    /*min-height: fit-content;*/
     flex-shrink: 0;
     width: 100%;
     background-color: #1c1c1c;
@@ -122,18 +119,12 @@
 }
 
 .tabContents {
-    /*display: flex;*/
-    /*flex-direction: column;*/
-    /*height: 100%;*/
 }
 
 .tabContent {
     display: none;
-    /*height: 100%;*/
 }
 
 .tabContent.selected {
     display: flex;
-    /*flex-direction: column;*/
-    /*min-height: fit-content;*/
 }
