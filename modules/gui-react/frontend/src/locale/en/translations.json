@@ -119,7 +119,24 @@
       "loading": "Loading recipes"
     },
     "mosaic": {
-      "create": "Mosaic"
+      "create": "Mosaic",
+      "toolbar": {
+        "auto.tooltip": "Auto-select scenes",
+        "preview.tooltip": "Preview settings",
+        "retrieve.tooltip": "Retrieve mosaic",
+        "zoomIn.tooltip": "Zoom in",
+        "zoomOut.tooltip": "Zoom out",
+        "labels.show.tooltip": "Show labels",
+        "labels.hide.tooltip": "Hide labels",
+        "grid.show.tooltip": "Show grid",
+        "grid.hide.tooltip": "Hide grid",
+        "centerMap.tooltip": "Zoom to area of interest",
+        "where.tooltip": "Specify area of interest",
+        "when.tooltip": "Specify dates",
+        "sensors.tooltip": "Select sensors",
+        "scenes.tooltip": "Configure scenes selection",
+        "composite.tooltip": "Configure composite creation"
+      }
     },
     "classification": {
       "create": "Classification"

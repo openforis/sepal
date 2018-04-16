@@ -2,8 +2,9 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 3rem 0.25rem 0 0;
+    padding-top: 5rem;
     transition: transform 150ms ease-in-out 0ms;
+    --button-size: 3.5rem;
 }
 
 .menu > * {
@@ -12,8 +13,8 @@
 
 .menu button {
     position: relative;
-    width: 3.5rem;
-    height: 3.5rem;
+    width: var(--button-size);
+    height: var(--button-size);
     border: none;
     border-radius: .25rem;
     color: rgba(255, 255, 255, 0.8);

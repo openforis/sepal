@@ -7,6 +7,7 @@ import {msg} from 'translate'
 import Icon from 'widget/icon'
 import CreateOrLoadRecipe from './createOrLoadRecipe'
 import styles from './process.module.css'
+import Mosaic from './mosaic/mosaic'
 
 const addTab = () => {
     const id = guid()
@@ -102,12 +103,12 @@ const Tab = ({tab: {id, type, title}, selected}) =>
 const TabContent = ({tab: {id, type}, selected}) => {
     const contents = () => {
         switch (type) {
-            case 'mosaic':
-                return <Mosaic/>
-            case 'classification':
-                return <Classification/>
-            default:
-                return <CreateOrLoadRecipe id={id}/>
+        case 'mosaic':
+            return <Mosaic id={id}/>
+        case 'classification':
+            return <Classification id={id}/>
+        default:
+            return <CreateOrLoadRecipe id={id}/>
         }
     }
     return (
@@ -119,13 +120,7 @@ const TabContent = ({tab: {id, type}, selected}) => {
 
 const NewTab = ({onAdd}) =>
     <div className={styles.newTab} onClick={onAdd}>
-        +
-    </div>
-
-const Mosaic = () =>
-    <div>
-        <h2>Mosaic</h2>
-        <input placeholder='Some input'/>
+        <Icon name={'plus'}/>
     </div>
 
 const Classification = () =>
