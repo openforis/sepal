@@ -17,7 +17,7 @@ const Tooltip =
         topRight,
         bottomLeft,
         bottomRight,
-        delay = 0.5,
+        delay = 0.25,
         children,
         ...otherProps
     }) =>
