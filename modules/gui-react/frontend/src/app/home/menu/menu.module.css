@@ -21,8 +21,8 @@
     --border-opacity: 0;
 }
 
-.menu button i {
-    font-size: 1.7rem;
+.menu button svg {
+    font-size: 1.5rem;
     vertical-align: middle;
     text-align: right;
     transition: opacity 150ms ease-in-out 200ms;
@@ -41,12 +41,12 @@
 }
 
 /* compensate icon position when border is active */
-.menu button.active i {
+.menu button.active svg {
     margin-left: var(--border-width);
 }
 
 /* hide button icons when bar is hidded */
-.menu.floating:not(:hover) button i {
+.menu.floating:not(:hover) button svg {
     opacity: 0;
 }
 
@@ -107,7 +107,7 @@
     transition: opacity 200ms 200ms;
 }
 
-.app .stop i {
+.app .stop svg {
     margin-left: .05rem;
 }
 

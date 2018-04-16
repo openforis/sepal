@@ -53,7 +53,7 @@ class Login extends React.Component {
                 </div>
 
                 <SubmitButton
-                    icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in'}
+                    icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
                     onClick={() => this.login(form.values())}
                     disabled={form.hasInvalid() || action('LOGIN').dispatching}
                     tabIndex={3}>

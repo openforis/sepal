@@ -100,7 +100,7 @@ class ResetPassword extends React.Component {
             </div>
 
             <SubmitButton
-                icon='sign-in'
+                icon='sign-in-alt'
                 onClick={() => this.resetPassword(form.values())}
                 disabled={form.hasInvalid()}
                 tabIndex={3}>

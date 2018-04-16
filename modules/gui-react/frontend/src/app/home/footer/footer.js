@@ -75,7 +75,7 @@ const Title = () =>
 
 const HourlyCost = () =>
     <span className={styles.hourlyCost}>
-        <Icon name='usd'/> 0/h
+        <Icon name='dollar-sign'/> 0/h
     </span>
 
 const Account = ({user}) =>
@@ -93,7 +93,7 @@ Account.propTypes = {
 
 const Logout = () =>
     <Tooltip msg='home.footer.logout' top>
-        <Button icon='sign-out' className={styles.logout} onClick={logout}>
+        <Button icon='sign-out-alt' className={styles.logout} onClick={logout}>
             {msg('home.footer.logout.label')}
         </Button>
     </Tooltip>

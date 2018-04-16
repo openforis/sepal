@@ -44,7 +44,7 @@ export class ForgotPassword extends React.Component {
             </div>
 
             <SubmitButton
-                icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in'}
+                icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in-alt'}
                 onClick={() => this.requestPasswordReset(email.value)}
                 disabled={form.hasInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
                 tabIndex={2}>

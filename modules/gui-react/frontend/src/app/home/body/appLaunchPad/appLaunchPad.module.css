@@ -43,7 +43,7 @@
     background-color: hsla(0, 0%, 100%, .05);
 }
 
-.app i {
+.app svg {
     border: 1px solid hsla(0, 0%, 100%, .2);
     border-radius: 50%;
     font-size: 1.4rem;

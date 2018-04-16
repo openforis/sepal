@@ -1,16 +1,24 @@
 import React from 'react'
-import FontAwesome from 'react-fontawesome'
-import 'font-awesome/css/font-awesome.css'
+import fontawesome from '@fortawesome/fontawesome'
+import FontAwesomeIcon from '@fortawesome/react-fontawesome'
+import fa from '@fortawesome/fontawesome-free-solid'
 import PropTypes from 'prop-types'
+
+fontawesome.library.add(fa)
 
 const Icon = ({name, className, ...props}) => {
     if (!name)
         return null
     else
-        return <FontAwesome tag='i' name={name} {...props} spin={name === 'spinner'} className={className}/>
+        return <FontAwesomeIcon 
+            tag='i'
+            icon={['fas', name]}
+            spin={name === 'spinner'} 
+            className={className}
+            {...props}/>
 }
 
-Icon.propTypes = Object.assign(FontAwesome.propTypes, {
+Icon.propTypes = Object.assign(FontAwesomeIcon.propTypes, {
     name: PropTypes.string
 })
 

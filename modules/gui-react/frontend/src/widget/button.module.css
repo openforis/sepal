@@ -41,7 +41,7 @@
     cursor: not-allowed;
 }
 
-.default i {
+.default svg {
     font-size: 1rem;
     line-height: 1rem;
     margin: auto;
@@ -53,7 +53,7 @@ button.submit {
     padding: 0 2rem;
 }
 
-button.submit i {
+button.submit svg {
     margin-right: .6rem;
     font-size: 1.5rem;
     line-height: 1.5rem;
@@ -70,7 +70,7 @@ button.icon {
 
 }
 
-button.icon i {
+button.icon svg {
     font-size: 1.3rem;
     margin: 0;
 }

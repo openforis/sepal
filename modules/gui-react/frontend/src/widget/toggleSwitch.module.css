@@ -51,7 +51,7 @@
     transform: translateX(var(--button-size));
 }
 
-.switchContainer i {
+.switchContainer svg {
     transition: .1s;
     color: #cbcbcb;
 }

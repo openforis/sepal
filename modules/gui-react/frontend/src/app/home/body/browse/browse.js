@@ -305,7 +305,7 @@ class Browse extends React.Component {
                         disabled={!oneFileSelected}/>
                 </Tooltip>
                 <Tooltip msg='browse.controls.remove' bottom>
-                    <HoldButton icon='trash-o'
+                    <HoldButton icon='trash-alt'
                         onClickHold={this.removeSelected.bind(this)}
                         disabled={nothingSelected} />
                 </Tooltip>

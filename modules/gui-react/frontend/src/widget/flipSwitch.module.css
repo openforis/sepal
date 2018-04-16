@@ -2,7 +2,6 @@
     --width: 3rem;
     --height: 1rem;
     --slider-width: calc(var(--width) / 2);
-    font-size: calc(var(--height) * .9);
     display: flex;
     flex-direction: row;
     justify-content: space-around;
@@ -19,9 +18,7 @@
 /* .flipSwitch.active {} */
 
 .icon {
-    padding-top: 5%;
-    padding-left: 10%;
-    padding-right: 10%;
+    padding: 5%;
 }
 .slider {
     position: absolute;

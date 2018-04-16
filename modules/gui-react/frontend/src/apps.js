@@ -33,7 +33,7 @@ export const loadApps$ = () =>
             const dataVis = {
                 path: '/sandbox/data-vis',
                 label: msg('apps.dataVis'),
-                icon: 'map-o',
+                icon: 'map',
                 endpoint: 'geo-web-viz'
             }
             const rStudio = {

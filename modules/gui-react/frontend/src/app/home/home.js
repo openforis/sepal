@@ -7,7 +7,6 @@ import Map from './map/map'
 import Menu from './menu/menu'
 import {isFloating} from './menu/menuMode'
 import styles from './home.module.css'
-import MenuMode from './menu/menuMode'
 
 const mapStateToProps = () => ({
     floatingMenu: isFloating(),
