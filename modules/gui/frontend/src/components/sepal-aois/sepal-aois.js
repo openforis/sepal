@@ -9,10 +9,21 @@ var GoogleMapsLoader = require('google-maps')
 var FT_URL        = 'https://www.googleapis.com/fusiontables/v2/query'
 var FT_TableID    = '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F'
 var FT_KEY_COLUMN = 'ISO'
+var FT_LABEL_COLUMN = 'NAME_FAO'
 
-var loadAoiList = function (callback) {
-  
-  var query = 'SELECT ISO,NAME_FAO FROM ' + FT_TableID + ' WHERE NAME_FAO NOT EQUAL TO \'\' ORDER BY NAME_FAO ASC'
+var loadAoiList = function (fusionTableOrCallback, keyColumn, labelColumn, callback) {
+  var fusionTable = fusionTableOrCallback
+  if (!keyColumn) {
+    fusionTable = FT_TableID
+    keyColumn = FT_KEY_COLUMN
+    labelColumn = FT_LABEL_COLUMN
+    callback = fusionTableOrCallback
+  }
+  var query = [
+      'SELECT', keyColumn, ',', labelColumn,
+      'FROM', fusionTable,
+      'WHERE', labelColumn, 'NOT EQUAL TO \'\'',
+      'ORDER BY', labelColumn].join(' ')
   var data  = {sql: query, key: GoogleMapsLoader.KEY}
   
   var params = {
@@ -30,13 +41,33 @@ var loadAoiList = function (callback) {
   EventBus.dispatch(Events.AJAX.GET, null, params)
 }
 
-var getFusionTableLayer = function (isoCode) {
+var migrateAoi = function (state) {
+    if (state.aoiCode && state.aoiName) {
+        state.aoiFusionTable = FT_TableID
+        state.aoiFusionTableKeyColumn = FT_KEY_COLUMN
+        state.aoiFusionTableKey = state.aoiCode
+        state.aoiFusionTableLabelColumn = FT_LABEL_COLUMN
+        state.aoiFusionTableLabel = state.aoiName
+    }
+}
+
+var resetAoi = function (state) {
+    if (!state)
+      return
+    state.aoiFusionTable = null
+    state.aoiFusionTableKeyColumn = null
+    state.aoiFusionTableKey = null
+    state.aoiFusionTableLabelColumn = null
+    state.aoiFusionTableLabel = null
+}
+
+var getFusionTableLayer = function (fusionTable, column, value) {
   var FT_Options = {
     suppressInfoWindows: true,
     query              : {
-      from  : FT_TableID,
+      from  : fusionTable,
       select: 'geometry',
-      where : '\'ISO\' = \'' + isoCode + '\';'
+      where : '\'' + column + '\' = \'' + value + '\';'
     },
     styles             : [{
       polygonOptions: {
@@ -48,13 +79,12 @@ var getFusionTableLayer = function (isoCode) {
       }
     }]
   }
-  
-  var fusionTableLayer = new google.maps.FusionTablesLayer(FT_Options)
-  return fusionTableLayer
+
+  return new google.maps.FusionTablesLayer(FT_Options)
 }
 
-var loadBounds = function (isoCode, callback) {
-  var query = 'SELECT geometry FROM ' + FT_TableID + ' WHERE ISO = \'' + isoCode + '\' ORDER BY NAME_FAO ASC'
+var loadBounds = function (fusionTable, column, value, callback) {
+  var query = 'SELECT geometry FROM ' + fusionTable + ' WHERE ' + column + ' = \'' + value + '\''
   var data  = {sql: query, key: GoogleMapsLoader.KEY}
   
   var bounds    = new google.maps.LatLngBounds()
@@ -100,4 +130,9 @@ module.exports = {
   , getKeyColumn       : function () {
     return FT_KEY_COLUMN
   }
+  , migrateAoi : migrateAoi
+  , resetAoi: resetAoi
+  , FT_TableID : FT_TableID
+  , FT_KEY_COLUMN: FT_KEY_COLUMN
+  , FT_LABEL_COLUMN: FT_LABEL_COLUMN
 }
