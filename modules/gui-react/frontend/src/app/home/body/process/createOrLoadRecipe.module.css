@@ -104,6 +104,6 @@
     border: 2px solid hsla(0, 0%, 100%, .40);
 }
 
-.recipe .recipeButton i {
+.recipe .recipeButton svg {
     font-size: .9rem;
 }

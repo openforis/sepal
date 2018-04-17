@@ -3,7 +3,7 @@ import Icon from 'widget/icon'
 import styles from './button.module.css'
 import PropTypes from 'prop-types'
 
-export const Button = ({icon, tabIndex, onClick, className, children, ...props}) => {
+export const Button = ({icon, iconType, tabIndex, onClick, className, children, ...props}) => {
     function handleClick(e) {
         if (onClick) {
             e.preventDefault()
@@ -19,7 +19,7 @@ export const Button = ({icon, tabIndex, onClick, className, children, ...props})
             {...props}
         >
             <div className={styles.content}>
-                <Icon name={icon}/>
+                <Icon name={icon} type={iconType}/>
                 {children}
             </div>
         </button>
@@ -46,9 +46,10 @@ export const SubmitButton = ({icon, tabIndex, onClick, className, children, ...p
 
 SubmitButton.propTypes = Button.propTypes
 
-export const IconButton = ({icon, tabIndex, onClick, className, ...props}) =>
+export const IconButton = ({icon, iconType, tabIndex, onClick, className, ...props}) =>
     <Button
         icon={icon}
+        iconType={iconType}
         tabIndex={tabIndex}
         onClick={onClick}
         className={`${styles.icon} ${className}`}

@@ -55,8 +55,8 @@ class RecipeList extends React.Component {
                         <div key={recipe.id} className={styles.recipe}>
                             <div className={styles.name}>{recipe.name}</div>
                             <div className={styles.type}>{recipe.type}</div>
-                            <div className={styles.duplicate}><RecipeButton icon='clone'/></div>
-                            <div className={styles.delete}><RecipeButton icon='trash'/></div>
+                            <div className={styles.duplicate}><RecipeButton icon='clone' iconType='regular'/></div>
+                            <div className={styles.delete}><RecipeButton icon='trash-alt' iconType='regular'/></div>
                         </div>
                     )}
                 </div>
@@ -82,5 +82,5 @@ const setTabType = (id, type, title) =>
 const CreateButton = ({id, type, label}) =>
     <Button icon='plus-circle' onClick={() => setTabType(id, type, label)} className={styles.createButton}>{label}</Button>
 
-const RecipeButton = ({icon, onClick}) =>
-    <IconButton icon={icon} onClick={onClick} className={styles.recipeButton}/>
+const RecipeButton = ({icon, iconType, onClick}) =>
+    <IconButton icon={icon} iconType={iconType} onClick={onClick} className={styles.recipeButton}/>

@@ -43,10 +43,9 @@
 }
 
 .default svg {
-    font-size: 1rem;
-    line-height: 1rem;
-    margin: auto;
-    margin-right: .3rem;
+    font-size: .9rem;
+    line-height: .9rem;
+    margin: auto .3rem auto auto;
 }
 
 button.submit {
@@ -72,7 +71,7 @@ button.icon {
 }
 
 button.icon svg {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     margin: 0;
 }
 
