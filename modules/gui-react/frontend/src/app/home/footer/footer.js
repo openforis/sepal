@@ -1,33 +1,24 @@
 import React from 'react'
-import {msg} from 'translate'
 import styles from './footer.module.css'
-import {Button, IconButton} from 'widget/button'
 import Icon from 'widget/icon'
-import Tooltip from 'widget/tooltip'
-import {Link} from 'route'
-import {logout} from 'user'
 import PropTypes from 'prop-types'
-import MenuMode from '../menu/menuMode'
+import Tooltip from 'widget/tooltip'
+import {logout} from 'user'
 
-const Footer = ({user, className}) => {
+const Footer = ({className, user}) => {
     return (
         <div className={className}>
             <div className={styles.footer}>
-                <MenuMode className={styles.menuMode}/>
-                <Section className={styles.firstSection}>
-                    <Tasks/>
-                    {user.admin ? <ManageUsers/> : null}
-                </Section>
-
-                <Section className={styles.secondSection}>
-                    <Title/>
-                </Section>
-
-                <Section className={styles.thirdSection}>
-                    <HourlyCost/>
-                    <Account user={user}/>
+                {/* <Title/> */}
+                <div>
                     <Logout/>
-                </Section>
+                    <User user={user}/>
+                </div>
+                <a href={'https://github.com/openforis/sepal/wiki'} target={'wiki'}>
+                    <span className={styles.sepal}>SEPAL</span>
+                    <Copyright/>
+                </a>
+                <HourlyCost/>
             </div>
         </div>
     )
@@ -38,64 +29,39 @@ Footer.propTypes = {
     className: PropTypes.string
 }
 
-const Section = ({className, children}) =>
-    <div className={className}>
-        <div>
-            {children}
-        </div>
-    </div>
+// const Title = () =>
+//     <h2 className={styles.title}>
+//         <span className={styles._1}>S</span>
+//         <span className={styles._2}>e</span>
+//         <span className={styles._3}>p</span>
+//         <span className={styles._4}>a</span>
+//         <span className={styles._5}>l</span>
+//     </h2>
 
-Section.propTypes = {
-    className: PropTypes.string,
-    children: PropTypes.any
-}
+const Logout = () =>
+    <Tooltip msg='home.sections.logout' top>
+        <button className={styles.logout} onClick={logout}>
+            <Icon name={'sign-out-alt'}/>
+        </button>
+    </Tooltip>
 
-const Tasks = () =>
-    <Link to={'/tasks'} onMouseDown={(e) => e.preventDefault()}>
-        <Tooltip msg='home.footer.tasks' topRight>
-            <IconButton icon='tasks'/>
-        </Tooltip>
-    </Link>
-
-const ManageUsers = () =>
-    <Link to={'/users'} onMouseDown={(e) => e.preventDefault()}>
-        <Tooltip msg='home.footer.manageUsers' topRight>
-            <IconButton icon='users'/>
-        </Tooltip>
-    </Link>
-
-const Title = () =>
-    <h2 className={styles.title}>
-        <span className={styles._1}>S</span>
-        <span className={styles._2}>e</span>
-        <span className={styles._3}>p</span>
-        <span className={styles._4}>a</span>
-        <span className={styles._5}>l</span>
-    </h2>
-
-const HourlyCost = () =>
-    <span className={styles.hourlyCost}>
-        <Icon name='dollar-sign'/> 0/h
+const User = ({user}) =>
+    <span className={styles.user}>
+        {user.username}
     </span>
 
-const Account = ({user}) =>
-    <Link to={'/account'} onMouseDown={(e) => e.preventDefault()}>
-        <Tooltip msg='home.footer.account' top>
-            <Button icon='user' className={styles.user}>
-                {user.username}
-            </Button>
-        </Tooltip>
-    </Link>
-
-Account.propTypes = {
+User.propTypes = {
     user: PropTypes.object
 }
 
-const Logout = () =>
-    <Tooltip msg='home.footer.logout' top>
-        <Button icon='sign-out-alt' className={styles.logout} onClick={logout}>
-            {msg('home.footer.logout.label')}
-        </Button>
-    </Tooltip>
+const Copyright = () => {
+    const thisYear = new Date().getFullYear()
+    return <span className={styles.copyright}>&copy; 20xx - {thisYear}</span>
+}
+
+const HourlyCost = () =>
+    <div className={styles.hourlyCost}>
+        <Icon name='dollar-sign'/> 0/h
+    </div>
 
 export default Footer

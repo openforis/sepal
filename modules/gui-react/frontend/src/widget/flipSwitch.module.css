@@ -1,5 +1,5 @@
 .flipSwitch {
-    --width: 3rem;
+    --width: 2.5rem;
     --height: 1rem;
     --slider-width: calc(var(--width) / 2);
     display: flex;

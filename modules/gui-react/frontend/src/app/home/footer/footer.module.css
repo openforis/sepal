@@ -1,46 +1,29 @@
 
 .footer {
-    height: 3.5rem;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    grid-template-rows: 1fr;
-    grid-template-areas: 'firstSection secondSection thirdSection';
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 
     background-color: rgba(28, 28, 28, 0.99);
-    border-top: 2px solid hsla(0, 0%, 100%, .1);
-    padding: 0 4.5rem;
-    /* opacity: 1; */
-    /* z-index: 1000; */
+    border-top: 1px solid hsla(0, 0%, 100%, .1);
+    padding: 0 .5rem;
+    z-index: 10;
+    color: #a0a0a0;
 }
 
-.footer > * {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+.logout {
+    border: 0;
+    cursor: pointer;
 }
 
-.menuMode {
-    position: absolute;
-    left: .5rem;
-    top: 1.5rem;
-    z-index: 3;
+.user {
+    text-transform: lowercase;
 }
 
-.firstSection {
-    grid-area: firstSection;
-}
-
-.secondSection {
-    grid-area: secondSection;
-    text-align: center;
-}
-
-.thirdSection {
-    grid-area: thirdSection;
-}
-
-.hourlyCost {
-    margin-right: 2rem;
+.sepal {
+    font-weight: bold;
+    letter-spacing: .5rem;
+    text-transform: uppercase;
 }
 
 .title {
@@ -94,8 +77,4 @@
     100% {
         opacity: .6
     }
-}
-
-.footer button {
-    margin: .2rem;
 }

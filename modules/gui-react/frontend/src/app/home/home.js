@@ -21,7 +21,7 @@ const Home = ({user, floatingMenu, floatingFooter}) => {
             floatingFooter && styles.floatingFooter
         ].join(' ')}>
             <Map className={styles.map}/>
-            <Menu className={styles.menu}/>
+            <Menu className={styles.menu} user={user}/>
             <Footer className={styles.footer} user={user}/>
             <Body className={styles.body}/>
         </div>

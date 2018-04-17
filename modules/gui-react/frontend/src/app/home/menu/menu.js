@@ -7,6 +7,7 @@ import {requestedApps, quitApp} from 'apps'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import {isFloating} from './menuMode'
+import MenuMode from '../menu/menuMode'
 
 const mapStateToProps = () => ({
     requestedApps: requestedApps(),
@@ -18,15 +19,24 @@ class Menu extends React.Component {
         return <AppLink key={app.path} app={app}/>
     }
     render() {
-        const {className, floating, requestedApps} = this.props
+        const {className, floating, requestedApps, user} = this.props
         return (
             <div className={className}>
                 <div className={[styles.menu, floating && styles.floating].join(' ')}>
-                    <SectionLink name='process' icon='globe'/>
-                    <SectionLink name='browse' icon='folder-open'/>
-                    {/* <SectionLink name='terminal' icon='terminal'/> */}
-                    <SectionLink name='app-launch-pad' icon='wrench'/>
-                    {requestedApps.map(this.appSection)}
+                    <div className={styles.section}>
+                        <SectionLink name='process' icon='globe'/>
+                        <SectionLink name='browse' icon='folder-open'/>
+                        <SectionLink name='terminal' icon='terminal'/>
+                        <SectionLink name='app-launch-pad' icon='wrench'/>
+                        {requestedApps.map(this.appSection)}
+                        <SectionLink name='tasks' icon='tasks'/>
+                    </div>
+                    <div className={styles.section}>
+                        <SectionLink name='account' icon='user'/>
+                        {/* {user.admin ? <SectionLink name='users' icon='users'/> : null} */}
+                        <SectionLink name='users' icon='users'/>
+                        <MenuMode className={styles.menuMode}/>
+                    </div>
                 </div>
             </div>
         )
@@ -36,7 +46,8 @@ class Menu extends React.Component {
 Menu.propTypes = {
     className: PropTypes.string,
     floating: PropTypes.bool.isRequired,
-    requestedApps: PropTypes.arrayOf(PropTypes.object).isRequired
+    requestedApps: PropTypes.arrayOf(PropTypes.object).isRequired,
+    user: PropTypes.object
 }
 
 const SectionLink = ({name, icon}) => {

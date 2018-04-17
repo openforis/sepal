@@ -3,7 +3,7 @@
     --menu-margin-bottom: 4.5rem;
     --menu-width: 3.5rem;
     --menu-handle-width: 1rem;
-    --footer-height: 3.5rem;
+    --footer-height: 2rem;
     --footer-handle-height: 1rem;
     --transition-time: 150ms;
     --transition-delay: 75ms;
@@ -64,13 +64,16 @@
 
 .footer {
     position: absolute;
-    z-index: 2;
+    z-index: 10;
     left: 0;
     right: 0;
     bottom: var(--footer-position);
     height: var(--footer-height);
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
     pointer-events: all;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
 }
 
 .container:not(.floatingFooter) .footer,

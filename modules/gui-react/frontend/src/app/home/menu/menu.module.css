@@ -1,14 +1,26 @@
+.menu .menuMode {
+    padding: 0 .5rem;
+    transition: opacity 250ms ease-in-out 0ms;
+}
+
+/* hide menu mode when not hover bar */
+.menu.floating:not(:hover) .menuMode {
+    opacity: 0;
+}
+
 .menu {
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding-top: 10rem;
+    justify-content: space-between;
+    padding: 1rem 0;
     transition: transform 150ms ease-in-out 0ms;
     --button-size: 3.5rem;
 }
 
-.menu > * {
-    margin-bottom: 1.5rem;
+.menu .section {
+    display: flex;
+    flex-direction: column;    
 }
 
 .menu button {
@@ -17,6 +29,7 @@
     height: var(--button-size);
     border: none;
     border-radius: .25rem;
+    margin-bottom: 1.2rem;
     color: rgba(255, 255, 255, 0.8);
     --opacity: .8;
     --border-opacity: 0;
@@ -67,6 +80,26 @@
 }
 
 .menu button.app-launch-pad {
+    background-color: hsla(310, 10%, 23%, var(--opacity));
+    border-color: hsla(310, 10%, 43%, var(--border-opacity));
+}
+
+.menu button.tasks {
+    background-color: hsla(310, 10%, 23%, var(--opacity));
+    border-color: hsla(310, 10%, 43%, var(--border-opacity));
+}
+
+.menu button.users {
+    background-color: hsla(310, 10%, 23%, var(--opacity));
+    border-color: hsla(310, 10%, 43%, var(--border-opacity));
+}
+
+.menu button.account {
+    background-color: hsla(310, 10%, 23%, var(--opacity));
+    border-color: hsla(310, 10%, 43%, var(--border-opacity));
+}
+
+.menu button.logout {
     background-color: hsla(310, 10%, 23%, var(--opacity));
     border-color: hsla(310, 10%, 43%, var(--border-opacity));
 }
