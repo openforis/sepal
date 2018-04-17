@@ -1,9 +1,14 @@
 import immutable from 'object-path-immutable'
 import {dispatch} from 'store'
 
-export default function actionBuilder(type, props = {}) {
+export default function actionBuilder(type, props) {
     const operations = []
+    let prefix = ''
     return {
+        within(_prefix) {
+            prefix = _prefix
+            return this
+        },
         withState(path, callback) {
             operations.push((immutableState) => {
                 const currentState = immutableState.value()
@@ -87,10 +92,18 @@ export default function actionBuilder(type, props = {}) {
                 type,
                 ...props,
                 reduce(state) {
-                    return operations.reduce(
-                        (immutableState, operation) => operation(immutableState) || immutableState,
-                        immutable(state)
-                    ).value()
+                    if (!prefix)
+                        return operations.reduce(
+                            (immutableState, operation) => operation(immutableState) || immutableState,
+                            immutable(state)
+                        ).value()
+                    else {
+                        const subState = operations.reduce(
+                            (immutableState, operation) => operation(immutableState) || immutableState,
+                            immutable(select(prefix, state))
+                        ).value()
+                        return immutable(state).set(prefix, subState).value()
+                    }
                 },
                 dispatch() {
                     dispatch(this)
