@@ -87,7 +87,8 @@
     background-color: rgba(96, 71, 90, .4);
 }
 
-.terminalIcon {
+.terminalIcon.featureIcon {
+    font-size: 1.4rem;
     background-color: rgba(74, 94, 130, .4);
 }
 
