@@ -81,10 +81,9 @@ const Features = () =>
 
 const Feature = ({icon, name}) =>
     <div className={styles.feature}>
-        <Icon
-            name={icon}
-            className={`${styles.featureIcon} ${styles[`${name}Icon`]}`}
-        />
+        <div className={`${styles.featureIcon} ${styles[`${name}Icon`]}`}>
+            <Icon name={icon}/>
+        </div>
         <h3 className={styles.featureTitle}><Msg id={`landing.features.${name}.title`}/></h3>
         <p className={styles.featureDescription}><Msg id={`landing.features.${name}.description`}/></p>
     </div>
