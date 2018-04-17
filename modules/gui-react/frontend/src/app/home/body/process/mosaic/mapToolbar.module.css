@@ -1,0 +1,34 @@
+.toolbar {
+    --button-size: 2.5rem;
+    --icon-size: 1.3rem;
+    --default-color: rgba(255, 255, 255, .6);
+    --hover-color: rgba(255, 255, 255, .8);
+    --default-background-color: rgba(36, 74, 88, .4);
+    --hover-background-color: rgba(36, 74, 88, .2);
+    display: flex;
+    flex-direction: row;
+    height: var(--button-size);
+}
+
+.toolbar button {
+    width: var(--button-size);
+    height: var(--button-size);
+    border: none;
+    border-radius: .25rem;
+    margin-right: .5rem;
+    padding: 0;
+    color: var(--default-color);
+    background-color: var(--default-background-color);
+}
+
+.toolbar button svg {
+    font-size: var(--icon-size);
+    width: var(--icon-size);
+    height: var(--icon-size);
+    vertical-align: middle;
+}
+
+.toolbar button:hover {
+    color: var(--hover-color);
+    background-color: var(--hover-background-color);
+}

@@ -1,15 +1,16 @@
 .toolbar {
-    --button-size: 2rem;
     position: absolute;
     z-index: 2;
-    top: 6rem;
-    bottom: 5rem;
-    right: .5rem;
-    width: var(--button-size);
-    background-color: rgba(0, 0, 0, 0.1);
-    border-radius: .5rem;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    /* transition: all var(--transition-time) ease-in-out var(--transition-delay); */
     pointer-events: all;
+}
+
+.map {
+    bottom: .5rem;
+    left: .5rem;
+}
+
+.mosaic {
+    top: 6rem;
+    bottom: .5rem;
+    right: .5rem;
 }

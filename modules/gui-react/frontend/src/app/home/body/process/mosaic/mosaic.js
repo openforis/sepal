@@ -1,12 +1,19 @@
 import React from 'react'
-import MosaicToolbar from './toolbar'
+import MapToolbar from './mapToolbar'
+import MosaicToolbar from './mosaicToolbar'
 import styles from './mosaic.module.css'
+import PropTypes from 'prop-types'
 
 const Mosaic = (props) =>
     <div>
-        <MosaicToolbar id={props.id} className={styles.toolbar}/>
+        <MapToolbar id={props.id} className={[styles.toolbar, styles.map].join(' ')}/>
+        <MosaicToolbar id={props.id} className={[styles.toolbar, styles.mosaic].join(' ')}/>
         <h2>Mosaic</h2>
         <input placeholder='Some input'/>
     </div>
+
+Mosaic.propTypes = {
+    id: PropTypes.string
+}
 
 export default Mosaic

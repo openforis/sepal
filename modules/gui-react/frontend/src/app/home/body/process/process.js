@@ -120,7 +120,7 @@ const TabContent = ({tab: {id, type}, selected}) => {
 
 const NewTab = ({onAdd}) =>
     <div className={styles.newTab} onClick={onAdd}>
-        <Icon name={'plus'}/>
+        +
     </div>
 
 const Classification = () =>

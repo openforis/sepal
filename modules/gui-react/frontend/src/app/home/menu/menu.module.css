@@ -46,7 +46,7 @@
     margin-left: var(--border-width);
 }
 
-/* hide button icons when bar is hidded */
+/* hide button icons when bar is hidden */
 .menu.floating:not(:hover) button svg {
     opacity: 0;
 }
