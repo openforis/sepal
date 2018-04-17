@@ -7,7 +7,6 @@ import {requestedApps, quitApp} from 'apps'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import {isFloating} from './menuMode'
-import MenuMode from '../menu/menuMode'
 
 const mapStateToProps = () => ({
     requestedApps: requestedApps(),
@@ -35,7 +34,6 @@ class Menu extends React.Component {
                         <SectionLink name='account' icon='user'/>
                         {/* {user.admin ? <SectionLink name='users' icon='users'/> : null} */}
                         <SectionLink name='users' icon='users'/>
-                        <MenuMode className={styles.menuMode}/>
                     </div>
                 </div>
             </div>

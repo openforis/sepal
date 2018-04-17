@@ -62,6 +62,14 @@
     left: 0;
 }
 
+.menuMode {
+    position: absolute;
+    bottom: 3rem;
+    left: .25rem;
+    z-index: 2;
+    pointer-events: all;
+}
+
 .footer {
     position: absolute;
     z-index: 10;
