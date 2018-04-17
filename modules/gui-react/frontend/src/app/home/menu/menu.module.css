@@ -1,5 +1,5 @@
 .menu .menuMode {
-    padding: 0 .5rem;
+    padding: 0 .25rem;
     transition: opacity 250ms ease-in-out 0ms;
 }
 
@@ -15,7 +15,8 @@
     justify-content: space-between;
     padding: 1rem 0;
     transition: transform 150ms ease-in-out 0ms;
-    --button-size: 3.5rem;
+    --button-size: var(--menu-width);
+    --icon-size: 1.3rem;
 }
 
 .menu .section {
@@ -29,14 +30,14 @@
     height: var(--button-size);
     border: none;
     border-radius: .25rem;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
     color: rgba(255, 255, 255, 0.8);
     --opacity: .8;
     --border-opacity: 0;
 }
 
 .menu button svg {
-    font-size: 1.5rem;
+    font-size: var(--icon-size);
     vertical-align: middle;
     text-align: right;
     transition: opacity 150ms ease-in-out 200ms;
