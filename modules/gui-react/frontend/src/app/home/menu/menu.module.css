@@ -78,6 +78,10 @@
     border-color: hsla(221, 19%, 46%, var(--border-opacity));
 }
 
+.menu button.terminal svg {
+    font-size: calc(var(--icon-size) * .8);
+}
+
 .menu button.app-launch-pad {
     background-color: hsla(310, 10%, 23%, var(--opacity));
     border-color: hsla(310, 10%, 43%, var(--border-opacity));
