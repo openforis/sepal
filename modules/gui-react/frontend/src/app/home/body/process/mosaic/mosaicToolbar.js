@@ -3,10 +3,24 @@ import Icon from 'widget/icon'
 import styles from './mosaicToolbar.module.css'
 import PropTypes from 'prop-types'
 import Tooltip from 'widget/tooltip'
+import {connect} from 'store'
+import {RecipeState, RecipeActions} from './mosaicRecipe'
+import {Msg} from 'translate'
+
+const mapStateToProps = (state, ownProps) => {
+    const recipe = RecipeState(ownProps.id)
+    return {
+        selectedPanel: recipe('selectedPanel')
+    }
+}
 
 class MosaicToolbar extends React.Component {
+    constructor(props) {
+        super(props)
+        this.recipe = RecipeActions(props.id)
+    }
     render() {
-        const {className} = this.props
+        const {className, selectedPanel} = this.props
         return (
             <div className={className}>
                 <div className={styles.toolbar}>
@@ -28,33 +42,11 @@ class MosaicToolbar extends React.Component {
                         </Tooltip>
                     </div>
                     <div className={styles.configuration}>
-                        <Tooltip msg={'process.mosaic.toolbar.where'} left>
-                            <button>
-                                AOI
-                                {/* <Icon name={'globe'}/> */}
-                            </button>
-                        </Tooltip>
-                        <Tooltip msg={'process.mosaic.toolbar.when'} left>
-                            <button>
-                                DAT
-                                {/* <Icon name={'calendar-alt'}/> */}
-                            </button>
-                        </Tooltip>
-                        <Tooltip msg={'process.mosaic.toolbar.sensors'} left>
-                            <button>
-                                SAT
-                            </button>
-                        </Tooltip>
-                        <Tooltip msg={'process.mosaic.toolbar.scenes'} left>
-                            <button>
-                                SCN
-                            </button>
-                        </Tooltip>
-                        <Tooltip msg={'process.mosaic.toolbar.composite'} left>
-                            <button>
-                                CMP
-                            </button>
-                        </Tooltip>
+                        <PanelButton panel={'AOI'} selectedPanel={selectedPanel} recipe={this.recipe}/>
+                        <PanelButton panel={'DAT'} selectedPanel={selectedPanel} recipe={this.recipe}/>
+                        <PanelButton panel={'SAT'} selectedPanel={selectedPanel} recipe={this.recipe}/>
+                        <PanelButton panel={'SCN'} selectedPanel={selectedPanel} recipe={this.recipe}/>
+                        <PanelButton panel={'CMP'} selectedPanel={selectedPanel} recipe={this.recipe}/>
                     </div>
                 </div>
             </div>
@@ -64,7 +56,22 @@ class MosaicToolbar extends React.Component {
 
 MosaicToolbar.propTypes = {
     className: PropTypes.string,
-    id: PropTypes.string
+    id: PropTypes.string,
+    selectedPanel: PropTypes.string
 }
 
-export default MosaicToolbar
+const PanelButton = ({panel, selectedPanel, recipe}) =>
+    <Tooltip msg={`process.mosaic.panel.${panel}`} left>
+        <button className={selectedPanel === panel && styles.selected}
+            onClick={() => recipe.selectPanel(panel)}>
+            <Msg id={`process.mosaic.panel.${panel}.button`}/>
+        </button>
+    </Tooltip>
+
+PanelButton.propTypes = {
+    panel: PropTypes.string,
+    selectedPanel: PropTypes.string,
+    recipe: PropTypes.object
+}
+
+export default connect(mapStateToProps)(MosaicToolbar)

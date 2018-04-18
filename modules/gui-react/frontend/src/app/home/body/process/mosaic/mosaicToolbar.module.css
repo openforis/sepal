@@ -2,9 +2,11 @@
     --button-size: 2.7rem;
     --icon-size: 1.2rem;
     --default-color: rgba(255, 255, 255, .6);
-    --hover-color: rgba(255, 255, 255, .8);
     --default-background-color: hsla(37, 27%, 39%, .4);
+    --hover-color: rgba(255, 255, 255, .8);
     --hover-background-color: hsla(37, 27%, 39%, .2);
+    --selected-color: rgba(255, 255, 255, 1);
+    --selected-background-color: hsla(37, 27%, 39%, .1);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -43,4 +45,9 @@
 .toolbar button:hover {
     color: var(--hover-color);
     background-color: var(--hover-background-color);
+}
+
+.toolbar .selected {
+    color: var(--selected-color);
+    background-color: var(--selected-background-color);
 }

@@ -31,6 +31,9 @@ export const RecipeActions = (id) => {
         },
         setGridShown(shown) {
             set('SET_GRID_SHOWN', 'gridShown', shown)
+        },
+        selectPanel(panel) {
+            set('SELECT_MOSAIC_PANEL', 'selectedPanel', panel)
         }
     }
 }

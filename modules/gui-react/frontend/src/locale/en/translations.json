@@ -130,12 +130,29 @@
         "labels.hide.tooltip": "Hide labels",
         "grid.show.tooltip": "Show grid",
         "grid.hide.tooltip": "Hide grid",
-        "centerMap.tooltip": "Zoom to area of interest",
-        "where.tooltip": "Specify area of interest",
-        "when.tooltip": "Specify dates",
-        "sensors.tooltip": "Select sensors",
-        "scenes.tooltip": "Configure scenes selection",
-        "composite.tooltip": "Configure composite creation"
+        "centerMap.tooltip": "Zoom to area of interest"
+      },
+      "panel": {
+        "AOI": {
+          "button": "AOI",
+          "tooltip": "Specify area of interest"
+        },
+        "DAT": {
+          "button": "DAT",
+          "tooltip": "Specify dates"
+        },
+        "SAT": {
+          "button": "SAT",
+          "tooltip": "Select sensors"
+        },
+        "SCN": {
+          "button": "SCN",
+          "tooltip": "Configure scenes selection"
+        },
+        "CMP": {
+          "button": "CMP",
+          "tooltip": "Configure composite creation"
+        }
       }
     },
     "classification": {
