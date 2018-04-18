@@ -101,6 +101,11 @@
     padding-left: 1rem;
 }
 
+span.title.placeholder {
+    font-style: italic;
+    color: #6c757d;
+}
+
 /*Fade-out overflow */
 .title:before {
     content: '';
@@ -118,6 +123,14 @@
 
 .tab.selected .title:before {
     background: linear-gradient(to right, transparent, #323232 100%);
+}
+
+.tab.selected input.title  {
+    border: none !important;
+    margin-right: 2rem;
+    letter-spacing: 0.75px;
+    height: 2.5rem;
+    line-height: 2.5rem;
 }
 
 .tabContents {

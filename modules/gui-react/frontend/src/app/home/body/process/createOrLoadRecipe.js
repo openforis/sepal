@@ -75,12 +75,25 @@ const setTabType = (id, type, title) =>
                 throw new Error('Unable to create recipe')
             return stateBuilder
                 .set(['process', 'tabs', tabIndex, 'type'], type)
-                .set(['process', 'tabs', tabIndex, 'title'], title)
+                .set(['process', 'tabs', tabIndex, 'placeholder'], `${title}_${formatDate(new Date())}`)
         })
         .dispatch()
 
 const CreateButton = ({id, type, label}) =>
-    <Button icon='plus-circle' onClick={() => setTabType(id, type, label)} className={styles.createButton}>{label}</Button>
+    <Button icon='plus-circle' onClick={() => setTabType(id, type, label)}
+            className={styles.createButton}>{label}</Button>
 
 const RecipeButton = ({icon, iconType, onClick}) =>
     <IconButton icon={icon} iconType={iconType} onClick={onClick} className={styles.recipeButton}/>
+
+function formatDate(date) {
+    const pad = (value) => value.length < 2 ? '0' + value : value
+    let d = new Date(date),
+        month = pad(d.getMonth() + 1),
+        day = pad(d.getDate()),
+        year = pad(d.getFullYear()),
+        hours = pad(d.getHours()),
+        minutes = pad(date.getMinutes()),
+        seconds = pad(date.getSeconds())
+    return `${[year, month, day].join('')}_${[hours, minutes, seconds].join('.')}`
+}
