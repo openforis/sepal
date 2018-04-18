@@ -1,5 +1,6 @@
 .container {
     padding: 0;
+    pointer-events: none;
 }
 
 .tabBar {
@@ -11,6 +12,7 @@
     padding: 1rem;
     border: 1px solid hsla(0, 0%, 100%, .05);
     border-bottom: 2px solid hsla(0, 0%, 100%, .05);
+    pointer-events: all;
 }
 
 .newTab {
@@ -119,6 +121,7 @@
 }
 
 .tabContents {
+    height: 100%;
 }
 
 .tabContent {
@@ -127,4 +130,5 @@
 
 .tabContent.selected {
     display: flex;
+    height: 100%;
 }

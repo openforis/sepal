@@ -1,7 +1,9 @@
 .container {
     align-items: center;
     margin-top: 3rem;
+    height: 100%;
     width: 100%;
+    pointer-events: all;
 }
 
 .createButtons {

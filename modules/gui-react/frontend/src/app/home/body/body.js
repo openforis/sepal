@@ -53,7 +53,7 @@ class Body extends React.Component {
         return (
             <div className={className}>
                 <Select className={styles.sections}>
-                    <Section path='/process'>
+                    <Section path='/process' className={styles.transparent}>
                         <Process/>
                     </Section>
                     <Section path='/browse'>

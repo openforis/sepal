@@ -28,6 +28,10 @@
     padding: 0;
 }
 
+.section.transparent {
+    pointer-events: none;
+}
+
 .section > * {
     height: 100%;
     pointer-events: all;
