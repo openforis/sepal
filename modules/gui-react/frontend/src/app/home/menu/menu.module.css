@@ -12,10 +12,6 @@
     padding-top: 9rem;
 }
 
-.menu:last-child {
-    padding-bottom: 1rem;
-}
-
 .menu .section {
     display: flex;
     flex-direction: column;
@@ -28,9 +24,11 @@
     height: var(--button-size);
     border: none;
     border-radius: .25rem;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
     margin-bottom: 1rem;
     color: rgba(255, 255, 255, 0.8);
-    --opacity: .8;
+    --opacity: 1;
     --border-opacity: 0;
 }
 
@@ -44,7 +42,7 @@
 .menu button:hover {
     color: white;
     cursor: pointer;
-    --opacity: .5;
+    --opacity: 1;
 }
 
 .menu button.active {
@@ -84,24 +82,13 @@
 }
 
 .menu button.tasks {
-    background-color: hsla(310, 10%, 23%, var(--opacity));
-    border-color: hsla(310, 10%, 43%, var(--border-opacity));
+    background-color: hsl(197, 60%, 25%, var(--opacity));
+    border-color: hsl(197, 60%, 45%, var(--border-opacity));
 }
 
 .menu button.users {
-    background-color: hsla(310, 10%, 23%, var(--opacity));
-    border-color: hsla(310, 10%, 43%, var(--border-opacity));
-    /*margin-bottom: 2rem;*/
-}
-
-.menu button.account {
-    background-color: hsla(310, 10%, 23%, var(--opacity));
-    border-color: hsla(310, 10%, 43%, var(--border-opacity));
-}
-
-.menu button.logout {
-    background-color: hsla(310, 10%, 23%, var(--opacity));
-    border-color: hsla(310, 10%, 43%, var(--border-opacity));
+    background-color: hsla(0, 24%, 27%, var(--opacity));
+    border-color: hsla(0, 24%, 47%, var(--border-opacity));
 }
 
 @keyframes blink {
@@ -111,8 +98,8 @@
 }
 
 .menu .app button {
-    background-color: hsla(0, 0%, 25%, var(--opacity));
-    /* border-color: hsla(0, 0%, 45%, var(--border-opacity)); */
+    background-color: hsla(310, 10%, 23%, var(--opacity));
+    border-color: hsla(310, 10%, 43%, var(--border-opacity));
     border-color: rgb(170, 43, 43,  var(--border-opacity));
     animation: blink 150ms linear 2;
 }

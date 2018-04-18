@@ -87,8 +87,8 @@
       "users.tooltip": "Manage Sepal users",
       "account.tooltip": "Modify your account settings",
       "logout.tooltip": "Logout from Sepal",
-      "fixed.tooltip": "Fixed menu",
-      "floating.tooltip": "Floating menu"
+      "expand.tooltip": "Expand menu (fixed)",
+      "collapse.tooltip": "Collapse menu (floating)"
     }
   },
   "browse": {
