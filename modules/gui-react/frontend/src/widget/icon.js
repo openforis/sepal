@@ -9,8 +9,6 @@ fontawesome.library.add(fas)
 fontawesome.library.add(far)
 
 const Icon = ({name, type = 'solid', className, ...props}) => {
-    console.log('type', type)
-    console.log('fontAwesomeCollection(type)', fontAwesomeCollection(type))
     if (!name)
         return null
     else
