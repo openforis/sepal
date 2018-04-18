@@ -1,5 +1,5 @@
 .toolbar {
-    --button-size: 2.7rem;
+    --button-size: 2.6rem;
     --icon-size: 1.2rem;
     --default-color: rgba(255, 255, 255, .6);
     --default-background-color: hsla(37, 27%, 39%, .4);
@@ -25,6 +25,7 @@
 }
 
 .toolbar button {
+    position: relative;
     width: var(--button-size);
     height: var(--button-size);
     border: none;
@@ -50,4 +51,20 @@
 .toolbar .selected {
     color: var(--selected-color);
     background-color: var(--selected-background-color);
+    left: -.9rem;
+    width: calc(var(--button-size) + .9rem);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
+
+/* .toolbar .selected::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    bottom: 0;
+    left: -1rem;
+    right: 0;
+    background-color: red;
+    border-radius: .25rem;
+} */
