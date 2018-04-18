@@ -17,11 +17,11 @@ class Panels extends React.Component {
     }
     render() {
         const {selectedPanel} = this.props
-        return (
-            <div className={styles.panels}>
+        return selectedPanel ? (
+            <div className={[styles.panels, styles.selectedPanel].join(' ')}>
                 {selectedPanel}
             </div>
-        )
+        ) : null
     }
 }
 

@@ -1,0 +1,29 @@
+.panels {
+    position: absolute;
+    top: 10rem;
+    bottom: 1rem;
+    left: 1rem;
+    right: 4rem;
+    background-color: hsla(37, 27%, 39%, .1);
+    pointer-events: all;
+}
+
+.AOI {
+
+}
+
+.DAT {
+
+}
+
+.SAT {
+
+}
+
+.SCN {
+
+}
+
+.CMP {
+
+}

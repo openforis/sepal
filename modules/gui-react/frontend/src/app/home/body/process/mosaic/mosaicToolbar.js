@@ -62,8 +62,8 @@ MosaicToolbar.propTypes = {
 
 const PanelButton = ({panel, selectedPanel, recipe}) =>
     <Tooltip msg={`process.mosaic.panel.${panel}`} left>
-        <button className={selectedPanel === panel && styles.selected}
-            onClick={() => recipe.selectPanel(panel)}>
+        <button className={panel === selectedPanel && styles.selected}
+            onClick={() => recipe.selectPanel(panel !== selectedPanel ? panel : null)}>
             <Msg id={`process.mosaic.panel.${panel}.button`}/>
         </button>
     </Tooltip>
