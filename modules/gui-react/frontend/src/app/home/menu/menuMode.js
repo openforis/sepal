@@ -3,8 +3,8 @@ import {connect, select} from 'store'
 import styles from './menuMode.module.css'
 import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
-import FlipSwitch from 'widget/flipSwitch'
 import PropTypes from 'prop-types'
+import IconSwitch from 'widget/iconSwitch'
 
 export function isFloating() {
     return select('menu.floating') == null ? false : !!select('menu.floating')
@@ -25,12 +25,13 @@ class MenuMode extends React.Component {
         const {className, floating} = this.props
         return (
             <div className={className}>
-                <Tooltip msg={floating ? 'home.sections.floating' : 'home.sections.fixed'} right>
-                    <div className={styles.modeSwitch}>
-                        <FlipSwitch
+                <Tooltip msg={floating ? 'home.sections.expand' : 'home.sections.collapse'} right>
+                    <div className={styles.menuMode}>
+                        <IconSwitch
+                            className={styles.switch}
                             on={!floating}
-                            offIcon='lock'
-                            onIcon='unlock'
+                            icon='angle-double-right'
+                            onClassName={styles.switchOn}
                             onChange={() => this.toggle(floating)}/>
                     </div>
                 </Tooltip>

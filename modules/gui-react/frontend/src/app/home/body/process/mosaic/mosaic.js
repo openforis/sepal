@@ -8,8 +8,6 @@ const Mosaic = (props) =>
     <div>
         <MapToolbar id={props.id} className={[styles.toolbar, styles.map].join(' ')}/>
         <MosaicToolbar id={props.id} className={[styles.toolbar, styles.mosaic].join(' ')}/>
-        <h2>Mosaic</h2>
-        <input placeholder='Some input'/>
     </div>
 
 Mosaic.propTypes = {

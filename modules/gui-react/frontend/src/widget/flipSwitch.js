@@ -4,23 +4,15 @@ import styles from './flipSwitch.module.css'
 import PropTypes from 'prop-types'
 
 class FlipSwitch extends React.Component {
-    constructor(props) {
-        super(props)
-        this.state = {
-            on: props.on
-        }
-    }
-
     toggle() {
-        const nextState = !this.state.on
-        this.props.onChange(nextState)
-        this.setState({on: nextState})
+        this.props.onChange(!this.props.on)
     }
 
     render() {
-        const {offIcon, onIcon} = this.props
+        const {on, offIcon, onIcon} = this.props
         return (
-            <div className={[styles.flipSwitch, this.state.on ? styles.active : ''].join(' ')} onClick={this.toggle.bind(this)}>
+            <div className={[styles.flipSwitch, on ? styles.active : ''].join(' ')}
+                onClick={this.toggle.bind(this)}>
                 <Icon name={offIcon} className={[styles.icon, styles.offIcon].join(' ')}/>
                 <Icon name={onIcon} className={[styles.icon, styles.onIcon].join(' ')}/>
                 <div className={styles.slider}></div>

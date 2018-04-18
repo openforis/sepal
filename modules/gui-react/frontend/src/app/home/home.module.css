@@ -1,10 +1,10 @@
 .container {
+    --footer-height: 1.8rem;
+    --footer-handle-height: 1rem;
     --menu-margin-top: 1rem;
-    --menu-margin-bottom: 4.5rem;
+    --menu-margin-bottom: calc(var(--footer-height) + 1rem);
     --menu-width: 3rem;
     --menu-handle-width: 1rem;
-    --footer-height: 2.2rem;
-    --footer-handle-height: 1rem;
     --transition-time: 150ms;
     --transition-delay: 75ms;
     position: relative;
@@ -19,7 +19,7 @@
 
 .container:not(.floatingMenu) {
     --menu-position: 0;
-    --menu-margin: calc(1rem + var(--menu-width));
+    --menu-margin: calc(var(--menu-width) * 1.1);
 }
 
 .container.floatingFooter {
@@ -48,7 +48,7 @@
     bottom: var(--menu-margin-bottom);
     left: var(--menu-position);
     width: var(--menu-width);
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(0, 0, 0, 0);
     border-radius: .5rem;
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
@@ -58,16 +58,8 @@
 
 .container:not(.floatingMenu) .menu,
 .menu:hover {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0);
     left: 0;
-}
-
-.menuMode {
-    position: absolute;
-    bottom: 3rem;
-    left: .25rem;
-    z-index: 2;
-    pointer-events: all;
 }
 
 .footer {
