@@ -1,0 +1,11 @@
+.iconSwitch {
+    position: relative;
+    cursor: pointer;
+    height: var(--size);
+    width: var(--size);
+    font-size: var(--size);
+}
+
+.iconSwitch > * {
+    position: absolute;
+}
