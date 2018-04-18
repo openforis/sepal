@@ -3,6 +3,7 @@ import styles from './panels.module.css'
 import PropTypes from 'prop-types'
 import {connect} from 'store'
 import {RecipeState} from './mosaicRecipe'
+import {Msg} from 'translate'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
@@ -19,7 +20,7 @@ class Panels extends React.Component {
         const {selectedPanel} = this.props
         return selectedPanel ? (
             <div className={[styles.panels, styles.selectedPanel].join(' ')}>
-                {selectedPanel}
+                <Msg id={`process.mosaic.panel.${selectedPanel}.title`}/>
             </div>
         ) : null
     }

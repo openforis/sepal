@@ -134,22 +134,27 @@
       },
       "panel": {
         "AOI": {
+          "title": "Area of interest",
           "button": "AOI",
           "tooltip": "Specify area of interest"
         },
         "DAT": {
+          "title": "Dates",
           "button": "DAT",
           "tooltip": "Specify dates"
         },
         "SAT": {
+          "title": "Sensors",
           "button": "SAT",
           "tooltip": "Select sensors"
         },
         "SCN": {
+          "title": "Scenes",
           "button": "SCN",
           "tooltip": "Configure scenes selection"
         },
         "CMP": {
+          "title": "Composite",
           "button": "CMP",
           "tooltip": "Configure composite creation"
         }
