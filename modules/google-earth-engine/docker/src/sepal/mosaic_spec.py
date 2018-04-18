@@ -1,5 +1,6 @@
-import logging
 from abc import abstractmethod
+
+import logging
 
 from aoi import Aoi
 from image_spec import ImageSpec
@@ -11,11 +12,11 @@ class MosaicSpec(ImageSpec):
         super(MosaicSpec, self).__init__()
         self.spec = spec
         self.aoi = Aoi.create(spec['aoi'])
-        self.target_day = int(spec.get('targetDayOfYear', 1))
-        self.target_day_weight = float(spec.get('targetDayOfYearWeight', 0))
-        self.shadow_tolerance = float(spec.get('shadowTolerance', 1))
-        self.haze_tolerance = float(spec.get('hazeTolerance', 0.05))
-        self.greenness_weight = float(spec.get('greennessWeight', 0))
+        self.target_day = _to_int(spec, 'targetDayOfYear', 1)
+        self.target_day_weight = _to_float(spec, 'targetDayOfYearWeight', 0)
+        self.shadow_tolerance = _to_float(spec, 'shadowTolerance', 1)
+        self.haze_tolerance = _to_float(spec, 'hazeTolerance', 0.05)
+        self.greenness_weight = _to_float(spec, 'greennessWeight', 0)
         self.bands = spec.get('bands', [])
         self.median_composite = spec.get('median_composite', False)
         self.mask_clouds = spec.get('maskClouds', False)
@@ -138,3 +139,18 @@ _sr_viz_by_bands = {
 }
 
 _milis_per_day = 1000 * 60 * 60 * 24
+
+
+def _to_float(spec, key, default):
+    return float(_get(default, key, spec))
+
+
+def _to_int(spec, key, default):
+    return int(_get(default, key, spec))
+
+
+def _get(default, key, spec):
+    value = spec.get(key, default)
+    if value == None or value == '':
+        value = default
+    return value
