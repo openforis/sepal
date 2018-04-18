@@ -112,7 +112,7 @@
     }
   },
   "process": {
-    "newTab": "New Tab",
+    "newTab": "New_Tab",
     "recipe": {
       "name": "Name",
       "type": "Type",

@@ -6,14 +6,22 @@ import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
 import CreateOrLoadRecipe from './createOrLoadRecipe'
-import styles from './process.module.css'
 import Mosaic from './mosaic/mosaic'
+import styles from './process.module.css'
 
 const addTab = () => {
     const id = guid()
     actionBuilder('ADD_TAB')
-        .push('process.tabs', {id, title: msg('process.newTab')})
+        .push('process.tabs', {id, placeholder: msg('process.newTab')})
         .set('process.selectedTabId', id)
+        .dispatch()
+}
+
+const renameTab = (id, title) => {
+    const tabIndex = select('process.tabs')
+        .findIndex((tab) => tab.id === id)
+    actionBuilder('RENAME_TAB')
+        .set(['process.tabs', tabIndex, 'title'].join('.'), title)
         .dispatch()
 }
 
@@ -68,7 +76,13 @@ class Process extends React.Component {
             <div className={[styles.container, flexy.container].join(' ')}>
                 <div className={styles.tabBar}>
                     {this.props.tabs.map((tab) =>
-                        <Tab key={tab.id} tab={tab} selected={tab.id === selectedTabId}/>
+                        <Tab
+                            key={tab.id}
+                            id={tab.id}
+                            title={tab.title}
+                            placeholder={tab.placeholder}
+                            selected={tab.id === selectedTabId}
+                        />
                     )}
                     <NewTab onAdd={addTab}/>
                 </div>
@@ -85,30 +99,83 @@ class Process extends React.Component {
 
 export default connect(mapStateToProps)(Process)
 
-const Tab = ({tab: {id, type, title}, selected}) =>
-    <div
-        className={[styles.tab, selected && styles.selected].join(' ')}
-        onClick={() => selectTab(id)}>
-        <span className={styles.title}>{title}</span>
-        <button
-            className={styles.close}
-            onClick={(e) => {
-                e.stopPropagation()
-                closeTab(id)
-            }}>
-            <Icon name='times'/>
-        </button>
-    </div>
+
+class Tab extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {editing: false}
+        this.titleInput = React.createRef()
+    }
+
+    onTitleKeyPress(e) {
+        const maxLength = 60
+        const charCode = e.which || e.keyCode
+        const enter = 13
+        if (charCode === enter)
+            return this.saveTitle()
+        const char = String.fromCharCode(charCode);
+        if ([' ', '-'].includes(char))
+            e.target.value += '_'
+        if (!char.match(/[\w-.]/) || e.target.value.length > maxLength) {
+            e.preventDefault()
+            return false
+        }
+    }
+
+    onTitleChange(e) {
+        console.log('onTitleChange')
+        e.target.value = e.target.value.replace(/[^\w-.]/g, '_')
+    }
+
+    saveTitle() {
+        renameTab(this.props.id, this.titleInput.current.value)
+        this.setState((state) => ({...state, editing: false}))
+    }
+
+    render() {
+        const {id, title, placeholder, selected} = this.props
+        const titleComponent = selected
+            ? <input
+                ref={this.titleInput}
+                className={styles.title}
+                defaultValue={title}
+                placeholder={placeholder}
+                autoFocus={!title}
+                onKeyPress={this.onTitleKeyPress.bind(this)}
+                onChange={this.onTitleChange.bind(this)}
+                onBlur={this.saveTitle.bind(this)}
+            />
+            : <span className={[styles.title, title ? null : styles.placeholder].join(' ')}>{title || placeholder}</span>
+        return <div
+            className={[styles.tab, selected && styles.selected].join(' ')}
+            onClick={() => selectTab(id)}>
+            {titleComponent}
+            <button
+                className={styles.close}
+                onClick={(e) => {
+                    e.stopPropagation()
+                    closeTab(id)
+                }}>
+                <Icon name='times'/>
+            </button>
+        </div>
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (!prevState.editing && this.state.editing)
+            this.titleInput.current.select()
+    }
+}
 
 const TabContent = ({tab: {id, type}, selected}) => {
     const contents = () => {
         switch (type) {
-        case 'mosaic':
-            return <Mosaic id={id}/>
-        case 'classification':
-            return <Classification id={id}/>
-        default:
-            return <CreateOrLoadRecipe id={id}/>
+            case 'mosaic':
+                return <Mosaic id={id}/>
+            case 'classification':
+                return <Classification id={id}/>
+            default:
+                return <CreateOrLoadRecipe id={id}/>
         }
     }
     return (

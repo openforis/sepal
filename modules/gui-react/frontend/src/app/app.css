@@ -13,6 +13,11 @@ body, input, textarea, select, button, a, label {
     color: #fff;
 }
 
+input::placeholder {
+    font-style: italic;
+    color: #6c757d;
+}
+
 :focus, :active, :focus:active {
     outline: 0 !important;
     box-shadow: none !important;
