@@ -9,16 +9,20 @@ const Footer = ({className, user}) => {
     return (
         <div className={className}>
             <div className={styles.footer}>
-                {/* <Title/> */}
-                <div>
-                    <Logout/>
-                    <User user={user}/>
-                </div>
-                <a href={'https://github.com/openforis/sepal/wiki'} target={'wiki'}>
-                    <span className={styles.sepal}>SEPAL</span>
-                    <Copyright/>
-                </a>
                 <HourlyCost/>
+                <div>
+                <a
+                    href={'https://github.com/openforis/sepal/wiki'}
+                    target={'wiki'}
+                    className={styles.sepal}>
+                    Sepal
+                </a>
+                <Copyright/>
+                </div>
+                <div>
+                    <User user={user}/>
+                    <Logout/>
+                </div>
             </div>
         </div>
     )
@@ -29,15 +33,6 @@ Footer.propTypes = {
     className: PropTypes.string
 }
 
-// const Title = () =>
-//     <h2 className={styles.title}>
-//         <span className={styles._1}>S</span>
-//         <span className={styles._2}>e</span>
-//         <span className={styles._3}>p</span>
-//         <span className={styles._4}>a</span>
-//         <span className={styles._5}>l</span>
-//     </h2>
-
 const Logout = () =>
     <Tooltip msg='home.sections.logout' top>
         <button className={styles.logout} onClick={logout}>
@@ -46,9 +41,9 @@ const Logout = () =>
     </Tooltip>
 
 const User = ({user}) =>
-    <span className={styles.user}>
+    <button className={styles.user}>
         {user.username}
-    </span>
+    </button>
 
 User.propTypes = {
     user: PropTypes.object
@@ -56,7 +51,7 @@ User.propTypes = {
 
 const Copyright = () => {
     const thisYear = new Date().getFullYear()
-    return <span className={styles.copyright}>&copy; 20xx - {thisYear}</span>
+    return <span className={styles.copyright}>&copy;{thisYear}</span>
 }
 
 const HourlyCost = () =>

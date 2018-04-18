@@ -3,15 +3,23 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding-top: 1rem;
     transition: transform 150ms ease-in-out 0ms;
     --button-size: var(--menu-width);
     --icon-size: 1.3rem;
 }
 
+.menu:first-child {
+    padding-top: 9rem;
+}
+
+.menu:last-child {
+    padding-bottom: 1rem;
+}
+
 .menu .section {
     display: flex;
-    flex-direction: column;    
+    flex-direction: column;
+    min-height: fit-content;
 }
 
 .menu button {
@@ -83,6 +91,7 @@
 .menu button.users {
     background-color: hsla(310, 10%, 23%, var(--opacity));
     border-color: hsla(310, 10%, 43%, var(--border-opacity));
+    /*margin-bottom: 2rem;*/
 }
 
 .menu button.account {

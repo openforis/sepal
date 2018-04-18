@@ -28,10 +28,9 @@ class Menu extends React.Component {
                         <SectionLink name='terminal' icon='terminal'/>
                         <SectionLink name='app-launch-pad' icon='wrench'/>
                         {requestedApps.map(this.appSection)}
-                        <SectionLink name='tasks' icon='tasks'/>
                     </div>
                     <div className={styles.section}>
-                        <SectionLink name='account' icon='user'/>
+                        <SectionLink name='tasks' icon='tasks'/>
                         {/* {user.admin ? <SectionLink name='users' icon='users'/> : null} */}
                         <SectionLink name='users' icon='users'/>
                     </div>
