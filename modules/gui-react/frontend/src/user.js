@@ -23,6 +23,7 @@ export function loadCurrentUser$() {
 
 
 export function login$(username, password) {
+    resetInvalidCredentials()
     return Http.post$('/user/login', {
         username, password,
         validStatuses: [200, 401]
