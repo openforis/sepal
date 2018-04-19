@@ -4,6 +4,8 @@ import {select} from 'store'
 const recipePath = (id, path) => {
     const tabIndex = select('process.tabs')
         .findIndex((tab) => tab.id === id)
+    if (tabIndex === -1)
+        throw new Error(`Recipe not found: ${id}`)
     return ['process.tabs', tabIndex, path]
         .filter(e => e !== undefined)
         .join('.')
@@ -34,6 +36,9 @@ export const RecipeActions = (id) => {
         },
         selectPanel(panel) {
             set('SELECT_MOSAIC_PANEL', 'selectedPanel', panel)
+        },
+        setAoi(aoi) {
+            set('SET_AOI', 'aoi', aoi)
         }
     }
 }

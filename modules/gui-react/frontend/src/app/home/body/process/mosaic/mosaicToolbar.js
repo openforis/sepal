@@ -65,7 +65,7 @@ const PanelButton = ({panel, selectedPanel, recipe}) => {
     const isSelected = panel === selectedPanel
     const button = (
         <button className={isSelected ? styles.selected : null}
-                onClick={() => recipe.selectPanel(isSelected ? null : panel)}>
+            onClick={() => recipe.selectPanel(isSelected ? null : panel)}>
             <Msg id={`process.mosaic.panel.${panel}.button`}/>
         </button>
     )

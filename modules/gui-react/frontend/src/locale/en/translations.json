@@ -136,7 +136,14 @@
         "areaOfInterest": {
           "title": "Area of interest",
           "button": "AOI",
-          "tooltip": "Specify area of interest"
+          "tooltip": "Specify area of interest",
+          "form": {
+            "country": {
+              "label": "Country",
+              "placeholder": "Enter country",
+              "required": "Country is required"
+            }
+          }
         },
         "dates": {
           "title": "Dates",
@@ -185,5 +192,9 @@
       "LOAD_APPS": "Load applications",
       "OPEN_APP": "Open application"
     }
+  },
+  "button": {
+    "apply": "Apply",
+    "discard": "Discard"
   }
 }

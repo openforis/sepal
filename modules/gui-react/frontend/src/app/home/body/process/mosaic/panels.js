@@ -17,10 +17,10 @@ class Panels extends React.Component {
     render() {
         const {selectedPanel} = this.props
         switch (selectedPanel) {
-            case 'areaOfInterest':
-                return <AoiSelection className={styles.panel}/>
-            default:
-                return null
+        case 'areaOfInterest':
+            return <AoiSelection id={this.props.id} className={styles.panel}/>
+        default:
+            return null
         }
     }
 }
