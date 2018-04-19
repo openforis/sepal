@@ -6,7 +6,8 @@
     --hover-color: rgba(255, 255, 255, .8);
     --hover-background-color: hsla(37, 27%, 39%, .2);
     --selected-color: rgba(255, 255, 255, 1);
-    --selected-background-color: hsla(37, 27%, 39%, .1);
+    /* --selected-background-color: hsla(37, 27%, 39%, .1); */
+    --selected-background-color: hsla(36, 8%, 15%, .95);
     display: flex;
     flex-direction: column;
     justify-content: space-between;

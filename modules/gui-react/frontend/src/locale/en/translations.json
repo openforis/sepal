@@ -135,7 +135,7 @@
           "tooltip": "Auto-select scenes"
           },
         "preview": {
-          "title": "Preview",
+          "title": "Preview settings",
           "tooltip": "Preview settings"
         },
         "retrieve": {
@@ -159,10 +159,10 @@
           "button": "DAT",
           "tooltip": "Specify dates"
         },
-        "sensors": {
-          "title": "Sensors",
-          "button": "SAT",
-          "tooltip": "Select sensors"
+        "sources": {
+          "title": "Sources",
+          "button": "SRC",
+          "tooltip": "Select sources"
         },
         "scenes": {
           "title": "Scenes",

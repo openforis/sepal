@@ -34,7 +34,7 @@ class Toolbar extends React.Component {
                     <div className={styles.configurationButtons}>
                         <Panel panel={'areaOfInterest'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                         <Panel panel={'dates'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
-                        <Panel panel={'sensors'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={'sources'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                         <Panel panel={'scenes'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                         <Panel panel={'composite'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                     </div>

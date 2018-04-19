@@ -1,9 +1,19 @@
 .panel {
     position: absolute;
-    bottom: 1rem;
-    right: 4rem;
-    background-color: hsla(37, 27%, 39%, .1);
+    background-color: hsla(36, 8%, 15%, .95);
+    /* background-color: hsla(37, 27%, 39%, .1); */
     /*border: 1px solid hsla(0,0%,100%,.05);*/
-    border-radius: 1rem;
+    border-radius: .5rem;
     pointer-events: all;
+    padding: .5rem;
+    right: 4rem;
+    z-index: 4;
+}
+
+.top {
+    top: 5.5rem;
+}
+
+.bottom {
+    bottom: .5rem;
 }

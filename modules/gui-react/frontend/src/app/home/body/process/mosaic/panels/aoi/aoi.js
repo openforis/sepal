@@ -4,7 +4,7 @@ import {Msg, msg} from 'translate'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import ConfirmationButtons from '../confirmationButtons'
-import styles from './aoiSelection.module.css'
+import styles from './aoi.module.css'
 
 const inputs = {
     country: new Constraints()
@@ -18,7 +18,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-class AoiSelection extends React.Component {
+class Aoi extends React.Component {
     constructor(props) {
         super(props)
         this.recipe = RecipeActions(props.id)
@@ -50,7 +50,7 @@ class AoiSelection extends React.Component {
     }
 }
 
-AoiSelection.propTypes = {
+Aoi.propTypes = {
     id: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
@@ -61,4 +61,4 @@ AoiSelection.propTypes = {
     values: PropTypes.object
 }
 
-export default form(inputs, mapStateToProps)(AoiSelection)
+export default form(inputs, mapStateToProps)(Aoi)
