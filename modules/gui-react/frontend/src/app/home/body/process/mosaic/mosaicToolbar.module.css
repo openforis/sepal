@@ -34,7 +34,6 @@
     padding: 0;
     color: var(--default-color);
     background-color: var(--default-background-color);
-    cursor: pointer;
 }
 
 .toolbar button svg {
@@ -44,9 +43,10 @@
     vertical-align: middle;
 }
 
-.toolbar button:hover {
+.toolbar button:hover:not(:disabled) {
     color: var(--hover-color);
     background-color: var(--hover-background-color);
+    cursor: pointer;
 }
 
 .toolbar .selected {
@@ -56,9 +56,7 @@
     border-bottom-left-radius: 0;
 }
 
-
-
-.toolbar .selected:hover {
+.toolbar .selected:hover:not(:disabled) {
     color: var(--selected-color);
     background-color: var(--selected-background-color);
 }

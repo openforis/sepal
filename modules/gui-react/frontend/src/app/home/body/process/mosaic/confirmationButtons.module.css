@@ -1,0 +1,30 @@
+.buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    /* opacity: .3; */
+    /* transition: opacity 100ms ease-in-out; */
+}
+
+.buttons button {
+    color: hsl(0, 0%, 50%);
+    background-color: hsl(224, 0%, 27%);
+    border: 0;
+    border-radius: 0.25rem;
+    font-size: .8rem;
+    transition: all 100ms ease-in-out;
+}
+
+.buttons button span {
+    margin-left: .2rem;
+}
+
+.dirty {
+    /* opacity: .8; */
+}
+
+.dirty button {
+    color: hsl(0, 0%, 100%);
+    background-color: hsl(224, 87%, 57%);
+    cursor: pointer;
+}

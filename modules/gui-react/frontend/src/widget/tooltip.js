@@ -17,27 +17,31 @@ const Tooltip =
         topRight,
         bottomLeft,
         bottomRight,
+        disabled = false,
         delay = 0.25,
         children,
         ...otherProps
-    }) =>
-        <RcTooltip
-            overlay={msg ? message(msg + '.tooltip') : rawMsg}
-            placement={
-                left ? 'left' :
-                    right ? 'right' :
-                        top ? 'top' :
-                            bottom ? 'bottom' :
-                                topLeft ? 'topLeft' :
-                                    topRight ? 'topRight' :
-                                        bottomLeft ? 'bottomLeft' :
-                                            bottomRight ? 'bottomRight' :
-                                                'top'}
-            mouseEnterDelay={delay}
-            trigger={['hover']}
-            {...otherProps}>
-            {children}
-        </RcTooltip>
+    }) => !disabled 
+        ? (
+            <RcTooltip
+                overlay={msg ? message(msg + '.tooltip') : rawMsg}
+                placement={
+                    left ? 'left' :
+                        right ? 'right' :
+                            top ? 'top' :
+                                bottom ? 'bottom' :
+                                    topLeft ? 'topLeft' :
+                                        topRight ? 'topRight' :
+                                            bottomLeft ? 'bottomLeft' :
+                                                bottomRight ? 'bottomRight' :
+                                                    'top'}
+                mouseEnterDelay={delay}
+                trigger={['hover']}
+                {...otherProps}>
+                {children}
+            </RcTooltip>
+        )
+        : <div>{children}</div>
 
 Tooltip.propTypes = {
     msg: PropTypes.string,
@@ -50,6 +54,7 @@ Tooltip.propTypes = {
     topRight: PropTypes.bool,
     bottomLeft: PropTypes.bool,
     bottomRight: PropTypes.bool,
+    disabled: PropTypes.bool,
     delay: PropTypes.number,
     children: PropTypes.object
 }

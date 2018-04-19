@@ -2,7 +2,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
-import {RecipeState, RecipeActions} from '../mosaicRecipe'
+import {RecipeActions, RecipeState} from '../mosaicRecipe'
+import ConfirmationButtons from '../confirmationButtons'
 import styles from './aoiSelection.module.css'
 
 const inputs = {
@@ -13,7 +14,7 @@ const inputs = {
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        values: recipe('aoi'),
+        values: recipe('aoi')
     }
 }
 
@@ -21,13 +22,6 @@ class AoiSelection extends React.Component {
     constructor(props) {
         super(props)
         this.recipe = RecipeActions(props.id)
-    }
-    apply(e, values) {
-        e.preventDefault()
-        this.recipe.setAoi(values)
-    }
-    discard(e) {
-        e.preventDefault()
     }
     render() {
         const {className, form, inputs: {country}} = this.props
@@ -48,17 +42,7 @@ class AoiSelection extends React.Component {
                                 tabIndex={1}/>
                             <ErrorMessage input={country}/>
                         </div>
-                        <div className={styles.buttons}>
-                            <button
-                                onClick={(e) => this.apply.bind(this)(e, form.values())}
-                                disabled={form.hasInvalid()}
-                                tabIndex={2}>
-                                <Msg id='button.apply'/>
-                            </button>
-                            <button onClick={this.discard.bind(this)}>
-                                <Msg id='button.discard'/>
-                            </button>
-                        </div>
+                        <ConfirmationButtons form={form} recipe={this.recipe}/>
                     </form>
                 </div>
             </div>
@@ -74,6 +58,7 @@ AoiSelection.propTypes = {
         country: PropTypes.object,
     }),
     action: PropTypes.func,
+    values: PropTypes.object
 }
 
 export default form(inputs, mapStateToProps)(AoiSelection)
