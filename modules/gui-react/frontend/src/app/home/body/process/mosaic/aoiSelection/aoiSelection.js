@@ -1,16 +1,21 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
-import styles from './aoiSelection.module.css'
-import PropTypes from 'prop-types'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
-import {RecipeActions} from '../mosaicRecipe'
+import {RecipeState, RecipeActions} from '../mosaicRecipe'
+import styles from './aoiSelection.module.css'
 
 const inputs = {
     country: new Constraints()
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
 }
 
-const mapStateToProps = () => ({})
+const mapStateToProps = (state, ownProps) => {
+    const recipe = RecipeState(ownProps.id)
+    return {
+        values: recipe('aoi'),
+    }
+}
 
 class AoiSelection extends React.Component {
     constructor(props) {
