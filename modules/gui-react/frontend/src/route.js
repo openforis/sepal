@@ -1,9 +1,9 @@
-import React from 'react'
-import QueryString from 'query-string'
-import {state} from 'store'
 import actionBuilder from 'action-builder'
 import PropTypes from 'prop-types'
+import QueryString from 'query-string'
+import React from 'react'
 import * as router from 'react-router-dom'
+import {state} from 'store'
 
 let historyInstance = null
 export const history = () => ({
@@ -76,7 +76,8 @@ export function syncHistoryAndStore(history, store) {
     })
 }
 
-export const isPathInLocation = (path) => location().pathname.startsWith(path)
+export const isPathInLocation = (path) =>
+    new RegExp(`^${path}([?#/].*)?$`).test(location().pathname)
 
 export const replaceIfPathInLocation = (pathPrefix, destinationPath) => {
     isPathInLocation(pathPrefix) && history().replace(destinationPath).dispatch()

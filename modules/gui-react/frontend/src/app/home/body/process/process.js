@@ -2,6 +2,7 @@ import actionBuilder from 'action-builder'
 import flexy from 'flexy.module.css'
 import guid from 'guid'
 import React from 'react'
+import Tooltip from 'widget/tooltip'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
@@ -113,7 +114,7 @@ class Tab extends React.Component {
         const enter = 13
         if (charCode === enter)
             return this.saveTitle()
-        const char = String.fromCharCode(charCode);
+        const char = String.fromCharCode(charCode)
         if ([' ', '-'].includes(char))
             e.target.value += '_'
         if (!char.match(/[\w-.]/) || e.target.value.length > maxLength) {
@@ -145,20 +146,25 @@ class Tab extends React.Component {
                 onChange={this.onTitleChange.bind(this)}
                 onBlur={this.saveTitle.bind(this)}
             />
-            : <span className={[styles.title, title ? null : styles.placeholder].join(' ')}>{title || placeholder}</span>
-        return <div
-            className={[styles.tab, selected && styles.selected].join(' ')}
-            onClick={() => selectTab(id)}>
-            {titleComponent}
-            <button
-                className={styles.close}
-                onClick={(e) => {
-                    e.stopPropagation()
-                    closeTab(id)
-                }}>
-                <Icon name='times'/>
-            </button>
-        </div>
+            :
+            <span className={[styles.title, title ? null : styles.placeholder].join(' ')}>{title || placeholder}</span>
+        return (
+            <Tooltip rawMsg={title || placeholder} bottom delay={1}>
+                <div
+                    className={[styles.tab, selected && styles.selected].join(' ')}
+                    onClick={() => selectTab(id)}>
+                    {titleComponent}
+                    <button
+                        className={styles.close}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            closeTab(id)
+                        }}>
+                        <Icon name='times'/>
+                    </button>
+                </div>
+            </Tooltip>
+        )
     }
 
     componentDidUpdate(prevProps, prevState) {
