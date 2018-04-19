@@ -1,6 +1,6 @@
 .toolbar {
-    --button-size: 2.8rem;
-    --icon-size: 1.3rem;
+    --button-size: 2.5rem;
+    --icon-size: 1.1rem;
     --default-color: rgba(255, 255, 255, .6);
     --hover-color: rgba(255, 255, 255, .8);
     --default-background-color: rgba(36, 74, 88, .4);
