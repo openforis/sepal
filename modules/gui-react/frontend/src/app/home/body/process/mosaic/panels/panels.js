@@ -1,8 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
-import {Msg} from 'translate'
-import {RecipeState} from './mosaicRecipe'
+import {RecipeState} from '../mosaicRecipe'
 import AoiSelection from './aoiSelection/aoiSelection'
 import styles from './panels.module.css'
 

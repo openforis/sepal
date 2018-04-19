@@ -18,14 +18,14 @@ class ConfirmationButtons extends React.Component {
             ...this.state,
             dirty: false
         })
-        this.props.recipe.setPanelsEnabled()
+        this.props.recipe.setModal(false)
     }
     onDirty() {
         this.setState({
             ...this.state,
             dirty: true
         })
-        this.props.recipe.setModal()
+        this.props.recipe.setModal(true)
     }
     apply(e, values) {
         e.preventDefault()

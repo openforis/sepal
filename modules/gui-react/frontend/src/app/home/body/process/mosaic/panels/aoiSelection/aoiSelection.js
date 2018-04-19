@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
-import {RecipeActions, RecipeState} from '../mosaicRecipe'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import ConfirmationButtons from '../confirmationButtons'
 import styles from './aoiSelection.module.css'
 

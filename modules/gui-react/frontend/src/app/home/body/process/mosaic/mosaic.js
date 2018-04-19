@@ -3,7 +3,7 @@ import MapToolbar from './mapToolbar'
 import MosaicToolbar from './mosaicToolbar'
 import styles from './mosaic.module.css'
 import PropTypes from 'prop-types'
-import Panels from './panels'
+import Panels from './panels/panels'
 
 const Mosaic = (props) =>
     <div>
