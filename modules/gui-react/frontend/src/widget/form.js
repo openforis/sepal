@@ -1,20 +1,25 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
-import PropTypes from 'prop-types'
 import {msg} from 'translate'
 import styles from './form.module.css'
 
 export function form(inputs, mapStateToProps) {
     return (WrappedComponent) => {
         class Form extends React.Component {
+            onDirtyListeners = []
+            onCleanListeners = []
+
             constructor(props) {
                 super(props)
                 const state = {
-                    values: props.values || {},
-                    errors: props.errors || {}
+                    initialValues: {...props.values} || {},
+                    values: {...props.values} || {},
+                    errors: {...props.errors} || {},
+                    dirty: false
                 }
-
                 Object.keys(inputs).forEach(name => {
+                    state.initialValues[name] = name in state.initialValues ? state.initialValues[name] : ''
                     state.values[name] = name in state.values ? state.values[name] : ''
                     state.errors[name] = name in state.errors ? state.errors[name] : ''
                 })
@@ -35,10 +40,10 @@ export function form(inputs, mapStateToProps) {
                     this.setState((prevState) =>
                         ({...prevState, errors: nextProps.errors})
                     )
-                if ('values' in nextProps)
-                    this.setState((prevState) =>
-                        ({...prevState, values: {...prevState.values, ...nextProps.values}})
-                    )
+                // if ('values' in nextProps)
+                //     this.setState((prevState) =>
+                //         ({...prevState, values: {...prevState.values, ...nextProps.values}})
+                //     )
             }
 
             handleChange(e) {
@@ -57,6 +62,11 @@ export function form(inputs, mapStateToProps) {
                         const state = Object.assign({}, prevState)
                         state.values[name] = value
                         state.errors[name] = ''
+                        state.dirty = state.initialValues[name] !== value
+                        if (state.dirty && !prevState.dirty)
+                            this.onDirty()
+                        if (!state.dirty && prevState.dirty)
+                            this.onClean()
                         return state
                     })
                 return this
@@ -86,6 +96,39 @@ export function form(inputs, mapStateToProps) {
                 return !!Object.keys(this.state.values).find(name => this.error(name))
             }
 
+            reset() {
+                this.setState((prevState) => {
+                    const dirty = !!Object.keys(inputs).find((name) => {
+                            this.state.values[name] !== this.state.initialValues
+                        }
+                    )
+                    const state = {...prevState, values: {...prevState.initialValues}, dirty: dirty}
+                    if (state.dirty && !prevState.dirty)
+                        this.onDirty()
+                    if (!state.dirty && prevState.dirty)
+                        this.onClean()
+                    return state
+                })
+            }
+
+            isValueDirty(name) {
+                const state = this.state
+                return state.values[name] !== state.initialValues[name]
+            }
+
+            isDirty() {
+                return !!Object.keys(this.state.initialValues)
+                    .find(this.isValueDirty)
+            }
+
+            onDirty() {
+                this.onDirtyListeners.forEach((listener) => listener())
+            }
+
+            onClean() {
+                this.onCleanListeners.forEach((listener) => listener())
+            }
+
             render() {
                 const formInputs = {}
                 Object.keys(inputs).forEach(name => {
@@ -96,6 +139,7 @@ export function form(inputs, mapStateToProps) {
                         errorClass: this.state.errors[name] ? styles.error : null,
                         set: (value) => this.set(name, value),
                         handleChange: (e) => this.handleChange(e),
+                        isDirty: () => this.isValueDirty(name),
                         validate: () => this.validate(name)
                     }
                 })
@@ -106,6 +150,10 @@ export function form(inputs, mapStateToProps) {
                             .filter(error => error),
                         errorClass: styles.error,
                         hasInvalid: this.hasInvalid,
+                        onDirty: (listener) => this.onDirtyListeners.push(listener),
+                        onClean: (listener) => this.onCleanListeners.push(listener),
+                        reset: () => this.reset(),
+                        isDirty: () => this.isDirty,
                         values: () => this.state.values
                     },
                     inputs: formInputs
