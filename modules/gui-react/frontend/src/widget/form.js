@@ -133,7 +133,7 @@ export function form(inputs, mapStateToProps) {
 
             isDirty() {
                 return !!Object.keys(this.state.initialValues)
-                    .find(this.isValueDirty)
+                    .find((name) => this.isValueDirty(name))
             }
 
             onDirty() {
@@ -169,7 +169,7 @@ export function form(inputs, mapStateToProps) {
                         onClean: (listener) => this.onCleanListeners.push(listener),
                         setInitialValues: (values) => this.setInitialValues(values),
                         reset: () => this.reset(),
-                        isDirty: () => this.isDirty,
+                        isDirty: () => this.isDirty(),
                         values: () => this.state.values
                     },
                     inputs: formInputs
