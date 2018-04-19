@@ -48,6 +48,7 @@ class ConfirmationButtons extends React.Component {
                     <span><Msg id='button.apply'/></span>
                 </button>
                 <button onClick={this.revert.bind(this)}
+                        onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before reverting
                     disabled={!dirty}>
                     <Icon name={'undo-alt'}/>
                     <span><Msg id='button.revert'/></span>

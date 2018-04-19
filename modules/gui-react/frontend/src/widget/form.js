@@ -40,10 +40,6 @@ export function form(inputs, mapStateToProps) {
                     this.setState((prevState) =>
                         ({...prevState, errors: nextProps.errors})
                     )
-                // if ('values' in nextProps)
-                //     this.setState((prevState) =>
-                //         ({...prevState, values: {...prevState.values, ...nextProps.values}})
-                //     )
             }
 
             handleChange(e) {
@@ -97,6 +93,8 @@ export function form(inputs, mapStateToProps) {
             }
 
             setInitialValues(values) {
+                if (!values)
+                    return
                 this.setState((prevState) => {
                     const state = {...prevState, dirty: false}
                     Object.keys(inputs).forEach(name => {
@@ -117,6 +115,9 @@ export function form(inputs, mapStateToProps) {
                         }
                     )
                     const state = {...prevState, values: {...prevState.initialValues}, dirty: dirty}
+                    Object.keys(inputs).forEach(name => {
+                        state.errors[name] = ''
+                    })
                     if (state.dirty && !prevState.dirty)
                         this.onDirty()
                     if (!state.dirty && prevState.dirty)
