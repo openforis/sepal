@@ -8,6 +8,7 @@
     padding: .5rem;
     right: 4rem;
     z-index: 4;
+    min-width: 20rem;
 }
 
 .top {
