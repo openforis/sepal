@@ -2,8 +2,6 @@
     display: flex;
     flex-direction: row;
     justify-content: space-around;
-    /* opacity: .3; */
-    /* transition: opacity 100ms ease-in-out; */
 }
 
 .buttons button {
@@ -19,11 +17,7 @@
     margin-left: .2rem;
 }
 
-.dirty {
-    /* opacity: .8; */
-}
-
-.dirty button {
+.dirty button:not(:disabled) {
     color: hsl(0, 0%, 100%);
     background-color: hsl(224, 87%, 57%);
     cursor: pointer;
