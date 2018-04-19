@@ -133,27 +133,27 @@
         "centerMap.tooltip": "Zoom to area of interest"
       },
       "panel": {
-        "AOI": {
+        "areaOfInterest": {
           "title": "Area of interest",
           "button": "AOI",
           "tooltip": "Specify area of interest"
         },
-        "DAT": {
+        "dates": {
           "title": "Dates",
           "button": "DAT",
           "tooltip": "Specify dates"
         },
-        "SAT": {
+        "sensors": {
           "title": "Sensors",
           "button": "SAT",
           "tooltip": "Select sensors"
         },
-        "SCN": {
+        "scenes": {
           "title": "Scenes",
           "button": "SCN",
           "tooltip": "Configure scenes selection"
         },
-        "CMP": {
+        "composite": {
           "title": "Composite",
           "button": "CMP",
           "tooltip": "Configure composite creation"

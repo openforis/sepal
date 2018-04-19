@@ -1,11 +1,11 @@
-import React from 'react'
-import Icon from 'widget/icon'
-import styles from './mosaicToolbar.module.css'
 import PropTypes from 'prop-types'
-import Tooltip from 'widget/tooltip'
+import React from 'react'
 import {connect} from 'store'
-import {RecipeState, RecipeActions} from './mosaicRecipe'
 import {Msg} from 'translate'
+import Icon from 'widget/icon'
+import Tooltip from 'widget/tooltip'
+import {RecipeActions, RecipeState} from './mosaicRecipe'
+import styles from './mosaicToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
@@ -19,6 +19,7 @@ class MosaicToolbar extends React.Component {
         super(props)
         this.recipe = RecipeActions(props.id)
     }
+
     render() {
         const {className, selectedPanel} = this.props
         return (
@@ -42,11 +43,11 @@ class MosaicToolbar extends React.Component {
                         </Tooltip>
                     </div>
                     <div className={styles.configuration}>
-                        <PanelButton panel={'AOI'} selectedPanel={selectedPanel} recipe={this.recipe}/>
-                        <PanelButton panel={'DAT'} selectedPanel={selectedPanel} recipe={this.recipe}/>
-                        <PanelButton panel={'SAT'} selectedPanel={selectedPanel} recipe={this.recipe}/>
-                        <PanelButton panel={'SCN'} selectedPanel={selectedPanel} recipe={this.recipe}/>
-                        <PanelButton panel={'CMP'} selectedPanel={selectedPanel} recipe={this.recipe}/>
+                        <PanelButton panel={'areaOfInterest'} selectedPanel={selectedPanel} recipe={this.recipe}/>
+                        <PanelButton panel={'dates'} selectedPanel={selectedPanel} recipe={this.recipe}/>
+                        <PanelButton panel={'sensors'} selectedPanel={selectedPanel} recipe={this.recipe}/>
+                        <PanelButton panel={'scenes'} selectedPanel={selectedPanel} recipe={this.recipe}/>
+                        <PanelButton panel={'composite'} selectedPanel={selectedPanel} recipe={this.recipe}/>
                     </div>
                 </div>
             </div>
@@ -60,13 +61,21 @@ MosaicToolbar.propTypes = {
     selectedPanel: PropTypes.string
 }
 
-const PanelButton = ({panel, selectedPanel, recipe}) =>
-    <Tooltip msg={`process.mosaic.panel.${panel}`} left>
-        <button className={panel === selectedPanel && styles.selected}
-            onClick={() => recipe.selectPanel(panel !== selectedPanel ? panel : null)}>
+const PanelButton = ({panel, selectedPanel, recipe}) => {
+    const isSelected = panel === selectedPanel
+    const button = (
+        <button className={isSelected ? styles.selected : null}
+                onClick={() => recipe.selectPanel(isSelected ? null : panel)}>
             <Msg id={`process.mosaic.panel.${panel}.button`}/>
         </button>
-    </Tooltip>
+    )
+
+    return isSelected
+        ? button
+        : <Tooltip msg={`process.mosaic.panel.${panel}`} left>
+            {button}
+        </Tooltip>
+}
 
 PanelButton.propTypes = {
     panel: PropTypes.string,

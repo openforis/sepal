@@ -1,29 +1,9 @@
-.panels {
+.panel {
     position: absolute;
-    top: 10rem;
     bottom: 1rem;
-    left: 1rem;
     right: 4rem;
     background-color: hsla(37, 27%, 39%, .1);
+    /*border: 1px solid hsla(0,0%,100%,.05);*/
+    border-radius: 1rem;
     pointer-events: all;
-}
-
-.AOI {
-
-}
-
-.DAT {
-
-}
-
-.SAT {
-
-}
-
-.SCN {
-
-}
-
-.CMP {
-
 }

@@ -1,9 +1,10 @@
-import React from 'react'
-import styles from './panels.module.css'
 import PropTypes from 'prop-types'
+import React from 'react'
 import {connect} from 'store'
-import {RecipeState} from './mosaicRecipe'
 import {Msg} from 'translate'
+import {RecipeState} from './mosaicRecipe'
+import AoiSelection from './aoiSelection/aoiSelection'
+import styles from './panels.module.css'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
@@ -13,16 +14,14 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class Panels extends React.Component {
-    constructor(props) {
-        super(props)
-    }
     render() {
         const {selectedPanel} = this.props
-        return selectedPanel ? (
-            <div className={[styles.panels, styles.selectedPanel].join(' ')}>
-                <Msg id={`process.mosaic.panel.${selectedPanel}.title`}/>
-            </div>
-        ) : null
+        switch (selectedPanel) {
+            case 'areaOfInterest':
+                return <AoiSelection className={styles.panel}/>
+            default:
+                return null
+        }
     }
 }
 

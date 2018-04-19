@@ -19,6 +19,7 @@
     padding: 0;
     color: var(--default-color);
     background-color: var(--default-background-color);
+    cursor: pointer;
 }
 
 .toolbar button svg {

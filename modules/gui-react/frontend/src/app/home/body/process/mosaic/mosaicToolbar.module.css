@@ -34,6 +34,7 @@
     padding: 0;
     color: var(--default-color);
     background-color: var(--default-background-color);
+    cursor: pointer;
 }
 
 .toolbar button svg {
@@ -51,20 +52,26 @@
 .toolbar .selected {
     color: var(--selected-color);
     background-color: var(--selected-background-color);
-    left: -.9rem;
-    width: calc(var(--button-size) + .9rem);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
 }
 
-/* .toolbar .selected::before {
+
+
+.toolbar .selected:hover {
+    color: var(--selected-color);
+    background-color: var(--selected-background-color);
+}
+
+.toolbar .selected::before {
     content: "";
     position: absolute;
-    z-index: 1;
+    z-index: 0;
     top: 0;
     bottom: 0;
-    left: -1rem;
-    right: 0;
-    background-color: red;
-    border-radius: .25rem;
-} */
+    left: -.9rem;
+    right: var(--button-size);
+    background-color: var(--selected-background-color);
+    border-radius: 0;
+    border: none;
+}
