@@ -96,6 +96,20 @@ export function form(inputs, mapStateToProps) {
                 return !!Object.keys(this.state.values).find(name => this.error(name))
             }
 
+            setInitialValues(values) {
+                this.setState((prevState) => {
+                    const state = {...prevState, dirty: false}
+                    Object.keys(inputs).forEach(name => {
+                        state.initialValues[name] = name in values ? values[name] : ''
+                        state.values[name] = name in values ? values[name] : ''
+                        state.errors[name] = ''
+                    })
+                    if (prevState.dirty)
+                        this.onClean()
+                    return state
+                })
+            }
+
             reset() {
                 this.setState((prevState) => {
                     const dirty = !!Object.keys(inputs).find((name) => {
@@ -152,6 +166,7 @@ export function form(inputs, mapStateToProps) {
                         hasInvalid: this.hasInvalid,
                         onDirty: (listener) => this.onDirtyListeners.push(listener),
                         onClean: (listener) => this.onCleanListeners.push(listener),
+                        setInitialValues: (values) => this.setInitialValues(values),
                         reset: () => this.reset(),
                         isDirty: () => this.isDirty,
                         values: () => this.state.values
