@@ -40,11 +40,8 @@ export const RecipeActions = (id) => {
         setAoi(aoi) {
             set('SET_AOI', 'aoi', aoi)
         },
-        setPanelsDisabled() {
-            set('SET_PANELS_DISABLED', 'panelsDisabled', true)
-        },
-        setPanelsEnabled() {
-            set('SET_PANELS_ENABLED', 'panelsDisabled', false)
+        setModal(enabled) {
+            set('SET_MODAL', 'modal', enabled)
         }
     }
 }

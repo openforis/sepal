@@ -14,12 +14,12 @@
     width: var(--button-size);
 }
 
-.toolbar.action {
+.toolbar.actionButtons {
     display: flex;
     flex-direction: column;
 }
 
-.toolbar.configuration {
+.toolbar.configurationButtons {
     display: flex;
     flex-direction: column;
 }
