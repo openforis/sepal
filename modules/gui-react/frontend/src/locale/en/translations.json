@@ -120,10 +120,7 @@
     },
     "mosaic": {
       "create": "Mosaic",
-      "toolbar": {
-        "auto.tooltip": "Auto-select scenes",
-        "preview.tooltip": "Preview settings",
-        "retrieve.tooltip": "Retrieve mosaic",
+      "mapToolbar": {
         "zoomIn.tooltip": "Zoom in",
         "zoomOut.tooltip": "Zoom out",
         "labels.show.tooltip": "Show labels",
@@ -133,6 +130,18 @@
         "centerMap.tooltip": "Zoom to area of interest"
       },
       "panel": {
+        "auto": {
+          "title": "Auto-select scenes",
+          "tooltip": "Auto-select scenes"
+          },
+        "preview": {
+          "title": "Preview",
+          "tooltip": "Preview settings"
+        },
+        "retrieve": {
+          "title": "Retrieve",
+          "tooltip": "Retrieve mosaic"
+        },
         "areaOfInterest": {
           "title": "Area of interest",
           "button": "AOI",

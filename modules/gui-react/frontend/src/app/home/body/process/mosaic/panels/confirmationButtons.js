@@ -5,41 +5,28 @@ import PropTypes from 'prop-types'
 import Icon from 'widget/icon'
 
 class ConfirmationButtons extends React.Component {
-    constructor(props) {
-        super(props)
-        this.state = {
-            dirty: false
-        }
-        props.form.onClean(this.onClean.bind(this))
-        props.form.onDirty(this.onDirty.bind(this))
-    }
-    onClean() {
-        this.setState({
-            ...this.state,
-            dirty: false
-        })
-        this.props.recipe.setModal(false)
-    }
-    onDirty() {
-        this.setState({
-            ...this.state,
-            dirty: true
-        })
-        this.props.recipe.setModal(true)
+    componentDidMount() {
+        const {form, recipe} = this.props
+        form.onClean(() => recipe.setModal(false))
+        form.onDirty(() => recipe.setModal(true))
+        recipe.setModal(form.hasInvalid())
     }
     apply(e, values) {
         e.preventDefault()
-        this.props.recipe.setAoi(values)
-        this.props.form.setInitialValues(values)
+        const {form, recipe} = this.props
+        recipe.setAoi(values)
+        form.setInitialValues(values)
     }
     revert(e) {
         e.preventDefault()
-        this.props.form.reset()
+        const {form, recipe} = this.props
+        form.reset()
+        // TODO: remove this hack
+        setTimeout(() => recipe.setModal(form.hasInvalid()), 0)
     }
-
     render () {
         const {form} = this.props
-        const dirty = this.state.dirty
+        const dirty = form.isDirty()
         return (
             <div className={[styles.buttons, dirty && styles.dirty].join(' ')}>
                 <button onClick={(e) => this.apply.bind(this)(e, form.values())}

@@ -24,27 +24,27 @@ class MapToolbar extends React.Component {
         return (
             <div className={className}>
                 <div className={styles.toolbar}>
-                    <Tooltip msg={'process.mosaic.toolbar.zoomIn'} top>
+                    <Tooltip msg={'process.mosaic.mapToolbar.zoomIn'} top>
                         <button>
                             <Icon name={'plus'}/>
                         </button>
                     </Tooltip>
-                    <Tooltip msg={'process.mosaic.toolbar.zoomOut'} top>
+                    <Tooltip msg={'process.mosaic.mapToolbar.zoomOut'} top>
                         <button>
                             <Icon name={'minus'}/>
                         </button>
                     </Tooltip>
-                    <Tooltip msg={`process.mosaic.toolbar.labels.${labelsShown ? 'hide' : 'show'}`} top>
+                    <Tooltip msg={`process.mosaic.mapToolbar.labels.${labelsShown ? 'hide' : 'show'}`} top>
                         <button onClick={() => this.recipe.setLabelsShown(!labelsShown)}>
                             <Icon name={'map-marker-alt'}/>
                         </button>
                     </Tooltip>
-                    <Tooltip msg={`process.mosaic.toolbar.grid.${gridShown ? 'hide' : 'show'}`} top>
+                    <Tooltip msg={`process.mosaic.mapToolbar.grid.${gridShown ? 'hide' : 'show'}`} top>
                         <button onClick={() => this.recipe.setGridShown(!gridShown)}>
                             <Icon name={'th'}/>
                         </button>
                     </Tooltip>
-                    <Tooltip msg={'process.mosaic.toolbar.centerMap'} top>
+                    <Tooltip msg={'process.mosaic.mapToolbar.centerMap'} top>
                         <button>
                             <Icon name={'bullseye'}/>
                         </button>

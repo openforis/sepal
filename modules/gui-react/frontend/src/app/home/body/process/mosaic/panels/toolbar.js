@@ -4,8 +4,8 @@ import {connect} from 'store'
 import {Msg} from 'translate'
 import Icon from 'widget/icon'
 import Tooltip from 'widget/tooltip'
-import {RecipeActions, RecipeState} from './mosaicRecipe'
-import styles from './mosaicToolbar.module.css'
+import {RecipeActions, RecipeState} from '../mosaicRecipe'
+import styles from './toolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
@@ -15,7 +15,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-class MosaicToolbar extends React.Component {
+class Toolbar extends React.Component {
     constructor(props) {
         super(props)
         this.recipe = RecipeActions(props.id)
@@ -44,7 +44,7 @@ class MosaicToolbar extends React.Component {
     }
 }
 
-MosaicToolbar.propTypes = {
+Toolbar.propTypes = {
     className: PropTypes.string,
     id: PropTypes.string,
     selectedPanel: PropTypes.string,
@@ -74,4 +74,4 @@ Panel.propTypes = {
     disabled: PropTypes.bool
 }
 
-export default connect(mapStateToProps)(MosaicToolbar)
+export default connect(mapStateToProps)(Toolbar)
