@@ -87,7 +87,7 @@ const RecipeButton = ({icon, iconType, onClick}) =>
     <IconButton icon={icon} iconType={iconType} onClick={onClick} className={styles.recipeButton}/>
 
 function formatDate(date) {
-    const pad = (value) => value.length < 2 ? '0' + value : value
+    const pad = (value) => ('' + value).length < 2 ? '0' + value : value
     let d = new Date(date),
         month = pad(d.getMonth() + 1),
         day = pad(d.getDate()),
@@ -95,5 +95,6 @@ function formatDate(date) {
         hours = pad(d.getHours()),
         minutes = pad(date.getMinutes()),
         seconds = pad(date.getSeconds())
+    console.log(month)
     return `${[year, month, day].join('')}_${[hours, minutes, seconds].join('.')}`
 }
