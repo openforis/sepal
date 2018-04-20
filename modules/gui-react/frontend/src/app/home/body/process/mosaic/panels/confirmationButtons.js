@@ -7,7 +7,7 @@ import Icon from 'widget/icon'
 class ConfirmationButtons extends React.Component {
     componentDidMount() {
         const {form, recipe} = this.props
-        form.onClean(() => recipe.setModal(false))
+        form.onClean(() => recipe.setModal(form.hasInvalid()))
         form.onDirty(() => recipe.setModal(true))
         recipe.setModal(form.hasInvalid())
     }
@@ -21,8 +21,6 @@ class ConfirmationButtons extends React.Component {
         e.preventDefault()
         const {form, recipe} = this.props
         form.reset()
-        // TODO: remove this hack
-        setTimeout(() => recipe.setModal(form.hasInvalid()), 0)
     }
     render () {
         const {form} = this.props
