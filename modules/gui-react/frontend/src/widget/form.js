@@ -59,13 +59,18 @@ export function form(inputs, mapStateToProps) {
                         state.values[name] = value
                         state.errors[name] = ''
                         state.dirty = state.initialValues[name] !== value
-                        if (state.dirty && !prevState.dirty)
-                            this.onDirty()
-                        if (!state.dirty && prevState.dirty)
-                            this.onClean()
+                        state.gotDirty = state.dirty && !prevState.dirty
+                        state.gotClean = !state.dirty && prevState.dirty
                         return state
-                    })
+                    }, () => this.notifyOnDirtyOrClean())
                 return this
+            }
+
+            notifyOnDirtyOrClean() {
+                if (this.state.gotDirty)
+                    this.onDirty()
+                else if (this.state.gotClean)
+                    this.onClean()
             }
 
             value(name) {
@@ -118,12 +123,10 @@ export function form(inputs, mapStateToProps) {
                     Object.keys(inputs).forEach(name => {
                         state.errors[name] = ''
                     })
-                    if (state.dirty && !prevState.dirty)
-                        this.onDirty()
-                    if (!state.dirty && prevState.dirty)
-                        this.onClean()
+                    state.gotDirty = state.dirty && !prevState.dirty
+                    state.gotClean = !state.dirty && prevState.dirty
                     return state
-                })
+                }, () => this.notifyOnDirtyOrClean())
             }
 
             isValueDirty(name) {

@@ -2,6 +2,12 @@
     display: flex;
     flex-direction: row;
     justify-content: space-around;
+    opacity: 0;
+    transition: opacity 200ms ease-in-out;
+}
+
+.dirty {
+    opacity: 1;
 }
 
 .buttons button {
@@ -9,7 +15,7 @@
     background-color: hsl(224, 0%, 27%);
     border: 0;
     border-radius: 0.25rem;
-    font-size: .8rem;
+    font-size: .9rem;
     transition: all 100ms ease-in-out;
 }
 
@@ -18,7 +24,12 @@
 }
 
 .dirty button:not(:disabled) {
-    color: hsl(0, 0%, 100%);
-    background-color: hsl(224, 87%, 57%);
+    color: hsl(0, 0%, 80%);
+    background-color: hsl(224, 87%, 37%);
     cursor: pointer;
+}
+
+.dirty button:not(:disabled):hover {
+    color: hsl(0, 0%, 100%);
+    background-color: hsl(224, 87%, 47%);
 }
