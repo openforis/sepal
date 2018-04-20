@@ -6,8 +6,8 @@
     pointer-events: all;
     right: 4rem;
     z-index: 4;
-    min-width: 20rem;
-    --scaling-factor: .8 !important;
+    min-width: 14rem;
+    --scaling-factor: .8;
     overflow: scroll;
     flex-shrink: 0;
 }
