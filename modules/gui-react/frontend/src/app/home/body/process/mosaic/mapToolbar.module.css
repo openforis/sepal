@@ -19,7 +19,6 @@
     padding: 0;
     color: var(--default-color);
     background-color: var(--default-background-color);
-    cursor: pointer;
 }
 
 .toolbar button svg {
@@ -30,6 +29,15 @@
 }
 
 .toolbar button:hover {
+    color: var(--hover-color);
+    background-color: var(--hover-background-color);
+}
+
+.toolbar button:not(:disabled) {
+    cursor: pointer;
+}
+
+.toolbar button:disabled {
     color: var(--hover-color);
     background-color: var(--hover-background-color);
 }

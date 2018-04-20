@@ -5,12 +5,14 @@ import PropTypes from 'prop-types'
 import Tooltip from 'widget/tooltip'
 import {connect} from 'store'
 import {RecipeState, RecipeActions} from './mosaicRecipe'
+import {map} from '../../../map/map'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
         labelsShown: recipe('labelsShown'),
-        gridShown: recipe('gridShown')
+        gridShown: recipe('gridShown'),
+        zoomLevel: map.getZoom()
     }
 }
 
@@ -24,13 +26,13 @@ class MapToolbar extends React.Component {
         return (
             <div className={className}>
                 <div className={styles.toolbar}>
-                    <Tooltip msg={'process.mosaic.mapToolbar.zoomIn'} top>
-                        <button>
+                    <Tooltip msg={'process.mosaic.mapToolbar.zoomIn'} top disabled={map.isMaxZoom()}>
+                        <button onClick={map.zoomIn.bind(map)} disabled={map.isMaxZoom()}>
                             <Icon name={'plus'}/>
                         </button>
                     </Tooltip>
-                    <Tooltip msg={'process.mosaic.mapToolbar.zoomOut'} top>
-                        <button>
+                    <Tooltip msg={'process.mosaic.mapToolbar.zoomOut'} top disabled={map.isMinZoom()}>
+                        <button onClick={map.zoomOut.bind(map)} disabled={map.isMinZoom()}>
                             <Icon name={'minus'}/>
                         </button>
                     </Tooltip>
