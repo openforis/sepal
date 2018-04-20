@@ -8,10 +8,15 @@
     z-index: 4;
     min-width: 20rem;
     --scaling-factor: .8 !important;
+    overflow: scroll;
+    flex-shrink: 0;
+    min-height: 500px;
+    height: 500px;
+    max-height: 500px;
 }
 
 .top {
-    top: 5.5rem;
+    top: .5rem;
 }
 
 .bottom {
