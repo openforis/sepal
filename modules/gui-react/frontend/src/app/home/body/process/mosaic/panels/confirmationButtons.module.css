@@ -3,7 +3,7 @@
     flex-direction: row;
     justify-content: space-around;
     opacity: 0;
-    transition: opacity 100ms ease-in-out;
+    transition: opacity 200ms ease-in-out;
 }
 
 .dirty {
@@ -24,7 +24,12 @@
 }
 
 .dirty button:not(:disabled) {
-    color: hsl(0, 0%, 100%);
-    background-color: hsl(224, 87%, 57%);
+    color: hsl(0, 0%, 80%);
+    background-color: hsl(224, 87%, 37%);
     cursor: pointer;
+}
+
+.dirty button:not(:disabled):hover {
+    color: hsl(0, 0%, 100%);
+    background-color: hsl(224, 87%, 47%);
 }
