@@ -6,6 +6,7 @@ import {connect} from 'store'
 import {msg} from 'translate'
 import {CenteredProgress} from 'widget/progress'
 import {Select} from 'widget/selectable'
+import {loadGoogleMapsApiKey$} from '../map/map'
 import Account from './account/account'
 import AppLaunchPad from './appLaunchPad/appLaunchPad'
 import styles from './body.module.css'
@@ -26,6 +27,9 @@ class Body extends React.Component {
     componentWillMount() {
         this.props.asyncActionBuilder('LOAD_APPS',
             loadApps$())
+            .dispatch()
+        this.props.asyncActionBuilder('LOAD_GOOGLE_MAPS_API_KEY',
+            loadGoogleMapsApiKey$())
             .dispatch()
     }
 
@@ -48,8 +52,15 @@ class Body extends React.Component {
             </Section>
         )
 
-        if (!action('LOAD_APPS').dispatched)
-            return <CenteredProgress title={msg('body.loading-apps')} className={className}/>
+        if (!action('LOAD_APPS').dispatched || !action('LOAD_GOOGLE_MAPS_API_KEY').dispatched) {
+            const progressMessageId = action('LOAD_APPS').dispatching
+                ? 'body.loading-apps'
+                : action('LOAD_GOOGLE_MAPS_API_KEY').dispatching
+                    ? 'body.loading-google-maps-api-key'
+                    : 'body.starting-sepal'
+            console.log('progressMessageId', progressMessageId)
+            return <CenteredProgress title={msg(progressMessageId)} className={className}/>
+        }
         return (
             <div className={className}>
                 <Select className={styles.sections}>

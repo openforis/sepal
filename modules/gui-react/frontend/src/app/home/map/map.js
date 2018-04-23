@@ -1,17 +1,26 @@
+import actionBuilder from 'action-builder'
 import GoogleMapsLoader from 'google-maps'
+import Http from 'http-client'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import actionBuilder from 'action-builder'
-import ee from 'earthengine-api'
+import {connect, select} from 'store'
 
-const mapStateToProps = () => {
-}
+const mapStateToProps = () => ({
+    apiKey: select('map.apiKey')
+})
 
 export let map = null
 
-const initMap = (mapElement) => {
-    GoogleMapsLoader.KEY = 'AIzaSyAIi2lE7w25HZOrJkWT-qHH01W-ywyrC0U'
+export const loadGoogleMapsApiKey$ = () =>
+    Http.get$('/api/data/google-maps-api-key')
+        .map((e) => actionBuilder('SET_GOOGLE_MAPS_API_KEY', {apiKey: e.response})
+            .set('map.apiKey', e.response.apiKey)
+            .build()
+        )
+
+const initMap = (mapElement, apiKey) => {
+    console.log('apiKey', apiKey)
+    GoogleMapsLoader.KEY = apiKey
     let googleInstance = null
     let instance = null
     GoogleMapsLoader.load((google) => {
@@ -31,8 +40,8 @@ const initMap = (mapElement) => {
             backgroundColor: '#131314',
             gestureHandling: 'greedy'
         })
-        instance.setOptions({ styles: defaultStyle })
-        instance.addListener('zoom_changed', () => 
+        instance.setOptions({styles: defaultStyle})
+        instance.addListener('zoom_changed', () =>
             actionBuilder('SET_MAP_ZOOM')
                 .set('map.zoom', instance.getZoom())
                 .dispatch()
@@ -61,7 +70,7 @@ const initMap = (mapElement) => {
                     {
                         featureType: 'all',
                         stylers: [
-                            { visibility: 'off' }
+                            {visibility: 'off'}
                         ]
                     },
                     {
@@ -69,9 +78,10 @@ const initMap = (mapElement) => {
                         'stylers': [
                             {'visibility': 'on'},
                             {'color': '#ffff00'}
-                    ]}
-                ];
-                var labelsLayer = new googleInstance.maps.StyledMapType(labelsLayerStyle, { name: 'labels' })
+                        ]
+                    }
+                ]
+                var labelsLayer = new googleInstance.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
                 instance.overlayMapTypes.push(labelsLayer)
             } else {
                 let index = instance.overlayMapTypes.getArray().findIndex(x => x.name === 'labels')
@@ -80,26 +90,29 @@ const initMap = (mapElement) => {
         }
     }
 }
+
 class Map extends React.Component {
-    constructor(props) {
-        super(props)
-        this.mapElement = React.createRef()
-    }
+    state = {initialized: false}
+    mapElement = React.createRef()
+
     render() {
-        return (
-            <div ref={this.mapElement} className={this.props.className}/>
-        )
+        return <div ref={this.mapElement} className={this.props.className}/>
     }
 
-    componentDidMount() {
-        initMap(this.mapElement.current)
+    componentDidUpdate() {
+        const apiKey = this.props.apiKey
+        if (apiKey && !this.state.initialized) {
+            this.setState((prevState) => ({...prevState, initialized: true}))
+            initMap(this.mapElement.current, apiKey)
+            this.initialized = true
+        }
     }
 }
 
 const defaultStyle = [
-    {'stylers': [{'visibility': 'simplified'}]}, 
-    {'stylers': [{'color': '#131314'}]}, 
-    {'featureType': 'water', 'stylers': [{'color': '#131313'}, {'lightness': 4}]}, 
+    {'stylers': [{'visibility': 'simplified'}]},
+    {'stylers': [{'color': '#131314'}]},
+    {'featureType': 'water', 'stylers': [{'color': '#131313'}, {'lightness': 4}]},
     {'elementType': 'labels.text.fill', 'stylers': [{'visibility': 'off'}, {'lightness': 25}]}
 ]
 
