@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
+import {AnimateReplacement} from 'widget/animate'
+import {Button} from 'widget/button'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Icon from 'widget/icon'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
@@ -9,7 +11,7 @@ import styles from './aoi.module.css'
 
 const inputs = {
     section: new Constraints()
-        .notBlank('asdf'), // TODO: Error message needed?
+        .notBlank(),
     country: new Constraints()
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
 }
@@ -33,11 +35,13 @@ class Aoi extends React.Component {
             <div className={className}>
                 <div className={styles.container}>
                     <form>
-                        <div>
-                            <SectionSelection section={inputs.section}/>
-                            <Section selected={inputs.section.value === 'country'}>
-                                <CountrySection form={form} inputs={inputs}/>
-                            </Section>
+                        <div className={styles.sections}>
+                            <AnimateReplacement
+                                currentKey={inputs.section.value}
+                                timeout={250}
+                                classNames={{enter: styles.enter, exit: styles.exit}}>
+                                {this.renderSections()}
+                            </AnimateReplacement>
                         </div>
                         <div className={styles.buttons}>
                             <ConfirmationButtons form={form} recipe={this.recipe}/>
@@ -47,38 +51,67 @@ class Aoi extends React.Component {
             </div>
         )
     }
+
+    renderSections() {
+        const {form, inputs} = this.props
+        switch (inputs.section.value) {
+            case 'country':
+                return (
+                    <Section>
+                        <CountrySection form={form} inputs={inputs}/>
+                    </Section>
+                )
+            default:
+                return <SectionSelection inputs={inputs}/>
+        }
+    }
 }
 
-const SectionSelection = ({section}) =>
-    <div className={[styles.typeSection, section.value ? styles.hide : null].join(' ')}>
-        <div className={styles.header}>
-            <span className={styles.title}>
+class SectionSelection extends React.Component {
+    componentWillMount() {
+        const {inputs} = this.props
+        console.log('inputs', inputs)
+        Object.keys(inputs).forEach((name) => inputs[name] && inputs[name].set(''))
+    }
+
+    render() {
+        const {inputs: {section}} = this.props
+        return (
+            <div className={styles.left}>
+                <div className={styles.header}>
+            <span className={styles.icon}>
+                <Icon name='cog'/>
+            </span>
+                    <span className={styles.title}>
                 <Msg id={'process.mosaic.panel.areaOfInterest.title'}/>
             </span>
-        </div>
-        <div className={styles.body}>
-            <SectionOption section={section} label={'Select country/province'} value='country'/>
-            <SectionOption section={section} label={'Select from Fusion Table'} value='fusionTable'/>
-            <SectionOption section={section} label={'Draw polygon'} value='polygon'/>
-        </div>
-    </div>
+                </div>
+                <div className={styles.body}>
+                    <SectionOption section={section} label={'Select country/province'} value='country'/>
+                    <SectionOption section={section} label={'Select from Fusion Table'} value='fusionTable'/>
+                    <SectionOption section={section} label={'Draw polygon'} value='polygon'/>
+                </div>
+            </div>
+        )
+    }
+}
 
 const SectionOption = ({label, value, section}) =>
-    <div onClick={() => section.set(value)}>
+    <Button onClick={() => section.set(value)} className={styles.sectionOption}>
         {label}
-    </div>
+    </Button>
 
-const Section = ({children, selected}) =>
-    <div className={[styles.section, selected ? null : styles.hide].join(' ')}>
+const Section = ({children}) =>
+    <div className={styles.right}>
         {children}
     </div>
 
 const CountrySection = ({form, inputs: {section, country}}) =>
     <div className={styles.countrySection}>
         <div className={styles.header}>
-            <span className={styles.back} onClick={() => section.set('')}>
+            <a className={styles.icon} onClick={() => section.set('')} onMouseDown={(e) => e.preventDefault()}>
                 <Icon name='arrow-left'/>
-            </span>
+            </a>
             <span className={styles.title}>{'Select country/province'}</span>
         </div>
         <div className={styles.body}>

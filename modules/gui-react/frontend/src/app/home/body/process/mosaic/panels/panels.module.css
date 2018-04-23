@@ -8,7 +8,7 @@
     z-index: 4;
     min-width: 20rem;
     --scaling-factor: .8 !important;
-    overflow: scroll;
+    overflow: hidden;
     flex-shrink: 0;
 }
 
