@@ -6,9 +6,15 @@
     pointer-events: all;
     right: 4rem;
     z-index: 4;
+<<<<<<< HEAD
     min-width: 14rem;
     --scaling-factor: .8;
     overflow: scroll;
+=======
+    min-width: 20rem;
+    --scaling-factor: .8 !important;
+    overflow: hidden;
+>>>>>>> c05da4853587e6333766c3c6df0fbb0ebc43d022
     flex-shrink: 0;
 }
 
