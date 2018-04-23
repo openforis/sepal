@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
 import actionBuilder from 'action-builder'
+import ee from 'earthengine-api'
 
 const mapStateToProps = () => {
 }
@@ -11,8 +12,10 @@ export let map = null
 
 const initMap = (mapElement) => {
     GoogleMapsLoader.KEY = 'AIzaSyAIi2lE7w25HZOrJkWT-qHH01W-ywyrC0U'
+    let googleInstance = null
     let instance = null
     GoogleMapsLoader.load((google) => {
+        googleInstance = google
         instance = new google.maps.Map(mapElement, {
             zoom: 3,
             minZoom: 3,
@@ -51,6 +54,29 @@ const initMap = (mapElement) => {
         },
         isMinZoom() {
             return instance.getZoom() === instance.minZoom
+        },
+        showLabelsLayer(shown) {
+            if (shown) {
+                var labelsLayerStyle = [
+                    {
+                        featureType: 'all',
+                        stylers: [
+                            { visibility: 'off' }
+                        ]
+                    },
+                    {
+                        elementType: 'labels.text.fill',
+                        'stylers': [
+                            {'visibility': 'on'},
+                            {'color': '#ffff00'}
+                    ]}
+                ];
+                var labelsLayer = new googleInstance.maps.StyledMapType(labelsLayerStyle, { name: 'labels' })
+                instance.overlayMapTypes.push(labelsLayer)
+            } else {
+                let index = instance.overlayMapTypes.getArray().findIndex(x => x.name === 'labels')
+                instance.overlayMapTypes.removeAt(index)
+            }
         }
     }
 }
