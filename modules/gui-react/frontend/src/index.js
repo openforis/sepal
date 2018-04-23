@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import {createLogger} from 'redux-logger'
 import {composeWithDevTools} from 'redux-devtools-extension'
 import {applyMiddleware, createStore} from 'redux'
 import {initStore} from 'store'
@@ -35,11 +34,6 @@ const rootReducer = (state = [], action) => {
         }
 }
 
-const logger = createLogger({
-    predicate: (getState, action) =>
-        !action.notLogged && ['RNS_HIDE_NOTIFICATION'].indexOf(action.type) === -1
-})
-
 const batchActions = () => (next) => (action) => {
     if ('actions' in action)
         next({
@@ -57,10 +51,7 @@ const batchActions = () => (next) => (action) => {
 
 const store = createStore(
     rootReducer,
-    composeWithDevTools(applyMiddleware(
-        logger,
-        batchActions
-    ))
+    composeWithDevTools(applyMiddleware(batchActions))
 )
 initStore(store)
 

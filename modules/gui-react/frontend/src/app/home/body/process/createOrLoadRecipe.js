@@ -95,6 +95,5 @@ function formatDate(date) {
         hours = pad(d.getHours()),
         minutes = pad(date.getMinutes()),
         seconds = pad(date.getSeconds())
-    console.log(month)
     return `${[year, month, day].join('-')}_${[hours, minutes, seconds].join('.')}`
 }
