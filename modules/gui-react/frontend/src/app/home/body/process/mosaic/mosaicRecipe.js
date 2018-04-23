@@ -1,5 +1,6 @@
 import actionBuilder from 'action-builder'
 import {select} from 'store'
+import {map} from '../../../map/map'
 
 const recipePath = (id, path) => {
     const tabIndex = select('process.tabs')
@@ -29,6 +30,7 @@ export const RecipeActions = (id) => {
     }
     return {
         setLabelsShown(shown) {
+            map.showLabelsLayer(shown)
             set('SET_LABELS_SHOWN', 'labelsShown', shown, {shown})
         },
         setGridShown(shown) {
