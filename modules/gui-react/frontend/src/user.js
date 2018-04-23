@@ -15,7 +15,7 @@ export function loadCurrentUser$() {
     return Http.get$('/user/current', {
         validStatuses: [200, 401]
     }).map((e) =>
-        actionBuilder('CURRENT_USER_LOADED')
+        actionBuilder('SET_CURRENT_USER', {user: e.response})
             .set('user.currentUser', e.response)
             .build()
     )
