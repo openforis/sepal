@@ -142,6 +142,7 @@ span.title.placeholder {
 }
 
 .tabContent.selected {
+    position: relative;
     display: flex;
     height: 100%;
 }

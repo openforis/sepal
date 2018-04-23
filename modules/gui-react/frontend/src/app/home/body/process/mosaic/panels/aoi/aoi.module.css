@@ -1,6 +1,58 @@
 .container {
+    min-height: 16rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 16rem;
+}
+
+.hide {
+    display: none;
+}
+
+.container form {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;
+}
+
+.header {
+    font-size: .9rem;
+    font-family: var(--header-font-family);
+    text-transform: uppercase;
+    color: #e8e8e8;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(100%, 100%, 100%, .1);
+    padding: var(--padding);
+}
+
+.back {
+    display: inline-block;
+    border-radius: 50%;
+    width: 1.6rem;
+    height: 1.6rem;
+    line-height: 1.6rem;
+    text-align: center;
+    margin-right: .2rem;
+}
+
+.back svg {
+    width: .9rem;
+    height: .9rem;
+}
+
+.back:hover {
+    background-color: hsla(0, 0%, 100%, .25);
+}
+
+.title {
+
+}
+
+.body {
+    padding: var(--padding);
+}
+
+.buttons {
+    padding: var(--padding);
 }
