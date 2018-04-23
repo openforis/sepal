@@ -28,7 +28,8 @@
     "react-transition-group": "^2.2.1",
     "redux": "^3.7.2",
     "redux-logger": "^3.0.6",
-    "rxjs": "^5.5.6"
+    "rxjs": "^5.5.6",
+    "earthengine-api": "git+https://github.com/openforis/earthengine-api.git"
   },
   "scripts": {
     "start": "NODE_PATH=src/ HTTPS=true react-app-rewired start",
