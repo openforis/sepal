@@ -70,7 +70,6 @@ class Aoi extends React.Component {
 class SectionSelection extends React.Component {
     componentWillMount() {
         const {inputs} = this.props
-        console.log('inputs', inputs)
         Object.keys(inputs).forEach((name) => inputs[name] && inputs[name].set(''))
     }
 
