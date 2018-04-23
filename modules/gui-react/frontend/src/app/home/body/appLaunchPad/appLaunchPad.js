@@ -1,10 +1,10 @@
-import React from 'react'
-import {connect, dispatch} from 'store'
-import {history} from 'route'
-import styles from './appLaunchPad.module.css'
-import Icon from 'widget/icon'
 import {appList, requestedApps, runApp$} from 'apps'
 import PropTypes from 'prop-types'
+import React from 'react'
+import {history} from 'route'
+import {connect, dispatch} from 'store'
+import Icon from 'widget/icon'
+import styles from './appLaunchPad.module.css'
 
 const mapStateToProps = () => ({
     apps: appList(),
@@ -55,7 +55,7 @@ App.propTypes = {
 }
 
 const Image = ({src, alt}) => {
-    return src 
+    return src
         ? <img src={src} alt={alt}/>
         : null
 }
