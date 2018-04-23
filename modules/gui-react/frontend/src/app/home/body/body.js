@@ -53,10 +53,10 @@ class Body extends React.Component {
         )
 
         if (!action('LOAD_APPS').dispatched || !action('LOAD_GOOGLE_MAPS_API_KEY').dispatched) {
-            const progressMessageId = action('LOAD_APPS').dispatching
-                ? 'body.loading-apps'
-                : action('LOAD_GOOGLE_MAPS_API_KEY').dispatching
-                    ? 'body.loading-google-maps-api-key'
+            const progressMessageId = action('LOAD_GOOGLE_MAPS_API_KEY').dispatching
+                ? 'body.loading-google-maps-api-key'
+                : action('LOAD_APPS').dispatching
+                    ? 'body.loading-apps'
                     : 'body.starting-sepal'
             console.log('progressMessageId', progressMessageId)
             return <CenteredProgress title={msg(progressMessageId)} className={className}/>
