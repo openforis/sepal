@@ -3,6 +3,7 @@ import GoogleMapsLoader from 'google-maps'
 import Http from 'http-client'
 import PropTypes from 'prop-types'
 import React from 'react'
+import earthengine from 'earthengine-api'
 import {connect, select} from 'store'
 
 const mapStateToProps = () => ({
@@ -22,6 +23,7 @@ const initMap = (mapElement, apiKey) => {
     console.log('apiKey', apiKey)
     GoogleMapsLoader.KEY = apiKey
     let googleInstance = null
+    let ee = earthengine.ee
     let instance = null
     GoogleMapsLoader.load((google) => {
         googleInstance = google
@@ -64,7 +66,12 @@ const initMap = (mapElement, apiKey) => {
         isMinZoom() {
             return instance.getZoom() === instance.minZoom
         },
+        addGEELayer(mapId, token) {
+            let  geeLayer = new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, { name: 'gee' })
+           instance.overlayMapTypes.push(geeLayer);
+        },
         showLabelsLayer(shown) {
+            // https://developers.google.com/maps/documentation/javascript/style-reference
             if (shown) {
                 var labelsLayerStyle = [
                     {
@@ -72,16 +79,20 @@ const initMap = (mapElement, apiKey) => {
                         stylers: [
                             {visibility: 'off'}
                         ]
-                    },
-                    {
+                    }, {
                         elementType: 'labels.text.fill',
-                        'stylers': [
-                            {'visibility': 'on'},
-                            {'color': '#ffff00'}
+                        stylers: [
+                            { visibility: 'on' }
+                        ],
+                    }, {
+                        featureType: 'road',
+                        elementType: 'geometry',
+                        stylers: [
+                            { visibility: 'on' }
                         ]
                     }
                 ]
-                var labelsLayer = new googleInstance.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
+                let labelsLayer = new googleInstance.maps.StyledMapType(labelsLayerStyle, { name: 'labels' })
                 instance.overlayMapTypes.push(labelsLayer)
             } else {
                 let index = instance.overlayMapTypes.getArray().findIndex(x => x.name === 'labels')
