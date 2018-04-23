@@ -148,9 +148,16 @@
           "tooltip": "Specify area of interest",
           "form": {
             "country": {
+              "title": "Select country/province",
               "label": "Country",
               "placeholder": "Enter country",
               "required": "Country is required"
+            },
+            "fusionTable": {
+              "title": "Select from Fusion Table"
+            },
+            "polygon": {
+              "title": "Draw a polygon"
             }
           }
         },

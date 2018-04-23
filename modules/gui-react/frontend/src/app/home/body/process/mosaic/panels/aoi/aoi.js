@@ -56,11 +56,11 @@ class Aoi extends React.Component {
         const {form, inputs} = this.props
         switch (inputs.section.value) {
             case 'country':
-                return (
-                    <Section>
-                        <CountrySection form={form} inputs={inputs}/>
-                    </Section>
-                )
+                return <CountrySection form={form} inputs={inputs}/>
+            case 'fusionTable':
+                return <FusionTableSection form={form} inputs={inputs}/>
+            case 'polygon':
+                return <PolygonSection form={form} inputs={inputs}/>
             default:
                 return <SectionSelection inputs={inputs}/>
         }
@@ -106,12 +106,12 @@ const Section = ({children}) =>
     </div>
 
 const CountrySection = ({form, inputs: {section, country}}) =>
-    <div className={styles.countrySection}>
+    <Section>
         <div className={styles.header}>
             <a className={styles.icon} onClick={() => section.set('')} onMouseDown={(e) => e.preventDefault()}>
                 <Icon name='arrow-left'/>
             </a>
-            <span className={styles.title}>{'Select country/province'}</span>
+            <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.country.title'/></span>
         </div>
         <div className={styles.body}>
             <label><Msg id='process.mosaic.panel.areaOfInterest.form.country.label'/></label>
@@ -123,7 +123,33 @@ const CountrySection = ({form, inputs: {section, country}}) =>
                 tabIndex={1}/>
             <ErrorMessage input={country}/>
         </div>
-    </div>
+    </Section>
+
+const FusionTableSection = ({form, inputs: {section, country}}) =>
+    <Section>
+        <div className={styles.header}>
+            <a className={styles.icon} onClick={() => section.set('')} onMouseDown={(e) => e.preventDefault()}>
+                <Icon name='arrow-left'/>
+            </a>
+            <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.country.title'/></span>
+        </div>
+        <div className={styles.body}>
+            Fusion Table Form
+        </div>
+    </Section>
+
+const PolygonSection = ({form, inputs: {section, country}}) =>
+    <Section>
+        <div className={styles.header}>
+            <a className={styles.icon} onClick={() => section.set('')} onMouseDown={(e) => e.preventDefault()}>
+                <Icon name='arrow-left'/>
+            </a>
+            <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.polygon.title'/></span>
+        </div>
+        <div className={styles.body}>
+            Draw a polygon
+        </div>
+    </Section>
 
 Aoi.propTypes = {
     id: PropTypes.string,
