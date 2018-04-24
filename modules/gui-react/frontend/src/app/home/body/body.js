@@ -6,7 +6,7 @@ import {connect} from 'store'
 import {msg} from 'translate'
 import {CenteredProgress} from 'widget/progress'
 import {Select} from 'widget/selectable'
-import {loadGoogleMapsApiKey$} from '../map/map'
+import {initGoogleMapsApi$} from '../map/map'
 import Account from './account/account'
 import AppLaunchPad from './appLaunchPad/appLaunchPad'
 import styles from './body.module.css'
@@ -28,8 +28,8 @@ class Body extends React.Component {
         this.props.asyncActionBuilder('LOAD_APPS',
             loadApps$())
             .dispatch()
-        this.props.asyncActionBuilder('LOAD_GOOGLE_MAPS_API_KEY',
-            loadGoogleMapsApiKey$())
+        this.props.asyncActionBuilder('INIT_GOOGLE_MAPS_API',
+            initGoogleMapsApi$())
             .dispatch()
     }
 
@@ -52,7 +52,7 @@ class Body extends React.Component {
             </Section>
         )
 
-        if (!action('LOAD_APPS').dispatched || !action('LOAD_GOOGLE_MAPS_API_KEY').dispatched) {
+        if (!action('LOAD_APPS').dispatched || !action('INIT_GOOGLE_MAPS_API').dispatched) {
             const progressMessageId = action('LOAD_GOOGLE_MAPS_API_KEY').dispatching
                 ? 'body.loading-google-maps-api-key'
                 : action('LOAD_APPS').dispatching
