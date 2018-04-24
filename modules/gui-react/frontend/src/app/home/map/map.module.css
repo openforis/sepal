@@ -1,0 +1,4 @@
+/* Hack to remove "Sorry, we have no imagery here." from Google Maps labels layer */
+:global .gm-style > div > div > div > div > div > div > div:not(:empty) {
+    display: none;
+}
