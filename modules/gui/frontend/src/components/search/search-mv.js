@@ -10,6 +10,7 @@ var Model              = require('./model/search-model')
 var SearchRequestUtils = require('./search-request-utils')
 var moment             = require('moment')
 var guid               = require('../guid/guid')
+var SepalAois          = require('../sepal-aois/sepal-aois')
 
 require('../scene-areas/scene-areas-mv')
 require('../scenes-selection/scenes-selection-mv')
@@ -75,6 +76,7 @@ var _loadMosaic = function (id, callback) {
     , success   : function (response) {
       
       var state = typeof response === 'string' ? JSON.parse(response) : response
+      SepalAois.migrateAoi(state)
       delete state['mosaic']
       
       setTimeout(function () {

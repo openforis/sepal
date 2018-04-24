@@ -106,9 +106,9 @@ class ToImageMapHandler implements QueryHandler<Map, ToImageMap> {
                 def aoi = contents.polygon ?
                         [type: 'polygon', path: new JsonSlurper().parseText(contents.polygon) as List] :
                         [type     : 'fusionTable',
-                         tableName: COUNTRY_FUSION_TABLE,
-                         keyColumn: COUNTRY_CODE_FUSION_TABLE_COLUMN,
-                         keyValue : contents.aoiCode]
+                         tableName: contents.aoiFusionTable ?: COUNTRY_FUSION_TABLE,
+                         keyColumn: contents.aoiFusionTableKeyColumn ?: COUNTRY_CODE_FUSION_TABLE_COLUMN,
+                         keyValue : contents.aoiFusionTableKey ?: contents.aoiCode]
                 def dayOfYear = Date.parse('yyyy-MM-dd', contents.targetDate)[DAY_OF_YEAR]
                 def sceneIds = contents.sceneAreas.values().collect { it.selection }.flatten()
                 return [

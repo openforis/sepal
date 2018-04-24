@@ -226,9 +226,9 @@ class DataSearchEndpoint {
         def aoi = polygon ?
                 new AoiPolygon(new JsonSlurper().parseText(polygon) as List) :
                 new FusionTableShape(
-                        tableName: COUNTRY_FUSION_TABLE,
-                        keyColumn: COUNTRY_CODE_FUSION_TABLE_COLUMN,
-                        keyValue: params.required('countryIso', String))
+                        tableName: params.aoiFusionTable ?: COUNTRY_FUSION_TABLE,
+                        keyColumn: params.aoiFusionTableKeyColumn ?: COUNTRY_CODE_FUSION_TABLE_COLUMN,
+                        keyValue: params.aoiFusionTableKey ?: params.required('countryIso', String))
         return aoi
     }
 

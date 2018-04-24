@@ -8,8 +8,10 @@ var addAoiRequestParameter = function (state, data) {
     
     if ($.isNotEmptyString(state.polygon)) {
       data.polygon = state.polygon
-    } else if ($.isNotEmptyString(state.aoiCode)) {
-      data.countryIso = state.aoiCode
+    } else if ($.isNotEmptyString(state.aoiFusionTable)) {
+      data.aoiFusionTable = state.aoiFusionTable
+      data.aoiFusionTableKeyColumn = state.aoiFusionTableKeyColumn
+      data.aoiFusionTableKey = state.aoiFusionTableKey
     }
     
   }
@@ -72,9 +74,9 @@ var getImageData = function (state, bands) {
   else
     aoi = {
       type     : 'fusionTable',
-      tableName: '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-      keyColumn: 'ISO',
-      keyValue : state.aoiCode
+      tableName: state.aoiFusionTable ? state.aoiFusionTable : '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
+      keyColumn: state.aoiFusionTableKeyColumn ? state.aoiFusionTableKeyColumn : 'ISO',
+      keyValue : state.aoiFusionTableKey ? state.aoiFusionTableKey : state.aoiCode
     }
   
   return {

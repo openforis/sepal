@@ -4,6 +4,7 @@ var FormValidator    = require('../../form/form-validator')
 var Model            = require('./../model/search-model')
 var GoogleMapsLoader = require('google-maps')
 var UserMV           = require('../../user/user-mv')
+var SepalAois        = require('../../sepal-aois/sepal-aois')
 
 var state   = {}
 var mosaics = []
@@ -175,6 +176,7 @@ var updateInputRecipe = function () {
       
       state.aoiCode     = null
       state.aoiName     = null
+      SepalAois.resetAoi(state)
       state.polygon     = null
       state.geeAssetId1 = null
       geeAssetId1.val('')
@@ -196,6 +198,7 @@ var updateInputRecipe = function () {
             if (inputRecipeState.aoiCode) {
               state.aoiCode = inputRecipeState.aoiCode
               state.aoiName = inputRecipeState.aoiName
+              SepalAois.migrateAoi(state)
             } else {
               state.polygon = inputRecipeState.polygon
             }
@@ -225,8 +228,12 @@ var restoreAoi = function (s, params) {
   if (params && params.isNew) {
     
     if (s.aoiCode && s.aoiName) {
+        EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
+        EventBus.dispatch(Events.MAP.ZOOM_TO, null, s.aoiCode, true)
+    } else if (s.aoiFusionTableKey && s.aoiFusionTableLabel) {
       EventBus.dispatch(Events.MAP.POLYGON_CLEAR)
-      EventBus.dispatch(Events.MAP.ZOOM_TO, null, s.aoiCode, true)
+      EventBus.dispatch(Events.MAP.ZOOM_TO_FUSION_TABLE, null,
+          s.aoiFusionTable, s.aoiFusionTableKeyColumn, s.aoiFusionTableKey, true)
     } else if (s.polygon) {
       EventBus.dispatch(Events.MAP.REMOVE_AOI_LAYER)
       EventBus.dispatch(Events.SECTION.SEARCH.STATE.RESTORE_DRAWN_AOI, null, s.polygon)

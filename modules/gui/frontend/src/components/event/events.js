@@ -143,6 +143,7 @@ var Events = {
   
   , MAP: {
     ZOOM_TO                 : 'map.zoom_to'
+    , ZOOM_TO_FUSION_TABLE                 : 'map.zoom_to_fusion_table'
     , ZOOM_CHANGED          : 'map.zoom_changed'
     // , LOAD_SCENE_AREAS: 'map.load_scene_areas'
     , SCENE_AREA_CLICK      : 'map.scene_area_click'

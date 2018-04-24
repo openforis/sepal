@@ -16,7 +16,9 @@ var google = null
 var map    = null
 
 // AOI layers
-var aoiCode           = null
+var aoiFusionTable    = null
+var aoiColumn         = null
+var aoiValue          = null
 var aoiLayer          = null
 var aoiDrawingManager = null
 var aoiDrawnPolygon   = null
@@ -38,8 +40,8 @@ var show = function () {
 }
 
 var zoomToActiveAoi = function (e) {
-  if (aoiCode) {
-    SepalAois.loadBounds(aoiCode, function (bounds) {
+  if (aoiValue) {
+    SepalAois.loadBounds(aoiFusionTable, aoiColumn, aoiValue, function (bounds) {
       map.panToBounds(bounds)
       map.fitBounds(bounds)
     })
@@ -53,23 +55,29 @@ var zoomToActiveAoi = function (e) {
   }
 }
 
-var zoomTo = function (e, isoCode, zoom) {
-  if (isoCode !== aoiCode) {
+var zoomToFusionTable = function (e, fusionTable, column, value, zoom) {
+  if (fusionTable !== aoiFusionTable || column !== aoiColumn || value !== aoiValue) {
     if (aoiLayer)
       aoiLayer.setMap(null)
     
     if (zoom)
-      SepalAois.loadBounds(isoCode, function (bounds) {
+      SepalAois.loadBounds(fusionTable, column, value, function (bounds) {
         map.panToBounds(bounds)
         map.fitBounds(bounds)
       })
     
-    aoiLayer = SepalAois.getFusionTableLayer(isoCode)
+    aoiLayer = SepalAois.getFusionTableLayer(fusionTable, column, value)
     aoiLayer.setMap(map)
-    aoiCode = isoCode
+    aoiFusionTable = fusionTable
+    aoiColumn = column
+    aoiValue = value
     
     aoiDrawnPolygon = null
   }
+}
+
+var zoomTo = function (e, isoCode, zoom) {
+  zoomToFusionTable(e, SepalAois.FT_TableID, SepalAois.FT_KEY_COLUMN, isoCode, zoom)
 }
 
 var addLayer = function (e, layer) {
@@ -82,7 +90,9 @@ var removeAoiLayer = function (e) {
   if (aoiLayer) {
     aoiLayer.setMap(null)
     aoiLayer = null
-    aoiCode  = null
+    aoiFusionTable = null
+    aoiColumn = null
+    aoiValue = null
   }
 }
 
@@ -220,6 +230,7 @@ var onAppReduce = function (e, type) {
 
 EventBus.addEventListener(Events.APP.LOAD, show)
 EventBus.addEventListener(Events.MAP.ZOOM_TO, zoomTo)
+EventBus.addEventListener(Events.MAP.ZOOM_TO_FUSION_TABLE, zoomToFusionTable)
 EventBus.addEventListener(Events.MAP.ADD_LAYER, addLayer)
 EventBus.addEventListener(Events.MAP.REMOVE_AOI_LAYER, removeAoiLayer)
 
