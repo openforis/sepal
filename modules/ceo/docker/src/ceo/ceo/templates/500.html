@@ -1,9 +1,16 @@
+{% extends 'layout.html' %}
+
 {% block body %}
 
     <div class="container-fluid">
         <div class="row">
             <div class="col-6">
                 500 Internal Server Error
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                {{ exception }}
             </div>
         </div>
     </div>

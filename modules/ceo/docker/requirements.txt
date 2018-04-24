@@ -12,5 +12,5 @@ pyasn1-modules==0.0.8
 rsa==3.4.2
 
 #
-git+git://github.com/openforis/earthengine-api.git@v0.1.124.1#egg=earthengine-api&subdirectory=python
-git+git://github.com/openforis/gee-gateway.git@42cba42c9334360764ac8fbbf24d265e40f84cbe#egg=gee-gateway
+git+git://github.com/openforis/earthengine-api.git@v0.1.137#egg=earthengine-api&subdirectory=python
+git+git://github.com/openforis/gee-gateway.git@e9f6d22134489ea14ca36eef22894e93f38ba8ef#egg=gee-gateway

@@ -360,7 +360,7 @@ def saveFileFromRequest(file):
     # project file
     filename = secure_filename(file.filename)
     name, ext = os.path.splitext(filename)
-    uniqueName = name + '--' + crc32(filename)
+    uniqueName = name + '--' + crc32(file)
     uniqueFilename =  uniqueName + ext
     extractDir = os.path.join(app.config['UPLOAD_FOLDER'], uniqueName)
     if not os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename)):
