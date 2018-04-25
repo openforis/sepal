@@ -72,6 +72,7 @@ def listToCSVRowString(lst):
 
 def crc32(file):
     buf = file.read()
+    file.seek(0)
     buf = (binascii.crc32(buf) & 0xFFFFFFFF)
     return '%08X' % buf
 
