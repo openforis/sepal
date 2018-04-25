@@ -100,7 +100,7 @@
   "body": {
     "starting-sepal": "Starting SEPAL...",
     "loading-apps": "Loading apps...",
-    "loading-google-maps-api-key": "Initializing map..."
+    "loading-initializing-google-maps": "Initializing map..."
   },
   "apps": {
     "initializing": "Initializing {label}...",

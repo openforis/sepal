@@ -54,7 +54,7 @@ class Body extends React.Component {
 
         if (!action('LOAD_APPS').dispatched || !action('INIT_GOOGLE_MAPS_API').dispatched) {
             const progressMessageId = action('LOAD_GOOGLE_MAPS_API_KEY').dispatching
-                ? 'body.loading-google-maps-api-key'
+                ? 'body.initializing-google-maps'
                 : action('LOAD_APPS').dispatching
                     ? 'body.loading-apps'
                     : 'body.starting-sepal'
