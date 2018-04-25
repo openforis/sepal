@@ -1,6 +1,52 @@
 .container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    --dot-size: 1rem;
+    /* display: flex; */
+    /* flex-direction: column; */
+    /* justify-content: space-between; */
     min-height: 16rem;
+    min-width: 30rem;
+}
+
+.body {
+    /* display: flex; */
+    /* flex-direction: row; */
+    /* justify-content: center; */
+    position: relative;
+    height: 10rem;
+    width: 100%;
+    border: 1px solid red;
+    overflow: hidden;
+}
+
+.handle {
+    position: absolute;
+    height: var(--dot-size);
+    width: var(--dot-size);
+    border-radius: 50%;
+    background-color: red;
+    cursor: pointer;
+    z-index: 10;
+    /* transition: all 150ms ease-in-out; */
+}
+
+.rect {
+    position: absolute;
+    background-color: rgba(255, 0, 0, .2);
+}
+
+/* .dot:hover {
+    height: calc(var(--dot-size) * 1.5);
+    width: calc(var(--dot-size) * 1.5);
+} */
+
+.footer {
+
+}
+.title {
+
+}
+
+.canvas {
+    width: 100%;
+    height: 100%;
 }
