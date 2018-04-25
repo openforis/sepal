@@ -72,6 +72,38 @@ var mapUtils = {
                 $('#' + lmapElementId).show();
                 lmap.invalidateSize();
             }
+        },
+        drawPlot: function(plotShapeDefinition, latLng, squareOptions1, squareOptions2, gmap, lmap) {
+            var plotShapes = {
+                'G': [],
+                'L': []
+            }
+            if (plotShapeDefinition.numberOfSamplingPointsInPlot == 1) {
+                var gPoint = mapUtils.G.drawSquare(latLng, plotShapeDefinition.uniquePlotSideLength, squareOptions2, gmap);
+                var lPoint = mapUtils.L.cloneSquare(gPlot, squareOptions2, lmap);
+                plotShapes.G.push(gPoint);
+                plotShapes.L.push(lPoint);
+            } else {
+                var innerSquare = mapUtils.G.drawSquare(latLng, plotShapeDefinition.innerSideLength);
+                var eastLng = innerSquare.getBounds().getNorthEast().lng();
+                var westLng = innerSquare.getBounds().getSouthWest().lng();
+                var lngDistanceBetweenSamplePoints = (westLng - eastLng) / (plotShapeDefinition.pointPerLine - 1);
+                var northLat = innerSquare.getBounds().getNorthEast().lat();
+                var southLat = innerSquare.getBounds().getSouthWest().lat();
+                var latDistanceBetweenSamplePoints = (northLat - southLat) / (plotShapeDefinition.pointPerLine - 1);
+                for (var x = 0; x < plotShapeDefinition.pointPerLine; x++) {
+                    var lng = eastLng + x * lngDistanceBetweenSamplePoints;
+                    for (var y = 0; y < plotShapeDefinition.pointPerLine; y++) {
+                        var latLng = new google.maps.LatLng(northLat - y * latDistanceBetweenSamplePoints, lng);
+                        var squareOptions = (plotShapeDefinition.indexOfCenter != -1 && x == plotShapeDefinition.indexOfCenter && y == plotShapeDefinition.indexOfCenter) ? squareOptions2 : squareOptions1;
+                        var gSquare = mapUtils.G.drawSquare(latLng, plotShapeDefinition.innerPointSide, squareOptions, gmap);
+                        var lSquare = mapUtils.L.cloneSquare(gSquare, squareOptions, lmap);
+                        plotShapes.G.push(gSquare);
+                        plotShapes.L.push(lSquare);
+                    }
+                }
+            }
+            return plotShapes;
         }
     }
 };
