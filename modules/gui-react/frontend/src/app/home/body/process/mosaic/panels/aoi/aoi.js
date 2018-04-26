@@ -8,12 +8,19 @@ import Icon from 'widget/icon'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import ConfirmationButtons from '../confirmationButtons'
 import styles from './aoi.module.css'
+import {map} from '../../../../../map/map'
 
 const inputs = {
     section: new Constraints()
         .notBlank(),
     country: new Constraints()
-        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
+        .predicate((country, { section }) =>
+            section !== 'country' || !!country,
+        'process.mosaic.panel.areaOfInterest.form.country.required'),
+    polygon: new Constraints()
+        .predicate((polygon, { section }) =>
+            section !== 'polygon' || !!polygon,
+        'process.mosaic.panel.areaOfInterest.form.country.required')
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -55,14 +62,14 @@ class Aoi extends React.Component {
     renderSections() {
         const {form, inputs} = this.props
         switch (inputs.section.value) {
-            case 'country':
-                return <CountrySection form={form} inputs={inputs}/>
-            case 'fusionTable':
-                return <FusionTableSection form={form} inputs={inputs}/>
-            case 'polygon':
-                return <PolygonSection form={form} inputs={inputs}/>
-            default:
-                return <SectionSelection inputs={inputs}/>
+        case 'country':
+            return <CountrySection form={form} inputs={inputs}/>
+        case 'fusionTable':
+            return <FusionTableSection form={form} inputs={inputs}/>
+        case 'polygon':
+            return <PolygonSection form={form} inputs={inputs}/>
+        default:
+            return <SectionSelection inputs={inputs}/>
         }
     }
 }
@@ -78,12 +85,12 @@ class SectionSelection extends React.Component {
         return (
             <div className={styles.left}>
                 <div className={styles.header}>
-            <span className={styles.icon}>
-                <Icon name='cog'/>
-            </span>
+                    <span className={styles.icon}>
+                        <Icon name='cog'/>
+                    </span>
                     <span className={styles.title}>
-                <Msg id={'process.mosaic.panel.areaOfInterest.title'}/>
-            </span>
+                        <Msg id={'process.mosaic.panel.areaOfInterest.title'}/>
+                    </span>
                 </div>
                 <div className={styles.body}>
                     <SectionOption section={section} label={'Select country/province'} value='country'/>
@@ -138,18 +145,34 @@ const FusionTableSection = ({form, inputs: {section, country}}) =>
         </div>
     </Section>
 
-const PolygonSection = ({form, inputs: {section, country}}) =>
-    <Section>
-        <div className={styles.header}>
-            <a className={styles.icon} onClick={() => section.set('')} onMouseDown={(e) => e.preventDefault()}>
-                <Icon name='arrow-left'/>
-            </a>
-            <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.polygon.title'/></span>
-        </div>
-        <div className={styles.body}>
-            Draw a polygon
-        </div>
-    </Section>
+class PolygonSection extends React.Component {
+
+    componentWillMount() {
+        map.enableDrawingMode((polygon) =>
+            this.props.inputs.polygon.set(polygon)
+        )
+    }
+
+    componentWillUnmount() {
+        map.disableDrawingMode()
+    }
+
+    render() {
+        const { form, inputs: { section, polygon } } = this.props
+        return <Section>
+            <div className={styles.header}>
+                <a className={styles.icon} onClick={() => section.set('')} onMouseDown={(e) => e.preventDefault()}>
+                    <Icon name='arrow-left' />
+                </a>
+                <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.polygon.title' /></span>
+            </div>
+            <div className={styles.body}>
+                Draw a polygon
+            </div>
+        </Section>
+    }
+
+}
 
 Aoi.propTypes = {
     id: PropTypes.string,

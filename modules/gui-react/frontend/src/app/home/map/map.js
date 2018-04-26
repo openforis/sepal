@@ -11,6 +11,7 @@ import './map.module.css'
 export let map = null
 const ee = earthengine.ee
 let google = null
+let drawingManager = null
 
 export const initGoogleMapsApi$ = () => {
     const loadGoogleMapsApiKey$ =
@@ -19,6 +20,7 @@ export const initGoogleMapsApi$ = () => {
 
     const loadGoogleMapsApi$ = (apiKey) => Rx.Observable.create((observer) => {
         GoogleMapsLoader.KEY = apiKey
+        GoogleMapsLoader.LIBRARIES = ['drawing']
         GoogleMapsLoader.load((g) => {
             google = g
             observer.next(apiKey)
@@ -56,6 +58,29 @@ const createMap = (mapElement) => {
             .set('map.zoom', instance.getZoom())
             .dispatch()
     )
+    var drawingOptions = {
+        fillColor: '#FBFAF2',
+        fillOpacity: 0.07,
+        strokeColor: '#c5b397',
+        strokeOpacity: 1,
+        strokeWeight: 2,
+        clickable: false,
+        editable: false,
+        zIndex: 1
+    }
+
+    drawingManager = new google.maps.drawing.DrawingManager({
+        drawingMode: google.maps.drawing.OverlayType.POLYGON,
+        drawingControl: false,
+        drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER,
+            // drawingModes: [ 'marker', 'circle', 'polygon', 'polyline', 'rectangle' ]
+            drawingModes: ['polygon']
+        },
+        circleOptions: drawingOptions
+        , polygonOptions: drawingOptions
+        , rectangleOptions: drawingOptions
+    })
 
     const addLayer = (layer) => {
         instance.overlayMapTypes.push(layer)
@@ -93,6 +118,16 @@ const createMap = (mapElement) => {
                 )
             else
                 removeLayer('labels')
+        },
+        enableDrawingMode(callback) {
+            google.maps.event.addListener(drawingManager, 'overlaycomplete', function (e) {
+                let path = e.overlay.getPaths().getArray()[0].getArray().map((latLng) => [latLng.lng(), latLng.lat()])
+                callback(path)
+            })
+            drawingManager.setMap(instance)
+        },
+        disableDrawingMode() {
+            drawingManager.setMap(null)
         }
     }
 }
