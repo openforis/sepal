@@ -4,6 +4,7 @@ import fas from '@fortawesome/fontawesome-free-solid'
 import FontAwesomeIcon from '@fortawesome/react-fontawesome'
 import PropTypes from 'prop-types'
 import React from 'react'
+import styles from './icon.module.css'
 
 fontawesome.library.add(fas)
 fontawesome.library.add(far)
@@ -12,12 +13,12 @@ const Icon = ({name, type = 'solid', className, ...props}) => {
     if (!name)
         return null
     else
-        return <FontAwesomeIcon
+        return <i className={styles.icon}><FontAwesomeIcon
             tag='i'
             icon={[fontAwesomeCollection(type), name]}
             spin={name === 'spinner'}
             className={className}
-            {...props}/>
+            {...props}/></i>
 }
 
 Icon.propTypes = Object.assign(FontAwesomeIcon.propTypes, {

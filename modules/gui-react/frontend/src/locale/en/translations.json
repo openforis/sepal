@@ -98,7 +98,9 @@
     "selected": "{files} files and {directories} directories selected"
   },
   "body": {
-    "loading-apps": "Loading apps..."
+    "starting-sepal": "Starting SEPAL...",
+    "loading-apps": "Loading apps...",
+    "loading-initializing-google-maps": "Initializing map..."
   },
   "apps": {
     "initializing": "Initializing {label}...",
@@ -148,9 +150,16 @@
           "tooltip": "Specify area of interest",
           "form": {
             "country": {
+              "title": "Select country/province",
               "label": "Country",
               "placeholder": "Enter country",
               "required": "Country is required"
+            },
+            "fusionTable": {
+              "title": "Select from Fusion Table"
+            },
+            "polygon": {
+              "title": "Draw a polygon"
             }
           }
         },

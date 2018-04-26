@@ -43,12 +43,17 @@
     background-color: hsla(0, 0%, 100%, .05);
 }
 
-.app svg {
+.app i {
     border: 1px solid hsla(0, 0%, 100%, .2);
     border-radius: 50%;
-    font-size: 1.4rem;
-    padding: .7rem;
+    height: 3rem;
+    width: 3rem;
+    line-height: 3rem;
     margin-right: .3rem;
+}
+
+.app svg {
+    font-size: 1.4rem;
 }
 
 .app img {
