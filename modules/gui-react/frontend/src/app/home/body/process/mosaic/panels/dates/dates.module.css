@@ -1,20 +1,17 @@
 .container {
     --dot-size: 1rem;
-    /* display: flex; */
-    /* flex-direction: column; */
-    /* justify-content: space-between; */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     min-height: 16rem;
     min-width: 30rem;
+    padding: var(--padding);
 }
 
 .body {
-    /* display: flex; */
-    /* flex-direction: row; */
-    /* justify-content: center; */
     position: relative;
     height: 10rem;
     width: 100%;
-    border: 1px solid red;
     overflow: hidden;
 }
 
@@ -49,4 +46,9 @@
 .canvas {
     width: 100%;
     height: 100%;
+}
+
+.dayRange {
+    display: flex;
+    flex-direction: row;
 }

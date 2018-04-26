@@ -1,0 +1,48 @@
+.container {
+    --container-size: 3rem;
+    --slider-size: .1rem;    
+    --handle-size: 1.2rem;
+    --handle-size-hover: 1.6rem;
+    --range-size: .2rem;
+    width: 100%;
+    height: var(--container-size);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    overflow: hidden;
+    padding: 0 calc(var(--handle-size) / 2);
+}
+
+.slider {
+    width: 100%;
+    height: var(--slider-size);
+    background-color: rgba(255, 0, 0, .2);
+}
+
+.handle {
+    position: relative;
+    height: 0;
+    width: 0;
+}
+
+.handle:before {
+    content: "";
+    position: absolute;
+    top: calc((var(--handle-size) - var(--slider-size)) / -2);
+    left: calc((var(--handle-size)) / -2);
+    height: var(--handle-size);
+    width: var(--handle-size);
+    border-radius: 50%;
+    background-color: red;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.range {
+    position: absolute;
+    top: calc((var(--range-size) - var(--slider-size)) / -2);
+    height: var(--range-size);
+    background-color: red;
+    /* cursor: pointer; */
+    z-index: 9;
+}
