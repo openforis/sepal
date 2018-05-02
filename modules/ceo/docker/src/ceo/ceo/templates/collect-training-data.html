@@ -549,7 +549,11 @@
             showList();
         });
 
-        $('#export-csv').click(function(e) {
+        var exportCsv = $('#export-csv');
+        queue.addEmptyListener(function(empty) {
+            exportCsv.toggleClass('disabled', !empty);
+        });
+        exportCsv.click(function(e) {
             e.preventDefault();
             window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export';
         });
