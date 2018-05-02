@@ -100,7 +100,8 @@ class SepalConfiguration {
         [
                 'rstudio'    : 8787,
                 'shiny'      : 3838,
-                'geo-web-viz': 5678
+                'geo-web-viz': 5678,
+                'jupyter'    : 8888
         ]
     }
 

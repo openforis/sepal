@@ -196,6 +196,7 @@ var Events = {
     OPEN_IFRAME   : 'app_manager.open_iframe'
     , OPEN_RSTUDIO: 'app_manager.open_rstudio'
     , OPEN_DATAVIS: 'app_manager.open_datavis'
+    , OPEN_JUPYTER: 'app_manager.open_jupyter'
     , CLOSED      : 'app_manager.closed'
   }
   

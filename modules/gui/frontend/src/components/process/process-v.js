@@ -8,6 +8,7 @@ var Events      = require('../event/events')
 var BudgetCheck = require('../budget-check/budget-check')
 
 var rStudioImg = require('./img/r-studio.png')
+var jupyterImg = require('./img/jupyter.png')
 
 var html              = null
 var $apps             = null
@@ -55,6 +56,13 @@ var setApps = function (apps) {
     EventBus.dispatch(Events.APP_MANAGER.OPEN_RSTUDIO, null, '/sandbox/rstudio/')
   })
   $apps.append(rStudioBtn)
+
+  // jupyter app
+  var jupyterBtn = $('<div><button class="btn btn-base app jupyter">Jupyter Notebook</button></div>')
+    jupyterBtn.click(function (e) {
+    EventBus.dispatch(Events.APP_MANAGER.OPEN_JUPYTER, null, '/sandbox/jupyter/tree')
+  })
+  $apps.append(jupyterBtn)
   
   // all other apps
   $.each(apps, function (i, app) {

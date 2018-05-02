@@ -59,3 +59,13 @@ wget https://download3.rstudio.org/ubuntu-12.04/x86_64/$shinyServer
 gdebi -n $shinyServer
 chown shiny:root /usr/lib/R/library
 rm $shinyServer
+
+
+echo
+echo "**************************"
+echo "*** Installing Jupyter ***"
+echo "**************************"
+/usr/bin/pip3 install jupyter
+jupyter notebook --generate-config
+/usr/bin/python2 -m pip install ipykernel
+/usr/bin/python2 -m ipykernel install

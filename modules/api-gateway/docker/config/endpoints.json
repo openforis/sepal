@@ -108,6 +108,14 @@
   },
   {
     "prefix": "true",
+    "path": "/sandbox/jupyter/",
+    "target": "http://sepal:9191/jupyter/sandbox/jupyter/",
+    "rewriteRedirects": "false",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
     "path": "/sandbox/",
     "target": "http://sepal:9191/",
     "rewriteRedirects": "true",
