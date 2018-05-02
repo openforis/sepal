@@ -75,6 +75,7 @@ apt-get install -y \
     python-opencv \
     python-pandas \
     python-pip \
+    python3-pip \
     python-pyshp \
     python-rasterio \
     python-scikits-learn \
@@ -99,3 +100,5 @@ pip install pyCrypto
 pip install earthengine-api
 pip install google-api-python-client
 pip install awscli
+pip install --upgrade pip
+pip3 install --upgrade pip
