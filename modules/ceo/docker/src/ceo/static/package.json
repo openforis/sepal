@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "jquery": "~2.2.4",
+    "jquery": "~3.0.0",
     "bootstrap": "v4.0.0-alpha.6",
     "earthengine-api": "git+https://github.com/openforis/earthengine-api.git",
     "font-awesome": "4.7.0",
