@@ -310,8 +310,8 @@ var updateFusionTableValues = function (ftId, column, callback) {
         var keyParam = user.googleTokens ? 'access_token=' + user.googleTokens.accessToken : 'key=' + GoogleMapsLoader.KEY
 
         var params = {
-            url     : 'https://www.googleapis.com/fusiontables/v2/query?sql=SELECT ' + column + ' FROM ' + ftId
-                + ' ORDER BY ' + column + '&' + keyParam,
+            url     : 'https://www.googleapis.com/fusiontables/v2/query?sql=SELECT \'' + column + '\' FROM ' + ftId
+                + ' ORDER BY \'' + column + '\'&' + keyParam,
             success : function (resp) {
                 FormValidator.resetFormErrors(form)
 

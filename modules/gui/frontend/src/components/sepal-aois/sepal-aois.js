@@ -20,10 +20,10 @@ var loadAoiList = function (fusionTableOrCallback, keyColumn, labelColumn, callb
     callback = fusionTableOrCallback
   }
   var query = [
-      'SELECT', keyColumn, ',', labelColumn,
+      'SELECT', keyColumn, ',', '\'' + labelColumn + '\'',
       'FROM', fusionTable,
-      'WHERE', labelColumn, 'NOT EQUAL TO \'\'',
-      'ORDER BY', labelColumn].join(' ')
+      'WHERE', '\'' + labelColumn + '\'', 'NOT EQUAL TO \'\'',
+      'ORDER BY', '\'' + labelColumn + '\''].join(' ')
   var data  = {sql: query, key: GoogleMapsLoader.KEY}
   
   var params = {
@@ -65,8 +65,8 @@ var getFusionTableLayer = function (fusionTable, column, value) {
   var FT_Options = {
     suppressInfoWindows: true,
     query              : {
-      from  : fusionTable,
       select: 'geometry',
+      from  : fusionTable,
       where : '\'' + column + '\' = \'' + value + '\';'
     },
     styles             : [{
@@ -84,7 +84,7 @@ var getFusionTableLayer = function (fusionTable, column, value) {
 }
 
 var loadBounds = function (fusionTable, column, value, callback) {
-  var query = 'SELECT geometry FROM ' + fusionTable + ' WHERE ' + column + ' = \'' + value + '\''
+  var query = 'SELECT geometry FROM ' + fusionTable + ' WHERE \'' + column + '\' = \'' + value + '\''
   var data  = {sql: query, key: GoogleMapsLoader.KEY}
   
   var bounds    = new google.maps.LatLngBounds()
