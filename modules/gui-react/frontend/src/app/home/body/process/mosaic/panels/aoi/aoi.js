@@ -12,7 +12,7 @@ import {map} from '../../../../../map/map'
 
 const inputs = {
     section: new Constraints()
-        .notBlank(),
+        .notBlank('some.key'),
     country: new Constraints()
         .predicate((country, { section }) =>
             section !== 'country' || !!country,
@@ -78,6 +78,8 @@ class SectionSelection extends React.Component {
     componentWillMount() {
         const {inputs} = this.props
         Object.keys(inputs).forEach((name) => inputs[name] && inputs[name].set(''))
+        console.log('Selection')
+        map.removeMapObject('aoi')
     }
 
     render() {
@@ -146,28 +148,44 @@ const FusionTableSection = ({form, inputs: {section, country}}) =>
     </Section>
 
 class PolygonSection extends React.Component {
+    navigatedBack = false
 
     componentWillMount() {
-        map.enableDrawingMode((polygon) =>
+        map.drawPolygon('aoi', (polygon) => {
             this.props.inputs.polygon.set(polygon)
-        )
+        })
     }
 
     componentWillUnmount() {
         map.disableDrawingMode()
     }
 
+    componentWillReceiveProps(nextProps) {
+        const { form, inputs: { section, polygon } } = nextProps
+        if (!this.navigatedBack) {
+            map.setPolygon('aoi', polygon.value)
+        }
+    }
+
     render() {
         const { form, inputs: { section, polygon } } = this.props
         return <Section>
             <div className={styles.header}>
-                <a className={styles.icon} onClick={() => section.set('')} onMouseDown={(e) => e.preventDefault()}>
+                <a 
+                    className={styles.icon}
+                    onClick={() => {
+                        this.navigatedBack = true
+                        map.disableDrawingMode()
+                        section.set('')
+                    }} 
+                    onMouseDown={(e) => e.preventDefault()}>
                     <Icon name='arrow-left' />
                 </a>
                 <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.polygon.title' /></span>
             </div>
             <div className={styles.body}>
                 Draw a polygon
+                {polygon.value}
             </div>
         </Section>
     }
@@ -180,6 +198,7 @@ Aoi.propTypes = {
     form: PropTypes.object,
     inputs: PropTypes.shape({
         country: PropTypes.object,
+        polygon: PropTypes.object
     }),
     action: PropTypes.func,
     values: PropTypes.object

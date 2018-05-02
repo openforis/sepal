@@ -11,7 +11,27 @@ import './map.module.css'
 export let map = null
 const ee = earthengine.ee
 let google = null
+let instance = null
 let drawingManager = null
+
+const mapObjects = {}
+
+const setMapObject = (id, object) => {
+    if (id in mapObjects)
+       removeMapObject(id)
+    if (object) {
+        object.setMap(instance)
+        mapObjects[id] = object
+    }
+}
+
+const removeMapObject = (id) => {
+    if (mapObjects[id]) {
+        mapObjects[id].setMap(null)
+    }
+    delete mapObjects[id]
+}
+
 
 export const initGoogleMapsApi$ = () => {
     const loadGoogleMapsApiKey$ =
@@ -37,7 +57,7 @@ export const initGoogleMapsApi$ = () => {
 }
 
 const createMap = (mapElement) => {
-    const instance = new google.maps.Map(mapElement, {
+    instance = new google.maps.Map(mapElement, {
         zoom: 3,
         minZoom: 3,
         maxZoom: 15,
@@ -68,19 +88,6 @@ const createMap = (mapElement) => {
         editable: false,
         zIndex: 1
     }
-
-    drawingManager = new google.maps.drawing.DrawingManager({
-        drawingMode: google.maps.drawing.OverlayType.POLYGON,
-        drawingControl: false,
-        drawingControlOptions: {
-            position: google.maps.ControlPosition.TOP_CENTER,
-            // drawingModes: [ 'marker', 'circle', 'polygon', 'polyline', 'rectangle' ]
-            drawingModes: ['polygon']
-        },
-        circleOptions: drawingOptions
-        , polygonOptions: drawingOptions
-        , rectangleOptions: drawingOptions
-    })
 
     const addLayer = (layer) => {
         instance.overlayMapTypes.push(layer)
@@ -119,17 +126,54 @@ const createMap = (mapElement) => {
             else
                 removeLayer('labels')
         },
-        enableDrawingMode(callback) {
-            google.maps.event.addListener(drawingManager, 'overlaycomplete', function (e) {
-                let path = e.overlay.getPaths().getArray()[0].getArray().map((latLng) => [latLng.lng(), latLng.lat()])
+        drawPolygon(id, callback) {
+            if (drawingManager === null) {
+                drawingManager = new google.maps.drawing.DrawingManager({
+                    drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                    drawingControl: false,
+                    drawingControlOptions: {
+                        position: google.maps.ControlPosition.TOP_CENTER,
+                        // drawingModes: [ 'marker', 'circle', 'polygon', 'polyline', 'rectangle' ]
+                        drawingModes: ['polygon']
+                    },
+                    circleOptions: drawingOptions,
+                    polygonOptions: drawingOptions,
+                    rectangleOptions: drawingOptions
+                })
+            }
+            const drawingListener = (e) => {
+                let polygon = e.overlay
+                polygon.setMap(null)
+                let path = polygon.getPaths().getArray()[0].getArray().map((latLng) => [latLng.lng(), latLng.lat()])
                 callback(path)
-            })
+            }
+            google.maps.event.addListener(drawingManager, 'overlaycomplete', drawingListener)
             drawingManager.setMap(instance)
         },
         disableDrawingMode() {
-            drawingManager.setMap(null)
+            if (drawingManager) {
+                drawingManager.setMap(null)
+                drawingManager = null
+            }
+        },
+        setPolygon(id, polygonPath) {
+            const polygon = polygonPath
+                ? new google.maps.Polygon({ paths: polygonPath.map(([lng, lat]) => new google.maps.LatLng(lat, lng)), ...polygonOptions     })
+                : null
+           setMapObject(id, polygon)
+        },
+        removeMapObject(id) {
+            removeMapObject(id)
         }
     }
+}
+
+const polygonOptions = {
+    fillColor    : '#FBFAF2',
+    fillOpacity  : 0.07,
+    strokeColor  : '#FBFAF2',
+    strokeOpacity: 0.15,
+    strokeWeight : 1
 }
 
 // https://developers.google.com/maps/documentation/javascript/style-reference
