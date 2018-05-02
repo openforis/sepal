@@ -112,7 +112,7 @@
     </div>
 </div>
 
-<script src="static/js/ceo-map-utils.js?v2"></script>
+<script src="static/js/ceo-map-utils.js?v3"></script>
 <script src="static/js/overlay-map-manager.js?v4"></script>
 
 <script>
@@ -176,6 +176,10 @@
         var overlays = [];
         var shapes = {};
         var properties = {};
+        var currentPlotShapes = {
+            'G': [],
+            'L': []
+        }
 
         var plotSelection = function(e) {
             e.preventDefault();
@@ -332,6 +336,16 @@
                     var uniquePlotSideLength = Math.sqrt(innerPointSide);
                     var indexOfCenter = (isEven) ? -1 : numberInnerColumns;
                     //
+                    var plotShapeDefinition = {
+                        'innerPointSide': innerPointSide,
+                        'numberOfSamplingPointsInPlot': numberOfSamplingPointsInPlot,
+                        'distanceBetweenSamplePoints': distanceBetweenSamplePoints,
+                        'pointPerLine': pointPerLine,
+                        'innerSideLength': innerSideLength,
+                        'uniquePlotSideLength': uniquePlotSideLength,
+                        'indexOfCenter': indexOfCenter
+                    };
+                    //
                     var squareOptions1 = {
                         color: 'yellow',
                         opacity: 0.8,
@@ -360,45 +374,22 @@
                         var li = $('<a>').attr("href", "#").addClass("list-group-item list-group-item-action").html(id);
                         li.attr('data-plot-id', id).attr('data-x-coordinate', lng).attr('data-y-coordinate', lat);
                         li.click(plotSelection);
+                        li.click(function() {
+                            for (var shape of currentPlotShapes.G) shape.setMap(null);
+                            for (var shape of currentPlotShapes.L) shape.remove();
+                            currentPlotShapes = mapUtils.utils.drawPlot(plotShapeDefinition, latLng, squareOptions1, squareOptions2, gmap, lmap);
+                        });
                         $('#list').append(li);
                         //
                         var gPlot = mapUtils.G.drawSquare(latLng, plotSideLength, squareOptions1, gmap);
                         var lPlot = mapUtils.L.cloneSquare(gPlot, squareOptions1, lmap);
                         shapes[id] = [gPlot, lPlot];
                         //
-                        if (numberOfSamplingPointsInPlot == 1) {
-                            var gPoint = mapUtils.G.drawSquare(latLng, uniquePlotSideLength, squareOptions2, gmap);
-                            var lPoint = mapUtils.L.cloneSquare(gPlot, squareOptions2, lmap);
-                        } else {
-                            var innerSquare = mapUtils.G.drawSquare(latLng, innerSideLength);
-                            var eastLng = innerSquare.getBounds().getNorthEast().lng();
-                            var westLng = innerSquare.getBounds().getSouthWest().lng();
-                            var lngDistanceBetweenSamplePoints = (westLng - eastLng) / (pointPerLine - 1);
-                            var northLat = innerSquare.getBounds().getNorthEast().lat();
-                            var southLat = innerSquare.getBounds().getSouthWest().lat();
-                            var latDistanceBetweenSamplePoints = (northLat - southLat) / (pointPerLine - 1);
-                            for (var x = 0; x < pointPerLine; x++) {
-                                var lng = eastLng + x * lngDistanceBetweenSamplePoints;
-                                for (var y = 0; y < pointPerLine; y++) {
-                                    var latLng = new google.maps.LatLng(northLat - y * latDistanceBetweenSamplePoints, lng);
-                                    if (indexOfCenter != -1 && x == indexOfCenter && y == indexOfCenter) {
-                                        var square = mapUtils.G.drawSquare(latLng, innerPointSide, squareOptions2, gmap);
-                                        mapUtils.L.cloneSquare(square, squareOptions2, lmap);
-                                    }
-                                    else {
-                                        var square = mapUtils.G.drawSquare(latLng, innerPointSide, squareOptions1, gmap);
-                                        mapUtils.L.cloneSquare(square, squareOptions1, lmap);
-                                    }
-                                }
-                            }
+                        var plotOnClick = function() {
+                            $('#list a[data-plot-id=' + plot.id +']').click();
                         }
-                        //
-                        gPlot.addListener('click', function() {
-                            $('#list a[data-plot-id=' + plot.id +']').click();
-                        });
-                        lPlot.on('click', function(e) {
-                            $('#list a[data-plot-id=' + plot.id +']').click();
-                        });
+                        gPlot.addListener('click', plotOnClick);
+                        lPlot.on('click', plotOnClick);
                         //
                         gBounds.extend(latLng);
                         lBounds.push([lat, lng]);

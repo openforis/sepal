@@ -95,7 +95,7 @@
     </div>
 </div>
 
-<script src="static/js/ceo-map-utils.js?v2"></script>
+<script src="static/js/ceo-map-utils.js?v3"></script>
 <script src="static/js/overlay-map-manager.js?v4"></script>
 
 <script>
@@ -366,14 +366,12 @@
                     var lPlot = mapUtils.L.cloneSquare(gPlot, squareOptions1, lmap);
                     shapes[id] = [[gPoint, gPlot], [lPlot, lPoint]];
                     //
-                    gPlot.addListener('click', function() {
+                    var plotOnClick = function() {
                         removePlots();
                         $('#list a[data-plot-id=' + id +']').click();
-                    });
-                    lPlot.on('click', function(e) {
-                        removePlots();
-                        $('#list a[data-plot-id=' + id +']').click();
-                    });
+                    };
+                    gPlot.addListener('click', plotOnClick);
+                    lPlot.on('click', plotOnClick);
                     //
                     li.trigger('click');
                 });
@@ -396,14 +394,12 @@
                     var lPlot = mapUtils.L.cloneSquare(gPlot, squareOptions1, lmap);
                     shapes[id] = [[gPoint, gPlot], [lPlot, lPoint]];
                     //
-                    gPlot.addListener('click', function() {
+                    var plotOnClick = function() {
                         removePlots();
                         $('#list a[data-plot-id=' + id +']').click();
-                    });
-                    lPlot.on('click', function(e) {
-                        removePlots();
-                        $('#list a[data-plot-id=' + id +']').click();
-                    });
+                    };
+                    gPlot.addListener('click', plotOnClick);
+                    lPlot.on('click', plotOnClick);
                     //
                     li.trigger('click');
                 });
