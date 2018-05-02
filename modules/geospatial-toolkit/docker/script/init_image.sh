@@ -101,4 +101,3 @@ pip install earthengine-api
 pip install google-api-python-client
 pip install awscli
 pip install --upgrade pip
-pip3 install --upgrade pip
