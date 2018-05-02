@@ -186,7 +186,7 @@
                 url: ceoSepalApiUrl + "/project/" + project_id,
                 method: 'get',
                 dataType: 'json'
-            }).success(function(data) {
+            }).done(function(data, textStatus, jqXHR) {
                 // project
                 projectName = data.name;
                 radius = parseFloat(data.radius);
@@ -462,7 +462,7 @@
             $.ajax({
                 url: ceoSepalApiUrl + "/record/project_id/" + project_id,
                 method: 'get'
-            }).success(function(data) {
+            }).done(function(data, textStatus, jqXHR) {
                 $.each(data, function(key, record) {
                     $('#list a[data-plot-id="' + record.plot.id +'"]').attr('data-record-id', record.id).data('value', record.value);
                     $('#list a[data-plot-id="' + record.plot.id +'"]').addClass('evaluated').text(record.plot.id + ' (' + record.value.class + ')');

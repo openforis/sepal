@@ -359,7 +359,7 @@ $('#submit-btn').click(function(e) {
             url: ceoSepalApiUrl + '/project/' + project_id,
             method: 'put',
             data: $('form').serialize()
-        }).success(function(data) {
+        }).done(function(data, textStatus, jqXHR) {
             window.location.href = '{{config.BASE}}';
         }).fail(function(jqXHR, textStatus, errorThrown) {
             console.error(jqXHR, textStatus, errorThrown);
@@ -373,7 +373,7 @@ $(document).ready(function() {
         url: ceoSepalApiUrl + '/project/' + project_id,
         method: 'get',
         dataType: 'json'
-    }).success(function(data) {
+    }).done(function(data, textStatus, jqXHR) {
         $('input[name="name"]').val(data.name);
         switch (data.type) {
             case 'CEP':
