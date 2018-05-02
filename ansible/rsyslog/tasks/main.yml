@@ -1,5 +1,8 @@
 ---
 - name: "Install rsyslog"
+  apt: name="gnutls-bin"
+
+- name: "Install rsyslog"
   apt: name="rsyslog"
 
 - name: "Install rsyslog-gnutls"

@@ -1,4 +1,0 @@
-- name: Create docker storage dir
-  file:
-    path: "/data/docker/storage"
-    state: directory

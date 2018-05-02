@@ -8,14 +8,6 @@
     - "{{ secret_vars_file }}"
 
   pre_tasks:
-    - name: Create docker-registry certificate dir
-      file:
-        path: "/etc/docker/certs.d/{{ docker_repository_host }}"
-        state: directory
-    - name: Copy docker-registry certificate
-      copy:
-        src: "{{ config_home }}/certificates/docker-registry.crt"
-        dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
     - set_fact:
         ldap_host: "{{ ec2_private_ip_address }}"
         elk_host: "{{ elk_host }}"
@@ -29,10 +21,10 @@
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
 
   roles:
-    - role: unattended-upgrades
-      unattended_origins_patterns:
-       - 'origin=Ubuntu,archive=${distro_codename}-security'
-       - 'o=Ubuntu,a=${distro_codename}-updates'
+#    - role: unattended-upgrades
+#      unattended_origins_patterns:
+#       - 'origin=Ubuntu,archive=${distro_codename}-security'
+#       - 'o=Ubuntu,a=${distro_codename}-updates'
     - { role: rsyslog }
     - { role: docker, users: ['ubuntu'] }
     - { role: aws-mount-efs }
