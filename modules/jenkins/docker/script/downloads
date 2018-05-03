@@ -13,7 +13,7 @@ apt-get update && apt-get install -y \
 export SDKMAN_DIR=/usr/local/lib/sdkman
 curl -s get.sdkman.io | bash
 source "$SDKMAN_DIR/bin/sdkman-init.sh"
-yes | sdk install java 10.0.1-oracle
+yes | sdk install java 8.0.171-oracle
 sdk install groovy
 sdk install maven
 echo 'source "$SDKMAN_DIR/bin/sdkman-init.sh"' >> /etc/profile
