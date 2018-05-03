@@ -21,10 +21,10 @@
     - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
 
   roles:
-#    - role: unattended-upgrades
-#      unattended_origins_patterns:
-#       - 'origin=Ubuntu,archive=${distro_codename}-security'
-#       - 'o=Ubuntu,a=${distro_codename}-updates'
+    - role: unattended-upgrades
+      unattended_origins_patterns:
+       - 'origin=Ubuntu,archive=${distro_codename}-security'
+       - 'o=Ubuntu,a=${distro_codename}-updates'
     - { role: rsyslog }
     - { role: docker, users: ['ubuntu'] }
     - { role: aws-mount-efs }
