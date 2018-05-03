@@ -163,7 +163,8 @@ class PolygonSection extends React.Component {
     componentWillReceiveProps(nextProps) {
         const { form, inputs: { section, polygon } } = nextProps
         if (!this.navigatedBack) {
-            map.setPolygon('aoi', polygon.value)
+            const fitBounds = true
+            map.setPolygon('aoi', polygon.value, fitBounds)
         }
     }
 

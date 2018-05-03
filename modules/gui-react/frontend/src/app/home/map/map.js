@@ -16,12 +16,18 @@ let drawingManager = null
 
 const mapObjects = {}
 
-const setMapObject = (id, object) => {
-    if (id in mapObjects)
+const setMapObject = (id, object, fitBounds) => {
+    if (id in mapObjects) {
+        const currentMapObject = mapObjects[id]
+        if (toPolygonPath(currentMapObject).toString() === toPolygonPath(object).toString())
+            return
        removeMapObject(id)
+    }
     if (object) {
         object.setMap(instance)
         mapObjects[id] = object
+        if (fitBounds)
+            map.fitBounds(id)
     }
 }
 
@@ -126,6 +132,17 @@ const createMap = (mapElement) => {
             else
                 removeLayer('labels')
         },
+        fitBounds(mapObjectName) {
+            const mapObject = mapObjects[mapObjectName]
+            if (mapObject) {
+                const bounds = new google.maps.LatLngBounds()
+                mapObject.getPaths().getArray().forEach((path) => 
+                    path.getArray().forEach((latLng) =>
+                        bounds.extend(latLng)
+                    ))
+                !instance.getBounds().equals(bounds) && instance.fitBounds(bounds)
+            }
+        },
         drawPolygon(id, callback) {
             if (drawingManager === null) {
                 drawingManager = new google.maps.drawing.DrawingManager({
@@ -142,10 +159,9 @@ const createMap = (mapElement) => {
                 })
             }
             const drawingListener = (e) => {
-                let polygon = e.overlay
+                const polygon = e.overlay
                 polygon.setMap(null)
-                let path = polygon.getPaths().getArray()[0].getArray().map((latLng) => [latLng.lng(), latLng.lat()])
-                callback(path)
+                callback(toPolygonPath(polygon))
             }
             google.maps.event.addListener(drawingManager, 'overlaycomplete', drawingListener)
             drawingManager.setMap(instance)
@@ -156,11 +172,11 @@ const createMap = (mapElement) => {
                 drawingManager = null
             }
         },
-        setPolygon(id, polygonPath) {
+        setPolygon(id, polygonPath, fitBounds) {
             const polygon = polygonPath
                 ? new google.maps.Polygon({ paths: polygonPath.map(([lng, lat]) => new google.maps.LatLng(lat, lng)), ...polygonOptions     })
                 : null
-           setMapObject(id, polygon)
+           setMapObject(id, polygon, fitBounds)
         },
         removeMapObject(id) {
             removeMapObject(id)
@@ -216,5 +232,7 @@ class Map extends React.Component {
 Map.propTypes = {
     className: PropTypes.string
 }
+
+const toPolygonPath = (polygon) => polygon.getPaths().getArray()[0].getArray().map((latLng) => [latLng.lng(), latLng.lat()])
 
 export default connect(mapStateToProps)(Map)
