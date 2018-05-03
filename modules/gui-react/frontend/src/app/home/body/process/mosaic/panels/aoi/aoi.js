@@ -7,6 +7,9 @@ import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import Icon from 'widget/icon'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import ConfirmationButtons from '../confirmationButtons'
+import CountrySection from './countrySection'
+import PolygonSection from './polygonSection'
+import FusionTableSection from './fusionTableSection'
 import styles from './aoi.module.css'
 import {map} from '../../../../../map/map'
 
@@ -63,11 +66,11 @@ class Aoi extends React.Component {
         const {form, inputs} = this.props
         switch (inputs.section.value) {
         case 'country':
-            return <CountrySection form={form} inputs={inputs}/>
+            return <Section><CountrySection form={form} inputs={inputs}/></Section>
         case 'fusionTable':
-            return <FusionTableSection form={form} inputs={inputs}/>
+            return <Section><FusionTableSection form={form} inputs={inputs}/></Section>
         case 'polygon':
-            return <PolygonSection form={form} inputs={inputs}/>
+            return <Section><PolygonSection form={form} inputs={inputs}/></Section>
         default:
             return <SectionSelection inputs={inputs}/>
         }
@@ -78,7 +81,6 @@ class SectionSelection extends React.Component {
     componentWillMount() {
         const {inputs} = this.props
         Object.keys(inputs).forEach((name) => inputs[name] && inputs[name].set(''))
-        console.log('Selection')
         map.removeMapObject('aoi')
     }
 
@@ -113,85 +115,6 @@ const Section = ({children}) =>
     <div className={styles.right}>
         {children}
     </div>
-
-const CountrySection = ({form, inputs: {section, country}}) =>
-    <Section>
-        <div className={styles.header}>
-            <a className={styles.icon} onClick={() => section.set('')} onMouseDown={(e) => e.preventDefault()}>
-                <Icon name='arrow-left'/>
-            </a>
-            <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.country.title'/></span>
-        </div>
-        <div className={styles.body}>
-            <label><Msg id='process.mosaic.panel.areaOfInterest.form.country.label'/></label>
-            <Input
-                input={country}
-                placeholder={msg('process.mosaic.panel.areaOfInterest.form.country.placeholder')}
-                autoFocus='on'
-                autoComplete='off'
-                tabIndex={1}/>
-            <ErrorMessage input={country}/>
-        </div>
-    </Section>
-
-const FusionTableSection = ({form, inputs: {section, country}}) =>
-    <Section>
-        <div className={styles.header}>
-            <a className={styles.icon} onClick={() => section.set('')} onMouseDown={(e) => e.preventDefault()}>
-                <Icon name='arrow-left'/>
-            </a>
-            <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.country.title'/></span>
-        </div>
-        <div className={styles.body}>
-            Fusion Table Form
-        </div>
-    </Section>
-
-class PolygonSection extends React.Component {
-    navigatedBack = false
-
-    componentWillMount() {
-        map.drawPolygon('aoi', (polygon) => {
-            this.props.inputs.polygon.set(polygon)
-        })
-    }
-
-    componentWillUnmount() {
-        map.disableDrawingMode()
-    }
-
-    componentWillReceiveProps(nextProps) {
-        const { form, inputs: { section, polygon } } = nextProps
-        if (!this.navigatedBack) {
-            const fitBounds = true
-            map.setPolygon('aoi', polygon.value, fitBounds)
-        }
-    }
-
-    render() {
-        const { form, inputs: { section, polygon } } = this.props
-        return <Section>
-            <div className={styles.header}>
-                <a 
-                    className={styles.icon}
-                    onClick={() => {
-                        this.navigatedBack = true
-                        map.disableDrawingMode()
-                        section.set('')
-                    }} 
-                    onMouseDown={(e) => e.preventDefault()}>
-                    <Icon name='arrow-left' />
-                </a>
-                <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.polygon.title' /></span>
-            </div>
-            <div className={styles.body}>
-                Draw a polygon
-                {polygon.value}
-            </div>
-        </Section>
-    }
-
-}
 
 Aoi.propTypes = {
     id: PropTypes.string,
