@@ -159,7 +159,8 @@
               "title": "Select from Fusion Table"
             },
             "polygon": {
-              "title": "Draw a polygon"
+              "title": "Draw a polygon",
+              "description": "Draw a polygon on the map."
             }
           }
         },

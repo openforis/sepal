@@ -43,8 +43,10 @@ class PolygonSection extends React.Component {
                 <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.polygon.title' /></span>
             </div>
             <div className={styles.body}>
-                Draw a polygon
-                {polygon.value}
+                <div className={styles.polygon}>
+                    <Msg id='process.mosaic.panel.areaOfInterest.form.polygon.description' />
+                </div>
+                {/*{polygon.value}*/}
             </div>
         </div>
     }

@@ -142,3 +142,10 @@ a.icon:hover {
 .buttons {
     padding: var(--padding);
 }
+
+.polygon {
+    margin: auto;
+    text-align: center;
+    font-style: italic;
+    margin-top: 5rem;
+}
