@@ -40,7 +40,7 @@ export const RecipeActions = (id) => {
             set('SELECT_MOSAIC_PANEL', 'selectedPanel', panel, {panel})
         },
         setAoi(aoi) {
-            set('SET_AOI', 'aoi', aoi, {aoi})
+            set('SET_AOI', 'aoi', {...aoi}, {aoi})
         },
         setModal(enabled) {
             set('SET_MODAL', 'modal', enabled, {enabled})
