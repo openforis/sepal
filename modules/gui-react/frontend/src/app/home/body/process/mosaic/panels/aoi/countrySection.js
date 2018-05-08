@@ -13,13 +13,14 @@ import PanelContent from '../panelContent'
 
 const loadCountries$ = () => {
     const query = `
-        SELECT ISO, NAME_FAO 
-        FROM 15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F 
-        WHERE NAME_FAO NOT EQUAL TO '' 
-        ORDER BY NAME_FAO ASC
+        SELECT id, label 
+        FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
+        WHERE parent_id != '' 
+        ORDER BY label ASC
     `.replace(/\s+/g, ' ').trim()
     const googleKey = map.getKey()
     return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&key=${googleKey}`)
+        .delay(2000)
         .map((e) =>
             actionBuilder('SET_COUNTRIES', {countries: e.response})
                 .set('countries', e.response.rows)
@@ -27,9 +28,27 @@ const loadCountries$ = () => {
         )
 }
 
-const mapStateToProps = () => {
+const loadCountryAreas$ = (countryId) => {
+    const query = `
+        SELECT id, label 
+        FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
+        WHERE parent_id = '${countryId}'
+        ORDER BY label ASC
+    `.replace(/\s+/g, ' ').trim()
+    const googleKey = map.getKey()
+    return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&key=${googleKey}`)
+        .delay(2000)
+        .map((e) =>
+            actionBuilder('SET_COUNTRY_AREA', {countries: e.response})
+                .set(['areasByCountry', countryId], e.response.rows)
+                .build()
+        )
+}
+
+const mapStateToProps = (state, ownProps) => {
     return {
-        countries: select('countries')
+        countries: select('countries'),
+        countryAreas: select(['areasByCountry', ownProps.inputs.country.value])
     }
 }
 
@@ -37,14 +56,23 @@ class CountrySection extends React.Component {
     constructor(props) {
         super(props)
         this.recipe = RecipeActions(props.id)
-        this.countryChanged$ = new Rx.Subject()
+        this.aoiChanged$ = new Rx.Subject()
+    }
+
+    loadCountryAreas(countryId) {
+        if (!select(['areasByCountry', countryId])) {
+            console.log('Loading country areas')
+            this.props.asyncActionBuilder('LOAD_COUNTRY_AREAS',
+                loadCountryAreas$(countryId)
+                    .takeUntil(this.aoiChanged$))
+                .dispatch()
+        }
+        else
+            console.log('Already loaded country areas')
     }
 
     render() {
-        const {countries, className, inputs: {section, country}} = this.props
-        if (!countries) {
-            return <div>Loading countries</div>
-        }
+        const {countries, countryAreas, className, inputs: {section, country, area}} = this.props
         return (
             <PanelContent
                 title={msg('process.mosaic.panel.areaOfInterest.form.country.title')}
@@ -53,16 +81,33 @@ class CountrySection extends React.Component {
                     section.set('')
                 }}>
                 <label><Msg id='process.mosaic.panel.areaOfInterest.form.country.label'/></label>
-                <select name="country" value={country.value} onChange={(e) => {
+                <select name="country" value={country.value} disabled={!countries} onChange={(e) => {
                     country.handleChange(e)
                     country.validate()
-                    this.countryChanged$.next()
+                    area.set('')
+                    this.aoiChanged$.next()
+                    this.loadCountryAreas(e.target.value)
                 }}>
-                    {countries.map(([value, label]) =>
+                    <option key='' value=''>[Select a country]</option>
+                    {(countries || []).map(([value, label]) =>
                         <option key={value} value={value}>{label}</option>
                     )}
                 </select>
-                <ErrorMessage input={country}/>
+                <br/><br/>
+                <div>
+                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.countryArea.label'/></label>
+                    <select name="area" value={area.value} disabled={!countryAreas || countryAreas.length === 0} onChange={(e) => {
+                        area.handleChange(e)
+                        area.validate()
+                        this.aoiChanged$.next()
+                    }}>
+                        <option key='' value=''>[Select an area]</option>
+                        {(countryAreas || []).map(([value, label]) =>
+                            <option key={value} value={value}>{label}</option>
+                        )}
+                    </select>
+                </div>
+                <ErrorMessage input={area}/>
             </PanelContent>
         )
     }
@@ -71,7 +116,7 @@ class CountrySection extends React.Component {
         if (prevProps.inputs === this.props.inputs)
             return
 
-        const {countries, action, asyncActionBuilder, inputs: {country}} = this.props
+        const {countries, action, asyncActionBuilder, inputs: {country, area}} = this.props
         if (!countries && !action('LOAD_COUNTRIES').dispatching)
             asyncActionBuilder('LOAD_COUNTRIES',
                 loadCountries$())
@@ -79,17 +124,17 @@ class CountrySection extends React.Component {
 
         FusionTable.setLayer({
             id: 'aoi',
-            table: '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-            keyColumn: 'ISO',
-            key: country.value
+            table: '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU',
+            keyColumn: 'id',
+            key: area.value || country.value
         }, this.loadBounds.bind(this))
     }
 
     loadBounds(fusionTable) {
         this.props.asyncActionBuilder('LOAD_BOUNDS',
             fusionTable.loadBounds$()
-                .map(((bounds) => actionBuilder('LOADED_BOUNDS', {bounds})))
-                .takeUntil(this.countryChanged$))
+                .map((bounds) => actionBuilder('LOADED_BOUNDS', {bounds}))
+                .takeUntil(this.aoiChanged$))
             .onComplete(() => map.fitBounds('aoi'))
             .dispatch()
     }

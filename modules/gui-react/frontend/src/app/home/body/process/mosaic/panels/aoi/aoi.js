@@ -19,6 +19,7 @@ const inputs = {
         .predicate((country, {section}) =>
             section !== 'country' || !!country,
             'process.mosaic.panel.areaOfInterest.form.country.required'),
+    area: new Constraints(),
     polygon: new Constraints()
         .predicate((polygon, {section}) =>
             section !== 'polygon' || !!polygon,

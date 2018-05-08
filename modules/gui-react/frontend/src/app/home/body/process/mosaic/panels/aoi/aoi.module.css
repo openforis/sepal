@@ -113,3 +113,7 @@
 .buttons {
     padding: var(--padding);
 }
+
+select:disabled {
+    background: #dddddd;
+}
