@@ -56,7 +56,6 @@
 
 .recipe:hover {
     border: 1px solid hsla(36, 28%, 61%, .7);
-    background-color: hsla(36, 28%, 61%, .25);
     cursor: pointer;
 }
 

@@ -26,6 +26,7 @@ form input:focus {
 }
 
 form input::placeholder {
+    font-size: calc(1.25rem * var(--scaling-factor));
     font-style: italic;
 }
 

@@ -7,6 +7,7 @@ import React from 'react'
 import Rx from 'rxjs'
 import {connect, select} from 'store'
 import {Msg, msg} from 'translate'
+import ComboBox from 'widget/comboBox'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
 import {RecipeActions} from '../../mosaicRecipe'
 import PanelContent from '../panelContent'
@@ -37,7 +38,6 @@ const loadCountryAreas$ = (countryId) => {
     `.replace(/\s+/g, ' ').trim()
     const googleKey = map.getKey()
     return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&key=${googleKey}`)
-        .delay(2000)
         .map((e) =>
             actionBuilder('SET_COUNTRY_AREA', {countries: e.response})
                 .set(['areasByCountry', countryId], e.response.rows)
@@ -72,7 +72,7 @@ class CountrySection extends React.Component {
     }
 
     render() {
-        const {countries, countryAreas, className, inputs: {section, country, area}} = this.props
+        const {action, countries, countryAreas, className, inputs: {section, country, area}} = this.props
         return (
             <PanelContent
                 title={msg('process.mosaic.panel.areaOfInterest.form.country.title')}
@@ -80,34 +80,43 @@ class CountrySection extends React.Component {
                 onBack={() => {
                     section.set('')
                 }}>
-                <label><Msg id='process.mosaic.panel.areaOfInterest.form.country.label'/></label>
-                <select name="country" value={country.value} disabled={!countries} onChange={(e) => {
-                    country.handleChange(e)
-                    country.validate()
-                    area.set('')
-                    this.aoiChanged$.next()
-                    this.loadCountryAreas(e.target.value)
-                }}>
-                    <option key='' value=''>[Select a country]</option>
-                    {(countries || []).map(([value, label]) =>
-                        <option key={value} value={value}>{label}</option>
-                    )}
-                </select>
-                <br/><br/>
+
                 <div>
-                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.countryArea.label'/></label>
-                    <select name="area" value={area.value} disabled={!countryAreas || countryAreas.length === 0} onChange={(e) => {
-                        area.handleChange(e)
-                        area.validate()
-                        this.aoiChanged$.next()
-                    }}>
-                        <option key='' value=''>[Select an area]</option>
-                        {(countryAreas || []).map(([value, label]) =>
-                            <option key={value} value={value}>{label}</option>
-                        )}
-                    </select>
+                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.country.country.label'/></label>
+                    <ComboBox
+                        input={country}
+                        isLoading={action('LOAD_COUNTRIES').dispatching}
+                        disabled={!countries}
+                        clearable={true}
+                        placeholder={msg('process.mosaic.panel.areaOfInterest.form.country.country.placeholder')}
+                        options={(countries || []).map(([value, label]) => ({value, label}))}
+                        onChange={(e) => {
+                            area.set('')
+                            this.aoiChanged$.next()
+                            if (e)
+                                this.loadCountryAreas(e.value)
+                        }}
+                    />
+                    <ErrorMessage input={country}/>
                 </div>
-                <ErrorMessage input={area}/>
+                <div>
+                    <label><Msg id='process.mosaic.panel.areaOfInterest.form.country.area.label'/></label>
+                    <ComboBox
+                        input={area}
+                        isLoading={action('LOAD_COUNTRY_AREAS').dispatching}
+                        disabled={!countryAreas || countryAreas.length === 0}
+                        clearable={true}
+                        placeholder={msg('process.mosaic.panel.areaOfInterest.form.country.area.placeholder')}
+                        options={(countryAreas || []).map(([value, label]) => ({value, label}))}
+                        onChange={(e) => {
+                            area.set('')
+                            this.aoiChanged$.next()
+                            if (e)
+                                this.loadCountryAreas(e.value)
+                        }}
+                    />
+                    <ErrorMessage input={area}/>
+                </div>
             </PanelContent>
         )
     }

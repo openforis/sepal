@@ -151,8 +151,11 @@
           "form": {
             "country": {
               "title": "Select country/province",
-              "label": "Country",
-              "placeholder": "Enter country",
+              "country.label": "Country",
+              "country.placeholder": "Select a country...",
+              "area.title": "Select area",
+              "area.label": "Province/area",
+              "area.placeholder": "Select a province",
               "required": "Country is required"
             },
             "fusionTable": {
