@@ -1,13 +1,12 @@
+import Polygon from 'app/home/map/polygon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
-import Icon from 'widget/icon'
-import styles from './aoi.module.css'
 import {map} from '../../../../../map/map'
+import PanelContent from '../panelContent'
+import styles from './aoi.module.css'
 
 class PolygonSection extends React.Component {
-    navigatedBack = false
-
     componentWillMount() {
         map.drawPolygon('aoi', (polygon) => {
             this.props.inputs.polygon.set(polygon)
@@ -18,39 +17,36 @@ class PolygonSection extends React.Component {
         map.disableDrawingMode()
     }
 
-    componentWillReceiveProps(nextProps) {
-        const { form, inputs: { section, polygon } } = nextProps
-        if (!this.navigatedBack) {
-            const fitBounds = true
-            map.setPolygon('aoi', polygon.value, fitBounds)
-        }
-    }
-
     render() {
-        const { form, inputs: { section, polygon } } = this.props
-        return <div>
-            <div className={styles.header}>
-                <a 
-                    className={styles.icon}
-                    onClick={() => {
-                        this.navigatedBack = true
-                        map.disableDrawingMode()
-                        section.set('')
-                    }} 
-                    onMouseDown={(e) => e.preventDefault()}>
-                    <Icon name='arrow-left' />
-                </a>
-                <span className={styles.title}><Msg id='process.mosaic.panel.areaOfInterest.form.polygon.title' /></span>
-            </div>
-            <div className={styles.body}>
+        const {className, inputs: {section}} = this.props
+        return (
+            <PanelContent
+                title={msg('process.mosaic.panel.areaOfInterest.form.polygon.title')}
+                className={className}
+                onBack={() => {
+                    map.disableDrawingMode()
+                    section.set('')
+                }}>
                 <div className={styles.polygon}>
-                    <Msg id='process.mosaic.panel.areaOfInterest.form.polygon.description' />
+                    <Msg id='process.mosaic.panel.areaOfInterest.form.polygon.description'/>
                 </div>
-                {/*{polygon.value}*/}
-            </div>
-        </div>
+            </PanelContent>
+        )
     }
 
+    componentDidUpdate(prevProps) {
+        if (prevProps.inputs === this.props.inputs)
+            return
+
+        const {inputs: {polygon}} = this.props
+        Polygon.setLayer({id: 'aoi', path: polygon.value, fitBounds: true})
+    }
+
+}
+
+PolygonSection.propTypes = {
+    inputs: PropTypes.object.isRequired,
+    className: PropTypes.string.isRequired
 }
 
 export default PolygonSection

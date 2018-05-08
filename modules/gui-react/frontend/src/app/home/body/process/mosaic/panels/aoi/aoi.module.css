@@ -99,48 +99,8 @@
     }
 }
 
-.header {
-    font-size: .9rem;
-    font-family: var(--header-font-family);
-    text-transform: uppercase;
-    color: #e8e8e8;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid rgba(100%, 100%, 100%, .1);
-    padding: var(--padding);
-}
-
-.header .icon {
-    display: inline-block;
-    border: none;
-    border-radius: 50%;
-    width: 1.6rem;
-    height: 1.6rem;
-    line-height: 1.6rem;
-    text-align: center;
-    margin-right: .2rem;
-}
-
-.svg {
-    width: .9rem;
-    height: .9rem;
-}
-
-a.icon:hover {
-    background-color: hsla(0, 0%, 100%, .25);
-}
-
-.body {
-    padding: var(--padding);
-    display: flex;
-    flex-direction: column;
-}
-
 .sectionOption {
     margin: 1rem;
-}
-
-.buttons {
-    padding: var(--padding);
 }
 
 .polygon {
@@ -148,4 +108,8 @@ a.icon:hover {
     text-align: center;
     font-style: italic;
     margin-top: 5rem;
+}
+
+.buttons {
+    padding: var(--padding);
 }

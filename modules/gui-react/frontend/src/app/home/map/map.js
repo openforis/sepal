@@ -9,33 +9,33 @@ import {connect, select} from 'store'
 import './map.module.css'
 
 export let map = null
-const ee = earthengine.ee
-let google = null
+export const ee = earthengine.ee
+export let google = null
 let instance = null
 let drawingManager = null
 
-const mapObjects = {}
+const layers = {}
 
-const setMapObject = (id, object, fitBounds) => {
-    if (id in mapObjects) {
-        const currentMapObject = mapObjects[id]
-        if (toPolygonPath(currentMapObject).toString() === toPolygonPath(object).toString())
-            return
-       removeMapObject(id)
+const setLayer = (id, layer, fitBounds) => {
+    if (id in layers) {
+        const currentLayer = layers[id]
+        if (currentLayer && currentLayer.equals(layer))
+            return false
+        removeLayer(id)
     }
-    if (object) {
-        object.setMap(instance)
-        mapObjects[id] = object
+    if (layer) {
+        layer.setMap(instance)
+        layers[id] = layer
         if (fitBounds)
             map.fitBounds(id)
     }
+    return true
 }
 
-const removeMapObject = (id) => {
-    if (mapObjects[id]) {
-        mapObjects[id].setMap(null)
-    }
-    delete mapObjects[id]
+const removeLayer = (id) => {
+    if (layers[id])
+        layers[id].setMap(null)
+    delete layers[id]
 }
 
 
@@ -84,7 +84,7 @@ const createMap = (mapElement) => {
             .set('map.zoom', instance.getZoom())
             .dispatch()
     )
-    var drawingOptions = {
+    const drawingOptions = {
         fillColor: '#FBFAF2',
         fillOpacity: 0.07,
         strokeColor: '#c5b397',
@@ -95,16 +95,20 @@ const createMap = (mapElement) => {
         zIndex: 1
     }
 
-    const addLayer = (layer) => {
+    const addOverlay= (layer) => {
         instance.overlayMapTypes.push(layer)
     }
 
-    const removeLayer = (name) => {
+    const removeOverlay= (name) => {
         let index = instance.overlayMapTypes.getArray().findIndex(x => x.name === name)
         instance.overlayMapTypes.removeAt(index)
     }
 
     map = {
+        getKey() {
+            return GoogleMapsLoader.KEY
+        },
+
         getZoom() {
             return instance.getZoom()
         },
@@ -126,20 +130,16 @@ const createMap = (mapElement) => {
         },
         showLabelsLayer(shown) {
             if (shown)
-                addLayer(
+                addOverlay(
                     new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
                 )
             else
-                removeLayer('labels')
+                removeOverlay('labels')
         },
         fitBounds(mapObjectName) {
-            const mapObject = mapObjects[mapObjectName]
-            if (mapObject) {
-                const bounds = new google.maps.LatLngBounds()
-                mapObject.getPaths().getArray().forEach((path) => 
-                    path.getArray().forEach((latLng) =>
-                        bounds.extend(latLng)
-                    ))
+            const mapObject = layers[mapObjectName]
+            if (mapObject && mapObject.bounds) {
+                const bounds = mapObject.bounds
                 !instance.getBounds().equals(bounds) && instance.fitBounds(bounds)
             }
         },
@@ -161,6 +161,9 @@ const createMap = (mapElement) => {
             const drawingListener = (e) => {
                 const polygon = e.overlay
                 polygon.setMap(null)
+                const toPolygonPath = (polygon) => polygon.getPaths().getArray()[0].getArray().map((latLng) =>
+                    [latLng.lng(), latLng.lat()]
+                )
                 callback(toPolygonPath(polygon))
             }
             google.maps.event.addListener(drawingManager, 'overlaycomplete', drawingListener)
@@ -172,24 +175,25 @@ const createMap = (mapElement) => {
                 drawingManager = null
             }
         },
-        setPolygon(id, polygonPath, fitBounds) {
-            const polygon = polygonPath
-                ? new google.maps.Polygon({ paths: polygonPath.map(([lng, lat]) => new google.maps.LatLng(lat, lng)), ...polygonOptions     })
-                : null
-           setMapObject(id, polygon, fitBounds)
+        getLayer(id) {
+            console.log('getLayer(id)', id, layers[id])
+            return layers[id]
         },
-        removeMapObject(id) {
-            removeMapObject(id)
+        setLayer({id, layer, fitBounds}) {
+            return setLayer(id, layer, fitBounds)
+        },
+        removeLayer(id) {
+            removeLayer(id)
         }
     }
 }
 
-const polygonOptions = {
-    fillColor    : '#FBFAF2',
-    fillOpacity  : 0.07,
-    strokeColor  : '#FBFAF2',
+export const polygonOptions = {
+    fillColor: '#FBFAF2',
+    fillOpacity: 0.07,
+    strokeColor: '#FBFAF2',
     strokeOpacity: 0.15,
-    strokeWeight : 1
+    strokeWeight: 1
 }
 
 // https://developers.google.com/maps/documentation/javascript/style-reference
@@ -232,7 +236,5 @@ class Map extends React.Component {
 Map.propTypes = {
     className: PropTypes.string
 }
-
-const toPolygonPath = (polygon) => polygon.getPaths().getArray()[0].getArray().map((latLng) => [latLng.lng(), latLng.lat()])
 
 export default connect(mapStateToProps)(Map)

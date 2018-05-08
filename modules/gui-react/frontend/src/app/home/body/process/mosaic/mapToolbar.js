@@ -10,8 +10,8 @@ import {map} from '../../../map/map'
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        labelsShown: recipe('labelsShown'),
-        gridShown: recipe('gridShown'),
+        labelsShown: recipe('ui.labelsShown'),
+        gridShown: recipe('ui.gridShown'),
         zoomLevel: map.getZoom()
     }
 }

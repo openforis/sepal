@@ -1,40 +1,45 @@
-import React from 'react'
-import {Msg} from 'translate'
-import styles from './confirmationButtons.module.css'
 import PropTypes from 'prop-types'
+import React from 'react'
+import {RecipeActions} from '../mosaicRecipe'
+import {Msg} from 'translate'
 import Icon from 'widget/icon'
+import styles from './confirmationButtons.module.css'
 
 class ConfirmationButtons extends React.Component {
     componentDidMount() {
-        const {form, recipe} = this.props
-        form.onClean(() => recipe.setModal(form.hasInvalid()))
-        form.onDirty(() => recipe.setModal(true))
-        recipe.setModal(form.hasInvalid())
+        const {recipeId, form} = this.props
+        this.recipe = RecipeActions(recipeId)
+        form.onClean(() => this.recipe.setModal(form.hasInvalid()))
+        form.onDirty(() => this.recipe.setModal(true))
+        this.recipe.setModal(form.hasInvalid())
     }
+
     apply(e, values) {
         e.preventDefault()
-        const {form, recipe} = this.props
-        recipe.setAoi(values)
+        const {form} = this.props
+        this.recipe.setAoi(values)
         form.setInitialValues(values)
     }
+
     revert(e) {
         e.preventDefault()
-        const {form, recipe} = this.props
+        const {form} = this.props
         form.reset()
     }
-    render () {
+
+    render() {
         const {form} = this.props
         const dirty = form.isDirty()
         return (
             <div className={[styles.buttons, dirty && styles.dirty].join(' ')}>
                 <button onClick={(e) => this.apply.bind(this)(e, form.values())}
-                    disabled={form.hasInvalid() || !dirty}>
+                        disabled={form.hasInvalid() || !dirty}>
                     <Icon name={'check'}/>
                     <span><Msg id='button.apply'/></span>
                 </button>
                 <button onClick={this.revert.bind(this)}
-                    onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before reverting
-                    disabled={!dirty}>
+                        onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before reverting
+                        disabled={!dirty}>
                     <Icon name={'undo-alt'}/>
                     <span><Msg id='button.revert'/></span>
                 </button>
@@ -44,8 +49,8 @@ class ConfirmationButtons extends React.Component {
 }
 
 ConfirmationButtons.propTypes = {
+    recipeId: PropTypes.string,
     form: PropTypes.object,
-    recipe: PropTypes.object
 }
 
 export default ConfirmationButtons

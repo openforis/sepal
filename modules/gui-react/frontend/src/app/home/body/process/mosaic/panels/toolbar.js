@@ -10,8 +10,8 @@ import styles from './toolbar.module.css'
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        selectedPanel: recipe('selectedPanel'),
-        modal: recipe('modal')
+        selectedPanel: recipe('ui.selectedPanel'),
+        modal: recipe('ui.modal')
     }
 }
 

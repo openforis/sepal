@@ -31,19 +31,22 @@ export const RecipeActions = (id) => {
     return {
         setLabelsShown(shown) {
             map.showLabelsLayer(shown)
-            set('SET_LABELS_SHOWN', 'labelsShown', shown, {shown})
+            set('SET_LABELS_SHOWN', 'ui.labelsShown', shown, {shown})
         },
         setGridShown(shown) {
-            set('SET_GRID_SHOWN', 'gridShown', shown, {shown})
+            set('SET_GRID_SHOWN', 'ui.gridShown', shown, {shown})
         },
         selectPanel(panel) {
-            set('SELECT_MOSAIC_PANEL', 'selectedPanel', panel, {panel})
+            set('SELECT_MOSAIC_PANEL', 'ui.selectedPanel', panel, {panel})
         },
         setAoi(aoi) {
             set('SET_AOI', 'aoi', {...aoi}, {aoi})
         },
         setModal(enabled) {
-            set('SET_MODAL', 'modal', enabled, {enabled})
+            set('SET_MODAL', 'ui.modal', enabled, {enabled})
+        },
+        setBounds(bounds) {
+            set('SET_BOUNDS', 'ui.bounds', bounds, {bounds})
         }
     }
 }

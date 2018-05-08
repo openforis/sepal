@@ -15,7 +15,7 @@ import styles from './panels.module.css'
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        selectedPanel: recipe('selectedPanel')
+        selectedPanel: recipe('ui.selectedPanel')
     }
 }
 

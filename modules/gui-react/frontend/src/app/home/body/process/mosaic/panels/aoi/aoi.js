@@ -4,26 +4,25 @@ import {Msg, msg} from 'translate'
 import {AnimateReplacement} from 'widget/animate'
 import {Button} from 'widget/button'
 import {Constraints, ErrorMessage, form, Input} from 'widget/form'
-import Icon from 'widget/icon'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {RecipeState} from '../../mosaicRecipe'
 import ConfirmationButtons from '../confirmationButtons'
-import CountrySection from './countrySection'
-import PolygonSection from './polygonSection'
-import FusionTableSection from './fusionTableSection'
 import styles from './aoi.module.css'
-import {map} from '../../../../../map/map'
+import CountrySection from './countrySection'
+import FusionTableSection from './fusionTableSection'
+import PolygonSection from './polygonSection'
+import SectionSelection from './sectionSelection'
 
 const inputs = {
     section: new Constraints()
         .notBlank('some.key'),
     country: new Constraints()
-        .predicate((country, { section }) =>
+        .predicate((country, {section}) =>
             section !== 'country' || !!country,
-        'process.mosaic.panel.areaOfInterest.form.country.required'),
+            'process.mosaic.panel.areaOfInterest.form.country.required'),
     polygon: new Constraints()
-        .predicate((polygon, { section }) =>
+        .predicate((polygon, {section}) =>
             section !== 'polygon' || !!polygon,
-        'process.mosaic.panel.areaOfInterest.form.country.required')
+            'process.mosaic.panel.areaOfInterest.form.country.required')
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -36,11 +35,10 @@ const mapStateToProps = (state, ownProps) => {
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.id)
     }
 
     render() {
-        const {className, form, inputs} = this.props
+        const {id, className, form, inputs} = this.props
         return (
             <div className={className}>
                 <div className={styles.container}>
@@ -54,7 +52,7 @@ class Aoi extends React.Component {
                             </AnimateReplacement>
                         </div>
                         <div className={styles.buttons}>
-                            <ConfirmationButtons form={form} recipe={this.recipe}/>
+                            <ConfirmationButtons recipeId={id} form={form} recipe={this.recipe}/>
                         </div>
                     </form>
                 </div>
@@ -63,58 +61,19 @@ class Aoi extends React.Component {
     }
 
     renderSections() {
-        const {form, inputs} = this.props
+        const {id, form, inputs} = this.props
         switch (inputs.section.value) {
-        case 'country':
-            return <Section><CountrySection form={form} inputs={inputs}/></Section>
-        case 'fusionTable':
-            return <Section><FusionTableSection form={form} inputs={inputs}/></Section>
-        case 'polygon':
-            return <Section><PolygonSection form={form} inputs={inputs}/></Section>
-        default:
-            return <SectionSelection inputs={inputs}/>
+            case 'country':
+                return <CountrySection id={id} inputs={inputs} className={styles.right}/>
+            case 'fusionTable':
+                return <FusionTableSection inputs={inputs} className={styles.right}/>
+            case 'polygon':
+                return <PolygonSection inputs={inputs} className={styles.right}/>
+            default:
+                return <SectionSelection form={form} inputs={inputs} className={styles.left}/>
         }
     }
 }
-
-class SectionSelection extends React.Component {
-    componentWillMount() {
-        const {inputs} = this.props
-        Object.keys(inputs).forEach((name) => inputs[name] && inputs[name].set(''))
-        map.removeMapObject('aoi')
-    }
-
-    render() {
-        const {inputs: {section}} = this.props
-        return (
-            <div className={styles.left}>
-                <div className={styles.header}>
-                    <span className={styles.icon}>
-                        <Icon name='cog'/>
-                    </span>
-                    <span className={styles.title}>
-                        <Msg id={'process.mosaic.panel.areaOfInterest.title'}/>
-                    </span>
-                </div>
-                <div className={styles.body}>
-                    <SectionOption section={section} label={'Select country/province'} value='country'/>
-                    <SectionOption section={section} label={'Select from Fusion Table'} value='fusionTable'/>
-                    <SectionOption section={section} label={'Draw polygon'} value='polygon'/>
-                </div>
-            </div>
-        )
-    }
-}
-
-const SectionOption = ({label, value, section}) =>
-    <Button onClick={() => section.set(value)} className={styles.sectionOption}>
-        {label}
-    </Button>
-
-const Section = ({children}) =>
-    <div className={styles.right}>
-        {children}
-    </div>
 
 Aoi.propTypes = {
     id: PropTypes.string,
