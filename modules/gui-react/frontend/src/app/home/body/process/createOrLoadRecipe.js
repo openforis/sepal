@@ -44,16 +44,6 @@ class RecipeList extends React.Component {
 
     render() {
         const {recipes, action} = this.props
-        // return <form style={{width: '50%'}}>
-        //
-        //     <Input input={{name: 'foo', validate: () => {}, handleChange: () => {}}} placeholder={'Select...'}/>
-        //     <br/>
-        //     <ComboBox
-        //         input={{name: 'foo', validate: () => {}, handleChange: () => {}}}
-        //         options={[{label: 'Foo', value: 'foo'}, {label: 'Bar', value: 'bar'}, {label: 'Baz', value: 'baz'}]}
-        //         clearable={true}
-        //     />
-        // </form>
         if (!recipes && !action('LOAD_RECIPES').dispatched)
             return <CenteredProgress title={msg('process.recipe.loading')}/>
         return (
