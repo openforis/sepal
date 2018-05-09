@@ -90,6 +90,7 @@ class CountrySection extends React.Component {
                         clearable={true}
                         placeholder={msg('process.mosaic.panel.areaOfInterest.form.country.country.placeholder')}
                         options={(countries || []).map(([value, label]) => ({value, label}))}
+                        scrollMenuIntoView={false}
                         onChange={(e) => {
                             area.set('')
                             this.aoiChanged$.next()
@@ -108,6 +109,7 @@ class CountrySection extends React.Component {
                         clearable={true}
                         placeholder={msg('process.mosaic.panel.areaOfInterest.form.country.area.placeholder')}
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}
+                        closeOnSelect={false}
                         onChange={(e) => {
                             area.set('')
                             this.aoiChanged$.next()

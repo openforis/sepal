@@ -1,9 +1,20 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import Select from 'react-select'
+import ReactDOM from 'react-dom'
+import ReactSelect from 'react-select'
 import styles from './comboBox.css'
 
-const ComboBox = ({input, validate = 'onBlur', onChange, isLoading, className, onBlur, ...props}) => {
+const ComboBox = (
+    {
+        input,
+        scalingFactor = 0.8,
+        validate = 'onBlur',
+        onChange,
+        isLoading,
+        className,
+        onBlur, ...
+        props
+    }) => {
     return <Select
         {...props}
         name={input.name}
@@ -23,7 +34,61 @@ const ComboBox = ({input, validate = 'onBlur', onChange, isLoading, className, o
         }}
         isLoading={!!isLoading}
         className={[styles.comboBox, className, input.errorClass].join(' ')}
+        scalingFactor={scalingFactor}
     />
+}
+
+
+class Select extends ReactSelect {
+    renderOuter(options, valueArray, focusedOption) {
+        const dimensions = this.wrapper ? this.wrapper.getBoundingClientRect() : null
+        const menu = super.renderMenu(options, valueArray, focusedOption)
+
+        if (!menu || !dimensions) return null
+
+        const maxHeight = document.body.offsetHeight - (dimensions.top + dimensions.height)
+        return ReactDOM.createPortal(
+            <div
+                ref={ref => {
+                    this.menuContainer = ref
+                }}
+                className="Select-menu-outer"
+                onClick={(e) => {
+                    e.stopPropagation()
+                }}
+                style={{
+                    ...this.props.menuContainerStyle,
+                    zIndex: 9999,
+                    position: 'absolute',
+                    width: dimensions.width,
+                    top: dimensions.top + dimensions.height,
+                    left: dimensions.left,
+                    maxHeight: Math.min(maxHeight, 200),
+                    overflow: 'hidden',
+                    fontSize: `calc(1rem * ${this.props.scalingFactor})`
+                }}
+            >
+                <div
+                    ref={ref => {
+                        this.menu = ref
+                    }}
+                    role="listbox"
+                    tabIndex={-1}
+                    className="Select-menu"
+                    id={`${this._instancePrefix}-list`}
+                    style={{
+                        ...this.props.menuStyle,
+                        maxHeight: Math.min(maxHeight, 200)
+                    }}
+                    onScroll={this.handleMenuScroll}
+                    onMouseDown={this.handleMouseDownOnMenu}
+                >
+                    {menu}
+                </div>
+            </div>,
+            document.body
+        )
+    }
 }
 
 
