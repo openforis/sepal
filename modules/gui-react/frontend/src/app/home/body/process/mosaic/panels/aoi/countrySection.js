@@ -87,10 +87,8 @@ class CountrySection extends React.Component {
                         input={country}
                         isLoading={action('LOAD_COUNTRIES').dispatching}
                         disabled={!countries}
-                        clearable={true}
                         placeholder={msg('process.mosaic.panel.areaOfInterest.form.country.country.placeholder')}
                         options={(countries || []).map(([value, label]) => ({value, label}))}
-                        scrollMenuIntoView={false}
                         onChange={(e) => {
                             area.set('')
                             this.aoiChanged$.next()
@@ -106,10 +104,8 @@ class CountrySection extends React.Component {
                         input={area}
                         isLoading={action('LOAD_COUNTRY_AREAS').dispatching}
                         disabled={!countryAreas || countryAreas.length === 0}
-                        clearable={true}
                         placeholder={msg('process.mosaic.panel.areaOfInterest.form.country.area.placeholder')}
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}
-                        closeOnSelect={false}
                         onChange={(e) => {
                             area.set('')
                             this.aoiChanged$.next()
