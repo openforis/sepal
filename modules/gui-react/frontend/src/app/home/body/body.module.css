@@ -16,7 +16,7 @@
     /* doesn't scroll without width!! */ 
     top: 0;
     bottom: var(--footer-margin);
-    left: var(--menu-margin);
+    left: 0;
     right: 0;
     padding: 0;
     overflow-y: hidden;
