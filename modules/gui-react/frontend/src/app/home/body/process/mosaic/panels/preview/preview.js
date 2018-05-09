@@ -1,16 +1,11 @@
-
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Msg, msg} from 'translate'
-import {Constraints, ErrorMessage, form, Input} from 'widget/form'
+import {Msg} from 'translate'
+import {form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import ConfirmationButtons from '../confirmationButtons'
 import styles from './preview.module.css'
 
-const inputs = {
-    // country: new Constraints()
-    //     .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
-}
+const inputs = {}
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
@@ -24,8 +19,9 @@ class Preview extends React.Component {
         super(props)
         this.recipe = RecipeActions(props.id)
     }
+
     render() {
-        const {className, form, inputs: {country}} = this.props
+        const {className} = this.props
         return (
             <div className={className}>
                 <div className={styles.container}>
@@ -42,8 +38,7 @@ Preview.propTypes = {
     id: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
-    inputs: PropTypes.shape({
-    }),
+    inputs: PropTypes.shape({}),
     action: PropTypes.func,
     values: PropTypes.object
 }

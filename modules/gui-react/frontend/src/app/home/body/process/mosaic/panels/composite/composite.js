@@ -1,14 +1,11 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Msg, msg} from 'translate'
-import {Constraints, ErrorMessage, form, Input} from 'widget/form'
+import {Msg} from 'translate'
+import {form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import ConfirmationButtons from '../confirmationButtons'
 import styles from './composite.module.css'
 
 const inputs = {
-    // country: new Constraints()
-    //     .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -24,7 +21,7 @@ class Composite extends React.Component {
         this.recipe = RecipeActions(props.id)
     }
     render() {
-        const {className, form, inputs: {country}} = this.props
+        const {className} = this.props
         return (
             <div className={className}>
                 <div className={styles.container}>

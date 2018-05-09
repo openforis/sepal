@@ -58,7 +58,6 @@ class Body extends React.Component {
                 : action('LOAD_APPS').dispatching
                     ? 'body.loading-apps'
                     : 'body.starting-sepal'
-            console.log('progressMessageId', progressMessageId)
             return <CenteredProgress title={msg(progressMessageId)} className={className}/>
         }
         return (

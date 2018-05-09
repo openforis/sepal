@@ -12,8 +12,8 @@ const ComboBox = (
         onChange,
         isLoading,
         className,
-        onBlur, ...
-        props
+        onBlur,
+        ...props
     }) => {
     return <Select
         {...props}

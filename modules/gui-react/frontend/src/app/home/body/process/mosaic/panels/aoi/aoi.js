@@ -1,9 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Msg, msg} from 'translate'
 import {AnimateReplacement} from 'widget/animate'
-import {Button} from 'widget/button'
-import {Constraints, ErrorMessage, form, Input} from 'widget/form'
+import {Constraints, form} from 'widget/form'
 import {RecipeState} from '../../mosaicRecipe'
 import ConfirmationButtons from '../confirmationButtons'
 import styles from './aoi.module.css'
@@ -14,12 +12,24 @@ import SectionSelection from './sectionSelection'
 
 const inputs = {
     section: new Constraints()
-        .notBlank('some.key'),
+        .notBlank('process.mosaic.panel.areaOfInterest.form.section.required'),
     country: new Constraints()
-        .predicate((country, {section}) =>
-            section !== 'country' || !!country,
+        .predicate((value, {section}) =>
+            section !== 'country' || !!value,
             'process.mosaic.panel.areaOfInterest.form.country.required'),
     area: new Constraints(),
+    fusionTable: new Constraints()
+        .predicate((value, {section}) =>
+            section !== 'fusionTable' || !!value,
+            'process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.required'),
+    fusionTableColumn: new Constraints()
+        .predicate((value, {section}) =>
+            section !== 'fusionTable' || !!value,
+            'process.mosaic.panel.areaOfInterest.form.fusionTable.column.required'),
+    fusionTableRow: new Constraints()
+        .predicate((value, {section}) =>
+            section !== 'fusionTable' || !!value,
+            'process.mosaic.panel.areaOfInterest.form.fusionTable.row.required'),
     polygon: new Constraints()
         .predicate((polygon, {section}) =>
             section !== 'polygon' || !!polygon,
@@ -34,10 +44,6 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class Aoi extends React.Component {
-    constructor(props) {
-        super(props)
-    }
-
     render() {
         const {id, className, form, inputs} = this.props
         return (

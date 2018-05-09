@@ -1,5 +1,4 @@
 import Http from 'http-client'
-import {connect, select} from 'store'
 import {google, map, polygonOptions} from './map'
 import './map.module.css'
 

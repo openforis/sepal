@@ -149,6 +149,7 @@
           "button": "AOI",
           "tooltip": "Specify area of interest",
           "form": {
+            "section.required": "A section must be selected",
             "country": {
               "title": "Select country/province",
               "country.label": "Country",
@@ -159,7 +160,16 @@
               "required": "Country is required"
             },
             "fusionTable": {
-              "title": "Select from Fusion Table"
+              "title": "Select from Fusion Table",
+              "fusionTable.label": "Fusion Table",
+              "fusionTable.placeholder": "Enter a Fusion Table ID",
+              "fusionTable.required": "Fusion Table must be specified",
+              "column.label": "Column",
+              "column.placeholder": "Select a column...",
+              "column.required": "A column must be selected",
+              "row.label": "Row",
+              "row.placeholder": "Select a row...",
+              "row.required": "A row must be selected"
             },
             "polygon": {
               "title": "Draw a polygon",

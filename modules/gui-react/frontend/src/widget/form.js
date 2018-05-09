@@ -115,9 +115,8 @@ export function form(inputs, mapStateToProps) {
 
             reset() {
                 this.setState((prevState) => {
-                    const dirty = !!Object.keys(inputs).find((name) => {
-                            this.state.values[name] !== this.state.initialValues
-                        }
+                    const dirty = !!Object.keys(inputs).find((name) =>
+                        this.state.values[name] !== this.state.initialValues
                     )
                     const state = {...prevState, values: {...prevState.initialValues}, dirty: dirty}
                     Object.keys(inputs).forEach(name => {

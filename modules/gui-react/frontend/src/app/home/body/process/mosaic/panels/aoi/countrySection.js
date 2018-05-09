@@ -8,7 +8,7 @@ import Rx from 'rxjs'
 import {connect, select} from 'store'
 import {Msg, msg} from 'translate'
 import ComboBox from 'widget/comboBox'
-import {Constraints, ErrorMessage, form, Input} from 'widget/form'
+import {ErrorMessage} from 'widget/form'
 import {RecipeActions} from '../../mosaicRecipe'
 import PanelContent from '../panelContent'
 

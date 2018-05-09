@@ -7,8 +7,6 @@ import {msg} from 'translate'
 import {Button, IconButton} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import styles from './createOrLoadRecipe.module.css'
-import ComboBox from 'widget/comboBox'
-import {Input} from 'widget/form'
 
 const CreateOrLoadRecipe = ({id}) =>
     <div className={[styles.container, flexy.container].join(' ')}>

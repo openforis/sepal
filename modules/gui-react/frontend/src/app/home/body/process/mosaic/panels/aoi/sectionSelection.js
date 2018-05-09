@@ -1,7 +1,7 @@
 import {map} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Msg, msg} from 'translate'
+import {msg} from 'translate'
 import {Button} from 'widget/button'
 import PanelContent from '../panelContent'
 import styles from './aoi.module.css'

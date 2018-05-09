@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import Icon from 'widget/icon'
-import styles from './panelForm.module.css'
+import styles from './panelContent.module.css'
 
 const PanelContent = ({icon, onBack, title, className, children}) => {
     const header = onBack ?

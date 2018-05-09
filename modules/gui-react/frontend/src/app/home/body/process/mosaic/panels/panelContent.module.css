@@ -4,7 +4,7 @@
     font-family: var(--header-font-family);
     text-transform: uppercase;
     color: #e8e8e8;
-    margin-bottom: 1rem;
+    margin-bottom: 2rem;
     border-bottom: 1px solid rgba(100%, 100%, 100%, .1);
     padding: var(--padding);
 }
