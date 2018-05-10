@@ -16,6 +16,7 @@ export function form(inputs, mapStateToProps) {
                     initialValues: {...props.values} || {},
                     values: {...props.values} || {},
                     errors: {...props.errors} || {},
+                    invalidValue: {},
                     dirty: false
                 }
                 Object.keys(inputs).forEach(name => {
@@ -58,6 +59,7 @@ export function form(inputs, mapStateToProps) {
                         const state = Object.assign({}, prevState)
                         state.values[name] = value
                         state.errors[name] = ''
+                        state.invalidValue[name] = ''
                         state.dirty = state.initialValues[name] !== value
                         state.gotDirty = state.dirty && !prevState.dirty
                         state.gotClean = !state.dirty && prevState.dirty
@@ -87,7 +89,8 @@ export function form(inputs, mapStateToProps) {
             validate(name) {
                 this.setState((prevState) => {
                     const state = Object.assign({}, prevState)
-                    state.errors[name] = this.error(name)
+                    if (!state.invalidValue[name])
+                        state.errors[name] = this.error(name)
                     return state
                 })
                 return this
@@ -151,6 +154,11 @@ export function form(inputs, mapStateToProps) {
                         value: this.state.values[name],
                         error: this.state.errors[name],
                         errorClass: this.state.errors[name] ? styles.error : null,
+                        invalid: (msg) => this.setState((prevState) => ({
+                            ...prevState,
+                            errors: {...prevState.errors, [name]: msg},
+                            invalidValue: {...prevState.invalidValue, [name]: this.state.values[name]}
+                        })),
                         set: (value) => this.set(name, value),
                         handleChange: (e) => this.handleChange(e),
                         isDirty: () => this.isValueDirty(name),

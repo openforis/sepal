@@ -164,6 +164,7 @@
               "fusionTable.label": "Fusion Table",
               "fusionTable.placeholder": "Enter a Fusion Table ID",
               "fusionTable.required": "Fusion Table must be specified",
+              "fusionTable.invalid": "Invalid Fution Table ID",
               "column.label": "Column",
               "column.placeholder.loading": "Loading columns...",
               "column.placeholder.noFusionTable": "Enter a Fusion Table ID first",

@@ -16,13 +16,13 @@ class FusionTable {
             initialize(layer)
     }
 
-    static get$(query) {
+    static get$(query, args = {}) {
         query = query.replace(/\s+/g, ' ').trim()
-        return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&${authParam()}`)
+        return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&${authParam()}`, args)
     }
 
-    static columns$(tableId) {
-        return Http.get$(`https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns?${authParam()}`)
+    static columns$(tableId, args) {
+        return Http.get$(`https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns?${authParam()}`, args)
             .map((e) => e.response.items)
     }
 

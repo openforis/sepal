@@ -29,10 +29,15 @@ class FusionTableSection extends React.Component {
 
     loadFusionTableColumns(fusionTableId) {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
-            FusionTable.columns$(fusionTableId)
-                .map((columns) =>
-                    columns
-                        .filter((column) => column.type !== 'LOCATION')
+            FusionTable.columns$(fusionTableId, {retries: 1, validStatuses: [200, 404]})
+                .map((columns) => {
+                        if (!columns)
+                            this.props.inputs.fusionTable.invalid(
+                                msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.invalid')
+                            )
+                        return (columns || [])
+                            .filter((column) => column.type !== 'LOCATION')
+                    }
                 )
                 .map(this.recipe.setFusionTableColumns)
                 .takeUntil(this.fusionTableChanged$))
@@ -70,7 +75,7 @@ class FusionTableSection extends React.Component {
         const {action, columns, rows, className, inputs: {section, fusionTable, fusionTableColumn, fusionTableRow}} = this.props
         const columnState = action('LOAD_FUSION_TABLE_COLUMNS').dispatching
             ? 'loading'
-            : columns
+            : columns && columns.length > 0
                 ? 'loaded'
                 : 'noFusionTable'
         const rowState = action('LOAD_FUSION_TABLE_ROWS').dispatching
@@ -97,16 +102,14 @@ class FusionTableSection extends React.Component {
                         onChange={(e) => {
                             fusionTableColumn.set('')
                             fusionTableRow.set('')
-                            // this.recipe.setFusionTableColumns(null)
-                            // this.recipe.setFusionTableRows(null)
+                            this.recipe.setFusionTableColumns(null).dispatch()
+                            this.recipe.setFusionTableRows(null).dispatch()
                             this.fusionTableChanged$.next()
                             this.fusionTableColumnChanged$.next()
                             this.fusionTableRowChanged$.next()
                             const fusionTableMinLength = 30
                             if (e && e.target.value.length > fusionTableMinLength)
                                 this.loadFusionTableColumns(e.target.value)
-                            else
-                                this.recipe.setFusionTableColumns(null).dispatch()
                         }}
                     />
                     <ErrorMessage input={fusionTable}/>
@@ -117,12 +120,12 @@ class FusionTableSection extends React.Component {
                     <ComboBox
                         input={fusionTableColumn}
                         isLoading={action('LOAD_FUSION_TABLE_COLUMNS').dispatching}
-                        disabled={!columns}
+                        disabled={!columns || columns.length === 0}
                         placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.column.placeholder.${columnState}`)}
                         options={(columns || []).map(({name}) => ({value: name, label: name}))}
                         onChange={(e) => {
                             fusionTableRow.set('')
-                            // this.recipe.setFusionTableRows(null).dispatch()
+                            this.recipe.setFusionTableRows(null).dispatch()
                             this.fusionTableColumnChanged$.next()
                             this.fusionTableRowChanged$.next()
                             if (e && e.value)
