@@ -34,12 +34,8 @@ class FusionTableSection extends React.Component {
                     columns
                         .filter((column) => column.type !== 'LOCATION')
                 )
-                .map((columns) =>
-                    actionBuilder('LOADED_FUSION_TABLE_COLUMNS', {columns})
-                        .build()
-                )
+                .map(this.recipe.setFusionTableColumns)
                 .takeUntil(this.fusionTableChanged$))
-            .onComplete(([{columns}]) => columns && this.recipe.setFusionTableColumns(columns))
             .dispatch()
     }
 
@@ -51,16 +47,13 @@ class FusionTableSection extends React.Component {
                     FROM ${this.props.inputs.fusionTable.value}
                     ORDER BY '${column}' ASC`)
                 .map((e) =>
-                    actionBuilder('LOADED_FUSION_TABLE_ROWS', {rows: e.response.rows})
-                        .build()
-                )
-                .takeUntil(this.fusionTableColumnChanged$))
-            .onComplete(([{rows}]) =>
-                this.recipe.setFusionTableRows(
-                    (rows || [])
+                    (e.response.rows || [])
                         .map((row) => row[0])
                         .filter((value) => value)
-                ))
+                )
+                .map(this.recipe.setFusionTableRows)
+                .takeUntil(this.fusionTableColumnChanged$)
+                .takeUntil(this.fusionTableChanged$))
             .dispatch()
     }
 
@@ -104,6 +97,8 @@ class FusionTableSection extends React.Component {
                         onChange={(e) => {
                             fusionTableColumn.set('')
                             fusionTableRow.set('')
+                            // this.recipe.setFusionTableColumns(null)
+                            // this.recipe.setFusionTableRows(null)
                             this.fusionTableChanged$.next()
                             this.fusionTableColumnChanged$.next()
                             this.fusionTableRowChanged$.next()
@@ -111,7 +106,7 @@ class FusionTableSection extends React.Component {
                             if (e && e.target.value.length > fusionTableMinLength)
                                 this.loadFusionTableColumns(e.target.value)
                             else
-                                this.recipe.setFusionTableColumns(null)
+                                this.recipe.setFusionTableColumns(null).dispatch()
                         }}
                     />
                     <ErrorMessage input={fusionTable}/>
@@ -127,6 +122,7 @@ class FusionTableSection extends React.Component {
                         options={(columns || []).map(({name}) => ({value: name, label: name}))}
                         onChange={(e) => {
                             fusionTableRow.set('')
+                            // this.recipe.setFusionTableRows(null).dispatch()
                             this.fusionTableColumnChanged$.next()
                             this.fusionTableRowChanged$.next()
                             if (e && e.value)

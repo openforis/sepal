@@ -58,7 +58,7 @@ const Panel = ({panel, icon, selectedPanel, recipe, disabled = false}) => {
     return (
         <Tooltip msg={`process.mosaic.panel.${panel}`} left disabled={isSelected || disabled}>
             <button className={isSelected ? styles.selected : null}
-                onClick={() => recipe.selectPanel(isSelected ? null : panel)}
+                onClick={() => recipe.selectPanel(isSelected ? null : panel).dispatch()}
                 disabled={disabled}>
                 {icon ? renderIcon(icon) : renderLabel(panel)}
             </button>

@@ -9,15 +9,15 @@ class ConfirmationButtons extends React.Component {
     componentDidMount() {
         const {recipeId, form} = this.props
         this.recipe = RecipeActions(recipeId)
-        form.onClean(() => this.recipe.setModal(form.hasInvalid()))
-        form.onDirty(() => this.recipe.setModal(true))
-        this.recipe.setModal(form.hasInvalid())
+        form.onClean(() => this.recipe.setModal(form.hasInvalid()).dispatch())
+        form.onDirty(() => this.recipe.setModal(true).dispatch())
+        this.recipe.setModal(form.hasInvalid()).dispatch()
     }
 
     apply(e, values) {
         e.preventDefault()
         const {form} = this.props
-        this.recipe.setAoi(values)
+        this.recipe.setAoi(values).dispatch()
         form.setInitialValues(values)
     }
 
