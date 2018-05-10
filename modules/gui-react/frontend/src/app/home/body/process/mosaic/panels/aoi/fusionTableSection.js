@@ -99,6 +99,7 @@ class FusionTableSection extends React.Component {
                         autoFocus
                         input={fusionTable}
                         placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.placeholder`)}
+                        spellCheck={false}
                         onChange={(e) => {
                             fusionTableColumn.set('')
                             fusionTableRow.set('')
