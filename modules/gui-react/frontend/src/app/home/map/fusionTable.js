@@ -18,10 +18,12 @@ class FusionTable {
 
     static get$(query) {
         query = query.replace(/\s+/g, ' ').trim()
-        const auth = googleTokens
-            ? `access_token=${googleTokens.accessToken}`
-            : `key=${map.getKey()}`
-        return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&${auth}`)
+        return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&${authParam()}`)
+    }
+
+    static columns$(tableId) {
+        return Http.get$(`https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns?${authParam()}`)
+            .map((e) => e.response.items)
     }
 
     constructor({table, keyColumn, key}) {
@@ -92,5 +94,11 @@ class FusionTable {
         )
     }
 }
+
+const authParam = () =>
+    googleTokens
+        ? `access_token=${googleTokens.accessToken}`
+        : `key=${map.getKey()}`
+
 
 export default FusionTable

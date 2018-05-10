@@ -165,10 +165,16 @@
               "fusionTable.placeholder": "Enter a Fusion Table ID",
               "fusionTable.required": "Fusion Table must be specified",
               "column.label": "Column",
-              "column.placeholder": "Select a column...",
+              "column.placeholder.loading": "Loading columns...",
+              "column.placeholder.noFusionTable": "Enter a Fusion Table ID first",
+              "column.placeholder.loaded": "Select a column...",
               "column.required": "A column must be selected",
               "row.label": "Row",
-              "row.placeholder": "Select a row...",
+              "row.placeholder.loading": "Loading rows...",
+              "row.placeholder.noFusionTable": "Enter a Fusion Table ID first",
+              "row.placeholder.noColumn": "Select a column first",
+              "row.placeholder.loaded": "Select a row...",
+              "row.placeholder.noRows": "No rows in Fusion Table",
               "row.required": "A row must be selected"
             },
             "polygon": {

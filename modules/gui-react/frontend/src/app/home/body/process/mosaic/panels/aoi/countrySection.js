@@ -12,10 +12,10 @@ import PanelContent from '../panelContent'
 
 const loadCountries$ = () => {
     return FusionTable.get$(`
-        SELECT id, label 
-        FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
-        WHERE parent_id != '' 
-        ORDER BY label ASC`)
+            SELECT id, label 
+            FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
+            WHERE parent_id != '' 
+            ORDER BY label ASC`)
         .map((e) =>
             actionBuilder('SET_COUNTRIES', {countries: e.response})
                 .set('countries', e.response.rows)
@@ -25,10 +25,10 @@ const loadCountries$ = () => {
 
 const loadCountryAreas$ = (countryId) => {
     return FusionTable.get$(`
-        SELECT id, label 
-        FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
-        WHERE parent_id = '${countryId}'
-        ORDER BY label ASC`)
+            SELECT id, label 
+            FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
+            WHERE parent_id = '${countryId}'
+            ORDER BY label ASC`)
         .map((e) =>
             actionBuilder('SET_COUNTRY_AREA', {countries: e.response})
                 .set(['areasByCountry', countryId], e.response.rows)
@@ -46,7 +46,9 @@ const mapStateToProps = (state, ownProps) => {
 class CountrySection extends React.Component {
     constructor(props) {
         super(props)
+        console.log('constructor')
         this.aoiChanged$ = new Rx.Subject()
+        this.update()
     }
 
     loadCountryAreas(countryId) {
@@ -55,6 +57,15 @@ class CountrySection extends React.Component {
                 loadCountryAreas$(countryId)
                     .takeUntil(this.aoiChanged$))
                 .dispatch()
+    }
+
+    loadBounds(fusionTable) {
+        this.props.asyncActionBuilder('LOAD_BOUNDS',
+            fusionTable.loadBounds$()
+                .map((bounds) => actionBuilder('LOADED_BOUNDS', {bounds}))
+                .takeUntil(this.aoiChanged$))
+            .onComplete(() => map.fitBounds('aoi'))
+            .dispatch()
     }
 
     render() {
@@ -92,12 +103,7 @@ class CountrySection extends React.Component {
                         disabled={!countryAreas || countryAreas.length === 0}
                         placeholder={msg('process.mosaic.panel.areaOfInterest.form.country.area.placeholder')}
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}
-                        onChange={(e) => {
-                            area.set('')
-                            this.aoiChanged$.next()
-                            if (e)
-                                this.loadCountryAreas(e.value)
-                        }}
+                        onChange={(e) => this.aoiChanged$.next()}
                     />
                     <ErrorMessage input={area}/>
                 </div>
@@ -105,10 +111,15 @@ class CountrySection extends React.Component {
         )
     }
 
-    componentDidUpdate(prevProps) {
-        if (prevProps.inputs === this.props.inputs)
-            return
+    shouldComponentUpdate(nextProps) {
+        return nextProps.inputs !== this.props.inputs
+    }
 
+    componentDidUpdate(prevProps) {
+        this.update()
+    }
+
+    update() {
         const {countries, action, asyncActionBuilder, inputs: {country, area}} = this.props
         if (!countries && !action('LOAD_COUNTRIES').dispatching)
             asyncActionBuilder('LOAD_COUNTRIES',
@@ -122,19 +133,9 @@ class CountrySection extends React.Component {
             key: area.value || country.value
         }, this.loadBounds.bind(this))
     }
-
-    loadBounds(fusionTable) {
-        this.props.asyncActionBuilder('LOAD_BOUNDS',
-            fusionTable.loadBounds$()
-                .map((bounds) => actionBuilder('LOADED_BOUNDS', {bounds}))
-                .takeUntil(this.aoiChanged$))
-            .onComplete(() => map.fitBounds('aoi'))
-            .dispatch()
-    }
 }
 
 CountrySection.propTypes = {
-    id: PropTypes.string.isRequired,
     inputs: PropTypes.object.isRequired,
     className: PropTypes.string.isRequired
 }

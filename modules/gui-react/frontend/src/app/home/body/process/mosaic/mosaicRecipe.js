@@ -47,6 +47,12 @@ export const RecipeActions = (id) => {
         },
         setBounds(bounds) {
             set('SET_BOUNDS', 'ui.bounds', bounds, {bounds})
+        },
+        setFusionTableColumns(columns) {
+            set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
+        },
+        setFusionTableRows(rows) {
+            set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
         }
     }
 }

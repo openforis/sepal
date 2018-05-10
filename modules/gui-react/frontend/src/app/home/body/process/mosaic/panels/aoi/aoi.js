@@ -14,26 +14,23 @@ const inputs = {
     section: new Constraints()
         .notBlank('process.mosaic.panel.areaOfInterest.form.section.required'),
     country: new Constraints()
-        .predicate((value, {section}) =>
-            section !== 'country' || !!value,
-            'process.mosaic.panel.areaOfInterest.form.country.required'),
+        .skip((value, {section}) => section !== 'country')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
     area: new Constraints(),
     fusionTable: new Constraints()
-        .predicate((value, {section}) =>
-            section !== 'fusionTable' || !!value,
-            'process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.required'),
+        .skip((value, {section}) => section !== 'fusionTable')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.required'),
     fusionTableColumn: new Constraints()
-        .predicate((value, {section}) =>
-            section !== 'fusionTable' || !!value,
-            'process.mosaic.panel.areaOfInterest.form.fusionTable.column.required'),
+        .skip((value, {section}) => section !== 'fusionTable')
+        .skip((value, {fusionTable}) => !fusionTable)
+        .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.column.required'),
     fusionTableRow: new Constraints()
-        .predicate((value, {section}) =>
-            section !== 'fusionTable' || !!value,
-            'process.mosaic.panel.areaOfInterest.form.fusionTable.row.required'),
+        .skip((value, {section}) => section !== 'fusionTable')
+        .skip((value, {fusionTableColumn}) => !fusionTableColumn)
+        .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.row.required'),
     polygon: new Constraints()
-        .predicate((polygon, {section}) =>
-            section !== 'polygon' || !!polygon,
-            'process.mosaic.panel.areaOfInterest.form.country.required')
+        .skip((value, {section}) => section !== 'polygon')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -71,9 +68,9 @@ class Aoi extends React.Component {
         const {id, form, inputs} = this.props
         switch (inputs.section.value) {
             case 'country':
-                return <CountrySection id={id} inputs={inputs} className={styles.right}/>
+                return <CountrySection inputs={inputs} className={styles.right}/>
             case 'fusionTable':
-                return <FusionTableSection inputs={inputs} className={styles.right}/>
+                return <FusionTableSection id={id} inputs={inputs} className={styles.right}/>
             case 'polygon':
                 return <PolygonSection inputs={inputs} className={styles.right}/>
             default:

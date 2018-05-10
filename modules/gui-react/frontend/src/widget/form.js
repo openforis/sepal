@@ -115,15 +115,12 @@ export function form(inputs, mapStateToProps) {
 
             reset() {
                 this.setState((prevState) => {
-                    const dirty = !!Object.keys(inputs).find((name) =>
-                        this.state.values[name] !== this.state.initialValues
-                    )
-                    const state = {...prevState, values: {...prevState.initialValues}, dirty: dirty}
+                    const state = {...prevState, values: {...prevState.initialValues}, dirty: false}
                     Object.keys(inputs).forEach(name => {
                         state.errors[name] = ''
                     })
-                    state.gotDirty = state.dirty && !prevState.dirty
-                    state.gotClean = !state.dirty && prevState.dirty
+                    state.gotDirty = false
+                    state.gotClean = prevState.dirty
                     return state
                 }, () => this.notifyOnDirtyOrClean())
             }
@@ -192,10 +189,16 @@ function getDisplayName(Component) {
 export class Constraints {
     static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape
 
-    constraints = []
+    _constraints = []
+    _skip = []
+
+    skip(when) {
+        this._skip.push(when)
+        return this
+    }
 
     predicate(constraint, messageId) {
-        this.constraints.push([constraint, messageId])
+        this._constraints.push([constraint, messageId])
         return this
     }
 
@@ -212,9 +215,11 @@ export class Constraints {
     }
 
     check(name, values) {
-        const failingConstraint = this.constraints.find(constraint => {
-            return constraint[0](values[name], values) ? null : constraint[1]
-        })
+        const skip = this._skip.find((when) => when(values[name], values))
+        const failingConstraint = !skip &&
+            this._constraints.find((constraint) =>
+                constraint[0](values[name], values) ? null : constraint[1]
+            )
         return failingConstraint ? msg(failingConstraint[1]) : ''
     }
 }
