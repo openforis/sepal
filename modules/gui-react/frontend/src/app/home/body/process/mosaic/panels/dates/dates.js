@@ -6,6 +6,8 @@ import {form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import styles from './dates.module.css'
 import {Slider} from './slider'
+import DatePicker from 'widget/datePicker'
+import Icon from 'widget/icon'
 
 const inputs = {}
 
@@ -22,49 +24,77 @@ class Dates extends React.Component {
         this.recipe = RecipeActions(props.id)
         this.rect = React.createRef()
         this.state = {
-            day: 1,
-            dayMin: 0,
-            dayMax: 0
+            date: new Date(),
+            dateMinOffset: -30,
+            dateMaxOffset: 30,
+            yearMinOffset: 0,
+            yearMaxOffset: 0
         }
     }
 
-    setDay(day) {
+    dateMin() {
+        return moment(this.state.date)
+            .add(this.state.yearMinOffset, 'years')
+            .add(this.state.dateMinOffset, 'days')
+            .toDate()
+    }
+
+    dateMax() {
+        return moment(this.state.date)
+            .add(this.state.yearMaxOffset, 'years')
+            .add(this.state.dateMaxOffset, 'days')
+            .toDate()
+    }
+
+    setDate(date) {
         this.setState({
             ...this.state,
-            day
+            date
         })
     }
 
-    setDayMin(dayMin) {
+    setDateMin(dateMin) {
+        const dateMinOffset = moment(dateMin).diff(moment(this.state.date), 'days')
         this.setState({
             ...this.state,
-            dayMin
+            dateMinOffset
         })
     }
 
-    setDayMax(dayMax) {
+    setDateMax(dateMax) {
+        const dateMaxOffset = moment(dateMax).diff(moment(this.state.date), 'days')
         this.setState({
             ...this.state,
-            dayMax
+            dateMaxOffset
         })
     }
 
-    day() {
-        return (
-            <div>{moment().dayOfYear(this.state.day).format('DD MMM')}</div>
-        )
+    setDateMinOffset(offset) {
+        this.setState({
+            ...this.state,
+            dateMinOffset: Math.round(offset)
+        })
     }
 
-    dayMin() {
-        return (
-            <span>{moment().dayOfYear(this.state.day).add(this.state.dayMin, 'days').format('DD MMM')}</span>
-        )
+    setDateMaxOffset(offset) {
+        this.setState({
+            ...this.state,
+            dateMaxOffset: Math.round(offset)
+        })
     }
 
-    dayMax() {
-        return (
-            <span>{moment().dayOfYear(this.state.day).add(this.state.dayMax, 'days').format('DD MMM')}</span>
-        )
+    setYearMinOffset(offset) {
+        this.setState({
+            ...this.state,
+            yearMinOffset: Math.round(offset)
+        })
+    }
+
+    setYearMaxOffset(offset) {
+        this.setState({
+            ...this.state,
+            yearMaxOffset: Math.round(offset)
+        })
     }
 
     render() {
@@ -76,21 +106,32 @@ class Dates extends React.Component {
                         <Msg id={'process.mosaic.panel.dates.title'}/>
                     </div>
                     <div className={styles.body}>
-                        <div>
-                            {this.day()}
-                            <Slider min={1} max={365} onChange={this.setDay.bind(this)}/>
+                        <div className={styles.dates}>
+                            <DatePicker className={styles.date} fromYear={1980} toYear={2020} 
+                                date={this.dateMin()} onChange={date => this.setDateMin(date)}/>
+                            <DatePicker className={styles.date} fromYear={1980} toYear={2020} 
+                                date={this.state.date} onChange={date => this.setDate(date)}/>
+                            <DatePicker className={styles.date} fromYear={1980} toYear={2020} 
+                                date={this.dateMax()} onChange={date => this.setDateMax(date)}/>
                         </div>
-                        <div>
-                            <div>{this.dayMin()} - {this.dayMax()}</div>
-                            <div className={styles.dayRange}>
-                                <Slider min={-180} max={0} start={-30} onChange={this.setDayMin.bind(this)}/>
-                                <Slider min={0} max={180} start={30} onChange={this.setDayMax.bind(this)}/>
+                        <div className={styles.range}>
+                            <Slider minValue={-180} maxValue={0} startValue={this.state.dateMinOffset} onChange={days => this.setDateMinOffset(days)}/>
+                            <div>
+                                {/* <Icon name="minus-circle"/> */}
+                                - days +
+                                {/* <Icon name="plus-circle"/> */}
                             </div>
+                            <Slider minValue={0} maxValue={180} startValue={this.state.dateMaxOffset} onChange={days => this.setDateMaxOffset(days)}/>
+                        </div>
+                        <div className={styles.range}>
+                            <Slider minValue={-10} maxValue={0} startValue={this.state.yearMinOffset} onChange={years => this.setYearMinOffset(years)}/>
+                            <div>- seasons +</div>
+                            <Slider minValue={0} maxValue={10} startValue={this.state.yearMaxOffset} onChange={years => this.setYearMaxOffset(years)}/>
                         </div>
                     </div>
-                    <div className={styles.footer}>
+                    {/* <div className={styles.footer}>
                         footer
-                    </div>
+                    </div> */}
                 </div>
             </div>
         )
