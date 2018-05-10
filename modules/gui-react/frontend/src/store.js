@@ -1,13 +1,23 @@
-import React from 'react'
-import {connect as connectToRedux} from 'react-redux'
 import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
+import React from 'react'
+import {connect as connectToRedux} from 'react-redux'
 import Rx from 'rxjs'
 
 let storeInstance = null
+const storeInitListeners = []
 
 export function initStore(store) {
     storeInstance = store
+    storeInitListeners.forEach((listener) => listener(store))
+}
+
+export function subscribe(path, listener) {
+    const subscribe = () => storeInstance.subscribe(() => listener(select(path)))
+    if (storeInstance)
+        subscribe()
+    else
+        storeInitListeners.push(subscribe)
 }
 
 export function state() {
@@ -84,7 +94,7 @@ function includeDispatchingProp(mapStateToProps) {
 
 export function dispatchable(action) {
     return {
-        ...action, 
+        ...action,
         dispatch: () => dispatch(action)
     }
 }

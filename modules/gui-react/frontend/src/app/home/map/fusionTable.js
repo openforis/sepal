@@ -1,7 +1,10 @@
 import Http from 'http-client'
+import {subscribe} from 'store'
 import {google, map, polygonOptions} from './map'
 import './map.module.css'
 
+let googleTokens = null
+subscribe('user.currentUser.googleTokens', (tokens) => googleTokens = tokens)
 
 class FusionTable {
     static setLayer({id, table, keyColumn, key}, initialize) {
@@ -11,6 +14,14 @@ class FusionTable {
         const changed = map.setLayer({id, layer, fitBounds: false})
         if (layer && changed)
             initialize(layer)
+    }
+
+    static get$(query) {
+        query = query.replace(/\s+/g, ' ').trim()
+        const auth = googleTokens
+            ? `access_token=${googleTokens.accessToken}`
+            : `key=${map.getKey()}`
+        return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&${auth}`)
     }
 
     constructor({table, keyColumn, key}) {
@@ -43,14 +54,6 @@ class FusionTable {
     }
 
     loadBounds$() {
-        this.uninitialized = false
-        const query = `
-            SELECT geometry 
-            FROM ${this.table} 
-            WHERE '${this.keyColumn}' = '${this.key}'
-        `.replace(/\s+/g, ' ').trim()
-        const googleKey = map.getKey()
-
         const eachLatLng = (o, callback) => {
             if (Array.isArray(o))
                 o.forEach((o) => callback(new google.maps.LatLng(o[1], o[0])))
@@ -62,7 +65,11 @@ class FusionTable {
                 value.forEach((o) => eachLatLng(o, callback))
             }
         }
-        return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&key=${googleKey}`).map((e) => {
+        return FusionTable.get$(`
+            SELECT geometry 
+            FROM ${this.table} 
+            WHERE '${this.keyColumn}' = '${this.key}'
+            `).map((e) => {
                 const bounds = new google.maps.LatLngBounds()
                 if (!e.response.rows[0])
                     throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.table}`)

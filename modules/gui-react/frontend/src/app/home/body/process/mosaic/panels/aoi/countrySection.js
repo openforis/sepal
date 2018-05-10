@@ -1,7 +1,6 @@
 import actionBuilder from 'action-builder'
 import FusionTable from 'app/home/map/fusionTable'
 import {map} from 'app/home/map/map'
-import Http from 'http-client'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Rx from 'rxjs'
@@ -9,19 +8,14 @@ import {connect, select} from 'store'
 import {Msg, msg} from 'translate'
 import ComboBox from 'widget/comboBox'
 import {ErrorMessage} from 'widget/form'
-import {RecipeActions} from '../../mosaicRecipe'
 import PanelContent from '../panelContent'
 
 const loadCountries$ = () => {
-    const query = `
+    return FusionTable.get$(`
         SELECT id, label 
         FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
         WHERE parent_id != '' 
-        ORDER BY label ASC
-    `.replace(/\s+/g, ' ').trim()
-    const googleKey = map.getKey()
-    return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&key=${googleKey}`)
-        .delay(2000)
+        ORDER BY label ASC`)
         .map((e) =>
             actionBuilder('SET_COUNTRIES', {countries: e.response})
                 .set('countries', e.response.rows)
@@ -30,14 +24,11 @@ const loadCountries$ = () => {
 }
 
 const loadCountryAreas$ = (countryId) => {
-    const query = `
+    return FusionTable.get$(`
         SELECT id, label 
         FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
         WHERE parent_id = '${countryId}'
-        ORDER BY label ASC
-    `.replace(/\s+/g, ' ').trim()
-    const googleKey = map.getKey()
-    return Http.get$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&key=${googleKey}`)
+        ORDER BY label ASC`)
         .map((e) =>
             actionBuilder('SET_COUNTRY_AREA', {countries: e.response})
                 .set(['areasByCountry', countryId], e.response.rows)
@@ -55,20 +46,15 @@ const mapStateToProps = (state, ownProps) => {
 class CountrySection extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.id)
         this.aoiChanged$ = new Rx.Subject()
     }
 
     loadCountryAreas(countryId) {
-        if (!select(['areasByCountry', countryId])) {
-            console.log('Loading country areas')
+        if (!select(['areasByCountry', countryId]))
             this.props.asyncActionBuilder('LOAD_COUNTRY_AREAS',
                 loadCountryAreas$(countryId)
                     .takeUntil(this.aoiChanged$))
                 .dispatch()
-        }
-        else
-            console.log('Already loaded country areas')
     }
 
     render() {
