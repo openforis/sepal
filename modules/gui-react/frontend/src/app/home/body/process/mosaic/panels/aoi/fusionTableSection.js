@@ -31,6 +31,10 @@ class FusionTableSection extends React.Component {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
             FusionTable.columns$(fusionTableId)
                 .map((columns) =>
+                    columns
+                        .filter((column) => column.type !== 'LOCATION')
+                )
+                .map((columns) =>
                     actionBuilder('LOADED_FUSION_TABLE_COLUMNS', {columns})
                         .build()
                 )
