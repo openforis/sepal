@@ -60,7 +60,9 @@ export function form(inputs, mapStateToProps) {
                         state.values[name] = value
                         state.errors[name] = ''
                         state.invalidValue[name] = ''
-                        state.dirty = state.initialValues[name] !== value
+                        state.dirty = !!Object.keys(state.initialValues).find((name) =>
+                            state.initialValues !== state.values[name]
+                        )
                         state.gotDirty = state.dirty && !prevState.dirty
                         state.gotClean = !state.dirty && prevState.dirty
                         return state
