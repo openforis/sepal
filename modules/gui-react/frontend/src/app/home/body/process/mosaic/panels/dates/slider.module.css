@@ -1,8 +1,9 @@
 .container {
     --container-size: 3rem;
-    --slider-size: .1rem;    
-    --handle-size: 1.2rem;
-    --handle-size-hover: 1.6rem;
+    --slider-size: .2rem;    
+    --handle-height: 1.5rem;
+    --handle-width: 3rem;
+    --handle-radius: .5rem;
     --range-size: .2rem;
     width: 100%;
     height: var(--container-size);
@@ -10,22 +11,42 @@
     flex-direction: column;
     justify-content: space-around;
     overflow: hidden;
-    padding: 0 calc(var(--handle-size) / 2);
+    padding: 0 calc(var(--handle-width) / 2);
 }
 
 .slider {
+    position: relative;
     width: 100%;
     height: var(--slider-size);
     background-color: rgba(255, 0, 0, .2);
 }
 
-.handle {
+/* .handle {
     position: relative;
     height: 0;
     width: 0;
+} */
+
+.handle {
+    position: absolute;
+    top: calc((var(--handle-height) - var(--slider-size)) / -2);
+    margin-left: calc((var(--handle-width)) / -2);
+    height: var(--handle-height);
+    width: var(--handle-width);
+    border-radius: var(--handle-radius);
+    background-color: #600000;
+    cursor: pointer;
+    text-align: center;
+    font-size: calc(var(--handle-height) * .6);
+    line-height: var(--handle-height);
+    z-index: 10;
 }
 
-.handle:before {
+.handle:hover {
+    background-color: #900000;    
+}
+
+/* .handle:before {
     content: "";
     position: absolute;
     top: calc((var(--handle-size) - var(--slider-size)) / -2);
@@ -36,7 +57,7 @@
     background-color: red;
     cursor: pointer;
     z-index: 10;
-}
+} */
 
 .range {
     position: absolute;
