@@ -70,6 +70,14 @@ class CountrySection extends React.Component {
 
     render() {
         const {action, countries, countryAreas, className, inputs: {section, country, area}} = this.props
+        const countriesState = action('LOAD_COUNTRIES').dispatching
+            ? 'loading'
+            : 'loaded'
+        const areasState = action('LOAD_COUNTRY_AREAS').dispatching
+            ? 'loading'
+            : country.value
+                ? countryAreas && countryAreas.length > 0 ? 'loaded' : 'noAreas'
+                : 'noCountry'
         return (
             <PanelContent
                 title={msg('process.mosaic.panel.areaOfInterest.form.country.title')}
@@ -84,7 +92,7 @@ class CountrySection extends React.Component {
                         input={country}
                         isLoading={action('LOAD_COUNTRIES').dispatching}
                         disabled={!countries}
-                        placeholder={msg('process.mosaic.panel.areaOfInterest.form.country.country.placeholder')}
+                        placeholder={msg(`process.mosaic.panel.areaOfInterest.form.country.country.placeholder.${countriesState}`)}
                         options={(countries || []).map(([value, label]) => ({value, label}))}
                         onChange={(e) => {
                             area.set('')
@@ -101,7 +109,7 @@ class CountrySection extends React.Component {
                         input={area}
                         isLoading={action('LOAD_COUNTRY_AREAS').dispatching}
                         disabled={!countryAreas || countryAreas.length === 0}
-                        placeholder={msg('process.mosaic.panel.areaOfInterest.form.country.area.placeholder')}
+                        placeholder={msg(`process.mosaic.panel.areaOfInterest.form.country.area.placeholder.${areasState}`)}
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}
                         onChange={(e) => this.aoiChanged$.next()}
                     />

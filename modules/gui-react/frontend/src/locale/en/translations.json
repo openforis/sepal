@@ -153,10 +153,14 @@
             "country": {
               "title": "Select country/province",
               "country.label": "Country",
-              "country.placeholder": "Select a country...",
+              "country.placeholder.loading": "Loading countries...",
+              "country.placeholder.loaded": "Select a country...",
               "area.title": "Select area",
               "area.label": "Province/area",
-              "area.placeholder": "Select a province",
+              "area.placeholder.loading": "Select a province",
+              "area.placeholder.noCountry": "Select a country first",
+              "area.placeholder.loaded": "Select a province",
+              "area.placeholder.noAreas": "No provinces configured",
               "required": "Country is required"
             },
             "fusionTable": {
