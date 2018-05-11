@@ -133,17 +133,17 @@
     -webkit-animation: Select-animation-fadeIn 200ms;
     -o-animation: Select-animation-fadeIn 200ms;
     animation: Select-animation-fadeIn 200ms;
-    color: #999;
     cursor: pointer;
     display: table-cell;
     position: relative;
     text-align: center;
     vertical-align: middle;
     width: 17px;
+    color: #a0a0a0;
 }
 
 .Select-clear-zone:hover {
-    color: #D0021B;
+    color: #e81351;
 }
 
 .Select-clear {
@@ -160,21 +160,21 @@
     vertical-align: middle;
     width: 25px;
     padding-right: 5px;
-}
-
-.Select--rtl .Select-arrow-zone {
-    padding-right: 0;
-    padding-left: 5px;
+    color: #a0a0a0;
 }
 
 .Select-arrow {
-    border-color: #999 transparent transparent;
+    border-color: #a0a0a0 transparent transparent;
     border-style: solid;
     border-width: 5px 5px 2.5px;
     display: inline-block;
     height: 0;
     width: 0;
     position: relative;
+}
+
+.Select-arrow-zone:hover .Select-arrow {
+    border-color: #c8c8c8 transparent transparent;
 }
 
 .Select-control > *:last-child {
