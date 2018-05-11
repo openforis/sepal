@@ -53,14 +53,14 @@
 
 .date,
 .picker ul li.selected {
-    background-color: rgb(255, 0, 0, .2);
+    background-color: rgba(255, 0, 0, .2);
     /* color: white; */
 }
 
 .date:hover,
 .picker ul li.highlighted {
     color: white;
-    background-color: rgb(255, 0, 0, .5);
+    background-color: rgba(255, 0, 0, .5);
 }
 
 .picker ul li:hover {
