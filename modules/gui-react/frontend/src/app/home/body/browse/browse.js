@@ -1,18 +1,19 @@
-import React from 'react'
-import {connect, select} from 'store'
-import Http from 'http-client'
-import Rx from 'rxjs'
-import Notifications from 'app/notifications'
 import actionBuilder from 'action-builder'
-import PropTypes from 'prop-types'
-import styles from './browse.module.css'
-import Icon from 'widget/icon'
+import Notifications from 'app/notifications'
+import flexy from 'flexy.module.css'
+import Http from 'http-client'
 import Path from 'path'
+import PropTypes from 'prop-types'
+import React from 'react'
+import {Observable} from 'rxjs'
+import {catchError, map} from 'rxjs/operators'
+import {connect, select} from 'store'
+import {msg} from 'translate'
 import {IconButton} from 'widget/button'
 import {HoldButton} from 'widget/button2'
+import Icon from 'widget/icon'
 import Tooltip from 'widget/tooltip'
-import {msg} from 'translate'
-import flexy from 'flexy.module.css'
+import styles from './browse.module.css'
 
 // const files = {
 //     'loaded': {
@@ -58,27 +59,29 @@ const mapStateToProps = () => ({
 })
 
 const loadFiles$ = (path) => {
-    return Http.get$('/api/user/files?path=' + encodeURIComponent(path))
-        .map((e) => e.response)
-        .catch(() => {
+    return Http.get$('/api/user/files?path=' + encodeURIComponent(path)).pipe(
+        map((e) => e.response),
+        catchError(() => {
             Notifications.error('files.loading').dispatch()
-            return Rx.Observable.of([])
-        })
-        .map((files) => {
+            return Observable.of([])
+        }),
+        map((files) => {
             return actionBuilder('LOAD_FILES')
                 .set(['files', 'loaded', path, 'files'], files)
                 .build()
         })
+    )
 }
 
 const removeItem$ = (path, action) => {
-    return Http.delete$('/api/user/files/' + encodeURIComponent(path))
-        .map((e) => e.response)
-        .catch(() => {
+    return Http.delete$('/api/user/files/' + encodeURIComponent(path)).pipe(
+        map((e) => e.response),
+        catchError(() => {
             Notifications.error('files.removing').dispatch()
-            return Rx.Observable.of([])
-        })
-        .map(action)
+            return Observable.of([])
+        }),
+        map(action)
+    )
 }
 
 const removeFile$ = (path) => {
@@ -106,21 +109,26 @@ class Browse extends React.Component {
     componentWillMount() {
         this.loadDirectory('/')
     }
+
     loadDirectory(path) {
         this.props.asyncActionBuilder('LOAD_DIRECTORY', loadFiles$(path))
             .dispatch()
     }
+
     pathSections(path) {
         return path.substr(1).split('/')
     }
+
     removeFile(path) {
         this.props.asyncActionBuilder('REMOVE_FILE', removeFile$(path))
             .dispatch()
     }
+
     removeDirectory(path) {
         this.props.asyncActionBuilder('REMOVE_DIRECTORY', removeDirectory$(path))
             .dispatch()
     }
+
     removeSelected() {
         const {files, directories} = this.selectedItems()
         files.forEach((file) => this.removeFile(file))
@@ -133,11 +141,13 @@ class Browse extends React.Component {
             .set(['files', 'loaded', path, 'collapsed'], true)
             .dispatch()
     }
+
     expandDirectory(path) {
         actionBuilder('EXPAND_DIRECTORY')
             .del(['files', 'loaded', path, 'collapsed'])
             .dispatch()
     }
+
     toggleDirectory(path) {
         const directory = this.props.loaded[path]
         if (directory && !directory.collapsed) {
@@ -147,27 +157,31 @@ class Browse extends React.Component {
             this.loadDirectory(path)
         }
     }
-    
+
     selectItem(path, isDirectory) {
         actionBuilder('SELECT_ITEM', {path})
             .set(['files', 'selected', ...this.pathSections(path)], isDirectory)
             .dispatch()
     }
+
     deselectItem(path) {
         actionBuilder('DESELECT_ITEM', {path})
             .del(['files', 'selected', ...this.pathSections(path)])
             .dispatch()
     }
+
     toggleSelection(path, isDirectory) {
         this.isSelected(path)
             ? this.deselectItem(path)
             : this.selectItem(path, isDirectory)
     }
+
     clearSelection() {
         actionBuilder('CLEAR_SELECTED_ITEMS')
             .del(['files', 'selected'])
             .dispatch()
     }
+
     isSelected(path) {
         const isSelected = (pathSections, selected) => {
             if (!selected) {
@@ -181,6 +195,7 @@ class Browse extends React.Component {
         }
         return isSelected(this.pathSections(path), this.props.selected)
     }
+
     selectedItems() {
         const selectedItems = (selected, path) => {
             return Object.keys(selected).reduce((acc, key) => {
@@ -205,6 +220,7 @@ class Browse extends React.Component {
         }
         return selectedItems(this.props.selected, '/')
     }
+
     countSelectedItems() {
         const {files, directories} = this.selectedItems()
         return {
@@ -212,9 +228,11 @@ class Browse extends React.Component {
             directories: directories.length
         }
     }
+
     downloadSelected() {
 
     }
+
     renderFileInfo(fullPath, file) {
         if (file.isDirectory) {
             const files = this.props.loaded[fullPath] && this.props.loaded[fullPath].files
@@ -222,16 +240,18 @@ class Browse extends React.Component {
                 ? <span className={styles.fileInfo}>({files.length} items)</span>
                 : null
         } else {
-            return file.size 
+            return file.size
                 ? <span className={styles.fileInfo}>({file.size} bytes)</span>
                 : null
         }
     }
+
     renderIcon(path, file) {
-        return file.isDirectory 
-            ? this.renderDirectoryIcon(path) 
+        return file.isDirectory
+            ? this.renderDirectoryIcon(path)
             : this.renderFileIcon(path)
     }
+
     renderFileIcon(path) {
         const isImage = (path) => ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
         return (
@@ -240,6 +260,7 @@ class Browse extends React.Component {
             </span>
         )
     }
+
     renderSpinner() {
         return (
             <span className={styles.icon}>
@@ -247,13 +268,14 @@ class Browse extends React.Component {
             </span>
         )
     }
+
     renderDirectoryIcon(path) {
         const directory = this.props.loaded[path]
         const expanded = directory && !directory.collapsed
         const toggleDirectory = (e) => {
             e.stopPropagation()
             this.toggleDirectory(path)
-        } 
+        }
         return expanded && !directory.files
             ? this.renderSpinner()
             : (
@@ -262,6 +284,7 @@ class Browse extends React.Component {
                 </span>
             )
     }
+
     renderList(path) {
         const directory = this.props.loaded[path]
         return directory && !directory.collapsed ? (
@@ -270,13 +293,14 @@ class Browse extends React.Component {
             </ul>
         ) : null
     }
+
     renderListItems(path, files) {
         return files ? files.map((file) => {
             const fullPath = Path.join(path, file ? file.name : null)
             return (
                 <li key={file.name}>
                     <div className={this.isSelected(fullPath) ? styles.selected : null}
-                        onClick={() => this.toggleSelection(fullPath, file.isDirectory)}>
+                         onClick={() => this.toggleSelection(fullPath, file.isDirectory)}>
                         {this.renderIcon(fullPath, file)}
                         <span className={styles.fileName}>{file.name}</span>
                         {this.renderFileInfo(fullPath, file)}
@@ -286,6 +310,7 @@ class Browse extends React.Component {
             )
         }) : null
     }
+
     renderToolbar() {
         const selected = this.countSelectedItems()
         const nothingSelected = selected.files === 0 && selected.directories === 0
@@ -302,23 +327,24 @@ class Browse extends React.Component {
                 )}
                 <Tooltip msg='browse.controls.download' bottom disabled={!oneFileSelected}>
                     <IconButton icon='download'
-                        onClick={this.downloadSelected.bind(this)}
-                        disabled={!oneFileSelected}/>
+                                onClick={this.downloadSelected.bind(this)}
+                                disabled={!oneFileSelected}/>
                 </Tooltip>
                 <Tooltip msg='browse.controls.remove' bottom disabled={nothingSelected}>
                     <HoldButton icon='trash-alt'
-                        onClickHold={this.removeSelected.bind(this)}
-                        disabled={nothingSelected} />
+                                onClickHold={this.removeSelected.bind(this)}
+                                disabled={nothingSelected}/>
                 </Tooltip>
                 <Tooltip msg='browse.controls.clearSelection' bottom disabled={nothingSelected}>
                     <IconButton icon='times'
-                        onClick={this.clearSelection.bind(this)}
-                        disabled={nothingSelected}
+                                onClick={this.clearSelection.bind(this)}
+                                disabled={nothingSelected}
                     />
                 </Tooltip>
             </div>
         )
     }
+
     render() {
         return (
             <div className={[styles.browse, flexy.container].join(' ')}>

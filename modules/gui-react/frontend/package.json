@@ -6,10 +6,10 @@
     "@fortawesome/fontawesome": "^1.1.5",
     "@fortawesome/fontawesome-free-regular": "^5.0.10",
     "@fortawesome/fontawesome-free-solid": "^5.0.10",
-    "@fortawesome/react-fontawesome": "0.0.18",
+    "@fortawesome/react-fontawesome": "0.0.20",
     "base-64": "^0.1.0",
     "bootstrap": "^4.0.0",
-    "cross-fetch": "^1.1.1",
+    "cross-fetch": "^2.2.0",
     "earthengine-api": "git+https://github.com/openforis/earthengine-api.git",
     "flat": "^4.0.0",
     "google-maps": "^3.2.1",
@@ -18,7 +18,7 @@
     "moment": "^2.22.1",
     "object-path-immutable": "^1.0.1",
     "path": "^0.12.7",
-    "query-string": "^5.1.0",
+    "query-string": "^6.1.0",
     "rc-tooltip": "^3.7.0",
     "react": "^16.3.0",
     "react-dom": "^16.3.0",
@@ -26,13 +26,14 @@
     "react-notification-system": "^0.2.17",
     "react-notification-system-redux": "^1.2.0",
     "react-redux": "^5.0.7",
+    "react-resize-detector": "^2.3.0",
     "react-router-dom": "^4.2.2",
-    "react-scripts": "1.1.0",
+    "react-scripts": "1.1.4",
     "react-select": "^1.2.1",
     "react-transition-group": "^2.2.1",
-    "redux": "^3.7.2",
+    "redux": "^4.0.0",
     "redux-logger": "^3.0.6",
-    "rxjs": "^5.5.6"
+    "rxjs": "^6.1.0"
   },
   "scripts": {
     "start": "NODE_PATH=src/ HTTPS=true react-app-rewired start",
@@ -43,12 +44,12 @@
   "devDependencies": {
     "eslint": "^4.19.1",
     "eslint-plugin-react": "^7.7.0",
-    "imports-loader": "^0.7.1",
+    "imports-loader": "^0.8.0",
     "lodash": "^4.17.5",
     "prop-types": "^15.6.0",
     "react-app-rewired": "^1.4.1",
     "redux-devtools-extension": "^2.13.2",
-    "webpack": "^3.10.0"
+    "webpack": "^3"
   },
   "proxy": "https://test.sepal.io"
 }

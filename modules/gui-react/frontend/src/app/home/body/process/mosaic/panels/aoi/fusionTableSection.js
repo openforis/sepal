@@ -2,7 +2,8 @@ import actionBuilder from 'action-builder'
 import FusionTable from 'app/home/map/fusionTable'
 import {map} from 'app/home/map/map'
 import React from 'react'
-import Rx from 'rxjs'
+import {Subject} from 'rxjs'
+import {map as rxMap, takeUntil} from 'rxjs/operators'
 import {connect} from 'store'
 import {Msg, msg} from 'translate'
 import ComboBox from 'widget/comboBox'
@@ -21,16 +22,16 @@ const mapStateToProps = (state, ownProps) => {
 class FusionTableSection extends React.Component {
     constructor(params) {
         super(params)
-        this.fusionTableChanged$ = new Rx.Subject()
-        this.fusionTableColumnChanged$ = new Rx.Subject()
-        this.fusionTableRowChanged$ = new Rx.Subject()
+        this.fusionTableChanged$ = new Subject()
+        this.fusionTableColumnChanged$ = new Subject()
+        this.fusionTableRowChanged$ = new Subject()
         this.recipe = new RecipeActions(params.id)
     }
 
     loadFusionTableColumns(fusionTableId) {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
-            FusionTable.columns$(fusionTableId, {retries: 1, validStatuses: [200, 404]})
-                .map((columns) => {
+            FusionTable.columns$(fusionTableId, {retries: 1, validStatuses: [200, 404]}).pipe(
+                rxMap((columns) => {
                         if (!columns)
                             this.props.inputs.fusionTable.invalid(
                                 msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.invalid')
@@ -38,9 +39,10 @@ class FusionTableSection extends React.Component {
                         return (columns || [])
                             .filter((column) => column.type !== 'LOCATION')
                     }
-                )
-                .map(this.recipe.setFusionTableColumns)
-                .takeUntil(this.fusionTableChanged$))
+                ),
+                rxMap(this.recipe.setFusionTableColumns),
+                takeUntil(this.fusionTableChanged$))
+        )
             .dispatch()
     }
 
@@ -50,23 +52,26 @@ class FusionTableSection extends React.Component {
             FusionTable.get$(`
                     SELECT '${column}'
                     FROM ${this.props.inputs.fusionTable.value}
-                    ORDER BY '${column}' ASC`)
-                .map((e) =>
+                    ORDER BY '${column}' ASC
+            `).pipe(
+                rxMap((e) =>
                     (e.response.rows || [])
                         .map((row) => row[0])
                         .filter((value) => value)
-                )
-                .map(this.recipe.setFusionTableRows)
-                .takeUntil(this.fusionTableColumnChanged$)
-                .takeUntil(this.fusionTableChanged$))
-            .dispatch()
+                ),
+                rxMap(this.recipe.setFusionTableRows),
+                takeUntil(this.fusionTableColumnChanged$),
+                takeUntil(this.fusionTableChanged$)
+            )
+        ).dispatch()
     }
 
     loadBounds(fusionTable) {
         this.props.asyncActionBuilder('LOAD_BOUNDS',
-            fusionTable.loadBounds$()
-                .map((bounds) => actionBuilder('LOADED_BOUNDS', {bounds}))
-                .takeUntil(this.fusionTableRowChanged$))
+            fusionTable.loadBounds$().pipe(
+                rxMap((bounds) => actionBuilder('LOADED_BOUNDS', {bounds})),
+                takeUntil(this.fusionTableRowChanged$)
+            ))
             .onComplete(() => map.fitBounds('aoi'))
             .dispatch()
     }

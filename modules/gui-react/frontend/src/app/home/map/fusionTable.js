@@ -1,4 +1,5 @@
 import Http from 'http-client'
+import {map as rxMap} from 'rxjs/operators'
 import {subscribe} from 'store'
 import {google, map, polygonOptions} from './map'
 import './map.module.css'
@@ -22,8 +23,12 @@ class FusionTable {
     }
 
     static columns$(tableId, args) {
-        return Http.get$(`https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns?${authParam()}`, args)
-            .map((e) => e.response.items)
+        return Http.get$(
+            `https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns?${authParam()}`,
+            args
+        ).pipe(
+            rxMap((e) => e.response.items)
+        )
     }
 
     constructor({table, keyColumn, key}) {
@@ -71,26 +76,28 @@ class FusionTable {
             SELECT geometry 
             FROM ${this.table} 
             WHERE '${this.keyColumn}' = '${this.key}'
-            `).map((e) => {
-                const bounds = new google.maps.LatLngBounds()
-                if (!e.response.rows[0])
-                    throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.table}`)
-                try {
-                    e.response.rows[0].forEach((o) =>
-                        eachLatLng(o, (latLng) => bounds.extend(latLng))
-                    )
-                    this.bounds = bounds
-                    const ne = bounds.getNorthEast()
-                    const sw = bounds.getSouthWest()
-                    return [
-                        [ne.lat(), ne.lng()],
-                        [sw.lat(), sw.lng()],
-                    ]
-                } catch (e) {
-                    console.error('Failed to get bounds', e)
-                    throw e
+        `).pipe(
+            rxMap((e) => {
+                    const bounds = new google.maps.LatLngBounds()
+                    if (!e.response.rows[0])
+                        throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.table}`)
+                    try {
+                        e.response.rows[0].forEach((o) =>
+                            eachLatLng(o, (latLng) => bounds.extend(latLng))
+                        )
+                        this.bounds = bounds
+                        const ne = bounds.getNorthEast()
+                        const sw = bounds.getSouthWest()
+                        return [
+                            [ne.lat(), ne.lng()],
+                            [sw.lat(), sw.lng()],
+                        ]
+                    } catch (e) {
+                        console.error('Failed to get bounds', e)
+                        throw e
+                    }
                 }
-            }
+            )
         )
     }
 }

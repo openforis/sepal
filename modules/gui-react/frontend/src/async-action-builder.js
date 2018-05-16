@@ -1,7 +1,8 @@
-import {dispatch} from 'store'
 import actionBuilder from 'action-builder'
-import {msg} from 'translate'
 import Notifications from 'app/notifications'
+import {takeUntil} from 'rxjs/operators'
+import {dispatch} from 'store'
+import {msg} from 'translate'
 
 export default function asyncActionBuilder(type, action$, component) {
     if (!type) throw new Error('Action type is required')
@@ -38,6 +39,7 @@ export default function asyncActionBuilder(type, action$, component) {
                     if (actions && !(actions instanceof Array))
                         actions = [actions]
                     actions.forEach((action) => addActions(action))
+                    console.log('error', error)
                     if (actions.length === 0)
                         addActions(Notifications.caught(
                             'action',
@@ -72,9 +74,9 @@ export default function asyncActionBuilder(type, action$, component) {
                 .set(['actions', componentId, type], 'DISPATCHING')
                 .dispatch()
             cleanupStateWhenComponentUnMounts(component)
-            action$
-                .takeUntil(component.componentWillUnmount$)
-                .subscribe(observer)
+            action$.pipe(
+                takeUntil(component.componentWillUnmount$)
+            ).subscribe(observer)
         }
     }
 }

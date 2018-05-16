@@ -1,13 +1,14 @@
-import React from 'react'
-import styles from './slider.module.css'
-import Rx from 'rxjs'
 import Hammer from 'hammerjs'
 import PropTypes from 'prop-types'
+import React from 'react'
+import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
+import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
+import styles from './slider.module.css'
 
-const map = (from, to) =>
+const scale = (from, to) =>
     (value) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
 
-const limit = ({min, max}) => 
+const limit = ({min, max}) =>
     (value) => Math.max(min, Math.min(max, value))
 
 class Draggable {
@@ -21,11 +22,11 @@ class Draggable {
         this.position = null
     }
 
-    initialize({slider, handle}) {    
+    initialize({slider, handle}) {
         const width = slider.getBoundingClientRect().width
 
-        this.mapToScreen = map({min: this.minValue, max: this.maxValue}, {min: 0, max: width})
-        this.mapToRange = map({min: 0, max: width}, {min: this.minValue, max: this.maxValue})
+        this.mapToScreen = scale({min: this.minValue, max: this.maxValue}, {min: 0, max: width})
+        this.mapToRange = scale({min: 0, max: width}, {min: this.minValue, max: this.maxValue})
         this.clipToScreen = limit({min: 0, max: width})
         this.clipToRange = limit({min: this.minValue, max: this.maxValue})
 
@@ -44,56 +45,60 @@ class Draggable {
             return false
         }
         this.getValue = () => this.mapToRange(this.position)
-        
+
         this.setValue = (value) => {
             this.setPosition(this.mapToScreen(value))
         }
-            
+
         this.setValue(this.startValue)
         this.position = this.getPosition()
-    
+
         const drag$ = (element) => {
             const hammerPan = new Hammer(element, {
                 threshold: 1
             })
-            hammerPan.get('pan').set({ direction: Hammer.DIRECTION_HORIZONTAL })
-    
-            const pan$ = Rx.Observable.fromEvent(hammerPan, 'panstart panmove panend')
-            const panStart$ = pan$.filter(e => e.type === 'panstart')
-            const panMove$ = pan$.filter(e => e.type === 'panmove')
-            const panEnd$ = pan$.filter(e => e.type === 'panend')
-            const animationFrame$ = Rx.Observable.interval(0, Rx.Scheduler.animationFrame)
-    
+            hammerPan.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
+
+            const pan$ = fromEvent(hammerPan, 'panstart panmove panend')
+            const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
+            const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
+            const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
+            const animationFrame$ = interval(0, animationFrameScheduler)
+
             const lerp = (rate, speed) => {
                 return (value, targetValue) => {
                     const delta = (targetValue - value) * (rate * speed)
                     return value + delta
-                }      
+                }
             }
-    
-            return panStart$
-                .switchMap(() => {
+
+            return panStart$.pipe(
+                switchMap(() => {
                     const start = this.position
-                    return panMove$
-                        .map(pmEvent => ({
+                    return panMove$.pipe(
+                        map(pmEvent => ({
                             cursor: this.clipToScreen(start + pmEvent.deltaX),
                             speed: 1 - Math.max(0, Math.min(95, Math.abs(pmEvent.deltaY))) / 100
-                        }))
-                        .distinctUntilChanged()
-                        .takeUntil(panEnd$)
-                })
-                .switchMap(({cursor, speed}) => {
+                        })),
+                        distinctUntilChanged(),
+                        takeUntil(panEnd$)
+                    )
+                }),
+                switchMap(({cursor, speed}) => {
                     const start = this.position
-                    return animationFrame$
-                        .map(() => cursor)
-                        .scan(lerp(.3, speed), start)
-                        .distinctUntilChanged((a, b) => Math.abs(a - b) < .01)
-                        .takeUntil(panEnd$)
+                    return animationFrame$.pipe(
+                        map(() => cursor),
+                        scan(lerp(.3, speed), start),
+                        distinctUntilChanged((a, b) => Math.abs(a - b) < .01),
+                        takeUntil(panEnd$)
+                    )
                 })
+            )
         }
 
         this.subscription = drag$(handle).subscribe(this.setPosition)
     }
+
     dispose() {
         this.subscription && this.subscription.unsubscribe()
     }
@@ -111,15 +116,18 @@ export class Slider extends React.Component {
             onChange: props.onChange
         })
     }
+
     componentWillReceiveProps(props) {
         return this.draggable.setValue(props.startValue)
     }
+
     componentDidMount() {
         this.draggable.initialize({
-            slider: this.slider.current, 
+            slider: this.slider.current,
             handle: this.handle.current
         })
     }
+
     render() {
         return (
             <div className={styles.container}>
@@ -129,6 +137,7 @@ export class Slider extends React.Component {
             </div>
         )
     }
+
     componentWillUnmount() {
         this.draggable.dispose()
     }

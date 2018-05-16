@@ -2,7 +2,7 @@ import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
 import React from 'react'
 import {connect as connectToRedux} from 'react-redux'
-import Rx from 'rxjs'
+import {Subject} from 'rxjs'
 
 let storeInstance = null
 const storeInitListeners = []
@@ -46,7 +46,7 @@ export function connect(mapStateToProps) {
             constructor(props) {
                 super(props)
                 this.id = `${displayName}:${guid()}`
-                this.componentWillUnmount$ = new Rx.Subject()
+                this.componentWillUnmount$ = new Subject()
                 this.asyncActionBuilder = this.asyncActionBuilder.bind(this)
             }
 

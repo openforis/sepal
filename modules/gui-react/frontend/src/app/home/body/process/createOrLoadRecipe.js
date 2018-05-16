@@ -2,6 +2,7 @@ import actionBuilder from 'action-builder'
 import flexy from 'flexy.module.css'
 import Http from 'http-client'
 import React from 'react'
+import {map} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {Button, IconButton} from 'widget/button'
@@ -27,10 +28,11 @@ const mapStateToProps = () => ({
 })
 
 const loadRecipes$ = () =>
-    Http.get$('/processing-recipes')
-        .map((e) => actionBuilder('SET_RECIPES')
+    Http.get$('/processing-recipes').pipe(
+        map((e) => actionBuilder('SET_RECIPES')
             .set('process.recipes', e.response)
             .build())
+    )
 
 
 class RecipeList extends React.Component {

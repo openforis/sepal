@@ -3,7 +3,8 @@ import FusionTable from 'app/home/map/fusionTable'
 import {map} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Rx from 'rxjs'
+import {Subject} from 'rxjs'
+import {map as rxMap, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {Msg, msg} from 'translate'
 import ComboBox from 'widget/comboBox'
@@ -15,12 +16,13 @@ const loadCountries$ = () => {
             SELECT id, label 
             FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
             WHERE parent_id != '' 
-            ORDER BY label ASC`)
-        .map((e) =>
+            ORDER BY label ASC`).pipe(
+        rxMap((e) =>
             actionBuilder('SET_COUNTRIES', {countries: e.response})
                 .set('countries', e.response.rows)
                 .build()
         )
+    )
 }
 
 const loadCountryAreas$ = (countryId) => {
@@ -28,12 +30,13 @@ const loadCountryAreas$ = (countryId) => {
             SELECT id, label 
             FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
             WHERE parent_id = '${countryId}'
-            ORDER BY label ASC`)
-        .map((e) =>
+            ORDER BY label ASC`).pipe(
+        rxMap((e) =>
             actionBuilder('SET_COUNTRY_AREA', {countries: e.response})
                 .set(['areasByCountry', countryId], e.response.rows)
                 .build()
         )
+    )
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -47,23 +50,25 @@ class CountrySection extends React.Component {
     constructor(props) {
         super(props)
         console.log('constructor')
-        this.aoiChanged$ = new Rx.Subject()
+        this.aoiChanged$ = new Subject()
         this.update()
     }
 
     loadCountryAreas(countryId) {
         if (!select(['areasByCountry', countryId]))
             this.props.asyncActionBuilder('LOAD_COUNTRY_AREAS',
-                loadCountryAreas$(countryId)
-                    .takeUntil(this.aoiChanged$))
+                loadCountryAreas$(countryId).pipe(
+                    takeUntil(this.aoiChanged$))
+            )
                 .dispatch()
     }
 
     loadBounds(fusionTable) {
         this.props.asyncActionBuilder('LOAD_BOUNDS',
-            fusionTable.loadBounds$()
-                .map((bounds) => actionBuilder('LOADED_BOUNDS', {bounds}))
-                .takeUntil(this.aoiChanged$))
+            fusionTable.loadBounds$().pipe(
+                rxMap((bounds) => actionBuilder('LOADED_BOUNDS', {bounds})),
+                takeUntil(this.aoiChanged$))
+        )
             .onComplete(() => map.fitBounds('aoi'))
             .dispatch()
     }

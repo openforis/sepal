@@ -1,11 +1,12 @@
 import actionBuilder from 'action-builder'
 import rstudioIcon from 'app/home/body/appLaunchPad/r-studio.png'
+import Notifications from 'app/notifications'
 import Http from 'http-client'
-import Rx from 'rxjs'
 import {history, isPathInLocation} from 'route'
+import {EMPTY, interval, of, Subject, throwError} from 'rxjs'
+import {catchError, concat, exhaustMap, filter, first, map, switchMap, takeUntil} from 'rxjs/operators'
 import {select} from 'store'
 import {msg} from 'translate'
-import Notifications from 'app/notifications'
 
 export const appList = () =>
     select('apps.list') || []
@@ -23,13 +24,13 @@ export const appReady = (app) => {
 }
 
 export const loadApps$ = () =>
-    Http.get$('/apps')
-        .map((e) => e.response)
-        .catch(() => {
+    Http.get$('/apps').pipe(
+        map((e) => e.response),
+        catchError(() => {
             Notifications.error('apps.loading').dispatch()
-            return Rx.Observable.of([])
-        })
-        .map((apps) => {
+            return of([])
+        }),
+        map((apps) => {
             const dataVis = {
                 path: '/sandbox/data-vis',
                 label: msg('apps.dataVis'),
@@ -37,15 +38,16 @@ export const loadApps$ = () =>
                 endpoint: 'geo-web-viz'
             }
             const rStudio = {
-                path: '/sandbox/rstudio', 
-                image: rstudioIcon, 
-                alt: 'RStudio', 
+                path: '/sandbox/rstudio',
+                image: rstudioIcon,
+                alt: 'RStudio',
                 endpoint: 'rstudio'
             }
             return actionBuilder('SET_APPS')
                 .set('apps.list', [dataVis, rStudio, ...apps])
                 .build()
         })
+    )
 
 export const runApp$ = (path) => {
     const app = getApp(path)
@@ -57,42 +59,48 @@ export const runApp$ = (path) => {
     const url = `/sandbox/start?endpoint=${app.endpoint ? app.endpoint : 'shiny'}`
     const isSessionStarted = (e) => e.response.status === 'STARTED'
 
-    const requestSession$ = Http.post$(url)
-        .filter(isSessionStarted)
+    const requestSession$ = Http.post$(url).pipe(
+        filter(isSessionStarted)
+    )
 
-    const waitForSession$ = Rx.Observable.interval(1000)
-        .switchMap((secondsPassed) => secondsPassed < 30
-            ? Rx.Observable.of(secondsPassed)
-            : Rx.Observable.throw({message: msg('')}))
-        .exhaustMap(() => Http.get$(url))
-        .filter(isSessionStarted)
-        .first()
+    const waitForSession$ = interval(1000).pipe(
+        switchMap((secondsPassed) => secondsPassed < 30
+            ? of(secondsPassed)
+            : throwError({message: msg('')})),
+        exhaustMap(() => Http.get$(url)),
+        filter(isSessionStarted),
+        first()
+    )
 
-    return requestSession$
-        .concat(waitForSession$)
-        .first()
-        .takeUntil(quitApp$.filter((path) => path === app.path))
-        .map(() => actionBuilder('APP_INITIALIZED', {app})
+    return requestSession$.pipe(
+        concat(waitForSession$),
+        first(),
+        takeUntil(quitApp$.pipe(
+            filter((path) => path === app.path)
+        )),
+        map(() => actionBuilder('APP_INITIALIZED', {app})
             .set(['apps', 'state', app.path], {state: 'INITIALIZED', app})
             .build()
-        ).catch(() => {
+        ),
+        catchError(() => {
             quitApp(app.path)
             Notifications.error('apps.run', {label: app.label || app.alt}).dispatch()
-            return Rx.Observable.empty()
+            return EMPTY
         })
+    )
 }
 
 export const quitApp = (path) => {
     quitApp$.next(path)
-    isPathInLocation('/app' + path) 
-        && history().replace('/app-launch-pad').dispatch()
+    isPathInLocation('/app' + path)
+    && history().replace('/app-launch-pad').dispatch()
     actionBuilder('QUIT_APP', {path})
         .del(['apps', 'state', path])
         .delValue(['apps', 'active'], path)
         .dispatch()
 }
 
-const quitApp$ = new Rx.Subject()
+const quitApp$ = new Subject()
 
 const getApp = (path) =>
     appList().find((app) => app.path === path)

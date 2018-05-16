@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import Rx from 'rxjs'
+import {interval, Observable} from 'rxjs'
+import {delay, exhaustMap, map, switchMap} from 'rxjs/operators'
 import {connect} from 'store'
 import {currentUser, loadCurrentUser$} from 'user'
 import Body from './body/body'
@@ -18,21 +19,21 @@ const mapStateToProps = () => ({
 
 const refreshUserAccessTokens$ = (user) => {
     const oneMinute = 60 * 1000
-    const delay = (expiryDate) => Math.max(oneMinute, expiryDate - 5 * oneMinute - Date.now())
-    return Rx.Observable
-        .interval(0)
-        .delay(delay(user.googleTokens.accessTokenExpiryDate))
-        .exhaustMap(() => loadCurrentUser$()
-            .map((currentUserAction) => {
+    const delayMillis = (expiryDate) => Math.max(oneMinute, expiryDate - 5 * oneMinute - Date.now())
+    return interval(0).pipe(
+        delay(delayMillis(user.googleTokens.accessTokenExpiryDate)),
+        exhaustMap(() => loadCurrentUser$().pipe(
+            map((currentUserAction) => {
                 currentUserAction.dispatch()
                 return currentUserAction.user.googleTokens.accessTokenExpiryDate
-            })
-            .map(delay)
-            .switchMap((delay) => Rx.Observable
+            }),
+            map(delayMillis),
+            switchMap((delay) => Observable
                 .empty()
                 .delay(delay)
             )
-        )
+        ))
+    )
 }
 
 

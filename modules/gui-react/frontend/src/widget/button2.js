@@ -1,16 +1,18 @@
+import PropTypes from 'prop-types'
 import React from 'react'
-import Rx from 'rxjs'
+import {fromEvent, merge, timer} from 'rxjs'
+import {switchMap, take, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
 import styles from './button2.module.css'
-import PropTypes from 'prop-types'
 
 export class HoldButton extends React.Component {
     constructor(props) {
         super(props)
         this.button = React.createRef()
     }
+
     render() {
-        const {icon, tabIndex, className, ...props} = this.props
+        const {icon, tabIndex, className, onClickHold, ...props} = this.props
         return (
             <button
                 ref={this.button}
@@ -21,27 +23,32 @@ export class HoldButton extends React.Component {
             </button>
         )
     }
+
     componentDidMount() {
         const button = this.button.current
-        const buttonMouseDown$ = Rx.Observable.fromEvent(button, 'mousedown')
-        const buttonMouseLeave$ = Rx.Observable.fromEvent(button, 'mouseleave')
-        const buttonMouseUp$ = Rx.Observable.fromEvent(button, 'mouseup')
-        const windowMouseUp$ = Rx.Observable.fromEvent(window, 'mouseup')
-        const cancel$ = Rx.Observable.merge(buttonMouseLeave$, windowMouseUp$)
-        
-        buttonMouseDown$
-            .switchMap(() => {
-                return Rx.Observable.timer(750).takeUntil(cancel$)
-                    .switchMap(() => {
-                        return buttonMouseUp$.takeUntil(cancel$).take(1)
-                    })
+        const buttonMouseDown$ = fromEvent(button, 'mousedown')
+        const buttonMouseLeave$ = fromEvent(button, 'mouseleave')
+        const buttonMouseUp$ = fromEvent(button, 'mouseup')
+        const windowMouseUp$ = fromEvent(window, 'mouseup')
+        const cancel$ = merge(buttonMouseLeave$, windowMouseUp$)
+
+        buttonMouseDown$.pipe(
+            switchMap(() => {
+                return timer(750).pipe(
+                    takeUntil(cancel$),
+                    switchMap(() =>
+                        buttonMouseUp$.pipe(
+                            takeUntil(cancel$),
+                            take(1)
+                        )
+                    )
+                )
             })
-            .subscribe(() => {
-                if (this.props.onClickHold && !this.props.disabled) {
-                    this.props.onClickHold()
-                }
-            })
-        
+        ).subscribe(() => {
+            if (this.props.onClickHold && !this.props.disabled)
+                this.props.onClickHold()
+        })
+
     }
 }
 

@@ -4,7 +4,8 @@ import GoogleMapsLoader from 'google-maps'
 import Http from 'http-client'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Rx from 'rxjs'
+import {Observable} from 'rxjs'
+import {map as rxMap, mergeMap} from 'rxjs/operators'
 import {connect, select} from 'store'
 import './map.module.css'
 
@@ -41,10 +42,11 @@ const removeLayer = (id) => {
 
 export const initGoogleMapsApi$ = () => {
     const loadGoogleMapsApiKey$ =
-        Http.get$('/api/data/google-maps-api-key')
-            .map((e) => e.response.apiKey)
+        Http.get$('/api/data/google-maps-api-key').pipe(
+            rxMap((e) => e.response.apiKey)
+        )
 
-    const loadGoogleMapsApi$ = (apiKey) => Rx.Observable.create((observer) => {
+    const loadGoogleMapsApi$ = (apiKey) => Observable.create((observer) => {
         GoogleMapsLoader.KEY = apiKey
         GoogleMapsLoader.LIBRARIES = ['drawing']
         GoogleMapsLoader.load((g) => {
@@ -54,12 +56,13 @@ export const initGoogleMapsApi$ = () => {
         })
     })
 
-    return loadGoogleMapsApiKey$
-        .mergeMap(loadGoogleMapsApi$)
-        .map((apiKey) => actionBuilder('SET_GOOGLE_MAPS_API_INITIALIZED', {apiKey: apiKey})
+    return loadGoogleMapsApiKey$.pipe(
+        mergeMap(loadGoogleMapsApi$),
+        rxMap((apiKey) => actionBuilder('SET_GOOGLE_MAPS_API_INITIALIZED', {apiKey: apiKey})
             .set('map.apiKey', apiKey)
             .build()
         )
+    )
 }
 
 const createMap = (mapElement) => {
@@ -95,11 +98,11 @@ const createMap = (mapElement) => {
         zIndex: 1
     }
 
-    const addOverlay= (layer) => {
+    const addOverlay = (layer) => {
         instance.overlayMapTypes.push(layer)
     }
 
-    const removeOverlay= (name) => {
+    const removeOverlay = (name) => {
         let index = instance.overlayMapTypes.getArray().findIndex(x => x.name === name)
         instance.overlayMapTypes.removeAt(index)
     }
