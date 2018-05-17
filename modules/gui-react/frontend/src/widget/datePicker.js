@@ -55,12 +55,13 @@ class DatePicker extends React.Component {
     }
 
     render() {
-        const {input, fromYear, toYear, className} = this.props
+        const {input, fromYear, toYear, className, ...props} = this.props
         const {edit} = this.state
         return (
             <div className={className}>
                 <div className={styles.input}>
                     <Input
+                        {...props}
                         input={input}
                         maxLength={10}
                         onFocus={() => this.editDate(true)}
