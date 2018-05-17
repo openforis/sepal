@@ -3,6 +3,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {animationFrameScheduler, interval, Subject} from 'rxjs'
 import {debounceTime, filter, first, map, scan, skip, switchMap, takeUntil} from 'rxjs/operators'
+import {Input} from 'widget/form'
+import Icon from 'widget/icon'
 import styles from './datePicker.module.css'
 
 const range = (from, to) =>
@@ -14,6 +16,8 @@ const AUTOSCROLL_DELAY = 1000
 const YEAR = 'year'
 const MONTH = 'month'
 const DAY = 'day'
+
+const DATE_FORMAT = 'YYYY-MM-DD'
 
 const items = [YEAR, MONTH, DAY]
 
@@ -33,47 +37,46 @@ const lerp = (rate) =>
 const daysInMonth = (year, month) =>
     moment().year(year).month(month).daysInMonth()
 
+const toMomentUnit = (item) => {
+    switch (item) {
+        case DAY:
+            return 'date'
+        default:
+            return item
+    }
+}
+
 class DatePicker extends React.Component {
-    constructor(props) {
-        super(props)
-        this.state = {
-            edit: false
-        }
-    }
+    state = {edit: false}
 
-    static getDerivedStateFromProps(props, state) {
-        return {
-            ...state,
-            date: props.date || new Date()
-        }
-    }
-
-    editDate() {
-        this.setState((prevState) => {
-            const state = {...prevState}
-            state.edit = true
-            return state
-        })
-    }
-
-    setDate(date) {
-        this.setState((prevState) => {
-            const state = {...prevState}
-            state.date = date
-            state.edit = false
-            return state
-        })
-        this.props.onChange(date)
+    editDate(edit) {
+        this.setState((prevState) =>
+            ({...prevState, edit}))
     }
 
     render() {
-        return this.state.edit ? (
-            <DatePickerOn fromYear={1980} toYear={2020} date={this.state.date}
-                          onChange={date => this.setDate(date)}/>
-        ) : (
-            <a className={styles.date} onClick={() => this.editDate()}>
-                {moment(this.state.date).format('YYYY MMM DD')}
-            </a>
+        const {input, fromYear, toYear, className} = this.props
+        const {edit} = this.state
+        return (
+            <div className={className}>
+                <div className={styles.input}>
+                    <Input
+                        input={input}
+                        maxLength={10}
+                        onFocus={() => this.editDate(true)}
+                        onBlur={() => this.editDate(false)}
+                    />
+                    <Icon name='calendar'
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => this.editDate(!edit)}/>
+                    {edit
+                        ? <DatePickerControl
+                            fromYear={fromYear}
+                            toYear={toYear}
+                            input={input}/>
+                        : null}
+                </div>
+            </div>
         )
     }
 }
@@ -81,14 +84,13 @@ class DatePicker extends React.Component {
 DatePicker.propTypes = {
     date: PropTypes.object,
     fromYear: PropTypes.number,
-    toYear: PropTypes.number,
-    onChange: PropTypes.func.isRequired
+    toYear: PropTypes.number
 }
 
-class DatePickerOn extends React.Component {
+class DatePickerControl extends React.Component {
     constructor(props) {
         super(props)
-        const date = moment(props.date)
+        const date = moment(props.input.value, DATE_FORMAT)
         this.state = {
             year: date.year(),
             month: date.month(),
@@ -111,6 +113,29 @@ class DatePickerOn extends React.Component {
         this.autoUnsubscribe(this.autoScroll(this.scroll$))
     }
 
+    componentDidUpdate(prevProps, prevState) {
+        if (this.center) {
+            this.center = false
+            this.centerSelected()
+        }
+
+        const nextState = {...this.state}
+        const changed = items.find((item) => {
+            const prevValue = prevState[item]
+            const date = moment(this.props.input.value, DATE_FORMAT)
+            if (!date.isValid())
+                return false
+            const value = date.get(toMomentUnit(item))
+            nextState[item] = value
+            if (prevValue !== value) {
+                this.set(item, value)
+                return true
+            }
+        })
+        if (changed)
+            this.center = true
+    }
+
     autoUnsubscribe(subscription) {
         this.subscriptions.push(subscription)
     }
@@ -120,6 +145,7 @@ class DatePickerOn extends React.Component {
         return select$.pipe(
             filter(selected => selected.item === item),
             map(selected => selected.element),
+            filter(element => element),
             switchMap((element) => {
                 const target = targetScrollOffset(element)
                 const scroll$ = animationFrame$.pipe(
@@ -173,23 +199,37 @@ class DatePickerOn extends React.Component {
             : value
         const selected = this.state[item] === value
         const select = (e, item, value) => {
-            this.set(item, value)
-            this.centerItem(item, e.target)
+            const date = moment(this.props.input.value, DATE_FORMAT)
+            if (date.isValid()) {
+                date.set(toMomentUnit(item), value)
+                this.props.input.set(date.format(DATE_FORMAT))
+                this.set(item, value)
+                this.centerItem(item, e.target)
+            }
         }
         return selected ? (
-            <li key={value} ref={this.selected[item]}
+            <li
+                key={value}
+                ref={this.selected[item]}
                 onMouseOver={() => this.highlight(true)}
                 onMouseOut={() => this.highlight(false)}
-                onClick={this.onClick.bind(this)}
                 className={this.state.highlighted ? styles.highlighted : styles.selected}>{displayValue}</li>
         ) : (
-            <li key={value} onClick={(e) => select(e, item, value)}>{displayValue}</li>
+            <li
+                key={value}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => select(e, item, value)}>
+                {displayValue}
+            </li>
         )
     }
 
     renderList(item, range) {
         return (
-            <ul key={item} onMouseOver={() => this.scroll$.next(item)} onScroll={() => this.scroll$.next(item)}>
+            <ul
+                key={item}
+                onMouseOver={() => this.scroll$.next(item)}
+                onScroll={() => this.scroll$.next(item)}>
                 {range.map((value) => this.renderItem(item, value))}
             </ul>
         )
@@ -217,16 +257,9 @@ class DatePickerOn extends React.Component {
         items.map(item => this.centerItem(item, this.selected[item].current))
     }
 
-    onClick() {
-        const date = new Date(this.state.year, this.state.month, this.state.day)
-        // if (!this.props.date || date.getTime() !== this.props.date.getTime()) {
-        this.props.onChange(date)
-        // }
-    }
-
     render() {
         return (
-            <div className={styles.container}>
+            <div className={styles.control}>
                 <div className={styles.picker}>
                     {items.map(item => this.renderPicker(item))}
                 </div>
@@ -243,11 +276,10 @@ class DatePickerOn extends React.Component {
     }
 }
 
-DatePickerOn.propTypes = {
+DatePickerControl.propTypes = {
     date: PropTypes.object,
     fromYear: PropTypes.number,
-    toYear: PropTypes.number,
-    onChange: PropTypes.func.isRequired
+    toYear: PropTypes.number
 }
 
 export default DatePicker
