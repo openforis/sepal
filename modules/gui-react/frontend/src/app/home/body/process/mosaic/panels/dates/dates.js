@@ -107,9 +107,9 @@ class Dates extends React.Component {
                         </label>
                         <div className={styles.targetDateInput}>
                             <DatePicker
+                                input={targetDate}
                                 fromYear={1980}
-                                toYear={moment().year()}
-                                input={targetDate}/>
+                                toYear={moment().year()}/>
                             <ErrorMessage input={targetDate}/>
                         </div>
 
