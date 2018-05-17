@@ -49,7 +49,6 @@ const mapStateToProps = (state, ownProps) => {
 class CountrySection extends React.Component {
     constructor(props) {
         super(props)
-        console.log('constructor')
         this.aoiChanged$ = new Subject()
         this.update()
     }
