@@ -32,7 +32,7 @@ class Panels extends React.Component {
         case 'areaOfInterest':
             return <Aoi id={this.props.id} className={[styles.panel, styles.bottom].join(' ')}/>
         case 'dates':
-            return <Dates id={this.props.id} className={[styles.panel, styles.bottom].join(' ')}/>
+            return <Dates id={this.props.id} className={[styles.panel, styles.dates, styles.bottom].join(' ')}/>
         case 'sources':
             return <Sources id={this.props.id} className={[styles.panel, styles.bottom].join(' ')}/>
         case 'scenes':

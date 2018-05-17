@@ -191,7 +191,18 @@
         "dates": {
           "title": "Dates",
           "button": "DAT",
-          "tooltip": "Specify dates"
+          "tooltip": "Specify dates",
+          "form": {
+            "targetDate": {
+              "label": "Target date"
+            },
+            "season": {
+              "label": "Season"
+            },
+            "years": {
+              "label": "Years"
+            }
+          }
         },
         "sources": {
           "title": "Sources",

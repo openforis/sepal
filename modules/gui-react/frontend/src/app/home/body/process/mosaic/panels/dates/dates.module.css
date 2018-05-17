@@ -1,48 +1,42 @@
-.container {
-    --dot-size: 1rem;
-    display: flex;
-    flex-direction: column;
-    /* justify-content: space-between; */
-    min-height: 16rem;
-    min-width: 30rem;
-    padding: var(--padding);
+.form {
 }
 
-.body {
-    position: relative;
-    height: 10rem;
-    width: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-}
-
-.handle {
-    position: absolute;
-    height: var(--dot-size);
-    width: var(--dot-size);
-    border-radius: 50%;
-    background-color: red;
-    cursor: pointer;
-    z-index: 10;
-    /* transition: all 150ms ease-in-out; */
-}
-
-.rect {
-    position: absolute;
-    background-color: rgba(255, 0, 0, .2);
-}
-
-.dates {
+.fields {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-gap: 1rem;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: 1fr 1fr auto;
+    grid-template-areas:
+            'targetDateLabel targetDateInput'
+            'yearsLabel      yearsInput'
+            'seasonLabel     .'
+            'seasonInput     seasonInput';
+    grid-column-gap: 3rem;
 }
 
-.range  {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    grid-gap: 1rem;
-    align-items: center;
+.targetDateLabel {
+    grid-area: targetDateLabel;
+    margin-top: 0.2rem;
 }
+
+.targetDateInput {
+    grid-area: targetDateInput;
+}
+
+.yearsLabel {
+    grid-area: yearsLabel;
+}
+
+.yearsInput {
+    grid-area: yearsInput;
+}
+
+.seasonLabel {
+    grid-area: seasonLabel;
+}
+
+.seasonInput {
+    grid-area: seasonInput;
+    padding-right: 5rem;
+    padding-left: 5rem;
+}
+

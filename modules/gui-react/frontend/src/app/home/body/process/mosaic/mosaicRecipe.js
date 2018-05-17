@@ -42,6 +42,9 @@ export const RecipeActions = (id) => {
         setAoi(aoi) {
             return set('SET_AOI', 'aoi', {...aoi}, {aoi})
         },
+        setDates(dates) {
+            return set('SET_DATES', 'dates', {...dates}, {dates})
+        },
         setModal(enabled) {
             return set('SET_MODAL', 'ui.modal', enabled, {enabled})
         },

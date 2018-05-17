@@ -1,5 +1,7 @@
 .panel {
-    --padding: .5rem .8rem;
+    --padding-top-bottom: .5rem;
+    --padding-right-left: .8rem;
+    --padding: var(--padding-top-bottom) var(--padding-right-left);
     position: absolute;
     background-color: hsla(36, 8%, 15%, .95);
     border-radius: .5rem;
@@ -10,6 +12,11 @@
     --scaling-factor: .8 !important;
     overflow: hidden;
     flex-shrink: 0;
+}
+
+.dates {
+    width: 90%;
+    max-width: 100rem;
 }
 
 .top {

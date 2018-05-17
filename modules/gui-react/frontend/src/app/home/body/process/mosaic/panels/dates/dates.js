@@ -1,28 +1,36 @@
 import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Msg} from 'translate'
-import {form} from 'widget/form'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import styles from './dates.module.css'
-import {Slider} from './slider'
+import {Msg, msg} from 'translate'
 import DatePicker from 'widget/datePicker'
-import Icon from 'widget/icon'
+import {Constraints, ErrorMessage, form} from 'widget/form'
+import SeasonSelect from 'widget/seasonSelect'
+import {RecipeState} from '../../mosaicRecipe'
+import PanelForm from '../panelForm'
+import styles from './dates.module.css'
 
-const inputs = {}
+const inputs = {
+    targetDate: new Constraints(),
+    seasonStart: new Constraints(),
+    seasonEnd: new Constraints()
+}
+
+const DATE_FORMAT = 'YYYY-MM-DD'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        values: recipe('dates')
+        values: recipe('dates') || {
+            targetDate: moment().format(DATE_FORMAT),
+            seasonStart: moment().month(0).date(1).format(DATE_FORMAT),
+            seasonEnd: moment().add(1, 'years').month(0).date(1).format(DATE_FORMAT)
+        }
     }
 }
 
 class Dates extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.id)
-        this.rect = React.createRef()
         this.state = {
             date: new Date(),
             dateMinOffset: -30,
@@ -53,26 +61,11 @@ class Dates extends React.Component {
         })
     }
 
-    setDateMin(dateMin) {
-        const dateMinOffset = moment(dateMin).diff(moment(this.state.date), 'days')
-        this.setState({
-            ...this.state,
-            dateMinOffset
-        })
-    }
-
     setDateMax(dateMax) {
         const dateMaxOffset = moment(dateMax).diff(moment(this.state.date), 'days')
         this.setState({
             ...this.state,
             dateMaxOffset
-        })
-    }
-
-    setDateMinOffset(offset) {
-        this.setState({
-            ...this.state,
-            dateMinOffset: Math.round(offset)
         })
     }
 
@@ -98,42 +91,51 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {className} = this.props
+        const {id, form, inputs: {targetDate, seasonStart, seasonEnd, years}, className} = this.props
         return (
-            <div className={className}>
-                <div className={styles.container}>
-                    <div className={styles.title}>
-                        <Msg id={'process.mosaic.panel.dates.title'}/>
+            <form className={className}>
+                <PanelForm
+                    recipeId={id}
+                    form={form}
+                    onApply={(recipe, dates) => recipe.setDates(dates).dispatch()}
+                    icon='cog'
+                    title={msg('process.mosaic.panel.dates.title')}
+                    className={styles.form}>
+                    <div className={styles.fields}>
+                        <label className={styles.targetDateLabel}>
+                            <Msg id='process.mosaic.panel.dates.form.targetDate.label'/>
+                        </label>
+                        <div className={styles.targetDateInput}>
+                            <DatePicker
+                                fromYear={1980}
+                                toYear={moment().year()}
+                                input={targetDate}/>
+                            <ErrorMessage input={targetDate}/>
+                        </div>
+
+                        <label className={styles.yearsLabel}>
+                            <Msg id='process.mosaic.panel.dates.form.years.label'/>
+                        </label>
+                        <div className={styles.yearsInput}>
+                            Some year selection widget will go here.
+                        </div>
+
+                        <label className={styles.seasonLabel}>
+                            <Msg id='process.mosaic.panel.dates.form.season.label'/>
+                        </label>
+                        {/* TODO: Switch to two date pickers for narrow screens */}
+                        <SeasonSelect
+                            initialStartDate={moment(seasonStart.value, DATE_FORMAT)}
+                            initialEndDate={moment(seasonEnd.value, DATE_FORMAT)}
+                            centerDate={moment(targetDate.value, DATE_FORMAT)}
+                            className={styles.seasonInput}
+                            onChange={(start, end) => {
+                                seasonStart.set(start)
+                                seasonEnd.set(end)
+                            }}/>
                     </div>
-                    <div className={styles.body}>
-                        <div className={styles.dates}>
-                            <DatePicker className={styles.date} fromYear={1980} toYear={2020} 
-                                date={this.dateMin()} onChange={date => this.setDateMin(date)}/>
-                            <DatePicker className={styles.date} fromYear={1980} toYear={2020} 
-                                date={this.state.date} onChange={date => this.setDate(date)}/>
-                            <DatePicker className={styles.date} fromYear={1980} toYear={2020} 
-                                date={this.dateMax()} onChange={date => this.setDateMax(date)}/>
-                        </div>
-                        <div className={styles.range}>
-                            <Slider minValue={-180} maxValue={0} startValue={this.state.dateMinOffset} onChange={days => this.setDateMinOffset(days)}/>
-                            <div>
-                                {/* <Icon name="minus-circle"/> */}
-                                - days +
-                                {/* <Icon name="plus-circle"/> */}
-                            </div>
-                            <Slider minValue={0} maxValue={180} startValue={this.state.dateMaxOffset} onChange={days => this.setDateMaxOffset(days)}/>
-                        </div>
-                        <div className={styles.range}>
-                            <Slider minValue={-10} maxValue={0} startValue={this.state.yearMinOffset} onChange={years => this.setYearMinOffset(years)}/>
-                            <div>- seasons +</div>
-                            <Slider minValue={0} maxValue={10} startValue={this.state.yearMaxOffset} onChange={years => this.setYearMaxOffset(years)}/>
-                        </div>
-                    </div>
-                    {/* <div className={styles.footer}>
-                        footer
-                    </div> */}
-                </div>
-            </div>
+                </PanelForm>
+            </form>
         )
     }
 }
