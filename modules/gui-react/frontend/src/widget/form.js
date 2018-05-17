@@ -241,7 +241,7 @@ export const ErrorMessage = ({input}) =>
 
 export class Input extends React.Component {
     render() {
-        const {input, validate = 'onBlur', onChange, onBlur, ...props} = this.props
+        const {input, validate = 'onBlur', onChange, className, onBlur, ...props} = this.props
         return (
             <input
                 {...props}
@@ -260,7 +260,7 @@ export class Input extends React.Component {
                     if (validate === 'onBlur')
                         input.validate()
                 }}
-                className={input.errorClass}
+                className={[input.errorClass, className].join(' ')}
             />
         )
     }
@@ -274,4 +274,5 @@ Input.propTypes = {
     placeholder: PropTypes.string,
     tabIndex: PropTypes.number,
     autoComplete: PropTypes.string,
+    className: PropTypes.string
 }
