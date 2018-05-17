@@ -232,7 +232,6 @@
 
 .Select-option {
     background-color: rgba(19, 19, 20, 0.91);
-    /*color: #666666;*/
     cursor: pointer;
     display: block;
     padding: 8px 10px;
@@ -244,15 +243,14 @@
 }
 
 .Select-option.is-focused {
-    /*background-color: rgba(101, 101, 104, 0.6);*/
     background-color: rgba(255, 0, 0, .2);
 }
 
 
 .Select-option.is-selected {
-    /*background-color: rgba(101, 101, 104, 0.6);*/
-    background-color: rgba(255, 0, 0, .5);
+    background-color: #81311F;
 }
+
 .Select-option.is-disabled {
     color: #cccccc;
     cursor: default;
