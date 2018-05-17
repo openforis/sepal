@@ -111,7 +111,8 @@
 }
 
 .buttons {
-    padding: var(--padding);
+    padding: 0.5rem var(--padding-right-left);
+    border-top: 1px solid rgba(100%, 100%, 100%, .1);
 }
 
 select:disabled {

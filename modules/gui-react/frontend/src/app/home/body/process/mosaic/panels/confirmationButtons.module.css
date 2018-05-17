@@ -1,7 +1,7 @@
 .buttons {
     display: flex;
-    flex-direction: row;
-    justify-content: space-around;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
     opacity: 0;
     transition: opacity 200ms ease-in-out;
 }
@@ -11,25 +11,57 @@
 }
 
 .buttons button {
-    color: hsl(0, 0%, 50%);
-    background-color: hsl(224, 0%, 27%);
+    color: #ccc;
     border: 0;
-    border-radius: 0.25rem;
+    border-radius: 1rem;
     font-size: .9rem;
     transition: all 100ms ease-in-out;
+    margin-left: 0.5rem;
+    padding: .1rem 1rem;
+    cursor: pointer;
+}
+
+.buttons button:hover. .buttons button:active {
+    color: #fff;
 }
 
 .buttons button span {
     margin-left: .2rem;
 }
 
-.dirty button:not(:disabled) {
-    color: hsl(0, 0%, 80%);
-    background-color: hsl(224, 87%, 37%);
-    cursor: pointer;
+button.apply {
+    background-color: rgb(38, 71, 171);
+    border: 1px solid rgb(32, 54, 115);
 }
 
-.dirty button:not(:disabled):hover {
-    color: hsl(0, 0%, 100%);
-    background-color: hsl(224, 87%, 47%);
+button.apply:hover {
+    background-color: rgb(39, 78, 198);
+    border: 1px solid rgb(44, 72, 161);
+}
+
+button.apply:active {
+    background-color: rgb(39, 83, 217);
+    border: 1px solid rgb(52, 80, 186);
+}
+
+button.revert {
+    background-color: rgb(173, 64, 58);
+    border: 1px solid rgb(164, 64, 57);
+}
+
+button.revert:hover {
+    background-color: rgb(185, 64, 58);
+    border: 1px solid rgb(177, 78, 73);
+}
+
+button.revert:active {
+    background-color: rgb(195, 68, 62);
+    border: 1px solid rgb(203, 64, 58);
+}
+
+.buttons button:disabled {
+    color: #6b6b6b;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: default;
 }

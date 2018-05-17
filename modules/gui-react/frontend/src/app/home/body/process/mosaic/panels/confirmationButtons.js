@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {RecipeActions} from '../mosaicRecipe'
 import {Msg} from 'translate'
 import Icon from 'widget/icon'
+import {RecipeActions} from '../mosaicRecipe'
 import styles from './confirmationButtons.module.css'
 
 class ConfirmationButtons extends React.Component {
@@ -16,8 +16,8 @@ class ConfirmationButtons extends React.Component {
 
     apply(e, values) {
         e.preventDefault()
-        const {form} = this.props
-        this.recipe.setAoi(values).dispatch()
+        const {form, onApply} = this.props
+        onApply(this.recipe, values)
         form.setInitialValues(values)
     }
 
@@ -32,14 +32,18 @@ class ConfirmationButtons extends React.Component {
         const dirty = form.isDirty()
         return (
             <div className={[styles.buttons, dirty && styles.dirty].join(' ')}>
-                <button onClick={(e) => this.apply.bind(this)(e, form.values())}
-                        disabled={form.hasInvalid() || !dirty}>
+                <button
+                    onClick={(e) => this.apply.bind(this)(e, form.values())}
+                    disabled={form.hasInvalid() || !dirty}
+                    className={styles.apply}>
                     <Icon name={'check'}/>
                     <span><Msg id='button.apply'/></span>
                 </button>
-                <button onClick={this.revert.bind(this)}
-                        onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before reverting
-                        disabled={!dirty}>
+                <button
+                    onClick={this.revert.bind(this)}
+                    onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before reverting
+                    disabled={!dirty}
+                    className={styles.revert}>
                     <Icon name={'undo-alt'}/>
                     <span><Msg id='button.revert'/></span>
                 </button>
@@ -49,8 +53,9 @@ class ConfirmationButtons extends React.Component {
 }
 
 ConfirmationButtons.propTypes = {
-    recipeId: PropTypes.string,
-    form: PropTypes.object,
+    recipeId: PropTypes.string.isRequired,
+    form: PropTypes.object.isRequired,
+    onApply: PropTypes.func.isRequired
 }
 
 export default ConfirmationButtons

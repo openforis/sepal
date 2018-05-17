@@ -56,7 +56,10 @@ class Aoi extends React.Component {
                             </AnimateReplacement>
                         </div>
                         <div className={styles.buttons}>
-                            <ConfirmationButtons recipeId={id} form={form} recipe={this.recipe}/>
+                            <ConfirmationButtons
+                                recipeId={id}
+                                form={form}
+                                onApply={(recipe, aoi) => recipe.setAoi(aoi).dispatch()}/>
                         </div>
                     </form>
                 </div>
