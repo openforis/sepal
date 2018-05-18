@@ -195,16 +195,19 @@
           "form": {
             "targetDate": {
               "label": "Target date",
-              "malformed": "Invalid date"
-            },
-            "season": {
-              "label": "Season",
-              "tooEarly": "Must not be before {min}",
-              "tooLate": "Must not be after {max}",
+              "tooltip": "The date in which pixels in the mosaic should ideally come from.",
               "malformed": "Invalid date"
             },
             "years": {
-              "label": "Years"
+              "label": "Years",
+              "tooltip": "Include data from additional years, from the same time of year."
+            },
+            "season": {
+              "label": "Season",
+              "tooltip": "Restrict the time of year to include imagery for.",
+              "tooEarly": "Must not be before {min}",
+              "tooLate": "Must not be after {max}",
+              "malformed": "Invalid date"
             }
           }
         },

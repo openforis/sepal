@@ -5,6 +5,7 @@ import {Msg, msg} from 'translate'
 import DatePicker from 'widget/datePicker'
 import {Constraints, ErrorMessage, form} from 'widget/form'
 import SeasonSelect from 'widget/seasonSelect'
+import Tooltip from 'widget/tooltip'
 import {RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './dates.module.css'
@@ -135,7 +136,9 @@ class Dates extends React.Component {
                     className={styles.form}>
                     <div className={styles.fields}>
                         <label className={styles.targetDateLabel}>
-                            <Msg id='process.mosaic.panel.dates.form.targetDate.label'/>
+                            <Tooltip msg='process.mosaic.panel.dates.form.targetDate' right>
+                                <div><Msg id='process.mosaic.panel.dates.form.targetDate.label'/></div>
+                            </Tooltip>
                         </label>
                         <div className={styles.targetDateInput}>
                             <DatePicker
@@ -146,14 +149,18 @@ class Dates extends React.Component {
                         </div>
 
                         <label className={styles.yearsLabel}>
-                            <Msg id='process.mosaic.panel.dates.form.years.label'/>
+                            <Tooltip msg='process.mosaic.panel.dates.form.years' right>
+                                <div><Msg id='process.mosaic.panel.dates.form.years.label'/></div>
+                            </Tooltip>
                         </label>
                         <div className={styles.yearsInput}>
                             Some year selection widget will go here.
                         </div>
 
                         <label className={styles.seasonLabel}>
-                            <Msg id='process.mosaic.panel.dates.form.season.label'/>
+                            <Tooltip msg='process.mosaic.panel.dates.form.season' right>
+                                <div><Msg id='process.mosaic.panel.dates.form.season.label'/></div>
+                            </Tooltip>
                         </label>
                         <SeasonSelect
                             startDate={seasonStart}
