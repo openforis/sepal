@@ -135,7 +135,7 @@
         "auto": {
           "title": "Auto-select scenes",
           "tooltip": "Auto-select scenes"
-          },
+        },
         "preview": {
           "title": "Preview settings",
           "tooltip": "Preview settings"
@@ -194,7 +194,8 @@
           "tooltip": "Specify dates",
           "form": {
             "targetDate": {
-              "label": "Target date"
+              "label": "Target date",
+              "malformed": "Invalid date"
             },
             "season": {
               "label": "Season"

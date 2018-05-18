@@ -9,13 +9,15 @@ import {RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './dates.module.css'
 
+const DATE_FORMAT = 'YYYY-MM-DD'
+
 const inputs = {
-    targetDate: new Constraints(),
+    targetDate: new Constraints()
+        .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.targetDate.malformed'),
     seasonStart: new Constraints(),
     seasonEnd: new Constraints()
 }
 
-const DATE_FORMAT = 'YYYY-MM-DD'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
@@ -125,8 +127,8 @@ class Dates extends React.Component {
                         </label>
                         {/* TODO: Switch to two date pickers for narrow screens */}
                         <SeasonSelect
-                            initialStartDate={moment(seasonStart.value, DATE_FORMAT)}
-                            initialEndDate={moment(seasonEnd.value, DATE_FORMAT)}
+                            startDate={moment(seasonStart.value, DATE_FORMAT)}
+                            endDate={moment(seasonEnd.value, DATE_FORMAT)}
                             centerDate={moment(targetDate.value, DATE_FORMAT)}
                             className={styles.seasonInput}
                             onChange={(start, end) => {

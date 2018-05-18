@@ -20,22 +20,31 @@ export default class SeasonSelect extends React.Component {
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        const centerDateUnchanged = prevState.centerDate && prevState.centerDate.isSame(nextProps.centerDate)
-        if (centerDateUnchanged || !moment(nextProps.centerDate).isValid())
-            return prevState
-        const centerDate = moment(nextProps.centerDate)
+        const defaultIfInvalid = (date, defaultDate) => {
+            date = moment(date)
+            return date.isValid() ? date : defaultDate()
+        }
+        const calcMinDate = (centerDate) => moment(centerDate).subtract(1, 'years').add(1, 'day')
+        const calcMaxDate = (centerDate) => moment(nextProps.centerDate).add(1, 'years')
+
+        let centerDate = defaultIfInvalid(nextProps.centerDate, () => moment())
+        let startDate = defaultIfInvalid(nextProps.startDate, () => calcMinDate(centerDate))
+        let endDate = defaultIfInvalid(nextProps.endDate, () => calcMaxDate(centerDate))
+
+        const centerDateUnchanged = prevState.centerDate && prevState.centerDate.isSame(centerDate)
+        if (centerDateUnchanged)
+            return {...prevState, centerDate, startDate, endDate}
+
         const prevCenterDate = prevState.centerDate || centerDate
-        const minDate = moment(centerDate).subtract(1, 'years').add(1, 'day')
-        const maxDate = moment(nextProps.centerDate).add(1, 'years')
+        const minDate = calcMinDate(centerDate)
+        const maxDate = calcMaxDate(centerDate)
         const centerDay = centerDate.diff(minDate, 'days')
         const maxDay = maxDate.diff(minDate, 'days')
 
-        let startDate = moment(prevState.startDate || nextProps.initialStartDate)
         let startCenterYearDiff = startDate.year() - prevCenterDate.year()
         startDate.set('year', centerDate.year() + startCenterYearDiff)
         startDate = SeasonSelect.constrainStartDate(startDate, centerDate)
 
-        let endDate = moment(prevState.endDate || nextProps.initialEndDate)
         let endCenterYearDiff = endDate.year() - prevCenterDate.year()
         endDate.set('year', centerDate.year() + endCenterYearDiff)
         endDate = SeasonSelect.constrainEndDate(endDate, centerDate)

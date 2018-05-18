@@ -3,6 +3,7 @@ import React from 'react'
 import {connect} from 'store'
 import {msg} from 'translate'
 import styles from './form.module.css'
+import moment from 'moment'
 
 export function form(inputs, mapStateToProps) {
     return (WrappedComponent) => {
@@ -222,6 +223,10 @@ export class Constraints {
 
     email(messageId) {
         return this.match(Constraints._EMAIL_REGEX, messageId)
+    }
+
+    date(format, messageId) {
+        return this.predicate(value => moment(value, format).isValid(), messageId)
     }
 
     check(name, values) {
