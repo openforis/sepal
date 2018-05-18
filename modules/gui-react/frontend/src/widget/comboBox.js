@@ -49,13 +49,9 @@ class Select extends ReactSelect {
         const maxHeight = document.body.offsetHeight - (dimensions.top + dimensions.height)
         return ReactDOM.createPortal(
             <div
-                ref={ref => {
-                    this.menuContainer = ref
-                }}
+                ref={ref => this.menuContainer = ref}
                 className="Select-menu-outer"
-                onClick={(e) => {
-                    e.stopPropagation()
-                }}
+                onClick={(e) => e.stopPropagation()}
                 style={{
                     ...this.props.menuContainerStyle,
                     zIndex: 9999,
@@ -66,12 +62,9 @@ class Select extends ReactSelect {
                     maxHeight: Math.min(maxHeight, 200),
                     overflow: 'hidden',
                     fontSize: `calc(1rem * ${this.props.scalingFactor})`
-                }}
-            >
+                }}>
                 <div
-                    ref={ref => {
-                        this.menu = ref
-                    }}
+                    ref={ref => this.menu = ref}
                     role="listbox"
                     tabIndex={-1}
                     className="Select-menu"
@@ -81,8 +74,7 @@ class Select extends ReactSelect {
                         maxHeight: Math.min(maxHeight, 200)
                     }}
                     onScroll={this.handleMenuScroll}
-                    onMouseDown={this.handleMouseDownOnMenu}
-                >
+                    onMouseDown={this.handleMouseDownOnMenu}>
                     {menu}
                 </div>
             </div>,
