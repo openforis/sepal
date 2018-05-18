@@ -165,6 +165,7 @@ class Dates extends React.Component {
                                 <Input type='number' input={yearsAfter} maxLength={2} min={0} max={99}/>
                                 <Msg id='process.mosaic.panel.dates.form.years.after'/>
                             </div>
+                            <ErrorMessage input={yearsBefore}/>
                         </div>
 
                         <Label className={styles.seasonLabel} tooltip='process.mosaic.panel.dates.form.season' right>
