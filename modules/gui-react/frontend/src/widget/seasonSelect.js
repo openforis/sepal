@@ -222,7 +222,6 @@ class Timeline extends React.Component {
     }
 
     componentDidMount() {
-        console.log('mounted')
         this.props.seasonSelect.setState((prevState) => {
             let {startDate, endDate, centerDate} = prevState
             startDate = SeasonSelect.constrainStartDate(startDate, centerDate)
