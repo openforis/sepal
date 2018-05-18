@@ -225,7 +225,7 @@ class Timeline extends React.Component {
         this.props.seasonSelect.setState((prevState) => {
             let {startDate, endDate, centerDate} = prevState
             startDate = SeasonSelect.constrainStartDate(startDate, centerDate)
-            endDate = SeasonSelect.constrainStartDate(endDate, centerDate)
+            endDate = SeasonSelect.constrainEndDate(endDate, centerDate)
             return {...prevState, startDate, endDate}
         })
     }
