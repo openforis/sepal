@@ -185,7 +185,9 @@ class DatePickerControl extends React.Component {
         const select = (e, item, value) => {
             const completeDate = !items
                 .filter((i) => i !== item)
-                .find((i) => !this.state[i])
+                .find((i) => {
+                    return !(this.state[i] >= 0)
+                })
             if (completeDate) { // If year, month, day specified in state
                 const date = moment().set(toMomentUnit(item), value)
                 items
