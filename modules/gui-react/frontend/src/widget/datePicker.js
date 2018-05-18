@@ -48,6 +48,7 @@ const toMomentUnit = (item) => {
 
 class DatePicker extends React.Component {
     state = {edit: false}
+    inputElement = React.createRef()
 
     editDate(edit) {
         this.setState((prevState) =>
@@ -62,6 +63,7 @@ class DatePicker extends React.Component {
                 <div className={styles.input}>
                     <Input
                         {...props}
+                        ref={this.inputElement}
                         input={input}
                         maxLength={10}
                         onFocus={() => this.editDate(true)}
@@ -69,7 +71,11 @@ class DatePicker extends React.Component {
                     />
                     <Icon name='calendar'
                           onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => this.editDate(!edit)}/>
+                          onClick={() => {
+                              if (!edit)
+                                  this.inputElement.current.focus()
+                              this.editDate(!edit)
+                          }}/>
                     {edit
                         ? <DatePickerControl
                             fromYear={fromYear}
@@ -112,29 +118,6 @@ class DatePickerControl extends React.Component {
 
         this.scroll$ = new Subject()
         this.autoUnsubscribe(this.autoScroll(this.scroll$))
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-        if (this.center) {
-            this.center = false
-            this.centerSelected()
-        }
-
-        const nextState = {...this.state}
-        const changed = items.find((item) => {
-            const prevValue = prevState[item]
-            const date = moment(this.props.input.value, DATE_FORMAT)
-            if (!date.isValid())
-                return false
-            const value = date.get(toMomentUnit(item))
-            nextState[item] = value
-            if (prevValue !== value) {
-                this.set(item, value)
-                return true
-            }
-        })
-        if (changed)
-            this.center = true
     }
 
     autoUnsubscribe(subscription) {
@@ -200,13 +183,18 @@ class DatePickerControl extends React.Component {
             : value
         const selected = this.state[item] === value
         const select = (e, item, value) => {
-            const date = moment(this.props.input.value, DATE_FORMAT)
-            if (date.isValid()) {
-                date.set(toMomentUnit(item), value)
+            const completeDate = !items
+                .filter((i) => i !== item)
+                .find((i) => !this.state[i])
+            if (completeDate) { // If year, month, day specified in state
+                const date = moment().set(toMomentUnit(item), value)
+                items
+                    .filter((i) => i !== item)
+                    .forEach((i) => date.set(toMomentUnit(i), this.state[i]))
                 this.props.input.set(date.format(DATE_FORMAT))
-                this.set(item, value)
-                this.centerItem(item, e.target)
             }
+            this.set(item, value)
+            this.centerItem(item, e.target)
         }
         return selected ? (
             <li
@@ -266,6 +254,29 @@ class DatePickerControl extends React.Component {
                 </div>
             </div>
         )
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (this.center) {
+            this.center = false
+            this.centerSelected()
+        }
+
+        const nextState = {...this.state}
+        const changed = items.find((item) => {
+            const prevValue = prevState[item]
+            const date = moment(this.props.input.value, DATE_FORMAT)
+            if (!date.isValid())
+                return false
+            const value = date.get(toMomentUnit(item))
+            nextState[item] = value
+            if (prevValue !== value) {
+                this.set(item, value)
+                return true
+            }
+        })
+        if (changed)
+            this.center = true
     }
 
     componentWillUnmount() {

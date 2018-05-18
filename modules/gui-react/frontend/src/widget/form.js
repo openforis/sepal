@@ -213,19 +213,19 @@ export class Constraints {
         return this
     }
 
-    match(regex, messageId) {
-        return this.predicate(value => regex.test(value), messageId)
-    }
+        match(regex, messageId) {
+            return this.predicate(value => regex.test(value), messageId)
+        }
 
-    notBlank(messageId) {
-        return this.predicate(value => !!value, messageId)
-    }
+        notBlank(messageId) {
+            return this.predicate(value => !!value, messageId)
+        }
 
-    email(messageId) {
-        return this.match(Constraints._EMAIL_REGEX, messageId)
-    }
+        email(messageId) {
+            return this.match(Constraints._EMAIL_REGEX, messageId)
+        }
 
-    date(format, messageId) {
+        date(format, messageId) {
         return this.predicate(value => moment(value, format).isValid(), messageId)
     }
 
@@ -245,11 +245,14 @@ export const ErrorMessage = ({input}) =>
     </div>
 
 export class Input extends React.Component {
+    element = React.createRef()
+
     render() {
         const {input, validate = 'onBlur', onChange, className, onBlur, ...props} = this.props
         return (
             <input
                 {...props}
+                ref={this.element}
                 name={input.name}
                 value={input.value}
                 onChange={(e) => {
@@ -268,6 +271,10 @@ export class Input extends React.Component {
                 className={[input.errorClass, className].join(' ')}
             />
         )
+    }
+
+    focus() {
+        this.element.current.focus()
     }
 }
 
