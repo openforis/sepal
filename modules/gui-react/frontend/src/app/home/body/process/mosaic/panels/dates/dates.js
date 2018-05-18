@@ -130,6 +130,7 @@ class Dates extends React.Component {
                             startDate={moment(seasonStart.value, DATE_FORMAT)}
                             endDate={moment(seasonEnd.value, DATE_FORMAT)}
                             centerDate={moment(targetDate.value, DATE_FORMAT)}
+                            disabled={targetDate.isInvalid()}
                             className={styles.seasonInput}
                             onChange={(start, end) => {
                                 seasonStart.set(start)

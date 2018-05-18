@@ -157,6 +157,7 @@ export function form(inputs, mapStateToProps) {
                         value: this.state.values[name],
                         error: this.state.errors[name],
                         errorClass: this.state.errors[name] ? styles.error : null,
+                        isInvalid: () => this.error(name),
                         invalid: (msg) => this.setState((prevState) => ({
                             ...prevState,
                             errors: {...prevState.errors, [name]: msg},

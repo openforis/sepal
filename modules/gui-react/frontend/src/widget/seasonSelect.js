@@ -1,5 +1,6 @@
 import Hammer from 'hammerjs'
 import moment from 'moment'
+import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
@@ -67,10 +68,11 @@ export default class SeasonSelect extends React.Component {
 
     render() {
         const {centerDate, centerDay, startDate, endDate, maxDay, width} = this.state
-        const {className} = this.props
+        const {className, disabled} = this.props
         return (
             <div className={className}>
                 <div className={styles.container} ref={this.element}>
+                    {disabled ? <div className={styles.disabled}/> : null}
                     <div className={styles.axisReference}>
                         <div className={styles.centerMarker}>
                             <div className={styles.label}>{this.formatDay(centerDay)}</div>
@@ -208,6 +210,15 @@ export default class SeasonSelect extends React.Component {
                     return {...prevState, startDate, endDate}
                 })
     }
+}
+
+SeasonSelect.propTypes = {
+    startDate: PropTypes.object.isRequired,
+    endDate: PropTypes.object.isRequired,
+    centerDate: PropTypes.object.isRequired,
+    disabled: PropTypes.any,
+    className: PropTypes.string,
+    onChange: PropTypes.func
 }
 
 const DateFlag = ({date, className, onChange}) =>
