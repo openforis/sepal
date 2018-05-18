@@ -4,6 +4,8 @@ import React from 'react'
 import {connect} from 'store'
 import {msg} from 'translate'
 import styles from './form.module.css'
+import Icon from './icon'
+import Tooltip from './tooltip'
 
 export function form(inputs, mapStateToProps) {
     return (WrappedComponent) => {
@@ -288,4 +290,54 @@ Input.propTypes = {
     tabIndex: PropTypes.number,
     autoComplete: PropTypes.string,
     className: PropTypes.string
+}
+
+export const Label = (
+    {
+        tooltip,
+        children,
+        left,
+        right,
+        top,
+        bottom,
+        topLeft,
+        topRight,
+        bottomLeft,
+        bottomRight,
+        className,
+        ...props,
+    }) => tooltip ? (
+        <Tooltip
+            msg={tooltip}
+            left={left}
+            right={right}
+            top={top}
+            bottom={bottom}
+            topLeft={topLeft}
+            topRight={topRight}
+            bottomLeft={bottomLeft}
+            bottomRight={bottomRight}
+            className={[className, styles.label].join(' ')}>
+            <span>
+                <label {...props}>
+                    {children}
+                    <Icon name='question-circle'/>
+                </label>
+            </span>
+        </Tooltip>
+    ) :
+    <label {...props}>{children}</label>
+
+
+Label.propTypes = {
+    tooltip: PropTypes.string,
+    left: PropTypes.bool,
+    right: PropTypes.bool,
+    top: PropTypes.bool,
+    bottom: PropTypes.bool,
+    topLeft: PropTypes.bool,
+    topRight: PropTypes.bool,
+    bottomLeft: PropTypes.bool,
+    bottomRight: PropTypes.bool,
+    children: PropTypes.object
 }

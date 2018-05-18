@@ -3,9 +3,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
 import DatePicker from 'widget/datePicker'
-import {Constraints, ErrorMessage, form} from 'widget/form'
+import {Constraints, ErrorMessage, form, Label} from 'widget/form'
 import SeasonSelect from 'widget/seasonSelect'
-import Tooltip from 'widget/tooltip'
 import {RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './dates.module.css'
@@ -135,11 +134,11 @@ class Dates extends React.Component {
                     title={msg('process.mosaic.panel.dates.title')}
                     className={styles.form}>
                     <div className={styles.fields}>
-                        <label className={styles.targetDateLabel}>
-                            <Tooltip msg='process.mosaic.panel.dates.form.targetDate' right>
-                                <div><Msg id='process.mosaic.panel.dates.form.targetDate.label'/></div>
-                            </Tooltip>
-                        </label>
+                        <Label className={styles.targetDateLabel}
+                               tooltip='process.mosaic.panel.dates.form.targetDate'
+                               right>
+                            <Msg id='process.mosaic.panel.dates.form.targetDate.label'/>
+                        </Label>
                         <div className={styles.targetDateInput}>
                             <DatePicker
                                 input={targetDate}
@@ -148,20 +147,19 @@ class Dates extends React.Component {
                             <ErrorMessage input={targetDate}/>
                         </div>
 
-                        <label className={styles.yearsLabel}>
-                            <Tooltip msg='process.mosaic.panel.dates.form.years' right>
-                                <div><Msg id='process.mosaic.panel.dates.form.years.label'/></div>
-                            </Tooltip>
-                        </label>
+                        <Label className={styles.yearsLabel} tooltip='process.mosaic.panel.dates.form.years' right>
+                            <Msg id='process.mosaic.panel.dates.form.years.label'/>
+                        </Label>
                         <div className={styles.yearsInput}>
-                            Some year selection widget will go here.
+                            Include
+                            <input type='number' style={{width: '2rem', display: 'inline-block'}}/> years before,
+                            <input type='number' style={{width: '2rem', display: 'inline-block'}}/> years after target
+                            year
                         </div>
 
-                        <label className={styles.seasonLabel}>
-                            <Tooltip msg='process.mosaic.panel.dates.form.season' right>
-                                <div><Msg id='process.mosaic.panel.dates.form.season.label'/></div>
-                            </Tooltip>
-                        </label>
+                        <Label className={styles.seasonLabel} tooltip='process.mosaic.panel.dates.form.season' right>
+                            <Msg id='process.mosaic.panel.dates.form.season.label'/>
+                        </Label>
                         <SeasonSelect
                             startDate={seasonStart}
                             endDate={seasonEnd}

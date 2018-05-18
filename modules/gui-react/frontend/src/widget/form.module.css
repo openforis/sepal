@@ -50,3 +50,8 @@ form .errorMessage {
     font-weight: 400;
 }
 
+.label i {
+    font-size: calc(.9rem * var(--scaling-factor));
+    margin-left: 0.5rem;
+    color: #B5B5B5;
+}
