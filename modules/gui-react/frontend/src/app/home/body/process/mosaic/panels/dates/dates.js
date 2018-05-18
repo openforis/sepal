@@ -11,11 +11,41 @@ import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
+const minStartDate = (targetDate) => moment(targetDate).subtract(1, 'year').add(1, 'days')
+const maxStartDate = (targetDate) => moment(targetDate)
+
+const minEndDate = (targetDate) => moment(targetDate).add(1, 'days')
+const maxEndDate = (targetDate) => moment(targetDate).add(1, 'years')
+
 const inputs = {
     targetDate: new Constraints()
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.targetDate.malformed'),
-    seasonStart: new Constraints(),
+
+    seasonStart: new Constraints()
+        .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
+        .predicate((date, {targetDate}) => moment(date).isSameOrAfter(minStartDate(targetDate)),
+            'process.mosaic.panel.dates.form.season.tooEarly',
+            ({targetDate}) => ({
+                min: minStartDate(targetDate).format(DATE_FORMAT)
+            }))
+        .predicate((date, {targetDate}) => moment(date).isSameOrBefore(maxStartDate(targetDate)),
+            'process.mosaic.panel.dates.form.season.tooLate',
+            ({targetDate}) => ({
+                max: maxStartDate(targetDate).format(DATE_FORMAT)
+            })),
+
     seasonEnd: new Constraints()
+        .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
+        .predicate((date, {targetDate}) => moment(date).isSameOrAfter(minEndDate(targetDate)),
+            'process.mosaic.panel.dates.form.season.tooEarly',
+            ({targetDate}) => ({
+                min: minEndDate(targetDate).format(DATE_FORMAT)
+            }))
+        .predicate((date, {targetDate}) => moment(date).isSameOrBefore(maxEndDate(targetDate)),
+            'process.mosaic.panel.dates.form.season.tooLate',
+            ({targetDate}) => ({
+                max: maxEndDate(targetDate).format(DATE_FORMAT)
+            }))
 }
 
 
@@ -110,8 +140,8 @@ class Dates extends React.Component {
                         <div className={styles.targetDateInput}>
                             <DatePicker
                                 input={targetDate}
-                                fromYear={1980}
-                                toYear={moment().year()}/>
+                                startDate={moment('1980-01-01', DATE_FORMAT)}
+                                endDate={moment()}/>
                             <ErrorMessage input={targetDate}/>
                         </div>
 

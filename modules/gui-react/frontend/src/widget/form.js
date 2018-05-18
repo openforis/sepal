@@ -1,9 +1,9 @@
+import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
 import {msg} from 'translate'
 import styles from './form.module.css'
-import moment from 'moment'
 
 export function form(inputs, mapStateToProps) {
     return (WrappedComponent) => {
@@ -209,25 +209,25 @@ export class Constraints {
         return this
     }
 
-    predicate(constraint, messageId) {
-        this._constraints.push([constraint, messageId])
+    predicate(constraint, messageId, messageArgs = () => ({})) {
+        this._constraints.push([constraint, messageId, messageArgs])
         return this
     }
 
-        match(regex, messageId) {
-            return this.predicate(value => regex.test(value), messageId)
-        }
+    match(regex, messageId, messageArgs) {
+        return this.predicate(value => regex.test(value), messageId, messageArgs)
+    }
 
-        notBlank(messageId) {
-            return this.predicate(value => !!value, messageId)
-        }
+    notBlank(messageId, messageArgs) {
+        return this.predicate(value => !!value, messageId, messageArgs)
+    }
 
-        email(messageId) {
-            return this.match(Constraints._EMAIL_REGEX, messageId)
-        }
+    email(messageId, messageArgs) {
+        return this.match(Constraints._EMAIL_REGEX, messageId, messageArgs)
+    }
 
-        date(format, messageId) {
-        return this.predicate(value => moment(value, format).isValid(), messageId)
+    date(format, messageId, messageArgs) {
+        return this.predicate(value => moment(value, format).isValid(), messageId, messageArgs)
     }
 
     check(name, values) {
@@ -236,7 +236,7 @@ export class Constraints {
             this._constraints.find((constraint) =>
                 constraint[0](values[name], values) ? null : constraint[1]
             )
-        return failingConstraint ? msg(failingConstraint[1]) : ''
+        return failingConstraint ? msg(failingConstraint[1], failingConstraint[2](values)) : ''
     }
 }
 

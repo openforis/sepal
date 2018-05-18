@@ -198,7 +198,10 @@
               "malformed": "Invalid date"
             },
             "season": {
-              "label": "Season"
+              "label": "Season",
+              "tooEarly": "Must not be before {min}",
+              "tooLate": "Must not be after {max}",
+              "malformed": "Invalid date"
             },
             "years": {
               "label": "Years"
@@ -256,7 +259,6 @@
     "seasonSelect": {
       "from": "From",
       "to": "To"
-
     }
   }
 }

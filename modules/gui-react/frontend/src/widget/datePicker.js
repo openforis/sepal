@@ -56,7 +56,7 @@ class DatePicker extends React.Component {
     }
 
     render() {
-        const {input, fromYear, toYear, className, ...props} = this.props
+        const {input, startDate, endDate, className, ...props} = this.props
         const {edit} = this.state
         return (
             <div className={className}>
@@ -78,8 +78,8 @@ class DatePicker extends React.Component {
                           }}/>
                     {edit
                         ? <DatePickerControl
-                            fromYear={fromYear}
-                            toYear={toYear}
+                            startDate={startDate}
+                            endDate={endDate}
                             input={input}/>
                         : null}
                 </div>
@@ -90,8 +90,8 @@ class DatePicker extends React.Component {
 
 DatePicker.propTypes = {
     date: PropTypes.object,
-    fromYear: PropTypes.number,
-    toYear: PropTypes.number
+    startDate: PropTypes.any,
+    endDate: PropTypes.any
 }
 
 class DatePickerControl extends React.Component {
@@ -227,15 +227,22 @@ class DatePickerControl extends React.Component {
     }
 
     renderPicker(item) {
-        const {fromYear, toYear} = this.props
-        const days = this.state.month ? daysInMonth(this.state.year, this.state.month) : 31
+        let {startDate, endDate} = this.props
+        startDate = moment(startDate)
+        endDate = moment(endDate)
+        const {year, month} = this.state
+        const days = month ? daysInMonth(year, month) : 31
         switch (item) {
             case YEAR:
-                return this.renderList(YEAR, range(fromYear, toYear))
+                return this.renderList(YEAR, range(startDate.year(), endDate.year()))
             case MONTH:
-                return this.renderList(MONTH, range(0, 11))
+                const minMonth = year === startDate.year() ? startDate.month() : 0
+                const maxMonth = year === endDate.year() ? endDate.month() : 11
+                return this.renderList(MONTH, range(minMonth, maxMonth))
             case DAY:
-                return this.renderList(DAY, range(1, days))
+                const minDay = year === startDate.year() &&  month === startDate.month() ? startDate.date() : 1
+                const maxDay = year === endDate.year() &&  month === endDate.month() ? endDate.date() : days
+                return this.renderList(DAY, range(minDay, maxDay))
             default:
         }
     }
@@ -292,8 +299,8 @@ class DatePickerControl extends React.Component {
 
 DatePickerControl.propTypes = {
     date: PropTypes.object,
-    fromYear: PropTypes.number,
-    toYear: PropTypes.number
+    startDate: PropTypes.any,
+    endDate: PropTypes.any
 }
 
 export default DatePicker
