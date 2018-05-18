@@ -24,21 +24,21 @@ class Panels extends React.Component {
         const {selectedPanel} = this.props
         switch (selectedPanel) {
         case 'auto':
-            return <Auto id={this.props.id} className={[styles.panel, styles.top].join(' ')}/>
+            return <Auto id={this.props.id} className={[styles.panel, styles.auto, styles.top].join(' ')}/>
         case 'preview':
-            return <Preview id={this.props.id} className={[styles.panel, styles.top].join(' ')}/>
+            return <Preview id={this.props.id} className={[styles.panel, styles.preview, styles.top].join(' ')}/>
         case 'retrieve':
-            return <Retrieve id={this.props.id} className={[styles.panel, styles.top].join(' ')}/>
+            return <Retrieve id={this.props.id} className={[styles.panel, styles.retrieve, styles.top].join(' ')}/>
         case 'areaOfInterest':
-            return <Aoi id={this.props.id} className={[styles.panel, styles.bottom].join(' ')}/>
+            return <Aoi id={this.props.id} className={[styles.panel, styles.aoi, styles.bottom].join(' ')}/>
         case 'dates':
             return <Dates id={this.props.id} className={[styles.panel, styles.dates, styles.bottom].join(' ')}/>
         case 'sources':
-            return <Sources id={this.props.id} className={[styles.panel, styles.bottom].join(' ')}/>
+            return <Sources id={this.props.id} className={[styles.panel, styles.sources, styles.bottom].join(' ')}/>
         case 'scenes':
-            return <Scenes id={this.props.id} className={[styles.panel, styles.bottom].join(' ')}/>
+            return <Scenes id={this.props.id} className={[styles.panel, styles.scenes, styles.bottom].join(' ')}/>
         case 'composite':
-            return <Composite id={this.props.id} className={[styles.panel, styles.bottom].join(' ')}/>
+            return <Composite id={this.props.id} className={[styles.panel, styles.composite, styles.bottom].join(' ')}/>
         default:
             return null
         }

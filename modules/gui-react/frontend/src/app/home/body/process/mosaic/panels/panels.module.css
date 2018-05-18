@@ -8,14 +8,17 @@
     pointer-events: all;
     right: 4rem;
     z-index: 4;
-    min-width: 20rem;
+    width: calc(100% - 5rem);
     --scaling-factor: .8 !important;
     overflow: hidden;
     flex-shrink: 0;
 }
 
+.aoi {
+    max-width: 20rem;
+}
+
 .dates {
-    width: 90%;
     max-width: 100rem;
 }
 
