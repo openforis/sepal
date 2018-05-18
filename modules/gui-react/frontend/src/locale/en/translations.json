@@ -200,7 +200,9 @@
             },
             "years": {
               "label": "Additional years",
-              "tooltip": "Include data from additional years, from the same time of year."
+              "tooltip": "Include data from additional years, from the same time of year.",
+              "before": "years before.",
+              "after": "years after."
             },
             "season": {
               "label": "Season",

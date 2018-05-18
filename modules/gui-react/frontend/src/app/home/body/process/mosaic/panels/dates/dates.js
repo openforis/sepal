@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
 import DatePicker from 'widget/datePicker'
-import {Constraints, ErrorMessage, form, Label} from 'widget/form'
+import {Constraints, ErrorMessage, form, Input, Label} from 'widget/form'
 import SeasonSelect from 'widget/seasonSelect'
 import {RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
@@ -45,7 +45,11 @@ const inputs = {
             'process.mosaic.panel.dates.form.season.tooLate',
             ({targetDate}) => ({
                 max: maxEndDate(targetDate).format(DATE_FORMAT)
-            }))
+            })),
+
+    yearsBefore: new Constraints(),
+
+    yearsAfter: new Constraints()
 }
 
 
@@ -55,7 +59,9 @@ const mapStateToProps = (state, ownProps) => {
         values: recipe('dates') || {
             targetDate: moment().format(DATE_FORMAT),
             seasonStart: moment().month(0).date(1).format(DATE_FORMAT),
-            seasonEnd: moment().add(1, 'years').month(0).date(1).format(DATE_FORMAT)
+            seasonEnd: moment().add(1, 'years').month(0).date(1).format(DATE_FORMAT),
+            yearsBefore: 0,
+            yearsAfter: 0
         }
     }
 }
@@ -123,7 +129,7 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {id, form, inputs: {targetDate, seasonStart, seasonEnd, years}, className} = this.props
+        const {id, form, inputs: {targetDate, seasonStart, seasonEnd, yearsBefore, yearsAfter}, className} = this.props
         return (
             <form className={className}>
                 <PanelForm
@@ -151,10 +157,14 @@ class Dates extends React.Component {
                             <Msg id='process.mosaic.panel.dates.form.years.label'/>
                         </Label>
                         <div className={styles.yearsInput}>
-                            Include
-                            <input type='number' style={{width: '2rem', display: 'inline-block'}}/> years before,
-                            <input type='number' style={{width: '2rem', display: 'inline-block'}}/> years after target
-                            year
+                            <div>
+                                <Input type='number' input={yearsBefore} maxLength={2} min={0} max={99}/>
+                                <Msg id='process.mosaic.panel.dates.form.years.before'/>
+                            </div>
+                            <div>
+                                <Input type='number' input={yearsAfter} maxLength={2} min={0} max={99}/>
+                                <Msg id='process.mosaic.panel.dates.form.years.after'/>
+                            </div>
                         </div>
 
                         <Label className={styles.seasonLabel} tooltip='process.mosaic.panel.dates.form.season' right>

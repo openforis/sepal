@@ -5,12 +5,9 @@
     display: grid;
     grid-template-columns: auto 1fr;
     grid-template-rows: 1fr 1fr auto;
-    grid-template-areas:
-            'targetDateLabel targetDateInput'
-            'yearsLabel      yearsInput'
-            'seasonLabel     seasonDatePickers'
-            'seasonTimeline     seasonTimeline';
+    grid-template-areas: 'targetDateLabel targetDateInput' 'yearsLabel      yearsInput' 'seasonLabel     seasonDatePickers' 'seasonTimeline     seasonTimeline';
     grid-column-gap: 3rem;
+    grid-row-gap: 1rem;
 }
 
 .targetDateLabel {
@@ -28,6 +25,16 @@
 
 .yearsInput {
     grid-area: yearsInput;
+}
+
+.yearsInput input {
+    width: 3rem;
+    display: inline-block;
+    text-align: center;
+}
+
+.yearsInput input[type=number]::-webkit-inner-spin-button {
+    opacity: 1;
 }
 
 .seasonLabel {
