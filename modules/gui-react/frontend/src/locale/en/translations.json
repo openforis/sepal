@@ -251,5 +251,12 @@
   "button": {
     "apply": "Apply",
     "revert": "Revert"
+  },
+  "widget": {
+    "seasonSelect": {
+      "from": "From",
+      "to": "To"
+
+    }
   }
 }

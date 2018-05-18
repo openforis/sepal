@@ -125,17 +125,12 @@ class Dates extends React.Component {
                         <label className={styles.seasonLabel}>
                             <Msg id='process.mosaic.panel.dates.form.season.label'/>
                         </label>
-                        {/* TODO: Switch to two date pickers for narrow screens */}
                         <SeasonSelect
-                            startDate={moment(seasonStart.value, DATE_FORMAT)}
-                            endDate={moment(seasonEnd.value, DATE_FORMAT)}
-                            centerDate={moment(targetDate.value, DATE_FORMAT)}
+                            startDate={seasonStart}
+                            endDate={seasonEnd}
+                            centerDate={targetDate}
                             disabled={targetDate.isInvalid()}
-                            className={styles.seasonInput}
-                            onChange={(start, end) => {
-                                seasonStart.set(start)
-                                seasonEnd.set(end)
-                            }}/>
+                            className={styles.seasonInput}/>
                     </div>
                 </PanelForm>
             </form>

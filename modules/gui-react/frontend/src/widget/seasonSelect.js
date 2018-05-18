@@ -2,9 +2,13 @@ import Hammer from 'hammerjs'
 import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Media from 'react-media'
 import ReactResizeDetector from 'react-resize-detector'
 import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
 import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
+import {Msg} from 'translate'
+import DatePicker from 'widget/datePicker'
+import {ErrorMessage} from 'widget/form'
 import styles from './seasonSelect.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -21,14 +25,14 @@ export default class SeasonSelect extends React.Component {
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        const defaultIfInvalid = (date, defaultDate) => {
-            date = moment(date)
+        const defaultIfInvalid = (input, defaultDate) => {
+            const date = moment(input.value)
             return date.isValid() ? date : defaultDate()
         }
         const calcMinDate = (centerDate) => moment(centerDate).subtract(1, 'years').add(1, 'day')
-        const calcMaxDate = (centerDate) => moment(nextProps.centerDate).add(1, 'years')
+        const calcMaxDate = (centerDate) => moment(centerDate).add(1, 'years')
 
-        let centerDate = defaultIfInvalid(nextProps.centerDate, () => moment())
+        const centerDate = defaultIfInvalid(nextProps.centerDate, () => moment())
         let startDate = defaultIfInvalid(nextProps.startDate, () => calcMinDate(centerDate))
         let endDate = defaultIfInvalid(nextProps.endDate, () => calcMaxDate(centerDate))
 
@@ -49,7 +53,7 @@ export default class SeasonSelect extends React.Component {
         let endCenterYearDiff = endDate.year() - prevCenterDate.year()
         endDate.set('year', centerDate.year() + endCenterYearDiff)
         endDate = SeasonSelect.constrainEndDate(endDate, centerDate)
-        return {...prevState, centerDate, centerDay, minDate, maxDay, startDate, endDate}
+        return {...prevState, centerDate, centerDay, minDate, maxDay, maxDate, startDate, endDate}
     }
 
     static constrainStartDate(startDate, centerDate) {
@@ -67,6 +71,40 @@ export default class SeasonSelect extends React.Component {
     }
 
     render() {
+        return (
+            <Media query='(min-width: 768px)'>
+                {(matches) => matches ? this.renderTimeline() : this.renderDatePickers()}
+            </Media>
+        )
+    }
+
+    renderDatePickers() {
+        const {centerDate, minDate, maxDate} = this.state
+        const {startDate, endDate, disabled, className} = this.props
+        return (
+            <div className={className}>
+                <div>
+                    <Msg id='widget.seasonSelect.from'/>
+                    <DatePicker
+                        input={startDate}
+                        fromYear={minDate.year()}
+                        toYear={centerDate.year()}/>
+                    <ErrorMessage input={startDate}/>
+                </div>
+
+                <div>
+                    <Msg id='widget.seasonSelect.to'/>
+                    <DatePicker
+                        input={endDate}
+                        fromYear={moment(centerDate).add(1, 'days').year()}
+                        toYear={maxDate.year()}/>
+                    <ErrorMessage input={endDate}/>
+                </div>
+            </div>
+        )
+    }
+
+    renderTimeline() {
         const {centerDate, centerDay, startDate, endDate, maxDay, width} = this.state
         const {className, disabled} = this.props
         return (
@@ -164,10 +202,11 @@ export default class SeasonSelect extends React.Component {
     }
 
     notifyChange() {
-        this.props.onChange && this.props.onChange(
-            this.state.startDate.format(DATE_FORMAT),
-            this.state.endDate.format(DATE_FORMAT)
-        )
+        const startDate = this.state.startDate.format(DATE_FORMAT)
+        const endDate = this.state.endDate.format(DATE_FORMAT)
+        this.props.startDate.set(startDate)
+        this.props.endDate.set(endDate)
+        this.props.onChange && this.props.onChange(startDate, endDate)
     }
 
     startIncrementDays(change) {

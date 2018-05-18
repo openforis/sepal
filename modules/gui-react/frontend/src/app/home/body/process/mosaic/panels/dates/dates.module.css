@@ -8,8 +8,8 @@
     grid-template-areas:
             'targetDateLabel targetDateInput'
             'yearsLabel      yearsInput'
-            'seasonLabel     .'
-            'seasonInput     seasonInput';
+            'seasonLabel     seasonDatePickers'
+            'seasonTimeline     seasonTimeline';
     grid-column-gap: 3rem;
 }
 
@@ -35,8 +35,13 @@
 }
 
 .seasonInput {
-    grid-area: seasonInput;
-    padding-right: 5rem;
-    padding-left: 5rem;
+    grid-area: seasonDatePickers;
 }
 
+@media (min-width: 768px) {
+    .seasonInput {
+        grid-area: seasonTimeline;
+        padding-right: 5rem;
+        padding-left: 5rem;
+    }
+}
