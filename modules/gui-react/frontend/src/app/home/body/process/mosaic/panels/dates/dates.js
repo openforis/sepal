@@ -47,9 +47,13 @@ const inputs = {
                 max: maxEndDate(targetDate).format(DATE_FORMAT)
             })),
 
-    yearsBefore: new Constraints(),
+    yearsBefore: new Constraints()
+        .int('process.mosaic.panel.dates.form.years.positiveInteger')
+        .min(0, 'process.mosaic.panel.dates.form.years.positiveInteger'),
 
     yearsAfter: new Constraints()
+        .int('process.mosaic.panel.dates.form.years.positiveInteger')
+        .min(0, 'process.mosaic.panel.dates.form.years.positiveInteger')
 }
 
 
@@ -159,13 +163,15 @@ class Dates extends React.Component {
                         <div className={styles.yearsInput}>
                             <div>
                                 <Input type='number' input={yearsBefore} maxLength={2} min={0} max={99}/>
+                                &nbsp;
                                 <Msg id='process.mosaic.panel.dates.form.years.before'/>
                             </div>
                             <div>
                                 <Input type='number' input={yearsAfter} maxLength={2} min={0} max={99}/>
+                                &nbsp;
                                 <Msg id='process.mosaic.panel.dates.form.years.after'/>
                             </div>
-                            <ErrorMessage input={yearsBefore}/>
+                            <ErrorMessage input={[yearsBefore, yearsAfter]}/>
                         </div>
 
                         <Label className={styles.seasonLabel} tooltip='process.mosaic.panel.dates.form.season' right>
