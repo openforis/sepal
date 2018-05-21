@@ -242,6 +242,14 @@ export class Constraints {
         return this.predicate(value => moment(value, format).isValid(), messageId, messageArgs)
     }
 
+    int(messageId, messageArgs) {
+        return this.predicate(value => String(value).match(/^\d+$/), messageId, messageArgs)
+    }
+
+    min(minValue, messageId, messageArgs) {
+        return this.predicate(value => value >= minValue, messageId, messageArgs)
+    }
+
     check(name, values) {
         const skip = this._skip.find((when) => when(values[name], values))
         const failingConstraint = !skip &&
@@ -252,10 +260,13 @@ export class Constraints {
     }
 }
 
-export const ErrorMessage = ({input}) =>
-    <div className={styles.errorMessage}>
+export const ErrorMessage = ({input}) => {
+    if (Array.isArray(input))
+        input = input.find((i) => i.error)
+    return <div className={styles.errorMessage}>
         {input && input.error}
     </div>
+}
 
 export class Input extends React.Component {
     element = React.createRef()
