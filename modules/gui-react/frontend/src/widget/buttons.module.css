@@ -1,0 +1,42 @@
+.buttons {
+    --default-color: rgba(255, 255, 255, .6);
+    --default-background-color: hsla(37, 27%, 39%, .4);
+    --hover-color: rgba(255, 255, 255, .8);
+    --hover-background-color: hsla(37, 27%, 39%, .2);
+    --selected-background-color: rgb(110, 74, 6);
+    --selected-color: white;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.buttons li {
+    display: inline-block;
+    margin-right: .5rem;
+    margin-bottom: 1rem;
+}
+
+.buttons button {
+    background-color: var(--default-background-color);
+    color: var(--default-color);
+    border: none;
+    border-radius: .5rem;
+    line-height: 2rem;
+    text-transform: uppercase;
+    padding: 0 1rem;
+    cursor: pointer;
+}
+
+.buttons button:hover {
+    background-color: var(--hover-background-color);
+    color: var(--hover-color);
+}
+
+.buttons button + button {
+    margin-left: 1rem;
+}
+
+.buttons button.selected {
+    background-color: var(--selected-background-color);
+    color: var(--selected-color);
+}

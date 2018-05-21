@@ -216,7 +216,43 @@
         "sources": {
           "title": "Sources",
           "button": "SRC",
-          "tooltip": "Select sources"
+          "tooltip": "Select sources",
+          "form": {
+            "source": {
+              "landsat": "Landsat",
+              "sentinel2": "Sentinel 2"
+            },
+            "dataSet": {
+              "landsat8": {
+                "label": "L8",
+                "tooltip": "Landsat 8"
+              },
+              "landsat7": {
+                "label": "L7",
+                "tooltip": "Landsat 7"
+              },
+              "landsat45": {
+                "label": "L4-5",
+                "tooltip": "Landsat 4-5"
+              },
+              "landsat8T2": {
+                "label": "L8 T2",
+                "tooltip": "Landsat 8 Tier 2"
+              },
+              "landsat7T2": {
+                "label": "L7 T2",
+                "tooltip": "Landsat 7 Tier 2"
+              },
+              "landsat5T2": {
+                "label": "L5 T2",
+                "tooltip": "Landsat 5 Tier 2"
+              },
+              "sentinel2": {
+                "label": "S2",
+                "tooltip": "Sentinel 2"
+              }
+            }
+          }
         },
         "scenes": {
           "title": "Scenes",

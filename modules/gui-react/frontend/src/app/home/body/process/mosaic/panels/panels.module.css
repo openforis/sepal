@@ -22,6 +22,10 @@
     max-width: 100rem;
 }
 
+.sources {
+    max-width: 30rem;
+}
+
 .top {
     top: .5rem;
 }

@@ -140,9 +140,10 @@ class Dates extends React.Component {
                     title={msg('process.mosaic.panel.dates.title')}
                     className={styles.form}>
                     <div className={styles.fields}>
-                        <Label className={styles.targetDateLabel}
-                               tooltip='process.mosaic.panel.dates.form.targetDate'
-                               right>
+                        <Label 
+                            className={styles.targetDateLabel}
+                            tooltip='process.mosaic.panel.dates.form.targetDate'
+                            right>
                             <Msg id='process.mosaic.panel.dates.form.targetDate.label'/>
                         </Label>
                         <div className={styles.targetDateInput}>

@@ -12,16 +12,16 @@ const PanelContent = ({icon, onBack, title, className, children}) => {
             <Icon name='arrow-left'/>
         </a> :
         <span className={styles.icon}>
-                        <Icon name={icon}/>
-                    </span>
+            <Icon name={icon}/>
+        </span>
 
     return (
         <div className={className}>
             <div className={styles.header}>
                 {header}
                 <span className={styles.title}>
-                {title}
-            </span>
+                    {title}
+                </span>
             </div>
             <div className={styles.body}>
                 {children}
@@ -34,7 +34,7 @@ PanelContent.propTypes = {
     icon: PropTypes.string,
     onBack: PropTypes.func,
     title: PropTypes.string.isRequired,
-    className: PropTypes.string.isRequired,
+    className: PropTypes.string,
     children: PropTypes.any.isRequired
 }
 

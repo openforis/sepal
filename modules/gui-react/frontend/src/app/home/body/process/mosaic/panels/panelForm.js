@@ -30,7 +30,7 @@ PanelForm.propTypes = {
     icon: PropTypes.string,
     onBack: PropTypes.func,
     title: PropTypes.string.isRequired,
-    className: PropTypes.string.isRequired,
+    className: PropTypes.string,
     children: PropTypes.any.isRequired
 }
 

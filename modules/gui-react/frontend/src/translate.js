@@ -16,4 +16,8 @@ Msg.propTypes = {
     id: PropTypes.string.isRequired
 }
 
-export const msg = (id, values = {}, defaultMessage = id) => intl.formatMessage({id, defaultMessage}, values)
+export const msg = (id, values = {}, defaultMessage = id) =>
+    intl.formatMessage({
+        id: Array.isArray(id) ? id.join('.') : id, 
+        defaultMessage
+    }, values)

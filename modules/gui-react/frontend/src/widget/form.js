@@ -220,6 +220,16 @@ export class Constraints {
         return this.predicate(value => regex.test(value), messageId, messageArgs)
     }
 
+    notEmpty(messageId, messageArgs) {
+                    return this.predicate(
+            value => Array.isArray(value) && value.lenght > 0
+                || value === Object(value) && Object.keys(value).length > 0
+                || !!value, 
+            messageId, 
+            messageArgs
+        )
+    }
+
     notBlank(messageId, messageArgs) {
         return this.predicate(value => !!value, messageId, messageArgs)
     }
