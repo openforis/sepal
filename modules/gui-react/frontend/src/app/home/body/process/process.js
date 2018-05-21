@@ -2,10 +2,10 @@ import actionBuilder from 'action-builder'
 import flexy from 'flexy.module.css'
 import guid from 'guid'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
+import Tooltip from 'widget/tooltip'
 import CreateOrLoadRecipe from './createOrLoadRecipe'
 import Mosaic from './mosaic/mosaic'
 import styles from './process.module.css'
@@ -104,7 +104,10 @@ export default connect(mapStateToProps)(Process)
 class Tab extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {editing: false}
+        this.state = {
+            editing: false,
+            title: null
+        }
         this.titleInput = React.createRef()
     }
 
@@ -124,8 +127,9 @@ class Tab extends React.Component {
     }
 
     onTitleChange(e) {
-        console.log('onTitleChange')
-        e.target.value = e.target.value.replace(/[^\w-.]/g, '_')
+        const value = e.target.value.replace(/[^\w-.]/g, '_')
+        e.target.value = value
+        this.setState((prevState) => ({...prevState, title: value}))
     }
 
     saveTitle() {
@@ -134,26 +138,32 @@ class Tab extends React.Component {
     }
 
     render() {
-        const {id, title, placeholder, selected} = this.props
-        const titleComponent = selected
-            ? <input
-                ref={this.titleInput}
-                className={styles.title}
-                defaultValue={title}
-                placeholder={placeholder}
-                autoFocus={!title}
-                onKeyPress={this.onTitleKeyPress.bind(this)}
-                onChange={this.onTitleChange.bind(this)}
-                onBlur={this.saveTitle.bind(this)}
-            />
-            :
-            <span className={[styles.title, title ? null : styles.placeholder].join(' ')}>{title || placeholder}</span>
+        let {id, title, placeholder, selected} = this.props
+        title = this.state.title || title
         return (
             <Tooltip rawMsg={title || placeholder} bottom delay={1}>
                 <div
                     className={[styles.tab, selected && styles.selected].join(' ')}
                     onClick={() => selectTab(id)}>
-                    {titleComponent}
+                    <span className={[
+                        styles.title,
+                        title ? null : styles.placeholder,
+                        selected ? styles.selected : null
+                    ].join(' ')}>
+                        <span>{title || placeholder}</span>
+                        {selected
+                            ? <input
+                                ref={this.titleInput}
+                                className={styles.title}
+                                defaultValue={title}
+                                placeholder={placeholder}
+                                autoFocus={!title}
+                                onKeyPress={this.onTitleKeyPress.bind(this)}
+                                onChange={this.onTitleChange.bind(this)}
+                                onBlur={this.saveTitle.bind(this)}/>
+                            : null
+                        }
+                        </span>
                     <button
                         className={styles.close}
                         onClick={(e) => {

@@ -6,8 +6,6 @@
 .tabBar {
     display: flex;
     flex-wrap: wrap;
-    flex-shrink: 0;
-    width: 100%;
     background-color: #1c1c1c;
     padding: 1rem;
     border: 1px solid hsla(0, 0%, 100%, .05);
@@ -36,10 +34,8 @@
 
 .tab {
     display: flex;
-    flex-basis: 7rem;
-    flex-grow: 1;
-    flex-shrink: 1;
     max-width: 20rem;
+    min-width: 8rem;
     position: relative;
     background: #1c1c1c;
     border-bottom: 3px solid hsla(0, 0%, 100%, .5);
@@ -50,6 +46,11 @@
     overflow: hidden;
     cursor: pointer;
 }
+
+.tab * {
+    width: 100%;
+}
+
 
 .tab.selected {
     background-color: #323232;
@@ -98,7 +99,24 @@
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-weight: 600;
     color: #e8e8e8;
+    padding-right: 2.1rem;
     padding-left: 1rem;
+}
+
+.title.selected {
+    position: relative;
+}
+
+.title.selected > span {
+    opacity: 0;
+}
+
+.title.selected input {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
 }
 
 span.title.placeholder {
@@ -123,6 +141,10 @@ span.title.placeholder {
 
 .tab.selected .title:before {
     background: linear-gradient(to right, transparent, #323232 100%);
+}
+
+.tab input {
+    width: 100%;
 }
 
 .tab.selected input.title  {
