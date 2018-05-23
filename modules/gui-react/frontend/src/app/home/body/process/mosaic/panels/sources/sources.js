@@ -1,12 +1,13 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {imageSourceById, imageSources} from 'sources'
+import {dataSetById, imageSourceById, sources} from 'sources'
 import {msg, Msg} from 'translate'
 import Buttons from 'widget/buttons'
 import {Constraints, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './sources.module.css'
+import updateSource from './updateSource'
 
 const inputs = {
     source: new Constraints()
@@ -18,6 +19,7 @@ const inputs = {
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
+        dates: recipe('dates'),
         values: recipe('sources')
     }
 }
@@ -26,23 +28,31 @@ class Sources extends React.Component {
     constructor(props) {
         super(props)
         this.recipe = RecipeActions(props.id)
+        const {dateRange, isSourceInDateRange, isDataSetInDateRange} = RecipeState(props.id)
+        this.dateRange = dateRange
+        this.isSourceInDateRange = isSourceInDateRange
+        this.isDataSetInDateRange = isDataSetInDateRange
     }
 
     lookupDataSetNames(sourceValue) {
-        return sourceValue ? imageSourceById[sourceValue].dataSets : []
+        return sourceValue ? imageSourceById[sourceValue].dataSets : null
     }
 
     sourceChanged(sourceValue) {
         const {inputs: {dataSets}} = this.props
         const dataSetNames = this.lookupDataSetNames(sourceValue)
-        const dataSetsValue = dataSetNames.length === 1 ? dataSetNames[0] : null
+        const dataSetsValue = dataSetNames.length === 1 ? [dataSetNames[0]] : null
         dataSets.set(dataSetsValue)
     }
 
     renderSources() {
         const {inputs: {source}} = this.props
-        const options = imageSources.map((value) =>
-            ({value, label: msg(['process.mosaic.panel.sources.form.source.options', value])})
+        const options = sources.map((value) =>
+            ({
+                value,
+                label: msg(['process.mosaic.panel.sources.form.source.options', value]),
+                disabled: !this.isSourceInDateRange(value)
+            })
         )
         return (
             <div>
@@ -66,6 +76,7 @@ class Sources extends React.Component {
                 value,
                 label: msg(['process.mosaic.panel.sources.form.dataSets.options', value, 'label']),
                 tooltip: ['process.mosaic.panel.sources.form.dataSets.options', value],
+                disabled: !this.isDataSetInDateRange(value)
             })
         )
         const content = options.length > 1
@@ -99,6 +110,22 @@ class Sources extends React.Component {
                 </form>
             </div>
         )
+    }
+
+    componentDidUpdate() {
+        const {inputs: {source, dataSets}} = this.props
+        const [selectedSource, selectedDataSets] = updateSource(source.value, dataSets.value, ...this.dateRange())
+        if (selectedSource !== source.value)
+            source.set(selectedSource)
+
+        const arrayEquals = (a1, a2) => {
+            if (a1 === a2) return true
+            if ((a1 && a1.length || 0) != (a2 && a2.length) || 0) return false
+            if (a1.find((e, i) => e !== a2[i])) return false
+            return true
+        }
+        if (!arrayEquals(selectedDataSets, dataSets.value))
+            dataSets.set(selectedDataSets)
     }
 }
 

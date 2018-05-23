@@ -1,6 +1,10 @@
 import actionBuilder from 'action-builder'
+import moment from 'moment'
+import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
 import {select} from 'store'
 import {map} from '../../../map/map'
+
+const DATE_FORMAT = 'YYYY-MM-DD'
 
 const recipePath = (id, path) => {
     const tabIndex = select('process.tabs')
@@ -13,9 +17,27 @@ const recipePath = (id, path) => {
 }
 
 export const RecipeState = (id) => {
-    return (path) => {
+    const get = (path) => {
         return select(recipePath(id, path))
     }
+    get.dateRange = () => {
+        const dates = get('dates')
+        const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
+        const seasonEnd = moment(dates.seasonEnd, DATE_FORMAT)
+        return [
+            seasonStart.subtract(dates.yearsBefore, 'years'),
+            seasonEnd.add(dates.yearsAfter, 'years')
+        ]
+    }
+    get.isSourceInDateRange = (sourceId) => {
+        const [from, to] = get.dateRange()
+        return isSourceInDateRange(sourceId, from, to)
+    }
+    get.isDataSetInDateRange = (dataSetId) => {
+        const [from, to] = get.dateRange()
+        return isDataSetInDateRange(dataSetId, from, to)
+    }
+    return get
 }
 
 export const RecipeActions = (id) => {
