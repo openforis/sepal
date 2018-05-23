@@ -29,27 +29,31 @@
 }
 
 .buttons button span {
-    margin-left: .2rem;
+    margin: 0 .2rem;
 }
 
 button.apply {
     --bg-hue: 222;
     --bg-sat: 44%;
+    color: var(--button-default-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 37%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 39%);
 }
 
 button.apply:focus {
+    color: var(--button-default-focus-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 34%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 36%);
 }
 
 button.apply:hover {
+    color: var(--button-default-hover-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 32%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 34%);
 }
 
 button.apply:active {
+    color: var(--button-default-active-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 31%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 33%);
 }
@@ -57,21 +61,25 @@ button.apply:active {
 button.revert {
     --bg-hue: 0;
     --bg-sat: 38%;
+    color: var(--button-default-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
 }
 
 button.revert:focus {
+    color: var(--button-default-focus-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 30%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 32%);
 }
 
 button.revert:hover {
+    color: var(--button-default-hover-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 28%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 30%);
 }
 
 button.revert:active {
+    color: var(--button-default-active-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 27%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 29%);
 }

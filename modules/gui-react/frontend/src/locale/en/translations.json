@@ -303,7 +303,10 @@
   },
   "button": {
     "apply": "Apply",
-    "revert": "Revert"
+    "revert": "Revert",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done"
   },
   "widget": {
     "seasonSelect": {

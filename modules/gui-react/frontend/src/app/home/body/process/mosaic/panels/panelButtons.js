@@ -95,7 +95,8 @@ class PanelButtons extends React.Component {
                 }}
                 onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before going back
                 className={styles.back}>
-                <span>Back</span>
+                <Icon name={'chevron-left'}/>
+                <span><Msg id='button.back'/></span>
             </button>
         const next =
             <button
@@ -105,7 +106,8 @@ class PanelButtons extends React.Component {
                 }}
                 disabled={form.hasInvalid()}
                 className={styles.apply}>
-                <span>Next</span>
+                <span><Msg id='button.next'/></span>
+                <Icon name={'chevron-right'}/>
             </button>
 
         const done =
@@ -116,7 +118,8 @@ class PanelButtons extends React.Component {
                 }}
                 disabled={form.hasInvalid()}
                 className={styles.apply}>
-                <span>Done</span>
+                <Icon name={'check'}/>
+                <span><Msg id='button.done'/></span>
             </button>
 
         return (
