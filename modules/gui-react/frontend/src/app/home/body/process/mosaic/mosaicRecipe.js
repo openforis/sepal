@@ -29,6 +29,9 @@ export const RecipeActions = (id) => {
             .build()
 
     return {
+        setInitialized() {
+            return set('SET_INITIALIZED', 'initialized', true)
+        },
         setLabelsShown(shown) {
             map.showLabelsLayer(shown)
             return set('SET_LABELS_SHOWN', 'ui.labelsShown', shown, {shown})

@@ -1,4 +1,4 @@
-import ConfirmationButtons from './confirmationButtons'
+import PanelButtons from './panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import PanelContent from './panelContent'
@@ -13,7 +13,7 @@ const PanelForm = ({recipeId, form, onApply, icon, onBack, title, className, chi
             className={className}>
             {children}
             <div className={styles.footer}>
-                <ConfirmationButtons
+                <PanelButtons
                     recipeId={recipeId}
                     form={form}
                     onApply={onApply}

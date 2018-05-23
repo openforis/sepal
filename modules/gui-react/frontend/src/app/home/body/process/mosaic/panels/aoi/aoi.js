@@ -3,7 +3,7 @@ import React from 'react'
 import {AnimateReplacement} from 'widget/animate'
 import {Constraints, form} from 'widget/form'
 import {RecipeState} from '../../mosaicRecipe'
-import ConfirmationButtons from '../confirmationButtons'
+import PanelButtons from '../panelButtons'
 import styles from './aoi.module.css'
 import CountrySection from './countrySection'
 import FusionTableSection from './fusionTableSection'
@@ -56,7 +56,7 @@ class Aoi extends React.Component {
                             </AnimateReplacement>
                         </div>
                         <div className={styles.buttons}>
-                            <ConfirmationButtons
+                            <PanelButtons
                                 recipeId={id}
                                 form={form}
                                 onApply={(recipe, aoi) => recipe.setAoi(aoi).dispatch()}/>

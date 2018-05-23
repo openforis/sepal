@@ -5,6 +5,7 @@ import {Msg} from 'translate'
 import Icon from 'widget/icon'
 import Tooltip from 'widget/tooltip'
 import {RecipeActions, RecipeState} from '../mosaicRecipe'
+import {PANELS} from './panelConstants'
 import styles from './toolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
@@ -27,16 +28,16 @@ class Toolbar extends React.Component {
             <div className={className}>
                 <div className={styles.toolbar}>
                     <div className={styles.actionButtons}>
-                        <Panel panel={'auto'} icon={'magic'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
-                        <Panel panel={'preview'} icon={'eye'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
-                        <Panel panel={'retrieve'} icon={'cloud-download-alt'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={PANELS.AUTO} icon={'magic'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={PANELS.PREVIEW} icon={'eye'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={PANELS.RETRIEVE} icon={'cloud-download-alt'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                     </div>
                     <div className={styles.configurationButtons}>
-                        <Panel panel={'areaOfInterest'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
-                        <Panel panel={'dates'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
-                        <Panel panel={'sources'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
-                        <Panel panel={'scenes'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
-                        <Panel panel={'composite'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={PANELS.AREA_OF_INTEREST} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={PANELS.DATES} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={PANELS.SOURCES} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={PANELS.SCENES} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={PANELS.COMPOSITE} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                     </div>
                 </div>
             </div>

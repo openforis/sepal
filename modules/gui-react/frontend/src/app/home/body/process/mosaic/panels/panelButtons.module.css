@@ -1,9 +1,12 @@
 .buttons {
     display: flex;
-    flex-direction: row-reverse;
-    justify-content: flex-start;
-    opacity: 0;
+    flex-direction: row;
+    justify-content: flex-end;
     transition: opacity 200ms ease-in-out;
+}
+
+.formButtons {
+    opacity: 0;
 }
 
 .dirty {
@@ -71,6 +74,30 @@ button.revert:hover {
 button.revert:active {
     background-color: hsl(var(--bg-hue), var(--bg-sat), 27%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 29%);
+}
+
+button.back {
+    color: var(--button-default-color);
+    background-color: var(--button-default-background-color);
+    border: var(--button-default-border);
+}
+
+button.back:focus {
+    color: var(--button-default-focus-color);
+    background-color: var(--button-default-focus-background-color);
+    border: var(--button-default-focus-border);
+}
+
+button.back:hover {
+    color: var(--button-default-hover-color);
+    background-color: var(--button-default-hover-background-color);
+    border: var(--button-default-hover-border);
+}
+
+button.back:active {
+    color: var(--button-default-active-color);
+    background-color: var(--button-default-active-background-color);
+    border: var(--button-default-active-border);
 }
 
 .buttons button:disabled {
