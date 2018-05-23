@@ -38,7 +38,8 @@ export default class Buttons extends React.Component {
 
     }
 
-    renderButton(value, label, tooltip) {
+    renderButton(value, label, tooltip, disabled) {
+        // console.log('disabled', label, disabled)
         const button =
             <li key={value}>
                 <button
@@ -46,6 +47,7 @@ export default class Buttons extends React.Component {
                         this.isSelected(value) ? styles.selected : null,
                         this.props.multiple ? styles.toggle : null
                     ].join(' ')}
+                    disabled={disabled}
                     onClick={(e) => {
                         e.preventDefault()
                         this.select(value)
@@ -53,7 +55,7 @@ export default class Buttons extends React.Component {
                     {label}
                 </button>
             </li>
-        return tooltip
+        return tooltip && !disabled
             ? <Tooltip key={value} msg={tooltip} below>{button}</Tooltip>
             : button
     }
@@ -63,7 +65,8 @@ export default class Buttons extends React.Component {
         return (
             <div className={className}>
                 <ul className={styles.buttons}>
-                    {options.map(({value, label, tooltip}) => this.renderButton(value, label, tooltip))}
+                    {options.map(({value, label, tooltip, disabled}) =>
+                        this.renderButton(value, label, tooltip, disabled))}
                 </ul>
             </div>
         )

@@ -72,3 +72,10 @@
     background-color: var(--button-selected-active-background-color);
     border: var(--button-selected-active-border);
 }
+
+.buttons button:disabled, .buttons button.selected:disabled {
+    color: #6b6b6b;
+    background-color: var(--button-default-background-color);
+    border: var(--button-default-border);
+    cursor: default;
+}
