@@ -69,7 +69,7 @@ const createMap = (mapElement) => {
     instance = new google.maps.Map(mapElement, {
         zoom: 3,
         minZoom: 3,
-        maxZoom: 15,
+        maxZoom: 17,
         center: new google.maps.LatLng(16.7794913, 9.6771556),
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         zoomControl: false,
@@ -209,8 +209,15 @@ const defaultStyle = [
 
 const labelsLayerStyle = [
     {featureType: 'all', stylers: [{visibility: 'off'}]},
-    {featureType: 'road', elementType: 'geometry', stylers: [{visibility: 'on'}]},
-    {elementType: 'labels.text.fill', stylers: [{visibility: 'on'}]},
+    {featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{color: '#decca6'}, {visibility: 'on'}]},
+    {featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{color: '#d59563'}, {visibility: 'on'}]},
+    {featureType: 'road', elementType: 'geometry', stylers: [{color: '#38414e'}, {visibility: 'on'}]},
+    {featureType: 'road', elementType: 'geometry.stroke', stylers: [{color: '#212a37'}, {visibility: 'on'}]},
+    {featureType: 'road', elementType: 'labels.text.fill', stylers: [{color: '#9ca5b3'}, {visibility: 'on'}]},
+    {featureType: 'road.highway', elementType: 'geometry', stylers: [{color: '#746855'}, {visibility: 'on'}]},
+    {featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{color: '#1f2835'}, {visibility: 'on'}]}
+
+
 ]
 
 const mapStateToProps = () => ({
