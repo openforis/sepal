@@ -153,7 +153,7 @@ class Dates extends React.Component {
                         <div className={styles.targetDateInput}>
                             <DatePicker
                                 input={targetDate}
-                                startDate={moment('1980-01-01', DATE_FORMAT)}
+                                startDate={moment('1982-08-22', DATE_FORMAT)}
                                 endDate={moment()}/>
                             <ErrorMessage input={targetDate}/>
                         </div>
