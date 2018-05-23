@@ -74,7 +74,6 @@
     left: calc(-1rem - var(--selected-panel-border-width));
     right: calc(-1 * var(--selected-panel-border-width));
     background-color: var(--button-selected-background-color);
-    border-radius: 0;
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-left: none;
     border-radius: .25rem;
