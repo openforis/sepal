@@ -8,6 +8,7 @@
     --button-selected-color: rgba(255, 255, 255, 1);
     /* --selected-background-color: hsla(37, 27%, 39%, .1); */
     --button-selected-background-color: hsla(36, 8%, 15%, .95);
+
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -55,6 +56,8 @@
     background-color: var(--button-selected-background-color);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
+    /* border: 2px solid red; */
+    border-left: none;
 }
 
 .toolbar .selected:hover:not(:disabled) {
@@ -65,12 +68,16 @@
 .toolbar .selected::before {
     content: "";
     position: absolute;
-    z-index: 0;
-    top: 0;
-    bottom: 0;
-    left: -1rem;
-    right: var(--button-size);
+    z-index: -1;
+    top: calc(-1 * var(--selected-panel-border-width));
+    bottom: calc(-1 * var(--selected-panel-border-width));
+    left: calc(-1rem - var(--selected-panel-border-width));
+    right: calc(-1 * var(--selected-panel-border-width));
     background-color: var(--button-selected-background-color);
     border-radius: 0;
-    border: none;
+    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
+    border-left: none;
+    border-radius: .25rem;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }

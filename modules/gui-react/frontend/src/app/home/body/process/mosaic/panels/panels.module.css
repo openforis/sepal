@@ -7,11 +7,12 @@
     border-radius: .5rem;
     pointer-events: all;
     right: 4rem;
-    z-index: 4;
+    z-index: 1;
     width: calc(100% - 5rem);
     --scaling-factor: .8 !important;
     overflow: hidden;
     flex-shrink: 0;
+    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
 }
 
 .aoi {

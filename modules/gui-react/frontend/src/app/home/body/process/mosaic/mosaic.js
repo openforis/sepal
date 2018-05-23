@@ -6,7 +6,7 @@ import PropTypes from 'prop-types'
 import Panels from './panels/panels'
 
 const Mosaic = (props) =>
-    <div>
+    <div className={styles.mosaic}>
         <MapToolbar id={props.id} className={[styles.toolbar, styles.map].join(' ')}/>
         <Toolbar id={props.id} className={[styles.toolbar, styles.mosaic].join(' ')}/>
         <Panels id={props.id} className={styles.panel}/>
