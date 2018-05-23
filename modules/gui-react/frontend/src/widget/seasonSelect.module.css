@@ -57,7 +57,7 @@
     width: 1px;
     bottom: -0.5rem;
     height: 4rem;
-    background-color: #81311F;
+    background-color: var(--button-selected-background-color);
     z-index: 1;
 }
 
@@ -67,9 +67,9 @@
     width: 5rem;
     left: calc(-2.5rem);
     text-align: center;
-    border: 1px solid #81311F;
+    background-color: var(--button-selected-background-color);
+    border: var(--button-selected-border);
     border-radius: 1rem;
-    background-color: rgba(255, 0, 0, .2);
 }
 
 .label {
@@ -81,7 +81,7 @@
     position: absolute;
     bottom: -1px;
     height: 3px;
-    background-color: #81311F;
+    background-color: var(--button-selected-background-color);
 }
 
 .handle {

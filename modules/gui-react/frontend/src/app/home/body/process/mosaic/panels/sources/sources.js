@@ -1,18 +1,18 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Msg, msg} from 'translate'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import styles from './sources.module.css'
-import PanelForm from '../panelForm'
-import {Constraints, ErrorMessage, form, Input, Label} from 'widget/form'
-import {imageSources, imageSourceById} from 'sources'
+import {imageSourceById, imageSources} from 'sources'
+import {msg, Msg} from 'translate'
 import Buttons from 'widget/buttons'
+import {Constraints, form} from 'widget/form'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import PanelForm from '../panelForm'
+import styles from './sources.module.css'
 
 const inputs = {
     source: new Constraints()
-        .notEmpty('process.mosaic.panel.sources.form.source.required'),
+        .notEmpty('process.mosaic.panel.sources.form.required'),
     dataSets: new Constraints()
-        .notEmpty('process.mosaic.panel.sources.form.dataSets.required')
+        .notEmpty('process.mosaic.panel.sources.form.required')
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -28,39 +28,54 @@ class Sources extends React.Component {
         this.recipe = RecipeActions(props.id)
     }
 
+    lookupDataSetNames(sourceValue) {
+        return sourceValue ? imageSourceById[sourceValue].dataSets : []
+    }
+
+    sourceChanged(sourceValue) {
+        const {inputs: {dataSets}} = this.props
+        const dataSetNames = this.lookupDataSetNames(sourceValue)
+        const dataSetsValue = dataSetNames.length === 1 ? dataSetNames[0] : null
+        dataSets.set(dataSetsValue)
+    }
+
     renderSources() {
         const {inputs: {source}} = this.props
-        const options = imageSources.map((value) => 
-            ({value, label: msg(['process.mosaic.panel.sources.form.source', value])})
+        const options = imageSources.map((value) =>
+            ({value, label: msg(['process.mosaic.panel.sources.form.source.options', value])})
         )
         return (
-            <Buttons
-                className={styles.sources}
-                input={source}
-                options={options}/>
+            <div>
+                <label><Msg id='process.mosaic.panel.sources.form.source.label'/></label>
+                <Buttons
+                    className={styles.sources}
+                    input={source}
+                    options={options}
+                    onChange={(sourceValue) => this.sourceChanged(sourceValue)}/>
+            </div>
         )
     }
 
     renderDataSets() {
-        const render = (content) => <div className={styles.dataSets}>{content}</div>
-
         const {inputs: {source, dataSets}} = this.props
         if (!source.value)
-            return render()
-        const dataSetNames = imageSourceById[source.value].dataSets
-        if (!dataSetNames)
-            return render()
-        const options = dataSetNames.map((value) => 
+            return
+        const dataSetNames = this.lookupDataSetNames(source.value)
+        const options = (dataSetNames || []).map((value) =>
             ({
-                value, 
-                label: msg(['process.mosaic.panel.sources.form.dataSet', value, 'label']),
-                // tooltip: ['process.mosaic.panel.sources.form.dataSet', value],
+                value,
+                label: msg(['process.mosaic.panel.sources.form.dataSets.options', value, 'label']),
+                tooltip: ['process.mosaic.panel.sources.form.dataSets.options', value],
             })
         )
-        return render(
-            dataSetNames.length > 1
-                ? <Buttons className={styles.dataSets} input={dataSets} options={options} multiple/>
-                : null
+        const content = options.length > 1
+            ? <Buttons className={styles.dataSets} input={dataSets} options={options} multiple/>
+            : <div className={styles.oneDataSet}><Msg id='process.mosaic.panel.sources.form.dataSets.oneDataSet'/></div>
+        return (
+            <div>
+                <label><Msg id='process.mosaic.panel.sources.form.dataSets.label'/></label>
+                {content}
+            </div>
         )
     }
 
@@ -76,16 +91,10 @@ class Sources extends React.Component {
                         icon='cog'
                         title={msg('process.mosaic.panel.sources.title')}
                         className={styles.form}>
-                    
-                        {this.renderSources()}
-                        {this.renderDataSets()}
-
-                        {/* <Label
-                        tooltip='process.mosaic.panel.dates.form.targetDate'
-                        right>
-                        <Msg id='process.mosaic.panel.dates.form.targetDate.label'/>
-                    </Label> */}
-
+                        <div className={styles.form}>
+                            {this.renderSources()}
+                            {this.renderDataSets()}
+                        </div>
                     </PanelForm>
                 </form>
             </div>

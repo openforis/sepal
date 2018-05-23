@@ -1,13 +1,13 @@
 .toolbar {
     --button-size: 2.5rem;
     --icon-size: 1.1rem;
-    --default-color: rgba(255, 255, 255, .6);
-    --default-background-color: hsla(37, 27%, 39%, .4);
-    --hover-color: rgba(255, 255, 255, .8);
-    --hover-background-color: hsla(37, 27%, 39%, .2);
-    --selected-color: rgba(255, 255, 255, 1);
+    --button-default-color: rgba(255, 255, 255, .6);
+    --button-default-background-color: hsla(37, 27%, 39%, .4);
+    --button-default-hover-color: rgba(255, 255, 255, .8);
+    --button-default-hover-background-color: hsla(37, 27%, 39%, .2);
+    --button-selected-color: rgba(255, 255, 255, 1);
     /* --selected-background-color: hsla(37, 27%, 39%, .1); */
-    --selected-background-color: hsla(36, 8%, 15%, .95);
+    --button-selected-background-color: hsla(36, 8%, 15%, .95);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -33,8 +33,8 @@
     border-radius: .25rem;
     margin-bottom: .5rem;
     padding: 0;
-    color: var(--default-color);
-    background-color: var(--default-background-color);
+    color: var(--button-default-color);
+    background-color: var(--button-default-background-color);
 }
 
 .toolbar button svg {
@@ -45,21 +45,21 @@
 }
 
 .toolbar button:hover:not(:disabled) {
-    color: var(--hover-color);
-    background-color: var(--hover-background-color);
+    color: var(--button-default-hover-color);
+    background-color: var(--button-default-hover-background-color);
     cursor: pointer;
 }
 
 .toolbar .selected {
-    color: var(--selected-color);
-    background-color: var(--selected-background-color);
+    color: var(--button-selected-color);
+    background-color: var(--button-selected-background-color);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
 }
 
 .toolbar .selected:hover:not(:disabled) {
-    color: var(--selected-color);
-    background-color: var(--selected-background-color);
+    color: var(--button-selected-color);
+    background-color: var(--button-selected-background-color);
 }
 
 .toolbar .selected::before {
@@ -70,7 +70,7 @@
     bottom: 0;
     left: -1rem;
     right: var(--button-size);
-    background-color: var(--selected-background-color);
+    background-color: var(--button-selected-background-color);
     border-radius: 0;
     border: none;
 }

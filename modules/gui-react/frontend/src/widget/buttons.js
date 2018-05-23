@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './buttons.module.css'
 import Tooltip from 'widget/tooltip'
+import styles from './buttons.module.css'
 
 export default class Buttons extends React.Component {
     // const options = [{value: 'foo', label: 'Foo'}, ...]
@@ -16,28 +16,36 @@ export default class Buttons extends React.Component {
     selectSingle(value) {
         const {input} = this.props
         input.set(value)
+        return value
     }
 
     toggleMultiple(value) {
         const {input} = this.props
-        const currentValue = Array.isArray(input.value) ? input.value : []
-        input.set(
-            this.isSelected(value)
-                ? currentValue.filter((v) => v !== value)
-                : [...currentValue, value]
-        )
+        const prevValue = Array.isArray(input.value) ? input.value : []
+        const nextValue = this.isSelected(value)
+            ? prevValue.filter((v) => v !== value)
+            : [...prevValue, value]
+        input.set(nextValue)
+        return nextValue
     }
 
     select(value) {
-        const {multiple} = this.props
-        multiple ? this.toggleMultiple(value) : this.selectSingle(value)
+        const {input, multiple, onChange} = this.props
+        const prevValue = input.value
+        const nextValue = multiple ? this.toggleMultiple(value) : this.selectSingle(value)
+        if (prevValue !== nextValue)
+            onChange && onChange(nextValue)
+
     }
 
     renderButton(value, label, tooltip) {
         const button =
             <li key={value}>
                 <button
-                    className={this.isSelected(value) ? styles.selected : null}
+                    className={[
+                        this.isSelected(value) ? styles.selected : null,
+                        this.props.multiple ? styles.toggle : null
+                    ].join(' ')}
                     onClick={(e) => {
                         e.preventDefault()
                         this.select(value)
@@ -46,7 +54,7 @@ export default class Buttons extends React.Component {
                 </button>
             </li>
         return tooltip
-            ? <Tooltip msg={tooltip} below>{button}</Tooltip>
+            ? <Tooltip key={value} msg={tooltip} below>{button}</Tooltip>
             : button
     }
 
@@ -66,5 +74,6 @@ Buttons.propTypes = {
     className: PropTypes.string,
     input: PropTypes.object,
     options: PropTypes.array,
-    multiple: PropTypes.any
+    multiple: PropTypes.any,
+    onChange: PropTypes.any
 }

@@ -80,8 +80,10 @@ const createMap = (mapElement) => {
         fullscreenControl: false,
         backgroundColor: '#131314',
         gestureHandling: 'greedy',
-        styles: defaultStyle
+        // styles: defaultStyle
     })
+    instance.mapTypes.set('styled_map', new google.maps.StyledMapType(defaultStyle, {name: 'sepalMap'}))
+    instance.setMapTypeId('styled_map')
     instance.addListener('zoom_changed', () =>
         actionBuilder('SET_MAP_ZOOM')
             .set('map.zoom', instance.getZoom())

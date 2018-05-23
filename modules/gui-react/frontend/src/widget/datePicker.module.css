@@ -77,17 +77,17 @@
 
 .date,
 .picker ul li.selected {
-    background-color: rgba(255, 0, 0, .2);
-    /* color: white; */
+    border: var(--button-selected-hover-border);
+    background-color: var(--button-selected-hover-background-color);
 }
 
 .date:hover,
 .picker ul li.highlighted {
     color: white;
-    background-color: rgba(255, 0, 0, .5);
+    border: var(--button-selected-border);
+    background-color: var(--button-selected-background-color);
 }
 
 .picker ul li:hover {
     color: white;
-    /* background-color: rgb(255, 0, 0, .5); */
 }

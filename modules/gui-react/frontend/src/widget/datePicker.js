@@ -240,8 +240,8 @@ class DatePickerControl extends React.Component {
                 const maxMonth = year === endDate.year() ? endDate.month() : 11
                 return this.renderList(MONTH, range(minMonth, maxMonth))
             case DAY:
-                const minDay = year === startDate.year() &&  month === startDate.month() ? startDate.date() : 1
-                const maxDay = year === endDate.year() &&  month === endDate.month() ? endDate.date() : days
+                const minDay = year === startDate.year() && month === startDate.month() ? startDate.date() : 1
+                const maxDay = year === endDate.year() && month === endDate.month() ? endDate.date() : days
                 return this.renderList(DAY, range(minDay, maxDay))
             default:
         }
@@ -283,6 +283,7 @@ class DatePickerControl extends React.Component {
                 this.set(item, value)
                 return true
             }
+            return false
         })
         if (changed)
             this.center = true

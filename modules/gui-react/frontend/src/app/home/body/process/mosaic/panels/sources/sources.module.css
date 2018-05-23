@@ -2,9 +2,16 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    /* min-height: 30rem; */
 }
 
-.dataSets {
-    min-height: 10rem;
+.form {
+    min-height: 14rem;
+}
+
+.sources {
+    margin-bottom: 2rem;
+}
+
+.oneDataSet {
+    font-style: italic;
 }

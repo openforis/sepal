@@ -191,7 +191,7 @@ class DatePickers extends React.Component {
 
     renderDatePickers() {
         const {centerDate, minDate, maxDate} = this.state
-        const {startDate, endDate, disabled, className} = this.props
+        const {startDate, endDate, className} = this.props
         return (
             <div className={className}>
                 <div>

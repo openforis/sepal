@@ -25,7 +25,7 @@
 }
 
 .newTab:hover {
-    background-color: #323232;
+    background-color: #2B2B29;
 }
 
 .newTab:active {
@@ -35,13 +35,15 @@
 .tab {
     display: flex;
     max-width: 20rem;
-    min-width: 8rem;
+    min-width: 9rem;
     position: relative;
-    background: #1c1c1c;
-    border-bottom: 3px solid hsla(0, 0%, 100%, .5);
+    background-color: #2B2B29;
+    border-bottom: 3px solid hsla(0, 0%, 100%, .15);
+    border-top-right-radius: 0.5rem;
+    border-top-left-radius: 0.5rem;
     height: 2.5rem;
     white-space: nowrap;
-    margin-right: .5rem;
+    margin-right: .3rem;
     line-height: 2.5rem;
     overflow: hidden;
     cursor: pointer;
@@ -53,12 +55,12 @@
 
 
 .tab.selected {
-    background-color: #323232;
-    border-bottom: 3px solid #b8a280;
+    background-color: #1c1c1c;
+    border-bottom: 3px solid hsl(var(--selected-hue), var(--selected-sat), 40%);
 }
 
 .tab:hover {
-    background-color: #323232;
+    background-color: #1c1c1c;
 }
 
 /* Prevent overflowing title from covering close button */
@@ -75,16 +77,16 @@
 .close {
     position: absolute;
     right: 0;
-    color: #afaeae;
+    color: #767575;
     border: 0;
     border-radius: 50%;
-    min-width: 1.5rem;
     width: 1.5rem;
     height: 1.5rem;
     align-self: center;
-    font-size: 1rem;
-    line-height: 1;
+    font-size: 1.4rem;
+    line-height: 1.4rem;
     padding: 0;
+    padding-bottom: 0.1rem;
     margin-right: .2rem;
     z-index: 2;
     cursor: pointer;
@@ -92,13 +94,14 @@
 
 .close:hover {
     background: #990003;
+    color: #ccc;
 }
 
 .title {
     flex: 1;
     font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-weight: 600;
-    color: #e8e8e8;
+    color: #8a949c;
     padding-right: 2.1rem;
     padding-left: 1rem;
 }
@@ -117,11 +120,15 @@
     right: 0;
     bottom: 0;
     left: 0;
+    color: #e8e8e8;
 }
 
 span.title.placeholder {
     font-style: italic;
-    color: #6c757d;
+}
+
+.title.selected input::placeholder {
+    color: #8a949c;
 }
 
 /*Fade-out overflow */
@@ -132,15 +139,15 @@ span.title.placeholder {
     position: absolute;
     right: 1.7rem;
     top: 0;
-    background: linear-gradient(to right, transparent, #1C1C1C 100%);
+    background: linear-gradient(to right, transparent, #2B2B29 100%);
 }
 
 .tab:hover .title:before {
-    background: linear-gradient(to right, transparent, #323232 100%);
+    background: linear-gradient(to right, transparent, #1c1c1c 100%);
 }
 
 .tab.selected .title:before {
-    background: linear-gradient(to right, transparent, #323232 100%);
+    background: linear-gradient(to right, transparent, #1c1c1c 100%);
 }
 
 .tab input {

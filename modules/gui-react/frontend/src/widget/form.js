@@ -57,7 +57,7 @@ export function form(inputs, mapStateToProps) {
             }
 
             set(name, value) {
-                if (value != null && value !== this.state.values[name])
+                if (value !== this.state.values[name])
                     this.setState((prevState) => {
                         const state = Object.assign({}, prevState)
                         state.values[name] = value
@@ -221,11 +221,15 @@ export class Constraints {
     }
 
     notEmpty(messageId, messageArgs) {
-                    return this.predicate(
-            value => Array.isArray(value) && value.lenght > 0
-                || value === Object(value) && Object.keys(value).length > 0
-                || !!value, 
-            messageId, 
+        return this.predicate(value => {
+                if (Array.isArray(value))
+                    return value.length > 0
+                else if (value === Object(value))
+                    return Object.keys(value).length > 0
+                else
+                    return !!value
+            },
+            messageId,
             messageArgs
         )
     }

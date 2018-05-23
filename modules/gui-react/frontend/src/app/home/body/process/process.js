@@ -170,7 +170,8 @@ class Tab extends React.Component {
                             e.stopPropagation()
                             closeTab(id)
                         }}>
-                        <Icon name='times'/>
+                        &times;
+                        {/*<Icon name='times'/>*/}
                     </button>
                 </div>
             </Tooltip>

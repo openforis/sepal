@@ -25,7 +25,7 @@ const Tooltip =
      }) => !disabled ? (
         <span className={className}>
                 <RcTooltip
-                    overlay={msg ? message(msg + '.tooltip') : rawMsg}
+                    overlay={msg ? message([msg, 'tooltip']) : rawMsg}
                     placement={
                         left ? 'left' :
                             right ? 'right' :
@@ -45,7 +45,7 @@ const Tooltip =
     ) : <div>{children}</div>
 
 Tooltip.propTypes = {
-    msg: PropTypes.string,
+    msg: PropTypes.any,
     rawMsg: PropTypes.string,
     left: PropTypes.bool,
     right: PropTypes.bool,

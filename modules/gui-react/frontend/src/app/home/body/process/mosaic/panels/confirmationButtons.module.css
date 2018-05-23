@@ -13,7 +13,7 @@
 .buttons button {
     color: #ccc;
     border: 0;
-    border-radius: 1rem;
+    border-radius: .3rem;
     font-size: .9rem;
     transition: all 100ms ease-in-out;
     margin-left: 0.5rem;
@@ -30,38 +30,54 @@
 }
 
 button.apply {
-    background-color: rgb(38, 71, 171);
-    border: 1px solid rgb(32, 54, 115);
+    --bg-hue: 222;
+    --bg-sat: 44%;
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 37%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 39%);
+}
+
+button.apply:focus {
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 34%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 36%);
 }
 
 button.apply:hover {
-    background-color: rgb(39, 78, 198);
-    border: 1px solid rgb(44, 72, 161);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 32%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 34%);
 }
 
 button.apply:active {
-    background-color: rgb(39, 83, 217);
-    border: 1px solid rgb(52, 80, 186);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 31%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 33%);
 }
 
 button.revert {
-    background-color: rgb(173, 64, 58);
-    border: 1px solid rgb(164, 64, 57);
+    --bg-hue: 0;
+    --bg-sat: 38%;
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
+}
+
+button.revert:focus {
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 30%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 32%);
 }
 
 button.revert:hover {
-    background-color: rgb(185, 64, 58);
-    border: 1px solid rgb(177, 78, 73);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 28%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 30%);
 }
 
 button.revert:active {
-    background-color: rgb(195, 68, 62);
-    border: 1px solid rgb(203, 64, 58);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 27%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 29%);
 }
 
 .buttons button:disabled {
     color: #6b6b6b;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    /*background-color: rgba(255, 255, 255, 0.1);*/
+    /*border: 1px solid rgba(255, 255, 255, 0.15);*/
+    background-color: var(--button-default-background-color);
+    border: var(--button-default-border);
     cursor: default;
 }

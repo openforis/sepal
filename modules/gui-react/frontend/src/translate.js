@@ -1,6 +1,6 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import {FormattedMessage} from 'react-intl'
-import PropTypes from 'prop-types'
 
 let intl
 export const initIntl = (intlInstance) => intl = intlInstance
@@ -16,8 +16,15 @@ Msg.propTypes = {
     id: PropTypes.string.isRequired
 }
 
-export const msg = (id, values = {}, defaultMessage = id) =>
-    intl.formatMessage({
-        id: Array.isArray(id) ? id.join('.') : id, 
-        defaultMessage
+export const msg = (id, values = {}, defaultMessage) => {
+    const toString = (id) => {
+        if (!Array.isArray(id))
+            return id
+        return id.map((element) => toString(element)).join('.')
+    }
+    const idString = toString(id)
+    return intl.formatMessage({
+        id: String(idString),
+        defaultMessage: defaultMessage || idString
     }, values)
+}
