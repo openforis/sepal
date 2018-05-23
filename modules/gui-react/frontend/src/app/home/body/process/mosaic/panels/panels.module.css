@@ -4,6 +4,7 @@
     --padding: var(--padding-top-bottom) var(--padding-right-left);
     position: absolute;
     background-color: hsla(36, 8%, 15%, .95);
+    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
     pointer-events: all;
     right: 4rem;
@@ -12,7 +13,6 @@
     --scaling-factor: .8 !important;
     overflow: hidden;
     flex-shrink: 0;
-    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
 }
 
 .aoi {
