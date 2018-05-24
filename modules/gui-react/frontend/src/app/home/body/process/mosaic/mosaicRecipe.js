@@ -84,6 +84,9 @@ export const RecipeActions = (id) => {
         },
         setFusionTableRows(rows) {
             return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
+        },
+        setAdvancedDateForm(enabled) {
+            return set('SET_ADVANCED_DATE_FORM', 'ui.advancedDateForm', enabled, {enabled})
         }
     }
 }

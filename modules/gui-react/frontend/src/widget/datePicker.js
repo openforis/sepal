@@ -17,8 +17,6 @@ const YEAR = 'year'
 const MONTH = 'month'
 const DAY = 'day'
 
-const DATE_FORMAT = 'YYYY-MM-DD'
-
 const items = [YEAR, MONTH, DAY]
 
 const currentScrollOffset = (element) => {
@@ -56,16 +54,17 @@ class DatePicker extends React.Component {
     }
 
     render() {
-        const {input, startDate, endDate, className, ...props} = this.props
+        const {input, startDate, endDate, resolution = DAY, className, ...props} = this.props
         const {edit} = this.state
         return (
             <div className={className}>
-                <div className={styles.input}>
+                <div className={[styles.input, styles[resolution]].join(' ')}>
                     <Input
                         {...props}
                         ref={this.inputElement}
                         input={input}
                         maxLength={10}
+                        autoComplete='off'
                         onFocus={() => this.editDate(true)}
                         onBlur={() => this.editDate(false)}
                     />
@@ -80,24 +79,48 @@ class DatePicker extends React.Component {
                         ? <DatePickerControl
                             startDate={startDate}
                             endDate={endDate}
-                            input={input}/>
+                            input={input}
+                            resolution={resolution}/>
                         : null}
                 </div>
             </div>
         )
+    }
+
+    componentDidUpdate(nextProps, prevState) {
+        const {input, resolution = DAY} = this.props
+        const prevDateString = input.value
+        if (!prevDateString)
+            return
+
+        const date = moment(prevDateString, getDateFormat(this.getResolution(prevDateString)), true)
+        if (!date.isValid())
+            return
+        const nextDateString = date.format(getDateFormat(resolution))
+        if (prevDateString !== nextDateString)
+            input.set(nextDateString)
+    }
+
+    getResolution(dateString) {
+        switch(dateString.length) {
+            case 4: return YEAR
+            case 7: return MONTH
+            default: return DAY
+        }
     }
 }
 
 DatePicker.propTypes = {
     date: PropTypes.object,
     startDate: PropTypes.any,
-    endDate: PropTypes.any
+    endDate: PropTypes.any,
+    resolution: PropTypes.string
 }
 
 class DatePickerControl extends React.Component {
     constructor(props) {
         super(props)
-        const date = moment(props.input.value, DATE_FORMAT)
+        const date = this.parseDate(props.input.value)
         this.state = {
             year: date.year(),
             month: date.month(),
@@ -177,23 +200,33 @@ class DatePickerControl extends React.Component {
         })
     }
 
+    parseDate(date) {
+        return moment(date, ['YYYY-MM-DD', 'YYYY-MM', 'YYYY'], true)
+    }
+
+    formatDate(date) {
+        return date.format(getDateFormat(this.props.resolution))
+    }
+
     renderItem(item, value) {
         const displayValue = item === MONTH
             ? moment().month(value).format('MMM')
             : value
         const selected = this.state[item] === value
         const select = (e, item, value) => {
-            const completeDate = !items
+            const {input, resolution} = this.props
+            const itemsForResolution = items.slice(0, items.indexOf(resolution) + 1)
+            const completeDate = !itemsForResolution
                 .filter((i) => i !== item)
                 .find((i) => {
                     return !(this.state[i] >= 0)
                 })
             if (completeDate) { // If year, month, day specified in state
                 const date = moment().set(toMomentUnit(item), value)
-                items
+                itemsForResolution
                     .filter((i) => i !== item)
                     .forEach((i) => date.set(toMomentUnit(i), this.state[i]))
-                this.props.input.set(date.format(DATE_FORMAT))
+                input.set(this.formatDate(date))
             }
             this.set(item, value)
             this.centerItem(item, e.target)
@@ -220,7 +253,8 @@ class DatePickerControl extends React.Component {
             <ul
                 key={item}
                 onMouseOver={() => this.scroll$.next(item)}
-                onScroll={() => this.scroll$.next(item)}>
+                onScroll={() => this.scroll$.next(item)}
+                className={styles[item]}>
                 {range.map((value) => this.renderItem(item, value))}
             </ul>
         )
@@ -228,8 +262,8 @@ class DatePickerControl extends React.Component {
 
     renderPicker(item) {
         let {startDate, endDate} = this.props
-        startDate = moment(startDate)
-        endDate = moment(endDate)
+        startDate = this.parseDate(startDate)
+        endDate = this.parseDate(endDate)
         const {year, month} = this.state
         const days = month ? daysInMonth(year, month) : 31
         switch (item) {
@@ -274,7 +308,7 @@ class DatePickerControl extends React.Component {
         const nextState = {...this.state}
         const changed = items.find((item) => {
             const prevValue = prevState[item]
-            const date = moment(this.props.input.value, DATE_FORMAT)
+            const date = this.parseDate(this.props.input.value)
             if (!date.isValid())
                 return false
             const value = date.get(toMomentUnit(item))
@@ -298,10 +332,24 @@ class DatePickerControl extends React.Component {
     }
 }
 
+const getDateFormat = (resolution) => {
+    switch (resolution) {
+        case YEAR:
+            return 'YYYY'
+        case MONTH:
+            return 'YYYY-MM'
+        case DAY:
+            return 'YYYY-MM-DD'
+        default:
+            throw new Error('Invalid resolution: ' + resolution)
+    }
+}
+
 DatePickerControl.propTypes = {
     date: PropTypes.object,
     startDate: PropTypes.any,
-    endDate: PropTypes.any
+    endDate: PropTypes.any,
+    resolution: PropTypes.string
 }
 
 export default DatePicker

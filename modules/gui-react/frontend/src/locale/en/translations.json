@@ -193,6 +193,11 @@
           "button": "DAT",
           "tooltip": "Specify dates",
           "form": {
+            "targetYear": {
+              "label": "Year",
+              "tooltip": "The year which pixels in the mosaic should come from.",
+              "malformed": "Not a year"
+            },
             "targetDate": {
               "label": "Target date",
               "tooltip": "The date in which pixels in the mosaic should ideally come from.",
@@ -306,7 +311,9 @@
     "cancel": "Cancel",
     "back": "Back",
     "next": "Next",
-    "done": "Done"
+    "done": "Done",
+    "more": "More",
+    "less": "Less"
   },
   "widget": {
     "seasonSelect": {

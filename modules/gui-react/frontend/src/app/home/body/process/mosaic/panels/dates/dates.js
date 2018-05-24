@@ -5,30 +5,33 @@ import {Msg, msg} from 'translate'
 import DatePicker from 'widget/datePicker'
 import {Constraints, ErrorMessage, form, Input, Label} from 'widget/form'
 import SeasonSelect from 'widget/seasonSelect'
-import {RecipeState} from '../../mosaicRecipe'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
-const minStartDate = (targetDate) => moment(targetDate).subtract(1, 'year').add(1, 'days')
-const maxStartDate = (targetDate) => moment(targetDate)
+const minStartDate = (targetDate) => parseDate(targetDate).subtract(1, 'year').add(1, 'days')
+const maxStartDate = (targetDate) => parseDate(targetDate)
 
-const minEndDate = (targetDate) => moment(targetDate).add(1, 'days')
-const maxEndDate = (targetDate) => moment(targetDate).add(1, 'years')
+const minEndDate = (targetDate) => parseDate(targetDate).add(1, 'days')
+const maxEndDate = (targetDate) => parseDate(targetDate).add(1, 'years')
 
 const inputs = {
+    targetYear: new Constraints()
+        .int('process.mosaic.panel.dates.form.targetDate.malformed'),
+
     targetDate: new Constraints()
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.targetDate.malformed'),
 
     seasonStart: new Constraints()
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
-        .predicate((date, {targetDate}) => moment(date).isSameOrAfter(minStartDate(targetDate)),
+        .predicate((date, {targetDate}) => parseDate(date).isSameOrAfter(minStartDate(targetDate)),
             'process.mosaic.panel.dates.form.season.tooEarly',
             ({targetDate}) => ({
                 min: minStartDate(targetDate).format(DATE_FORMAT)
             }))
-        .predicate((date, {targetDate}) => moment(date).isSameOrBefore(maxStartDate(targetDate)),
+        .predicate((date, {targetDate}) => parseDate(date).isSameOrBefore(maxStartDate(targetDate)),
             'process.mosaic.panel.dates.form.season.tooLate',
             ({targetDate}) => ({
                 max: maxStartDate(targetDate).format(DATE_FORMAT)
@@ -36,12 +39,12 @@ const inputs = {
 
     seasonEnd: new Constraints()
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
-        .predicate((date, {targetDate}) => moment(date).isSameOrAfter(minEndDate(targetDate)),
+        .predicate((date, {targetDate}) => parseDate(date).isSameOrAfter(minEndDate(targetDate)),
             'process.mosaic.panel.dates.form.season.tooEarly',
             ({targetDate}) => ({
                 min: minEndDate(targetDate).format(DATE_FORMAT)
             }))
-        .predicate((date, {targetDate}) => moment(date).isSameOrBefore(maxEndDate(targetDate)),
+        .predicate((date, {targetDate}) => parseDate(date).isSameOrBefore(maxEndDate(targetDate)),
             'process.mosaic.panel.dates.form.season.tooLate',
             ({targetDate}) => ({
                 max: maxEndDate(targetDate).format(DATE_FORMAT)
@@ -60,10 +63,12 @@ const inputs = {
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
+        advanced: recipe('ui.advancedDateForm'),
         values: recipe('dates') || {
+            targetYear: String(moment().year()),
             targetDate: moment().format(DATE_FORMAT),
-            seasonStart: moment().month(0).date(1).format(DATE_FORMAT),
-            seasonEnd: moment().add(1, 'years').month(0).date(1).format(DATE_FORMAT),
+            seasonStart: moment().startOf('year').format(DATE_FORMAT),
+            seasonEnd: moment().add(1, 'years').startOf('year').format(DATE_FORMAT),
             yearsBefore: 0,
             yearsAfter: 0
         }
@@ -73,121 +78,131 @@ const mapStateToProps = (state, ownProps) => {
 class Dates extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {
-            date: new Date(),
-            dateMinOffset: -30,
-            dateMaxOffset: 30,
-            yearMinOffset: 0,
-            yearMaxOffset: 0
+        const {id, inputs: {targetYear, targetDate}} = props
+        targetYear.onChange((yearString) => this.handleYearChange(yearString))
+        targetDate.onChange((dateString) => this.handleDateChange(dateString))
+        this.recipe = RecipeActions(id)
+    }
+
+    handleYearChange(yearString) {
+        const {inputs: {targetDate}} = this.props
+        const yearDate = parseDate(yearString)
+        if (yearDate.isValid()) {
+            const targetDateMoment = parseDate(targetDate.value)
+            targetDateMoment.set('year', yearDate.year())
+            targetDate.set(targetDateMoment.format(DATE_FORMAT))
         }
     }
 
-    dateMin() {
-        return moment(this.state.date)
-            .add(this.state.yearMinOffset, 'years')
-            .add(this.state.dateMinOffset, 'days')
-            .toDate()
+    handleDateChange(dateString) {
+        const {inputs: {targetYear}} = this.props
+        const date = parseDate(dateString)
+        if (date.isValid())
+            targetYear.set(String(date.year()))
     }
 
-    dateMax() {
-        return moment(this.state.date)
-            .add(this.state.yearMaxOffset, 'years')
-            .add(this.state.dateMaxOffset, 'days')
-            .toDate()
-    }
-
-    setDate(date) {
-        this.setState({
-            ...this.state,
-            date
-        })
-    }
-
-    setDateMax(dateMax) {
-        const dateMaxOffset = moment(dateMax).diff(moment(this.state.date), 'days')
-        this.setState({
-            ...this.state,
-            dateMaxOffset
-        })
-    }
-
-    setDateMaxOffset(offset) {
-        this.setState({
-            ...this.state,
-            dateMaxOffset: Math.round(offset)
-        })
-    }
-
-    setYearMinOffset(offset) {
-        this.setState({
-            ...this.state,
-            yearMinOffset: Math.round(offset)
-        })
-    }
-
-    setYearMaxOffset(offset) {
-        this.setState({
-            ...this.state,
-            yearMaxOffset: Math.round(offset)
-        })
+    setAdvanced(enabled) {
+        this.recipe.setAdvancedDateForm(enabled).dispatch()
     }
 
     render() {
-        const {id, form, inputs: {targetDate, seasonStart, seasonEnd, yearsBefore, yearsAfter}, className} = this.props
+        const {id, form, advanced, className} = this.props
         return (
-            <form className={className}>
+            <form className={[className, advanced ? styles.advanced : styles.simple].join(' ')}>
                 <PanelForm
+                    additionalButtons={[{
+                        key: 'advanced',
+                        label: advanced ? msg('button.less') : msg('button.more'),
+                        onClick: () => this.setAdvanced(!advanced)
+                    }]}
                     recipeId={id}
                     form={form}
                     onApply={(recipe, dates) => recipe.setDates(dates).dispatch()}
                     icon='cog'
                     title={msg('process.mosaic.panel.dates.title')}>
-                    <div className={styles.fields}>
-                        <Label 
-                            className={styles.targetDateLabel}
-                            tooltip='process.mosaic.panel.dates.form.targetDate'
-                            right>
-                            <Msg id='process.mosaic.panel.dates.form.targetDate.label'/>
-                        </Label>
-                        <div className={styles.targetDateInput}>
-                            <DatePicker
-                                input={targetDate}
-                                startDate={moment('1982-08-22', DATE_FORMAT)}
-                                endDate={moment()}/>
-                            <ErrorMessage input={targetDate}/>
-                        </div>
-
-                        <Label className={styles.yearsLabel} tooltip='process.mosaic.panel.dates.form.years' right>
-                            <Msg id='process.mosaic.panel.dates.form.years.label'/>
-                        </Label>
-                        <div className={styles.yearsInput}>
-                            <div>
-                                <Input type='number' input={yearsBefore} maxLength={2} min={0} max={99}/>
-                                &nbsp;
-                                <Msg id='process.mosaic.panel.dates.form.years.before'/>
-                            </div>
-                            <div>
-                                <Input type='number' input={yearsAfter} maxLength={2} min={0} max={99}/>
-                                &nbsp;
-                                <Msg id='process.mosaic.panel.dates.form.years.after'/>
-                            </div>
-                            <ErrorMessage input={[yearsBefore, yearsAfter]}/>
-                        </div>
-
-                        <Label className={styles.seasonLabel} tooltip='process.mosaic.panel.dates.form.season' right>
-                            <Msg id='process.mosaic.panel.dates.form.season.label'/>
-                        </Label>
-                        <SeasonSelect
-                            startDate={seasonStart}
-                            endDate={seasonEnd}
-                            centerDate={targetDate}
-                            disabled={targetDate.isInvalid()}
-                            className={styles.seasonInput}/>
-                    </div>
+                    {advanced ? this.renderAdvanced() : this.renderSimple()}
                 </PanelForm>
             </form>
         )
     }
+
+    renderAdvanced() {
+        const {inputs: {targetDate, seasonStart, seasonEnd, yearsBefore, yearsAfter}} = this.props
+        return (
+            <div className={styles.advancedLayout}>
+                <Label
+                    className={styles.targetDateLabel}
+                    tooltip='process.mosaic.panel.dates.form.targetDate'
+                    right>
+                    <Msg id='process.mosaic.panel.dates.form.targetDate.label'/>
+                </Label>
+                <div className={styles.targetDateInput}>
+                    <DatePicker
+                        input={targetDate}
+                        startDate={moment('1982-08-22', DATE_FORMAT)}
+                        endDate={moment()}/>
+                    <ErrorMessage input={targetDate}/>
+                </div>
+
+                <Label className={styles.yearsLabel} tooltip='process.mosaic.panel.dates.form.years' right>
+                    <Msg id='process.mosaic.panel.dates.form.years.label'/>
+                </Label>
+                <div className={styles.yearsInput}>
+                    <div>
+                        <Input type='number' input={yearsBefore} maxLength={2} min={0} max={99}/>
+                        &nbsp;
+                        <Msg id='process.mosaic.panel.dates.form.years.before'/>
+                    </div>
+                    <div>
+                        <Input type='number' input={yearsAfter} maxLength={2} min={0} max={99}/>
+                        &nbsp;
+                        <Msg id='process.mosaic.panel.dates.form.years.after'/>
+                    </div>
+                    <ErrorMessage input={[yearsBefore, yearsAfter]}/>
+                </div>
+
+                <Label className={styles.seasonLabel} tooltip='process.mosaic.panel.dates.form.season' right>
+                    <Msg id='process.mosaic.panel.dates.form.season.label'/>
+                </Label>
+                <SeasonSelect
+                    startDate={seasonStart}
+                    endDate={seasonEnd}
+                    centerDate={targetDate}
+                    disabled={targetDate.isInvalid()}
+                    className={styles.seasonInput}/>
+            </div>
+        )
+    }
+
+    renderSimple() {
+        const {inputs: {targetYear}} = this.props
+        return (
+            <div className={styles.simpleLayout}>
+                <Label
+                    className={styles.yearLabel}
+                    tooltip='process.mosaic.panel.dates.form.targetYear'
+                    right>
+                    <Msg id='process.mosaic.panel.dates.form.targetYear.label'/>
+                </Label>
+                <div className={styles.targetDateInput}>
+                    <DatePicker
+                        input={targetYear}
+                        startDate={moment('1982-08-22', DATE_FORMAT)}
+                        endDate={moment()}
+                        resolution='year'/>
+                    <ErrorMessage input={targetYear}/>
+                </div>
+
+            </div>
+        )
+    }
+}
+
+const parseDate = (dateString) => {
+    const date = moment(dateString, ['YYYY-MM-DD', 'YYYY'], true)
+    if (dateString.length < 10)
+        date.startOf('year')
+    return date
 }
 
 Dates.propTypes = {

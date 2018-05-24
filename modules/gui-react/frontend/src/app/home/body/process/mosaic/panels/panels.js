@@ -34,7 +34,7 @@ class Panels extends React.Component {
             case PANELS.AREA_OF_INTEREST:
                 return <Aoi id={this.props.id} className={[styles.panel, styles.aoi, styles.bottom].join(' ')}/>
             case PANELS.DATES:
-                return <Dates id={this.props.id} className={[styles.panel, styles.dates, styles.bottom].join(' ')}/>
+                return <Dates id={this.props.id} className={[styles.panel, styles.bottom].join(' ')}/>
             case PANELS.SOURCES:
                 return <Sources id={this.props.id} className={[styles.panel, styles.sources, styles.bottom].join(' ')}/>
             case PANELS.SCENES:

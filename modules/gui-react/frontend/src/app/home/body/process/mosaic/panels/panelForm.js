@@ -4,7 +4,7 @@ import React from 'react'
 import PanelContent from './panelContent'
 import styles from './panelForm.module.css'
 
-const PanelForm = ({recipeId, form, onApply, icon, onBack, title, className, children}) => {
+const PanelForm = ({recipeId, form, onApply, icon, onBack, title, additionalButtons, className, children}) => {
     return (
         <PanelContent
             icon={icon}
@@ -16,6 +16,7 @@ const PanelForm = ({recipeId, form, onApply, icon, onBack, title, className, chi
                 <PanelButtons
                     recipeId={recipeId}
                     form={form}
+                    additionalButtons={additionalButtons}
                     onApply={onApply}
                 />
             </div>
@@ -30,6 +31,7 @@ PanelForm.propTypes = {
     icon: PropTypes.string,
     onBack: PropTypes.func,
     title: PropTypes.string.isRequired,
+    additionalButtons: PropTypes.array,
     className: PropTypes.string,
     children: PropTypes.any.isRequired
 }

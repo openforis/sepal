@@ -18,10 +18,10 @@ const updateSource = (source, dataSets, fromDate, toDate) => {
 
     const arrayEquals = (a1, a2) => {
         if (a1 === a2) return true
-        if ((a1 && a1.length || 0) != (a2 && a2.length) || 0) return false
+        if ((a1 && a1.length || 0) !== (a2 && a2.length) || 0) return false
         if (a1 && !a2 || a2 && !a1) return false
-        if (a1.find((e, i) => e !== a2[i])) return false
-        return true
+        return !a1.find((e, i) => e !== a2[i]);
+
     }
     console.log('equals', dataSets, selectedDataSets, arrayEquals(dataSets, selectedDataSets))
     if (selectedSource && !arrayEquals(dataSets, selectedDataSets) && selectedDataSets.length === 0) {

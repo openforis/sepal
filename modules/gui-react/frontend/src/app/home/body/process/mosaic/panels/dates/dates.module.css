@@ -1,4 +1,12 @@
-.fields {
+.simple {
+    max-width: 20rem;
+}
+
+.advanced {
+    max-width: 100rem;
+}
+
+.advancedLayout {
     display: grid;
     grid-template-areas:
             'targetDateLabel'
@@ -7,18 +15,20 @@
             'yearsInput'
             'seasonLabel'
             'seasonDatePickers'
-            'seasonTimeline';
+            'seasonTimeline'
+            'moreLess';
     grid-row-gap: 1rem;
 }
 
 @media (min-width: 576px) {
-    .fields {
+    .advancedLayout {
         grid-template-columns: auto 1fr;
         grid-template-areas:
                 'targetDateLabel targetDateInput'
                 'yearsLabel      yearsInput'
                 'seasonLabel     seasonDatePickers'
-                'seasonTimeline  seasonTimeline';
+                'seasonTimeline  seasonTimeline'
+                '.               moreLess';
         grid-column-gap: 3rem;
         grid-row-gap: 0;
     }
@@ -65,4 +75,41 @@
         padding-right: 5rem;
         padding-left: 5rem;
     }
+}
+
+button.moreLess {
+    margin: var(--padding);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+
+    border: 0;
+    border-radius: .3rem;
+    font-size: .9rem;
+    transition: all 100ms ease-in-out;
+    margin-left: 0.5rem;
+    padding: .1rem 1rem;
+    cursor: pointer;
+
+    color: var(--button-default-color);
+    background-color: var(--button-default-background-color);
+    border: var(--button-default-border);
+}
+
+button.moreLess:focus {
+    color: var(--button-default-focus-color);
+    background-color: var(--button-default-focus-background-color);
+    border: var(--button-default-focus-border);
+}
+
+button.moreLess:hover {
+    color: var(--button-default-hover-color);
+    background-color: var(--button-default-hover-background-color);
+    border: var(--button-default-hover-border);
+}
+
+button.moreLess:active {
+    color: var(--button-default-active-color);
+    background-color: var(--button-default-active-background-color);
+    border: var(--button-default-active-border);
 }

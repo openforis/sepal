@@ -1,9 +1,15 @@
 .buttons {
     display: flex;
     flex-direction: row;
-    justify-content: flex-end;
+    justify-content: space-between;
     transition: opacity 200ms ease-in-out;
 }
+
+/*.additionalButtons {*/
+/**/
+/*}*/
+
+/*.*/
 
 .dirty {
     opacity: 1;
@@ -15,9 +21,12 @@
     border-radius: .3rem;
     font-size: .9rem;
     transition: all 100ms ease-in-out;
-    margin-left: 0.5rem;
     padding: .1rem 1rem;
     cursor: pointer;
+}
+
+.buttons button:not(:last-child) {
+    margin-right: 0.5rem;
 }
 
 .buttons button:hover. .buttons button:active {
@@ -80,25 +89,25 @@ button.cancel:active {
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 29%);
 }
 
-button.back {
+button.default {
     color: var(--button-default-color);
     background-color: var(--button-default-background-color);
     border: var(--button-default-border);
 }
 
-button.back:focus {
+button.default:focus {
     color: var(--button-default-focus-color);
     background-color: var(--button-default-focus-background-color);
     border: var(--button-default-focus-border);
 }
 
-button.back:hover {
+button.default:hover {
     color: var(--button-default-hover-color);
     background-color: var(--button-default-hover-background-color);
     border: var(--button-default-hover-border);
 }
 
-button.back:active {
+button.default:active {
     color: var(--button-default-active-color);
     background-color: var(--button-default-active-background-color);
     border: var(--button-default-active-border);
@@ -109,4 +118,10 @@ button.back:active {
     background-color: var(--button-default-background-color);
     border: var(--button-default-border);
     cursor: default;
+}
+
+@media (max-width: 576px) {
+    .buttons i {
+        display: none;
+    }
 }

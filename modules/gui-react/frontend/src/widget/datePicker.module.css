@@ -7,6 +7,24 @@
     /*width: calc(var(--column-width) * 3);*/
 }
 
+.input.day {
+    width: calc(8.5rem * var(--scaling-factor));
+}
+
+.input.month {
+    width: calc(6.5rem * var(--scaling-factor));
+}
+
+.input.year {
+    width: calc(5rem * var(--scaling-factor));
+}
+
+.input.year ul.month,
+.input.year ul.day,
+.input.month ul.day {
+    display: none;
+}
+
 .input input {
     margin: 0;
     display: inline-block;

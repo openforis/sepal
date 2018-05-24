@@ -1,11 +1,10 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {connect} from 'store'
 import {Msg} from 'translate'
 import Icon from 'widget/icon'
-import {RecipeActions} from '../mosaicRecipe'
+import {RecipeActions, RecipeState} from '../mosaicRecipe'
 import styles from './panelButtons.module.css'
-import {connect} from 'store'
-import {RecipeState} from '../mosaicRecipe'
 import {PANELS} from './panelConstants'
 
 const WIZARD_PANELS = [PANELS.AREA_OF_INTEREST, PANELS.DATES, PANELS.SOURCES]
@@ -87,7 +86,32 @@ class PanelButtons extends React.Component {
 
     render() {
         const {initialized} = this.props
-        return initialized ? this.renderFormButtons() : this.renderWizardButtons()
+        return (
+            <div className={styles.buttons}>
+                {this.renderAdditionalButtons()}
+                {initialized ? this.renderFormButtons() : this.renderWizardButtons()}
+            </div>
+        )
+    }
+
+    renderAdditionalButtons() {
+        const {additionalButtons = []} = this.props
+        const renderButton = (button) =>
+            <button
+                key={button.key}
+                onClick={(e) => {
+                    e.preventDefault()
+                    button.onClick(e)
+                }}
+                className={button.className || styles.default}>
+                <span>{button.label}</span>
+            </button>
+
+        return (
+            <div className={styles.additionalButtons}>
+                {additionalButtons.map(renderButton)}
+            </div>
+        )
     }
 
     renderWizardButtons() {
@@ -100,7 +124,7 @@ class PanelButtons extends React.Component {
                     this.back()
                 }}
                 onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before going back
-                className={styles.back}>
+                className={styles.default}>
                 <Icon name={'chevron-left'}/>
                 <span><Msg id='button.back'/></span>
             </button>
@@ -168,6 +192,7 @@ class PanelButtons extends React.Component {
 PanelButtons.propTypes = {
     recipeId: PropTypes.string.isRequired,
     form: PropTypes.object.isRequired,
+    additionalButtons: PropTypes.array,
     onApply: PropTypes.func.isRequired
 }
 

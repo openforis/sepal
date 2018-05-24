@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {dataSetById, imageSourceById, sources} from 'sources'
+import {imageSourceById, sources} from 'sources'
 import {msg, Msg} from 'translate'
 import Buttons from 'widget/buttons'
 import {Constraints, form} from 'widget/form'

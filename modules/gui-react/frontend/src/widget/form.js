@@ -10,8 +10,9 @@ import Tooltip from './tooltip'
 export function form(inputs, mapStateToProps) {
     return (WrappedComponent) => {
         class Form extends React.Component {
-            onDirtyListeners = []
-            onCleanListeners = []
+            dirtyListeners = []
+            cleanListeners = []
+            changeListenersByInputName = {}
 
             constructor(props) {
                 super(props)
@@ -69,11 +70,15 @@ export function form(inputs, mapStateToProps) {
                         state.gotDirty = state.dirty && !prevState.dirty
                         state.gotClean = !state.dirty && prevState.dirty
                         return state
-                    }, () => this.notifyOnDirtyOrClean())
+                    }, () => {
+                        return this.notifyOnChange(name, value)
+                    })
                 return this
             }
 
-            notifyOnDirtyOrClean() {
+            notifyOnChange(name, value) {
+                const listeners = this.changeListenersByInputName[name] || []
+                listeners.forEach((listener) => listener(value))
                 if (this.state.gotDirty)
                     this.onDirty()
                 else if (this.state.gotClean)
@@ -130,7 +135,7 @@ export function form(inputs, mapStateToProps) {
                     state.gotDirty = false
                     state.gotClean = prevState.dirty
                     return state
-                }, () => this.notifyOnDirtyOrClean())
+                }, () => this.notifyOnChange())
             }
 
             isValueDirty(name) {
@@ -144,11 +149,11 @@ export function form(inputs, mapStateToProps) {
             }
 
             onDirty() {
-                this.onDirtyListeners.forEach((listener) => listener())
+                this.dirtyListeners.forEach((listener) => listener())
             }
 
             onClean() {
-                this.onCleanListeners.forEach((listener) => listener())
+                this.cleanListeners.forEach((listener) => listener())
             }
 
             render() {
@@ -168,7 +173,12 @@ export function form(inputs, mapStateToProps) {
                         set: (value) => this.set(name, value),
                         handleChange: (e) => this.handleChange(e),
                         isDirty: () => this.isValueDirty(name),
-                        validate: () => this.validate(name)
+                        validate: () => this.validate(name),
+                        onChange: (listener) => {
+                            const listeners = this.changeListenersByInputName[name] || []
+                            this.changeListenersByInputName[name] = listeners
+                            listeners.push(listener)
+                        }
                     }
                 })
                 return React.createElement(WrappedComponent, {
@@ -178,8 +188,8 @@ export function form(inputs, mapStateToProps) {
                             .filter(error => error),
                         errorClass: styles.error,
                         hasInvalid: this.hasInvalid,
-                        onDirty: (listener) => this.onDirtyListeners.push(listener),
-                        onClean: (listener) => this.onCleanListeners.push(listener),
+                        onDirty: (listener) => this.dirtyListeners.push(listener),
+                        onClean: (listener) => this.cleanListeners.push(listener),
                         setInitialValues: (values) => this.setInitialValues(values),
                         reset: () => this.reset(),
                         isDirty: () => this.isDirty(),
