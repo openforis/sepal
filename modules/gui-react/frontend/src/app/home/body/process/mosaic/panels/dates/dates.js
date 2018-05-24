@@ -86,7 +86,7 @@ class Dates extends React.Component {
 
     handleYearChange(yearString) {
         const {inputs: {targetDate}} = this.props
-        const yearDate = parseDate(yearString)
+        const yearDate = parseYear(yearString)
         if (yearDate.isValid()) {
             const targetDateMoment = parseDate(targetDate.value)
             targetDateMoment.set('year', yearDate.year())
@@ -139,8 +139,8 @@ class Dates extends React.Component {
                 <div className={styles.targetDateInput}>
                     <DatePicker
                         input={targetDate}
-                        startDate={moment('1982-08-22', DATE_FORMAT)}
-                        endDate={moment()}/>
+                        startDate={'1982-08-22'}
+                        endDate={moment().format(DATE_FORMAT)}/>
                     <ErrorMessage input={targetDate}/>
                 </div>
 
@@ -198,12 +198,11 @@ class Dates extends React.Component {
     }
 }
 
-const parseDate = (dateString) => {
-    const date = moment(dateString, ['YYYY-MM-DD', 'YYYY'], true)
-    if (dateString.length < 10)
-        date.startOf('year')
-    return date
-}
+const parseDate = (dateString) =>
+    moment(dateString, 'YYYY-MM-DD', true)
+
+const parseYear = (dateString) => 
+    moment(dateString, 'YYYY', true)
 
 Dates.propTypes = {
     id: PropTypes.string,

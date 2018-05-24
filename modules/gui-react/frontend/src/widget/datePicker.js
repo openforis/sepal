@@ -43,7 +43,6 @@ const toMomentUnit = (item) => {
             return item
     }
 }
-
 class DatePicker extends React.Component {
     state = {edit: false}
     inputElement = React.createRef()
@@ -87,19 +86,19 @@ class DatePicker extends React.Component {
         )
     }
 
-    componentDidUpdate(nextProps, prevState) {
-        const {input, resolution = DAY} = this.props
-        const prevDateString = input.value
-        if (!prevDateString)
-            return
+    // componentDidUpdate(nextProps, prevState) {
+    //     const {input, resolution = DAY} = this.props
+    //     const prevDateString = input.value
+    //     if (!prevDateString)
+    //         return
 
-        const date = moment(prevDateString, getDateFormat(this.getResolution(prevDateString)), true)
-        if (!date.isValid())
-            return
-        const nextDateString = date.format(getDateFormat(resolution))
-        if (prevDateString !== nextDateString)
-            input.set(nextDateString)
-    }
+    //     const date = moment(prevDateString, getDateFormat(this.getResolution(prevDateString)), true)
+    //     if (!date.isValid())
+    //         return
+    //     const nextDateString = date.format(getDateFormat(resolution))
+    //     if (prevDateString !== nextDateString)
+    //         input.set(nextDateString)
+    // }
 
     getResolution(dateString) {
         switch(dateString.length) {
@@ -201,7 +200,7 @@ class DatePickerControl extends React.Component {
     }
 
     parseDate(date) {
-        return moment(date, ['YYYY-MM-DD', 'YYYY-MM', 'YYYY'], true)
+        return moment(date, getDateFormat(this.props.resolution), true)
     }
 
     formatDate(date) {
