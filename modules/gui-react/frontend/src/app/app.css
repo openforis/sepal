@@ -14,11 +14,11 @@ html {
     --btn-sel-bg-hue: var(--selected-hue);
     --btn-sel-bg-sat: var(--selected-sat);
 
-    --button-default-color: hsl(0, 0%, 80%);
+    --button-default-color: hsl(0, 0%, 90%);
     --button-default-background-color: hsl(var(--btn-bg-hue), var(--btn-bg-sat), 20%);
     --button-default-border: 1px solid hsl(var(--btn-bg-hue), var(--btn-bg-sat), 22%);
 
-    --button-default-focus-color: hsl(0, 0%, 80%);
+    --button-default-focus-color: hsl(0, 0%, 90%);
     --button-default-focus-background-color: hsl(var(--btn-bg-hue), var(--btn-bg-sat), 23%);
     --button-default-focus-border: 1px solid hsl(var(--btn-bg-hue), var(--btn-bg-sat), 25%);
 

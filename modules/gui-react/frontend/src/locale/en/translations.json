@@ -302,8 +302,8 @@
     }
   },
   "button": {
-    "apply": "Apply",
-    "revert": "Revert",
+    "ok": "OK",
+    "cancel": "Cancel",
     "back": "Back",
     "next": "Next",
     "done": "Done"

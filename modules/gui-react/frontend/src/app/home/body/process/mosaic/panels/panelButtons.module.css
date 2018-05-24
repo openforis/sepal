@@ -5,10 +5,6 @@
     transition: opacity 200ms ease-in-out;
 }
 
-.formButtons {
-    opacity: 0;
-}
-
 .dirty {
     opacity: 1;
 }
@@ -42,14 +38,14 @@ button.apply {
 
 button.apply:focus {
     color: var(--button-default-focus-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 34%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 36%);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 35%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 38%);
 }
 
 button.apply:hover {
     color: var(--button-default-hover-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 32%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 34%);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
 }
 
 button.apply:active {
@@ -58,7 +54,7 @@ button.apply:active {
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 33%);
 }
 
-button.revert {
+button.cancel {
     --bg-hue: 0;
     --bg-sat: 38%;
     color: var(--button-default-color);
@@ -66,19 +62,19 @@ button.revert {
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
 }
 
-button.revert:focus {
+button.cancel:focus {
     color: var(--button-default-focus-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 30%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 32%);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 31%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 33%);
 }
 
-button.revert:hover {
+button.cancel:hover {
     color: var(--button-default-hover-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 28%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 30%);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 29%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 31%);
 }
 
-button.revert:active {
+button.cancel:active {
     color: var(--button-default-active-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 27%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 29%);

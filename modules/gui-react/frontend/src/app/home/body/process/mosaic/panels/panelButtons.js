@@ -33,24 +33,31 @@ class PanelButtons extends React.Component {
         return {...prevState, selectedPanelIndex, first, last}
 
     }
+
     componentDidMount() {
         const {recipeId, form} = this.props
         this.recipe = RecipeActions(recipeId)
-        form.onClean(() => this.recipe.setModal(form.hasInvalid()).dispatch())
-        form.onDirty(() => this.recipe.setModal(true).dispatch())
-        this.recipe.setModal(form.hasInvalid()).dispatch()
+        this.recipe.setModal(true).dispatch()
     }
 
     apply() {
         const {form, onApply} = this.props
         const values = form.values()
         onApply(this.recipe, values)
-        form.setInitialValues(values)
     }
 
-    revert() {
-        const {form} = this.props
-        form.reset()
+    closePanel() {
+        this.recipe.setModal(false).dispatch()
+        this.recipe.selectPanel().dispatch()
+    }
+
+    ok() {
+        this.apply()
+        this.closePanel()
+    }
+
+    cancel() {
+        this.closePanel()
     }
 
     back() {
@@ -75,8 +82,7 @@ class PanelButtons extends React.Component {
     done() {
         this.apply()
         this.recipe.setInitialized().dispatch()
-        this.recipe.setModal(false).dispatch()
-        this.recipe.selectPanel().dispatch()
+        this.closePanel()
     }
 
     render() {
@@ -132,29 +138,27 @@ class PanelButtons extends React.Component {
 
     renderFormButtons() {
         const {form} = this.props
-        const dirty = form.isDirty()
         return (
-            <div className={[styles.buttons, styles.formButtons, dirty && styles.dirty].join(' ')}>
+            <div className={styles.buttons}>
                 <button
                     onClick={(e) => {
                         e.preventDefault()
-                        this.revert()
+                        this.cancel()
                     }}
-                    onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before reverting
-                    disabled={!dirty}
-                    className={styles.revert}>
+                    onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before canceling
+                    className={styles.cancel}>
                     <Icon name={'undo-alt'}/>
-                    <span><Msg id='button.revert'/></span>
+                    <span><Msg id='button.cancel'/></span>
                 </button>
                 <button
                     onClick={(e) => {
                         e.preventDefault()
-                        this.apply()
+                        this.ok()
                     }}
-                    disabled={form.hasInvalid() || !dirty}
+                    disabled={form.hasInvalid()}
                     className={styles.apply}>
                     <Icon name={'check'}/>
-                    <span><Msg id='button.apply'/></span>
+                    <span><Msg id='button.ok'/></span>
                 </button>
             </div>
         )

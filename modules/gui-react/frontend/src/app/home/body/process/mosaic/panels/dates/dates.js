@@ -141,8 +141,7 @@ class Dates extends React.Component {
                     form={form}
                     onApply={(recipe, dates) => recipe.setDates(dates).dispatch()}
                     icon='cog'
-                    title={msg('process.mosaic.panel.dates.title')}
-                    className={styles.form}>
+                    title={msg('process.mosaic.panel.dates.title')}>
                     <div className={styles.fields}>
                         <Label 
                             className={styles.targetDateLabel}
