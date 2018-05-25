@@ -1,4 +1,5 @@
 import actionBuilder from 'action-builder'
+import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
 import FusionTable from 'app/home/map/fusionTable'
 import {map} from 'app/home/map/map'
 import PropTypes from 'prop-types'
@@ -14,7 +15,7 @@ import PanelContent from '../panelContent'
 const loadCountries$ = () => {
     return FusionTable.get$(`
             SELECT id, label 
-            FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
+            FROM ${countryFusionTable}
             WHERE parent_id != '' 
             ORDER BY label ASC`).pipe(
         rxMap((e) =>
@@ -28,7 +29,7 @@ const loadCountries$ = () => {
 const loadCountryAreas$ = (countryId) => {
     return FusionTable.get$(`
             SELECT id, label 
-            FROM 1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU 
+            FROM ${countryFusionTable} 
             WHERE parent_id = '${countryId}'
             ORDER BY label ASC`).pipe(
         rxMap((e) =>
@@ -62,13 +63,12 @@ class CountrySection extends React.Component {
                 .dispatch()
     }
 
-    loadBounds(fusionTable) {
+    loadBounds(layer) {
         this.props.asyncActionBuilder('LOAD_BOUNDS',
-            fusionTable.loadBounds$().pipe(
+            layer.loadBounds$().pipe(
                 rxMap((bounds) => actionBuilder('LOADED_BOUNDS', {bounds})),
-                takeUntil(this.aoiChanged$))
-        )
-            .onComplete(() => map.fitBoundsToObject('aoi'))
+                takeUntil(this.aoiChanged$)))
+            .onComplete(() => map.fitLayer('aoi'))
             .dispatch()
     }
 
@@ -138,12 +138,11 @@ class CountrySection extends React.Component {
                 loadCountries$())
                 .dispatch()
 
-        FusionTable.setLayer({
-            id: 'aoi',
-            table: '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU',
-            keyColumn: 'id',
-            key: area.value || country.value
-        }, this.loadBounds.bind(this))
+        setAoiLayer({
+            type: 'country',
+            countryCode: country.value,
+            areaCode: area.value
+        }, (layer) => this.loadBounds(layer))
     }
 }
 

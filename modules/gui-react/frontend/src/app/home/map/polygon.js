@@ -2,9 +2,12 @@ import {google, map, polygonOptions} from './map'
 import './map.module.css'
 
 class Polygon {
-    static setLayer({id, path, fitBounds}) {
+    static setLayer({id, path}, onInitialized) {
         const layer = path ? new Polygon(path) : null
-        map.setLayer({id, layer, fitBounds})
+        const changed = map.setLayer({id, layer})
+        if (layer && changed && onInitialized)
+            onInitialized(layer)
+        return layer
     }
 
     constructor(path) {

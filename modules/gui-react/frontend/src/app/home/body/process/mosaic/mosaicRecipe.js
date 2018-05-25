@@ -112,9 +112,9 @@ const createAoi = (aoiForm) => {
         case 'fusionTable':
             return {
                 type: 'fusionTable',
-                fusionTable: aoiForm.fusionTable,
-                fusionTableColumn: aoiForm.fusionTableColumn,
-                fusionTableRow: aoiForm.fusionTableRow
+                id: aoiForm.fusionTable,
+                keyColumn: aoiForm.fusionTableColumn,
+                key: aoiForm.fusionTableRow
             }
         case 'polygon':
             return {

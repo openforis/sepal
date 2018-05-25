@@ -17,7 +17,7 @@ let drawingManager = null
 
 const layers = {}
 
-const setLayer = (id, layer, fitBounds) => {
+const setLayer = (id, layer) => {
     if (id in layers) {
         const currentLayer = layers[id]
         if (currentLayer && currentLayer.equals(layer))
@@ -27,8 +27,6 @@ const setLayer = (id, layer, fitBounds) => {
     if (layer) {
         layer.setMap(instance)
         layers[id] = layer
-        if (fitBounds)
-            map.fitBoundsToObject(id)
     }
     return true
 }
@@ -141,7 +139,7 @@ const createMap = (mapElement) => {
             else
                 removeOverlay('labels')
         },
-        fitBoundsToObject(mapObjectName) {
+        fitLayer(mapObjectName) {
             const mapObject = layers[mapObjectName]
             if (mapObject && mapObject.bounds) {
                 const bounds = mapObject.bounds
@@ -190,8 +188,8 @@ const createMap = (mapElement) => {
             console.log('getLayer(id)', id, layers[id])
             return layers[id]
         },
-        setLayer({id, layer, fitBounds}) {
-            return setLayer(id, layer, fitBounds)
+        setLayer({id, layer}) {
+            return setLayer(id, layer)
         },
         removeLayer(id) {
             removeLayer(id)
@@ -218,7 +216,11 @@ const defaultStyle = [
 const labelsLayerStyle = [
     {featureType: 'all', stylers: [{visibility: 'off'}]},
     {featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{color: '#decca6'}, {visibility: 'on'}]},
-    {featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{color: '#d59563'}, {visibility: 'on'}]},
+    {
+        featureType: 'administrative.locality',
+        elementType: 'labels.text.fill',
+        stylers: [{color: '#d59563'}, {visibility: 'on'}]
+    },
     {featureType: 'road', elementType: 'geometry', stylers: [{color: '#38414e'}, {visibility: 'on'}]},
     {featureType: 'road', elementType: 'geometry.stroke', stylers: [{color: '#212a37'}, {visibility: 'on'}]},
     {featureType: 'road', elementType: 'labels.text.fill', stylers: [{color: '#9ca5b3'}, {visibility: 'on'}]},

@@ -1,4 +1,5 @@
 import actionBuilder from 'action-builder'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
 import FusionTable from 'app/home/map/fusionTable'
 import {map} from 'app/home/map/map'
 import React from 'react'
@@ -66,13 +67,16 @@ class FusionTableSection extends React.Component {
         ).dispatch()
     }
 
-    loadBounds(fusionTable) {
+    loadBounds(layer) {
         this.props.asyncActionBuilder('LOAD_BOUNDS',
-            fusionTable.loadBounds$().pipe(
+            layer.loadBounds$().pipe(
                 rxMap((bounds) => actionBuilder('LOADED_BOUNDS', {bounds})),
                 takeUntil(this.fusionTableRowChanged$)
             ))
-            .onComplete(() => map.fitBoundsToObject('aoi'))
+            .onComplete(() => {
+                console.log('on complete')
+                return map.fitLayer('aoi')
+            })
             .dispatch()
     }
 
@@ -162,12 +166,13 @@ class FusionTableSection extends React.Component {
             return
 
         const {inputs: {fusionTable, fusionTableColumn, fusionTableRow}} = this.props
-        FusionTable.setLayer({
-            id: 'aoi',
-            table: fusionTable.value,
+
+        setAoiLayer({
+            type: 'fusionTable',
+            id: fusionTable.value,
             keyColumn: fusionTableColumn.value,
             key: fusionTableRow.value
-        }, this.loadBounds.bind(this))
+        }, (layer) => this.loadBounds(layer))
     }
 }
 

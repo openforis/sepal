@@ -1,4 +1,4 @@
-import Polygon from 'app/home/map/polygon'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
@@ -39,7 +39,11 @@ class PolygonSection extends React.Component {
             return
 
         const {inputs: {polygon}} = this.props
-        Polygon.setLayer({id: 'aoi', path: polygon.value, fitBounds: true})
+        setAoiLayer({
+                type: 'polygon',
+                path: polygon.value
+            }, () => map.fitLayer('aoi')
+        )
     }
 
 }
