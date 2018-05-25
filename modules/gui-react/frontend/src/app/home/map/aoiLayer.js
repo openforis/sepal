@@ -6,7 +6,6 @@ export const countryFusionTable = '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU'
 
 export const setAoiLayer = (aoi, onInitialized) => {
     const id = 'aoi'
-    console.log(setAoiLayer)
 
     const setCountryLayer = () =>
         FusionTable.setLayer({

@@ -185,7 +185,6 @@ const createMap = (mapElement) => {
             }
         },
         getLayer(id) {
-            console.log('getLayer(id)', id, layers[id])
             return layers[id]
         },
         setLayer({id, layer}) {
