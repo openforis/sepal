@@ -1,5 +1,6 @@
-import React from 'react'
 import PropTypes from 'prop-types'
+import React from 'react'
+import {Disabled} from 'store'
 
 export class Select extends React.Component {
     getChildContext() {
@@ -68,7 +69,9 @@ export class Selectable extends React.Component {
         else
             return (
                 <div className={[this.props.className, this.props.classNames.default, this.className].join(' ')}>
-                    {this.props.children}
+                    <Disabled.Provider value={!this.props.active}>
+                        {this.props.children}
+                    </Disabled.Provider>
                 </div>
             )
     }

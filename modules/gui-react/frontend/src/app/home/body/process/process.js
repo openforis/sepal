@@ -2,7 +2,7 @@ import actionBuilder from 'action-builder'
 import flexy from 'flexy.module.css'
 import guid from 'guid'
 import React from 'react'
-import {connect, select} from 'store'
+import {connect, Disabled, select} from 'store'
 import {msg} from 'translate'
 import Tooltip from 'widget/tooltip'
 import CreateOrLoadRecipe from './createOrLoadRecipe'
@@ -170,7 +170,6 @@ class Tab extends React.Component {
                             closeTab(id)
                         }}>
                         &times;
-                        {/*<Icon name='times'/>*/}
                     </button>
                 </div>
             </Tooltip>
@@ -196,7 +195,11 @@ const TabContent = ({tab: {id, type}, selected}) => {
     }
     return (
         <div className={[styles.tabContent, selected && flexy.container, selected && styles.selected].join(' ')}>
-            {contents()}
+            <Disabled.Consumer>{disabled =>
+                <Disabled.Provider value={!disabled && !selected}>
+                    {contents()}
+                </Disabled.Provider>}
+            </Disabled.Consumer>
         </div>
     )
 }

@@ -39,8 +39,12 @@ export function select(path) {
 export function connect(mapStateToProps) {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
     return (WrappedComponent) => {
+        let disabled = false
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
         WrappedComponent = connectToRedux(includeDispatchingProp(mapStateToProps))(WrappedComponent)
+        WrappedComponent.prototype.shouldComponentUpdate = (nextProps, nextState) => {
+            return !disabled
+        }
 
         class ConnectedComponent extends React.Component {
             constructor(props) {
@@ -60,11 +64,18 @@ export function connect(mapStateToProps) {
             }
 
             render() {
-                return React.createElement(WrappedComponent, {
-                    ...this.props,
-                    asyncActionBuilder: this.asyncActionBuilder,
-                    componentId: this.id
-                })
+                return (
+                    <Disabled.Consumer>
+                        {_disabled => {
+                            disabled = _disabled
+                            return React.createElement(WrappedComponent, {
+                                ...this.props,
+                                asyncActionBuilder: this.asyncActionBuilder,
+                                componentId: this.id
+                            })
+                        }}
+                    </Disabled.Consumer>
+                )
             }
         }
 
@@ -98,3 +109,5 @@ export function dispatchable(action) {
         dispatch: () => dispatch(action)
     }
 }
+
+export const Disabled = React.createContext(false)

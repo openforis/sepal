@@ -52,6 +52,7 @@ class Aoi extends React.Component {
     }
 
     render() {
+        console.log('render aoi')
         const {id, className, form, inputs} = this.props
         return (
             <div className={className}>
