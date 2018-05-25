@@ -23,6 +23,12 @@ export default function actionBuilder(type, props) {
             return this
         },
 
+        setAll(values) {
+            Object.keys(values).forEach((path) =>
+                operations.push((immutableState) => immutableState.set(path, values[path])))
+            return this
+        },
+
         push(path, value) {
             operations.push((immutableState) => {
                 return immutableState.push(path, value)

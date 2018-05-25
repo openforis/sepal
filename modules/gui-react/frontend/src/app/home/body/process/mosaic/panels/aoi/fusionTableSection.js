@@ -72,7 +72,7 @@ class FusionTableSection extends React.Component {
                 rxMap((bounds) => actionBuilder('LOADED_BOUNDS', {bounds})),
                 takeUntil(this.fusionTableRowChanged$)
             ))
-            .onComplete(() => map.fitBounds('aoi'))
+            .onComplete(() => map.fitBoundsToObject('aoi'))
             .dispatch()
     }
 

@@ -11,7 +11,7 @@ const inputs = {
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        values: recipe('auto')
+        values: recipe('ui.auto')
     }
 }
 

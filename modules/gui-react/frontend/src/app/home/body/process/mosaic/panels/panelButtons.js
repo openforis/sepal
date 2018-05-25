@@ -12,7 +12,7 @@ const WIZARD_PANELS = [PANELS.AREA_OF_INTEREST, PANELS.DATES, PANELS.SOURCES]
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
-        initialized: recipe('initialized'),
+        initialized: recipe('ui.initialized'),
         selectedPanel: recipe('ui.selectedPanel')
     }
 }
@@ -56,7 +56,9 @@ class PanelButtons extends React.Component {
     }
 
     cancel() {
+        const {onCancel} = this.props
         this.closePanel()
+        onCancel && onCancel()
     }
 
     back() {
@@ -193,7 +195,8 @@ PanelButtons.propTypes = {
     recipeId: PropTypes.string.isRequired,
     form: PropTypes.object.isRequired,
     additionalButtons: PropTypes.array,
-    onApply: PropTypes.func.isRequired
+    onApply: PropTypes.func.isRequired,
+    onCancel: PropTypes.func
 }
 
 export default connect(mapStateToProps)(PanelButtons)

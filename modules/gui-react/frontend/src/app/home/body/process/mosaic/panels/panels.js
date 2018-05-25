@@ -16,7 +16,7 @@ import Sources from './sources/sources'
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        initialized: recipe('initialized'),
+        initialized: recipe('ui.initialized'),
         selectedPanel: recipe('ui.selectedPanel')
     }
 }

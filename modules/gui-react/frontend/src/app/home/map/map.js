@@ -28,7 +28,7 @@ const setLayer = (id, layer, fitBounds) => {
         layer.setMap(instance)
         layers[id] = layer
         if (fitBounds)
-            map.fitBounds(id)
+            map.fitBoundsToObject(id)
     }
     return true
 }
@@ -141,12 +141,18 @@ const createMap = (mapElement) => {
             else
                 removeOverlay('labels')
         },
-        fitBounds(mapObjectName) {
+        fitBoundsToObject(mapObjectName) {
             const mapObject = layers[mapObjectName]
             if (mapObject && mapObject.bounds) {
                 const bounds = mapObject.bounds
                 !instance.getBounds().equals(bounds) && instance.fitBounds(bounds)
             }
+        },
+        fitBounds(bounds) {
+            instance.fitBounds(bounds)
+        },
+        getBounds() {
+            return instance.getBounds()
         },
         drawPolygon(id, callback) {
             if (drawingManager === null) {

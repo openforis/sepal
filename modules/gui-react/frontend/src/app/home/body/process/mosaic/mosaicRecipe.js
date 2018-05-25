@@ -21,7 +21,7 @@ export const RecipeState = (id) => {
         return select(recipePath(id, path))
     }
     get.dateRange = () => {
-        const dates = get('dates')
+        const dates = get('ui.dates')
         const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
         const seasonEnd = moment(dates.seasonEnd, DATE_FORMAT)
         return [
@@ -49,10 +49,14 @@ export const RecipeActions = (id) => {
         _actionBuilder(name, otherProps)
             .set(prop, value)
             .build()
+    const setAll = (name, values, otherProps) =>
+        _actionBuilder(name, otherProps)
+            .setAll(values)
+            .build()
 
     return {
         setInitialized() {
-            return set('SET_INITIALIZED', 'initialized', true)
+            return set('SET_INITIALIZED', 'ui.initialized', true)
         },
         setLabelsShown(shown) {
             map.showLabelsLayer(shown)
@@ -64,14 +68,23 @@ export const RecipeActions = (id) => {
         selectPanel(panel) {
             return set('SELECT_MOSAIC_PANEL', 'ui.selectedPanel', panel, {panel})
         },
-        setAoi(aoi) {
-            return set('SET_AOI', 'aoi', {...aoi}, {aoi})
+        setAoi(aoiForm) {
+            return setAll('SET_AOI', {
+                'ui.aoi': {...aoiForm},
+                'aoi': createAoi(aoiForm),
+            }, {aoiForm})
         },
-        setDates(dates) {
-            return set('SET_DATES', 'dates', {...dates}, {dates})
+        setDates(datesForm) {
+            return setAll('SET_DATES', {
+                'ui.dates': {...datesForm},
+                'dates': createDates(datesForm)
+            }, {datesForm})
         },
-        setSources(sources) {
-            return set('SET_SOURCES', 'sources', {...sources}, {sources})
+        setSources(sourcesForm) {
+            return setAll('SET_SOURCES', {
+                'ui.sources': {...sourcesForm},
+                'sources': createSources(sourcesForm)
+            }, {sourcesForm})
         },
         setModal(enabled) {
             return set('SET_MODAL', 'ui.modal', enabled, {enabled})
@@ -84,9 +97,53 @@ export const RecipeActions = (id) => {
         },
         setFusionTableRows(rows) {
             return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
-        },
-        setAdvancedDateForm(enabled) {
-            return set('SET_ADVANCED_DATE_FORM', 'ui.advancedDateForm', enabled, {enabled})
         }
     }
 }
+
+const createAoi = (aoiForm) => {
+    switch (aoiForm.section) {
+        case 'country':
+            return {
+                type: 'country',
+                countryCode: aoiForm.country,
+                areaCode: aoiForm.area
+            }
+        case 'fusionTable':
+            return {
+                type: 'fusionTable',
+                fusionTable: aoiForm.fusionTable,
+                fusionTableColumn: aoiForm.fusionTableColumn,
+                fusionTableRow: aoiForm.fusionTableRow
+            }
+        case 'polygon':
+            return {
+                type: 'polygon',
+                path: aoiForm.polygon
+            }
+    }
+}
+
+const createDates = (datesForm) => {
+    const DATE_FORMAT = 'YYYY-MM-DD'
+    if (datesForm.advanced)
+        return {
+            targetDate: datesForm.targetDate,
+            seasonStart: datesForm.seasonStart,
+            seasonEnd: datesForm.seasonEnd,
+            yearsBefore: Number(datesForm.yearsBefore),
+            yearsAfter: Number(datesForm.yearsAfter)
+        }
+    else
+        return {
+            targetDate: moment().year(datesForm.targetYear).month(6).date(2).format(DATE_FORMAT),
+            seasonStart: moment().year(datesForm.targetYear).startOf('year').format(DATE_FORMAT),
+            seasonEnd: moment().year(Number(datesForm.targetYear) + 1).startOf('year').format(DATE_FORMAT),
+            yearsBefore: 0,
+            yearsAfter: 0
+        }
+}
+
+const createSources = (sourcesForm) => ({
+    [sourcesForm.source]: [...sourcesForm.dataSets]
+})

@@ -9,6 +9,7 @@ import CountrySection from './countrySection'
 import FusionTableSection from './fusionTableSection'
 import PolygonSection from './polygonSection'
 import SectionSelection from './sectionSelection'
+import {map} from 'app/home/map/map'
 
 const inputs = {
     section: new Constraints()
@@ -36,11 +37,21 @@ const inputs = {
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        values: recipe('aoi')
+        values: recipe('ui.aoi')
     }
 }
 
 class Aoi extends React.Component {
+    constructor(props) {
+        super(props)
+        this.initialBounds = map.getBounds()
+    }
+
+    onCancel() {
+        map.setLayer
+        map.fitBounds(this.initialBounds)
+    }
+
     render() {
         const {id, className, form, inputs} = this.props
         return (
@@ -59,7 +70,8 @@ class Aoi extends React.Component {
                             <PanelButtons
                                 recipeId={id}
                                 form={form}
-                                onApply={(recipe, aoi) => recipe.setAoi(aoi).dispatch()}/>
+                                onApply={(recipe, aoi) => recipe.setAoi(aoi).dispatch()}
+                                onCancel={() => this.onCancel()}/>
                         </div>
                     </form>
                 </div>

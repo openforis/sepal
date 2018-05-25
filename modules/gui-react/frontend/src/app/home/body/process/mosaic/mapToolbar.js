@@ -47,7 +47,7 @@ class MapToolbar extends React.Component {
                         </button>
                     </Tooltip>
                     <Tooltip msg={'process.mosaic.mapToolbar.centerMap'} top>
-                        <button onClick={() => map.fitBounds('aoi')}>
+                        <button onClick={() => map.fitBoundsToObject('aoi')}>
                             <Icon name={'bullseye'}/>
                         </button>
                     </Tooltip>

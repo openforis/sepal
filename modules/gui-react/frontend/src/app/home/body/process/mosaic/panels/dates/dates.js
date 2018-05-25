@@ -70,8 +70,8 @@ const inputs = {
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        values: recipe('dates') || {
-            advanced: recipe('ui.advancedDateForm'),
+        values: recipe('ui.dates') || {
+            advanced: recipe('ui.dates.advanced'),
             targetYear: String(moment().year()),
             targetDate: moment().format(DATE_FORMAT),
             seasonStart: moment().startOf('year').format(DATE_FORMAT),
@@ -111,7 +111,6 @@ class Dates extends React.Component {
     setAdvanced(enabled) {
         const {inputs: {advanced}} = this.props
         advanced.set(enabled)
-        this.recipe.setAdvancedDateForm(enabled).dispatch()
     }
 
     render() {
