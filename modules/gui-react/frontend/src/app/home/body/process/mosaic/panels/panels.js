@@ -50,8 +50,7 @@ class Panels extends React.Component {
     componentDidMount() {
         const {id, selectedPanel, initialized} = this.props
         if (!initialized && !selectedPanel)
-            // RecipeActions(id).selectPanel(PANELS.AREA_OF_INTEREST)
-            RecipeActions(id).selectPanel(PANELS.DATES)
+            RecipeActions(id).selectPanel(PANELS.AREA_OF_INTEREST)
                 .dispatch()
     }
 }
