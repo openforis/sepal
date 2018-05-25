@@ -1,3 +1,4 @@
+import {intersect} from 'collections'
 import Hammer from 'hammerjs'
 import moment from 'moment'
 import PropTypes from 'prop-types'
@@ -25,34 +26,48 @@ export default class SeasonSelect extends React.Component {
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        const defaultIfInvalid = (input, defaultDate) => {
-            const date = moment(input.value)
-            return date.isValid() ? date : defaultDate()
-        }
         const calcMinDate = (centerDate) => moment(centerDate).subtract(1, 'years').add(1, 'day')
         const calcMaxDate = (centerDate) => moment(centerDate).add(1, 'years')
 
-        const centerDate = defaultIfInvalid(nextProps.centerDate, () => moment())
-        let startDate = defaultIfInvalid(nextProps.startDate, () => calcMinDate(centerDate))
-        let endDate = defaultIfInvalid(nextProps.endDate, () => calcMaxDate(centerDate))
+        const centerDate = moment(nextProps.centerDate.value, DATE_FORMAT, true)
+        let startDate = moment(nextProps.startDate.value, DATE_FORMAT, true)
+        let endDate = moment(nextProps.endDate.value, DATE_FORMAT, true)
+
+        if (!centerDate.isValid() || !startDate.isValid() || !endDate.isValid())
+            return prevState // Don't update if any provided date is invalid
 
         const centerDateUnchanged = prevState.centerDate && prevState.centerDate.isSame(centerDate)
         if (centerDateUnchanged)
             return {...prevState, centerDate, startDate, endDate}
 
-        const prevCenterDate = prevState.centerDate || centerDate
         const minDate = calcMinDate(centerDate)
         const maxDate = calcMaxDate(centerDate)
         const centerDay = centerDate.diff(minDate, 'days')
         const maxDay = maxDate.diff(minDate, 'days')
 
-        let startCenterYearDiff = startDate.year() - prevCenterDate.year()
-        startDate.set('year', centerDate.year() + startCenterYearDiff)
-        startDate = SeasonSelect.constrainStartDate(startDate, centerDate)
+        const incrementYear = (date, years) =>
+            moment(date).set('year', date.year() + years)
 
-        let endCenterYearDiff = endDate.year() - prevCenterDate.year()
-        endDate.set('year', centerDate.year() + endCenterYearDiff)
-        endDate = SeasonSelect.constrainEndDate(endDate, centerDate)
+        const bestRange = (range1, range2) => {
+            const diff = (range) => range[0].diff(centerDate, 'days') + centerDate.diff(range[1], 'days')
+            const diff1 = diff(range1)
+            const diff2 = diff(range2)
+            return diff1 === diff2 ? 0 : diff1 < diff2 ? -1 : 1
+        }
+
+        const [updatedStartDate, updatedEndDate] = intersect([startDate, endDate]
+            .map(date => date.year())
+            .map(year => centerDate.year() - year))
+            .map((yearDiff) => [
+                incrementYear(startDate, yearDiff),
+                incrementYear(endDate, yearDiff)
+            ])
+            .sort(bestRange)[0]
+        startDate = SeasonSelect.constrainStartDate(updatedStartDate, centerDate)
+        nextProps.startDate.set(startDate.format(DATE_FORMAT))
+        endDate = SeasonSelect.constrainEndDate(updatedEndDate, centerDate)
+        nextProps.endDate.set(endDate.format(DATE_FORMAT))
+
         return {...prevState, centerDate, centerDay, minDate, maxDay, maxDate, startDate, endDate}
     }
 
@@ -219,15 +234,6 @@ class DatePickers extends React.Component {
 class Timeline extends React.Component {
     render() {
         return this.renderTimeline.bind(this.props.seasonSelect)()
-    }
-
-    componentDidMount() {
-        this.props.seasonSelect.setState((prevState) => {
-            let {startDate, endDate, centerDate} = prevState
-            startDate = SeasonSelect.constrainStartDate(startDate, centerDate)
-            endDate = SeasonSelect.constrainEndDate(endDate, centerDate)
-            return {...prevState, startDate, endDate}
-        })
     }
 
     renderTimeline() {

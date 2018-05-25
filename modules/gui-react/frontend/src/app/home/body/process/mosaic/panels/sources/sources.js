@@ -8,6 +8,7 @@ import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './sources.module.css'
 import updateSource from './updateSource'
+import {arrayEquals} from 'collections'
 
 const inputs = {
     source: new Constraints()
@@ -118,12 +119,6 @@ class Sources extends React.Component {
         if (selectedSource !== source.value)
             source.set(selectedSource)
 
-        const arrayEquals = (a1, a2) => {
-            if (a1 === a2) return true
-            if ((a1 && a1.length || 0) != (a2 && a2.length) || 0) return false
-            if (a1.find((e, i) => e !== a2[i])) return false
-            return true
-        }
         if (!arrayEquals(selectedDataSets, dataSets.value))
             dataSets.set(selectedDataSets)
     }

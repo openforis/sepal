@@ -18,13 +18,18 @@ const minEndDate = (targetDate) => parseDate(targetDate).add(1, 'days')
 const maxEndDate = (targetDate) => parseDate(targetDate).add(1, 'years')
 
 const inputs = {
+    advanced: new Constraints(),
+
     targetYear: new Constraints()
+        .skip((_, {advanced}) => advanced)
         .int('process.mosaic.panel.dates.form.targetDate.malformed'),
 
     targetDate: new Constraints()
+        .skip((_, {advanced}) => !advanced)
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.targetDate.malformed'),
 
     seasonStart: new Constraints()
+        .skip((_, {advanced}) => !advanced)
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
         .predicate((date, {targetDate}) => parseDate(date).isSameOrAfter(minStartDate(targetDate)),
             'process.mosaic.panel.dates.form.season.tooEarly',
@@ -38,6 +43,7 @@ const inputs = {
             })),
 
     seasonEnd: new Constraints()
+        .skip((_, {advanced}) => !advanced)
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
         .predicate((date, {targetDate}) => parseDate(date).isSameOrAfter(minEndDate(targetDate)),
             'process.mosaic.panel.dates.form.season.tooEarly',
@@ -51,20 +57,21 @@ const inputs = {
             })),
 
     yearsBefore: new Constraints()
+        .skip((_, {advanced}) => !advanced)
         .int('process.mosaic.panel.dates.form.years.positiveInteger')
         .min(0, 'process.mosaic.panel.dates.form.years.positiveInteger'),
 
     yearsAfter: new Constraints()
+        .skip((_, {advanced}) => !advanced)
         .int('process.mosaic.panel.dates.form.years.positiveInteger')
         .min(0, 'process.mosaic.panel.dates.form.years.positiveInteger')
 }
 
-
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        advanced: recipe('ui.advancedDateForm'),
         values: recipe('dates') || {
+            advanced: recipe('ui.advancedDateForm'),
             targetYear: String(moment().year()),
             targetDate: moment().format(DATE_FORMAT),
             seasonStart: moment().startOf('year').format(DATE_FORMAT),
@@ -102,25 +109,27 @@ class Dates extends React.Component {
     }
 
     setAdvanced(enabled) {
+        const {inputs: {advanced}} = this.props
+        advanced.set(enabled)
         this.recipe.setAdvancedDateForm(enabled).dispatch()
     }
 
     render() {
-        const {id, form, advanced, className} = this.props
+        const {id, form, inputs: {advanced}, className} = this.props
         return (
-            <form className={[className, advanced ? styles.advanced : styles.simple].join(' ')}>
+            <form className={[className, advanced.value ? styles.advanced : styles.simple].join(' ')}>
                 <PanelForm
                     additionalButtons={[{
                         key: 'advanced',
-                        label: advanced ? msg('button.less') : msg('button.more'),
-                        onClick: () => this.setAdvanced(!advanced)
+                        label: advanced.value ? msg('button.less') : msg('button.more'),
+                        onClick: () => this.setAdvanced(!advanced.value)
                     }]}
                     recipeId={id}
                     form={form}
                     onApply={(recipe, dates) => recipe.setDates(dates).dispatch()}
                     icon='cog'
                     title={msg('process.mosaic.panel.dates.title')}>
-                    {advanced ? this.renderAdvanced() : this.renderSimple()}
+                    {advanced.value ? this.renderAdvanced() : this.renderSimple()}
                 </PanelForm>
             </form>
         )
@@ -201,7 +210,7 @@ class Dates extends React.Component {
 const parseDate = (dateString) =>
     moment(dateString, 'YYYY-MM-DD', true)
 
-const parseYear = (dateString) => 
+const parseYear = (dateString) =>
     moment(dateString, 'YYYY', true)
 
 Dates.propTypes = {
