@@ -56,7 +56,7 @@ export default class Buttons extends React.Component {
                 </button>
             </li>
         return tooltip && !disabled
-            ? <Tooltip key={value} msg={tooltip} below>{button}</Tooltip>
+            ? <Tooltip key={value} msg={tooltip} bottom>{button}</Tooltip>
             : button
     }
 
