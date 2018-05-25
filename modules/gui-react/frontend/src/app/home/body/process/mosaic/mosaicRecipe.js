@@ -2,7 +2,7 @@ import actionBuilder from 'action-builder'
 import moment from 'moment'
 import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
 import {select} from 'store'
-import {map} from '../../../map/map'
+import Labels from '../../../map/labels'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -59,7 +59,7 @@ export const RecipeActions = (id) => {
             return set('SET_INITIALIZED', 'ui.initialized', true)
         },
         setLabelsShown(shown) {
-            map.showLabelsLayer(shown)
+            Labels.setLayer({id: 'labels', shown})
             return set('SET_LABELS_SHOWN', 'ui.labelsShown', shown, {shown})
         },
         setGridShown(shown) {

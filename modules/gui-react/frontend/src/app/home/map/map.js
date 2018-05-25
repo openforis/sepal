@@ -25,7 +25,7 @@ const setLayer = (id, layer) => {
         removeLayer(id)
     }
     if (layer) {
-        layer.setMap(instance)
+        layer.addToMap(instance)
         layers[id] = layer
     }
     return true
@@ -33,7 +33,7 @@ const setLayer = (id, layer) => {
 
 const removeLayer = (id) => {
     if (layers[id])
-        layers[id].setMap(null)
+        layers[id].removeFromMap(instance)
     delete layers[id]
 }
 
@@ -98,15 +98,6 @@ const createMap = (mapElement) => {
         zIndex: 1
     }
 
-    const addOverlay = (layer) => {
-        instance.overlayMapTypes.push(layer)
-    }
-
-    const removeOverlay = (name) => {
-        let index = instance.overlayMapTypes.getArray().findIndex(x => x.name === name)
-        instance.overlayMapTypes.removeAt(index)
-    }
-
     map = {
         getKey() {
             return GoogleMapsLoader.KEY
@@ -130,14 +121,6 @@ const createMap = (mapElement) => {
         addGEELayer(mapId, token) {
             let geeLayer = new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {name: 'gee'})
             instance.overlayMapTypes.push(geeLayer)
-        },
-        showLabelsLayer(shown) {
-            if (shown)
-                addOverlay(
-                    new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
-                )
-            else
-                removeOverlay('labels')
         },
         fitLayer(mapObjectName) {
             const mapObject = layers[mapObjectName]
@@ -210,23 +193,6 @@ const defaultStyle = [
     {stylers: [{color: '#131314'}]},
     {featureType: 'water', stylers: [{color: '#131313'}, {lightness: 4}]},
     {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
-]
-
-const labelsLayerStyle = [
-    {featureType: 'all', stylers: [{visibility: 'off'}]},
-    {featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{color: '#decca6'}, {visibility: 'on'}]},
-    {
-        featureType: 'administrative.locality',
-        elementType: 'labels.text.fill',
-        stylers: [{color: '#d59563'}, {visibility: 'on'}]
-    },
-    {featureType: 'road', elementType: 'geometry', stylers: [{color: '#38414e'}, {visibility: 'on'}]},
-    {featureType: 'road', elementType: 'geometry.stroke', stylers: [{color: '#212a37'}, {visibility: 'on'}]},
-    {featureType: 'road', elementType: 'labels.text.fill', stylers: [{color: '#9ca5b3'}, {visibility: 'on'}]},
-    {featureType: 'road.highway', elementType: 'geometry', stylers: [{color: '#746855'}, {visibility: 'on'}]},
-    {featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{color: '#1f2835'}, {visibility: 'on'}]}
-
-
 ]
 
 const mapStateToProps = () => ({

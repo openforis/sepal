@@ -57,8 +57,12 @@ class FusionTable {
         )
     }
 
-    setMap(map) {
+    addToMap(map) {
         this.layer.setMap(map)
+    }
+
+    removeFromMap(map) {
+        this.layer.setMap(null)
     }
 
     loadBounds$() {

@@ -1,5 +1,5 @@
-import {google, map, polygonOptions} from './map'
 import {of} from 'rxjs'
+import {google, map, polygonOptions} from './map'
 import './map.module.css'
 
 class Polygon {
@@ -32,8 +32,12 @@ class Polygon {
         )
     }
 
-    setMap(map) {
+    addToMap(map) {
         this.layer.setMap(map)
+    }
+
+    removeFromMap(map) {
+        this.layer.setMap(null)
     }
 
     loadBounds$() {
