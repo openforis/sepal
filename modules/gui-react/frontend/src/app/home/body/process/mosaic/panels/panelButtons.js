@@ -34,7 +34,7 @@ class PanelButtons extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId, form} = this.props
+        const {recipeId} = this.props
         this.recipe = RecipeActions(recipeId)
         this.recipe.setModal(true).dispatch()
     }
@@ -71,7 +71,6 @@ class PanelButtons extends React.Component {
     }
 
     next() {
-        const {form} = this.props
         const {selectedPanelIndex, last} = this.state
         if (!last) {
             this.apply()

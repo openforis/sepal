@@ -121,6 +121,8 @@ const createAoi = (aoiForm) => {
                 type: 'polygon',
                 path: aoiForm.polygon
             }
+        default:
+            throw new Error('Invalid aoi section: ' + aoiForm.section)
     }
 }
 

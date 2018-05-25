@@ -1,3 +1,4 @@
+import {map} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {AnimateReplacement} from 'widget/animate'
@@ -9,7 +10,6 @@ import CountrySection from './countrySection'
 import FusionTableSection from './fusionTableSection'
 import PolygonSection from './polygonSection'
 import SectionSelection from './sectionSelection'
-import {map} from 'app/home/map/map'
 
 const inputs = {
     section: new Constraints()
@@ -48,7 +48,6 @@ class Aoi extends React.Component {
     }
 
     onCancel() {
-        map.setLayer
         map.fitBounds(this.initialBounds)
     }
 
