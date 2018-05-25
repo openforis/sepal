@@ -1,11 +1,11 @@
-import React from 'react'
-import {connect} from 'store'
-import styles from './menu.module.css'
-import Tooltip from 'widget/tooltip'
-import {Link, isPathInLocation} from 'route'
-import {requestedApps, quitApp} from 'apps'
-import Icon from 'widget/icon'
+import {quitApp, requestedApps} from 'apps'
 import PropTypes from 'prop-types'
+import React from 'react'
+import {isPathInLocation, Link} from 'route'
+import {connect} from 'store'
+import Icon from 'widget/icon'
+import Tooltip from 'widget/tooltip'
+import styles from './menu.module.css'
 import {isFloating} from './menuMode'
 
 const mapStateToProps = () => ({
@@ -17,6 +17,7 @@ class Menu extends React.Component {
     appSection(app) {
         return <AppLink key={app.path} app={app}/>
     }
+
     render() {
         const {className, floating, requestedApps, user} = this.props
         return (
@@ -31,8 +32,7 @@ class Menu extends React.Component {
                     </div>
                     <div className={styles.section}>
                         <SectionLink name='tasks' icon='tasks'/>
-                        {/* {user.admin ? <SectionLink name='users' icon='users'/> : null} */}
-                        <SectionLink name='users' icon='users'/>
+                        {user.admin ? <SectionLink name='users' icon='users'/> : null}
                     </div>
                 </div>
             </div>
