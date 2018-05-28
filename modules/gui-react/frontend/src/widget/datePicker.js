@@ -119,30 +119,38 @@ DatePicker.propTypes = {
 class DatePickerControl extends React.Component {
     constructor(props) {
         super(props)
-        const date = this.parseDate(props.input.value)
+        const {input, resolution} = props
+        const date = this.parseDate(input.value)
+        this.items = items.slice(0, items.indexOf(resolution) + 1)
+
         this.state = {
-            year: date.year(),
-            month: date.month(),
-            day: date.date(),
             highlighted: false
         }
-        this.selected = {
-            year: React.createRef(),
-            month: React.createRef(),
-            day: React.createRef()
-        }
+        this.selected = {}
         this.subscriptions = []
-
         this.select$ = new Subject()
-        this.autoUnsubscribe(this.select(this.select$, YEAR))
-        this.autoUnsubscribe(this.select(this.select$, MONTH))
-        this.autoUnsubscribe(this.select(this.select$, DAY))
+
+        if ([YEAR, MONTH, DAY].includes(resolution))
+            this.initializeItem(YEAR, date)
+
+        if ([MONTH, DAY].includes(resolution))
+            this.initializeItem(MONTH, date)
+
+        if ([DAY].includes(resolution))
+            this.initializeItem(DAY, date)
 
         this.scroll$ = new Subject()
-        this.autoUnsubscribe(this.autoScroll(this.scroll$))
+        this.unsubscribeOnUnmount(this.autoScroll(this.scroll$))
     }
 
-    autoUnsubscribe(subscription) {
+    initializeItem(item, date) {
+        console.log('initialize', item)
+        this.state[item] = this.getDateItem(date, item)
+        this.selected[item] = React.createRef()
+        this.unsubscribeOnUnmount(this.select(this.select$, item))
+    }
+
+    unsubscribeOnUnmount(subscription) {
         this.subscriptions.push(subscription)
     }
 
@@ -207,6 +215,10 @@ class DatePickerControl extends React.Component {
         return date.format(getDateFormat(this.props.resolution))
     }
 
+    getDateItem(date, item) {
+        return date.get(item === DAY ? 'date' : item)
+    }
+
     renderItem(item, value) {
         const displayValue = item === MONTH
             ? moment().month(value).format('MMM')
@@ -214,7 +226,7 @@ class DatePickerControl extends React.Component {
         const selected = this.state[item] === value
         const select = (e, item, value) => {
             const {input, resolution} = this.props
-            const itemsForResolution = items.slice(0, items.indexOf(resolution) + 1)
+            const itemsForResolution = this.items
             const completeDate = !itemsForResolution
                 .filter((i) => i !== item)
                 .find((i) => {
@@ -285,14 +297,14 @@ class DatePickerControl extends React.Component {
     }
 
     centerSelected() {
-        items.map(item => this.centerItem(item, this.selected[item].current))
+        this.items.map(item => this.centerItem(item, this.selected[item].current))
     }
 
     render() {
         return (
             <div className={styles.control}>
                 <div className={styles.picker}>
-                    {items.map(item => this.renderPicker(item))}
+                    {this.items.map(item => this.renderPicker(item))}
                 </div>
             </div>
         )
@@ -305,7 +317,7 @@ class DatePickerControl extends React.Component {
         }
 
         const nextState = {...this.state}
-        const changed = items.find((item) => {
+        const changed = this.items.find((item) => {
             const prevValue = prevState[item]
             const date = this.parseDate(this.props.input.value)
             if (!date.isValid())

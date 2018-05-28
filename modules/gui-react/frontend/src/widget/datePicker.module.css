@@ -19,12 +19,6 @@
     width: calc(5rem * var(--scaling-factor));
 }
 
-.input.year ul.month,
-.input.year ul.day,
-.input.month ul.day {
-    display: none;
-}
-
 .input input {
     margin: 0;
     display: inline-block;
