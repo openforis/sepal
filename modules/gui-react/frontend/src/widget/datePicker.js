@@ -11,7 +11,7 @@ const range = (from, to) =>
     Array.from({length: (to - from + 1)}, (v, k) => k + from)
 
 const ANIMATION_SPEED = .2
-const AUTOSCROLL_DELAY = 1000
+const AUTO_CENTER_DELAY = 1000
 
 const YEAR = 'year'
 const MONTH = 'month'
@@ -64,6 +64,7 @@ class DatePicker extends React.Component {
                         input={input}
                         maxLength={10}
                         autoComplete='off'
+                        onClick={() => this.editDate(true)}
                         onFocus={() => this.editDate(true)}
                         onBlur={() => this.editDate(false)}
                     />
@@ -79,7 +80,9 @@ class DatePicker extends React.Component {
                             startDate={startDate}
                             endDate={endDate}
                             input={input}
-                            resolution={resolution}/>
+                            resolution={resolution}
+                            onSelect={() => this.editDate(false)}
+                            />
                         : null}
                 </div>
             </div>
@@ -131,23 +134,22 @@ class DatePickerControl extends React.Component {
         this.select$ = new Subject()
 
         if ([YEAR, MONTH, DAY].includes(resolution))
-            this.initializeItem(YEAR, date)
+            this.state.year = this.initializeItem(YEAR, date)
 
         if ([MONTH, DAY].includes(resolution))
-            this.initializeItem(MONTH, date)
+            this.state.month = this.initializeItem(MONTH, date)
 
         if ([DAY].includes(resolution))
-            this.initializeItem(DAY, date)
+            this.state.day = this.initializeItem(DAY, date)
 
         this.scroll$ = new Subject()
-        this.unsubscribeOnUnmount(this.autoScroll(this.scroll$))
+        this.unsubscribeOnUnmount(this.autoCenterWhenIdle(this.scroll$))
     }
 
     initializeItem(item, date) {
-        console.log('initialize', item)
-        this.state[item] = this.getDateItem(date, item)
         this.selected[item] = React.createRef()
         this.unsubscribeOnUnmount(this.select(this.select$, item))
+        return this.getDateItem(date, item)
     }
 
     unsubscribeOnUnmount(subscription) {
@@ -179,9 +181,9 @@ class DatePickerControl extends React.Component {
         ).subscribe(({element, value}) => setScrollOffset(element, Math.round(value)))
     }
 
-    autoScroll(scroll$) {
+    autoCenterWhenIdle(scroll$) {
         return scroll$.pipe(
-            debounceTime(AUTOSCROLL_DELAY)
+            debounceTime(AUTO_CENTER_DELAY)
         ).subscribe(() => {
             this.centerSelected()
         })
@@ -190,8 +192,9 @@ class DatePickerControl extends React.Component {
     set(item, value) {
         this.setState((prevState) => {
             const state = {...prevState}
+            const {resolution} = this.props
             state[item] = value
-            if (item !== DAY) {
+            if (resolution === DAY && item !== DAY) {
                 // adjust day of month if not allowed in current month
                 state.day = Math.min(prevState.day, daysInMonth(state.year, state.month))
             }
@@ -219,28 +222,39 @@ class DatePickerControl extends React.Component {
         return date.get(item === DAY ? 'date' : item)
     }
 
+    centerItem(item, element) {
+        this.select$.next({item, element})
+    }
+
+    centerSelected() {
+        this.items.map(item => this.centerItem(item, this.selected[item].current))
+    }
+
     renderItem(item, value) {
         const displayValue = item === MONTH
             ? moment().month(value).format('MMM')
             : value
         const selected = this.state[item] === value
         const select = (e, item, value) => {
-            const {input, resolution} = this.props
-            const itemsForResolution = this.items
-            const completeDate = !itemsForResolution
+            const {input, resolution, onSelect} = this.props
+            const completeDate = !this.items
                 .filter((i) => i !== item)
                 .find((i) => {
                     return !(this.state[i] >= 0)
                 })
             if (completeDate) { // If year, month, day specified in state
                 const date = moment().set(toMomentUnit(item), value)
-                itemsForResolution
+                this.items
                     .filter((i) => i !== item)
                     .forEach((i) => date.set(toMomentUnit(i), this.state[i]))
                 input.set(this.formatDate(date))
             }
             this.set(item, value)
-            this.centerItem(item, e.target)
+            if (resolution === YEAR && onSelect) {
+                onSelect()
+            } else {
+                this.centerItem(item, e.target)
+            }
         }
         return selected ? (
             <li
@@ -290,14 +304,6 @@ class DatePickerControl extends React.Component {
                 return this.renderList(DAY, range(minDay, maxDay))
             default:
         }
-    }
-
-    centerItem(item, element) {
-        this.select$.next({item, element})
-    }
-
-    centerSelected() {
-        this.items.map(item => this.centerItem(item, this.selected[item].current))
     }
 
     render() {
@@ -360,7 +366,8 @@ DatePickerControl.propTypes = {
     date: PropTypes.object,
     startDate: PropTypes.any,
     endDate: PropTypes.any,
-    resolution: PropTypes.string
+    resolution: PropTypes.string,
+    onSelect: PropTypes.func
 }
 
 export default DatePicker
