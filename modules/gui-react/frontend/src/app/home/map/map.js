@@ -13,7 +13,6 @@ export let map = null
 export const ee = earthengine.ee
 export let google = null
 let instance = null
-let drawingManager = null
 
 const layersByContextId = {}
 let currentContextId
@@ -58,15 +57,15 @@ const createMap = (mapElement) => {
         fullscreenControl: false,
         backgroundColor: '#131314',
         gestureHandling: 'greedy',
-        // styles: defaultStyle
     })
     instance.mapTypes.set('styled_map', new google.maps.StyledMapType(defaultStyle, {name: 'sepalMap'}))
     instance.setMapTypeId('styled_map')
-    // instance.addListener('zoom_changed', () =>
-    //     actionBuilder('SET_MAP_ZOOM')
-    //         .set('map.zoom', instance.getZoom())
-    //         .dispatch()
-    // )
+    instance.addListener('zoom_changed', () =>
+        actionBuilder('SET_MAP_ZOOM')
+            .set('map.zoom', instance.getZoom())
+            .dispatch()
+    )
+
     const drawingOptions = {
         fillColor: '#FBFAF2',
         fillOpacity: 0.07,
@@ -109,38 +108,6 @@ const createMap = (mapElement) => {
         getBounds() {
             return fromGoogleBounds(instance.getBounds())
         },
-        drawPolygon(id, callback) {
-            if (drawingManager === null) {
-                drawingManager = new google.maps.drawing.DrawingManager({
-                    drawingMode: google.maps.drawing.OverlayType.POLYGON,
-                    drawingControl: false,
-                    drawingControlOptions: {
-                        position: google.maps.ControlPosition.TOP_CENTER,
-                        // drawingModes: [ 'marker', 'circle', 'polygon', 'polyline', 'rectangle' ]
-                        drawingModes: ['polygon']
-                    },
-                    circleOptions: drawingOptions,
-                    polygonOptions: drawingOptions,
-                    rectangleOptions: drawingOptions
-                })
-            }
-            const drawingListener = (e) => {
-                const polygon = e.overlay
-                polygon.setMap(null)
-                const toPolygonPath = (polygon) => polygon.getPaths().getArray()[0].getArray().map((latLng) =>
-                    [latLng.lng(), latLng.lat()]
-                )
-                callback(toPolygonPath(polygon))
-            }
-            google.maps.event.addListener(drawingManager, 'overlaycomplete', drawingListener)
-            drawingManager.setMap(instance)
-        },
-        disableDrawingMode() {
-            if (drawingManager) {
-                drawingManager.setMap(null)
-                drawingManager = null
-            }
-        },
         getLayers(contextId) {
             let layers = layersByContextId[contextId]
             if (!layers) {
@@ -178,7 +145,42 @@ const createMap = (mapElement) => {
                     },
                     removeFromMap() {
                         Object.keys(layerById).forEach(id => layerById[id].removeFromMap(instance))
-                    }
+                    },
+                    drawPolygon(id, callback) {
+                        this._drawingMode = {id, callback}
+                        this._drawingManager = this._drawingManager || new google.maps.drawing.DrawingManager({
+                            drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                            drawingControl: false,
+                            drawingControlOptions: {
+                                position: google.maps.ControlPosition.TOP_CENTER,
+                                drawingModes: ['polygon']
+                            },
+                            circleOptions: drawingOptions,
+                            polygonOptions: drawingOptions,
+                            rectangleOptions: drawingOptions
+                        })
+                        const drawingListener = (e) => {
+                            console.log('drawingListener', e)
+                            const polygon = e.overlay
+                            polygon.setMap(null)
+                            const toPolygonPath = (polygon) => polygon.getPaths().getArray()[0].getArray().map((latLng) =>
+                                [latLng.lng(), latLng.lat()]
+                            )
+                            callback(toPolygonPath(polygon))
+                        }
+                        google.maps.event.addListener(this._drawingManager, 'overlaycomplete', drawingListener)
+                        this._drawingManager.setMap(instance)
+                    },
+                    pauseDrawingMode() {
+                        if (this._drawingManager) {
+                            this._drawingManager.setMap(null)
+                            google.maps.event.clearListeners(this._drawingManager, 'overlaycomplete')
+                        }
+                    },
+                    disableDrawingMode() {
+                        this.pauseDrawingMode()
+                        this._drawingMode = null
+                    },
                 }
                 layersByContextId[contextId] = layers
             }
@@ -187,15 +189,20 @@ const createMap = (mapElement) => {
         selectLayers(nextContextId) {
             if (currentContextId === nextContextId)
                 return
-
             const prevContextId = currentContextId
-            if (prevContextId)
-                this.getLayers(prevContextId).removeFromMap()
+            if (prevContextId) {
+                const layers = this.getLayers(prevContextId)
+                layers.pauseDrawingMode()
+                layers.removeFromMap()
+            }
 
             currentContextId = nextContextId
+            if (nextContextId) {
+                const layers = this.getLayers(nextContextId)
+                layers.addToMap()
+                layers._drawingMode && layers.drawPolygon(layers._drawingMode.id, layers._drawingMode.callback)
+            }
 
-            if (nextContextId)
-                this.getLayers(nextContextId).addToMap()
         },
         deselectLayers(contextIdToDeselect) {
             if (contextIdToDeselect === currentContextId)
