@@ -30,9 +30,14 @@ class TabContent extends React.Component {
 
     componentDidMount() {
         const {tab: {id}} = this.props
-        this.props.onEnable(() => map.switchLayers(id))
-        this.props.onDisable(() => map.deselectLayers(id))
-        map.switchLayers(id)
+        this.props.onEnable(() => {
+            if (this.props.selected)
+                map.selectLayers(id)
+        })
+        this.props.onDisable(() => {
+            map.deselectLayers(id)
+        })
+        map.selectLayers(id)
     }
 
     componentDidUpdate(prevProps) {
@@ -42,7 +47,7 @@ class TabContent extends React.Component {
             map.deselectLayers(id)
         const gotSelected = !prevProps.selected && selected
         if (gotSelected)
-            map.switchLayers(id)
+            map.selectLayers(id)
     }
 
     componentWillUnmount() {

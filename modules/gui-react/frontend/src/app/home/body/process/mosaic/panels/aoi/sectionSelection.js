@@ -1,3 +1,4 @@
+import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {msg} from 'translate'
@@ -23,6 +24,11 @@ export default class SectionSelection extends React.Component {
                 <SectionOption section={section} label={'Draw polygon'} value='polygon'/>
             </PanelContent>
         )
+    }
+
+    componentDidUpdate() {
+        const {id} = this.props
+        setAoiLayer(id, null)
     }
 }
 

@@ -1,5 +1,5 @@
 import {of} from 'rxjs'
-import {google, map, polygonOptions} from './map'
+import {google, map, polygonOptions, fromGoogleBounds} from './map'
 import './map.module.css'
 
 class Polygon {
@@ -17,12 +17,12 @@ class Polygon {
             paths: path.map(([lng, lat]) =>
                 new google.maps.LatLng(lat, lng)), ...polygonOptions
         })
-        const bounds = new google.maps.LatLngBounds()
+        const googleBounds = new google.maps.LatLngBounds()
         this.layer.getPaths().getArray().forEach((path) =>
             path.getArray().forEach((latLng) =>
-                bounds.extend(latLng)
+                googleBounds.extend(latLng)
             ))
-        this.bounds = bounds
+        this.bounds = fromGoogleBounds(googleBounds)
     }
 
     equals(o) {

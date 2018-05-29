@@ -185,7 +185,8 @@
             "polygon": {
               "title": "Draw a polygon",
               "description": "Draw a polygon on the map."
-            }
+            },
+            "bounds.required": "Bounds are not loaded"
           }
         },
         "dates": {

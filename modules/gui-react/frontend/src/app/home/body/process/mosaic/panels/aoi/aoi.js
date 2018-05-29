@@ -1,3 +1,4 @@
+import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {map} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -31,13 +32,16 @@ const inputs = {
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.row.required'),
     polygon: new Constraints()
         .skip((value, {section}) => section !== 'polygon')
-        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
+    bounds: new Constraints()
+        .notBlank('process.mosaic.panel.areaOfInterest.form.bounds.required')
 }
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        values: recipe('ui.aoi')
+        values: recipe('ui.aoi'),
+        aoi: recipe('aoi')
     }
 }
 
@@ -48,6 +52,8 @@ class Aoi extends React.Component {
     }
 
     onCancel() {
+        const {id, aoi} = this.props
+        setAoiLayer(id, aoi)
         map.fitBounds(this.initialBounds)
     }
 
@@ -88,7 +94,7 @@ class Aoi extends React.Component {
             case 'polygon':
                 return <PolygonSection id={id} inputs={inputs} className={styles.right}/>
             default:
-                return <SectionSelection form={form} inputs={inputs} className={styles.left}/>
+                return <SectionSelection id={id} form={form} inputs={inputs} className={styles.left}/>
         }
     }
 }

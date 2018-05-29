@@ -40,11 +40,10 @@ export function select(path) {
 export function connect(mapStateToProps) {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
     return (WrappedComponent) => {
-        let enabled
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
         WrappedComponent = connectToRedux(includeDispatchingProp(mapStateToProps))(WrappedComponent)
         WrappedComponent.prototype.shouldComponentUpdate = (nextProps, nextState) => {
-            return enabled !== false
+            return nextProps.enabled !== false
         }
 
         class ConnectedComponent extends React.Component {
@@ -65,29 +64,36 @@ export function connect(mapStateToProps) {
             }
 
             render() {
-                return (
-                    <EnabledContext.Consumer>
-                        {nextEnabled => {
-                            if (enabled === false && nextEnabled === true && this.onEnable)
-                                this.onEnable && this.onEnable()
-                            else if (enabled !== false && nextEnabled === false && this.onDisable)
-                                this.onDisable && this.onDisable()
-                            enabled = nextEnabled
-                            return React.createElement(WrappedComponent, {
-                                ...this.props,
-                                asyncActionBuilder: this.asyncActionBuilder,
-                                onEnable: (listener) => this.onEnable = listener,
-                                onDisable: (listener) => this.onDisable = listener,
-                                componentId: this.id
-                            })
-                        }}
-                    </EnabledContext.Consumer>
-                )
+                return React.createElement(WrappedComponent, {
+                    ...this.props,
+                    asyncActionBuilder: this.asyncActionBuilder,
+                    onEnable: (listener) => this.onEnable = listener,
+                    onDisable: (listener) => this.onDisable = listener,
+                    componentId: this.id
+                })
+            }
+
+            componentDidUpdate(prevProps) {
+                const wasEnabled = prevProps.enabled
+                const isEnabled = this.props.enabled
+                if (displayName === 'TabContent' && wasEnabled !== isEnabled)
+                    console.log(this.id, wasEnabled, '->', isEnabled)
+                if (wasEnabled !== true && isEnabled === true && this.onEnable)
+                    this.onEnable()
+                else if (wasEnabled !== false && isEnabled === false && this.onDisable)
+                    this.onDisable()
             }
         }
 
         ConnectedComponent.displayName = `Store(${WrappedComponent.displayName})`
-        return ConnectedComponent
+        return (props) =>
+            <EnabledContext.Consumer>
+                {enabled =>
+                    <ConnectedComponent {...props} enabled={enabled}>
+                        {props.children}
+                    </ConnectedComponent>
+                }
+            </EnabledContext.Consumer>
     }
 }
 

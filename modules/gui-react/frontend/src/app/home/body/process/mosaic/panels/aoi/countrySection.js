@@ -59,17 +59,19 @@ class CountrySection extends React.Component {
             this.props.asyncActionBuilder('LOAD_COUNTRY_AREAS',
                 loadCountryAreas$(countryId).pipe(
                     takeUntil(this.aoiChanged$))
-            )
-                .dispatch()
+            ).dispatch()
     }
 
     loadBounds(layer) {
         const {id} = this.props
         this.props.asyncActionBuilder('LOAD_BOUNDS',
             layer.loadBounds$().pipe(
-                rxMap((bounds) => actionBuilder('LOADED_BOUNDS', {bounds})),
+                rxMap((bounds) => {
+                    map.getLayers(id).fit('aoi')
+                    this.props.inputs.bounds.set(bounds)
+                    return actionBuilder('LOADED_BOUNDS', {bounds})
+                }),
                 takeUntil(this.aoiChanged$)))
-            .onComplete(() => map.getLayers(id).fit('aoi'))
             .dispatch()
     }
 

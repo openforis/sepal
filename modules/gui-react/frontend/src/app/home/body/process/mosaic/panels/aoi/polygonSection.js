@@ -38,11 +38,14 @@ class PolygonSection extends React.Component {
         if (prevProps.inputs === this.props.inputs)
             return
 
-        const {id, inputs: {polygon}} = this.props
+        const {id, inputs: {polygon, bounds}} = this.props
         setAoiLayer(id, {
                 type: 'polygon',
                 path: polygon.value
-            }, () => map.getLayers(id).fit('aoi')
+            }, (layer) => {
+                bounds.set(layer.bounds)
+                return map.getLayers(id).fit('aoi')
+            }
         )
     }
 

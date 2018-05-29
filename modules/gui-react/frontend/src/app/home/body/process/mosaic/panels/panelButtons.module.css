@@ -11,9 +11,6 @@
 
 /*.*/
 
-.dirty {
-    opacity: 1;
-}
 
 .buttons button {
     color: #ccc;
@@ -69,6 +66,11 @@ button.cancel {
     color: var(--button-default-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
+    opacity: 0;
+}
+
+.buttons.dirty button.cancel {
+    opacity: 1;
 }
 
 button.cancel:focus {

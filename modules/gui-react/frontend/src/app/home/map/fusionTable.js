@@ -1,16 +1,16 @@
 import Http from 'http-client'
 import {map as rxMap} from 'rxjs/operators'
 import {subscribe} from 'store'
-import {google, map, polygonOptions} from './map'
+import {fromGoogleBounds, google, map, polygonOptions} from './map'
 import './map.module.css'
 
 let googleTokens = null
 subscribe('user.currentUser.googleTokens', (tokens) => googleTokens = tokens)
 
 class FusionTable {
-    static setLayer(contextId, {id, table, keyColumn, key}, onInitialized) {
+    static setLayer(contextId, {id, table, keyColumn, key, bounds}, onInitialized) {
         const layer = key
-            ? new FusionTable({table, keyColumn, key})
+            ? new FusionTable({table, keyColumn, key, bounds})
             : null
         const changed = map.getLayers(contextId).set(id, layer)
         if (layer && changed && onInitialized)
@@ -32,10 +32,11 @@ class FusionTable {
         )
     }
 
-    constructor({table, keyColumn, key}) {
+    constructor({table, keyColumn, key, bounds}) {
         this.table = table
         this.keyColumn = keyColumn
         this.key = key
+        this.bounds = bounds
 
         this.layer = new google.maps.FusionTablesLayer({
             suppressInfoWindows: true,
@@ -83,20 +84,15 @@ class FusionTable {
             WHERE '${this.keyColumn}' = '${this.key}'
         `).pipe(
             rxMap((e) => {
-                    const bounds = new google.maps.LatLngBounds()
+                    const googleBounds = new google.maps.LatLngBounds()
                     if (!e.response.rows[0])
                         throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.table}`)
                     try {
                         e.response.rows[0].forEach((o) =>
-                            eachLatLng(o, (latLng) => bounds.extend(latLng))
+                            eachLatLng(o, (latLng) => googleBounds.extend(latLng))
                         )
-                        this.bounds = bounds
-                        const ne = bounds.getNorthEast()
-                        const sw = bounds.getSouthWest()
-                        return [
-                            [ne.lat(), ne.lng()],
-                            [sw.lat(), sw.lng()],
-                        ]
+                        this.bounds = fromGoogleBounds(googleBounds)
+                        return this.bounds
                     } catch (e) {
                         console.error('Failed to get bounds', e)
                         throw e

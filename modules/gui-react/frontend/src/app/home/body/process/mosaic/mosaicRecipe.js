@@ -107,19 +107,22 @@ const createAoi = (aoiForm) => {
             return {
                 type: 'country',
                 countryCode: aoiForm.country,
-                areaCode: aoiForm.area
+                areaCode: aoiForm.area,
+                bounds: aoiForm.bounds
             }
         case 'fusionTable':
             return {
                 type: 'fusionTable',
                 id: aoiForm.fusionTable,
                 keyColumn: aoiForm.fusionTableColumn,
-                key: aoiForm.fusionTableRow
+                key: aoiForm.fusionTableRow,
+                bounds: aoiForm.bounds
             }
         case 'polygon':
             return {
                 type: 'polygon',
-                path: aoiForm.polygon
+                path: aoiForm.polygon,
+                bounds: aoiForm.bounds
             }
         default:
             throw new Error('Invalid aoi section: ' + aoiForm.section)

@@ -163,8 +163,9 @@ class PanelButtons extends React.Component {
 
     renderFormButtons() {
         const {form} = this.props
+        const dirty = form.isDirty()
         return (
-            <div className={styles.buttons}>
+            <div className={[styles.buttons, dirty && styles.dirty].join(' ')}>
                 <button
                     onClick={(e) => {
                         e.preventDefault()

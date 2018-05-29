@@ -103,10 +103,11 @@ const createMap = (mapElement) => {
             instance.overlayMapTypes.push(geeLayer)
         },
         fitBounds(bounds) {
-            instance.fitBounds(bounds)
+            const googleBounds = toGoogleBounds(bounds)
+            !instance.getBounds().equals(googleBounds) && instance.fitBounds(googleBounds)
         },
         getBounds() {
-            return instance.getBounds()
+            return fromGoogleBounds(instance.getBounds())
         },
         drawPolygon(id, callback) {
             if (drawingManager === null) {
@@ -169,7 +170,7 @@ const createMap = (mapElement) => {
                         const layer = layerById[id]
                         if (layer && layer.bounds && currentContextId === contextId) {
                             const bounds = layer.bounds
-                            !instance.getBounds().equals(bounds) && instance.fitBounds(bounds)
+                            map.fitBounds(bounds)
                         }
                     },
                     addToMap() {
@@ -183,7 +184,7 @@ const createMap = (mapElement) => {
             }
             return layers
         },
-        switchLayers(nextContextId) {
+        selectLayers(nextContextId) {
             if (currentContextId === nextContextId)
                 return
 
@@ -198,7 +199,7 @@ const createMap = (mapElement) => {
         },
         deselectLayers(contextIdToDeselect) {
             if (contextIdToDeselect === currentContextId)
-                map.switchLayers()
+                map.selectLayers()
         },
         removeLayers(contextIdToRemove) {
             if (contextIdToRemove === currentContextId) {
@@ -207,10 +208,27 @@ const createMap = (mapElement) => {
             delete layersByContextId[contextIdToRemove]
         },
         clear() {
-            map.switchLayers()
+            map.selectLayers()
         }
     }
 }
+
+export const fromGoogleBounds = (googleBounds) => {
+    const sw = googleBounds.getSouthWest()
+    const ne = googleBounds.getNorthEast()
+    return [
+        [sw.lng(), sw.lat()],
+        [ne.lng(), ne.lat()],
+    ]
+}
+
+const toGoogleBounds = (bounds) => {
+    return new google.maps.LatLngBounds(
+        {lng: bounds[0][0], lat: bounds[0][1]},
+        {lng: bounds[1][0], lat: bounds[1][1]},
+    )
+}
+
 
 export const polygonOptions = {
     fillColor: '#FBFAF2',
@@ -231,7 +249,6 @@ const defaultStyle = [
 const mapStateToProps = () => ({
     apiKey: select('map.apiKey')
 })
-
 
 class Map extends React.Component {
     state = {initialized: false}
