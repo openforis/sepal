@@ -56,7 +56,7 @@ export const dataSetById = {
 export const isDataSetInDateRange = (dataSetId, fromDate, toDate) => {
     const dataSet = dataSetById[dataSetId]
     const startOk = !dataSet.toYear || moment(fromDate).year() <= dataSet.toYear
-    const endOk = moment(toDate).year() >= dataSet.fromYear
+    const endOk = moment(toDate).subtract(1, 'days').year() >= dataSet.fromYear
     return startOk && endOk
 }
 

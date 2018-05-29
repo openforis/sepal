@@ -2,9 +2,9 @@ import {google, map} from 'app/home/map/map'
 import {of} from 'rxjs/index'
 
 export default class Labels {
-    static setLayer({id, shown}, onInitialized) {
+    static setLayer(contextId, {shown}, onInitialized) {
         const layer = shown ? new Labels() : null
-        const changed = map.setLayer({id, layer})
+        const changed = map.getLayers(contextId).set('labels', layer)
         if (changed && layer && onInitialized)
             onInitialized(layer)
         return layer

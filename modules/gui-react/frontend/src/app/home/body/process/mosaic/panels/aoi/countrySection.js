@@ -64,11 +64,12 @@ class CountrySection extends React.Component {
     }
 
     loadBounds(layer) {
+        const {id} = this.props
         this.props.asyncActionBuilder('LOAD_BOUNDS',
             layer.loadBounds$().pipe(
                 rxMap((bounds) => actionBuilder('LOADED_BOUNDS', {bounds})),
                 takeUntil(this.aoiChanged$)))
-            .onComplete(() => map.fitLayer('aoi'))
+            .onComplete(() => map.getLayers(id).fit('aoi'))
             .dispatch()
     }
 
@@ -132,13 +133,13 @@ class CountrySection extends React.Component {
     }
 
     update() {
-        const {countries, action, asyncActionBuilder, inputs: {country, area}} = this.props
+        const {id, countries, action, asyncActionBuilder, inputs: {country, area}} = this.props
         if (!countries && !action('LOAD_COUNTRIES').dispatching)
             asyncActionBuilder('LOAD_COUNTRIES',
                 loadCountries$())
                 .dispatch()
 
-        setAoiLayer({
+        setAoiLayer(id, {
             type: 'country',
             countryCode: country.value,
             areaCode: area.value
@@ -147,6 +148,7 @@ class CountrySection extends React.Component {
 }
 
 CountrySection.propTypes = {
+    id: PropTypes.string.isRequired,
     inputs: PropTypes.object.isRequired,
     className: PropTypes.string.isRequired
 }

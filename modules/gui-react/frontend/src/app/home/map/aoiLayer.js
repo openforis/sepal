@@ -4,11 +4,13 @@ import Polygon from './polygon'
 
 export const countryFusionTable = '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU'
 
-export const setAoiLayer = (aoi, onInitialized) => {
+export const setAoiLayer = (contextId, aoi, onInitialized) => {
+    if (!aoi)
+        return null
     const id = 'aoi'
 
     const setCountryLayer = () =>
-        FusionTable.setLayer({
+        FusionTable.setLayer(contextId, {
             id,
             table: countryFusionTable,
             keyColumn: 'id',
@@ -16,7 +18,7 @@ export const setAoiLayer = (aoi, onInitialized) => {
         }, onInitialized)
 
     const setFusionTableLayer = () =>
-        FusionTable.setLayer({
+        FusionTable.setLayer(contextId, {
             id,
             table: aoi.id,
             keyColumn: aoi.keyColumn,
@@ -24,7 +26,7 @@ export const setAoiLayer = (aoi, onInitialized) => {
         }, onInitialized)
 
     const setPolygonLayer = () =>
-        Polygon.setLayer({
+        Polygon.setLayer(contextId, {
             id,
             path: aoi.path
         }, onInitialized)

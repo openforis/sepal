@@ -3,9 +3,9 @@ import {google, map, polygonOptions} from './map'
 import './map.module.css'
 
 class Polygon {
-    static setLayer({id, path}, onInitialized) {
+    static setLayer(contextId, {id, path}, onInitialized) {
         const layer = path ? new Polygon(path) : null
-        const changed = map.setLayer({id, layer})
+        const changed = map.getLayers(contextId).set(id, layer)
         if (layer && changed && onInitialized)
             onInitialized(layer)
         return layer

@@ -15,28 +15,8 @@ export let google = null
 let instance = null
 let drawingManager = null
 
-const layers = {}
-
-const setLayer = (id, layer) => {
-    if (id in layers) {
-        const currentLayer = layers[id]
-        if (currentLayer && currentLayer.equals(layer))
-            return false
-        removeLayer(id)
-    }
-    if (layer) {
-        layer.addToMap(instance)
-        layers[id] = layer
-    }
-    return true
-}
-
-const removeLayer = (id) => {
-    if (layers[id])
-        layers[id].removeFromMap(instance)
-    delete layers[id]
-}
-
+const layersByContextId = {}
+let currentContextId
 
 export const initGoogleMapsApi$ = () => {
     const loadGoogleMapsApiKey$ =
@@ -82,11 +62,11 @@ const createMap = (mapElement) => {
     })
     instance.mapTypes.set('styled_map', new google.maps.StyledMapType(defaultStyle, {name: 'sepalMap'}))
     instance.setMapTypeId('styled_map')
-    instance.addListener('zoom_changed', () =>
-        actionBuilder('SET_MAP_ZOOM')
-            .set('map.zoom', instance.getZoom())
-            .dispatch()
-    )
+    // instance.addListener('zoom_changed', () =>
+    //     actionBuilder('SET_MAP_ZOOM')
+    //         .set('map.zoom', instance.getZoom())
+    //         .dispatch()
+    // )
     const drawingOptions = {
         fillColor: '#FBFAF2',
         fillOpacity: 0.07,
@@ -121,13 +101,6 @@ const createMap = (mapElement) => {
         addGEELayer(mapId, token) {
             let geeLayer = new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {name: 'gee'})
             instance.overlayMapTypes.push(geeLayer)
-        },
-        fitLayer(mapObjectName) {
-            const mapObject = layers[mapObjectName]
-            if (mapObject && mapObject.bounds) {
-                const bounds = mapObject.bounds
-                !instance.getBounds().equals(bounds) && instance.fitBounds(bounds)
-            }
         },
         fitBounds(bounds) {
             instance.fitBounds(bounds)
@@ -167,14 +140,74 @@ const createMap = (mapElement) => {
                 drawingManager = null
             }
         },
-        getLayer(id) {
-            return layers[id]
+        getLayers(contextId) {
+            let layers = layersByContextId[contextId]
+            if (!layers) {
+                const layerById = {}
+                layers = {
+                    set(id, layer) {
+                        const existingLayer = layerById[id]
+                        if (layer === existingLayer)
+                            return false
+                        if (existingLayer) {
+                            if (existingLayer && existingLayer.equals(layer))
+                                return false
+                            this.remove(id)
+                        }
+                        if (layer) {
+                            layerById[id] = layer
+                            currentContextId === contextId && layer.addToMap(instance)
+                        }
+                        return true
+                    },
+                    remove(id) {
+                        if (layerById[id] && currentContextId === contextId)
+                            layerById[id].removeFromMap(instance)
+                        delete layerById[id]
+                    },
+                    fit(id) {
+                        const layer = layerById[id]
+                        if (layer && layer.bounds && currentContextId === contextId) {
+                            const bounds = layer.bounds
+                            !instance.getBounds().equals(bounds) && instance.fitBounds(bounds)
+                        }
+                    },
+                    addToMap() {
+                        Object.keys(layerById).forEach(id => layerById[id].addToMap(instance))
+                    },
+                    removeFromMap() {
+                        Object.keys(layerById).forEach(id => layerById[id].removeFromMap(instance))
+                    }
+                }
+                layersByContextId[contextId] = layers
+            }
+            return layers
         },
-        setLayer({id, layer}) {
-            return setLayer(id, layer)
+        switchLayers(nextContextId) {
+            if (currentContextId === nextContextId)
+                return
+
+            const prevContextId = currentContextId
+            if (prevContextId)
+                this.getLayers(prevContextId).removeFromMap()
+
+            currentContextId = nextContextId
+
+            if (nextContextId)
+                this.getLayers(nextContextId).addToMap()
         },
-        removeLayer(id) {
-            removeLayer(id)
+        deselectLayers(contextIdToDeselect) {
+            if (contextIdToDeselect === currentContextId)
+                map.switchLayers()
+        },
+        removeLayers(contextIdToRemove) {
+            if (contextIdToRemove === currentContextId) {
+                map.clear()
+            }
+            delete layersByContextId[contextIdToRemove]
+        },
+        clear() {
+            map.switchLayers()
         }
     }
 }

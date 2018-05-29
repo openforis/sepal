@@ -82,11 +82,11 @@ class Aoi extends React.Component {
         const {id, form, inputs} = this.props
         switch (inputs.section.value) {
             case 'country':
-                return <CountrySection inputs={inputs} className={styles.right}/>
+                return <CountrySection id={id} inputs={inputs} className={styles.right}/>
             case 'fusionTable':
                 return <FusionTableSection id={id} inputs={inputs} className={styles.right}/>
             case 'polygon':
-                return <PolygonSection inputs={inputs} className={styles.right}/>
+                return <PolygonSection id={id} inputs={inputs} className={styles.right}/>
             default:
                 return <SectionSelection form={form} inputs={inputs} className={styles.left}/>
         }

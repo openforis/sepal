@@ -1,4 +1,3 @@
-import {map} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {msg} from 'translate'
@@ -10,7 +9,6 @@ export default class SectionSelection extends React.Component {
     componentWillMount() {
         const {inputs} = this.props
         Object.keys(inputs).forEach((name) => inputs[name] && inputs[name].set(''))
-        map.removeLayer('aoi')
     }
 
     render() {

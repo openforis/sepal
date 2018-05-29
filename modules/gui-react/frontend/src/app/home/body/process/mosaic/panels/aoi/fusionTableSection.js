@@ -68,12 +68,13 @@ class FusionTableSection extends React.Component {
     }
 
     loadBounds(layer) {
+        const {id} = this.props
         this.props.asyncActionBuilder('LOAD_BOUNDS',
             layer.loadBounds$().pipe(
                 rxMap((bounds) => actionBuilder('LOADED_BOUNDS', {bounds})),
                 takeUntil(this.fusionTableRowChanged$)
             ))
-            .onComplete(() => map.fitLayer('aoi'))
+            .onComplete(() => map.getLayers(id).fit('aoi'))
             .dispatch()
     }
 
@@ -162,9 +163,9 @@ class FusionTableSection extends React.Component {
         if (prevProps.inputs === this.props.inputs)
             return
 
-        const {inputs: {fusionTable, fusionTableColumn, fusionTableRow}} = this.props
+        const {id, inputs: {fusionTable, fusionTableColumn, fusionTableRow}} = this.props
 
-        setAoiLayer({
+        setAoiLayer(id, {
             type: 'fusionTable',
             id: fusionTable.value,
             keyColumn: fusionTableColumn.value,

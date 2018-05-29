@@ -22,7 +22,7 @@ class MapToolbar extends React.Component {
         this.recipe = RecipeActions(props.id)
     }
     render() {
-        const {className, labelsShown, gridShown} = this.props
+        const {id, className, labelsShown, gridShown} = this.props
         return (
             <div className={className}>
                 <div className={styles.toolbar}>
@@ -47,7 +47,7 @@ class MapToolbar extends React.Component {
                         </button>
                     </Tooltip>
                     <Tooltip msg={'process.mosaic.mapToolbar.centerMap'} top>
-                        <button onClick={() => map.fitLayer('aoi')}>
+                        <button onClick={() => map.getLayers(id).fit('aoi')}>
                             <Icon name={'bullseye'}/>
                         </button>
                     </Tooltip>

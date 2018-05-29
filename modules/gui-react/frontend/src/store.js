@@ -1,5 +1,6 @@
 import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
+import PropTypes from 'prop-types'
 import React from 'react'
 import {connect as connectToRedux} from 'react-redux'
 import {Subject} from 'rxjs'
@@ -39,11 +40,11 @@ export function select(path) {
 export function connect(mapStateToProps) {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
     return (WrappedComponent) => {
-        let disabled = false
+        let enabled
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
         WrappedComponent = connectToRedux(includeDispatchingProp(mapStateToProps))(WrappedComponent)
         WrappedComponent.prototype.shouldComponentUpdate = (nextProps, nextState) => {
-            return !disabled
+            return enabled !== false
         }
 
         class ConnectedComponent extends React.Component {
@@ -65,16 +66,22 @@ export function connect(mapStateToProps) {
 
             render() {
                 return (
-                    <Disabled.Consumer>
-                        {_disabled => {
-                            disabled = _disabled
+                    <EnabledContext.Consumer>
+                        {nextEnabled => {
+                            if (enabled === false && nextEnabled === true && this.onEnable)
+                                this.onEnable && this.onEnable()
+                            else if (enabled !== false && nextEnabled === false && this.onDisable)
+                                this.onDisable && this.onDisable()
+                            enabled = nextEnabled
                             return React.createElement(WrappedComponent, {
                                 ...this.props,
                                 asyncActionBuilder: this.asyncActionBuilder,
+                                onEnable: (listener) => this.onEnable = listener,
+                                onDisable: (listener) => this.onDisable = listener,
                                 componentId: this.id
                             })
                         }}
-                    </Disabled.Consumer>
+                    </EnabledContext.Consumer>
                 )
             }
         }
@@ -110,4 +117,20 @@ export function dispatchable(action) {
     }
 }
 
-export const Disabled = React.createContext(false)
+const EnabledContext = React.createContext()
+
+export class Enabled extends React.Component {
+    render() {
+        const {value, children} = this.props
+        return (
+            <EnabledContext.Provider value={!!value}>
+                {children}
+            </EnabledContext.Provider>
+        )
+    }
+}
+
+Enabled.propTypes = {
+    value: PropTypes.any.isRequired,
+    children: PropTypes.any.isRequired
+}

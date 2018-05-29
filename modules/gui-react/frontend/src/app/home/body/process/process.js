@@ -2,12 +2,11 @@ import actionBuilder from 'action-builder'
 import flexy from 'flexy.module.css'
 import guid from 'guid'
 import React from 'react'
-import {connect, Disabled, select} from 'store'
+import {connect, select} from 'store'
 import {msg} from 'translate'
 import Tooltip from 'widget/tooltip'
-import CreateOrLoadRecipe from './createOrLoadRecipe'
-import Mosaic from './mosaic/mosaic'
 import styles from './process.module.css'
+import TabContent from './tabContent'
 
 const addTab = () => {
     const id = guid()
@@ -182,35 +181,7 @@ class Tab extends React.Component {
     }
 }
 
-const TabContent = ({tab: {id, type}, selected}) => {
-    const contents = () => {
-        switch (type) {
-            case 'mosaic':
-                return <Mosaic id={id}/>
-            case 'classification':
-                return <Classification id={id}/>
-            default:
-                return <CreateOrLoadRecipe id={id}/>
-        }
-    }
-    return (
-        <div className={[styles.tabContent, selected && flexy.container, selected && styles.selected].join(' ')}>
-            <Disabled.Consumer>{disabled =>
-                <Disabled.Provider value={!disabled && !selected}>
-                    {contents()}
-                </Disabled.Provider>}
-            </Disabled.Consumer>
-        </div>
-    )
-}
-
 const NewTab = ({onAdd}) =>
     <div className={styles.newTab} onClick={onAdd}>
         +
-    </div>
-
-const Classification = () =>
-    <div>
-        <h2>Classification</h2>
-        <input placeholder='Some input'/>
     </div>
