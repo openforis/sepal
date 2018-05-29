@@ -19,12 +19,6 @@
     width: calc(5rem * var(--scaling-factor));
 }
 
-.input.year ul.month,
-.input.year ul.day,
-.input.month ul.day {
-    display: none;
-}
-
 .input input {
     margin: 0;
     display: inline-block;
@@ -79,6 +73,10 @@
     padding: calc(.5 * var(--height)) 0;
     list-style: none;
     overflow-y: scroll;
+}
+
+.picker ul:first-child:nth-last-child(1) {
+    padding: 0;
 }
 
 .picker ul::-webkit-scrollbar {
