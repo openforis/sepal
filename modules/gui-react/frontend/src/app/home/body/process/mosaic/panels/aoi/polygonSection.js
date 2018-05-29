@@ -8,13 +8,19 @@ import styles from './aoi.module.css'
 
 class PolygonSection extends React.Component {
     componentWillMount() {
-        map.drawPolygon('aoi', (polygon) => {
-            this.props.inputs.polygon.set(polygon)
+        const {id, inputs: {polygon}} = this.props
+        map.getLayers(id).drawPolygon('aoi', (drawnPolygon) => {
+            polygon.set(drawnPolygon)
         })
     }
 
     componentWillUnmount() {
-        map.disableDrawingMode()
+        this.disableDrawingMode()
+    }
+
+    disableDrawingMode() {
+        const {id} = this.props
+        map.getLayers(id).disableDrawingMode()
     }
 
     render() {
@@ -24,7 +30,7 @@ class PolygonSection extends React.Component {
                 title={msg('process.mosaic.panel.areaOfInterest.form.polygon.title')}
                 className={className}
                 onBack={() => {
-                    map.disableDrawingMode()
+                    this.disableDrawingMode()
                     section.set('')
                 }}>
                 <div className={styles.polygon}>
