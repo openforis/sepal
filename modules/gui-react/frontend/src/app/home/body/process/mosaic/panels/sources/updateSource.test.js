@@ -51,3 +51,11 @@ it('source out of range -> in range source, highest quality data sets in range',
         ['landsat', ['landsat7', 'landsat45']]
     )
 })
+
+it('toDate on first date of a data set -> data set is excluded', () => {
+    expect(
+        updateSource('sentinel2', ['sentinel2'], '2012-01-01', '2013-01-01')
+    ).toEqual(
+        ['landsat', ['landsat7', 'landsat45']]
+    )
+})

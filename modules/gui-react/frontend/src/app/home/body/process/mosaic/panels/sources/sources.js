@@ -20,7 +20,6 @@ const inputs = {
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
     return {
-        dates: recipe('ui.dates'),
         values: recipe('ui.sources')
     }
 }

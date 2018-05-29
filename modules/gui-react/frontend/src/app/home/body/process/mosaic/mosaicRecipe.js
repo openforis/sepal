@@ -21,7 +21,7 @@ export const RecipeState = (id) => {
         return select(recipePath(id, path))
     }
     get.dateRange = () => {
-        const dates = get('ui.dates')
+        const dates = get('dates')
         const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
         const seasonEnd = moment(dates.seasonEnd, DATE_FORMAT)
         return [
@@ -59,7 +59,7 @@ export const RecipeActions = (id) => {
             return set('SET_INITIALIZED', 'ui.initialized', true)
         },
         setLabelsShown(shown) {
-            Labels.setLayer({id: 'labels', shown})
+            Labels.setLayer(id, {shown})
             return set('SET_LABELS_SHOWN', 'ui.labelsShown', shown, {shown})
         },
         setGridShown(shown) {
