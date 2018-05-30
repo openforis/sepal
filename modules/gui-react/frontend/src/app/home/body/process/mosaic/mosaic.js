@@ -1,8 +1,6 @@
-import actionBuilder from 'action-builder'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {map as rxMap} from 'rxjs/operators/index'
 import {connect} from 'store'
 import MapToolbar from './mapToolbar'
 import styles from './mosaic.module.css'

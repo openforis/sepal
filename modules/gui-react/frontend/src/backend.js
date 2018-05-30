@@ -61,7 +61,7 @@ const toSensors = (sources) =>
             case 'landsat8T2': return 'LANDSAT_8_T2'
             case 'landsat7T2': return 'LANDSAT_7_T2'
             case 'landsa5T2': return 'LANDSAT_TM_T2'
-
+            default: throw new Error('Invalid dataSet: ' + dataSet)
         }
     })
 
