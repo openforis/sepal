@@ -236,14 +236,14 @@ export const fromGoogleBounds = (googleBounds) => {
     const ne = googleBounds.getNorthEast()
     return [
         [sw.lng(), sw.lat()],
-        [ne.lng(), ne.lat()],
+        [ne.lng(), ne.lat()]
     ]
 }
 
 const toGoogleBounds = (bounds) => {
     return new google.maps.LatLngBounds(
         {lng: bounds[0][0], lat: bounds[0][1]},
-        {lng: bounds[1][0], lat: bounds[1][1]},
+        {lng: bounds[1][0], lat: bounds[1][1]}
     )
 }
 
