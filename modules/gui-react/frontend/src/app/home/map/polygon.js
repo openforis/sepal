@@ -1,13 +1,11 @@
 import {of} from 'rxjs'
-import {google, map, polygonOptions, fromGoogleBounds} from './map'
+import {fromGoogleBounds, google, polygonOptions} from './map'
 import './map.module.css'
 
 class Polygon {
-    static setLayer(contextId, {id, path}, onInitialized) {
+    static setLayer(layers, {id, path}, destroy$, onInitialized) {
         const layer = path ? new Polygon(path) : null
-        const changed = map.getLayers(contextId).set(id, layer)
-        if (layer && changed && onInitialized)
-            onInitialized(layer)
+        layers.set({id, layer, destroy$, onInitialized})
         return layer
     }
 
@@ -40,8 +38,9 @@ class Polygon {
         this.layer.setMap(null)
     }
 
-    loadBounds$() {
-        return of(this.bounds)
+    initialize$() {
+        console.log('initialized')
+        return of(this)
     }
 }
 

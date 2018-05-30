@@ -5,6 +5,7 @@ import {Msg, msg} from 'translate'
 import {map} from '../../../../../map/map'
 import PanelContent from '../panelContent'
 import styles from './aoi.module.css'
+import {connect} from 'store'
 
 class PolygonSection extends React.Component {
     componentWillMount() {
@@ -21,6 +22,12 @@ class PolygonSection extends React.Component {
     disableDrawingMode() {
         const {id} = this.props
         map.getLayers(id).disableDrawingMode()
+    }
+
+    updateBounds(updatedBounds) {
+        const {id, inputs: {bounds}} = this.props
+        bounds.set(updatedBounds)
+        map.getLayers(id).fit('aoi')
     }
 
     render() {
@@ -44,14 +51,15 @@ class PolygonSection extends React.Component {
         if (prevProps.inputs === this.props.inputs)
             return
 
-        const {id, inputs: {polygon, bounds}} = this.props
-        setAoiLayer(id, {
+        const {id, inputs: {polygon, bounds}, componentWillUnmount$} = this.props
+        setAoiLayer(
+            id,
+            {
                 type: 'polygon',
                 path: polygon.value
-            }, (layer) => {
-                bounds.set(layer.bounds)
-                return map.getLayers(id).fit('aoi')
-            }
+            },
+            componentWillUnmount$,
+            (layer) => this.updateBounds(layer.bounds)
         )
     }
 
@@ -63,4 +71,4 @@ PolygonSection.propTypes = {
     className: PropTypes.string.isRequired
 }
 
-export default PolygonSection
+export default connect()(PolygonSection)

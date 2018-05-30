@@ -62,17 +62,10 @@ class CountrySection extends React.Component {
             ).dispatch()
     }
 
-    loadBounds(layer) {
-        const {id} = this.props
-        this.props.asyncActionBuilder('LOAD_BOUNDS',
-            layer.loadBounds$().pipe(
-                rxMap((bounds) => {
-                    map.getLayers(id).fit('aoi')
-                    this.props.inputs.bounds.set(bounds)
-                    return actionBuilder('LOADED_BOUNDS', {bounds})
-                }),
-                takeUntil(this.aoiChanged$)))
-            .dispatch()
+    updateBounds(updatedBounds) {
+        const {id, inputs: {bounds}} = this.props
+        bounds.set(updatedBounds)
+        map.getLayers(id).fit('aoi')
     }
 
     render() {
@@ -85,6 +78,8 @@ class CountrySection extends React.Component {
             : country.value
                 ? countryAreas && countryAreas.length > 0 ? 'loaded' : 'noAreas'
                 : 'noCountry'
+        const countryPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.country.placeholder.${countriesState}`)
+        const areaPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.area.placeholder.${areasState}`)
         return (
             <PanelContent
                 title={msg('process.mosaic.panel.areaOfInterest.form.country.title')}
@@ -99,7 +94,7 @@ class CountrySection extends React.Component {
                         input={country}
                         isLoading={action('LOAD_COUNTRIES').dispatching}
                         disabled={!countries}
-                        placeholder={msg(`process.mosaic.panel.areaOfInterest.form.country.country.placeholder.${countriesState}`)}
+                        placeholder={countryPlaceholder}
                         options={(countries || []).map(([value, label]) => ({value, label}))}
                         onChange={(e) => {
                             area.set('')
@@ -116,7 +111,7 @@ class CountrySection extends React.Component {
                         input={area}
                         isLoading={action('LOAD_COUNTRY_AREAS').dispatching}
                         disabled={!countryAreas || countryAreas.length === 0}
-                        placeholder={msg(`process.mosaic.panel.areaOfInterest.form.country.area.placeholder.${areasState}`)}
+                        placeholder={areaPlaceholder}
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}
                         onChange={(e) => this.aoiChanged$.next()}
                     />
@@ -135,17 +130,22 @@ class CountrySection extends React.Component {
     }
 
     update() {
-        const {id, countries, action, asyncActionBuilder, inputs: {country, area}} = this.props
+        const {id, countries, action, asyncActionBuilder, inputs: {country, area}, componentWillUnmount$} = this.props
         if (!countries && !action('LOAD_COUNTRIES').dispatching)
             asyncActionBuilder('LOAD_COUNTRIES',
                 loadCountries$())
                 .dispatch()
 
-        setAoiLayer(id, {
-            type: 'country',
-            countryCode: country.value,
-            areaCode: area.value
-        }, (layer) => this.loadBounds(layer))
+        setAoiLayer(
+            id,
+            {
+                type: 'country',
+                countryCode: country.value,
+                areaCode: area.value
+            },
+            componentWillUnmount$,
+            (layer) => this.updateBounds(layer.bounds)
+        )
     }
 }
 

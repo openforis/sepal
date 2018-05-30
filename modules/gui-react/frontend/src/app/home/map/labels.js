@@ -1,12 +1,10 @@
 import {google, map} from 'app/home/map/map'
-import {of} from 'rxjs/index'
+import {NEVER, of} from 'rxjs'
 
 export default class Labels {
-    static setLayer(contextId, {shown}, onInitialized) {
+    static setLayer({contextId, shown, onInitialized}) {
         const layer = shown ? new Labels() : null
-        const changed = map.getLayers(contextId).set('labels', layer)
-        if (changed && layer && onInitialized)
-            onInitialized(layer)
+        map.getLayers(contextId).set({id: 'labels', layer, destroy$: NEVER, onInitialized})
         return layer
     }
 
@@ -23,8 +21,7 @@ export default class Labels {
     }
 
     addToMap(map) {
-        if (this.layer)
-            map.overlayMapTypes.push(this.layer)
+        map.overlayMapTypes.push(this.layer)
     }
 
     removeFromMap(map) {
@@ -33,8 +30,8 @@ export default class Labels {
             map.overlayMapTypes.removeAt(index)
     }
 
-    loadBounds$() {
-        return of(this.bounds)
+    initialize$() {
+        return of(this)
     }
 }
 

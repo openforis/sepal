@@ -1,36 +1,40 @@
 import FusionTable from './fusionTable'
+import {map} from './map'
 import './map.module.css'
 import Polygon from './polygon'
-import {map} from './map'
 
 export const countryFusionTable = '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU'
 
-export const setAoiLayer = (contextId, aoi, onInitialized) => {
-    const id = 'aoi'
+export const removeAoiLayer = (contextId) => {
+    map.getLayers(contextId).remove('aoi')
+}
 
+export const setAoiLayer = (contextId, aoi, destroy$, onInitialized) => {
+    const id = 'aoi'
+    const layers = map.getLayers(contextId)
     const setCountryLayer = () =>
-        FusionTable.setLayer(contextId, {
+        FusionTable.setLayer(layers, {
             id,
             table: countryFusionTable,
             keyColumn: 'id',
             key: aoi.areaCode || aoi.countryCode,
             bounds: aoi.bounds
-        }, onInitialized)
+        }, destroy$, onInitialized)
 
     const setFusionTableLayer = () =>
-        FusionTable.setLayer(contextId, {
+        FusionTable.setLayer(layers, {
             id,
             table: aoi.id,
             keyColumn: aoi.keyColumn,
             key: aoi.key,
             bounds: aoi.bounds
-        }, onInitialized)
+        }, destroy$, onInitialized)
 
     const setPolygonLayer = () =>
-        Polygon.setLayer(contextId, {
+        Polygon.setLayer(layers, {
             id,
             path: aoi.path
-        }, onInitialized)
+        }, destroy$, onInitialized)
 
     switch (aoi && aoi.type) {
         case 'country':
@@ -40,8 +44,7 @@ export const setAoiLayer = (contextId, aoi, onInitialized) => {
         case 'polygon':
             return setPolygonLayer()
         default:
-            map.getLayers(contextId).set(id, null)
-
+            removeAoiLayer(contextId)
     }
 }
 

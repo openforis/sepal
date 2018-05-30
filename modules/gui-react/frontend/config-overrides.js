@@ -12,9 +12,16 @@ module.exports = {
                     ws: true,
                     onProxyRes: (proxyRes) => proxyRes.headers['Content-Security-Policy'] = contentSecurityPolicy
                 })
-                config.proxy.push({
+                config.proxy.unshift({
                     ...defaultProxy,
                     context: ['/sandbox']
+                })
+                config.proxy.unshift({
+                    ...defaultProxy,
+                    context: ['/gee'],
+                    target: 'http://localhost:5001',
+                    pathRewrite: {'^/gee' : '/'},
+                    logLevel: 'debug'
                 })
                 config.headers = {
                     ...config.headers,

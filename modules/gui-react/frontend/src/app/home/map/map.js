@@ -4,8 +4,8 @@ import GoogleMapsLoader from 'google-maps'
 import Http from 'http-client'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Observable} from 'rxjs'
-import {map as rxMap, mergeMap} from 'rxjs/operators'
+import {Observable, Subject} from 'rxjs'
+import {map as rxMap, mergeMap, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
 import './map.module.css'
 
@@ -113,24 +113,36 @@ const createMap = (mapElement) => {
             if (!layers) {
                 const layerById = {}
                 layers = {
-                    set(id, layer) {
+                    set({id, layer, destroy$, onInitialized}) {
+                        if (!destroy$)
+                            throw new Error('destroy$ is missing')
                         const existingLayer = layerById[id]
-                        if (layer === existingLayer)
+                        const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
+                        if (unchanged)
                             return false
-                        if (existingLayer) {
-                            if (existingLayer && existingLayer.equals(layer))
-                                return false
-                            this.remove(id)
-                        }
+                        this.remove(id)
                         if (layer) {
                             layerById[id] = layer
-                            currentContextId === contextId && layer.addToMap(instance)
+                            layer.__removed$ = new Subject()
+                            layer.initialize$()
+                                .pipe(
+                                    takeUntil(destroy$),
+                                    takeUntil(layer.__removed$)
+                                )
+                                .subscribe(() => {
+                                    currentContextId === contextId && layer.addToMap(instance)
+                                    onInitialized && onInitialized(layer)
+                                })
                         }
                         return true
                     },
                     remove(id) {
-                        if (layerById[id] && currentContextId === contextId)
-                            layerById[id].removeFromMap(instance)
+                        const layer = layerById[id]
+                        if (!layer)
+                            return
+                        layer.__removed$.next()
+                        if (currentContextId === contextId)
+                            layer.removeFromMap(instance)
                         delete layerById[id]
                     },
                     fit(id) {
@@ -160,7 +172,6 @@ const createMap = (mapElement) => {
                             rectangleOptions: drawingOptions
                         })
                         const drawingListener = (e) => {
-                            console.log('drawingListener', e)
                             const polygon = e.overlay
                             polygon.setMap(null)
                             const toPolygonPath = (polygon) => polygon.getPaths().getArray()[0].getArray().map((latLng) =>

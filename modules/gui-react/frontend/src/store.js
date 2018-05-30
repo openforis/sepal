@@ -69,7 +69,8 @@ export function connect(mapStateToProps) {
                     asyncActionBuilder: this.asyncActionBuilder,
                     onEnable: (listener) => this.onEnable = listener,
                     onDisable: (listener) => this.onDisable = listener,
-                    componentId: this.id
+                    componentId: this.id,
+                    componentWillUnmount$: this.componentWillUnmount$
                 })
             }
 

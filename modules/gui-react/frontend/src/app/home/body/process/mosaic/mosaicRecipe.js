@@ -1,4 +1,5 @@
 import actionBuilder from 'action-builder'
+import {countryFusionTable} from 'app/home/map/aoiLayer'
 import moment from 'moment'
 import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
 import {select} from 'store'
@@ -59,7 +60,7 @@ export const RecipeActions = (id) => {
             return set('SET_INITIALIZED', 'ui.initialized', true)
         },
         setLabelsShown(shown) {
-            Labels.setLayer(id, {shown})
+            Labels.setLayer({contextId: id, shown})
             return set('SET_LABELS_SHOWN', 'ui.labelsShown', shown, {shown})
         },
         setGridShown(shown) {
@@ -105,9 +106,10 @@ const createAoi = (aoiForm) => {
     switch (aoiForm.section) {
         case 'country':
             return {
-                type: 'country',
-                countryCode: aoiForm.country,
-                areaCode: aoiForm.area,
+                type: 'fusionTable',
+                id: countryFusionTable,
+                keyColumn: 'id',
+                key: aoiForm.areaCode || aoiForm.countryCode,
                 bounds: aoiForm.bounds
             }
         case 'fusionTable':

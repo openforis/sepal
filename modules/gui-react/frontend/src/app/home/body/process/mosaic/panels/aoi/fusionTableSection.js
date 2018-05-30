@@ -1,4 +1,3 @@
-import actionBuilder from 'action-builder'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import FusionTable from 'app/home/map/fusionTable'
 import {map} from 'app/home/map/map'
@@ -67,18 +66,12 @@ class FusionTableSection extends React.Component {
         ).dispatch()
     }
 
-    loadBounds(layer) {
-        const {id} = this.props
-        this.props.asyncActionBuilder('LOAD_BOUNDS',
-            layer.loadBounds$().pipe(
-                rxMap((bounds) => {
-                    map.getLayers(id).fit('aoi')
-                    this.props.inputs.bounds.set(bounds)
-                    return actionBuilder('LOADED_BOUNDS', {bounds})
-                }),
-                takeUntil(this.fusionTableRowChanged$)
-            ))
-            .dispatch()
+
+    updateBounds(updatedBounds) {
+        const {id, inputs: {bounds}} = this.props
+        console.log('update bounds', updatedBounds)
+        bounds.set(updatedBounds)
+        map.getLayers(id).fit('aoi')
     }
 
     render() {
@@ -166,14 +159,19 @@ class FusionTableSection extends React.Component {
         if (prevProps.inputs === this.props.inputs)
             return
 
-        const {id, inputs: {fusionTable, fusionTableColumn, fusionTableRow}} = this.props
+        const {id, inputs: {fusionTable, fusionTableColumn, fusionTableRow}, componentWillUnmount$} = this.props
 
-        setAoiLayer(id, {
-            type: 'fusionTable',
-            id: fusionTable.value,
-            keyColumn: fusionTableColumn.value,
-            key: fusionTableRow.value
-        }, (layer) => this.loadBounds(layer))
+        setAoiLayer(
+            id,
+            {
+                type: 'fusionTable',
+                id: fusionTable.value,
+                keyColumn: fusionTableColumn.value,
+                key: fusionTableRow.value
+            },
+            componentWillUnmount$,
+            (layer) => this.updateBounds(layer)
+        )
     }
 }
 
