@@ -1,7 +1,10 @@
 import logging
 from abc import abstractmethod
 
+import ee
+
 from aoi import Aoi
+from dates import parse_date, day_of_year, add_years, to_millis, milis_per_day
 from image_spec import ImageSpec
 from mosaic import Mosaic
 
@@ -9,9 +12,15 @@ from mosaic import Mosaic
 class MosaicSpec(ImageSpec):
     def __init__(self, spec):
         super(MosaicSpec, self).__init__()
+        dates = spec['dates']
         self.spec = spec
         self.aoi = Aoi.create(spec['aoi'])
-        self.target_day = int(spec.get('targetDayOfYear', 1))
+        self.target_date = parse_date(dates['targetDate'])
+        self.season_start = parse_date(dates['seasonStart'])
+        self.season_end = parse_date(dates['seasonEnd'])
+        self.years_before = int(dates['yearsBefore'])
+        self.years_after = int(dates['yearsAfter'])
+        self.target_day = day_of_year(parse_date(dates['targetDate']))
         self.target_day_weight = float(spec.get('targetDayOfYearWeight', 0))
         self.shadow_tolerance = float(spec.get('shadowTolerance', 1))
         self.haze_tolerance = float(spec.get('hazeTolerance', 0.05))
@@ -21,8 +30,8 @@ class MosaicSpec(ImageSpec):
         self.mask_clouds = spec.get('maskClouds', False)
         self.mask_snow = spec.get('maskSnow', False)
         self.brdf_correct = bool(spec.get('brdfCorrect', False))
-        self.from_date = spec.get('fromDate', None)
-        self.to_date = spec.get('toDate', None)
+        self.from_date = add_years(parse_date(dates['seasonStart']), - int(dates['yearsBefore']))
+        self.to_date = add_years(parse_date(dates['seasonEnd']), int(dates['yearsAfter']))
         self.surface_reflectance = bool(spec.get('surfaceReflectance', False))
         self.masked_on_analysis = self.surface_reflectance
         self.pan_sharpen = bool(spec.get('panSharpening', False))
@@ -30,13 +39,27 @@ class MosaicSpec(ImageSpec):
     def _viz_params(self):
         viz_by_band = _sr_viz_by_bands if self.surface_reflectance else _toa_viz_by_bands
         return viz_by_band[', '.join(self.bands)]({
-            'from_days_since_epoch': self.from_date / _milis_per_day,
-            'to_days_since_epoch': self.to_date / _milis_per_day
+            'from_days_since_epoch': to_millis(self.from_date) / milis_per_day,
+            'to_days_since_epoch': to_millis(self.to_date) / milis_per_day
         })
 
     def _ee_image(self):
         logging.info('Creating mosaic of ' + str(self))
         return Mosaic(self).create(self._data_sets())
+
+    def _date_filter(self):
+        def filter(year_diff):
+            return ee.Filter.date(
+                add_years(self.season_start, year_diff),
+                add_years(self.season_end, year_diff)
+            )
+
+        filters = ee.Filter.Or(
+            [filter(0)]
+            + [filter(-(i + 1)) for i in range(0, self.years_before)]
+            + [filter(i + 1) for i in range(0, self.years_after)]
+        )
+        return filters
 
     @abstractmethod
     def _data_sets(self):
@@ -136,5 +159,3 @@ _sr_viz_by_bands = {
         'palette': '00FF00, FF0000'
     },
 }
-
-_milis_per_day = 1000 * 60 * 60 * 24

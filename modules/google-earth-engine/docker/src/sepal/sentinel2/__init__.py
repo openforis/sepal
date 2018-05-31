@@ -5,6 +5,7 @@ import ee
 from datetime import datetime
 
 from analyze import Analyze
+from ..dates import millis_to_date
 from ..mosaic import DataSet
 from ..mosaic_spec import MosaicSpec
 
@@ -52,7 +53,7 @@ class Sentinel2AutomaticMosaicSpec(Sentinel2MosaicSpec):
         """
         image_filter = ee.Filter.And(
             ee.Filter.geometry(self.aoi.geometry()),
-            ee.Filter.date(self.from_date, self.to_date)
+            self._date_filter()
         )
         return image_filter
 
@@ -71,8 +72,8 @@ class Sentinel2ManualMosaicSpec(Sentinel2MosaicSpec):
             return (date - epoch).total_seconds() * 1000
 
         acquisition_timestamps = [acquisition(scene) for scene in self.scene_ids]
-        self.from_date = min(acquisition_timestamps)
-        self.to_date = max(acquisition_timestamps)
+        self.from_date = millis_to_date(min(acquisition_timestamps))
+        self.to_date = millis_to_date(max(acquisition_timestamps))
 
     def _create_image_filter(self):
         return ee.Filter.inList('system:index', ee.List(list(self.scene_ids)))

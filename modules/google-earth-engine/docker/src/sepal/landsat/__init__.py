@@ -6,6 +6,7 @@ from datetime import timedelta
 from itertools import groupby
 
 from analyze import Analyze
+from ..dates import millis_to_date
 from ..mosaic import DataSet
 from ..mosaic_spec import MosaicSpec
 
@@ -43,7 +44,7 @@ class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
     def _data_sets(self):
         image_filter = ee.Filter.And(
             ee.Filter.geometry(self.aoi.geometry()),
-            ee.Filter.date(self.from_date, self.to_date),
+            self._date_filter(),
             ee.Filter.stringStartsWith('LO8').Not()
         )
         collection_names = self._convert_sepal_sensor_name_to_ee_collection_names()
@@ -88,8 +89,8 @@ class LandsatManualMosaicSpec(LandsatMosaicSpec):
             return (date - epoch).total_seconds() * 1000
 
         acquisition_timestamps = [acquisition(scene) for scene in self.sceneIds]
-        self.from_date = min(acquisition_timestamps)
-        self.to_date = max(acquisition_timestamps)
+        self.from_date = millis_to_date(min(acquisition_timestamps))
+        self.to_date = millis_to_date(max(acquisition_timestamps))
 
     def _data_sets(self):
         scenes_by_scene_id_prefix = groupby(sorted(self.sceneIds), lambda scene_id: scene_id[:3])

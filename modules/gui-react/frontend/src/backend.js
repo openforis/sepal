@@ -12,15 +12,13 @@ export default api
 const transformRecipeForPreview = (recipe) => {
     const transformedRecipe = {
         aoi: transformAoi(recipe.aoi),
+        dates: recipe.dates,
         dataSet: toDataSet(recipe.sources),
         sensors: toSensors(recipe.sources),
-        fromDate: new Date(recipe.dates.seasonStart).getTime(),
-        toDate: new Date(recipe.dates.seasonEnd).getTime(),
-        targetDayOfYear: 298,
         targetDayOfYearWeight: 0,
         shadowTolerance: 1,
-        hazeTolerance: 0,
-        greennessWeight: 0.9,
+        hazeTolerance: 0.5,
+        greennessWeight: 0,
         bands: ['red', 'green', 'blue'],
         medianComposite: true,
         brdfCorrect: false,
