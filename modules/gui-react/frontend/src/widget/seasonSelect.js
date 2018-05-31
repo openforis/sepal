@@ -32,13 +32,15 @@ export default class SeasonSelect extends React.Component {
         const centerDate = moment(nextProps.centerDate.value, DATE_FORMAT, true)
         let startDate = moment(nextProps.startDate.value, DATE_FORMAT, true)
         let endDate = moment(nextProps.endDate.value, DATE_FORMAT, true)
-
-        if (!centerDate.isValid() || !startDate.isValid() || !endDate.isValid())
+        if (!centerDate.isValid() || !startDate.isValid() || !endDate.isValid()) {
             return prevState // Don't update if any provided date is invalid
+        }
 
         const centerDateUnchanged = prevState.centerDate && prevState.centerDate.isSame(centerDate)
-        if (centerDateUnchanged)
+        if (centerDateUnchanged) {
             return {...prevState, centerDate, startDate, endDate}
+        }
+
 
         const minDate = calcMinDate(centerDate)
         const maxDate = calcMaxDate(centerDate)
@@ -67,7 +69,6 @@ export default class SeasonSelect extends React.Component {
         nextProps.startDate.set(startDate.format(DATE_FORMAT))
         endDate = SeasonSelect.constrainEndDate(updatedEndDate, centerDate)
         nextProps.endDate.set(endDate.format(DATE_FORMAT))
-
         return {...prevState, centerDate, centerDay, minDate, maxDay, maxDate, startDate, endDate}
     }
 
@@ -94,9 +95,12 @@ export default class SeasonSelect extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const changed = ['startDate', 'endDate', 'centerDate'].find((key) => prevState[key] !== this.state[key])
+        const changed = ['startDate', 'endDate', 'centerDate'].find((key) => !prevState[key].isSame(this.state[key]))
         if (changed)
-            this.notifyChange()
+            this.notifyChange(
+                this.state.startDate.format(DATE_FORMAT),
+                this.state.endDate.format(DATE_FORMAT)
+            )
     }
 
     dateToPosition(date) {
@@ -140,9 +144,7 @@ export default class SeasonSelect extends React.Component {
         this.setState((prevState) => ({...prevState, width}))
     }
 
-    notifyChange() {
-        const startDate = this.state.startDate.format(DATE_FORMAT)
-        const endDate = this.state.endDate.format(DATE_FORMAT)
+    notifyChange(startDate, endDate) {
         this.props.startDate.set(startDate)
         this.props.endDate.set(endDate)
         this.props.onChange && this.props.onChange(startDate, endDate)
@@ -169,6 +171,7 @@ export default class SeasonSelect extends React.Component {
                     startDate = SeasonSelect.constrainStartDate(startDate, prevState.centerDate)
                     const maxEndDate = moment(startDate).add(1, 'years')
                     const endDate = moment.min(prevState.endDate, maxEndDate)
+                    this.notifyChange(startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT))
                     return {...prevState, startDate, endDate}
                 })
 
@@ -185,6 +188,7 @@ export default class SeasonSelect extends React.Component {
                     endDate = SeasonSelect.constrainEndDate(endDate, prevState.centerDate)
                     const maxStartDate = moment(endDate).subtract(1, 'years')
                     const startDate = moment.max(prevState.startDate, maxStartDate)
+                    this.notifyChange(startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT))
                     return {...prevState, startDate, endDate}
                 })
     }
@@ -239,6 +243,10 @@ class Timeline extends React.Component {
     renderTimeline() {
         const {centerDate, centerDay, startDate, endDate, maxDay, width} = this.state
         const {className, disabled} = this.props
+        const selectRangeStyle = {
+            left: `${this.dateToPosition(startDate)}px`,
+            right: `${this.dayToPosition(maxDay) - this.dateToPosition(endDate) - 1}px`
+        }
         return (
             <div className={className}>
                 <div className={styles.container} ref={this.element}>
@@ -273,10 +281,7 @@ class Timeline extends React.Component {
                             width={width}/>
                         <div
                             className={styles.selectedRange}
-                            style={{
-                                left: `${this.dateToPosition(startDate)}px`,
-                                right: `${this.dayToPosition(maxDay) - this.dateToPosition(endDate) - 1}px`
-                            }}/>
+                            style={selectRangeStyle}/>
                     </div>
                     <ReactResizeDetector
                         handleWidth
@@ -309,22 +314,25 @@ class Axis extends React.Component {
             .map((i) => [dateRange.monthIndexToPosition(i), i])
             .filter(([position, i]) => position >= 0)
             .map(([position, i]) => {
+                    const axisStyle = {left: `${position}px`}
                     return <div
                         key={i}
-                        style={{left: `${position}px`}}/>
+                        style={axisStyle}/>
                 }
             )
         const months = [...Array(24).keys()]
             .filter((i) => i % 2)
-            .map((i) =>
-                <div
-                    key={i}
-                    style={{
+            .map((i) => {
+                    const monthStyle = {
                         left: `${dateRange.monthIndexToPosition(i)}px`,
                         width: `${dateRange.monthIndexToPosition(i + 1) - dateRange.monthIndexToPosition(i)}px`,
-                    }}>
-                    {moment(dateRange.state.minDate).add(i, 'months').format('MMM')}
-                </div>
+                    }
+                    return <div
+                        key={i}
+                        style={monthStyle}>
+                        {moment(dateRange.state.minDate).add(i, 'months').format('MMM')}
+                    </div>
+                }
             )
         return (
             <div>
@@ -358,11 +366,12 @@ class Handle extends React.Component {
 
     render() {
         const {position, children} = this.props
+        const handleStyle = {left: `${position}px`}
         return (
             <div
                 ref={this.element}
                 className={styles.handle}
-                style={{left: `${position}px`}}>
+                style={handleStyle}>
                 <div className={styles.handleGrabArea}/>
                 {children}
             </div>
