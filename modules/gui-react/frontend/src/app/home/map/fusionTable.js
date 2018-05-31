@@ -1,7 +1,7 @@
 import Http from 'http-client'
 import {map as rxMap} from 'rxjs/operators'
 import {subscribe} from 'store'
-import {google, map, polygonOptions} from './map'
+import {fromGoogleBounds, google, map, polygonOptions} from './map'
 import './map.module.css'
 
 let googleTokens = null
@@ -66,7 +66,6 @@ class FusionTable {
 
     initialize$() {
         const eachLatLng = (o, callback) => {
-            console.log(o)
             if (Array.isArray(o))
                 o.forEach((o) => callback(new google.maps.LatLng(o[1], o[0])))
             else {
@@ -83,31 +82,19 @@ class FusionTable {
             WHERE '${this.keyColumn}' = '${this.key}'
         `).pipe(
             rxMap((e) => {
-                    this.bounds = [
-                        [
-                            60.50492900000001,
-                            29.36157399999997
-                        ],
-                        [
-                            74.894127,
-                            29.36157399999997
-                        ]
-                    ]
-                    return this
-
-                    // const googleBounds = new google.maps.LatLngBounds()
-                    // if (!e.response.rows[0])
-                    //     throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.table}`)
-                    // try {
-                    //     e.response.rows[0].forEach((o) =>
-                    //         eachLatLng(o, (latLng) => googleBounds.extend(latLng))
-                    //     )
-                    //     this.bounds = fromGoogleBounds(googleBounds)
-                    //     return this.bounds
-                    // } catch (e) {
-                    //     console.error('Failed to get bounds', e)
-                    //     throw e
-                    // }
+                    const googleBounds = new google.maps.LatLngBounds()
+                    if (!e.response.rows[0])
+                        throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.table}`)
+                    try {
+                        e.response.rows[0].forEach((o) =>
+                            eachLatLng(o, (latLng) => googleBounds.extend(latLng))
+                        )
+                        this.bounds = fromGoogleBounds(googleBounds)
+                        return this.bounds
+                    } catch (e) {
+                        console.error('Failed to get bounds', e)
+                        throw e
+                    }
                 }
             )
         )
