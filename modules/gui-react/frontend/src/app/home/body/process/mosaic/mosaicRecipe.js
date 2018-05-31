@@ -109,7 +109,7 @@ const createAoi = (aoiForm) => {
                 type: 'fusionTable',
                 id: countryFusionTable,
                 keyColumn: 'id',
-                key: aoiForm.areaCode || aoiForm.countryCode,
+                key: aoiForm.area || aoiForm.country,
                 bounds: aoiForm.bounds
             }
         case 'fusionTable':

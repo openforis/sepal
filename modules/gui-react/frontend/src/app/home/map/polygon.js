@@ -39,7 +39,6 @@ class Polygon {
     }
 
     initialize$() {
-        console.log('initialized')
         return of(this)
     }
 }

@@ -16,16 +16,16 @@ const transformRecipeForPreview = (recipe) => {
         sensors: toSensors(recipe.sources),
         fromDate: new Date(recipe.dates.seasonStart).getTime(),
         toDate: new Date(recipe.dates.seasonEnd).getTime(),
-        targetDayOfYear: '298',
+        targetDayOfYear: 298,
         targetDayOfYearWeight: 0,
         shadowTolerance: 1,
-        hazeTolerance: '1.00',
-        greennessWeight: 0,
+        hazeTolerance: 0,
+        greennessWeight: 0.9,
         bands: ['red', 'green', 'blue'],
         medianComposite: true,
         brdfCorrect: false,
         maskClouds: false,
-        maskSnow: false,
+        maskSnow: true,
         type: 'automatic'
     }
     console.log(recipe)
@@ -61,6 +61,7 @@ const toSensors = (sources) =>
             case 'landsat8T2': return 'LANDSAT_8_T2'
             case 'landsat7T2': return 'LANDSAT_7_T2'
             case 'landsa5T2': return 'LANDSAT_TM_T2'
+            case 'sentinel2': return 'SENTINEL_2'
             default: throw new Error('Invalid dataSet: ' + dataSet)
         }
     })

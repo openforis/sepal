@@ -21,7 +21,6 @@ class Preview {
             o && _.omit(o.recipe, 'ui'),
             _.omit(this.recipe, 'ui')
         )
-        console.log('equals', equals)
         return equals
     }
 
@@ -30,6 +29,7 @@ class Preview {
         const layer = new ee.layers.ImageOverlay(
             new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', this.mapId, this.token)
         )
+        layer.name = 'preview'
         googleMap.overlayMapTypes.push(layer)
     }
 
