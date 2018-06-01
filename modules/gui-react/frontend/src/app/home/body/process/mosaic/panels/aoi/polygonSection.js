@@ -1,11 +1,11 @@
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {connect} from 'store'
 import {Msg, msg} from 'translate'
 import {map} from '../../../../../map/map'
 import PanelContent from '../panelContent'
 import styles from './aoi.module.css'
-import {connect} from 'store'
 
 class PolygonSection extends React.Component {
     componentWillMount() {
@@ -52,15 +52,15 @@ class PolygonSection extends React.Component {
             return
 
         const {recipeId, inputs: {polygon}, componentWillUnmount$} = this.props
-        setAoiLayer(
-            recipeId,
-            {
+        setAoiLayer({
+            contextId: recipeId,
+            aoi: {
                 type: 'polygon',
                 path: polygon.value
             },
-            componentWillUnmount$,
-            (layer) => this.updateBounds(layer.bounds)
-        )
+            destroy$: componentWillUnmount$,
+            onInitialized: (layer) => this.updateBounds(layer.bounds)
+        })
     }
 
 }

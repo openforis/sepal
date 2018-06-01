@@ -3,13 +3,13 @@ import {of} from 'rxjs'
 import {fromGoogleBounds, google, polygonOptions} from './map'
 import './map.module.css'
 
-class Polygon {
-    static setLayer(contextId, {id, path}, destroy$, onInitialized) {
-        const layer = path ? new Polygon(path) : null
-        map.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
-        return layer
-    }
+export const setPolygonLayer = ({contextId, layerSpec: {id, path}, destroy$, onInitialized}) => {
+    const layer = path ? new PolygonLayer(path) : null
+    map.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
+    return layer
+}
 
+class PolygonLayer {
     constructor(path) {
         this.polygonPath = path
         this.layer = new google.maps.Polygon({
@@ -26,7 +26,7 @@ class Polygon {
 
     equals(o) {
         return o === this || (
-            o instanceof Polygon &&
+            o instanceof PolygonLayer &&
             o.polygonPath.toString() === this.polygonPath.toString()
         )
     }
@@ -43,5 +43,3 @@ class Polygon {
         return of(this)
     }
 }
-
-export default Polygon

@@ -7,31 +7,31 @@ import './map.module.css'
 let googleTokens = null
 subscribe('user.currentUser.googleTokens', (tokens) => googleTokens = tokens)
 
-class FusionTable {
-    static setLayer(contextId, {id, table, keyColumn, key, bounds}, destroy$, onInitialized) {
-        const layer = key
-            ? new FusionTable({table, keyColumn, key, bounds})
-            : null
-        map.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
-        return layer
-    }
+export const setFusionTableLayer = ({contextId, layerSpec: {id, tableId, keyColumn, key, bounds}, destroy$, onInitialized}) => {
+    const layer = key
+        ? new FusionTableLayer({tableId, keyColumn, key, bounds})
+        : null
+    map.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
+    return layer
+}
 
-    static get$(query, args = {}) {
-        query = query.replace(/\s+/g, ' ').trim()
-        return Http.post$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&${authParam()}`, args)
-    }
+export const queryFusionTable$ = (query, args = {}) => {
+    query = query.replace(/\s+/g, ' ').trim()
+    return Http.post$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&${authParam()}`, args)
+}
 
-    static columns$(tableId, args) {
-        return Http.get$(
-            `https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns?${authParam()}`,
-            args
-        ).pipe(
-            rxMap((e) => e.response.items)
-        )
-    }
+export const loadFusionTableColumns$ = (tableId, args) => {
+    return Http.get$(
+        `https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns?${authParam()}`,
+        args
+    ).pipe(
+        rxMap((e) => e.response.items)
+    )
+}
 
-    constructor({table, keyColumn, key, bounds}) {
-        this.table = table
+class FusionTableLayer {
+    constructor({tableId, keyColumn, key, bounds}) {
+        this.tableId = tableId
         this.keyColumn = keyColumn
         this.key = key
         this.bounds = bounds
@@ -39,7 +39,7 @@ class FusionTable {
         this.layer = new google.maps.FusionTablesLayer({
             suppressInfoWindows: true,
             query: {
-                from: table,
+                from: tableId,
                 select: 'geometry',
                 where: `'${keyColumn}' = '${key}'`
             },
@@ -49,8 +49,8 @@ class FusionTable {
 
     equals(o) {
         return o === this || (
-            o instanceof FusionTable &&
-            o.table === this.table &&
+            o instanceof FusionTableLayer &&
+            o.tableId === this.tableId &&
             o.keyColumn === this.keyColumn &&
             o.key === this.key
         )
@@ -76,15 +76,15 @@ class FusionTable {
                 value.forEach((o) => eachLatLng(o, callback))
             }
         }
-        return FusionTable.get$(`
+        return queryFusionTable$(`
             SELECT geometry 
-            FROM ${this.table} 
+            FROM ${this.tableId} 
             WHERE '${this.keyColumn}' = '${this.key}'
         `).pipe(
             rxMap((e) => {
                     const googleBounds = new google.maps.LatLngBounds()
                     if (!e.response.rows[0])
-                        throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.table}`)
+                        throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.tableId}`)
                     try {
                         e.response.rows[0].forEach((o) =>
                             eachLatLng(o, (latLng) => googleBounds.extend(latLng))
@@ -105,6 +105,3 @@ const authParam = () =>
     googleTokens
         ? `access_token=${googleTokens.accessToken}`
         : `key=${map.getKey()}`
-
-
-export default FusionTable

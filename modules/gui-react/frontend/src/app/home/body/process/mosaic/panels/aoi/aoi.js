@@ -53,7 +53,7 @@ class Aoi extends React.Component {
 
     onCancel() {
         const {recipeId, aoi} = this.props
-        setAoiLayer(recipeId, aoi)
+        setAoiLayer({contextId: recipeId, aoi})
         map.fitBounds(this.initialBounds)
     }
 

@@ -1,5 +1,5 @@
 import {setAoiLayer} from 'app/home/map/aoiLayer'
-import FusionTable from 'app/home/map/fusionTable'
+import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
 import {map} from 'app/home/map/map'
 import React from 'react'
 import {Subject} from 'rxjs'
@@ -30,7 +30,7 @@ class FusionTableSection extends React.Component {
 
     loadFusionTableColumns(fusionTableId) {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
-            FusionTable.columns$(fusionTableId, {retries: 1, validStatuses: [200, 404]}).pipe(
+            loadFusionTableColumns$(fusionTableId, {retries: 1, validStatuses: [200, 404]}).pipe(
                 rxMap((columns) => {
                         if (!columns)
                             this.props.inputs.fusionTable.invalid(
@@ -49,7 +49,7 @@ class FusionTableSection extends React.Component {
 
     loadFusionTableRows(column) {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_ROWS',
-            FusionTable.get$(`
+            queryFusionTable$(`
                     SELECT '${column}'
                     FROM ${this.props.inputs.fusionTable.value}
                     ORDER BY '${column}' ASC
@@ -69,7 +69,6 @@ class FusionTableSection extends React.Component {
 
     updateBounds(updatedBounds) {
         const {recipeId, inputs: {bounds}} = this.props
-        console.log('update bounds', updatedBounds)
         bounds.set(updatedBounds)
         map.getContext(recipeId).fitLayer('aoi')
     }
@@ -160,17 +159,17 @@ class FusionTableSection extends React.Component {
             return
 
         const {recipeId, inputs: {fusionTable, fusionTableColumn, fusionTableRow}, componentWillUnmount$} = this.props
-        setAoiLayer(
-            recipeId,
-            {
+        setAoiLayer({
+            contextId: recipeId,
+            aoi: {
                 type: 'fusionTable',
                 id: fusionTable.value,
                 keyColumn: fusionTableColumn.value,
                 key: fusionTableRow.value
             },
-            componentWillUnmount$,
-            (layer) => this.updateBounds(layer)
-        )
+            destroy$: componentWillUnmount$,
+            onInitialized: (layer) => this.updateBounds(layer)
+        })
     }
 }
 

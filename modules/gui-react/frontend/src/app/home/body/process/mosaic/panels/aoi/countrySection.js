@@ -1,6 +1,6 @@
 import actionBuilder from 'action-builder'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
-import FusionTable from 'app/home/map/fusionTable'
+import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {map} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -13,7 +13,7 @@ import {ErrorMessage} from 'widget/form'
 import PanelContent from '../panelContent'
 
 const loadCountries$ = () => {
-    return FusionTable.get$(`
+    return queryFusionTable$(`
             SELECT id, label 
             FROM ${countryFusionTable}
             WHERE parent_id != '' 
@@ -27,7 +27,7 @@ const loadCountries$ = () => {
 }
 
 const loadCountryAreas$ = (countryId) => {
-    return FusionTable.get$(`
+    return queryFusionTable$(`
             SELECT id, label 
             FROM ${countryFusionTable} 
             WHERE parent_id = '${countryId}'
@@ -136,16 +136,16 @@ class CountrySection extends React.Component {
                 loadCountries$())
                 .dispatch()
 
-        setAoiLayer(
-            recipeId,
-            {
+        setAoiLayer({
+            contextId: recipeId,
+            aoi: {
                 type: 'country',
                 countryCode: country.value,
                 areaCode: area.value
             },
-            componentWillUnmount$,
-            (layer) => this.updateBounds(layer.bounds)
-        )
+            destroy$: componentWillUnmount$,
+            onInitialized: (layer) => this.updateBounds(layer.bounds)
+        })
     }
 }
 

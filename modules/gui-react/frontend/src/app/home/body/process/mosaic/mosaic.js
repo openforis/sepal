@@ -31,7 +31,7 @@ class Mosaic extends React.Component {
 
     componentDidMount() {
         const {recipeId, recipe: {aoi}} = this.props
-        setAoiLayer(recipeId, aoi)
+        setAoiLayer({contextId: recipeId, aoi})
     }
 }
 
