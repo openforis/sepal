@@ -1,11 +1,12 @@
+import {map} from 'app/home/map/map'
 import {of} from 'rxjs'
 import {fromGoogleBounds, google, polygonOptions} from './map'
 import './map.module.css'
 
 class Polygon {
-    static setLayer(layers, {id, path}, destroy$, onInitialized) {
+    static setLayer(contextId, {id, path}, destroy$, onInitialized) {
         const layer = path ? new Polygon(path) : null
-        layers.set({id, layer, destroy$, onInitialized})
+        map.getContext(contextId).set({id, layer, destroy$, onInitialized})
         return layer
     }
 

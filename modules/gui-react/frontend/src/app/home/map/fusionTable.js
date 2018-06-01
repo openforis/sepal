@@ -8,11 +8,11 @@ let googleTokens = null
 subscribe('user.currentUser.googleTokens', (tokens) => googleTokens = tokens)
 
 class FusionTable {
-    static setLayer(layers, {id, table, keyColumn, key, bounds}, destroy$, onInitialized) {
+    static setLayer(contextId, {id, table, keyColumn, key, bounds}, destroy$, onInitialized) {
         const layer = key
             ? new FusionTable({table, keyColumn, key, bounds})
             : null
-        layers.set({id, layer, destroy$, onInitialized})
+        map.getContext(contextId).set({id, layer, destroy$, onInitialized})
         return layer
     }
 

@@ -10,7 +10,7 @@ import {connect} from 'store'
 class PolygonSection extends React.Component {
     componentWillMount() {
         const {recipeId, inputs: {polygon}} = this.props
-        map.getLayers(recipeId).drawPolygon('aoi', (drawnPolygon) => {
+        map.getContext(recipeId).drawPolygon('aoi', (drawnPolygon) => {
             polygon.set(drawnPolygon)
         })
     }
@@ -21,13 +21,13 @@ class PolygonSection extends React.Component {
 
     disableDrawingMode() {
         const {recipeId} = this.props
-        map.getLayers(recipeId).disableDrawingMode()
+        map.getContext(recipeId).disableDrawingMode()
     }
 
     updateBounds(updatedBounds) {
         const {recipeId, inputs: {bounds}} = this.props
         bounds.set(updatedBounds)
-        map.getLayers(recipeId).fit('aoi')
+        map.getContext(recipeId).fit('aoi')
     }
 
     render() {

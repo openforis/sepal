@@ -71,7 +71,7 @@ class FusionTableSection extends React.Component {
         const {recipeId, inputs: {bounds}} = this.props
         console.log('update bounds', updatedBounds)
         bounds.set(updatedBounds)
-        map.getLayers(recipeId).fit('aoi')
+        map.getContext(recipeId).fit('aoi')
     }
 
     render() {

@@ -13,7 +13,7 @@ export let map = null
 export let google = null
 let instance = null
 
-const layersByContextId = {}
+const contextById = {}
 let currentContextId
 
 export const initGoogleMapsApi$ = () => {
@@ -114,11 +114,11 @@ const createMap = (mapElement) => {
             if (listener)
                 google.maps.event.removeListener(listener)
         },
-        getLayers(contextId) {
-            let layers = layersByContextId[contextId]
-            if (!layers) {
+        getContext(contextId) {
+            let context = contextById[contextId]
+            if (!context) {
                 const layerById = {}
-                layers = {
+                context = {
                     set({id, layer, destroy$, onInitialized}) {
                         if (!destroy$)
                             throw new Error('destroy$ is missing')
@@ -199,23 +199,23 @@ const createMap = (mapElement) => {
                         this._drawingMode = null
                     },
                 }
-                layersByContextId[contextId] = layers
+                contextById[contextId] = context
             }
-            return layers
+            return context
         },
         selectLayers(nextContextId) {
             if (currentContextId === nextContextId)
                 return
             const prevContextId = currentContextId
             if (prevContextId) {
-                const layers = this.getLayers(prevContextId)
+                const layers = this.getContext(prevContextId)
                 layers.pauseDrawingMode()
                 layers.removeFromMap()
             }
 
             currentContextId = nextContextId
             if (nextContextId) {
-                const layers = this.getLayers(nextContextId)
+                const layers = this.getContext(nextContextId)
                 layers.addToMap()
                 layers._drawingMode && layers.drawPolygon(layers._drawingMode.id, layers._drawingMode.callback)
             }
@@ -229,7 +229,7 @@ const createMap = (mapElement) => {
             if (contextIdToRemove === currentContextId) {
                 map.clear()
             }
-            delete layersByContextId[contextIdToRemove]
+            delete contextById[contextIdToRemove]
         },
         clear() {
             map.selectLayers()

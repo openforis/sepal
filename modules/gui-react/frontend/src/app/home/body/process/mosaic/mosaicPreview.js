@@ -67,7 +67,7 @@ class MosaicPreview extends React.Component {
             props: _.omit(recipe, 'ui'),
             onProgress: (tiles) => this.onProgress(tiles)
         }) : null
-        const changed = map.getLayers(recipeId).set({id: 'preview', layer, destroy$: componentWillUnmount$})
+        const changed = map.getContext(recipeId).set({id: 'preview', layer, destroy$: componentWillUnmount$})
         if (changed && initializing !== !!layer)
             this.setState(prevState => ({...prevState, initializing: !!layer}))
 

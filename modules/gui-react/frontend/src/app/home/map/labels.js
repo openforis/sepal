@@ -4,7 +4,7 @@ import {NEVER, of} from 'rxjs'
 export default class Labels {
     static setLayer({contextId, shown, onInitialized}) {
         const layer = shown ? new Labels() : null
-        map.getLayers(contextId).set({id: 'labels', layer, destroy$: NEVER, onInitialized})
+        map.getContext(contextId).set({id: 'labels', layer, destroy$: NEVER, onInitialized})
         return layer
     }
 
