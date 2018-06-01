@@ -1,11 +1,11 @@
-import {map} from 'app/home/map/map'
+import {sepalMap} from 'app/home/map/map'
 import {of} from 'rxjs'
 import {fromGoogleBounds, google, polygonOptions} from './map'
 import './map.module.css'
 
 export const setPolygonLayer = ({contextId, layerSpec: {id, path}, destroy$, onInitialized}) => {
     const layer = path ? new PolygonLayer(path) : null
-    map.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
+    sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
     return layer
 }
 

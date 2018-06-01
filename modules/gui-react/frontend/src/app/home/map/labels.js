@@ -1,10 +1,10 @@
-import {google, map} from 'app/home/map/map'
+import {google, sepalMap} from 'app/home/map/map'
 import {NEVER, of} from 'rxjs'
 
 export default class Labels {
     static setLayer({contextId, shown, onInitialized}) {
         const layer = shown ? new Labels() : null
-        map.getContext(contextId).setLayer({id: 'labels', layer, destroy$: NEVER, onInitialized})
+        sepalMap.getContext(contextId).setLayer({id: 'labels', layer, destroy$: NEVER, onInitialized})
         return layer
     }
 

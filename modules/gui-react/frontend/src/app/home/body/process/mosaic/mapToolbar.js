@@ -3,7 +3,7 @@ import React from 'react'
 import {connect} from 'store'
 import Icon from 'widget/icon'
 import Tooltip from 'widget/tooltip'
-import {map} from '../../../map/map'
+import {sepalMap} from '../../../map/map'
 import styles from './mapToolbar.module.css'
 import {RecipeActions, RecipeState} from './mosaicRecipe'
 
@@ -12,7 +12,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         labelsShown: recipe('ui.labelsShown'),
         gridShown: recipe('ui.gridShown'),
-        zoomLevel: map.getZoom()
+        zoomLevel: sepalMap.getZoom()
     }
 }
 
@@ -27,13 +27,13 @@ class MapToolbar extends React.Component {
         return (
             <div className={className}>
                 <div className={styles.toolbar}>
-                    <Tooltip msg={'process.mosaic.mapToolbar.zoomIn'} top disabled={map.isMaxZoom()}>
-                        <button onClick={map.zoomIn.bind(map)} disabled={map.isMaxZoom()}>
+                    <Tooltip msg={'process.mosaic.mapToolbar.zoomIn'} top disabled={sepalMap.isMaxZoom()}>
+                        <button onClick={sepalMap.zoomIn.bind(sepalMap)} disabled={sepalMap.isMaxZoom()}>
                             <Icon name={'plus'}/>
                         </button>
                     </Tooltip>
-                    <Tooltip msg={'process.mosaic.mapToolbar.zoomOut'} top disabled={map.isMinZoom()}>
-                        <button onClick={map.zoomOut.bind(map)} disabled={map.isMinZoom()}>
+                    <Tooltip msg={'process.mosaic.mapToolbar.zoomOut'} top disabled={sepalMap.isMinZoom()}>
+                        <button onClick={sepalMap.zoomOut.bind(sepalMap)} disabled={sepalMap.isMinZoom()}>
                             <Icon name={'minus'}/>
                         </button>
                     </Tooltip>
@@ -48,7 +48,7 @@ class MapToolbar extends React.Component {
                         </button>
                     </Tooltip>
                     <Tooltip msg={'process.mosaic.mapToolbar.centerMap'} top>
-                        <button onClick={() => map.getContext(recipeId).fitLayer('aoi')}>
+                        <button onClick={() => sepalMap.getContext(recipeId).fitLayer('aoi')}>
                             <Icon name={'bullseye'}/>
                         </button>
                     </Tooltip>

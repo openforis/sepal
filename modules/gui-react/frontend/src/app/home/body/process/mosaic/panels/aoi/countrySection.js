@@ -1,11 +1,11 @@
 import actionBuilder from 'action-builder'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
-import {map} from 'app/home/map/map'
+import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject} from 'rxjs'
-import {map as rxMap, takeUntil} from 'rxjs/operators'
+import {map, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {Msg, msg} from 'translate'
 import ComboBox from 'widget/comboBox'
@@ -18,7 +18,7 @@ const loadCountries$ = () => {
             FROM ${countryFusionTable}
             WHERE parent_id != '' 
             ORDER BY label ASC`).pipe(
-        rxMap((e) =>
+        map((e) =>
             actionBuilder('SET_COUNTRIES', {countries: e.response})
                 .set('countries', e.response.rows)
                 .build()
@@ -32,7 +32,7 @@ const loadCountryAreas$ = (countryId) => {
             FROM ${countryFusionTable} 
             WHERE parent_id = '${countryId}'
             ORDER BY label ASC`).pipe(
-        rxMap((e) =>
+        map((e) =>
             actionBuilder('SET_COUNTRY_AREA', {countries: e.response})
                 .set(['areasByCountry', countryId], e.response.rows)
                 .build()
@@ -65,7 +65,7 @@ class CountrySection extends React.Component {
     updateBounds(updatedBounds) {
         const {recipeId, inputs: {bounds}} = this.props
         bounds.set(updatedBounds)
-        map.getContext(recipeId).fitLayer('aoi')
+        sepalMap.getContext(recipeId).fitLayer('aoi')
     }
 
     render() {

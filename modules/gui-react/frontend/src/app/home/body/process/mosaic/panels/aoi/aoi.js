@@ -1,5 +1,5 @@
 import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {map} from 'app/home/map/map'
+import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {AnimateReplacement} from 'widget/animate'
@@ -48,13 +48,13 @@ const mapStateToProps = (state, ownProps) => {
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
-        this.initialBounds = map.getBounds()
+        this.initialBounds = sepalMap.getBounds()
     }
 
     onCancel() {
         const {recipeId, aoi} = this.props
         setAoiLayer({contextId: recipeId, aoi})
-        map.fitBounds(this.initialBounds)
+        sepalMap.fitBounds(this.initialBounds)
     }
 
     render() {

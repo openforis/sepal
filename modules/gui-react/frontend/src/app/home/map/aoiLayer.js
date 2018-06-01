@@ -1,5 +1,5 @@
 import {setFusionTableLayer} from './fusionTable'
-import {map} from './map'
+import {sepalMap} from './map'
 import './map.module.css'
 import {setPolygonLayer} from './polygonLayer'
 
@@ -7,7 +7,7 @@ import {setPolygonLayer} from './polygonLayer'
 export const countryFusionTable = '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU'
 
 export const removeAoiLayer = (contextId) => {
-    map.getContext(contextId).removeLayer('aoi')
+    sepalMap.getContext(contextId).removeLayer('aoi')
 }
 
 export const setAoiLayer = ({contextId, aoi, destroy$, onInitialized}) => {

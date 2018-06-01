@@ -1,7 +1,7 @@
 import Http from 'http-client'
-import {map as rxMap} from 'rxjs/operators'
+import {map} from 'rxjs/operators'
 import {subscribe} from 'store'
-import {fromGoogleBounds, google, map, polygonOptions} from './map'
+import {fromGoogleBounds, google, sepalMap, polygonOptions} from './map'
 import './map.module.css'
 
 let googleTokens = null
@@ -11,7 +11,7 @@ export const setFusionTableLayer = ({contextId, layerSpec: {id, tableId, keyColu
     const layer = key
         ? new FusionTableLayer({tableId, keyColumn, key, bounds})
         : null
-    map.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
+    sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
     return layer
 }
 
@@ -25,7 +25,7 @@ export const loadFusionTableColumns$ = (tableId, args) => {
         `https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns?${authParam()}`,
         args
     ).pipe(
-        rxMap((e) => e.response.items)
+        map((e) => e.response.items)
     )
 }
 
@@ -81,7 +81,7 @@ class FusionTableLayer {
             FROM ${this.tableId} 
             WHERE '${this.keyColumn}' = '${this.key}'
         `).pipe(
-            rxMap((e) => {
+            map((e) => {
                     const googleBounds = new google.maps.LatLngBounds()
                     if (!e.response.rows[0])
                         throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.tableId}`)
@@ -104,4 +104,4 @@ class FusionTableLayer {
 const authParam = () =>
     googleTokens
         ? `access_token=${googleTokens.accessToken}`
-        : `key=${map.getKey()}`
+        : `key=${sepalMap.getKey()}`

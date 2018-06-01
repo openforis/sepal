@@ -1,6 +1,6 @@
 import {RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import EarthEngineImageLayer from 'app/home/map/earthEngineLayer'
-import {map} from 'app/home/map/map'
+import {sepalMap} from 'app/home/map/map'
 import backend from 'backend'
 import _ from 'lodash'
 import React from 'react'
@@ -67,7 +67,7 @@ class MosaicPreview extends React.Component {
             props: _.omit(recipe, 'ui'),
             onProgress: (tiles) => this.onProgress(tiles)
         }) : null
-        const changed = map.getContext(recipeId).setLayer({id: 'preview', layer, destroy$: componentWillUnmount$})
+        const changed = sepalMap.getContext(recipeId).setLayer({id: 'preview', layer, destroy$: componentWillUnmount$})
         if (changed && initializing !== !!layer)
             this.setState(prevState => ({...prevState, initializing: !!layer}))
 

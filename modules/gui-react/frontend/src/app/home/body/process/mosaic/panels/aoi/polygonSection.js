@@ -3,14 +3,14 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
 import {Msg, msg} from 'translate'
-import {map} from '../../../../../map/map'
+import {sepalMap} from '../../../../../map/map'
 import PanelContent from '../panelContent'
 import styles from './aoi.module.css'
 
 class PolygonSection extends React.Component {
     componentWillMount() {
         const {recipeId, inputs: {polygon}} = this.props
-        map.getContext(recipeId).drawPolygon('aoi', (drawnPolygon) => {
+        sepalMap.getContext(recipeId).drawPolygon('aoi', (drawnPolygon) => {
             polygon.set(drawnPolygon)
         })
     }
@@ -21,13 +21,13 @@ class PolygonSection extends React.Component {
 
     disableDrawingMode() {
         const {recipeId} = this.props
-        map.getContext(recipeId).disableDrawingMode()
+        sepalMap.getContext(recipeId).disableDrawingMode()
     }
 
     updateBounds(updatedBounds) {
         const {recipeId, inputs: {bounds}} = this.props
         bounds.set(updatedBounds)
-        map.getContext(recipeId).fitLayer('aoi')
+        sepalMap.getContext(recipeId).fitLayer('aoi')
     }
 
     render() {

@@ -5,11 +5,11 @@ import Http from 'http-client'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Observable, Subject} from 'rxjs'
-import {map as rxMap, mergeMap, takeUntil} from 'rxjs/operators'
+import {map, mergeMap, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
 import './map.module.css'
 
-export let map = null
+export let sepalMap = null
 export let google = null
 let instance = null
 
@@ -19,7 +19,7 @@ let currentContextId
 export const initGoogleMapsApi$ = () => {
     const loadGoogleMapsApiKey$ =
         Http.get$('/api/data/google-maps-api-key').pipe(
-            rxMap((e) => e.response.apiKey)
+            map((e) => e.response.apiKey)
         )
 
     const loadGoogleMapsApi$ = (apiKey) => Observable.create((observer) => {
@@ -34,7 +34,7 @@ export const initGoogleMapsApi$ = () => {
 
     return loadGoogleMapsApiKey$.pipe(
         mergeMap(loadGoogleMapsApi$),
-        rxMap((apiKey) => actionBuilder('SET_GOOGLE_MAPS_API_INITIALIZED', {apiKey: apiKey})
+        map((apiKey) => actionBuilder('SET_GOOGLE_MAPS_API_INITIALIZED', {apiKey: apiKey})
             .set('map.apiKey', apiKey)
             .build()
         )
@@ -76,7 +76,7 @@ const createMap = (mapElement) => {
         zIndex: 1
     }
 
-    map = {
+    sepalMap = {
         getKey() {
             return GoogleMapsLoader.KEY
         },
@@ -155,7 +155,7 @@ const createMap = (mapElement) => {
                         const layer = layerById[id]
                         if (layer && layer.bounds && currentContextId === contextId) {
                             const bounds = layer.bounds
-                            map.fitBounds(bounds)
+                            sepalMap.fitBounds(bounds)
                         }
                     },
                     addToMap() {
@@ -223,16 +223,16 @@ const createMap = (mapElement) => {
         },
         deselectLayers(contextIdToDeselect) {
             if (contextIdToDeselect === currentContextId)
-                map.selectLayers()
+                sepalMap.selectLayers()
         },
         removeLayers(contextIdToRemove) {
             if (contextIdToRemove === currentContextId) {
-                map.clear()
+                sepalMap.clear()
             }
             delete contextById[contextIdToRemove]
         },
         clear() {
-            map.selectLayers()
+            sepalMap.selectLayers()
         }
     }
 }

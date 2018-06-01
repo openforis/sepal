@@ -1,4 +1,4 @@
-import {map} from 'app/home/map/map'
+import {sepalMap} from 'app/home/map/map'
 import flexy from 'flexy.module.css'
 import React from 'react'
 import {connect, Enabled} from 'store'
@@ -20,27 +20,27 @@ class TabContent extends React.Component {
         const {tab: {id}} = this.props
         this.props.onEnable(() => {
             if (this.props.selected)
-                map.selectLayers(id)
+                sepalMap.selectLayers(id)
         })
         this.props.onDisable(() => {
-            map.deselectLayers(id)
+            sepalMap.deselectLayers(id)
         })
-        map.selectLayers(id)
+        sepalMap.selectLayers(id)
     }
 
     componentDidUpdate(prevProps) {
         const {tab: {id}, selected} = this.props
         const gotDeselected = prevProps.selected && !selected
         if (gotDeselected)
-            map.deselectLayers(id)
+            sepalMap.deselectLayers(id)
         const gotSelected = !prevProps.selected && selected
         if (gotSelected)
-            map.selectLayers(id)
+            sepalMap.selectLayers(id)
     }
 
     componentWillUnmount() {
         const {tab: {id}} = this.props
-        map.removeLayers(id)
+        sepalMap.removeLayers(id)
     }
 }
 

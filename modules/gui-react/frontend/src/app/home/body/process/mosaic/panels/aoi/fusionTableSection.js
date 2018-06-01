@@ -1,9 +1,9 @@
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
-import {map} from 'app/home/map/map'
+import {sepalMap} from 'app/home/map/map'
 import React from 'react'
 import {Subject} from 'rxjs'
-import {map as rxMap, takeUntil} from 'rxjs/operators'
+import {map, takeUntil} from 'rxjs/operators'
 import {connect} from 'store'
 import {Msg, msg} from 'translate'
 import ComboBox from 'widget/comboBox'
@@ -31,7 +31,7 @@ class FusionTableSection extends React.Component {
     loadFusionTableColumns(fusionTableId) {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
             loadFusionTableColumns$(fusionTableId, {retries: 1, validStatuses: [200, 404]}).pipe(
-                rxMap((columns) => {
+                map((columns) => {
                         if (!columns)
                             this.props.inputs.fusionTable.invalid(
                                 msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.invalid')
@@ -40,7 +40,7 @@ class FusionTableSection extends React.Component {
                             .filter((column) => column.type !== 'LOCATION')
                     }
                 ),
-                rxMap(this.recipe.setFusionTableColumns),
+                map(this.recipe.setFusionTableColumns),
                 takeUntil(this.fusionTableChanged$))
         )
             .dispatch()
@@ -54,12 +54,12 @@ class FusionTableSection extends React.Component {
                     FROM ${this.props.inputs.fusionTable.value}
                     ORDER BY '${column}' ASC
             `).pipe(
-                rxMap((e) =>
+                map((e) =>
                     (e.response.rows || [])
                         .map((row) => row[0])
                         .filter((value) => value)
                 ),
-                rxMap(this.recipe.setFusionTableRows),
+                map(this.recipe.setFusionTableRows),
                 takeUntil(this.fusionTableColumnChanged$),
                 takeUntil(this.fusionTableChanged$)
             )
@@ -70,7 +70,7 @@ class FusionTableSection extends React.Component {
     updateBounds(updatedBounds) {
         const {recipeId, inputs: {bounds}} = this.props
         bounds.set(updatedBounds)
-        map.getContext(recipeId).fitLayer('aoi')
+        sepalMap.getContext(recipeId).fitLayer('aoi')
     }
 
     render() {
