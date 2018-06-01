@@ -10,7 +10,7 @@ const api = {
 export default api
 
 const transformRecipeForPreview = (recipe) => {
-    const transformedRecipe = {
+    return {
         aoi: transformAoi(recipe.aoi),
         dates: recipe.dates,
         dataSet: toDataSet(recipe.sources),
@@ -26,9 +26,6 @@ const transformRecipeForPreview = (recipe) => {
         maskSnow: true,
         type: 'automatic'
     }
-    console.log(recipe)
-    console.log(transformedRecipe)
-    return transformedRecipe
 }
 
 const transformAoi = (aoi) => {

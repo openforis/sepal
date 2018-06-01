@@ -1,5 +1,5 @@
 import actionBuilder from 'action-builder'
-import earthengine from 'earthengine-api'
+import ee from 'earthengine-api'
 import GoogleMapsLoader from 'google-maps'
 import Http from 'http-client'
 import PropTypes from 'prop-types'
@@ -10,7 +10,6 @@ import {connect, select} from 'store'
 import './map.module.css'
 
 export let map = null
-export const ee = earthengine.ee
 export let google = null
 let instance = null
 
@@ -107,6 +106,13 @@ const createMap = (mapElement) => {
         },
         getBounds() {
             return fromGoogleBounds(instance.getBounds())
+        },
+        onBoundsChanged(listener) {
+            return instance.addListener('bounds_changed', listener)
+        },
+        removeListener(listener) {
+            if (listener)
+                google.maps.event.removeListener(listener)
         },
         getLayers(contextId) {
             let layers = layersByContextId[contextId]

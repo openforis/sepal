@@ -279,6 +279,11 @@
           "button": "CMP",
           "tooltip": "Configure composite creation"
         }
+      },
+      "preview": {
+        "initializing": "Loading preview...",
+        "loading": "Loaded {loaded} of {count} tiles",
+        "failed": "{failed} failed"
       }
     },
     "classification": {

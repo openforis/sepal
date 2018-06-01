@@ -4,10 +4,10 @@ import React from 'react'
 import {connect} from 'store'
 import MapToolbar from './mapToolbar'
 import styles from './mosaic.module.css'
+import MosaicPreview from './mosaicPreview'
 import {RecipeState} from './mosaicRecipe'
 import Panels from './panels/panels'
 import Toolbar from './panels/toolbar'
-import {setPreviewLayer} from './previewLayer'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.id)
@@ -24,6 +24,7 @@ class Mosaic extends React.Component {
                 <MapToolbar id={id} className={[styles.toolbar, styles.map].join(' ')}/>
                 <Toolbar id={id} className={[styles.toolbar, styles.mosaic].join(' ')}/>
                 <Panels id={id} className={styles.panel}/>
+                <MosaicPreview recipeId={id}/>
             </div>
         )
     }
@@ -31,16 +32,6 @@ class Mosaic extends React.Component {
     componentDidMount() {
         const {id, recipe: {aoi}} = this.props
         setAoiLayer(id, aoi)
-    }
-
-    componentDidUpdate() {
-        const {id, recipe, componentWillUnmount$} = this.props
-        // setAoiLayer(id, aoi)
-        setPreviewLayer({
-            contextId: id,
-            recipe,
-            destroy$: componentWillUnmount$
-        })
     }
 }
 

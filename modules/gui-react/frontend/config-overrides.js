@@ -20,8 +20,7 @@ module.exports = {
                     ...defaultProxy,
                     context: ['/gee'],
                     target: 'http://localhost:5001',
-                    pathRewrite: {'^/gee' : '/'},
-                    logLevel: 'debug'
+                    pathRewrite: {'^/gee' : '/'}
                 })
                 config.headers = {
                     ...config.headers,
