@@ -12,7 +12,7 @@ class FusionTable {
         const layer = key
             ? new FusionTable({table, keyColumn, key, bounds})
             : null
-        map.getContext(contextId).set({id, layer, destroy$, onInitialized})
+        map.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
         return layer
     }
 

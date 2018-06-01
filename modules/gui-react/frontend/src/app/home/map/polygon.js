@@ -6,7 +6,7 @@ import './map.module.css'
 class Polygon {
     static setLayer(contextId, {id, path}, destroy$, onInitialized) {
         const layer = path ? new Polygon(path) : null
-        map.getContext(contextId).set({id, layer, destroy$, onInitialized})
+        map.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
         return layer
     }
 

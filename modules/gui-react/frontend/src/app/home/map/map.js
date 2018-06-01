@@ -119,14 +119,14 @@ const createMap = (mapElement) => {
             if (!context) {
                 const layerById = {}
                 context = {
-                    set({id, layer, destroy$, onInitialized}) {
+                    setLayer({id, layer, destroy$, onInitialized}) {
                         if (!destroy$)
                             throw new Error('destroy$ is missing')
                         const existingLayer = layerById[id]
                         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
                         if (unchanged)
                             return false
-                        this.remove(id)
+                        this.removeLayer(id)
                         if (layer) {
                             layerById[id] = layer
                             layer.__removed$ = new Subject()
@@ -142,7 +142,7 @@ const createMap = (mapElement) => {
                         }
                         return true
                     },
-                    remove(id) {
+                    removeLayer(id) {
                         const layer = layerById[id]
                         if (!layer)
                             return
@@ -151,7 +151,7 @@ const createMap = (mapElement) => {
                             layer.removeFromMap(instance)
                         delete layerById[id]
                     },
-                    fit(id) {
+                    fitLayer(id) {
                         const layer = layerById[id]
                         if (layer && layer.bounds && currentContextId === contextId) {
                             const bounds = layer.bounds

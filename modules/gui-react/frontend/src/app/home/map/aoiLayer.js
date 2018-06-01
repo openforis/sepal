@@ -6,7 +6,7 @@ import Polygon from './polygon'
 export const countryFusionTable = '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU'
 
 export const removeAoiLayer = (contextId) => {
-    map.getContext(contextId).remove('aoi')
+    map.getContext(contextId).removeLayer('aoi')
 }
 
 export const setAoiLayer = (contextId, aoi, destroy$, onInitialized) => {

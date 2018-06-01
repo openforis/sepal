@@ -65,7 +65,7 @@ class CountrySection extends React.Component {
     updateBounds(updatedBounds) {
         const {recipeId, inputs: {bounds}} = this.props
         bounds.set(updatedBounds)
-        map.getContext(recipeId).fit('aoi')
+        map.getContext(recipeId).fitLayer('aoi')
     }
 
     render() {
