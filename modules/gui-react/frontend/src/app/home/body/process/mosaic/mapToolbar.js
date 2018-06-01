@@ -1,14 +1,14 @@
-import React from 'react'
-import Icon from 'widget/icon'
-import styles from './mapToolbar.module.css'
 import PropTypes from 'prop-types'
-import Tooltip from 'widget/tooltip'
+import React from 'react'
 import {connect} from 'store'
-import {RecipeState, RecipeActions} from './mosaicRecipe'
+import Icon from 'widget/icon'
+import Tooltip from 'widget/tooltip'
 import {map} from '../../../map/map'
+import styles from './mapToolbar.module.css'
+import {RecipeActions, RecipeState} from './mosaicRecipe'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.id)
+    const recipe = RecipeState(ownProps.recipeId)
     return {
         labelsShown: recipe('ui.labelsShown'),
         gridShown: recipe('ui.gridShown'),
@@ -19,10 +19,11 @@ const mapStateToProps = (state, ownProps) => {
 class MapToolbar extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.id)
+        this.recipe = RecipeActions(props.recipeId)
     }
+
     render() {
-        const {id, className, labelsShown, gridShown} = this.props
+        const {recipeId, className, labelsShown, gridShown} = this.props
         return (
             <div className={className}>
                 <div className={styles.toolbar}>
@@ -47,7 +48,7 @@ class MapToolbar extends React.Component {
                         </button>
                     </Tooltip>
                     <Tooltip msg={'process.mosaic.mapToolbar.centerMap'} top>
-                        <button onClick={() => map.getLayers(id).fit('aoi')}>
+                        <button onClick={() => map.getLayers(recipeId).fit('aoi')}>
                             <Icon name={'bullseye'}/>
                         </button>
                     </Tooltip>
@@ -59,7 +60,7 @@ class MapToolbar extends React.Component {
 
 MapToolbar.propTypes = {
     className: PropTypes.string,
-    id: PropTypes.string,
+    recipeId: PropTypes.string,
     labelsShown: PropTypes.bool,
     gridShown: PropTypes.bool
 }

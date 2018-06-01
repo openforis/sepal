@@ -27,8 +27,8 @@ export default class SectionSelection extends React.Component {
     }
 
     componentDidUpdate() {
-        const {id} = this.props
-        removeAoiLayer(id)
+        const {recipeId} = this.props
+        removeAoiLayer(recipeId)
     }
 }
 
@@ -38,6 +38,7 @@ const SectionOption = ({label, value, section}) =>
     </Button>
 
 SectionSelection.propTypes = {
+    recipeId: PropTypes.string.isRequired,
     inputs: PropTypes.object.isRequired,
     className: PropTypes.string.isRequired
 }

@@ -68,7 +68,7 @@ const inputs = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.id)
+    const recipe = RecipeState(ownProps.recipeId)
     return {
         values: recipe('ui.dates') || {
             advanced: recipe('ui.dates.advanced'),
@@ -85,10 +85,10 @@ const mapStateToProps = (state, ownProps) => {
 class Dates extends React.Component {
     constructor(props) {
         super(props)
-        const {id, inputs: {targetYear, targetDate}} = props
+        const {recipeId, inputs: {targetYear, targetDate}} = props
         targetYear.onChange((yearString) => this.handleYearChange(yearString))
         targetDate.onChange((dateString) => this.handleDateChange(dateString))
-        this.recipe = RecipeActions(id)
+        this.recipe = RecipeActions(recipeId)
     }
 
     handleYearChange(yearString) {
@@ -114,7 +114,7 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {id, form, inputs: {advanced}, className} = this.props
+        const {recipeId, form, inputs: {advanced}, className} = this.props
         return (
             <form className={[className, advanced.value ? styles.advanced : styles.simple].join(' ')}>
                 <PanelForm
@@ -123,7 +123,7 @@ class Dates extends React.Component {
                         label: advanced.value ? msg('button.less') : msg('button.more'),
                         onClick: () => this.setAdvanced(!advanced.value)
                     }]}
-                    recipeId={id}
+                    recipeId={recipeId}
                     form={form}
                     onApply={(recipe, dates) => recipe.setDates(dates).dispatch()}
                     icon='cog'
@@ -213,7 +213,7 @@ const parseYear = (dateString) =>
     moment(dateString, 'YYYY', true)
 
 Dates.propTypes = {
-    id: PropTypes.string,
+    recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
     inputs: PropTypes.shape({}),

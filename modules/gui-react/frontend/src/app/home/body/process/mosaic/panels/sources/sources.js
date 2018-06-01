@@ -1,3 +1,4 @@
+import {arrayEquals} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {imageSourceById, sources} from 'sources'
@@ -8,7 +9,6 @@ import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './sources.module.css'
 import updateSource from './updateSource'
-import {arrayEquals} from 'collections'
 
 const inputs = {
     source: new Constraints()
@@ -18,7 +18,7 @@ const inputs = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.id)
+    const recipe = RecipeState(ownProps.recipeId)
     return {
         values: recipe('ui.sources') || {
             source: 'landsat'
@@ -29,8 +29,9 @@ const mapStateToProps = (state, ownProps) => {
 class Sources extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.id)
-        const {dateRange, isSourceInDateRange, isDataSetInDateRange} = RecipeState(props.id)
+        const {recipeId} = props
+        this.recipe = RecipeActions(recipeId)
+        const {dateRange, isSourceInDateRange, isDataSetInDateRange} = RecipeState(recipeId)
         this.dateRange = dateRange
         this.isSourceInDateRange = isSourceInDateRange
         this.isDataSetInDateRange = isDataSetInDateRange
@@ -93,12 +94,12 @@ class Sources extends React.Component {
     }
 
     render() {
-        const {className, id, form} = this.props
+        const {recipeId, form, className} = this.props
         return (
             <div className={className}>
                 <form className={styles.container}>
                     <PanelForm
-                        recipeId={id}
+                        recipeId={recipeId}
                         form={form}
                         onApply={(recipe, sources) => recipe.setSources(sources).dispatch()}
                         icon='cog'
@@ -126,7 +127,7 @@ class Sources extends React.Component {
 }
 
 Sources.propTypes = {
-    id: PropTypes.string,
+    recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
     inputs: PropTypes.shape({}),

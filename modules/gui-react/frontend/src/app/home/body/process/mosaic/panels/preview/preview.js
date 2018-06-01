@@ -8,7 +8,7 @@ import styles from './preview.module.css'
 const inputs = {}
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.id)
+    const recipe = RecipeState(ownProps.recipeId)
     return {
         values: recipe('ui.preview')
     }
@@ -17,7 +17,7 @@ const mapStateToProps = (state, ownProps) => {
 class Preview extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.id)
+        this.recipe = RecipeActions(props.recipeId)
     }
 
     render() {
@@ -35,7 +35,7 @@ class Preview extends React.Component {
 }
 
 Preview.propTypes = {
-    id: PropTypes.string,
+    recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
     inputs: PropTypes.shape({}),

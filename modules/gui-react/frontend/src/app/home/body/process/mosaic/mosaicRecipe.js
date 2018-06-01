@@ -7,19 +7,19 @@ import Labels from '../../../map/labels'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
-const recipePath = (id, path) => {
-    const tabIndex = select('process.tabs')
-        .findIndex((tab) => tab.id === id)
-    if (tabIndex === -1)
-        throw new Error(`Recipe not found: ${id}`)
-    return ['process.tabs', tabIndex, path]
+const recipePath = (recipeId, path) => {
+    const recipeTabIndex = select('process.tabs')
+        .findIndex((recipe) => recipe.id === recipeId)
+    if (recipeTabIndex === -1)
+        throw new Error(`Recipe not found: ${recipeId}`)
+    return ['process.tabs', recipeTabIndex, path]
         .filter(e => e !== undefined)
         .join('.')
 }
 
-export const RecipeState = (id) => {
+export const RecipeState = (recipeId) => {
     const get = (path) => {
-        return select(recipePath(id, path))
+        return select(recipePath(recipeId, path))
     }
     get.dateRange = () => {
         const dates = get('dates')

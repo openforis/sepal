@@ -14,7 +14,7 @@ import Scenes from './scenes/scenes'
 import Sources from './sources/sources'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.id)
+    const recipe = RecipeState(ownProps.recipeId)
     return {
         initialized: recipe('ui.initialized'),
         selectedPanel: recipe('ui.selectedPanel')
@@ -23,40 +23,55 @@ const mapStateToProps = (state, ownProps) => {
 
 class Panels extends React.Component {
     render() {
-        const {selectedPanel} = this.props
+        const {recipeId, selectedPanel} = this.props
         switch (selectedPanel) {
-        case PANELS.AUTO:
-            return <Auto id={this.props.id} className={[styles.panel, styles.auto, styles.top].join(' ')}/>
-        case PANELS.PREVIEW:
-            return <Preview id={this.props.id} className={[styles.panel, styles.preview, styles.top].join(' ')}/>
-        case PANELS.RETRIEVE:
-            return <Retrieve id={this.props.id} className={[styles.panel, styles.retrieve, styles.top].join(' ')}/>
-        case PANELS.AREA_OF_INTEREST:
-            return <Aoi id={this.props.id} className={[styles.panel, styles.aoi, styles.bottom].join(' ')}/>
-        case PANELS.DATES:
-            return <Dates id={this.props.id} className={[styles.panel, styles.bottom].join(' ')}/>
-        case PANELS.SOURCES:
-            return <Sources id={this.props.id} className={[styles.panel, styles.sources, styles.bottom].join(' ')}/>
-        case PANELS.SCENES:
-            return <Scenes id={this.props.id} className={[styles.panel, styles.scenes, styles.bottom].join(' ')}/>
-        case PANELS.COMPOSITE:
-            return <Composite id={this.props.id}
-                className={[styles.panel, styles.composite, styles.bottom].join(' ')}/>
-        default:
-            return null
+            case PANELS.AUTO:
+                return <Auto
+                    recipeId={recipeId}
+                    className={[styles.panel, styles.auto, styles.top].join(' ')}/>
+            case PANELS.PREVIEW:
+                return <Preview
+                    recipeId={recipeId}
+                    className={[styles.panel, styles.preview, styles.top].join(' ')}/>
+            case PANELS.RETRIEVE:
+                return <Retrieve
+                    recipeId={recipeId}
+                    className={[styles.panel, styles.retrieve, styles.top].join(' ')}/>
+            case PANELS.AREA_OF_INTEREST:
+                return <Aoi
+                    recipeId={recipeId}
+                    className={[styles.panel, styles.aoi, styles.bottom].join(' ')}/>
+            case PANELS.DATES:
+                return <Dates
+                    recipeId={recipeId}
+                    className={[styles.panel, styles.bottom].join(' ')}/>
+            case PANELS.SOURCES:
+                return <Sources
+                    recipeId={recipeId}
+                    className={[styles.panel, styles.sources, styles.bottom].join(' ')}/>
+            case PANELS.SCENES:
+                return <Scenes
+                    recipeId={recipeId}
+                    className={[styles.panel, styles.scenes, styles.bottom].join(' ')}/>
+            case PANELS.COMPOSITE:
+                return <Composite
+                    recipeId={recipeId}
+                    className={[styles.panel, styles.composite, styles.bottom].join(' ')}/>
+            default:
+                return null
         }
     }
 
     componentDidMount() {
-        const {id, selectedPanel, initialized} = this.props
+        const {recipeId, selectedPanel, initialized} = this.props
         if (!initialized && !selectedPanel)
-            RecipeActions(id).selectPanel(PANELS.AREA_OF_INTEREST)
+            RecipeActions(recipeId).selectPanel(PANELS.AREA_OF_INTEREST)
                 .dispatch()
     }
 }
 
 Panels.propTypes = {
-    id: PropTypes.string,
+    recipeId: PropTypes.string,
     selectedPanel: PropTypes.string,
     initialized: PropTypes.any
 }

@@ -9,7 +9,7 @@ import {PANELS} from './panelConstants'
 import styles from './toolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.id)
+    const recipe = RecipeState(ownProps.recipeId)
     return {
         selectedPanel: recipe('ui.selectedPanel'),
         modal: recipe('ui.modal')
@@ -19,7 +19,7 @@ const mapStateToProps = (state, ownProps) => {
 class Toolbar extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.id)
+        this.recipe = RecipeActions(props.recipeId)
     }
 
     render() {
@@ -47,7 +47,7 @@ class Toolbar extends React.Component {
 
 Toolbar.propTypes = {
     className: PropTypes.string,
-    id: PropTypes.string,
+    recipeId: PropTypes.string,
     selectedPanel: PropTypes.string,
     modal: PropTypes.bool
 }

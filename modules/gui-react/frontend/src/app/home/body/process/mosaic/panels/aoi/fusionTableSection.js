@@ -12,7 +12,7 @@ import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelContent from '../panelContent'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = new RecipeState(ownProps.id)
+    const recipe = new RecipeState(ownProps.recipeId)
     return {
         columns: recipe('ui.fusionTable.columns'),
         rows: recipe('ui.fusionTable.rows')
@@ -20,12 +20,12 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class FusionTableSection extends React.Component {
-    constructor(params) {
-        super(params)
+    constructor(props) {
+        super(props)
         this.fusionTableChanged$ = new Subject()
         this.fusionTableColumnChanged$ = new Subject()
         this.fusionTableRowChanged$ = new Subject()
-        this.recipe = new RecipeActions(params.id)
+        this.recipe = new RecipeActions(props.recipeId)
     }
 
     loadFusionTableColumns(fusionTableId) {
@@ -68,10 +68,10 @@ class FusionTableSection extends React.Component {
 
 
     updateBounds(updatedBounds) {
-        const {id, inputs: {bounds}} = this.props
+        const {recipeId, inputs: {bounds}} = this.props
         console.log('update bounds', updatedBounds)
         bounds.set(updatedBounds)
-        map.getLayers(id).fit('aoi')
+        map.getLayers(recipeId).fit('aoi')
     }
 
     render() {
@@ -159,10 +159,9 @@ class FusionTableSection extends React.Component {
         if (prevProps.inputs === this.props.inputs)
             return
 
-        const {id, inputs: {fusionTable, fusionTableColumn, fusionTableRow}, componentWillUnmount$} = this.props
-
+        const {recipeId, inputs: {fusionTable, fusionTableColumn, fusionTableRow}, componentWillUnmount$} = this.props
         setAoiLayer(
-            id,
+            recipeId,
             {
                 type: 'fusionTable',
                 id: fusionTable.value,

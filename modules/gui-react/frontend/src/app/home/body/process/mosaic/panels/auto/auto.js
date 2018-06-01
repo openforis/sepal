@@ -5,11 +5,10 @@ import {form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import styles from './auto.module.css'
 
-const inputs = {
-}
+const inputs = {}
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.id)
+    const recipe = RecipeState(ownProps.recipeId)
     return {
         values: recipe('ui.auto')
     }
@@ -18,8 +17,9 @@ const mapStateToProps = (state, ownProps) => {
 class Auto extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.id)
+        this.recipe = RecipeActions(props.recipeId)
     }
+
     render() {
         const {className} = this.props
         return (
@@ -35,11 +35,10 @@ class Auto extends React.Component {
 }
 
 Auto.propTypes = {
-    id: PropTypes.string,
+    recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
-    inputs: PropTypes.shape({
-    }),
+    inputs: PropTypes.shape({}),
     action: PropTypes.func,
     values: PropTypes.object
 }

@@ -10,7 +10,7 @@ import Panels from './panels/panels'
 import Toolbar from './panels/toolbar'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.id)
+    const recipe = RecipeState(ownProps.recipeId)
     return {
         recipe: recipe()
     }
@@ -18,25 +18,25 @@ const mapStateToProps = (state, ownProps) => {
 
 class Mosaic extends React.Component {
     render() {
-        const {id} = this.props
+        const {recipeId} = this.props
         return (
             <div className={styles.mosaic}>
-                <MapToolbar id={id} className={[styles.toolbar, styles.map].join(' ')}/>
-                <Toolbar id={id} className={[styles.toolbar, styles.mosaic].join(' ')}/>
-                <Panels id={id} className={styles.panel}/>
-                <MosaicPreview recipeId={id}/>
+                <MapToolbar recipeId={recipeId} className={[styles.toolbar, styles.map].join(' ')}/>
+                <Toolbar recipeId={recipeId} className={[styles.toolbar, styles.mosaic].join(' ')}/>
+                <Panels recipeId={recipeId} className={styles.panel}/>
+                <MosaicPreview recipeId={recipeId}/>
             </div>
         )
     }
 
     componentDidMount() {
-        const {id, recipe: {aoi}} = this.props
-        setAoiLayer(id, aoi)
+        const {recipeId, recipe: {aoi}} = this.props
+        setAoiLayer(recipeId, aoi)
     }
 }
 
 Mosaic.propTypes = {
-    id: PropTypes.string
+    recipeId: PropTypes.string
 }
 
 export default connect(mapStateToProps)(Mosaic)

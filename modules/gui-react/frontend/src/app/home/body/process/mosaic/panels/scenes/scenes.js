@@ -9,7 +9,7 @@ const inputs = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.id)
+    const recipe = RecipeState(ownProps.recipeId)
     return {
         values: recipe('ui.scenes')
     }
@@ -18,7 +18,7 @@ const mapStateToProps = (state, ownProps) => {
 class Scenes extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.id)
+        this.recipe = RecipeActions(props.recipeId)
     }
     render() {
         const {className} = this.props
@@ -35,7 +35,7 @@ class Scenes extends React.Component {
 }
 
 Scenes.propTypes = {
-    id: PropTypes.string,
+    recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
     inputs: PropTypes.shape({

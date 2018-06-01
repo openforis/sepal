@@ -38,7 +38,7 @@ const inputs = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.id)
+    const recipe = RecipeState(ownProps.recipeId)
     return {
         values: recipe('ui.aoi'),
         aoi: recipe('aoi')
@@ -52,13 +52,13 @@ class Aoi extends React.Component {
     }
 
     onCancel() {
-        const {id, aoi} = this.props
-        setAoiLayer(id, aoi)
+        const {recipeId, aoi} = this.props
+        setAoiLayer(recipeId, aoi)
         map.fitBounds(this.initialBounds)
     }
 
     render() {
-        const {id, className, form, inputs} = this.props
+        const {recipeId, className, form, inputs} = this.props
         return (
             <div className={className}>
                 <div className={styles.container}>
@@ -73,7 +73,7 @@ class Aoi extends React.Component {
                         </div>
                         <div className={styles.buttons}>
                             <PanelButtons
-                                recipeId={id}
+                                recipeId={recipeId}
                                 form={form}
                                 onApply={(recipe, aoi) => recipe.setAoi(aoi).dispatch()}
                                 onCancel={() => this.onCancel()}/>
@@ -85,22 +85,22 @@ class Aoi extends React.Component {
     }
 
     renderSections() {
-        const {id, form, inputs} = this.props
+        const {recipeId, form, inputs} = this.props
         switch (inputs.section.value) {
             case 'country':
-                return <CountrySection id={id} inputs={inputs} className={styles.right}/>
+                return <CountrySection recipeId={recipeId} inputs={inputs} className={styles.right}/>
             case 'fusionTable':
-                return <FusionTableSection id={id} inputs={inputs} className={styles.right}/>
+                return <FusionTableSection recipeId={recipeId} inputs={inputs} className={styles.right}/>
             case 'polygon':
-                return <PolygonSection id={id} inputs={inputs} className={styles.right}/>
+                return <PolygonSection recipeId={recipeId} inputs={inputs} className={styles.right}/>
             default:
-                return <SectionSelection id={id} form={form} inputs={inputs} className={styles.left}/>
+                return <SectionSelection recipeId={recipeId} form={form} inputs={inputs} className={styles.left}/>
         }
     }
 }
 
 Aoi.propTypes = {
-    id: PropTypes.string,
+    recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
     inputs: PropTypes.shape({

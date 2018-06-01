@@ -1,6 +1,7 @@
 import actionBuilder from 'action-builder'
 import flexy from 'flexy.module.css'
 import Http from 'http-client'
+import PropTypes from 'prop-types'
 import React from 'react'
 import {map} from 'rxjs/operators'
 import {connect, select} from 'store'
@@ -9,17 +10,20 @@ import {Button, IconButton} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import styles from './createOrLoadRecipe.module.css'
 
-const CreateOrLoadRecipe = ({id}) =>
+const CreateOrLoadRecipe = ({recipeId}) =>
     <div className={[styles.container, flexy.container].join(' ')}>
         <div className={styles.createButtons}>
-            <CreateButton label={msg('process.mosaic.create')} id={id} type='mosaic'/>
-            <CreateButton label={msg('process.classification.create')} id={id} type='classification'/>
-            <CreateButton label={msg('process.changeDetection.create')} id={id} type='changeDetection'/>
-            <CreateButton label={msg('process.timeSeries.create')} id={id} type='timeSeries'/>
+            <CreateButton label={msg('process.mosaic.create')} recipeId={recipeId} type='mosaic'/>
+            <CreateButton label={msg('process.classification.create')} recipeId={recipeId} type='classification'/>
+            <CreateButton label={msg('process.changeDetection.create')} recipeId={recipeId} type='changeDetection'/>
+            <CreateButton label={msg('process.timeSeries.create')} recipeId={recipeId} type='timeSeries'/>
         </div>
-
         <RecipeList/>
     </div>
+
+CreateOrLoadRecipe.propTypes = {
+    recipeId: PropTypes.string.isRequired
+}
 
 export default CreateOrLoadRecipe
 
@@ -69,20 +73,20 @@ class RecipeList extends React.Component {
 
 RecipeList = connect(mapStateToProps)(RecipeList)
 
-const setTabType = (id, type, title) =>
+const setTabType = (recipeId, type, title) =>
     actionBuilder('SET_TAB_TYPE')
-        .withState('process.tabs', (tabs, stateBuilder) => {
-            const tabIndex = tabs.findIndex((tab) => tab.id === id)
-            if (tabIndex === -1)
+        .withState('process.tabs', (recipes, stateBuilder) => {
+            const recipeIndex = recipes.findIndex((recipe) => recipe.id === recipeId)
+            if (recipeIndex === -1)
                 throw new Error('Unable to create recipe')
             return stateBuilder
-                .set(['process', 'tabs', tabIndex, 'type'], type)
-                .set(['process', 'tabs', tabIndex, 'placeholder'], `${title}_${formatDate(new Date())}`)
+                .set(['process', 'tabs', recipeIndex, 'type'], type)
+                .set(['process', 'tabs', recipeIndex, 'placeholder'], `${title}_${formatDate(new Date())}`)
         })
         .dispatch()
 
-const CreateButton = ({id, type, label}) =>
-    <Button icon='plus-circle' onClick={() => setTabType(id, type, label)}
+const CreateButton = ({recipeId, type, label}) =>
+    <Button icon='plus-circle' onClick={() => setTabType(recipeId, type, label)}
             className={styles.createButton}>{label}</Button>
 
 const RecipeButton = ({icon, iconType, onClick}) =>

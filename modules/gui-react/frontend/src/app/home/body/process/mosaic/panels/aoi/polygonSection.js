@@ -9,8 +9,8 @@ import {connect} from 'store'
 
 class PolygonSection extends React.Component {
     componentWillMount() {
-        const {id, inputs: {polygon}} = this.props
-        map.getLayers(id).drawPolygon('aoi', (drawnPolygon) => {
+        const {recipeId, inputs: {polygon}} = this.props
+        map.getLayers(recipeId).drawPolygon('aoi', (drawnPolygon) => {
             polygon.set(drawnPolygon)
         })
     }
@@ -20,14 +20,14 @@ class PolygonSection extends React.Component {
     }
 
     disableDrawingMode() {
-        const {id} = this.props
-        map.getLayers(id).disableDrawingMode()
+        const {recipeId} = this.props
+        map.getLayers(recipeId).disableDrawingMode()
     }
 
     updateBounds(updatedBounds) {
-        const {id, inputs: {bounds}} = this.props
+        const {recipeId, inputs: {bounds}} = this.props
         bounds.set(updatedBounds)
-        map.getLayers(id).fit('aoi')
+        map.getLayers(recipeId).fit('aoi')
     }
 
     render() {
@@ -51,9 +51,9 @@ class PolygonSection extends React.Component {
         if (prevProps.inputs === this.props.inputs)
             return
 
-        const {id, inputs: {polygon}, componentWillUnmount$} = this.props
+        const {recipeId, inputs: {polygon}, componentWillUnmount$} = this.props
         setAoiLayer(
-            id,
+            recipeId,
             {
                 type: 'polygon',
                 path: polygon.value
@@ -66,7 +66,7 @@ class PolygonSection extends React.Component {
 }
 
 PolygonSection.propTypes = {
-    id: PropTypes.string.isRequired,
+    recipeId: PropTypes.string.isRequired,
     inputs: PropTypes.object.isRequired,
     className: PropTypes.string.isRequired
 }

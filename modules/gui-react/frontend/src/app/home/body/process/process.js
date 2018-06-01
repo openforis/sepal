@@ -7,11 +7,11 @@ const Process = () => {
     const contents = ({id, type}) => {
         switch (type) {
             case 'mosaic':
-                return <Mosaic id={id}/>
+                return <Mosaic recipeId={id}/>
             case 'classification':
-                return <Classification id={id}/>
+                return <Classification recipeId={id}/>
             default:
-                return <CreateOrLoadRecipe id={id}/>
+                return <CreateOrLoadRecipe recipeId={id}/>
         }
     }
 
