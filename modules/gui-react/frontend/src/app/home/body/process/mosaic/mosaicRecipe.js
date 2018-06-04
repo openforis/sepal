@@ -38,6 +38,8 @@ export const RecipeState = (recipeId) => {
         const [from, to] = get.dateRange()
         return isDataSetInDateRange(dataSetId, from, to)
     }
+
+    initRecipe(get())
     return get
 }
 
@@ -87,6 +89,12 @@ export const RecipeActions = (id) => {
                 'sources': createSources(sourcesForm)
             }, {sourcesForm})
         },
+        setSceneSelectionOptions(scenesForm) {
+            return setAll('SET_SCENE_SELECTION_OPTIONS', {
+                'ui.sceneSelectionOptions': {...scenesForm},
+                'sceneSelectionOptions': createSceneSelectionOptions(scenesForm)
+            }, {scenesForm})
+        },
         setModal(enabled) {
             return set('SET_MODAL', 'ui.modal', enabled, {enabled})
         },
@@ -100,6 +108,30 @@ export const RecipeActions = (id) => {
             return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
         }
     }
+}
+
+const initRecipe = (recipe) => {
+    if (recipe.ui)
+        return
+
+    const actions = RecipeActions(recipe.id)
+    actions.setDates({
+        advanced: false,
+        targetYear: String(moment().year()),
+        targetDate: moment().format(DATE_FORMAT),
+        seasonStart: moment().startOf('year').format(DATE_FORMAT),
+        seasonEnd: moment().add(1, 'years').startOf('year').format(DATE_FORMAT),
+        yearsBefore: 0,
+        yearsAfter: 0
+    }).dispatch()
+
+    actions.setSources({
+        source: 'landsat'
+    }).dispatch()
+
+    actions.setSceneSelectionOptions({
+        type: 'all'
+    }).dispatch()
 }
 
 const createAoi = (aoiForm) => {
@@ -152,5 +184,9 @@ const createDates = (datesForm) => {
 }
 
 const createSources = (sourcesForm) => ({
-    [sourcesForm.source]: [...sourcesForm.dataSets]
+    [sourcesForm.source]: sourcesForm.dataSets ? [...sourcesForm.dataSets] : null
+})
+
+const createSceneSelectionOptions = (scenesForm) => ({
+    ...scenesForm
 })

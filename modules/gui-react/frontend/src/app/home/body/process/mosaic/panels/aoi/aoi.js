@@ -72,8 +72,7 @@ class Aoi extends React.Component {
     render() {
         const {recipeId, className, form, inputs} = this.props
         return (
-            <div className={className}>
-                <div className={styles.container}>
+            <div className={[className, styles.container].join(' ')}>
                     <form>
                         <div className={styles.sections}>
                             <AnimateReplacement
@@ -91,7 +90,6 @@ class Aoi extends React.Component {
                                 onCancel={() => this.onCancel()}/>
                         </div>
                     </form>
-                </div>
             </div>
         )
     }

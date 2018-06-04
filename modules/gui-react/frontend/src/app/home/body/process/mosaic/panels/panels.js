@@ -28,19 +28,19 @@ class Panels extends React.Component {
             case PANELS.AUTO:
                 return <Auto
                     recipeId={recipeId}
-                    className={[styles.panel, styles.auto, styles.top].join(' ')}/>
+                    className={[styles.panel, styles.top].join(' ')}/>
             case PANELS.PREVIEW:
                 return <Preview
                     recipeId={recipeId}
-                    className={[styles.panel, styles.preview, styles.top].join(' ')}/>
+                    className={[styles.panel, styles.top].join(' ')}/>
             case PANELS.RETRIEVE:
                 return <Retrieve
                     recipeId={recipeId}
-                    className={[styles.panel, styles.retrieve, styles.top].join(' ')}/>
+                    className={[styles.panel, styles.top].join(' ')}/>
             case PANELS.AREA_OF_INTEREST:
                 return <Aoi
                     recipeId={recipeId}
-                    className={[styles.panel, styles.aoi, styles.bottom].join(' ')}/>
+                    className={[styles.panel, styles.bottom].join(' ')}/>
             case PANELS.DATES:
                 return <Dates
                     recipeId={recipeId}
@@ -48,15 +48,15 @@ class Panels extends React.Component {
             case PANELS.SOURCES:
                 return <Sources
                     recipeId={recipeId}
-                    className={[styles.panel, styles.sources, styles.bottom].join(' ')}/>
+                    className={[styles.panel, styles.bottom].join(' ')}/>
             case PANELS.SCENES:
                 return <Scenes
                     recipeId={recipeId}
-                    className={[styles.panel, styles.scenes, styles.bottom].join(' ')}/>
+                    className={[styles.panel, styles.bottom].join(' ')}/>
             case PANELS.COMPOSITE:
                 return <Composite
                     recipeId={recipeId}
-                    className={[styles.panel, styles.composite, styles.bottom].join(' ')}/>
+                    className={[styles.panel, styles.bottom].join(' ')}/>
             default:
                 return null
         }

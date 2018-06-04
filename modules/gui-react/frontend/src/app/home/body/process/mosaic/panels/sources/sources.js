@@ -20,9 +20,7 @@ const inputs = {
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
-        values: recipe('ui.sources') || {
-            source: 'landsat'
-        }
+        values: recipe('ui.sources')
     }
 }
 
@@ -96,8 +94,7 @@ class Sources extends React.Component {
     render() {
         const {recipeId, form, className} = this.props
         return (
-            <div className={className}>
-                <form className={styles.container}>
+            <form className={[className, styles.container].join(' ')}>
                     <PanelForm
                         recipeId={recipeId}
                         form={form}
@@ -110,8 +107,7 @@ class Sources extends React.Component {
                             {this.renderDataSets()}
                         </div>
                     </PanelForm>
-                </form>
-            </div>
+            </form>
         )
     }
 

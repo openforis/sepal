@@ -5,7 +5,7 @@ import {connect} from 'store'
 import MapToolbar from './mapToolbar'
 import styles from './mosaic.module.css'
 import MosaicPreview from './mosaicPreview'
-import {RecipeState} from './mosaicRecipe'
+import {initRecipe, RecipeState} from './mosaicRecipe'
 import Panels from './panels/panels'
 import Toolbar from './panels/toolbar'
 

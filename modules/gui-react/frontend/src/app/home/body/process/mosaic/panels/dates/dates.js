@@ -70,15 +70,7 @@ const inputs = {
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
-        values: recipe('ui.dates') || {
-            advanced: recipe('ui.dates.advanced'),
-            targetYear: String(moment().year()),
-            targetDate: moment().format(DATE_FORMAT),
-            seasonStart: moment().startOf('year').format(DATE_FORMAT),
-            seasonEnd: moment().add(1, 'years').startOf('year').format(DATE_FORMAT),
-            yearsBefore: 0,
-            yearsAfter: 0
-        }
+        values: recipe('ui.dates')
     }
 }
 

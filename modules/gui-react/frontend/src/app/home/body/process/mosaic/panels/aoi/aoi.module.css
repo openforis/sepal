@@ -1,5 +1,6 @@
 .container {
     min-height: 27rem;
+    max-width: 20rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;

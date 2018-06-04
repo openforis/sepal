@@ -15,14 +15,6 @@
     flex-shrink: 0;
 }
 
-.aoi {
-    max-width: 20rem;
-}
-
-.sources {
-    max-width: 29rem;
-}
-
 .top {
     top: .5rem;
 }
