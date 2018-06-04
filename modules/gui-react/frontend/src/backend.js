@@ -17,13 +17,14 @@ const transformRecipeForPreview = (recipe) => {
         sensors: toSensors(recipe.sources),
         targetDayOfYearWeight: 0,
         shadowTolerance: 1,
-        hazeTolerance: 0.5,
+        hazeTolerance: 1,
         greennessWeight: 0,
         bands: ['red', 'green', 'blue'],
-        medianComposite: true,
+        surfaceReflectance: true,
+        medianComposite: false,
         brdfCorrect: false,
         maskClouds: false,
-        maskSnow: true,
+        maskSnow: false,
         type: 'automatic'
     }
 }
