@@ -129,24 +129,26 @@ _toa = {
     'collection_names_by_sensor': {
         'LANDSAT_8': ('LANDSAT/LC08/C01/T1_TOA',),
         'LANDSAT_7': ('LANDSAT/LE07/C01/T1_TOA',),
-        'LANDSAT_TM': ('LANDSAT/LT4_L1T_TOA_FMASK', 'LANDSAT/LT05/C01/T1_TOA'),
+        'LANDSAT_TM': ('LANDSAT/LT04/C01/T1_TOA', 'LANDSAT/LT05/C01/T1_TOA'),
         'LANDSAT_8_T2': ('LANDSAT/LC08/C01/T2_TOA',),
         'LANDSAT_7_T2': ('LANDSAT/LE07/C01/T2_TOA',),
-        'LANDSAT_TM_T2': ('LANDSAT/LT05/C01/T2_TOA',)
+        'LANDSAT_TM_T2': ('LANDSAT/LT04/C01/T2_TOA', 'LANDSAT/LT05/C01/T2_TOA',)
     },
     'collection_names_by_scene_id_prefix': {
         'LC8': ('LANDSAT/LC08/C01/T1_TOA', 'LANDSAT/LC08/C01/T2_TOA'),
         'LE7': ('LANDSAT/LE07/C01/T1_TOA', 'LANDSAT/LE07/C01/T2_TOA'),
         'LT5': ('LANDSAT/LT05/C01/T1_TOA', 'LANDSAT/LT05/C01/T2_TOA'),
-        'LT4': ('LANDSAT/LT4_L1T_TOA_FMASK',)
+        'LT4': ('LANDSAT/LT04/C01/T1_TOA', 'LANDSAT/LT04/C01/T2_TOA')
     },
     'collection_name_by_data_set': {
         'landsat8': 'LANDSAT/LC08/C01/T1_TOA',
         'landsat7': 'LANDSAT/LE07/C01/T1_TOA',
         'landsat5': 'LANDSAT/LT05/C01/T1_TOA',
+        'landsat4': 'LANDSAT/LT04/C01/T2_TOA',
         'landsat8T2': 'LANDSAT/LC08/C01/T2_TOA',
         'landsat7T2': 'LANDSAT/LE07/C01/T2_TOA',
-        'landsat5T2': 'LANDSAT/LT05/C01/T2_TOA'
+        'landsat5T2': 'LANDSAT/LT05/C01/T2_TOA',
+        'landsat4T2': 'LANDSAT/LT04/C01/T2_TOA'
     }
 }
 
@@ -154,13 +156,16 @@ _sr = {
     'collection_names_by_sensor': {
         'LANDSAT_8': ('LANDSAT/LC08/C01/T1_SR',),
         'LANDSAT_7': ('LANDSAT/LE07/C01/T1_SR',),
-        'LANDSAT_TM': ('LANDSAT/LT04/C01/T1_SR', 'LANDSAT/LT05/C01/T1_SR',)
+        'LANDSAT_TM': ('LANDSAT/LT04/C01/T1_SR', 'LANDSAT/LT05/C01/T1_SR',),
+        'LANDSAT_8_T2': ('LANDSAT/LC08/C01/T2_SR',),
+        'LANDSAT_7_T2': ('LANDSAT/LE07/C01/T2_SR',),
+        'LANDSAT_TM_T2': ('LANDSAT/LT04/C01/T2_SR', 'LANDSAT/LT05/C01/T2_SR',)
     },
     'collection_names_by_scene_id_prefix': {
-        'LC8': ('LANDSAT/LC08/C01/T1_SR',),
-        'LE7': ('LANDSAT/LE07/C01/T1_SR',),
-        'LT5': ('LANDSAT/LT05/C01/T1_SR',),
-        'LT4': ('LANDSAT/LT04/C01/T1_SR',)
+        'LC8': ('LANDSAT/LC08/C01/T1_SR', 'LANDSAT/LC08/C01/T2_SR'),
+        'LE7': ('LANDSAT/LE07/C01/T1_SR', 'LANDSAT/LE07/C01/T2_SR'),
+        'LT5': ('LANDSAT/LT05/C01/T1_SR', 'LANDSAT/LT05/C01/T2_SR'),
+        'LT4': ('LANDSAT/LT04/C01/T1_SR', 'LANDSAT/LT04/C01/T2_SR')
     },
     'collection_name_by_data_set': {
         'landsat8': 'LANDSAT/LC08/C01/T1_SR',
@@ -203,9 +208,9 @@ class LandsatDataSet(DataSet):
             'LANDSAT/LT05/C01/T1_TOA': {
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
                 'BQA': 'BQA'},
-            'LANDSAT/LT4_L1T_TOA_FMASK': {
+            'LANDSAT/LT04/C01/T1_TOA': {
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
-                'fmask': 'fmask'},
+                'BQA': 'BQA'},
             'LANDSAT/LC08/C01/T2_TOA': {
                 'aerosol': 'B1', 'blue': 'B2', 'green': 'B3', 'red': 'B4', 'nir': 'B5', 'swir1': 'B6', 'swir2': 'B7',
                 'pan': 'B8', 'cirrus': 'B9', 'thermal': 'B10', 'thermal2': 'B11', 'BQA': 'BQA'},
@@ -213,6 +218,9 @@ class LandsatDataSet(DataSet):
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5',
                 'thermal': 'B6_VCID_1', 'thermal2': 'B6_VCID_2', 'swir2': 'B7', 'pan': 'B8', 'BQA': 'BQA'},
             'LANDSAT/LT05/C01/T2_TOA': {
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
+                'BQA': 'BQA'},
+            'LANDSAT/LT04/C01/T2_TOA': {
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
                 'BQA': 'BQA'},
             'LANDSAT/LC08/C01/T1_SR': {
@@ -225,6 +233,18 @@ class LandsatDataSet(DataSet):
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
                 'pixel_qa': 'pixel_qa'},
             'LANDSAT/LT04/C01/T1_SR': {
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
+                'pixel_qa': 'pixel_qa'},
+            'LANDSAT/LC08/C01/T2_SR': {
+                'aerosol': 'B1', 'blue': 'B2', 'green': 'B3', 'red': 'B4', 'nir': 'B5', 'swir1': 'B6', 'swir2': 'B7',
+                'thermal': 'B10', 'thermal2': 'B11', 'pixel_qa': 'pixel_qa'},
+            'LANDSAT/LE07/C01/T2_SR': {
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5',
+                'thermal': 'B6', 'swir2': 'B7', 'pixel_qa': 'pixel_qa'},
+            'LANDSAT/LT05/C01/T2_SR': {
+                'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
+                'pixel_qa': 'pixel_qa'},
+            'LANDSAT/LT04/C01/T2_SR': {
                 'blue': 'B1', 'green': 'B2', 'red': 'B3', 'nir': 'B4', 'swir1': 'B5', 'thermal': 'B6', 'swir2': 'B7',
                 'pixel_qa': 'pixel_qa'},
         }[self.collection_name]

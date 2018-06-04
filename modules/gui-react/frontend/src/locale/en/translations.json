@@ -258,9 +258,9 @@
                   "label": "L7 T2",
                   "tooltip": "Landsat 7 Tier 2"
                 },
-                "landsat5T2": {
-                  "label": "L5 T2",
-                  "tooltip": "Landsat 5 Tier 2"
+                "landsat45T2": {
+                  "label": "L4-5 T2",
+                  "tooltip": "Landsat 4-5 Tier 2"
                 },
                 "sentinel2": {
                   "label": "S2",

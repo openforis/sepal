@@ -10,7 +10,7 @@ export const imageSourceById = {
             'landsat45',
             'landsat8T2',
             'landsat7T2',
-            'landsat5T2'
+            'landsat45T2'
         ]
     },
     sentinel2: {
@@ -42,7 +42,7 @@ export const dataSetById = {
         fromYear: 1999,
         quality: 3,
     },
-    landsat5T2: {
+    landsat45T2: {
         fromYear: 1984,
         toYear: 2012,
         quality: 3,
