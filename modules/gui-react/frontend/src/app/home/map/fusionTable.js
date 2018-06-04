@@ -73,7 +73,6 @@ class FusionTableLayer {
     }
 
     addToMap(map) {
-        console.log('addToMap', this)
         this.layer.setMap(map)
     }
 

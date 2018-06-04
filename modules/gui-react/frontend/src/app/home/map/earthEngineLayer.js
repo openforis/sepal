@@ -50,6 +50,12 @@ export default class EarthEngineImageLayer {
             googleMap.overlayMapTypes.removeAt(index)
     }
 
+    hide(googleMap, hidden) {
+        const index = googleMap.overlayMapTypes.getArray().findIndex(overlay => overlay.name === 'preview')
+        if (index >= 0)
+            googleMap.overlayMapTypes.getAt(index).setOpacity(hidden ? 0 : 1)
+    }
+
     initialize$() {
         return this.mapId$.pipe(
             map(({response: {token, mapId}}) => {

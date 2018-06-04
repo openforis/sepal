@@ -22,6 +22,9 @@ class MosaicPreview extends React.Component {
 
     render() {
         const {initializing, tiles} = this.state
+        const {recipe} = this.props
+        if (this.isHidden(recipe))
+            return null
         const status = (content) =>
             <div className={styles.container}>
                 <div className={styles.status}>
@@ -67,10 +70,16 @@ class MosaicPreview extends React.Component {
             props: _.omit(recipe, 'ui'),
             onProgress: (tiles) => this.onProgress(tiles)
         }) : null
-        const changed = sepalMap.getContext(recipeId).setLayer({id: 'preview', layer, destroy$: componentWillUnmount$})
+        const context = sepalMap.getContext(recipeId)
+        const changed = context.setLayer({id: 'preview', layer, destroy$: componentWillUnmount$})
+        context.hideLayer('preview', this.isHidden(recipe))
         if (changed && initializing !== !!layer)
             this.setState(prevState => ({...prevState, initializing: !!layer}))
 
+    }
+
+    isHidden(recipe) {
+        return !recipe || !recipe.ui || !!recipe.ui.selectedPanel
     }
 }
 

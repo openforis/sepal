@@ -148,6 +148,11 @@ const createMap = (mapElement) => {
                         }
                         return true
                     },
+                    hideLayer(id, hidden) {
+                        const layer = layerById[id]
+                        if (layer)
+                            layer.hide(instance, hidden)
+                    },
                     removeLayer(id) {
                         const layer = layerById[id]
                         if (!layer)
