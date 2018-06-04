@@ -51,7 +51,7 @@ export default class SeasonSelect extends React.Component {
             moment(date).set('year', date.year() + years)
 
         const bestRange = (range1, range2) => {
-            const diff = (range) => range[0].diff(centerDate, 'days') + centerDate.diff(range[1], 'days')
+            const diff = (range) => Math.abs(range[0].diff(centerDate, 'days') + range[1].diff(centerDate, 'days'))
             const diff1 = diff(range1)
             const diff2 = diff(range2)
             return diff1 === diff2 ? 0 : diff1 < diff2 ? -1 : 1
