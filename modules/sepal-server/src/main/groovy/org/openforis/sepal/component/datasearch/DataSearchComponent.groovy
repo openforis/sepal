@@ -60,8 +60,8 @@ final class DataSearchComponent extends DataSourceBackedComponent implements End
         def sceneMetaDataRepository = new JdbcSceneMetaDataRepository(connectionManager)
 
         command(UpdateSceneMetaData, new UpdateSceneMetaDataHandler([
+                new UpdateUsgsSceneMetaDataHandler(landsatMetadata, sceneMetaDataRepository),
                 new UpdateSentinel2SceneMetaDataHandler(sentinel2Metadata, sceneMetaDataRepository),
-                new UpdateUsgsSceneMetaDataHandler(landsatMetadata, sceneMetaDataRepository)
         ]))
 
         query(FindSceneAreasForAoi, new FindSceneAreasForAoiHandler(geeGateway))
