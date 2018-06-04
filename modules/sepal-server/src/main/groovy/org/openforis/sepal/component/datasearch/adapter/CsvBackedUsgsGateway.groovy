@@ -112,7 +112,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     private Double cloudCover(Sensor sensor, data) {
         def result = data.cloudCover.toDouble() as Double
         // LANDSAT_7 with SLC off always miss about 22% of its data. Consider that cloud cover.
-        if (result && sensor == LANDSAT_7 && data.SCAN_GAP_INTERPOLATION)
+        if (result && sensor == LANDSAT_7 && data.SCAN_GAP_INTERPOLATION != '-1')
             result = Math.min(100, result + 22)
         return result
     }
