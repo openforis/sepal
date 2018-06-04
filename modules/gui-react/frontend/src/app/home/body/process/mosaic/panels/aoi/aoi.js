@@ -54,7 +54,6 @@ class Aoi extends React.Component {
     onApply(recipe, aoiForm) {
         const {recipeId, componentWillUnmount$} = this.props
         recipe.setAoi(aoiForm).dispatch()
-        console.log('aoi', RecipeState(recipeId)('aoi'))
         setAoiLayer({
                 contextId: recipeId,
                 aoi: RecipeState(recipeId)('aoi'),
