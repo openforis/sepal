@@ -30,8 +30,8 @@ class Mosaic extends React.Component {
     }
 
     componentDidMount() {
-        const {recipeId, recipe: {aoi}} = this.props
-        setAoiLayer({contextId: recipeId, aoi})
+        const {recipeId, recipe: {aoi}, componentWillUnmount$} = this.props
+        setAoiLayer({contextId: recipeId, aoi, destroy$: componentWillUnmount$})
     }
 }
 

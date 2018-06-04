@@ -91,6 +91,9 @@
       "collapse.tooltip": "Collapse menu (floating)"
     }
   },
+  "map": {
+    "layer.error.title": "Failed to load layer"
+  },
   "browse": {
     "controls.clearSelection.tooltip": "Clear selection",
     "controls.remove.tooltip": "Remove selected items",
@@ -307,8 +310,14 @@
       "REQUEST_PASSWORD_RESET": "Request password reset",
       "VALIDATE_TOKEN": "Validate link",
       "RESET_PASSWORD": "Reset password",
+      "INIT_GOOGLE_MAPS_API": "Initialize Google Maps",
+      "LOAD_RECIPES": "Load recipes",
+      "LOAD_COUNTRIES": "Load countries",
+      "LOAD_COUNTRY_AREAS": "Load areas of country",
+      "LOAD_DIRECTORY": "Load user directory",
+      "REMOVE_FILE": "Delete file",
       "LOAD_APPS": "Load applications",
-      "OPEN_APP": "Open application"
+      "RUN_APP": "Open application"
     }
   },
   "button": {

@@ -7,6 +7,9 @@ import {msg} from 'translate'
 export default function asyncActionBuilder(type, action$, component) {
     if (!type) throw new Error('Action type is required')
 
+    // Force warning for non-existing translations. Otherwise this would only be noticed on error.
+    msg('action.type.' + type)
+
     const componentId = component.id
 
     let actionsToDispatch = []

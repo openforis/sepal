@@ -1,4 +1,5 @@
 import actionBuilder from 'action-builder'
+import Notifications from 'app/notifications'
 import ee from 'earthengine-api'
 import GoogleMapsLoader from 'google-maps'
 import Http from 'http-client'
@@ -135,10 +136,15 @@ const createMap = (mapElement) => {
                                     takeUntil(destroy$),
                                     takeUntil(layer.__removed$)
                                 )
-                                .subscribe(() => {
-                                    currentContextId === contextId && layer.addToMap(instance)
-                                    onInitialized && onInitialized(layer)
-                                })
+                                .subscribe(
+                                    () => {
+                                        currentContextId === contextId && layer.addToMap(instance)
+                                        onInitialized && onInitialized(layer)
+                                    },
+                                    (e) =>
+                                        Notifications.caught('app.home.map.layer', {}, e)
+                                            .dispatch()
+                                )
                         }
                         return true
                     },

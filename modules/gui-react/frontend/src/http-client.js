@@ -64,7 +64,7 @@ function execute$(url, method, {retries, username, password, headers, validStatu
             return error$.pipe(
                 zip(range(1, retries + 1)),
                 flatMap(
-                    ([retry, error$]) => {
+                    ([error$, retry]) => {
                         if (retry > retries)
                             return throwError(error$)
                         else

@@ -1,7 +1,7 @@
 import Http from 'http-client'
 import {map} from 'rxjs/operators'
 import {subscribe} from 'store'
-import {fromGoogleBounds, google, sepalMap, polygonOptions} from './map'
+import {fromGoogleBounds, google, polygonOptions, sepalMap} from './map'
 import './map.module.css'
 
 let googleTokens = null
@@ -28,6 +28,12 @@ export const loadFusionTableColumns$ = (tableId, args) => {
         map((e) => e.response.items)
     )
 }
+
+const authParam = () =>
+    googleTokens
+        ? `access_token=${googleTokens.accessToken}`
+        : `key=${sepalMap.getKey()}`
+
 
 class FusionTableLayer {
     constructor({tableId, keyColumn, key, bounds}) {
@@ -100,8 +106,3 @@ class FusionTableLayer {
         )
     }
 }
-
-const authParam = () =>
-    googleTokens
-        ? `access_token=${googleTokens.accessToken}`
-        : `key=${sepalMap.getKey()}`

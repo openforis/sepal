@@ -52,8 +52,8 @@ class Aoi extends React.Component {
     }
 
     onCancel() {
-        const {recipeId, aoi} = this.props
-        setAoiLayer({contextId: recipeId, aoi})
+        const {recipeId, aoi, componentWillUnmount$} = this.props
+        setAoiLayer({contextId: recipeId, aoi, destroy$: componentWillUnmount$})
         sepalMap.fitBounds(this.initialBounds)
     }
 
