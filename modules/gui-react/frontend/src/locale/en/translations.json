@@ -272,9 +272,21 @@
           }
         },
         "scenes": {
-          "title": "Scenes",
+          "title": "Scene selection",
           "button": "SCN",
-          "tooltip": "Configure scenes selection"
+          "tooltip": "Configure scenes selection",
+          "form": {
+            "required": "Scene selection must be configured",
+            "type": {
+              "label": "Selection",
+              "all": "Use all scenes",
+              "select": "Select individual scenes"
+            },
+            "targetDateWeight": {
+              "label": "Target date weight",
+              "tooltip": "Prefer cloud-free scenes or scenes close to target date"
+            }
+          }
         },
         "composite": {
           "title": "Composite",

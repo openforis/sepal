@@ -2,5 +2,14 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 16rem;
+    max-width: 29rem;
 }
+
+.form {
+    min-height: 14rem;
+}
+
+.types {
+    margin-bottom: 2rem;
+}
+

@@ -95,18 +95,17 @@ class Sources extends React.Component {
         const {recipeId, form, className} = this.props
         return (
             <form className={[className, styles.container].join(' ')}>
-                    <PanelForm
-                        recipeId={recipeId}
-                        form={form}
-                        onApply={(recipe, sources) => recipe.setSources(sources).dispatch()}
-                        icon='cog'
-                        title={msg('process.mosaic.panel.sources.title')}
-                        className={styles.form}>
-                        <div className={styles.form}>
-                            {this.renderSources()}
-                            {this.renderDataSets()}
-                        </div>
-                    </PanelForm>
+                <PanelForm
+                    recipeId={recipeId}
+                    form={form}
+                    onApply={(recipe, sources) => recipe.setSources(sources).dispatch()}
+                    icon='cog'
+                    title={msg('process.mosaic.panel.sources.title')}>
+                    <div className={styles.form}>
+                        {this.renderSources()}
+                        {this.renderDataSets()}
+                    </div>
+                </PanelForm>
             </form>
         )
     }

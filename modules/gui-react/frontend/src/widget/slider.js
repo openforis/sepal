@@ -28,7 +28,6 @@ class Draggable {
         this.mapToScreen = scale({min: this.minValue, max: this.maxValue}, {min: 0, max: width})
         this.mapToRange = scale({min: 0, max: width}, {min: this.minValue, max: this.maxValue})
         this.clipToScreen = limit({min: 0, max: width})
-        this.clipToRange = limit({min: this.minValue, max: this.maxValue})
 
         this.getPosition = () => Math.round(parseFloat(handle.style.left))
 
@@ -104,7 +103,7 @@ class Draggable {
     }
 }
 
-export class Slider extends React.Component {
+export default class Slider extends React.Component {
     constructor(props) {
         super(props)
         this.slider = React.createRef()
@@ -150,64 +149,3 @@ Slider.propTypes = {
     onChange: PropTypes.func
 }
 
-
-// export class RangeSlider extends React.Component {
-//     constructor(props) {
-//         super(props)
-//         this.container = React.createRef()
-//         this.sliderMinHandle = React.createRef()
-//         this.sliderMaxHandle = React.createRef()
-//         this.state = {}
-//         this.onChange = this.onChange.bind(this)
-//     }
-//     onChange() {
-//         if (this.state.min && this.state.max)
-//             this.props.onChange && this.props.onChange(this.state.min, this.state.max)
-//     }
-//     componentDidMount() {
-//         this.sliderMin = drag({
-//             element: this.sliderMinHandle.current, 
-//             container: this.container.current, 
-//             options: this.props,
-//             onChange: (min) => {
-//                 this.setState({
-//                     ...this.state,
-//                     min
-//                 })
-//                 this.onChange()
-//             }
-//         })
-//         this.sliderMax = drag({
-//             element: this.sliderMaxHandle.current, 
-//             container: this.container.current, 
-//             options: this.props,
-//             onChange: (max) => {
-//                 this.setState({
-//                     ...this.state,
-//                     max
-//                 })
-//                 this.onChange()
-//             }
-//         })
-//     }
-//     render() {
-//         return (
-//             <div className={styles.container}>
-//                 <div className={styles.slider} ref={this.container}>
-//                     <div className={styles.handle} ref={this.sliderMinHandle}/>
-//                     <div className={styles.handle} ref={this.sliderMaxHandle}/>
-//                 </div>
-//             </div>
-//         )
-//     }
-//     componentWillUnmount() {
-//         this.sliderMin.unsubscribe()
-//         this.sliderMax.unsubscribe()
-//     }
-// }
-
-// RangeSlider.propTypes = {
-//     min: PropTypes.number,
-//     max: PropTypes.number,
-//     onChange: PropTypes.func
-// }
