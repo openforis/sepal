@@ -10,7 +10,7 @@ export const removeAoiLayer = (contextId) => {
     sepalMap.getContext(contextId).removeLayer('aoi')
 }
 
-export const setAoiLayer = ({contextId, aoi, destroy$, onInitialized}) => {
+export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => {
     const layerId = 'aoi'
     switch (aoi && aoi.type) {
         case 'country':
@@ -23,6 +23,7 @@ export const setAoiLayer = ({contextId, aoi, destroy$, onInitialized}) => {
                     key: aoi.areaCode || aoi.countryCode,
                     bounds: aoi.bounds
                 },
+                fill,
                 destroy$,
                 onInitialized
             })
@@ -36,6 +37,7 @@ export const setAoiLayer = ({contextId, aoi, destroy$, onInitialized}) => {
                     key: aoi.key,
                     bounds: aoi.bounds
                 },
+                fill,
                 destroy$,
                 onInitialized
             })
@@ -47,6 +49,7 @@ export const setAoiLayer = ({contextId, aoi, destroy$, onInitialized}) => {
                     id: layerId,
                     path: aoi.path
                 },
+                fill,
                 destroy$,
                 onInitialized
             })

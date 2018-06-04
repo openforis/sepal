@@ -58,6 +58,7 @@ class PolygonSection extends React.Component {
                 type: 'polygon',
                 path: polygon.value
             },
+            fill: true,
             destroy$: componentWillUnmount$,
             onInitialized: (layer) => this.updateBounds(layer.bounds)
         })

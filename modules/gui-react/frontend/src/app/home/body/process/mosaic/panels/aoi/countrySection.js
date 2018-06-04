@@ -143,6 +143,7 @@ class CountrySection extends React.Component {
                 countryCode: country.value,
                 areaCode: area.value
             },
+            fill: true,
             destroy$: componentWillUnmount$,
             onInitialized: (layer) => this.updateBounds(layer.bounds)
         })

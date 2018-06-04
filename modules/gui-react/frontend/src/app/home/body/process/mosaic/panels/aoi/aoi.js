@@ -51,9 +51,22 @@ class Aoi extends React.Component {
         this.initialBounds = sepalMap.getBounds()
     }
 
+    onApply(recipe, aoiForm) {
+        const {recipeId, componentWillUnmount$} = this.props
+        recipe.setAoi(aoiForm).dispatch()
+        console.log('aoi', RecipeState(recipeId)('aoi'))
+        setAoiLayer({
+                contextId: recipeId,
+                aoi: RecipeState(recipeId)('aoi'),
+                fill: false,
+                destroy$: componentWillUnmount$
+            }
+        )
+    }
+
     onCancel() {
         const {recipeId, aoi, componentWillUnmount$} = this.props
-        setAoiLayer({contextId: recipeId, aoi, destroy$: componentWillUnmount$})
+        setAoiLayer({contextId: recipeId, aoi, fill: false, destroy$: componentWillUnmount$})
         sepalMap.fitBounds(this.initialBounds)
     }
 
@@ -75,7 +88,7 @@ class Aoi extends React.Component {
                             <PanelButtons
                                 recipeId={recipeId}
                                 form={form}
-                                onApply={(recipe, aoi) => recipe.setAoi(aoi).dispatch()}
+                                onApply={(recipe, aoi) => this.onApply(recipe, aoi)}
                                 onCancel={() => this.onCancel()}/>
                         </div>
                     </form>

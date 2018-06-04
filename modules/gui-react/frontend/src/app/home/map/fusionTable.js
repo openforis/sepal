@@ -1,4 +1,5 @@
 import Http from 'http-client'
+import {of} from 'rxjs'
 import {map} from 'rxjs/operators'
 import {subscribe} from 'store'
 import {fromGoogleBounds, google, polygonOptions, sepalMap} from './map'
@@ -7,9 +8,16 @@ import './map.module.css'
 let googleTokens = null
 subscribe('user.currentUser.googleTokens', (tokens) => googleTokens = tokens)
 
-export const setFusionTableLayer = ({contextId, layerSpec: {id, tableId, keyColumn, key, bounds}, destroy$, onInitialized}) => {
+export const setFusionTableLayer = (
+    {
+        contextId,
+        layerSpec: {id, tableId, keyColumn, key, bounds},
+        fill,
+        destroy$,
+        onInitialized
+    }) => {
     const layer = key
-        ? new FusionTableLayer({tableId, keyColumn, key, bounds})
+        ? new FusionTableLayer({tableId, keyColumn, key, bounds, fill})
         : null
     sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
     return layer
@@ -36,11 +44,12 @@ const authParam = () =>
 
 
 class FusionTableLayer {
-    constructor({tableId, keyColumn, key, bounds}) {
+    constructor({tableId, keyColumn, key, bounds, fill}) {
         this.tableId = tableId
         this.keyColumn = keyColumn
         this.key = key
         this.bounds = bounds
+        this.fill = fill
 
         this.layer = new google.maps.FusionTablesLayer({
             suppressInfoWindows: true,
@@ -49,7 +58,7 @@ class FusionTableLayer {
                 select: 'geometry',
                 where: `'${keyColumn}' = '${key}'`
             },
-            styles: [{polygonOptions: {...polygonOptions}}]
+            styles: [{polygonOptions: {...polygonOptions(fill)}}]
         })
     }
 
@@ -58,11 +67,13 @@ class FusionTableLayer {
             o instanceof FusionTableLayer &&
             o.tableId === this.tableId &&
             o.keyColumn === this.keyColumn &&
-            o.key === this.key
+            o.key === this.key &&
+            o.fill === this.fill
         )
     }
 
     addToMap(map) {
+        console.log('addToMap', this)
         this.layer.setMap(map)
     }
 
@@ -71,6 +82,8 @@ class FusionTableLayer {
     }
 
     initialize$() {
+        if (this.bounds)
+            return of(this)
         const eachLatLng = (o, callback) => {
             if (Array.isArray(o))
                 o.forEach((o) => callback(new google.maps.LatLng(o[1], o[0])))

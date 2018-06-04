@@ -167,6 +167,7 @@ class FusionTableSection extends React.Component {
                 keyColumn: fusionTableColumn.value,
                 key: fusionTableRow.value
             },
+            fill: true,
             destroy$: componentWillUnmount$,
             onInitialized: (layer) => this.updateBounds(layer)
         })

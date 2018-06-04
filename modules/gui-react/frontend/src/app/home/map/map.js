@@ -260,13 +260,13 @@ const toGoogleBounds = (bounds) => {
 }
 
 
-export const polygonOptions = {
+export const polygonOptions = (fill) => ({
     fillColor: '#FBFAF2',
-    fillOpacity: 0.07,
+    fillOpacity: fill ? 0.07 : 0.000000000000000000000000000001,
     strokeColor: '#FBFAF2',
     strokeOpacity: 0.15,
     strokeWeight: 1
-}
+})
 
 // https://developers.google.com/maps/documentation/javascript/style-reference
 const defaultStyle = [
