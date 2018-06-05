@@ -65,10 +65,11 @@ export function form(inputs, mapStateToProps) {
                         state.errors[name] = ''
                         state.invalidValue[name] = ''
                         state.dirty = !!Object.keys(state.initialValues).find((name) =>
-                            state.initialValues !== state.values[name]
+                            state.initialValues[name] !== state.values[name]
                         )
                         state.gotDirty = state.dirty && !prevState.dirty
                         state.gotClean = !state.dirty && prevState.dirty
+                        console.log('gotClean', state.gotClean, '. Was dirty', prevState.dirty, '. Is dirty', state.dirty)
                         return state
                     }, () => {
                         return this.notifyOnChange(name, value)
@@ -153,6 +154,7 @@ export function form(inputs, mapStateToProps) {
             }
 
             onClean() {
+                console.log('form onClean')
                 this.cleanListeners.forEach((listener) => listener())
             }
 
