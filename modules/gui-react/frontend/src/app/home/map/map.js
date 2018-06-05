@@ -5,14 +5,14 @@ import GoogleMapsLoader from 'google-maps'
 import Http from 'http-client'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Observable, Subject} from 'rxjs'
+import {NEVER, Observable, Subject} from 'rxjs'
 import {map, mergeMap, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
 import './map.module.css'
 
 export let sepalMap = null
 export let google = null
-let instance = null
+let googleMap = null
 
 const contextById = {}
 let currentContextId
@@ -43,7 +43,7 @@ export const initGoogleMapsApi$ = () => {
 }
 
 const createMap = (mapElement) => {
-    instance = new google.maps.Map(mapElement, {
+    googleMap = new google.maps.Map(mapElement, {
         zoom: 3,
         minZoom: 3,
         maxZoom: 17,
@@ -58,11 +58,11 @@ const createMap = (mapElement) => {
         backgroundColor: '#131314',
         gestureHandling: 'greedy',
     })
-    instance.mapTypes.set('styled_map', new google.maps.StyledMapType(defaultStyle, {name: 'sepalMap'}))
-    instance.setMapTypeId('styled_map')
-    instance.addListener('zoom_changed', () =>
+    googleMap.mapTypes.set('styled_map', new google.maps.StyledMapType(defaultStyle, {name: 'sepalMap'}))
+    googleMap.setMapTypeId('styled_map')
+    googleMap.addListener('zoom_changed', () =>
         actionBuilder('SET_MAP_ZOOM')
-            .set('map.zoom', instance.getZoom())
+            .set('map.zoom', googleMap.getZoom())
             .dispatch()
     )
 
@@ -83,33 +83,33 @@ const createMap = (mapElement) => {
         },
 
         getZoom() {
-            return instance.getZoom()
+            return googleMap.getZoom()
         },
         zoomIn() {
-            instance.setZoom(instance.getZoom() + 1)
+            googleMap.setZoom(googleMap.getZoom() + 1)
         },
         zoomOut() {
-            instance.setZoom(instance.getZoom() - 1)
+            googleMap.setZoom(googleMap.getZoom() - 1)
         },
         isMaxZoom() {
-            return instance.getZoom() === instance.maxZoom
+            return googleMap.getZoom() === googleMap.maxZoom
         },
         isMinZoom() {
-            return instance.getZoom() === instance.minZoom
+            return googleMap.getZoom() === googleMap.minZoom
         },
         addGEELayer(mapId, token) {
             let geeLayer = new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {name: 'gee'})
-            instance.overlayMapTypes.push(geeLayer)
+            googleMap.overlayMapTypes.push(geeLayer)
         },
         fitBounds(bounds) {
             const googleBounds = toGoogleBounds(bounds)
-            !instance.getBounds().equals(googleBounds) && instance.fitBounds(googleBounds)
+            !googleMap.getBounds().equals(googleBounds) && googleMap.fitBounds(googleBounds)
         },
         getBounds() {
-            return fromGoogleBounds(instance.getBounds())
+            return fromGoogleBounds(googleMap.getBounds())
         },
         onBoundsChanged(listener) {
-            return instance.addListener('bounds_changed', listener)
+            return googleMap.addListener('bounds_changed', listener)
         },
         removeListener(listener) {
             if (listener)
@@ -120,9 +120,9 @@ const createMap = (mapElement) => {
             if (!context) {
                 const layerById = {}
                 context = {
-                    setLayer({id, layer, destroy$, onInitialized}) {
-                        if (!destroy$)
-                            throw new Error('destroy$ is missing')
+                    setLayer({id, layer, destroy$ = NEVER, onInitialized}) {
+                        // if (!destroy$)
+                        //     throw new Error('destroy$ is missing')
                         const existingLayer = layerById[id]
                         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
                         if (unchanged)
@@ -138,7 +138,7 @@ const createMap = (mapElement) => {
                                 )
                                 .subscribe(
                                     () => {
-                                        currentContextId === contextId && layer.addToMap(instance)
+                                        currentContextId === contextId && layer.addToMap(googleMap)
                                         onInitialized && onInitialized(layer)
                                     },
                                     (e) =>
@@ -151,7 +151,7 @@ const createMap = (mapElement) => {
                     hideLayer(id, hidden) {
                         const layer = layerById[id]
                         if (layer)
-                            layer.hide(instance, hidden)
+                            layer.hide(googleMap, hidden)
                     },
                     removeLayer(id) {
                         const layer = layerById[id]
@@ -159,7 +159,7 @@ const createMap = (mapElement) => {
                             return
                         layer.__removed$.next()
                         if (currentContextId === contextId)
-                            layer.removeFromMap(instance)
+                            layer.removeFromMap(googleMap)
                         delete layerById[id]
                     },
                     fitLayer(id) {
@@ -170,10 +170,10 @@ const createMap = (mapElement) => {
                         }
                     },
                     addToMap() {
-                        Object.keys(layerById).forEach(id => layerById[id].addToMap(instance))
+                        Object.keys(layerById).forEach(id => layerById[id].addToMap(googleMap))
                     },
                     removeFromMap() {
-                        Object.keys(layerById).forEach(id => layerById[id].removeFromMap(instance))
+                        Object.keys(layerById).forEach(id => layerById[id].removeFromMap(googleMap))
                     },
                     drawPolygon(id, callback) {
                         this._drawingMode = {id, callback}
@@ -197,7 +197,7 @@ const createMap = (mapElement) => {
                             callback(toPolygonPath(polygon))
                         }
                         google.maps.event.addListener(this._drawingManager, 'overlaycomplete', drawingListener)
-                        this._drawingManager.setMap(instance)
+                        this._drawingManager.setMap(googleMap)
                     },
                     pauseDrawingMode() {
                         if (this._drawingManager) {
@@ -234,7 +234,7 @@ const createMap = (mapElement) => {
         },
         deselectLayers(contextIdToDeselect) {
             if (contextIdToDeselect === currentContextId)
-                sepalMap.selectLayers()
+                sepalMap.clear()
         },
         removeLayers(contextIdToRemove) {
             if (contextIdToRemove === currentContextId) {

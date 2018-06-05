@@ -1,5 +1,6 @@
 import ee from 'earthengine-api'
 import _ from 'lodash'
+import {of} from 'rxjs'
 import {map} from 'rxjs/operators'
 import {sepalMap} from './map'
 
@@ -45,18 +46,20 @@ export default class EarthEngineImageLayer {
 
     removeFromMap(googleMap) {
         sepalMap.removeListener(this.boundsChangedListener)
-        const index = googleMap.overlayMapTypes.getArray().findIndex(overlay => overlay.name === 'preview')
+        const index = this._layerIndex(googleMap)
         if (index >= 0)
             googleMap.overlayMapTypes.removeAt(index)
     }
 
     hide(googleMap, hidden) {
-        const index = googleMap.overlayMapTypes.getArray().findIndex(overlay => overlay.name === 'preview')
+        const index = this._layerIndex(googleMap)
         if (index >= 0)
             googleMap.overlayMapTypes.getAt(index).setOpacity(hidden ? 0 : 1)
     }
 
     initialize$() {
+        if (this.token)
+            return of(this)
         return this.mapId$.pipe(
             map(({response: {token, mapId}}) => {
                 this.token = token
@@ -64,5 +67,9 @@ export default class EarthEngineImageLayer {
                 return this
             })
         )
+    }
+
+    _layerIndex(googleMap) {
+        return googleMap.overlayMapTypes.getArray().findIndex(overlay => overlay.name === 'preview')
     }
 }

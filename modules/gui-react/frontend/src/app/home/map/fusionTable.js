@@ -72,11 +72,11 @@ class FusionTableLayer {
         )
     }
 
-    addToMap(map) {
-        this.layer.setMap(map)
+    addToMap(googleMap) {
+        this.layer.setMap(googleMap)
     }
 
-    removeFromMap(map) {
+    removeFromMap(googleMap) {
         this.layer.setMap(null)
     }
 

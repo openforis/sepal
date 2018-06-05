@@ -48,11 +48,12 @@ const mapStateToProps = (state, ownProps) => {
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
-        this.initialBounds = sepalMap.getBounds()
+        this.bounds = sepalMap.getBounds()
     }
 
     onApply(recipe, aoiForm) {
         const {recipeId, componentWillUnmount$} = this.props
+        this.bounds = aoiForm.bounds
         recipe.setAoi(aoiForm).dispatch()
         setAoiLayer({
                 contextId: recipeId,
@@ -63,33 +64,26 @@ class Aoi extends React.Component {
         )
     }
 
-    onCancel() {
-        const {recipeId, aoi, componentWillUnmount$} = this.props
-        setAoiLayer({contextId: recipeId, aoi, fill: false, destroy$: componentWillUnmount$})
-        sepalMap.fitBounds(this.initialBounds)
-    }
-
     render() {
         const {recipeId, className, form, inputs} = this.props
         return (
             <div className={[className, styles.container].join(' ')}>
-                    <form>
-                        <div className={styles.sections}>
-                            <AnimateReplacement
-                                currentKey={inputs.section.value}
-                                timeout={250}
-                                classNames={{enter: styles.enter, exit: styles.exit}}>
-                                {this.renderSections()}
-                            </AnimateReplacement>
-                        </div>
-                        <div className={styles.buttons}>
-                            <PanelButtons
-                                recipeId={recipeId}
-                                form={form}
-                                onApply={(recipe, aoi) => this.onApply(recipe, aoi)}
-                                onCancel={() => this.onCancel()}/>
-                        </div>
-                    </form>
+                <form>
+                    <div className={styles.sections}>
+                        <AnimateReplacement
+                            currentKey={inputs.section.value}
+                            timeout={250}
+                            classNames={{enter: styles.enter, exit: styles.exit}}>
+                            {this.renderSections()}
+                        </AnimateReplacement>
+                    </div>
+                    <div className={styles.buttons}>
+                        <PanelButtons
+                            recipeId={recipeId}
+                            form={form}
+                            onApply={(recipe, aoi) => this.onApply(recipe, aoi)}/>
+                    </div>
+                </form>
             </div>
         )
     }
@@ -106,6 +100,18 @@ class Aoi extends React.Component {
             default:
                 return <SectionSelection recipeId={recipeId} form={form} inputs={inputs} className={styles.left}/>
         }
+    }
+
+    componentWillUnmount() {
+        const {recipeId} = this.props
+        console.log('aoi unmount', RecipeState(recipeId)('aoi'))
+        setAoiLayer({
+                contextId: recipeId,
+                aoi: RecipeState(recipeId)('aoi'),
+                fill: false
+            }
+        )
+        sepalMap.fitBounds(this.bounds)
     }
 }
 

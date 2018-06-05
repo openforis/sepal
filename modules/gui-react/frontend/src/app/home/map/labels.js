@@ -20,14 +20,14 @@ export default class Labels {
         return o === this || o instanceof Labels
     }
 
-    addToMap(map) {
-        map.overlayMapTypes.push(this.layer)
+    addToMap(googleMap) {
+        googleMap.overlayMapTypes.push(this.layer)
     }
 
-    removeFromMap(map) {
-        const index = map.overlayMapTypes.getArray().findIndex(overlay => overlay.name === 'labels')
+    removeFromMap(googleMap) {
+        const index = googleMap.overlayMapTypes.getArray().findIndex(overlay => overlay.name === 'labels')
         if (index >= 0)
-            map.overlayMapTypes.removeAt(index)
+            googleMap.overlayMapTypes.removeAt(index)
     }
 
     initialize$() {

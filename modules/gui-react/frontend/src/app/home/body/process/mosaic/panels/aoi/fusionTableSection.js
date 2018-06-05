@@ -170,7 +170,7 @@ class FusionTableSection extends React.Component {
             },
             fill: true,
             destroy$: componentWillUnmount$,
-            onInitialized: (layer) => this.updateBounds(layer)
+            onInitialized: (layer) => this.updateBounds(layer.bounds)
         })
     }
 }
