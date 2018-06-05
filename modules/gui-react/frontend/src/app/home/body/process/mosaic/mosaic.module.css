@@ -5,13 +5,13 @@
 
 .mapToolbar {
     position: absolute;
-    top: 1rem;
+    top: .5rem;
     right: 6rem;
 }
 
 .mosaicToolbar {
     position: absolute;
-    top: 1rem;
-    bottom: 1rem;
+    top: .5rem;
+    bottom: .5rem;
     right: .5rem;
 }
