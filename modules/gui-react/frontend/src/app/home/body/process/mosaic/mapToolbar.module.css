@@ -1,43 +1,19 @@
-.toolbar {
-    --button-size: 2.5rem;
-    --icon-size: 1.1rem;
-    --button-default-color: rgba(255, 255, 255, .6);
-    --button-default-hover-color: rgba(255, 255, 255, .8);
-    --button-default-background-color: rgba(36, 74, 88, .4);
-    --button-default-hover-background-color: rgba(36, 74, 88, .2);
-    display: flex;
-    flex-direction: row;
-    height: var(--button-size);
-}
 
-.toolbar button {
-    width: var(--button-size);
-    height: var(--button-size);
-    border: none;
-    border-radius: .25rem;
-    margin-right: .5rem;
-    padding: 0;
-    color: var(--button-default-color);
-    background-color: var(--button-default-background-color);
-}
+.mapToolbar {
+    --btn-def-bg-h: 196;
+    --btn-def-bg-s: 27%;
+    --btn-def-bg-l: 20%;
+    --btn-def-bg-a: .9;
 
-.toolbar button svg {
-    font-size: var(--icon-size);
-    width: var(--icon-size);
-    height: var(--icon-size);
-    vertical-align: middle;
-}
+    --btn-sel-bg-h: 36;
+    --btn-sel-bg-s: 8%;
+    --btn-sel-bg-l: 15%;
+    --btn-sel-bg-a: .95;
+    
+    --btn-dis-bg-h: 196;
+    --btn-dis-bg-s: 5%;
+    --btn-dis-bg-l: 15%;
+    --btn-dis-bg-a: .9;
 
-.toolbar button:hover {
-    color: var(--button-default-hover-color);
-    background-color: var(--button-default-hover-background-color);
-}
-
-.toolbar button:not(:disabled) {
-    cursor: pointer;
-}
-
-.toolbar button:disabled {
-    color: var(--button-default-hover-color);
-    background-color: var(--button-default-hover-background-color);
+    z-index: 2;
 }

@@ -7,7 +7,7 @@ import styles from './mosaic.module.css'
 import MosaicPreview from './mosaicPreview'
 import {RecipeState} from './mosaicRecipe'
 import Panels from './panels/panels'
-import Toolbar from './panels/toolbar'
+import MosaicToolbar from './panels/mosaicToolbar'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
@@ -21,8 +21,8 @@ class Mosaic extends React.Component {
         const {recipeId} = this.props
         return (
             <div className={styles.mosaic}>
-                <MapToolbar recipeId={recipeId} className={[styles.toolbar, styles.map].join(' ')}/>
-                <Toolbar recipeId={recipeId} className={[styles.toolbar, styles.mosaic].join(' ')}/>
+                <MapToolbar recipeId={recipeId} className={styles.mapToolbar}/>
+                <MosaicToolbar recipeId={recipeId} className={styles.mosaicToolbar}/>
                 <Panels recipeId={recipeId} className={styles.panel}/>
                 <MosaicPreview recipeId={recipeId}/>
             </div>
@@ -36,7 +36,10 @@ class Mosaic extends React.Component {
 }
 
 Mosaic.propTypes = {
-    recipeId: PropTypes.string
+    recipeId: PropTypes.string,
+    recipe: PropTypes.shape({
+        aoi: PropTypes.object
+    })
 }
 
 export default connect(mapStateToProps)(Mosaic)

@@ -1,0 +1,25 @@
+.toolbarGroup {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.mosaicToolbar {
+    --btn-def-bg-h: 37;
+    --btn-def-bg-s: 27%;
+    --btn-def-bg-l: 25%;
+    --btn-def-bg-a: .9;
+
+    --btn-sel-bg-h: 40;
+    --btn-sel-bg-s: 8%;
+    --btn-sel-bg-l: 15%;
+    --btn-sel-bg-a: .95;
+    
+    --btn-dis-bg-h: 37;
+    --btn-dis-bg-s: 10%;
+    --btn-dis-bg-l: 20%;
+    --btn-dis-bg-a: .9;
+    
+    z-index: 2;
+}

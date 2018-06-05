@@ -3,19 +3,15 @@
     --selected-panel-border-color: rgba(100%, 100%, 100%, .1);
 }
 
-.toolbar {
+.mapToolbar {
     position: absolute;
-    z-index: 2;
-    pointer-events: all;
-}
-
-.map {
     top: 1rem;
     right: 6rem;
 }
 
-.mosaic {
+.mosaicToolbar {
+    position: absolute;
     top: 1rem;
-    bottom: .5rem;
+    bottom: 1rem;
     right: .5rem;
 }
