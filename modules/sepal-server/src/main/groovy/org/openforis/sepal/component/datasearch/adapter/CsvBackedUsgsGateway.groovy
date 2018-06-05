@@ -66,6 +66,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     }
 
     private void updatedSince(Sensor sensor, Date lastUpdate, Closure callback) {
+        LOG.info("updatedSince")
         if (!lastUpdate)
             return
         lastUpdate = startOfDay(lastUpdate)
@@ -104,7 +105,8 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
                         updateTime: parseDateString(data.dateUpdated)
                 )
             }
-        } catch (Exception ignore) {
+        } catch (Exception e) {
+            LOG.error("${e.message}: ${data}")
         }
         return null
     }
