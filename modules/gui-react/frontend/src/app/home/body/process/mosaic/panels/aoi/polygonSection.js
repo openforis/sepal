@@ -51,12 +51,13 @@ class PolygonSection extends React.Component {
         if (prevProps.inputs === this.props.inputs)
             return
 
-        const {recipeId, inputs: {polygon}, componentWillUnmount$} = this.props
+        const {recipeId, inputs: {polygon, bounds}, componentWillUnmount$} = this.props
         setAoiLayer({
             contextId: recipeId,
             aoi: {
                 type: 'polygon',
-                path: polygon.value
+                path: polygon.value,
+                bounds: bounds.value
             },
             fill: true,
             destroy$: componentWillUnmount$,

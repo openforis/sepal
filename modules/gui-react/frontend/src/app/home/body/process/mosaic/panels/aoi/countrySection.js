@@ -130,7 +130,7 @@ class CountrySection extends React.Component {
     }
 
     update() {
-        const {recipeId, countries, action, asyncActionBuilder, inputs: {country, area}, componentWillUnmount$} = this.props
+        const {recipeId, countries, action, asyncActionBuilder, inputs: {country, area, bounds}, componentWillUnmount$} = this.props
         if (!countries && !action('LOAD_COUNTRIES').dispatching)
             asyncActionBuilder('LOAD_COUNTRIES',
                 loadCountries$())
@@ -141,7 +141,8 @@ class CountrySection extends React.Component {
             aoi: {
                 type: 'country',
                 countryCode: country.value,
-                areaCode: area.value
+                areaCode: area.value,
+                bounds: bounds.value
             },
             fill: true,
             destroy$: componentWillUnmount$,

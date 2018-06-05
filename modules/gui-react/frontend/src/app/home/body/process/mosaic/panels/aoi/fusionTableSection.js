@@ -158,14 +158,15 @@ class FusionTableSection extends React.Component {
         if (prevProps.inputs === this.props.inputs)
             return
 
-        const {recipeId, inputs: {fusionTable, fusionTableColumn, fusionTableRow}, componentWillUnmount$} = this.props
+        const {recipeId, inputs: {fusionTable, fusionTableColumn, fusionTableRow, bounds}, componentWillUnmount$} = this.props
         setAoiLayer({
             contextId: recipeId,
             aoi: {
                 type: 'fusionTable',
                 id: fusionTable.value,
                 keyColumn: fusionTableColumn.value,
-                key: fusionTableRow.value
+                key: fusionTableRow.value,
+                bounds: bounds.value
             },
             fill: true,
             destroy$: componentWillUnmount$,
