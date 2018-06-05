@@ -1,0 +1,90 @@
+.toolbar {
+    position: relative;
+    --button-margin: .5rem;
+    --button-size: 2.5rem;
+    --button-border-radius: .25rem;
+    --button-panel-background-color: rgba(0, 0, 0, 0.5);
+    --icon-size: 1.1rem;
+    pointer-events: all;
+    z-index: 0;
+}
+
+.toolbar::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: calc(-1 * var(--button-margin));
+    bottom: calc(-1 * var(--button-margin));
+    left: calc(-1 * var(--button-margin));
+    right: calc(-1 * var(--button-margin));
+    background-color: var(--button-panel-background-color);
+    border: none;
+    border-radius: .5rem;
+}
+
+.toolbar.horizontal {
+    display: flex;
+    flex-direction: row;
+}
+
+.toolbar.horizontal * + * {
+    margin-left: var(--button-margin);
+}
+
+.toolbar.vertical {
+    display: flex;
+    flex-direction: column;
+}
+
+.toolbar.vertical * + * {
+    margin-top: var(--button-margin);
+}
+
+.toolbar button {
+    width: var(--button-size);
+    height: var(--button-size);
+    /* border: var(--selected-panel-border-width) solid transparent; */
+    border-width: var(--selected-panel-border-width);
+    border-style: solid;
+    border-radius: var(--button-border-radius);
+    padding: 0;
+    color: var(--button-default-color);
+    background-color: var(--button-default-background-color);
+    border-color: var(--button-default-border-color);
+}
+
+.toolbar button:hover:not(:disabled) {
+    color: var(--button-default-hover-color);
+    background-color: var(--button-default-hover-background-color);
+    border-color: var(--button-default-hover-border-color);
+    cursor: pointer;
+}
+
+.toolbar button.selected,
+.toolbar button.selected:hover:not(:disabled),
+.toolbar button.selected:disabled {
+    width: calc(var(--button-size) + 1rem + var(--selected-panel-border-width));
+    margin-left: calc(-1rem - var(--selected-panel-border-width));
+    padding-left: calc(1rem + 2 * var(--selected-panel-border-width));
+    border-color: var(--selected-panel-border-color);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+    color: var(--button-selected-color);
+    background-color: var(--button-selected-background-color);
+    border-color: var(--button-selected-border-color);
+    z-index: 2;
+}
+
+.toolbar button:disabled {
+    color: var(--button-disabled-color);
+    background-color: var(--button-disabled-background-color);
+    border-color: var(--button-disabled-border-color);
+}
+
+.toolbar button svg {
+    width: var(--icon-size);
+    height: var(--icon-size);
+    vertical-align: middle;
+    font-size: var(--icon-size);
+}

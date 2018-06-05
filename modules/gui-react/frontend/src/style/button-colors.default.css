@@ -1,0 +1,16 @@
+html {
+    --btn-def-bg-h: 137;
+    --btn-def-bg-s: 27%;
+    --btn-def-bg-l: 20%;
+    --btn-def-bg-a: 1;
+
+    --btn-sel-bg-h: 136;
+    --btn-sel-bg-s: 8%;
+    --btn-sel-bg-l: 26%;
+    --btn-sel-bg-a: 1;
+
+    --btn-dis-bg-h: 137;
+    --btn-dis-bg-s: 10%;
+    --btn-dis-bg-l: 22%;
+    --btn-dis-bg-a: 1;
+}
