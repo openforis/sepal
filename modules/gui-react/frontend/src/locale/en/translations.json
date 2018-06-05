@@ -279,8 +279,14 @@
             "required": "Scene selection must be configured",
             "type": {
               "label": "Selection",
-              "all": "Use all scenes",
-              "select": "Select individual scenes"
+              "all": {
+                "label": "Use all scenes",
+                "tooltip": "Create mosaic using all available scenes for your specified dates."
+              },
+              "select": {
+                "label": "Select individual scenes",
+                "tooltip": "Create mosaic using individually selected scenes."
+              }
             },
             "targetDateWeight": {
               "label": "Target date weight",

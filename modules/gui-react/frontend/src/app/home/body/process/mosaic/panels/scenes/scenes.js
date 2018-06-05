@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
 import Buttons from 'widget/buttons'
-import {Constraints, form} from 'widget/form'
+import {Constraints, form, Label} from 'widget/form'
 import Slider from 'widget/slider'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
@@ -31,12 +31,20 @@ class Scenes extends React.Component {
     renderTypes() {
         const {inputs: {type}} = this.props
         const options = [
-            {value: 'all', label: msg('process.mosaic.panel.scenes.form.type.all')},
-            {value: 'select', label: msg('process.mosaic.panel.scenes.form.type.select')},
+            {
+                value: 'all',
+                label: msg('process.mosaic.panel.scenes.form.type.all.label'),
+                tooltip: 'process.mosaic.panel.scenes.form.type.all'
+            },
+            {
+                value: 'select',
+                label: msg('process.mosaic.panel.scenes.form.type.select.label'),
+                tooltip: 'process.mosaic.panel.scenes.form.type.select'
+            },
         ]
         return (
             <div className={styles.types}>
-                <label><Msg id='process.mosaic.panel.scenes.form.type.label'/></label>
+                <Label><Msg id='process.mosaic.panel.scenes.form.type.label'/></Label>
                 <Buttons
                     className={styles.sources}
                     input={type}
@@ -49,7 +57,9 @@ class Scenes extends React.Component {
         const {inputs: {targetDateWeight}} = this.props
         return (
             <div>
-                <label><Msg id='process.mosaic.panel.scenes.form.targetDateWeight.label'/></label>
+                <Label tooltip='process.mosaic.panel.scenes.form.targetDateWeight'>
+                    <Msg id='process.mosaic.panel.scenes.form.targetDateWeight.label'/>
+                </Label>
                 <Slider
                     startValue={targetDateWeight.value || 0}
                     minValue={0}
