@@ -68,6 +68,18 @@
     border-color: var(--button-selected-border-color);
 }
 
+.toolbar button:active:not(:disabled) {
+    color: var(--button-default-active-color);
+    background-color: var(--button-default-active-background-color);
+    border-color: var(--button-default-active-border-color);
+}
+
+.toolbar button.selected:active:not(:disabled) {
+    color: var(--button-selected-active-color);
+    background-color: var(--button-selected-active-background-color);
+    border-color: var(--button-selected-active-border-color);
+}
+
 .toolbar.vertical.panel button.selected {
     width: calc(var(--button-size) + 1rem + var(--selected-panel-border-width));
     margin-left: calc(-1rem - var(--selected-panel-border-width));
