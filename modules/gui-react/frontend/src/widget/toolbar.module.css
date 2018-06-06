@@ -63,16 +63,18 @@
 .toolbar button.selected,
 .toolbar button.selected:hover:not(:disabled),
 .toolbar button.selected:disabled {
-    width: calc(var(--button-size) + 1rem + var(--selected-panel-border-width));
-    margin-left: calc(-1rem - var(--selected-panel-border-width));
-    padding-left: calc(1rem + 2 * var(--selected-panel-border-width));
-    border-color: var(--selected-panel-border-color);
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-left: none;
     color: var(--button-selected-color);
     background-color: var(--button-selected-background-color);
     border-color: var(--button-selected-border-color);
+}
+
+.toolbar.vertical.panel button.selected {
+    width: calc(var(--button-size) + 1rem + var(--selected-panel-border-width));
+    margin-left: calc(-1rem - var(--selected-panel-border-width));
+    padding-left: calc(1rem + 2 * var(--selected-panel-border-width));
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
     z-index: 2;
 }
 

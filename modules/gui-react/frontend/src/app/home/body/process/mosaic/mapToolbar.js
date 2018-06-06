@@ -37,13 +37,15 @@ class MapToolbar extends React.Component {
                         icon={'minus'}
                         tooltip={'process.mosaic.mapToolbar.zoomOut'}/>
                     <ToolbarButton
+                        selected={labelsShown}
                         onClick={() => this.recipe.setLabelsShown(!labelsShown).dispatch()}
                         icon={'map-marker-alt'}
                         tooltip={`process.mosaic.mapToolbar.labels.${labelsShown ? 'hide' : 'show'}`}/>
                     <ToolbarButton
+                        selected={sceneAreasShown}
                         onClick={() => this.recipe.setSceneAreasShown(!sceneAreasShown).dispatch()}
                         icon={'th'}
-                        tooltip={`process.mosaic.mapToolbar.sceneAreas.${sceneAreasShown ? 'hide' : 'show'}`}/>
+                        tooltip={`process.mosaic.mapToolbar.sceneAreasShown.${gridShown ? 'hide' : 'show'}`}/>
                     <ToolbarButton
                         onClick={() => sepalMap.getContext(recipeId).fitLayer('aoi')}
                         icon={'bullseye'}

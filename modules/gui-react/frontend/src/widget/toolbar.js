@@ -10,12 +10,13 @@ const Context = React.createContext()
 
 export class Toolbar extends React.Component {
     render() {
-        const {className, horizontal, vertical, top, bottom, left, right} = this.props
+        const {className, horizontal, vertical, panel, top, bottom, left, right} = this.props
         const classNames = [
             styles.toolbar, 
             buttonColors.buttons,
             horizontal && styles.horizontal,
             vertical && styles.vertical,
+            panel && styles.panel,
             top && styles.top,
             bottom && styles.bottom,
             left && styles.left,
@@ -37,6 +38,7 @@ Toolbar.propTypes = {
     className: PropTypes.string,
     horizontal: PropTypes.any,
     vertical: PropTypes.any,
+    panel: PropTypes.any,
     top: PropTypes.any,
     bottom: PropTypes.any,
     left: PropTypes.any,
