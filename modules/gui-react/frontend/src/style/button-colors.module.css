@@ -12,8 +12,8 @@
     --button-default-hover-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 7%), var(--btn-def-bg-a));
     
     --button-default-active-color: hsla(0, 0%, 100%, 1);
-    --button-default-active-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 6%), var(--btn-def-bg-a));
-    --button-default-active-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 8%), var(--btn-def-bg-a));
+    --button-default-active-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 7%), var(--btn-def-bg-a));
+    --button-default-active-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 9%), var(--btn-def-bg-a));
     
     --button-selected-color: hsla(0, 0%, 100%, 1);
     --button-selected-background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), var(--btn-sel-bg-l), var(--btn-sel-bg-a));
