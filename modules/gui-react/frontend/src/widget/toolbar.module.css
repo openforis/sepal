@@ -61,11 +61,16 @@
 }
 
 .toolbar button.selected,
-.toolbar button.selected:hover:not(:disabled),
 .toolbar button.selected:disabled {
     color: var(--button-selected-color);
     background-color: var(--button-selected-background-color);
     border-color: var(--button-selected-border-color);
+}
+
+.toolbar button.selected:hover:not(:disabled) {
+    color: var(--button-selected-hover-color);
+    background-color: var(--button-selected-hover-background-color);
+    border-color: var(--button-selected-hover-border-color);
 }
 
 .toolbar button:active:not(:disabled) {
