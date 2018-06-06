@@ -37,10 +37,12 @@ class MapToolbar extends React.Component {
                         icon={'minus'}
                         tooltip={'process.mosaic.mapToolbar.zoomOut'}/>
                     <ToolbarButton
+                        selected={labelsShown}
                         onClick={() => this.recipe.setLabelsShown(!labelsShown).dispatch()}
                         icon={'map-marker-alt'}
                         tooltip={`process.mosaic.mapToolbar.labels.${labelsShown ? 'hide' : 'show'}`}/>
                     <ToolbarButton
+                        selected={gridShown}
                         onClick={() => this.recipe.setGridShown(!gridShown).dispatch()}
                         icon={'th'}
                         tooltip={`process.mosaic.mapToolbar.grid.${gridShown ? 'hide' : 'show'}`}/>

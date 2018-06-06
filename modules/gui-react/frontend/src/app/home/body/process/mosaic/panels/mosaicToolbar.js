@@ -25,12 +25,12 @@ class MosaicToolbar extends React.Component {
         return (
             <div className={className}>
                 <div className={styles.toolbarGroup}>
-                    <Toolbar className={styles.mosaicToolbar} vertical>
+                    <Toolbar className={styles.mosaicToolbar} vertical panel>
                         <Panel panel={PANELS.AUTO} icon={'magic'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                         <Panel panel={PANELS.PREVIEW} icon={'eye'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                         <Panel panel={PANELS.RETRIEVE} icon={'cloud-download-alt'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                     </Toolbar>
-                    <Toolbar className={styles.mosaicToolbar} vertical>
+                    <Toolbar className={styles.mosaicToolbar} vertical panel>
                         <Panel panel={PANELS.AREA_OF_INTEREST} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                         <Panel panel={PANELS.DATES} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                         <Panel panel={PANELS.SOURCES} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
