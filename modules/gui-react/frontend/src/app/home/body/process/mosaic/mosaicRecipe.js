@@ -7,6 +7,11 @@ import Labels from '../../../map/labels'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
+export const SceneSelectionType = Object.freeze({
+    ALL: 'all',
+    SELECT: 'select'
+})
+
 const recipePath = (recipeId, path) => {
     const recipeTabIndex = select('process.tabs')
         .findIndex((recipe) => recipe.id === recipeId)
@@ -18,6 +23,11 @@ const recipePath = (recipeId, path) => {
 }
 
 export const RecipeState = (recipeId) => {
+    const recipeTabIndex = select('process.tabs')
+        .findIndex((recipe) => recipe.id === recipeId)
+    if (recipeTabIndex === -1)
+        return null
+
     const get = (path) => {
         return select(recipePath(recipeId, path))
     }
@@ -38,7 +48,6 @@ export const RecipeState = (recipeId) => {
         const [from, to] = get.dateRange()
         return isDataSetInDateRange(dataSetId, from, to)
     }
-
     initRecipe(get())
     return get
 }
@@ -65,8 +74,8 @@ export const RecipeActions = (id) => {
             Labels.setLayer({contextId: id, shown})
             return set('SET_LABELS_SHOWN', 'ui.labelsShown', shown, {shown})
         },
-        setGridShown(shown) {
-            return set('SET_GRID_SHOWN', 'ui.gridShown', shown, {shown})
+        setSceneAreasShown(shown) {
+            return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})
         },
         selectPanel(panel) {
             return set('SELECT_MOSAIC_PANEL', 'ui.selectedPanel', panel, {panel})
@@ -130,8 +139,12 @@ const initRecipe = (recipe) => {
     }).dispatch()
 
     actions.setSceneSelectionOptions({
-        type: 'all'
+        type: SceneSelectionType.SELECT,
+        targetDateWeight: 0.5
     }).dispatch()
+
+    actions.setLabelsShown(false).dispatch()
+    actions.setSceneAreasShown(true).dispatch()
 }
 
 const createAoi = (aoiForm) => {

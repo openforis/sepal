@@ -8,11 +8,12 @@ import MosaicPreview from './mosaicPreview'
 import {RecipeState} from './mosaicRecipe'
 import Panels from './panels/panels'
 import MosaicToolbar from './panels/mosaicToolbar'
+import SceneAreas from './sceneAreas'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
-        recipe: recipe()
+        aoi: recipe('aoi')
     }
 }
 
@@ -25,21 +26,20 @@ class Mosaic extends React.Component {
                 <MosaicToolbar recipeId={recipeId} className={styles.mosaicToolbar}/>
                 <Panels recipeId={recipeId} className={styles.panel}/>
                 <MosaicPreview recipeId={recipeId}/>
+                <SceneAreas recipeId={recipeId}/>
             </div>
         )
     }
 
     componentDidMount() {
-        const {recipeId, recipe: {aoi}, componentWillUnmount$} = this.props
+        const {recipeId, aoi, componentWillUnmount$} = this.props
         setAoiLayer({contextId: recipeId, aoi, destroy$: componentWillUnmount$})
     }
 }
 
 Mosaic.propTypes = {
     recipeId: PropTypes.string,
-    recipe: PropTypes.shape({
-        aoi: PropTypes.object
-    })
+    aoi: PropTypes.object
 }
 
 export default connect(mapStateToProps)(Mosaic)

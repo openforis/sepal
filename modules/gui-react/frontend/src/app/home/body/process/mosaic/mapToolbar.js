@@ -10,7 +10,7 @@ const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
         labelsShown: recipe('ui.labelsShown'),
-        gridShown: recipe('ui.gridShown'),
+        sceneAreasShown: recipe('ui.sceneAreasShown'),
         zoomLevel: sepalMap.getZoom()
     }
 }
@@ -22,7 +22,7 @@ class MapToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, className, labelsShown, gridShown} = this.props
+        const {recipeId, className, labelsShown, sceneAreasShown} = this.props
         return (
             <div className={className}>
                 <Toolbar className={styles.mapToolbar} horizontal>
@@ -41,9 +41,9 @@ class MapToolbar extends React.Component {
                         icon={'map-marker-alt'}
                         tooltip={`process.mosaic.mapToolbar.labels.${labelsShown ? 'hide' : 'show'}`}/>
                     <ToolbarButton
-                        onClick={() => this.recipe.setGridShown(!gridShown).dispatch()}
+                        onClick={() => this.recipe.setSceneAreasShown(!sceneAreasShown).dispatch()}
                         icon={'th'}
-                        tooltip={`process.mosaic.mapToolbar.grid.${gridShown ? 'hide' : 'show'}`}/>
+                        tooltip={`process.mosaic.mapToolbar.sceneAreas.${sceneAreasShown ? 'hide' : 'show'}`}/>
                     <ToolbarButton
                         onClick={() => sepalMap.getContext(recipeId).fitLayer('aoi')}
                         icon={'bullseye'}
@@ -58,7 +58,7 @@ MapToolbar.propTypes = {
     className: PropTypes.string,
     recipeId: PropTypes.string,
     labelsShown: PropTypes.bool,
-    gridShown: PropTypes.bool
+    sceneAreasShown: PropTypes.bool
 }
 
 // class Button extends React.Component {

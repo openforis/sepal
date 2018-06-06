@@ -129,8 +129,8 @@
         "zoomOut.tooltip": "Zoom out",
         "labels.show.tooltip": "Show labels",
         "labels.hide.tooltip": "Hide labels",
-        "grid.show.tooltip": "Show grid",
-        "grid.hide.tooltip": "Hide grid",
+        "sceneAreas.show.tooltip": "Show scene areas",
+        "sceneAreas.hide.tooltip": "Hide scene areas",
         "centerMap.tooltip": "Zoom to area of interest"
       },
       "panel": {

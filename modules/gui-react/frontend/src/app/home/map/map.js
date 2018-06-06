@@ -111,6 +111,9 @@ const createMap = (mapElement) => {
         onBoundsChanged(listener) {
             return googleMap.addListener('bounds_changed', listener)
         },
+        addListener(mapObject, event, listener) {
+            return google.maps.event.addListener(mapObject, event, listener)
+        },
         removeListener(listener) {
             if (listener)
                 google.maps.event.removeListener(listener)
@@ -142,7 +145,7 @@ const createMap = (mapElement) => {
                                         onInitialized && onInitialized(layer)
                                     },
                                     (e) =>
-                                        Notifications.caught('app.home.map.layer', {}, e)
+                                        Notifications.caught('map.layer', {}, e)
                                             .dispatch()
                                 )
                         }

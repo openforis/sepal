@@ -3,8 +3,7 @@ import React from 'react'
 import {Msg, msg} from 'translate'
 import Buttons from 'widget/buttons'
 import {Constraints, form, Label} from 'widget/form'
-import Slider from 'widget/slider'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {RecipeActions, RecipeState, SceneSelectionType} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './scenes.module.css'
 
@@ -32,11 +31,11 @@ class Scenes extends React.Component {
         const {inputs: {type}} = this.props
         const options = [
             {
-                value: 'all',
+                value: SceneSelectionType.ALL,
                 label: msg('process.mosaic.panel.scenes.form.type.all.label')
             },
             {
-                value: 'select',
+                value: SceneSelectionType.SELECT,
                 label: msg('process.mosaic.panel.scenes.form.type.select.label')
             },
         ]
@@ -81,11 +80,6 @@ class Scenes extends React.Component {
                 <Buttons
                     input={targetDateWeight}
                     options={options}/>
-                {/*<Slider*/}
-                    {/*startValue={targetDateWeight.value || 0}*/}
-                    {/*minValue={0}*/}
-                    {/*maxValue={100}*/}
-                    {/*onChange={targetDateWeight.set}/>*/}
             </div>
         )
     }
@@ -102,7 +96,7 @@ class Scenes extends React.Component {
                     title={msg('process.mosaic.panel.scenes.title')}>
                     <div className={styles.form}>
                         {this.renderTypes()}
-                        {type.value === 'select' ? this.renderTargetDateWeight() : null}
+                        {type.value === SceneSelectionType.SELECT ? this.renderTargetDateWeight() : null}
                     </div>
                 </PanelForm>
             </form>

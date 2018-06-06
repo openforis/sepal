@@ -2,9 +2,9 @@ import Http from 'http-client'
 
 const api = {
     gee: {
-        preview$: (recipe) => {
-            return Http.postJson$('gee/preview', transformRecipeForPreview(recipe))
-        }
+        preview$: (recipe) =>
+            Http.postJson$('gee/preview', transformRecipeForPreview(recipe)),
+        sceneAreas$: (aoi, source) => Http.get$('gee/sceneareas?' + transformQueryForSceneAreas(aoi, source))
     }
 }
 export default api
@@ -13,7 +13,7 @@ const transformRecipeForPreview = (recipe) => {
     return {
         aoi: transformAoi(recipe.aoi),
         dates: recipe.dates,
-        dataSet: toDataSet(recipe.sources),
+        dataSet: sourcesToDataSet(recipe.sources),
         sensors: toSensors(recipe.sources),
         targetDayOfYearWeight: 0,
         shadowTolerance: 1,
@@ -28,6 +28,9 @@ const transformRecipeForPreview = (recipe) => {
         type: 'automatic'
     }
 }
+
+const transformQueryForSceneAreas = (aoi, source) =>
+    `aoi=${JSON.stringify(transformAoi(aoi))}&dataSet=${sourceToDataSet(source)}`
 
 const transformAoi = (aoi) => {
     switch (aoi.type) {
@@ -51,16 +54,27 @@ const transformAoi = (aoi) => {
 const toSensors = (sources) =>
     Object.values(sources)[0].map((dataSet) => {
         switch (dataSet) {
-            case 'landsat8': return 'LANDSAT_8'
-            case 'landsat7': return 'LANDSAT_7'
-            case 'landsat45': return 'LANDSAT_TM'
-            case 'landsat8T2': return 'LANDSAT_8_T2'
-            case 'landsat7T2': return 'LANDSAT_7_T2'
-            case 'landsat45T2': return 'LANDSAT_TM_T2'
-            case 'sentinel2': return 'SENTINEL_2'
-            default: throw new Error('Invalid dataSet: ' + dataSet)
+            case 'landsat8':
+                return 'LANDSAT_8'
+            case 'landsat7':
+                return 'LANDSAT_7'
+            case 'landsat45':
+                return 'LANDSAT_TM'
+            case 'landsat8T2':
+                return 'LANDSAT_8_T2'
+            case 'landsat7T2':
+                return 'LANDSAT_7_T2'
+            case 'landsat45T2':
+                return 'LANDSAT_TM_T2'
+            case 'sentinel2':
+                return 'SENTINEL_2'
+            default:
+                throw new Error('Invalid dataSet: ' + dataSet)
         }
     })
 
-const toDataSet = (sources) =>
+const sourcesToDataSet = (sources) =>
     sources.landsat ? 'LANDSAT' : 'SENTINEL2'
+
+const sourceToDataSet = (source) =>
+    source === 'landsat' ? 'LANDSAT' : 'SENTINEL2'
