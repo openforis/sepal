@@ -1,3 +1,4 @@
+import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Http from 'http-client'
 
 const api = {
@@ -25,7 +26,8 @@ const transformRecipeForPreview = (recipe) => {
         brdfCorrect: false,
         maskClouds: false,
         maskSnow: false,
-        type: 'automatic'
+        sceneIds: [],
+        type: recipe.sceneSelectionOptions.type === SceneSelectionType.ALL ? 'automatic' : 'manual'
     }
 }
 

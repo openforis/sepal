@@ -1,4 +1,4 @@
-import {RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeState, SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import EarthEngineImageLayer from 'app/home/map/earthEngineLayer'
 import {sepalMap} from 'app/home/map/map'
 import backend from 'backend'
@@ -22,8 +22,7 @@ class MosaicPreview extends React.Component {
 
     render() {
         const {initializing, tiles} = this.state
-        const {recipe} = this.props
-        if (this.isHidden(recipe))
+        if (this.isHidden())
             return null
         const status = (content) =>
             <div className={styles.container}>
@@ -61,15 +60,24 @@ class MosaicPreview extends React.Component {
         this.setState(prevState => ({...prevState, tiles, initializing: false}))
     }
 
+    isPreviewShown() {
+        const {recipe} = this.props
+        return recipe.ui.initialized
+            && (recipe.sceneSelectionOptions.type === SceneSelectionType.ALL
+                || (recipe.scenes && recipe.scenes.length > 0))
+    }
+
     componentDidUpdate() {
         const {recipeId, recipe, componentWillUnmount$} = this.props
         const {initializing} = this.state
-        const layer = recipe.ui.initialized ? new EarthEngineImageLayer({
-            bounds: recipe.aoi.bounds,
-            mapId$: backend.gee.preview$(recipe),
-            props: _.omit(recipe, 'ui'),
-            onProgress: (tiles) => this.onProgress(tiles)
-        }) : null
+        const layer = this.isPreviewShown()
+            ? new EarthEngineImageLayer({
+                bounds: recipe.aoi.bounds,
+                mapId$: backend.gee.preview$(recipe),
+                props: _.omit(recipe, 'ui'),
+                onProgress: (tiles) => this.onProgress(tiles)
+            })
+            : null
         const context = sepalMap.getContext(recipeId)
         const changed = context.setLayer({id: 'preview', layer, destroy$: componentWillUnmount$})
         context.hideLayer('preview', this.isHidden(recipe))
@@ -78,8 +86,9 @@ class MosaicPreview extends React.Component {
 
     }
 
-    isHidden(recipe) {
-        return !recipe || !recipe.ui || !!recipe.ui.selectedPanel
+    isHidden() {
+        const {recipe} = this.props
+        return !this.isPreviewShown() || !recipe || !recipe.ui || !!recipe.ui.selectedPanel
     }
 }
 

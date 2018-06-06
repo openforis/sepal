@@ -30,7 +30,7 @@ class SceneAreas extends React.Component {
             return null
         return (
             <div>
-                Scene areas
+                {/*Scene areas*/}
             </div>
         )
     }
@@ -197,10 +197,6 @@ class SceneAreaLayer {
         )
     }
 }
-
-
-// TODO: Don't reload scene areas when hiding/showing grid or switching between recipe.
-// Part of recipe itself?
 
 /*
 SELECT geometry
