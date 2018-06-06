@@ -25,7 +25,10 @@ export class Toolbar extends React.Component {
         return (
             <div className={className}>
                 <div className={classNames.join(' ')}> 
-                    <Context.Provider value={!!horizontal}>
+                    <Context.Provider value={{
+                        horizontal: !!horizontal,
+                        panel: !!panel
+                    }}>
                         {this.props.children}
                     </Context.Provider>
                 </div>
@@ -53,8 +56,8 @@ export class ToolbarButton extends React.Component {
         const {disabled, selected, onClick, icon, label, tooltip} = this.props
         return (
             <Context.Consumer>
-                {(horizontal) =>
-                    <Tooltip msg={tooltip} top={horizontal} left={!horizontal} disabled={disabled || selected}>
+                {({horizontal, panel}) =>
+                    <Tooltip msg={tooltip} top={horizontal} left={!horizontal} disabled={disabled || (panel && selected)}>
                         <button
                             className={selected ? styles.selected : null} 
                             onClick={onClick} 
