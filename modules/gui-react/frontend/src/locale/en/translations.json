@@ -272,25 +272,30 @@
           }
         },
         "scenes": {
-          "title": "Scene selection",
+          "title": "Scenes",
           "button": "SCN",
           "tooltip": "Configure scenes selection",
           "form": {
             "required": "Scene selection must be configured",
             "type": {
-              "label": "Selection",
-              "all": {
-                "label": "Use all scenes",
-                "tooltip": "Create mosaic using all available scenes for your specified dates."
-              },
-              "select": {
-                "label": "Select individual scenes",
-                "tooltip": "Create mosaic using individually selected scenes."
-              }
+              "label": "Scene selection",
+              "all.label": "Use all scenes",
+              "select.label": "Select individual scenes"
             },
             "targetDateWeight": {
-              "label": "Target date weight",
-              "tooltip": "Prefer cloud-free scenes or scenes close to target date"
+              "label": "Priority",
+              "cloudFree": {
+                "label": "Cloud free",
+                "tooltip": "Some tooltip"
+              },
+              "balanced": {
+                "label": "Balanced",
+                "tooltip": "Some tooltip"
+              },
+              "targetDate": {
+                "label": "Target date",
+                "tooltip": "Some tooltip"
+              }
             }
           }
         },

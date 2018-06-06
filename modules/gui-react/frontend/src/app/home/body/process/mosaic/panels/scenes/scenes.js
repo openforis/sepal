@@ -33,18 +33,18 @@ class Scenes extends React.Component {
         const options = [
             {
                 value: 'all',
-                label: msg('process.mosaic.panel.scenes.form.type.all.label'),
-                tooltip: 'process.mosaic.panel.scenes.form.type.all'
+                label: msg('process.mosaic.panel.scenes.form.type.all.label')
             },
             {
                 value: 'select',
-                label: msg('process.mosaic.panel.scenes.form.type.select.label'),
-                tooltip: 'process.mosaic.panel.scenes.form.type.select'
+                label: msg('process.mosaic.panel.scenes.form.type.select.label')
             },
         ]
         return (
             <div className={styles.types}>
-                <Label><Msg id='process.mosaic.panel.scenes.form.type.label'/></Label>
+                <Label>
+                    <Msg id='process.mosaic.panel.scenes.form.type.label'/>
+                </Label>
                 <Buttons
                     className={styles.sources}
                     input={type}
@@ -55,16 +55,37 @@ class Scenes extends React.Component {
 
     renderTargetDateWeight() {
         const {inputs: {targetDateWeight}} = this.props
+        const options = [
+            {
+                value: 0,
+                label: msg('process.mosaic.panel.scenes.form.targetDateWeight.cloudFree.label'),
+                tooltip: 'process.mosaic.panel.scenes.form.targetDateWeight.cloudFree'
+            },
+            {
+                value: 0.5,
+                label: msg('process.mosaic.panel.scenes.form.targetDateWeight.balanced.label'),
+                tooltip: 'process.mosaic.panel.scenes.form.targetDateWeight.balanced'
+            },
+            {
+                value: 1,
+                label: msg('process.mosaic.panel.scenes.form.targetDateWeight.targetDate.label'),
+                tooltip: 'process.mosaic.panel.scenes.form.targetDateWeight.targetDate'
+            },
+        ]
         return (
             <div>
-                <Label tooltip='process.mosaic.panel.scenes.form.targetDateWeight'>
+                <Label>
                     <Msg id='process.mosaic.panel.scenes.form.targetDateWeight.label'/>
                 </Label>
-                <Slider
-                    startValue={targetDateWeight.value || 0}
-                    minValue={0}
-                    maxValue={100}
-                    onChange={targetDateWeight.set}/>
+
+                <Buttons
+                    input={targetDateWeight}
+                    options={options}/>
+                {/*<Slider*/}
+                    {/*startValue={targetDateWeight.value || 0}*/}
+                    {/*minValue={0}*/}
+                    {/*maxValue={100}*/}
+                    {/*onChange={targetDateWeight.set}/>*/}
             </div>
         )
     }
