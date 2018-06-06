@@ -5,9 +5,8 @@ import backend from 'backend'
 import _ from 'lodash'
 import React from 'react'
 import {connect} from 'store'
-import {Msg} from 'translate'
-import Icon from 'widget/icon'
-import styles from './mosaicPreview.module.css'
+import {msg} from 'translate'
+import MapStatus from 'widget/mapStatus'
 
 
 const mapStateToProps = (state, ownProps) => {
@@ -24,33 +23,15 @@ class MosaicPreview extends React.Component {
         const {initializing, tiles} = this.state
         if (this.isHidden())
             return null
-        const status = (content) =>
-            <div className={styles.container}>
-                <div className={styles.status}>
-                    {!tiles || tiles.loading ? <Icon name='spinner'/> : null}
-                    {content}
-                </div>
-            </div>
-
         if (initializing)
-            return status(
-                <div><Msg id='process.mosaic.preview.initializing'/></div>
+            return (
+                <MapStatus message={msg('process.mosaic.preview.initializing')}/>
             )
         else if (tiles && !tiles.complete)
-            return status(
-                <div>
-                    <div className={styles.loaded}>
-                        <Msg id='process.mosaic.preview.loading' loaded={tiles.loaded} count={tiles.count}/>
-                    </div>
-                    {tiles.failed
-                        ? (
-                            <div className={styles.failed}>
-                                (<Msg id='process.mosaic.preview.failed' failed={tiles.failed}/>)
-                            </div>
-                        )
-                        : null
-                    }
-                </div>
+            return (
+                <MapStatus
+                    message={msg('process.mosaic.preview.loading', {loaded: tiles.loaded, count: tiles.count})}
+                    error={tiles.failed ? msg('process.mosaic.preview.failed', {failed: tiles.failed}) : null}/>
             )
         else
             return null

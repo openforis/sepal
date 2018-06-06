@@ -30,7 +30,7 @@
 .initializing {
 
 }
-.failed {
+.error {
     margin-left: 0.5rem;
     color: #e81351;
 }
