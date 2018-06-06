@@ -7,6 +7,7 @@ import Landing from 'app/landing/landing'
 import PropTypes from 'prop-types'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
 import './app.css'
+import '../style/button-colors.default.css'
 
 const mapStateToProps = () => ({
     currentUser: currentUser()
