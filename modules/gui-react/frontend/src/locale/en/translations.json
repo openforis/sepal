@@ -309,6 +309,9 @@
         "initializing": "Loading preview...",
         "loading": "Loaded {loaded} of {count} tiles",
         "failed": "{failed} failed"
+      },
+      "sceneAreas": {
+        "loading": "Loading scene areas..."
       }
     },
     "classification": {
