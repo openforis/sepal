@@ -113,7 +113,7 @@ class SceneAreas extends React.Component {
 
     loadSceneAreas(aoi, source) {
         this.props.asyncActionBuilder('LOAD_SCENE_AREAS',
-            backend.gee.sceneAreas$(aoi, source)
+            backend.gee.sceneAreas$({aoi, source})
                 .pipe(
                     map((e) => {
                         return this.setState((prevState) =>

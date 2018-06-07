@@ -1,14 +1,45 @@
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Http from 'http-client'
+import moment from 'moment'
+import {map} from 'rxjs/operators'
 
 const api = {
     gee: {
         preview$: (recipe) =>
             Http.postJson$('gee/preview', transformRecipeForPreview(recipe)),
-        sceneAreas$: (aoi, source) => Http.get$('gee/sceneareas?' + transformQueryForSceneAreas(aoi, source))
+        sceneAreas$: ({aoi, source}) =>
+            Http.get$('gee/sceneareas?' + transformQueryForSceneAreas(aoi, source)),
+        scenesInSceneArea$: ({sceneAreaId, dates, source}) =>
+            Http.get$(`api/data/sceneareas/${sceneAreaId}?`
+                + transformQueryForScenesInSceneArea({dates, source})).pipe(
+                map(({response: scenes}) =>
+                    scenes
+                        .map(({sceneId, sensor, acquisitionDate, cloudCover, browseUrl}) => ({
+                            id: sceneId,
+                            dataSet: transformBackDataSet(sensor),
+                            date: acquisitionDate,
+                            daysFromTarget: daysFromTarget(acquisitionDate, dates),
+                            cloudCover: Math.round(cloudCover),
+                            browseUrl
+                        }))
+                        .filter(({date}) => inSeason(date, dates))
+                )
+            )
     }
 }
 export default api
+
+
+const DATE_FORMAT = 'YYYY-MM-DD'
+
+const inSeason = (date, dates) => {
+    const doy = moment(date, DATE_FORMAT).dayOfYear()
+    const fromDoy = moment(dates.seasonStart).dayOfYear()
+    const toDoy = moment(dates.seasonEnd).dayOfYear()
+    return toDoy <= fromDoy
+        ? doy >= fromDoy || doy < toDoy
+        : doy >= fromDoy && doy < toDoy
+}
 
 const transformRecipeForPreview = (recipe) => {
     return {
@@ -33,6 +64,36 @@ const transformRecipeForPreview = (recipe) => {
 
 const transformQueryForSceneAreas = (aoi, source) =>
     `aoi=${JSON.stringify(transformAoi(aoi))}&dataSet=${sourceToDataSet(source)}`
+
+const transformQueryForScenesInSceneArea = ({dates, source}) =>
+    'dataSet=' + sourceToDataSet(source)
+    + '&targetDayOfYear=' + targetDayOfYear(dates)
+    + '&fromDate=' + fromDate(dates)
+    + '&toDate=' + toDate(dates)
+
+
+const targetDayOfYear = (dates) =>
+    moment(dates.targetDate, DATE_FORMAT).dayOfYear()
+
+const fromDate = (dates) =>
+    moment(dates.seasonStart, DATE_FORMAT).subtract(dates.yearsBefore, 'years').format(DATE_FORMAT)
+
+const toDate = (dates) =>
+    moment(dates.seasonEnd, DATE_FORMAT).add(dates.yearsAfter, 'years').format(DATE_FORMAT)
+
+const daysFromTarget = (dateString, dates) => {
+    const date = moment(dateString, DATE_FORMAT)
+    const targetDate = moment(dates.targetDate, DATE_FORMAT)
+    const diffs = [
+        date.diff(moment(targetDate).year(date.year() - 1), 'days'),
+        date.diff(moment(targetDate).year(date.year()), 'days'),
+        date.diff(moment(targetDate).year(date.year() + 1), 'days'),
+    ]
+
+    const min = Math.min(...diffs.map(Math.abs))
+    console.log('diffs:', diffs, ', min:', min, ', days:', diffs.find(diff => Math.abs(diff) === min))
+    return diffs.find(diff => Math.abs(diff) === min)
+}
 
 const transformAoi = (aoi) => {
     switch (aoi.type) {
@@ -74,6 +135,27 @@ const toSensors = (sources) =>
                 throw new Error('Invalid dataSet: ' + dataSet)
         }
     })
+
+const transformBackDataSet = (dataSet) => {
+    switch (dataSet) {
+        case 'LANDSAT_8':
+            return 'landsat8'
+        case 'LANDSAT_7':
+            return 'landsat7'
+        case 'LANDSAT_TM':
+            return 'landsat45'
+        case 'LANDSAT_8_T2':
+            return 'landsat8T2'
+        case 'LANDSAT_7_T2':
+            return 'landsat7T2'
+        case 'LANDSAT_TM_T2':
+            return 'landsat45T2'
+        case 'SENTINEL_2':
+            return 'sentinel2'
+        default:
+            throw new Error('Invalid dataSet: ' + dataSet)
+    }
+}
 
 const sourcesToDataSet = (sources) =>
     sources.landsat ? 'LANDSAT' : 'SENTINEL2'

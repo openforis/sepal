@@ -11,6 +11,8 @@
 }
 
 .panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     height: 100%;
     max-height: 80rem;
     width: 100%;
@@ -19,4 +21,68 @@
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
     --scaling-factor: .8 !important;
+}
+
+.availableScenes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 12rem);
+    grid-template-rows: repeat(auto-fill, 17rem);
+    grid-row-gap: 1rem;
+    grid-column-gap: 1rem;
+    justify-content: center;
+}
+
+.selectedScenes {
+
+}
+
+.availableScenes .scene {
+    display: flex;
+    flex-direction: column;
+    background-color: #323030;
+    border: 1px solid #514F4E;
+    justify-content: space-between;
+}
+
+.availableScenes img {
+    height: 10rem;
+}
+
+.availableScenes .details {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-areas:
+            'dataSet    .'
+            'cloudCover .'
+            'date       daysFromTarget';
+    background-color: #3D3B3A;
+    border: 1px solid #514F4E;
+    margin: 0.5rem;
+    padding: 0.25rem;
+    font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
+    font-size: 0.7rem;
+    color: #CCC;
+}
+
+.availableScenes .dataSet {
+    grid-area: dataSet;
+}
+
+.availableScenes .date {
+    grid-area: date;
+}
+
+.availableScenes .daysFromTarget {
+    grid-area: daysFromTarget;
+}
+
+.availableScenes .cloudCover {
+    grid-area: cloudCover;
+}
+
+.container i > svg {
+    color: white;
+    width: 1.5rem !important;
+    text-align: left;
 }
