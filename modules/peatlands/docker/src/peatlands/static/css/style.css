@@ -1,0 +1,98 @@
+body {
+    font-family: "Ubuntu", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #fff;
+    background-color: rgba(17,18,21,.9);
+}
+
+navbar-inverse {
+    background-color: rgba(17,18,21,.9);
+}
+
+.table > tbody > tr > td {
+    vertical-align: middle;
+}
+
+.modal {
+    color: black;
+}
+
+#list a.evaluated {
+    background-color: #dff0d8;
+}
+
+.card-inverse {
+    background-color: #333;
+    border-color: #333;
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    font-size: 1.6rem;
+}
+
+/* */
+
+html, body, #gmap, #lmap {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#maps {
+    width: 100%;
+    height: calc(100% - 56px);
+    position: relative;
+    float: left;
+}
+
+.map-control {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    z-index: 999;
+}
+
+.map-control.map-control-left {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    z-index: 999;
+}
+
+.map-control select {
+    background-color: #fff;
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+.map-control button {
+    background-color: #fff;
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+#collect {
+    width: 40%;
+    height: calc(100% - 56px);
+    position: relative;
+    float: left;
+}
+
+#list {
+    height: auto;
+    max-height: 500px;
+    overflow-x: hidden;
+}
+
+.dgcs-iframe {
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.subform-template .card-block .form-group:last-of-type {
+    margin-bottom: 0px;
+}

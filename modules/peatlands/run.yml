@@ -1,0 +1,22 @@
+---
+- file: path="/data/peatlands" state=directory
+
+- name: "peatlands | Start container"
+  docker_container:
+    api_version: "{{ api_version }}"
+    name: "{{ name }}"
+    pull: "{{ pull }}"
+    image: "{{ image }}"
+    state: "{{ state }}"
+    restart_policy: "{{ restart_policy }}"
+    network_mode: "{{ network_mode }}"
+    log_driver: syslog
+    log_opt:
+      syslog-address: "{{ syslog_address }}"
+      tag: "peatlands"
+    networks:
+      - name: 'sepal'
+    volumes:
+    - "/data/peatlands:/data"
+    env:
+      GOOGLE_MAPS_API_KEY_SEPAL_ENV: "{{ google_maps_api_key }}"
