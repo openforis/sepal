@@ -45,7 +45,7 @@ class MapToolbar extends React.Component {
                         selected={sceneAreasShown}
                         onClick={() => this.recipe.setSceneAreasShown(!sceneAreasShown).dispatch()}
                         icon={'th'}
-                        tooltip={`process.mosaic.mapToolbar.sceneAreasShown.${sceneAreasShown ? 'hide' : 'show'}`}/>
+                        tooltip={`process.mosaic.mapToolbar.sceneAreas.${sceneAreasShown ? 'hide' : 'show'}`}/>
                     <ToolbarButton
                         onClick={() => sepalMap.getContext(recipeId).fitLayer('aoi')}
                         icon={'bullseye'}
