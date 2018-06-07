@@ -6,9 +6,10 @@ import MapToolbar from './mapToolbar'
 import styles from './mosaic.module.css'
 import MosaicPreview from './mosaicPreview'
 import {RecipeState} from './mosaicRecipe'
-import Panels from './panels/panels'
 import MosaicToolbar from './panels/mosaicToolbar'
+import Panels from './panels/panels'
 import SceneAreas from './sceneAreas'
+import SceneSelection from './sceneSelection'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
@@ -27,6 +28,7 @@ class Mosaic extends React.Component {
                 <Panels recipeId={recipeId} className={styles.panel}/>
                 <MosaicPreview recipeId={recipeId}/>
                 <SceneAreas recipeId={recipeId}/>
+                <SceneSelection recipeId={recipeId}/>
             </div>
         )
     }
@@ -38,7 +40,7 @@ class Mosaic extends React.Component {
 }
 
 Mosaic.propTypes = {
-    recipeId: PropTypes.string,
+    recipeId: PropTypes.string.isRequired,
     aoi: PropTypes.object
 }
 

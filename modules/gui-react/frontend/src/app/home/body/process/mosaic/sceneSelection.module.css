@@ -1,0 +1,22 @@
+.container {
+    pointer-events: all;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.panel {
+    height: 100%;
+    max-height: 80rem;
+    width: 100%;
+    max-width: 80rem;
+    background-color: hsla(36, 8%, 15%, .95);
+    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
+    border-radius: .5rem;
+    --scaling-factor: .8 !important;
+}

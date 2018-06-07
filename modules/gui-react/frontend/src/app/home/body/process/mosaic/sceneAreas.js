@@ -1,4 +1,4 @@
-import {RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {google, googleMap, MapLayer, MapObject, sepalMap} from 'app/home/map/map'
 import backend from 'backend'
 import _ from 'lodash'
@@ -29,8 +29,13 @@ class SceneAreas extends React.Component {
         show: true
     }
 
+    constructor(props) {
+        super(props)
+        this.recipe = RecipeActions(props.recipeId)
+    }
+
     selectScenes(sceneAreaId) {
-        console.log('sceneAreaId', sceneAreaId)
+        this.recipe.setSceneSelection(sceneAreaId).dispatch()
     }
 
     render() {

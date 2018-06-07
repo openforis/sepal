@@ -115,6 +115,9 @@ export const RecipeActions = (id) => {
         },
         setFusionTableRows(rows) {
             return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
+        },
+        setSceneSelection(sceneAreaId) {
+            return set('SET_SCENE_SELECTION', 'ui.sceneSelection', sceneAreaId, {sceneAreaId})
         }
     }
 }
