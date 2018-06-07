@@ -30,6 +30,13 @@
     "authenticate": "true"
   },
   {
+    "prefix": "true",
+    "path": "/peatlands/",
+    "target": "http://peatlands:7767/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
     "prefix": "false",
     "path": "/gateone/ws",
     "target": "https://gateone:8000/ws/",
