@@ -44,9 +44,8 @@ class SceneAreas extends React.Component {
             return (
                 <div>
                     {action('LOAD_SCENE_AREAS').dispatched
-                        ? null
+                        ? this.renderSceneAreas()
                         : <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
-                    {this.renderSceneAreas()}
                 </div>
             )
         else
