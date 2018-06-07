@@ -5,6 +5,7 @@ import GoogleMapsLoader from 'google-maps'
 import Http from 'http-client'
 import PropTypes from 'prop-types'
 import React from 'react'
+import ReactDOM from 'react-dom'
 import {NEVER, Observable, Subject} from 'rxjs'
 import {map, mergeMap, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
@@ -12,10 +13,18 @@ import './map.module.css'
 
 export let sepalMap = null
 export let google = null
-let googleMap = null
+export let googleMap = null
 
 const contextById = {}
 let currentContextId
+
+const initListeners = []
+const onInit = (listener) => {
+    if (google)
+        listener(google)
+    else
+        initListeners.push(listener)
+}
 
 export const initGoogleMapsApi$ = () => {
     const loadGoogleMapsApiKey$ =
@@ -28,6 +37,7 @@ export const initGoogleMapsApi$ = () => {
         GoogleMapsLoader.LIBRARIES = ['drawing']
         GoogleMapsLoader.load((g) => {
             google = g
+            initListeners.forEach((listener) => listener(google))
             observer.next(apiKey)
             observer.complete()
         })
@@ -311,3 +321,84 @@ Map.propTypes = {
 }
 
 export default connect(mapStateToProps)(Map)
+
+
+export class MapLayer extends React.Component {
+    state = {
+        shown:
+            false, projection: null
+    }
+
+    constructor(props) {
+        super(props)
+        this.overlay = new ReactOverlayView(this)
+        this.overlay.setMap(googleMap)
+    }
+
+    render() {
+        const {shown, projection} = this.state
+        const {className, children} = this.props
+        const mapPanes = this.overlay.getPanes()
+        const content = (
+            <div className={className}>
+                <ProjectionContext.Provider value={projection}>
+                    {children}
+                </ProjectionContext.Provider>
+            </div>
+        )
+        return shown && mapPanes
+            ? ReactDOM.createPortal(content, mapPanes.overlayMouseTarget)
+            : null
+    }
+}
+
+export class MapObject extends React.Component {
+    render() {
+        const {lat, lng, width, height, className, children} = this.props
+        return (
+            <ProjectionContext.Consumer>
+                {projection => {
+                    if (!projection)
+                        return null
+                    const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(lat, lng))
+                    const style = {
+                        position: 'absolute',
+                        top: `calc(${point.y}px - ${height} / 2)`,
+                        left: `calc(${point.x}px - ${width} /2)`
+                    }
+                    return <div style={style} className={className}>
+                        {children}
+                    </div>
+                }
+                }
+            </ProjectionContext.Consumer>
+        )
+    }
+}
+
+const ProjectionContext = React.createContext()
+
+let ReactOverlayView
+onInit((google) =>
+    ReactOverlayView = class ReactOverlayView extends google.maps.OverlayView {
+        constructor(component) {
+            super()
+            this.component = component
+        }
+
+        onAdd() {
+            this.show(true)
+        }
+
+        draw() {
+            this.component.setState((prevState) => ({...prevState, projection: this.getProjection()}))
+        }
+
+        onRemove() {
+            this.show(false)
+        }
+
+        show(shown) {
+            this.component.setState((prevState) => ({...prevState, shown: shown}))
+        }
+    })

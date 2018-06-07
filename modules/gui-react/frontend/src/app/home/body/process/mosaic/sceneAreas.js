@@ -1,5 +1,5 @@
 import {RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {google, sepalMap} from 'app/home/map/map'
+import {google, googleMap, MapLayer, MapObject, sepalMap} from 'app/home/map/map'
 import backend from 'backend'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
@@ -10,6 +10,7 @@ import {connect} from 'store'
 import {msg} from 'translate'
 import MapStatus from 'widget/mapStatus'
 import {SceneSelectionType} from './mosaicRecipe'
+import styles from './sceneAreas.module.css'
 
 
 const mapStateToProps = (state, ownProps) => {
@@ -24,36 +25,123 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class SceneAreas extends React.Component {
-    state = {}
+    state = {
+        show: true
+    }
 
     selectScenes(sceneAreaId) {
         console.log('sceneAreaId', sceneAreaId)
     }
 
     render() {
-        const {initialized, sceneSelectionOptions: {type}} = this.props
-        if (!initialized || type !== SceneSelectionType.SELECT || !this.state.sceneAreasLoading)
+        const {sceneAreasShown, action} = this.props
+        if (this.renderable() && sceneAreasShown && this.state.show)
+            return (
+                <div>
+                    {action('LOAD_SCENE_AREAS').dispatched
+                        ? null
+                        : <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
+                    {this.renderSceneAreas()}
+                </div>
+            )
+        else
             return null
+    }
+
+    renderSceneAreas() {
+        const sceneAreas = this.state.sceneAreas
+        if (sceneAreas)
+            return (
+                <MapLayer className={styles.sceneAreas}>
+                    {sceneAreas.map(sceneArea => this.renderSceneArea(sceneArea))}
+                </MapLayer>
+            )
+        else
+            return null
+    }
+
+    renderSceneArea({id, center, polygon}) {
+        const zoom = sepalMap.getZoom()
+        const scale = Math.min(1, Math.pow(zoom, 2.5) / Math.pow(8, 2.5))
+        const size = `${4 * scale}rem`
+        const halfSize = `${2 * scale}rem`
         return (
-            <div>
-                <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>
-            </div>
+            <MapObject
+                key={id}
+                lat={center.lat()}
+                lng={center.lng()}
+                width={size}
+                height={size}
+                className={styles.sceneArea}>
+                <svg
+                    height={size}
+                    width={size}
+                    onMouseOver={() => polygon.setMap(googleMap)}
+                    onMouseLeave={() => polygon.setMap(null)}
+                    onClick={() => this.selectScenes(id)}>
+                    <circle cx={halfSize} cy={halfSize} r={halfSize}/>
+                    {zoom > 4
+                        ? <text x={halfSize} y={halfSize} textAnchor='middle' alignmentBaseline="central">
+                            64
+                        </text>
+                        : null}
+                </svg>
+            </MapObject>
         )
     }
 
-    componentDidUpdate() {
-        const {sceneAreasShown, recipeId} = this.props
-        const setSceneAreasLoading = (loading) =>
-            () => this.setState((prevState) => ({...prevState, sceneAreasLoading: loading}))
-        if (sceneAreasShown)
-            setSceneAreaLayer({
-                    ...this.props,
-                    onClick: (sceneAreaId) => this.selectScenes(sceneAreaId),
-                    onLoading: () => setSceneAreasLoading(false),
-                    onInitialized: () => setSceneAreasLoading(false)
-                }
-            )
-        sepalMap.getContext(recipeId).hideLayer('sceneAreas', !sceneAreasShown)
+    componentDidUpdate(prevProps) {
+        const {recipeId, aoi, source} = this.props
+        const loadSceneAreas = this.renderable() && !_.isEqual(
+            [aoi, source],
+            [prevProps.aoi, prevProps.source])
+        if (loadSceneAreas)
+            this.loadSceneAreas(aoi, source)
+        setSceneAreaLayer({recipeId, component: this})
+    }
+
+    renderable() {
+        const {aoi, source, sceneSelectionOptions: {type}} = this.props
+        return aoi
+            && source
+            && type === SceneSelectionType.SELECT
+    }
+
+    loadSceneAreas(aoi, source) {
+        this.props.asyncActionBuilder('LOAD_SCENE_AREAS',
+            backend.gee.sceneAreas$(aoi, source)
+                .pipe(
+                    map((e) => {
+                        return this.setState((prevState) =>
+                            ({...prevState, sceneAreas: this.toSceneAreas(e.response)})
+                        )
+                    })
+                ))
+            .dispatch()
+    }
+
+    toSceneAreas(json) {
+        return json.map(({polygon, sceneAreaId}) => {
+            const gPolygon = new google.maps.Polygon({
+                paths: polygon.map(([lat, lng]) =>
+                    new google.maps.LatLng(lat, lng)),
+                fillColor: '#000000',
+                fillOpacity: 0.4,
+                strokeColor: '#636363',
+                strokeOpacity: 0.6,
+                strokeWeight: 1
+            })
+            const bounds = new google.maps.LatLngBounds()
+            gPolygon.getPaths().getArray().forEach((path) =>
+                path.getArray().forEach((latLng) =>
+                    bounds.extend(latLng)
+                ))
+            return {
+                id: sceneAreaId,
+                center: bounds.getCenter(),
+                polygon: gPolygon,
+            }
+        })
     }
 }
 
@@ -61,163 +149,47 @@ SceneAreas.propTypes = {
     recipeId: PropTypes.string
 }
 
-
 export default connect(mapStateToProps)(SceneAreas)
 
-
-const setSceneAreaLayer = (
-    {
-        recipeId,
-        aoi,
-        source,
-        sceneSelectionOptions,
-        componentWillUnmount$,
-        onClick,
-        onLoading,
-        onInitialized
-    }) => {
-    const layer =
-        aoi
-        && source
-        && sceneSelectionOptions.type === SceneSelectionType.SELECT
-            ? new SceneAreaLayer({aoi, source, onClick, onLoading})
-            : null
+const setSceneAreaLayer = ({recipeId, component}) => {
+    const layer = component.renderable()
+        ? new SceneAreaLayer(component)
+        : null
     sepalMap.getContext(recipeId).setLayer({
         id: 'sceneAreas',
         layer,
-        destroy$: componentWillUnmount$,
-        onInitialized
+        destroy$: component.componentWillUnmount$
     })
 }
 
 class SceneAreaLayer {
-    constructor({aoi, source, onClick, onLoading}) {
-        this.aoi = aoi
-        this.source = source
-        this.onLoading = onLoading
-        this.onClick = onClick
-        this.bounds = aoi.bounds
-        this.listeners = []
+    constructor(component) {
+        this.component = component
     }
 
     equals(o) {
-        return o && _.isEqual(
-            {aoi: this.aoi, source: this.source},
-            {aoi: o.aoi, source: o.source})
+        return o && this.component === o.component
     }
 
-    addListener({object, event, listener}) {
-        this.listeners.push({
-            object, event, listener,
-            gListener: google.maps.event.addListener(object, event, listener)
-        })
+    addToMap() {
+        if (!this.component.state.show)
+            this.component.setState(prevState => ({...prevState, show: true}))
     }
 
-    addToMap(googleMap) {
-        if (this.layer) {
-            this.listeners.forEach((listener) => this.addListener(listener))
-            return this.layer.set('sceneAreas', googleMap)
-        }
-        this.layer = new google.maps.MVCObject()
-        this.sceneAreas
-            .map((sceneArea) => this.createMarker(sceneArea, googleMap))
-            .forEach(marker => marker.bindTo('map', this.layer, 'sceneAreas'))
-        this.layer.setValues({sceneAreas: googleMap})
+    removeFromMap() {
+        if (this.component.state.show)
+            this.component.setState(prevState => ({...prevState, show: false}))
     }
 
-    createMarker({polygon, sceneAreaId}, googleMap) {
-        const gPolygon = new google.maps.Polygon({
-            paths: polygon.map(([lat, lng]) =>
-                new google.maps.LatLng(lat, lng)),
-            fillColor: '#000000',
-            fillOpacity: 0.4,
-            strokeColor: '#636363',
-            strokeOpacity: 0.6,
-            strokeWeight: 1
-        })
-        const bounds = new google.maps.LatLngBounds()
-        gPolygon.getPaths().getArray().forEach((path) =>
-            path.getArray().forEach((latLng) =>
-                bounds.extend(latLng)
-            ))
-        const center = bounds.getCenter()
-
-        const icon = {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: '#000000',
-            fillOpacity: 0.4,
-            anchor: new google.maps.Point(0, 0),
-            strokeColor: '#636363',
-            strokeOpacity: 0.6,
-            strokeWeight: 2
-        }
-        const marker = new google.maps.Marker({
-            position: center,
-            map: googleMap,
-            draggable: false
-        })
-
-        const updateMarker = () => {
-            const zoom = googleMap.getZoom()
-            const scale = () => {
-                switch (zoom) {
-                    case 6:
-                        return 20
-                    case 5:
-                        return 13
-                    case 4:
-                        return 3
-                    case 3:
-                    case 2:
-                    case 1:
-                        return 2
-                    default:
-                        return 30
-                }
-            }
-            marker.setLabel(zoom > 4
-                ? {
-                    text: '65',
-                    color: '#FFFFFF',
-                    fontSize: zoom > 6 ? '0.9rem' : '0.7rem'
-                }
-                : null)
-            marker.setIcon({...icon, scale: scale(zoom)})
-        }
-        updateMarker()
-        this.addListener({object: marker, event: 'mouseover', listener: () => gPolygon.setMap(googleMap)})
-        this.addListener({object: marker, event: 'mouseout', listener: () => gPolygon.setMap(null)})
-        this.addListener({object: marker, event: 'click', listener: () => this.onClick(sceneAreaId)})
-        this.addListener({
-            object: googleMap,
-            event: 'zoom_changed',
-            listener: () => updateMarker()
-        })
-        return marker
-    }
-
-    removeFromMap(googleMap) {
-        if (this.layer) {
-            this.layer.set('sceneAreas', null)
-            this.listeners.forEach(({gListener}) => google.maps.event.removeListener(gListener))
-        }
-    }
-
-    hide(googleMap, hidden) {
-        if (this.layer)
-            this.layer.set('sceneAreas', hidden ? null : googleMap)
+    hide() {
+        this.removeFromMap()
     }
 
     initialize$() {
-        if (this.sceneAreas)
-            return of(this)
-        this.onLoading()
-        return backend.gee.sceneAreas$(this.aoi, this.source).pipe(
-            map((e) => this.sceneAreas = e.response),
-            map(() => this)
-        )
+        return of(this)
     }
 }
+
 
 /*
 SELECT geometry
