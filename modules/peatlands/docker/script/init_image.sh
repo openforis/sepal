@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+apt-get -y update && apt-get install -y software-properties-common
+apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
 apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get install -y\
  python-pip\
  libssl-dev\

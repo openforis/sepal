@@ -27,5 +27,6 @@
     - { role: build-module, module: user }
     - { role: build-module, module: gui }
     - { role: build-module, module: ceo }
+    - { role: build-module, module: peatlands }
     - { role: build-module, module: sepal-server }
     - role: push-images
