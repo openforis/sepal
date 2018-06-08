@@ -63,8 +63,10 @@
 
         // google maps init
         gmap = new google.maps.Map(window.document.getElementById('gmap'), gOptions);
+        gmap.setOptions({
+            styles: mapStyle
+        });
 
-        gmap.setOptions( { styles: mapStyle } );
         var gBounds = new google.maps.LatLngBounds();
 
         $('#base-selector').change(function(e) {
@@ -75,17 +77,6 @@
                 gmap.setMapTypeId(google.maps.MapTypeId.SATELLITE);
             }
         });
-
-        let ftLayer = new google.maps.FusionTablesLayer({
-            suppressInfoWindows: true,
-            query: {
-                from: '1-kv2WWZfEjOuvUhuB3YJj3zIIxn0tzZR6Hg0bUrr',
-                select: 'geometry',
-                //where: `'${keyColumn}' = '${key}'`
-            },
-            //styles: [{polygonOptions: {...polygonOptions(fill)}}]
-        })
-        ftLayer.setMap(gmap);
 
         const clickEvent = (e) =>  {
             let latLng = e.latLng;
@@ -176,7 +167,30 @@
         }
 
         //gmap.addListener('click', clickEvent);
-        google.maps.event.addListener(ftLayer, 'click', clickEvent);
+
+        var url = 'https://www.googleapis.com/fusiontables/v2/query?sql=select geometry from {{ config.FT_DOCID }}&key={{ config.GMAPS_API_KEY }}';
+        $.getJSON(url, function(data) {
+            $.each(data.rows, function(i, row) {
+                if (row[0].geometry !== undefined && row[0].geometry.type === 'Polygon') {
+                    $.each(row[0].geometry.coordinates[0], function(k, coordinate) {
+                        var latLng = new google.maps.LatLng(parseFloat(coordinate[1]), parseFloat(coordinate[0]));
+                        gBounds.extend(latLng);
+                    });
+                }
+            });
+            gmap.panToBounds(gBounds);
+            gmap.fitBounds(gBounds);
+            //
+            let ftLayer = new google.maps.FusionTablesLayer({
+                suppressInfoWindows: true,
+                query: {
+                    from: '{{ config.FT_DOCID }}',
+                    select: 'geometry'
+                },
+            })
+            ftLayer.setMap(gmap);
+            google.maps.event.addListener(ftLayer, 'click', clickEvent);
+        });
 
     });
 

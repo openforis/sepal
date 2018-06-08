@@ -15,3 +15,6 @@ PEATLANDS_API_URL = PEATLANDS_URL + 'api'
 
 #TS_FILENAME = '/home/rfontanarosa/gdal/smap_disag_1km_geo.tif'
 TS_FILENAME = '/vsis3/sepal-data-public/smap_1km/smap_disag_1km_geo.tif'
+
+#https://fusiontables.google.com/DataSource?docid=1-kv2WWZfEjOuvUhuB3YJj3zIIxn0tzZR6Hg0bUrr
+FT_DOCID = '1-kv2WWZfEjOuvUhuB3YJj3zIIxn0tzZR6Hg0bUrr'
