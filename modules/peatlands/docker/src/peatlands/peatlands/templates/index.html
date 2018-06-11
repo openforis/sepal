@@ -56,6 +56,7 @@
             rotateControl    : false,
             fullscreenControl: false,
             animatedZoom     : false,
+            maxZoom: 10,
             tilt: 0,
             backgroundColor  : '#131314',
             draggableCursor  : 'crosshair'
@@ -143,7 +144,7 @@
                         },
                         series: [{
                             name: indexName,
-                            data: data,
+                            data: data.timeseries,
                             lineWidth: 0,
                             marker: {
                                 enabled: true,
@@ -168,7 +169,41 @@
 
         //gmap.addListener('click', clickEvent);
 
-        var url = 'https://www.googleapis.com/fusiontables/v2/query?sql=select geometry from {{ config.FT_DOCID }}&key={{ config.GMAPS_API_KEY }}';
+        const limitToBounds = (map, strictBounds, minZoomLevel, maxZoomLevel) => {
+
+            // Listen for the dragend event
+            google.maps.event.addListener(map, 'dragend', function() {
+                if (gBounds.contains(map.getCenter())) return;
+
+                // We're out of bounds - Move the map back within the bounds
+
+                var c = map.getCenter(),
+                    x = c.lng(),
+                    y = c.lat(),
+                    maxX = strictBounds.getNorthEast().lng(),
+                    maxY = strictBounds.getNorthEast().lat(),
+                    minX = strictBounds.getSouthWest().lng(),
+                    minY = strictBounds.getSouthWest().lat();
+
+                    if (x < minX) x = minX;
+                    if (x > maxX) x = maxX;
+                    if (y < minY) y = minY;
+                    if (y > maxY) y = maxY;
+
+                map.setCenter(new google.maps.LatLng(y, x));
+            });
+
+            // Limit the zoom level
+            /*
+            google.maps.event.addListener(map, 'idle', function() {
+                //if (map.getZoom() < minZoomLevel) map.setZoom(minZoomLevel);
+                //if (map.getZoom() > maxZoomLevel) map.setZoom(maxZoomLevel);
+            });
+            */
+
+        };
+
+        const url = 'https://www.googleapis.com/fusiontables/v2/query?sql=select geometry from {{ config.FT_DOCID }}&key={{ config.GMAPS_API_KEY }}';
         $.getJSON(url, function(data) {
             $.each(data.rows, function(i, row) {
                 if (row[0].geometry !== undefined && row[0].geometry.type === 'Polygon') {
@@ -178,9 +213,10 @@
                     });
                 }
             });
+            //
             gmap.panToBounds(gBounds);
             gmap.fitBounds(gBounds);
-            //
+            limitToBounds(gmap, gBounds, 5, 10);
             let ftLayer = new google.maps.FusionTablesLayer({
                 suppressInfoWindows: true,
                 query: {

@@ -16,4 +16,7 @@ def getTimeseries():
     lng = request.json.get('lng')
     filename = app.config['TS_FILENAME']
     ts = timeseries(filename, lng, lat)
-    return jsonify(ts), 200
+    return jsonify({
+        'timeseries': ts,
+        'regression': []
+    }), 200
