@@ -1,16 +1,15 @@
 #
 Flask>=0.12.2
 Flask-Cors==3.0.3
-Flask-Migrate==1.8.0
 Flask-PyMongo==0.5.1
 gunicorn==19.7.1
 futures==3.1.1
 requests==2.18.4
 
-pyasn1==0.2.3
-pyasn1-modules==0.0.8
+pyasn1>=0.4.1
+pyasn1-modules>=0.2.1
 rsa==3.4.2
 
 #
 git+git://github.com/openforis/earthengine-api.git@v0.1.137#egg=earthengine-api&subdirectory=python
-git+git://github.com/openforis/gee-gateway.git@bc0d4444c91557e65745b4fc7eb893836d432cf5#egg=gee-gateway
+git+git://github.com/openforis/gee-gateway.git@00a27b6a1c16f20d7bc5535678d46973f159d8c6#egg=gee-gateway
