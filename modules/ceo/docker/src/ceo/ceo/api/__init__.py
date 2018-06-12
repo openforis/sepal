@@ -1,1 +1,1 @@
-import project, record
+import project, record, proxy

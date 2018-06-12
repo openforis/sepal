@@ -3,7 +3,7 @@ let overlayMapManager = {
         'geeGatewayApiUrl': '',
         'digitalGlobeApiKey': '',
         'dgcsConnectId': '',
-        'planetApiKey': '',
+        'planetProxyUrl': '',
         'sepalHost': ''
     },
     'overlayMapTypes': {},
@@ -183,14 +183,10 @@ let overlayMapManager = {
             callback();
         } else if (overlay.type === 'planet') {
             var mosaic_name = overlay.planetMosaicName;
-            var version = overlay.planetApiVersion;
-            var api_key = this.config.planetApiKey;
+            var planet_proxy_url = this.config.planetProxyUrl;
             var layerOptions = {
                 getTileUrl: function (tile, zoom) {
-                    var url = 'https://tiles.planet.com/basemaps/v1/planet-tiles/{mosaic_name}/gmap/{z}/{x}/{y}.png?api_key=' + api_key;
-                    if (version === 'v0') {
-                        url = 'https://tiles.planet.com/v0/mosaics/{mosaic_name}/{z}/{x}/{y}.png?api_key=' + api_key;
-                    }
+                    var url = planet_proxy_url + '/{mosaic_name}/{z}/{x}/{y}';
                     return url.replace('{mosaic_name}', mosaic_name).replace('{z}', zoom).replace('{x}', tile.x).replace('{y}', tile.y);
                 },
                 name: layerName,
