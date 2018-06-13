@@ -4,6 +4,7 @@ from flask import session, render_template
 from flask_cors import CORS, cross_origin
 
 from .. import app
+from .. import mongo
 
 from ..common.utils import import_sepal_auth, requires_auth
 
@@ -21,14 +22,16 @@ def index():
 @import_sepal_auth
 @requires_auth
 def project_add():
-    return render_template('project-add.html')
+    planet_imagery = list(mongo.db.imagery.find({'owner': 'planet'}, {'_id': False}))
+    return render_template('project-add.html', planet_imagery=planet_imagery)
 
 @app.route('/project-edit', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
 @import_sepal_auth
 @requires_auth
 def project_edit():
-    return render_template('project-edit.html')
+    planet_imagery = list(mongo.db.imagery.find({'owner': 'planet'}, {'_id': False}))
+    return render_template('project-edit.html', planet_imagery=planet_imagery)
 
 @app.route('/collect-cep', methods=['GET'])
 @cross_origin(origins=app.config['CO_ORIGINS'])

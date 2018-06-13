@@ -5,20 +5,15 @@
     </div>
 </div>
 <div class="form-group row">
-    <label class="col-4 col-form-label">Resolution (Hi/Lo)</label>
-    <div class="col-8">
-        <select class="form-control" name="planetApiVersion[]">
-            <option value="" selected>CHOOSE A RESOLUTION</option>
-            <option value="v0">HI-RES</option>
-            <option value="v1">LO-RES</option>
-        </select>
-    </div>
-</div>
-<div class="form-group row">
     <label class="col-4 col-form-label">Layer</label>
     <div class="col-8">
         <select class="form-control" name="planetMosaicName[]">
-            <option value="" selected>CHOOSE A BASEMAP</option>
+            <option value="" selected>CHOOSE A MAP</option>
+            {% if planet_imagery -%}
+                {% for value in planet_imagery -%}
+                    <option value="{{ value.id }}">{{ value.name }}</option>
+                {% endfor -%}
+            {% endif -%}
         </select>
     </div>
 </div>
