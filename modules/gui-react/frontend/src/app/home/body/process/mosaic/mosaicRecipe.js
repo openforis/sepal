@@ -65,6 +65,10 @@ export const RecipeActions = (id) => {
         _actionBuilder(name, otherProps)
             .setAll(values)
             .build()
+    const push = (name, prop, value, otherProps) =>
+        _actionBuilder(name, otherProps)
+            .push(prop, value)
+            .build()
 
     return {
         setInitialized() {
@@ -118,6 +122,9 @@ export const RecipeActions = (id) => {
         },
         setSceneSelection(sceneAreaId) {
             return set('SET_SCENE_SELECTION', 'ui.sceneSelection', sceneAreaId, {sceneAreaId})
+        },
+        addScene(scene) {
+            return push('ADD_SCENE', ['scenes', scene.sceneAreaId], scene, {scene})
         }
     }
 }
@@ -145,6 +152,8 @@ const initRecipe = (recipe) => {
         type: SceneSelectionType.SELECT,
         targetDateWeight: 0.5
     }).dispatch()
+
+
 
     actions.setLabelsShown(false).dispatch()
     actions.setSceneAreasShown(true).dispatch()

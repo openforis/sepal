@@ -285,7 +285,7 @@ class Timeline extends React.Component {
                     </div>
                     <ReactResizeDetector
                         handleWidth
-                        onResize={this.widthUpdated.bind(this)}/>
+                        onResize={width => this.widthUpdated(width)}/>
                 </div>
             </div>
         )

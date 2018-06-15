@@ -9,13 +9,14 @@ const api = {
             Http.postJson$('gee/preview', transformRecipeForPreview(recipe)),
         sceneAreas$: ({aoi, source}) =>
             Http.get$('gee/sceneareas?' + transformQueryForSceneAreas(aoi, source)),
-        scenesInSceneArea$: ({sceneAreaId, dates, source}) =>
+        scenesInSceneArea$: ({sceneAreaId, dates, sources}) =>
             Http.get$(`api/data/sceneareas/${sceneAreaId}?`
-                + transformQueryForScenesInSceneArea({dates, source})).pipe(
+                + transformQueryForScenesInSceneArea({dates, sources})).pipe(
                 map(({response: scenes}) =>
                     scenes
                         .map(({sceneId, sensor, acquisitionDate, cloudCover, browseUrl}) => ({
                             id: sceneId,
+                            sceneAreaId,
                             dataSet: transformBackDataSet(sensor),
                             date: acquisitionDate,
                             daysFromTarget: daysFromTarget(acquisitionDate, dates),
@@ -23,6 +24,7 @@ const api = {
                             browseUrl
                         }))
                         .filter(({date}) => inSeason(date, dates))
+                        .filter(({dataSet}) => Object.values(sources)[0].includes(dataSet))
                 )
             )
     }
@@ -65,8 +67,8 @@ const transformRecipeForPreview = (recipe) => {
 const transformQueryForSceneAreas = (aoi, source) =>
     `aoi=${JSON.stringify(transformAoi(aoi))}&dataSet=${sourceToDataSet(source)}`
 
-const transformQueryForScenesInSceneArea = ({dates, source}) =>
-    'dataSet=' + sourceToDataSet(source)
+const transformQueryForScenesInSceneArea = ({dates, sources}) =>
+    'dataSet=' + sourceToDataSet(Object.keys(sources)[0])
     + '&targetDayOfYear=' + targetDayOfYear(dates)
     + '&fromDate=' + fromDate(dates)
     + '&toDate=' + toDate(dates)

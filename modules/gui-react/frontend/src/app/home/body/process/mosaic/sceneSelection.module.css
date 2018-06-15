@@ -2,41 +2,83 @@
     pointer-events: all;
     position: absolute;
     top: 0;
-    right: 0;
+    right: 4rem;
     bottom: 0;
-    left: 0;
+    left: 1rem;
     display: flex;
     justify-content: space-around;
     align-items: center;
 }
 
 .panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    justify-content: space-between;
     height: 100%;
     max-height: 80rem;
     width: 100%;
-    max-width: 80rem;
+    max-width: 95rem;
     background-color: hsla(36, 8%, 15%, .95);
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
     --scaling-factor: .8 !important;
 }
 
-.availableScenes {
+.title {
+    font-size: 1.3rem;
+    font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
+    line-height: 1.3;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #fff;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.availableScenes, .selectedScenes {
+    position: relative;
+    height: 100%;
+    min-width: 10rem;
+    flex-grow: 1;
+
+}
+
+.selectedScenes {
+    background-color: hsla(36, 8%, 17%, .95);
+    max-width: 22rem;
+}
+
+.scrollable {
+    position: absolute;
+    top: 5rem;
+    right: 0;
+    bottom: 1rem;
+    left: 0;
+    overflow-y: auto;
+    padding: 0 2rem;
+}
+
+.details {
+    font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
+    font-size: 0.7rem;
+    color: #CCC;
+}
+
+.thumbnail {
+    background-size: cover;
+}
+
+.grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 12rem);
-    grid-template-rows: repeat(auto-fill, 17rem);
+    grid-template-columns: repeat(auto-fill, 10rem);
+    grid-template-rows: repeat(auto-fill, 14rem);
     grid-row-gap: 1rem;
     grid-column-gap: 1rem;
     justify-content: center;
 }
 
-.selectedScenes {
-
-}
-
-.availableScenes .scene {
+.grid .scene {
+    position: relative;
     display: flex;
     flex-direction: column;
     background-color: #323030;
@@ -44,41 +86,180 @@
     justify-content: space-between;
 }
 
-.availableScenes img {
-    height: 10rem;
+.grid .thumbnail {
+    height: calc(10rem - 2px);
+    width: calc(10rem - 2px);
 }
 
-.availableScenes .details {
+.details {
+    height: 4rem;
     display: grid;
     grid-template-columns: 1fr auto;
-    grid-template-rows: 1fr 1fr 1fr;
-    grid-template-areas:
-            'dataSet    .'
-            'cloudCover .'
-            'date       daysFromTarget';
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas: 'dataSet cloudCover' 'date    daysFromTarget';
     background-color: #3D3B3A;
-    border: 1px solid #514F4E;
-    margin: 0.5rem;
-    padding: 0.25rem;
-    font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
-    font-size: 0.7rem;
-    color: #CCC;
+    padding: 0.5rem;
 }
 
-.availableScenes .dataSet {
+.grid .details {
+    border-top: 1px solid #514F4E;
+}
+
+.dataSet {
     grid-area: dataSet;
 }
 
-.availableScenes .date {
+.date {
     grid-area: date;
 }
 
-.availableScenes .daysFromTarget {
+.daysFromTarget {
     grid-area: daysFromTarget;
 }
 
-.availableScenes .cloudCover {
+.cloudCover {
     grid-area: cloudCover;
+}
+
+.sceneOverlay {
+    display: none;
+}
+
+.scene:hover .sceneOverlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    background: hsla(0, 0%, 0%, 0.7);
+}
+
+.grid .scene:hover .sceneOverlay {
+    flex-direction: column;
+    padding: 1rem;
+}
+
+.grid .sceneOverlay button:first-child {
+    margin-bottom: 1rem;
+}
+
+.scrollable button {
+    border-radius: var(--button-border-radius);
+    font-size: 0.9rem;
+}
+
+.sceneOverlay .add {
+    --bg-hue: 222;
+    --bg-sat: 44%;
+    color: var(--button-default-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 37%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 39%);
+}
+
+.sceneOverlay .add:focus {
+    color: var(--button-default-focus-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 35%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 38%);
+}
+
+.sceneOverlay .add:hover {
+    color: var(--button-default-hover-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
+}
+
+.sceneOverlay .add:active {
+    color: var(--button-default-active-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 31%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 33%);
+}
+
+.sceneOverlay .remove {
+    --bg-hue: 0;
+    --bg-sat: 38%;
+    color: var(--button-default-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 37%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 39%);
+}
+
+.sceneOverlay .remove:focus {
+    color: var(--button-default-focus-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 35%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 38%);
+}
+
+.sceneOverlay .remove:hover {
+    color: var(--button-default-hover-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
+}
+
+.sceneOverlay .remove:active {
+    color: var(--button-default-active-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 31%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 33%);
+}
+
+.sceneOverlay .preview {
+    --bg-hue: 0;
+    --bg-sat: 0%;
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 78%);
+    color: var(--button-default-color);
+}
+
+.sceneOverlay .preview:focus {
+    color: var(--button-default-focus-color);
+    background-color: hsla(var(--bg-hue), var(--bg-sat), 0%, 0.2);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 77%);
+}
+
+.sceneOverlay .preview:hover {
+    color: var(--button-default-hover-color);
+    background-color: hsla(var(--bg-hue), var(--bg-sat), 0%, 0.2);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 75%);
+}
+
+.sceneOverlay .preview:active {
+    color: var(--button-default-active-color);
+    background-color: hsla(var(--bg-hue), var(--bg-sat), 0%, 0.4);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 73%);
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+}
+
+.list .details {
+    border-left: 1px solid #514F4E;
+    width: 100%;
+    padding-right: 2rem;
+}
+
+.list .scene {
+    position: relative;
+    display: flex;
+    height: 4rem;
+    background-color: #3D3B3A;
+    border: 1px solid #514F4E;
+    margin-bottom: 1rem;
+}
+
+.list .thumbnail {
+    height: calc(4rem - 2px);
+    width: calc(5rem - 2px);
+    overflow: hidden;
+}
+
+.list .sceneOverlay {
+    align-items: center;
+}
+
+.list .sceneOverlay button:first-child {
+    margin-right: 1rem;
+
 }
 
 .container i > svg {
