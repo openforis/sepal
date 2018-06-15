@@ -80,6 +80,9 @@ class ProxyTest extends AbstractGatewayTest {
     }
 
     def 'When endpoint not registered, 404 is returned'() {
+        proxy(endpoint('/another', '/another')) {
+            body = it.params
+        }
         when:
         def response = httpGet('/')
 

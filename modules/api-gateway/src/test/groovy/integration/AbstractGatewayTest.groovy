@@ -26,15 +26,7 @@ abstract class AbstractGatewayTest extends Specification {
     final httpsPort = Port.findFree()
     final FakeUserServer userServer = new FakeUserServer().start() as FakeUserServer
     final TestServer endpoint = new TestServer().start()
-    final server = new ProxyServer(new ProxyConfig(
-            keyFile: new File(getClass().getResource('/test.key').file),
-            certificateFile: new File(getClass().getResource('/test.crt').file),
-            httpPort: httpPort,
-            httpsPort: httpsPort,
-            authenticationUrl: "${userServer.url}authenticate",
-            logoutPath: '/logout',
-            endpointConfigs: []
-    )).start()
+    private ProxyServer server
     final List<RequestContext> requests = []
     final String validUsername = userServer.validUsername
     final String validPassword = userServer.validPassword
@@ -44,12 +36,20 @@ abstract class AbstractGatewayTest extends Specification {
     final void proxy(EndpointConfig endpointConfig,
                      @ClosureParams(value = SimpleType, options = ['groovymvc.RequestContext'])
                      @DelegatesTo(RequestContext) Closure callback = {}) {
+        server = new ProxyServer(new ProxyConfig(
+                keyFile: new File(getClass().getResource('/test.key').file),
+                certificateFile: new File(getClass().getResource('/test.crt').file),
+                httpPort: httpPort,
+                httpsPort: httpsPort,
+                authenticationUrl: "${userServer.url}authenticate",
+                logoutPath: '/logout',
+                endpointConfigs: [endpointConfig]
+        )).start()
         endpoint.route {
             requests << it
             callback.delegate = it
             callback.call(it)
         }
-        server.proxy(endpointConfig)
     }
 
     final HttpResponseDecorator httpsGet(String path) {
