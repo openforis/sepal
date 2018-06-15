@@ -109,7 +109,7 @@ class SetArchivable_Test extends AbstractFilesTest {
     }
 
     private UserFile userFile(String relativePath) {
-        def path = new File(new File(homeDir, testUsername), relativePath).path
+        def path = new File(new File(homeDir, testUsername), relativePath).canonicalPath
         listFiles(new File(relativePath).parent ?: '/').find { it.path == path }
     }
 }
