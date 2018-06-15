@@ -1,6 +1,6 @@
 import actionBuilder from 'action-builder'
 import PropTypes from 'prop-types'
-import QueryString from 'query-string'
+import QueryString from 'qs'
 import React from 'react'
 import * as router from 'react-router-dom'
 import {state} from 'store'
@@ -26,7 +26,12 @@ export const history = () => ({
 
 export const location = () => state().location
 
-export const query = () => QueryString.parse(location().search)
+export const query = () => {
+    let queryString = location().search
+    if (queryString.startsWith('?'))
+        queryString = queryString.substring(1)
+    return QueryString.parse(queryString)
+}
 
 const renderMergedProps = (component, ...rest) => {
     return React.createElement(component, Object.assign({}, ...rest))

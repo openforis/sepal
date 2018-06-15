@@ -116,9 +116,9 @@ ResetPassword.propTypes = {
     user: PropTypes.object,
     form: PropTypes.object,
     inputs: PropTypes.shape({
-        username: PropTypes.string,
-        password: PropTypes.string,
-        password2: PropTypes.string
+        username: PropTypes.object,
+        password: PropTypes.object,
+        password2: PropTypes.object
     })
 }
 

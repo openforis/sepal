@@ -292,7 +292,7 @@ export class Input extends React.Component {
                 {...props}
                 ref={this.element}
                 name={input.name}
-                value={input.value}
+                value={input.value || ''}
                 onChange={(e) => {
                     input.handleChange(e)
                     if (onChange)
