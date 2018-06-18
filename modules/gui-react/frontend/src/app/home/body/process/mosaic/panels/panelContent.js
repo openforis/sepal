@@ -16,7 +16,7 @@ const PanelContent = ({icon, onBack, title, className, children}) => {
         </span>
 
     return (
-        <div className={className}>
+        <div className={[className, styles.panel].join(' ')}>
             <div className={styles.header}>
                 {header}
                 <span className={styles.title}>

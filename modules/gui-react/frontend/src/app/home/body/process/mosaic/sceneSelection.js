@@ -1,16 +1,18 @@
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import backend from 'backend'
 import _ from 'lodash'
-import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import {map} from 'rxjs/operators'
 import {dataSetById} from 'sources'
-import {connect} from 'store'
-import {Msg} from 'translate'
+import {msg, Msg} from 'translate'
 import Icon from 'widget/icon'
 import styles from './sceneSelection.module.css'
+import PanelForm from './panels/panelForm'
+import {Constraints, form, Label} from 'widget/form'
+
+const inputs = {}
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
@@ -35,7 +37,7 @@ class SceneSelection extends React.Component {
 
     render() {
         console.log('render')
-        const {sceneAreaId, selectedScenes} = this.props
+        const {recipeId, form, sceneAreaId, selectedScenes} = this.props
         const {width} = this.state
         if (!sceneAreaId)
             return null
@@ -50,23 +52,32 @@ class SceneSelection extends React.Component {
             )
         return (
             <div className={styles.container}>
-                <div className={styles.panel}>
-                    <div className={styles.availableScenes}>
-                        <div className={styles.title}>Available scenes</div>
-                        <div className={[styles.scrollable, styles.grid].join(' ')}>
-                            {availableSceneComponents}
+                <form className={styles.panel}>
+                    <PanelForm
+                        recipeId={recipeId}
+                        form={form}
+                        onApply={(recipe, sources) => recipe.setSceneSelectionOptions(sources).dispatch()}
+                        icon='cog'
+                        title={msg('process.mosaic.panel.scenes.title')}>
+                        <div className={styles.form}>
+                            <div className={styles.availableScenes}>
+                                <div className={styles.title}>Available scenes</div>
+                                <div className={[styles.scrollable, styles.grid].join(' ')}>
+                                    {availableSceneComponents}
+                                </div>
+                            </div>
+                            <div className={styles.selectedScenes}>
+                                <div className={styles.title}>Selected scenes</div>
+                                <div className={[styles.scrollable, width > 250 ? styles.list : styles.grid].join(' ')}>
+                                    {selectedSceneComponents}
+                                </div>
+                                <ReactResizeDetector
+                                    handleWidth
+                                    onResize={width => this.widthUpdated(width)}/>
+                            </div>
                         </div>
-                    </div>
-                    <div className={styles.selectedScenes}>
-                        <div className={styles.title}>Selected scenes</div>
-                        <div className={[styles.scrollable, width > 250 ? styles.list : styles.grid].join(' ')}>
-                            {selectedSceneComponents}
-                        </div>
-                        {/*<ReactResizeDetector*/}
-                            {/*handleWidth*/}
-                            {/*onResize={width => this.widthUpdated(width)}/>*/}
-                    </div>
-                </div>
+                    </PanelForm>
+                </form>
             </div>
         )
     }
@@ -104,7 +115,7 @@ class SceneSelection extends React.Component {
 }
 
 const Scene = ({selected, scene, onAdd, onRemove}) => {
-    const {id, dataSet, date, daysFromTarget, cloudCover, browseUrl} = scene
+    const {dataSet, date, daysFromTarget, cloudCover, browseUrl} = scene
     const thumbnailStyle = {
         backgroundImage: `url("${browseUrl}")`
     }
@@ -165,4 +176,4 @@ SceneSelection.propTypes = {
     recipeId: PropTypes.string.isRequired
 }
 
-export default connect(mapStateToProps)(SceneSelection)
+export default form(inputs, mapStateToProps)(SceneSelection)
