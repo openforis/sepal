@@ -5,8 +5,10 @@ import backend from 'backend'
 import _ from 'lodash'
 import React from 'react'
 import {connect} from 'store'
-import {msg} from 'translate'
+import {msg, Msg} from 'translate'
+import Icon from 'widget/icon'
 import MapStatus from 'widget/mapStatus'
+import styles from './mosaicPreview.module.css'
 
 
 const mapStateToProps = (state, ownProps) => {
@@ -20,10 +22,15 @@ class MosaicPreview extends React.Component {
     state = {}
 
     render() {
-        const {initializing, tiles} = this.state
+        const {initializing, tiles, error} = this.state
         if (this.isHidden())
             return null
-        if (initializing)
+        else if (error) {
+            return (
+                <MapStatus loading={false} error={error}/>
+            )
+        }
+        else if (initializing)
             return (
                 <MapStatus message={msg('process.mosaic.preview.initializing')}/>
             )
@@ -32,7 +39,7 @@ class MosaicPreview extends React.Component {
                 <MapStatus
                     loading={!tiles.failed}
                     message={msg('process.mosaic.preview.loading', {loaded: tiles.loaded, count: tiles.count})}
-                    error={tiles.failed ? msg('process.mosaic.preview.failed', {failed: tiles.failed}) : null}/>
+                    error={tiles.failed ? msg('process.mosaic.preview.tilesFailed', {failed: tiles.failed}) : error}/>
             )
         else
             return null
@@ -40,6 +47,34 @@ class MosaicPreview extends React.Component {
 
     onProgress(tiles) {
         this.setState(prevState => ({...prevState, tiles, initializing: false}))
+    }
+
+    onError() {
+        this.setState(prevState => ({
+            ...prevState,
+            error:
+                <div>
+                    <Msg id='process.mosaic.preview.error'/>
+                    <div className={styles.retry}>
+                        <a
+                            href=''
+                            onClick={(e) => {
+                                e.preventDefault()
+                                this.reload()
+                            }}>
+                            <Icon name='sync'/>
+                            <Msg id='button.retry'/>
+                        </a>
+                    </div>
+
+                </div>
+        }))
+    }
+
+    reload() {
+        const {recipeId} = this.props
+        this.setState(prevState => ({...prevState, error: null}))
+        sepalMap.getContext(recipeId).setLayer({id: 'preview', layer: null})
     }
 
     isPreviewShown() {
@@ -51,6 +86,7 @@ class MosaicPreview extends React.Component {
 
     componentDidUpdate() {
         const {recipeId, recipe, componentWillUnmount$} = this.props
+        const {error} = this.state
         const {initializing} = this.state
         const layer = this.isPreviewShown()
             ? new EarthEngineImageLayer({
@@ -61,11 +97,17 @@ class MosaicPreview extends React.Component {
             })
             : null
         const context = sepalMap.getContext(recipeId)
-        const changed = context.setLayer({id: 'preview', layer, destroy$: componentWillUnmount$})
+        const changed = context.setLayer({
+            id: 'preview',
+            layer,
+            destroy$: componentWillUnmount$,
+            onError: () => this.onError()
+        })
         context.hideLayer('preview', this.isHidden(recipe))
         if (changed && initializing !== !!layer)
-            this.setState(prevState => ({...prevState, initializing: !!layer}))
-
+            this.setState(prevState => ({...prevState, initializing: !!layer, error: null}))
+        else if (changed && error)
+            this.setState(prevState => ({...prevState, error: null}))
     }
 
     isHidden() {

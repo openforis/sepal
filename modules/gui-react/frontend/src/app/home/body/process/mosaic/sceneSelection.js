@@ -99,7 +99,6 @@ class SceneSelection extends React.Component {
 
     loadScenes() {
         const {sceneAreaId, dates, sources, asyncActionBuilder} = this.props
-        console.log('loadScenes')
         this.setScenes([])
         asyncActionBuilder('LOAD_SCENES',
             backend.gee.scenesInSceneArea$({sceneAreaId, dates, sources}).pipe(

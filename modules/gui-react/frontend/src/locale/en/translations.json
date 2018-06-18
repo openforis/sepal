@@ -311,7 +311,8 @@
       "preview": {
         "initializing": "Loading preview...",
         "loading": "Loaded {loaded} of {count} tiles",
-        "failed": "{failed} failed"
+        "tilesFailed": "{failed} failed",
+        "error": "Failed to create preview"
       },
       "sceneAreas": {
         "loading": "Loading scene areas..."
@@ -362,7 +363,8 @@
     "next": "Next",
     "done": "Done",
     "more": "More",
-    "less": "Less"
+    "less": "Less",
+    "retry": "Retry"
   },
   "widget": {
     "seasonSelect": {

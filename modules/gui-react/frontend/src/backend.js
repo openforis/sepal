@@ -6,7 +6,7 @@ import {map} from 'rxjs/operators'
 const api = {
     gee: {
         preview$: (recipe) =>
-            Http.postJson$('gee/preview', transformRecipeForPreview(recipe)),
+            Http.postJson$('gee/preview', transformRecipeForPreview(recipe), {retries: 0}),
         sceneAreas$: ({aoi, source}) =>
             Http.get$('gee/sceneareas?' + transformQueryForSceneAreas(aoi, source)),
         scenesInSceneArea$: ({sceneAreaId, dates, sources}) =>

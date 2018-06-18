@@ -133,7 +133,7 @@ const createMap = (mapElement) => {
             if (!context) {
                 const layerById = {}
                 context = {
-                    setLayer({id, layer, destroy$ = NEVER, onInitialized}) {
+                    setLayer({id, layer, destroy$ = NEVER, onInitialized, onError}) {
                         // if (!destroy$)
                         //     throw new Error('destroy$ is missing')
                         const existingLayer = layerById[id]
@@ -154,9 +154,13 @@ const createMap = (mapElement) => {
                                         currentContextId === contextId && layer.addToMap(googleMap)
                                         onInitialized && onInitialized(layer)
                                     },
-                                    (e) =>
-                                        Notifications.caught('map.layer', {}, e)
-                                            .dispatch()
+                                    (e) => {
+                                        if (onError)
+                                            onError()
+                                        else
+                                            Notifications.caught('map.layer', {}, e)
+                                                .dispatch()
+                                    }
                                 )
                         }
                         return true
