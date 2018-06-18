@@ -51,15 +51,6 @@ class SceneSelection extends React.Component {
             .map(scene =>
                 <Scene key={scene.id} scene={scene} selected={true} onRemove={() => this.removeScene(scene)}/>
             )
-        /*
-
-                                    {
-                                        !
-                                            ? availableSceneComponents
-                                            : <CenteredProgress
-                                                title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
-                                    }
-                                    */
         return (
             <div className={styles.container}>
                 <form className={styles.panel}>
