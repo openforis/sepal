@@ -46,7 +46,7 @@ class MosaicPreview extends React.Component {
         const {recipe} = this.props
         return recipe.ui.initialized
             && (recipe.sceneSelectionOptions.type === SceneSelectionType.ALL
-                || (recipe.scenes && recipe.scenes.length > 0))
+                || (recipe.scenes && Object.keys(recipe.scenes).length > 0))
     }
 
     componentDidUpdate() {

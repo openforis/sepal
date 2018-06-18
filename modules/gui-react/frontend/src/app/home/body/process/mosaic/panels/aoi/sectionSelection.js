@@ -19,9 +19,11 @@ export default class SectionSelection extends React.Component {
                 icon='cog'
                 title={msg('process.mosaic.panel.areaOfInterest.title')}
                 className={className}>
-                <SectionOption section={section} label={'Select country/province'} value='country'/>
-                <SectionOption section={section} label={'Select from Fusion Table'} value='fusionTable'/>
-                <SectionOption section={section} label={'Draw polygon'} value='polygon'/>
+                <div className={styles.sectionOptions}>
+                    <SectionOption section={section} label={'Select country/province'} value='country'/>
+                    <SectionOption section={section} label={'Select from Fusion Table'} value='fusionTable'/>
+                    <SectionOption section={section} label={'Draw polygon'} value='polygon'/>
+                </div>
             </PanelContent>
         )
     }

@@ -44,6 +44,8 @@ const inSeason = (date, dates) => {
 }
 
 const transformRecipeForPreview = (recipe) => {
+    const sceneIds = []
+    Object.keys(recipe.scenes).forEach(sceneAreaId => recipe.scenes[sceneAreaId].forEach(scene => sceneIds.push(scene.id)))
     return {
         aoi: transformAoi(recipe.aoi),
         dates: recipe.dates,
@@ -59,7 +61,7 @@ const transformRecipeForPreview = (recipe) => {
         brdfCorrect: false,
         maskClouds: false,
         maskSnow: false,
-        sceneIds: [],
+        sceneIds: sceneIds,
         type: recipe.sceneSelectionOptions.type === SceneSelectionType.ALL ? 'automatic' : 'manual'
     }
 }
