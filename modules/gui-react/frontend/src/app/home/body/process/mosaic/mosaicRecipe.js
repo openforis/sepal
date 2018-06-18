@@ -65,9 +65,13 @@ export const RecipeActions = (id) => {
         _actionBuilder(name, otherProps)
             .setAll(values)
             .build()
-    const push = (name, prop, value, otherProps) =>
+    const pushIfMissing = (name, prop, value, uniqueKeyProp, otherProps) =>
         _actionBuilder(name, otherProps)
-            .push(prop, value)
+            .pushIfMissing(prop, value, uniqueKeyProp)
+            .build()
+    const delValueByKey = (name, prop, key, value, otherProps) =>
+        _actionBuilder(name, otherProps)
+            .delValueByKey(prop, key, value)
             .build()
 
     return {
@@ -124,7 +128,10 @@ export const RecipeActions = (id) => {
             return set('SET_SCENE_SELECTION', 'ui.sceneSelection', sceneAreaId, {sceneAreaId})
         },
         addScene(scene) {
-            return push('ADD_SCENE', ['scenes', scene.sceneAreaId], scene, {scene})
+            return pushIfMissing('ADD_SCENE', ['scenes', scene.sceneAreaId], scene, 'id', {scene})
+        },
+        removeScene(scene) {
+            return delValueByKey('REMOVE_SCENE', ['scenes', scene.sceneAreaId], 'id', scene.id, {scene})
         }
     }
 }
@@ -152,7 +159,6 @@ const initRecipe = (recipe) => {
         type: SceneSelectionType.SELECT,
         targetDateWeight: 0.5
     }).dispatch()
-
 
 
     actions.setLabelsShown(false).dispatch()

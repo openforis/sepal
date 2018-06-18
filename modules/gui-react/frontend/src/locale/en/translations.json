@@ -303,6 +303,9 @@
           "title": "Composite",
           "button": "CMP",
           "tooltip": "Configure composite creation"
+        },
+        "sceneSelection": {
+          "preview": "Preview"
         }
       },
       "preview": {
@@ -352,6 +355,8 @@
   "button": {
     "ok": "OK",
     "cancel": "Cancel",
+    "add": "Add",
+    "remove": "Remove",
     "back": "Back",
     "next": "Next",
     "done": "Done",

@@ -93,7 +93,6 @@ const daysFromTarget = (dateString, dates) => {
     ]
 
     const min = Math.min(...diffs.map(Math.abs))
-    console.log('diffs:', diffs, ', min:', min, ', days:', diffs.find(diff => Math.abs(diff) === min))
     return diffs.find(diff => Math.abs(diff) === min)
 }
 
