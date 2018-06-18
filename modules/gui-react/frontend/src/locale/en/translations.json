@@ -346,6 +346,7 @@
       "LOAD_FUSION_TABLE_COLUMNS": "Load Fusion Table columns",
       "LOAD_FUSION_TABLE_ROWS": "Load Fusion Table rows",
       "LOAD_SCENE_AREAS": "Load scene areas",
+      "LOAD_SCENES": "Load scenes",
       "LOAD_DIRECTORY": "Load user directory",
       "REMOVE_FILE": "Delete file",
       "LOAD_APPS": "Load applications",

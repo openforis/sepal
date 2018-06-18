@@ -7,22 +7,23 @@ import ReactResizeDetector from 'react-resize-detector'
 import {map} from 'rxjs/operators'
 import {dataSetById} from 'sources'
 import {msg, Msg} from 'translate'
+import {Constraints, form} from 'widget/form'
 import Icon from 'widget/icon'
-import styles from './sceneSelection.module.css'
 import PanelForm from './panels/panelForm'
-import {Constraints, form, Label} from 'widget/form'
+import styles from './sceneSelection.module.css'
 
-const inputs = {}
+const inputs = {
+    selectedScenes: new Constraints()
+}
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
-    const sceneAreaId = recipe('ui.sceneSelection')
-    const scenes = recipe('scenes')
+    const {recipeId, sceneAreaId} = ownProps
+    const recipe = RecipeState(recipeId)
+    const selectedScenes = recipe(['scenes', sceneAreaId]) || []
     return {
-        sceneAreaId: sceneAreaId,
         sources: recipe('sources'),
         dates: recipe('dates'),
-        selectedScenes: (sceneAreaId && scenes && scenes[sceneAreaId]) || []
+        values: {selectedScenes: selectedScenes}
     }
 }
 
@@ -36,17 +37,16 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        console.log('render')
-        const {recipeId, form, sceneAreaId, selectedScenes} = this.props
+        const {recipeId, form, sceneAreaId, inputs: {selectedScenes}} = this.props
         const {width} = this.state
         if (!sceneAreaId)
             return null
         const availableSceneComponents = this.state.scenes
-            .filter(scene => !selectedScenes.find(selectedScene => selectedScene.id === scene.id))
+            .filter(scene => !selectedScenes.value.find(selectedScene => selectedScene.id === scene.id))
             .map(scene =>
                 <Scene key={scene.id} scene={scene} selected={false} onAdd={() => this.addScene(scene)}/>
             )
-        const selectedSceneComponents = selectedScenes
+        const selectedSceneComponents = selectedScenes.value
             .map(scene =>
                 <Scene key={scene.id} scene={scene} selected={true} onRemove={() => this.removeScene(scene)}/>
             )
@@ -56,7 +56,8 @@ class SceneSelection extends React.Component {
                     <PanelForm
                         recipeId={recipeId}
                         form={form}
-                        onApply={(recipe, sources) => recipe.setSceneSelectionOptions(sources).dispatch()}
+                        onApply={(recipe, {selectedScenes}) => this.onApply(selectedScenes)}
+                        onCancel={() => this.deselectSceneArea()}
                         icon='cog'
                         title={msg('process.mosaic.panel.scenes.title')}>
                         <div className={styles.form}>
@@ -82,27 +83,48 @@ class SceneSelection extends React.Component {
         )
     }
 
+    componentDidMount() {
+        this.loadScenes()
+    }
+
     componentDidUpdate(prevProps) {
-        const {sceneAreaId, dates, sources, asyncActionBuilder} = this.props
+        const {dates, sources} = this.props
         const changed = !_.isEqual(
-            {sceneAreaId, dates, sources},
-            {sceneAreaId: prevProps.sceneAreaId, dates: prevProps.dates, sources: prevProps.sources})
-        if (sceneAreaId && changed) {
-            this.setScenes([])
-            asyncActionBuilder('LOAD_SCENES',
-                backend.gee.scenesInSceneArea$({sceneAreaId, dates, sources}).pipe(
-                    map(scenes => this.setScenes(scenes))
-                )
-            ).dispatch()
-        }
+            {dates, sources},
+            {dates: prevProps.dates, sources: prevProps.sources})
+        if (changed)
+            this.loadScenes()
+    }
+
+    loadScenes() {
+        const {sceneAreaId, dates, sources, asyncActionBuilder} = this.props
+        console.log('loadScenes')
+        this.setScenes([])
+        asyncActionBuilder('LOAD_SCENES',
+            backend.gee.scenesInSceneArea$({sceneAreaId, dates, sources}).pipe(
+                map(scenes => this.setScenes(scenes))
+            )
+        ).dispatch()
+    }
+
+    onApply(selectedScenes) {
+        const {sceneAreaId} = this.props
+        this.recipe.setSelectedScenes(sceneAreaId, selectedScenes).dispatch()
+        this.deselectSceneArea()
+    }
+
+    deselectSceneArea() {
+        this.recipe.setSceneSelection(null).dispatch()
     }
 
     addScene(scene) {
-        this.recipe.addScene(scene).dispatch()
+        const {inputs: {selectedScenes}} = this.props
+        selectedScenes.set([...selectedScenes.value, scene])
     }
 
     removeScene(scene) {
-        this.recipe.removeScene(scene).dispatch()
+        const {inputs: {selectedScenes}} = this.props
+        selectedScenes.set(selectedScenes.value.filter(s => s.id !== scene.id))
     }
 
     setScenes(scenes) {
@@ -173,7 +195,8 @@ const SelectedSceneOverlay = ({scene, onRemove}) =>
     </div>
 
 SceneSelection.propTypes = {
-    recipeId: PropTypes.string.isRequired
+    recipeId: PropTypes.string.isRequired,
+    sceneAreaId: PropTypes.string.isRequired
 }
 
 export default form(inputs, mapStateToProps)(SceneSelection)

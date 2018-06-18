@@ -14,13 +14,14 @@ import SceneSelection from './sceneSelection'
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
-        aoi: recipe('aoi')
+        aoi: recipe('aoi'),
+        sceneSelection: recipe('ui.sceneSelection')
     }
 }
 
 class Mosaic extends React.Component {
     render() {
-        const {recipeId} = this.props
+        const {recipeId, sceneSelection} = this.props
         return (
             <div className={styles.mosaic}>
                 <MapToolbar recipeId={recipeId} className={styles.mapToolbar}/>
@@ -28,7 +29,10 @@ class Mosaic extends React.Component {
                 <Panels recipeId={recipeId} className={styles.panel}/>
                 <MosaicPreview recipeId={recipeId}/>
                 <SceneAreas recipeId={recipeId}/>
-                <SceneSelection recipeId={recipeId}/>
+                {sceneSelection
+                    ? <SceneSelection recipeId={recipeId} sceneAreaId={sceneSelection}/>
+                    : null}
+
             </div>
         )
     }

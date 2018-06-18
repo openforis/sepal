@@ -1,5 +1,5 @@
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {google, googleMap, MapLayer, MapObject, sepalMap} from 'app/home/map/map'
+import {RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {google, MapLayer, sepalMap} from 'app/home/map/map'
 import backend from 'backend'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
@@ -10,6 +10,7 @@ import {connect} from 'store'
 import {msg} from 'translate'
 import MapStatus from 'widget/mapStatus'
 import {SceneSelectionType} from './mosaicRecipe'
+import SceneAreaMarker from './sceneAreaMarker'
 import styles from './sceneAreas.module.css'
 
 
@@ -27,15 +28,6 @@ const mapStateToProps = (state, ownProps) => {
 class SceneAreas extends React.Component {
     state = {
         show: true
-    }
-
-    constructor(props) {
-        super(props)
-        this.recipe = RecipeActions(props.recipeId)
-    }
-
-    selectScenes(sceneAreaId) {
-        this.recipe.setSceneSelection(sceneAreaId).dispatch()
     }
 
     render() {
@@ -57,42 +49,20 @@ class SceneAreas extends React.Component {
         if (sceneAreas)
             return (
                 <MapLayer className={styles.sceneAreas}>
-                    {sceneAreas.map(sceneArea => this.renderSceneArea(sceneArea))}
+                    {sceneAreas.map(sceneArea =>
+                        <SceneAreaMarker
+                            key={sceneArea.id}
+                            recipeId={this.props.recipeId}
+                            sceneAreaId={sceneArea.id}
+                            center={sceneArea.center}
+                            polygon={sceneArea.polygon}/>
+                    )}
                 </MapLayer>
             )
         else
             return null
     }
 
-    renderSceneArea({id, center, polygon}) {
-        const zoom = sepalMap.getZoom()
-        const scale = Math.min(1, Math.pow(zoom, 2.5) / Math.pow(8, 2.5))
-        const size = `${4 * scale}rem`
-        const halfSize = `${2 * scale}rem`
-        return (
-            <MapObject
-                key={id}
-                lat={center.lat()}
-                lng={center.lng()}
-                width={size}
-                height={size}
-                className={styles.sceneArea}>
-                <svg
-                    height={size}
-                    width={size}
-                    onMouseOver={() => polygon.setMap(googleMap)}
-                    onMouseLeave={() => polygon.setMap(null)}
-                    onClick={() => this.selectScenes(id)}>
-                    <circle cx={halfSize} cy={halfSize} r={halfSize}/>
-                    {zoom > 4
-                        ? <text x={halfSize} y={halfSize} textAnchor='middle' alignmentBaseline="central">
-                            64
-                        </text>
-                        : null}
-                </svg>
-            </MapObject>
-        )
-    }
 
     componentDidUpdate(prevProps) {
         const {recipeId, aoi, source} = this.props
@@ -193,10 +163,3 @@ class SceneAreaLayer {
         return of(this)
     }
 }
-
-
-/*
-SELECT geometry
-FROM 1EJjaOloQD5NL7ReC5aVtn8cX05xbdEbZthUiCFB6
-WHERE ST_INTERSECTS(geometry,  RECTANGLE(LATLNG(36, 5), LATLNG(47, 20)))
-*/

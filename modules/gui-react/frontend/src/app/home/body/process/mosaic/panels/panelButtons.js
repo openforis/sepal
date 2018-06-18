@@ -175,6 +175,7 @@ class PanelButtons extends React.Component {
                         e.preventDefault()
                         this.cancel()
                     }}
+                    disabled={!dirty}
                     onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before canceling
                     className={styles.cancel}>
                     <Icon name={'undo-alt'}/>

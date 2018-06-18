@@ -17,6 +17,8 @@ const recipePath = (recipeId, path) => {
         .findIndex((recipe) => recipe.id === recipeId)
     if (recipeTabIndex === -1)
         throw new Error(`Recipe not found: ${recipeId}`)
+    if (path && Array.isArray(path))
+        path = path.join('.')
     return ['process.tabs', recipeTabIndex, path]
         .filter(e => e !== undefined)
         .join('.')
@@ -64,14 +66,6 @@ export const RecipeActions = (id) => {
     const setAll = (name, values, otherProps) =>
         _actionBuilder(name, otherProps)
             .setAll(values)
-            .build()
-    const pushIfMissing = (name, prop, value, uniqueKeyProp, otherProps) =>
-        _actionBuilder(name, otherProps)
-            .pushIfMissing(prop, value, uniqueKeyProp)
-            .build()
-    const delValueByKey = (name, prop, key, value, otherProps) =>
-        _actionBuilder(name, otherProps)
-            .delValueByKey(prop, key, value)
             .build()
 
     return {
@@ -127,11 +121,8 @@ export const RecipeActions = (id) => {
         setSceneSelection(sceneAreaId) {
             return set('SET_SCENE_SELECTION', 'ui.sceneSelection', sceneAreaId, {sceneAreaId})
         },
-        addScene(scene) {
-            return pushIfMissing('ADD_SCENE', ['scenes', scene.sceneAreaId], scene, 'id', {scene})
-        },
-        removeScene(scene) {
-            return delValueByKey('REMOVE_SCENE', ['scenes', scene.sceneAreaId], 'id', scene.id, {scene})
+        setSelectedScenes(sceneAreaId, scenes) {
+            return set('SET_SELECTED_SCENES', ['scenes', sceneAreaId], scenes, {scenes})
         }
     }
 }
