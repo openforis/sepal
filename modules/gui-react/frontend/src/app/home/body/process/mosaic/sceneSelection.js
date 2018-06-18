@@ -9,6 +9,7 @@ import {dataSetById} from 'sources'
 import {msg, Msg} from 'translate'
 import {Constraints, form} from 'widget/form'
 import Icon from 'widget/icon'
+import {CenteredProgress} from 'widget/progress'
 import PanelForm from './panels/panelForm'
 import styles from './sceneSelection.module.css'
 
@@ -37,7 +38,7 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        const {recipeId, form, sceneAreaId, inputs: {selectedScenes}} = this.props
+        const {action, recipeId, form, sceneAreaId, inputs: {selectedScenes}} = this.props
         const {width} = this.state
         if (!sceneAreaId)
             return null
@@ -50,6 +51,15 @@ class SceneSelection extends React.Component {
             .map(scene =>
                 <Scene key={scene.id} scene={scene} selected={true} onRemove={() => this.removeScene(scene)}/>
             )
+        /*
+
+                                    {
+                                        !
+                                            ? availableSceneComponents
+                                            : <CenteredProgress
+                                                title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
+                                    }
+                                    */
         return (
             <div className={styles.container}>
                 <form className={styles.panel}>
@@ -64,9 +74,18 @@ class SceneSelection extends React.Component {
                         <div className={styles.form}>
                             <div className={styles.availableScenes}>
                                 <div className={styles.title}>Available scenes</div>
-                                <div className={[styles.scrollable, styles.grid].join(' ')}>
-                                    {availableSceneComponents}
-                                </div>
+                                {action('LOAD_SCENES').dispatched
+                                    ? (
+                                        <div className={[styles.scrollable, styles.grid].join(' ')}>
+                                            {availableSceneComponents}
+                                        </div>
+
+                                    )
+                                    : (
+                                        <CenteredProgress
+                                            title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
+                                    )
+                                }
                             </div>
                             <div className={styles.selectedScenes}>
                                 <div className={styles.title}>Selected scenes</div>

@@ -305,7 +305,8 @@
           "tooltip": "Configure composite creation"
         },
         "sceneSelection": {
-          "preview": "Preview"
+          "preview": "Preview",
+          "loadingScenes": "Loading scenes..."
         }
       },
       "preview": {
