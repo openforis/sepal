@@ -34,12 +34,14 @@ class PanelButtons extends React.Component {
     }
 
     componentDidMount() {
-        const {initialized, recipeId, form} = this.props
+        const {initialized, recipeId, form, modalOnDirty = true} = this.props
         this.recipe = RecipeActions(recipeId)
-        this.recipe.setModal(!initialized).dispatch()
-        if (initialized) {
-            form.onDirty(() => this.recipe.setModal(true).dispatch())
-            form.onClean(() => this.recipe.setModal(false).dispatch())
+        if (modalOnDirty) {
+            this.recipe.setModal(!initialized).dispatch()
+            if (initialized) {
+                form.onDirty(() => this.recipe.setModal(true).dispatch())
+                form.onClean(() => this.recipe.setModal(false).dispatch())
+            }
         }
     }
 
@@ -200,6 +202,7 @@ PanelButtons.propTypes = {
     recipeId: PropTypes.string.isRequired,
     form: PropTypes.object.isRequired,
     additionalButtons: PropTypes.array,
+    modalOnDirty: PropTypes.any,
     onApply: PropTypes.func.isRequired,
     onCancel: PropTypes.func
 }

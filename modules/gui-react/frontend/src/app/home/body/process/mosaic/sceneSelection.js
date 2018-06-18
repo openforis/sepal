@@ -59,6 +59,7 @@ class SceneSelection extends React.Component {
                         onApply={(recipe, {selectedScenes}) => this.onApply(selectedScenes)}
                         onCancel={() => this.deselectSceneArea()}
                         icon='cog'
+                        modalOnDirty={false}
                         title={msg('process.mosaic.panel.scenes.title')}>
                         <div className={styles.form}>
                             <div className={styles.availableScenes}>
