@@ -12,6 +12,7 @@ import {Constraints, form} from 'widget/form'
 import Icon from 'widget/icon'
 import {CenteredProgress} from 'widget/progress'
 import PanelForm from './panels/panelForm'
+import ScenePreview from './scenePreview'
 import styles from './sceneSelection.module.css'
 
 const inputs = {
@@ -51,7 +52,8 @@ class SceneSelection extends React.Component {
                     key={scene.id}
                     scene={scene}
                     selected={false}
-                    onAdd={() => this.addScene(scene)}/>
+                    onAdd={() => this.addScene(scene)}
+                    recipe={this.recipe}/>
             )
         const selectedSceneComponents = selectedScenes.value
             .map(scene =>
@@ -59,7 +61,8 @@ class SceneSelection extends React.Component {
                     key={scene.id}
                     scene={scene}
                     selected={true}
-                    onRemove={() => this.removeScene(scene)}/>
+                    onRemove={() => this.removeScene(scene)}
+                    recipe={this.recipe}/>
             )
         return (
             <div className={styles.container}>
@@ -73,6 +76,7 @@ class SceneSelection extends React.Component {
                         modalOnDirty={false}
                         title={msg('process.mosaic.panel.scenes.title')}>
                         <div className={styles.form}>
+                            <ScenePreview recipeId={recipeId}/>
                             <div className={styles.availableScenes}>
                                 <div className={styles.title}>Available scenes</div>
                                 {action('LOAD_SCENES').dispatched
@@ -152,7 +156,7 @@ class SceneSelection extends React.Component {
     }
 }
 
-const Scene = ({selected, scene, onAdd, onRemove, className}) => {
+const Scene = ({selected, scene, onAdd, onRemove, className, recipe}) => {
     const {dataSet, date, daysFromTarget, cloudCover, browseUrl} = scene
     const thumbnailStyle = {
         backgroundImage: `url("${browseUrl}")`
@@ -179,14 +183,14 @@ const Scene = ({selected, scene, onAdd, onRemove, className}) => {
                 </div>
             </div>
             {selected
-                ? <SelectedSceneOverlay scene={scene} onRemove={onRemove}/>
-                : <AvailableSceneOverlay scene={scene} onAdd={onAdd}/>
+                ? <SelectedSceneOverlay scene={scene} onRemove={onRemove} recipe={recipe}/>
+                : <AvailableSceneOverlay scene={scene} onAdd={onAdd} recipe={recipe}/>
             }
         </div>
     )
 }
 
-const AvailableSceneOverlay = ({scene, onAdd}) =>
+const AvailableSceneOverlay = ({scene, onAdd, recipe}) =>
     <div className={styles.sceneOverlay}>
         <Hammer onTap={() => onAdd(scene)}>
             <button className={styles.add} onClick={(e) => e.preventDefault()}>
@@ -194,15 +198,15 @@ const AvailableSceneOverlay = ({scene, onAdd}) =>
                 <Msg id='button.add'/>
             </button>
         </Hammer>
-        <Hammer onTap={() => console.log('show preview of scene', scene)}>
+        <Hammer onTap={() => recipe.setSceneToPreview(scene).dispatch()}>
             <button className={styles.preview} onClick={(e) => e.preventDefault()}>
                 <Icon name='eye'/>
-                <Msg id='process.mosaic.panel.sceneSelection.preview'/>
+                <Msg id='process.mosaic.panel.sceneSelection.preview.label'/>
             </button>
         </Hammer>
     </div>
 
-const SelectedSceneOverlay = ({scene, onRemove}) =>
+const SelectedSceneOverlay = ({scene, onRemove, recipe}) =>
     <div className={styles.sceneOverlay}>
         <Hammer onTap={() => onRemove(scene)}>
             <button className={styles.remove} onClick={(e) => e.preventDefault()}>
@@ -210,10 +214,10 @@ const SelectedSceneOverlay = ({scene, onRemove}) =>
                 <Msg id='button.remove'/>
             </button>
         </Hammer>
-        <Hammer onTap={() => console.log('show preview of scene', scene)}>
+        <Hammer onTap={() => recipe.setSceneToPreview(scene).dispatch()}>
             <button className={styles.preview} onClick={(e) => e.preventDefault()}>
                 <Icon name='eye'/>
-                <Msg id='process.mosaic.panel.sceneSelection.preview'/>
+                <Msg id='process.mosaic.panel.sceneSelection.preview.label'/>
             </button>
         </Hammer>
     </div>

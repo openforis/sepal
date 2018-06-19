@@ -1,0 +1,82 @@
+.container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: 1rem;
+    background: rgba(29, 29, 29, 0.99);
+    z-index: 1;
+    box-shadow: 4px 4px 7px 2px rgba(0, 0, 0, 0.2);
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.id {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.thumbnail {
+    flex: 1 1 auto;
+    height: 100%;
+    width: 100%;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.thumbnail img {
+    max-height: 100%;
+    max-width: 100%;
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
+
+.details {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 11rem);
+    grid-template-rows: repeat(auto-fill, 3rem);
+    -ms-flex-pack: center;
+    justify-content: center;
+    max-width: 50rem;
+    width: 100%;
+    grid-gap: 1rem;
+    border: 1px solid #514F4E;
+    padding: 1rem;
+    border-radius: 0.3rem;
+    background-color: #3D3B3A;
+}
+
+.label {
+    margin: 0;
+    color: #ccc;
+}
+
+.value {
+    margin-left: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+}
+
+.dataSet {
+    /*grid-area: dataSet;*/
+}
+
+.date {
+    /*grid-area: date;*/
+}
+
+.daysFromTarget {
+    /*grid-area: daysFromTarget;*/
+}
+
+.cloudCover {
+    /*grid-area: cloudCover;*/
+}

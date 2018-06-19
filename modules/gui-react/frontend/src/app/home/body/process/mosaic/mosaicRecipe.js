@@ -123,6 +123,9 @@ export const RecipeActions = (id) => {
         },
         setSelectedScenes(sceneAreaId, scenes) {
             return set('SET_SELECTED_SCENES', ['scenes', sceneAreaId], scenes, {scenes})
+        },
+        setSceneToPreview(scene) {
+            return set('SET_SCENE_TO_PREVIEW', 'sceneToPreview', scene, {scene})
         }
     }
 }

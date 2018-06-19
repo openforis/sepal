@@ -25,6 +25,7 @@
 }
 
 .form {
+    position: relative;
     display: flex;
     flex-grow: 1;
     margin-top: -2.5rem;

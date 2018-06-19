@@ -305,7 +305,15 @@
           "tooltip": "Configure composite creation"
         },
         "sceneSelection": {
-          "preview": "Preview",
+          "preview": {
+            "label": "Preview",
+            "dataSet": "Data set",
+            "date": "Acquisition date",
+            "daysFromTarget": "Days from target",
+            "cloudCover": "Cloud cover",
+            "beforeTarget": "{daysFromTarget} before",
+            "afterTarget": "{daysFromTarget} after"
+          },
           "loadingScenes": "Loading scenes..."
         }
       },
