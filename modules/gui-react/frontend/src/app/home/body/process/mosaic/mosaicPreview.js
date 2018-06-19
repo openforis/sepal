@@ -88,8 +88,6 @@ class MosaicPreview extends React.Component {
         const {recipeId, recipe, componentWillUnmount$} = this.props
         const {error} = this.state
         const {initializing} = this.state
-        if (this.isPreviewShown())
-            console.log('preview is shown', this.props.recipe.scenes)
         const layer = this.isPreviewShown()
             ? new EarthEngineImageLayer({
                 bounds: recipe.aoi.bounds,
