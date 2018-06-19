@@ -134,8 +134,6 @@ const createMap = (mapElement) => {
                 const layerById = {}
                 context = {
                     setLayer({id, layer, destroy$ = NEVER, onInitialized, onError}) {
-                        // if (!destroy$)
-                        //     throw new Error('destroy$ is missing')
                         const existingLayer = layerById[id]
                         const unchanged = layer === existingLayer || (existingLayer && existingLayer.equals(layer))
                         if (unchanged)

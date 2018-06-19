@@ -1,5 +1,4 @@
 import Http from 'http-client'
-import {of} from 'rxjs'
 import {map} from 'rxjs/operators'
 import {subscribe} from 'store'
 import {fromGoogleBounds, google, polygonOptions, sepalMap} from './map'
@@ -11,13 +10,13 @@ subscribe('user.currentUser.googleTokens', (tokens) => googleTokens = tokens)
 export const setFusionTableLayer = (
     {
         contextId,
-        layerSpec: {id, tableId, keyColumn, key, bounds},
+        layerSpec: {id, tableId, keyColumn, key},
         fill,
         destroy$,
         onInitialized
     }) => {
     const layer = key
-        ? new FusionTableLayer({tableId, keyColumn, key, bounds, fill})
+        ? new FusionTableLayer({tableId, keyColumn, key, fill})
         : null
     sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
     return layer
@@ -44,11 +43,10 @@ const authParam = () =>
 
 
 class FusionTableLayer {
-    constructor({tableId, keyColumn, key, bounds, fill}) {
+    constructor({tableId, keyColumn, key, fill}) {
         this.tableId = tableId
         this.keyColumn = keyColumn
         this.key = key
-        this.bounds = bounds
         this.fill = fill
 
         this.layer = new google.maps.FusionTablesLayer({
@@ -76,13 +74,12 @@ class FusionTableLayer {
         this.layer.setMap(googleMap)
     }
 
-    removeFromMap(googleMap) {
+    removeFromMap() {
         this.layer.setMap(null)
     }
 
     initialize$() {
-        if (this.bounds)
-            return of(this)
+        console.log('fusionTable initialize$')
         const eachLatLng = (o, callback) => {
             if (Array.isArray(o))
                 o.forEach((o) => callback(new google.maps.LatLng(o[1], o[0])))

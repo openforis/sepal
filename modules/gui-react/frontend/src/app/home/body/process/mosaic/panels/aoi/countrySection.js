@@ -113,7 +113,7 @@ class CountrySection extends React.Component {
                         disabled={!countryAreas || countryAreas.length === 0}
                         placeholder={areaPlaceholder}
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}
-                        onChange={(e) => this.aoiChanged$.next()}
+                        onChange={() => this.aoiChanged$.next()}
                     />
                     <ErrorMessage input={area}/>
                 </div>
@@ -125,12 +125,12 @@ class CountrySection extends React.Component {
         return nextProps.inputs !== this.props.inputs
     }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate() {
         this.update()
     }
 
     update() {
-        const {recipeId, countries, action, asyncActionBuilder, inputs: {country, area, bounds}, componentWillUnmount$} = this.props
+        const {recipeId, countries, action, asyncActionBuilder, inputs: {country, area}, componentWillUnmount$} = this.props
         if (!countries && !action('LOAD_COUNTRIES').dispatching)
             asyncActionBuilder('LOAD_COUNTRIES',
                 loadCountries$())
@@ -141,8 +141,7 @@ class CountrySection extends React.Component {
             aoi: {
                 type: 'country',
                 countryCode: country.value,
-                areaCode: area.value,
-                bounds: bounds.value
+                areaCode: area.value
             },
             fill: true,
             destroy$: componentWillUnmount$,

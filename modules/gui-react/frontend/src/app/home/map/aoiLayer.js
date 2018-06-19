@@ -20,8 +20,7 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => 
                     id: layerId,
                     tableId: countryFusionTable,
                     keyColumn: 'id',
-                    key: aoi.areaCode || aoi.countryCode,
-                    bounds: aoi.bounds
+                    key: aoi.areaCode || aoi.countryCode
                 },
                 fill,
                 destroy$,
@@ -34,8 +33,7 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => 
                     id: layerId,
                     tableId: aoi.id,
                     keyColumn: aoi.keyColumn,
-                    key: aoi.key,
-                    bounds: aoi.bounds
+                    key: aoi.key
                 },
                 fill,
                 destroy$,
