@@ -22,6 +22,7 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => 
                     keyColumn: 'id',
                     key: aoi.areaCode || aoi.countryCode
                 },
+                bounds: aoi.bounds,
                 fill,
                 destroy$,
                 onInitialized
@@ -35,6 +36,7 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => 
                     keyColumn: aoi.keyColumn,
                     key: aoi.key
                 },
+                bounds: aoi.bounds,
                 fill,
                 destroy$,
                 onInitialized
