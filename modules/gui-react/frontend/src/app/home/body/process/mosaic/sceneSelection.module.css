@@ -134,7 +134,7 @@
     display: none;
 }
 
-.scene:hover .sceneOverlay {
+.scene:hover .sceneOverlay, .scene.hover .sceneOverlay {
     position: absolute;
     top: 0;
     right: 0;

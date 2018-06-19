@@ -3,6 +3,7 @@ import backend from 'backend'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Hammer from 'react-hammerjs'
 import ReactResizeDetector from 'react-resize-detector'
 import {map} from 'rxjs/operators'
 import {dataSetById} from 'sources'
@@ -38,6 +39,7 @@ class SceneSelection extends React.Component {
     }
 
     render() {
+        console.log('render')
         const {action, recipeId, form, sceneAreaId, inputs: {selectedScenes}} = this.props
         const {width} = this.state
         if (!sceneAreaId)
@@ -45,11 +47,19 @@ class SceneSelection extends React.Component {
         const availableSceneComponents = this.state.scenes
             .filter(scene => !selectedScenes.value.find(selectedScene => selectedScene.id === scene.id))
             .map(scene =>
-                <Scene key={scene.id} scene={scene} selected={false} onAdd={() => this.addScene(scene)}/>
+                <Scene
+                    key={scene.id}
+                    scene={scene}
+                    selected={false}
+                    onAdd={() => this.addScene(scene)}/>
             )
         const selectedSceneComponents = selectedScenes.value
             .map(scene =>
-                <Scene key={scene.id} scene={scene} selected={true} onRemove={() => this.removeScene(scene)}/>
+                <Scene
+                    key={scene.id}
+                    scene={scene}
+                    selected={true}
+                    onRemove={() => this.removeScene(scene)}/>
             )
         return (
             <div className={styles.container}>
@@ -128,6 +138,7 @@ class SceneSelection extends React.Component {
     }
 
     addScene(scene) {
+        console.log('adding', scene)
         const {inputs: {selectedScenes}} = this.props
         selectedScenes.set([...selectedScenes.value, scene])
     }
@@ -146,13 +157,13 @@ class SceneSelection extends React.Component {
     }
 }
 
-const Scene = ({selected, scene, onAdd, onRemove}) => {
+const Scene = ({selected, scene, onAdd, onRemove, className}) => {
     const {dataSet, date, daysFromTarget, cloudCover, browseUrl} = scene
     const thumbnailStyle = {
         backgroundImage: `url("${browseUrl}")`
     }
     return (
-        <div className={styles.scene}>
+        <div className={[styles.scene, className].join(' ')}>
             <div className={styles.thumbnail} style={thumbnailStyle}/>
             <div className={styles.details}>
                 <div className={styles.dataSet}>
@@ -182,26 +193,34 @@ const Scene = ({selected, scene, onAdd, onRemove}) => {
 
 const AvailableSceneOverlay = ({scene, onAdd}) =>
     <div className={styles.sceneOverlay}>
-        <button className={styles.add} onClick={() => onAdd(scene)}>
-            <Icon name='plus'/>
-            <Msg id='button.add'/>
-        </button>
-        <button className={styles.preview}>
-            <Icon name='eye'/>
-            <Msg id='process.mosaic.panel.sceneSelection.preview'/>
-        </button>
+        <Hammer onTap={() => onAdd(scene)}>
+            <button className={styles.add} onClick={(e) => e.preventDefault()}>
+                <Icon name='plus'/>
+                <Msg id='button.add'/>
+            </button>
+        </Hammer>
+        <Hammer onTap={() => console.log('show preview of scene', scene)}>
+            <button className={styles.preview} onClick={(e) => e.preventDefault()}>
+                <Icon name='eye'/>
+                <Msg id='process.mosaic.panel.sceneSelection.preview'/>
+            </button>
+        </Hammer>
     </div>
 
 const SelectedSceneOverlay = ({scene, onRemove}) =>
     <div className={styles.sceneOverlay}>
-        <button className={styles.remove} onClick={() => onRemove(scene)}>
-            <Icon name='times'/>
-            <Msg id='button.remove'/>
-        </button>
-        <button className={styles.preview}>
-            <Icon name='eye'/>
-            <Msg id='process.mosaic.panel.sceneSelection.preview'/>
-        </button>
+        <Hammer onTap={() => onRemove(scene)}>
+            <button className={styles.remove} onClick={(e) => e.preventDefault()}>
+                <Icon name='times'/>
+                <Msg id='button.remove'/>
+            </button>
+        </Hammer>
+        <Hammer onTap={() => console.log('show preview of scene', scene)}>
+            <button className={styles.preview} onClick={(e) => e.preventDefault()}>
+                <Icon name='eye'/>
+                <Msg id='process.mosaic.panel.sceneSelection.preview'/>
+            </button>
+        </Hammer>
     </div>
 
 SceneSelection.propTypes = {
