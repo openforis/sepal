@@ -79,7 +79,6 @@ class FusionTableLayer {
     }
 
     initialize$() {
-        console.log('fusionTable initialize$')
         const eachLatLng = (o, callback) => {
             if (Array.isArray(o))
                 o.forEach((o) => callback(new google.maps.LatLng(o[1], o[0])))
