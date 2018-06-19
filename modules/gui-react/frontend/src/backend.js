@@ -9,7 +9,7 @@ const api = {
             Http.postJson$('gee/preview', transformRecipeForPreview(recipe), {retries: 0}),
         sceneAreas$: ({aoi, source}) =>
             Http.get$('gee/sceneareas?' + transformQueryForSceneAreas(aoi, source)),
-        scenesInSceneArea$: ({sceneAreaId, dates, sources}) =>
+        scenesInSceneArea$: ({sceneAreaId, dates, sources, sceneSelectionOptions}) =>
             Http.get$(`api/data/sceneareas/${sceneAreaId}?`
                 + transformQueryForScenesInSceneArea({dates, sources})).pipe(
                 map(({response: scenes}) =>
@@ -25,6 +25,13 @@ const api = {
                         }))
                         .filter(({date}) => inSeason(date, dates))
                         .filter(({dataSet}) => Object.values(sources)[0].includes(dataSet))
+                        .sort((scene1, scene2) => {
+                            const weightOf = (scene) => {
+                                const weight = sceneSelectionOptions.targetDateWeight
+                                return (1 - weight) * scene.cloudCover / 100 + weight * Math.abs(scene.daysFromTarget) / 183
+                            }
+                            return weightOf(scene1) - weightOf(scene2)
+                        })
                 )
             )
     }

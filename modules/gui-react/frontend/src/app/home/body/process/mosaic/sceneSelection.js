@@ -1,6 +1,6 @@
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import backend from 'backend'
-import _ from 'lodash'
+import {objectEquals} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Hammer from 'react-hammerjs'
@@ -25,6 +25,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         sources: recipe('sources'),
         dates: recipe('dates'),
+        sceneSelectionOptions: recipe('sceneSelectionOptions'),
         values: {selectedScenes: selectedScenes}
     }
 }
@@ -39,7 +40,6 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        console.log('render')
         const {action, recipeId, form, sceneAreaId, inputs: {selectedScenes}} = this.props
         const {width} = this.state
         if (!sceneAreaId)
@@ -109,19 +109,15 @@ class SceneSelection extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {dates, sources} = this.props
-        const changed = !_.isEqual(
-            {dates, sources},
-            {dates: prevProps.dates, sources: prevProps.sources})
-        if (changed)
+        if (!objectEquals(this.props, prevProps, ['dates', 'sources', 'sceneSelectionOptions']))
             this.loadScenes()
     }
 
     loadScenes() {
-        const {sceneAreaId, dates, sources, asyncActionBuilder} = this.props
+        const {sceneAreaId, dates, sources, sceneSelectionOptions, asyncActionBuilder} = this.props
         this.setScenes([])
         asyncActionBuilder('LOAD_SCENES',
-            backend.gee.scenesInSceneArea$({sceneAreaId, dates, sources}).pipe(
+            backend.gee.scenesInSceneArea$({sceneAreaId, dates, sources, sceneSelectionOptions}).pipe(
                 map(scenes => this.setScenes(scenes))
             )
         ).dispatch()
@@ -138,7 +134,6 @@ class SceneSelection extends React.Component {
     }
 
     addScene(scene) {
-        console.log('adding', scene)
         const {inputs: {selectedScenes}} = this.props
         selectedScenes.set([...selectedScenes.value, scene])
     }

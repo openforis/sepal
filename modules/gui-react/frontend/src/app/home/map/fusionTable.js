@@ -20,7 +20,7 @@ export const setFusionTableLayer = (
     const layer = key
         ? new FusionTableLayer({tableId, keyColumn, key, bounds, fill})
         : null
-    const changed = sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
+    sepalMap.getContext(contextId).setLayer({id, layer, destroy$, onInitialized})
     return layer
 }
 
@@ -74,7 +74,6 @@ class FusionTableLayer {
     }
 
     addToMap(googleMap) {
-        console.log('add to map', this)
         this.layer.setMap(googleMap)
     }
 
