@@ -158,6 +158,7 @@
 .scrollable button {
     border-radius: var(--button-border-radius);
     font-size: 0.9rem;
+    cursor: pointer;
 }
 
 .sceneOverlay .add {
@@ -221,19 +222,19 @@
 
 .sceneOverlay .preview:focus {
     color: var(--button-default-focus-color);
-    background-color: hsla(var(--bg-hue), var(--bg-sat), 0%, 0.2);
+    background-color: hsla(var(--bg-hue), var(--bg-sat), 50%, 0.1);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 77%);
 }
 
 .sceneOverlay .preview:hover {
     color: var(--button-default-hover-color);
-    background-color: hsla(var(--bg-hue), var(--bg-sat), 0%, 0.2);
+    background-color: hsla(var(--bg-hue), var(--bg-sat), 50%, 0.4);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 75%);
 }
 
 .sceneOverlay .preview:active {
     color: var(--button-default-active-color);
-    background-color: hsla(var(--bg-hue), var(--bg-sat), 0%, 0.4);
+    background-color: hsla(var(--bg-hue), var(--bg-sat), 55%, 0.4);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 73%);
 }
 

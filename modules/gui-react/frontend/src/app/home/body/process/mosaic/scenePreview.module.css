@@ -4,7 +4,6 @@
     right: 0;
     bottom: 0;
     left: 0;
-    margin: 1rem;
     background: rgba(29, 29, 29, 0.99);
     z-index: 1;
     box-shadow: 4px 4px 7px 2px rgba(0, 0, 0, 0.2);
@@ -15,6 +14,8 @@
     flex-direction: column;
     align-items: center;
     height: 100%;
+    padding: 1rem;
+    cursor: pointer;
 }
 
 .id {
@@ -27,16 +28,15 @@
     height: 100%;
     width: 100%;
     margin-bottom: 1rem;
-    position: relative;
 }
 
 .thumbnail img {
     max-height: 100%;
     max-width: 100%;
-    position: absolute;
-    left: 0;
-    right: 0;
-    margin: auto;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .details {
@@ -59,24 +59,13 @@
     color: #ccc;
 }
 
+.label i {
+    width: 1.8rem;
+    display: inline-block;
+}
+
 .value {
-    margin-left: 1.5rem;
+    margin-left: 1.8rem;
     font-size: 1rem;
     line-height: 1.5rem;
-}
-
-.dataSet {
-    /*grid-area: dataSet;*/
-}
-
-.date {
-    /*grid-area: date;*/
-}
-
-.daysFromTarget {
-    /*grid-area: daysFromTarget;*/
-}
-
-.cloudCover {
-    /*grid-area: cloudCover;*/
 }

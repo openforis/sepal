@@ -66,6 +66,7 @@ class SceneSelection extends React.Component {
             )
         return (
             <div className={styles.container}>
+                <ScenePreview recipeId={recipeId}/>
                 <form className={styles.panel}>
                     <PanelForm
                         recipeId={recipeId}
@@ -76,7 +77,6 @@ class SceneSelection extends React.Component {
                         modalOnDirty={false}
                         title={msg('process.mosaic.panel.scenes.title')}>
                         <div className={styles.form}>
-                            <ScenePreview recipeId={recipeId}/>
                             <div className={styles.availableScenes}>
                                 <div className={styles.title}>Available scenes</div>
                                 {action('LOAD_SCENES').dispatched
