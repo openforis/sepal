@@ -10,6 +10,7 @@ import MosaicToolbar from './panels/mosaicToolbar'
 import Panels from './panels/panels'
 import SceneAreas from './sceneAreas'
 import SceneSelection from './sceneSelection'
+import SceneUnselection from './sceneUnselection'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
@@ -32,7 +33,7 @@ class Mosaic extends React.Component {
                 {sceneSelection
                     ? <SceneSelection recipeId={recipeId} sceneAreaId={sceneSelection}/>
                     : null}
-
+                <SceneUnselection recipeId={recipeId}/>
             </div>
         )
     }

@@ -352,6 +352,10 @@ export class MapLayer extends React.Component {
             ? ReactDOM.createPortal(content, mapPanes.overlayMouseTarget)
             : null
     }
+
+    componentWillUnmount() {
+        this.overlay.setMap(null)
+    }
 }
 
 export class MapObject extends React.Component {
