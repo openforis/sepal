@@ -32,7 +32,7 @@ class ScenePreview extends React.Component {
                     <Hammer onTap={() => this.closePreview()}>
                         <div className={styles.panel}>
                             <div className={styles.id}>{id}</div>
-                            <div className={styles.thumbnail}><img src={browseUrl}/></div>
+                            <div className={styles.thumbnail}><img src={browseUrl} alt={id}/></div>
                             <div className={styles.details}>
                                 <LabelValue name='dataSet' value={dataSetById[dataSet].name} icon='rocket'/>
                                 <LabelValue name='date' value={date} icon='calendar'/>
