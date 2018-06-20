@@ -14,6 +14,7 @@ from gee_gateway.gee.utils import getTimeSeriesForPoint
 @import_sepal_auth
 @requires_auth
 def getTimeseries():
+    """  """
     lat = request.json.get('lat')
     lng = request.json.get('lng')
     filename = app.config['TS_FILENAME']
@@ -26,12 +27,12 @@ def getTimeseries():
 
 @app.route('/api/get-indexes', methods=['POST'])
 @cross_origin(origins=app.config['CO_ORIGINS'])
-#@import_sepal_auth
-#@requires_auth
+@import_sepal_auth
+@requires_auth
 def getIndexes():
+    """  """
     lat = request.json.get('lat')
     lng = request.json.get('lng')
-
 
     point = {
         "type": "Point",

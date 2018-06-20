@@ -20,33 +20,49 @@
                 <i class="fa fa-map-marker"></i>&nbsp;<span id="selected-point" style="word-break: break-all;">NO SELECTED POINT</span>
             </h3>
         </div>
-        <div class="chart-box">
+        <div id="chart-box-1" class="chart-box">
+            <div class="spinner">
+                <i class="fa fa-spinner fa-pulse fa-3x fa-fw spinner"></i>
+                <span class="sr-only">Loading...</span>
+            </div>
             <div id="chart1" class="chart"></div>
         </div>
-        <div class="chart-box">
-            <select id="selector1" class="selector-control float-right" disabled="disabled">
-                <option value="">SELECT AN INDEX</option>
-                <option value="EVI">EVI</option>
-                <option value="EVI2">EVI2</option>
-                <option value="NDMI">NDMI</option>
-                <option value="NDVI">NDVI</option>
-                <option value="NDWI">NDWI</option>
-                <option value="NBR">NBR</option>
-                <option value="LSAVI">LSAVI</option>
-            </select>
+        <div  id="chart-box-2" class="chart-box">
+            <div class="selector-control float-right">
+                <div class="spinner">
+                    <i class="fa fa-spinner fa-pulse fa-fw spinner"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <select id="selector1" class="" disabled="disabled">
+                    <option value="">SELECT AN INDEX</option>
+                    <option value="EVI">EVI</option>
+                    <option value="EVI2">EVI2</option>
+                    <option value="NDMI">NDMI</option>
+                    <option value="NDVI">NDVI</option>
+                    <option value="NDWI">NDWI</option>
+                    <option value="NBR">NBR</option>
+                    <option value="LSAVI">LSAVI</option>
+                </select>
+            </div>
             <div id="chart2" class="chart"></div>
         </div>
-        <div class="chart-box">
-            <select id="selector2" class="selector-control float-right" disabled="disabled">
-                <option value="">SELECT AN INDEX</option>
-                <option value="EVI">EVI</option>
-                <option value="EVI2">EVI2</option>
-                <option value="NDMI">NDMI</option>
-                <option value="NDVI">NDVI</option>
-                <option value="NDWI">NDWI</option>
-                <option value="NBR">NBR</option>
-                <option value="LSAVI">LSAVI</option>
-            </select>
+        <div id="chart-box-3" class="chart-box">
+            <div class="selector-control float-right">
+                <div class="spinner">
+                    <i class="fa fa-spinner fa-pulse fa-fw spinner"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <select id="selector2" disabled="disabled">
+                    <option value="">SELECT AN INDEX</option>
+                    <option value="EVI">EVI</option>
+                    <option value="EVI2">EVI2</option>
+                    <option value="NDMI">NDMI</option>
+                    <option value="NDVI">NDVI</option>
+                    <option value="NDWI">NDWI</option>
+                    <option value="NBR">NBR</option>
+                    <option value="LSAVI">LSAVI</option>
+                </select>
+            </div>
             <div id="chart3" class="chart"></div>
         </div>
     </div>
@@ -58,6 +74,7 @@
     $(document).ready(function() {
 
         let indexes = [];
+        let ajaxRequests = [];
 
         const peatlandsApiUrl = '{{config.PEATLANDS_API_URL}}';
 
@@ -258,11 +275,19 @@
         });
 
         const clickEvent = (e) => {
+            ajaxRequests.forEach(function(request) {
+                request.abort();
+            });
+            ajaxRequests = [];
+            $('#charts-container .chart-box .selector-control select').prop('disabled', true);
             const lat = e.latLng.lat();
             const lng = e.latLng.lng();
-            $('#selected-point').data('lat', lat).data('lng', lng).text(lat + ', ' + lng);
+            $('#selected-point').data('lat', lat).data('lng', lng).text(lat.toFixed(2) + ', ' + lng.toFixed(2));
             // SMAP
-            $.ajax({
+            let chart1 = $('#chart1').highcharts();
+            if (chart1 !== undefined) chart1.destroy();
+            $('#chart-box-1 .spinner').show();
+            let request1 = $.ajax({
                 url: peatlandsApiUrl + '/get-timeseries',
                 method: 'post',
                 data: JSON.stringify({
@@ -273,11 +298,17 @@
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
             }).done(function(data, textStatus, jqXHR) {
-                $('#chart1-container').show();
+                $('#chart-box-1 .spinner').hide();
                 smapChart(data.timeseries);
             });
             // INDEXES
-            $.ajax({
+            let chart2 = $('#chart2').highcharts();
+            if (chart2 !== undefined) chart2.destroy();
+            let chart3 = $('#chart3').highcharts();
+            if (chart3 !== undefined) chart3.destroy();
+            $('#chart-box-2 .spinner').show();
+            $('#chart-box-3 .spinner').show();
+            let request2 = $.ajax({
                 url: peatlandsApiUrl + '/get-indexes',
                 method: 'post',
                 data: JSON.stringify({
@@ -289,8 +320,13 @@
                 console.error(jqXHR, textStatus, errorThrown);
             }).done(function(data, textStatus, jqXHR) {
                 indexes = data.indexes;
-                $('#charts-container .chart-box .selector-control').prop('disabled', false);
+                $('#chart-box-2 .spinner').hide();
+                $('#chart-box-3 .spinner').hide();
+                $('#charts-container .chart-box .selector-control select').prop('disabled', false);
             });
+            //
+            ajaxRequests.push(request1);
+            ajaxRequests.push(request2);
         }
 
         //gmap.addListener('click', clickEvent);
@@ -349,7 +385,12 @@
                     from: '{{ config.FT_DOCID }}',
                     select: 'geometry'
                 },
-            })
+                styles: [{
+                    polygonOptions: {
+                        fillOpacity: 0.3
+                    }
+                }]
+            });
             ftLayer.setMap(gmap);
             google.maps.event.addListener(ftLayer, 'click', clickEvent);
         });

@@ -107,9 +107,6 @@ html, body, #gmap, #lmap {
 
 #charts-container {
     grid-area: charts;
-}
-
-#charts-container {
     display: grid;
     grid-template-rows: 0.1fr 1fr 1fr 1fr;
     padding: 0 1rem;
@@ -125,14 +122,36 @@ html, body, #gmap, #lmap {
     position: absolute;
     width: 100%;
     height: calc(100% - 1rem);
+    background: white;
 }
 
 #charts-container .chart-box .selector-control {
     position: absolute;
     top: 1rem;
     right: 1rem;
+    z-index: 9999;
+}
+
+#charts-container .chart-box .selector-control select {
     background-color: #fff;
     border: 2px solid;
     border-radius: 25px;
+}
+
+#charts-container #chart-box-1 .spinner {
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    top: calc(50% - 1rem);
+    left: 50%;
     z-index: 9999;
+    color: rgba(17,18,21,.9);
+    display: none;
+}
+
+#charts-container #chart-box-2 .spinner, #charts-container #chart-box-3 .spinner {
+    position: relative;
+    float: left;
+    display: none;
+    color: rgba(17,18,21,.9);
 }
