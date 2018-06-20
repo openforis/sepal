@@ -140,7 +140,7 @@ const toSensors = (sources) =>
             case 'landsat45T2':
                 return 'LANDSAT_TM_T2'
             case 'sentinel2':
-                return 'SENTINEL_2'
+                return 'SENTINEL2A'
             default:
                 throw new Error('Invalid dataSet: ' + dataSet)
         }
@@ -160,7 +160,7 @@ const transformBackDataSet = (dataSet) => {
             return 'landsat7T2'
         case 'LANDSAT_TM_T2':
             return 'landsat45T2'
-        case 'SENTINEL_2':
+        case 'SENTINEL2A':
             return 'sentinel2'
         default:
             throw new Error('Invalid dataSet: ' + dataSet)
