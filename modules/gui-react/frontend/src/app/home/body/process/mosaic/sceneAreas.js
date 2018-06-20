@@ -1,11 +1,11 @@
 import {RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {google, MapLayer, sepalMap} from 'app/home/map/map'
 import backend from 'backend'
-import _ from 'lodash'
+import {objectEquals} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {of} from 'rxjs'
-import {map} from 'rxjs/operators'
+import {of, Subject} from 'rxjs'
+import {map, takeUntil} from 'rxjs/operators'
 import {connect} from 'store'
 import {msg} from 'translate'
 import MapStatus from 'widget/mapStatus'
@@ -29,6 +29,7 @@ class SceneAreas extends React.Component {
     state = {
         show: true
     }
+    loadSceneArea$ = new Subject()
 
     render() {
         const {sceneAreasShown, action} = this.props
@@ -66,9 +67,8 @@ class SceneAreas extends React.Component {
 
     componentDidUpdate(prevProps) {
         const {recipeId, aoi, source} = this.props
-        const loadSceneAreas = this.renderable() && !_.isEqual(
-            [aoi, source],
-            [prevProps.aoi, prevProps.source])
+        const loadSceneAreas = this.renderable()
+            && !objectEquals(this.props, prevProps, ['aoi', 'source'])
         if (loadSceneAreas)
             this.loadSceneAreas(aoi, source)
         setSceneAreaLayer({recipeId, component: this})
@@ -82,6 +82,7 @@ class SceneAreas extends React.Component {
     }
 
     loadSceneAreas(aoi, source) {
+        this.loadSceneArea$.next()
         this.props.asyncActionBuilder('LOAD_SCENE_AREAS',
             backend.gee.sceneAreas$({aoi, source})
                 .pipe(
@@ -89,7 +90,8 @@ class SceneAreas extends React.Component {
                         return this.setState((prevState) =>
                             ({...prevState, sceneAreas: this.toSceneAreas(e.response)})
                         )
-                    })
+                    }),
+                    takeUntil(this.loadSceneArea$)
                 ))
             .dispatch()
     }
