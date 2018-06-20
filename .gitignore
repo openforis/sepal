@@ -46,3 +46,6 @@ node_modules/
 
 #Visual Studio
 .vscode
+modules/peatlands/docker/build/
+
+modules/peatlands/docker/env/

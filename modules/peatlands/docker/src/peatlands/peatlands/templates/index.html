@@ -2,31 +2,64 @@
 
 {% block body %}
 
-<div id="maps">
-    <div class="map-control map-control-left">
-        <select class="selector-control" id="base-selector">
-            <option value="">SEPAL</option>
-            <option value="satellite">SATELLITE</option>
-        </select>
-    </div>
-    <div id="gmap"></div>
-</div>
+<div id="peatlands-container">
 
-<div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="chart-modal">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-body">
-                <div id="chart" style="width:100%; height:400px;"></div>
-            </div>
+    <div id="maps">
+        <div class="map-control map-control-left">
+            <select class="selector-control" id="base-selector">
+                <option value="">SEPAL</option>
+                <option value="satellite">SATELLITE</option>
+            </select>
+        </div>
+        <div id="gmap"></div>
+    </div>
+
+    <div id="charts-container">
+        <div>
+            <h3>
+                <i class="fa fa-map-marker"></i>&nbsp;<span id="selected-point" style="word-break: break-all;">NO SELECTED POINT</span>
+            </h3>
+        </div>
+        <div class="chart-box">
+            <div id="chart1" class="chart"></div>
+        </div>
+        <div class="chart-box">
+            <select id="selector1" class="selector-control float-right" disabled="disabled">
+                <option value="">SELECT AN INDEX</option>
+                <option value="EVI">EVI</option>
+                <option value="EVI2">EVI2</option>
+                <option value="NDMI">NDMI</option>
+                <option value="NDVI">NDVI</option>
+                <option value="NDWI">NDWI</option>
+                <option value="NBR">NBR</option>
+                <option value="LSAVI">LSAVI</option>
+            </select>
+            <div id="chart2" class="chart"></div>
+        </div>
+        <div class="chart-box">
+            <select id="selector2" class="selector-control float-right" disabled="disabled">
+                <option value="">SELECT AN INDEX</option>
+                <option value="EVI">EVI</option>
+                <option value="EVI2">EVI2</option>
+                <option value="NDMI">NDMI</option>
+                <option value="NDVI">NDVI</option>
+                <option value="NDWI">NDWI</option>
+                <option value="NBR">NBR</option>
+                <option value="LSAVI">LSAVI</option>
+            </select>
+            <div id="chart3" class="chart"></div>
         </div>
     </div>
+
 </div>
 
 <script>
 
     $(document).ready(function() {
 
-        var peatlandsApiUrl = '{{config.PEATLANDS_API_URL}}';
+        let indexes = [];
+
+        const peatlandsApiUrl = '{{config.PEATLANDS_API_URL}}';
 
         var gmap;
 
@@ -79,92 +112,185 @@
             }
         });
 
-        const clickEvent = (e) =>  {
-            let latLng = e.latLng;
+        const smapChart = (timeseries) => {
+            const chartStyle = {
+                lineWidth: 0,
+                marker: {
+                    enabled: true,
+                    radius: 2
+                },
+                tooltip: {
+                    valueDecimals: 2
+                },
+                states: {
+                    hover: {
+                        lineWidthPlus: 0
+                    }
+                }
+            };
+            let indexName = 'SMAP';
+            var text = indexName;
+            Highcharts.chart('chart1', {
+                chart: {
+                    zoomType: 'x'
+                },
+                title: {
+                    text: text
+                },
+                subtitle: {
+                    text: document.ontouchstart === undefined ? 'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+                },
+                xAxis: {
+                    type: 'datetime',
+                    min:  Date.UTC(2000, 0, 0)
+                },
+                yAxis: {
+                    title: {
+                        text: indexName
+                    }
+                },
+                legend: {
+                    enabled: false
+                },
+                plotOptions: {
+                    area: {
+                        fillColor: {
+                            linearGradient: {
+                                x1: 0,
+                                y1: 0,
+                                x2: 0,
+                                y2: 1
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        },
+                        marker: {
+                            radius: 2
+                        },
+                        lineWidth: 1,
+                        states: {
+                            hover: {
+                                lineWidth: 1
+                            }
+                        },
+                        threshold: null
+                    }
+                },
+                series: [{
+                    name: indexName,
+                    data: timeseries,
+                    lineWidth: 0,
+                    marker: {
+                        enabled: true,
+                        radius: 2
+                    },
+                    tooltip: {
+                        valueDecimals: 2
+                    },
+                    states: {
+                        hover: {
+                            lineWidthPlus: 0
+                        }
+                    }
+                }],
+                credits: {
+                    enabled: false
+                }
+            });
+        };
+
+        const indexChart = (id, data, index) => {
+            const chartStyle = {
+                lineWidth: 0,
+                marker: {
+                    enabled: true,
+                    radius: 2
+                },
+                tooltip: {
+                    valueDecimals: 2
+                },
+                states: {
+                    hover: {
+                        lineWidthPlus: 0
+                    }
+                }
+            };
+            Highcharts.chart(id, {
+                chart: {
+                    zoomType: 'x'
+                },
+                title: {
+                    text: index
+                },
+                xAxis: {
+                    type: 'datetime'
+                },
+                yAxis: {
+                    title: {
+                        text: index
+                    }
+                },
+                legend: {
+                    enabled: false
+                },
+                series: [
+                    Object.assign({}, chartStyle, {
+                        name: index,
+                        data: data.map(function(d) { return [d.date, d[index] ]; }),
+                    })
+                ],
+                credits: {
+                    enabled: false
+                },
+            });
+        };
+
+        $('#selector1').change(function(e) {
+            e.preventDefault();
+            indexChart('chart2', indexes, this.value);
+        });
+
+        $('#selector2').change(function(e) {
+            e.preventDefault();
+            indexChart('chart3', indexes, this.value);
+        });
+
+        const clickEvent = (e) => {
+            const lat = e.latLng.lat();
+            const lng = e.latLng.lng();
+            $('#selected-point').data('lat', lat).data('lng', lng).text(lat + ', ' + lng);
+            // SMAP
             $.ajax({
                 url: peatlandsApiUrl + '/get-timeseries',
                 method: 'post',
                 data: JSON.stringify({
-                    'lat': latLng.lat(),
-                    'lng': latLng.lng()
+                    'lat': lat,
+                    'lng': lng
                 }),
                 contentType: 'application/json;charset=UTF-8'
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
             }).done(function(data, textStatus, jqXHR) {
-                    let indexName = 'SMAP';
-                    $('#chart-modal').modal('show');
-                    var text = indexName;
-                    Highcharts.chart('chart', {
-                        chart: {
-                            zoomType: 'x'
-                        },
-                        title: {
-                            text: text
-                        },
-                        subtitle: {
-                            text: document.ontouchstart === undefined ? 'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
-                        },
-                        xAxis: {
-                            type: 'datetime'
-                        },
-                        yAxis: {
-                            title: {
-                                text: indexName
-                            }
-                        },
-                        legend: {
-                            enabled: false
-                        },
-                        plotOptions: {
-                            area: {
-                                fillColor: {
-                                    linearGradient: {
-                                        x1: 0,
-                                        y1: 0,
-                                        x2: 0,
-                                        y2: 1
-                                    },
-                                    stops: [
-                                        [0, Highcharts.getOptions().colors[0]],
-                                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-                                    ]
-                                },
-                                marker: {
-                                    radius: 2
-                                },
-                                lineWidth: 1,
-                                states: {
-                                    hover: {
-                                        lineWidth: 1
-                                    }
-                                },
-                                threshold: null
-                            }
-                        },
-                        series: [{
-                            name: indexName,
-                            data: data.timeseries,
-                            lineWidth: 0,
-                            marker: {
-                                enabled: true,
-                                radius: 2
-                            },
-                            tooltip: {
-                                valueDecimals: 2
-                            },
-                            states: {
-                                hover: {
-                                    lineWidthPlus: 0
-                                }
-                            }
-                        }],
-                        credits: {
-                            enabled: false
-                        }
-                    });
+                $('#chart1-container').show();
+                smapChart(data.timeseries);
             });
-
+            // INDEXES
+            $.ajax({
+                url: peatlandsApiUrl + '/get-indexes',
+                method: 'post',
+                data: JSON.stringify({
+                    'lat': lat,
+                    'lng': lng
+                }),
+                contentType: 'application/json;charset=UTF-8'
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
+            }).done(function(data, textStatus, jqXHR) {
+                indexes = data.indexes;
+                $('#charts-container .chart-box .selector-control').prop('disabled', false);
+            });
         }
 
         //gmap.addListener('click', clickEvent);
