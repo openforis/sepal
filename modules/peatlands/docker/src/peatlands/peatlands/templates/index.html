@@ -28,14 +28,13 @@
             <div id="chart1" class="chart"></div>
         </div>
         <div  id="chart-box-2" class="chart-box">
+            <div class="spinner">
+                <i class="fa fa-spinner fa-pulse fa-3x fa-fw spinner"></i>
+                <span class="sr-only">Loading...</span>
+            </div>
             <div class="selector-control float-right">
-                <div class="spinner">
-                    <i class="fa fa-spinner fa-pulse fa-fw spinner"></i>
-                    <span class="sr-only">Loading...</span>
-                </div>
-                <select id="selector1" class="" disabled="disabled">
-                    <option value="">SELECT AN INDEX</option>
-                    <option value="EVI">EVI</option>
+                <select id="selector1">
+                    <option value="EVI" selected="selected">EVI</option>
                     <option value="EVI2">EVI2</option>
                     <option value="NDMI">NDMI</option>
                     <option value="NDVI">NDVI</option>
@@ -47,16 +46,15 @@
             <div id="chart2" class="chart"></div>
         </div>
         <div id="chart-box-3" class="chart-box">
+            <div class="spinner">
+                <i class="fa fa-spinner fa-pulse fa-3x fa-fw spinner"></i>
+                <span class="sr-only">Loading...</span>
+            </div>
             <div class="selector-control float-right">
-                <div class="spinner">
-                    <i class="fa fa-spinner fa-pulse fa-fw spinner"></i>
-                    <span class="sr-only">Loading...</span>
-                </div>
-                <select id="selector2" disabled="disabled">
-                    <option value="">SELECT AN INDEX</option>
+                <select id="selector2">
                     <option value="EVI">EVI</option>
                     <option value="EVI2">EVI2</option>
-                    <option value="NDMI">NDMI</option>
+                    <option value="NDMI" selected="selected">NDMI</option>
                     <option value="NDVI">NDVI</option>
                     <option value="NDWI">NDWI</option>
                     <option value="NBR">NBR</option>
@@ -266,12 +264,16 @@
 
         $('#selector1').change(function(e) {
             e.preventDefault();
-            indexChart('chart2', indexes, this.value);
+            if (indexes.length != 0) {
+                indexChart('chart2', indexes, this.value);
+            }
         });
 
         $('#selector2').change(function(e) {
             e.preventDefault();
-            indexChart('chart3', indexes, this.value);
+            if (indexes.length != 0) {
+                indexChart('chart3', indexes, this.value);
+            }
         });
 
         const clickEvent = (e) => {
@@ -279,7 +281,6 @@
                 request.abort();
             });
             ajaxRequests = [];
-            $('#charts-container .chart-box .selector-control select').prop('disabled', true);
             const lat = e.latLng.lat();
             const lng = e.latLng.lng();
             $('#selected-point').data('lat', lat).data('lng', lng).text(lat.toFixed(2) + ', ' + lng.toFixed(2));
@@ -322,7 +323,8 @@
                 indexes = data.indexes;
                 $('#chart-box-2 .spinner').hide();
                 $('#chart-box-3 .spinner').hide();
-                $('#charts-container .chart-box .selector-control select').prop('disabled', false);
+                indexChart('chart2', indexes, $('#selector1').val());
+                indexChart('chart3', indexes, $('#selector2').val());
             });
             //
             ajaxRequests.push(request1);
