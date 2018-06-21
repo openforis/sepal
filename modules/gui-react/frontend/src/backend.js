@@ -1,4 +1,4 @@
-import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {inDateRange, SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Http from 'http-client'
 import moment from 'moment'
 import {map} from 'rxjs/operators'
@@ -23,7 +23,7 @@ const api = {
                             cloudCover: Math.round(cloudCover),
                             browseUrl
                         }))
-                        .filter(({date}) => inSeason(date, dates))
+                        .filter(({date}) => inDateRange(date, dates))
                         .filter(({dataSet}) => Object.values(sources)[0].includes(dataSet))
                         .sort((scene1, scene2) => {
                             const weightOf = (scene) => {
@@ -38,17 +38,7 @@ const api = {
 }
 export default api
 
-
 const DATE_FORMAT = 'YYYY-MM-DD'
-
-const inSeason = (date, dates) => {
-    const doy = moment(date, DATE_FORMAT).dayOfYear()
-    const fromDoy = moment(dates.seasonStart).dayOfYear()
-    const toDoy = moment(dates.seasonEnd).dayOfYear()
-    return toDoy <= fromDoy
-        ? doy >= fromDoy || doy < toDoy
-        : doy >= fromDoy && doy < toDoy
-}
 
 const transformRecipeForPreview = (recipe) => {
     const sceneIds = []

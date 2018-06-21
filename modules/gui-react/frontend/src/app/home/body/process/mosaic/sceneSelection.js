@@ -129,7 +129,7 @@ class SceneSelection extends React.Component {
 
     onApply(selectedScenes) {
         const {sceneAreaId} = this.props
-        this.recipe.setSelectedScenes(sceneAreaId, selectedScenes).dispatch()
+        this.recipe.setSelectedScenesInSceneArea(sceneAreaId, selectedScenes).dispatch()
         this.deselectSceneArea()
     }
 

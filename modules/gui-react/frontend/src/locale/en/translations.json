@@ -345,6 +345,7 @@
     "error.title": "Failed: {action}",
     "type": {
       "LOAD_CURRENT_USER": "Load current user",
+      "SCHEDULE_USER_INFO_REFRESH": "Schedule user info request",
       "LOGIN": "Login",
       "REQUEST_PASSWORD_RESET": "Request password reset",
       "VALIDATE_TOKEN": "Validate link",

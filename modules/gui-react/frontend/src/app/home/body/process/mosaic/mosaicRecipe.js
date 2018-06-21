@@ -118,11 +118,17 @@ export const RecipeActions = (id) => {
         setFusionTableRows(rows) {
             return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
         },
+        setSceneAreas(sceneAreas) {
+            return set('SET_SCENE_Areas', 'ui.sceneAreas', sceneAreas, {sceneAreas})
+        },
         setSceneSelection(sceneAreaId) {
             return set('SET_SCENE_SELECTION', 'ui.sceneSelection', sceneAreaId, {sceneAreaId})
         },
-        setSelectedScenes(sceneAreaId, scenes) {
-            return set('SET_SELECTED_SCENES', ['scenes', sceneAreaId], scenes, {scenes})
+        setSelectedScenesInSceneArea(sceneAreaId, scenes) {
+            return set('SET_SELECTED_SCENES_IN_SCENE_AREA', ['scenes', sceneAreaId], scenes, {sceneAreaId, scenes})
+        },
+        setSelectedScenes(scenes) {
+            return set('SET_SELECTED_SCENES', 'scenes', scenes, {scenes})
         },
         setSceneToPreview(scene) {
             return set('SET_SCENE_TO_PREVIEW', 'sceneToPreview', scene, {scene})
@@ -184,7 +190,7 @@ const createAoi = (aoiForm) => {
                 bounds: aoiForm.bounds
             }
         default:
-            throw new Error('Invalid aoi section: ' + aoiForm.section)
+            throw new Error('InvalidsetSelectedScenes aoi section: ' + aoiForm.section)
     }
 }
 
@@ -215,3 +221,12 @@ const createSources = (sourcesForm) => ({
 const createSceneSelectionOptions = (scenesForm) => ({
     ...scenesForm
 })
+
+export const inDateRange = (date, dates) => {
+    const doy = moment(date, DATE_FORMAT).dayOfYear()
+    const fromDoy = moment(dates.seasonStart).dayOfYear()
+    const toDoy = moment(dates.seasonEnd).dayOfYear()
+    return toDoy <= fromDoy
+        ? doy >= fromDoy || doy < toDoy
+        : doy >= fromDoy && doy < toDoy
+}

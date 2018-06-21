@@ -1,4 +1,4 @@
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {inDateRange, RecipeActions, RecipeState, SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {objectEquals} from 'collections'
 import React from 'react'
 import {connect} from 'store'
@@ -7,10 +7,11 @@ import {connect} from 'store'
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
-        aoi: recipe('aoi'),
+        sceneAreas: recipe('ui.sceneAreas'),
         dates: recipe('dates'),
         sources: recipe('sources'),
-        sceneSelectionOptions: recipe('sceneSelectionOptions')
+        sceneSelectionOptions: recipe('sceneSelectionOptions'),
+        scenes: recipe('scenes')
     }
 }
 
@@ -25,13 +26,31 @@ class SceneUnselection extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (!objectEquals(prevProps, this.props, ['aoi', 'dates', 'sources', 'sceneSelectionOptions']))
+        let propsToCheck = ['sceneAreas', 'dates', 'sources', 'sceneSelectionOptions']
+        if (!objectEquals(prevProps, this.props, ['sceneAreas', 'dates', 'sources', 'sceneSelectionOptions']))
             this.updateSelectedScenes()
     }
 
     updateSelectedScenes() {
-        const {aoi, dates, sources, sceneSelectionOptions} = this.props
-        // TODO: Need to know the scene areas, not the AOI, to determine if a scene should be removed due to change in AOI
+        const {sceneAreas, dates, sources, sceneSelectionOptions, scenes} = this.props
+        if (!scenes)
+            return
+        if (sceneSelectionOptions.type !== SceneSelectionType.SELECT)
+            this.recipe.setSelectedScenes({}).dispatch()
+        const filteredScenes = {}
+        const filterScenes = (scenes) => {
+            if (!scenes)
+                return []
+            return scenes
+                .filter(scene => inDateRange(scene.date, dates))
+                .filter(scene => Object.values(sources).includes(scene.dataSet))
+        }
+
+        sceneAreas.forEach(sceneAreaId =>
+            filteredScenes[sceneAreaId] = filterScenes(scenes[sceneAreaId])
+        )
+        console.log(filteredScenes)
+        this.recipe.setSelectedScenes(filteredScenes).dispatch()
     }
 }
 

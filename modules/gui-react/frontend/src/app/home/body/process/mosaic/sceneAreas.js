@@ -1,4 +1,4 @@
-import {RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {google, MapLayer, sepalMap} from 'app/home/map/map'
 import backend from 'backend'
 import {objectEquals} from 'collections'
@@ -19,6 +19,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         initialized: recipe('ui.initialized'),
         sceneAreasShown: recipe('ui.sceneAreasShown'),
+        sceneAreas: recipe('ui.sceneAreas'),
         aoi: recipe('aoi'),
         source: Object.keys(recipe('sources'))[0],
         sceneSelectionOptions: recipe('sceneSelectionOptions')
@@ -26,10 +27,14 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class SceneAreas extends React.Component {
-    state = {
-        show: true
+    constructor(props) {
+        super(props)
+        this.recipe = new RecipeActions(props.recipeId)
+        this.state = {
+            show: true
+        }
+        this.loadSceneArea$ = new Subject()
     }
-    loadSceneArea$ = new Subject()
 
     render() {
         const {sceneAreasShown, action} = this.props
@@ -46,7 +51,7 @@ class SceneAreas extends React.Component {
     }
 
     renderSceneAreas() {
-        const sceneAreas = this.state.sceneAreas
+        const sceneAreas = this.props.sceneAreas
         if (sceneAreas)
             return (
                 <MapLayer className={styles.sceneAreas}>
@@ -86,11 +91,11 @@ class SceneAreas extends React.Component {
         this.props.asyncActionBuilder('LOAD_SCENE_AREAS',
             backend.gee.sceneAreas$({aoi, source})
                 .pipe(
-                    map((e) => {
-                        return this.setState((prevState) =>
-                            ({...prevState, sceneAreas: this.toSceneAreas(e.response)})
+                    map(e =>
+                        this.recipe.setSceneAreas(
+                            this.toSceneAreas(e.response)
                         )
-                    }),
+                    ),
                     takeUntil(this.loadSceneArea$)
                 ))
             .dispatch()
