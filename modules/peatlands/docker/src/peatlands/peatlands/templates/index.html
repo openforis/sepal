@@ -76,7 +76,7 @@
 
         const peatlandsApiUrl = '{{config.PEATLANDS_API_URL}}';
 
-        var gmap;
+        var gmap, chart1, chart2, chart3;
 
         var mapStyle = [
             {
@@ -145,7 +145,7 @@
             };
             let indexName = 'SMAP';
             var text = indexName;
-            Highcharts.chart('chart1', {
+            return Highcharts.chart('chart1', {
                 chart: {
                     zoomType: 'x'
                 },
@@ -157,7 +157,21 @@
                 },
                 xAxis: {
                     type: 'datetime',
-                    min:  Date.UTC(2000, 0, 0)
+                    min:  Date.UTC(2000, 0, 0),
+                    events: {
+                        afterSetExtremes: function() {
+                            if (!this.chart.options.chart.isZoomed) {
+                                var xMin = this.chart.xAxis[0].min;
+                                var xMax = this.chart.xAxis[0].max;
+                                chart2.options.chart.isZoomed = true;
+                                chart3.options.chart.isZoomed = true;
+                                chart2.xAxis[0].setExtremes(xMin, xMax, true);
+                                chart3.xAxis[0].setExtremes(xMin, xMax, true);
+                                chart2.options.chart.isZoomed = false;
+                                chart3.options.chart.isZoomed = false;
+                            }
+                        }
+                    },
                 },
                 yAxis: {
                     title: {
@@ -232,7 +246,7 @@
                     }
                 }
             };
-            Highcharts.chart(id, {
+            return Highcharts.chart(id, {
                 chart: {
                     zoomType: 'x'
                 },
@@ -240,7 +254,25 @@
                     text: index
                 },
                 xAxis: {
-                    type: 'datetime'
+                    type: 'datetime',
+                    min:  Date.UTC(2000, 0, 0),
+                    events: {
+                        afterSetExtremes: function() {
+                            if (!this.chart.options.chart.isZoomed) {
+                                var xMin = this.chart.xAxis[0].min;
+                                var xMax = this.chart.xAxis[0].max;
+                                chart1.options.chart.isZoomed = true;
+                                chart2.options.chart.isZoomed = true;
+                                chart3.options.chart.isZoomed = true;
+                                chart1.xAxis[0].setExtremes(xMin, xMax, true);
+                                chart2.xAxis[0].setExtremes(xMin, xMax, true);
+                                chart3.xAxis[0].setExtremes(xMin, xMax, true);
+                                chart1.options.chart.isZoomed = false;
+                                chart2.options.chart.isZoomed = false;
+                                chart3.options.chart.isZoomed = false;
+                            }
+                        }
+                    },
                 },
                 yAxis: {
                     title: {
@@ -265,14 +297,14 @@
         $('#selector1').change(function(e) {
             e.preventDefault();
             if (indexes.length != 0) {
-                indexChart('chart2', indexes, this.value);
+                chart2 = indexChart('chart2', indexes, this.value);
             }
         });
 
         $('#selector2').change(function(e) {
             e.preventDefault();
             if (indexes.length != 0) {
-                indexChart('chart3', indexes, this.value);
+                chart3 = indexChart('chart3', indexes, this.value);
             }
         });
 
@@ -285,7 +317,6 @@
             const lng = e.latLng.lng();
             $('#selected-point').data('lat', lat).data('lng', lng).text(lat.toFixed(2) + ', ' + lng.toFixed(2));
             // SMAP
-            let chart1 = $('#chart1').highcharts();
             if (chart1 !== undefined) chart1.destroy();
             $('#chart-box-1 .spinner').show();
             let request1 = $.ajax({
@@ -300,12 +331,10 @@
                 console.error(jqXHR, textStatus, errorThrown);
             }).done(function(data, textStatus, jqXHR) {
                 $('#chart-box-1 .spinner').hide();
-                smapChart(data.timeseries);
+                chart1 = smapChart(data.timeseries);
             });
             // INDEXES
-            let chart2 = $('#chart2').highcharts();
             if (chart2 !== undefined) chart2.destroy();
-            let chart3 = $('#chart3').highcharts();
             if (chart3 !== undefined) chart3.destroy();
             $('#chart-box-2 .spinner').show();
             $('#chart-box-3 .spinner').show();
@@ -323,8 +352,8 @@
                 indexes = data.indexes;
                 $('#chart-box-2 .spinner').hide();
                 $('#chart-box-3 .spinner').hide();
-                indexChart('chart2', indexes, $('#selector1').val());
-                indexChart('chart3', indexes, $('#selector2').val());
+                chart2 = indexChart('chart2', indexes, $('#selector1').val());
+                chart3 = indexChart('chart3', indexes, $('#selector2').val());
             });
             //
             ajaxRequests.push(request1);
