@@ -97,6 +97,7 @@ apt-get install -y \
 
 pip install python-dateutil
 pip install pyCrypto
+pip install oauth2client
 pip install earthengine-api
 pip install google-api-python-client
 pip install awscli
