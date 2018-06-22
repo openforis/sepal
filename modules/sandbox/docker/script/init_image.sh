@@ -64,13 +64,20 @@ rm $shinyServer
 git clone https://github.com/openforis/shiny-server.git
 cd shiny-server
 git checkout fix
-
 cp -r lib/* /opt/shiny-server/lib/
 cp -r R/* /opt/shiny-server/R
 cp -r config/shiny-server-rules.config /opt/shiny-server/config/
 cd ..
 rm -rf shiny-server
 
+git clone https://github.com/openforis/shiny-server-client.git
+cd shiny-server-client
+git checkout reconnect-on-3000
+yarn install
+npm run prepublish
+cp dist/* /opt/shiny-server/node_modules/shiny-server-client/dist/
+cd ..
+rm -rf shiny-server-client
 
 echo
 echo "**************************"

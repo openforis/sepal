@@ -40,6 +40,9 @@ RUN chmod u+x /script/init_r.sh; sync && /script/init_r.sh
 ADD script/init_r_packages.sh /script
 RUN chmod u+x /script/init_r_packages.sh; sync && /script/init_r_packages.sh
 
+ADD script/init_node.sh /script
+RUN chmod u+x /script/init_node.sh; sync && /script/init_node.sh
+
 ADD script/init_post.sh /script
 RUN chmod u+x /script/init_post.sh; sync && /script/init_post.sh
 
