@@ -27,6 +27,7 @@ R -e "pacman::p_load(\
         'dismo',\
         'dplyr',\
         'DT',\
+        'Formula',\
         'ggmap',\
         'ggplot2',\
         'htmltools',\
