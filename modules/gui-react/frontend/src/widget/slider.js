@@ -18,14 +18,14 @@ class Draggable extends React.Component {
     dragging = false
 
     ticksPosition(ticks) {
-        return Array.isArray(ticks) ? ticks : range(0, ticks).map(i => i / ticks)
+        return Array.isArray(ticks) ? ticks : range(0, ticks + 1).map(i => i / ticks)
     } 
 
     renderAxis(ticks) {
         return (
             <div className={styles.axis}>
                 {this.ticksPosition(ticks).map(position => 
-                        <div key={position} style={{left: `${Math.round(position * this.props.width)}px`}}/>
+                        <div key={position} style={{left: `${Math.trunc(position * this.props.width)}px`}}/>
                 )}
             </div>
         )
