@@ -64,22 +64,23 @@ class Composite extends React.Component {
                             <Label>Pixel filters</Label>
                             <div className={styles.slider}>
                                 <FilterLabel filter='shadow' percentile={shadowPercentile.value}/>
-                                <Slider input={shadowPercentile} steps={20}/>
+                                {/* <Slider input={shadowPercentile} steps={20}/> */}
+                                <Slider input={shadowPercentile} ticks={[0, .05, .1, .25, .5, .75, .9, .95, 1]}/>
                             </div>
 
                             <div className={styles.slider}>
                                 <FilterLabel filter='haze' percentile={hazePercentile.value}/>
-                                <Slider input={hazePercentile} steps={20}/>
+                                <Slider input={hazePercentile} ticks={20}/>
                             </div>
 
                             <div className={styles.slider}>
                                 <FilterLabel filter='ndvi' percentile={ndviPercentile.value}/>
-                                <Slider input={ndviPercentile} steps={20}/>
+                                <Slider input={ndviPercentile} ticks={20}/>
                             </div>
 
                             <div className={styles.slider}>
                                 <FilterLabel filter='dayOfYear' percentile={targetDayPercentile.value}/>
-                                <Slider input={targetDayPercentile} steps={20}/>
+                                <Slider input={targetDayPercentile} ticks={20}/>
                             </div>
                         </div>
 

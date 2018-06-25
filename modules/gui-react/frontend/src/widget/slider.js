@@ -17,18 +17,29 @@ class Draggable extends React.Component {
     subscription = null
     dragging = false
 
+    ticksPosition(ticks) {
+        return Array.isArray(ticks) ? ticks : range(0, ticks).map(i => i / ticks)
+    } 
+
+    renderAxis(ticks) {
+        return (
+            <div className={styles.axis}>
+                {this.ticksPosition(ticks).map(position => 
+                        <div key={position} style={{left: `${Math.round(position * this.props.width)}px`}}/>
+                )}
+            </div>
+        )
+    }
+
     render() {
         const position = this.state.position
         const width = this.props.width
-        const handleStyle = {left: `${position}px`}
-        const leftStyle = {right: `${width - position}px`}
-        const rightStyle = {left: `${position}px`}
-
         return (
             <div>
-                <div className={[styles.range, styles.leftRange].join(' ')} style={leftStyle}/>
-                <div className={[styles.range, styles.rightRange].join(' ')} style={rightStyle}/>
-                <div className={styles.handle} ref={this.element} style={handleStyle}/>
+                {this.renderAxis(this.props.ticks)}
+                <div className={[styles.range, styles.leftRange].join(' ')} style={{right: `${width - position}px`}}/>
+                <div className={[styles.range, styles.rightRange].join(' ')} style={{left: `${position}px`}}/>
+                <div className={styles.handle} ref={this.element} style={{left: `${position}px`}}/>
             </div>
         )
     }
@@ -67,12 +78,21 @@ class Draggable extends React.Component {
     }
 
     snapPosition(value) {
-        if (this.props.steps > 0) {
-            const stepSize = this.props.width / this.props.steps
+        if (Array.isArray(this.props.ticks)) {
+            const closest = _(this.props.ticks)
+                .map(tick => tick * this.props.width)
+                .map(position => ({position, distance: Math.abs(position - value)}))
+                .sortBy('distance')
+                .head()
+            return closest.position
+        }
+        if (Number.isInteger(this.props.ticks)) {
+            console.log('number', this.props.ticks)
+            const stepSize = this.props.width / this.props.ticks
             const step = Math.round(value / stepSize)
             return step * stepSize
-        } else
-            return value
+        }
+        return value
     }
 
     setPosition(position) {
@@ -153,19 +173,19 @@ class Draggable extends React.Component {
     }
 }
 
+Draggable.propTypes = {
+    input: PropTypes.object,
+    minValue: PropTypes.number,
+    maxValue: PropTypes.number,
+    ticks: PropTypes.any,
+    width: PropTypes.number
+}
+
 export default class Slider extends React.Component {
     state = {}
 
     render() {
-        const {input, minValue, maxValue, steps} = this.props
-        const ticks = range(0, steps + 1).map(i => {
-                const stepSize = this.state.width / steps
-                const style = {
-                    left: `${i * stepSize}px`
-                }
-                return <div key={i} style={style}/>
-            }
-        )
+        const {input, minValue, maxValue, ticks} = this.props
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
@@ -174,15 +194,11 @@ export default class Slider extends React.Component {
                         onResize={width => {
                             return this.setState(prevState => ({...prevState, width}))
                         }}/>
-                    <div className={styles.axis}/>
-                    <div className={styles.ticks}>
-                        {ticks}
-                    </div>
                     <Draggable
                         input={input}
                         minValue={minValue !== undefined ? minValue : 0}
                         maxValue={maxValue !== undefined ? maxValue : 100}
-                        steps={steps}
+                        ticks={ticks}
                         width={this.state.width}/>
                 </div>
             </div>
@@ -194,6 +210,5 @@ Slider.propTypes = {
     input: PropTypes.object.isRequired,
     minValue: PropTypes.number,
     maxValue: PropTypes.number,
-    steps: PropTypes.number
+    ticks: PropTypes.any
 }
-

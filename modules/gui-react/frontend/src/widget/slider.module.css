@@ -4,6 +4,8 @@
     --handle-height: 1.5rem;
     --handle-width: 1.5rem;
     --handle-radius: 100%;
+    --axis-color: hsl(0, 0%, 40%);
+    --ticks-half-height: .3rem;
     width: 100%;
     height: var(--container-height);
     display: flex;
@@ -20,19 +22,25 @@
 }
 
 .axis {
-    background-color: rgb(222, 222, 222);
-    opacity: 0.32;
-    height: 100%;
+    background-color: var(--axis-color);
+    height: 1px;
 }
 
-.ticks > * {
+.axis > * {
+    position: absolute;
+    background-color: inherit;
+    width: 1px;
+    top: calc(-1* var(--ticks-half-height));
+    bottom: calc(-1* var(--ticks-half-height));
+}
+
+/* .ticks > * {
     position: absolute;
     background-color: rgb(222, 222, 222);
     width: 1px;
-    opacity: 0.32;
     top: -0.3rem;
     bottom: -0.3rem;
-}
+} */
 
 .handle {
     position: absolute;
