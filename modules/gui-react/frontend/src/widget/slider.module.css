@@ -1,11 +1,11 @@
 .container {
-    --container-size: 1.5rem;
+    --container-height: 2rem;
     --slider-size: 1px;
     --handle-height: 1.5rem;
-    --handle-width: 3rem;
-    --handle-radius: .5rem;
+    --handle-width: 1.5rem;
+    --handle-radius: 100%;
     width: 100%;
-    height: var(--container-size);
+    height: var(--container-height);
     display: flex;
     flex-direction: column;
     justify-content: space-around;
@@ -17,7 +17,21 @@
     position: relative;
     width: 100%;
     height: var(--slider-size);
+}
+
+.axis {
     background-color: rgb(222, 222, 222);
+    opacity: 0.32;
+    height: 100%;
+}
+
+.ticks > * {
+    position: absolute;
+    background-color: rgb(222, 222, 222);
+    width: 1px;
+    opacity: 0.32;
+    top: -0.3rem;
+    bottom: -0.3rem;
 }
 
 .handle {
@@ -39,4 +53,20 @@
 .handle:hover {
     background-color: var(--button-selected-hover-background-color);
     border: var(--button-selected-hover-border);
+}
+
+.range {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -1px;
+    bottom: -1px;
+}
+
+.leftRange {
+    /*background-color: rgba(0, 255, 0, .5);*/
+}
+
+.rightRange {
+    background-color: var(--button-selected-background-color);
 }

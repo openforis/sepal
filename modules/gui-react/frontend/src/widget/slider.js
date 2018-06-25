@@ -1,57 +1,97 @@
+import {range} from 'collections'
 import Hammer from 'hammerjs'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
+import ReactResizeDetector from 'react-resize-detector'
+import {animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
 import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
 import styles from './slider.module.css'
 
-const scale = (from, to) =>
-    (value) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
+const clamp = ({value, min, max}) => Math.max(min, Math.min(max, value))
+const scale = ({value, from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
 
-const limit = ({min, max}) =>
-    (value) => Math.max(min, Math.min(max, value))
+class Draggable extends React.Component {
+    state = {}
+    element = React.createRef()
+    subscription = null
+    dragging = false
 
-class Draggable {
-    constructor(props) {
-        const {minValue, maxValue, startValue, onChange} = props
-        this.subscription = null
-        this.minValue = minValue !== undefined ? minValue : 0
-        this.maxValue = maxValue !== undefined ? maxValue : 100
-        this.startValue = startValue !== undefined ? startValue : (maxValue - minValue) / 2
-        this.onChange = onChange
-        this.position = null
+    render() {
+        const position = this.state.position
+        const width = this.props.width
+        const handleStyle = {left: `${position}px`}
+        const leftStyle = {right: `${width - position}px`}
+        const rightStyle = {left: `${position}px`}
+
+        return (
+            <div>
+                <div className={[styles.range, styles.leftRange].join(' ')} style={leftStyle}/>
+                <div className={[styles.range, styles.rightRange].join(' ')} style={rightStyle}/>
+                <div className={styles.handle} ref={this.element} style={handleStyle}/>
+            </div>
+        )
     }
 
-    initialize({slider, handle}) {
-        const width = slider.getBoundingClientRect().width
+    componentDidUpdate(prevProps) {
+        if (!this.dragging && !_.isEqual(prevProps, this.props))
+            this.setPosition(this.toPosition(this.props.input.value))
+    }
 
-        this.mapToScreen = scale({min: this.minValue, max: this.maxValue}, {min: 0, max: width})
-        this.mapToRange = scale({min: 0, max: width}, {min: this.minValue, max: this.maxValue})
-        this.clipToScreen = limit({min: 0, max: width})
+    componentWillUnmount() {
+        this.subscription && this.subscription.unsubscribe()
+    }
 
-        this.getPosition = () => Math.round(parseFloat(handle.style.left))
+    toPosition(value) {
+        return scale({
+            value,
+            from: {min: this.props.minValue, max: this.props.maxValue},
+            to: {min: 0, max: this.props.width}
+        })
+    }
 
-        this.setPosition = (position) => {
+    toValue(position) {
+        return scale({
+            value: position,
+            from: {min: 0, max: this.props.width},
+            to: {min: this.props.minValue, max: this.props.maxValue}
+        })
+    }
+
+    clampPosition(position) {
+        return clamp({
+            value: position,
+            min: 0,
+            max: this.props.width
+        })
+    }
+
+    snapPosition(value) {
+        if (this.props.steps > 0) {
+            const stepSize = this.props.width / this.props.steps
+            const step = Math.round(value / stepSize)
+            return step * stepSize
+        } else
+            return value
+    }
+
+    setPosition(position) {
+        if (position >= 0) {
             position = Math.round(position)
-            if (position !== this.getPosition()) {
-                this.position = position
-                const value = this.getValue()
-                this.onChange && this.onChange(value)
-                handle.innerHTML = Math.round(value)
-                handle.style.left = position + 'px'
-                return true
+            if (position !== this.state.position) {
+                this.setState(prevState => ({...prevState, position}))
+                this.props.input.set(
+                    Math.round(
+                        this.toValue(
+                            this.snapPosition(position)
+                        )
+                    )
+                )
             }
-            return false
         }
-        this.getValue = () => this.mapToRange(this.position)
+    }
 
-        this.setValue = (value) => {
-            this.setPosition(this.mapToScreen(value))
-        }
-
-        this.setValue(this.startValue)
-        this.position = this.getPosition()
-
+    componentDidMount() {
         const drag$ = (element) => {
             const hammerPan = new Hammer(element, {
                 threshold: 1
@@ -73,21 +113,35 @@ class Draggable {
 
             return panStart$.pipe(
                 switchMap(() => {
-                    const start = this.position
-                    return panMove$.pipe(
-                        map(pmEvent => ({
-                            cursor: this.clipToScreen(start + pmEvent.deltaX),
-                            speed: 1 - Math.max(0, Math.min(95, Math.abs(pmEvent.deltaY))) / 100
-                        })),
-                        distinctUntilChanged(),
-                        takeUntil(panEnd$)
+                    const start = this.state.position
+                    return merge(
+                        panMove$.pipe(
+                            map(pmEvent => {
+                                this.dragging = true
+                                return ({
+                                    cursor: this.clampPosition(start + pmEvent.deltaX),
+                                    speed: 1 - Math.max(0, Math.min(95, Math.abs(pmEvent.deltaY))) / 100
+                                })
+                            }),
+                            distinctUntilChanged(),
+                            takeUntil(panEnd$)
+                        ),
+                        panEnd$.pipe(
+                            map(() => {
+                                this.dragging = false
+                                return ({
+                                    cursor: this.snapPosition(this.state.position),
+                                    speed: 1
+                                })
+                            })
+                        )
                     )
                 }),
                 switchMap(({cursor, speed}) => {
-                    const start = this.position
+                    const start = this.state.position
                     return animationFrame$.pipe(
                         map(() => cursor),
-                        scan(lerp(.3, speed), start),
+                        scan(lerp(.2, speed), start),
                         distinctUntilChanged((a, b) => Math.abs(a - b) < .01),
                         takeUntil(panEnd$)
                     )
@@ -95,57 +149,51 @@ class Draggable {
             )
         }
 
-        this.subscription = drag$(handle).subscribe(this.setPosition)
-    }
-
-    dispose() {
-        this.subscription && this.subscription.unsubscribe()
+        this.subscription = drag$(this.element.current).subscribe((position) => this.setPosition(position))
     }
 }
 
 export default class Slider extends React.Component {
-    constructor(props) {
-        super(props)
-        this.slider = React.createRef()
-        this.handle = React.createRef()
-        this.draggable = new Draggable({
-            minValue: props.minValue,
-            maxValue: props.maxValue,
-            startValue: props.startValue,
-            onChange: props.onChange
-        })
-    }
-
-    componentWillReceiveProps(props) {
-        return this.draggable.setValue(props.startValue)
-    }
-
-    componentDidMount() {
-        this.draggable.initialize({
-            slider: this.slider.current,
-            handle: this.handle.current
-        })
-    }
+    state = {}
 
     render() {
+        const {input, minValue, maxValue, steps} = this.props
+        const ticks = range(0, steps + 1).map(i => {
+                const stepSize = this.state.width / steps
+                const style = {
+                    left: `${i * stepSize}px`
+                }
+                return <div key={i} style={style}/>
+            }
+        )
         return (
             <div className={styles.container}>
-                <div className={styles.slider} ref={this.slider}>
-                    <div className={styles.handle} ref={this.handle}/>
+                <div className={styles.slider}>
+                    <ReactResizeDetector
+                        handleWidth
+                        onResize={width => {
+                            return this.setState(prevState => ({...prevState, width}))
+                        }}/>
+                    <div className={styles.axis}/>
+                    <div className={styles.ticks}>
+                        {ticks}
+                    </div>
+                    <Draggable
+                        input={input}
+                        minValue={minValue !== undefined ? minValue : 0}
+                        maxValue={maxValue !== undefined ? maxValue : 100}
+                        steps={steps}
+                        width={this.state.width}/>
                 </div>
             </div>
         )
     }
-
-    componentWillUnmount() {
-        this.draggable.dispose()
-    }
 }
 
 Slider.propTypes = {
+    input: PropTypes.object.isRequired,
     minValue: PropTypes.number,
     maxValue: PropTypes.number,
-    startValue: PropTypes.number,
-    onChange: PropTypes.func
+    steps: PropTypes.number
 }
 

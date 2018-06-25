@@ -286,15 +286,15 @@
               "label": "Priority",
               "cloudFree": {
                 "label": "Cloud free",
-                "tooltip": "Some tooltip"
+                "tooltip": "[TODO] Some tooltip"
               },
               "balanced": {
                 "label": "Balanced",
-                "tooltip": "Some tooltip"
+                "tooltip": "[TODO] Some tooltip"
               },
               "targetDate": {
                 "label": "Target date",
-                "tooltip": "Some tooltip"
+                "tooltip": "[TODO] Some tooltip"
               }
             }
           }
@@ -302,7 +302,33 @@
         "composite": {
           "title": "Composite",
           "button": "CMP",
-          "tooltip": "Configure composite creation"
+          "tooltip": "Configure composite creation",
+          "form": {
+            "filters": {
+              "label": "Pixel filters",
+              "tooltip": "[TODO] Some tooltip",
+              "shadow": {
+                "off": "Don't filter based on shadow",
+                "percentile": "Less shadows than {percentile}% of pixels",
+                "max": "Pixel with least shadow"
+              },
+              "haze": {
+                "off": "Don't filter based on haze",
+                "percentile": "Less haze than {percentile}% of pixels",
+                "max": "Pixel with least haze"
+              },
+              "ndvi": {
+                "off": "Don't filter based on NDVI",
+                "percentile": "Higher NDVI than {percentile}% of pixels",
+                "max": "Pixel with highest NDVI"
+              },
+              "dayOfYear": {
+                "off": "Don't filter based on day of year",
+                "percentile": "Closer to target day than {percentile}% of pixels",
+                "max": "Pixel closest to target day"
+              }
+            }
+          }
         },
         "sceneSelection": {
           "preview": {

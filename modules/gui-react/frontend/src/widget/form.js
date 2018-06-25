@@ -374,5 +374,5 @@ Label.propTypes = {
     topRight: PropTypes.bool,
     bottomLeft: PropTypes.bool,
     bottomRight: PropTypes.bool,
-    children: PropTypes.object
+    children: PropTypes.any
 }

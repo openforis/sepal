@@ -41,6 +41,7 @@ export default api
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 const transformRecipeForPreview = (recipe) => {
+    console.log(recipe.compositeOptions)
     const sceneIds = []
     if (recipe.sceneSelectionOptions.type === SceneSelectionType.SELECT)
         Object.keys(recipe.scenes).forEach(sceneAreaId => recipe.scenes[sceneAreaId].forEach(scene => sceneIds.push(scene.id)))
@@ -49,16 +50,16 @@ const transformRecipeForPreview = (recipe) => {
         dates: recipe.dates,
         dataSet: sourcesToDataSet(recipe.sources),
         sensors: toSensors(recipe.sources),
-        targetDayOfYearWeight: 0,
-        shadowTolerance: 1,
-        hazeTolerance: 1,
-        greennessWeight: 0,
+        targetDayOfYearWeight: recipe.compositeOptions.targetDayPercentile / 100,
+        shadowTolerance: 1 - recipe.compositeOptions.shadowPercentile / 100,
+        hazeTolerance: 1 - recipe.compositeOptions.hazePercentile / 100,
+        greennessWeight: recipe.compositeOptions.ndviPercentile / 100,
         bands: ['red', 'green', 'blue'],
-        surfaceReflectance: true,
-        medianComposite: false,
-        brdfCorrect: false,
-        maskClouds: false,
-        maskSnow: false,
+        surfaceReflectance: recipe.compositeOptions.corrections.includes('SR'),
+        medianComposite: recipe.compositeOptions.compose === 'MEDIAN',
+        brdfCorrect: recipe.compositeOptions.corrections.includes('BRDF'),
+        maskClouds: recipe.compositeOptions.mask.includes('CLOUDS'),
+        maskSnow: recipe.compositeOptions.mask.includes('SNOW'),
         sceneIds: sceneIds,
         type: recipe.sceneSelectionOptions.type === SceneSelectionType.ALL ? 'automatic' : 'manual'
     }

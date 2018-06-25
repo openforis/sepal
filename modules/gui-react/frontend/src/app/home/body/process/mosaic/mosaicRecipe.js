@@ -100,11 +100,17 @@ export const RecipeActions = (id) => {
                 'sources': createSources(sourcesForm)
             }, {sourcesForm})
         },
-        setSceneSelectionOptions(scenesForm) {
+        setSceneSelectionOptions(sceneSelectionOptionsForm) {
             return setAll('SET_SCENE_SELECTION_OPTIONS', {
-                'ui.sceneSelectionOptions': {...scenesForm},
-                'sceneSelectionOptions': createSceneSelectionOptions(scenesForm)
-            }, {scenesForm})
+                'ui.sceneSelectionOptions': {...sceneSelectionOptionsForm},
+                'sceneSelectionOptions': createSceneSelectionOptions(sceneSelectionOptionsForm)
+            }, {sceneSelectionOptionsForm})
+        },
+        setCompositeOptions(compositeOptionsForm) {
+            return setAll('SET_COMPOSITE_OPTIONS', {
+                'ui.compositeOptions': {...compositeOptionsForm},
+                'compositeOptions': createCompositeOptions(compositeOptionsForm)
+            }, {compositeOptionsForm})
         },
         setModal(enabled) {
             return set('SET_MODAL', 'ui.modal', enabled, {enabled})
@@ -156,8 +162,18 @@ const initRecipe = (recipe) => {
     }).dispatch()
 
     actions.setSceneSelectionOptions({
-        type: SceneSelectionType.SELECT,
+        type: SceneSelectionType.ALL,
         targetDateWeight: 0.5
+    }).dispatch()
+
+    actions.setCompositeOptions({
+        corrections: ['SR', 'BRDF'],
+        shadowPercentile: 0,
+        hazePercentile: 0,
+        ndviPercentile: 0,
+        targetDayPercentile: 0,
+        mask: ['CLOUDS'],
+        compose: 'MEDOID'
     }).dispatch()
 
 
@@ -218,8 +234,12 @@ const createSources = (sourcesForm) => ({
     [sourcesForm.source]: sourcesForm.dataSets ? [...sourcesForm.dataSets] : null
 })
 
-const createSceneSelectionOptions = (scenesForm) => ({
-    ...scenesForm
+const createSceneSelectionOptions = (sceneSelectionOptionsForm) => ({
+    ...sceneSelectionOptionsForm
+})
+
+const createCompositeOptions = (compositeOptionsForm) => ({
+    ...compositeOptionsForm
 })
 
 export const inDateRange = (date, dates) => {

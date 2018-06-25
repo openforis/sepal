@@ -17,3 +17,6 @@ export const objectEquals = (o1, o2, compareProps) => {
 }
 
 export const intersect = (array) => Array.from(new Set(array))
+
+export const range = (from, to) =>
+    [...Array(to - from).keys()].map(i => from + i)
