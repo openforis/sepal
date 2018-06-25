@@ -15,7 +15,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-class SceneUnselection extends React.Component {
+class SceneDeselection extends React.Component {
     constructor(props) {
         super(props)
         this.recipe = RecipeActions(props.recipeId)
@@ -26,7 +26,6 @@ class SceneUnselection extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        let propsToCheck = ['sceneAreas', 'dates', 'sources', 'sceneSelectionOptions']
         if (!objectEquals(prevProps, this.props, ['sceneAreas', 'dates', 'sources', 'sceneSelectionOptions']))
             this.updateSelectedScenes()
     }
@@ -54,4 +53,4 @@ class SceneUnselection extends React.Component {
     }
 }
 
-export default connect(mapStateToProps)(SceneUnselection)
+export default connect(mapStateToProps)(SceneDeselection)
