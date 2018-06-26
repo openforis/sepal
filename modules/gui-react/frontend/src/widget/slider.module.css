@@ -34,14 +34,6 @@
     bottom: calc(-1* var(--ticks-half-height));
 }
 
-/* .ticks > * {
-    position: absolute;
-    background-color: rgb(222, 222, 222);
-    width: 1px;
-    top: -0.3rem;
-    bottom: -0.3rem;
-} */
-
 .handle {
     position: absolute;
     top: calc((var(--handle-height) - var(--slider-size)) / -2);

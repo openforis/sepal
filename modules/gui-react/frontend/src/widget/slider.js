@@ -87,7 +87,6 @@ class Draggable extends React.Component {
             return closest.position
         }
         if (Number.isInteger(this.props.ticks)) {
-            console.log('number', this.props.ticks)
             const stepSize = this.props.width / this.props.ticks
             const step = Math.round(value / stepSize)
             return step * stepSize

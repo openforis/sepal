@@ -41,7 +41,6 @@ export default api
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 const transformRecipeForPreview = (recipe) => {
-    console.log(recipe.compositeOptions)
     const sceneIds = []
     if (recipe.sceneSelectionOptions.type === SceneSelectionType.SELECT)
         Object.keys(recipe.scenes).forEach(sceneAreaId => recipe.scenes[sceneAreaId].forEach(scene => sceneIds.push(scene.id)))
