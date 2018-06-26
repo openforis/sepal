@@ -13,7 +13,7 @@ const inputs = {
     shadowPercentile: new Constraints(),
     hazePercentile: new Constraints(),
     ndviPercentile: new Constraints(),
-    targetDayPercentile: new Constraints(),
+    dayOfYearPercentile: new Constraints(),
     mask: new Constraints(),
     compose: new Constraints()
 }
@@ -21,7 +21,8 @@ const inputs = {
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
-        values: recipe('ui.compositeOptions')
+        values: recipe('ui.compositeOptions'),
+        source: Object.keys(recipe('sources'))[0]
     }
 }
 
@@ -35,9 +36,11 @@ class Composite extends React.Component {
         const {
             recipeId,
             form,
-            inputs: {corrections, shadowPercentile, hazePercentile, ndviPercentile, targetDayPercentile, mask, compose},
+            inputs: {corrections, shadowPercentile, hazePercentile, ndviPercentile, dayOfYearPercentile, mask, compose},
+            source,
             className
         } = this.props
+
         return (
             <form className={[className, styles.container].join(' ')}>
                 <PanelForm
@@ -52,38 +55,23 @@ class Composite extends React.Component {
                             <Buttons input={corrections} multiple={true} options={[
                                 {
                                     value: 'SR',
-                                    label: 'Surface reflectance'
+                                    label: 'Surface reflectance',
+                                    disabled: source !== 'landsat'
                                 },
                                 {
                                     value: 'BRDF',
-                                    label: 'BRDF correction'
+                                    label: 'BRDF correction',
+                                    disabled: source !== 'landsat'
                                 }
                             ]}/>
                         </div>
                         <div className={styles.filters}>
                             <Label>Pixel filters</Label>
-                            <div className={styles.slider}>
-                                <FilterLabel filter='shadow' percentile={shadowPercentile.value}/>
-                                {/* <Slider input={shadowPercentile} steps={20}/> */}
-                                <Slider input={shadowPercentile} ticks={[0, .05, .1, .25, .5, .75, .9, .95, 1]}/>
-                            </div>
-
-                            <div className={styles.slider}>
-                                <FilterLabel filter='haze' percentile={hazePercentile.value}/>
-                                <Slider input={hazePercentile} ticks={20}/>
-                            </div>
-
-                            <div className={styles.slider}>
-                                <FilterLabel filter='ndvi' percentile={ndviPercentile.value}/>
-                                <Slider input={ndviPercentile} ticks={20}/>
-                            </div>
-
-                            <div className={styles.slider}>
-                                <FilterLabel filter='dayOfYear' percentile={targetDayPercentile.value}/>
-                                <Slider input={targetDayPercentile} ticks={20}/>
-                            </div>
+                            <PercentileField input={shadowPercentile}/>
+                            <PercentileField input={hazePercentile} disabled={corrections.value.includes('SR')}/>
+                            <PercentileField input={ndviPercentile}/>
+                            <PercentileField input={dayOfYearPercentile}/>
                         </div>
-
                         <div className={styles.mask}>
                             <Label>Mask</Label>
                             <Buttons input={mask} multiple={true} options={[
@@ -121,19 +109,23 @@ class Composite extends React.Component {
     }
 }
 
-const FilterLabel = ({filter, percentile}) => {
+const PercentileField = ({input, disabled = false}) => {
+    const percentile = input.value
     let type = 'percentile'
     if (percentile === 0)
         type = 'off'
     else if (percentile === 100)
         type = 'max'
     return (
-        <div className={styles.label}>
-            <Msg id={['process.mosaic.panel.composite.form.filters', filter, type]} percentile={percentile}/>
+        <div className={[styles.slider, disabled ? styles.disabled : null].join(' ')}>
+            <div className={styles.label}>
+                <Msg id={['process.mosaic.panel.composite.form.filters', input.name, type]} percentile={percentile}/>
+            </div>
+            <Slider input={input} ticks={[0, .05, .1, .25, .5, .75, .9, .95, 1]}/>
+            <div className={disabled ? styles.disabledOverlay : null}/>
         </div>
     )
 }
-
 
 Composite.propTypes = {
     recipeId: PropTypes.string,

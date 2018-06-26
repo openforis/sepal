@@ -307,22 +307,22 @@
             "filters": {
               "label": "Pixel filters",
               "tooltip": "[TODO] Some tooltip",
-              "shadow": {
+              "shadowPercentile": {
                 "off": "Don't filter based on shadow",
                 "percentile": "Less shadows than {percentile}% of pixels",
                 "max": "Pixel with least shadow"
               },
-              "haze": {
+              "hazePercentile": {
                 "off": "Don't filter based on haze",
                 "percentile": "Less haze than {percentile}% of pixels",
                 "max": "Pixel with least haze"
               },
-              "ndvi": {
+              "ndviPercentile": {
                 "off": "Don't filter based on NDVI",
                 "percentile": "Higher NDVI than {percentile}% of pixels",
                 "max": "Pixel with highest NDVI"
               },
-              "dayOfYear": {
+              "dayOfYearPercentile": {
                 "off": "Don't filter based on day of year",
                 "percentile": "Closer to target day than {percentile}% of pixels",
                 "max": "Pixel closest to target day"
