@@ -3,6 +3,7 @@ import Hammer from 'hammerjs'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
+import ReactDOM from 'react-dom'
 import ReactResizeDetector from 'react-resize-detector'
 import {animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
 import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
@@ -15,17 +16,16 @@ class Draggable extends React.Component {
     state = {}
     element = React.createRef()
     subscription = null
-    dragging = false
 
     ticksPosition(ticks) {
         return Array.isArray(ticks) ? ticks : range(0, ticks + 1).map(i => i / ticks)
-    } 
+    }
 
     renderAxis(ticks) {
         return (
             <div className={styles.axis}>
-                {this.ticksPosition(ticks).map(position => 
-                        <div key={position} style={{left: `${Math.trunc(position * this.props.width)}px`}}/>
+                {this.ticksPosition(ticks).map(position =>
+                    <div key={position} style={{left: `${Math.trunc(position * this.props.width)}px`}}/>
                 )}
             </div>
         )
@@ -40,12 +40,20 @@ class Draggable extends React.Component {
                 <div className={[styles.range, styles.leftRange].join(' ')} style={{right: `${width - position}px`}}/>
                 <div className={[styles.range, styles.rightRange].join(' ')} style={{left: `${position}px`}}/>
                 <div className={styles.handle} ref={this.element} style={{left: `${position}px`}}/>
+                {this.state.dragging
+                    ? ReactDOM.createPortal(
+                        <div className={styles.cursorOverlay}/>,
+                        document.body
+                    )
+                    : null
+                }
+
             </div>
         )
     }
 
     componentDidUpdate(prevProps) {
-        if (!this.dragging && !_.isEqual(prevProps, this.props))
+        if (!this.state.dragging && !_.isEqual(prevProps, this.props))
             this.setPosition(this.toPosition(this.props.input.value))
     }
 
@@ -110,6 +118,10 @@ class Draggable extends React.Component {
         }
     }
 
+    setDragging(dragging) {
+        this.setState(prevState => ({...prevState, dragging}))
+    }
+
     componentDidMount() {
         const drag$ = (element) => {
             const hammerPan = new Hammer(element, {
@@ -136,7 +148,7 @@ class Draggable extends React.Component {
                     return merge(
                         panMove$.pipe(
                             map(pmEvent => {
-                                this.dragging = true
+                                this.setDragging(true)
                                 return ({
                                     cursor: this.clampPosition(start + pmEvent.deltaX),
                                     speed: 1 - Math.max(0, Math.min(95, Math.abs(pmEvent.deltaY))) / 100
@@ -147,7 +159,7 @@ class Draggable extends React.Component {
                         ),
                         panEnd$.pipe(
                             map(() => {
-                                this.dragging = false
+                                this.setDragging(false)
                                 return ({
                                     cursor: this.snapPosition(this.state.position),
                                     speed: 1
