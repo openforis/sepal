@@ -5,17 +5,19 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import ReactResizeDetector from 'react-resize-detector'
-import {animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
-import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
+import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
+import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
 import styles from './slider.module.css'
 
 const clamp = ({value, min, max}) => Math.max(min, Math.min(max, value))
 const scale = ({value, from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
+const lerp = (rate, speed) => (value, target) => value + (target - value) * (rate * speed)
 
 class Draggable extends React.Component {
     state = {}
     element = React.createRef()
-    subscription = null
+    subscriptions = []
+    click$ = new Subject()
 
     ticksPosition(ticks) {
         return Array.isArray(ticks) ? ticks : range(0, ticks + 1).map(i => i / ticks)
@@ -23,11 +25,16 @@ class Draggable extends React.Component {
 
     renderAxis(ticks) {
         return (
-            <div className={styles.axis}>
-                {this.ticksPosition(ticks).map(position =>
-                    <div key={position} style={{left: `${Math.trunc(position * this.props.width)}px`}}/>
-                )}
+            <div className={styles.axis}>            
+                {this.ticksPosition(ticks).map(position => this.renderTick(position))}
             </div>
+        )
+    }
+
+    renderTick(position) {
+        const cursor = Math.trunc(position * this.props.width)
+        return (
+            <div key={position} className={styles.tick} style={{left: `${cursor}px`}} onClick={() => this.click$.next({cursor})}/>
         )
     }
 
@@ -53,12 +60,12 @@ class Draggable extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (!this.state.dragging && !_.isEqual(prevProps, this.props))
+        if (!this.state.inhibitInput && !_.isEqual(prevProps, this.props))
             this.setPosition(this.toPosition(this.props.input.value))
     }
 
     componentWillUnmount() {
-        this.subscription && this.subscription.unsubscribe()
+        this.subscriptions.forEach(subscription => subscription.unsubscribe())
     }
 
     toPosition(value) {
@@ -118,69 +125,87 @@ class Draggable extends React.Component {
         }
     }
 
+    setInhibitInput(inhibitInput) {
+        console.log({inhibitInput})
+        this.setState(prevState => ({...prevState, inhibitInput}))
+    }
+
     setDragging(dragging) {
+        console.log({dragging})
         this.setState(prevState => ({...prevState, dragging}))
     }
 
     componentDidMount() {
-        const drag$ = (element) => {
-            const hammerPan = new Hammer(element, {
-                threshold: 1
-            })
-            hammerPan.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
+        const hammerPan = new Hammer(this.element.current, {
+            threshold: 1
+        })
+        hammerPan.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
 
-            const pan$ = fromEvent(hammerPan, 'panstart panmove panend')
-            const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
-            const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
-            const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
-            const animationFrame$ = interval(0, animationFrameScheduler)
+        const pan$ = fromEvent(hammerPan, 'panstart panmove panend')
+        const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
+        const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
+        const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
+        const animationFrame$ = interval(0, animationFrameScheduler)
+        const stop$ = new Subject()
 
-            const lerp = (rate, speed) => {
-                return (value, targetValue) => {
-                    const delta = (targetValue - value) * (rate * speed)
-                    return value + delta
-                }
-            }
-
-            return panStart$.pipe(
-                switchMap(() => {
-                    const start = this.state.position
-                    return merge(
-                        panMove$.pipe(
-                            map(pmEvent => {
-                                this.setDragging(true)
-                                return ({
-                                    cursor: this.clampPosition(start + pmEvent.deltaX),
-                                    speed: 1 - Math.max(0, Math.min(95, Math.abs(pmEvent.deltaY))) / 100
-                                })
-                            }),
-                            distinctUntilChanged(),
-                            takeUntil(panEnd$)
-                        ),
-                        panEnd$.pipe(
-                            map(() => {
-                                this.setDragging(false)
-                                return ({
-                                    cursor: this.snapPosition(this.state.position),
-                                    speed: 1
-                                })
-                            })
-                        )
-                    )
-                }),
-                switchMap(({cursor, speed}) => {
-                    const start = this.state.position
-                    return animationFrame$.pipe(
-                        map(() => cursor),
-                        scan(lerp(.2, speed), start),
-                        distinctUntilChanged((a, b) => Math.abs(a - b) < .01),
+        const drag$ = panStart$.pipe(
+            switchMap(() => {
+                const start = this.state.position
+                return merge(
+                    panMove$.pipe(
+                        map(pmEvent => ({
+                            cursor: this.clampPosition(start + pmEvent.deltaX),
+                            speed: 1 - Math.max(0, Math.min(95, Math.abs(pmEvent.deltaY))) / 100
+                        })),
+                        distinctUntilChanged(),
                         takeUntil(panEnd$)
+                    ),
+                    panEnd$.pipe(
+                        map(() => ({
+                            cursor: this.snapPosition(this.state.position)
+                        }))
                     )
-                })
-            )
-        }
+                )
+            })
+        )
 
-        this.subscription = drag$(this.element.current).subscribe((position) => this.setPosition(position))
+        const move$ = merge(this.click$, drag$).pipe(
+            switchMap(({cursor, speed = 1}) => {
+                const start = this.state.position
+                return animationFrame$.pipe(
+                    map(() => cursor),
+                    scan(lerp(.1, speed), start),
+                    takeUntil(stop$)
+                )
+            })
+        )
+
+        this.subscriptions.push(
+            panStart$.subscribe(() => {
+                this.setDragging(true)
+            })
+        )
+
+        this.subscriptions.push(
+            panEnd$.subscribe(() => {
+                this.setDragging(false)
+            })
+        )
+
+        this.subscriptions.push(
+            move$.pipe(
+                pairwise(),
+                map(([a, b]) => Math.abs(a - b) > .01),
+                distinctUntilChanged()
+            ).subscribe(status => {
+                this.setInhibitInput(status)
+                status === false && stop$.next()
+            })
+        )
+
+        this.subscriptions.push(
+            move$.subscribe(position => this.setPosition(position))
+        )
     }
 }
 

@@ -5,7 +5,7 @@
     --handle-width: 1.5rem;
     --handle-radius: 100%;
     --axis-color: hsl(0, 0%, 40%);
-    --ticks-half-height: .3rem;
+    --tick-half-height: .4rem;
     width: 100%;
     height: var(--container-height);
     display: flex;
@@ -26,12 +26,35 @@
     height: 1px;
 }
 
-.axis > * {
+.tick {
     position: absolute;
-    background-color: inherit;
-    width: 1px;
-    top: calc(-1* var(--ticks-half-height));
-    bottom: calc(-1* var(--ticks-half-height));
+}
+
+.tick:before {
+    content: '';
+    position: absolute;
+    background-color: var(--axis-color);
+    width: 2px;
+    margin-left: -1px;
+    top: calc(-1* var(--tick-half-height));
+    bottom: calc(-1* var(--tick-half-height));
+}
+
+.tick:after {
+    content: '';
+    position: absolute;
+    top: calc((var(--handle-height) - var(--slider-size)) / -2);
+    margin-left: calc((var(--handle-width)) / -2);
+    height: var(--handle-height);
+    width: var(--handle-width);
+    border: none;
+    border-radius: var(--handle-radius);
+    cursor: pointer;
+    z-index: 10;
+}
+
+.tick:hover:after {
+    border: var(--button-selected-hover-border);
 }
 
 .handle {
