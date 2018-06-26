@@ -34,10 +34,9 @@
     content: '';
     position: absolute;
     background-color: var(--axis-color);
-    width: 2px;
-    margin-left: -1px;
+    width: 1px;
     top: calc(-1* var(--tick-half-height));
-    bottom: calc(-1* var(--tick-half-height));
+    bottom: calc(-1* var(--tick-half-height) - 1px);
 }
 
 .tick:after {

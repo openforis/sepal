@@ -126,12 +126,10 @@ class Draggable extends React.Component {
     }
 
     setInhibitInput(inhibitInput) {
-        console.log({inhibitInput})
         this.setState(prevState => ({...prevState, inhibitInput}))
     }
 
     setDragging(dragging) {
-        console.log({dragging})
         this.setState(prevState => ({...prevState, dragging}))
     }
 
