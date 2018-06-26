@@ -68,7 +68,9 @@ class Composite extends React.Component {
                         <div className={styles.filters}>
                             <Label>Pixel filters</Label>
                             <PercentileField input={shadowPercentile}/>
-                            <PercentileField input={hazePercentile} disabled={corrections.value.includes('SR')}/>
+                            <PercentileField
+                                input={hazePercentile}
+                                disabled={source === 'landsat' && corrections.value.includes('SR')}/>
                             <PercentileField input={ndviPercentile}/>
                             <PercentileField input={dayOfYearPercentile}/>
                         </div>
