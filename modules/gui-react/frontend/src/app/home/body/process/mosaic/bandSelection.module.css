@@ -15,8 +15,18 @@
     border-radius: .5rem;
 }
 
+.selector {
+    height: 3rem;
+}
+
+.selection :global .comboBox__value-container {
+    padding: 8px !important;
+}
+
 .selection :global .comboBox__control {
-    border: none !important;
+    background-color: rgba(19, 19, 20, 0.91) !important;
+    border: 1px solid rgba(32, 32, 33, 0.91) !important;
+    height: 3rem !important;
 }
 
 .selection :global .comboBox__single-value {
@@ -24,6 +34,7 @@
 }
 
 .selectedBands {
+    cursor: pointer;
     display: flex;
     justify-content: center;
 }
