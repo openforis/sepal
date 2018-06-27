@@ -27,9 +27,8 @@
     bottom: calc(-1 * var(--handle-height) / 2);
     left: 0;
     right: 0;
-    /* left: calc(-1 * var(--handle-width) / 2); */
-    /* right: calc(-1 * var(--handle-width) / 2); */
     cursor: pointer;
+    z-index: 1;
 }
 
 .axis {
@@ -39,30 +38,33 @@
 
 .tick {
     position: absolute;
-}
-
-.tick:before {
-    content: '';
-    position: absolute;
     background-color: var(--axis-color);
     width: 1px;
     top: calc(-1* var(--tick-half-height));
-    bottom: calc(-1* var(--tick-half-height) - 1px);
+    bottom: calc(-1* var(--tick-half-height));
 }
 
-.handle {
+.cursor {
     position: absolute;
-    top: calc((var(--handle-height) - var(--slider-size)) / -2 - 0px);
+    top: calc((var(--handle-height) - var(--slider-size)) / -2);
     margin-left: calc((var(--handle-width)) / -2);
     height: var(--handle-height);
     width: var(--handle-width);
     border-radius: var(--handle-radius);
+    border: none;
+}
+
+.cursor.handle {
     background-color: var(--button-selected-background-color);
-    cursor: pointer;
-    text-align: center;
+    /* cursor: pointer; */
+    /* text-align: center;
     font-size: calc(var(--handle-height) * .6);
-    line-height: var(--handle-height);
-    z-index: 10;
+    line-height: var(--handle-height); */
+    z-index: 2;
+}
+
+.cursor.preview {
+    background-color: hsla(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 26%, .3);
 }
 
 .handle:hover {

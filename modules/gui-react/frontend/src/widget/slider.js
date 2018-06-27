@@ -39,14 +39,11 @@ class Draggable extends React.Component {
         )
     }
 
-    setClickTargetBoundingRect() {
-        const clickTargetOffset = Math.trunc(this.clickTarget.current.getBoundingClientRect().left)
-        if (this.state.clickTargetOffset !== clickTargetOffset) {
-            this.setState(prevState => ({
-                ...prevState,
-                clickTargetOffset
-            }))
-        }
+    renderPreview() {
+        const position = this.state.previewPosition
+        return position !== null ? (
+            <div className={[styles.cursor, styles.preview].join(' ')} ref={this.preview} style={{left: `${position}px`}}/>
+        ) : null
     }
 
     render() {
@@ -57,8 +54,9 @@ class Draggable extends React.Component {
                 {this.renderAxis(this.props.ticks)}
                 <div className={[styles.range, styles.leftRange].join(' ')} style={{right: `${width - position}px`}}/>
                 <div className={[styles.range, styles.rightRange].join(' ')} style={{left: `${position}px`}}/>
+                {this.renderPreview()}
                 <div className={styles.clickTarget} ref={this.clickTarget}/>
-                <div className={styles.handle} ref={this.handle} style={{left: `${position}px`}}/>
+                <div className={[styles.cursor, styles.handle].join(' ')} ref={this.handle} style={{left: `${position}px`}}/>
                 <ViewportResizeDetector onChange={() => this.setClickTargetBoundingRect()}/>
                 {this.state.dragging
                     ? ReactDOM.createPortal(
@@ -74,7 +72,7 @@ class Draggable extends React.Component {
 
     componentDidUpdate(prevProps) {
         if (!this.state.inhibitInput && !_.isEqual(prevProps, this.props))
-            this.setPosition(this.toPosition(this.props.input.value))
+            this.setHandlePosition(this.toPosition(this.props.input.value))
         
     }
 
@@ -123,7 +121,17 @@ class Draggable extends React.Component {
         return value
     }
 
-    setPosition(position) {
+    setClickTargetBoundingRect() {
+        const clickTargetOffset = Math.trunc(this.clickTarget.current.getBoundingClientRect().left)
+        if (this.state.clickTargetOffset !== clickTargetOffset) {
+            this.setState(prevState => ({
+                ...prevState,
+                clickTargetOffset
+            }))
+        }
+    }
+
+    setHandlePosition(position) {
         if (position >= 0) {
             position = Math.round(position)
             if (position !== this.state.position) {
@@ -137,6 +145,13 @@ class Draggable extends React.Component {
                 )
             }
         }
+    }
+
+    setPreviewPosition(previewPosition) {
+        this.setState(prevState => ({
+            ...prevState,
+            previewPosition
+        }))
     }
 
     setInhibitInput(inhibitInput) {
@@ -199,18 +214,30 @@ class Draggable extends React.Component {
             })
         )
 
+        // enable preview on mouseover, disable on mouseleave
         this.subscriptions.push(
-            panStart$.subscribe(() => {
-                this.setDragging(true)
-            })
+            merge(
+                drag$.pipe(
+                    map(({cursor}) => this.snapPosition(cursor)),
+                ),
+                fromEvent(this.clickTarget.current, 'mousemove').pipe(
+                    map(e => this.snapPosition(e.clientX - this.state.clickTargetOffset)),
+                ),
+                fromEvent(this.clickTarget.current, 'mouseleave').pipe(
+                    map(() => null)
+                )
+            ).subscribe(previewPosition => this.setPreviewPosition(previewPosition))
         )
 
+        // enable fullscreen pointer while dragging, disable when drag end
         this.subscriptions.push(
-            panEnd$.subscribe(() => {
-                this.setDragging(false)
-            })
+            merge(
+                panStart$.pipe(map(() => true)),
+                panEnd$.pipe(map(() => false))
+            ).subscribe((dragging) => this.setDragging(dragging))
         )
 
+        // enable input when stopped, disabled when moving
         this.subscriptions.push(
             move$.pipe(
                 pairwise(),
@@ -222,8 +249,9 @@ class Draggable extends React.Component {
             })
         )
 
+        // render animation
         this.subscriptions.push(
-            move$.subscribe(position => this.setPosition(position))
+            move$.subscribe(position => this.setHandlePosition(position))
         )
     }
 }
