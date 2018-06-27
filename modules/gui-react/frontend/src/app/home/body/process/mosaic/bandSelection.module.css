@@ -1,0 +1,57 @@
+.container {
+    --scaling-factor: .8 !important;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding-bottom: 0.5rem;
+}
+
+.selection {
+    pointer-events: all;
+    width: 17rem;
+    margin: auto;
+    padding: .3rem 1rem;
+    border-radius: .5rem;
+}
+
+.selection :global .comboBox__control {
+    border: none !important;
+}
+
+.selection :global .comboBox__single-value {
+    width: 100%;
+}
+
+.selectedBands {
+    display: flex;
+    justify-content: center;
+}
+
+.selectedBands > * {
+    padding: 0 .5rem;
+    border-radius: .25rem;
+}
+
+.selectedBands > *:not(:last-child) {
+    margin-right: .5rem;
+}
+
+.red {
+    background-color: hsla(0, 70%, 20%, 0.8);
+    border: 1px solid hsla(0, 70%, 21%, 0.8)
+}
+
+.green {
+    background-color: hsla(120, 70%, 15%, 0.8);
+    border: 1px solid hsla(120, 70%, 16%, 0.8)
+}
+
+.blue {
+    background-color: hsla(240, 70%, 40%, 0.8);
+    border: 1px solid hsla(240, 70%, 41%, 0.8)
+}
+
+.single {
+    background-color: hsla(0, 0%, 50%, 0.8);
+}

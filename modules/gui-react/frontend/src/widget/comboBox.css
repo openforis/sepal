@@ -23,7 +23,7 @@
 
 .comboBox__value-container {
     font-size: calc(1.25rem * var(--scaling-factor));
-    padding: 0 calc(.3rem * var(--scaling-factor)) !important;
+    padding: 0 calc(0.3rem * var(--scaling-factor)) !important;
     transition: background-color 800ms ease-out;
     margin: 0 !important;
 }
@@ -68,18 +68,19 @@
     margin-right: 0.2rem;
 }
 
-.comboBox__dropdown-indicator {
-
-}
-
 .comboBox__menu {
     background-color: rgba(19, 19, 20, 0.91) !important;
     border: 1px solid rgba(32, 32, 33, 0.91) !important;
     z-index: 9999999;
+    margin: 0 !important;
 }
 
 .comboBox__menu-list {
-    font-size: .8rem !important;
+    font-size: 0.8rem !important;
+}
+
+.comboBox__group-heading {
+    font-size: 0.8rem !important;
 }
 
 .comboBox__option {

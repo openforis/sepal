@@ -1,13 +1,15 @@
-import React from 'react'
-import {connect} from 'store'
-import {currentUser, loadCurrentUser$} from 'user'
-import Notifications from 'app/notifications'
+import actionBuilder from 'action-builder'
 import Home from 'app/home/home'
 import Landing from 'app/landing/landing'
-import PropTypes from 'prop-types'
+import Notifications from 'app/notifications'
 import 'bootstrap/dist/css/bootstrap-reboot.css'
-import './app.css'
+import PropTypes from 'prop-types'
+import React from 'react'
+import ReactResizeDetector from 'react-resize-detector'
+import {connect} from 'store'
+import {currentUser, loadCurrentUser$} from 'user'
 import '../style/button-colors.default.css'
+import './app.css'
 
 const mapStateToProps = () => ({
     currentUser: currentUser()
@@ -24,6 +26,15 @@ class App extends React.Component {
         return (
             <div className='app'>
                 <Notifications/>
+                <ReactResizeDetector
+                    handleWidth
+                    handleHeight
+                    onResize={(width, height) =>
+                        actionBuilder('SET_APP_DIMENSIONS')
+                            .set('dimensions', {width, height})
+                            .dispatch()
+                    }/>
+                <div id="portalTarget"/>
                 {this.body()}
             </div>
         )

@@ -343,6 +343,11 @@
           "loadingScenes": "Loading scenes..."
         }
       },
+      "bands": {
+        "placeholder": "Select bands to preview",
+        "combinations": "Combinations",
+        "metadata": "Metadata"
+      },
       "preview": {
         "initializing": "Loading preview...",
         "loading": "Loaded {loaded} of {count} tiles",

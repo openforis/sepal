@@ -1,48 +1,52 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import Select from 'react-select'
+import Select, {components} from 'react-select'
+import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
 import styles from './comboBox.css'
 
+const mapStateToProps = () => ({
+    appDimensions: select('dimensions')
+})
+
 class ComboBox extends React.Component {
+    state = {}
     element = React.createRef()
 
     render() {
-        let {
+        const {
             input,
             validate = 'onBlur',
-            maxMenuHeight,
-            onChange,
+            isClearable = true,
             isLoading,
+            showChevron = true,
             menuPlacement = 'bottom',
             className,
+            onChange,
             onBlur,
+            children,
             ...props
         } = this.props
-
-        const calculateMaxMenuHeight = () => {
-            const dimensions = this.element.current.getBoundingClientRect()
-            return menuPlacement === 'bottom'
-                ? document.body.offsetHeight - (dimensions.top + dimensions.height * 2)
-                : document.body.offsetHeight
-        }
-        if (!maxMenuHeight)
-            maxMenuHeight = this.element.current ? calculateMaxMenuHeight() : '15rem'
+        const components = {LoadingIndicator}
+        if (!showChevron)
+            components.DropdownIndicator = null
+        if (children)
+            components.SingleValue = createSingleValue(children)
         return (
             <div className={[styles.comboBox, className, input.error ? 'error' : null].join(' ')} ref={this.element}>
                 <Select
                     {...props}
                     name={input.name}
-                    value={props.options.find(option => option.value === input.value) || null}
+                    value={this.state.selectedOption}
                     classNamePrefix='comboBox'
-                    maxMenuHeight={maxMenuHeight}
+                    maxMenuHeight={this.state.maxMenuHeight}
                     menuPlacement={menuPlacement}
                     menuPortalTarget={document.getElementById('portalTarget')}
-                    isClearable={true}
+                    isClearable={isClearable}
                     isLoading={!!isLoading}
-                    loadingMessage={msg('widget.comboBox.loading')}
-                    components={{LoadingIndicator}}
+                    loadingMessage={() => msg('widget.comboBox.loading')}
+                    components={components}
                     onChange={(e) => {
                         input.handleChange({target: {value: e ? e.value : '', name: input.name}})
                         if (onChange)
@@ -60,6 +64,56 @@ class ComboBox extends React.Component {
             </div>
         )
     }
+
+    componentDidMount() {
+        this.updateSelectedOption()
+        this.updateMaxMenuHeight()
+    }
+
+    componentDidUpdate(prevProps) {
+        const value = this.props.input.value
+        if (prevProps.input.value !== value)
+            this.updateSelectedOption()
+
+        const appHeight = this.props.appDimensions.height
+        if (this.element.current && prevProps.appDimensions.height !== appHeight)
+            this.updateMaxMenuHeight()
+    }
+
+    updateMaxMenuHeight() {
+        const appHeight = this.props.appDimensions.height
+        const comboBoxBox = this.element.current.getBoundingClientRect()
+        const availableSpace = (
+            this.props.menuPlacement === 'top'
+                ? comboBoxBox.top
+                : appHeight - comboBoxBox.bottom
+        ) - 10
+
+        let maxMenuHeightProp = this.props.maxMenuHeight || '20rem'
+        if (maxMenuHeightProp.toString().toLowerCase().endsWith('rem'))
+            maxMenuHeightProp = parseFloat(maxMenuHeightProp) * parseFloat(getComputedStyle(document.documentElement).fontSize)
+        const maxMenuHeight = Math.trunc(Math.min(availableSpace, maxMenuHeightProp))
+        this.setState(prevState => ({...prevState, maxMenuHeight}))
+    }
+
+    updateSelectedOption() {
+        const value = this.props.input.value
+        let selectedOption = null
+
+        const setSelected = (option) => {
+            if (option.value === value)
+                selectedOption = option
+            return option.value === value
+        }
+
+        this.props.options.find(option =>
+            option.options
+                ? option.options.find(setSelected)
+                : setSelected(option)
+        )
+        this.setState(prevState => ({...prevState, selectedOption}))
+
+    }
 }
 
 ComboBox.propTypes = {
@@ -67,10 +121,20 @@ ComboBox.propTypes = {
     validate: PropTypes.oneOf(['onChange', 'onBlur']),
     ...Select.propTypes
 }
-export default ComboBox
+export default connect(mapStateToProps)(ComboBox)
 
 const LoadingIndicator = () => {
     return (
         <Icon name='spinner'/>
     )
 }
+
+
+const createSingleValue = (children) =>
+    (props) => {
+        return (
+            <components.SingleValue {...props}>
+                {children ? children(props) : null}
+            </components.SingleValue>
+        )
+    }

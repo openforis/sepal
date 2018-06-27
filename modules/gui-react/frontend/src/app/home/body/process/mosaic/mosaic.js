@@ -2,6 +2,7 @@ import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
+import BandSelection from './bandSelection'
 import MapToolbar from './mapToolbar'
 import styles from './mosaic.module.css'
 import MosaicPreview from './mosaicPreview'
@@ -9,8 +10,8 @@ import {RecipeState} from './mosaicRecipe'
 import MosaicToolbar from './panels/mosaicToolbar'
 import Panels from './panels/panels'
 import SceneAreas from './sceneAreas'
-import SceneSelection from './sceneSelection'
 import SceneDeselection from './sceneDeselection'
+import SceneSelection from './sceneSelection'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
@@ -34,6 +35,7 @@ class Mosaic extends React.Component {
                     ? <SceneSelection recipeId={recipeId} sceneAreaId={sceneSelection}/>
                     : null}
                 <SceneDeselection recipeId={recipeId}/>
+                <BandSelection recipeId={recipeId}/>
             </div>
         )
     }
