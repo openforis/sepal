@@ -12,7 +12,7 @@ import ViewportResizeDetector from 'widget/viewportResizeDetector'
 
 const clamp = ({value, min, max}) => Math.max(min, Math.min(max, value))
 const scale = ({value, from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
-const lerp = (rate, speed) => (value, target) => value + (target - value) * (rate * speed)
+const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
 
 class Draggable extends React.Component {
     state = {}
@@ -163,18 +163,15 @@ class Draggable extends React.Component {
     }
 
     componentDidMount() {
-        const click = new Hammer(this.clickTarget.current, {
-            threshold: 1
-        })
-
         const handle = new Hammer(this.handle.current, {
             threshold: 1
         })
         handle.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
 
-        const click$ = fromEvent(click, 'tap').pipe(
-            map(tap => ({cursor: this.snapPosition(tap.center.x - this.state.clickTargetOffset)}))
-        )
+        const click = new Hammer(this.clickTarget.current, {
+            threshold: 1
+        })
+
         const pan$ = fromEvent(handle, 'panstart panmove panend')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
@@ -187,28 +184,28 @@ class Draggable extends React.Component {
                 const start = this.state.position
                 return merge(
                     panMove$.pipe(
-                        map(pmEvent => ({
-                            cursor: this.clampPosition(start + pmEvent.deltaX),
-                            speed: 1 - Math.max(0, Math.min(95, Math.abs(pmEvent.deltaY))) / 100
-                        })),
+                        map(pmEvent => this.clampPosition(start + pmEvent.deltaX)),
                         distinctUntilChanged(),
                         takeUntil(panEnd$)
                     ),
                     panEnd$.pipe(
-                        map(() => ({
-                            cursor: this.snapPosition(this.state.position)
-                        }))
+                        map(() => this.snapPosition(this.state.position))
                     )
                 )
             })
         )
 
+        const click$ = fromEvent(click, 'tap').pipe(
+            map(tap => this.snapPosition(tap.center.x - this.state.clickTargetOffset))
+        )
+
+        // move on click or drag
         const move$ = merge(click$, drag$).pipe(
-            switchMap(({cursor, speed = 1}) => {
+            switchMap(cursor => {
                 const start = this.state.position
                 return animationFrame$.pipe(
                     map(() => cursor),
-                    scan(lerp(.1, speed), start),
+                    scan(lerp(.1), start),
                     takeUntil(stop$)
                 )
             })
@@ -218,7 +215,7 @@ class Draggable extends React.Component {
         this.subscriptions.push(
             merge(
                 drag$.pipe(
-                    map(({cursor}) => this.snapPosition(cursor)),
+                    map(cursor => this.snapPosition(cursor)),
                 ),
                 fromEvent(this.clickTarget.current, 'mousemove').pipe(
                     map(e => this.snapPosition(e.clientX - this.state.clickTargetOffset)),
