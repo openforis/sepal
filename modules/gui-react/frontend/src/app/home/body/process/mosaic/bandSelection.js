@@ -20,66 +20,93 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class BandSelection extends React.Component {
+    state = {}
+    options = [
+        {
+            label: msg('process.mosaic.bands.combinations'),
+            options: [
+                {value: 'red, green, blue', label: 'RED, GREEN, BLUE'},
+                {value: 'nir, red, green', label: 'NIR, RED, GREEN'},
+                {value: 'nir, swir1, red', label: 'NIR, SWIR1, RED'},
+                {value: 'swir2, nir, red', label: 'SWIR2, NIR, RED'},
+                {value: 'swir2, swir1, red', label: 'SWIR2, SWIR1, RED'},
+                {value: 'swir2, nir, green', label: 'SWIR2, NIR, GREEN'},
+            ]
+        },
+        {
+            label: msg('process.mosaic.bands.metadata'),
+            options: [
+                {value: 'unixTimeDays', label: 'Date'},
+                {value: 'dayOfYear', label: 'Day of year'},
+                {value: 'daysFromTarget', label: 'Days from target'}
+            ]
+        }
+    ]
+    optionByValue = {}
+
     constructor(props) {
         super(props)
         this.recipe = new RecipeActions(props.recipeId)
+        this.options.forEach(option => {
+            if (option.options)
+                option.options.forEach(option => this.optionByValue[option.value] = option)
+            else
+                this.optionByValue[option.value] = option
+        })
     }
 
     render() {
         const {initialized, inputs: {bands}} = this.props
-        const options = [
-            {
-                label: msg('process.mosaic.bands.combinations'),
-                options: [
-                    {value: 'red, green, blue', label: 'RED, GREEN, BLUE'},
-                    {value: 'nir, red, green', label: 'NIR, RED, GREEN'},
-                    {value: 'nir, swir1, red', label: 'NIR, SWIR1, RED'},
-                    {value: 'swir2, nir, red', label: 'SWIR2, NIR, RED'},
-                    {value: 'swir2, swir1, red', label: 'SWIR2, SWIR1, RED'},
-                    {value: 'swir2, nir, green', label: 'SWIR2, NIR, GREEN'},
-                ]
-            },
-            {
-                label: msg('process.mosaic.bands.metadata'),
-                options: [
-                    {value: 'unixTimeDays', label: 'Date'},
-                    {value: 'dayOfYear', label: 'Day of year'},
-                    {value: 'daysFromTarget', label: 'Days from target'}
-                ]
-            }
-        ]
-        // if (initialized)
-        return (
-            <div className={styles.container}>
-                <div className={styles.selection}>
-                    <ComboBox
-                        input={bands}
-                        placeholder={msg('process.mosaic.bands.placeholder')}
-                        options={options}
-                        menuPlacement='top'
-                        maxMenuHeight='40rem'
-                        isClearable={false}
-                        showChevron={false}
-                        onChange={(option) =>
-                            this.recipe.setBands(option ? option.value : null).dispatch()
-                        }>
-                        {
-                            (props) => {
-                                console.log(props)
-                                return <SelectedBands bands={props.getValue()[0].label}/>
-                            }
+        if (initialized)
+            return (
+                <div className={styles.container}>
+                    <div className={styles.selection}>
+                        {this.state.showSelector
+                            ? <BandSelector
+                                recipe={this.recipe}
+                                bands={bands}
+                                options={this.options}
+                                onChange={() => this.setSelectorShown(false)}/>
+                            : <SelectedBands
+                                selectedOption={this.optionByValue[bands.value]}
+                                onClick={() => this.setSelectorShown(true)}/>
                         }
-
-                    </ComboBox>
+                    </div>
                 </div>
-            </div>
+            )
+        else
+            return null
+    }
+
+    setSelectorShown(shown) {
+        this.setState(prevState =>
+            ({...prevState, showSelector: shown})
         )
-        // else
-        //     return null
     }
 }
 
-const SelectedBands = ({bands}) => {
+const BandSelector = ({recipe, bands, options, onChange}) =>
+    <ComboBox
+        input={bands}
+        placeholder={msg('process.mosaic.bands.placeholder')}
+        options={options}
+        autoFocus={true}
+        openMenuOnFocus={true}
+        menuPlacement='top'
+        maxMenuHeight='40rem'
+        isClearable={false}
+        showChevron={false}
+        className={styles.selector}
+        onMenuClose={onChange}
+        onChange={(option) => {
+            recipe.setBands(option ? option.value : null).dispatch()
+            onChange()
+        }}>
+        {() => <div/>}
+    </ComboBox>
+
+const SelectedBands = ({selectedOption, onClick}) => {
+    const bands = selectedOption.label
     if (!bands)
         return null
     console.log({bands})
@@ -89,7 +116,7 @@ const SelectedBands = ({bands}) => {
         : ['red', 'green', 'blue']
 
     const bandElements = _.zip(bandList, bandClasses).map(([band, className]) =>
-        <div key={className} className={styles[className]}>
+        <div key={className} className={styles[className]} onClick={onClick}>
             {band}
         </div>
     )
