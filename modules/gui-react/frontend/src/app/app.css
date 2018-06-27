@@ -49,6 +49,10 @@ html {
     font-size: calc(14px * var(--scaling-factor));
 }
 
+#portalTarget > * {
+    z-index: 999999 !important;
+}
+
 body, input, textarea, select, button, a, label {
     font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
     line-height: calc(2 * var(--scaling-factor));

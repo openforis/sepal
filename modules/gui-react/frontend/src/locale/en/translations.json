@@ -409,6 +409,9 @@
     },
     "tabs": {
       "newTab": "New_Tab"
+    },
+    "comboBox": {
+      "loading": "Loading..."
     }
   }
 }

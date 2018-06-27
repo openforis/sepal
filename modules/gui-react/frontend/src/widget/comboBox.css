@@ -1,276 +1,95 @@
-.Select {
-    position: relative;
-    margin-top: -0.5rem;
+.comboBox {
 }
 
-.Select.is-disabled .Select-arrow-zone {
-    cursor: default;
-    pointer-events: none;
-    opacity: 0.35;
+.comboBox__control {
+    border: none !important;
+    border-bottom: 1px solid #B5B5B5 !important;
+    border-radius: unset !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    height: calc(2rem * var(--scaling-factor)) !important;
+    min-height: calc(2.5rem * var(--scaling-factor)) !important;
 }
 
-.Select.is-open > .Select-control .Select-arrow {
-    top: -2px;
-    border-color: transparent transparent #999;
-    border-width: 0 5px 5px;
+.comboBox__control.comboBox__control-is-focused {
+    border-bottom: 1px solid #fff !important;
 }
 
-.Select.is-searchable.is-open > .Select-control {
-    cursor: text;
+.error .comboBox__control {
+    border-bottom-color: #e81351 !important;
+    background-color: rgba(232, 19, 81, 0.1) !important;
 }
 
-.Select.is-searchable.is-focused:not(.is-open) > .Select-control {
-    cursor: text;
-}
 
-.Select.has-value.is-clearable.Select--single > .Select-control .Select-value {
-    padding-right: 42px;
-}
-
-.Select.has-value.Select--single > .Select-control .Select-value .Select-value-label,
-.Select.has-value.is-pseudo-focused.Select--single > .Select-control .Select-value .Select-value-label {
-    /*color: #333;*/
-}
-
-.Select.has-value.Select--single > .Select-control .Select-value a.Select-value-label,
-.Select.has-value.is-pseudo-focused.Select--single > .Select-control .Select-value a.Select-value-label {
-    cursor: pointer;
-    text-decoration: none;
-}
-
-.Select.has-value.is-pseudo-focused .Select-input {
-    opacity: 0;
-}
-
-.Select-control {
-    border-bottom: 1px solid #B5B5B5;
-    cursor: default;
-    display: table;
-    border-spacing: 0;
-    border-collapse: separate;
-    overflow: hidden;
-    position: relative;
-    width: 100%;
-}
-
-.Select-placeholder,
-.Select--single > .Select-control .Select-value {
-    bottom: 0;
-    /*color: #aaa;*/
-    left: 0;
-    line-height: 34px;
-    padding-left: calc(.3rem * var(--scaling-factor));
-    padding-right: calc(.3rem * var(--scaling-factor));
-    position: absolute;
-    right: 0;
-    top: 0;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.Select-placeholder {
+.comboBox__value-container {
     font-size: calc(1.25rem * var(--scaling-factor));
+    padding: 0 calc(.3rem * var(--scaling-factor)) !important;
+    transition: background-color 800ms ease-out;
+    margin: 0 !important;
+}
+
+.comboBox__input {
+    color: white !important;
+}
+
+.comboBox__placeholder {
     font-style: italic;
     letter-spacing: normal;
     color: #6c757d;
 }
 
-.Select-input {
-    height: 34px;
-    padding-left: calc(.3rem * var(--scaling-factor));
-    padding-right: calc(.3rem * var(--scaling-factor));
-    vertical-align: middle;
+.comboBox__single-value {
+    color: white !important;
 }
 
-.Select-input > input {
-    width: 100%;
-    background: none transparent;
-    border: 0 none;
-    cursor: default;
-    display: inline-block;
-    margin: 0;
-    line-height: 17px;
-    padding: 8px 0 12px;
-    font-size: calc(1.25rem * var(--scaling-factor));
-}
-
-.is-focused .Select-input > input {
-    cursor: text;
-}
-
-.has-value.is-pseudo-focused .Select-input {
-    opacity: 0;
-}
-
-.Select-control:not(.is-searchable) > .Select-input {
-}
-
-.Select-loading-zone {
-    cursor: pointer;
-    display: table-cell;
-    position: relative;
-    text-align: center;
-    vertical-align: middle;
-    width: 16px;
-}
-
-.Select-loading {
-    -webkit-animation: Select-animation-spin 400ms infinite linear;
-    -o-animation: Select-animation-spin 400ms infinite linear;
-    animation: Select-animation-spin 400ms infinite linear;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 2px solid #ccc;
-    border-right-color: #333;
-    display: inline-block;
-    position: relative;
-    vertical-align: middle;
-}
-
-.Select-clear-zone {
-    -webkit-animation: Select-animation-fadeIn 200ms;
-    -o-animation: Select-animation-fadeIn 200ms;
-    animation: Select-animation-fadeIn 200ms;
-    cursor: pointer;
-    display: table-cell;
-    position: relative;
-    text-align: center;
-    vertical-align: middle;
-    width: 17px;
+.comboBox__indicators svg {
     color: #a0a0a0;
 }
 
-.Select-clear-zone:hover {
-    color: #e81351;
+.comboBox__indicators i {
+    font-size: 0.9rem;
+    margin-right: 0.2rem;
 }
 
-.Select-clear {
-    display: inline-block;
-    font-size: 18px;
-    line-height: 1;
+.comboBox__indicator-separator {
+    display: none;
 }
 
-.Select-arrow-zone {
-    cursor: pointer;
-    display: table-cell;
-    position: relative;
-    text-align: center;
-    vertical-align: middle;
-    width: 25px;
-    padding-right: 5px;
-    color: #a0a0a0;
+.comboBox__indicator {
+    padding: 0 !important;
 }
 
-.Select-arrow {
-    border-color: #a0a0a0 transparent transparent;
-    border-style: solid;
-    border-width: 5px 5px 2.5px;
-    display: inline-block;
-    height: 0;
-    width: 0;
-    position: relative;
+.comboBox__indicator:hover svg {
+    color: #ccc !important;
 }
 
-.Select-arrow-zone:hover .Select-arrow {
-    border-color: #c8c8c8 transparent transparent;
+.comboBox__clear-indicator svg {
+    height: 1rem;
+    margin-right: 0.2rem;
 }
 
-.Select-control > *:last-child {
-    padding-right: 5px;
+.comboBox__dropdown-indicator {
+
 }
 
-.Select .Select-aria-only {
-    position: absolute;
-    display: inline-block;
-    height: 1px;
-    width: 1px;
-    margin: -1px;
-    clip: rect(0, 0, 0, 0);
-    overflow: hidden;
-    float: left;
+.comboBox__menu {
+    background-color: rgba(19, 19, 20, 0.91) !important;
+    border: 1px solid rgba(32, 32, 33, 0.91) !important;
+    z-index: 9999999;
 }
 
-@-webkit-keyframes Select-animation-fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+.comboBox__menu-list {
+    font-size: .8rem !important;
 }
 
-@keyframes Select-animation-fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+.comboBox__option {
+    background-color: rgba(19, 19, 20, 0.91) !important;
 }
 
-.Select-menu-outer {
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 4px;
-    background-color: rgba(19, 19, 20, 0.91);
-    border: 1px solid rgba(32, 32, 33, 0.91);
-    margin-top: -1px;
-    max-height: 200px;
-    position: absolute;
-    left: 0;
-    top: 100%;
-    width: 100%;
-    z-index: 1;
-    -webkit-overflow-scrolling: touch;
+.comboBox__option--is-selected {
+    background-color: hsla(var(--selected-hue), var(--selected-sat), 26%, .5) !important;
 }
 
-.Select-menu {
-    max-height: 198px;
-    overflow-y: auto;
-}
-
-.Select-option {
-    background-color: rgba(19, 19, 20, 0.91);
-    cursor: pointer;
-    display: block;
-    padding: 8px 10px;
-}
-
-.Select-option:last-child {
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 4px;
-}
-
-.Select-option.is-selected {
-    background-color: hsla(var(--selected-hue), var(--selected-sat), 26%, .5);
-}
-
-.Select-option.is-focused {
-    background-color: hsl(var(--selected-hue), var(--selected-sat), 26%);
-}
-
-.Select-option.is-disabled {
-    color: #cccccc;
-    cursor: default;
-}
-
-.Select-noresults {
-    color: #999999;
-    cursor: default;
-    display: block;
-    padding: 8px 10px;
-}
-
-@keyframes Select-animation-spin {
-    to {
-        transform: rotate(1turn);
-    }
-}
-
-@-webkit-keyframes Select-animation-spin {
-    to {
-        -webkit-transform: rotate(1turn);
-    }
+.comboBox__option--is-focused {
+    background-color: hsl(var(--selected-hue), var(--selected-sat), 26%) !important;
 }
