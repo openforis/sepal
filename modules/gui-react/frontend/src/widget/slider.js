@@ -8,6 +8,7 @@ import ReactResizeDetector from 'react-resize-detector'
 import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
 import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
 import styles from './slider.module.css'
+import ViewportResizeDetector from 'widget/viewportResizeDetector'
 
 const clamp = ({value, min, max}) => Math.max(min, Math.min(max, value))
 const scale = ({value, from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
@@ -15,9 +16,9 @@ const lerp = (rate, speed) => (value, target) => value + (target - value) * (rat
 
 class Draggable extends React.Component {
     state = {}
-    element = React.createRef()
+    handle = React.createRef()
+    clickTarget = React.createRef()
     subscriptions = []
-    click$ = new Subject()
 
     ticksPosition(ticks) {
         return Array.isArray(ticks) ? ticks : range(0, ticks + 1).map(i => i / ticks)
@@ -34,8 +35,18 @@ class Draggable extends React.Component {
     renderTick(position) {
         const cursor = Math.trunc(position * this.props.width)
         return (
-            <div key={position} className={styles.tick} style={{left: `${cursor}px`}} onClick={() => this.click$.next({cursor})}/>
+            <div key={position} className={styles.tick} style={{left: `${cursor}px`}}/>
         )
+    }
+
+    setClickTargetBoundingRect() {
+        const clickTargetOffset = Math.trunc(this.clickTarget.current.getBoundingClientRect().left)
+        if (this.state.clickTargetOffset !== clickTargetOffset) {
+            this.setState(prevState => ({
+                ...prevState,
+                clickTargetOffset
+            }))
+        }
     }
 
     render() {
@@ -46,7 +57,9 @@ class Draggable extends React.Component {
                 {this.renderAxis(this.props.ticks)}
                 <div className={[styles.range, styles.leftRange].join(' ')} style={{right: `${width - position}px`}}/>
                 <div className={[styles.range, styles.rightRange].join(' ')} style={{left: `${position}px`}}/>
-                <div className={styles.handle} ref={this.element} style={{left: `${position}px`}}/>
+                <div className={styles.clickTarget} ref={this.clickTarget}/>
+                <div className={styles.handle} ref={this.handle} style={{left: `${position}px`}}/>
+                <ViewportResizeDetector onChange={() => this.setClickTargetBoundingRect()}/>
                 {this.state.dragging
                     ? ReactDOM.createPortal(
                         <div className={styles.cursorOverlay}/>,
@@ -62,6 +75,7 @@ class Draggable extends React.Component {
     componentDidUpdate(prevProps) {
         if (!this.state.inhibitInput && !_.isEqual(prevProps, this.props))
             this.setPosition(this.toPosition(this.props.input.value))
+        
     }
 
     componentWillUnmount() {
@@ -134,12 +148,19 @@ class Draggable extends React.Component {
     }
 
     componentDidMount() {
-        const hammerPan = new Hammer(this.element.current, {
+        const click = new Hammer(this.clickTarget.current, {
             threshold: 1
         })
-        hammerPan.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
 
-        const pan$ = fromEvent(hammerPan, 'panstart panmove panend')
+        const handle = new Hammer(this.handle.current, {
+            threshold: 1
+        })
+        handle.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
+
+        const click$ = fromEvent(click, 'tap').pipe(
+            map(tap => ({cursor: this.snapPosition(tap.center.x - this.state.clickTargetOffset)}))
+        )
+        const pan$ = fromEvent(handle, 'panstart panmove panend')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
         const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
@@ -167,7 +188,7 @@ class Draggable extends React.Component {
             })
         )
 
-        const move$ = merge(this.click$, drag$).pipe(
+        const move$ = merge(click$, drag$).pipe(
             switchMap(({cursor, speed = 1}) => {
                 const start = this.state.position
                 return animationFrame$.pipe(

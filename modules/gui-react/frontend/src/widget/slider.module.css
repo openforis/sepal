@@ -1,5 +1,5 @@
 .container {
-    --container-height: 2rem;
+    --container-height: 3rem;
     --slider-size: 1px;
     --handle-height: 1.5rem;
     --handle-width: 1.5rem;
@@ -21,6 +21,17 @@
     height: var(--slider-size);
 }
 
+.clickTarget {
+    position: absolute;
+    top: calc(-1 * var(--handle-height) / 2);
+    bottom: calc(-1 * var(--handle-height) / 2);
+    left: 0;
+    right: 0;
+    /* left: calc(-1 * var(--handle-width) / 2); */
+    /* right: calc(-1 * var(--handle-width) / 2); */
+    cursor: pointer;
+}
+
 .axis {
     background-color: var(--axis-color);
     height: 1px;
@@ -39,32 +50,14 @@
     bottom: calc(-1* var(--tick-half-height) - 1px);
 }
 
-.tick:after {
-    content: '';
-    position: absolute;
-    top: calc((var(--handle-height) - var(--slider-size)) / -2);
-    margin-left: calc((var(--handle-width)) / -2);
-    height: var(--handle-height);
-    width: var(--handle-width);
-    border: none;
-    border-radius: var(--handle-radius);
-    cursor: pointer;
-    z-index: 10;
-}
-
-.tick:hover:after {
-    border: var(--button-selected-hover-border);
-}
-
 .handle {
     position: absolute;
-    top: calc((var(--handle-height) - var(--slider-size)) / -2);
+    top: calc((var(--handle-height) - var(--slider-size)) / -2 - 0px);
     margin-left: calc((var(--handle-width)) / -2);
     height: var(--handle-height);
     width: var(--handle-width);
     border-radius: var(--handle-radius);
     background-color: var(--button-selected-background-color);
-    border: var(--button-selected-border);
     cursor: pointer;
     text-align: center;
     font-size: calc(var(--handle-height) * .6);
@@ -74,7 +67,6 @@
 
 .handle:hover {
     background-color: var(--button-selected-hover-background-color);
-    border: var(--button-selected-hover-border);
 }
 
 .range {
@@ -83,10 +75,6 @@
     right: 0;
     top: -1px;
     bottom: -1px;
-}
-
-.leftRange {
-    /*background-color: rgba(0, 255, 0, .5);*/
 }
 
 .rightRange {
