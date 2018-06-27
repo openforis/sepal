@@ -10,7 +10,7 @@ import styles from './scenePreview.module.css'
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
-        scene: recipe('sceneToPreview')
+        scene: recipe('ui.sceneToPreview')
     }
 }
 

@@ -112,6 +112,12 @@ export const RecipeActions = (id) => {
                 'compositeOptions': createCompositeOptions(compositeOptionsForm)
             }, {compositeOptionsForm})
         },
+        setBands(bands) {
+            return setAll('SET_BANDS', {
+                'ui.bands': bands,
+                'bands': bands ? bands.split(',').map(band => band.trim()) : null
+            }, {bands})
+        },
         setModal(enabled) {
             return set('SET_MODAL', 'ui.modal', enabled, {enabled})
         },
@@ -137,7 +143,7 @@ export const RecipeActions = (id) => {
             return set('SET_SELECTED_SCENES', 'scenes', scenes, {scenes})
         },
         setSceneToPreview(scene) {
-            return set('SET_SCENE_TO_PREVIEW', 'sceneToPreview', scene, {scene})
+            return set('SET_SCENE_TO_PREVIEW', 'ui.sceneToPreview', scene, {scene})
         }
     }
 }
@@ -179,6 +185,7 @@ const initRecipe = (recipe) => {
 
     actions.setLabelsShown(false).dispatch()
     actions.setSceneAreasShown(true).dispatch()
+    actions.setBands('red, green, blue').dispatch()
 }
 
 const createAoi = (aoiForm) => {

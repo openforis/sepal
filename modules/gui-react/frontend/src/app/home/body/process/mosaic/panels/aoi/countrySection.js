@@ -96,6 +96,7 @@ class CountrySection extends React.Component {
                         disabled={!countries}
                         placeholder={countryPlaceholder}
                         options={(countries || []).map(([value, label]) => ({value, label}))}
+                        autoFocus={true}
                         onChange={(e) => {
                             area.set('')
                             this.aoiChanged$.next()

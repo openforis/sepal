@@ -53,7 +53,7 @@ const transformRecipeForPreview = (recipe) => {
         shadowTolerance: 1 - recipe.compositeOptions.shadowPercentile / 100,
         hazeTolerance: 1 - recipe.compositeOptions.hazePercentile / 100,
         greennessWeight: recipe.compositeOptions.ndviPercentile / 100,
-        bands: ['red', 'green', 'blue'],
+        bands: recipe.bands,
         surfaceReflectance: recipe.compositeOptions.corrections.includes('SR'),
         medianComposite: recipe.compositeOptions.compose === 'MEDIAN',
         brdfCorrect: recipe.compositeOptions.corrections.includes('BRDF'),
