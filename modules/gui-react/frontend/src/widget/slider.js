@@ -9,13 +9,16 @@ import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs
 import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
 import styles from './slider.module.css'
 import ViewportResizeDetector from 'widget/viewportResizeDetector'
+import { isNull } from 'util';
 
 const clamp = ({value, min, max}) => Math.max(min, Math.min(max, value))
 const scale = ({value, from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
 const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
 
 class Draggable extends React.Component {
-    state = {}
+    state = {
+        previewPosition: null
+    }
     handle = React.createRef()
     clickTarget = React.createRef()
     subscriptions = []
