@@ -3,10 +3,14 @@ html {
     --secondary-text-color: #e8edf0;
     --header-font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
 
+    --wireframe-color: rgba(100%, 100%, 100%, .15);
+    --wireframe: 1px solid var(--wireframe-color);
+
     --selected-hue: 40;
     --selected-sat: 60%;
 
     --button-border-radius: .2rem;
+    --container-border-radius: .4rem;
 
     --btn-bg-hue: 40;
     --btn-bg-sat: 8%;
