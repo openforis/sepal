@@ -9,7 +9,6 @@ import {map, takeUntil} from 'rxjs/operators'
 import {connect} from 'store'
 import {msg} from 'translate'
 import MapStatus from 'widget/mapStatus'
-import {SceneSelectionType} from './mosaicRecipe'
 import SceneAreaMarker from './sceneAreaMarker'
 import styles from './sceneAreas.module.css'
 
@@ -21,24 +20,25 @@ const mapStateToProps = (state, ownProps) => {
         sceneAreasShown: recipe('ui.sceneAreasShown'),
         sceneAreas: recipe('ui.sceneAreas'),
         aoi: recipe('aoi'),
-        source: Object.keys(recipe('sources'))[0],
-        sceneSelectionOptions: recipe('sceneSelectionOptions')
+        source: Object.keys(recipe('sources'))[0]
     }
 }
 
 class SceneAreas extends React.Component {
     constructor(props) {
         super(props)
+        const {aoi, source} = props
         this.recipe = new RecipeActions(props.recipeId)
         this.state = {
             show: true
         }
         this.loadSceneArea$ = new Subject()
+        this.loadSceneAreas(aoi, source)
     }
 
     render() {
         const {sceneAreasShown, action} = this.props
-        if (this.renderable() && sceneAreasShown && this.state.show)
+        if (sceneAreasShown && this.state.show)
             return (
                 <div>
                     {action('LOAD_SCENE_AREAS').dispatched
@@ -72,18 +72,10 @@ class SceneAreas extends React.Component {
 
     componentDidUpdate(prevProps) {
         const {recipeId, aoi, source} = this.props
-        const loadSceneAreas = this.renderable()
-            && !objectEquals(this.props, prevProps, ['aoi', 'source', 'sceneSelectionOptions'])
+        const loadSceneAreas = !objectEquals(this.props, prevProps, ['aoi', 'source'])
         if (loadSceneAreas)
             this.loadSceneAreas(aoi, source)
         setSceneAreaLayer({recipeId, component: this})
-    }
-
-    renderable() {
-        const {aoi, source, sceneSelectionOptions: {type}} = this.props
-        return aoi
-            && source
-            && type === SceneSelectionType.SELECT
     }
 
     loadSceneAreas(aoi, source) {
@@ -133,9 +125,7 @@ SceneAreas.propTypes = {
 export default connect(mapStateToProps)(SceneAreas)
 
 const setSceneAreaLayer = ({recipeId, component}) => {
-    const layer = component.renderable()
-        ? new SceneAreaLayer(component)
-        : null
+    const layer = new SceneAreaLayer(component)
     sepalMap.getContext(recipeId).setLayer({
         id: 'sceneAreas',
         layer,

@@ -1,3 +1,4 @@
+import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -17,20 +18,24 @@ const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
         aoi: recipe('aoi'),
-        sceneSelection: recipe('ui.sceneSelection')
+        source: Object.keys(recipe('sources'))[0],
+        sceneSelectionOptions: recipe('sceneSelectionOptions'),
+        sceneSelection: recipe('ui.sceneSelection'),
     }
 }
 
 class Mosaic extends React.Component {
     render() {
-        const {recipeId, sceneSelection} = this.props
+        const {recipeId, aoi, source, sceneSelectionOptions: {type}, sceneSelection} = this.props
         return (
             <div className={styles.mosaic}>
                 <MapToolbar recipeId={recipeId} className={styles.mapToolbar}/>
                 <MosaicToolbar recipeId={recipeId} className={styles.mosaicToolbar}/>
                 <Panels recipeId={recipeId} className={styles.panel}/>
                 <MosaicPreview recipeId={recipeId}/>
-                <SceneAreas recipeId={recipeId}/>
+                {aoi && source && type === SceneSelectionType.SELECT
+                    ? <SceneAreas recipeId={recipeId}/>
+                    : null}
                 {sceneSelection
                     ? <SceneSelection recipeId={recipeId} sceneAreaId={sceneSelection}/>
                     : null}
