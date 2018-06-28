@@ -1,7 +1,7 @@
 .container {
-    --scaling-factor: .8 !important;
+    --scaling-factor: .9 !important;
     position: absolute;
-    right: 0;
+    right: 3rem;
     bottom: 0;
     left: 0;
     padding-bottom: 0.5rem;
@@ -9,13 +9,18 @@
 
 .selection {
     pointer-events: all;
-    width: 17rem;
     margin: auto;
     padding: .3rem 1rem;
     border-radius: .5rem;
 }
 
+.selection label {
+    margin: 1rem 0 0 1rem;
+    font-size: calc(1rem * var(--scaling-factor));
+}
+
 .selector {
+    width: 17rem;
     height: 3rem;
 }
 
@@ -33,10 +38,18 @@
     width: 100%;
 }
 
+.selection {
+    display: flex;
+    flex-wrap: wrap-reverse;
+    justify-content: center;
+    align-items: center;
+}
+
 .selectedBands {
     cursor: pointer;
     display: flex;
     justify-content: center;
+    margin-top: 1rem;
 }
 
 .selectedBands > * {

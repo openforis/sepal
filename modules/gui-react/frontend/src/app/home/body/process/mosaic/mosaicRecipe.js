@@ -118,6 +118,12 @@ export const RecipeActions = (id) => {
                 'bands': bands ? bands.split(',').map(band => band.trim()) : null
             }, {bands})
         },
+        setPanSharpen(enabled) {
+            return setAll('SET_PAN_SHARPEN', {
+                'ui.panSharpen': enabled,
+                'panSharpen': enabled
+            }, {enabled})
+        },
         setModal(enabled) {
             return set('SET_MODAL', 'ui.modal', enabled, {enabled})
         },

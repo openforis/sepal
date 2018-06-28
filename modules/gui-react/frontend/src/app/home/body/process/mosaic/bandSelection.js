@@ -2,12 +2,14 @@ import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRec
 import _ from 'lodash'
 import React from 'react'
 import {msg} from 'translate'
+import Checkbox from 'widget/checkbox'
 import ComboBox from 'widget/comboBox'
 import {Constraints, form} from 'widget/form'
 import styles from './bandSelection.module.css'
 
 const inputs = {
-    bands: new Constraints()
+    bands: new Constraints(),
+    panSharpen: new Constraints()
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -15,6 +17,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         initialized: recipe('ui.initialized'),
         source: Object.keys(recipe('sources'))[0],
+        surfaceReflectance: recipe('compositeOptions').corrections.includes('SR'),
         values: {bands: recipe('ui.bands')}
     }
 }
@@ -56,7 +59,10 @@ class BandSelection extends React.Component {
     }
 
     render() {
-        const {initialized, inputs: {bands}} = this.props
+        const {initialized, source, surfaceReflectance, inputs: {bands, panSharpen}} = this.props
+        const canPanSharpen = source === 'landsat'
+            && !surfaceReflectance
+            && ['red, green, blue', 'nir, red, green'].includes(bands.value)
         if (initialized)
             return (
                 <div className={styles.container}>
@@ -68,7 +74,10 @@ class BandSelection extends React.Component {
                                 options={this.options}
                                 onChange={() => this.setSelectorShown(false)}/>
                             : <SelectedBands
+                                recipe={this.recipe}
                                 selectedOption={this.optionByValue[bands.value]}
+                                canPanSharpen={canPanSharpen}
+                                panSharpen={panSharpen}
                                 onClick={() => this.setSelectorShown(true)}/>
                         }
                     </div>
@@ -105,11 +114,10 @@ const BandSelector = ({recipe, bands, options, onChange}) =>
         {() => <div/>}
     </ComboBox>
 
-const SelectedBands = ({selectedOption, onClick}) => {
+const SelectedBands = ({recipe, selectedOption, canPanSharpen, panSharpen, onClick}) => {
     const bands = selectedOption.label
     if (!bands)
         return null
-    console.log({bands})
     const bandList = bands.split(', ')
     const bandClasses = bandList.length === 1
         ? ['single']
@@ -121,8 +129,18 @@ const SelectedBands = ({selectedOption, onClick}) => {
         </div>
     )
     return (
-        <div className={styles.selectedBands}>
-            {bandElements}
+        <div className={styles.selection}>
+            <div className={styles.selectedBands}>
+                {bandElements}
+            </div>
+
+            {canPanSharpen
+                ? <Checkbox label='Pan sharpen' input={panSharpen} onChange={enabled =>
+                    recipe.setPanSharpen(enabled).dispatch()
+                }/>
+                : null
+            }
+
         </div>
     )
 

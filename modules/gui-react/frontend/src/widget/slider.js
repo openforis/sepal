@@ -5,11 +5,10 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import ReactResizeDetector from 'react-resize-detector'
-import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
+import {animationFrameScheduler, fromEvent, interval, merge, Subject} from 'rxjs'
 import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
-import styles from './slider.module.css'
 import ViewportResizeDetector from 'widget/viewportResizeDetector'
-import { isNull } from 'util';
+import styles from './slider.module.css'
 
 const clamp = ({value, min, max}) => Math.max(min, Math.min(max, value))
 const scale = ({value, from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
@@ -29,7 +28,7 @@ class Draggable extends React.Component {
 
     renderAxis(ticks) {
         return (
-            <div className={styles.axis}>            
+            <div className={styles.axis}>
                 {this.ticksPosition(ticks).map(position => this.renderTick(position))}
             </div>
         )
@@ -45,7 +44,8 @@ class Draggable extends React.Component {
     renderPreview() {
         const position = this.state.previewPosition
         return position !== null ? (
-            <div className={[styles.cursor, styles.preview].join(' ')} ref={this.preview} style={{left: `${position}px`}}/>
+            <div className={[styles.cursor, styles.preview].join(' ')} ref={this.preview}
+                 style={{left: `${position}px`}}/>
         ) : null
     }
 
@@ -59,7 +59,8 @@ class Draggable extends React.Component {
                 <div className={[styles.range, styles.rightRange].join(' ')} style={{left: `${position}px`}}/>
                 {this.renderPreview()}
                 <div className={styles.clickTarget} ref={this.clickTarget}/>
-                <div className={[styles.cursor, styles.handle].join(' ')} ref={this.handle} style={{left: `${position}px`}}/>
+                <div className={[styles.cursor, styles.handle].join(' ')} ref={this.handle}
+                     style={{left: `${position}px`}}/>
                 <ViewportResizeDetector onChange={() => this.setClickTargetBoundingRect()}/>
                 {this.state.dragging
                     ? ReactDOM.createPortal(
@@ -76,7 +77,7 @@ class Draggable extends React.Component {
     componentDidUpdate(prevProps) {
         if (!this.state.inhibitInput && !_.isEqual(prevProps, this.props))
             this.setHandlePosition(this.toPosition(this.props.input.value))
-        
+
     }
 
     componentWillUnmount() {

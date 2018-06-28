@@ -286,13 +286,14 @@ export class Input extends React.Component {
     element = React.createRef()
 
     render() {
-        const {input, validate = 'onBlur', onChange, className, onBlur, ...props} = this.props
+        const {input, validate = 'onBlur', tabIndex, onChange, className, onBlur, ...props} = this.props
         return (
             <input
                 {...props}
                 ref={this.element}
                 name={input.name}
                 value={input.value || ''}
+                tabIndex={tabIndex}
                 onChange={(e) => {
                     input.handleChange(e)
                     if (onChange)

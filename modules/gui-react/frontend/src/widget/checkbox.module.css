@@ -1,0 +1,63 @@
+/* https://medium.com/claritydesignsystem/pure-css-accessible-checkboxes-and-radios-buttons-54063e759bb3 */
+.container {
+    --checkbox-width: calc(1.25rem * var(--scaling-factor));
+    --checkbox-label-gap: calc(0.5rem * var(--scaling-factor));
+    --checkbox-left: calc(var(--checkbox-width) + var(--checkbox-label-gap));
+    padding-left: var(--checkbox-left);
+    margin: 0;
+}
+
+.container input[type="checkbox"] {
+    opacity: 0;
+}
+
+.checkbox {
+    position: relative;
+}
+
+/* Box */
+.checkbox::before {
+    content: '';
+    display: inline-block;
+    height: var(--checkbox-width);
+    width: var(--checkbox-width);
+    border: 2px solid hsl(40, 8%, 50%);
+    border-radius: 10%;
+    bottom: 0;
+    left: calc(-1 * var(--checkbox-left));
+    background-color: var(--button-default-background-color);
+}
+
+/* Checkmark */
+.checkbox::after {
+    content: "";
+    display: inline-block;
+    height: calc(0.4rem * var(--scaling-factor));
+    width: calc(0.9rem * var(--scaling-factor));
+    border-left: calc(0.12rem * var(--scaling-factor)) solid;
+    border-bottom: calc(0.12rem * var(--scaling-factor)) solid;
+    transform: rotate(-45deg);
+    left: calc(-1 * var(--checkbox-left) + 0.2rem * var(--scaling-factor));
+    top: calc(0.2rem * var(--scaling-factor));
+    background-color: transparent;
+}
+
+.checkbox::before,
+.checkbox::after {
+    position: absolute;
+}
+
+/* Hide the checkmark by default */
+.container input[type="checkbox"] + .checkbox::after {
+    content: none;
+}
+
+/* Show the checkmark when checked */
+.container input[type="checkbox"]:checked + .checkbox::after {
+    content: "";
+}
+
+/* Adding focus styles on the outer-box of the fake checkbox */
+/*.container input[type="checkbox"]:focus + .checkbox::before {*/
+    /*outline: rgb(59, 153, 252) auto 5px;*/
+/*}*/
