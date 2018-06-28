@@ -65,8 +65,8 @@ class BandSelection extends React.Component {
             && ['red, green, blue', 'nir, red, green'].includes(bands.value)
         if (initialized)
             return (
-                <div className={styles.container}>
-                    <div className={styles.selection}>
+                <div className={styles.wrapper}>
+                    <div className={styles.container}>
                         {this.state.showSelector
                             ? <BandSelector
                                 recipe={this.recipe}
@@ -105,13 +105,14 @@ const BandSelector = ({recipe, bands, options, onChange}) =>
         maxMenuHeight='40rem'
         isClearable={false}
         showChevron={false}
+        showCurrentSelection={false}
         className={styles.selector}
         onMenuClose={onChange}
         onChange={(option) => {
             recipe.setBands(option ? option.value : null).dispatch()
             onChange()
         }}>
-        {() => <div/>}
+        {() => null}
     </ComboBox>
 
 const SelectedBands = ({recipe, selectedOption, canPanSharpen, panSharpen, onClick}) => {
@@ -135,9 +136,12 @@ const SelectedBands = ({recipe, selectedOption, canPanSharpen, panSharpen, onCli
             </div>
 
             {canPanSharpen
-                ? <Checkbox label='Pan sharpen' input={panSharpen} onChange={enabled =>
-                    recipe.setPanSharpen(enabled).dispatch()
-                }/>
+                ?
+                <div className={styles.panSharpen}>
+                    <Checkbox label='Pan sharpen' input={panSharpen} onChange={enabled =>
+                        recipe.setPanSharpen(enabled).dispatch()
+                    }/>
+                </div>
                 : null
             }
 

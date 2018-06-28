@@ -3,7 +3,7 @@
     --checkbox-width: calc(1.25rem * var(--scaling-factor));
     --checkbox-label-gap: calc(0.5rem * var(--scaling-factor));
     --checkbox-left: calc(var(--checkbox-width) + var(--checkbox-label-gap));
-    padding-left: var(--checkbox-left);
+    padding-left: calc(0.8rem * var(--scaling-factor));
     margin: 0;
 }
 

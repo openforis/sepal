@@ -21,6 +21,7 @@ class ComboBox extends React.Component {
             isClearable = true,
             isLoading,
             showChevron = true,
+            showCurrentSelection = true,
             menuPlacement = 'bottom',
             className,
             onChange,
@@ -38,7 +39,7 @@ class ComboBox extends React.Component {
                 <Select
                     {...props}
                     name={input.name}
-                    value={this.state.selectedOption}
+                    value={showCurrentSelection ? this.state.selectedOption : null}
                     classNamePrefix='comboBox'
                     maxMenuHeight={this.state.maxMenuHeight}
                     menuPlacement={menuPlacement}
@@ -134,7 +135,7 @@ const createSingleValue = (children) =>
     (props) => {
         return (
             <components.SingleValue {...props}>
-                {children ? children(props) : null}
+                {children && children(props)}
             </components.SingleValue>
         )
     }

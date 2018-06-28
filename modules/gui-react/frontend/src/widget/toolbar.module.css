@@ -2,7 +2,6 @@
     position: relative;
     --button-margin: .5rem;
     --button-size: 2.5rem;
-    --button-border-radius: .25rem;
     --button-panel-background-color: rgba(0, 0, 0, 0.5);
     --icon-size: 1.1rem;
     pointer-events: all;
