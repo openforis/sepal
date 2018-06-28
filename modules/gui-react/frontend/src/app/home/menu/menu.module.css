@@ -86,8 +86,8 @@
 }
 
 .menu button.tasks {
-    background-color: hsl(197, 60%, 25%, var(--opacity));
-    border-color: hsl(197, 60%, 45%, var(--border-opacity));
+    background-color: hsla(197, 60%, 25%, var(--opacity));
+    border-color: hsla(197, 60%, 45%, var(--border-opacity));
 }
 
 .menu button.users {
@@ -104,7 +104,7 @@
 .menu .app button {
     background-color: hsla(310, 10%, 23%, var(--opacity));
     border-color: hsla(310, 10%, 43%, var(--border-opacity));
-    border-color: rgb(170, 43, 43,  var(--border-opacity));
+    border-color: rgba(170, 43, 43,  var(--border-opacity));
     animation: blink 150ms linear 2;
 }
 
