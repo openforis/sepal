@@ -30,12 +30,19 @@
 
 .container :global .comboBox__control {
     background-color: rgba(19, 19, 20, 0.91) !important;
-    border: 1px solid rgba(32, 32, 33, 0.91) !important;
+    border: var(--wireframe) !important;
+    border-top: none !important;
+    border-radius: 0 0 var(--container-border-radius) var(--container-border-radius) !important;
     height: 3rem !important;
 }
 
 .container :global .comboBox__single-value {
     width: 100%;
+}
+
+.menu :global .comboBox__menu {
+    border: var(--wireframe) !important;
+    border-radius: var(--container-border-radius) var(--container-border-radius) 0 0 !important;
 }
 
 .selection {
@@ -45,7 +52,7 @@
     align-items: center;
     background-color: rgba(0, 0, 0, 0.5);
     padding: 0 0.5rem;
-    border-radius: var(--button-border-radius);
+    border-radius: var(--container-border-radius);
 }
 
 .selection > * {
@@ -62,10 +69,15 @@
 .selectedBands > * {
     padding: 0 .5rem;
     border-radius: .25rem;
+    color: var(--button-default-color);
 }
 
 .selectedBands > *:not(:last-child) {
     margin-right: .5rem;
+}
+
+.selectedBands:hover > * {
+    color: var(--button-default-hover-color);
 }
 
 .red {
@@ -73,14 +85,26 @@
     border: 1px solid hsla(0, 50%, 21%, 0.8)
 }
 
+.selectedBands:hover > .red {
+    background-color: hsla(0, 50%, 25%, 0.8);
+}
+
 .green {
     background-color: hsla(120, 50%, 15%, 0.8);
     border: 1px solid hsla(120, 50%, 16%, 0.8)
 }
 
+.selectedBands:hover > .green {
+    background-color: hsla(120, 50%, 20%, 0.8);
+}
+
 .blue {
-    background-color: hsla(240, 50%, 40%, 0.8);
-    border: 1px solid hsla(240, 50%, 41%, 0.8)
+    background-color: hsla(240, 50%, 35%, 0.8);
+    border: 1px solid hsla(240, 50%, 36%, 0.8)
+}
+
+.selectedBands:hover > .blue {
+    background-color: hsla(240, 50%, 43%, 0.8);
 }
 
 .single {

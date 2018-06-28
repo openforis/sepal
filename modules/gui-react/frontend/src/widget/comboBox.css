@@ -20,7 +20,6 @@
     background-color: rgba(232, 19, 81, 0.1) !important;
 }
 
-
 .comboBox__value-container {
     font-size: calc(1.25rem * var(--scaling-factor));
     padding: 0 calc(0.3rem * var(--scaling-factor)) !important;
@@ -70,7 +69,7 @@
 
 .comboBox__menu {
     background-color: rgba(26, 26, 27, 0.91) !important;
-    border: 1px solid rgba(100%, 100%, 100%, .1) !important;
+    border: var(--wireframe) !important;
     z-index: 9999999;
     margin: 0 !important;
 }
