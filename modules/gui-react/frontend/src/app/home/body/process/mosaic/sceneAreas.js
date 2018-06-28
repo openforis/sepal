@@ -73,7 +73,8 @@ class SceneAreas extends React.Component {
     componentDidUpdate(prevProps) {
         const {recipeId, aoi, source} = this.props
         const loadSceneAreas = this.renderable()
-            && !objectEquals(this.props, prevProps, ['aoi', 'source'])
+            && !objectEquals(this.props, prevProps, ['aoi', 'source', 'sceneSelectionOptions'])
+        console.log({loadSceneAreas})
         if (loadSceneAreas)
             this.loadSceneAreas(aoi, source)
         setSceneAreaLayer({recipeId, component: this})
