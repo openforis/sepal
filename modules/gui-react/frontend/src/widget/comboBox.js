@@ -1,10 +1,12 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import ReactDOM from 'react-dom'
 import Select, {components} from 'react-select'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
 import styles from './comboBox.css'
+
 
 const mapStateToProps = () => ({
     appDimensions: select('dimensions')
@@ -13,6 +15,7 @@ const mapStateToProps = () => ({
 class ComboBox extends React.Component {
     state = {}
     element = React.createRef()
+    menuPortalTarget = React.createRef()
 
     render() {
         const {
@@ -23,7 +26,8 @@ class ComboBox extends React.Component {
             showChevron = true,
             showCurrentSelection = true,
             menuPlacement = 'bottom',
-            className,
+            controlClassName,
+            menuClassName,
             onChange,
             onBlur,
             children,
@@ -35,7 +39,11 @@ class ComboBox extends React.Component {
         if (children)
             components.SingleValue = createSingleValue(children)
         return (
-            <div className={[styles.comboBox, className, input.error ? 'error' : null].join(' ')} ref={this.element}>
+            <div className={[styles.comboBox, controlClassName, input.error ? 'error' : null].join(' ')} ref={this.element}>
+                {ReactDOM.createPortal(
+                    <div ref={this.menuPortalTarget} className={[menuClassName, 'portalTarget'].join(' ')}/>,
+                    document.body
+                )}
                 <Select
                     {...props}
                     name={input.name}
@@ -43,7 +51,7 @@ class ComboBox extends React.Component {
                     classNamePrefix='comboBox'
                     maxMenuHeight={this.state.maxMenuHeight}
                     menuPlacement={menuPlacement}
-                    menuPortalTarget={document.getElementById('portalTarget')}
+                    menuPortalTarget={this.menuPortalTarget.current}
                     isClearable={isClearable}
                     isLoading={!!isLoading}
                     loadingMessage={() => msg('widget.comboBox.loading')}

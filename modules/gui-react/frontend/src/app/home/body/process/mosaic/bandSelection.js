@@ -106,7 +106,8 @@ const BandSelector = ({recipe, bands, options, onChange}) =>
         isClearable={false}
         showChevron={false}
         showCurrentSelection={false}
-        className={styles.selector}
+        controlClassName={styles.selector}
+        menuClassName={styles.menu}
         onMenuClose={onChange}
         onChange={(option) => {
             recipe.setBands(option ? option.value : null).dispatch()

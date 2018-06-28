@@ -49,7 +49,7 @@ html {
     font-size: calc(14px * var(--scaling-factor));
 }
 
-#portalTarget > * {
+.portalTarget > * {
     z-index: 999999 !important;
 }
 

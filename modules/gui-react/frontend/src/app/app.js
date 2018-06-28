@@ -34,7 +34,6 @@ class App extends React.Component {
                             .set('dimensions', {width, height})
                             .dispatch()
                     }/>
-                <div id="portalTarget"/>
                 {this.body()}
             </div>
         )
