@@ -1,6 +1,6 @@
 .mosaic {
     --selected-panel-border-width: 1px;
-    --selected-panel-border-color: rgba(100%, 100%, 100%, .1);
+    --selected-panel-border-color: var(--wireframe-color);
     height: 100%;
 }
 

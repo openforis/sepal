@@ -2,7 +2,7 @@
 .footer {
     margin: 1rem calc(0rem - var(--padding-right-left)) 0;
     padding: var(--padding-top-bottom) var(--padding-right-left) 0;
-    border-top: 1px solid rgba(100%, 100%, 100%, .1);
+    border-top: var(--wireframe);
 }
 
 .footer > * {

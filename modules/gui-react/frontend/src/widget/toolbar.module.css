@@ -18,7 +18,7 @@
     right: calc(-1 * var(--button-margin));
     background-color: var(--button-panel-background-color);
     border: none;
-    border-radius: .5rem;
+    border-radius: var(--container-border-radius);
 }
 
 .toolbar.horizontal {

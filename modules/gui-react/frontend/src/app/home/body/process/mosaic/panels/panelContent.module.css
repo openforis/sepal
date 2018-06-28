@@ -10,7 +10,7 @@
     text-transform: uppercase;
     color: #e8e8e8;
     margin-bottom: 2rem;
-    border-bottom: 1px solid rgba(100%, 100%, 100%, .1);
+    border-bottom: var(--wireframe);
     padding: var(--padding);
 }
 
