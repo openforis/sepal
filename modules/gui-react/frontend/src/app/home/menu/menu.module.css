@@ -103,8 +103,7 @@
 
 .menu .app button {
     background-color: hsla(310, 10%, 23%, var(--opacity));
-    border-color: hsla(310, 10%, 43%, var(--border-opacity));
-    border-color: rgba(170, 43, 43,  var(--border-opacity));
+    border-color: hsla(0, 60%, 42%,  var(--border-opacity));
     animation: blink 150ms linear 2;
 }
 
