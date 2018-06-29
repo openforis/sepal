@@ -8,15 +8,15 @@ import ReactResizeDetector from 'react-resize-detector'
 import {map} from 'rxjs/operators'
 import {dataSetById} from 'sources'
 import {msg, Msg} from 'translate'
-import {Constraints, form} from 'widget/form'
+import {Field, form} from 'widget/form'
 import Icon from 'widget/icon'
 import {CenteredProgress} from 'widget/progress'
 import PanelForm from './panels/panelForm'
 import ScenePreview from './scenePreview'
 import styles from './sceneSelection.module.css'
 
-const inputs = {
-    selectedScenes: new Constraints()
+const fields = {
+    selectedScenes: new Field()
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -227,4 +227,4 @@ SceneSelection.propTypes = {
     sceneAreaId: PropTypes.string.isRequired
 }
 
-export default form({inputs, mapStateToProps})(SceneSelection)
+export default form({fields, mapStateToProps})(SceneSelection)

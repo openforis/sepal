@@ -1,7 +1,7 @@
 import React from 'react'
 import {resetPassword$, tokenUser, validateToken$} from 'user'
 import {history, query} from 'route'
-import {Constraints, ErrorMessage, form, Input} from 'widget/form'
+import {Field, ErrorMessage, form, Input} from 'widget/form'
 import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
 import Notifications from 'app/notifications'
@@ -9,11 +9,11 @@ import {CenteredProgress} from 'widget/progress'
 import {PropTypes} from 'prop-types'
 
 
-const inputs = {
+const fields = {
     username: null,
-    password: new Constraints()
+    password: new Field()
         .notBlank('landing.reset-password.password.required'),
-    password2: new Constraints()
+    password2: new Field()
         .notBlank('landing.reset-password.password2.required')
         .predicate((password2, form) => password2 === form.password, 'landing.reset-password.password2.not-matching')
 }
@@ -115,11 +115,11 @@ ResetPassword.propTypes = {
     action: PropTypes.func,
     user: PropTypes.object,
     form: PropTypes.object,
-    inputs: PropTypes.shape({
+    fields: PropTypes.shape({
         username: PropTypes.object,
         password: PropTypes.object,
         password2: PropTypes.object
     })
 }
 
-export default form({inputs, mapStateToProps})(ResetPassword)
+export default form({fields, mapStateToProps})(ResetPassword)

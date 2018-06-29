@@ -3,7 +3,7 @@ import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {AnimateReplacement} from 'widget/animate'
-import {Constraints, form} from 'widget/form'
+import {Field, form} from 'widget/form'
 import {RecipeState} from '../../mosaicRecipe'
 import PanelButtons from '../panelButtons'
 import styles from './aoi.module.css'
@@ -12,28 +12,28 @@ import FusionTableSection from './fusionTableSection'
 import PolygonSection from './polygonSection'
 import SectionSelection from './sectionSelection'
 
-const inputs = {
-    section: new Constraints()
+const fields = {
+    section: new Field()
         .notBlank('process.mosaic.panel.areaOfInterest.form.section.required'),
-    country: new Constraints()
+    country: new Field()
         .skip((value, {section}) => section !== 'country')
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
-    area: new Constraints(),
-    fusionTable: new Constraints()
+    area: new Field(),
+    fusionTable: new Field()
         .skip((value, {section}) => section !== 'fusionTable')
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.required'),
-    fusionTableColumn: new Constraints()
+    fusionTableColumn: new Field()
         .skip((value, {section}) => section !== 'fusionTable')
         .skip((value, {fusionTable}) => !fusionTable)
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.column.required'),
-    fusionTableRow: new Constraints()
+    fusionTableRow: new Field()
         .skip((value, {section}) => section !== 'fusionTable')
         .skip((value, {fusionTableColumn}) => !fusionTableColumn)
         .notBlank('process.mosaic.panel.areaOfInterest.form.fusionTable.row.required'),
-    polygon: new Constraints()
+    polygon: new Field()
         .skip((value, {section}) => section !== 'polygon')
         .notBlank('process.mosaic.panel.areaOfInterest.form.country.required'),
-    bounds: new Constraints()
+    bounds: new Field()
         .notBlank('process.mosaic.panel.areaOfInterest.form.bounds.required')
 }
 
@@ -119,12 +119,9 @@ Aoi.propTypes = {
     recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
-    inputs: PropTypes.shape({
-        country: PropTypes.object,
-        polygon: PropTypes.object
-    }),
+    fields: PropTypes.object,
     action: PropTypes.func,
     values: PropTypes.object
 }
 
-export default form({inputs, mapStateToProps})(Aoi)
+export default form({fields, mapStateToProps})(Aoi)

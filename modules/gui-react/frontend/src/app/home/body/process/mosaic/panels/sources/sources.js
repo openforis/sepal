@@ -4,16 +4,16 @@ import React from 'react'
 import {imageSourceById, sources} from 'sources'
 import {msg, Msg} from 'translate'
 import Buttons from 'widget/buttons'
-import {Constraints, form} from 'widget/form'
+import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './sources.module.css'
 import updateSource from './updateSource'
 
-const inputs = {
-    source: new Constraints()
+const fields = {
+    source: new Field()
         .notEmpty('process.mosaic.panel.sources.form.required'),
-    dataSets: new Constraints()
+    dataSets: new Field()
         .notEmpty('process.mosaic.panel.sources.form.required')
 }
 
@@ -125,10 +125,10 @@ Sources.propTypes = {
     recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
-    inputs: PropTypes.shape({}),
+    fields: PropTypes.object,
     action: PropTypes.func,
     values: PropTypes.object
 }
 
-export default form({inputs, mapStateToProps})(Sources)
+export default form({fields, mapStateToProps})(Sources)
 

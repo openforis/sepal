@@ -7,7 +7,7 @@ import styles from './form.module.css'
 import Icon from './icon'
 import Tooltip from './tooltip'
 
-export function form({inputs, constraints, mapStateToProps}) {
+export function form({fields, constraints, mapStateToProps}) {
     return (WrappedComponent) => {
         class Form extends React.Component {
             dirtyListeners = []
@@ -23,7 +23,7 @@ export function form({inputs, constraints, mapStateToProps}) {
                     invalidValue: {},
                     dirty: false
                 }
-                Object.keys(inputs).forEach(name => {
+                Object.keys(fields).forEach(name => {
                     state.initialValues[name] = name in state.initialValues ? state.initialValues[name] : ''
                     state.values[name] = name in state.values ? state.values[name] : ''
                     state.errors[name] = name in state.errors ? state.errors[name] : ''
@@ -90,9 +90,9 @@ export function form({inputs, constraints, mapStateToProps}) {
             }
 
             error(name) {
-                let constraints = inputs[name]
+                let constraints = fields[name]
                 if (constraints == null)
-                    constraints = new Constraints()
+                    constraints = new Field()
                 return constraints.check(name, this.state.values)
             }
 
@@ -115,7 +115,7 @@ export function form({inputs, constraints, mapStateToProps}) {
                     return
                 this.setState((prevState) => {
                     const state = {...prevState, dirty: false}
-                    Object.keys(inputs).forEach(name => {
+                    Object.keys(fields).forEach(name => {
                         state.initialValues[name] = name in values ? values[name] : ''
                         state.values[name] = name in values ? values[name] : ''
                         state.errors[name] = ''
@@ -129,7 +129,7 @@ export function form({inputs, constraints, mapStateToProps}) {
             reset() {
                 this.setState((prevState) => {
                     const state = {...prevState, values: {...prevState.initialValues}, dirty: false}
-                    Object.keys(inputs).forEach(name => {
+                    Object.keys(fields).forEach(name => {
                         state.errors[name] = ''
                     })
                     state.gotDirty = false
@@ -158,7 +158,7 @@ export function form({inputs, constraints, mapStateToProps}) {
 
             render() {
                 const formInputs = {}
-                Object.keys(inputs).forEach(name => {
+                Object.keys(fields).forEach(name => {
                     formInputs[name] = {
                         name: name,
                         value: this.state.values[name],
@@ -210,7 +210,7 @@ function getDisplayName(Component) {
     return Component.displayName || Component.name || 'Component'
 }
 
-export class Constraints {
+export class Field {
     static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape
 
     _constraints = []
@@ -249,7 +249,7 @@ export class Constraints {
     }
 
     email(messageId, messageArgs) {
-        return this.match(Constraints._EMAIL_REGEX, messageId, messageArgs)
+        return this.match(Field._EMAIL_REGEX, messageId, messageArgs)
     }
 
     date(format, messageId, messageArgs) {

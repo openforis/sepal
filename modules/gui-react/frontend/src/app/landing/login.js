@@ -1,15 +1,15 @@
 import React from 'react'
 import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
-import {Constraints, ErrorMessage, form, Input} from 'widget/form'
+import {Field, ErrorMessage, form, Input} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
 
-const inputs = {
-    username: new Constraints()
+const fields = {
+    username: new Field()
         .notBlank('landing.login.username.required'),
-    password: new Constraints()
+    password: new Field()
         .notBlank('landing.login.password.required')
 }
 
@@ -67,7 +67,7 @@ class Login extends React.Component {
 
 Login.propTypes = {
     form: PropTypes.object,
-    inputs: PropTypes.shape({
+    fields: PropTypes.shape({
         username: PropTypes.object,
         password: PropTypes.object,
     }),
@@ -75,5 +75,5 @@ Login.propTypes = {
     asyncActionBuilder: PropTypes.func
 }
 
-export default form({inputs, mapStateToProps})(Login)
+export default form({fields, mapStateToProps})(Login)
 

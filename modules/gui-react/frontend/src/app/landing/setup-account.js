@@ -1,16 +1,16 @@
 import React from 'react'
 import {resetPassword$, validateToken$} from 'user'
 import {query} from 'route'
-import {Constraints, ErrorMessage, form, Input} from 'widget/form'
+import {Field, ErrorMessage, form, Input} from 'widget/form'
 import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
 
-const inputs = {
+const fields = {
     username: null,
-    password: new Constraints()
+    password: new Field()
         .notBlank('landing.reset-password.password.required'),
-    password2: new Constraints()
+    password2: new Field()
         .notBlank('landing.reset-password.password2.required')
         .predicate((password2, form) => password2 === form.password, 'landing.reset-password.password2.not-matching')
 }
@@ -73,13 +73,9 @@ class SetupAccount extends React.Component {
 
 SetupAccount.propTypes = {
     form: PropTypes.object,
-    inputs: PropTypes.shape({
-        username: PropTypes.object,
-        password: PropTypes.object,
-        password2: PropTypes.object
-    }),
+    fields: PropTypes.object,
     action: PropTypes.func,
     asyncActionBuilder: PropTypes.func
 }
 
-export default form(inputs)(SetupAccount)
+export default form({fields})(SetupAccount)

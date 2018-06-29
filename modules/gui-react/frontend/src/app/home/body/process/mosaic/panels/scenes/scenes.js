@@ -2,16 +2,16 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
 import Buttons from 'widget/buttons'
-import {Constraints, form, Label} from 'widget/form'
+import {Field, form, Label} from 'widget/form'
 import {RecipeActions, RecipeState, SceneSelectionType} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './scenes.module.css'
 
-const inputs = {
-    type: new Constraints()
+const fields = {
+    type: new Field()
         .notEmpty('process.mosaic.panel.scenes.form.required'),
 
-    targetDateWeight: new Constraints()
+    targetDateWeight: new Field()
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -108,9 +108,9 @@ Scenes.propTypes = {
     recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
-    inputs: PropTypes.shape({}),
+    fields: PropTypes.object,
     action: PropTypes.func,
     values: PropTypes.object
 }
 
-export default form({inputs, mapStateToProps})(Scenes)
+export default form({fields, mapStateToProps})(Scenes)

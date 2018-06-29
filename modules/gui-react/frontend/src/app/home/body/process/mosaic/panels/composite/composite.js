@@ -2,20 +2,20 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {msg, Msg} from 'translate'
 import Buttons from 'widget/buttons'
-import {Constraints, form, Label} from 'widget/form'
+import {Field, form, Label} from 'widget/form'
 import Slider from 'widget/slider'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './composite.module.css'
 
-const inputs = {
-    corrections: new Constraints(),
-    shadowPercentile: new Constraints(),
-    hazePercentile: new Constraints(),
-    ndviPercentile: new Constraints(),
-    dayOfYearPercentile: new Constraints(),
-    mask: new Constraints(),
-    compose: new Constraints()
+const fields = {
+    corrections: new Field(),
+    shadowPercentile: new Field(),
+    hazePercentile: new Field(),
+    ndviPercentile: new Field(),
+    dayOfYearPercentile: new Field(),
+    mask: new Field(),
+    compose: new Field()
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -133,9 +133,9 @@ Composite.propTypes = {
     recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
-    inputs: PropTypes.shape({}),
+    fields: PropTypes.object,
     action: PropTypes.func,
     values: PropTypes.object
 }
 
-export default form({inputs, mapStateToProps})(Composite)
+export default form({fields, mapStateToProps})(Composite)

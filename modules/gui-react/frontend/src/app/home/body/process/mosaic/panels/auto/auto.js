@@ -1,13 +1,15 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import {msg, Msg} from 'translate'
-import {ErrorMessage, form, Input, Constraints} from 'widget/form'
+import {ErrorMessage, form, Input, Field} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './auto.module.css'
-const inputs = {
-    min: new Constraints(),
-    max: new Constraints()
+
+
+const fields = {
+    min: new Field(),
+    max: new Field()
 }
 
 // const fields = {
@@ -20,7 +22,7 @@ const inputs = {
 // }
 //
 const constraints = {
-    minLessThanMax: new Constraints(['min', 'max'])
+    minLessThanMax: new Field(['min', 'max'])
         .predicate(({min, max}) => min <= max, 'process.mosaic.panel.auto.form.minLessThanMax')
 }
 
@@ -87,11 +89,11 @@ Auto.propTypes = {
     recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
-    fields: PropTypes.shape({}),
+    fields: PropTypes.object,
     constraints: PropTypes.shape({}),
     action: PropTypes.func,
     values: PropTypes.object
 }
 
 // export default form({fields, constraints, mapStateToProps})(Auto)
-export default form({inputs, constraints, mapStateToProps})(Auto)
+export default form({fields, mapStateToProps})(Auto)

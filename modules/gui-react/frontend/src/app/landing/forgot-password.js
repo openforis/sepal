@@ -1,7 +1,7 @@
 import React from 'react'
 import {requestPasswordReset$} from 'user'
 import {history, Link} from 'route'
-import {Constraints, ErrorMessage, form, Input} from 'widget/form'
+import {Field, ErrorMessage, form, Input} from 'widget/form'
 import Icon from 'widget/icon'
 import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
@@ -9,8 +9,8 @@ import PropTypes from 'prop-types'
 import styles from './forgot-password.module.css'
 import Notifications from 'app/notifications'
 
-const inputs = {
-    email: new Constraints()
+const fields = {
+    email: new Field()
         .notBlank('landing.forgot-password.required')
         .email('landing.forgot-password.invalid')
 }
@@ -61,7 +61,7 @@ ForgotPassword.propTypes = {
     asyncActionBuilder: PropTypes.func,
     action: PropTypes.func,
     form: PropTypes.object, 
-    inputs: PropTypes.shape({
+    fields: PropTypes.shape({
         email: PropTypes.string
     })
 }
@@ -89,4 +89,4 @@ ForgotPasswordLink.propTypes = {
     tabIndex: PropTypes.number
 }
 
-export default form(inputs)(ForgotPassword)
+export default form({fields})(ForgotPassword)

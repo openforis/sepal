@@ -4,12 +4,12 @@ import React from 'react'
 import {msg} from 'translate'
 import Checkbox from 'widget/checkbox'
 import ComboBox from 'widget/comboBox'
-import {Constraints, form} from 'widget/form'
+import {Field, form} from 'widget/form'
 import styles from './bandSelection.module.css'
 
-const inputs = {
-    bands: new Constraints(),
-    panSharpen: new Constraints()
+const fields = {
+    bands: new Field(),
+    panSharpen: new Field()
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -151,4 +151,4 @@ const SelectedBands = ({recipe, selectedOption, canPanSharpen, panSharpen, onCli
 
 }
 
-export default form({inputs, mapStateToProps})(BandSelection)
+export default form({fields, mapStateToProps})(BandSelection)

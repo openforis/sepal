@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
 import DatePicker from 'widget/datePicker'
-import {Constraints, ErrorMessage, form, Input, Label} from 'widget/form'
+import {Field, ErrorMessage, form, Input, Label} from 'widget/form'
 import SeasonSelect from 'widget/seasonSelect'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
@@ -17,18 +17,18 @@ const maxStartDate = (targetDate) => parseDate(targetDate)
 const minEndDate = (targetDate) => parseDate(targetDate).add(1, 'days')
 const maxEndDate = (targetDate) => parseDate(targetDate).add(1, 'years')
 
-const inputs = {
-    advanced: new Constraints(),
+const fields = {
+    advanced: new Field(),
 
-    targetYear: new Constraints()
+    targetYear: new Field()
         .skip((_, {advanced}) => advanced)
         .int('process.mosaic.panel.dates.form.targetDate.malformed'),
 
-    targetDate: new Constraints()
+    targetDate: new Field()
         .skip((_, {advanced}) => !advanced)
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.targetDate.malformed'),
 
-    seasonStart: new Constraints()
+    seasonStart: new Field()
         .skip((_, {advanced}) => !advanced)
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
         .predicate((date, {targetDate}) => parseDate(date).isSameOrAfter(minStartDate(targetDate)),
@@ -42,7 +42,7 @@ const inputs = {
                 max: maxStartDate(targetDate).format(DATE_FORMAT)
             })),
 
-    seasonEnd: new Constraints()
+    seasonEnd: new Field()
         .skip((_, {advanced}) => !advanced)
         .date(DATE_FORMAT, 'process.mosaic.panel.dates.form.season.malformed')
         .predicate((date, {targetDate}) => parseDate(date).isSameOrAfter(minEndDate(targetDate)),
@@ -56,12 +56,12 @@ const inputs = {
                 max: maxEndDate(targetDate).format(DATE_FORMAT)
             })),
 
-    yearsBefore: new Constraints()
+    yearsBefore: new Field()
         .skip((_, {advanced}) => !advanced)
         .int('process.mosaic.panel.dates.form.years.positiveInteger')
         .min(0, 'process.mosaic.panel.dates.form.years.positiveInteger'),
 
-    yearsAfter: new Constraints()
+    yearsAfter: new Field()
         .skip((_, {advanced}) => !advanced)
         .int('process.mosaic.panel.dates.form.years.positiveInteger')
         .min(0, 'process.mosaic.panel.dates.form.years.positiveInteger')
@@ -208,9 +208,9 @@ Dates.propTypes = {
     recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
-    inputs: PropTypes.shape({}),
+    fields: PropTypes.object,
     action: PropTypes.func,
     values: PropTypes.object
 }
 
-export default form({inputs, mapStateToProps})(Dates)
+export default form({fields, mapStateToProps})(Dates)

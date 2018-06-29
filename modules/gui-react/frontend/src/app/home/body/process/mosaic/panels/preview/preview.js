@@ -5,7 +5,7 @@ import {form} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import styles from './preview.module.css'
 
-const inputs = {}
+const fields = {}
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
@@ -38,9 +38,9 @@ Preview.propTypes = {
     recipeId: PropTypes.string,
     className: PropTypes.string,
     form: PropTypes.object,
-    inputs: PropTypes.shape({}),
+    fields: PropTypes.object,
     action: PropTypes.func,
     values: PropTypes.object
 }
 
-export default form({inputs, mapStateToProps})(Preview)
+export default form({fields, mapStateToProps})(Preview)
