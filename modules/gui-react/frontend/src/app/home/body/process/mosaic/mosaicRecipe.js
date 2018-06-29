@@ -168,10 +168,13 @@ export const RecipeActions = (id) => {
         setAutoSelectingScenes(selecting) {
             return set('SET_AUTO_SELECTING_SCENES', 'ui.autoSelectingScenes', selecting, {selecting})
         },
+        setAutoSelectSceneCount(sceneCount) {
+            return set('SET_SCENE_COUNT', 'ui.sceneCount', sceneCount, {sceneCount})
+        },
         autoSelectScenes(sceneCount) {
             this.setAutoSelectingScenes(true).dispatch()
             RecipeEvents(id).autoSelectScenes$.next(sceneCount)
-            return set('SET_SCENE_COUNT', 'ui.sceneCount', sceneCount, {sceneCount})
+            return this.setAutoSelectSceneCount(sceneCount)
         }
     }
 }
@@ -215,7 +218,7 @@ const initRecipe = (recipe) => {
     actions.setLabelsShown(false).dispatch()
     actions.setSceneAreasShown(true).dispatch()
     actions.setBands('red, green, blue').dispatch()
-    actions.autoSelectScenes({min: 1, max: 99}).dispatch()
+    actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
 }
 
 const createAoi = (aoiForm) => {
