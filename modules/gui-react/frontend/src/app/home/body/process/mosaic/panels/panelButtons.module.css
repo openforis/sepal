@@ -15,6 +15,10 @@
     cursor: pointer;
 }
 
+.buttons button i {
+    margin: 0 0.1rem;
+}
+
 .buttons button:not(:last-child) {
     margin-right: 0.5rem;
 }
@@ -59,10 +63,9 @@ button.cancel {
     color: var(--button-default-color);
     background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
     border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
-    opacity: 0;
 }
 
-.buttons.dirty button.cancel {
+.buttons.show button.cancel {
     opacity: 1;
 }
 

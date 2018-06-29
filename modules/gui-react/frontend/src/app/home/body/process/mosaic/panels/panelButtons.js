@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
-import {Msg} from 'translate'
+import {Msg, msg} from 'translate'
 import Icon from 'widget/icon'
 import {RecipeActions, RecipeState} from '../mosaicRecipe'
 import styles from './panelButtons.module.css'
@@ -105,6 +105,7 @@ class PanelButtons extends React.Component {
         const {additionalButtons = []} = this.props
         const renderButton = (button) =>
             <button
+                type='button'
                 key={button.key}
                 onClick={(e) => {
                     e.preventDefault()
@@ -126,6 +127,7 @@ class PanelButtons extends React.Component {
         const {first, last} = this.state
         const back =
             <button
+                type='button'
                 onClick={(e) => {
                     e.preventDefault()
                     this.back()
@@ -137,6 +139,7 @@ class PanelButtons extends React.Component {
             </button>
         const next =
             <button
+                type='submit'
                 onClick={(e) => {
                     e.preventDefault()
                     this.next()
@@ -149,6 +152,7 @@ class PanelButtons extends React.Component {
 
         const done =
             <button
+                type='submit'
                 onClick={(e) => {
                     e.preventDefault()
                     this.done()
@@ -168,22 +172,25 @@ class PanelButtons extends React.Component {
     }
 
     renderFormButtons() {
-        const {form} = this.props
+        const {isActionForm, applyLabel = msg('button.ok'), cancelLabel = msg('button.cancel'), form} = this.props
         const dirty = form.isDirty()
         return (
-            <div className={[styles.buttons, dirty && styles.dirty].join(' ')}>
+            <div className={styles.buttons}>
                 <button
+                    type='button'
                     onClick={(e) => {
                         e.preventDefault()
                         this.cancel()
                     }}
-                    disabled={!dirty}
+                    disabled={!dirty && !isActionForm}
                     onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before canceling
-                    className={styles.cancel}>
+                    className={styles.cancel}
+                    style={{opacity: isActionForm || dirty ? 1 : 0}}>
                     <Icon name={'undo-alt'}/>
-                    <span><Msg id='button.cancel'/></span>
+                    <span>{cancelLabel}</span>
                 </button>
                 <button
+                    type='submit'
                     onClick={(e) => {
                         e.preventDefault()
                         this.ok()
@@ -191,7 +198,7 @@ class PanelButtons extends React.Component {
                     disabled={form.hasInvalid()}
                     className={styles.apply}>
                     <Icon name={'check'}/>
-                    <span><Msg id='button.ok'/></span>
+                    <span>{applyLabel}</span>
                 </button>
             </div>
         )
@@ -201,8 +208,11 @@ class PanelButtons extends React.Component {
 PanelButtons.propTypes = {
     recipeId: PropTypes.string.isRequired,
     form: PropTypes.object.isRequired,
+    isActionForm: PropTypes.any,
     additionalButtons: PropTypes.array,
     modalOnDirty: PropTypes.any,
+    applyLabel: PropTypes.string,
+    cancelLabel: PropTypes.string,
     onApply: PropTypes.func.isRequired,
     onCancel: PropTypes.func
 }
