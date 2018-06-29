@@ -2,5 +2,32 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 16rem;
+    max-width: 20rem;
+}
+
+.sceneCount {
+    display: flex;
+}
+
+.sceneCount > * {
+    display: flex;
+    align-items: baseline;
+}
+
+.sceneCount > *:not(:last-child) {
+    margin-right: 4rem;
+}
+
+.sceneCount label {
+    font-size: 0.7rem;
+    font-weight: normal;
+    margin-bottom: 0;
+    margin-right: 1rem;
+}
+
+.sceneCount input {
+    width: 4rem;
+    text-align: center;
+    padding-left: 1rem;
+
 }

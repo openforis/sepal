@@ -4,7 +4,10 @@ import PanelButtons from './panelButtons'
 import PanelContent from './panelContent'
 import styles from './panelForm.module.css'
 
-const PanelForm = ({recipeId, form, onApply, onCancel, icon, onBack, title, modalOnDirty = true, additionalButtons, className, children}) => {
+const PanelForm = ({
+                       recipeId, form, isActionForm, applyLabel, cancelLabel, onApply, onCancel, icon, onBack, title,
+                       modalOnDirty = true, additionalButtons, className, children
+                   }) => {
     return (
         <PanelContent
             icon={icon}
@@ -16,6 +19,9 @@ const PanelForm = ({recipeId, form, onApply, onCancel, icon, onBack, title, moda
                 <PanelButtons
                     recipeId={recipeId}
                     form={form}
+                    isActionForm={isActionForm}
+                    applyLabel={applyLabel}
+                    cancelLabel={cancelLabel}
                     additionalButtons={additionalButtons}
                     onApply={onApply}
                     onCancel={onCancel}
@@ -29,8 +35,11 @@ const PanelForm = ({recipeId, form, onApply, onCancel, icon, onBack, title, moda
 PanelForm.propTypes = {
     recipeId: PropTypes.string,
     form: PropTypes.object,
+    isActionForm: PropTypes.any,
     onApply: PropTypes.func,
     onCancel: PropTypes.func,
+    applyLabel: PropTypes.string,
+    cancelLabel: PropTypes.string,
     icon: PropTypes.string,
     onBack: PropTypes.func,
     title: PropTypes.string.isRequired,

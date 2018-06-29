@@ -12,7 +12,6 @@ import MapStatus from 'widget/mapStatus'
 import SceneAreaMarker from './sceneAreaMarker'
 import styles from './sceneAreas.module.css'
 
-
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
@@ -28,7 +27,7 @@ class SceneAreas extends React.Component {
     constructor(props) {
         super(props)
         const {aoi, source} = props
-        this.recipe = new RecipeActions(props.recipeId)
+        this.recipeActions = new RecipeActions(props.recipeId)
         this.state = {
             show: true
         }
@@ -69,7 +68,6 @@ class SceneAreas extends React.Component {
             return null
     }
 
-
     componentDidUpdate(prevProps) {
         const {recipeId, aoi, source} = this.props
         const loadSceneAreas = !objectEquals(this.props, prevProps, ['aoi', 'source'])
@@ -78,18 +76,25 @@ class SceneAreas extends React.Component {
         setSceneAreaLayer({recipeId, component: this})
     }
 
+    componentWillUnmount() {
+        this.recipeActions.setSceneAreas(null).dispatch()
+    }
+
     loadSceneAreas(aoi, source) {
         this.loadSceneArea$.next()
         this.props.asyncActionBuilder('LOAD_SCENE_AREAS',
-            backend.gee.sceneAreas$({aoi, source})
-                .pipe(
-                    map(e =>
-                        this.recipe.setSceneAreas(
-                            this.toSceneAreas(e.response)
-                        )
-                    ),
-                    takeUntil(this.loadSceneArea$)
-                ))
+            backend.gee.sceneAreas$({aoi, source}).pipe(
+                map(e =>
+                    this.recipeActions.setSceneAreas(
+                        this.toSceneAreas(e.response)
+                    )
+                ),
+                takeUntil(this.loadSceneArea$)
+            ))
+            .onComplete(() => {
+                setTimeout(() => this.recipeActions.autoSelectScenes({min: 1, max: 99}), 0) // Wait until scene areas are set
+                return {}
+            })
             .dispatch()
     }
 

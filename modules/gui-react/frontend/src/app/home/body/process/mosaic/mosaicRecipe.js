@@ -1,6 +1,7 @@
 import actionBuilder from 'action-builder'
 import {countryFusionTable} from 'app/home/map/aoiLayer'
 import moment from 'moment'
+import {Subject} from 'rxjs'
 import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
 import {select} from 'store'
 import Labels from '../../../map/labels'
@@ -22,6 +23,19 @@ const recipePath = (recipeId, path) => {
     return ['process.tabs', recipeTabIndex, path]
         .filter(e => e !== undefined)
         .join('.')
+}
+
+const event$ByRecipeAndType = {}
+
+export const RecipeEvents = (recipeId) => {
+    let event$ByType = event$ByRecipeAndType[recipeId]
+    if (!event$ByType) {
+        event$ByType = {
+            autoSelectScenes$: new Subject()
+        }
+        event$ByRecipeAndType[recipeId] = event$ByType
+    }
+    return event$ByType
 }
 
 export const RecipeState = (recipeId) => {
@@ -150,6 +164,14 @@ export const RecipeActions = (id) => {
         },
         setSceneToPreview(scene) {
             return set('SET_SCENE_TO_PREVIEW', 'ui.sceneToPreview', scene, {scene})
+        },
+        setAutoSelectingScenes(selecting) {
+            return set('SET_AUTO_SELECTING_SCENES', 'ui.autoSelectingScenes', selecting, {selecting})
+        },
+        autoSelectScenes(sceneCount) {
+            this.setAutoSelectingScenes(true).dispatch()
+            RecipeEvents(id).autoSelectScenes$.next(sceneCount)
+            return set('SET_SCENE_COUNT', 'ui.sceneCount', sceneCount, {sceneCount})
         }
     }
 }
@@ -175,6 +197,7 @@ const initRecipe = (recipe) => {
 
     actions.setSceneSelectionOptions({
         type: SceneSelectionType.ALL,
+        // type: SceneSelectionType.SELECT,
         targetDateWeight: 0.5
     }).dispatch()
 
@@ -192,6 +215,7 @@ const initRecipe = (recipe) => {
     actions.setLabelsShown(false).dispatch()
     actions.setSceneAreasShown(true).dispatch()
     actions.setBands('red, green, blue').dispatch()
+    actions.autoSelectScenes({min: 1, max: 99}).dispatch()
 }
 
 const createAoi = (aoiForm) => {
@@ -263,3 +287,4 @@ export const inDateRange = (date, dates) => {
         ? doy >= fromDoy || doy < toDoy
         : doy >= fromDoy && doy < toDoy
 }
+

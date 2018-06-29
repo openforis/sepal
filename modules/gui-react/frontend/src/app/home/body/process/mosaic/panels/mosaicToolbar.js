@@ -8,9 +8,11 @@ import {Toolbar, ToolbarButton} from 'widget/toolbar'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
+    const sceneAreas = recipe('ui.sceneAreas')
     return {
         selectedPanel: recipe('ui.selectedPanel'),
-        modal: recipe('ui.modal')
+        modal: recipe('ui.modal'),
+        sceneAreasLoaded: sceneAreas && Object.keys(sceneAreas).length > 0
     }
 }
 
@@ -21,12 +23,12 @@ class MosaicToolbar extends React.Component {
     }
 
     render() {
-        const {className, selectedPanel, modal} = this.props
+        const {className, selectedPanel, modal, sceneAreasLoaded} = this.props
         return (
             <div className={className}>
                 <div className={styles.toolbarGroup}>
                     <Toolbar className={styles.mosaicToolbar} vertical panel>
-                        <Panel panel={PANELS.AUTO} icon={'magic'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={PANELS.AUTO} icon={'magic'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal || !sceneAreasLoaded}/>
                         <Panel panel={PANELS.PREVIEW} icon={'eye'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                         <Panel panel={PANELS.RETRIEVE} icon={'cloud-download-alt'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                     </Toolbar>

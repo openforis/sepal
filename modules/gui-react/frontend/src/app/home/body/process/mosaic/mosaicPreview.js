@@ -80,6 +80,7 @@ class MosaicPreview extends React.Component {
     isPreviewShown() {
         const {recipe} = this.props
         return recipe.ui.initialized
+            && !recipe.ui.autoSelectingScenes
             && recipe.bands
             && (recipe.sceneSelectionOptions.type === SceneSelectionType.ALL
                 || (recipe.scenes && Object.keys(recipe.scenes).find(sceneAreaId => recipe.scenes[sceneAreaId].length > 0)))

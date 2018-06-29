@@ -3,6 +3,7 @@ import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
+import AutoSelectScenes from './autoSelectScenes'
 import BandSelection from './bandSelection'
 import MapToolbar from './mapToolbar'
 import styles from './mosaic.module.css'
@@ -34,7 +35,10 @@ class Mosaic extends React.Component {
                 <Panels recipeId={recipeId} className={styles.panel}/>
                 <MosaicPreview recipeId={recipeId}/>
                 {aoi && source && type === SceneSelectionType.SELECT
-                    ? <SceneAreas recipeId={recipeId}/>
+                    ? <React.Fragment>
+                        <SceneAreas recipeId={recipeId}/>
+                        <AutoSelectScenes recipeId={recipeId}/>
+                    </React.Fragment>
                     : null}
                 {sceneSelection
                     ? <SceneSelection recipeId={recipeId} sceneAreaId={sceneSelection}/>

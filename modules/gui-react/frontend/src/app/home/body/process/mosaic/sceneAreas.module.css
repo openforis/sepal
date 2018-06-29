@@ -2,7 +2,7 @@
     user-select: none;
 }
 
-.sceneArea circle {
+.sceneArea circle, .sceneArea.loading:hover circle {
     fill: #000000;
     fill-opacity: 0.4;
     stroke: #636363;
@@ -10,12 +10,12 @@
     stroke-width: 2px;
 }
 
-.sceneArea:hover circle  {
+.sceneArea:hover circle {
     fill-opacity: 0.6;
     stroke-opacity: 0.8;
 }
 
-.sceneArea text {
+.sceneArea text, .sceneArea.loading:hover text {
     fill: #CCC;
 }
 

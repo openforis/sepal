@@ -136,7 +136,18 @@
       "panel": {
         "auto": {
           "title": "Auto-select scenes",
-          "tooltip": "Auto-select scenes"
+          "tooltip": "Auto-select scenes",
+          "form": {
+            "sceneCount": "Scene count",
+            "min": {
+              "label": "Min"
+            },
+            "max": {
+              "label": "Max"
+            },
+            "selectScenes": "Select scenes"
+          },
+          "selecting": "Selecting scenes..."
         },
         "preview": {
           "title": "Preview settings",

@@ -14,15 +14,7 @@ const api = {
                 + transformQueryForScenesInSceneArea({dates, sources})).pipe(
                 map(({response: scenes}) =>
                     scenes
-                        .map(({sceneId, sensor, acquisitionDate, cloudCover, browseUrl}) => ({
-                            id: sceneId,
-                            sceneAreaId,
-                            dataSet: transformBackDataSet(sensor),
-                            date: acquisitionDate,
-                            daysFromTarget: daysFromTarget(acquisitionDate, dates),
-                            cloudCover: Math.round(cloudCover),
-                            browseUrl
-                        }))
+                        .map((scene) => transformOldSceneToNew(sceneAreaId, dates, scene))
                         .filter(({date}) => inDateRange(date, dates))
                         .filter(({dataSet}) => Object.values(sources)[0].includes(dataSet))
                         .sort((scene1, scene2) => {
@@ -33,7 +25,33 @@ const api = {
                             return weightOf(scene1) - weightOf(scene2)
                         })
                 )
+            ),
+        autoSelectScenes$: (sceneCount, recipe) => {
+            console.log({sceneCount, recipe})
+            return Http.post$('/api/data/best-scenes', {
+                body: {
+                    targetDayOfYearWeight: recipe.sceneSelectionOptions.targetDateWeight,
+                    cloudCoverTarget: 0.0001,
+                    minScenes: sceneCount.min,
+                    maxScenes: sceneCount.max,
+                    dataSet: sourcesToDataSet(recipe.sources),
+                    sceneAreaIds: recipe.ui.sceneAreas.map(sceneArea => sceneArea.id).join(','),
+                    sensorIds: toSensors(recipe.sources).join(','),
+                    fromDate: fromDate(recipe.dates),
+                    toDate: toDate(recipe.dates),
+                    targetDayOfYear: targetDayOfYear(recipe.dates)
+                }
+            }).pipe(
+                map(({response: scenesBySceneArea}) => {
+                        Object.keys(scenesBySceneArea).forEach((sceneAreaId) =>
+                            scenesBySceneArea[sceneAreaId] = scenesBySceneArea[sceneAreaId].map((scene) =>
+                                transformOldSceneToNew(sceneAreaId, recipe.dates, scene))
+                        )
+                        return scenesBySceneArea
+                    }
+                )
             )
+        }
     }
 }
 export default api
@@ -64,6 +82,16 @@ const transformRecipeForPreview = (recipe) => {
         type: recipe.sceneSelectionOptions.type === SceneSelectionType.ALL ? 'automatic' : 'manual'
     }
 }
+
+const transformOldSceneToNew = (sceneAreaId, dates, {sceneId, sensor, acquisitionDate, cloudCover, browseUrl}) => ({
+    id: sceneId,
+    sceneAreaId,
+    dataSet: transformBackDataSet(sensor),
+    date: acquisitionDate,
+    daysFromTarget: daysFromTarget(acquisitionDate, dates),
+    cloudCover: Math.round(cloudCover),
+    browseUrl
+})
 
 const transformQueryForSceneAreas = (aoi, source) =>
     `aoi=${JSON.stringify(transformAoi(aoi))}&dataSet=${sourceToDataSet(source)}`

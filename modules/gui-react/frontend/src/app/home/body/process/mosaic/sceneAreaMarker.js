@@ -6,10 +6,11 @@ import styles from './sceneAreas.module.css'
 
 const mapStateToProps = (state, ownProps) => {
     const {recipeId, sceneAreaId} = ownProps
-    const recipe = RecipeState(recipeId)
-    const selectedScenes = recipe(['scenes', sceneAreaId]) || []
+    const recipeState = RecipeState(recipeId)
+    const selectedScenes = recipeState(['scenes', sceneAreaId]) || []
     return {
-        selectedSceneCount: selectedScenes.length
+        selectedSceneCount: selectedScenes.length,
+        loading: recipeState('ui.autoSelectingScenes')
     }
 }
 
@@ -20,7 +21,7 @@ class SceneAreaMarker extends React.Component {
     }
 
     render() {
-        const {sceneAreaId, center, polygon, selectedSceneCount} = this.props
+        const {sceneAreaId, center, polygon, selectedSceneCount, loading} = this.props
         const zoom = sepalMap.getZoom()
         const scale = Math.min(1, Math.pow(zoom, 2.5) / Math.pow(8, 2.5))
         const size = `${4 * scale}rem`
@@ -31,13 +32,13 @@ class SceneAreaMarker extends React.Component {
                 lng={center.lng()}
                 width={size}
                 height={size}
-                className={styles.sceneArea}>
+                className={[styles.sceneArea, loading ? styles.loading : null].join(' ')}>
                 <svg
                     height={size}
                     width={size}
-                    onMouseOver={() => polygon.setMap(googleMap)}
+                    onMouseOver={() => !loading && polygon.setMap(googleMap)}
                     onMouseLeave={() => polygon.setMap(null)}
-                    onClick={() => this.selectScenes(sceneAreaId)}>
+                    onClick={() => loading ? null : this.selectScenes(sceneAreaId)}>
                     <circle cx={halfSize} cy={halfSize} r={halfSize}/>
                     {zoom > 4
                         ? <text x={halfSize} y={halfSize} textAnchor='middle' alignmentBaseline="central">
