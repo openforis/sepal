@@ -223,12 +223,12 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                 const form = {
                     errors: this.state.errors,
                     isInvalid: this.isInvalid,
-                    onDirty: (listener) => this.dirtyListeners.push(listener),
-                    onClean: (listener) => this.cleanListeners.push(listener),
+                    isDirty: () => this.isDirty(),
                     setInitialValues: (values) => this.setInitialValues(values),
                     reset: () => this.reset(),
-                    isDirty: () => this.isDirty(),
-                    values: () => this.state.values
+                    values: () => this.state.values,
+                    onDirty: (listener) => this.dirtyListeners.push(listener),
+                    onClean: (listener) => this.cleanListeners.push(listener)
                 }
                 const element = React.createElement(WrappedComponent, {
                     ...this.props, form, inputs
@@ -251,15 +251,11 @@ function getDisplayName(Component) {
     return Component.displayName || Component.name || 'Component'
 }
 
-export class Constraint {
+class FormProperty {
     static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape
 
     _predicates = []
     _skip = []
-
-    constructor(fieldNames) {
-        this.fieldNames = fieldNames
-    }
 
     skip(when) {
         this._skip.push(when)
@@ -323,7 +319,20 @@ export class Constraint {
     }
 }
 
-export class Field extends Constraint {
+export class Constraint extends FormProperty {
+    constructor(fieldNames) {
+        super()
+        this.fieldNames = fieldNames
+        if (!Array.isArray(fieldNames) || fieldNames.length < 2)
+            throw new Error('Constructor of Constraint requires an array of at least 2 field names')
+    }
+
+    _checkPredicate(name, values, predicate) {
+        return predicate(values)
+    }
+}
+
+export class Field extends FormProperty {
     _checkPredicate(name, values, predicate) {
         return predicate(values[name], values)
     }
@@ -334,7 +343,7 @@ const FormContext = React.createContext()
 export const ErrorMessage = (props) => {
     return <FormContext.Consumer>
         {form => {
-            let sources = props['for']
+            let sources = props['for'] || []
             if (!Array.isArray(sources))
                 sources = [sources]
             const error = sources

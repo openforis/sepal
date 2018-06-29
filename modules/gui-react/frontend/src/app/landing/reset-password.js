@@ -1,7 +1,7 @@
 import React from 'react'
 import {resetPassword$, tokenUser, validateToken$} from 'user'
 import {history, query} from 'route'
-import {Field, ErrorMessage, form, Input} from 'widget/form'
+import {Field, ErrorMessage, form, Input, Constraint} from 'widget/form'
 import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
 import Notifications from 'app/notifications'
@@ -15,7 +15,14 @@ const fields = {
         .notBlank('landing.reset-password.password.required'),
     password2: new Field()
         .notBlank('landing.reset-password.password2.required')
-        .predicate((password2, form) => password2 === form.password, 'landing.reset-password.password2.not-matching')
+
+}
+
+const constraints = {
+    passwordsMatch: new Constraint(['password', 'password2'])
+        .predicate(({password, password2}) =>
+            !password || password === password2,
+            'landing.reset-password.password2.not-matching')
 }
 
 const mapStateToProps = () => ({
@@ -96,7 +103,7 @@ class ResetPassword extends React.Component {
                     type='password'
                     placeholder={msg('landing.reset-password.password2.placeholder')}
                     tabIndex={2}/>
-                <ErrorMessage for={password2}/>
+                <ErrorMessage for={[password2, 'passwordsMatch']}/>
             </div>
 
             <SubmitButton
@@ -122,4 +129,4 @@ ResetPassword.propTypes = {
     })
 }
 
-export default form({fields, mapStateToProps})(ResetPassword)
+export default form({fields, constraints, mapStateToProps})(ResetPassword)
