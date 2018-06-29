@@ -122,4 +122,4 @@ ResetPassword.propTypes = {
     })
 }
 
-export default form(inputs, mapStateToProps)(ResetPassword)
+export default form({inputs, mapStateToProps})(ResetPassword)

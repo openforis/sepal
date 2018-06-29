@@ -7,7 +7,7 @@ import styles from './form.module.css'
 import Icon from './icon'
 import Tooltip from './tooltip'
 
-export function form(inputs, mapStateToProps) {
+export function form({inputs, constraints, mapStateToProps}) {
     return (WrappedComponent) => {
         class Form extends React.Component {
             dirtyListeners = []

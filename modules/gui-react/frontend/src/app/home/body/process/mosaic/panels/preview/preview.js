@@ -43,4 +43,4 @@ Preview.propTypes = {
     values: PropTypes.object
 }
 
-export default form(inputs, mapStateToProps)(Preview)
+export default form({inputs, mapStateToProps})(Preview)

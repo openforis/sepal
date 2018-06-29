@@ -130,5 +130,5 @@ Sources.propTypes = {
     values: PropTypes.object
 }
 
-export default form(inputs, mapStateToProps)(Sources)
+export default form({inputs, mapStateToProps})(Sources)
 

@@ -43,4 +43,4 @@ Retrieve.propTypes = {
     values: PropTypes.object
 }
 
-export default form(inputs, mapStateToProps)(Retrieve)
+export default form({inputs, mapStateToProps})(Retrieve)

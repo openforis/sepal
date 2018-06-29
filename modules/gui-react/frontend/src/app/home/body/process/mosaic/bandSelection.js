@@ -151,4 +151,4 @@ const SelectedBands = ({recipe, selectedOption, canPanSharpen, panSharpen, onCli
 
 }
 
-export default form(inputs, mapStateToProps)(BandSelection)
+export default form({inputs, mapStateToProps})(BandSelection)

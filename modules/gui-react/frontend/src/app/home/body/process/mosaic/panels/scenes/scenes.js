@@ -113,4 +113,4 @@ Scenes.propTypes = {
     values: PropTypes.object
 }
 
-export default form(inputs, mapStateToProps)(Scenes)
+export default form({inputs, mapStateToProps})(Scenes)

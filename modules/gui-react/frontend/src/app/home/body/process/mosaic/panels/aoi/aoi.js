@@ -127,4 +127,4 @@ Aoi.propTypes = {
     values: PropTypes.object
 }
 
-export default form(inputs, mapStateToProps)(Aoi)
+export default form({inputs, mapStateToProps})(Aoi)

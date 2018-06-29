@@ -227,4 +227,4 @@ SceneSelection.propTypes = {
     sceneAreaId: PropTypes.string.isRequired
 }
 
-export default form(inputs, mapStateToProps)(SceneSelection)
+export default form({inputs, mapStateToProps})(SceneSelection)

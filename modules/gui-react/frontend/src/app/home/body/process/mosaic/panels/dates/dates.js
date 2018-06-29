@@ -213,4 +213,4 @@ Dates.propTypes = {
     values: PropTypes.object
 }
 
-export default form(inputs, mapStateToProps)(Dates)
+export default form({inputs, mapStateToProps})(Dates)

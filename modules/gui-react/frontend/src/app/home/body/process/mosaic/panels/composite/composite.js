@@ -138,4 +138,4 @@ Composite.propTypes = {
     values: PropTypes.object
 }
 
-export default form(inputs, mapStateToProps)(Composite)
+export default form({inputs, mapStateToProps})(Composite)
