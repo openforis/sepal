@@ -104,7 +104,7 @@ class CountrySection extends React.Component {
                                 this.loadCountryAreas(e.value)
                         }}
                     />
-                    <ErrorMessage input={country}/>
+                    <ErrorMessage for={country}/>
                 </div>
                 <div>
                     <label><Msg id='process.mosaic.panel.areaOfInterest.form.country.area.label'/></label>
@@ -116,7 +116,7 @@ class CountrySection extends React.Component {
                         options={(countryAreas || []).map(([value, label]) => ({value, label}))}
                         onChange={() => this.aoiChanged$.next()}
                     />
-                    <ErrorMessage input={area}/>
+                    <ErrorMessage for={area}/>
                 </div>
             </PanelContent>
         )

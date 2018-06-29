@@ -140,11 +140,14 @@
           "form": {
             "sceneCount": "Scene count",
             "min": {
-              "label": "Min"
+              "label": "Min",
+              "atLeast1": "Min must be at least 1"
             },
             "max": {
-              "label": "Max"
+              "label": "Max",
+              "atLeast1": "Max must be at least 1"
             },
+            "minLessThanMax": "Min cannot exceed max",
             "selectScenes": "Select scenes"
           },
           "selecting": "Selecting scenes..."

@@ -1,34 +1,29 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import {msg, Msg} from 'translate'
-import {ErrorMessage, form, Input, Field} from 'widget/form'
+import {Constraint, ErrorMessage, Field, form, Input} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import PanelForm from '../panelForm'
 import styles from './auto.module.css'
 
-
 const fields = {
-    min: new Field(),
+    min: new Field()
+        .int('process.mosaic.panel.auto.form.min.atLeast1')
+        .min(1, 'process.mosaic.panel.auto.form.min.atLeast1'),
     max: new Field()
+        .int('process.mosaic.panel.auto.form.max.atLeast1')
+        .min(1, 'process.mosaic.panel.auto.form.max.atLeast1')
 }
 
-// const fields = {
-//     min: new Field()
-//         .int('process.mosaic.panel.auto.form.min.mustBeInt')
-//         .min(1, 'process.mosaic.panel.auto.form.min.atLeast1'),
-//     max: new Field()
-//         .int('process.mosaic.panel.auto.form.max.mustBeInt')
-//         .min(1, 'process.mosaic.panel.auto.form.max.atLeast1')
-// }
-//
 const constraints = {
-    minLessThanMax: new Field(['min', 'max'])
-        .predicate(({min, max}) => min <= max, 'process.mosaic.panel.auto.form.minLessThanMax')
+    minLessThanMax: new Constraint(['min', 'max'])
+        .predicate(({min, max}) => {
+            return +min <= +max
+        }, 'process.mosaic.panel.auto.form.minLessThanMax')
 }
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
-    console.log(recipe('ui.sceneCount'))
     return {
         values: recipe('ui.sceneCount'),
         recipeState: recipe()
@@ -75,9 +70,8 @@ class Auto extends React.Component {
                                     step={1}
                                     input={max}/>
                             </div>
-                            <ErrorMessage for={[min, max, 'minLessThanMax']}/>
-                            <ErrorMessage for={[min, max, {min, max}]}/>
                         </div>
+                        <ErrorMessage for={[min, max, 'minLessThanMax']}/>
                     </div>
                 </PanelForm>
             </form>
@@ -95,5 +89,4 @@ Auto.propTypes = {
     values: PropTypes.object
 }
 
-// export default form({fields, constraints, mapStateToProps})(Auto)
-export default form({fields, mapStateToProps})(Auto)
+export default form({fields, constraints, mapStateToProps})(Auto)

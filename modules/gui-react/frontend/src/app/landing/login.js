@@ -40,7 +40,7 @@ class Login extends React.Component {
                         autoFocus='on'
                         autoComplete='off'
                         tabIndex={1}/>
-                    <ErrorMessage input={username}/>
+                    <ErrorMessage for={username}/>
                 </div>
                 <div>
                     <label><Msg id='landing.login.password.label'/></label>
@@ -49,13 +49,13 @@ class Login extends React.Component {
                         type='password'
                         placeholder={msg('landing.login.password.placeholder')}
                         tabIndex={2}/>
-                    <ErrorMessage input={password}/>
+                    <ErrorMessage for={password}/>
                 </div>
 
                 <SubmitButton
                     icon={action('LOGIN').dispatching ? 'spinner' : 'sign-in-alt'}
                     onClick={() => this.login(form.values())}
-                    disabled={form.hasInvalid() || action('LOGIN').dispatching}
+                    disabled={form.isInvalid() || action('LOGIN').dispatching}
                     tabIndex={3}>
                     <Msg id='landing.login.button'/>
                 </SubmitButton>

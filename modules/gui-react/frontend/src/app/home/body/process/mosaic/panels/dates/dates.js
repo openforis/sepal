@@ -141,7 +141,7 @@ class Dates extends React.Component {
                         input={targetDate}
                         startDate={'1982-08-22'}
                         endDate={moment().format(DATE_FORMAT)}/>
-                    <ErrorMessage input={targetDate}/>
+                    <ErrorMessage for={targetDate}/>
                 </div>
 
                 <Label className={styles.yearsLabel} tooltip='process.mosaic.panel.dates.form.years' right>
@@ -158,7 +158,7 @@ class Dates extends React.Component {
                         &nbsp;
                         <Msg id='process.mosaic.panel.dates.form.years.after'/>
                     </div>
-                    <ErrorMessage input={[yearsBefore, yearsAfter]}/>
+                    <ErrorMessage for={[yearsBefore, yearsAfter]}/>
                 </div>
 
                 <Label className={styles.seasonLabel} tooltip='process.mosaic.panel.dates.form.season' right>
@@ -190,7 +190,7 @@ class Dates extends React.Component {
                         startDate={moment('1982-08-22', DATE_FORMAT)}
                         endDate={moment()}
                         resolution='year'/>
-                    <ErrorMessage input={targetYear}/>
+                    <ErrorMessage for={targetYear}/>
                 </div>
 
             </div>

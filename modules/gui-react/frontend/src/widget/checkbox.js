@@ -3,7 +3,7 @@ import React from 'react'
 import styles from './checkbox.module.css'
 
 const Checkbox = ({label, input, tabIndex, className, onChange}) =>
-    <label className={[styles.container, input.errorClass, className].join(' ')}>
+    <label className={[styles.container, className].join(' ')}>
         <input
             type='checkbox'
             name={input.name}

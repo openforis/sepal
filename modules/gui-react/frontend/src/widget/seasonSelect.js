@@ -219,7 +219,7 @@ class DatePickers extends React.Component {
                         input={startDate}
                         startDate={minDate}
                         endDate={centerDate}/>
-                    <ErrorMessage input={startDate}/>
+                    <ErrorMessage for={startDate}/>
                 </div>
 
                 <div>
@@ -228,7 +228,7 @@ class DatePickers extends React.Component {
                         input={endDate}
                         startDate={moment(centerDate).add(1, 'days')}
                         endDate={maxDate}/>
-                    <ErrorMessage input={endDate}/>
+                    <ErrorMessage for={endDate}/>
                 </div>
             </div>
         )

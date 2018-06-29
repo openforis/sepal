@@ -40,13 +40,13 @@ export class ForgotPassword extends React.Component {
                     tabIndex={1}
                     validate='onBlur'
                 />
-                <ErrorMessage input={email}/>
+                <ErrorMessage for={email}/>
             </div>
 
             <SubmitButton
                 icon={action('REQUEST_PASSWORD_RESET').dispatching ? 'spinner' : 'sign-in-alt'}
                 onClick={() => this.requestPasswordReset(email.value)}
-                disabled={form.hasInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
+                disabled={form.isInvalid() || action('REQUEST_PASSWORD_RESET').dispatching}
                 tabIndex={2}>
                 <Msg id='landing.forgot-password.button'/>
             </SubmitButton>

@@ -7,12 +7,13 @@ import styles from './form.module.css'
 import Icon from './icon'
 import Tooltip from './tooltip'
 
-export function form({fields, constraints, mapStateToProps}) {
+export function form({fields = {}, constraints = {}, mapStateToProps}) {
     return (WrappedComponent) => {
         class Form extends React.Component {
             dirtyListeners = []
             cleanListeners = []
             changeListenersByInputName = {}
+            constraintNamesByFieldName = {}
 
             constructor(props) {
                 super(props)
@@ -30,10 +31,24 @@ export function form({fields, constraints, mapStateToProps}) {
                 })
                 this.state = state
 
+                if (constraints) {
+                    Object.keys(constraints).forEach(constraintName =>
+                        constraints[constraintName].fieldNames.forEach(name => {
+                            let constraintNames = this.constraintNamesByFieldName[name]
+                            if (!constraintNames) {
+                                constraintNames = []
+                                this.constraintNamesByFieldName[name] = constraintNames
+                            }
+                            constraintNames.push(constraintName)
+                        })
+                    )
+                }
+
+
                 this.handleChange = this.handleChange.bind(this)
                 this.value = this.value.bind(this)
-                this.validate = this.validate.bind(this)
-                this.hasInvalid = this.hasInvalid.bind(this)
+                this.validateField = this.validateField.bind(this)
+                this.isInvalid = this.isInvalid.bind(this)
             }
 
             subscribe(description, stream$, observer) {
@@ -62,7 +77,7 @@ export function form({fields, constraints, mapStateToProps}) {
                     this.setState((prevState) => {
                         const state = Object.assign({}, prevState)
                         state.values[name] = value
-                        state.errors[name] = ''
+                        this.clearErrorsForField(name, state.errors)
                         state.invalidValue[name] = ''
                         state.dirty = !!Object.keys(state.initialValues).find((name) =>
                             state.initialValues[name] !== state.values[name]
@@ -89,25 +104,49 @@ export function form({fields, constraints, mapStateToProps}) {
                 return this.state.values[name]
             }
 
-            error(name) {
-                let constraints = fields[name]
-                if (constraints == null)
-                    constraints = new Field()
-                return constraints.check(name, this.state.values)
+            clearErrorsForField(name, errors) {
+                errors[name] = ''
+                const constraintNames = this.constraintNamesByFieldName[name] || []
+                constraintNames.forEach(constraintName =>
+                    errors[constraintName] = ''
+                )
             }
 
-            validate(name) {
+            getConstraintErrorsForField(name) {
+                return (this.constraintNamesByFieldName[name] || []).find(constraintName =>
+                    this.state.errors[constraintName]
+                )
+            }
+
+            checkFieldError(name) {
+                let field = fields[name]
+                return field ? field.check(name, this.state.values) : ''
+            }
+
+            checkConstraintError(name) {
+                let constraint = constraints[name]
+                return constraint ? constraint.check(name, this.state.values) : ''
+            }
+
+            validateField(name) {
+                // TODO: Validate constraints containing name
                 this.setState((prevState) => {
                     const state = Object.assign({}, prevState)
                     if (!state.invalidValue[name])
-                        state.errors[name] = this.error(name)
+                        state.errors[name] = this.checkFieldError(name)
+                    const constraintName = this.constraintNamesByFieldName[name]
+                    constraintName && constraintName.forEach(constraint =>
+                        state.errors[constraintName] = this.checkConstraintError(constraintName)
+                    )
                     return state
                 })
                 return this
             }
 
-            hasInvalid() {
-                return !!Object.keys(this.state.values).find(name => this.error(name))
+            isInvalid() {
+                const hasInvalidField = !!Object.keys(this.state.values).find(name => this.checkFieldError(name))
+                const hasInvalidConstraint = !!Object.keys(constraints).find(name => this.checkConstraintError(name))
+                return hasInvalidField || hasInvalidConstraint
             }
 
             setInitialValues(values) {
@@ -130,7 +169,7 @@ export function form({fields, constraints, mapStateToProps}) {
                 this.setState((prevState) => {
                     const state = {...prevState, values: {...prevState.initialValues}, dirty: false}
                     Object.keys(fields).forEach(name => {
-                        state.errors[name] = ''
+                        this.clearErrorsForField(name, state.errors)
                     })
                     state.gotDirty = false
                     state.gotClean = prevState.dirty
@@ -157,23 +196,23 @@ export function form({fields, constraints, mapStateToProps}) {
             }
 
             render() {
-                const formInputs = {}
+                const inputs = {}
                 Object.keys(fields).forEach(name => {
-                    formInputs[name] = {
+                    inputs[name] = {
                         name: name,
                         value: this.state.values[name],
                         error: this.state.errors[name],
-                        errorClass: this.state.errors[name] ? styles.error : null,
-                        isInvalid: () => this.error(name),
-                        invalid: (msg) => this.setState((prevState) => ({
+                        validationFailed: !!this.state.errors[name] || !!this.getConstraintErrorsForField(name),
+                        isInvalid: () => this.checkFieldError(name),
+                        setInvalid: (msg) => this.setState((prevState) => ({
                             ...prevState,
                             errors: {...prevState.errors, [name]: msg},
                             invalidValue: {...prevState.invalidValue, [name]: this.state.values[name]}
                         })),
+                        validate: () => this.validateField(name),
+                        isDirty: () => this.isValueDirty(name),
                         set: (value) => this.set(name, value),
                         handleChange: (e) => this.handleChange(e),
-                        isDirty: () => this.isValueDirty(name),
-                        validate: () => this.validate(name),
                         onChange: (listener) => {
                             const listeners = this.changeListenersByInputName[name] || []
                             this.changeListenersByInputName[name] = listeners
@@ -181,22 +220,24 @@ export function form({fields, constraints, mapStateToProps}) {
                         }
                     }
                 })
-                return React.createElement(WrappedComponent, {
-                    ...this.props,
-                    form: {
-                        errors: Object.values(this.state.errors)
-                            .filter(error => error),
-                        errorClass: styles.error,
-                        hasInvalid: this.hasInvalid,
-                        onDirty: (listener) => this.dirtyListeners.push(listener),
-                        onClean: (listener) => this.cleanListeners.push(listener),
-                        setInitialValues: (values) => this.setInitialValues(values),
-                        reset: () => this.reset(),
-                        isDirty: () => this.isDirty(),
-                        values: () => this.state.values
-                    },
-                    inputs: formInputs
+                const form = {
+                    errors: this.state.errors,
+                    isInvalid: this.isInvalid,
+                    onDirty: (listener) => this.dirtyListeners.push(listener),
+                    onClean: (listener) => this.cleanListeners.push(listener),
+                    setInitialValues: (values) => this.setInitialValues(values),
+                    reset: () => this.reset(),
+                    isDirty: () => this.isDirty(),
+                    values: () => this.state.values
+                }
+                const element = React.createElement(WrappedComponent, {
+                    ...this.props, form, inputs
                 })
+                return (
+                    <FormContext.Provider value={form}>
+                        {element}
+                    </FormContext.Provider>
+                )
             }
         }
 
@@ -210,11 +251,15 @@ function getDisplayName(Component) {
     return Component.displayName || Component.name || 'Component'
 }
 
-export class Field {
+export class Constraint {
     static _EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ // eslint-disable-line no-useless-escape
 
-    _constraints = []
+    _predicates = []
     _skip = []
+
+    constructor(fieldNames) {
+        this.fieldNames = fieldNames
+    }
 
     skip(when) {
         this._skip.push(when)
@@ -222,7 +267,7 @@ export class Field {
     }
 
     predicate(constraint, messageId, messageArgs = () => ({})) {
-        this._constraints.push([constraint, messageId, messageArgs])
+        this._predicates.push([constraint, messageId, messageArgs])
         return this
     }
 
@@ -249,7 +294,7 @@ export class Field {
     }
 
     email(messageId, messageArgs) {
-        return this.match(Field._EMAIL_REGEX, messageId, messageArgs)
+        return this.match(Constraint._EMAIL_REGEX, messageId, messageArgs)
     }
 
     date(format, messageId, messageArgs) {
@@ -267,19 +312,43 @@ export class Field {
     check(name, values) {
         const skip = this._skip.find((when) => when(values[name], values))
         const failingConstraint = !skip &&
-            this._constraints.find((constraint) =>
-                constraint[0](values[name], values) ? null : constraint[1]
+            this._predicates.find((constraint) =>
+                this._checkPredicate(name, values, constraint[0]) ? null : constraint[1]
             )
         return failingConstraint ? msg(failingConstraint[1], failingConstraint[2](values)) : ''
     }
+
+    _checkPredicate(name, values, predicate) {
+        return predicate(values)
+    }
 }
 
-export const ErrorMessage = ({input}) => {
-    if (Array.isArray(input))
-        input = input.find((i) => i.error)
-    return <div className={styles.errorMessage}>
-        {input && input.error}
-    </div>
+export class Field extends Constraint {
+    _checkPredicate(name, values, predicate) {
+        return predicate(values[name], values)
+    }
+}
+
+const FormContext = React.createContext()
+
+export const ErrorMessage = (props) => {
+    return <FormContext.Consumer>
+        {form => {
+            let sources = props['for']
+            if (!Array.isArray(sources))
+                sources = [sources]
+            const error = sources
+                .map(source =>
+                    (typeof source) === 'string' ? form.errors[source] : source.error
+                )
+                .find(error => error)
+            return (
+                <div className={styles.errorMessage}>
+                    {error}
+                </div>
+            )
+        }}
+    </FormContext.Consumer>
 }
 
 export class Input extends React.Component {
@@ -307,7 +376,7 @@ export class Input extends React.Component {
                     if (validate === 'onBlur')
                         input.validate()
                 }}
-                className={[input.errorClass, className].join(' ')}
+                className={[input.validationFailed ? styles.error : null, className].join(' ')}
             />
         )
     }

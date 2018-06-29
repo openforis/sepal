@@ -144,7 +144,7 @@ class PanelButtons extends React.Component {
                     e.preventDefault()
                     this.next()
                 }}
-                disabled={form.hasInvalid()}
+                disabled={form.isInvalid()}
                 className={styles.apply}>
                 <span><Msg id='button.next'/></span>
                 <Icon name={'chevron-right'}/>
@@ -157,7 +157,7 @@ class PanelButtons extends React.Component {
                     e.preventDefault()
                     this.done()
                 }}
-                disabled={form.hasInvalid()}
+                disabled={form.isInvalid()}
                 className={styles.apply}>
                 <Icon name={'check'}/>
                 <span><Msg id='button.done'/></span>
@@ -195,7 +195,7 @@ class PanelButtons extends React.Component {
                         e.preventDefault()
                         this.ok()
                     }}
-                    disabled={form.hasInvalid()}
+                    disabled={form.isInvalid()}
                     className={styles.apply}>
                     <Icon name={'check'}/>
                     <span>{applyLabel}</span>

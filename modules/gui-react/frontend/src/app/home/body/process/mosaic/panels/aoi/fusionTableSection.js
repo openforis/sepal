@@ -33,7 +33,7 @@ class FusionTableSection extends React.Component {
             loadFusionTableColumns$(fusionTableId, {retries: 1, validStatuses: [200, 404]}).pipe(
                 map((columns) => {
                         if (!columns)
-                            this.props.inputs.fusionTable.invalid(
+                            this.props.inputs.fusionTable.setInvalid(
                                 msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.invalid')
                             )
                         return (columns || [])
@@ -115,7 +115,7 @@ class FusionTableSection extends React.Component {
                                 this.loadFusionTableColumns(e.target.value)
                         }}
                     />
-                    <ErrorMessage input={fusionTable}/>
+                    <ErrorMessage for={fusionTable}/>
                 </div>
 
                 <div>
@@ -135,7 +135,7 @@ class FusionTableSection extends React.Component {
                                 this.loadFusionTableRows(e.value)
                         }}
                     />
-                    <ErrorMessage input={fusionTableColumn}/>
+                    <ErrorMessage for={fusionTableColumn}/>
                 </div>
 
                 <div>
@@ -148,7 +148,7 @@ class FusionTableSection extends React.Component {
                         options={(rows || []).map((value) => ({value, label: value}))}
                         onChange={(e) => this.fusionTableRowChanged$.next()}
                     />
-                    <ErrorMessage input={fusionTableRow}/>
+                    <ErrorMessage for={fusionTableRow}/>
                 </div>
             </PanelContent>
         )

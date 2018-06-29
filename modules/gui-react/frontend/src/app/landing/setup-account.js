@@ -48,7 +48,7 @@ class SetupAccount extends React.Component {
                     placeholder={msg('landing.reset-password.password.placeholder')}
                     autoFocus='on'
                     tabIndex={1}/>
-                <ErrorMessage input={password}/>
+                <ErrorMessage for={password}/>
             </div>
             <div>
                 <label><Msg id='landing.reset-password.password2.label'/></label>
@@ -57,13 +57,13 @@ class SetupAccount extends React.Component {
                     type='password'
                     placeholder={msg('landing.reset-password.password2.placeholder')}
                     tabIndex={2}/>
-                <ErrorMessage input={password2}/>
+                <ErrorMessage for={password2}/>
             </div>
 
             <SubmitButton
                 icon='sign-in-alt'
                 onClick={() => this.resetPassword(form.values())}
-                disabled={form.hasInvalid()}
+                disabled={form.isInvalid()}
                 tabIndex={3}>
                 <Msg id='landing.reset-password.button'/>
             </SubmitButton>

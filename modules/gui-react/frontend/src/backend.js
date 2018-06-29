@@ -27,7 +27,6 @@ const api = {
                 )
             ),
         autoSelectScenes$: (sceneCount, recipe) => {
-            console.log({sceneCount, recipe})
             return Http.post$('/api/data/best-scenes', {
                 body: {
                     targetDayOfYearWeight: recipe.sceneSelectionOptions.targetDateWeight,
