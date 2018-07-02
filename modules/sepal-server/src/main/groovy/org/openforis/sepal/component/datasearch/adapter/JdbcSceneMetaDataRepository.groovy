@@ -54,22 +54,19 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
     }
 
     List<SceneMetaData> findScenesInSceneArea(SceneQuery query) {
-        return sql.rows('''
+        return sql.rows("""
                 SELECT id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, 
                        sun_azimuth, sun_elevation, browse_url, update_time
                 FROM scene_meta_data
                 WHERE scene_area_id = ?
-                AND acquisition_date >= ? AND acquisition_date <= ? AND acquisition_date <= ?''',
-                [query.sceneAreaId, query.fromDate, query.toDate, latestAcquisitionDate()])
+                AND acquisition_date >= ? AND acquisition_date <= ? AND acquisition_date <= ?
+                AND ${dayOfYearConstraint(query)}""",
+                [query.sceneAreaId, query.fromDate, query.toDate, latestAcquisitionDate(),
+                 query.seasonStartDayOfYear, query.seasonEndDayOfYear])
                 .collect { toSceneMetaData(it) }
     }
 
     void eachScene(SceneQuery query, double targetDayOfYearWeight, Closure<Boolean> callback) {
-        def seasonStartDayOfYear = DateTime.dayOfYearIgnoringLeapDay(query.fromDate)
-        def seasonEndDayOfYear = DateTime.dayOfYearIgnoringLeapDay(query.toDate)
-        def dayOfYearConstraint = seasonEndDayOfYear <= seasonStartDayOfYear ?
-                "day_of_year >= ? && <= day_of_year < ?" :
-                "day_of_year >= ? || day_of_year < ?"
         def q = """
                 SELECT
                     (1 - $targetDayOfYearWeight) * cloud_cover / 100 + $targetDayOfYearWeight *
@@ -85,7 +82,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                 WHERE scene_area_id  = ?
                 AND sensor_id in (${placeholders(query.sensorIds)})
                 AND acquisition_date >= ? AND acquisition_date <= ? AND acquisition_date <= ?
-                AND ${dayOfYearConstraint}
+                AND ${dayOfYearConstraint(query)}
                 ORDER BY sort_weight, cloud_cover, days_from_target_date""" as String
 
 
@@ -99,8 +96,8 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
             ps.setDate(++i, new java.sql.Date(query.fromDate.time))
             ps.setDate(++i, new java.sql.Date(query.toDate.time))
             ps.setDate(++i, new java.sql.Date(latestAcquisitionDate().time))
-            ps.setInt(++i, seasonStartDayOfYear)
-            ps.setInt(++i, seasonEndDayOfYear)
+            ps.setInt(++i, query.seasonStartDayOfYear)
+            ps.setInt(++i, query.seasonEndDayOfYear)
             def rs = ps.executeQuery()
             while (rs.next()) {
                 def scene = new SceneMetaData(
@@ -136,6 +133,12 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
             }
         }
         return lastUpdates
+    }
+
+    private String dayOfYearConstraint(SceneQuery query) {
+        return query.seasonEndDayOfYear < query.seasonStartDayOfYear ?
+                "(day_of_year >= ? AND day_of_year < ?)" :
+                "(day_of_year >= ? OR day_of_year < ?)"
     }
 
     private SceneMetaData toSceneMetaData(Map row) {
