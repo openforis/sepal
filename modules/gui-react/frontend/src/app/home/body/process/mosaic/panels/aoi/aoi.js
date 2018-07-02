@@ -41,7 +41,8 @@ const mapStateToProps = (state, ownProps) => {
     const recipe = RecipeState(ownProps.recipeId)
     return {
         values: recipe('ui.aoi'),
-        aoi: recipe('aoi')
+        aoi: recipe('aoi'),
+        initialized: recipe('ui.initialized')
     }
 }
 
@@ -49,6 +50,7 @@ class Aoi extends React.Component {
     constructor(props) {
         super(props)
         this.bounds = sepalMap.getBounds()
+        this.zoom = sepalMap.getZoom()
     }
 
     onApply(recipe, aoiForm) {
@@ -103,7 +105,7 @@ class Aoi extends React.Component {
     }
 
     componentWillUnmount() {
-        const {recipeId} = this.props
+        const {recipeId, initialized} = this.props
         const recipe = RecipeState(recipeId)
         setAoiLayer({
                 contextId: recipeId,
@@ -112,6 +114,8 @@ class Aoi extends React.Component {
             }
         )
         sepalMap.fitBounds(this.bounds)
+        if (initialized)
+            sepalMap.setZoom(this.zoom)
     }
 }
 

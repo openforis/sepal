@@ -95,6 +95,9 @@ const createMap = (mapElement) => {
         getZoom() {
             return googleMap.getZoom()
         },
+        setZoom(zoom) {
+            return googleMap.setZoom(zoom)
+        },
         zoomIn() {
             googleMap.setZoom(googleMap.getZoom() + 1)
         },
