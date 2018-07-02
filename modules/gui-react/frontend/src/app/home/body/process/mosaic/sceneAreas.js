@@ -91,10 +91,6 @@ class SceneAreas extends React.Component {
                 ),
                 takeUntil(this.loadSceneArea$)
             ))
-            .onComplete(() => {
-                setTimeout(() => this.recipeActions.autoSelectScenes({min: 1, max: 99}), 0) // Wait until scene areas are set
-                return {}
-            })
             .dispatch()
     }
 
