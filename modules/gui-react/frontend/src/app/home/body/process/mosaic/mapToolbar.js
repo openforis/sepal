@@ -7,11 +7,13 @@ import {RecipeActions, RecipeState} from './mosaicRecipe'
 import {Toolbar, ToolbarButton} from 'widget/toolbar'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
+    const sceneAreas = recipeState('ui.sceneAreas')
     return {
-        labelsShown: recipe('ui.labelsShown'),
-        sceneAreasShown: recipe('ui.sceneAreasShown'),
-        zoomLevel: sepalMap.getZoom()
+        labelsShown: recipeState('ui.labelsShown'),
+        sceneAreasShown: recipeState('ui.sceneAreasShown'),
+        zoomLevel: sepalMap.getZoom(),
+        sceneAreasLoaded: sceneAreas && Object.keys(sceneAreas).length > 0
     }
 }
 
@@ -22,7 +24,7 @@ class MapToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, className, labelsShown, sceneAreasShown} = this.props
+        const {recipeId, className, labelsShown, sceneAreasShown, sceneAreasLoaded} = this.props
         return (
             <div className={className}>
                 <Toolbar className={styles.mapToolbar} horizontal>
@@ -43,6 +45,7 @@ class MapToolbar extends React.Component {
                         tooltip={`process.mosaic.mapToolbar.labels.${labelsShown ? 'hide' : 'show'}`}/>
                     <ToolbarButton
                         selected={sceneAreasShown}
+                        disabled={!sceneAreasLoaded}
                         onClick={() => this.recipe.setSceneAreasShown(!sceneAreasShown).dispatch()}
                         icon={'th'}
                         tooltip={`process.mosaic.mapToolbar.sceneAreas.${sceneAreasShown ? 'hide' : 'show'}`}/>
