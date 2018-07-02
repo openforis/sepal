@@ -86,6 +86,15 @@ class DateTime {
         return [days, 365 - days].min()
     }
 
+    static int dayOfYearIgnoringLeapDay(Date date) {
+        def zone = ZoneId.systemDefault()
+        def local = date.toInstant().atZone(zone).toLocalDate()
+        def dayOfYear = local.getDayOfYear()
+        if (local.isLeapYear() && dayOfYear > 60)
+            dayOfYear = dayOfYear - 1
+        return dayOfYear
+    }
+
     private static daysBetween(Date date1, Date date2) {
         use(TimeCategory) {
             return Math.abs((startOfDay(date1) - startOfDay(date2)).days)

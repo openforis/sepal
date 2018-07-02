@@ -6,6 +6,7 @@ import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.SceneMetaDataRepository
 import org.openforis.sepal.component.datasearch.api.SceneQuery
 import org.openforis.sepal.sql.SqlConnectionManager
+import org.openforis.sepal.util.DateTime
 
 import java.sql.Connection
 
@@ -27,8 +28,8 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
 
     private void update(SceneMetaData scene, Sql sql) {
         def params = scene.with {
-            [sensorId, sceneAreaId, acquisitionDate, cloudCover, sunAzimuth, sunElevation,
-             browseUrl.toString(), updateTime, dataSet.metaDataSource, id]
+            [sensorId, sceneAreaId, acquisitionDate, DateTime.dayOfYearIgnoringLeapDay(acquisitionDate), cloudCover,
+             sunAzimuth, sunElevation, browseUrl.toString(), updateTime, dataSet.metaDataSource, id]
         }
 
         def rowsUpdated = sql.executeUpdate('''
@@ -36,6 +37,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                 SET   sensor_id = ?,
                       scene_area_id = ?,
                       acquisition_date = ?,
+                      day_of_year = ?,
                       cloud_cover = ?,
                       sun_azimuth = ?,
                       sun_elevation = ?,
@@ -46,9 +48,9 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
         if (!rowsUpdated)
             sql.executeInsert('''
                     INSERT INTO scene_meta_data(
-                        sensor_id, scene_area_id, acquisition_date, cloud_cover, sun_azimuth, sun_elevation, 
+                        sensor_id, scene_area_id, acquisition_date, day_of_year, cloud_cover, sun_azimuth, sun_elevation, 
                         browse_url, update_time, meta_data_source, id)
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', params)
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', params)
     }
 
     List<SceneMetaData> findScenesInSceneArea(SceneQuery query) {
@@ -63,21 +65,27 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
     }
 
     void eachScene(SceneQuery query, double targetDayOfYearWeight, Closure<Boolean> callback) {
+        def seasonStartDayOfYear = DateTime.dayOfYearIgnoringLeapDay(query.fromDate)
+        def seasonEndDayOfYear = DateTime.dayOfYearIgnoringLeapDay(query.toDate)
+        def dayOfYearConstraint = seasonEndDayOfYear <= seasonStartDayOfYear ?
+                "day_of_year >= ? && <= day_of_year < ?" :
+                "day_of_year >= ? || day_of_year < ?"
         def q = """
                 SELECT
                     (1 - $targetDayOfYearWeight) * cloud_cover / 100 + $targetDayOfYearWeight *
                     LEAST(
-                        ABS(DAYOFYEAR(acquisition_date) - $query.targetDayOfYear),
-                        365 - ABS(DAYOFYEAR(acquisition_date) - $query.targetDayOfYear)) / 182 as sort_weight,
+                        ABS(day_of_year - $query.targetDayOfYear),
+                        365 - ABS(day_of_year - $query.targetDayOfYear)) / 182 as sort_weight,
                     LEAST(
-                        ABS(DAYOFYEAR(acquisition_date) - $query.targetDayOfYear),
-                        365 - ABS(DAYOFYEAR(acquisition_date) - $query.targetDayOfYear)) days_from_target_date,
+                        ABS(day_of_year - $query.targetDayOfYear),
+                        365 - ABS(day_of_year - $query.targetDayOfYear)) days_from_target_date,
                     id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, 
                     sun_azimuth, sun_elevation, browse_url, update_time
                 FROM scene_meta_data
                 WHERE scene_area_id  = ?
                 AND sensor_id in (${placeholders(query.sensorIds)})
                 AND acquisition_date >= ? AND acquisition_date <= ? AND acquisition_date <= ?
+                AND ${dayOfYearConstraint}
                 ORDER BY sort_weight, cloud_cover, days_from_target_date""" as String
 
 
@@ -91,6 +99,8 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
             ps.setDate(++i, new java.sql.Date(query.fromDate.time))
             ps.setDate(++i, new java.sql.Date(query.toDate.time))
             ps.setDate(++i, new java.sql.Date(latestAcquisitionDate().time))
+            ps.setInt(++i, seasonStartDayOfYear)
+            ps.setInt(++i, seasonEndDayOfYear)
             def rs = ps.executeQuery()
             while (rs.next()) {
                 def scene = new SceneMetaData(
