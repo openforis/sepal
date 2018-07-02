@@ -55,18 +55,22 @@ class Composite extends React.Component {
                             <Buttons input={corrections} multiple={true} options={[
                                 {
                                     value: 'SR',
-                                    label: 'Surface reflectance',
+                                    label: msg('process.mosaic.panel.composite.form.surfaceReflectance.label'),
+                                    tooltip: 'process.mosaic.panel.composite.form.surfaceReflectance',
                                     disabled: source !== 'landsat'
                                 },
                                 {
                                     value: 'BRDF',
-                                    label: 'BRDF correction',
+                                    label: msg('process.mosaic.panel.composite.form.brdf.label'),
+                                    tooltip: 'process.mosaic.panel.composite.form.brdf',
                                     disabled: source !== 'landsat'
                                 }
                             ]}/>
                         </div>
                         <div className={styles.filters}>
-                            <Label>Pixel filters</Label>
+                            <Label tooltip={'process.mosaic.panel.composite.form.filters'}>
+                                <Msg id='process.mosaic.panel.composite.form.filters.label'/>
+                            </Label>
                             <PercentileField input={shadowPercentile}/>
                             <PercentileField
                                 input={hazePercentile}
@@ -79,13 +83,13 @@ class Composite extends React.Component {
                             <Buttons input={mask} multiple={true} options={[
                                 {
                                     value: 'CLOUDS',
-                                    label: 'Clouds',
-                                    // tooltip: ['process.mosaic.panel.sources.form.dataSets.options']
+                                    label: msg('process.mosaic.panel.composite.form.clouds.label'),
+                                    tooltip: 'process.mosaic.panel.composite.form.clouds'
                                 },
                                 {
                                     value: 'SNOW',
-                                    label: 'Snow',
-                                    // tooltip: ['process.mosaic.panel.sources.form.dataSets.options']
+                                    label: msg('process.mosaic.panel.composite.form.snow.label'),
+                                    tooltip: 'process.mosaic.panel.composite.form.snow'
                                 },
                             ]}/>
                         </div>
@@ -94,13 +98,13 @@ class Composite extends React.Component {
                             <Buttons input={compose} options={[
                                 {
                                     value: 'MEDOID',
-                                    label: 'Medoid',
-                                    // tooltip: ['process.mosaic.panel.sources.form.dataSets.options']
+                                    label: msg('process.mosaic.panel.composite.form.medoid.label'),
+                                    tooltip: 'process.mosaic.panel.composite.form.medoid'
                                 },
                                 {
                                     value: 'MEDIAN',
-                                    label: 'Median',
-                                    // tooltip: ['process.mosaic.panel.sources.form.dataSets.options']
+                                    label: msg('process.mosaic.panel.composite.form.median.label'),
+                                    tooltip: 'process.mosaic.panel.composite.form.median'
                                 },
                             ]}/>
                         </div>
