@@ -209,7 +209,7 @@ const initRecipe = (recipe) => {
         shadowPercentile: 0,
         hazePercentile: 0,
         ndviPercentile: 0,
-        targetDayPercentile: 0,
+        dayOfYearPercentile: 0,
         mask: ['CLOUDS'],
         compose: 'MEDOID'
     }).dispatch()

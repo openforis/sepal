@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -73,7 +74,8 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
             }
 
             set(name, value) {
-                if (value !== this.state.values[name])
+                const prevValue = this.state.values[name]
+                if (value !== prevValue && !_.isEqual(value, prevValue))
                     this.setState((prevState) => {
                         const state = Object.assign({}, prevState)
                         state.values[name] = value

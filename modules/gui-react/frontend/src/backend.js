@@ -66,7 +66,7 @@ const transformRecipeForPreview = (recipe) => {
         dates: recipe.dates,
         dataSet: sourcesToDataSet(recipe.sources),
         sensors: toSensors(recipe.sources),
-        targetDayOfYearWeight: recipe.compositeOptions.targetDayPercentile / 100,
+        targetDayOfYearWeight: recipe.compositeOptions.dayOfYearPercentile / 100,
         shadowTolerance: 1 - recipe.compositeOptions.shadowPercentile / 100,
         hazeTolerance: 1 - recipe.compositeOptions.hazePercentile / 100,
         greennessWeight: recipe.compositeOptions.ndviPercentile / 100,
