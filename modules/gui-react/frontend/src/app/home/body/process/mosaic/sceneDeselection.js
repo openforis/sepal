@@ -35,19 +35,23 @@ class SceneDeselection extends React.Component {
         if (!scenes)
             return
         if (sceneSelectionOptions.type !== SceneSelectionType.SELECT)
-            this.recipe.setSelectedScenes({}).dispatch()
+            return this.recipe.setSelectedScenes({}).dispatch()
         const filteredScenes = {}
         const filterScenes = (scenes) => {
             if (!scenes)
                 return []
             return scenes
                 .filter(scene => inDateRange(scene.date, dates))
-                .filter(scene => Object.values(sources).includes(scene.dataSet))
+                .filter(scene =>
+                    !!Object.values(sources).find(values => values.includes(scene.dataSet))
+                )
         }
 
-        sceneAreas.forEach(sceneAreaId =>
-            filteredScenes[sceneAreaId] = filterScenes(scenes[sceneAreaId])
-        )
+        sceneAreas
+            .map(sceneArea => sceneArea.id)
+            .forEach(sceneAreaId =>
+                filteredScenes[sceneAreaId] = filterScenes(scenes[sceneAreaId])
+            )
         this.recipe.setSelectedScenes(filteredScenes).dispatch()
     }
 }
