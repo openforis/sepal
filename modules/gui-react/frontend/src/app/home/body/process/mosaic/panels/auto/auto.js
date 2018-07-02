@@ -46,7 +46,7 @@ class Auto extends React.Component {
                     applyLabel={msg('process.mosaic.panel.auto.form.selectScenes')}
                     isActionForm={true}
                     onApply={(recipe, sceneCount) => recipe.autoSelectScenes(sceneCount).dispatch()}
-                    icon='cog'
+                    icon='magic'
                     title={msg('process.mosaic.panel.auto.title')}>
                     <div className={styles.form}>
                         <label><Msg id='process.mosaic.panel.auto.form.sceneCount'/></label>

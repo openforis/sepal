@@ -109,7 +109,8 @@
     "initializing": "Initializing {label}...",
     "loading": {
       "progress": "Loading {label}...",
-      "error.title": "Failed to load apps"
+      "error.title": "Failed to load apps",
+      "error.message": "Try to reload the page."
     },
     "dataVis": "Data visualization",
     "run": {
@@ -152,9 +153,11 @@
           },
           "selecting": "Selecting scenes..."
         },
-        "preview": {
-          "title": "Preview settings",
-          "tooltip": "Preview settings"
+        "clearSelectedScenes": {
+          "title": "Clear selected scenes",
+          "tooltip": "Clear selected scenes",
+          "message": "You are about to clear all selected scenes.",
+          "apply": "Clear scenes"
         },
         "retrieve": {
           "title": "Retrieve",

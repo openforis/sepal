@@ -47,11 +47,12 @@ class SceneDeselection extends React.Component {
                 )
         }
 
-        sceneAreas
-            .map(sceneArea => sceneArea.id)
-            .forEach(sceneAreaId =>
-                filteredScenes[sceneAreaId] = filterScenes(scenes[sceneAreaId])
-            )
+        if (sceneAreas)
+            sceneAreas
+                .map(sceneArea => sceneArea.id)
+                .forEach(sceneAreaId =>
+                    filteredScenes[sceneAreaId] = filterScenes(scenes[sceneAreaId])
+                )
         this.recipe.setSelectedScenes(filteredScenes).dispatch()
     }
 }

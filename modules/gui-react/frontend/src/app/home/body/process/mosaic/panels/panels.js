@@ -8,7 +8,7 @@ import Composite from './composite/composite'
 import Dates from './dates/dates'
 import {PANELS} from './panelConstants'
 import styles from './panels.module.css'
-import Preview from './preview/preview'
+import ClearSelectedScenes from './clearSelectedScenes/clearSelectedScenes'
 import Retrieve from './retrieve/retrieve'
 import Scenes from './scenes/scenes'
 import Sources from './sources/sources'
@@ -29,8 +29,8 @@ class Panels extends React.Component {
                 return <Auto
                     recipeId={recipeId}
                     className={[styles.panel, styles.top].join(' ')}/>
-            case PANELS.PREVIEW:
-                return <Preview
+            case PANELS.CLEAR_SELETED_SCENES:
+                return <ClearSelectedScenes
                     recipeId={recipeId}
                     className={[styles.panel, styles.top].join(' ')}/>
             case PANELS.RETRIEVE:

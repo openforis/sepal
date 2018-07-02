@@ -5,14 +5,17 @@ import {RecipeActions, RecipeState} from '../mosaicRecipe'
 import {PANELS} from './panelConstants'
 import styles from './mosaicToolbar.module.css'
 import {Toolbar, ToolbarButton} from 'widget/toolbar'
+import _ from 'lodash'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
-    const sceneAreas = recipe('ui.sceneAreas')
+    const recipeState = RecipeState(ownProps.recipeId)
+    const sceneAreas = recipeState('ui.sceneAreas')
+
     return {
-        selectedPanel: recipe('ui.selectedPanel'),
-        modal: recipe('ui.modal'),
-        sceneAreasLoaded: sceneAreas && Object.keys(sceneAreas).length > 0
+        selectedPanel: recipeState('ui.selectedPanel'),
+        modal: recipeState('ui.modal'),
+        sceneAreasLoaded: sceneAreas && Object.keys(sceneAreas).length > 0,
+        scenesSelected: !!_.flatten(Object.values(recipeState('scenes') || {})).length,
     }
 }
 
@@ -23,13 +26,13 @@ class MosaicToolbar extends React.Component {
     }
 
     render() {
-        const {className, selectedPanel, modal, sceneAreasLoaded} = this.props
+        const {className, selectedPanel, modal, sceneAreasLoaded, scenesSelected} = this.props
         return (
             <div className={className}>
                 <div className={styles.toolbarGroup}>
                     <Toolbar className={styles.mosaicToolbar} vertical panel>
                         <Panel panel={PANELS.AUTO} icon={'magic'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal || !sceneAreasLoaded}/>
-                        <Panel panel={PANELS.PREVIEW} icon={'eye'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
+                        <Panel panel={PANELS.CLEAR_SELETED_SCENES} icon={'trash'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal || !scenesSelected}/>
                         <Panel panel={PANELS.RETRIEVE} icon={'cloud-download-alt'} selectedPanel={selectedPanel} recipe={this.recipe} disabled={modal}/>
                     </Toolbar>
                     <Toolbar className={styles.mosaicToolbar} vertical panel>
