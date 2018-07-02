@@ -25,13 +25,6 @@
     left: 0;
 }
 
-.sectionOptions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex-shrink: 0;
-}
-
 .enter {
     opacity: 1;
     z-index: 1;
@@ -106,8 +99,14 @@
     }
 }
 
-.sectionOption {
-    margin: 1rem;
+.sources ul {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sources li {
+    margin-top: 1.5rem;
 }
 
 .polygon {

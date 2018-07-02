@@ -2,7 +2,7 @@ import {removeAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {msg} from 'translate'
-import {Button} from 'widget/button'
+import Buttons from 'widget/buttons'
 import PanelContent from '../panelContent'
 import styles from './aoi.module.css'
 
@@ -14,16 +14,29 @@ export default class SectionSelection extends React.Component {
 
     render() {
         const {className, inputs: {section}} = this.props
+        const options = [
+            {
+                value: 'country',
+                label: msg('process.mosaic.panel.areaOfInterest.form.country.title')
+            },
+            {
+                value: 'fusionTable',
+                label: msg('process.mosaic.panel.areaOfInterest.form.fusionTable.title')
+            },
+            {
+                value: 'polygon',
+                label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title')
+            }
+        ]
         return (
             <PanelContent
                 icon='cog'
                 title={msg('process.mosaic.panel.areaOfInterest.title')}
                 className={className}>
-                <div className={styles.sectionOptions}>
-                    <SectionOption section={section} label={'Select country/province'} value='country'/>
-                    <SectionOption section={section} label={'Select from Fusion Table'} value='fusionTable'/>
-                    <SectionOption section={section} label={'Draw polygon'} value='polygon'/>
-                </div>
+                <Buttons
+                    className={styles.sources}
+                    input={section}
+                    options={options}/>
             </PanelContent>
         )
     }
@@ -33,11 +46,6 @@ export default class SectionSelection extends React.Component {
         removeAoiLayer(recipeId)
     }
 }
-
-const SectionOption = ({label, value, section}) =>
-    <Button onClick={() => section.set(value)} className={styles.sectionOption}>
-        {label}
-    </Button>
 
 SectionSelection.propTypes = {
     recipeId: PropTypes.string.isRequired,
