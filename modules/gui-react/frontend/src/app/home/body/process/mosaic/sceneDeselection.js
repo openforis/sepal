@@ -48,7 +48,6 @@ class SceneDeselection extends React.Component {
         sceneAreas.forEach(sceneAreaId =>
             filteredScenes[sceneAreaId] = filterScenes(scenes[sceneAreaId])
         )
-        console.log(filteredScenes)
         this.recipe.setSelectedScenes(filteredScenes).dispatch()
     }
 }
