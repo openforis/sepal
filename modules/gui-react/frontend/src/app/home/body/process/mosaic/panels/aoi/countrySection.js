@@ -2,6 +2,7 @@ import actionBuilder from 'action-builder'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject} from 'rxjs'
@@ -64,7 +65,8 @@ class CountrySection extends React.Component {
 
     updateBounds(updatedBounds) {
         const {recipeId, inputs: {bounds}} = this.props
-        bounds.set(updatedBounds)
+        if (!_.isEqual(bounds.value, updatedBounds))
+            bounds.set(updatedBounds)
         sepalMap.getContext(recipeId).fitLayer('aoi')
     }
 

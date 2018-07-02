@@ -1,6 +1,7 @@
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
+import _ from 'lodash'
 import React from 'react'
 import {Subject} from 'rxjs'
 import {map, takeUntil} from 'rxjs/operators'
@@ -69,7 +70,8 @@ class FusionTableSection extends React.Component {
 
     updateBounds(updatedBounds) {
         const {recipeId, inputs: {bounds}} = this.props
-        bounds.set(updatedBounds)
+        if (!_.isEqual(bounds.value, updatedBounds))
+            bounds.set(updatedBounds)
         sepalMap.getContext(recipeId).fitLayer('aoi')
     }
 
