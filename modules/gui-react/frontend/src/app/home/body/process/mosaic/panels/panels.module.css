@@ -8,7 +8,7 @@
     border-radius: .5rem;
     pointer-events: all;
     right: 4rem;
-    z-index: 2;
+    z-index: 3;
     width: calc(100% - 5rem);
     --scaling-factor: .8 !important;
     overflow: hidden;
