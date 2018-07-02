@@ -39,9 +39,9 @@ class BandSelection extends React.Component {
         {
             label: msg('process.mosaic.bands.metadata'),
             options: [
-                {value: 'unixTimeDays', label: 'Date'},
-                {value: 'dayOfYear', label: 'Day of year'},
-                {value: 'daysFromTarget', label: 'Days from target'}
+                {value: 'unixTimeDays', label: msg('process.mosaic.bands.unixTimeDays')},
+                {value: 'dayOfYear', label: msg('process.mosaic.bands.dayOfYear')},
+                {value: 'daysFromTarget', label: msg('process.mosaic.bands.daysFromTarget')}
             ]
         }
     ]
@@ -139,7 +139,7 @@ const SelectedBands = ({recipe, selectedOption, canPanSharpen, panSharpen, onCli
             {canPanSharpen
                 ?
                 <div className={styles.panSharpen}>
-                    <Checkbox label='Pan sharpen' input={panSharpen} onChange={enabled =>
+                    <Checkbox label={msg('process.mosaic.bands.panSharpen')} input={panSharpen} onChange={enabled =>
                         recipe.setPanSharpen(enabled).dispatch()
                     }/>
                 </div>

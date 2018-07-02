@@ -352,7 +352,8 @@
             "daysFromTarget": "Days from target",
             "cloudCover": "Cloud cover",
             "beforeTarget": "{daysFromTarget} before",
-            "afterTarget": "{daysFromTarget} after"
+            "afterTarget": "{daysFromTarget} after",
+            "onTarget": "On target day"
           },
           "loadingScenes": "Loading scenes..."
         }
@@ -360,7 +361,11 @@
       "bands": {
         "placeholder": "Select bands to preview",
         "combinations": "Combinations",
-        "metadata": "Metadata"
+        "metadata": "Metadata",
+        "unixTimeDays": "Date",
+        "dayOfYear": "Day of year",
+        "daysFromTarget": "Days from target",
+        "panSharpen": "Pan sharpen"
       },
       "preview": {
         "initializing": "Loading preview...",
@@ -403,6 +408,7 @@
       "LOAD_FUSION_TABLE_ROWS": "Load Fusion Table rows",
       "LOAD_SCENE_AREAS": "Load scene areas",
       "LOAD_SCENES": "Load scenes",
+      "AUTO_SELECT_SCENES": "Auto-select scenes",
       "LOAD_DIRECTORY": "Load user directory",
       "REMOVE_FILE": "Delete file",
       "LOAD_APPS": "Load applications",

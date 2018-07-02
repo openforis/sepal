@@ -24,9 +24,11 @@ class ScenePreview extends React.Component {
         const {scene} = this.props
         if (scene) {
             const {id, dataSet, date, daysFromTarget, cloudCover, browseUrl} = scene
-            const daysFromTargetString = daysFromTarget < 0
-                ? msg('process.mosaic.panel.sceneSelection.preview.beforeTarget', {daysFromTarget: -daysFromTarget})
-                : msg('process.mosaic.panel.sceneSelection.preview.afterTarget', {daysFromTarget})
+            const daysFromTargetString = daysFromTarget === 0
+                ? msg('process.mosaic.panel.sceneSelection.preview.onTarget')
+                : daysFromTarget < 0
+                    ? msg('process.mosaic.panel.sceneSelection.preview.beforeTarget', {daysFromTarget: -daysFromTarget})
+                    : msg('process.mosaic.panel.sceneSelection.preview.afterTarget', {daysFromTarget})
             return (
                 <div className={styles.container}>
                     <Hammer onTap={() => this.closePreview()}>
