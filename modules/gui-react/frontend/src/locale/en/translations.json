@@ -170,7 +170,13 @@
             },
             "destination": {
               "label": "Retrieve to",
-              "required": "A destination must be selected"
+              "required": "A destination must be selected",
+              "SEPAL": "Sepal workspace",
+              "GEE": "Google Earth Engine asset"
+            },
+            "task": {
+              "SEPAL": "Retrieve {name} to Sepal workspace",
+              "GEE": "Export {name} as a Google Earth Engine asset"
             }
           }
         },

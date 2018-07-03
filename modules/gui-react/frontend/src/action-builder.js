@@ -3,6 +3,7 @@ import {dispatch} from 'store'
 
 export default function actionBuilder(type, props) {
     const operations = []
+    const sideEffects = []
     let prefix = ''
     return {
         within(_prefix) {
@@ -33,6 +34,11 @@ export default function actionBuilder(type, props) {
             operations.push((immutableState) => {
                 return immutableState.push(path, value)
             })
+            return this
+        },
+
+        sideEffect(callback) {
+            sideEffects.push(callback)
             return this
         },
 
@@ -98,16 +104,18 @@ export default function actionBuilder(type, props) {
                 type,
                 ...props,
                 reduce(state) {
-                    if (!prefix)
+                    if (!prefix) {
+                        sideEffects.forEach(sideEffect => sideEffect(state))
                         return operations.reduce(
                             (immutableState, operation) => operation(immutableState) || immutableState,
                             immutable(state)
                         ).value()
-                    else {
+                    } else {
                         const subState = operations.reduce(
                             (immutableState, operation) => operation(immutableState) || immutableState,
                             immutable(select(prefix, state))
                         ).value()
+                        sideEffects.forEach(sideEffect => sideEffect(subState))
                         return immutable(state).set(prefix, subState).value()
                     }
                 },

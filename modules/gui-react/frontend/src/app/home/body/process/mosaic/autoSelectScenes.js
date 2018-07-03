@@ -20,18 +20,18 @@ class AutoSelectScenes extends React.Component {
         const {recipeId, asyncActionBuilder} = props
         this.recipeActions = new RecipeActions(recipeId)
         this.request$ = new Subject()
-        this.request$.subscribe(sceneCount => {
-                this.recipeActions.setAutoSelectingScenes('RUNNING').dispatch()
+        this.request$.subscribe(() => {
+                this.recipeActions.setAutoSelectScenesState('RUNNING').dispatch()
                 asyncActionBuilder('AUTO_SELECT_SCENES',
-                    this.autoSelectScenes$(sceneCount))
-                    .onComplete(() => this.recipeActions.setAutoSelectingScenes(null))
+                    this.autoSelectScenes$())
+                    .onComplete(() => this.recipeActions.setAutoSelectScenesState(null))
                     .dispatch()
             }
         )
     }
 
-    autoSelectScenes$(sceneCount) {
-        return backend.gee.autoSelectScenes$(sceneCount, this.props.recipe).pipe(
+    autoSelectScenes$() {
+        return backend.gee.autoSelectScenes$(this.props.recipe).pipe(
             map(scenes =>
                 this.recipeActions.setSelectedScenes(scenes)
             ),
@@ -51,9 +51,8 @@ class AutoSelectScenes extends React.Component {
     }
 
     componentDidUpdate() {
-        const {recipe: {ui: {autoSelectingScenes, sceneCount}}} = this.props
-        if (autoSelectingScenes === 'SUBMITTED')
-            this.request$.next(sceneCount)
+        if (this.props.recipe.ui.autoSelectScenesState === 'SUBMITTED')
+            this.request$.next()
     }
 
     componentWillUnmount() {

@@ -2,6 +2,7 @@ import {inDateRange, SceneSelectionType} from 'app/home/body/process/mosaic/mosa
 import Http from 'http-client'
 import moment from 'moment'
 import {map} from 'rxjs/operators'
+import {msg} from 'translate'
 
 const api = {
     gee: {
@@ -26,13 +27,13 @@ const api = {
                         })
                 )
             ),
-        autoSelectScenes$: (sceneCount, recipe) => {
-            return Http.post$('/api/data/best-scenes', {
+        autoSelectScenes$: (recipe) =>
+            Http.post$('/api/data/best-scenes', {
                 body: {
                     targetDayOfYearWeight: recipe.sceneSelectionOptions.targetDateWeight,
                     cloudCoverTarget: 0.0001,
-                    minScenes: sceneCount.min,
-                    maxScenes: sceneCount.max,
+                    minScenes: recipe.ui.sceneCount.min,
+                    maxScenes: recipe.ui.sceneCount.max,
                     dataSet: sourcesToDataSet(recipe.sources),
                     sceneAreaIds: recipe.ui.sceneAreas.map(sceneArea => sceneArea.id).join(','),
                     sensorIds: toSensors(recipe.sources).join(','),
@@ -49,8 +50,10 @@ const api = {
                         return scenesBySceneArea
                     }
                 )
-            )
-        }
+            ),
+        retrieveMosaic: (recipe) =>
+            Http.postJson$('/api/tasks', transformRecipeForRetrieval(recipe))
+                .subscribe()
     }
 }
 export default api
@@ -79,6 +82,20 @@ const transformRecipeForPreview = (recipe) => {
         maskSnow: recipe.compositeOptions.mask.includes('SNOW'),
         sceneIds: sceneIds,
         type: recipe.sceneSelectionOptions.type === SceneSelectionType.ALL ? 'automatic' : 'manual'
+    }
+}
+
+const transformRecipeForRetrieval = (recipe) => {
+    const name = recipe.title || recipe.placeholder
+    const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', recipe.ui.retrieveOptions.destination], {name})
+    return {
+        'operation': 'sepal.image.sepal_export',
+        'params':
+            {
+                title: taskTitle,
+                description: name,
+                image: transformRecipeForPreview(recipe)
+            }
     }
 }
 

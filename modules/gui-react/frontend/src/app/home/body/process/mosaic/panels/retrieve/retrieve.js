@@ -90,12 +90,12 @@ class Retrieve extends React.Component {
             )
         const destinationOptions = [
             {
-                value: 'sepal',
-                label: 'Sepal workspace'
+                value: 'SEPAL',
+                label: msg('process.mosaic.panel.retrieve.form.destination.SEPAL')
             },
             {
-                value: 'google',
-                label: 'Google Earth Engine asset'
+                value: 'GEE',
+                label: msg('process.mosaic.panel.retrieve.form.destination.GEE')
             }
         ]
 

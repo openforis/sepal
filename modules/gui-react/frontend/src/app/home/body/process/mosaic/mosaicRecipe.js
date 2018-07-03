@@ -1,9 +1,10 @@
-import actionBuilder from 'action-builder'
+import globalActionBuilder from 'action-builder'
 import {countryFusionTable} from 'app/home/map/aoiLayer'
 import moment from 'moment'
 import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
 import {select} from 'store'
 import Labels from '../../../map/labels'
+import backend from 'backend'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -55,16 +56,16 @@ export const RecipeState = (recipeId) => {
 }
 
 export const RecipeActions = (id) => {
-    const _actionBuilder = (name, props) => {
-        return actionBuilder(name, props)
+    const actionBuilder = (name, props) => {
+        return globalActionBuilder(name, props)
             .within(recipePath(id))
     }
     const set = (name, prop, value, otherProps) =>
-        _actionBuilder(name, otherProps)
+        actionBuilder(name, otherProps)
             .set(prop, value)
             .build()
     const setAll = (name, values, otherProps) =>
-        _actionBuilder(name, otherProps)
+        actionBuilder(name, otherProps)
             .setAll(values)
             .build()
 
@@ -151,24 +152,30 @@ export const RecipeActions = (id) => {
         setSceneToPreview(scene) {
             return set('SET_SCENE_TO_PREVIEW', 'ui.sceneToPreview', scene, {scene})
         },
-        setAutoSelectingScenes(selecting) {
-            return set('SET_AUTO_SELECTING_SCENES', 'ui.autoSelectingScenes', selecting, {selecting})
+        setAutoSelectScenesState(state) {
+            return set('SET_AUTO_SELECTING_SCENES', 'ui.autoSelectScenesState', state, {state})
         },
         setAutoSelectSceneCount(sceneCount) {
             return set('SET_SCENE_COUNT', 'ui.sceneCount', sceneCount, {sceneCount})
         },
         autoSelectScenes(sceneCount) {
             return setAll('REQUEST_AUTO_SELECT_SCENES', {
-                'ui.autoSelectingScenes': 'SUBMITTED',
+                'ui.autoSelectScenesState': 'SUBMITTED',
                 'ui.sceneCount': sceneCount,
             }, {sceneCount})
         },
         retrieve(retrieveOptions) {
-            return setAll('REQUEST_MOSAIC_RETRIEVAL', {
-                'ui.retrieve': 'SUBMITTED',
-                'ui.retrieveOptions': retrieveOptions,
-            }, {retrieveOptions})
-        }
+            return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
+                .setAll({
+                    'ui.retrieveState': 'SUBMITTED',
+                    'ui.retrieveOptions': retrieveOptions,
+                })
+                .sideEffect(recipe => backend.gee.retrieveMosaic(recipe))
+                .build()
+        },
+        setRetrieveState(state) {
+            return set('SET_RETRIEVE_STATE', 'ui.retrieveState', state, {state})
+        },
     }
 }
 
