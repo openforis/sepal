@@ -101,5 +101,5 @@ function formatDate(date) {
         hours = pad(d.getHours()),
         minutes = pad(date.getMinutes()),
         seconds = pad(date.getSeconds())
-    return `${[year, month, day].join('-')}_${[hours, minutes, seconds].join('.')}`
+    return `${[year, month, day].join('-')}_${[hours, minutes, seconds].join('-')}`
 }
