@@ -283,11 +283,27 @@ const createCompositeOptions = (compositeOptionsForm) => ({
 })
 
 export const inDateRange = (date, dates) => {
-    const doy = moment(date, DATE_FORMAT).dayOfYear()
-    const fromDoy = moment(dates.seasonStart).dayOfYear()
-    const toDoy = moment(dates.seasonEnd).dayOfYear()
+    date = moment(date, DATE_FORMAT)
+    if (date.isBefore(fromDate(dates)) || date.isSameOrAfter(toDate(dates)))
+        return false
+    const doy = dayOfYearIgnoringLeapDay(date)
+    const fromDoy = dayOfYearIgnoringLeapDay(dates.seasonStart)
+    const toDoy = dayOfYearIgnoringLeapDay(dates.seasonEnd)
     return toDoy <= fromDoy
         ? doy >= fromDoy || doy < toDoy
         : doy >= fromDoy && doy < toDoy
 }
 
+const fromDate = (dates) =>
+    moment(dates.seasonStart, DATE_FORMAT).subtract(dates.yearsBefore, 'years').format(DATE_FORMAT)
+
+const toDate = (dates) =>
+    moment(dates.seasonEnd, DATE_FORMAT).add(dates.yearsAfter, 'years').format(DATE_FORMAT)
+
+const dayOfYearIgnoringLeapDay = (date) => {
+    date = moment(date)
+    let doy = date.dayOfYear()
+    if (date.isLeapYear() && doy > 60)
+        doy = doy + 1
+    return doy
+}

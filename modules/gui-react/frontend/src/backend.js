@@ -1,4 +1,4 @@
-import {inDateRange, SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Http from 'http-client'
 import moment from 'moment'
 import {map} from 'rxjs/operators'
@@ -16,7 +16,6 @@ const api = {
                 map(({response: scenes}) =>
                     scenes
                         .map((scene) => transformOldSceneToNew(sceneAreaId, dates, scene))
-                        .filter(({date}) => inDateRange(date, dates))
                         .filter(({dataSet}) => Object.values(sources)[0].includes(dataSet))
                         .sort((scene1, scene2) => {
                             const weightOf = (scene) => {

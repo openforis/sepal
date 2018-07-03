@@ -136,7 +136,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
     }
 
     private String dayOfYearConstraint(SceneQuery query) {
-        return query.seasonEndDayOfYear < query.seasonStartDayOfYear ?
+        return query.seasonStartDayOfYear < query.seasonEndDayOfYear ?
                 "(day_of_year >= ? AND day_of_year < ?)" :
                 "(day_of_year >= ? OR day_of_year < ?)"
     }
