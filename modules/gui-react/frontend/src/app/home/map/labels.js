@@ -22,10 +22,12 @@ export default class Labels {
     }
 
     addToMap(googleMap) {
-        googleMap.overlayMapTypes.insertAt(this.layerIndex, this.layer)
+        console.log('Labels.addToMap()')
+        googleMap.overlayMapTypes.setAt(this.layerIndex, this.layer)
     }
 
     removeFromMap(googleMap) {
+        console.log('Labels.removeFromMap()')
             googleMap.overlayMapTypes.setAt(this.layerIndex, null)
     }
 

@@ -38,11 +38,12 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
-        values: recipe('ui.aoi'),
-        aoi: recipe('aoi'),
-        initialized: recipe('ui.initialized')
+        values: recipeState('ui.aoi'),
+        aoi: recipeState('aoi'),
+        initialized: recipeState('ui.initialized'),
+        labelsShown: recipeState('ui.labelsShown')
     }
 }
 
@@ -91,16 +92,30 @@ class Aoi extends React.Component {
     }
 
     renderSections() {
-        const {recipeId, form, inputs} = this.props
+        const {recipeId, labelsShown, form, inputs} = this.props
         switch (inputs.section.value) {
             case 'country':
-                return <CountrySection recipeId={recipeId} inputs={inputs} className={styles.right}/>
+                return <CountrySection
+                    recipeId={recipeId}
+                    inputs={inputs}
+                    className={styles.right}/>
             case 'fusionTable':
-                return <FusionTableSection recipeId={recipeId} inputs={inputs} className={styles.right}/>
+                return <FusionTableSection
+                    recipeId={recipeId}
+                    inputs={inputs}
+                    className={styles.right}/>
             case 'polygon':
-                return <PolygonSection recipeId={recipeId} inputs={inputs} className={styles.right}/>
+                return <PolygonSection
+                    recipeId={recipeId}
+                    inputs={inputs}
+                    labelsShown={labelsShown}
+                    className={styles.right} />
             default:
-                return <SectionSelection recipeId={recipeId} form={form} inputs={inputs} className={styles.left}/>
+                return <SectionSelection
+                    recipeId={recipeId}
+                    form={form}
+                    inputs={inputs}
+                    className={styles.left}/>
         }
     }
 

@@ -1,3 +1,4 @@
+import {RecipeActions} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -8,8 +9,15 @@ import PanelContent from '../panelContent'
 import styles from './aoi.module.css'
 
 class PolygonSection extends React.Component {
-    componentWillMount() {
+    constructor(props) {
+        super(props)
+        this.whereLabelsShown = props.labelsShown
+        this.recipeActions = new RecipeActions(props.recipeId)
+    }
+
+    componentDidMount() {
         const {recipeId, inputs: {polygon}} = this.props
+        this.recipeActions.setLabelsShown(true).dispatch()
         sepalMap.getContext(recipeId).drawPolygon('aoi', (drawnPolygon) => {
             polygon.set(drawnPolygon)
         })
@@ -17,6 +25,7 @@ class PolygonSection extends React.Component {
 
     componentWillUnmount() {
         this.disableDrawingMode()
+        this.recipeActions.setLabelsShown(this.whereLabelsShown).dispatch()
     }
 
     disableDrawingMode() {
@@ -69,6 +78,7 @@ class PolygonSection extends React.Component {
 
 PolygonSection.propTypes = {
     recipeId: PropTypes.string.isRequired,
+    labelsShown: PropTypes.any.isRequired,
     inputs: PropTypes.object.isRequired,
     className: PropTypes.string.isRequired
 }
