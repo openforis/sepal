@@ -70,8 +70,11 @@ class Retrieve extends React.Component {
 
     render() {
         const {recipeId, sources, compositeOptions, form, inputs: {bands, destination}, className} = this.props
-        const dataSets = _.flatten(Object.values(sources))
-        const availableBands = new Set(_.flatten(dataSets.map(dataSetId => dataSetById[dataSetId].bands)))
+        const bandsForEachDataSet = _.flatten(Object.values(sources))
+            .map(dataSetId => dataSetById[dataSetId].bands)
+        const availableBands = new Set(
+            _.intersection(...bandsForEachDataSet)
+        )
 
         if (compositeOptions.corrections.includes('SR'))
             availableBands.delete('pan')
