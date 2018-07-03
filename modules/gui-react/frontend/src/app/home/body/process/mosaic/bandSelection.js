@@ -39,9 +39,9 @@ class BandSelection extends React.Component {
         {
             label: msg('process.mosaic.bands.metadata'),
             options: [
-                {value: 'unixTimeDays', label: msg('process.mosaic.bands.unixTimeDays')},
-                {value: 'dayOfYear', label: msg('process.mosaic.bands.dayOfYear')},
-                {value: 'daysFromTarget', label: msg('process.mosaic.bands.daysFromTarget')}
+                {value: 'unixTimeDays', label: msg('bands.unixTimeDays')},
+                {value: 'dayOfYear', label: msg('bands.dayOfYear')},
+                {value: 'daysFromTarget', label: msg('bands.daysFromTarget')}
             ]
         }
     ]

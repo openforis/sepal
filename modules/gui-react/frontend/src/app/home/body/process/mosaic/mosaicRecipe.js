@@ -175,6 +175,12 @@ export const RecipeActions = (id) => {
             this.setAutoSelectingScenes(true).dispatch()
             RecipeEvents(id).autoSelectScenes$.next(sceneCount)
             return this.setAutoSelectSceneCount(sceneCount)
+        },
+        retrieve(retrieveOptions) {
+            // TODO: Submit background task - that component should already have the recipe
+            //          Need to make sure the retrieveOptions have been updated though, or pass them
+            // TODO: Using the RecipeEvents from here is ugly. It happens before dispatching the action
+            return set('SET_RETRIEVE_OPTIONS', 'ui.retrieve', retrieveOptions, {retrieveOptions})
         }
     }
 }

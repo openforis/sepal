@@ -2,5 +2,9 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 16rem;
+    max-width: 33rem;
+}
+
+.form > *:not(:last-child) {
+    margin-bottom: 2rem;
 }

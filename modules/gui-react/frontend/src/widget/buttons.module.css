@@ -79,3 +79,7 @@
     border: var(--button-default-border);
     cursor: default;
 }
+
+.group {
+    margin-bottom: 1rem;
+}

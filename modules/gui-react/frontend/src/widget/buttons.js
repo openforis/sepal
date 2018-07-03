@@ -39,7 +39,6 @@ export default class Buttons extends React.Component {
     }
 
     renderButton(value, label, tooltip, disabled) {
-        // console.log('disabled', label, disabled)
         const button =
             <li key={value}>
                 <button
@@ -60,14 +59,32 @@ export default class Buttons extends React.Component {
             : button
     }
 
+    renderButtons(options) {
+        return (
+            <ul className={styles.buttons}>
+                {options.map(({value, label, tooltip, disabled}) =>
+                    this.renderButton(value, label, tooltip, disabled))}
+            </ul>
+        )
+    }
+
+    renderOptionGroups(groups) {
+        return (
+            groups.map((group, i) =>
+                <div key={group.value || group.label || i} className={styles.group}>
+                    {this.renderButtons(group.options)}
+                </div>
+            )
+        )
+    }
+
     render() {
         const {options, className} = this.props
         return (
             <div className={className}>
-                <ul className={styles.buttons}>
-                    {options.map(({value, label, tooltip, disabled}) =>
-                        this.renderButton(value, label, tooltip, disabled))}
-                </ul>
+                {options.length && options[0].options
+                    ? this.renderOptionGroups(options)
+                    : this.renderButtons(options)}
             </div>
         )
     }

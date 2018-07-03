@@ -161,7 +161,18 @@
         },
         "retrieve": {
           "title": "Retrieve",
-          "tooltip": "Retrieve mosaic"
+          "tooltip": "Retrieve mosaic",
+          "apply": "Retrieve",
+          "form": {
+            "bands": {
+              "label": "Bands to retrieve",
+              "atLeastOne": "At least one band must be retrieved"
+            },
+            "destination": {
+              "label": "Retrieve to",
+              "required": "A destination must be selected"
+            }
+          }
         },
         "areaOfInterest": {
           "title": "Area of interest",
@@ -389,9 +400,6 @@
         "placeholder": "Select bands to preview",
         "combinations": "Combinations",
         "metadata": "Metadata",
-        "unixTimeDays": "Date",
-        "dayOfYear": "Day of year",
-        "daysFromTarget": "Days from target",
         "panSharpen": "Pan sharpen"
       },
       "preview": {
@@ -441,6 +449,27 @@
       "LOAD_APPS": "Load applications",
       "RUN_APP": "Open application"
     }
+  },
+  "bands": {
+    "blue": "Blue",
+    "green": "Green",
+    "red": "Red",
+    "nir": "NIR",
+    "swir1": "SWIR 1",
+    "swir2": "SWIR 2",
+    "redEdge1": "Red edge 1",
+    "redEdge2": "Red edge 2",
+    "redEdge3": "Red edge 3",
+    "redEdge4": "Red edge 4",
+    "aerosol": "Aerosol",
+    "waterVapor": "Water vapor",
+    "thermal": "Thermal",
+    "thermal2": "Thermal 2",
+    "cirrus": "Cirrus",
+    "pan": "Pan",
+    "unixTimeDays": "Date",
+    "dayOfYear": "Day of year",
+    "daysFromTarget": "Days from target"
   },
   "button": {
     "ok": "OK",

@@ -25,45 +25,74 @@ export const dataSetById = {
         fromYear: 2013,
         quality: 1,
         name: 'Landsat 8',
-        shortName: 'L8'
+        shortName: 'L8',
+        bands: [
+            'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+            'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2'
+        ]
     },
     landsat7: {
         fromYear: 1999,
         quality: 2,
         name: 'Landsat 7',
-        shortName: 'L7'
+        shortName: 'L7',
+        bands: [
+            'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+            'pan', 'thermal', 'thermal2'
+        ]
     },
     landsat45: {
         fromYear: 1982,
         toYear: 2012,
         quality: 2,
         name: 'Landsat 4-5',
-        shortName: 'L4-5'
+        shortName: 'L4-5',
+        bands: [
+            'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+            'thermal'
+        ]
     },
     landsat8T2: {
         fromYear: 2013,
         quality: 3,
         name: 'Landsat 8, tier 2',
-        shortName: 'L8 T2'
+        shortName: 'L8 T2',
+        bands: [
+            'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+            'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2'
+        ]
     },
     landsat7T2: {
         fromYear: 1999,
         quality: 3,
         name: 'Landsat 7, tier 2',
-        shortName: 'L7 T2'
+        shortName: 'L7 T2',
+        bands: [
+            'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+            'pan', 'thermal', 'thermal2'
+        ]
     },
     landsat45T2: {
         fromYear: 1984,
         toYear: 2012,
         quality: 3,
         name: 'Landsat 4-5, tier 2',
-        shortName: 'L4-5 T2'
+        shortName: 'L4-5 T2',
+        bands: [
+            'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+            'thermal'
+        ]
     },
     sentinel2: {
         fromYear: 2015,
         quality: 1,
         name: 'Sentinel 2',
-        shortName: 'S2'
+        shortName: 'S2',
+        bands: [
+            'blue', 'green', 'red', 'nir', 'swir1', 'swir2',
+            'redEdge1', 'redEdge2', 'redEdge3', 'redEdge4',
+            'aerosol', 'waterVapor', 'cirrus'
+        ]
     }
 }
 
