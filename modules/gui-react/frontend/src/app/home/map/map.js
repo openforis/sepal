@@ -1,6 +1,5 @@
 import actionBuilder from 'action-builder'
 import Notifications from 'app/notifications'
-import ee from 'earthengine-api'
 import GoogleMapsLoader from 'google-maps'
 import Http from 'http-client'
 import PropTypes from 'prop-types'
@@ -109,10 +108,6 @@ const createMap = (mapElement) => {
         },
         isMinZoom() {
             return googleMap.getZoom() === googleMap.minZoom
-        },
-        addGEELayer(mapId, token) {
-            let geeLayer = new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {name: 'gee'})
-            googleMap.overlayMapTypes.push(geeLayer)
         },
         fitBounds(bounds) {
             const googleBounds = toGoogleBounds(bounds)

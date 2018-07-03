@@ -74,7 +74,7 @@ export const RecipeActions = (id) => {
             return set('SET_INITIALIZED', 'ui.initialized', true)
         },
         setLabelsShown(shown) {
-            Labels.setLayer({contextId: id, shown})
+            Labels.setLayer({layerIndex: 1, contextId: id, shown})
             return set('SET_LABELS_SHOWN', 'ui.labelsShown', shown, {shown})
         },
         setSceneAreasShown(shown) {

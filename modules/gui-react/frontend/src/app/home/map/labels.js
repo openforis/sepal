@@ -2,18 +2,19 @@ import {google, sepalMap} from 'app/home/map/map'
 import {NEVER, of} from 'rxjs'
 
 export default class Labels {
-    static setLayer({contextId, shown, onInitialized}) {
-        const layer = shown ? new Labels() : null
+    static setLayer({layerIndex, contextId, shown, onInitialized}) {
+        const layer = shown ? new Labels(layerIndex) : null
         sepalMap.getContext(contextId).setLayer({id: 'labels', layer, destroy$: NEVER, onInitialized})
         return layer
     }
 
-    constructor() {
+    constructor(layerIndex) {
         this.layer = new google.maps.StyledMapType(labelsLayerStyle, {name: 'labels'})
         this.bounds = new google.maps.LatLngBounds(
             new google.maps.LatLng(90, -180),
             new google.maps.LatLng(-90, 180)
         )
+        this.layerIndex = layerIndex
     }
 
     equals(o) {
@@ -21,13 +22,11 @@ export default class Labels {
     }
 
     addToMap(googleMap) {
-        googleMap.overlayMapTypes.push(this.layer)
+        googleMap.overlayMapTypes.insertAt(this.layerIndex, this.layer)
     }
 
     removeFromMap(googleMap) {
-        const index = googleMap.overlayMapTypes.getArray().findIndex(overlay => overlay.name === 'labels')
-        if (index >= 0)
-            googleMap.overlayMapTypes.removeAt(index)
+            googleMap.overlayMapTypes.setAt(this.layerIndex, null)
     }
 
     initialize$() {

@@ -5,7 +5,8 @@ import {map} from 'rxjs/operators'
 import {sepalMap} from './map'
 
 export default class EarthEngineImageLayer {
-    constructor({bounds, mapId$, props, onProgress}) {
+    constructor({layerIndex, bounds, mapId$, props, onProgress}) {
+        this.layerIndex = layerIndex
         this.bounds = bounds
         this.mapId$ = mapId$
         this.props = props
@@ -20,7 +21,7 @@ export default class EarthEngineImageLayer {
         const layer = new ee.layers.ImageOverlay(
             new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', this.mapId, this.token)
         )
-        googleMap.overlayMapTypes.push(layer)
+        googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
         const notifyOnProgress = () => {
             const tiles = {
                 count: layer.getLoadingTilesCount()
@@ -45,16 +46,14 @@ export default class EarthEngineImageLayer {
     }
 
     removeFromMap(googleMap) {
+        console.log({earthEngineLayer: googleMap.overlayMapTypes.getArray()})
         sepalMap.removeListener(this.boundsChangedListener)
-        const index = this._layerIndex(googleMap)
-        if (index >= 0)
-            googleMap.overlayMapTypes.removeAt(index)
+        googleMap.overlayMapTypes.setAt(this.layerIndex, null)
     }
 
     hide(googleMap, hidden) {
-        const index = this._layerIndex(googleMap)
-        if (index >= 0)
-            googleMap.overlayMapTypes.getAt(index).setOpacity(hidden ? 0 : 1)
+        const layer = googleMap.overlayMapTypes.getAt(this.layerIndex)
+        layer && layer.setOpacity(hidden ? 0 : 1)
     }
 
     initialize$() {
@@ -67,9 +66,5 @@ export default class EarthEngineImageLayer {
                 return this
             })
         )
-    }
-
-    _layerIndex(googleMap) {
-        return googleMap.overlayMapTypes.getArray().findIndex(overlay => overlay.name === 'preview')
     }
 }
