@@ -28,7 +28,7 @@ export default class Labels {
 
     removeFromMap(googleMap) {
         console.log('Labels.removeFromMap()')
-            googleMap.overlayMapTypes.setAt(this.layerIndex, null)
+        googleMap.overlayMapTypes.setAt(this.layerIndex, null)
     }
 
     initialize$() {
@@ -38,15 +38,18 @@ export default class Labels {
 
 const labelsLayerStyle = [
     {featureType: 'all', stylers: [{visibility: 'off'}]},
-    {featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{color: '#decca6'}, {visibility: 'on'}]},
+    {elementType: 'labels.text.fill', stylers: [{color: '#ebd1aa'}, {visibility: 'on'}]},
+    {elementType: 'labels.text.stroke', stylers: [{color: '#000000'}, {visibility: 'on'}, {weight: 2}]},
+    {elementType: 'geometry.stroke', stylers: [{color: '#000000'}, {visibility: 'on'}]},
+    {featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{color: '#ebe5dd'}, {visibility: 'on'}]},
     {
         featureType: 'administrative.locality',
         elementType: 'labels.text.fill',
-        stylers: [{color: '#d59563'}, {visibility: 'on'}]
+        stylers: [{color: '#ebd9ca'}, {visibility: 'on'}]
     },
-    {featureType: 'road', elementType: 'geometry', stylers: [{color: '#38414e'}, {visibility: 'on'}]},
+    {featureType: 'road', elementType: 'geometry', stylers: [{color: '#ebd1b1'}, {visibility: 'on'}]},
     {featureType: 'road', elementType: 'geometry.stroke', stylers: [{color: '#212a37'}, {visibility: 'on'}]},
-    {featureType: 'road', elementType: 'labels.text.fill', stylers: [{color: '#9ca5b3'}, {visibility: 'on'}]},
-    {featureType: 'road.highway', elementType: 'geometry', stylers: [{color: '#746855'}, {visibility: 'on'}]},
+    {featureType: 'road', elementType: 'labels.text.fill', stylers: [{color: '#ebe1db'}, {visibility: 'on'}]},
+    {featureType: 'road.highway', elementType: 'geometry', stylers: [{color: '#ebbba2'}, {visibility: 'on'}]},
     {featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{color: '#1f2835'}, {visibility: 'on'}]}
 ]
