@@ -19,6 +19,7 @@ class BuildOverviews(ThreadTask):
         for f in files:
             ds = osgeo.gdal.OpenShared(f)
             ds.BuildOverviews(resampling='average', overviewlist=[2, 4, 8])
+            ds.FlushCache()
         self.resolve()
 
     def __str__(self):

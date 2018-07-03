@@ -30,6 +30,7 @@ class SetBandNames(ThreadTask):
                     return
                 band = ds.GetRasterBand(i + 1)
                 band.SetMetadata({'BAND_NAME': self.band_names[i]})
+                ds.FlushCache()
         self.resolve()
 
     def __str__(self):
