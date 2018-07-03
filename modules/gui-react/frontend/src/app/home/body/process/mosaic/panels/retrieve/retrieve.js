@@ -21,7 +21,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         sources: recipeState('sources'),
         compositeOptions: recipeState('compositeOptions'),
-        values: recipeState('ui.retrieve')
+        values: recipeState('ui.retrieveOptions')
     }
 }
 

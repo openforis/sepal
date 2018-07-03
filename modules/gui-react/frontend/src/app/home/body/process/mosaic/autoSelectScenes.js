@@ -1,6 +1,7 @@
-import {RecipeActions, RecipeEvents, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import backend from 'backend'
 import React from 'react'
+import {Subject} from 'rxjs'
 import {map, takeUntil} from 'rxjs/operators'
 import {connect} from 'store'
 import {msg} from 'translate'
@@ -16,26 +17,25 @@ const mapStateToProps = (state, ownProps) => {
 class AutoSelectScenes extends React.Component {
     constructor(props) {
         super(props)
-        const {recipe, asyncActionBuilder} = props
-        this.recipeActions = new RecipeActions(recipe.id)
-        const autoSelectScenes$ = RecipeEvents(recipe.id).autoSelectScenes$
-        this.subscription = autoSelectScenes$
-            .subscribe(sceneCount => {
-                    return asyncActionBuilder('AUTO_SELECT_SCENES',
-                        this.autoSelectScenes$(sceneCount).pipe(
-                            takeUntil(autoSelectScenes$)
-                        ))
-                        .onComplete(() => this.recipeActions.setAutoSelectingScenes(false))
-                        .dispatch()
-                }
-            )
+        const {recipeId, asyncActionBuilder} = props
+        this.recipeActions = new RecipeActions(recipeId)
+        this.request$ = new Subject()
+        this.request$.subscribe(sceneCount => {
+                this.recipeActions.setAutoSelectingScenes('RUNNING').dispatch()
+                asyncActionBuilder('AUTO_SELECT_SCENES',
+                    this.autoSelectScenes$(sceneCount))
+                    .onComplete(() => this.recipeActions.setAutoSelectingScenes(null))
+                    .dispatch()
+            }
+        )
     }
 
     autoSelectScenes$(sceneCount) {
         return backend.gee.autoSelectScenes$(sceneCount, this.props.recipe).pipe(
             map(scenes =>
                 this.recipeActions.setSelectedScenes(scenes)
-            )
+            ),
+            takeUntil(this.request$)
         )
     }
 
@@ -50,8 +50,14 @@ class AutoSelectScenes extends React.Component {
         )
     }
 
+    componentDidUpdate() {
+        const {recipe: {ui: {autoSelectingScenes, sceneCount}}} = this.props
+        if (autoSelectingScenes === 'SUBMITTED')
+            this.request$.next(sceneCount)
+    }
+
     componentWillUnmount() {
-        this.subscription.unsubscribe()
+        this.request$.unsubscribe()
     }
 }
 

@@ -25,19 +25,6 @@ const recipePath = (recipeId, path) => {
         .join('.')
 }
 
-const event$ByRecipeAndType = {}
-
-export const RecipeEvents = (recipeId) => {
-    let event$ByType = event$ByRecipeAndType[recipeId]
-    if (!event$ByType) {
-        event$ByType = {
-            autoSelectScenes$: new Subject()
-        }
-        event$ByRecipeAndType[recipeId] = event$ByType
-    }
-    return event$ByType
-}
-
 export const RecipeState = (recipeId) => {
     const recipeTabIndex = select('process.tabs')
         .findIndex((recipe) => recipe.id === recipeId)
@@ -172,15 +159,16 @@ export const RecipeActions = (id) => {
             return set('SET_SCENE_COUNT', 'ui.sceneCount', sceneCount, {sceneCount})
         },
         autoSelectScenes(sceneCount) {
-            this.setAutoSelectingScenes(true).dispatch()
-            RecipeEvents(id).autoSelectScenes$.next(sceneCount)
-            return this.setAutoSelectSceneCount(sceneCount)
+            return setAll('REQUEST_AUTO_SELECT_SCENES', {
+                'ui.autoSelectingScenes': 'SUBMITTED',
+                'ui.sceneCount': sceneCount,
+            }, {sceneCount})
         },
         retrieve(retrieveOptions) {
-            // TODO: Submit background task - that component should already have the recipe
-            //          Need to make sure the retrieveOptions have been updated though, or pass them
-            // TODO: Using the RecipeEvents from here is ugly. It happens before dispatching the action
-            return set('SET_RETRIEVE_OPTIONS', 'ui.retrieve', retrieveOptions, {retrieveOptions})
+            return setAll('REQUEST_MOSAIC_RETRIEVAL', {
+                'ui.retrieve': 'SUBMITTED',
+                'ui.retrieveOptions': retrieveOptions,
+            }, {retrieveOptions})
         }
     }
 }
