@@ -1,7 +1,6 @@
 import actionBuilder from 'action-builder'
 import {countryFusionTable} from 'app/home/map/aoiLayer'
 import moment from 'moment'
-import {Subject} from 'rxjs'
 import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
 import {select} from 'store'
 import Labels from '../../../map/labels'
