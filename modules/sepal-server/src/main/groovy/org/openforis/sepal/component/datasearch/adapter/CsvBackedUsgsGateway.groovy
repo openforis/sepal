@@ -98,19 +98,20 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
                         acquisitionDate: parseDateString(data.acquisitionDate),
                         cloudCover: cloudCover(sensor, data),
                         coverage: 100,
-                        sunAzimuth: data.sunAzimuth.toDouble(),
-                        sunElevation: data.sunElevation.toDouble(),
+                        sunAzimuth: data.sunAzimuth ? data.sunAzimuth.toDouble() : 0d,
+                        sunElevation: data.sunElevation ? data.sunElevation.toDouble() : 0d,
                         browseUrl: URI.create(data.browseURL),
                         updateTime: parseDateString(data.dateUpdated)
                 )
             }
-        } catch (Exception ignore) {
+        } catch (Exception e) {
+            LOG.error("${e.message}: ${data}")
         }
         return null
     }
 
     private Double cloudCover(Sensor sensor, data) {
-        def result = data.cloudCoverFull.toDouble() as Double
+        def result = data.cloudCover.toDouble() as Double
         // LANDSAT_7 with SLC off always miss about 22% of its data. Consider that cloud cover.
         if (result && sensor == LANDSAT_7 && data.SCAN_GAP_INTERPOLATION)
             result = Math.min(100, result + 22)
@@ -120,8 +121,8 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     private boolean isSceneIncluded(data) {
         def prefix = (data.sceneID as String).substring(0, 3)
         return data.COLLECTION_CATEGORY in ['T1', 'T2'] &&
-                data.dayOrNight == 'DAY' &&
-                data.cloudCoverFull.toDouble() >= 0d &&
+                data.dayOrNight.toUpperCase() == 'DAY' &&
+                data.cloudCover.toDouble() >= 0d &&
                 prefix in ['LT4', 'LT5', 'LE7', 'LC8']
     }
 
