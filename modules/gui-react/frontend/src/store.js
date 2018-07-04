@@ -42,7 +42,7 @@ export function connect(mapStateToProps) {
     return (WrappedComponent) => {
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
         WrappedComponent = connectToRedux(includeDispatchingProp(mapStateToProps))(WrappedComponent)
-        WrappedComponent.prototype.shouldComponentUpdate = (nextProps, nextState) => {
+        WrappedComponent.prototype.shouldComponentUpdate = (nextProps) => {
             return nextProps.enabled !== false
         }
 
@@ -77,8 +77,6 @@ export function connect(mapStateToProps) {
             componentDidUpdate(prevProps) {
                 const wasEnabled = prevProps.enabled
                 const isEnabled = this.props.enabled
-                if (displayName === 'TabContent' && wasEnabled !== isEnabled)
-                    console.log(this.id, wasEnabled, '->', isEnabled)
                 if (wasEnabled !== true && isEnabled === true && this.onEnable)
                     this.onEnable()
                 else if (wasEnabled !== false && isEnabled === false && this.onDisable)
