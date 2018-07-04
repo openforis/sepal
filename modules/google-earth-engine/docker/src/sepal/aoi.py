@@ -6,12 +6,12 @@ class Aoi:
         'LANDSAT': {
             'table_id': 'ft:1EJjaOloQD5NL7ReC5aVtn8cX05xbdEbZthUiCFB6',
             'id_column': 'name',
-            'coordinates': lambda sceneArea: sceneArea['geometry']['coordinates'][0]
+            'coordinates': lambda sceneArea: sceneArea[0]['coordinates'][0]
         },
         'SENTINEL2': {
             'table_id': 'ft:1z3OSnCDFQqUHIXlU_hwVc5h4ZrDP2VdQNNfG3RZB',
             'id_column': 'name',
-            'coordinates': lambda sceneArea: sceneArea['geometry']['geometries'][1]['coordinates'][0]
+            'coordinates': lambda sceneArea: sceneArea[0]['geometries'][1]['coordinates'][0]
         }
     }
 
@@ -44,18 +44,27 @@ class Aoi:
         if data_set not in self._fusion_table_by_data_set:
             raise ValueError('Unsupported data set: ' + data_set)
         table = self._fusion_table_by_data_set[data_set]
-        scene_area_table = ee.FeatureCollection(table['table_id']) \
-            .filterBounds(self._geometry) \
-            .toList(1e6) \
+        aoi = self._geometry
+        scene_area_table = ee.Join.simple().apply(
+            ee.FeatureCollection(table['table_id'])
+                .filterBounds(aoi.bounds().buffer(10000, 1000)),
+            aoi,
+            ee.Filter.withinDistance(
+                distance=10000,
+                leftField='.geo',
+                rightField='.geo'
+            )
+        ) \
+            .reduceColumns(ee.Reducer.toList(2), ['.geo', table['id_column']]) \
+            .get('list') \
             .getInfo()
-        scene_areas = []
-        for scene_area in scene_area_table:
-            polygon = map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](scene_area))
-            scene_areas.append({
-                'sceneAreaId': scene_area['properties'][table['id_column']],
-                'polygon': polygon,
-            })
-
+        scene_areas = [
+            {
+                'sceneAreaId': scene_area[1],
+                'polygon': map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](scene_area)),
+            }
+            for scene_area in scene_area_table
+        ]
         return scene_areas
 
     def geometry(self):
@@ -84,7 +93,7 @@ class FusionTable(Aoi):
         self.value_column = spec['keyValue']
         table = ee.FeatureCollection('ft:' + self.table_name)
         aoi = table.filterMetadata(self.key_column, 'equals', self.value_column)
-        geometry = aoi.geometry().buffer(10000)
+        geometry = aoi.geometry()
         Aoi.__init__(self, geometry)
 
     def __str__(self):
