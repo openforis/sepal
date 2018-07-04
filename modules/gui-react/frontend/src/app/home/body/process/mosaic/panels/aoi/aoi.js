@@ -1,5 +1,6 @@
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {sepalMap} from 'app/home/map/map'
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {AnimateReplacement} from 'widget/animate'
@@ -50,17 +51,21 @@ const mapStateToProps = (state, ownProps) => {
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
-        this.bounds = sepalMap.getBounds()
-        this.zoom = sepalMap.getZoom()
+        this.aoiUnchanged = true
+        this.initialAoi = props.aoi
+        this.initialBounds = sepalMap.getBounds()
+        this.initialZoom = sepalMap.getZoom()
     }
 
     onApply(recipe, aoiForm) {
         const {recipeId, componentWillUnmount$} = this.props
-        this.bounds = aoiForm.bounds
+        this.initialBounds = aoiForm.bounds
         recipe.setAoi(aoiForm).dispatch()
+        const aoi = RecipeState(recipeId)('aoi')
+        this.aoiUnchanged = _.isEqual(aoi, this.initialAoi)
         setAoiLayer({
                 contextId: recipeId,
-                aoi: RecipeState(recipeId)('aoi'),
+                aoi: aoi,
                 fill: false,
                 destroy$: componentWillUnmount$
             }
@@ -109,7 +114,7 @@ class Aoi extends React.Component {
                     recipeId={recipeId}
                     inputs={inputs}
                     labelsShown={labelsShown}
-                    className={styles.right} />
+                    className={styles.right}/>
             default:
                 return <SectionSelection
                     recipeId={recipeId}
@@ -120,7 +125,7 @@ class Aoi extends React.Component {
     }
 
     componentWillUnmount() {
-        const {recipeId, initialized} = this.props
+        const {recipeId} = this.props
         const recipe = RecipeState(recipeId)
         setAoiLayer({
                 contextId: recipeId,
@@ -128,9 +133,10 @@ class Aoi extends React.Component {
                 fill: false
             }
         )
-        sepalMap.fitBounds(this.bounds)
-        if (initialized)
-            sepalMap.setZoom(this.zoom)
+        if (this.aoiUnchanged) {
+            sepalMap.fitBounds(this.initialBounds)
+            sepalMap.setZoom(this.initialZoom)
+        }
     }
 }
 
