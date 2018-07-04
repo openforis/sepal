@@ -37,16 +37,13 @@ class SceneAreas extends React.Component {
 
     render() {
         const {sceneAreasShown, action} = this.props
-        if (sceneAreasShown && this.state.show)
-            return (
-                <div>
-                    {action('LOAD_SCENE_AREAS').dispatched
-                        ? this.renderSceneAreas()
-                        : <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
-                </div>
-            )
-        else
-            return null
+        return (
+            <React.Fragment>
+                {action('LOAD_SCENE_AREAS').dispatched
+                    ? sceneAreasShown && this.state.show ? this.renderSceneAreas() : null
+                    : <MapStatus message={msg('process.mosaic.sceneAreas.loading')}/>}
+            </React.Fragment>
+        )
     }
 
     renderSceneAreas() {
@@ -82,6 +79,8 @@ class SceneAreas extends React.Component {
 
     loadSceneAreas(aoi, source) {
         this.loadSceneArea$.next()
+        this.recipeActions.setSceneAreas(null).dispatch()
+        this.recipeActions.setSelectedScenes(null).dispatch()
         this.props.asyncActionBuilder('LOAD_SCENE_AREAS',
             backend.gee.sceneAreas$({aoi, source}).pipe(
                 map(e =>

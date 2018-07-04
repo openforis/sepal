@@ -140,7 +140,7 @@ export const RecipeActions = (id) => {
             return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
         },
         setSceneAreas(sceneAreas) {
-            return set('SET_SCENE_Areas', 'ui.sceneAreas', sceneAreas, {sceneAreas})
+            return set('SET_SCENE_AREAS', 'ui.sceneAreas', sceneAreas, {sceneAreas})
         },
         setSceneSelection(sceneAreaId) {
             return set('SET_SCENE_SELECTION', 'ui.sceneSelection', sceneAreaId, {sceneAreaId})
