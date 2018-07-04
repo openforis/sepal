@@ -2,7 +2,7 @@ import ee
 
 import brdf_correction
 from cloud_score import cloud_score
-from ..image_operation import ImageOperation
+from ..image_operation import ImageOperation, combine_probability
 
 
 def analyze(mosaic_def, data_set, collection):
@@ -20,7 +20,7 @@ class _Analyze(ImageOperation):
 
     def apply(self):
         self._normalize_band_names()
-
+        self.image = self.data_set.analyze(self.image)
         self.set('ndsi',
                  '(i.green - i.swir1) / (i.green + i.swir1)')
         self.set('ndvi',
@@ -28,14 +28,14 @@ class _Analyze(ImageOperation):
         self.set('ndwi',
                  '(i.green - i.nir) / (i.green + i.nir)')
 
-        self.image = self.data_set.analyze(self.image)
-
         # Based on https://earth.esa.int/c/document_library/get_file?folderId=349490&name=DLFE-4518.pdf
-        self.set('snowProbability', 1)
-        self._snow_probability('i.ndsi', 0.2, 0.42)
-        self._snow_probability('i.nir', 0.15, 0.35)
-        self._snow_probability('i.blue', 0.18, 0.22)
-        self._snow_probability('i.blue/i.red', 0.85, 0.95)
+        self.set('snowProbability',
+                 combine_probability([
+                     self.rescale('i.ndsi', 0.2, 0.42),
+                     self.rescale('i.nir', 0.15, 0.35),
+                     self.rescale('i.blue', 0.18, 0.22),
+                     self.rescale('i.blue/i.red', 0.85, 0.95)
+                 ]))
         self.setIf('snow', '!i.snow',
                    'i.snowProbability > 0.12')
 
@@ -125,15 +125,3 @@ class _Analyze(ImageOperation):
                 .copyProperties(self.image)
                 .set('system:time_start', self.image.get('system:time_start'))
         ).uint16()
-
-    def _snow_probability(self, value, lower, upper):
-        name = 'snowProbability'
-        args = {'name': name, 'value': value, 'lower': lower, 'upper': upper}
-        self.setIf(name,
-                   '{value} < {lower}', 0, args)
-
-        self.setIf(name,
-                   '{lower} <= {value} and {value} <= {upper}',
-                   'i.{name} * ({value} - {lower}) / ({upper} - {lower})', args)
-
-        return self.image

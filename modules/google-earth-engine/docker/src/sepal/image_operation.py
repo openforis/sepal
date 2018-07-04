@@ -1,5 +1,6 @@
-import ee
 import math
+
+import ee
 
 
 class ImageOperation(object):
@@ -57,3 +58,13 @@ class ImageOperation(object):
 
     def merge(self, o1, o2):
         return dict(list(o1.iteritems()) + list(o2.iteritems()))
+
+    def rescale(self, value, min, max):
+        return self.toImage(value) \
+            .subtract(min) \
+            .divide(max - min) \
+            .clamp(0, 1)
+
+
+def combine_probability(probabilities):
+    return reduce(lambda result, probability: probability.multiply(result), probabilities, 1)

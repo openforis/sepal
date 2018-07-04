@@ -23,7 +23,8 @@ class Mosaic(object):
 
         collection = mask_clouds(self.mosaic_def, collection)
         collection = mask_shadows(self.mosaic_def, collection)
-        collection = mask_haze(self.mosaic_def, collection)
+        if not self.mosaic_def.surface_reflectance:
+            collection = mask_haze(self.mosaic_def, collection)
         collection = mask_less_green(self.mosaic_def, collection)
         collection = mask_days_from_target(self.mosaic_def, collection)
 

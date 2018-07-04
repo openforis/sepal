@@ -33,7 +33,6 @@ class MosaicSpec(ImageSpec):
         self.from_date = add_years(parse_date(dates['seasonStart']), - int(dates['yearsBefore']))
         self.to_date = add_years(parse_date(dates['seasonEnd']), int(dates['yearsAfter']))
         self.surface_reflectance = bool(spec.get('surfaceReflectance', False))
-        self.masked_on_analysis = self.surface_reflectance
         self.pan_sharpen = bool(spec.get('panSharpening', False))
 
     def _viz_params(self):
