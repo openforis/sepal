@@ -282,7 +282,7 @@ export const polygonOptions = (fill) => ({
     fillColor: '#FBFAF2',
     fillOpacity: fill ? 0.07 : 0.000000000000000000000000000001,
     strokeColor: '#FBFAF2',
-    strokeOpacity: 0.15,
+    strokeOpacity: 0.5,
     strokeWeight: 1
 })
 
@@ -290,7 +290,7 @@ export const polygonOptions = (fill) => ({
 const defaultStyle = [
     {stylers: [{visibility: 'simplified'}]},
     {stylers: [{color: '#131314'}]},
-    {featureType: 'water', stylers: [{color: '#131313'}, {lightness: 4}]},
+    {featureType: 'water', stylers: [{color: '#191919'}, {lightness: 4}]},
     {elementType: 'labels.text.fill', stylers: [{visibility: 'off'}, {lightness: 25}]}
 ]
 
