@@ -46,7 +46,6 @@ export default class EarthEngineImageLayer {
     }
 
     removeFromMap(googleMap) {
-        console.log({earthEngineLayer: googleMap.overlayMapTypes.getArray()})
         sepalMap.removeListener(this.boundsChangedListener)
         googleMap.overlayMapTypes.setAt(this.layerIndex, null)
     }
