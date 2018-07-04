@@ -86,34 +86,40 @@ class MosaicPreview extends React.Component {
                 || (recipe.scenes && Object.keys(recipe.scenes).find(sceneAreaId => recipe.scenes[sceneAreaId].length > 0)))
     }
 
+
+    toLayerProps(recipe) {
+        return _.omit(recipe, ['ui', 'placeholder', 'title'])
+    }
+
     componentDidUpdate(prevProps) {
-        const {recipeId, recipe, componentWillUnmount$} = this.props
+        const {recipe} = this.props
+        const layerProps = this.toLayerProps(recipe)
+        const layerChanged = !_.isEqual(layerProps, this.toLayerProps(prevProps.recipe))
+        if (layerChanged)
+            this.updateLayer()
+        const context = sepalMap.getContext(recipe.id)
+        context.hideLayer('preview', this.isHidden(recipe))
+    }
 
-        const toLayerProps = (recipe) =>
-            _.omit(recipe, ['ui', 'placeholder', 'title'])
-
-        const layerProps = toLayerProps(recipe)
-        if (_.isEqual(layerProps, toLayerProps(prevProps.recipe)))
-            return
-        const {error} = this.state
-        const {initializing} = this.state
+    updateLayer() {
+        const {recipe, componentWillUnmount$} = this.props
+        const {initializing, error} = this.state
         const layer = this.isPreviewShown()
             ? new EarthEngineImageLayer({
                 layerIndex: 0,
                 bounds: recipe.aoi.bounds,
                 mapId$: backend.gee.preview$(recipe),
-                props: toLayerProps(recipe),
+                props: this.toLayerProps(recipe),
                 onProgress: (tiles) => this.onProgress(tiles)
             })
             : null
-        const context = sepalMap.getContext(recipeId)
+        const context = sepalMap.getContext(recipe.id)
         const changed = context.setLayer({
             id: 'preview',
             layer,
             destroy$: componentWillUnmount$,
             onError: () => this.onError()
         })
-        context.hideLayer('preview', this.isHidden(recipe))
         if (changed && initializing !== !!layer)
             this.setState(prevState => ({...prevState, initializing: !!layer, error: null}))
         else if (changed && error)
