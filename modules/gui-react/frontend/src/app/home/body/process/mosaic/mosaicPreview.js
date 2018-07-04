@@ -86,8 +86,15 @@ class MosaicPreview extends React.Component {
                 || (recipe.scenes && Object.keys(recipe.scenes).find(sceneAreaId => recipe.scenes[sceneAreaId].length > 0)))
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
         const {recipeId, recipe, componentWillUnmount$} = this.props
+
+        const toLayerProps = (recipe) =>
+            _.omit(recipe, ['ui', 'placeholder', 'title'])
+
+        const layerProps = toLayerProps(recipe)
+        if (_.isEqual(layerProps, toLayerProps(prevProps.recipe)))
+            return
         const {error} = this.state
         const {initializing} = this.state
         const layer = this.isPreviewShown()
@@ -95,7 +102,7 @@ class MosaicPreview extends React.Component {
                 layerIndex: 0,
                 bounds: recipe.aoi.bounds,
                 mapId$: backend.gee.preview$(recipe),
-                props: _.omit(recipe, ['ui', 'placeholder', 'title']),
+                props: toLayerProps(recipe),
                 onProgress: (tiles) => this.onProgress(tiles)
             })
             : null
