@@ -124,6 +124,12 @@ class Tab extends React.Component {
     }
 
     onTitleKeyPress(e) {
+        const insertCharAtSelection = (input, char) => {
+            const selectionStart = input.selectionStart
+            input.value = input.value.slice(0, selectionStart).concat(char).concat(input.value.slice(input.selectionEnd))
+            e.target.selectionStart = selectionStart + 1
+            e.target.selectionEnd = selectionStart + 1
+        }
         const maxLength = 60
         const charCode = e.which || e.keyCode
         const enter = 13
@@ -131,7 +137,7 @@ class Tab extends React.Component {
             return this.saveTitle()
         const char = String.fromCharCode(charCode)
         if ([' ', '-'].includes(char))
-            e.target.value += '_'
+            insertCharAtSelection(e.target, '_')
         if (!char.match(/[\w-.]/) || e.target.value.length > maxLength) {
             e.preventDefault()
             return false
