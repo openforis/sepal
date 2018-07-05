@@ -43,7 +43,7 @@ class Menu extends React.Component {
                 className={[styles.menu, open ? styles.open : null, className].join(' ')}
                 onClick={() => this.toggleOpen()}>
                 <Icon name='bars'/>
-                {warning
+                {warning && !open
                     ? <Icon name='exclamation-triangle' className={styles.warning}/>
                     : null}
             </button>
