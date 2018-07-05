@@ -34,10 +34,10 @@ class MosaicPreview extends React.Component {
             return (
                 <MapStatus message={msg('process.mosaic.preview.initializing')}/>
             )
-        else if (tiles && !tiles.complete)
+        else if (tiles && (!tiles.complete || tiles.failed))
             return (
                 <MapStatus
-                    loading={!tiles.failed}
+                    loading={!tiles.complete}
                     message={msg('process.mosaic.preview.loading', {loaded: tiles.loaded, count: tiles.count})}
                     error={tiles.failed ? msg('process.mosaic.preview.tilesFailed', {failed: tiles.failed}) : error}/>
             )

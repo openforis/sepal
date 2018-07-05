@@ -31,7 +31,7 @@ export default class EarthEngineImageLayer {
                 failed: layer.getFailedTilesCount(),
                 loaded: layer.getLoadedTilesCount()
             }
-            tiles.complete = tiles.count === tiles.loaded
+            tiles.complete = tiles.count === tiles.loaded + layer.getFailedTilesCount()
 
             if (tiles.count > 0)
                 this.onProgress(tiles)
