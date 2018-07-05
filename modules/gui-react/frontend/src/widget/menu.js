@@ -35,14 +35,17 @@ class Menu extends React.Component {
     }
 
     render() {
-        const {children} = this.props
+        const {warning, className, children} = this.props
         const {open} = this.state
         return <React.Fragment>
             <button
                 ref={this.button}
-                className={[styles.menu, open ? styles.open : null].join(' ')}
+                className={[styles.menu, open ? styles.open : null, className].join(' ')}
                 onClick={() => this.toggleOpen()}>
                 <Icon name='bars'/>
+                {warning
+                    ? <Icon name='exclamation-triangle' className={styles.warning}/>
+                    : null}
             </button>
             {open
                 ? ReactDOM.createPortal(
@@ -50,6 +53,13 @@ class Menu extends React.Component {
                         <MenuContext.Provider value={this}>
                             <div className={styles.captureClicks} onClick={() => this.toggleOpen()}/>
                             <ul className={styles.list} style={this.menuStyle()}>
+                                {warning
+                                    ?
+                                    <li className={styles.warning}>
+                                        <Icon name='exclamation-triangle'/>
+                                        {warning}
+                                    </li>
+                                    : null}
                                 {children}
                             </ul>
                         </MenuContext.Provider>
@@ -61,7 +71,9 @@ class Menu extends React.Component {
 }
 
 Menu.propTypes = {
+    warning: PropTypes.any,
     onClick: PropTypes.func,
+    className: PropTypes.string,
     children: PropTypes.any
 }
 

@@ -166,7 +166,7 @@ export const RecipeActions = (id) => {
 }
 
 const initRecipe = (recipeState) => {
-    if (!recipeState || recipeState.ui)
+    if (!recipeState || recipeState.ui || recipeState.aoi)
         return
 
     const actions = RecipeActions(recipeState.id)

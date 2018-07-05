@@ -73,10 +73,6 @@ class SceneAreas extends React.Component {
         setSceneAreaLayer({recipeId, component: this})
     }
 
-    componentWillUnmount() {
-        this.recipeActions.setSceneAreas(null).dispatch()
-    }
-
     loadSceneAreas(aoi, source) {
         this.loadSceneArea$.next()
         this.recipeActions.setSceneAreas(null).dispatch()

@@ -28,7 +28,7 @@ class ProcessingRecipeEndpoint {
                 def contentsMap = fromJson(contents)
                 component.submit(new SaveRecipe(new Recipe(
                         id: params.id,
-                        name: contentsMap.name,
+                        name: contentsMap.title ?: contentsMap.placeholder,
                         type: contentsMap.type as Recipe.Type,
                         username: sepalUser.username,
                         contents: contents

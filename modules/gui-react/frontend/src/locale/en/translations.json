@@ -443,6 +443,7 @@
       "RESET_PASSWORD": "Reset password",
       "INIT_GOOGLE_MAPS_API": "Initialize Google Maps",
       "LOAD_RECIPES": "Load recipes",
+      "LOAD_RECIPE": "Load recipe",
       "LOAD_COUNTRIES": "Load countries",
       "LOAD_COUNTRY_AREAS": "Load areas of country",
       "LOAD_FUSION_TABLE_COLUMNS": "Load Fusion Table columns",

@@ -1,5 +1,5 @@
-
 button.menu {
+    position: relative;
     --button-size: 2.5rem;
     --icon-size: 1.1rem;
 
@@ -15,6 +15,27 @@ button.menu:hover {
     background-color: #2B2B29;
     border-radius: var(--button-border-radius);
     cursor: pointer;
+}
+
+.menu .warning {
+    position: absolute;
+    color: hsl(49, 79%, 53%);
+    top: 10%;
+    left: 60%;
+}
+
+.menu:hover .warning {
+    color: hsl(49, 79%, 58%);
+}
+
+.list li.warning {
+    color: hsl(var(--selected-hue), 80%, 50%);
+}
+
+.list li.warning i {
+    font-size: 1rem;
+    margin-right: 0.5rem;
+    color: hsl(49, 79%, 53%);
 }
 
 .open {
@@ -48,7 +69,7 @@ button.menu svg {
     padding: 0;
 }
 
-.menuItem {
+.menuItem, .list li {
     font-size: 0.8rem;
     padding: 1rem;
 }

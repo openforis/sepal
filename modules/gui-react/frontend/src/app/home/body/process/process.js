@@ -7,9 +7,9 @@ import ProcessMenu from './processMenu'
 const Process = () => {
     const contents = ({id, type}) => {
         switch (type) {
-            case 'mosaic':
+            case 'MOSAIC':
                 return <Mosaic recipeId={id}/>
-            case 'classification':
+            case 'CLASSIFICATION':
                 return <Classification recipeId={id}/>
             default:
                 return <CreateOrLoadRecipe recipeId={id}/>

@@ -7,7 +7,7 @@ export const Button = ({icon, iconType, tabIndex, onClick, className, children, 
     function handleClick(e) {
         if (onClick) {
             e.preventDefault()
-            onClick()
+            onClick(e)
         }
     }
 

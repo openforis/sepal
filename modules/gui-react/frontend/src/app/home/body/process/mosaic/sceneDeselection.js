@@ -35,7 +35,7 @@ class SceneDeselection extends React.Component {
         if (!scenes)
             return
         if (sceneSelectionOptions.type !== SceneSelectionType.SELECT)
-            return this.recipe.setSelectedScenes({}).dispatch()
+            return this.recipe.setSelectedScenes(null).dispatch()
         const filteredScenes = {}
         const filterScenes = (scenes) => {
             if (!scenes)

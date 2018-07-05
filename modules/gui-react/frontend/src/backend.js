@@ -54,6 +54,21 @@ const api = {
         retrieveMosaic: (recipe) =>
             Http.postJson$('/api/tasks', transformRecipeForRetrieval(recipe))
                 .subscribe()
+    },
+    recipe: {
+        loadAll$: () =>
+            Http.get$('/processing-recipes').pipe(
+                map(e => e.response)
+            ),
+        save$: (recipe) =>
+            Http.post$(`/processing-recipes/${recipe.id}`, {body: {data: JSON.stringify(recipe)}})
+        ,
+        delete$: (recipeId) =>
+            Http.delete$(`/processing-recipes/${recipeId}`),
+        load$: (recipeId) =>
+            Http.get$(`/processing-recipes/${recipeId}`).pipe(
+                map(e => e.response)
+            ),
     }
 }
 export default api
