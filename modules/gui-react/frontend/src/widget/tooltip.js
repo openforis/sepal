@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import RcTooltip from 'rc-tooltip'
 import 'rc-tooltip/assets/bootstrap.css'
+import './tooltip.css'
 import React from 'react'
 import {msg as message} from 'translate'
 

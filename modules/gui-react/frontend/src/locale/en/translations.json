@@ -344,7 +344,7 @@
             },
             "brdf": {
               "label": "BRDF correction",
-              "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects"
+              "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
             },
             "filters": {
               "label": "Pixel filters",
@@ -372,7 +372,7 @@
             },
             "clouds": {
               "label": "Clouds",
-              "tooltip": "Completely mask out cloudy areas. Can cause built-up areas to be masked out."
+              "tooltip": "Mask clouds instead of just trying to use cloud-free pixels. Can cause built-up areas to be masked out."
             },
             "snow": {
               "label": "Snow",
