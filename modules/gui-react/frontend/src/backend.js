@@ -44,7 +44,8 @@ const api = {
                 map(({response: scenesBySceneArea}) => {
                         Object.keys(scenesBySceneArea).forEach((sceneAreaId) =>
                             scenesBySceneArea[sceneAreaId] = scenesBySceneArea[sceneAreaId].map((scene) =>
-                                transformOldSceneToNew(sceneAreaId, recipe.dates, scene))
+                                scene.sceneId
+                            )
                         )
                         return scenesBySceneArea
                     }
