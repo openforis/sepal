@@ -5,12 +5,17 @@
 
 .tabBar {
     display: flex;
-    flex-wrap: wrap;
+    justify-content: space-between;
     background-color: #1c1c1c;
-    padding: 1rem;
+    padding: 0.5rem;
     border: 1px solid hsla(0, 0%, 100%, .05);
     border-bottom: 2px solid hsla(0, 0%, 100%, .05);
     pointer-events: all;
+}
+
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .newTab {
@@ -25,11 +30,14 @@
 }
 
 .newTab:hover {
+    color: var(--button-default-hover-color);
     background-color: #2B2B29;
+    border-radius: var(--button-border-radius);
 }
 
 .newTab:active {
-    background-color: #3c3c3c;
+    color: var(--button-default-active-color);
+    background-color: #2f2f2f;
 }
 
 .tab {
@@ -52,7 +60,6 @@
 .tab * {
     width: 100%;
 }
-
 
 .tab.selected {
     background-color: #1c1c1c;
@@ -94,7 +101,7 @@
 
 .close:hover {
     background: #990003;
-    color: #ccc;
+    color: var(--button-default-hover-color);
 }
 
 .title {
@@ -154,12 +161,15 @@ span.title.placeholder {
     width: 100%;
 }
 
-.tab.selected input.title  {
+.tab.selected input.title {
     border: none !important;
     margin-right: 2rem;
     letter-spacing: 0.75px;
     height: 2.5rem;
     line-height: 2.5rem;
+}
+
+.tabActions {
 }
 
 .tabContents {

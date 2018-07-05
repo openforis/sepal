@@ -77,21 +77,24 @@ class Tabs extends React.Component {
     }
 
     render() {
-        const {selectedTabId, statePath, children} = this.props
+        const {selectedTabId, statePath, tabActions, children} = this.props
         return (
             <div className={[styles.container, flexy.container].join(' ')}>
                 <div className={styles.tabBar}>
-                    {this.props.tabs.map((tab) =>
-                        <Tab
-                            key={tab.id}
-                            id={tab.id}
-                            title={tab.title}
-                            placeholder={tab.placeholder}
-                            selected={tab.id === selectedTabId}
-                            statePath={statePath}
-                        />
-                    )}
-                    <NewTab onAdd={() => addTab(statePath)}/>
+                    <div className={styles.tabs}>
+                        {this.props.tabs.map((tab) =>
+                            <Tab
+                                key={tab.id}
+                                id={tab.id}
+                                title={tab.title}
+                                placeholder={tab.placeholder}
+                                selected={tab.id === selectedTabId}
+                                statePath={statePath}
+                            />
+                        )}
+                        <NewTab onAdd={() => addTab(statePath)}/>
+                    </div>
+                    <div className={styles.tabActions}>{tabActions(selectedTabId)}</div>
                 </div>
 
                 <div className={[styles.tabContents, flexy.container].join(' ')}>
@@ -107,7 +110,8 @@ class Tabs extends React.Component {
 }
 
 Tabs.propTypes = {
-    statePath: PropTypes.string.isRequired
+    statePath: PropTypes.string.isRequired,
+    tabActions: PropTypes.func
 }
 
 export default connect(mapStateToProps)(Tabs)
