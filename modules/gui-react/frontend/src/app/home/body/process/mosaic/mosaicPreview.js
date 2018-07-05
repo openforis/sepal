@@ -107,7 +107,7 @@ class MosaicPreview extends React.Component {
         const layer = this.isPreviewShown()
             ? new EarthEngineImageLayer({
                 layerIndex: 0,
-                bounds: recipe.aoi.bounds,
+                bounds: recipe.ui.aoi.bounds,
                 mapId$: backend.gee.preview$(recipe),
                 props: this.toLayerProps(recipe),
                 onProgress: (tiles) => this.onProgress(tiles)

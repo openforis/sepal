@@ -215,7 +215,6 @@ const createAoi = (aoiForm) => {
                 id: countryFusionTable,
                 keyColumn: 'id',
                 key: aoiForm.area || aoiForm.country,
-                bounds: aoiForm.bounds
             }
         case 'fusionTable':
             return {
@@ -223,13 +222,11 @@ const createAoi = (aoiForm) => {
                 id: aoiForm.fusionTable,
                 keyColumn: aoiForm.fusionTableColumn,
                 key: aoiForm.fusionTableRow,
-                bounds: aoiForm.bounds
             }
         case 'polygon':
             return {
                 type: 'polygon',
                 path: aoiForm.polygon,
-                bounds: aoiForm.bounds
             }
         default:
             throw new Error('InvalidsetSelectedScenes aoi section: ' + aoiForm.section)

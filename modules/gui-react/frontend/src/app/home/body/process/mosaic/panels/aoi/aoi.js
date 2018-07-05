@@ -61,7 +61,7 @@ class Aoi extends React.Component {
         const {recipeId, componentWillUnmount$} = this.props
         this.initialBounds = aoiForm.bounds
         recipe.setAoi(aoiForm).dispatch()
-        const aoi = RecipeState(recipeId)('aoi')
+        const aoi = RecipeState(recipeId)('ui.aoi')
         this.aoiUnchanged = _.isEqual(aoi, this.initialAoi)
         setAoiLayer({
                 contextId: recipeId,
