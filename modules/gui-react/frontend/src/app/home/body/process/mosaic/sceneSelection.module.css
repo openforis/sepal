@@ -29,10 +29,12 @@
     position: relative;
     display: flex;
     flex-grow: 1;
-    margin-top: -2.5rem;
-    margin-right: -.8rem;
-    margin-bottom: -1rem;
-    margin-left: -.8rem;
+    margin: -2.5rem -.8rem -1rem;
+}
+
+.loading {
+    flex-direction: column;
+    justify-content: center;
 }
 
 .title {

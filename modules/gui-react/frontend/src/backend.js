@@ -62,7 +62,7 @@ const DATE_FORMAT = 'YYYY-MM-DD'
 const transformRecipeForPreview = (recipe) => {
     const sceneIds = []
     if (recipe.sceneSelectionOptions.type === SceneSelectionType.SELECT)
-        Object.keys(recipe.scenes).forEach(sceneAreaId => recipe.scenes[sceneAreaId].forEach(scene => sceneIds.push(scene.id)))
+        Object.keys(recipe.scenes).forEach(sceneAreaId => recipe.scenes[sceneAreaId].forEach(sceneId => sceneIds.push(sceneId)))
     return {
         aoi: transformAoi(recipe.aoi),
         dates: recipe.dates,

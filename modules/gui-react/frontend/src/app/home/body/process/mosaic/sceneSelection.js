@@ -16,18 +16,18 @@ import ScenePreview from './scenePreview'
 import styles from './sceneSelection.module.css'
 
 const fields = {
-    selectedScenes: new Field()
+    selectedSceneIds: new Field()
 }
 
 const mapStateToProps = (state, ownProps) => {
     const {recipeId, sceneAreaId} = ownProps
     const recipeState = RecipeState(recipeId)
-    const selectedScenes = recipeState(['scenes', sceneAreaId]) || []
+    const selectedSceneIds = recipeState(['scenes', sceneAreaId]) || []
     return {
         sources: recipeState('sources'),
         dates: recipeState('dates'),
         sceneSelectionOptions: recipeState('sceneSelectionOptions'),
-        values: {selectedScenes: selectedScenes}
+        values: {selectedSceneIds}
     }
 }
 
@@ -41,12 +41,36 @@ class SceneSelection extends React.Component {
     }
 
     render() {
-        const {action, recipeId, form, sceneAreaId, inputs: {selectedScenes}} = this.props
-        const {width} = this.state
-        if (!sceneAreaId)
-            return null
-        const availableSceneComponents = this.state.scenes
-            .filter(scene => !selectedScenes.value.find(selectedScene => selectedScene.id === scene.id))
+        const {action, recipeId, form} = this.props
+        const loading = !action('LOAD_SCENES').dispatched
+        return (
+            <div className={styles.container}>
+                <ScenePreview recipeId={recipeId}/>
+                <form className={styles.panel}>
+                    <PanelForm
+                        recipeId={recipeId}
+                        form={form}
+                        onApply={(recipe, {selectedSceneIds}) => this.onApply(selectedSceneIds)}
+                        onCancel={() => this.deselectSceneArea()}
+                        icon='cog'
+                        modalOnDirty={false}
+                        title={msg('process.mosaic.panel.scenes.title')}>
+                        <div className={[styles.form, loading ? styles.loading : null].join(' ')}>
+                            {loading
+                                ? <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
+                                : this.renderScenes()}
+                        </div>
+                    </PanelForm>
+                </form>
+            </div>
+        )
+    }
+
+    renderScenes() {
+        const {inputs: {selectedSceneIds}} = this.props
+        const {width, scenes, scenesById} = this.state
+        const availableSceneComponents = scenes
+            .filter(scene => !selectedSceneIds.value.find(selectedSceneId => selectedSceneId === scene.id))
             .map(scene =>
                 <Scene
                     key={scene.id}
@@ -55,7 +79,9 @@ class SceneSelection extends React.Component {
                     onAdd={() => this.addScene(scene)}
                     recipe={this.recipe}/>
             )
-        const selectedSceneComponents = selectedScenes.value
+        const selectedSceneComponents = selectedSceneIds.value
+            .map(sceneId => scenesById[sceneId])
+            .filter(scene => scene)
             .map(scene =>
                 <Scene
                     key={scene.id}
@@ -65,46 +91,23 @@ class SceneSelection extends React.Component {
                     recipe={this.recipe}/>
             )
         return (
-            <div className={styles.container}>
-                <ScenePreview recipeId={recipeId}/>
-                <form className={styles.panel}>
-                    <PanelForm
-                        recipeId={recipeId}
-                        form={form}
-                        onApply={(recipe, {selectedScenes}) => this.onApply(selectedScenes)}
-                        onCancel={() => this.deselectSceneArea()}
-                        icon='cog'
-                        modalOnDirty={false}
-                        title={msg('process.mosaic.panel.scenes.title')}>
-                        <div className={styles.form}>
-                            <div className={styles.availableScenes}>
-                                <div className={styles.title}>Available scenes</div>
-                                {action('LOAD_SCENES').dispatched
-                                    ? (
-                                        <div className={[styles.scrollable, styles.grid].join(' ')}>
-                                            {availableSceneComponents}
-                                        </div>
-
-                                    )
-                                    : (
-                                        <CenteredProgress
-                                            title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
-                                    )
-                                }
-                            </div>
-                            <div className={styles.selectedScenes}>
-                                <div className={styles.title}>Selected scenes</div>
-                                <div className={[styles.scrollable, width > 250 ? styles.list : styles.grid].join(' ')}>
-                                    {selectedSceneComponents}
-                                </div>
-                                <ReactResizeDetector
-                                    handleWidth
-                                    onResize={width => this.widthUpdated(width)}/>
-                            </div>
-                        </div>
-                    </PanelForm>
-                </form>
-            </div>
+            <React.Fragment>
+                <div className={styles.availableScenes}>
+                    <div className={styles.title}>Available scenes</div>
+                    <div className={[styles.scrollable, styles.grid].join(' ')}>
+                        {availableSceneComponents}
+                    </div>
+                </div>
+                <div className={styles.selectedScenes}>
+                    <div className={styles.title}>Selected scenes</div>
+                    <div className={[styles.scrollable, width > 250 ? styles.list : styles.grid].join(' ')}>
+                        {selectedSceneComponents}
+                    </div>
+                    <ReactResizeDetector
+                        handleWidth
+                        onResize={width => this.widthUpdated(width)}/>
+                </div>
+            </React.Fragment>
         )
     }
 
@@ -127,9 +130,9 @@ class SceneSelection extends React.Component {
         ).dispatch()
     }
 
-    onApply(selectedScenes) {
+    onApply(selectedSceneIds) {
         const {sceneAreaId} = this.props
-        this.recipe.setSelectedScenesInSceneArea(sceneAreaId, selectedScenes).dispatch()
+        this.recipe.setSelectedScenesInSceneArea(sceneAreaId, selectedSceneIds).dispatch()
         this.deselectSceneArea()
     }
 
@@ -138,17 +141,21 @@ class SceneSelection extends React.Component {
     }
 
     addScene(scene) {
-        const {inputs: {selectedScenes}} = this.props
-        selectedScenes.set([...selectedScenes.value, scene])
+        const {inputs: {selectedSceneIds}} = this.props
+        selectedSceneIds.set([...selectedSceneIds.value, scene.id])
     }
 
-    removeScene(scene) {
-        const {inputs: {selectedScenes}} = this.props
-        selectedScenes.set(selectedScenes.value.filter(s => s.id !== scene.id))
+    removeScene(sceneToRemove) {
+        const {inputs: {selectedSceneIds}} = this.props
+        selectedSceneIds.set(selectedSceneIds.value.filter(sceneId => sceneId !== sceneToRemove.id))
     }
 
     setScenes(scenes) {
-        this.setState(prevState => ({...prevState, scenes}))
+        this.setState(prevState => {
+            const scenesById = {}
+            scenes.forEach(scene => scenesById[scene.id] = scene)
+            return {...prevState, scenes, scenesById}
+        })
     }
 
     widthUpdated(width) {
