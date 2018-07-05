@@ -16,12 +16,12 @@ import SceneDeselection from './sceneDeselection'
 import SceneSelection from './sceneSelection'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
-        aoi: recipe('aoi'),
-        source: Object.keys(recipe('sources'))[0],
-        sceneSelectionOptions: recipe('sceneSelectionOptions'),
-        sceneSelection: recipe('ui.sceneSelection'),
+        aoi: recipeState('aoi'),
+        source: Object.keys(recipeState('sources'))[0],
+        sceneSelectionOptions: recipeState('sceneSelectionOptions'),
+        sceneSelection: recipeState('ui.sceneSelection'),
     }
 }
 

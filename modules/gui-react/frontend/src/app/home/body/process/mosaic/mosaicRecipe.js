@@ -1,10 +1,10 @@
 import globalActionBuilder from 'action-builder'
 import {countryFusionTable} from 'app/home/map/aoiLayer'
+import backend from 'backend'
 import moment from 'moment'
 import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
-import {select} from 'store'
 import Labels from '../../../map/labels'
-import backend from 'backend'
+import {recipePath, RecipeState as ParentRecipeState} from '../recipe'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -13,27 +13,11 @@ export const SceneSelectionType = Object.freeze({
     SELECT: 'select'
 })
 
-const recipePath = (recipeId, path) => {
-    const recipeTabIndex = select('process.tabs')
-        .findIndex((recipe) => recipe.id === recipeId)
-    if (recipeTabIndex === -1)
-        throw new Error(`Recipe not found: ${recipeId}`)
-    if (path && Array.isArray(path))
-        path = path.join('.')
-    return ['process.tabs', recipeTabIndex, path]
-        .filter(e => e !== undefined)
-        .join('.')
-}
-
 export const RecipeState = (recipeId) => {
-    const recipeTabIndex = select('process.tabs')
-        .findIndex((recipe) => recipe.id === recipeId)
-    if (recipeTabIndex === -1)
+    const recipeState = ParentRecipeState(recipeId)
+    if (!recipeState)
         return null
-
-    const get = (path) => {
-        return select(recipePath(recipeId, path))
-    }
+    const get = (path) => recipeState(path)
     get.dateRange = () => {
         const dates = get('dates')
         const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
@@ -181,11 +165,11 @@ export const RecipeActions = (id) => {
     }
 }
 
-const initRecipe = (recipe) => {
-    if (recipe.ui)
+const initRecipe = (recipeState) => {
+    if (!recipeState || recipeState.ui)
         return
 
-    const actions = RecipeActions(recipe.id)
+    const actions = RecipeActions(recipeState.id)
     actions.setDates({
         advanced: false,
         targetYear: String(moment().year()),

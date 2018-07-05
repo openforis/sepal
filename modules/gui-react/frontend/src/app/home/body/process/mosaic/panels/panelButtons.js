@@ -10,10 +10,10 @@ import {PANELS} from './panelConstants'
 const WIZARD_PANELS = [PANELS.AREA_OF_INTEREST, PANELS.DATES, PANELS.SOURCES]
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
-        initialized: recipe('ui.initialized'),
-        selectedPanel: recipe('ui.selectedPanel')
+        initialized: recipeState('ui.initialized'),
+        selectedPanel: recipeState('ui.selectedPanel')
     }
 }
 

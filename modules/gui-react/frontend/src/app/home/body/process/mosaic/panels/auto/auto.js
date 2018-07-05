@@ -23,10 +23,10 @@ const constraints = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
-        values: recipe('ui.sceneCount'),
-        recipeState: recipe()
+        values: recipeState('ui.sceneCount'),
+        recipeState: recipeState()
     }
 }
 

@@ -19,10 +19,10 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
-        values: recipe('ui.compositeOptions'),
-        source: Object.keys(recipe('sources'))[0]
+        values: recipeState('ui.compositeOptions'),
+        source: Object.keys(recipeState('sources'))[0]
     }
 }
 

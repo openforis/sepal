@@ -5,13 +5,13 @@ import {connect} from 'store'
 
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
-        sceneAreas: recipe('ui.sceneAreas'),
-        dates: recipe('dates'),
-        sources: recipe('sources'),
-        sceneSelectionOptions: recipe('sceneSelectionOptions'),
-        scenes: recipe('scenes')
+        sceneAreas: recipeState('ui.sceneAreas'),
+        dates: recipeState('dates'),
+        sources: recipeState('sources'),
+        sceneSelectionOptions: recipeState('sceneSelectionOptions'),
+        scenes: recipeState('scenes')
     }
 }
 

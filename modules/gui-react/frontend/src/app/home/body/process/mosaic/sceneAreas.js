@@ -13,13 +13,13 @@ import SceneAreaMarker from './sceneAreaMarker'
 import styles from './sceneAreas.module.css'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
-        initialized: recipe('ui.initialized'),
-        sceneAreasShown: recipe('ui.sceneAreasShown'),
-        sceneAreas: recipe('ui.sceneAreas'),
-        aoi: recipe('aoi'),
-        source: Object.keys(recipe('sources'))[0]
+        initialized: recipeState('ui.initialized'),
+        sceneAreasShown: recipeState('ui.sceneAreasShown'),
+        sceneAreas: recipeState('ui.sceneAreas'),
+        aoi: recipeState('aoi'),
+        source: Object.keys(recipeState('sources'))[0]
     }
 }
 

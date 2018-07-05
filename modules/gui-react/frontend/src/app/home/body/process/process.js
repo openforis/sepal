@@ -2,13 +2,9 @@ import React from 'react'
 import Tabs from 'widget/tabs'
 import CreateOrLoadRecipe from './createOrLoadRecipe'
 import Mosaic from './mosaic/mosaic'
-import Menu from './menu'
+import ProcessMenu from './processMenu'
 
 const Process = () => {
-    const tabActions = (id) => {
-        return <Menu recipeId={id}/>
-    }
-
     const contents = ({id, type}) => {
         switch (type) {
             case 'mosaic':
@@ -21,7 +17,7 @@ const Process = () => {
     }
 
     return (
-        <Tabs statePath='process' tabActions={tabActions}>
+        <Tabs statePath='process' tabActions={(recipeId) => <ProcessMenu recipeId={recipeId}/>}>
             {contents}
         </Tabs>
     )

@@ -14,10 +14,10 @@ import Scenes from './scenes/scenes'
 import Sources from './sources/sources'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
-        initialized: recipe('ui.initialized'),
-        selectedPanel: recipe('ui.selectedPanel')
+        initialized: recipeState('ui.initialized'),
+        selectedPanel: recipeState('ui.selectedPanel')
     }
 }
 

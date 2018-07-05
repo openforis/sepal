@@ -12,9 +12,9 @@ import styles from './mosaicPreview.module.css'
 
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
-        recipe: recipe()
+        recipe: recipeState()
     }
 }
 

@@ -13,12 +13,12 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
-        initialized: recipe('ui.initialized'),
-        source: Object.keys(recipe('sources'))[0],
-        surfaceReflectance: recipe('compositeOptions').corrections.includes('SR'),
-        values: {bands: recipe('ui.bands')}
+        initialized: recipeState('ui.initialized'),
+        source: Object.keys(recipeState('sources'))[0],
+        surfaceReflectance: recipeState('compositeOptions').corrections.includes('SR'),
+        values: {bands: recipeState('ui.bands')}
     }
 }
 

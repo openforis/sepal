@@ -126,10 +126,10 @@ class Aoi extends React.Component {
 
     componentWillUnmount() {
         const {recipeId} = this.props
-        const recipe = RecipeState(recipeId)
+        const recipeState = RecipeState(recipeId)
         setAoiLayer({
                 contextId: recipeId,
-                aoi: recipe && recipe('aoi'),
+                aoi: recipeState && recipeState('aoi'),
                 fill: false
             }
         )
