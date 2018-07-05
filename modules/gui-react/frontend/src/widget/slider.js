@@ -59,7 +59,7 @@ class Draggable extends React.Component {
                 <div className={[styles.range, styles.rightRange].join(' ')} style={{left: `${position}px`}}/>
                 {this.renderPreview()}
                 <div className={styles.clickTarget} ref={this.clickTarget}/>
-                <div className={[styles.cursor, styles.handle].join(' ')} ref={this.handle}
+                <div className={[styles.cursor, styles.handle, this.state.dragging ? styles.dragging : null].join(' ')} ref={this.handle}
                      style={{left: `${position}px`}}/>
                 <ViewportResizeDetector onChange={() => this.setClickTargetBoundingRect()}/>
                 {this.state.dragging

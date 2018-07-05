@@ -55,11 +55,7 @@
 }
 
 .cursor.handle {
-    background-color: var(--button-selected-background-color);
-    /* cursor: pointer; */
-    /* text-align: center;
-    font-size: calc(var(--handle-height) * .6);
-    line-height: var(--handle-height); */
+    background-color: hsl(40, 69%, 32%);
     z-index: 2;
 }
 
@@ -68,7 +64,13 @@
 }
 
 .handle:hover {
-    background-color: var(--button-selected-hover-background-color);
+    background-color: hsl(40, 69%, 35%);
+    cursor: pointer;
+}
+
+.handle.dragging {
+    background-color: hsl(40, 69%, 35%);
+    cursor: pointer;
 }
 
 .range {
