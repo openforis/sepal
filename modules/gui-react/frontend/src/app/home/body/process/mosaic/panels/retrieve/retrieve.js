@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {dataSetById} from 'sources'
 import {msg, Msg} from 'translate'
+import {currentUser} from 'user'
 import Buttons from 'widget/buttons'
 import {Field, form, Label} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
@@ -18,10 +19,12 @@ const fields = {
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
+    const retrieveOptions = recipeState('ui.retrieveOptions')
     return {
         sources: recipeState('sources'),
         compositeOptions: recipeState('compositeOptions'),
-        values: recipeState('ui.retrieveOptions')
+        values: retrieveOptions,
+        user: currentUser()
     }
 }
 
@@ -69,7 +72,7 @@ class Retrieve extends React.Component {
     }
 
     render() {
-        const {recipeId, sources, compositeOptions, form, inputs: {bands, destination}, className} = this.props
+        const {user, recipeId, sources, compositeOptions, form, inputs: {bands, destination}, className} = this.props
         const bandsForEachDataSet = _.flatten(Object.values(sources))
             .map(dataSetId => dataSetById[dataSetId].bands)
         const availableBands = new Set(
@@ -94,13 +97,14 @@ class Retrieve extends React.Component {
         const destinationOptions = [
             {
                 value: 'SEPAL',
-                label: msg('process.mosaic.panel.retrieve.form.destination.SEPAL')
+                label: msg('process.mosaic.panel.retrieve.form.destination.SEPAL'),
+                disabled: !user.googleTokens
             },
             {
                 value: 'GEE',
                 label: msg('process.mosaic.panel.retrieve.form.destination.GEE')
             }
-        ]
+        ].filter(({value}) => user.googleTokens || value !== 'GEE')
 
         return (
             <form className={[className, styles.container].join(' ')}>
@@ -137,6 +141,12 @@ class Retrieve extends React.Component {
                 </PanelForm>
             </form>
         )
+    }
+
+    componentDidUpdate() {
+        const {user, inputs: {destination}} = this.props
+        if (!user.googleTokens && destination.value !== 'SEPAL')
+            destination.set('SEPAL')
     }
 }
 
