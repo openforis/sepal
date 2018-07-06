@@ -1,8 +1,9 @@
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {sepalMap} from 'app/home/map/map'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
+import {connect, select} from 'store'
 import AutoSelectScenes from './autoSelectScenes'
 import BandSelection from './bandSelection'
 import MapToolbar from './mapToolbar'
@@ -22,6 +23,7 @@ const mapStateToProps = (state, ownProps) => {
         source: Object.keys(recipeState('sources'))[0],
         sceneSelectionOptions: recipeState('sceneSelectionOptions'),
         sceneSelection: recipeState('ui.sceneSelection'),
+        tabCount: select('process.tabs').length
     }
 }
 
@@ -51,7 +53,15 @@ class Mosaic extends React.Component {
 
     componentDidMount() {
         const {recipeId, aoi, componentWillUnmount$} = this.props
-        setAoiLayer({contextId: recipeId, aoi, destroy$: componentWillUnmount$})
+        setAoiLayer({
+            contextId: recipeId,
+            aoi,
+            destroy$: componentWillUnmount$,
+            onInitialized: () => {
+                if (this.props.tabCount === 1)
+                    sepalMap.getContext(recipeId).fitLayer('aoi')
+            }
+        })
     }
 }
 
