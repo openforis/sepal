@@ -32,10 +32,12 @@ class SceneDeselection extends React.Component {
 
     updateSelectedScenes() {
         const {sceneAreas, dates, sources, sceneSelectionOptions, scenes} = this.props
-        if (!scenes)
+        if (!scenes) // No scenes selected, nothing to do
             return
         if (sceneSelectionOptions.type !== SceneSelectionType.SELECT)
-            return this.recipe.setSelectedScenes(null).dispatch()
+            return this.recipe.setSelectedScenes(null).dispatch() // Not selecting individual scenes, remove all selected
+        if (!sceneAreas) // Scene areas are not loaded, we don't know enough to filter out scenes
+            return
         const filteredScenes = {}
         const filterScenes = (scenes) => {
             if (!scenes)
@@ -46,13 +48,11 @@ class SceneDeselection extends React.Component {
                     !!Object.values(sources).find(values => values.includes(scene.dataSet))
                 )
         }
-
-        if (sceneAreas)
-            sceneAreas
-                .map(sceneArea => sceneArea.id)
-                .forEach(sceneAreaId =>
-                    filteredScenes[sceneAreaId] = filterScenes(scenes[sceneAreaId])
-                )
+        sceneAreas
+            .map(sceneArea => sceneArea.id)
+            .forEach(sceneAreaId =>
+                filteredScenes[sceneAreaId] = filterScenes(scenes[sceneAreaId])
+            )
         this.recipe.setSelectedScenes(filteredScenes).dispatch()
     }
 }
