@@ -12,7 +12,7 @@ export class HoldButton extends React.Component {
     }
 
     render() {
-        const {icon, tabIndex, className, ...props} = this.props
+        const {icon, tabIndex, className, onClickHold, ...props} = this.props
         return (
             <button
                 ref={this.button}
@@ -56,9 +56,7 @@ export class HoldButton extends React.Component {
 
 HoldButton.propTypes = {
     icon: PropTypes.string,
-    // onClick: PropTypes.func,
     onClickHold: PropTypes.func,
-    // clickHoldTime: PropTypes.number,
     tabIndex: PropTypes.number,
     disabled: PropTypes.bool,
     className: PropTypes.string,
