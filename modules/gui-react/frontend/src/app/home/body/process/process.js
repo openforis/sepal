@@ -3,6 +3,7 @@ import Tabs from 'widget/tabs'
 import CreateOrLoadRecipe from './createOrLoadRecipe'
 import Mosaic from './mosaic/mosaic'
 import ProcessMenu from './processMenu'
+import {saveRecipe} from './recipe'
 
 const Process = () => {
     const contents = ({id, type}) => {
@@ -17,7 +18,10 @@ const Process = () => {
     }
 
     return (
-        <Tabs statePath='process' tabActions={(recipeId) => <ProcessMenu recipeId={recipeId}/>}>
+        <Tabs
+            statePath='process'
+            tabActions={(recipeId) => <ProcessMenu recipeId={recipeId}/>}
+            onTitleChanged={recipe => saveRecipe(recipe)}>
             {contents}
         </Tabs>
     )

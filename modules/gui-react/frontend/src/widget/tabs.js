@@ -17,11 +17,17 @@ const addTab = (statePath) => {
         .dispatch()
 }
 
-const renameTab = (id, title, statePath) => {
-    const tabIndex = select(path(statePath, 'tabs'))
+const getTabIndex = (id, statePath) =>
+    select(path(statePath, 'tabs'))
         .findIndex((tab) => tab.id === id)
+
+const tabPath = (id, statePath) =>
+    [statePath, 'tabs', getTabIndex(id, statePath)].join('.')
+
+const renameTab = (id, title, statePath) => {
+    const tabIndex = getTabIndex(id, statePath)
     actionBuilder('RENAME_TAB')
-        .set(path(statePath, 'tabs', tabIndex, 'title'), title)
+        .set([statePath, 'tabs', tabIndex, 'title'], title)
         .dispatch()
 }
 
@@ -77,7 +83,7 @@ class Tabs extends React.Component {
     }
 
     render() {
-        const {selectedTabId, statePath, tabActions, children} = this.props
+        const {selectedTabId, statePath, tabActions, onTitleChanged, children} = this.props
         return (
             <div className={[styles.container, flexy.container].join(' ')}>
                 <div className={styles.tabBar}>
@@ -90,6 +96,7 @@ class Tabs extends React.Component {
                                 placeholder={tab.placeholder}
                                 selected={tab.id === selectedTabId}
                                 statePath={statePath}
+                                onTitleChanged={onTitleChanged}
                             />
                         )}
                         <NewTab onAdd={() => addTab(statePath)}/>
@@ -111,7 +118,8 @@ class Tabs extends React.Component {
 
 Tabs.propTypes = {
     statePath: PropTypes.string.isRequired,
-    tabActions: PropTypes.func
+    tabActions: PropTypes.func,
+    onTitleChanged: PropTypes.func
 }
 
 export default connect(mapStateToProps)(Tabs)
@@ -155,9 +163,16 @@ class Tab extends React.Component {
     }
 
     saveTitle() {
-        const {id, statePath} = this.props
-        renameTab(id, this.titleInput.current.value, statePath)
-        this.setState((state) => ({...state, editing: false}))
+        const {id, statePath, onTitleChanged} = this.props
+        const selectTab = () => select(tabPath(id, statePath))
+        const prevTitle = selectTab().title
+        const title = this.titleInput.current.value
+        if (prevTitle === title || (!prevTitle && !title))
+            return
+        renameTab(id, title, statePath)
+        this.setState(
+            (state) => ({...state, editing: false}),
+            () => onTitleChanged && onTitleChanged(selectTab()))
     }
 
     render() {
@@ -181,9 +196,9 @@ class Tab extends React.Component {
                                 defaultValue={title}
                                 placeholder={placeholder}
                                 autoFocus={!title}
-                                onKeyPress={this.onTitleKeyPress.bind(this)}
-                                onChange={this.onTitleChange.bind(this)}
-                                onBlur={this.saveTitle.bind(this)}/>
+                                onKeyPress={(e) => this.onTitleKeyPress(e)}
+                                onChange={(e) => this.onTitleChange(e)}
+                                onBlur={() => this.saveTitle()}/>
                             : null
                         }
                         </span>

@@ -27,18 +27,22 @@ export const RecipeState = (recipeId) => {
 }
 
 export const saveRecipe = (recipe) => {
-    // TODO: Include ui or not?
-    // Takes less space without (e.g. scene area markers/polygons)
-    // Requires custom code to re-create ui model once loaded
+    if (!recipe.type)
+        return
+    const listItem = {
+        id: recipe.id,
+        name: recipe.title || recipe.placeholder,
+        type: recipe.type
+    }
+    const recipes = [...select('process.recipes')]
+    const index = recipes.findIndex(savedRecipe => savedRecipe.id === recipe.id)
+    if (index > -1)
+        recipes[index] = listItem
+    else
+        recipes.push(listItem)
 
-    // backend.recipe.save$(_.omit(recipe, ['ui'])).pipe(
     backend.recipe.save$(recipe).pipe(
         map(() => {
-            const recipes = select('process.recipes').concat({
-                id: recipe.id,
-                name: recipe.title || recipe.placeholder,
-                type: recipe.type
-            })
             actionBuilder('SET_RECIPES', {recipes})
                 .set('process.recipes', recipes)
                 .dispatch()
