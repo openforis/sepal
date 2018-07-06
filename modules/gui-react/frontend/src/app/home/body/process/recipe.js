@@ -154,6 +154,12 @@ subscribe('process.tabs', (recipes) => {
 // TODO: Must debounce for unique recipe ids, otherwise save events will be lost
 // Stream per recipe, remove it when it's no longer among the saved recipes?
 
+// Some operations must save immediately
+//      close tab    - re-open would cause unsaved recipe to fail, saved recipe to get old state
+//      close window - changes lost
+
+// Indicate if saving in recipe list and prevent it from being opened, cloned and deleted (?)
+
 saveToBackend$.pipe(
     debounce(() => interval(10000))
 ).subscribe((recipe) =>
