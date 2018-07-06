@@ -164,8 +164,8 @@ export default class SeasonSelect extends React.Component {
         this.startDateChanged(this.positionToDate(position))
     }
 
-    startDateChanged(startDate) {
-        if (!this.state.startDate.isSame(startDate))
+    startDateChanged(startDate, always) {
+        if (always || !this.state.startDate.isSame(startDate))
             this.setState(
                 (prevState) => {
                     startDate = SeasonSelect.constrainStartDate(startDate, prevState.centerDate)
@@ -181,8 +181,8 @@ export default class SeasonSelect extends React.Component {
         this.endDateChanged(this.positionToDate(position))
     }
 
-    endDateChanged(endDate) {
-        if (!this.state.endDate.isSame(endDate))
+    endDateChanged(endDate, always) {
+        if (always || !this.state.endDate.isSame(endDate))
             this.setState(
                 (prevState) => {
                     endDate = SeasonSelect.constrainEndDate(endDate, prevState.centerDate)
@@ -218,7 +218,8 @@ class DatePickers extends React.Component {
                     <DatePicker
                         input={startDate}
                         startDate={minDate}
-                        endDate={centerDate}/>
+                        endDate={centerDate}
+                        onChange={(updatedStartDate) => this.startDateChanged(moment(updatedStartDate), true)}/>
                     <ErrorMessage for={startDate}/>
                 </div>
 
@@ -227,7 +228,8 @@ class DatePickers extends React.Component {
                     <DatePicker
                         input={endDate}
                         startDate={moment(centerDate).add(1, 'days')}
-                        endDate={maxDate}/>
+                        endDate={maxDate}
+                        onChange={(updatedEndDate) => this.endDateChanged(moment(updatedEndDate), true)}/>
                     <ErrorMessage for={endDate}/>
                 </div>
             </div>
