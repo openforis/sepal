@@ -91,6 +91,10 @@ class MosaicPreview extends React.Component {
         return _.omit(recipe, ['ui', 'placeholder', 'title'])
     }
 
+    componentDidMount() {
+        this.updateLayer()
+    }
+
     componentDidUpdate(prevProps) {
         const {recipe} = this.props
         const layerProps = this.toLayerProps(recipe)
