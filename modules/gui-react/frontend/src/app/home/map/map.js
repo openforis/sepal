@@ -147,6 +147,7 @@ const createMap = (mapElement) => {
                                 )
                                 .subscribe(
                                     () => {
+                                        layer.__initialized__ = true
                                         currentContextId === contextId && layer.addToMap(googleMap)
                                         onInitialized && onInitialized(layer)
                                     },
@@ -183,7 +184,11 @@ const createMap = (mapElement) => {
                         }
                     },
                     addToMap() {
-                        Object.keys(layerById).forEach(id => layerById[id].addToMap(googleMap))
+                        Object.keys(layerById).forEach(id => {
+                            const layer = layerById[id]
+                            if (layer.__initialized__)
+                                layer.addToMap(googleMap)
+                        })
                     },
                     removeFromMap() {
                         Object.keys(layerById).forEach(id => layerById[id].removeFromMap(googleMap))
