@@ -43,6 +43,7 @@ const toMomentUnit = (item) => {
             return item
     }
 }
+
 class DatePicker extends React.Component {
     state = {edit: false}
     inputElement = React.createRef()
@@ -50,6 +51,10 @@ class DatePicker extends React.Component {
     editDate(edit) {
         this.setState((prevState) =>
             ({...prevState, edit}))
+        if (!edit) {
+            const {onChange, input} = this.props
+            onChange && onChange(input.value)
+        }
     }
 
     render() {
@@ -82,33 +87,11 @@ class DatePicker extends React.Component {
                             input={input}
                             resolution={resolution}
                             onSelect={() => this.editDate(false)}
-                            />
+                        />
                         : null}
                 </div>
             </div>
         )
-    }
-
-    // componentDidUpdate(nextProps, prevState) {
-    //     const {input, resolution = DAY} = this.props
-    //     const prevDateString = input.value
-    //     if (!prevDateString)
-    //         return
-
-    //     const date = moment(prevDateString, getDateFormat(this.getResolution(prevDateString)), true)
-    //     if (!date.isValid())
-    //         return
-    //     const nextDateString = date.format(getDateFormat(resolution))
-    //     if (prevDateString !== nextDateString)
-    //         input.set(nextDateString)
-    // }
-
-    getResolution(dateString) {
-        switch(dateString.length) {
-            case 4: return YEAR
-            case 7: return MONTH
-            default: return DAY
-        }
     }
 }
 
