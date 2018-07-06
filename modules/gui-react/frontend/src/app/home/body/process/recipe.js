@@ -1,6 +1,7 @@
 import actionBuilder from 'action-builder'
 import backend from 'backend'
 import _ from 'lodash'
+import {of} from 'rxjs'
 import {map} from 'rxjs/operators'
 import {select} from 'store'
 
@@ -17,9 +18,7 @@ export const recipePath = (recipeId, path) => {
 }
 
 export const RecipeState = (recipeId) => {
-    const recipeTabIndex = select('process.tabs')
-        .findIndex((recipe) => recipe.id === recipeId)
-    if (recipeTabIndex === -1)
+    if (!recipeExists(recipeId))
         return null
 
     return (path) =>
@@ -82,11 +81,23 @@ export const deleteRecipe = (recipeId) =>
 
 export const loadRecipe$ = (recipeId) => {
     const selectedTabId = select('process.selectedTabId')
-    return backend.recipe.load$(recipeId).pipe(
-        map(recipe =>
-            actionBuilder('OPEN_RECIPE')
-                .set(recipePath(selectedTabId,), recipe)
+    if (recipeExists(recipeId)) {
+        const recipe = select(recipePath(recipeId))
+        return of([
+            actionBuilder('SELECT_RECIPE')
                 .set('process.selectedTabId', recipe.id)
-                .build())
-    )
+                .build()
+        ])
+    } else {
+        return backend.recipe.load$(recipeId).pipe(
+            map(recipe =>
+                actionBuilder('OPEN_RECIPE')
+                    .set(recipePath(selectedTabId), recipe)
+                    .set('process.selectedTabId', recipe.id)
+                    .build())
+        )
+    }
 }
+
+const recipeExists = (recipeId) =>
+    select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
