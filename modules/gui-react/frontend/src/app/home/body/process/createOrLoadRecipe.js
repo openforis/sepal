@@ -8,7 +8,7 @@ import {Button, IconButton} from 'widget/button'
 import {HoldButton} from 'widget/holdButton'
 import {CenteredProgress} from 'widget/progress'
 import styles from './createOrLoadRecipe.module.css'
-import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
+import {deleteRecipe, duplicateRecipe$, loadRecipe$, loadRecipes$} from './recipe'
 
 const CreateOrLoadRecipe = ({recipeId}) =>
     <div className={[styles.container, flexy.container].join(' ')}>
@@ -43,6 +43,11 @@ class RecipeList extends React.Component {
             .dispatch()
     }
 
+    duplicateRecipe(recipeId) {
+        this.props.asyncActionBuilder('DUPLICATE_RECIPE', duplicateRecipe$(recipeId))
+            .dispatch()
+    }
+
     render() {
         const {recipes, action} = this.props
         if (!recipes && !action('LOAD_RECIPES').dispatched)
@@ -61,7 +66,11 @@ class RecipeList extends React.Component {
                             <div className={styles.duplicate}>
                                 <RecipeButton
                                     icon='clone'
-                                    iconType='regular'/>
+                                    iconType='regular'
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        this.duplicateRecipe(recipe.id)
+                                    }}/>
                             </div>
                             <div className={styles.delete}>
                                 <HoldButton

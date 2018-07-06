@@ -1,9 +1,9 @@
 import actionBuilder from 'action-builder'
 import backend from 'backend'
 import _ from 'lodash'
-import {of} from 'rxjs'
-import {map} from 'rxjs/operators'
-import {select} from 'store'
+import {interval, of, Subject} from 'rxjs'
+import {debounce, map, switchMap} from 'rxjs/operators'
+import {select, subscribe} from 'store'
 
 export const recipePath = (recipeId, path) => {
     const recipeTabIndex = select('process.tabs')
@@ -25,7 +25,7 @@ export const RecipeState = (recipeId) => {
         select(recipePath(recipeId, path))
 }
 
-export const saveRecipe = (recipe) => {
+export const saveRecipe$ = (recipe) => {
     if (!recipe.type)
         return
     const listItem = {
@@ -40,14 +40,16 @@ export const saveRecipe = (recipe) => {
     else
         recipes.push(listItem)
 
-    backend.recipe.save$(recipe).pipe(
-        map(() => {
-            actionBuilder('SET_RECIPES', {recipes})
-                .set('process.recipes', recipes)
-                .dispatch()
-        })
-    ).subscribe()
+    return of(
+        actionBuilder('SET_RECIPES', {recipes})
+            .set('process.recipes', recipes)
+            .sideEffect(() => saveToBackend$.next(recipe))
+            .build()
+    )
 }
+
+export const saveRecipe = (recipe) =>
+    saveRecipe$(recipe).subscribe(action => action.dispatch())
 
 export const exportRecipe = (recipe) => {
     setTimeout(() => {
@@ -68,16 +70,19 @@ export const loadRecipes$ = () =>
             .build())
     )
 
-export const deleteRecipe = (recipeId) =>
+export const deleteRecipe$ = (recipeId) =>
     backend.recipe.delete$(recipeId).pipe(
         map(() => {
             const recipes = select('process.recipes')
                 .filter(recipe => recipe.id !== recipeId)
-            actionBuilder('SET_RECIPES', {recipes})
+            return actionBuilder('SET_RECIPES', {recipes})
                 .set('process.recipes', recipes)
-                .dispatch()
+                .build()
         })
-    ).subscribe()
+    )
+
+export const deleteRecipe = (recipeId) =>
+    deleteRecipe$(recipeId).subscribe(action => action.dispatch())
 
 export const loadRecipe$ = (recipeId) => {
     const selectedTabId = select('process.selectedTabId')
@@ -99,5 +104,58 @@ export const loadRecipe$ = (recipeId) => {
     }
 }
 
+export const duplicateRecipe$ = (recipeId) => {
+    const selectedTabId = select('process.selectedTabId')
+    return backend.recipe.load$(recipeId).pipe(
+        map(recipe => ({
+                ...recipe,
+                id: selectedTabId,
+                title: (recipe.title || recipe.placeholder) + '_copy'
+            })
+        ),
+        switchMap(duplicate =>
+            saveRecipe$(duplicate).pipe(
+                map(action => [
+                    action,
+                    actionBuilder('SELECT_RECIPE', {duplicate})
+                        .set(recipePath(selectedTabId), duplicate)
+                        .build()
+                ])
+            )
+        )
+    )
+}
+
 const recipeExists = (recipeId) =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
+
+const saveToBackend$ = new Subject()
+
+let prevTabs = []
+subscribe('process.tabs', (recipes) => {
+        if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
+            const recipesToSave = recipes
+                .filter(recipe => {
+                    const prevRecipe = prevTabs.find(prevRecipe => prevRecipe.id === recipe.id)
+                    return prevRecipe !== recipe
+                })
+                .filter(recipe =>
+                    (select('process.recipes') || []).find(saved =>
+                        saved.id === recipe.id
+                    )
+                )
+            if (recipesToSave.length > 0)
+                recipesToSave.forEach(recipe => saveToBackend$.next(recipe))
+            prevTabs = recipes
+        }
+    }
+)
+
+// TODO: Must debounce for unique recipe ids, otherwise save events will be lost
+// Stream per recipe, remove it when it's no longer among the saved recipes?
+
+saveToBackend$.pipe(
+    debounce(() => interval(10000))
+).subscribe((recipe) =>
+    backend.recipe.save$(recipe).subscribe()
+)
