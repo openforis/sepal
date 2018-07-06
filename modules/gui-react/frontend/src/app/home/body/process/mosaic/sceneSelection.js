@@ -16,18 +16,18 @@ import ScenePreview from './scenePreview'
 import styles from './sceneSelection.module.css'
 
 const fields = {
-    selectedSceneIds: new Field()
+    selectedScenes: new Field()
 }
 
 const mapStateToProps = (state, ownProps) => {
     const {recipeId, sceneAreaId} = ownProps
     const recipeState = RecipeState(recipeId)
-    const selectedSceneIds = recipeState(['scenes', sceneAreaId]) || []
+    const selectedScenes = recipeState(['scenes', sceneAreaId]) || []
     return {
         sources: recipeState('sources'),
         dates: recipeState('dates'),
         sceneSelectionOptions: recipeState('sceneSelectionOptions'),
-        values: {selectedSceneIds}
+        values: {selectedScenes}
     }
 }
 
@@ -50,7 +50,7 @@ class SceneSelection extends React.Component {
                     <PanelForm
                         recipeId={recipeId}
                         form={form}
-                        onApply={(recipe, {selectedSceneIds}) => this.onApply(selectedSceneIds)}
+                        onApply={(recipe, {selectedScenes}) => this.onApply(selectedScenes)}
                         onCancel={() => this.deselectSceneArea()}
                         icon='cog'
                         modalOnDirty={false}
@@ -67,10 +67,10 @@ class SceneSelection extends React.Component {
     }
 
     renderScenes() {
-        const {inputs: {selectedSceneIds}} = this.props
+        const {inputs: {selectedScenes}} = this.props
         const {width, scenes, scenesById} = this.state
         const availableSceneComponents = scenes
-            .filter(scene => !selectedSceneIds.value.find(selectedSceneId => selectedSceneId === scene.id))
+            .filter(scene => !selectedScenes.value.find(selectedSceneId => selectedSceneId === scene.id))
             .map(scene =>
                 <Scene
                     key={scene.id}
@@ -79,8 +79,8 @@ class SceneSelection extends React.Component {
                     onAdd={() => this.addScene(scene)}
                     recipe={this.recipe}/>
             )
-        const selectedSceneComponents = selectedSceneIds.value
-            .map(sceneId => scenesById[sceneId])
+        const selectedSceneComponents = selectedScenes.value
+            .map(scene => scenesById[scene.id])
             .filter(scene => scene)
             .map(scene =>
                 <Scene
@@ -130,9 +130,9 @@ class SceneSelection extends React.Component {
         ).dispatch()
     }
 
-    onApply(selectedSceneIds) {
+    onApply(selectedScenes) {
         const {sceneAreaId} = this.props
-        this.recipe.setSelectedScenesInSceneArea(sceneAreaId, selectedSceneIds).dispatch()
+        this.recipe.setSelectedScenesInSceneArea(sceneAreaId, selectedScenes).dispatch()
         this.deselectSceneArea()
     }
 
@@ -141,13 +141,21 @@ class SceneSelection extends React.Component {
     }
 
     addScene(scene) {
-        const {inputs: {selectedSceneIds}} = this.props
-        selectedSceneIds.set([...selectedSceneIds.value, scene.id])
+        const {inputs: {selectedScenes}} = this.props
+        selectedScenes.set([
+            ...selectedScenes.value,
+            {
+                id: scene.id,
+                date: scene.date,
+                dateSet: scene.dataSet,
+                cloudCover: scene.cloudCover
+            }
+            ])
     }
 
     removeScene(sceneToRemove) {
-        const {inputs: {selectedSceneIds}} = this.props
-        selectedSceneIds.set(selectedSceneIds.value.filter(sceneId => sceneId !== sceneToRemove.id))
+        const {inputs: {selectedScenes}} = this.props
+        selectedScenes.set(selectedScenes.value.filter(scene => scene.id !== sceneToRemove.id))
     }
 
     setScenes(scenes) {

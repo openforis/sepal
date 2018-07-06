@@ -9,7 +9,13 @@ const api = {
         preview$: (recipe) =>
             Http.postJson$('gee/preview', transformRecipeForPreview(recipe), {retries: 0}),
         sceneAreas$: ({aoi, source}) =>
-            Http.get$('gee/sceneareas?' + transformQueryForSceneAreas(aoi, source)),
+            Http.get$('gee/sceneareas?' + transformQueryForSceneAreas(aoi, source)).pipe(
+                map(e =>
+                    e.response.map(sceneArea =>
+                        ({id: sceneArea.sceneAreaId, polygon: sceneArea.polygon})
+                    )
+                )
+            ),
         scenesInSceneArea$: ({sceneAreaId, dates, sources, sceneSelectionOptions}) =>
             Http.get$(`api/data/sceneareas/${sceneAreaId}?`
                 + transformQueryForScenesInSceneArea({dates, sources})).pipe(
@@ -43,8 +49,15 @@ const api = {
             }).pipe(
                 map(({response: scenesBySceneArea}) => {
                         Object.keys(scenesBySceneArea).forEach((sceneAreaId) =>
-                            scenesBySceneArea[sceneAreaId] = scenesBySceneArea[sceneAreaId].map((scene) =>
-                                scene.sceneId
+                            scenesBySceneArea[sceneAreaId] = scenesBySceneArea[sceneAreaId].map((sceneOldFormat) => {
+                                    const scene = transformOldSceneToNew(sceneAreaId, recipe.dates, sceneOldFormat)
+                                    return {
+                                        id: scene.id,
+                                        dataSet: scene.dataSet,
+                                        date: scene.date,
+                                        cloudCover: scene.cloudCover
+                                    }
+                                }
                             )
                         )
                         return scenesBySceneArea
@@ -78,7 +91,7 @@ const DATE_FORMAT = 'YYYY-MM-DD'
 const transformRecipeForPreview = (recipe) => {
     const sceneIds = []
     if (recipe.sceneSelectionOptions.type === SceneSelectionType.SELECT)
-        Object.keys(recipe.scenes).forEach(sceneAreaId => recipe.scenes[sceneAreaId].forEach(sceneId => sceneIds.push(sceneId)))
+        Object.keys(recipe.scenes).forEach(sceneAreaId => recipe.scenes[sceneAreaId].forEach(scene => sceneIds.push(scene.id)))
     return {
         aoi: transformAoi(recipe.aoi),
         dates: recipe.dates,

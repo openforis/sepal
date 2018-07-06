@@ -1,5 +1,5 @@
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {google, MapLayer, sepalMap} from 'app/home/map/map'
+import {MapLayer, sepalMap} from 'app/home/map/map'
 import backend from 'backend'
 import {objectEquals} from 'collections'
 import PropTypes from 'prop-types'
@@ -76,41 +76,14 @@ class SceneAreas extends React.Component {
     loadSceneAreas(aoi, source) {
         this.loadSceneArea$.next()
         this.recipeActions.setSceneAreas(null).dispatch()
-        this.recipeActions.setSelectedScenes(null).dispatch()
         this.props.asyncActionBuilder('LOAD_SCENE_AREAS',
             backend.gee.sceneAreas$({aoi, source}).pipe(
-                map(e =>
-                    this.recipeActions.setSceneAreas(
-                        this.toSceneAreas(e.response)
-                    )
+                map(sceneAreas =>
+                    this.recipeActions.setSceneAreas(sceneAreas)
                 ),
                 takeUntil(this.loadSceneArea$)
             ))
             .dispatch()
-    }
-
-    toSceneAreas(json) {
-        return json.map(({polygon, sceneAreaId}) => {
-            const gPolygon = new google.maps.Polygon({
-                paths: polygon.map(([lat, lng]) =>
-                    new google.maps.LatLng(lat, lng)),
-                fillColor: '#000000',
-                fillOpacity: 0.4,
-                strokeColor: '#636363',
-                strokeOpacity: 0.6,
-                strokeWeight: 1
-            })
-            const bounds = new google.maps.LatLngBounds()
-            gPolygon.getPaths().getArray().forEach((path) =>
-                path.getArray().forEach((latLng) =>
-                    bounds.extend(latLng)
-                ))
-            return {
-                id: sceneAreaId,
-                center: bounds.getCenter(),
-                polygon: gPolygon,
-            }
-        })
     }
 }
 

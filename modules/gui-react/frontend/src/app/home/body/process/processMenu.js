@@ -30,19 +30,11 @@ class ProcessMenu extends React.Component {
 
     renderUnsavedRecipeItems() {
         const {recipe} = this.props
-        return (
-            <React.Fragment>
-                <MenuItem onClick={() => saveRecipe(recipe)}>Save recipe</MenuItem>
-            </React.Fragment>
-        )
+        return <MenuItem onClick={() => saveRecipe(recipe)}>Save recipe</MenuItem>
     }
 
     renderSavedRecipeItems() {
-        return (
-            <React.Fragment>
-                <MenuItem>Revert to old revesion...</MenuItem>
-            </React.Fragment>
-        )
+        return <MenuItem>Revert to old revision...</MenuItem>
 
     }
 
