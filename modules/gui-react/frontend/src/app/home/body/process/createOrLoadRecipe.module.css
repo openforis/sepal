@@ -88,6 +88,7 @@
     border: 2px solid hsla(0, 0%, 100%, .25);
     height: 2.3rem;
     width: 2.3rem;
+    font-size: 0.9rem;
 }
 
 .recipe .recipeButton:focus {

@@ -3,7 +3,7 @@ import React from 'react'
 import {fromEvent, merge, timer} from 'rxjs'
 import {switchMap, take, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
-import styles from './button2.module.css'
+import styles from './holdButton.module.css'
 
 export class HoldButton extends React.Component {
     constructor(props) {
@@ -12,12 +12,13 @@ export class HoldButton extends React.Component {
     }
 
     render() {
-        const {icon, tabIndex, className, onClickHold, ...props} = this.props
+        const {icon, tabIndex, className, ...props} = this.props
         return (
             <button
                 ref={this.button}
                 className={[styles.hold, className].join(' ')}
                 tabIndex={tabIndex}
+                onClick={e => e.stopPropagation()}
                 {...props}>
                 <Icon name={icon}/>
             </button>
@@ -45,8 +46,9 @@ export class HoldButton extends React.Component {
                 )
             })
         ).subscribe(() => {
-            if (this.props.onClickHold && !this.props.disabled)
-                this.props.onClickHold()
+            const {onClickHold, disabled} = this.props
+            if (onClickHold && !disabled)
+                onClickHold()
         })
 
     }

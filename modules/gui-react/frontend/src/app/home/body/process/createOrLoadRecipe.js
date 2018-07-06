@@ -5,6 +5,7 @@ import React from 'react'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {Button, IconButton} from 'widget/button'
+import {HoldButton} from 'widget/holdButton'
 import {CenteredProgress} from 'widget/progress'
 import styles from './createOrLoadRecipe.module.css'
 import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
@@ -63,13 +64,17 @@ class RecipeList extends React.Component {
                                     iconType='regular'/>
                             </div>
                             <div className={styles.delete}>
-                                <RecipeButton
+                                <HoldButton
                                     icon='trash-alt'
-                                    iconType='regular'
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        deleteRecipe(recipe.id)
-                                    }}/>
+                                    className={styles.recipeButton}
+                                    onClickHold={() => deleteRecipe(recipe.id)}/>
+                                {/*<RecipeButton*/}
+                                {/*icon='trash-alt'*/}
+                                {/*iconType='regular'*/}
+                                {/*onClick={(e) => {*/}
+                                {/*e.stopPropagation()*/}
+                                {/*deleteRecipe(recipe.id)*/}
+                                {/*}}/>*/}
                             </div>
                         </div>
                     )}
