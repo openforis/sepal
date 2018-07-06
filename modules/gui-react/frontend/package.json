@@ -53,5 +53,5 @@
     "redux-devtools-extension": "2.13.2",
     "webpack": "3"
   },
-  "proxy": "https://test.sepal.io"
+  "proxy": "https://localhost:8002"
 }
