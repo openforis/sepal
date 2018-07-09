@@ -1,16 +1,16 @@
-const EventBus = require('../event/event-bus')
-const Events = require('../event/events')
-const View = require('./messages-v')
+var EventBus = require('../event/event-bus')
+var Events = require('../event/events')
+var View = require('./messages-v')
 
-const show = (e, type) => {
+var show = function (e, type) {
     if (type === 'messages') {
         loadMessages()
         View.init()
     }
 }
 
-const loadMessages = () => {
-    const params = {
+var loadMessages = function () {
+    var params = {
         url: '/notification/messages',
         success: function (messages) {
             View.setMessages(messages)

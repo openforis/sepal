@@ -1,33 +1,39 @@
-import MessageView from './message-v'
-import './messages.scss'
+var MessageView = require('./message-v')
+require('./messages.scss')
 
-let $html = null
+var $html = null
 
-export const init = () => {
-    const template = require('./messages.html')
+var init = function () {
+    var template = require('./messages.html')
     $html = $(template({}))
 
-    const appSection = $('#app-section').find('.messages')
+    var appSection = $('#app-section').find('.messages')
     if (appSection.children().length <= 0) {
         appSection.append($html)
-        new MessageView({
-            $element: $html,
-            onSave
-        })
+        MessageView($html, null, onSave)
     }
 }
-const onSave = (view) => {
+var onSave = function (view) {
     $html
         .find('.messages')
         .prepend(view.clone().$element)
     view.reset()
 }
 
-export const setMessages = (messages) => {
-    const $messages = $html.find('.messages')
+var setMessages = function (messages) {
+    var $messages = $html.find('.messages')
     if (messages.length)
         $messages.html('')
     messages
-        .map(message => new MessageView({message}))
-        .map(view => $messages.append(view.$element))
+        .map(function (message) {
+            return MessageView(null, message)
+        })
+        .map(function (view) {
+            return $messages.append(view.$element)
+        })
+}
+
+module.exports = {
+    init: init,
+    setMessages: setMessages
 }

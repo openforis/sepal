@@ -1,26 +1,27 @@
-import _ from 'lodash'
-import * as EventBus from '../event/event-bus'
-import * as Events from '../event/events'
-import * as View from './notifications-v'
+var _ = require('lodash')
+var View = require('./notifications-v')
 
-let jobTimer = null
-let _notifications = []
+var EventBus = require('../event/event-bus')
+var Events = require('../event/events')
 
-const init = () => {
+var jobTimer = null
+var _notifications = []
+
+var init = function () {
     View.init()
     startJob()
 }
 
-const stopJob = () => {
+var stopJob = function () {
     if (jobTimer) {
         clearTimeout(jobTimer)
         jobTimer = null
     }
 }
 
-const startJob = () => {
+var startJob = function () {
     if (!jobTimer) {
-        const executeTaskRequest = () => {
+        var executeTaskRequest = function () {
             jobTimer = setTimeout(function () {
                 loadNotifications(executeTaskRequest)
             }, 60 * 1000)
@@ -29,15 +30,17 @@ const startJob = () => {
     }
 }
 
-const show = (e, type) => {
+var show = function (e, type) {
     if (type === 'notifications') {
         View.setNotifications(_notifications)
-        const markedAnyAsRead = _notifications
-            .filter(notification => notification.state === 'UNREAD')
-            .map(notification => {
+        var markedAnyAsRead = _notifications
+            .filter(function (notification) {
+                return notification.state === 'UNREAD'
+            })
+            .map(function (notification) {
                 notification.state = 'READ'
-                const params = {
-                    url: `/notification/notifications/${notification.message.id}`,
+                var params = {
+                    url: '/notification/notifications/' + notification.message.id,
                     data: {state: 'READ'}
                 }
                 EventBus.dispatch(Events.AJAX.POST, null, params)
@@ -49,8 +52,8 @@ const show = (e, type) => {
     }
 }
 
-const loadNotifications = (callback) => {
-    const params = {
+var loadNotifications = function (callback) {
+    var params = {
         url: '/notification/notifications',
         success: function (notifications) {
             if (!_.isEqual(_notifications, notifications))

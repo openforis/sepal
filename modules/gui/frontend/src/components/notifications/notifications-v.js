@@ -1,21 +1,29 @@
-import NotificationView from './notification-v'
-import './notifications.scss'
+var NotificationView = require('./notification-v')
+require('./notifications.scss')
 
-let $html = null
+var $html = null
 
-export const init = () => {
-    const template = require('./notifications.html')
+var init = function () {
+    var template = require('./notifications.html')
     $html = $(template({}))
 
-    const appSection = $('#app-section').find('.notifications')
+    var appSection = $('#app-section').find('.notifications')
     if (appSection.children().length <= 0)
         appSection.append($html)
 }
 
-export const setNotifications = (notifications = []) => {
-    const $notifications = $html.find('.notifications')
+var setNotifications = function (notifications) {
+    notifications = notifications || []
+    var $notifications = $html.find('.notifications')
     if (notifications.length)
         $notifications.html('')
     notifications
-        .forEach(notification => $notifications.append(new NotificationView(notification).$element))
+        .forEach(function (notification) {
+            return $notifications.append(new NotificationView(notification).$element)
+        })
+}
+
+module.exports = {
+    init: init,
+    setNotifications: setNotifications
 }

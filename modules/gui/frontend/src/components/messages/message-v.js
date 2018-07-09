@@ -1,86 +1,92 @@
-import EventBus from '../event/event-bus'
-import Events from '../event/events'
-import {random as guid} from '../guid/guid'
-import Loader from '../loader/loader'
+var EventBus = require('../event/event-bus')
+var Events = require('../event/events')
+var guid = require('../guid/guid')
+var Loader = require('../loader/loader')
+var messageTemplate = require('./message.html')
 
-const messageTemplate = require('./message.html')
+var MessageView = function ($element, message, onSave) {
+    message = message || {id: guid.random()}
+    $element = $element || $(messageTemplate({}))
+    var $delete = $element.find('.btn-delete')
+    var $submit = $element.find('.btn-submit')
+    var $reset = $element.find('.btn-reset')
+    var $subject = $element.find('input[name=subject]')
+    var $contents = $element.find('textarea[name=contents]')
 
-export default class MessageView {
-    constructor({
-                    $element = $(messageTemplate({})),
-                    message = {id: guid()},
-                    onSave
-                }) {
-        this.$element = $element
-        this.message = message
-        this.onSave = onSave
+    $delete.click(function (e) {
+        e.preventDefault()
+        remove()
+    })
+    $submit.click(function (e) {
+        e.preventDefault()
+        save()
+    })
+    $reset.click(function (e) {
+        e.preventDefault()
+        reset(message)
+        $subject.focus()
+    })
 
-        this.$delete = $element.find('.btn-delete')
-        this.$submit = $element.find('.btn-submit')
-        this.$reset = $element.find('.btn-reset')
-        this.$subject = $element.find('input[name=subject]')
-        this.$contents = $element.find('textarea[name=contents]')
-
-        this.$delete.click(e => {
-            e.preventDefault()
-            this.delete()
-        })
-        this.$submit.click(e => {
-            e.preventDefault()
-            this.save()
-        })
-        this.$reset.click(e => {
-            e.preventDefault()
-            this.reset(this.message)
-            this.$subject.focus()
-        })
-
-        this.reset(message)
-    }
-
-    delete() {
+    var remove = function () {
         var params = {
-            url: `/notification/messages/${this.message.id}`,
-            beforeSend: () => Loader.show(),
-            success: () => {
+            url: '/notification/messages/' + message.id,
+            beforeSend: function () {
+                Loader.show()
+            },
+            success: function () {
                 Loader.hide({delay: 200})
-                this.$element.remove()
+                $element.remove()
             }
         }
-        EventBus.dispatch(Events.AJAX.DELETE, this, params)
+        EventBus.dispatch(Events.AJAX.DELETE, null, params)
     }
 
-    reset(message = {id: guid()}) {
-        this.message = message
-        this.$subject.val(message.subject)
-        this.$contents.val(message.contents)
+    var reset = function (messageToResetTo) {
+        message = messageToResetTo || {id: guid.random()}
+        $subject.val(message.subject)
+        $contents.val(message.contents)
     }
 
-    save() {
-        const {id, subject, contents} = this.message = {
-            id: this.message.id,
-            subject: this.$subject.val(),
-            contents: this.$contents.val()
+    var save = function () {
+        message = {
+            id: message.id,
+            subject: $subject.val(),
+            contents: $contents.val(),
+            type: 'SYSTEM'
         }
         var params = {
-            url: `/notification/messages/${id}`,
-            data: {subject, contents, type: 'SYSTEM'},
-            beforeSend: () => Loader.show(),
-            success: () => {
+            url: '/notification/messages/' + message.id,
+            data: message,
+            beforeSend: function () {
+                Loader.show()
+            },
+            success: function () {
                 Loader.hide({delay: 200})
-                this.onSave && this.onSave(this)
+                onSave && onSave(returnObject())
             }
         }
-        EventBus.dispatch(Events.AJAX.POST, this, params)
+        EventBus.dispatch(Events.AJAX.POST, null, params)
     }
 
-    clone() {
-        return new MessageView({
-            message: {
-                id: this.message.id,
-                subject: this.$subject.val(),
-                contents: this.$contents.val()
-            }
-        })
+    var clone = function () {
+        var clonedMessage = {
+            id: message.id,
+            subject: $subject.val(),
+            contents: $contents.val()
+        }
+        return MessageView(null, clonedMessage, null)
     }
+
+    var returnObject = function () {
+        return {
+            $element: $element,
+            clone: clone,
+            reset: reset
+        }
+    }
+
+    reset(message)
+    return returnObject()
 }
+
+module.exports = MessageView
