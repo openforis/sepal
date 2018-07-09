@@ -25,11 +25,8 @@ var setMessages = function (messages) {
     if (messages.length)
         $messages.html('')
     messages
-        .map(function (message) {
-            return MessageView(null, message)
-        })
-        .map(function (view) {
-            return $messages.append(view.$element)
+        .forEach(function (message) {
+            $messages.append(MessageView(null, message).$element)
         })
 }
 

@@ -3,6 +3,7 @@ var Events = require('../event/events')
 var guid = require('../guid/guid')
 var Loader = require('../loader/loader')
 var messageTemplate = require('./message.html')
+var Editor = require('@ckeditor/ckeditor5-build-classic/build/ckeditor')
 
 var MessageView = function ($element, message, onSave) {
     message = message || {id: guid.random()}
@@ -11,7 +12,7 @@ var MessageView = function ($element, message, onSave) {
     var $submit = $element.find('.btn-submit')
     var $reset = $element.find('.btn-reset')
     var $subject = $element.find('input[name=subject]')
-    var $contents = $element.find('textarea[name=contents]')
+    var editor = null
 
     $delete.click(function (e) {
         e.preventDefault()
@@ -42,16 +43,16 @@ var MessageView = function ($element, message, onSave) {
     }
 
     var reset = function (messageToResetTo) {
-        message = messageToResetTo || {id: guid.random()}
+        message = messageToResetTo || {id: guid.random(), contents: ''}
         $subject.val(message.subject)
-        $contents.val(message.contents)
+        editor && editor.setData(message.contents || '')
     }
 
     var save = function () {
         message = {
             id: message.id,
             subject: $subject.val(),
-            contents: $contents.val(),
+            contents: editor.getData(),
             type: 'SYSTEM'
         }
         var params = {
@@ -72,7 +73,7 @@ var MessageView = function ($element, message, onSave) {
         var clonedMessage = {
             id: message.id,
             subject: $subject.val(),
-            contents: $contents.val()
+            contents: editor.getData()
         }
         return MessageView(null, clonedMessage, null)
     }
@@ -85,7 +86,19 @@ var MessageView = function ($element, message, onSave) {
         }
     }
 
+    var createEditor = function () {
+        $element.find('textarea').get().forEach(function (textArea) {
+            Editor.create(textArea, {
+                toolbar: ['bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote']
+            }).then(function (_editor) {
+                editor = _editor
+                editor.setData(message.contents || '')
+            })
+        })
+    }
+
     reset(message)
+    editor = createEditor()
     return returnObject()
 }
 

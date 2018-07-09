@@ -7,7 +7,7 @@ var template = _.template(html({}), {interpolate: /{{(.+?)}}/g})
 var NotificationView = function (notification) {
     var templateInput = {
         subject: notification.message.subject,
-        contents: notification.message.contents.replace(/(?:\r\n|\r|\n)/g, '<br/>'),
+        contents: notification.message.contents,
         date: moment(notification.message.creationTime).fromNow(),
         className: notification.state === 'READ' ? 'read' : 'unread'
 
