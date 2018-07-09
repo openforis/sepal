@@ -187,6 +187,10 @@ var Events = {
     , PASSWORD_CHANGED          : 'user.password_changed'
     , LOGGED_OUT                : 'user.logged_out'
   }
+
+  , NOTIFICATION: {
+    NOTIFICATIONS_UPDATED : 'notification.notifications_loaded'
+  }
   
   , ALERT: {
     SHOW_INFO: 'alert.show_info'

@@ -101,6 +101,13 @@
   },
   {
     "prefix": "true",
+    "path": "/notification/",
+    "target": "http://sepal:1025/api/notification/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
     "path": "/apps/",
     "target": "http://sepal:1025/api/apps",
     "https": "true",

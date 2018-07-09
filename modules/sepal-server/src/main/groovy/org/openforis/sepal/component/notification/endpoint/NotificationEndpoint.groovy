@@ -1,6 +1,6 @@
 package org.openforis.sepal.component.notification.endpoint
 
-import groovy.json.JsonSlurper
+
 import groovymvc.Controller
 import org.openforis.sepal.component.Component
 import org.openforis.sepal.component.notification.api.Message
@@ -48,35 +48,35 @@ class NotificationEndpoint {
                 }
             }
 
-            delete('/notification/message/{id}') {
-                component.submit(new RemoveMessage(params.required('id', String)))
-                response.status = 204
-            }
-
             post('/notification/messages/{id}', [Roles.ADMIN]) {
                 component.submit(new SaveMessage(
                         username: currentUser.username,
                         message: new Message(
-                            id          : params.required('id', String),
-                            username    : currentUser.username,
-                            subject     : params.required('subject', String),
-                            contents    : params.required('contents', String),
-                            type        : params.required('type', String) as Message.Type
-                )))
+                                id: params.required('id', String),
+                                username: currentUser.username,
+                                subject: params.required('subject', String),
+                                contents: params.required('contents', String),
+                                type: params.required('type', String) as Message.Type
+                        )))
                 response.status = 204
             }
 
-            get('/notification/notifications', [Roles.ADMIN]) {
+            delete('/notification/messages/{id}', [Roles.ADMIN]) {
+                component.submit(new RemoveMessage(params.required('id', String)))
+                response.status = 204
+            }
+
+            get('/notification/notifications') {
                 def notifications = component.submit(new ListNotifications(username: currentUser.username))
                 def json = toJson(notifications.collect { toMap(it) })
                 send(json)
             }
 
-            post('/notification/notification/{id}', [Roles.ADMIN]) {
+            post('/notification/notifications/{id}') {
                 component.submit(new UpdateNotification(
-                        username        : currentUser.username,
-                        messageId       : params.required('id', String),
-                        state           : params.required('state', String) as Notification.State
+                        username: currentUser.username,
+                        messageId: params.required('id', String),
+                        state: params.required('state', String) as Notification.State
                 ))
                 response.status = 204
             }
@@ -101,9 +101,9 @@ class NotificationEndpoint {
     Map toMap(Notification notification) {
         notification.with {
             return [
-                    message     : message,
-                    username    : username,
-                    state       : state.name()
+                    message : message,
+                    username: username,
+                    state   : state.name()
             ]
         }
     }

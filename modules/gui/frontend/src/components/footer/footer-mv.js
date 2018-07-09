@@ -17,5 +17,6 @@ var updateUserBudget = function ( evt, user ) {
 EventBus.addEventListener( Events.APP.LOAD, init )
 
 EventBus.addEventListener( Events.SECTION.TASK_MANAGER.UPDATED, View.updateTasks )
+EventBus.addEventListener( Events.NOTIFICATION.NOTIFICATIONS_UPDATED, View.updateNotifications )
 
 EventBus.addEventListener( Events.USER.USER_SANDBOX_REPORT_LOADED, updateUserBudget )

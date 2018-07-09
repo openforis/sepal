@@ -87,4 +87,12 @@
 
   }
 
+  .unread {
+    background-color: hsla(4, 59%, 52%, 0.95);
+  }
+
+  .unread:hover {
+    background-color: hsla(4, 70%, 62%, 0.95);
+  }
+
 }
