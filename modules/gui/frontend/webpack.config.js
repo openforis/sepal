@@ -1,8 +1,8 @@
 const Webpack               = require( 'webpack' )
 const HtmlWebpackPlugin     = require( 'html-webpack-plugin' )
 const ExtractTextPlugin     = require( 'extract-text-webpack-plugin' )
-const autoprefixer          = require( 'autoprefixer' )
 const FaviconsWebpackPlugin = require( 'favicons-webpack-plugin' )
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 
 const extractText = new ExtractTextPlugin( { filename: 'static/sepal-[hash].css', allChunks: true } )
 
@@ -23,6 +23,7 @@ module.exports = {
             hash    : true
         } ),
         extractText,
+        new UglifyJSPlugin(),
         new Webpack.ProvidePlugin( { "window.Tether": "tether" } ),
         new Webpack.ProvidePlugin( {
             $              : "jquery",
