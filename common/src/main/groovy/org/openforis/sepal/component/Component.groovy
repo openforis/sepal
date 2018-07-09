@@ -84,7 +84,6 @@ abstract class DataSourceBackedComponent implements Component {
 
         commandDispatcher = new HandlerRegistryCommandDispatcher(connectionManager)
         queryDispatcher = new HandlerRegistryQueryDispatcher()
-
     }
 
     final <R> R submit(Command<R> command) {
