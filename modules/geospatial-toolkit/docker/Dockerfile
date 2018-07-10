@@ -4,7 +4,7 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current \
     SDKMAN_DIR=/usr/local/lib/sdkman \
     GDAL_DATA=/usr/share/gdal/2.2 \
-    VERSION=2018-02-06
+    VERSION=2018-07-10
 # VERSION used to force complete rebuild of image
 
 ADD config/OFGTMethod /usr/local/share/OFGTMethod
