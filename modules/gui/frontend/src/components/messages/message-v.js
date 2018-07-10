@@ -3,7 +3,6 @@ var Events = require('../event/events')
 var guid = require('../guid/guid')
 var Loader = require('../loader/loader')
 var messageTemplate = require('./message.html')
-var Editor = require('@ckeditor/ckeditor5-build-classic/build/ckeditor')
 
 var MessageView = function ($element, message, onSave) {
     message = message || {id: guid.random()}
@@ -88,7 +87,7 @@ var MessageView = function ($element, message, onSave) {
 
     var createEditor = function () {
         $element.find('textarea').get().forEach(function (textArea) {
-            Editor.create(textArea, {
+            ClassicEditor.create(textArea, {
                 toolbar: ['bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote']
             }).then(function (_editor) {
                 editor = _editor
