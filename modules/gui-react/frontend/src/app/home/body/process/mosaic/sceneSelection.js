@@ -70,7 +70,7 @@ class SceneSelection extends React.Component {
         const {inputs: {selectedScenes}} = this.props
         const {width, scenes, scenesById} = this.state
         const availableSceneComponents = scenes
-            .filter(scene => !selectedScenes.value.find(selectedSceneId => selectedSceneId === scene.id))
+            .filter(scene => !selectedScenes.value.find(selectedScene => selectedScene.id === scene.id))
             .map(scene =>
                 <Scene
                     key={scene.id}
