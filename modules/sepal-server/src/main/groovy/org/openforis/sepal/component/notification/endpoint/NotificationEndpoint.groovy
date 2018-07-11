@@ -92,8 +92,8 @@ class NotificationEndpoint {
                     subject     : subject,
                     contents    : contents,
                     type        : type.name(),
-                    creationTime: DateTime.toDateTimeString(creationTime),
-                    updateTime  : DateTime.toDateTimeString(updateTime)
+                    creationTime: DateTime.toUtcString(creationTime),
+                    updateTime  : DateTime.toUtcString(updateTime)
             ]
         }
     }
