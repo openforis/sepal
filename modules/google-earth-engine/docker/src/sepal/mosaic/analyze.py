@@ -36,8 +36,9 @@ class _Analyze(ImageOperation):
                      self.rescale('i.blue', 0.18, 0.22),
                      self.rescale('i.blue/i.red', 0.85, 0.95)
                  ]))
-        self.setIf('snow', '!i.snow',
-                   'i.snowProbability > 0.12')
+        self.set('snow', 'i.snow or i.snowProbability > 0.12')
+        if self.mosaic_def.mask_snow:
+            self.setIf('toMask', '!i.toMask', 'i.snow')
 
         self.set('water', '!i.snow and (i.blue/i.swir1 > 4.0 or i.ndwi > 0.15)')
 
@@ -52,10 +53,9 @@ class _Analyze(ImageOperation):
                  '(abs(i.blue - i.meanVis) + abs(i.green - i.meanVis) + abs(i.red - i.meanVis)) / i.meanVis')
         self.set('variabilityProbability',
                  '1 - max(max(abs(i.ndvi), abs(i.ndsi)), i.whiteness)')
-        self.setIf('toMask', '!i.toMask',
-                   'i.variabilityProbability < -0.5')
         self.set('variabilityProbability',
                  'max(i.variabilityProbability, 0.1)')
+        self.setIf('toMask', '!i.toMask', 'i.variabilityProbability < -0.5')  # Remove bad pixels
 
         self.set('cirrusCloudProbability',
                  'i.cirrus / 0.04')
@@ -71,19 +71,15 @@ class _Analyze(ImageOperation):
         self.set('soil', 'i.blue/i.swir1 < 0.55 or i.nir/i.swir1 < 0.90')
         self.set('cloudScore', cloud_score(self.image))
         self.setIf('cloudScore', 'soil', 0)
-        self.set('cloud', 'i.cloudScore > 0.25 or (i.cloudScore > 0 and i.aerosol > 0.2) or i.hazeScore == 0')
-        self.setIf('toMask', '!i.toMask', 'i.variabilityProbability < -0.5')  # Remove bad pixels
+        if self.mosaic_def.mask_snow or self.mosaic_def.mask_clouds:
+            self.set('cloud', 'i.cloud or i.cloudScore > 0.25 or (i.cloudScore > 0 and i.aerosol > 0.2) or i.hazeScore == 0')
+        else:
+            self.set('cloud', '!i.snow and (i.cloud or i.cloudScore > 0.25 or (i.cloudScore > 0 and i.aerosol > 0.2) or i.hazeScore == 0)')
 
         self._add_date_bands()
 
-        if self.mosaic_def.mask_snow:
-            self.setIf('toMask', '!i.toMask', 'i.snow')
-
         if self.mosaic_def.brdf_correct:
             self.image = brdf_correction.apply(self.image)
-
-        if self.mosaic_def.masked_on_analysis:
-            self.updateMask('!i.toMask')
 
         self._scale_image()
 

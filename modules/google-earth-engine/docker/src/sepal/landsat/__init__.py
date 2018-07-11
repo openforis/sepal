@@ -16,7 +16,7 @@ str(_strptime.__all__)  # Workaround for "Failed to import _strptime because the
 class LandsatMosaicSpec(MosaicSpec):
     def __init__(self, spec):
         super(LandsatMosaicSpec, self).__init__(spec)
-        self.masked_on_analysis = self.surface_reflectance
+        self.masked_on_analysis = False
         collections = _sr if self.surface_reflectance else _toa
         self._collection_names_by_scene_id_prefix = collections['collection_names_by_scene_id_prefix']
         self._collection_names_by_sensor = collections['collection_names_by_sensor']

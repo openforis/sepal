@@ -29,7 +29,8 @@ class Analyze(ImageOperation):
                     any_set = any_set.Or(self.image.select('pixel_qa').bitwiseAnd(typeByValue[type]).neq(0))
                 return any_set
 
-            self.set('toMask', is_set(['cloud', 'shadow']))
+            self.set('toMask', is_set(['shadow']))
+            self.set('cloud', is_set(['cloud']))
             self.set('snow', is_set(['snow']))
         else:
             def is_set(types):
@@ -40,7 +41,8 @@ class Analyze(ImageOperation):
                     any_set = any_set.Or(self.image.select('BQA').bitwiseAnd(typeByValue[type]).neq(0))
                 return any_set
 
-            self.set('toMask', is_set(['badPixels', 'cloud', 'shadow', 'cirrus']))
+            self.set('toMask', is_set(['badPixels', 'shadow']))
+            self.set('cloud', is_set(['cloud', 'cirrus']))
             self.set('snow', is_set(['snow']))
 
         if self.surface_reflectance:
