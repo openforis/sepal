@@ -20,3 +20,15 @@ export const intersect = (array) => Array.from(new Set(array))
 
 export const range = (from, to) =>
     [...Array(to - from).keys()].map(i => from + i)
+
+export const toPathList = (path) => {
+    let pathList = []
+    const flatten = (path) => {
+        if (typeof path === 'string')
+            pathList = pathList.concat(path.split('.'))
+        else
+            path.forEach(part => flatten(part))
+    }
+    flatten(path)
+    return pathList
+}

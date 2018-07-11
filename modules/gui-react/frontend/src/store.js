@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {connect as connectToRedux} from 'react-redux'
 import {Subject} from 'rxjs'
+import {toPathList} from 'collections'
 
 let storeInstance = null
 const storeInitListeners = []
@@ -30,9 +31,7 @@ export function dispatch(action) {
 }
 
 export function select(path) {
-    if (typeof path === 'string')
-        path = path.split('.')
-    return path.reduce((state, part) => {
+    return toPathList(path).reduce((state, part) => {
         return state != null && state[part] != null ? state[part] : undefined
     }, state())
 }

@@ -1,11 +1,17 @@
+import actionBuilder from 'action-builder'
 import {google, sepalMap} from 'app/home/map/map'
 import {NEVER, of} from 'rxjs'
 
+
 export default class Labels {
-    static setLayer({layerIndex, contextId, shown, onInitialized}) {
-        const layer = shown ? new Labels(layerIndex) : null
-        sepalMap.getContext(contextId).setLayer({id: 'labels', layer, destroy$: NEVER, onInitialized})
-        return layer
+    static showLabelsAction({layerIndex = 1, shown, statePath, mapContext}) {
+        return actionBuilder('SET_LABELS_SHOWN', {shown})
+            .set([statePath, 'labelsShown'], shown)
+            .sideEffect(() => {
+                const layer = shown ? new Labels(layerIndex) : null
+                sepalMap.getContext(mapContext).setLayer({id: 'labels', layer, destroy$: NEVER})
+            })
+            .build()
     }
 
     constructor(layerIndex) {

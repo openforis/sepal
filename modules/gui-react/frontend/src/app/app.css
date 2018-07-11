@@ -50,6 +50,9 @@ html {
     --button-selected-active-background-color: hsl(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 22%);
     --button-selected-active-border: 1px solid hsl(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 24%);
 
+    --selected-panel-border-width: 1px;
+    --selected-panel-border-color: var(--wireframe-color);
+
     font-size: calc(14px * var(--scaling-factor));
 }
 

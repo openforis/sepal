@@ -17,6 +17,7 @@ class PolygonSection extends React.Component {
 
     componentDidMount() {
         const {recipeId, inputs: {polygon}} = this.props
+
         this.recipeActions.setLabelsShown(true).dispatch()
         sepalMap.getContext(recipeId).drawPolygon('aoi', (drawnPolygon) => {
             polygon.set(drawnPolygon)

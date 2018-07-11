@@ -1,15 +1,16 @@
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
+import ShowSceneAreaToggle from 'app/home/body/process/mosaic/showSceneAreaToggle'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import {sepalMap} from 'app/home/map/map'
+import MapToolbar from 'app/home/map/mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect, select} from 'store'
 import AutoSelectScenes from './autoSelectScenes'
 import BandSelection from './bandSelection'
-import MapToolbar from './mapToolbar'
 import styles from './mosaic.module.css'
 import MosaicPreview from './mosaicPreview'
-import {RecipeState} from './mosaicRecipe'
+import {recipePath, RecipeState} from './mosaicRecipe'
 import MosaicToolbar from './panels/mosaicToolbar'
 import Panels from './panels/panels'
 import SceneAreas from './sceneAreas'
@@ -32,7 +33,9 @@ class Mosaic extends React.Component {
         const {recipeId, aoi, source, sceneSelectionOptions: {type}, sceneSelection} = this.props
         return (
             <div className={styles.mosaic}>
-                <MapToolbar recipeId={recipeId} className={styles.mapToolbar}/>
+                <MapToolbar statePath={recipePath(recipeId, 'ui')} mapContext={recipeId} labelLayerIndex={1}>
+                    <ShowSceneAreaToggle recipeId={recipeId}/>
+                </MapToolbar>
                 <MosaicToolbar recipeId={recipeId} className={styles.mosaicToolbar}/>
                 <Panels recipeId={recipeId} className={styles.panel}/>
                 <MosaicPreview recipeId={recipeId}/>

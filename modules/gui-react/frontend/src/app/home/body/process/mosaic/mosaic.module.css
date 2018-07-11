@@ -1,15 +1,3 @@
-.mosaic {
-    --selected-panel-border-width: 1px;
-    --selected-panel-border-color: var(--wireframe-color);
-    height: 100%;
-}
-
-.mapToolbar {
-    position: absolute;
-    top: .5rem;
-    right: 6rem;
-}
-
 .mosaicToolbar {
     position: absolute;
     top: .5rem;

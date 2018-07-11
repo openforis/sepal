@@ -8,6 +8,8 @@ import {recipePath, RecipeState as ParentRecipeState} from '../recipe'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
+export {recipePath}
+
 export const SceneSelectionType = Object.freeze({
     ALL: 'all',
     SELECT: 'select'
@@ -58,10 +60,7 @@ export const RecipeActions = (id) => {
             return set('SET_INITIALIZED', 'ui.initialized', true)
         },
         setLabelsShown(shown) {
-            return actionBuilder('SET_LABELS_SHOWN', {shown})
-                .set('ui.labelsShown', shown)
-                .sideEffect(() => Labels.setLayer({layerIndex: 1, contextId: id, shown}))
-                .build()
+            return Labels.showLabelsAction({shown, mapContext: id, statePath: recipePath(id, 'ui'), layerIndex: 1})
         },
         setSceneAreasShown(shown) {
             return set('SET_SCENE_AREAS_SHOWN', 'ui.sceneAreasShown', shown, {shown})

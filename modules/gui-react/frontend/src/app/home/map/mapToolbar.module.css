@@ -15,5 +15,8 @@
     --btn-dis-bg-l: 15%;
     --btn-dis-bg-a: .9;
 
+    position: absolute;
+    top: .5rem;
+    right: 6rem;
     z-index: 2;
 }

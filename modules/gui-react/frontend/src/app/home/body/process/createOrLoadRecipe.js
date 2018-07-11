@@ -77,13 +77,6 @@ class RecipeList extends React.Component {
                                     icon='trash-alt'
                                     className={styles.recipeButton}
                                     onClickHold={() => deleteRecipe(recipe.id)}/>
-                                {/*<RecipeButton*/}
-                                {/*icon='trash-alt'*/}
-                                {/*iconType='regular'*/}
-                                {/*onClick={(e) => {*/}
-                                {/*e.stopPropagation()*/}
-                                {/*deleteRecipe(recipe.id)*/}
-                                {/*}}/>*/}
                             </div>
                         </div>
                     )}

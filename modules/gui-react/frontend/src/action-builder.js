@@ -1,3 +1,4 @@
+import {toPathList} from 'collections'
 import immutable from 'object-path-immutable'
 import {dispatch} from 'store'
 
@@ -20,19 +21,19 @@ export default function actionBuilder(type, props) {
         },
 
         set(path, value) {
-            operations.push((immutableState) => immutableState.set(path, value))
+            operations.push((immutableState) => immutableState.set(toPathList(path), value))
             return this
         },
 
         setAll(values) {
             Object.keys(values).forEach((path) =>
-                operations.push((immutableState) => immutableState.set(path, values[path])))
+                operations.push((immutableState) => immutableState.set(toPathList(path), values[path])))
             return this
         },
 
         push(path, value) {
             operations.push((immutableState) => {
-                return immutableState.push(path, value)
+                return immutableState.push(toPathList(path), value)
             })
             return this
         },
@@ -54,19 +55,18 @@ export default function actionBuilder(type, props) {
                 if (collection && collection.find(equals))
                     return immutableState
                 else
-                    return immutableState.push(path, value)
+                    return immutableState.push(toPathList(path), value)
             })
             return this
         },
 
         del(path) {
-            operations.push((immutableState) => immutableState.del(path))
+            operations.push((immutableState) => immutableState.del(toPathList(path)))
             return this
         },
 
         delValueByKey(path, key, keyValue) {
-            if (typeof path === 'string')
-                path = path.split('.')
+            path = toPathList(path)
 
             operations.push((immutableState) => {
                 const currentState = immutableState.value()
@@ -80,8 +80,7 @@ export default function actionBuilder(type, props) {
         },
 
         delValue(path, value) {
-            if (typeof path === 'string')
-                path = path.split('.')
+            path = toPathList(path)
 
             operations.push((immutableState) => {
                 const currentState = immutableState.value()
@@ -95,7 +94,7 @@ export default function actionBuilder(type, props) {
         },
 
         assign(path, source) {
-            operations.push((immutableState) => immutableState.assign(path, source))
+            operations.push((immutableState) => immutableState.assign(toPathList(path), source))
             return this
         },
 
@@ -132,9 +131,7 @@ export default function actionBuilder(type, props) {
 }
 
 function select(path, state) {
-    if (typeof path === 'string')
-        path = path.split('.')
-    return path.reduce((state, part) => {
+    return toPathList(path).reduce((state, part) => {
         return state != null && state[part] != null ? state[part] : undefined
     }, state)
 }

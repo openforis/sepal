@@ -42,7 +42,6 @@
 .toolbar button {
     width: var(--button-size);
     height: var(--button-size);
-    /* border: var(--selected-panel-border-width) solid transparent; */
     border-width: var(--selected-panel-border-width);
     border-style: solid;
     border-radius: var(--button-border-radius);
