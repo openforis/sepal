@@ -1,5 +1,6 @@
 import React from 'react'
 import Tabs from 'widget/tabs'
+import Classification from './classification/classification'
 import CreateOrLoadRecipe from './createOrLoadRecipe'
 import Mosaic from './mosaic/mosaic'
 import ProcessMenu from './processMenu'
@@ -27,9 +28,3 @@ const Process = () => {
     )
 }
 export default Process
-
-const Classification = () =>
-    <div>
-        <h2>Classification</h2>
-        <input placeholder='Some input'/>
-    </div>
