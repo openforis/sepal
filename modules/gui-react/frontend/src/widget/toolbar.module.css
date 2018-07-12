@@ -1,5 +1,13 @@
+.container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
 .toolbar {
-    position: relative;
+    position: absolute;
     --button-margin: .5rem;
     --button-size: 2.5rem;
     --button-panel-background-color: rgba(0, 0, 0, 0.5);
@@ -37,6 +45,22 @@
 
 .toolbar.vertical * + * {
     margin-top: var(--button-margin);
+}
+
+.toolbar.top {
+    top: .5rem;
+}
+
+.toolbar.bottom {
+    bottom: .5rem;
+}
+
+.toolbar.left {
+    left: .5rem;
+}
+
+.toolbar.right {
+    right: .5rem;
 }
 
 .toolbar button {
@@ -83,7 +107,7 @@
     border-color: var(--button-selected-active-border-color);
 }
 
-.toolbar.vertical.panel button.selected {
+.toolbar.vertical.panelButton button.selected, button.panelButton.selected {
     width: calc(var(--button-size) + 1rem + var(--selected-panel-border-width));
     margin-left: calc(-1rem - var(--selected-panel-border-width));
     padding-left: calc(1rem + 2 * var(--selected-panel-border-width));
@@ -91,6 +115,7 @@
     border-bottom-left-radius: 0;
     border-left: none;
     z-index: 2;
+
 }
 
 .toolbar button:disabled {
@@ -104,4 +129,29 @@
     height: var(--icon-size);
     vertical-align: middle;
     font-size: var(--icon-size);
+}
+
+.panel {
+    --padding-top-bottom: .5rem;
+    --padding-right-left: .8rem;
+    --padding: var(--padding-top-bottom) var(--padding-right-left);
+    position: absolute;
+    background-color: hsla(36, 8%, 15%, .95);
+    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
+    border-radius: .5rem;
+    pointer-events: all;
+    right: 4rem;
+    z-index: 3;
+    width: calc(100% - 5rem);
+    --scaling-factor: .8 !important;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.panel.top {
+    top: .5rem;
+}
+
+.panel.top {
+    bottom: .5rem;
 }

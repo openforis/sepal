@@ -1,3 +1,4 @@
+import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -6,8 +7,9 @@ import {msg, Msg} from 'translate'
 import {currentUser} from 'user'
 import Buttons from 'widget/buttons'
 import {Field, form, Label} from 'widget/form'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import PanelForm from '../panelForm'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -31,7 +33,7 @@ const mapStateToProps = (state, ownProps) => {
 class Retrieve extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(props.recipeId)
         this.allBandOptions = [
             {
                 options: [
@@ -71,8 +73,8 @@ class Retrieve extends React.Component {
         ]
     }
 
-    render() {
-        const {user, recipeId, sources, compositeOptions, form, inputs: {bands, destination}, className} = this.props
+    renderContent() {
+        const {user, sources, compositeOptions, form, inputs: {bands, destination}} = this.props
         const bandsForEachDataSet = _.flatten(Object.values(sources))
             .map(dataSetId => dataSetById[dataSetId].bands)
         const availableBands = new Set(
@@ -107,39 +109,52 @@ class Retrieve extends React.Component {
         ].filter(({value}) => user.googleTokens || value !== 'GEE')
 
         return (
-            <form className={[className, styles.container].join(' ')}>
-                <PanelForm
-                    recipeId={recipeId}
-                    form={form}
-                    applyLabel={msg('process.mosaic.panel.retrieve.apply')}
-                    isActionForm={true}
-                    onApply={(recipe, values) => recipe.retrieve(values).dispatch()}
-                    icon='cloud-download-alt'
-                    title={msg('process.mosaic.panel.retrieve.title')}>
-                    <div className={styles.form}>
-                        <div>
-                            <Label>
-                                <Msg id='process.mosaic.panel.retrieve.form.bands.label'/>
-                            </Label>
-                            <Buttons
-                                input={bands}
-                                multiple={true}
-                                options={bandOptions}/>
-                        </div>
+            <div className={styles.form}>
+                <div>
+                    <Label>
+                        <Msg id='process.mosaic.panel.retrieve.form.bands.label'/>
+                    </Label>
+                    <Buttons
+                        input={bands}
+                        multiple={true}
+                        options={bandOptions}/>
+                </div>
 
-                        <div>
-                            <Label>
-                                <Msg id='process.mosaic.panel.retrieve.form.destination.label'/>
-                            </Label>
-                            <Buttons
-                                input={destination}
-                                multiple={false}
-                                options={destinationOptions}/>
-                        </div>
+                <div>
+                    <Label>
+                        <Msg id='process.mosaic.panel.retrieve.form.destination.label'/>
+                    </Label>
+                    <Buttons
+                        input={destination}
+                        multiple={false}
+                        options={destinationOptions}/>
+                </div>
 
-                    </div>
-                </PanelForm>
-            </form>
+            </div>
+        )
+    }
+
+    render() {
+        const {recipeId, form} = this.props
+        return (
+            <Panel className={styles.panel}>
+                <form>
+                    <PanelHeader
+                        icon='cloud-download-alt'
+                        title={msg('process.mosaic.panel.retrieve.title')}/>
+
+                    <PanelContent>
+                        {this.renderContent()}
+                    </PanelContent>
+
+                    <PanelButtons
+                        statePath={recipePath(recipeId, 'ui')}
+                        form={form}
+                        isActionForm={true}
+                        applyLabel={msg('process.mosaic.panel.retrieve.apply')}
+                        onApply={values => this.recipeActions.retrieve(values).dispatch()}/>
+                </form>
+            </Panel>
         )
     }
 

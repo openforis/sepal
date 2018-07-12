@@ -25,18 +25,18 @@ class Panels extends React.Component {
     render() {
         const {recipeId, selectedPanel} = this.props
         switch (selectedPanel) {
-            case PANELS.AUTO:
-                return <Auto
-                    recipeId={recipeId}
-                    className={[styles.panel, styles.top].join(' ')}/>
-            case PANELS.CLEAR_SELETED_SCENES:
-                return <ClearSelectedScenes
-                    recipeId={recipeId}
-                    className={[styles.panel, styles.top].join(' ')}/>
-            case PANELS.RETRIEVE:
-                return <Retrieve
-                    recipeId={recipeId}
-                    className={[styles.panel, styles.top].join(' ')}/>
+            // case PANELS.AUTO:
+            //     return <Auto
+            //         recipeId={recipeId}
+            //         className={[styles.panel, styles.top].join(' ')}/>
+            // case PANELS.CLEAR_SELETED_SCENES:
+            //     return <ClearSelectedScenes
+            //         recipeId={recipeId}
+            //         className={[styles.panel, styles.top].join(' ')}/>
+            // case PANELS.RETRIEVE:
+            //     return <Retrieve
+            //         recipeId={recipeId}
+            //         className={[styles.panel, styles.top].join(' ')}/>
             case PANELS.AREA_OF_INTEREST:
                 return <Aoi
                     recipeId={recipeId}

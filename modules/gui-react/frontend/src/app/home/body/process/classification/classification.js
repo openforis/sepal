@@ -2,7 +2,6 @@ import MapToolbar from 'app/home/map/mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
-import Panels from './classificationPanels'
 import ClassificationPreview from './classificationPreview'
 import {recipePath} from './classificationRecipe'
 import ClassificationToolbar from './classificationToolbar'
@@ -16,9 +15,12 @@ class Classification extends React.Component {
         const {recipeId} = this.props
         return (
             <React.Fragment>
-                <MapToolbar recipeId={recipeId} statePath={recipePath(recipeId, 'ui')} mapContext={recipeId} labelLayerIndex={1}/>
+                <MapToolbar
+                    recipeId={recipeId}
+                    statePath={recipePath(recipeId, 'ui')}
+                    mapContext={recipeId}
+                    labelLayerIndex={1}/>
                 <ClassificationToolbar recipeId={recipeId}/>
-                <Panels recipeId={recipeId}/>
                 <ClassificationPreview recipeId={recipeId}/>
             </React.Fragment>
         )

@@ -1,9 +1,11 @@
+import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {msg, Msg} from 'translate'
 import {form} from 'widget/form'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
 import {RecipeActions} from '../../mosaicRecipe'
-import PanelForm from '../panelForm'
 import styles from './clearSelectedScenes.module.css'
 
 const fields = {}
@@ -11,24 +13,30 @@ const fields = {}
 class ClearSelectedScenes extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(props.recipeId)
     }
 
     render() {
-        const {recipeId, form, className} = this.props
+        const {recipeId, form} = this.props
         return (
-            <form className={[className, styles.container].join(' ')}>
-                <PanelForm
-                    recipeId={recipeId}
-                    form={form}
-                    applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}
-                    isActionForm={true}
-                    onApply={() => this.recipe.setSelectedScenes({}).dispatch()}
-                    icon='trash'
-                    title={msg('process.mosaic.panel.clearSelectedScenes.title')}>
-                    <Msg id='process.mosaic.panel.clearSelectedScenes.message'/>
-                </PanelForm>
-            </form>
+            <Panel className={styles.panel}>
+                <form>
+                    <PanelHeader
+                        icon='trash'
+                        title={msg('process.mosaic.panel.sources.title')}/>
+
+                    <PanelContent>
+                        <Msg id='process.mosaic.panel.clearSelectedScenes.message'/>
+                    </PanelContent>
+
+                    <PanelButtons
+                        statePath={recipePath(recipeId, 'ui')}
+                        form={form}
+                        isActionForm={true}
+                        applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}
+                        onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}/>
+                </form>
+            </Panel>
         )
     }
 }

@@ -1,9 +1,12 @@
+import Auto from 'app/home/body/process/mosaic/panels/auto/auto'
+import ClearSelectedScenes from 'app/home/body/process/mosaic/panels/clearSelectedScenes/clearSelectedScenes'
+import Retrieve from 'app/home/body/process/mosaic/panels/retrieve/retrieve'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
-import {Toolbar, ToolbarButton} from 'widget/toolbar'
-import {RecipeActions, RecipeState, SceneSelectionType} from '../mosaicRecipe'
+import {PanelButton, Toolbar, ToolbarButton} from 'widget/toolbar'
+import {RecipeActions, recipePath, RecipeState, SceneSelectionType} from '../mosaicRecipe'
 import styles from './mosaicToolbar.module.css'
 import {PANELS} from './panelConstants'
 
@@ -25,71 +28,69 @@ class MosaicToolbar extends React.Component {
     constructor(props) {
         super(props)
         this.recipe = RecipeActions(props.recipeId)
+        this.statePath = recipePath(props.recipeId, 'ui')
     }
 
     render() {
-        const {className, selectedPanel, modal, sceneAreasLoaded, scenesSelected, initialized, sceneSelectionType} = this.props
+        const {recipeId, selectedPanel, modal, sceneAreasLoaded, scenesSelected, initialized, sceneSelectionType} = this.props
         return (
-            <div className={className}>
-                <div className={styles.toolbarGroup}>
-                    <Toolbar className={styles.mosaicToolbar} vertical panel>
-                        <Panel
-                            panel={PANELS.AUTO}
-                            icon={'magic'}
-                            selectedPanel={selectedPanel}
-                            recipe={this.recipe}
-                            disabled={modal || !sceneAreasLoaded}/>
-                        <Panel
-                            panel={PANELS.CLEAR_SELETED_SCENES}
-                            icon={'trash'}
-                            selectedPanel={selectedPanel}
-                            recipe={this.recipe}
-                            disabled={modal || !scenesSelected}/>
-                        <Panel
-                            panel={PANELS.RETRIEVE}
-                            icon={'cloud-download-alt'}
-                            selectedPanel={selectedPanel}
-                            recipe={this.recipe}
-                            disabled={
-                                modal
-                                || !initialized
-                                || (sceneSelectionType === SceneSelectionType.SELECT && !scenesSelected)}/>
-                    </Toolbar>
-                    <Toolbar className={styles.mosaicToolbar} vertical panel>
-                        <Panel
-                            panel={PANELS.AREA_OF_INTEREST}
-                            selectedPanel={selectedPanel}
-                            recipe={this.recipe}
-                            disabled={modal}/>
-                        <Panel
-                            panel={PANELS.DATES}
-                            selectedPanel={selectedPanel}
-                            recipe={this.recipe}
-                            disabled={modal}/>
-                        <Panel
-                            panel={PANELS.SOURCES}
-                            selectedPanel={selectedPanel}
-                            recipe={this.recipe}
-                            disabled={modal}/>
-                        <Panel
-                            panel={PANELS.SCENES}
-                            selectedPanel={selectedPanel}
-                            recipe={this.recipe}
-                            disabled={modal}/>
-                        <Panel
-                            panel={PANELS.COMPOSITE}
-                            selectedPanel={selectedPanel}
-                            recipe={this.recipe}
-                            disabled={modal}/>
-                    </Toolbar>
-                </div>
-            </div>
+            <React.Fragment>
+                <Toolbar statePath={this.statePath} vertical top right className={styles.top}>
+                    <PanelButton
+                        name='auto'
+                        icon='magic'
+                        tooltip='process.mosaic.panel.auto'
+                        disabled={!sceneAreasLoaded}>
+                        <Auto recipeId={recipeId}/>
+                    </PanelButton>
+                    <PanelButton
+                        name='clearSelectedScenes'
+                        icon='trash'
+                        tooltip='process.mosaic.panel.clearSelectedScenes'
+                        disabled={!scenesSelected}>
+                        <ClearSelectedScenes recipeId={recipeId}/>
+                    </PanelButton>
+                    <PanelButton
+                        name='retrieve'
+                        icon='cloud-download-alt'
+                        tooltip='process.mosaic.panel.retrieve'
+                        disabled={!initialized || (sceneSelectionType === SceneSelectionType.SELECT && !scenesSelected)}>
+                        <Retrieve recipeId={recipeId}/>
+                    </PanelButton>
+                </Toolbar>
+                <Toolbar statePath={this.statePath} vertical bottom right panel className={styles.bottom}>
+                    <Panel
+                        panel={PANELS.AREA_OF_INTEREST}
+                        selectedPanel={selectedPanel}
+                        recipe={this.recipe}
+                        disabled={modal}/>
+                    <Panel
+                        panel={PANELS.DATES}
+                        selectedPanel={selectedPanel}
+                        recipe={this.recipe}
+                        disabled={modal}/>
+                    <Panel
+                        panel={PANELS.SOURCES}
+                        selectedPanel={selectedPanel}
+                        recipe={this.recipe}
+                        disabled={modal}/>
+                    <Panel
+                        panel={PANELS.SCENES}
+                        selectedPanel={selectedPanel}
+                        recipe={this.recipe}
+                        disabled={modal}/>
+                    <Panel
+                        panel={PANELS.COMPOSITE}
+                        selectedPanel={selectedPanel}
+                        recipe={this.recipe}
+                        disabled={modal}/>
+                </Toolbar>
+            </React.Fragment>
         )
     }
 }
 
 MosaicToolbar.propTypes = {
-    className: PropTypes.string,
     recipeId: PropTypes.string,
     selectedPanel: PropTypes.string,
     modal: PropTypes.bool

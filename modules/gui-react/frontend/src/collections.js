@@ -27,7 +27,7 @@ export const toPathList = (path) => {
         if (typeof path === 'string')
             pathList = pathList.concat(path.split('.'))
         else
-            path.forEach(part => flatten(part))
+            path && path.forEach(part => flatten(part))
     }
     flatten(path)
     return pathList

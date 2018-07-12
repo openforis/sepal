@@ -17,6 +17,9 @@ export const recipePath = (recipeId, path) => {
         .join('.')
 }
 
+export const uiPath = (recipeId) =>
+    recipePath(recipeId, 'ui')
+
 export const RecipeState = (recipeId) => {
     if (!recipeExists(recipeId))
         return null

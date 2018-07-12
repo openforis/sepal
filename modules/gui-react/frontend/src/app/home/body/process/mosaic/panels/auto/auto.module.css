@@ -1,9 +1,13 @@
-.container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.panel {
     max-width: 20rem;
 }
+
+/*.container {*/
+    /*display: flex;*/
+    /*flex-direction: column;*/
+    /*justify-content: space-between;*/
+    /*max-width: 20rem;*/
+/*}*/
 
 .sceneCount {
     display: flex;
