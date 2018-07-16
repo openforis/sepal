@@ -93,8 +93,6 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
             tile = data.GRANULE_ID.substring(4, 4 + 6)
         } else
             throw IllegalStateException("Unexpected GRANULE_ID length: " + data.GRANULE_ID)
-        if (date1 == '20180102T043149')
-            println(data)
         def id = "${date1}_${date2}_${tile}"
         return id
     }
