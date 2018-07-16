@@ -1,11 +1,13 @@
+import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {msg, Msg} from 'translate'
 import Buttons from 'widget/buttons'
 import {Field, form, Label} from 'widget/form'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
 import Slider from 'widget/slider'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import PanelForm from '../panelForm'
 import styles from './composite.module.css'
 
 const fields = {
@@ -29,88 +31,97 @@ const mapStateToProps = (state, ownProps) => {
 class Composite extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(props.recipeId)
+    }
+
+    renderContent() {
+        const {
+            inputs: {
+                corrections, shadowPercentile, hazePercentile, ndviPercentile, dayOfYearPercentile, mask, compose
+            },
+            source
+        } = this.props
+        return (
+            <div className={styles.content}>
+                <div className={styles.corrections}>
+                    <Label>Corrections</Label>
+                    <Buttons input={corrections} multiple={true} options={[
+                        {
+                            value: 'SR',
+                            label: msg('process.mosaic.panel.composite.form.surfaceReflectance.label'),
+                            tooltip: 'process.mosaic.panel.composite.form.surfaceReflectance',
+                            disabled: source !== 'landsat'
+                        },
+                        {
+                            value: 'BRDF',
+                            label: msg('process.mosaic.panel.composite.form.brdf.label'),
+                            tooltip: 'process.mosaic.panel.composite.form.brdf',
+                            disabled: source !== 'landsat'
+                        }
+                    ]}/>
+                </div>
+                <div className={styles.filters}>
+                    <Label tooltip={'process.mosaic.panel.composite.form.filters'}>
+                        <Msg id='process.mosaic.panel.composite.form.filters.label'/>
+                    </Label>
+                    <PercentileField input={shadowPercentile}/>
+                    <PercentileField
+                        input={hazePercentile}
+                        disabled={source === 'landsat' && corrections.value.includes('SR')}/>
+                    <PercentileField input={ndviPercentile}/>
+                    <PercentileField input={dayOfYearPercentile}/>
+                </div>
+                <div className={styles.mask}>
+                    <Label>Mask</Label>
+                    <Buttons input={mask} multiple={true} options={[
+                        {
+                            value: 'CLOUDS',
+                            label: msg('process.mosaic.panel.composite.form.clouds.label'),
+                            tooltip: 'process.mosaic.panel.composite.form.clouds'
+                        },
+                        {
+                            value: 'SNOW',
+                            label: msg('process.mosaic.panel.composite.form.snow.label'),
+                            tooltip: 'process.mosaic.panel.composite.form.snow'
+                        },
+                    ]}/>
+                </div>
+                <div className={styles.compose}>
+                    <Label>Composing method</Label>
+                    <Buttons input={compose} options={[
+                        {
+                            value: 'MEDOID',
+                            label: msg('process.mosaic.panel.composite.form.medoid.label'),
+                            tooltip: 'process.mosaic.panel.composite.form.medoid'
+                        },
+                        {
+                            value: 'MEDIAN',
+                            label: msg('process.mosaic.panel.composite.form.median.label'),
+                            tooltip: 'process.mosaic.panel.composite.form.median'
+                        },
+                    ]}/>
+                </div>
+            </div>
+        )
     }
 
     render() {
-        const {
-            recipeId,
-            form,
-            inputs: {corrections, shadowPercentile, hazePercentile, ndviPercentile, dayOfYearPercentile, mask, compose},
-            source,
-            className
-        } = this.props
-
+        const {recipeId, form} = this.props
         return (
-            <form className={[className, styles.container].join(' ')}>
-                <PanelForm
-                    recipeId={recipeId}
-                    form={form}
-                    onApply={(recipe, options) => recipe.setCompositeOptions(options).dispatch()}
-                    icon='cog'
-                    title={msg('process.mosaic.panel.composite.title')}>
-                    <div className={styles.form}>
-                        <div className={styles.corrections}>
-                            <Label>Corrections</Label>
-                            <Buttons input={corrections} multiple={true} options={[
-                                {
-                                    value: 'SR',
-                                    label: msg('process.mosaic.panel.composite.form.surfaceReflectance.label'),
-                                    tooltip: 'process.mosaic.panel.composite.form.surfaceReflectance',
-                                    disabled: source !== 'landsat'
-                                },
-                                {
-                                    value: 'BRDF',
-                                    label: msg('process.mosaic.panel.composite.form.brdf.label'),
-                                    tooltip: 'process.mosaic.panel.composite.form.brdf',
-                                    disabled: source !== 'landsat'
-                                }
-                            ]}/>
-                        </div>
-                        <div className={styles.filters}>
-                            <Label tooltip={'process.mosaic.panel.composite.form.filters'}>
-                                <Msg id='process.mosaic.panel.composite.form.filters.label'/>
-                            </Label>
-                            <PercentileField input={shadowPercentile}/>
-                            <PercentileField
-                                input={hazePercentile}
-                                disabled={source === 'landsat' && corrections.value.includes('SR')}/>
-                            <PercentileField input={ndviPercentile}/>
-                            <PercentileField input={dayOfYearPercentile}/>
-                        </div>
-                        <div className={styles.mask}>
-                            <Label>Mask</Label>
-                            <Buttons input={mask} multiple={true} options={[
-                                {
-                                    value: 'CLOUDS',
-                                    label: msg('process.mosaic.panel.composite.form.clouds.label'),
-                                    tooltip: 'process.mosaic.panel.composite.form.clouds'
-                                },
-                                {
-                                    value: 'SNOW',
-                                    label: msg('process.mosaic.panel.composite.form.snow.label'),
-                                    tooltip: 'process.mosaic.panel.composite.form.snow'
-                                },
-                            ]}/>
-                        </div>
-                        <div className={styles.compose}>
-                            <Label>Composing method</Label>
-                            <Buttons input={compose} options={[
-                                {
-                                    value: 'MEDOID',
-                                    label: msg('process.mosaic.panel.composite.form.medoid.label'),
-                                    tooltip: 'process.mosaic.panel.composite.form.medoid'
-                                },
-                                {
-                                    value: 'MEDIAN',
-                                    label: msg('process.mosaic.panel.composite.form.median.label'),
-                                    tooltip: 'process.mosaic.panel.composite.form.median'
-                                },
-                            ]}/>
-                        </div>
-                    </div>
-                </PanelForm>
-            </form>
+                <Panel className={styles.panel}>
+                    <PanelHeader
+                        icon='cog'
+                        title={msg('process.mosaic.panel.composite.title')}/>
+
+                    <PanelContent>
+                        {this.renderContent()}
+                    </PanelContent>
+
+                    <PanelButtons
+                        statePath={recipePath(recipeId, 'ui')}
+                        form={form}
+                        onApply={(options) => this.recipeActions.setCompositeOptions(options).dispatch()}/>
+                </Panel>
         )
     }
 }
@@ -135,7 +146,6 @@ const PercentileField = ({input, disabled = false}) => {
 
 Composite.propTypes = {
     recipeId: PropTypes.string,
-    className: PropTypes.string,
     form: PropTypes.object,
     fields: PropTypes.object,
     action: PropTypes.func,

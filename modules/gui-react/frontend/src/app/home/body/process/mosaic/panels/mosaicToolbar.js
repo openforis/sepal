@@ -1,14 +1,19 @@
+import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
 import Auto from 'app/home/body/process/mosaic/panels/auto/auto'
 import ClearSelectedScenes from 'app/home/body/process/mosaic/panels/clearSelectedScenes/clearSelectedScenes'
+import Composite from 'app/home/body/process/mosaic/panels/composite/composite'
+import Dates from 'app/home/body/process/mosaic/panels/dates/dates'
 import Retrieve from 'app/home/body/process/mosaic/panels/retrieve/retrieve'
+import Scenes from 'app/home/body/process/mosaic/panels/scenes/scenes'
+import Sources from 'app/home/body/process/mosaic/panels/sources/sources'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
+import {PanelWizard} from 'widget/panel'
 import {PanelButton, Toolbar, ToolbarButton} from 'widget/toolbar'
 import {RecipeActions, recipePath, RecipeState, SceneSelectionType} from '../mosaicRecipe'
 import styles from './mosaicToolbar.module.css'
-import {PANELS} from './panelConstants'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -32,9 +37,11 @@ class MosaicToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, selectedPanel, modal, sceneAreasLoaded, scenesSelected, initialized, sceneSelectionType} = this.props
+        const {recipeId, sceneAreasLoaded, scenesSelected, initialized, sceneSelectionType} = this.props
         return (
-            <React.Fragment>
+            <PanelWizard
+                panels={['areaOfInterest', 'dates', 'sources']}
+                statePath={this.statePath}>
                 <Toolbar statePath={this.statePath} vertical top right className={styles.top}>
                     <PanelButton
                         name='auto'
@@ -59,41 +66,44 @@ class MosaicToolbar extends React.Component {
                     </PanelButton>
                 </Toolbar>
                 <Toolbar statePath={this.statePath} vertical bottom right panel className={styles.bottom}>
-                    <Panel
-                        panel={PANELS.AREA_OF_INTEREST}
-                        selectedPanel={selectedPanel}
-                        recipe={this.recipe}
-                        disabled={modal}/>
-                    <Panel
-                        panel={PANELS.DATES}
-                        selectedPanel={selectedPanel}
-                        recipe={this.recipe}
-                        disabled={modal}/>
-                    <Panel
-                        panel={PANELS.SOURCES}
-                        selectedPanel={selectedPanel}
-                        recipe={this.recipe}
-                        disabled={modal}/>
-                    <Panel
-                        panel={PANELS.SCENES}
-                        selectedPanel={selectedPanel}
-                        recipe={this.recipe}
-                        disabled={modal}/>
-                    <Panel
-                        panel={PANELS.COMPOSITE}
-                        selectedPanel={selectedPanel}
-                        recipe={this.recipe}
-                        disabled={modal}/>
+                    <PanelButton
+                        name='areaOfInterest'
+                        label='process.mosaic.panel.areaOfInterest.button'
+                        tooltip='process.mosaic.panel.areaOfInterest'>
+                        <Aoi recipeId={recipeId}/>
+                    </PanelButton>
+                    <PanelButton
+                        name='dates'
+                        label='process.mosaic.panel.dates.button'
+                        tooltip='process.mosaic.panel.dates'>
+                        <Dates recipeId={recipeId}/>
+                    </PanelButton>
+                    <PanelButton
+                        name='sources'
+                        label='process.mosaic.panel.sources.button'
+                        tooltip='process.mosaic.panel.sources'>
+                        <Sources recipeId={recipeId}/>
+                    </PanelButton>
+                    <PanelButton
+                        name='scenes'
+                        label='process.mosaic.panel.scenes.button'
+                        tooltip='process.mosaic.panel.scenes'>
+                        <Scenes recipeId={recipeId}/>
+                    </PanelButton>
+                    <PanelButton
+                        name='composite'
+                        label='process.mosaic.panel.composite.button'
+                        tooltip='process.mosaic.panel.composite'>
+                        <Composite recipeId={recipeId}/>
+                    </PanelButton>
                 </Toolbar>
-            </React.Fragment>
+            </PanelWizard>
         )
     }
 }
 
 MosaicToolbar.propTypes = {
-    recipeId: PropTypes.string,
-    selectedPanel: PropTypes.string,
-    modal: PropTypes.bool
+    recipeId: PropTypes.string
 }
 
 const Panel = ({panel, icon, selectedPanel, recipe, disabled = false}) => {

@@ -18,20 +18,18 @@ class Source extends React.Component {
         const {recipeId, form} = this.props
         return (
             <Panel className={styles.panel}>
-                <form>
-                    <PanelHeader
-                        icon='cog'
-                        title={msg('process.mosaic.panel.sources.title')}/>
+                <PanelHeader
+                    icon='cog'
+                    title={msg('process.mosaic.panel.sources.title')}/>
 
-                    <PanelContent>
-                        A panel form
-                    </PanelContent>
+                <PanelContent>
+                    A panel form
+                </PanelContent>
 
-                    <PanelButtons
-                        form={form}
-                        statePath={recipePath(recipeId, 'ui')}
-                        onApply={(values) => console.log('onApply', values)}/>
-                </form>
+                <PanelButtons
+                    form={form}
+                    statePath={recipePath(recipeId, 'ui')}
+                    onApply={(values) => console.log('onApply', values)}/>
             </Panel>
         )
     }

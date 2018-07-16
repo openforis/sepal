@@ -1,3 +1,4 @@
+import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {arrayEquals} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -5,8 +6,9 @@ import {imageSourceById, sources} from 'sources'
 import {msg, Msg} from 'translate'
 import Buttons from 'widget/buttons'
 import {Field, form} from 'widget/form'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import PanelForm from '../panelForm'
 import styles from './sources.module.css'
 import updateSource from './updateSource'
 
@@ -28,7 +30,7 @@ class Sources extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
-        this.recipe = RecipeActions(recipeId)
+        this.recipeActions = RecipeActions(recipeId)
         const {dateRange, isSourceInDateRange, isDataSetInDateRange} = RecipeState(recipeId)
         this.dateRange = dateRange
         this.isSourceInDateRange = isSourceInDateRange
@@ -92,21 +94,25 @@ class Sources extends React.Component {
     }
 
     render() {
-        const {recipeId, form, className} = this.props
+        const {recipeId, form} = this.props
         return (
-            <form className={[className, styles.container].join(' ')}>
-                <PanelForm
-                    recipeId={recipeId}
-                    form={form}
-                    onApply={(recipe, sources) => recipe.setSources(sources).dispatch()}
+            <Panel className={styles.panel}>
+                <PanelHeader
                     icon='cog'
-                    title={msg('process.mosaic.panel.sources.title')}>
-                    <div className={styles.form}>
+                    title={msg('process.mosaic.panel.sources.title')}/>
+
+                <PanelContent>
+                    <div>
                         {this.renderSources()}
                         {this.renderDataSets()}
                     </div>
-                </PanelForm>
-            </form>
+                </PanelContent>
+
+                <PanelButtons
+                    statePath={recipePath(recipeId, 'ui')}
+                    form={form}
+                    onApply={(sources) => this.recipeActions.setSources(sources).dispatch()}/>
+            </Panel>
         )
     }
 
@@ -123,7 +129,6 @@ class Sources extends React.Component {
 
 Sources.propTypes = {
     recipeId: PropTypes.string,
-    className: PropTypes.string,
     form: PropTypes.object,
     fields: PropTypes.object,
     action: PropTypes.func,

@@ -189,10 +189,10 @@ class PanelButtons extends React.Component {
             </button>
 
         return (
-            <React.Fragment>
+            <div>
                 {!first ? back : null}
                 {!last ? next : done}
-            </React.Fragment>
+            </div>
         )
     }
 
@@ -200,7 +200,7 @@ class PanelButtons extends React.Component {
         const {isActionForm, applyLabel = msg('button.ok'), cancelLabel = msg('button.cancel'), form} = this.props
         const dirty = form.isDirty()
         return (
-            <React.Fragment>
+            <div>
                 <button
                     type='button'
                     onClick={(e) => {
@@ -225,7 +225,7 @@ class PanelButtons extends React.Component {
                     <Icon name={'check'}/>
                     <span>{applyLabel}</span>
                 </button>
-            </React.Fragment>
+            </div>
         )
     }
 }

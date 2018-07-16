@@ -1,4 +1,5 @@
 .buttons {
+    flex-grow: 0;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -6,13 +7,6 @@
     padding: var(--padding);
     border-top: var(--wireframe);
 }
-
-
-
-/*.buttons > * {*/
-    /*margin: 0.5rem 0;*/
-/*}*/
-
 
 .buttons button {
     color: #ccc;

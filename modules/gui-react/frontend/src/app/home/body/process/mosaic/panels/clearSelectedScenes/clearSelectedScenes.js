@@ -20,22 +20,20 @@ class ClearSelectedScenes extends React.Component {
         const {recipeId, form} = this.props
         return (
             <Panel className={styles.panel}>
-                <form>
-                    <PanelHeader
-                        icon='trash'
-                        title={msg('process.mosaic.panel.sources.title')}/>
+                <PanelHeader
+                    icon='trash'
+                    title={msg('process.mosaic.panel.sources.title')}/>
 
-                    <PanelContent>
-                        <Msg id='process.mosaic.panel.clearSelectedScenes.message'/>
-                    </PanelContent>
+                <PanelContent>
+                    <Msg id='process.mosaic.panel.clearSelectedScenes.message'/>
+                </PanelContent>
 
-                    <PanelButtons
-                        statePath={recipePath(recipeId, 'ui')}
-                        form={form}
-                        isActionForm={true}
-                        applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}
-                        onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}/>
-                </form>
+                <PanelButtons
+                    statePath={recipePath(recipeId, 'ui')}
+                    form={form}
+                    isActionForm={true}
+                    applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}
+                    onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}/>
             </Panel>
         )
     }
@@ -43,7 +41,6 @@ class ClearSelectedScenes extends React.Component {
 
 ClearSelectedScenes.propTypes = {
     recipeId: PropTypes.string,
-    className: PropTypes.string,
     form: PropTypes.object,
     fields: PropTypes.object,
     action: PropTypes.func,

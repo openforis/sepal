@@ -3,10 +3,12 @@ import {sepalMap} from 'app/home/map/map'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {AnimateReplacement} from 'widget/animate'
+import {msg} from 'translate'
 import {Field, form} from 'widget/form'
-import {RecipeState} from '../../mosaicRecipe'
-import PanelButtons from '../panelButtons'
+import {Panel} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
+import PanelSections from 'widget/panelSections'
+import {RecipeActions, recipePath, RecipeState} from '../../mosaicRecipe'
 import styles from './aoi.module.css'
 import CountrySection from './countrySection'
 import FusionTableSection from './fusionTableSection'
@@ -51,16 +53,18 @@ const mapStateToProps = (state, ownProps) => {
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
+        const {aoi, recipeId} = props
         this.aoiUnchanged = true
-        this.initialAoi = props.aoi
+        this.initialAoi = aoi
         this.initialBounds = sepalMap.getBounds()
         this.initialZoom = sepalMap.getZoom()
+        this.recipeActions = RecipeActions(recipeId)
     }
 
-    onApply(recipe, aoiForm) {
+    onApply(aoiForm) {
         const {recipeId, componentWillUnmount$} = this.props
         this.initialBounds = aoiForm.bounds
-        recipe.setAoi(aoiForm).dispatch()
+        this.recipeActions.setAoi(aoiForm).dispatch()
         const aoi = RecipeState(recipeId)('ui.aoi')
         this.aoiUnchanged = _.isEqual(aoi, this.initialAoi)
         setAoiLayer({
@@ -73,55 +77,39 @@ class Aoi extends React.Component {
     }
 
     render() {
-        const {recipeId, className, form, inputs} = this.props
+        const {recipeId, form, inputs} = this.props
+        const sections = [
+            {
+                icon: 'cog',
+                title: msg('process.mosaic.panel.areaOfInterest.title'),
+                component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
+            },
+            {
+                value: 'country',
+                title: msg('process.mosaic.panel.areaOfInterest.form.country.title'),
+                component: <CountrySection recipeId={recipeId} inputs={inputs}/>
+            },
+            {
+                value: 'fusionTable',
+                title: msg('process.mosaic.panel.areaOfInterest.form.fusionTable.title'),
+                component: <FusionTableSection recipeId={recipeId} inputs={inputs}/>
+            },
+            {
+                value: 'polygon',
+                title: msg('process.mosaic.panel.areaOfInterest.form.polygon.title'),
+                component: <PolygonSection recipeId={recipeId} inputs={inputs}/>
+            },
+        ]
         return (
-            <div className={[className, styles.container].join(' ')}>
-                <form>
-                    <div className={styles.sections}>
-                        <AnimateReplacement
-                            currentKey={inputs.section.value}
-                            timeout={250}
-                            classNames={{enter: styles.enter, exit: styles.exit}}>
-                            {this.renderSections()}
-                        </AnimateReplacement>
-                    </div>
-                    <div className={styles.buttons}>
-                        <PanelButtons
-                            recipeId={recipeId}
-                            form={form}
-                            onApply={(recipe, aoi) => this.onApply(recipe, aoi)}/>
-                    </div>
-                </form>
-            </div>
-        )
-    }
+            <Panel className={styles.panel}>
+                <PanelSections selected={inputs.section} sections={sections}/>
 
-    renderSections() {
-        const {recipeId, labelsShown, form, inputs} = this.props
-        switch (inputs.section.value) {
-            case 'country':
-                return <CountrySection
-                    recipeId={recipeId}
-                    inputs={inputs}
-                    className={styles.right}/>
-            case 'fusionTable':
-                return <FusionTableSection
-                    recipeId={recipeId}
-                    inputs={inputs}
-                    className={styles.right}/>
-            case 'polygon':
-                return <PolygonSection
-                    recipeId={recipeId}
-                    inputs={inputs}
-                    labelsShown={labelsShown}
-                    className={styles.right}/>
-            default:
-                return <SectionSelection
-                    recipeId={recipeId}
+                <PanelButtons
+                    statePath={recipePath(recipeId, 'ui')}
                     form={form}
-                    inputs={inputs}
-                    className={styles.left}/>
-        }
+                    onApply={(aoi) => this.onApply(aoi)}/>
+            </Panel>
+        )
     }
 
     componentWillUnmount() {
@@ -131,7 +119,7 @@ class Aoi extends React.Component {
                 contextId: recipeId,
                 aoi: recipeState && recipeState('aoi'),
                 fill: false
-            }
+            }   
         )
         if (this.aoiUnchanged) {
             sepalMap.fitBounds(this.initialBounds)
@@ -142,7 +130,6 @@ class Aoi extends React.Component {
 
 Aoi.propTypes = {
     recipeId: PropTypes.string,
-    className: PropTypes.string,
     form: PropTypes.object,
     fields: PropTypes.object,
     action: PropTypes.func,

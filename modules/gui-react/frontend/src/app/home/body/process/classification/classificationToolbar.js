@@ -9,10 +9,13 @@ import Source from './source'
 export default class ClassificationToolbar extends React.Component {
     render() {
         const {recipeId} = this.props
+        const statePath = recipePath(recipeId, 'ui')
         return (
-            <PanelWizard panels={['mosaic', 'trainingData']}>
+            <PanelWizard
+                panels={['mosaic', 'trainingData']}
+                statePath={statePath}>
                 <Toolbar
-                    statePath={recipePath(recipeId, 'ui')}
+                    statePath={statePath}
                     vertical bottom right
                     className={styles.bottom}>
                     <PanelButton

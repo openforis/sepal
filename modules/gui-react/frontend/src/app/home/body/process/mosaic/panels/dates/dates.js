@@ -1,12 +1,14 @@
+import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
 import DatePicker from 'widget/datePicker'
-import {Field, ErrorMessage, form, Input, Label} from 'widget/form'
+import {ErrorMessage, Field, form, Input, Label} from 'widget/form'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
 import SeasonSelect from 'widget/seasonSelect'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import PanelForm from '../panelForm'
 import styles from './dates.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -80,7 +82,7 @@ class Dates extends React.Component {
         const {recipeId, inputs: {targetYear, targetDate}} = props
         targetYear.onChange((yearString) => this.handleYearChange(yearString))
         targetDate.onChange((dateString) => this.handleDateChange(dateString))
-        this.recipe = RecipeActions(recipeId)
+        this.recipeActions = RecipeActions(recipeId)
     }
 
     handleYearChange(yearString) {
@@ -106,23 +108,27 @@ class Dates extends React.Component {
     }
 
     render() {
-        const {recipeId, form, inputs: {advanced}, className} = this.props
+        const {recipeId, form, inputs: {advanced}} = this.props
         return (
-            <form className={[className, advanced.value ? styles.advanced : styles.simple].join(' ')}>
-                <PanelForm
+            <Panel className={advanced.value ? styles.advanced : styles.simple}>
+                <PanelHeader
+                    icon='cog'
+                    title={msg('process.mosaic.panel.dates.title')}/>
+
+                <PanelContent>
+                    {advanced.value ? this.renderAdvanced() : this.renderSimple()}
+                </PanelContent>
+
+                <PanelButtons
+                    statePath={recipePath(recipeId, 'ui')}
+                    form={form}
+                    onApply={(dates) => this.recipeActions.setDates(dates).dispatch()}
                     additionalButtons={[{
                         key: 'advanced',
                         label: advanced.value ? msg('button.less') : msg('button.more'),
                         onClick: () => this.setAdvanced(!advanced.value)
-                    }]}
-                    recipeId={recipeId}
-                    form={form}
-                    onApply={(recipe, dates) => recipe.setDates(dates).dispatch()}
-                    icon='cog'
-                    title={msg('process.mosaic.panel.dates.title')}>
-                    {advanced.value ? this.renderAdvanced() : this.renderSimple()}
-                </PanelForm>
-            </form>
+                    }]}/>
+            </Panel>
         )
     }
 
@@ -206,7 +212,6 @@ const parseYear = (dateString) =>
 
 Dates.propTypes = {
     recipeId: PropTypes.string,
-    className: PropTypes.string,
     form: PropTypes.object,
     fields: PropTypes.object,
     action: PropTypes.func,

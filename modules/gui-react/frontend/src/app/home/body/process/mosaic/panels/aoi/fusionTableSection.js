@@ -10,7 +10,6 @@ import {Msg, msg} from 'translate'
 import ComboBox from 'widget/comboBox'
 import {ErrorMessage, Input} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
-import PanelContent from '../panelContent'
 
 const mapStateToProps = (state, ownProps) => {
     const recipe = new RecipeState(ownProps.recipeId)
@@ -76,7 +75,7 @@ class FusionTableSection extends React.Component {
     }
 
     render() {
-        const {action, columns, rows, className, inputs: {section, fusionTable, fusionTableColumn, fusionTableRow}} = this.props
+        const {action, columns, rows, inputs: {fusionTable, fusionTableColumn, fusionTableRow}} = this.props
         const columnState = action('LOAD_FUSION_TABLE_COLUMNS').dispatching
             ? 'loading'
             : columns && columns.length > 0
@@ -91,12 +90,7 @@ class FusionTableSection extends React.Component {
                     : 'noFusionTable'
 
         return (
-            <PanelContent
-                title={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.title')}
-                className={className}
-                onBack={() => {
-                    section.set('')
-                }}>
+            <React.Fragment>
                 <div>
                     <label><Msg id='process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.label'/></label>
                     <Input
@@ -148,11 +142,11 @@ class FusionTableSection extends React.Component {
                         disabled={!rows}
                         placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.row.placeholder.${rowState}`)}
                         options={(rows || []).map((value) => ({value, label: value}))}
-                        onChange={(e) => this.fusionTableRowChanged$.next()}
+                        onChange={() => this.fusionTableRowChanged$.next()}
                     />
                     <ErrorMessage for={fusionTableRow}/>
                 </div>
-            </PanelContent>
+            </React.Fragment>
         )
     }
 

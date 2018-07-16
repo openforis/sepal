@@ -41,22 +41,20 @@ class Auto extends React.Component {
         const {recipeId, form} = this.props
         return (
             <Panel className={styles.panel}>
-                <form>
-                    <PanelHeader
-                        icon='magic'
-                        title={msg('process.mosaic.panel.sources.title')}/>
+                <PanelHeader
+                    icon='magic'
+                    title={msg('process.mosaic.panel.auto.title')}/>
 
-                    <PanelContent>
-                        {this.renderContent()}
-                    </PanelContent>
+                <PanelContent>
+                    {this.renderContent()}
+                </PanelContent>
 
-                    <PanelButtons
-                        statePath={recipePath(recipeId, 'ui')}
-                        form={form}
-                        isActionForm={true}
-                        applyLabel={msg('process.mosaic.panel.auto.form.selectScenes')}
-                        onApply={(sceneCount) => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}/>
-                </form>
+                <PanelButtons
+                    statePath={recipePath(recipeId, 'ui')}
+                    form={form}
+                    isActionForm={true}
+                    applyLabel={msg('process.mosaic.panel.auto.form.selectScenes')}
+                    onApply={(sceneCount) => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}/>
             </Panel>
         )
     }
@@ -96,7 +94,6 @@ class Auto extends React.Component {
 
 Auto.propTypes = {
     recipeId: PropTypes.string,
-    className: PropTypes.string,
     form: PropTypes.object,
     fields: PropTypes.object,
     constraints: PropTypes.shape({}),

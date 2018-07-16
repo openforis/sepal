@@ -74,7 +74,7 @@ class Retrieve extends React.Component {
     }
 
     renderContent() {
-        const {user, sources, compositeOptions, form, inputs: {bands, destination}} = this.props
+        const {user, sources, compositeOptions, inputs: {bands, destination}} = this.props
         const bandsForEachDataSet = _.flatten(Object.values(sources))
             .map(dataSetId => dataSetById[dataSetId].bands)
         const availableBands = new Set(
@@ -138,22 +138,20 @@ class Retrieve extends React.Component {
         const {recipeId, form} = this.props
         return (
             <Panel className={styles.panel}>
-                <form>
-                    <PanelHeader
-                        icon='cloud-download-alt'
-                        title={msg('process.mosaic.panel.retrieve.title')}/>
+                <PanelHeader
+                    icon='cloud-download-alt'
+                    title={msg('process.mosaic.panel.retrieve.title')}/>
 
-                    <PanelContent>
-                        {this.renderContent()}
-                    </PanelContent>
+                <PanelContent>
+                    {this.renderContent()}
+                </PanelContent>
 
-                    <PanelButtons
-                        statePath={recipePath(recipeId, 'ui')}
-                        form={form}
-                        isActionForm={true}
-                        applyLabel={msg('process.mosaic.panel.retrieve.apply')}
-                        onApply={values => this.recipeActions.retrieve(values).dispatch()}/>
-                </form>
+                <PanelButtons
+                    statePath={recipePath(recipeId, 'ui')}
+                    form={form}
+                    isActionForm={true}
+                    applyLabel={msg('process.mosaic.panel.retrieve.apply')}
+                    onApply={values => this.recipeActions.retrieve(values).dispatch()}/>
             </Panel>
         )
     }
@@ -167,7 +165,6 @@ class Retrieve extends React.Component {
 
 Retrieve.propTypes = {
     recipeId: PropTypes.string,
-    className: PropTypes.string,
     form: PropTypes.object,
     fields: PropTypes.object,
     action: PropTypes.func,

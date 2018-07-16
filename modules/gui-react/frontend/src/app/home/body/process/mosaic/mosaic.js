@@ -12,7 +12,6 @@ import styles from './mosaic.module.css'
 import MosaicPreview from './mosaicPreview'
 import {recipePath, RecipeState} from './mosaicRecipe'
 import MosaicToolbar from './panels/mosaicToolbar'
-import Panels from './panels/panels'
 import SceneAreas from './sceneAreas'
 import SceneDeselection from './sceneDeselection'
 import SceneSelection from './sceneSelection'
@@ -37,7 +36,6 @@ class Mosaic extends React.Component {
                     <ShowSceneAreaToggle recipeId={recipeId}/>
                 </MapToolbar>
                 <MosaicToolbar recipeId={recipeId} className={styles.mosaicToolbar}/>
-                <Panels recipeId={recipeId} className={styles.panel}/>
                 <MosaicPreview recipeId={recipeId}/>
                 {aoi && source && type === SceneSelectionType.SELECT
                     ? <React.Fragment>

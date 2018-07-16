@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {msg} from 'translate'
 import Buttons from 'widget/buttons'
-import PanelContent from '../panelContent'
 import styles from './aoi.module.css'
 
 export default class SectionSelection extends React.Component {
@@ -13,7 +12,7 @@ export default class SectionSelection extends React.Component {
     }
 
     render() {
-        const {className, inputs: {section}} = this.props
+        const {inputs: {section}} = this.props
         const options = [
             {
                 value: 'country',
@@ -29,15 +28,10 @@ export default class SectionSelection extends React.Component {
             }
         ]
         return (
-            <PanelContent
-                icon='cog'
-                title={msg('process.mosaic.panel.areaOfInterest.title')}
-                className={className}>
-                <Buttons
-                    className={styles.sources}
-                    input={section}
-                    options={options}/>
-            </PanelContent>
+            <Buttons
+                className={styles.sources}
+                input={section}
+                options={options}/>
         )
     }
 
@@ -49,6 +43,5 @@ export default class SectionSelection extends React.Component {
 
 SectionSelection.propTypes = {
     recipeId: PropTypes.string.isRequired,
-    inputs: PropTypes.object.isRequired,
-    className: PropTypes.string.isRequired
+    inputs: PropTypes.object.isRequired
 }

@@ -1,10 +1,12 @@
+import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Msg, msg} from 'translate'
 import Buttons from 'widget/buttons'
 import {Field, form, Label} from 'widget/form'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
 import {RecipeActions, RecipeState, SceneSelectionType} from '../../mosaicRecipe'
-import PanelForm from '../panelForm'
 import styles from './scenes.module.css'
 
 const fields = {
@@ -24,7 +26,7 @@ const mapStateToProps = (state, ownProps) => {
 class Scenes extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(props.recipeId)
     }
 
     renderTypes() {
@@ -85,28 +87,31 @@ class Scenes extends React.Component {
     }
 
     render() {
-        const {recipeId, form, inputs: {type}, className} = this.props
+        const {recipeId, form, inputs: {type}} = this.props
         return (
-            <form className={[className, styles.container].join(' ')}>
-                <PanelForm
-                    recipeId={recipeId}
-                    form={form}
-                    onApply={(recipe, sources) => recipe.setSceneSelectionOptions(sources).dispatch()}
+            <Panel className={styles.panel}>
+                <PanelHeader
                     icon='cog'
-                    title={msg('process.mosaic.panel.scenes.title')}>
-                    <div className={styles.form}>
+                    title={msg('process.mosaic.panel.scenes.title')}/>
+
+                <PanelContent>
+                    <div>
                         {this.renderTypes()}
                         {type.value === SceneSelectionType.SELECT ? this.renderTargetDateWeight() : null}
                     </div>
-                </PanelForm>
-            </form>
+                </PanelContent>
+
+                <PanelButtons
+                    statePath={recipePath(recipeId, 'ui')}
+                    form={form}
+                    onApply={(sources) => this.recipeActions.setSceneSelectionOptions(sources).dispatch()}/>
+            </Panel>
         )
     }
 }
 
 Scenes.propTypes = {
     recipeId: PropTypes.string,
-    className: PropTypes.string,
     form: PropTypes.object,
     fields: PropTypes.object,
     action: PropTypes.func,

@@ -1,4 +1,5 @@
-import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, recipePath, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
 import backend from 'backend'
 import {objectEquals} from 'collections'
 import PropTypes from 'prop-types'
@@ -10,9 +11,9 @@ import {dataSetById} from 'sources'
 import {msg, Msg} from 'translate'
 import {Field, form} from 'widget/form'
 import Icon from 'widget/icon'
+import {Panel, PanelHeader} from 'widget/panel'
+import PanelButtons from 'widget/panelButtons'
 import {CenteredProgress} from 'widget/progress'
-import PanelForm from './panels/panelForm'
-import ScenePreview from './scenePreview'
 import styles from './sceneSelection.module.css'
 
 const fields = {
@@ -44,25 +45,28 @@ class SceneSelection extends React.Component {
         const {action, recipeId, form} = this.props
         const loading = !action('LOAD_SCENES').dispatched
         return (
-            <div className={styles.container}>
+            <React.Fragment>
                 <ScenePreview recipeId={recipeId}/>
-                <form className={styles.panel}>
-                    <PanelForm
-                        recipeId={recipeId}
-                        form={form}
-                        onApply={(recipe, {selectedScenes}) => this.onApply(selectedScenes)}
-                        onCancel={() => this.deselectSceneArea()}
+                <Panel center className={styles.panel}>
+                    <PanelHeader
                         icon='cog'
+                        title={msg('process.mosaic.panel.auto.form.selectScenes')}/>
+
+                    <div className={[styles.content, loading ? styles.loading : null].join(' ')}>
+                        {loading
+                            ?
+                            <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
+                            : this.renderScenes()}
+                    </div>
+
+                    <PanelButtons
+                        statePath={recipePath(recipeId, 'ui')}
+                        form={form}
                         modalOnDirty={false}
-                        title={msg('process.mosaic.panel.scenes.title')}>
-                        <div className={[styles.form, loading ? styles.loading : null].join(' ')}>
-                            {loading
-                                ? <CenteredProgress title={msg('process.mosaic.panel.sceneSelection.loadingScenes')}/>
-                                : this.renderScenes()}
-                        </div>
-                    </PanelForm>
-                </form>
-            </div>
+                        onApply={({selectedScenes}) => this.onApply(selectedScenes)}
+                        onCancel={() => this.deselectSceneArea()}/>
+                </Panel>
+            </React.Fragment>
         )
     }
 
@@ -150,7 +154,7 @@ class SceneSelection extends React.Component {
                 dateSet: scene.dataSet,
                 cloudCover: scene.cloudCover
             }
-            ])
+        ])
     }
 
     removeScene(sceneToRemove) {

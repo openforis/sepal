@@ -1,12 +1,6 @@
-.container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.panel {
     max-width: 30rem;
-}
-
-.form {
-    min-height: 14rem;
+    min-height: 19rem;
 }
 
 .sources {

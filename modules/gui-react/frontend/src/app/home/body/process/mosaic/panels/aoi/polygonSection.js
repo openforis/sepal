@@ -3,9 +3,8 @@ import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
-import {Msg, msg} from 'translate'
+import {Msg} from 'translate'
 import {sepalMap} from '../../../../../map/map'
-import PanelContent from '../panelContent'
 import styles from './aoi.module.css'
 
 class PolygonSection extends React.Component {
@@ -41,19 +40,12 @@ class PolygonSection extends React.Component {
     }
 
     render() {
-        const {className, inputs: {section}} = this.props
         return (
-            <PanelContent
-                title={msg('process.mosaic.panel.areaOfInterest.form.polygon.title')}
-                className={className}
-                onBack={() => {
-                    this.disableDrawingMode()
-                    section.set('')
-                }}>
+            <React.Fragment>
                 <div className={styles.polygon}>
                     <Msg id='process.mosaic.panel.areaOfInterest.form.polygon.description'/>
                 </div>
-            </PanelContent>
+            </React.Fragment>
         )
     }
 
@@ -80,8 +72,7 @@ class PolygonSection extends React.Component {
 PolygonSection.propTypes = {
     recipeId: PropTypes.string.isRequired,
     labelsShown: PropTypes.any.isRequired,
-    inputs: PropTypes.object.isRequired,
-    className: PropTypes.string.isRequired
+    inputs: PropTypes.object.isRequired
 }
 
 export default connect()(PolygonSection)

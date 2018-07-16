@@ -1,11 +1,8 @@
-.container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.panel {
     max-width: 29rem;
 }
 
-.form > *:not(:last-child) {
+.content > *:not(:last-child) {
     margin-bottom: 2rem;
 }
 

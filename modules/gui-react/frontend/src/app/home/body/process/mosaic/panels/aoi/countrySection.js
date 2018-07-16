@@ -11,7 +11,6 @@ import {connect, select} from 'store'
 import {Msg, msg} from 'translate'
 import ComboBox from 'widget/comboBox'
 import {ErrorMessage} from 'widget/form'
-import PanelContent from '../panelContent'
 
 const loadCountries$ = () => {
     return queryFusionTable$(`
@@ -71,7 +70,7 @@ class CountrySection extends React.Component {
     }
 
     render() {
-        const {action, countries, countryAreas, className, inputs: {section, country, area}} = this.props
+        const {action, countries, countryAreas, inputs: {country, area}} = this.props
         const countriesState = action('LOAD_COUNTRIES').dispatching
             ? 'loading'
             : 'loaded'
@@ -83,13 +82,7 @@ class CountrySection extends React.Component {
         const countryPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.country.placeholder.${countriesState}`)
         const areaPlaceholder = msg(`process.mosaic.panel.areaOfInterest.form.country.area.placeholder.${areasState}`)
         return (
-            <PanelContent
-                title={msg('process.mosaic.panel.areaOfInterest.form.country.title')}
-                className={className}
-                onBack={() => {
-                    section.set('')
-                }}>
-
+            <React.Fragment>
                 <div>
                     <label><Msg id='process.mosaic.panel.areaOfInterest.form.country.country.label'/></label>
                     <ComboBox
@@ -120,7 +113,7 @@ class CountrySection extends React.Component {
                     />
                     <ErrorMessage for={area}/>
                 </div>
-            </PanelContent>
+            </React.Fragment>
         )
     }
 
@@ -155,8 +148,7 @@ class CountrySection extends React.Component {
 
 CountrySection.propTypes = {
     recipeId: PropTypes.string.isRequired,
-    inputs: PropTypes.object.isRequired,
-    className: PropTypes.string.isRequired
+    inputs: PropTypes.object.isRequired
 }
 
 export default connect(mapStateToProps)(CountrySection)

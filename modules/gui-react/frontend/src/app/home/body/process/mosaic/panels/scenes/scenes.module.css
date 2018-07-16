@@ -1,12 +1,6 @@
-.container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.panel {
     max-width: 29rem;
-}
-
-.form {
-    min-height: 11rem;
+    min-height: 19rem;
 }
 
 .types {
