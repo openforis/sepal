@@ -7,7 +7,7 @@ import styles from './sceneAreas.module.css'
 const mapStateToProps = (state, ownProps) => {
     const {recipeId, sceneAreaId} = ownProps
     const recipeState = RecipeState(recipeId)
-    const selectedScenes = recipeState(['scenes', sceneAreaId]) || []
+    const selectedScenes = recipeState(['model.scenes', sceneAreaId]) || []
     return {
         selectedSceneCount: selectedScenes.length,
         loading: recipeState('ui.autoSelectingScenes')

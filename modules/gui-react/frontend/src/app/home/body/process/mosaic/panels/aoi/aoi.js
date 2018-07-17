@@ -44,7 +44,7 @@ const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
         values: recipeState('ui.aoi'),
-        aoi: recipeState('aoi'),
+        aoi: recipeState('model.aoi'),
         initialized: recipeState('ui.initialized')
     }
 }
@@ -116,7 +116,7 @@ class Aoi extends React.Component {
         const recipeState = RecipeState(recipeId)
         setAoiLayer({
                 contextId: recipeId,
-                aoi: recipeState && recipeState('aoi'),
+                aoi: recipeState && recipeState('model.aoi'),
                 fill: false
             }
         )

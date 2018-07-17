@@ -8,10 +8,10 @@ const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
         sceneAreas: recipeState('ui.sceneAreas'),
-        dates: recipeState('dates'),
-        sources: recipeState('sources'),
-        sceneSelectionOptions: recipeState('sceneSelectionOptions'),
-        scenes: recipeState('scenes')
+        dates: recipeState('model.dates'),
+        sources: recipeState('model.sources'),
+        sceneSelectionOptions: recipeState('model.sceneSelectionOptions'),
+        scenes: recipeState('model.scenes')
     }
 }
 

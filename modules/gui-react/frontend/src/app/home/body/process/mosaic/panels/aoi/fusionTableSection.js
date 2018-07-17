@@ -14,7 +14,8 @@ import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 const mapStateToProps = (state, ownProps) => {
     const recipe = new RecipeState(ownProps.recipeId)
     return {
-        columns: recipe('ui.fusionTable.columns')
+        columns: recipe('ui.fusionTable.columns'),
+        rows: recipe('ui.fusionTable.rows')
     }
 }
 

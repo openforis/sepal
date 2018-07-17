@@ -23,11 +23,11 @@ const fields = {
 const mapStateToProps = (state, ownProps) => {
     const {recipeId, sceneAreaId} = ownProps
     const recipeState = RecipeState(recipeId)
-    const selectedScenes = recipeState(['scenes', sceneAreaId]) || []
+    const selectedScenes = recipeState(['model.scenes', sceneAreaId]) || []
     return {
-        sources: recipeState('sources'),
-        dates: recipeState('dates'),
-        sceneSelectionOptions: recipeState('sceneSelectionOptions'),
+        sources: recipeState('model.sources'),
+        dates: recipeState('model.dates'),
+        sceneSelectionOptions: recipeState('model.sceneSelectionOptions'),
         values: {selectedScenes}
     }
 }

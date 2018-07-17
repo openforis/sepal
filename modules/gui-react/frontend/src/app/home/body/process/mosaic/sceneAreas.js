@@ -18,8 +18,8 @@ const mapStateToProps = (state, ownProps) => {
         initialized: recipeState('ui.initialized'),
         sceneAreasShown: recipeState('ui.sceneAreasShown'),
         sceneAreas: recipeState('ui.sceneAreas'),
-        aoi: recipeState('aoi'),
-        source: Object.keys(recipeState('sources'))[0]
+        aoi: recipeState('model.aoi'),
+        source: Object.keys(recipeState('model.sources'))[0]
     }
 }
 

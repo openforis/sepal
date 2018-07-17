@@ -23,9 +23,9 @@ const mapStateToProps = (state, ownProps) => {
         selectedPanel: recipeState('ui.selectedPanel'),
         modal: recipeState('ui.modal'),
         sceneAreasLoaded: sceneAreas && Object.keys(sceneAreas).length > 0,
-        scenesSelected: !!_.flatten(Object.values(recipeState('scenes') || {})).length,
+        scenesSelected: !!_.flatten(Object.values(recipeState('model.scenes') || {})).length,
         initialized: recipeState('ui.initialized'),
-        sceneSelectionType: (recipeState('sceneSelectionOptions') || {}).type,
+        sceneSelectionType: (recipeState('model.sceneSelectionOptions') || {}).type,
     }
 }
 

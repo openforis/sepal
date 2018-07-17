@@ -19,9 +19,9 @@ import SceneSelection from './sceneSelection'
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
-        aoi: recipeState('aoi'),
-        source: Object.keys(recipeState('sources'))[0],
-        sceneSelectionOptions: recipeState('sceneSelectionOptions'),
+        aoi: recipeState('model.aoi'),
+        source: Object.keys(recipeState('model.sources'))[0],
+        sceneSelectionOptions: recipeState('model.sceneSelectionOptions'),
         sceneSelection: recipeState('ui.sceneSelection'),
         tabCount: select('process.tabs').length
     }

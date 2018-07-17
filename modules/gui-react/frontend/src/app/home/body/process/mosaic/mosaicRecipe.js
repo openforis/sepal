@@ -21,7 +21,7 @@ export const RecipeState = (recipeId) => {
         return null
     const get = (path) => recipeState(path)
     get.dateRange = () => {
-        const dates = get('dates')
+        const dates = get('model.dates')
         const seasonStart = moment(dates.seasonStart, DATE_FORMAT)
         const seasonEnd = moment(dates.seasonEnd, DATE_FORMAT)
         return [
@@ -68,43 +68,43 @@ export const RecipeActions = (id) => {
         setAoi(aoiForm) {
             return setAll('SET_AOI', {
                 'ui.aoi': {...aoiForm},
-                'aoi': createAoi(aoiForm),
+                'model.aoi': createAoi(aoiForm),
             }, {aoiForm})
         },
         setDates(datesForm) {
             return setAll('SET_DATES', {
                 'ui.dates': {...datesForm},
-                'dates': createDates(datesForm)
+                'model.dates': createDates(datesForm)
             }, {datesForm})
         },
         setSources(sourcesForm) {
             return setAll('SET_SOURCES', {
                 'ui.sources': {...sourcesForm},
-                'sources': createSources(sourcesForm)
+                'model.sources': createSources(sourcesForm)
             }, {sourcesForm})
         },
         setSceneSelectionOptions(sceneSelectionOptionsForm) {
             return setAll('SET_SCENE_SELECTION_OPTIONS', {
                 'ui.sceneSelectionOptions': {...sceneSelectionOptionsForm},
-                'sceneSelectionOptions': createSceneSelectionOptions(sceneSelectionOptionsForm)
+                'model.sceneSelectionOptions': createSceneSelectionOptions(sceneSelectionOptionsForm)
             }, {sceneSelectionOptionsForm})
         },
         setCompositeOptions(compositeOptionsForm) {
             return setAll('SET_COMPOSITE_OPTIONS', {
                 'ui.compositeOptions': {...compositeOptionsForm},
-                'compositeOptions': createCompositeOptions(compositeOptionsForm)
+                'model.compositeOptions': createCompositeOptions(compositeOptionsForm)
             }, {compositeOptionsForm})
         },
         setBands(bands) {
             return setAll('SET_BANDS', {
                 'ui.bands': bands,
-                'bands': bands ? bands.split(',').map(band => band.trim()) : null
+                'model.bands': bands ? bands.split(',').map(band => band.trim()) : null
             }, {bands})
         },
         setPanSharpen(enabled) {
             return setAll('SET_PAN_SHARPEN', {
                 'ui.panSharpen': enabled,
-                'panSharpen': enabled
+                'model.panSharpen': enabled
             }, {enabled})
         },
         setModal(enabled) {
@@ -116,6 +116,9 @@ export const RecipeActions = (id) => {
         setFusionTableColumns(columns) {
             return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
         },
+        setFusionTableRows(rows) {
+            return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
+        },
         setSceneAreas(sceneAreas) {
             return set('SET_SCENE_AREAS', 'ui.sceneAreas', sceneAreas, {sceneAreas})
         },
@@ -123,10 +126,10 @@ export const RecipeActions = (id) => {
             return set('SET_SCENE_SELECTION', 'ui.sceneSelection', sceneAreaId, {sceneAreaId})
         },
         setSelectedScenesInSceneArea(sceneAreaId, scenes) {
-            return set('SET_SELECTED_SCENES_IN_SCENE_AREA', ['scenes', sceneAreaId], scenes, {sceneAreaId, scenes})
+            return set('SET_SELECTED_SCENES_IN_SCENE_AREA', ['model.scenes', sceneAreaId], scenes, {sceneAreaId, scenes})
         },
         setSelectedScenes(scenes) {
-            return set('SET_SELECTED_SCENES', 'scenes', scenes, {scenes})
+            return set('SET_SELECTED_SCENES', 'model.scenes', scenes, {scenes})
         },
         setSceneToPreview(scene) {
             return set('SET_SCENE_TO_PREVIEW', 'ui.sceneToPreview', scene, {scene})

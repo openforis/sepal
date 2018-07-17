@@ -16,8 +16,8 @@ const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
         initialized: recipeState('ui.initialized'),
-        source: Object.keys(recipeState('sources'))[0],
-        surfaceReflectance: recipeState('compositeOptions').corrections.includes('SR'),
+        source: Object.keys(recipeState('model.sources'))[0],
+        surfaceReflectance: recipeState('model.compositeOptions').corrections.includes('SR'),
         values: {bands: recipeState('ui.bands')}
     }
 }
