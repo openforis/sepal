@@ -66,6 +66,9 @@ const api = {
             ),
         retrieveMosaic: (recipe) =>
             Http.postJson$('/api/tasks', transformRecipeForRetrieval(recipe))
+                .subscribe(),
+        retrieveClassification: (recipe) =>
+            Http.postJson$('/api/tasks', transformRecipeForRetrieval(recipe))
                 .subscribe()
     },
     recipe: {

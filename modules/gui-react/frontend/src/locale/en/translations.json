@@ -423,7 +423,7 @@
       "panel": {
         "source": {
           "button": "MOS",
-          "tooltip":"Select mosaic to classify",
+          "tooltip": "Select mosaic to classify",
           "title": "Image to classify",
           "recipe": {
             "title": "Select saved Sepal recipe"
@@ -464,6 +464,23 @@
               "placeholder.noFusionTable": "Enter a Fusion Table ID first",
               "placeholder.loaded": "Select a column...",
               "required": "A column must be selected"
+            }
+          }
+        },
+        "retrieve": {
+          "title": "Retrieve",
+          "tooltip": "Retrieve classification",
+          "apply": "Retrieve",
+          "form": {
+            "destination": {
+              "label": "Retrieve to",
+              "required": "A destination must be selected",
+              "SEPAL": "Sepal workspace",
+              "GEE": "Google Earth Engine asset"
+            },
+            "task": {
+              "SEPAL": "Retrieve {name} to Sepal workspace",
+              "GEE": "Export {name} as a Google Earth Engine asset"
             }
           }
         }

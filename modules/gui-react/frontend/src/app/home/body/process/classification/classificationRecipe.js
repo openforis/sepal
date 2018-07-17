@@ -1,4 +1,5 @@
 import globalActionBuilder from 'action-builder'
+import backend from 'backend'
 import {recipePath, RecipeState} from '../recipe'
 
 export {recipePath, RecipeState}
@@ -36,6 +37,15 @@ export const RecipeActions = (id) => {
                 'ui.trainingData': {...trainingDataForm},
                 'trainingData': createTrainingData(trainingDataForm),
             }, {trainingDataForm})
+        },
+        retrieve(retrieveOptions) {
+            return actionBuilder('REQUEST_CLASSIFICATION_RETRIEVAL', {retrieveOptions})
+                .setAll({
+                    'ui.retrieveState': 'SUBMITTED',
+                    'ui.retrieveOptions': retrieveOptions,
+                })
+                .sideEffect(recipe => backend.gee.retrieveClassification(recipe))
+                .build()
         },
     }
 }

@@ -21,11 +21,10 @@ const fields = {
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
-    const retrieveOptions = recipeState('ui.retrieveOptions')
     return {
         sources: recipeState('sources'),
         compositeOptions: recipeState('compositeOptions'),
-        values: retrieveOptions,
+        values: recipeState('ui.retrieveOptions'),
         user: currentUser()
     }
 }
