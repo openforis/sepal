@@ -20,7 +20,7 @@ const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
         aoi: recipeState('model.aoi'),
-        source: recipeState.source,
+        source: recipeState.source(),
         sceneSelectionOptions: recipeState('model.sceneSelectionOptions'),
         sceneSelection: recipeState('ui.sceneSelection'),
         tabCount: select('process.tabs').length
