@@ -116,9 +116,6 @@ export const RecipeActions = (id) => {
         setFusionTableColumns(columns) {
             return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
         },
-        setFusionTableRows(rows) {
-            return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
-        },
         setSceneAreas(sceneAreas) {
             return set('SET_SCENE_AREAS', 'ui.sceneAreas', sceneAreas, {sceneAreas})
         },

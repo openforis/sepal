@@ -1,3 +1,4 @@
+import TrainingData from 'app/home/body/process/classification/trainingData/trainingData'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {PanelWizard} from 'widget/panel'
@@ -29,7 +30,7 @@ export default class ClassificationToolbar extends React.Component {
                         name='trainingData'
                         label='process.classification.panel.trainingData.button'
                         tooltip='process.classification.panel.trainingData'>
-                        <Source recipeId={recipeId}/>
+                        <TrainingData recipeId={recipeId}/>
                     </PanelButton>
                 </Toolbar>
             </PanelWizard>

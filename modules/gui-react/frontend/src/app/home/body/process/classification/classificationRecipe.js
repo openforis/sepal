@@ -25,6 +25,18 @@ export const RecipeActions = (id) => {
                 'source': createSource(sourceForm),
             }, {sourceForm})
         },
+        setFusionTableColumns(columns) {
+            return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
+        },
+        setFusionTableRows(rows) {
+            return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
+        },
+        setTrainingData(trainingDataForm) {
+            return setAll('SET_TRAINING_DATA', {
+                'ui.trainingData': {...trainingDataForm},
+                'trainingData': createTrainingData(trainingDataForm),
+            }, {trainingDataForm})
+        },
     }
 }
 
@@ -42,5 +54,13 @@ const createSource = (sourceForm) => {
             }
         default:
             throw new Error('Invalid source section: ' + sourceForm.section)
+    }
+}
+
+const createTrainingData = (trainingDataForm) => {
+    return {
+        type: 'fusionTable',
+        id: trainingDataForm.fusionTable,
+        classColumn: trainingDataForm.fusionTableColumn,
     }
 }

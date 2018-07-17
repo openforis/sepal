@@ -450,7 +450,22 @@
         "trainingData": {
           "button": "TRN",
           "tooltip": "Configure training data source",
-          "title": "Training data"
+          "title": "Training data",
+          "form": {
+            "fusionTable": {
+              "label": "Fusion table",
+              "placeholder": "Enter a Fusion Table ID",
+              "required": "Fusion Table must be specified",
+              "invalid": "Invalid Fution Table ID"
+            },
+            "fusionTableColumn": {
+              "label": "Class column",
+              "placeholder.loading": "Loading columns...",
+              "placeholder.noFusionTable": "Enter a Fusion Table ID first",
+              "placeholder.loaded": "Select a column...",
+              "required": "A column must be selected"
+            }
+          }
         }
       }
     },
