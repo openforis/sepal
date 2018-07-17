@@ -37,6 +37,11 @@ export const RecipeState = (recipeId) => {
         const [from, to] = get.dateRange()
         return isDataSetInDateRange(dataSetId, from, to)
     }
+
+    get.source = () => {
+        const sources = get('model.sources')
+        return sources && Object.keys(sources)[0]
+    }
     initRecipe(get())
     return get
 }
@@ -126,7 +131,10 @@ export const RecipeActions = (id) => {
             return set('SET_SCENE_SELECTION', 'ui.sceneSelection', sceneAreaId, {sceneAreaId})
         },
         setSelectedScenesInSceneArea(sceneAreaId, scenes) {
-            return set('SET_SELECTED_SCENES_IN_SCENE_AREA', ['model.scenes', sceneAreaId], scenes, {sceneAreaId, scenes})
+            return set('SET_SELECTED_SCENES_IN_SCENE_AREA', ['model.scenes', sceneAreaId], scenes, {
+                sceneAreaId,
+                scenes
+            })
         },
         setSelectedScenes(scenes) {
             return set('SET_SELECTED_SCENES', 'model.scenes', scenes, {scenes})
@@ -182,7 +190,6 @@ const initRecipe = (recipeState) => {
 
     actions.setSceneSelectionOptions({
         type: SceneSelectionType.ALL,
-        // type: SceneSelectionType.SELECT,
         targetDateWeight: 0.5
     }).dispatch()
 

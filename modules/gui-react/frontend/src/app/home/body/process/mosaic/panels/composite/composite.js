@@ -24,7 +24,7 @@ const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
         values: recipeState('ui.compositeOptions'),
-        source: Object.keys(recipeState('model.sources'))[0]
+        source: recipeState.source
     }
 }
 
