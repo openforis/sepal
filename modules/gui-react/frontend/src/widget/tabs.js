@@ -21,14 +21,14 @@ const getTabIndex = (id, statePath) =>
     select(path(statePath, 'tabs'))
         .findIndex((tab) => tab.id === id)
 
-const tabPath = (id, statePath) =>
+const toTabPath = (id, statePath) =>
     [statePath, 'tabs', getTabIndex(id, statePath)].join('.')
 
-const renameTab = (id, title, statePath) => {
-    const tabIndex = getTabIndex(id, statePath)
+const renameTab = (id, title, tabPath, onTitleChanged) => {
     actionBuilder('RENAME_TAB')
-        .set([statePath, 'tabs', tabIndex, 'title'], title)
+        .set([tabPath, 'title'], title)
         .dispatch()
+    setTimeout(() => onTitleChanged && onTitleChanged(select(tabPath)), 0)
 }
 
 const closeTab = (id, statePath) => {
@@ -164,15 +164,16 @@ class Tab extends React.Component {
 
     saveTitle() {
         const {id, statePath, onTitleChanged} = this.props
-        const selectTab = () => select(tabPath(id, statePath))
+        const tabPath = toTabPath(id, statePath)
+        const selectTab = () => select(tabPath)
         const prevTitle = selectTab().title
         const title = this.titleInput.current.value
         if (prevTitle === title || (!prevTitle && !title))
             return
-        renameTab(id, title, statePath)
+        renameTab(id, title, tabPath, onTitleChanged)
         this.setState(
-            (state) => ({...state, editing: false}),
-            () => onTitleChanged && onTitleChanged(selectTab()))
+            (state) => ({...state, editing: false})
+        )
     }
 
     render() {
