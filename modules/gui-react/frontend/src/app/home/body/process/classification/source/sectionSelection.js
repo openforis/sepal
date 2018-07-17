@@ -6,7 +6,7 @@ import styles from './sectionSelection.module.css'
 
 export default class SectionSelection extends React.Component {
     render() {
-        const {inputs: {section}} = this.props
+        const {section} = this.props
         const options = [
             {
                 value: 'recipe',
@@ -27,6 +27,5 @@ export default class SectionSelection extends React.Component {
 }
 
 SectionSelection.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    inputs: PropTypes.object.isRequired
+    section: PropTypes.object.isRequired
 }

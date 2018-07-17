@@ -14,7 +14,7 @@ const mapStateToProps = () => {
 
 class RecipeSection extends React.Component {
     render() {
-        const {recipes, inputs: {recipe}} = this.props
+        const {recipes, recipe} = this.props
         const options = recipes.map(recipe => ({
             value: recipe.id,
             label: recipe.name
@@ -34,13 +34,7 @@ class RecipeSection extends React.Component {
 }
 
 RecipeSection.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    inputs: PropTypes.object.isRequired
+    recipe: PropTypes.object.isRequired
 }
 
 export default connect(mapStateToProps)(RecipeSection)
-
-RecipeSection.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    inputs: PropTypes.object.isRequired
-}

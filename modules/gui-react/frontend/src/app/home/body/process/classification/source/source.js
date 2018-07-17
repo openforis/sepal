@@ -41,17 +41,17 @@ class Source extends React.Component {
             {
                 icon: 'cog',
                 title: msg('process.classification.panel.source.title'),
-                component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
+                component: <SectionSelection section={inputs.section}/>
             },
             {
                 value: 'recipe',
                 title: msg('process.classification.panel.source.recipe.title'),
-                component: <RecipeSection recipeId={recipeId} inputs={inputs}/>
+                component: <RecipeSection recipe={inputs.recipe}/>
             },
             {
                 value: 'asset',
                 title: msg('process.classification.panel.source.asset.title'),
-                component: <AssetSection recipeId={recipeId} inputs={inputs}/>
+                component: <AssetSection asset={inputs.asset}/>
             }
         ]
         return (

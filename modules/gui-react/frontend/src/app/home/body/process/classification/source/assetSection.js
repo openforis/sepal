@@ -5,7 +5,7 @@ import {ErrorMessage, Input} from 'widget/form'
 
 export default class AssetSection extends React.Component {
     render() {
-        const {inputs: {asset}} = this.props
+        const {asset} = this.props
         // TODO: Make sure asset is readable
         return (
             <React.Fragment>
@@ -23,6 +23,5 @@ export default class AssetSection extends React.Component {
 }
 
 AssetSection.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    inputs: PropTypes.object.isRequired
+    asset: PropTypes.object.isRequired
 }
