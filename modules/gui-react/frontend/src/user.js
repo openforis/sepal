@@ -81,3 +81,11 @@ export function logout() {
         .del('user')
         .dispatch()
 }
+
+export function profile() {
+    console.log('user profile')
+}
+
+export function info() {
+    console.log('user info')
+}

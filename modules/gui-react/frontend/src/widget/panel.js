@@ -23,8 +23,7 @@ export const Panel = ({top, bottom, right, left, center, className, children}) =
             ].join(' ')}>
                 {children}
             </form>
-        }
-        }
+        }}
     </PanelButtonContext.Consumer>
 
 Panel.propTypes = {
