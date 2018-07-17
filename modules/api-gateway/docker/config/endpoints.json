@@ -8,6 +8,14 @@
     "no-cache": "true"
   },
   {
+    "prefix": "false",
+    "path": "/privacy-policy",
+    "target": "http://gui:7667/static/privacy-policy.html",
+    "https": "true",
+    "authenticate": "false",
+    "cached": "false"
+  },
+  {
     "prefix": "true",
     "path": "/static/",
     "target": "http://gui:7667/static/",

@@ -73,6 +73,12 @@
                     <include>dist/**</include>
                 </includes>
             </resource>
+            <resource>
+                <directory>frontend/public</directory>
+                <includes>
+                    <include>dist/static/**</include>
+                </includes>
+            </resource>
         </resources>
 
         <plugins>
