@@ -6,11 +6,6 @@ import Buttons from 'widget/buttons'
 import styles from './aoi.module.css'
 
 export default class SectionSelection extends React.Component {
-    componentWillMount() {
-        const {inputs} = this.props
-        Object.keys(inputs).forEach((name) => inputs[name] && inputs[name].set(''))
-    }
-
     render() {
         const {inputs: {section}} = this.props
         const options = [

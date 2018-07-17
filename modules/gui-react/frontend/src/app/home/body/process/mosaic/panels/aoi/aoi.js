@@ -45,8 +45,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         values: recipeState('ui.aoi'),
         aoi: recipeState('aoi'),
-        initialized: recipeState('ui.initialized'),
-        labelsShown: recipeState('ui.labelsShown')
+        initialized: recipeState('ui.initialized')
     }
 }
 
@@ -102,7 +101,7 @@ class Aoi extends React.Component {
         ]
         return (
             <Panel className={styles.panel}>
-                <PanelSections selected={inputs.section} sections={sections}/>
+                <PanelSections inputs={inputs} selected={inputs.section} sections={sections}/>
 
                 <PanelButtons
                     statePath={recipePath(recipeId, 'ui')}
@@ -119,7 +118,7 @@ class Aoi extends React.Component {
                 contextId: recipeId,
                 aoi: recipeState && recipeState('aoi'),
                 fill: false
-            }   
+            }
         )
         if (this.aoiUnchanged) {
             sepalMap.fitBounds(this.initialBounds)

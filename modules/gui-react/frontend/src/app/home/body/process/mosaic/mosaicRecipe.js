@@ -56,9 +56,6 @@ export const RecipeActions = (id) => {
             .build()
 
     return {
-        setInitialized() {
-            return set('SET_INITIALIZED', 'ui.initialized', true)
-        },
         setLabelsShown(shown) {
             return Labels.showLabelsAction({shown, mapContext: id, statePath: recipePath(id, 'ui'), layerIndex: 1})
         },
@@ -228,7 +225,7 @@ const createAoi = (aoiForm) => {
                 path: aoiForm.polygon,
             }
         default:
-            throw new Error('InvalidsetSelectedScenes aoi section: ' + aoiForm.section)
+            throw new Error('Invalid aoi section: ' + aoiForm.section)
     }
 }
 

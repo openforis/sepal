@@ -419,7 +419,40 @@
       }
     },
     "classification": {
-      "create": "Classification"
+      "create": "Classification",
+      "panel": {
+        "source": {
+          "button": "MOS",
+          "tooltip":"Select mosaic to classify",
+          "title": "Image to classify",
+          "recipe": {
+            "title": "Select saved Sepal recipe"
+          },
+          "asset": {
+            "title": "Select Earth Engine asset"
+          },
+          "form": {
+            "section": {
+              "required": "An image must be selected"
+            },
+            "recipe": {
+              "label": "Recipe",
+              "placeholder": "Select a recipe...",
+              "required": "You must select a recipe"
+            },
+            "asset": {
+              "label": "Earth Engine asset ID",
+              "placeholder": "Enter an asset ID...",
+              "required": "You must enter an asset ID"
+            }
+          }
+        },
+        "trainingData": {
+          "button": "TRN",
+          "tooltip": "Configure training data source",
+          "title": "Training data"
+        }
+      }
     },
     "changeDetection": {
       "create": "Change detection"

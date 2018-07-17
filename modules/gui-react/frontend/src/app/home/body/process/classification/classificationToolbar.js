@@ -4,7 +4,7 @@ import {PanelWizard} from 'widget/panel'
 import {PanelButton, Toolbar} from 'widget/toolbar'
 import {recipePath} from './classificationRecipe'
 import styles from './classificationToolbar.module.css'
-import Source from './source'
+import Source from './source/source'
 
 export default class ClassificationToolbar extends React.Component {
     render() {
@@ -20,15 +20,15 @@ export default class ClassificationToolbar extends React.Component {
                     className={styles.bottom}>
                     <PanelButton
                         name='mosaic'
-                        label='MOZ'
-                        tooltip='Select mosaic to classify'>
+                        label='process.classification.panel.source.button'
+                        tooltip='process.classification.panel.source'>
                         <Source recipeId={recipeId}/>
                     </PanelButton>
 
                     <PanelButton
                         name='trainingData'
-                        label='TRN'
-                        tooltip='Select mosaic to classify'>
+                        label='process.classification.panel.trainingData.button'
+                        tooltip='process.classification.panel.trainingData'>
                         <Source recipeId={recipeId}/>
                     </PanelButton>
                 </Toolbar>

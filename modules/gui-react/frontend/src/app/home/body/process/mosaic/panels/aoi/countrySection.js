@@ -117,10 +117,6 @@ class CountrySection extends React.Component {
         )
     }
 
-    shouldComponentUpdate(nextProps) {
-        return nextProps.inputs !== this.props.inputs
-    }
-
     componentDidUpdate() {
         this.update()
     }
