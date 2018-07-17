@@ -70,20 +70,6 @@ export const loadRecipes$ = () =>
             .build())
     )
 
-export const deleteRecipe$ = (recipeId) =>
-    backend.recipe.delete$(recipeId).pipe(
-        map(() => {
-            const recipes = select('process.recipes')
-                .filter(recipe => recipe.id !== recipeId)
-            return actionBuilder('SET_RECIPES', {recipes})
-                .set('process.recipes', recipes)
-                .build()
-        })
-    )
-
-export const deleteRecipe = (recipeId) =>
-    deleteRecipe$(recipeId).subscribe(action => action.dispatch())
-
 export const loadRecipe$ = (recipeId) => {
     const selectedTabId = select('process.selectedTabId')
     if (recipeExists(recipeId)) {
@@ -126,6 +112,22 @@ export const duplicateRecipe$ = (recipeId) => {
     )
 }
 
+
+export const deleteRecipe$ = (recipeId) =>
+    backend.recipe.delete$(recipeId).pipe(
+        map(() => {
+            const recipes = select('process.recipes')
+                .filter(recipe => recipe.id !== recipeId)
+            return actionBuilder('SET_RECIPES', {recipes})
+                .set('process.recipes', recipes)
+                .build()
+        })
+    )
+
+export const deleteRecipe = (recipeId) =>
+    deleteRecipe$(recipeId).subscribe(action => action.dispatch())
+
+
 const recipeExists = (recipeId) =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
 
@@ -136,8 +138,8 @@ subscribe('process.tabs', (recipes) => {
         if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
             const recipesToSave = recipes
                 .filter(recipe => {
-                    const prevRecipe = prevTabs.find(prevRecipe => prevRecipe.id === recipe.id)
-                    return prevRecipe !== recipe
+                    const prevRecipe = prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
+                    return prevRecipe.model !== recipe.model
                 })
                 .filter(recipe =>
                     (select('process.recipes') || []).find(saved =>
