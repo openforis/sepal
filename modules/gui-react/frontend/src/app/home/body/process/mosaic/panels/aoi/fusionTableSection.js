@@ -12,10 +12,10 @@ import {ErrorMessage, Input} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipe = new RecipeState(ownProps.recipeId)
+    const recipeState = new RecipeState(ownProps.recipeId)
     return {
-        columns: recipe('ui.fusionTable.columns'),
-        rows: recipe('ui.fusionTable.rows')
+        columns: recipeState('ui.fusionTable.columns'),
+        rows: recipeState('ui.fusionTable.rows')
     }
 }
 
