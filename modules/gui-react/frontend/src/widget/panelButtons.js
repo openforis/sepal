@@ -85,7 +85,7 @@ class PanelButtons extends React.Component {
                     return (
                         <div className={styles.buttons}>
                             {this.renderAdditionalButtons()}
-                            {initialized ? this.renderFormButtons() : this.renderWizardButtons()}
+                            {!panels || initialized ? this.renderFormButtons() : this.renderWizardButtons()}
                         </div>
                     )
                 }}
