@@ -176,6 +176,12 @@ const initRecipe = (recipeState) => {
         return
 
     const actions = RecipeActions(recipeState.id)
+
+    actions.setLabelsShown(false).dispatch()
+    actions.setSceneAreasShown(true).dispatch()
+    actions.setBands('red, green, blue').dispatch()
+    actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
+
     const model = recipeState.model
     if (model)
         return actions.setInitialized(model.aoi && model.dates && model.sources).dispatch()
@@ -215,12 +221,6 @@ const initRecipe = (recipeState) => {
             compose: 'MEDOID'
         }
     }).dispatch()
-
-
-    actions.setLabelsShown(false).dispatch()
-    actions.setSceneAreasShown(true).dispatch()
-    actions.setBands('red, green, blue').dispatch()
-    actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
 }
 
 export const inDateRange = (date, dates) => {
