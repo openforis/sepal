@@ -103,6 +103,29 @@ const createMap = (mapElement) => {
         zoomOut() {
             googleMap.setZoom(googleMap.getZoom() - 1)
         },
+        zoomArea() {
+            const setZooming = (zooming) =>
+                actionBuilder('SET_MAP_ZOOMING')
+                    .set('map.zooming', zooming)
+                    .dispatch()
+            setZooming(true)
+            const drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.RECTANGLE,
+                drawingControl: false,
+                rectangleOptions: drawingOptions
+            })
+            const drawingListener = (e) => {
+                setZooming(false)
+                const rectangle = e.overlay
+                rectangle.setMap(null)
+                drawingManager.setMap(null)
+                googleMap.fitBounds(rectangle.bounds)
+            }
+            google.maps.event.addListener(drawingManager, 'overlaycomplete', drawingListener)
+            drawingManager.setMap(googleMap)
+
+
+        },
         isMaxZoom() {
             return googleMap.getZoom() === googleMap.maxZoom
         },
@@ -175,6 +198,9 @@ const createMap = (mapElement) => {
                         if (currentContextId === contextId)
                             layer.removeFromMap(googleMap)
                         delete layerById[id]
+                    },
+                    hasLayer(id) {
+                        return !!layerById[id]
                     },
                     fitLayer(id) {
                         const layer = layerById[id]

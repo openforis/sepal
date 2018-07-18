@@ -130,6 +130,7 @@
     "mosaic": {
       "create": "Mosaic",
       "mapToolbar": {
+        "zoom.tooltip": "Zoom to area",
         "zoomIn.tooltip": "Zoom in",
         "zoomOut.tooltip": "Zoom out",
         "labels.show.tooltip": "Show labels",

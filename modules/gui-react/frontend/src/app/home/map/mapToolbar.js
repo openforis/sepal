@@ -8,24 +8,36 @@ import styles from './mapToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => ({
     labelsShown: select([ownProps.statePath, 'labelsShown']),
-    zoomLevel: sepalMap.getZoom()
+    zoomLevel: sepalMap.getZoom(),
+    isZooming: select('map.zooming')
 })
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, mapContext, labelsShown, labelLayerIndex, children} = this.props
+        const {statePath, mapContext, labelsShown, labelLayerIndex, isZooming, children} = this.props
         return (
             <Toolbar className={styles.mapToolbar} horizontal top right>
                 <ToolbarButton
                     disabled={sepalMap.isMaxZoom()}
-                    onClick={sepalMap.zoomIn.bind(sepalMap)}
+                    onClick={() => sepalMap.zoomIn()}
                     icon={'plus'}
                     tooltip={'process.mosaic.mapToolbar.zoomIn'}/>
                 <ToolbarButton
                     disabled={sepalMap.isMinZoom()}
-                    onClick={sepalMap.zoomOut.bind(sepalMap)}
+                    onClick={() => sepalMap.zoomOut()}
                     icon={'minus'}
                     tooltip={'process.mosaic.mapToolbar.zoomOut'}/>
+                <ToolbarButton
+                    selected={isZooming}
+                    disabled={sepalMap.isMaxZoom()}
+                    onClick={() => sepalMap.zoomArea()}
+                    icon={'search'}
+                    tooltip={'process.mosaic.mapToolbar.zoom'}/>
+                <ToolbarButton
+                    disabled={!sepalMap.getContext(mapContext).hasLayer('aoi')}
+                    onClick={() => sepalMap.getContext(mapContext).fitLayer('aoi')}
+                    icon={'bullseye'}
+                    tooltip={'process.mosaic.mapToolbar.centerMap'}/>
                 <ToolbarButton
                     selected={labelsShown}
                     onClick={() => Labels.showLabelsAction({
@@ -37,10 +49,6 @@ class MapToolbar extends React.Component {
                     icon={'map-marker-alt'}
                     tooltip={`process.mosaic.mapToolbar.labels.${labelsShown ? 'hide' : 'show'}`}/>
                 {children}
-                <ToolbarButton
-                    onClick={() => sepalMap.getContext(mapContext).fitLayer('aoi')}
-                    icon={'bullseye'}
-                    tooltip={'process.mosaic.mapToolbar.centerMap'}/>
             </Toolbar>
         )
     }
