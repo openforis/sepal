@@ -107,6 +107,7 @@ const createMap = (mapElement) => {
             const setZooming = (zooming) =>
                 actionBuilder('SET_MAP_ZOOMING')
                     .set('map.zooming', zooming)
+                    .set('map.zoom', googleMap.getZoom())
                     .dispatch()
             setZooming(true)
             const drawingManager = new google.maps.drawing.DrawingManager({
@@ -115,11 +116,11 @@ const createMap = (mapElement) => {
                 rectangleOptions: drawingOptions
             })
             const drawingListener = (e) => {
-                setZooming(false)
                 const rectangle = e.overlay
                 rectangle.setMap(null)
                 drawingManager.setMap(null)
                 googleMap.fitBounds(rectangle.bounds)
+                setZooming(false)
             }
             google.maps.event.addListener(drawingManager, 'overlaycomplete', drawingListener)
             drawingManager.setMap(googleMap)
