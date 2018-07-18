@@ -3,7 +3,9 @@ import styles from './footer.module.css'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import Tooltip from 'widget/tooltip'
-import {logout} from 'user'
+import {profile, info, logout} from 'user'
+// import UserInfo from '../user/userInfo'
+import UserProfile from '../user/userProfile'
 import MenuMode from '../menu/menuMode'
 
 const Footer = ({className, user}) => {
@@ -19,7 +21,8 @@ const Footer = ({className, user}) => {
                 </div>
                 <div>
                     <HourlyCost/>
-                    <User user={user}/>
+                    <UserProfile className={styles.user} user={user}/>
+                    <Logout/>
                 </div>
             </div>
         </div>
@@ -38,17 +41,16 @@ const Logout = () =>
         </button>
     </Tooltip>
 
-const User = ({user}) =>
-    <span>
-        <button className={styles.user}>
-            {user.username}
-        </button>
-        <Logout/>
-    </span>
+// const User = ({user}) =>
+//     <Tooltip msg='home.sections.user.profile' top>
+//         <button className={styles.user} onClick={profile}>
+//             {user.username}
+//         </button>
+//     </Tooltip>
 
-User.propTypes = {
-    user: PropTypes.object
-}
+// User.propTypes = {
+//     user: PropTypes.object
+// }
 
 const Title = () => {
     const wikiURL = 'https://github.com/openforis/sepal/wiki'
@@ -65,8 +67,10 @@ const Copyright = () => {
 }
 
 const HourlyCost = () =>
-    <span className={styles.hourlyCost}>
-        <Icon name='dollar-sign'/> 0/h
-    </span>
+    <Tooltip msg='home.sections.user.info'>
+        <button className={styles.hourlyCost} onClick={info}>
+            <Icon name='dollar-sign'/> 0/h
+        </button>
+    </Tooltip>
 
 export default Footer

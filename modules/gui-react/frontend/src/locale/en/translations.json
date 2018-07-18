@@ -88,7 +88,11 @@
       "account.tooltip": "Modify your account settings",
       "logout.tooltip": "Logout from Sepal",
       "expand.tooltip": "Expand menu (fixed)",
-      "collapse.tooltip": "Collapse menu (floating)"
+      "collapse.tooltip": "Collapse menu (floating)",
+      "user": {
+        "profile.tooltip": "Manage user profile",
+        "info.tooltip": "Show user info"
+      }
     }
   },
   "map": {
@@ -491,6 +495,11 @@
     },
     "timeSeries": {
       "create": "Time series"
+    }
+  },
+  "user": {
+    "panel": {
+      "title": "User profile"
     }
   },
   "unauthorized.warning": {
