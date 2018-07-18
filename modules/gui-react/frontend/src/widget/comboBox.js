@@ -81,7 +81,7 @@ class ComboBox extends React.Component {
 
     componentDidUpdate(prevProps) {
         const value = this.props.input.value
-        if (prevProps.input.value !== value)
+        if (prevProps.input.value !== value || prevProps.options !== this.props.options)
             this.updateSelectedOption()
 
         const appHeight = this.props.appDimensions.height
