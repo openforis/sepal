@@ -206,7 +206,7 @@ const initRecipe = (recipeState) => {
     actions.setSceneSelectionOptions({
         model: {
             type: SceneSelectionType.ALL,
-            targetDateWeight: 0.5
+            targetDateWeight: 0
         }
     }).dispatch()
 
@@ -217,7 +217,7 @@ const initRecipe = (recipeState) => {
             hazePercentile: 0,
             ndviPercentile: 0,
             dayOfYearPercentile: 0,
-            mask: ['CLOUDS'],
+            mask: ['CLOUDS', 'SNOW'],
             compose: 'MEDOID'
         }
     }).dispatch()
