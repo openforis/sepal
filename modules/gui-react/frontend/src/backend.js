@@ -1,5 +1,6 @@
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import Http from 'http-client'
+import _ from 'lodash'
 import moment from 'moment'
 import {map} from 'rxjs/operators'
 import {msg} from 'translate'
@@ -77,7 +78,7 @@ const api = {
                 map(e => e.response)
             ),
         save$: (recipe) =>
-            Http.post$(`/processing-recipes/${recipe.id}`, {body: {data: JSON.stringify(recipe)}})
+            Http.post$(`/processing-recipes/${recipe.id}`, {body: {data: JSON.stringify(_.omit(recipe, ['ui']))}})
         ,
         delete$: (recipeId) =>
             Http.delete$(`/processing-recipes/${recipeId}`),

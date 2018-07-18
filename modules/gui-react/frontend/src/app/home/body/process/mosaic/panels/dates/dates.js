@@ -70,10 +70,15 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        values: recipeState('ui.dates')
+    const recipeId = ownProps.recipeId
+    const recipeState = RecipeState(recipeId)
+    let values = recipeState('ui.dates')
+    if (!values) {
+        const model = recipeState('model.dates')
+        values = modelToValues(model)
+        RecipeActions(recipeId).setDates({values, model}).dispatch()
     }
+    return {values}
 }
 
 class Dates extends React.Component {
@@ -122,7 +127,7 @@ class Dates extends React.Component {
                 <PanelButtons
                     statePath={recipePath(recipeId, 'ui')}
                     form={form}
-                    onApply={(dates) => this.recipeActions.setDates(dates).dispatch()}
+                    onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}
                     additionalButtons={[{
                         key: 'advanced',
                         label: advanced.value ? msg('button.less') : msg('button.more'),
@@ -219,3 +224,40 @@ Dates.propTypes = {
 }
 
 export default form({fields, mapStateToProps})(Dates)
+
+
+const valuesToModel = (values) => {
+    const DATE_FORMAT = 'YYYY-MM-DD'
+    if (values.advanced)
+        return {
+            targetDate: values.targetDate,
+            seasonStart: values.seasonStart,
+            seasonEnd: values.seasonEnd,
+            yearsBefore: Number(values.yearsBefore),
+            yearsAfter: Number(values.yearsAfter)
+        }
+    else
+        return {
+            targetDate: moment().year(values.targetYear).month(6).date(2).format(DATE_FORMAT),
+            seasonStart: moment().year(values.targetYear).startOf('year').format(DATE_FORMAT),
+            seasonEnd: moment().year(Number(values.targetYear) + 1).startOf('year').format(DATE_FORMAT),
+            yearsBefore: 0,
+            yearsAfter: 0
+        }
+}
+
+const modelToValues = (model = {}) => {
+    return {
+        advanced:
+            moment(model.seasonStart).dayOfYear() !== 1
+            || moment(model.seasonEnd).dayOfYear() !== 1
+            || model.yearsBefore !== 0
+            || model.yearsAfter !== 0,
+        targetYear: String(moment(model.targetDate).year()),
+        targetDate: model.targetDate,
+        seasonStart: model.seasonStart,
+        seasonEnd: model.seasonEnd,
+        yearsBefore: String(model.yearsBefore),
+        yearsAfter: String(model.yearsAfter),
+    }
+}

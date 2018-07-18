@@ -17,10 +17,15 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        values: recipeState('ui.sceneSelectionOptions')
+    const recipeId = ownProps.recipeId
+    const recipeState = RecipeState(recipeId)
+    let values = recipeState('ui.sceneSelectionOptions')
+    if (!values) {
+        const model = recipeState('model.sceneSelectionOptions')
+        values = modelToValues(model)
+        RecipeActions(recipeId).setSceneSelectionOptions({values, model}).dispatch()
     }
+    return {values}
 }
 
 class Scenes extends React.Component {
@@ -104,7 +109,10 @@ class Scenes extends React.Component {
                 <PanelButtons
                     statePath={recipePath(recipeId, 'ui')}
                     form={form}
-                    onApply={(sources) => this.recipeActions.setSceneSelectionOptions(sources).dispatch()}/>
+                    onApply={values => this.recipeActions.setSceneSelectionOptions({
+                        values,
+                        model: valuesToModel(values)
+                    }).dispatch()}/>
             </Panel>
         )
     }
@@ -119,3 +127,12 @@ Scenes.propTypes = {
 }
 
 export default form({fields, mapStateToProps})(Scenes)
+
+
+const valuesToModel = (values) => ({
+    ...values
+})
+
+const modelToValues = (model) => ({
+    ...model
+})

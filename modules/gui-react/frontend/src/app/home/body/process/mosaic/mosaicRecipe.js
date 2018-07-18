@@ -1,5 +1,4 @@
 import globalActionBuilder from 'action-builder'
-import {countryFusionTable} from 'app/home/map/aoiLayer'
 import backend from 'backend'
 import moment from 'moment'
 import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
@@ -70,45 +69,45 @@ export const RecipeActions = (id) => {
         selectPanel(panel) {
             return set('SELECT_MOSAIC_PANEL', 'ui.selectedPanel', panel, {panel})
         },
-        setAoi(aoiForm) {
+        setAoi({values, model}) {
             return setAll('SET_AOI', {
-                'ui.aoi': {...aoiForm},
-                'model.aoi': createAoi(aoiForm),
-            }, {aoiForm})
+                'ui.aoi': values,
+                'model.aoi': model,
+            }, {values, model})
         },
-        setDates(datesForm) {
+        setDates({values, model}) {
             return setAll('SET_DATES', {
-                'ui.dates': {...datesForm},
-                'model.dates': createDates(datesForm)
-            }, {datesForm})
+                'ui.dates': values,
+                'model.dates': model
+            }, {values, model})
         },
-        setSources(sourcesForm) {
+        setSources({values, model}) {
             return setAll('SET_SOURCES', {
-                'ui.sources': {...sourcesForm},
-                'model.sources': createSources(sourcesForm)
-            }, {sourcesForm})
+                'ui.sources': values,
+                'model.sources': model
+            }, {values, model})
         },
-        setSceneSelectionOptions(sceneSelectionOptionsForm) {
+        setSceneSelectionOptions({values, model}) {
             return setAll('SET_SCENE_SELECTION_OPTIONS', {
-                'ui.sceneSelectionOptions': {...sceneSelectionOptionsForm},
-                'model.sceneSelectionOptions': createSceneSelectionOptions(sceneSelectionOptionsForm)
-            }, {sceneSelectionOptionsForm})
+                'ui.sceneSelectionOptions': values,
+                'model.sceneSelectionOptions': model
+            }, {values, model})
         },
-        setCompositeOptions(compositeOptionsForm) {
+        setCompositeOptions({values, model}) {
             return setAll('SET_COMPOSITE_OPTIONS', {
-                'ui.compositeOptions': {...compositeOptionsForm},
-                'model.compositeOptions': createCompositeOptions(compositeOptionsForm)
-            }, {compositeOptionsForm})
+                'ui.compositeOptions': values,
+                'model.compositeOptions': model
+            }, {values, model})
         },
         setBands(bands) {
             return setAll('SET_BANDS', {
-                'ui.bands': bands,
+                'ui.bands.selection': bands,
                 'model.bands': bands ? bands.split(',').map(band => band.trim()) : null
             }, {bands})
         },
         setPanSharpen(enabled) {
             return setAll('SET_PAN_SHARPEN', {
-                'ui.panSharpen': enabled,
+                'ui.bands.panSharpen': enabled,
                 'model.panSharpen': enabled
             }, {enabled})
         },
@@ -166,41 +165,55 @@ export const RecipeActions = (id) => {
         setRetrieveState(state) {
             return set('SET_RETRIEVE_STATE', 'ui.retrieveState', state, {state})
         },
+        setInitialized(initialized) {
+            return set('SET_INITIALIZED', 'ui.initialized', !!initialized, {initialized})
+        }
     }
 }
 
 const initRecipe = (recipeState) => {
-    if (!recipeState || recipeState.ui || recipeState.aoi)
+    if (!recipeState || recipeState.ui)
         return
 
     const actions = RecipeActions(recipeState.id)
+    const model = recipeState.model
+    if (model)
+        return actions.setInitialized(model.aoi && model.dates && model.sources).dispatch()
+
+    const now = moment()
     actions.setDates({
-        advanced: false,
-        targetYear: String(moment().year()),
-        targetDate: moment().format(DATE_FORMAT),
-        seasonStart: moment().startOf('year').format(DATE_FORMAT),
-        seasonEnd: moment().add(1, 'years').startOf('year').format(DATE_FORMAT),
-        yearsBefore: 0,
-        yearsAfter: 0
+        model: {
+            targetDate: now.format(DATE_FORMAT),
+            seasonStart: now.startOf('year').format(DATE_FORMAT),
+            seasonEnd: now.add(1, 'years').startOf('year').format(DATE_FORMAT),
+            yearsBefore: 0,
+            yearsAfter: 0
+        }
     }).dispatch()
 
     actions.setSources({
-        source: 'landsat'
+        model: {
+            landsat: ['landsat8']
+        }
     }).dispatch()
 
     actions.setSceneSelectionOptions({
-        type: SceneSelectionType.ALL,
-        targetDateWeight: 0.5
+        model: {
+            type: SceneSelectionType.ALL,
+            targetDateWeight: 0.5
+        }
     }).dispatch()
 
     actions.setCompositeOptions({
-        corrections: ['SR', 'BRDF'],
-        shadowPercentile: 0,
-        hazePercentile: 0,
-        ndviPercentile: 0,
-        dayOfYearPercentile: 0,
-        mask: ['CLOUDS'],
-        compose: 'MEDOID'
+        model: {
+            corrections: ['SR', 'BRDF'],
+            shadowPercentile: 0,
+            hazePercentile: 0,
+            ndviPercentile: 0,
+            dayOfYearPercentile: 0,
+            mask: ['CLOUDS'],
+            compose: 'MEDOID'
+        }
     }).dispatch()
 
 
@@ -209,64 +222,6 @@ const initRecipe = (recipeState) => {
     actions.setBands('red, green, blue').dispatch()
     actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
 }
-
-const createAoi = (aoiForm) => {
-    switch (aoiForm.section) {
-        case 'country':
-            return {
-                type: 'fusionTable',
-                id: countryFusionTable,
-                keyColumn: 'id',
-                key: aoiForm.area || aoiForm.country,
-            }
-        case 'fusionTable':
-            return {
-                type: 'fusionTable',
-                id: aoiForm.fusionTable,
-                keyColumn: aoiForm.fusionTableColumn,
-                key: aoiForm.fusionTableRow,
-            }
-        case 'polygon':
-            return {
-                type: 'polygon',
-                path: aoiForm.polygon,
-            }
-        default:
-            throw new Error('Invalid aoi section: ' + aoiForm.section)
-    }
-}
-
-const createDates = (datesForm) => {
-    const DATE_FORMAT = 'YYYY-MM-DD'
-    if (datesForm.advanced)
-        return {
-            targetDate: datesForm.targetDate,
-            seasonStart: datesForm.seasonStart,
-            seasonEnd: datesForm.seasonEnd,
-            yearsBefore: Number(datesForm.yearsBefore),
-            yearsAfter: Number(datesForm.yearsAfter)
-        }
-    else
-        return {
-            targetDate: moment().year(datesForm.targetYear).month(6).date(2).format(DATE_FORMAT),
-            seasonStart: moment().year(datesForm.targetYear).startOf('year').format(DATE_FORMAT),
-            seasonEnd: moment().year(Number(datesForm.targetYear) + 1).startOf('year').format(DATE_FORMAT),
-            yearsBefore: 0,
-            yearsAfter: 0
-        }
-}
-
-const createSources = (sourcesForm) => ({
-    [sourcesForm.source]: sourcesForm.dataSets ? [...sourcesForm.dataSets] : null
-})
-
-const createSceneSelectionOptions = (sceneSelectionOptionsForm) => ({
-    ...sceneSelectionOptionsForm
-})
-
-const createCompositeOptions = (compositeOptionsForm) => ({
-    ...compositeOptionsForm
-})
 
 export const inDateRange = (date, dates) => {
     date = moment(date, DATE_FORMAT)

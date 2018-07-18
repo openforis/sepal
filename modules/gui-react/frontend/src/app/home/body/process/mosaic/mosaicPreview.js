@@ -87,19 +87,13 @@ class MosaicPreview extends React.Component {
                     && Object.keys(recipe.model.scenes).find(sceneAreaId => recipe.model.scenes[sceneAreaId].length > 0)))
     }
 
-
-    toLayerProps(recipe) {
-        return _.omit(recipe, ['ui', 'placeholder', 'title'])
-    }
-
     componentDidMount() {
         this.updateLayer()
     }
 
     componentDidUpdate(prevProps) {
         const {recipe} = this.props
-        const layerProps = this.toLayerProps(recipe)
-        const layerChanged = !_.isEqual(layerProps, this.toLayerProps(prevProps.recipe))
+        const layerChanged = !_.isEqual(recipe.model, prevProps.recipe.model)
         if (layerChanged)
             this.updateLayer()
         const context = sepalMap.getContext(recipe.id)
@@ -112,9 +106,9 @@ class MosaicPreview extends React.Component {
         const layer = this.isPreviewShown()
             ? new EarthEngineImageLayer({
                 layerIndex: 0,
-                bounds: recipe.ui.aoi.bounds,
+                bounds: recipe.model.aoi.bounds,
                 mapId$: backend.gee.preview$(recipe),
-                props: this.toLayerProps(recipe),
+                props: recipe.model,
                 onProgress: (tiles) => this.onProgress(tiles)
             })
             : null

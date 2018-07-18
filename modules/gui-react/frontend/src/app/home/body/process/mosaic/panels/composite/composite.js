@@ -21,9 +21,16 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const recipeId = ownProps.recipeId
+    const recipeState = RecipeState(recipeId)
+    let values = recipeState('ui.compositeOptions')
+    if (!values) {
+        const model = recipeState('model.compositeOptions')
+        values = modelToValues(model)
+        RecipeActions(recipeId).setCompositeOptions({values, model}).dispatch()
+    }
     return {
-        values: recipeState('ui.compositeOptions'),
+        values,
         source: recipeState.source()
     }
 }
@@ -108,20 +115,23 @@ class Composite extends React.Component {
     render() {
         const {recipeId, form} = this.props
         return (
-                <Panel className={styles.panel}>
-                    <PanelHeader
-                        icon='cog'
-                        title={msg('process.mosaic.panel.composite.title')}/>
+            <Panel className={styles.panel}>
+                <PanelHeader
+                    icon='cog'
+                    title={msg('process.mosaic.panel.composite.title')}/>
 
-                    <PanelContent>
-                        {this.renderContent()}
-                    </PanelContent>
+                <PanelContent>
+                    {this.renderContent()}
+                </PanelContent>
 
-                    <PanelButtons
-                        statePath={recipePath(recipeId, 'ui')}
-                        form={form}
-                        onApply={(options) => this.recipeActions.setCompositeOptions(options).dispatch()}/>
-                </Panel>
+                <PanelButtons
+                    statePath={recipePath(recipeId, 'ui')}
+                    form={form}
+                    onApply={values => this.recipeActions.setCompositeOptions({
+                        values,
+                        model: valuesToModel(values)
+                    }).dispatch()}/>
+            </Panel>
         )
     }
 }
@@ -153,3 +163,11 @@ Composite.propTypes = {
 }
 
 export default form({fields, mapStateToProps})(Composite)
+
+const valuesToModel = (values) => ({
+    ...values
+})
+
+const modelToValues = (model) => ({
+    ...model
+})

@@ -232,36 +232,36 @@ const createMap = (mapElement) => {
             }
             return context
         },
-        selectLayers(nextContextId) {
-            if (currentContextId === nextContextId)
+        setContext(contextId) {
+            if (currentContextId === contextId)
                 return
             const prevContextId = currentContextId
             if (prevContextId) {
-                const layers = this.getContext(prevContextId)
-                layers.pauseDrawingMode()
-                layers.removeFromMap()
+                const context = this.getContext(prevContextId)
+                context.pauseDrawingMode()
+                context.removeFromMap()
             }
 
-            currentContextId = nextContextId
-            if (nextContextId) {
-                const layers = this.getContext(nextContextId)
-                layers.addToMap()
-                layers._drawingMode && layers.drawPolygon(layers._drawingMode.id, layers._drawingMode.callback)
+            currentContextId = contextId
+            if (contextId) {
+                const context = this.getContext(contextId)
+                context.addToMap()
+                context._drawingMode && context.drawPolygon(context._drawingMode.id, context._drawingMode.callback)
             }
 
         },
-        deselectLayers(contextIdToDeselect) {
-            if (contextIdToDeselect === currentContextId)
+        clearContext(contextId) {
+            if (contextId === currentContextId)
                 sepalMap.clear()
         },
-        removeLayers(contextIdToRemove) {
-            if (contextIdToRemove === currentContextId) {
+        removeContext(contextId) {
+            if (contextId === currentContextId) {
                 sepalMap.clear()
             }
-            delete contextById[contextIdToRemove]
+            delete contextById[contextId]
         },
         clear() {
-            sepalMap.selectLayers()
+            sepalMap.setContext()
         }
     }
 }

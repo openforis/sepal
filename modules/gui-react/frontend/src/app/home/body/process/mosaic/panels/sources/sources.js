@@ -20,7 +20,14 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const recipeId = ownProps.recipeId
+    const recipeState = RecipeState(recipeId)
+    let values = recipeState('ui.sources')
+    if (!values) {
+        const model = recipeState('model.sources')
+        values = modelToValues(model)
+        RecipeActions(recipeId).setSources({values, model}).dispatch()
+    }
     return {
         values: recipeState('ui.sources')
     }
@@ -111,7 +118,10 @@ class Sources extends React.Component {
                 <PanelButtons
                     statePath={recipePath(recipeId, 'ui')}
                     form={form}
-                    onApply={(sources) => this.recipeActions.setSources(sources).dispatch()}/>
+                    onApply={values => this.recipeActions.setSources({
+                        values,
+                        model: valuesToModel(values)
+                    }).dispatch()}/>
             </Panel>
         )
     }
@@ -137,3 +147,14 @@ Sources.propTypes = {
 
 export default form({fields, mapStateToProps})(Sources)
 
+
+const valuesToModel = (values) => {
+    return {[values.source]: values.dataSets ? [...values.dataSets] : null}
+}
+
+const modelToValues = (model) => {
+    return {
+        source: Object.keys(model)[0],
+        dataSets: [...Object.values(model)[0]]
+    }
+}

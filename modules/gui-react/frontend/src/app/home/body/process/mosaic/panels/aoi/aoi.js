@@ -1,4 +1,4 @@
-import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
 import {sepalMap} from 'app/home/map/map'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
@@ -41,29 +41,32 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        values: recipeState('ui.aoi'),
-        aoi: recipeState('model.aoi'),
-        initialized: recipeState('ui.initialized')
+    const recipeId = ownProps.recipeId
+    const recipeState = RecipeState(recipeId)
+    const model = recipeState('model.aoi')
+    let values = recipeState('ui.aoi')
+    if (!values) {
+        values = modelToValues(model)
+        RecipeActions(recipeId).setAoi({values, model}).dispatch()
     }
+    return {model, values}
 }
 
 class Aoi extends React.Component {
     constructor(props) {
         super(props)
-        const {aoi, recipeId} = props
+        const {values, recipeId} = props
         this.aoiUnchanged = true
-        this.initialAoi = aoi
+        this.initialAoi = values
         this.initialBounds = sepalMap.getBounds()
         this.initialZoom = sepalMap.getZoom()
         this.recipeActions = RecipeActions(recipeId)
     }
 
-    onApply(aoiForm) {
+    onApply(values) {
         const {recipeId, componentWillUnmount$} = this.props
-        this.initialBounds = aoiForm.bounds
-        this.recipeActions.setAoi(aoiForm).dispatch()
+        this.initialBounds = values.bounds
+        this.recipeActions.setAoi({values, model: valuesToModel(values)}).dispatch()
         const aoi = RecipeState(recipeId)('ui.aoi')
         this.aoiUnchanged = _.isEqual(aoi, this.initialAoi)
         setAoiLayer({
@@ -106,7 +109,7 @@ class Aoi extends React.Component {
                 <PanelButtons
                     statePath={recipePath(recipeId, 'ui')}
                     form={form}
-                    onApply={(aoi) => this.onApply(aoi)}/>
+                    onApply={(values) => this.onApply(values)}/>
             </Panel>
         )
     }
@@ -128,11 +131,63 @@ class Aoi extends React.Component {
 }
 
 Aoi.propTypes = {
-    recipeId: PropTypes.string,
-    form: PropTypes.object,
-    fields: PropTypes.object,
-    action: PropTypes.func,
-    values: PropTypes.object
+    recipeId: PropTypes.string.isRequired
 }
 
 export default form({fields, mapStateToProps})(Aoi)
+
+const valuesToModel = (values) => {
+    switch (values.section) {
+        case 'country':
+            return {
+                type: 'fusionTable',
+                id: countryFusionTable,
+                keyColumn: 'id',
+                key: values.area || values.country,
+                level: values.area ? 'area' : 'country',
+                bounds: values.bounds
+            }
+        case 'fusionTable':
+            return {
+                type: 'fusionTable',
+                id: values.fusionTable,
+                keyColumn: values.fusionTableColumn,
+                key: values.fusionTableRow,
+                bounds: values.bounds
+            }
+        case 'polygon':
+            return {
+                type: 'polygon',
+                path: values.polygon,
+                bounds: values.bounds
+            }
+        default:
+            throw new Error('Invalid aoi section: ' + values.section)
+    }
+}
+
+const modelToValues = (model = {}) => {
+    if (model.type === 'fusionTable')
+        if (model.id === countryFusionTable)
+            return {
+                section: 'country',
+                [model.level]: model.key,
+                bounds: model.bounds
+            }
+        else
+            return {
+                section: 'fusionTable',
+                fusionTable: model.id,
+                fusionTableColumn: model.keyColumn,
+                fusionTableRow: model.key,
+                bounds: model.bounds
+            }
+    else if (model.type === 'polygon')
+        return {
+            section: 'polygon',
+            polygon: model.path,
+            bounds: model.bounds
+        }
+    else
+        return {}
+}

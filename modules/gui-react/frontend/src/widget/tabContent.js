@@ -20,27 +20,27 @@ class TabContent extends React.Component {
         const {tab: {id}} = this.props
         this.props.onEnable(() => {
             if (this.props.selected)
-                sepalMap.selectLayers(id)
+                sepalMap.setContext(id)
         })
         this.props.onDisable(() => {
-            sepalMap.deselectLayers(id)
+            sepalMap.clearContext(id)
         })
-        sepalMap.selectLayers(id)
+        sepalMap.setContext(id)
     }
 
     componentDidUpdate(prevProps) {
         const {tab: {id}, selected} = this.props
         const gotDeselected = prevProps.selected && !selected
         if (gotDeselected)
-            sepalMap.deselectLayers(id)
+            sepalMap.clearContext(id)
         const gotSelected = !prevProps.selected && selected
         if (gotSelected)
-            sepalMap.selectLayers(id)
+            sepalMap.setContext(id)
     }
 
     componentWillUnmount() {
         const {tab: {id}} = this.props
-        sepalMap.removeLayers(id)
+        sepalMap.removeContext(id)
     }
 }
 

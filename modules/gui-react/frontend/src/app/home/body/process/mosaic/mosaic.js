@@ -19,6 +19,7 @@ import SceneSelection from './sceneSelection'
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
     return {
+        initialized: recipeState('ui.initialized'),
         aoi: recipeState('model.aoi'),
         source: recipeState.source(),
         sceneSelectionOptions: recipeState('model.sceneSelectionOptions'),
@@ -29,25 +30,30 @@ const mapStateToProps = (state, ownProps) => {
 
 class Mosaic extends React.Component {
     render() {
-        const {recipeId, aoi, source, sceneSelectionOptions: {type}, sceneSelection} = this.props
+        const {recipeId, initialized, aoi, source, sceneSelectionOptions: {type}, sceneSelection} = this.props
         return (
             <div className={styles.mosaic}>
                 <MapToolbar statePath={recipePath(recipeId, 'ui')} mapContext={recipeId} labelLayerIndex={1}>
                     <ShowSceneAreaToggle recipeId={recipeId}/>
                 </MapToolbar>
                 <MosaicToolbar recipeId={recipeId} className={styles.mosaicToolbar}/>
-                <MosaicPreview recipeId={recipeId}/>
-                {aoi && source && type === SceneSelectionType.SELECT
+
+                {initialized
                     ? <React.Fragment>
-                        <SceneAreas recipeId={recipeId}/>
-                        <AutoSelectScenes recipeId={recipeId}/>
+                        <MosaicPreview recipeId={recipeId}/>
+                        {aoi && source && type === SceneSelectionType.SELECT
+                            ? <React.Fragment>
+                                <SceneAreas recipeId={recipeId}/>
+                                <AutoSelectScenes recipeId={recipeId}/>
+                            </React.Fragment>
+                            : null}
+                        {sceneSelection
+                            ? <SceneSelection recipeId={recipeId} sceneAreaId={sceneSelection}/>
+                            : null}
+                        <SceneDeselection recipeId={recipeId}/>
+                        <BandSelection recipeId={recipeId}/>
                     </React.Fragment>
                     : null}
-                {sceneSelection
-                    ? <SceneSelection recipeId={recipeId} sceneAreaId={sceneSelection}/>
-                    : null}
-                <SceneDeselection recipeId={recipeId}/>
-                <BandSelection recipeId={recipeId}/>
             </div>
         )
     }
@@ -60,6 +66,7 @@ class Mosaic extends React.Component {
             destroy$: componentWillUnmount$,
             onInitialized: () => {
                 if (this.props.tabCount === 1)
+                    sepalMap.setContext(recipeId)
                     sepalMap.getContext(recipeId).fitLayer('aoi')
             }
         })

@@ -11,7 +11,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
 import {PanelWizard} from 'widget/panel'
-import {PanelButton, Toolbar, ToolbarButton} from 'widget/toolbar'
+import {PanelButton, Toolbar} from 'widget/toolbar'
 import {RecipeActions, recipePath, RecipeState, SceneSelectionType} from '../mosaicRecipe'
 import styles from './mosaicToolbar.module.css'
 
@@ -20,12 +20,10 @@ const mapStateToProps = (state, ownProps) => {
     const sceneAreas = recipeState('ui.sceneAreas')
 
     return {
-        selectedPanel: recipeState('ui.selectedPanel'),
-        modal: recipeState('ui.modal'),
-        sceneAreasLoaded: sceneAreas && Object.keys(sceneAreas).length > 0,
-        scenesSelected: !!_.flatten(Object.values(recipeState('model.scenes') || {})).length,
         initialized: recipeState('ui.initialized'),
         sceneSelectionType: (recipeState('model.sceneSelectionOptions') || {}).type,
+        sceneAreasLoaded: sceneAreas && Object.keys(sceneAreas).length > 0,
+        scenesSelected: !!_.flatten(Object.values(recipeState('model.scenes') || {})).length,
     }
 }
 
@@ -37,7 +35,7 @@ class MosaicToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, sceneAreasLoaded, scenesSelected, initialized, sceneSelectionType} = this.props
+        const {recipeId, initialized, sceneSelectionType, sceneAreasLoaded, scenesSelected} = this.props
         return (
             <PanelWizard
                 panels={['areaOfInterest', 'dates', 'sources']}
@@ -104,27 +102,6 @@ class MosaicToolbar extends React.Component {
 
 MosaicToolbar.propTypes = {
     recipeId: PropTypes.string
-}
-
-const Panel = ({panel, icon, selectedPanel, recipe, disabled = false}) => {
-    const selected = panel === selectedPanel
-    return (
-        <ToolbarButton
-            disabled={disabled}
-            selected={selected}
-            onClick={() => recipe.selectPanel(selected ? null : panel).dispatch()}
-            icon={icon}
-            label={`process.mosaic.panel.${panel}.button`}
-            tooltip={`process.mosaic.panel.${panel}`}/>
-    )
-}
-
-Panel.propTypes = {
-    panel: PropTypes.string,
-    icon: PropTypes.string,
-    selectedPanel: PropTypes.string,
-    recipe: PropTypes.object,
-    disabled: PropTypes.bool
 }
 
 export default connect(mapStateToProps)(MosaicToolbar)

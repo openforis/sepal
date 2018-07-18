@@ -1,6 +1,7 @@
 import actionBuilder from 'action-builder'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {connect, select} from 'store'
 import Icon from 'widget/icon'
 import styles from './panel.module.css'
 import {PanelButtonContext} from './toolbar'
@@ -66,7 +67,16 @@ PanelContent.propTypes = {
     children: PropTypes.any.isRequired,
 }
 
-export class PanelWizard extends React.Component {
+
+const mapStateToProps = (state, ownProps) => {
+    const {statePath} = ownProps
+    return {
+        initialized: select(statePath, 'initialized'),
+        selectedPanel: select(statePath, 'selectedPanel')
+    }
+}
+
+class PanelWizard extends React.Component {
     render() {
         const {panels, children} = this.props
         return <PanelWizardContext.Provider value={panels}>
@@ -87,5 +97,8 @@ PanelWizard.propTypes = {
     panels: PropTypes.array.isRequired,
     statePath: PropTypes.string.isRequired
 }
+
+PanelWizard = connect(mapStateToProps)(PanelWizard)
+export {PanelWizard}
 
 export const PanelWizardContext = React.createContext()
