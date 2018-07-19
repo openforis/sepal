@@ -125,7 +125,7 @@ export class PanelButton extends React.Component {
                             icon={icon}
                             label={label}
                             tooltip={tooltip}
-                            className={styles.panelButton}
+                            className={[styles.panelButton, selected ? styles.selected : null].join(' ')}
                             onClick={(e) => {
                                 this.select()
                                 onClick && onClick(e)
