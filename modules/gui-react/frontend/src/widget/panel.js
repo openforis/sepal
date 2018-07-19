@@ -71,8 +71,8 @@ PanelContent.propTypes = {
 const mapStateToProps = (state, ownProps) => {
     const {statePath} = ownProps
     return {
-        initialized: select(statePath, 'initialized'),
-        selectedPanel: select(statePath, 'selectedPanel')
+        initialized: select([statePath, 'initialized']),
+        selectedPanel: select([statePath, 'selectedPanel'])
     }
 }
 
