@@ -21,13 +21,18 @@ export default function actionBuilder(type, props) {
         },
 
         set(path, value) {
-            operations.push((immutableState) => immutableState.set(toPathList(path), value))
+            operations.push((immutableState, state) => {
+                const pathList = toPathList(path)
+                const prevValue = select(pathList, state)
+                if (prevValue !== value)
+                    return immutableState.set(pathList, value)
+            })
             return this
         },
 
         setAll(values) {
             Object.keys(values).forEach((path) =>
-                operations.push((immutableState) => immutableState.set(toPathList(path), values[path])))
+                this.set(path, values[path]))
             return this
         },
 
@@ -99,19 +104,24 @@ export default function actionBuilder(type, props) {
         },
 
         build() {
+            const performOperation = (immutableState, operation) => {
+                const state = immutableState.value()
+                return operation(immutable(state), state) || immutableState
+            }
             return {
                 type,
                 ...props,
                 reduce(state) {
                     if (!prefix) {
-                        sideEffects.forEach(sideEffect => sideEffect(state))
-                        return operations.reduce(
-                            (immutableState, operation) => operation(immutableState) || immutableState,
+                        var nextState = operations.reduce(
+                            performOperation,
                             immutable(state)
                         ).value()
+                        sideEffects.forEach(sideEffect => sideEffect(nextState))
+                        return nextState
                     } else {
                         const subState = operations.reduce(
-                            (immutableState, operation) => operation(immutableState) || immutableState,
+                            performOperation,
                             immutable(select(prefix, state))
                         ).value()
                         sideEffects.forEach(sideEffect => sideEffect(subState))
