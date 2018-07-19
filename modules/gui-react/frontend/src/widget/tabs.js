@@ -197,6 +197,8 @@ class Tab extends React.Component {
                                 defaultValue={title}
                                 placeholder={placeholder}
                                 autoFocus={!title}
+                                spellCheck={false}
+                                autoComplete='off'
                                 onKeyPress={(e) => this.onTitleKeyPress(e)}
                                 onChange={(e) => this.onTitleChange(e)}
                                 onBlur={() => this.saveTitle()}/>
