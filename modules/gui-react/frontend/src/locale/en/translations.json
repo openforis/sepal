@@ -430,7 +430,7 @@
           "button": "MOS",
           "tooltip": "Select mosaic to classify",
           "title": "Image to classify",
-          "recipes": {
+          "recipe": {
             "title": "Select saved Sepal recipe"
           },
           "asset": {
@@ -440,7 +440,7 @@
             "section": {
               "required": "An image must be selected"
             },
-            "recipes": {
+            "recipe": {
               "label": "Recipe",
               "placeholder": "Select a recipe...",
               "required": "You must select a recipe"
