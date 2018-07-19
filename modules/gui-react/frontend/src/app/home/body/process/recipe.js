@@ -1,8 +1,8 @@
 import actionBuilder from 'action-builder'
 import backend from 'backend'
 import _ from 'lodash'
-import {interval, of, Subject} from 'rxjs'
-import {debounce, map, switchMap} from 'rxjs/operators'
+import {of, Subject} from 'rxjs'
+import {map, switchMap} from 'rxjs/operators'
 import {select, subscribe} from 'store'
 
 export const recipePath = (recipeId, path) => {
@@ -137,33 +137,23 @@ let prevTabs = []
 subscribe('process.tabs', (recipes) => {
         if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
             const recipesToSave = recipes
-                .filter(recipe => {
-                    const prevRecipe = prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
-                    return prevRecipe.model !== recipe.model
-                })
                 .filter(recipe =>
                     (select('process.recipes') || []).find(saved =>
                         saved.id === recipe.id
                     )
                 )
-            if (recipesToSave.length > 0)
+                .filter(recipe => {
+                    const prevRecipe = prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
+                    return prevRecipe.model && !_.isEqual(prevRecipe.model, recipe.model)
+                })
+            if (recipesToSave.length > 0) {
                 recipesToSave.forEach(recipe => saveToBackend$.next(recipe))
+            }
             prevTabs = recipes
         }
     }
 )
 
-// TODO: Must debounce for unique recipe ids, otherwise save events will be lost
-// Stream per recipe, remove it when it's no longer among the saved recipes?
-
-// Some operations must save immediately
-//      close tab    - re-open would cause unsaved recipe to fail, saved recipe to get old state
-//      close window - changes lost
-
-// Indicate if saving in recipe list and prevent it from being opened, cloned and deleted (?)
-
 saveToBackend$.pipe(
-    debounce(() => interval(10000))
-).subscribe((recipe) =>
-    backend.recipe.save$(recipe).subscribe()
-)
+    switchMap(recipe => backend.recipe.save$(recipe))
+).subscribe()
