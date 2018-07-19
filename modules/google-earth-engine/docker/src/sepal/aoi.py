@@ -45,16 +45,8 @@ class Aoi:
             raise ValueError('Unsupported data set: ' + data_set)
         table = self._fusion_table_by_data_set[data_set]
         aoi = self._geometry
-        scene_area_table = ee.Join.simple().apply(
-            ee.FeatureCollection(table['table_id'])
-                .filterBounds(aoi.bounds().buffer(10000, 1000)),
-            aoi,
-            ee.Filter.withinDistance(
-                distance=10000,
-                leftField='.geo',
-                rightField='.geo'
-            )
-        ) \
+        scene_area_table = ee.FeatureCollection(table['table_id']) \
+            .filterBounds(aoi) \
             .reduceColumns(ee.Reducer.toList(2), ['.geo', table['id_column']]) \
             .get('list') \
             .getInfo()
