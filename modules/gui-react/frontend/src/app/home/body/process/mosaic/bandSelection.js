@@ -24,9 +24,11 @@ const mapStateToProps = (state, ownProps) => {
         RecipeActions(recipeId).setBands(values.selection).dispatch()
         RecipeActions(recipeId).setPanSharpen(values.panSharpen).dispatch()
     }
+    const compositeOptions = recipeState('model.compositeOptions')
     return {
         source: recipeState.source(),
-        surfaceReflectance: recipeState('model.compositeOptions').corrections.includes('SR'),
+        surfaceReflectance: compositeOptions.corrections.includes('SR'),
+        median: compositeOptions.compose === 'MEDIAN',
         values
     }
 }
@@ -68,10 +70,13 @@ class BandSelection extends React.Component {
     }
 
     render() {
-        const {source, surfaceReflectance, inputs: {selection, panSharpen}} = this.props
+        const {source, surfaceReflectance, median, inputs: {selection, panSharpen}} = this.props
         const canPanSharpen = source === 'landsat'
             && !surfaceReflectance
             && ['red, green, blue', 'nir, red, green'].includes(selection.value)
+        const options = median
+            ? this.options[0].options
+            : this.options
         return (
             <div className={styles.wrapper}>
                 <div className={styles.container}>
@@ -79,7 +84,7 @@ class BandSelection extends React.Component {
                         ? <BandSelector
                             recipeActions={this.recipeActions}
                             selection={selection}
-                            options={this.options}
+                            options={options}
                             onChange={() => this.setSelectorShown(false)}/>
                         : <SelectedBands
                             recipeActions={this.recipeActions}
