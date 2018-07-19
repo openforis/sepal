@@ -147,6 +147,11 @@ span.title.placeholder {
     right: 1.7rem;
     top: 0;
     background: linear-gradient(to right, transparent, #2B2B29 100%);
+    z-index: 1;
+}
+
+.title > span {
+    margin-right: 1rem;
 }
 
 .tab:hover .title:before {
@@ -159,6 +164,9 @@ span.title.placeholder {
 
 .tab input {
     width: 100%;
+}
+.tab input:focus {
+    z-index: 2;
 }
 
 .tab.selected input.title {
