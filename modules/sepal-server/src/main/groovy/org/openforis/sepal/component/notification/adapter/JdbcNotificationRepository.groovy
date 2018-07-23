@@ -34,13 +34,13 @@ class JdbcNotificationRepository implements MessageRepository, NotificationRepos
     void saveMessage(Message message) {
         def updated = sql.executeUpdate('''
                 UPDATE message 
-                SET username = ?, subject = ?, contents = ?, type = ?, creation_time = ?, update_time = ?
-                WHERE id = ?''', [message.username, message.subject, message.contents, message.type.name(), message.creationTime, message.updateTime, message.id])
+                SET username = ?, subject = ?, contents = ?, type = ?, update_time = ?
+                WHERE id = ?''', [message.username, message.subject, message.contents, message.type.name(), message.updateTime, message.id])
         if (!updated)
             sql.executeInsert('''
-                INSERT INTO message(id, username, subject, contents, type, creation_time, update_time) 
+                INSERT INTO message(id, username, subject, contents, type, creation_time, update_time)
                 VALUES(?, ?, ?, ?, ?, ?, ?)''', [
-                    message.id, message.username, message.subject, message.contents, message.type.name(), message.creationTime, message.updateTime
+                    message.id, message.username, message.subject, message.contents, message.type.name(), message.updateTime, message.updateTime
             ])
     }
 

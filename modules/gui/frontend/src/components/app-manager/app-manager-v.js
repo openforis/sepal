@@ -48,7 +48,6 @@ var showDataVisApp = function () {
     DataVisApp.show( appContainer )
 }
 
-
 var showIFrameApp = function ( path ) {
     hideLoading()
     IFrameApp.show( appContainer, path )
@@ -60,5 +59,5 @@ module.exports = {
     , showLoading   : showLoading
     , showIFrameApp : showIFrameApp
     , showDataVisApp: showDataVisApp
-    
+
 }

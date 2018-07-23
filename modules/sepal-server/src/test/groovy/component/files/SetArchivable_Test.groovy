@@ -4,7 +4,9 @@ import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.component.files.api.InvalidPath
 import org.openforis.sepal.component.files.api.UserFile
 import org.openforis.sepal.component.files.command.SetArchivable
+import spock.lang.Ignore
 
+@Ignore
 class SetArchivable_Test extends AbstractFilesTest {
     def 'When file not tagged as non-archivable, file list has it archivable'() {
         addFile('/test.txt')
@@ -79,7 +81,7 @@ class SetArchivable_Test extends AbstractFilesTest {
         archivable('/test-dir/test.txt')
     }
 
-    def 'If file is hidden, it should not be archived' () {
+    def 'If file is hidden, it should not be archived'() {
         addFile('/.hidden-file')
 
         expect:

@@ -16,12 +16,6 @@ class Message {
         SYSTEM
     }
 
-    Message created(Date date) {
-        new Message(
-                id: id, username: username, subject: subject, contents: contents, type: type,
-                creationTime: date, updateTime: date)
-    }
-
     Message updated(Date date) {
         new Message(
                 id: id, username: username, subject: subject, contents: contents, type: type,

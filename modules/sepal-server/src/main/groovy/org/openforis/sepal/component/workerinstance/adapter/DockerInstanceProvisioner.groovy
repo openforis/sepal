@@ -3,10 +3,10 @@ package org.openforis.sepal.component.workerinstance.adapter
 import groovy.json.JsonOutput
 import groovy.transform.ToString
 import groovyx.net.http.RESTClient
+import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.InstanceProvisioner
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
-import org.openforis.sepal.component.hostingservice.api.InstanceType
 import org.openforis.sepal.util.Is
 import org.openforis.sepal.workertype.Image
 import org.openforis.sepal.workertype.WorkerType
@@ -63,9 +63,13 @@ class DockerInstanceProvisioner implements InstanceProvisioner {
                 Tty: true,
                 Cmd: image.runCommand,
                 HostConfig: [
-                        Binds : image.volumes.collect { hostDir, mountedDir ->
-                            "$hostDir:$mountedDir"
-                        },
+                        Binds : image.volumes.collect { hostDir, mountedDirs ->
+                            if (!(mountedDirs instanceof List))
+                                mountedDirs = [mountedDirs]
+                            return mountedDirs.collect {
+                                "$hostDir:$it"
+                            }
+                        }.flatten(),
                         Links : image.links.collect { "$it.key:$it.value" },
                         Mounts: [
                                 [

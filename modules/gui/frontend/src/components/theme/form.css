@@ -68,6 +68,27 @@
     transition: border-bottom-color 500ms ease-in;
 }
 
+.form-theme .form-group textarea {
+    border: 1px solid #fff;
+    padding: .6rem .2rem;
+    transition: background-color 800ms ease-in;
+    transition: border-bottom-color 500ms ease-in;
+    font-weight: 300 !important;
+    background-color: transparent;
+}
+
+.form-theme .form-group.error textarea {
+    border-bottom-color: #e81351 !important;
+    background-color: rgba(232, 19, 81, 0.1) !important;
+
+    transition: background-color 800ms ease-out;
+    transition: border-bottom-color 500ms ease-in;
+}
+
+.form-theme .form-group textarea:focus {
+    outline: none;
+}
+
 .form-theme .form-group.error button {
     border-color: #e81351 !important;
     background-color: rgba(232, 19, 81, 0.1) !important;
@@ -160,10 +181,12 @@
     border-radius: 50%;
     animate: opacity 500 ease-in;
 }
+
 .autocomplete-reset.disabled, .autocomplete-reset:disabled {
     opacity: .15 !important;
     animate: opacity 500 ease-in;
 }
+
 .autocomplete-reset i {
     font-size: 1.2rem !important;
 }

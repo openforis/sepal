@@ -16,7 +16,7 @@ ADD ref /usr/share/jenkins/ref/
 ENV JENKINS_HOME /var/jenkins_home
 ENV JENKINS_SLAVE_AGENT_PORT 50000
 ENV JENKINS_UC https://updates.jenkins-ci.org
-ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
+ENV JAVA_HOME /usr/local/lib/sdkman/candidates/java/current
 
 RUN chmod +x /init_image; sync
 RUN /init_image

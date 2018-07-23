@@ -22,7 +22,7 @@ class SaveMessageHandler implements CommandHandler<Void, SaveMessage> {
     }
 
     Void execute(SaveMessage command) {
-        def message = command.message.creationTime ? command.message.updated(clock.now()) : command.message.created(clock.now())
+        def message = command.message.updated(clock.now())
         repository.saveMessage(message)
         return null
     }

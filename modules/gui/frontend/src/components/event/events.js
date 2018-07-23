@@ -143,6 +143,7 @@ var Events = {
   
   , MAP: {
     ZOOM_TO                 : 'map.zoom_to'
+    , ZOOM_TO_FUSION_TABLE                 : 'map.zoom_to_fusion_table'
     , ZOOM_CHANGED          : 'map.zoom_changed'
     // , LOAD_SCENE_AREAS: 'map.load_scene_areas'
     , SCENE_AREA_CLICK      : 'map.scene_area_click'
@@ -186,6 +187,10 @@ var Events = {
     , PASSWORD_CHANGED          : 'user.password_changed'
     , LOGGED_OUT                : 'user.logged_out'
   }
+
+  , NOTIFICATION: {
+    NOTIFICATIONS_UPDATED : 'notification.notifications_loaded'
+  }
   
   , ALERT: {
     SHOW_INFO: 'alert.show_info'
@@ -195,6 +200,7 @@ var Events = {
     OPEN_IFRAME   : 'app_manager.open_iframe'
     , OPEN_RSTUDIO: 'app_manager.open_rstudio'
     , OPEN_DATAVIS: 'app_manager.open_datavis'
+    , OPEN_JUPYTER: 'app_manager.open_jupyter'
     , CLOSED      : 'app_manager.closed'
   }
   

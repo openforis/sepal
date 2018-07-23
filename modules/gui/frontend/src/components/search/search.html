@@ -26,17 +26,40 @@
                                            placeholder="Select a name">
                                 </div>
                             </div>
-                            <div class="row form-group">
-                                <label class="form-label col-sm-2" for="search-form-country">Area of interest</label>
-                                <div class="col-4">
-                                    <input type="text" class="form-control" id="search-form-country" name="country"
-                                           placeholder="Select a country">
+                            <div class="form-group">
+                                <div class="row">
+                                    <label class="form-label col-sm-2" for="search-form-country">Area of
+                                        interest</label>
+                                    <div class="col-4">
+                                        <input type="text" class="form-control" id="search-form-country" name="country"
+                                               placeholder="Select a country">
+                                    </div>
+                                    <label class="form-label col-sm-1 text-align-center form-label-btn-draw-polygon">Or</label>
+                                    <div class="col-3">
+                                        <button type="button" class="btn btn-base round btn-draw-polygon">
+                                            <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Draw a polygon
+                                        </button>
+                                    </div>
+                                    <label class="form-label col-sm-1 text-align-center form-label-btn-draw-polygon">Or</label>
                                 </div>
-                                <label class="form-label col-sm-1 text-align-center form-label-btn-draw-polygon">Or</label>
-                                <div class="col-4">
-                                    <button type="button" class="btn btn-base round btn-draw-polygon">
-                                        <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Draw a polygon
-                                    </button>
+                                <div class="row mt-4">
+                                    <div class="col-2"></div>
+
+                                    <div class="col-4 p-r-0">
+                                        <input type="text" class="form-control" id="mosaic-fusion-table-id" name="fusion-table-id"
+                                               placeholder="Enter a fusion table id">
+                                    </div>
+                                    <!--<label class="form-label col-sm-2 text-align-right">Column</label>-->
+                                    <div class="col-2">
+                                        <input type="text" class="form-control" id="mosaic-fusion-table-column"
+                                               name="fusion-table-column"
+                                               placeholder="Select a column">
+                                    </div>
+                                    <div class="col-4">
+                                        <input type="text" class="form-control" id="mosaic-fusion-table-value"
+                                               name="fusion-table-value"
+                                               placeholder="Select a row">
+                                    </div>
                                 </div>
                             </div>
                             <div class="row row-sensor form-group">
@@ -297,9 +320,11 @@
 
                             <div class="row row-other-options form-group">
                                 <div class="col-12 text-align-center">
-                                    <button type="button" class="btn btn-base round p-y-0-5 m-r-0-5" value="maskSnow">Mask snow
+                                    <button type="button" class="btn btn-base round p-y-0-5 m-r-0-5" value="maskSnow">
+                                        Mask snow
                                     </button>
-                                    <button type="button" class="btn btn-base round p-y-0-5" value="brdfCorrect">BRDF correct
+                                    <button type="button" class="btn btn-base round p-y-0-5" value="brdfCorrect">BRDF
+                                        correct
                                     </button>
                                 </div>
                             </div>

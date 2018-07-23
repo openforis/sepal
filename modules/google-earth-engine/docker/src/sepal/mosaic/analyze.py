@@ -66,8 +66,12 @@ class _Analyze(ImageOperation):
         self.set('aerosolProbability',
                  'max(100 * pow(i.aerosol - 0.15, 2), 0)')
 
-        self.set('hazeScore',
-                 'max(1 - (i.hazeProbability + i.variabilityProbability + i.cirrusCloudProbability + i.aerosolProbability) / 10, 0)')
+        if self.mosaic_def.surface_reflectance:
+            self.set('hazeScore', 1)
+        else:
+            self.set('hazeScore',
+                     'max(1 - (i.hazeProbability + i.variabilityProbability + i.cirrusCloudProbability + i.aerosolProbability) / 10, 0)')
+
         self.set('soil', 'i.blue/i.swir1 < 0.55 or i.nir/i.swir1 < 0.90')
         self.set('cloudScore', cloud_score(self.image))
         self.setIf('cloudScore', 'soil', 0)

@@ -99,7 +99,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
                         cloudCover: cloudCover(sensor, data),
                         coverage: 100,
                         sunAzimuth: data.sunAzimuth ? data.sunAzimuth.toDouble() : 0d,
-                        sunElevation: data.sunElevation ? data.sunElevation.toDouble() : 0d,
+                        sunElevation: data.sunAzimuth ? data.sunElevation.toDouble() : 0d,
                         browseUrl: URI.create(data.browseURL),
                         updateTime: parseDateString(data.dateUpdated)
                 )
@@ -113,7 +113,7 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
     private Double cloudCover(Sensor sensor, data) {
         def result = data.cloudCover.toDouble() as Double
         // LANDSAT_7 with SLC off always miss about 22% of its data. Consider that cloud cover.
-        if (result && sensor == LANDSAT_7 && data.SCAN_GAP_INTERPOLATION)
+        if (result && sensor == LANDSAT_7 && data.SCAN_GAP_INTERPOLATION != '-1')
             result = Math.min(100, result + 22)
         return result
     }

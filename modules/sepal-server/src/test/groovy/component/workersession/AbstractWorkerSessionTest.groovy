@@ -22,6 +22,7 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 
 abstract class AbstractWorkerSessionTest extends Specification {
+    final workDir = File.createTempDir()
     final testWorkerType = 'test-worker-type'
     final testInstanceType = 'test-instance-type'
     final testUsername = 'test-user'
@@ -40,13 +41,19 @@ abstract class AbstractWorkerSessionTest extends Specification {
             instanceManager,
             googleOAuthGateway,
             [new InstanceType(id: testInstanceType, name: testInstanceType, hourlyCost: 123d, idleCount: 1)],
-            clock)
+            clock,
+            workDir
+    )
 
     final events = [] as List<Event>
 
 
     def setup() {
         component.on(Event) { events << it }
+    }
+
+    def cleanup() {
+        workDir.deleteDir()
     }
 
     final WorkerSession requestSession(Map args = [:]) {
@@ -154,6 +161,10 @@ abstract class AbstractWorkerSessionTest extends Specification {
 
     final Spending setUserSpending(Spending spending, Map args = [:]) {
         budgetManager.setUserSpending(username(args), spending)
+    }
+
+    final void removeOrphanedTmpDirs() {
+        component.submit(new RemoveOrphanedTmpDirs())
     }
 
 

@@ -1,7 +1,6 @@
 const Webpack               = require( 'webpack' )
 const HtmlWebpackPlugin     = require( 'html-webpack-plugin' )
 const ExtractTextPlugin     = require( 'extract-text-webpack-plugin' )
-const autoprefixer          = require( 'autoprefixer' )
 const FaviconsWebpackPlugin = require( 'favicons-webpack-plugin' )
 
 const extractText = new ExtractTextPlugin( { filename: 'static/sepal-[hash].css', allChunks: true } )
@@ -113,13 +112,13 @@ module.exports = {
                 test: /\.html$/,
                 use : [ 'underscore-template-loader' ]
             }
-        
+
         ]
     },
     node   : {
         fs: "empty"
     },
-    
+
     devServer: {
         contentBase: './dist',
         host       : '0.0.0.0',

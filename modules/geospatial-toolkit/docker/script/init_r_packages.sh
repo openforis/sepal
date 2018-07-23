@@ -31,12 +31,15 @@ R -e "pacman::p_load(\
         'ggmap',\
         'ggplot2',\
         'htmltools',\
+        'igraph',\
+        'keras',\
         'knitr',\
         'leaflet',\
         'lubridate',\
         'mapview',\
         'plyr',\
         'random',\
+        'randomForest',\
         'raster',\
         'RColorBrewer',\
         'rgdal',\

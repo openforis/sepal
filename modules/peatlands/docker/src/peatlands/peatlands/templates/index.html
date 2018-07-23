@@ -1,0 +1,433 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div id="peatlands-container">
+
+    <div id="maps">
+        <div class="map-control map-control-left">
+            <select class="selector-control" id="base-selector">
+                <option value="">SEPAL</option>
+                <option value="satellite">SATELLITE</option>
+            </select>
+        </div>
+        <div id="gmap"></div>
+    </div>
+
+    <div id="charts-container">
+        <div>
+            <h3>
+                <i class="fa fa-map-marker"></i>&nbsp;<span id="selected-point" style="word-break: break-all;">NO SELECTED POINT</span>
+            </h3>
+        </div>
+        <div id="chart-box-1" class="chart-box">
+            <div class="spinner">
+                <i class="fa fa-spinner fa-pulse fa-3x fa-fw spinner"></i>
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div id="chart1" class="chart"></div>
+        </div>
+        <div  id="chart-box-2" class="chart-box">
+            <div class="spinner">
+                <i class="fa fa-spinner fa-pulse fa-3x fa-fw spinner"></i>
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="selector-control float-right">
+                <select id="selector1">
+                    <option value="EVI" selected="selected">EVI</option>
+                    <option value="EVI2">EVI2</option>
+                    <option value="NDMI">NDMI</option>
+                    <option value="NDVI">NDVI</option>
+                    <option value="NDWI">NDWI</option>
+                    <option value="NBR">NBR</option>
+                    <option value="LSAVI">LSAVI</option>
+                </select>
+            </div>
+            <div id="chart2" class="chart"></div>
+        </div>
+        <div id="chart-box-3" class="chart-box">
+            <div class="spinner">
+                <i class="fa fa-spinner fa-pulse fa-3x fa-fw spinner"></i>
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="selector-control float-right">
+                <select id="selector2">
+                    <option value="EVI">EVI</option>
+                    <option value="EVI2">EVI2</option>
+                    <option value="NDMI" selected="selected">NDMI</option>
+                    <option value="NDVI">NDVI</option>
+                    <option value="NDWI">NDWI</option>
+                    <option value="NBR">NBR</option>
+                    <option value="LSAVI">LSAVI</option>
+                </select>
+            </div>
+            <div id="chart3" class="chart"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+    $(document).ready(function() {
+
+        let indexes = [];
+        let ajaxRequests = [];
+
+        const peatlandsApiUrl = '{{config.PEATLANDS_API_URL}}';
+
+        var gmap, chart1, chart2, chart3;
+
+        var mapStyle = [
+            {
+                "stylers": [ { "visibility": "simplified" } ]
+            }, {
+                "stylers": [ { "color": "#131314" } ]
+            }, {
+                "featureType": "water",
+                "stylers"    : [ { "color": "#131313" }, { "lightness": 4 }
+                ]
+            }, {
+                "elementType": "labels.text.fill"
+                , "stylers"  : [ { "visibility": "off" }, { "lightness": 25 } ]
+            }
+        ];
+
+        var gOptions = {
+            zoom             : 3,
+            center           : new google.maps.LatLng(0, 0),
+            mapTypeId        : google.maps.MapTypeId.ROADMAP,
+            zoomControl      : false,
+            mapTypeControl   : false,
+            scaleControl     : false,
+            streetViewControl: false,
+            rotateControl    : false,
+            fullscreenControl: false,
+            animatedZoom     : false,
+            maxZoom: 10,
+            tilt: 0,
+            backgroundColor  : '#131314',
+            draggableCursor  : 'crosshair'
+        };
+
+        // google maps init
+        gmap = new google.maps.Map(window.document.getElementById('gmap'), gOptions);
+        gmap.setOptions({
+            styles: mapStyle
+        });
+
+        var gBounds = new google.maps.LatLngBounds();
+
+        $('#base-selector').change(function(e) {
+            var selectedBase = $(this).val();
+            if (selectedBase == '') {
+                gmap.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+            } else if (selectedBase == 'satellite') {
+                gmap.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+            }
+        });
+
+        const smapChart = (timeseries) => {
+            const chartStyle = {
+                lineWidth: 0,
+                marker: {
+                    enabled: true,
+                    radius: 2
+                },
+                tooltip: {
+                    valueDecimals: 2
+                },
+                states: {
+                    hover: {
+                        lineWidthPlus: 0
+                    }
+                }
+            };
+            let indexName = 'SMAP';
+            var text = indexName;
+            return Highcharts.chart('chart1', {
+                chart: {
+                    zoomType: 'x'
+                },
+                title: {
+                    text: text
+                },
+                subtitle: {
+                    text: document.ontouchstart === undefined ? 'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in'
+                },
+                xAxis: {
+                    type: 'datetime',
+                    min:  Date.UTC(2000, 0, 0),
+                    events: {
+                        afterSetExtremes: function() {
+                            if (!this.chart.options.chart.isZoomed) {
+                                var xMin = this.chart.xAxis[0].min;
+                                var xMax = this.chart.xAxis[0].max;
+                                chart2.options.chart.isZoomed = true;
+                                chart3.options.chart.isZoomed = true;
+                                chart2.xAxis[0].setExtremes(xMin, xMax, true);
+                                chart3.xAxis[0].setExtremes(xMin, xMax, true);
+                                chart2.options.chart.isZoomed = false;
+                                chart3.options.chart.isZoomed = false;
+                            }
+                        }
+                    },
+                },
+                yAxis: {
+                    title: {
+                        text: indexName
+                    }
+                },
+                legend: {
+                    enabled: false
+                },
+                plotOptions: {
+                    area: {
+                        fillColor: {
+                            linearGradient: {
+                                x1: 0,
+                                y1: 0,
+                                x2: 0,
+                                y2: 1
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        },
+                        marker: {
+                            radius: 2
+                        },
+                        lineWidth: 1,
+                        states: {
+                            hover: {
+                                lineWidth: 1
+                            }
+                        },
+                        threshold: null
+                    }
+                },
+                series: [{
+                    name: indexName,
+                    data: timeseries,
+                    lineWidth: 0,
+                    marker: {
+                        enabled: true,
+                        radius: 2
+                    },
+                    tooltip: {
+                        valueDecimals: 2
+                    },
+                    states: {
+                        hover: {
+                            lineWidthPlus: 0
+                        }
+                    }
+                }],
+                credits: {
+                    enabled: false
+                }
+            });
+        };
+
+        const indexChart = (id, data, index) => {
+            const chartStyle = {
+                lineWidth: 0,
+                marker: {
+                    enabled: true,
+                    radius: 2
+                },
+                tooltip: {
+                    valueDecimals: 2
+                },
+                states: {
+                    hover: {
+                        lineWidthPlus: 0
+                    }
+                }
+            };
+            return Highcharts.chart(id, {
+                chart: {
+                    zoomType: 'x'
+                },
+                title: {
+                    text: index
+                },
+                xAxis: {
+                    type: 'datetime',
+                    min:  Date.UTC(2000, 0, 0),
+                    events: {
+                        afterSetExtremes: function() {
+                            if (!this.chart.options.chart.isZoomed) {
+                                var xMin = this.chart.xAxis[0].min;
+                                var xMax = this.chart.xAxis[0].max;
+                                chart1.options.chart.isZoomed = true;
+                                chart2.options.chart.isZoomed = true;
+                                chart3.options.chart.isZoomed = true;
+                                chart1.xAxis[0].setExtremes(xMin, xMax, true);
+                                chart2.xAxis[0].setExtremes(xMin, xMax, true);
+                                chart3.xAxis[0].setExtremes(xMin, xMax, true);
+                                chart1.options.chart.isZoomed = false;
+                                chart2.options.chart.isZoomed = false;
+                                chart3.options.chart.isZoomed = false;
+                            }
+                        }
+                    },
+                },
+                yAxis: {
+                    title: {
+                        text: index
+                    }
+                },
+                legend: {
+                    enabled: false
+                },
+                series: [
+                    Object.assign({}, chartStyle, {
+                        name: index,
+                        data: data.map(function(d) { return [d.date, d[index] ]; }),
+                    })
+                ],
+                credits: {
+                    enabled: false
+                },
+            });
+        };
+
+        $('#selector1').change(function(e) {
+            e.preventDefault();
+            if (indexes.length != 0) {
+                chart2 = indexChart('chart2', indexes, this.value);
+            }
+        });
+
+        $('#selector2').change(function(e) {
+            e.preventDefault();
+            if (indexes.length != 0) {
+                chart3 = indexChart('chart3', indexes, this.value);
+            }
+        });
+
+        const clickEvent = (e) => {
+            ajaxRequests.forEach(function(request) {
+                request.abort();
+            });
+            ajaxRequests = [];
+            const lat = e.latLng.lat();
+            const lng = e.latLng.lng();
+            $('#selected-point').data('lat', lat).data('lng', lng).text(lat.toFixed(2) + ', ' + lng.toFixed(2));
+            // SMAP
+            if (chart1 !== undefined) chart1.destroy();
+            $('#chart-box-1 .spinner').show();
+            let request1 = $.ajax({
+                url: peatlandsApiUrl + '/get-timeseries',
+                method: 'post',
+                data: JSON.stringify({
+                    'lat': lat,
+                    'lng': lng
+                }),
+                contentType: 'application/json;charset=UTF-8'
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
+            }).done(function(data, textStatus, jqXHR) {
+                $('#chart-box-1 .spinner').hide();
+                chart1 = smapChart(data.timeseries);
+            });
+            // INDEXES
+            if (chart2 !== undefined) chart2.destroy();
+            if (chart3 !== undefined) chart3.destroy();
+            $('#chart-box-2 .spinner').show();
+            $('#chart-box-3 .spinner').show();
+            let request2 = $.ajax({
+                url: peatlandsApiUrl + '/get-indexes',
+                method: 'post',
+                data: JSON.stringify({
+                    'lat': lat,
+                    'lng': lng
+                }),
+                contentType: 'application/json;charset=UTF-8'
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(jqXHR, textStatus, errorThrown);
+            }).done(function(data, textStatus, jqXHR) {
+                indexes = data.indexes;
+                $('#chart-box-2 .spinner').hide();
+                $('#chart-box-3 .spinner').hide();
+                chart2 = indexChart('chart2', indexes, $('#selector1').val());
+                chart3 = indexChart('chart3', indexes, $('#selector2').val());
+            });
+            //
+            ajaxRequests.push(request1);
+            ajaxRequests.push(request2);
+        }
+
+        //gmap.addListener('click', clickEvent);
+
+        const limitToBounds = (map, strictBounds, minZoomLevel, maxZoomLevel) => {
+
+            // Listen for the dragend event
+            google.maps.event.addListener(map, 'dragend', function() {
+                if (gBounds.contains(map.getCenter())) return;
+
+                // We're out of bounds - Move the map back within the bounds
+
+                var c = map.getCenter(),
+                    x = c.lng(),
+                    y = c.lat(),
+                    maxX = strictBounds.getNorthEast().lng(),
+                    maxY = strictBounds.getNorthEast().lat(),
+                    minX = strictBounds.getSouthWest().lng(),
+                    minY = strictBounds.getSouthWest().lat();
+
+                    if (x < minX) x = minX;
+                    if (x > maxX) x = maxX;
+                    if (y < minY) y = minY;
+                    if (y > maxY) y = maxY;
+
+                map.setCenter(new google.maps.LatLng(y, x));
+            });
+
+            // Limit the zoom level
+            /*
+            google.maps.event.addListener(map, 'idle', function() {
+                //if (map.getZoom() < minZoomLevel) map.setZoom(minZoomLevel);
+                //if (map.getZoom() > maxZoomLevel) map.setZoom(maxZoomLevel);
+            });
+            */
+
+        };
+
+        const url = 'https://www.googleapis.com/fusiontables/v2/query?sql=select geometry from {{ config.FT_DOCID }}&key={{ config.GMAPS_API_KEY }}';
+        $.getJSON(url, function(data) {
+            $.each(data.rows, function(i, row) {
+                if (row[0].geometry !== undefined && row[0].geometry.type === 'Polygon') {
+                    $.each(row[0].geometry.coordinates[0], function(k, coordinate) {
+                        var latLng = new google.maps.LatLng(parseFloat(coordinate[1]), parseFloat(coordinate[0]));
+                        gBounds.extend(latLng);
+                    });
+                }
+            });
+            //
+            gmap.panToBounds(gBounds);
+            gmap.fitBounds(gBounds);
+            limitToBounds(gmap, gBounds, 5, 10);
+            let ftLayer = new google.maps.FusionTablesLayer({
+                suppressInfoWindows: true,
+                query: {
+                    from: '{{ config.FT_DOCID }}',
+                    select: 'geometry'
+                },
+                styles: [{
+                    polygonOptions: {
+                        fillOpacity: 0.3
+                    }
+                }]
+            });
+            ftLayer.setMap(gmap);
+            google.maps.event.addListener(ftLayer, 'click', clickEvent);
+        });
+
+    });
+
+</script>
+
+{% endblock %}

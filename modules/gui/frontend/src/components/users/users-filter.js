@@ -59,7 +59,7 @@ var filterUser = function ( user ) {
 }
 
 var filterUserBySearchString = function ( user ) {
-    var match = $.containsString( user.name.toLowerCase(), searchString )
+    var match = $.containsString( (user.name || '').toLowerCase(), searchString )
         || $.containsString( user.username.toLowerCase(), searchString )
         || $.containsString( user.organization.toLowerCase(), searchString )
     return match

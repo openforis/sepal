@@ -53,7 +53,7 @@
             $.ajax({
                 url: ceoSepalApiUrl + '/project',
                 dataType: 'json'
-            }).success(function(data) {
+            }).done(function(data, textStatus, jqXHR) {
                 if (data !== undefined && data.projects !== undefined) {
                     $(data.projects).each(function() {
                         var project_id = this.id;
@@ -85,7 +85,7 @@
                             url: ceoSepalApiUrl + '/project/' + project_id,
                             method: 'delete',
                             contentType: 'application/json;charset=UTF-8'
-                        }).success(function(data) {
+                        }).done(function(data, textStatus, jqXHR) {
                             window.location.reload();
                         }).fail(function(jqXHR, textStatus, errorThrown) {
                             console.error(jqXHR, textStatus, errorThrown);

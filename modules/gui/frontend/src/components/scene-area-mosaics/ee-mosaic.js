@@ -1,8 +1,7 @@
 /**
  * @author Mino Togna
  */
-var ee = require( 'earthengine-api' ).ee
-// ee.MapTileManager.MAX_RETRIES = 3
+var ee = require( 'earthengine-api' )
 
 var EEMosaic = function ( mapId, token ) {
   // >= IE8

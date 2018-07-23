@@ -21,10 +21,10 @@ class MosaicSpec(ImageSpec):
         self.years_before = int(dates['yearsBefore'])
         self.years_after = int(dates['yearsAfter'])
         self.target_day = day_of_year(parse_date(dates['targetDate']))
-        self.target_day_weight = float(spec.get('targetDayOfYearWeight', 0))
-        self.shadow_tolerance = float(spec.get('shadowTolerance', 1))
-        self.haze_tolerance = float(spec.get('hazeTolerance', 0.05))
-        self.greenness_weight = float(spec.get('greennessWeight', 0))
+        self.target_day_weight = _to_float(spec, 'targetDayOfYearWeight', 0)
+        self.shadow_tolerance = _to_float(spec, 'shadowTolerance', 1)
+        self.haze_tolerance = _to_float(spec, 'hazeTolerance', 0.05)
+        self.greenness_weight = _to_float(spec, 'greennessWeight', 0)
         self.bands = spec.get('bands', [])
         self.median_composite = spec.get('median_composite', False)
         self.mask_clouds = spec.get('maskClouds', False)
@@ -158,3 +158,20 @@ _sr_viz_by_bands = {
         'palette': '00FF00, FF0000'
     },
 }
+
+_milis_per_day = 1000 * 60 * 60 * 24
+
+
+def _to_float(spec, key, default):
+    return float(_get(default, key, spec))
+
+
+def _to_int(spec, key, default):
+    return int(_get(default, key, spec))
+
+
+def _get(default, key, spec):
+    value = spec.get(key, default)
+    if value == None or value == '':
+        value = default
+    return value

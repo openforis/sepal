@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <base href="{{config.BASE}}" />
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <meta charset="utf-8" />
+        <title>S E P A L - PEATLANDS</title>
+        <script type="text/javascript" src="static/node_modules/jquery/dist/jquery.min.js"></script>
+        <script type="text/javascript" src="static/node_modules/tether/dist/js/tether.min.js"></script>
+        <script type="text/javascript" src="static/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+        {% if config.GMAPS_API_KEY is defined and config.GMAPS_API_KEY != '' -%}
+            <script type="text/javascript" src="https://maps.google.com/maps/api/js?key={{ config.GMAPS_API_KEY }}"></script>
+        {% else -%}
+            <script type="text/javascript" src="https://maps.google.com/maps/api/js"></script>
+        {% endif -%}
+        <script type="text/javascript" src="static/node_modules/highcharts/highcharts.js"></script>
+        <link rel="stylesheet" href="static/node_modules/bootstrap/dist/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="static/node_modules/font-awesome/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="static/css/style.css?v3" />
+    </head>
+    <body>
+
+        <nav class="navbar navbar-inverse navbar-toggleable-md">
+            <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand" href="{{config.BASE}}">peatlands-sepal</a>
+            {% if session.username -%}
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a class="nav-link disabled" href="#">
+                                <i class="fa fa-user-circle-o" aria-hidden="true"></i>
+                                &nbsp;{{session.username}}
+                                {% if session.is_admin %}(admin){% endif %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            {% endif -%}
+        </nav>
+
+        {% block body %}{% endblock %}
+
+    </body>
+</html>

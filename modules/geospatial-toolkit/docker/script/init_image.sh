@@ -59,6 +59,7 @@ apt-get install -y --fix-missing \
     libgmp3-dev \
     libgstreamer0.10-dev \
     libgstreamer-plugins-base0.10-dev \
+    libpython3.5-dev \
     libproj-dev \
     libssl-dev \
     libxcursor-dev \
@@ -69,17 +70,21 @@ apt-get install -y --fix-missing \
     parallel \
     pkg-config \
     p7zip-full \
+    python3-gdal \
     python-dev \
     python-opencv \
     python-pandas \
     python-pip \
+    python3-pip \
     python-pyshp \
     python-rasterio \
     python-scikits-learn \
     python-scikits.statsmodels \
+    python-virtualenv \
     rsync \
     saga \
     screen \
+    shapelib \
     swig \
     tcl-dev \
     tmux \
@@ -92,6 +97,8 @@ apt-get install -y --fix-missing \
 
 pip install python-dateutil
 pip install pyCrypto
+pip install oauth2client
 pip install earthengine-api
 pip install google-api-python-client
 pip install awscli
+pip install --upgrade pip

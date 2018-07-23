@@ -2,3 +2,68 @@
   file:
     path: "/data/docker/storage"
     state: directory
+
+- name: Install linux-image-extra-* packages to enable AuFS driver
+  apt:
+    name: "{{ item }}"
+    state: present
+  when: ansible_distribution_version is version_compare('14.04', '==')
+  loop:
+    - "linux-image-extra-{{ ansible_kernel }}"
+    - "linux-image-extra-virtual"
+
+- name: Add docker user group
+  group:
+    name: docker
+    state: present
+
+- name: Add users to the docker group
+  user:
+    name: "{{ item }}"
+    groups: docker
+    append: yes
+  with_items: "{{ users }}"
+
+- name: Create docker-registry certificate dir
+  file:
+    path: "/etc/docker/certs.d/{{ docker_repository_host }}"
+    state: directory
+
+- name: Copy docker-registry certificate
+  copy:
+    src: "{{ config_home }}/certificates/docker-registry.crt"
+    dest: "/etc/docker/certs.d/{{ docker_repository_host }}/ca.crt"
+
+- name: Add an APT signing key for Docker repo
+  shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  args:
+    warn: False
+
+- name: Add Docker APT Repository
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu trusty stable
+    state: present
+
+- name: Install docker package
+  apt:
+    name: docker-ce
+    state: present
+
+- name: Set DOCKER_OPTS
+  lineinfile:
+    dest: "/etc/default/docker"
+    regexp: "^DOCKER_OPTS="
+    line: 'DOCKER_OPTS="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock -g /data/docker/storage --storage-driver=devicemapper --storage-opt dm.basesize=10G"'
+
+- name: Install pip
+  apt:
+    name: python-pip
+    state: present
+
+
+- name: Install docker-py
+  pip:
+    name: docker-py
+
+- name: Start Docker
+  service: name=docker state=started

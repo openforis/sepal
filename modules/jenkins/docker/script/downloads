@@ -5,21 +5,19 @@ apt-get update && apt-get install -y \
     software-properties-common \
     curl \
     unzip \
+    zip \
     git \
-    maven \
     python-setuptools \
     apt-transport-https
 
-#install java-8
-echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
-#add-apt-repository -y ppa:webupd8team/java
-add-apt-repository ppa:luiz-armesto/java  # TODO: Remove once webupd8team have a new release
-apt-get update
- apt-get install -y oracle-java8-installer
-rm -rf /var/lib/apt/lists/*
-rm -rf /var/cache/oracle-jdk8-installer
-
-echo "JAVA_HOME=\"/usr/lib/jvm/java-8-oracle\"" >> /etc/environment
+export SDKMAN_DIR=/usr/local/lib/sdkman
+curl -s get.sdkman.io | bash
+source "$SDKMAN_DIR/bin/sdkman-init.sh"
+yes | sdk install java 8.0.171-oracle
+sdk install groovy
+sdk install maven
+echo 'source "$SDKMAN_DIR/bin/sdkman-init.sh"' >> /etc/profile
+echo "JAVA_HOME=\"/usr/local/lib/sdkman/candidates/java/current\"" >> /etc/environment
 
 #install ansible and jenkins
 sudo apt-add-repository ppa:ansible/ansible

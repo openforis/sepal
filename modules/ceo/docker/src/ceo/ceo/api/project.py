@@ -360,7 +360,7 @@ def saveFileFromRequest(file):
     # project file
     filename = secure_filename(file.filename)
     name, ext = os.path.splitext(filename)
-    uniqueName = name + '--' + crc32(filename)
+    uniqueName = name + '--' + crc32(file)
     uniqueFilename =  uniqueName + ext
     extractDir = os.path.join(app.config['UPLOAD_FOLDER'], uniqueName)
     if not os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], uniqueFilename)):
@@ -453,7 +453,6 @@ def getLayersFromRequest(request):
     dgcsProductType = request.form.getlist('dgcsProductType[]')
     dgcsStackingProfile = request.form.getlist('dgcsStackingProfile[]')
     # planet
-    planetApiVersion = request.form.getlist('planetApiVersion[]')
     planetMosaicName = request.form.getlist('planetMosaicName[]')
     # sepal
     sepalMosaicName = request.form.getlist('sepalMosaicName[]')
@@ -519,7 +518,6 @@ def getLayersFromRequest(request):
         elif layerType[i] == 'planet':
             i6 += 1
             overlay = {
-                'planetApiVersion': planetApiVersion[i6],
                 'planetMosaicName': planetMosaicName[i6]
             }
         elif layerType[i] == 'sepal':

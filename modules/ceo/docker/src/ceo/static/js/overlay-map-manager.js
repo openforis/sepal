@@ -3,7 +3,7 @@ let overlayMapManager = {
         'geeGatewayApiUrl': '',
         'digitalGlobeApiKey': '',
         'dgcsConnectId': '',
-        'planetApiKey': '',
+        'planetProxyUrl': '',
         'sepalHost': ''
     },
     'overlayMapTypes': {},
@@ -39,7 +39,7 @@ let overlayMapManager = {
             } else if (collectionName === 'NDVI_CHANGE') {
                 url += '/ndviChange';
             } else {
-                url += '/imageByMosaicCollection';
+                url += '/firstImageByMosaicCollection';
             }
             $.ajax({
                 url: url,
@@ -58,7 +58,7 @@ let overlayMapManager = {
                     console.error(data, textStatus, jqXHR);
                 } else {
                     if (data.hasOwnProperty('mapid')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token)
+                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token);
                     }
                 }
                 callback();
@@ -90,7 +90,7 @@ let overlayMapManager = {
                     console.error(data, textStatus, jqXHR);
                 } else {
                     if (data.hasOwnProperty('mapid')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token)
+                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapid, data.token);
                     }
                     callback();
                 }
@@ -105,7 +105,7 @@ let overlayMapManager = {
                 },
                 name: layerName,
                 tileSize : new google.maps.Size(256, 256)
-            }
+            };
             var imageMapType = new google.maps.ImageMapType(layerOptions);
             this.overlayMapTypes[index] = imageMapType;
             callback();
@@ -183,19 +183,15 @@ let overlayMapManager = {
             callback();
         } else if (overlay.type === 'planet') {
             var mosaic_name = overlay.planetMosaicName;
-            var version = overlay.planetApiVersion;
-            var api_key = this.config.planetApiKey;
+            var planet_proxy_url = this.config.planetProxyUrl;
             var layerOptions = {
                 getTileUrl: function (tile, zoom) {
-                    var url = 'https://tiles.planet.com/basemaps/v1/planet-tiles/{mosaic_name}/gmap/{z}/{x}/{y}.png?api_key=' + api_key;
-                    if (version === 'v0') {
-                        url = 'https://tiles.planet.com/v0/mosaics/{mosaic_name}/{z}/{x}/{y}.png?api_key=' + api_key;
-                    }
+                    var url = planet_proxy_url + '/{mosaic_name}/{z}/{x}/{y}';
                     return url.replace('{mosaic_name}', mosaic_name).replace('{z}', zoom).replace('{x}', tile.x).replace('{y}', tile.y);
                 },
                 name: layerName,
                 tileSize : new google.maps.Size(256, 256)
-            }
+            };
             this.overlayMapTypes[index] = new google.maps.ImageMapType(layerOptions);
             callback();
         } else if (overlay.type === 'sepal') {
@@ -208,7 +204,7 @@ let overlayMapManager = {
                 var serviceSubPath = 'mosaic';
                 var req = {
                     'imageType': type
-                }
+                };
                 if (type === 'MOSAIC') {
                     var sceneIds = [];
                     for (var key in data['sceneAreas']) {
@@ -250,7 +246,7 @@ let overlayMapManager = {
                     console.error(jqXHR, textStatus, errorThrown);
                 }).done(function(data, textStatus, jqXHR) {
                     if (data.hasOwnProperty('mapId')) {
-                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapId, data.token)
+                      that.overlayMapTypes[index] = createEarthEngineLayer(data.mapId, data.token);
                     }
                     callback();
                 });
@@ -272,14 +268,13 @@ let overlayMapManager = {
 
         function createEarthEngineLayer(mapId, token) {
           if (document.documentMode) {
-            return new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {})
+            return new ee.MapLayerOverlay('https://earthengine.googleapis.com/map', mapId, token, {});
           } else {
-            return new ee.layers.ImageOverlay( // Requires Content-Security-Policy, not available in IE
-              new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', mapId, token)
-            )
+            // Requires Content-Security-Policy, not available in IE
+            return new ee.layers.ImageOverlay(new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', mapId, token));
           }
         }
 
     }
 
-}
+};

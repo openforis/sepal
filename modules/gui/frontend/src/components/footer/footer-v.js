@@ -45,7 +45,8 @@ var showLogo = function () {
 }
 
 module.exports = {
-    init              : init
-    , updateTasks     : DashboardLinks.updateTasks
-    , updateUserBudget: SectionUser.updateUserBudget
+    init                 : init
+    , updateTasks        : DashboardLinks.updateTasks
+    , updateNotifications: DashboardLinks.updateNotifications
+    , updateUserBudget   : SectionUser.updateUserBudget
 }

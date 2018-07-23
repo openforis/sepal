@@ -64,6 +64,8 @@
                             <a class="dropdown-item chart-btn" href="#">NDMI</a>
                             <a class="dropdown-item chart-btn" href="#">NDVI</a>
                             <a class="dropdown-item chart-btn" href="#">NDWI</a>
+                            <a class="dropdown-item chart-btn" href="#">NBR</a>
+                            <a class="dropdown-item chart-btn" href="#">LSAVI</a>
                         </div>
                     </div>
                 </div>
@@ -93,8 +95,8 @@
     </div>
 </div>
 
-<script src="static/js/ceo-map-utils.js?v1"></script>
-<script src="static/js/overlay-map-manager.js?v3"></script>
+<script src="static/js/ceo-map-utils.js?v3"></script>
+<script src="static/js/overlay-map-manager.js?v5"></script>
 
 <script>
 
@@ -107,7 +109,7 @@
             'geeGatewayApiUrl': '{{config.GEEG_API_URL}}',
             'digitalGlobeApiKey': '{{config.DIGITALGLOBE_API_KEY}}',
             'dgcsConnectId': '{{config.DGCS_CONNECT_ID}}',
-            'planetApiKey': '{{config.PLANET_API_KEY}}',
+            'planetProxyUrl': ceoSepalApiUrl + '/proxy/planet',
             'sepalHost': '{{config.SEPAL_HOST}}'
         };
 
@@ -184,7 +186,7 @@
                 url: ceoSepalApiUrl + "/project/" + project_id,
                 method: 'get',
                 dataType: 'json'
-            }).success(function(data) {
+            }).done(function(data, textStatus, jqXHR) {
                 // project
                 projectName = data.name;
                 radius = parseFloat(data.radius);
@@ -364,14 +366,12 @@
                     var lPlot = mapUtils.L.cloneSquare(gPlot, squareOptions1, lmap);
                     shapes[id] = [[gPoint, gPlot], [lPlot, lPoint]];
                     //
-                    gPlot.addListener('click', function() {
+                    var plotOnClick = function() {
                         removePlots();
                         $('#list a[data-plot-id=' + id +']').click();
-                    });
-                    lPlot.on('click', function(e) {
-                        removePlots();
-                        $('#list a[data-plot-id=' + id +']').click();
-                    });
+                    };
+                    gPlot.addListener('click', plotOnClick);
+                    lPlot.on('click', plotOnClick);
                     //
                     li.trigger('click');
                 });
@@ -394,14 +394,12 @@
                     var lPlot = mapUtils.L.cloneSquare(gPlot, squareOptions1, lmap);
                     shapes[id] = [[gPoint, gPlot], [lPlot, lPoint]];
                     //
-                    gPlot.addListener('click', function() {
+                    var plotOnClick = function() {
                         removePlots();
                         $('#list a[data-plot-id=' + id +']').click();
-                    });
-                    lPlot.on('click', function(e) {
-                        removePlots();
-                        $('#list a[data-plot-id=' + id +']').click();
-                    });
+                    };
+                    gPlot.addListener('click', plotOnClick);
+                    lPlot.on('click', plotOnClick);
                     //
                     li.trigger('click');
                 });
@@ -464,7 +462,7 @@
             $.ajax({
                 url: ceoSepalApiUrl + "/record/project_id/" + project_id,
                 method: 'get'
-            }).success(function(data) {
+            }).done(function(data, textStatus, jqXHR) {
                 $.each(data, function(key, record) {
                     $('#list a[data-plot-id="' + record.plot.id +'"]').attr('data-record-id', record.id).data('value', record.value);
                     $('#list a[data-plot-id="' + record.plot.id +'"]').addClass('evaluated').text(record.plot.id + ' (' + record.value.class + ')');
@@ -551,7 +549,11 @@
             showList();
         });
 
-        $('#export-csv').click(function(e) {
+        var exportCsv = $('#export-csv');
+        queue.addEmptyListener(function(empty) {
+            exportCsv.toggleClass('disabled', !empty);
+        });
+        exportCsv.click(function(e) {
             e.preventDefault();
             window.location.href = ceoSepalApiUrl + '/project/' + project_id + '/export';
         });
@@ -663,7 +665,7 @@
             var x_coordinate = active.attr('data-x-coordinate');
             var y_coordinate = active.attr('data-y-coordinate');
             $.ajax({
-                url: geeGatewayApiUrl + '/timeSeriesIndex2',
+                url: geeGatewayApiUrl + '/timeSeriesIndex3',
                 type: 'POST',
                 crossDomain : true,
                 contentType: 'application/json',

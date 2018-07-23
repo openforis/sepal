@@ -1,0 +1,21 @@
+.messages {
+    .new {
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        height: fit-content;
+    }
+
+    .ck-content {
+        font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif;
+        line-height: 2;
+        font-weight: 300;
+        background-color: transparent!important;
+        font-size: 14px;
+        color: #fff;
+        height: 200px;
+
+        p, ul, ol {
+            margin-bottom: 0 !important;
+        }
+    }
+}

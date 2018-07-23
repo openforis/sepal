@@ -15,12 +15,12 @@ target
 /modules/ssh-gateway/docker/binary/sepal-ssh-gateway.jar
 /modules/user/docker/binary/sepal-user.jar
 /modules/sepal-server/docker/binary/sepal.jar
-/modules/gui/docker/binary/sepal-gui.jar
-/modules/gui-react/docker/binary/sepal-gui.jar
+/modules/*/docker/binary/sepal-gui.jar
 /modules/api-gateway/docker/binary/sepal-api-gateway.jar
 
 #Sepal frontend
-/modules/gui/frontend/dist/
+/modules/*/frontend/dist/
+/modules/*/frontend/node/
 /modules/gui/frontend/node/
 /modules/gui/frontend/node_modules/
 
@@ -40,3 +40,12 @@ modules/ceo/docker/env
 modules/ceo/docker/src/ceo/static/node_modules
 yarn.lock
 venv/
+
+#JavaScript
+node_modules/
+
+#Visual Studio
+.vscode
+modules/peatlands/docker/build/
+
+modules/peatlands/docker/env/

@@ -37,6 +37,14 @@ var openDataVisApp = function ( e ) {
     }, 'geo-web-viz' )
 }
 
+var openJupyterApp = function ( e, path ) {
+    openView()
+
+    startServer( function () {
+        View.showIFrameApp(path)
+    }, 'jupyter' )
+}
+
 var startServer = function ( callback, endpoint ) {
     var params = {
         url      : "/sandbox/start?endpoint=" + endpoint
@@ -61,3 +69,4 @@ init()
 EventBus.addEventListener( Events.APP_MANAGER.OPEN_IFRAME, openIFrameApp )
 EventBus.addEventListener( Events.APP_MANAGER.OPEN_RSTUDIO, openRStudioApp )
 EventBus.addEventListener( Events.APP_MANAGER.OPEN_DATAVIS, openDataVisApp )
+EventBus.addEventListener( Events.APP_MANAGER.OPEN_JUPYTER, openJupyterApp )

@@ -1,4 +1,4 @@
-import json, hashlib, zlib, io, csv, time
+import json, hashlib, zlib, io, csv, time, binascii
 
 from functools import wraps
 
@@ -71,10 +71,10 @@ def listToCSVRowString(lst):
     return output.getvalue()
 
 def crc32(file):
-    prev = 0
-    for eachLine in file:
-        prev = zlib.crc32(eachLine, prev)
-    return '%X' % (prev & 0xFFFFFFFF)
+    buf = file.read()
+    file.seek(0)
+    buf = (binascii.crc32(buf) & 0xFFFFFFFF)
+    return '%08X' % buf
 
 def getTimestamp():
     return str(int(time.time()))
