@@ -33,6 +33,7 @@ class AbstractUserTest extends Specification {
     final eventDispatcher = new SynchronousEventDispatcher()
     final googleOAuthClient = new FakeGoogleOAuthClient()
     final googleEarthEngineWhitelistChecker = new FakeGoogleEarthEngineWhitelistChecker()
+    final changeListener = new FakeUserChangeListener()
     final clock = new FakeClock()
     final homeDirectory = File.createTempDir()
     final component = new UserComponent(
@@ -45,6 +46,7 @@ class AbstractUserTest extends Specification {
             googleOAuthClient,
             googleEarthEngineWhitelistChecker,
             new GoogleAccessTokenFileGateway(homeDirectory.absolutePath),
+            changeListener,
             clock
     )
 
@@ -114,7 +116,6 @@ class AbstractUserTest extends Specification {
     User activeUserWithPassword(String password) {
         activeUser(password: password)
     }
-
 
     List<User> listUsers() {
         component.submit(new ListUsers())

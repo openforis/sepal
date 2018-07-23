@@ -67,6 +67,25 @@ class User implements groovymvc.security.User {
                 roles: roles)
     }
 
+    Map toMap() {
+        [
+                id          : id,
+                name        : name,
+                username    : username,
+                email       : email,
+                organization: organization,
+                googleTokens: googleTokens ? [
+                        accessToken          : googleTokens.accessToken,
+                        accessTokenExpiryDate: googleTokens.accessTokenExpiryDate,
+                        refreshToken         : googleTokens.refreshToken
+
+                ] : null,
+                status      : status.name(),
+                roles       : roles,
+                systemUser  : systemUser
+        ]
+    }
+
     enum Status {
         ACTIVE, PENDING, LOCKED
     }

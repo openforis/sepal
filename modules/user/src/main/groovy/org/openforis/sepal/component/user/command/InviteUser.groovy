@@ -5,6 +5,7 @@ import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.api.EmailGateway
 import org.openforis.sepal.component.user.api.ExternalUserDataGateway
 import org.openforis.sepal.component.user.api.UserRepository
+import org.openforis.sepal.component.user.internal.UserChangeListener
 import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageQueue
 import org.openforis.sepal.user.User
@@ -33,12 +34,16 @@ class InviteUserHandler implements CommandHandler<User, InviteUser> {
             UserRepository userRepository,
             MessageBroker messageBroker,
             ExternalUserDataGateway externalUserDataGateway,
-            EmailGateway emailGateway) {
+            EmailGateway emailGateway,
+            UserChangeListener changeListener
+    ) {
         this.userRepository = userRepository
         this.externalUserDataGateway = externalUserDataGateway
         this.emailGateway = emailGateway
         this.messageQueue = messageBroker.createMessageQueue('user.invite_user', Map) {
             createExternalUserAndSendEmailNotification(it)
+            def user = it.user
+            changeListener.changed(user.username, user.toMap())
         }
     }
 

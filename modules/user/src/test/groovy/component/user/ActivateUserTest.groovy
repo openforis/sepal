@@ -7,15 +7,17 @@ import static java.util.concurrent.TimeUnit.DAYS
 import static org.openforis.sepal.user.User.Status.ACTIVE
 
 class ActivateUserTest extends AbstractUserTest {
-    def 'Given a pending user, when activating, user is active and password is set'() {
+    def 'Given a pending user, when activating, user is active, password is set, and change listener is notified'() {
         def user = inviteUser()
         def token = mailServer.token
         when:
         activateUser(token, 'the password')
+        def activatedUser = loadUser(user.username)
 
         then:
-        listUsers().first().status == ACTIVE
+        activatedUser.status == ACTIVE
         externalUserDataGateway.password(user.username) == 'the password'
+        changeListener.lastChange(user.username) == activatedUser.toMap()
     }
 
     def 'Given an invalid token, when activating user, exception is thrown'() {

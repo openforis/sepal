@@ -6,6 +6,9 @@ import org.openforis.sepal.component.user.adapter.GoogleAccessTokenFileGateway
 import org.openforis.sepal.component.user.adapter.GoogleOAuthClient
 import org.openforis.sepal.component.user.adapter.InvalidToken
 import org.openforis.sepal.component.user.api.UserRepository
+import org.openforis.sepal.component.user.internal.UserChangeListener
+import org.openforis.sepal.messagebroker.MessageBroker
+import org.openforis.sepal.messagebroker.MessageQueue
 import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.util.annotation.Data
 import org.slf4j.Logger
@@ -22,14 +25,22 @@ class RefreshGoogleAccessTokenHandler implements CommandHandler<GoogleTokens, Re
     private final GoogleOAuthClient oAuthClient
     private final UserRepository userRepository
     private final GoogleAccessTokenFileGateway googleAccessTokenFileGateway
+    private final MessageQueue<Map> messageQueue
 
     RefreshGoogleAccessTokenHandler(
             GoogleOAuthClient oAuthClient,
             UserRepository userRepository,
-            GoogleAccessTokenFileGateway googleAccessTokenFileGateway) {
+            GoogleAccessTokenFileGateway googleAccessTokenFileGateway,
+            MessageBroker messageBroker,
+            UserChangeListener changeListener) {
         this.oAuthClient = oAuthClient
         this.userRepository = userRepository
         this.googleAccessTokenFileGateway = googleAccessTokenFileGateway
+        this.messageQueue = messageBroker.createMessageQueue('user.refresh_google_access_token', Map) {
+            def user = it.user
+            googleAccessTokenFileGateway.save(user.username, it.accessToken)
+            changeListener.changed(user.username, user.toMap())
+        }
     }
 
     GoogleTokens execute(RefreshGoogleAccessToken command) {
@@ -44,7 +55,8 @@ class RefreshGoogleAccessTokenHandler implements CommandHandler<GoogleTokens, Re
             LOG.info("Invalid refresh token. Sepal credentials will be used. command: $command, error: $e.message")
         }
         userRepository.updateGoogleTokens(command.username, refreshedToken)
-        googleAccessTokenFileGateway.save(command.username, refreshedToken?.accessToken)
+        def user = userRepository.lookupUser(command.username)
+        messageQueue.publish(user: user, accessToken: refreshedToken?.accessToken)
         return refreshedToken
     }
 }

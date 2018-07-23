@@ -1,0 +1,26 @@
+- file: path="/data/kafka" state=directory
+- file: path="/data/kafka/zookeeper" state=directory
+- file: path="/data/kafka/zookeeper/data" state=directory
+
+- copy: src="docker-compose.yml" dest="/data/kafka/"
+- copy: src="docker-compose.syslog.yml" dest="/data/kafka/"
+
+- name: "kafka | Start service"
+  docker_service:
+    api_version: "{{ api_version }}"
+    project_src: "/data/kafka"
+    files:
+    - "docker-compose.yml"
+    - "docker-compose.syslog.yml"
+  environment:
+    ZOOKEEPER_IMAGE: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/zookeeper"
+    KAFKA_IMAGE: "{{ image }}"
+    SYSLOG_ADDRESS: "{{ syslog_address }}"
+    WORKDIR: "/data/kafka"
+
+- name: kafka | Wait until initialized
+  shell: docker run --rm --network sepal solsson/kafkacat -b kafka_kafka_1:9092 -L
+  register: result
+  until: (result.rc == 0)
+  retries: 10
+  delay: 5

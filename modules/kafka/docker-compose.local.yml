@@ -1,0 +1,11 @@
+version: "2"
+services:
+  zookeeper:
+    ports:
+    - "${HOSTNAME}:2181:2181"
+  kafka:
+    ports:
+    - "${HOSTNAME}:9092:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${HOSTNAME}:9092
+      KAFKA_LISTENERS: PLAINTEXT://:9092

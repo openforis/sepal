@@ -1,0 +1,12 @@
+version: "2"
+services:
+  zookeeper:
+    logging:
+      driver: syslog
+      options:
+        syslog-address: ${SYSLOG_ADDRESS}
+  kafka:
+    logging:
+      driver: syslog
+      options:
+        syslog-address: ${SYSLOG_ADDRESS}

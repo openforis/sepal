@@ -9,13 +9,15 @@ import org.openforis.sepal.component.user.api.ExternalUserDataGateway
 import org.openforis.sepal.component.user.api.GoogleEarthEngineWhitelistChecker
 import org.openforis.sepal.component.user.command.*
 import org.openforis.sepal.component.user.endpoint.UserEndpoint
+import org.openforis.sepal.component.user.internal.KafkaPublishingUserChangeListener
 import org.openforis.sepal.component.user.internal.TokenManager
+import org.openforis.sepal.component.user.internal.UserChangeListener
 import org.openforis.sepal.component.user.query.*
-import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.endpoint.EndpointRegistry
 import org.openforis.sepal.event.AsynchronousEventDispatcher
 import org.openforis.sepal.event.HandlerRegistryEventDispatcher
 import org.openforis.sepal.messagebroker.MessageBroker
+import org.openforis.sepal.sql.DatabaseConfig
 import org.openforis.sepal.sql.SqlConnectionManager
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.EmailServer
@@ -38,6 +40,7 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
                         serverConfig.host, serverConfig.googleOAuthClientId, serverConfig.googleOAuthClientSecret),
                 new RestGoogleEarthEngineWhitelistChecker(serverConfig.googleEarthEngineEndpoint),
                 new GoogleAccessTokenFileGateway(serverConfig.homeDirectory),
+                new KafkaPublishingUserChangeListener(),
                 new SystemClock())
     }
 
@@ -51,24 +54,25 @@ class UserComponent extends DataSourceBackedComponent implements EndpointRegistr
             GoogleOAuthClient googleOAuthClient,
             GoogleEarthEngineWhitelistChecker googleEarthEngineWhitelistChecker,
             GoogleAccessTokenFileGateway googleAccessTokenFileGateway,
+            UserChangeListener changeListener,
             Clock clock
     ) {
         super(connectionManager, eventDispatcher)
         this.messageBroker = messageBroker
         def userRepository = new JdbcUserRepository(connectionManager)
         def tokenManager = new TokenManager(userRepository, clock)
-        command(InviteUser, new InviteUserHandler(userRepository, messageBroker, externalUserDataGateway, emailGateway))
+        command(InviteUser, new InviteUserHandler(userRepository, messageBroker, externalUserDataGateway, emailGateway, changeListener))
         command(ValidateToken, new ValidateTokenHandler(tokenManager))
-        command(ActivateUser, new ActivateUserHandler(tokenManager, externalUserDataGateway, userRepository))
+        command(ActivateUser, new ActivateUserHandler(tokenManager, externalUserDataGateway, userRepository, messageBroker, changeListener))
         command(ResetPassword, new ResetPasswordHandler(tokenManager, externalUserDataGateway))
         command(Authenticate, new AuthenticateHandler(usernamePasswordVerifier, userRepository))
-        command(UpdateUserDetails, new UpdateUserDetailsHandler(userRepository))
+        command(UpdateUserDetails, new UpdateUserDetailsHandler(userRepository, messageBroker, changeListener))
         command(ChangePassword, new ChangePasswordHandler(usernamePasswordVerifier, externalUserDataGateway))
         command(RequestPasswordReset, new RequestPasswordResetHandler(userRepository, emailGateway, messageBroker, clock))
-        command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository, googleEarthEngineWhitelistChecker, googleAccessTokenFileGateway))
-        command(RefreshGoogleAccessToken, new RefreshGoogleAccessTokenHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway))
-        command(RevokeGoogleAccountAccess, new RevokeGoogleAccountAccessHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway))
-        command(DeleteUser, new DeleteUserHandler(externalUserDataGateway, userRepository, messageBroker))
+        command(AssociateGoogleAccount, new AssociateGoogleAccountHandler(googleOAuthClient, userRepository, googleEarthEngineWhitelistChecker, googleAccessTokenFileGateway, messageBroker, changeListener))
+        command(RefreshGoogleAccessToken, new RefreshGoogleAccessTokenHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))
+        command(RevokeGoogleAccountAccess, new RevokeGoogleAccountAccessHandler(googleOAuthClient, userRepository, googleAccessTokenFileGateway, messageBroker, changeListener))
+        command(DeleteUser, new DeleteUserHandler(externalUserDataGateway, userRepository, messageBroker, changeListener))
         query(LoadUser, new LoadUserHandler(userRepository))
         query(ListUsers, new ListUsersHandler(userRepository))
         query(GoogleAccessRequestUrl, new GoogleAccessRequestUrlHandler(googleOAuthClient))

@@ -4,6 +4,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.user.api.ExternalUserDataGateway
 import org.openforis.sepal.component.user.api.UserRepository
+import org.openforis.sepal.component.user.internal.UserChangeListener
 import org.openforis.sepal.messagebroker.MessageBroker
 import org.openforis.sepal.messagebroker.MessageQueue
 import org.openforis.sepal.util.annotation.Data
@@ -17,11 +18,17 @@ class DeleteUserHandler implements CommandHandler<Void, DeleteUser> {
     private final UserRepository userRepository
     private final MessageQueue<String> messageQueue
 
-    DeleteUserHandler(ExternalUserDataGateway externalUserDataGateway, UserRepository userRepository, MessageBroker messageBroker) {
+    DeleteUserHandler(
+            ExternalUserDataGateway externalUserDataGateway,
+            UserRepository userRepository,
+            MessageBroker messageBroker,
+            UserChangeListener changeListener
+    ) {
         this.externalUserDataGateway = externalUserDataGateway
         this.userRepository = userRepository
         this.messageQueue = messageBroker.createMessageQueue('user.delete_user', String) {
             externalUserDataGateway.deleteUser(it)
+            changeListener.changed(it, null)
         }
     }
 
