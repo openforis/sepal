@@ -16,7 +16,6 @@ class Classification extends React.Component {
         return (
             <React.Fragment>
                 <MapToolbar
-                    recipeId={recipeId}
                     statePath={recipePath(recipeId, 'ui')}
                     mapContext={recipeId}
                     labelLayerIndex={1}/>
