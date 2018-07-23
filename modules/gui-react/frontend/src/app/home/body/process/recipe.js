@@ -1,7 +1,8 @@
 import actionBuilder from 'action-builder'
 import backend from 'backend'
+import JSZip from 'jszip'
 import _ from 'lodash'
-import {of, Subject} from 'rxjs'
+import {from, of, Subject} from 'rxjs'
 import {map, switchMap} from 'rxjs/operators'
 import {select, subscribe} from 'store'
 
@@ -52,15 +53,26 @@ export const saveRecipe = (recipe) =>
     saveRecipe$(recipe).subscribe(action => action.dispatch())
 
 export const exportRecipe = (recipe) => {
-    setTimeout(() => {
-        const data = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(_.omit(recipe, ['ui']), null, 2))
-        var downloadElement = document.createElement('a')
-        downloadElement.setAttribute('href', data)
-        downloadElement.setAttribute('download', `${recipe.title || recipe.placeholder}.json`)
-        document.body.appendChild(downloadElement)
-        downloadElement.click()
-        downloadElement.remove()
-    }, 0)
+    const name = `${recipe.title || recipe.placeholder}`
+    const recipeString = JSON.stringify(_.omit(recipe, ['ui']), null, 2)
+    from(new JSZip().file(name + '.json', recipeString).generateAsync({
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: {
+            level: 5
+        }
+    })).pipe(
+        map(zippedRecipe => {
+            const data = window.URL.createObjectURL(zippedRecipe)
+            var downloadElement = document.createElement('a')
+            downloadElement.setAttribute('href', data)
+            downloadElement.setAttribute('download', name + '.zip')
+            document.body.appendChild(downloadElement)
+            downloadElement.click()
+            downloadElement.remove()
+            window.URL.revokeObjectURL(data)
+        })
+    ).subscribe()
 }
 
 export const loadRecipes$ = () =>
