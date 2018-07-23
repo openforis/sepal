@@ -1,9 +1,11 @@
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {gzip$} from 'gzip'
 import Http from 'http-client'
 import _ from 'lodash'
 import moment from 'moment'
-import {map} from 'rxjs/operators'
+import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
+
 
 const api = {
     gee: {
@@ -77,9 +79,17 @@ const api = {
             Http.get$('/processing-recipes').pipe(
                 map(e => e.response)
             ),
-        save$: (recipe) =>
-            Http.post$(`/processing-recipes/${recipe.id}`, {body: {data: JSON.stringify(_.omit(recipe, ['ui']))}})
-        ,
+        save$: (recipe) => {
+            const name = recipe.title || recipe.placeholder
+            return gzip$(_.omit(recipe, ['ui'])).pipe(
+                switchMap(contents =>
+                    Http.post$(`/processing-recipes/${recipe.id}?type=${recipe.type}&name=${name}`, {
+                        body: contents,
+                        headers: {'Content-Type': 'application/octet-stream'}
+                    })
+                )
+            )
+        },
         delete$: (recipeId) =>
             Http.delete$(`/processing-recipes/${recipeId}`),
         load$: (recipeId) =>

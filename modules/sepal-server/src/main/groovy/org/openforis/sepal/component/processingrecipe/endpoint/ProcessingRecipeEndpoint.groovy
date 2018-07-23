@@ -11,6 +11,8 @@ import org.openforis.sepal.component.processingrecipe.query.LoadRecipe
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.util.zip.InflaterInputStream
+
 import static groovy.json.JsonOutput.toJson
 
 class ProcessingRecipeEndpoint {
@@ -24,14 +26,13 @@ class ProcessingRecipeEndpoint {
     void registerWith(Controller controller) {
         controller.with {
             post('/processing-recipes/{id}') {
-                def contents = params.data
-                def contentsMap = fromJson(contents)
+                def contents = new InflaterInputStream(request.inputStream).text
                 component.submit(new SaveRecipe(new Recipe(
                         id: params.id,
-                        name: contentsMap.title ?: contentsMap.placeholder,
-                        type: contentsMap.type as Recipe.Type,
+                        name: params.name,
+                        type: params.type as Recipe.Type,
                         username: sepalUser.username,
-                        contents: contents
+                        contents: fromJson(contents)
                 )))
                 send(recipesJson(sepalUser.username))
             }
