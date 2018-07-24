@@ -1,11 +1,11 @@
+import api from 'backend'
 import React from 'react'
 import {connect} from 'store'
-import Http from 'http-client'
 
 class LandCover extends React.Component {
     createComposites() {
         this.props.asyncActionBuilder('CREATE_COMPOSITES',
-            Http.postJson$('/api/tasks', {
+            api.tasks.submit$({
                 operation: 'sepal.landcover.create_composites',
                 params: {
                     assetPath: 'land-cover-test/myanmar',
@@ -23,7 +23,7 @@ class LandCover extends React.Component {
 
     classify() {
         this.props.asyncActionBuilder('CLASSIFY',
-            Http.postJson$('/api/tasks', {
+            api.tasks.submit$({
                 operation: 'sepal.landcover.create_land_cover_map',
                 params: {
                     assetPath: 'land-cover-test/myanmar',
@@ -49,7 +49,7 @@ class LandCover extends React.Component {
 
     assessAccuracy() {
         this.props.asyncActionBuilder('ASSES_ACCURACY',
-            Http.postJson$('/api/tasks', {
+            api.tasks.submit$({
                 operation: 'sepal.landcover.assess_land_cover_map_accuracy',
                 params: {}
             })

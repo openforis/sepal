@@ -32,7 +32,7 @@ class ProcessingRecipeEndpoint {
                         name: params.name,
                         type: params.type as Recipe.Type,
                         username: sepalUser.username,
-                        contents: fromJson(contents)
+                        contents: contents
                 )))
                 send(recipesJson(sepalUser.username))
             }

@@ -1,7 +1,7 @@
 import actionBuilder from 'action-builder'
 import Notifications from 'app/notifications'
+import api from 'backend'
 import GoogleMapsLoader from 'google-maps'
-import Http from 'http-client'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom'
@@ -27,8 +27,8 @@ const onInit = (listener) => {
 
 export const initGoogleMapsApi$ = () => {
     const loadGoogleMapsApiKey$ =
-        Http.get$('/api/data/google-maps-api-key').pipe(
-            map((e) => e.response.apiKey)
+        api.map.loadApiKey$().pipe(
+            map(({apiKey}) => apiKey)
         )
 
     const loadGoogleMapsApi$ = (apiKey) => Observable.create((observer) => {

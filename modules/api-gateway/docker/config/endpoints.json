@@ -1,6 +1,149 @@
 [
   {
+    "prefix": "true",
+    "path": "/api/gee/",
+    "target": "http://google-earth-engine:5001/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/ceo/",
+    "target": "http://ceo:7766/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/peatlands/",
+    "target": "http://peatlands:7767/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
     "prefix": "false",
+    "path": "/api/gateone/ws",
+    "target": "https://gateone:8000/ws/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/gateone/",
+    "target": "https://gateone:8000/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "false",
+    "path": "/api/user/password/reset-request",
+    "target": "http://user/password/reset-request",
+    "https": "true",
+    "authenticate": "false"
+  },
+  {
+    "prefix": "false",
+    "path": "/api/user/password/reset",
+    "target": "http://user/password/reset",
+    "https": "true",
+    "authenticate": "false"
+  },
+  {
+    "prefix": "false",
+    "path": "/api/user/activate",
+    "target": "http://user/activate",
+    "https": "true",
+    "authenticate": "false"
+  },
+  {
+    "prefix": "false",
+    "path": "/api/user/validate-token",
+    "target": "http://user/validate-token",
+    "https": "true",
+    "authenticate": "false"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/user/",
+    "target": "http://user/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/processing-recipes/",
+    "target": "http://sepal:1025/api/processing-recipes",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/budget/",
+    "target": "http://sepal:1025/api/budget",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/notification/",
+    "target": "http://sepal:1025/api/notification/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/apps/",
+    "target": "http://sepal:1025/api/apps",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/files/",
+    "target": "http://sepal:1025/api/files",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/tasks/",
+    "target": "http://sepal:1025/api/tasks",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/data/",
+    "target": "http://sepal:1025/api/data",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/sandbox/jupyter/",
+    "target": "http://sepal:9191/jupyter/sandbox/jupyter/",
+    "rewriteRedirects": "false",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/sandbox/",
+    "target": "http://sepal:9191/",
+    "rewriteRedirects": "true",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
+    "path": "/api/static/",
+    "target": "http://gui:7667/static/",
+    "https": "true",
+    "authenticate": "false",
+    "cached": "true"
+  },
+  {
+    "prefix": "true",
     "path": "/",
     "target": "http://gui:7667/",
     "https": "true",
@@ -22,142 +165,5 @@
     "https": "true",
     "authenticate": "false",
     "cached": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/gee/",
-    "target": "http://google-earth-engine:5001/",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/ceo/",
-    "target": "http://ceo:7766/",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/peatlands/",
-    "target": "http://peatlands:7767/",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "false",
-    "path": "/gateone/ws",
-    "target": "https://gateone:8000/ws/",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/gateone/",
-    "target": "https://gateone:8000/",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "false",
-    "path": "/user/password/reset-request",
-    "target": "http://user/password/reset-request",
-    "https": "true",
-    "authenticate": "false"
-  },
-  {
-    "prefix": "false",
-    "path": "/user/password/reset",
-    "target": "http://user/password/reset",
-    "https": "true",
-    "authenticate": "false"
-  },
-  {
-    "prefix": "false",
-    "path": "/user/activate",
-    "target": "http://user/activate",
-    "https": "true",
-    "authenticate": "false"
-  },
-  {
-    "prefix": "false",
-    "path": "/user/validate-token",
-    "target": "http://user/validate-token",
-    "https": "true",
-    "authenticate": "false"
-  },
-  {
-    "prefix": "true",
-    "path": "/user/",
-    "target": "http://user/",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/processing-recipes/",
-    "target": "http://sepal:1025/api/processing-recipes",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/budget/",
-    "target": "http://sepal:1025/api/budget",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/notification/",
-    "target": "http://sepal:1025/api/notification/",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/apps/",
-    "target": "http://sepal:1025/api/apps",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/api/",
-    "target": "http://sepal:1025/api/",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/sandbox/jupyter/",
-    "target": "http://sepal:9191/jupyter/sandbox/jupyter/",
-    "rewriteRedirects": "false",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/sandbox/",
-    "target": "http://sepal:9191/",
-    "rewriteRedirects": "true",
-    "https": "true",
-    "authenticate": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/static/",
-    "target": "http://gui:7667/static/",
-    "https": "true",
-    "authenticate": "false",
-    "cached": "true"
-  },
-  {
-    "prefix": "true",
-    "path": "/",
-    "target": "http://gui:7667/",
-    "https": "true",
-    "authenticate": "false",
-    "no-cache": "true"
   }
 ]

@@ -27,7 +27,7 @@ class FilesEndpoint {
                 send(toJson([message: it.message]))
             }
 
-            get('/user/files') {
+            get('/files') {
                 response.contentType = 'application/json'
                 def path = params.required('path', String)
                 def files = component.submit(
@@ -42,7 +42,7 @@ class FilesEndpoint {
                 send toJson(result)
             }
 
-            delete('/user/files/{path}') {
+            delete('/files/{path}') {
                 def path = '/' + URLDecoder.decode(params.required('path', String), "UTF-8")
                 component.submit(
                         new DeleteFile(username: currentUser.username, path: path)
@@ -50,7 +50,7 @@ class FilesEndpoint {
                 send toJson([status: 'success'])
             }
 
-            get('/user/files/download') {
+            get('/files/download') {
                 def path = params.required('path', String)
                 def fileStream = component.submit(
                         new ReadFile(username: currentUser.username, path: path)
@@ -64,13 +64,13 @@ class FilesEndpoint {
                 response.outputStream.flush()
             }
 
-            post('/user/files/archivable/{path}') {
+            post('/files/archivable/{path}') {
                 def path = URLDecoder.decode(params.required('path', String), "UTF-8")
                 component.submit(new SetArchivable(username: currentUser.username, path: path, archivable: true))
                 response.status = 204
             }
 
-            post('/user/files/non-archivable/{path}') {
+            post('/files/non-archivable/{path}') {
                 def path = URLDecoder.decode(params.required('path', String), "UTF-8")
                 component.submit(new SetArchivable(username: currentUser.username, path: path, archivable: false))
                 response.status = 204

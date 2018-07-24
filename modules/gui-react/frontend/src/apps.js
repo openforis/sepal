@@ -1,7 +1,7 @@
 import actionBuilder from 'action-builder'
 import rstudioIcon from 'app/home/body/appLaunchPad/r-studio.png'
 import Notifications from 'app/notifications'
-import Http from 'http-client'
+import api from 'backend'
 import {history, isPathInLocation} from 'route'
 import {EMPTY, interval, of, Subject, throwError} from 'rxjs'
 import {catchError, concat, exhaustMap, filter, first, map, switchMap, takeUntil} from 'rxjs/operators'
@@ -24,8 +24,7 @@ export const appReady = (app) => {
 }
 
 export const loadApps$ = () =>
-    Http.get$('/apps').pipe(
-        map((e) => e.response),
+    api.apps.loadAll$().pipe(
         catchError(() => {
             Notifications.error('apps.loading').dispatch()
             return of([])
@@ -56,10 +55,8 @@ export const runApp$ = (path) => {
         .set(['apps', 'state', path], {state: 'REQUESTED', app})
         .dispatch()
 
-    const url = `/sandbox/start?endpoint=${app.endpoint ? app.endpoint : 'shiny'}`
     const isSessionStarted = (e) => e.response.status === 'STARTED'
-
-    const requestSession$ = Http.post$(url).pipe(
+    const requestSession$ = api.apps.requestSession$(app.endpoint).pipe(
         filter(isSessionStarted)
     )
 
@@ -67,7 +64,7 @@ export const runApp$ = (path) => {
         switchMap((secondsPassed) => secondsPassed < 30
             ? of(secondsPassed)
             : throwError({message: msg('')})),
-        exhaustMap(() => Http.get$(url)),
+        exhaustMap(() => api.apps.waitForSession$(app.endpoint)),
         filter(isSessionStarted),
         first()
     )

@@ -49,7 +49,6 @@ export default class UserProfile extends React.Component {
     }
     render() {
         const {open} = this.state
-        console.log({open})
         return (
             <React.Fragment>
                 {this.renderButton()}

@@ -1,10 +1,10 @@
-import React from 'react'
+import api from 'backend'
 // import './gateone'
 // import './gateone.css'
-import Http from 'http-client'
-import {currentUser} from 'user'
-import {connect} from 'store'
 import PropTypes from 'prop-types'
+import React from 'react'
+import {connect} from 'store'
+import {currentUser} from 'user'
 
 let terminalId = null
 
@@ -14,8 +14,8 @@ const mapStateToProps = () => ({
 
 class Terminal extends React.Component {
     componentWillMount() {
-        Http.get$('/api/gateone/auth-object')
-            .subscribe(e => this.initTerminal(e.response.authObject))
+        api.terminal.init$()
+            .subscribe(({authObject}) => this.initTerminal(authObject))
     }
 
     render() {

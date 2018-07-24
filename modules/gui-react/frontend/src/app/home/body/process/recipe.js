@@ -19,7 +19,7 @@ export const recipePath = (recipeId, path) => {
 }
 
 export const RecipeState = (recipeId) => {
-    if (!recipeExists(recipeId))
+    if (!isRecipeOpen(recipeId))
         return null
 
     return (path) =>
@@ -84,7 +84,7 @@ export const loadRecipes$ = () =>
 
 export const loadRecipe$ = (recipeId) => {
     const selectedTabId = select('process.selectedTabId')
-    if (recipeExists(recipeId)) {
+    if (isRecipeOpen(recipeId)) {
         const recipe = select(recipePath(recipeId))
         return of([
             actionBuilder('SELECT_RECIPE')
@@ -140,7 +140,7 @@ export const deleteRecipe = (recipeId) =>
     deleteRecipe$(recipeId).subscribe(action => action.dispatch())
 
 
-const recipeExists = (recipeId) =>
+const isRecipeOpen = (recipeId) =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
 
 const saveToBackend$ = new Subject()

@@ -1,5 +1,5 @@
 import actionBuilder from 'action-builder'
-import Http from 'http-client'
+import api from 'backend'
 import {filter, map, switchMap} from 'rxjs/operators'
 import {select} from 'store'
 
@@ -13,12 +13,10 @@ export const resetInvalidCredentials = () =>
 
 
 export function loadCurrentUser$() {
-    return Http.get$('/user/current', {
-        validStatuses: [200, 401]
-    }).pipe(
-        map((e) =>
-            actionBuilder('SET_CURRENT_USER', {user: e.response})
-                .set('user.currentUser', e.response)
+    return api.user.loadCurrentUser$().pipe(
+        map((user) =>
+            actionBuilder('SET_CURRENT_USER', {user})
+                .set('user.currentUser', user)
                 .build()
         )
     )
@@ -27,49 +25,35 @@ export function loadCurrentUser$() {
 
 export function login$(username, password) {
     resetInvalidCredentials()
-    return Http.post$('/user/login', {
-        username, password,
-        validStatuses: [200, 401]
-    }).pipe(
-        map((e) => actionBuilder('CREDENTIALS_POSTED')
-            .set('user.currentUser', e.response)
-            .set('user.invalidCredentials', !e.response)
+    return api.user.login$(username, password).pipe(
+        map((user) => actionBuilder('CREDENTIALS_POSTED')
+            .set('user.currentUser', user)
+            .set('user.invalidCredentials', !user)
             .build()
         )
     )
 }
 
 export function requestPasswordReset$(email) {
-    return Http.post$('/user/password/reset-request', {
-        body: {email}
-    }).pipe(
+    return api.user.requestPasswordReset$(email).pipe(
         filter(() => false)
     )
 }
 
 export function validateToken$(token) {
-    return Http.post$('/user/validate-token', {
-        body: {token}
-    }).pipe(
-        map((e) => {
-            const user = e.response && e.response.user
-            return actionBuilder('TOKEN_VALIDATED',
+    return api.user.validateToken$(token).pipe(
+        map(({user}) =>
+            actionBuilder('TOKEN_VALIDATED',
                 {valid: !!user})
                 .set('user.tokenUser', user)
-                .build()
-        })
+                .build())
     )
 }
 
 export const tokenUser = () => select('user.tokenUser')
 
 export function resetPassword$(token, username, password) {
-    return Http.post$('/user/password/reset', {
-        body: {
-            token: token,
-            password: password
-        }
-    }).pipe(
+    return api.user.resetPassword$(token, username, password).pipe(
         switchMap(
             () => login$(username, password)
         )

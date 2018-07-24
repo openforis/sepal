@@ -1,7 +1,7 @@
 import actionBuilder from 'action-builder'
 import Notifications from 'app/notifications'
+import api from 'backend'
 import flexy from 'flexy.module.css'
-import Http from 'http-client'
 import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -59,8 +59,7 @@ const mapStateToProps = () => ({
 })
 
 const loadFiles$ = (path) => {
-    return Http.get$('/api/user/files?path=' + encodeURIComponent(path)).pipe(
-        map((e) => e.response),
+    return api.files.loadFiles$(path).pipe(
         catchError(() => {
             Notifications.error('files.loading').dispatch()
             return Observable.of([])
@@ -74,8 +73,7 @@ const loadFiles$ = (path) => {
 }
 
 const removeItem$ = (path, action) => {
-    return Http.delete$('/api/user/files/' + encodeURIComponent(path)).pipe(
-        map((e) => e.response),
+    return api.files.removeItem$(path).pipe(
         catchError(() => {
             Notifications.error('files.removing').dispatch()
             return Observable.of([])

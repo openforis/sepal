@@ -1,6 +1,6 @@
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {gzip$} from 'gzip'
-import Http from 'http-client'
+import {delete$, get$, post$, postJson$} from 'http-client'
 import _ from 'lodash'
 import moment from 'moment'
 import {map, switchMap} from 'rxjs/operators'
@@ -8,11 +8,64 @@ import {msg} from 'translate'
 
 
 const api = {
+    user: {
+        loadCurrentUser$: () =>
+            get$('/api/user/current', {
+                validStatuses: [200, 401]
+            }).pipe(toResponse),
+        login$: (username, password) =>
+            post$('/api/user/login', {
+                username, password,
+                validStatuses: [200, 401]
+            }).pipe(toResponse),
+        requestPasswordReset$: (email) =>
+            post$('/api/user/password/reset-request', {
+                body: {email}
+            }),
+        validateToken$: (token) =>
+            post$('/api/user/validate-token', {
+                body: {token}
+            }),
+        resetPassword$: (token, username, password) =>
+            post$('/api/user/password/reset', {
+                body: {
+                    token: token,
+                    password: password
+                }
+            }),
+        logout$: () =>
+            null // TODO: Implement...
+    },
+    files: {
+        loadFiles$: (path) =>
+            get$('/api/files?path=' + encodeURIComponent(path))
+                .pipe(toResponse),
+        removeItem$: (path) =>
+            delete$('/api/files/' + encodeURIComponent(path))
+                .pipe(toResponse)
+
+    },
+    apps: {
+        loadAll$: () =>
+            get$('/api/apps').pipe(toResponse),
+        requestSession$: (endpoint) => post$(`/api/sandbox/start?endpoint=${endpoint ? endpoint : 'shiny'}`),
+        waitForSession$: (endpoint) => get$(`/api/sandbox/start?endpoint=${endpoint ? endpoint : 'shiny'}`),
+    },
+    terminal: {
+        init$: () =>
+            get$('/api/gateone/auth-object')
+                .pipe(toResponse)
+    },
+    map: {
+        loadApiKey$: () =>
+            get$('/api/data/google-maps-api-key')
+                .pipe(toResponse)
+    },
     gee: {
         preview$: (recipe) =>
-            Http.postJson$('gee/preview', transformRecipeForPreview(recipe), {retries: 0}),
+            postJson$('/api/gee/preview', transformRecipeForPreview(recipe), {retries: 0}),
         sceneAreas$: ({aoi, source}) =>
-            Http.get$('gee/sceneareas?' + transformQueryForSceneAreas(aoi, source)).pipe(
+            get$('/api/gee/sceneareas?' + transformQueryForSceneAreas(aoi, source)).pipe(
                 map(e =>
                     e.response.map(sceneArea =>
                         ({id: sceneArea.sceneAreaId, polygon: sceneArea.polygon})
@@ -20,7 +73,7 @@ const api = {
                 )
             ),
         scenesInSceneArea$: ({sceneAreaId, dates, sources, sceneSelectionOptions}) =>
-            Http.get$(`api/data/sceneareas/${sceneAreaId}?`
+            get$(`/api/data/sceneareas/${sceneAreaId}?`
                 + transformQueryForScenesInSceneArea({dates, sources})).pipe(
                 map(({response: scenes}) =>
                     scenes
@@ -36,7 +89,7 @@ const api = {
                 )
             ),
         autoSelectScenes$: (recipe) =>
-            Http.post$('/api/data/best-scenes', {
+            post$('/api/data/best-scenes', {
                 body: {
                     targetDayOfYearWeight: recipe.model.sceneSelectionOptions.targetDateWeight,
                     cloudCoverTarget: 0.0001,
@@ -68,22 +121,22 @@ const api = {
                 )
             ),
         retrieveMosaic: (recipe) =>
-            Http.postJson$('/api/tasks', transformRecipeForRetrieval(recipe))
+            postJson$('/api/tasks', transformRecipeForRetrieval(recipe))
                 .subscribe(),
         retrieveClassification: (recipe) =>
-            Http.postJson$('/api/tasks', transformRecipeForRetrieval(recipe))
+            postJson$('/api/tasks', transformRecipeForRetrieval(recipe))
                 .subscribe()
     },
     recipe: {
         loadAll$: () =>
-            Http.get$('/processing-recipes').pipe(
+            get$('/api/processing-recipes').pipe(
                 map(e => e.response)
             ),
         save$: (recipe) => {
             const name = recipe.title || recipe.placeholder
             return gzip$(_.omit(recipe, ['ui'])).pipe(
                 switchMap(contents =>
-                    Http.post$(`/processing-recipes/${recipe.id}?type=${recipe.type}&name=${name}`, {
+                    post$(`/api/processing-recipes/${recipe.id}?type=${recipe.type}&name=${name}`, {
                         body: contents,
                         headers: {'Content-Type': 'application/octet-stream'}
                     })
@@ -91,11 +144,15 @@ const api = {
             )
         },
         delete$: (recipeId) =>
-            Http.delete$(`/processing-recipes/${recipeId}`),
+            delete$(`/api/processing-recipes/${recipeId}`),
         load$: (recipeId) =>
-            Http.get$(`/processing-recipes/${recipeId}`).pipe(
+            get$(`/api/processing-recipes/${recipeId}`).pipe(
                 map(e => e.response)
             ),
+    },
+    tasks: {
+        submit$: (task) =>
+            postJson$('/api/tasks', task)
     }
 }
 export default api
@@ -250,3 +307,5 @@ const sourcesToDataSet = (sources) =>
 
 const sourceToDataSet = (source) =>
     source === 'landsat' ? 'LANDSAT' : 'SENTINEL2'
+
+const toResponse = map((e) => e.response)
