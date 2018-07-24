@@ -1,5 +1,6 @@
 import actionBuilder from 'action-builder'
 import backend from 'backend'
+import {gzip$} from 'gzip'
 import JSZip from 'jszip'
 import _ from 'lodash'
 import {from, of, Subject} from 'rxjs'
@@ -146,6 +147,8 @@ const isRecipeOpen = (recipeId) =>
 const saveToBackend$ = new Subject()
 
 let prevTabs = []
+const findPrevRecipe = (recipe) =>
+    prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
 subscribe('process.tabs', (recipes) => {
         if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
             const recipesToSave = recipes
@@ -155,7 +158,7 @@ subscribe('process.tabs', (recipes) => {
                     )
                 )
                 .filter(recipe => {
-                    const prevRecipe = prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
+                    const prevRecipe = findPrevRecipe(recipe)
                     return prevRecipe.model && !_.isEqual(prevRecipe.model, recipe.model)
                 })
             if (recipesToSave.length > 0) {
@@ -167,5 +170,38 @@ subscribe('process.tabs', (recipes) => {
 )
 
 saveToBackend$.pipe(
-    switchMap(recipe => backend.recipe.save$(recipe))
+    switchMap(recipe => {
+        const prevRecipe = findPrevRecipe(recipe)
+        if (prevRecipe) {
+            const revisionId = `${prevRecipe.id}:${Date.now()}`
+            const prevRecipeWithoutUi = _.omit(prevRecipe, ['ui'])
+            console.log({revisionId, prevRecipeWithoutUi})
+
+            gzip$(prevRecipeWithoutUi, {to: 'string'}).subscribe(revision =>
+                saveRevisionToLocalStorage(prevRecipe.id, revision)
+            )
+        }
+        return backend.recipe.save$(recipe)
+    })
 ).subscribe()
+
+
+const saveRevisionToLocalStorage = (recipeId, revision) => {
+    try {
+        localStorage.setItem(`${recipeId}:${Date.now()}`, revision)
+    } catch (exception) {
+        if (expireRevisionFromLocalStorage(recipeId))
+            saveRevisionToLocalStorage(recipeId, revision)
+    }
+}
+
+const expireRevisionFromLocalStorage = (recipeId) => {
+    const keyToExpire = _(localStorage)
+        .keys()
+        .map(key => ({key, timestamp: key.split(':')[1]}))
+        .sortBy({key: 1})
+        .first()
+        .key
+    localStorage.removeItem(keyToExpire)
+    return true
+}
