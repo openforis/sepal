@@ -17,7 +17,7 @@ const mapStateToProps = (state, ownProps) => {
 class ScenePreview extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(props.recipeId)
     }
 
     render() {
@@ -51,7 +51,7 @@ class ScenePreview extends React.Component {
     }
 
     closePreview() {
-        this.recipe.setSceneToPreview(null).dispatch()
+        this.recipeActions.setSceneToPreview(null).dispatch()
     }
 }
 

@@ -12,7 +12,7 @@ import React from 'react'
 import {connect} from 'store'
 import {PanelWizard} from 'widget/panel'
 import {PanelButton, Toolbar} from 'widget/toolbar'
-import {RecipeActions, recipePath, RecipeState, SceneSelectionType} from '../mosaicRecipe'
+import {recipePath, RecipeState, SceneSelectionType} from '../mosaicRecipe'
 import styles from './mosaicToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
@@ -30,7 +30,6 @@ const mapStateToProps = (state, ownProps) => {
 class MosaicToolbar extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.recipeId)
         this.statePath = recipePath(props.recipeId, 'ui')
     }
 

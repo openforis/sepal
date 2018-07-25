@@ -18,7 +18,7 @@ class SceneAreaMarker extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId, polygon} = props
-        this.recipe = RecipeActions(recipeId)
+        this.recipeActions = RecipeActions(recipeId)
         const gPolygon = new google.maps.Polygon({
             paths: polygon.map(([lat, lng]) =>
                 new google.maps.LatLng(lat, lng)),
@@ -68,7 +68,7 @@ class SceneAreaMarker extends React.Component {
     }
 
     selectScenes(sceneAreaId) {
-        this.recipe.setSceneSelection(sceneAreaId).dispatch()
+        this.recipeActions.setSceneSelection(sceneAreaId).dispatch()
     }
 
 }

@@ -18,7 +18,7 @@ const mapStateToProps = (state, ownProps) => {
 class SceneDeselection extends React.Component {
     constructor(props) {
         super(props)
-        this.recipe = RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(props.recipeId)
     }
 
     render() {
@@ -35,7 +35,7 @@ class SceneDeselection extends React.Component {
         if (!scenes) // No scenes selected, nothing to do
             return
         if (sceneSelectionOptions.type !== SceneSelectionType.SELECT)
-            return this.recipe.setSelectedScenes(null).dispatch() // Not selecting individual scenes, remove all selected
+            return this.recipeActions.setSelectedScenes(null).dispatch() // Not selecting individual scenes, remove all selected
         if (!sceneAreas) // Scene areas are not loaded, we don't know enough to filter out scenes
             return
         const filteredScenes = {}
@@ -53,7 +53,7 @@ class SceneDeselection extends React.Component {
             .forEach(sceneAreaId =>
                 filteredScenes[sceneAreaId] = filterScenes(scenes[sceneAreaId])
             )
-        this.recipe.setSelectedScenes(filteredScenes).dispatch()
+        this.recipeActions.setSelectedScenes(filteredScenes).dispatch()
     }
 }
 
