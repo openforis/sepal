@@ -20,6 +20,7 @@
     right: 0;
     padding: 0;
     overflow-y: hidden;
+    pointer-events: all;
     transition: all var(--transition-time) ease-in-out var(--transition-delay);
 }
 
@@ -33,6 +34,7 @@
 
 .section > * {
     height: 100%;
+    pointer-events: all;
 }
 
 .in {
