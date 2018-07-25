@@ -1,19 +1,20 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
-import Tooltip from 'widget/tooltip'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
+import React from 'react'
 import {msg} from 'translate'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import Portal from 'widget/portal'
+import Tooltip from 'widget/tooltip'
 import styles from './userProfile.module.css'
 
 export default class UserProfile extends React.Component {
     state = {
         open: false
     }
+
     toggleOpen() {
         this.setState(prevState => ({...prevState, open: !this.state.open}))
     }
+
     renderButton() {
         const {className, user} = this.props
         const {open} = this.state
@@ -25,28 +26,26 @@ export default class UserProfile extends React.Component {
             </Tooltip>
         )
     }
+
     renderPanel() {
         return (
-            ReactDOM.createPortal(
-                <React.Fragment>
-                    <div className={styles.modal}>
-                        <Panel className={styles.panel} center>
-                            <PanelHeader
-                                icon='user'
-                                title={msg('user.panel.title')}/>
-                            <PanelContent>
-                                HELLO WORLD!
-                            </PanelContent>
-                            {/* <PanelButtons
-                                form={form}
-                                statePath={recipePath(recipeId, 'ui')}
-                                onApply={trainingData => this.recipeActions.setTrainingData(trainingData).dispatch()}/> */}
-                        </Panel>
-                    </div>
-                </React.Fragment>,
-            document.body)
+            <Portal>
+                <Panel className={styles.panel} center modal>
+                    <PanelHeader
+                        icon='user'
+                        title={msg('user.panel.title')}/>
+                    <PanelContent>
+                        HELLO WORLD!
+                    </PanelContent>
+                    {/* <PanelButtons
+                        form={form}
+                        statePath={recipePath(recipeId, 'ui')}
+                        onApply={trainingData => this.recipeActions.setTrainingData(trainingData).dispatch()}/> */}
+                </Panel>
+            </Portal>
         )
     }
+
     render() {
         const {open} = this.state
         return (

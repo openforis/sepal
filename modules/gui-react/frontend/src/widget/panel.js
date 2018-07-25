@@ -6,24 +6,28 @@ import Icon from 'widget/icon'
 import styles from './panel.module.css'
 import {PanelButtonContext} from './toolbar'
 
-export const Panel = ({top, bottom, right, left, center, className, children}) =>
+export const Panel = ({top, bottom, right, left, center, modal, className, children}) =>
     <PanelButtonContext.Consumer>
         {panelButtonPosition => {
             top = top || (panelButtonPosition && panelButtonPosition.top)
             bottom = bottom || (panelButtonPosition && panelButtonPosition.bottom)
             right = right || (panelButtonPosition && panelButtonPosition.right)
             left = left || (panelButtonPosition && panelButtonPosition.left)
-            return <form className={[
-                styles.panel,
-                top ? styles.top : null,
-                bottom ? styles.bottom : null,
-                right ? styles.right : null,
-                left ? styles.bottom : null,
-                center ? styles.center : null,
-                className
-            ].join(' ')}>
-                {children}
-            </form>
+            const panel =
+                <form className={[
+                    styles.panel,
+                    top ? styles.top : null,
+                    bottom ? styles.bottom : null,
+                    right ? styles.right : null,
+                    left ? styles.bottom : null,
+                    center ? styles.center : null,
+                    className
+                ].join(' ')}>
+                    {children}
+                </form>
+            return modal
+                ? <div className={styles.modal}>{panel}</div>
+                : panel
         }}
     </PanelButtonContext.Consumer>
 
@@ -33,6 +37,7 @@ Panel.propTypes = {
     right: PropTypes.any,
     left: PropTypes.any,
     center: PropTypes.any,
+    modal: PropTypes.any,
     className: PropTypes.string,
     children: PropTypes.any.isRequired
 }
