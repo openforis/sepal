@@ -1,13 +1,13 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import {isPathInLocation} from 'route'
 import {Selectable} from 'widget/selectable'
-import PropTypes from 'prop-types'
 import styles from './body.module.css'
 
-const Section = ({path, className, children}) =>
+const Section = ({path, captureMouseEvents = true, children}) =>
     <Selectable
         active={isPathInLocation(path)}
-        className={className}
+        captureMouseEvents ={captureMouseEvents}
         classNames={{
             default: styles.section,
             in: styles.in,
@@ -18,7 +18,7 @@ const Section = ({path, className, children}) =>
 
 Section.propTypes = {
     path: PropTypes.string,
-    className: PropTypes.string,
+    captureMouseEvents: PropTypes.any,
     children: PropTypes.any
 }
 

@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import {Enabled} from 'store'
+import styles from './selectable.module.css'
 
 export class Select extends React.Component {
     getChildContext() {
@@ -64,11 +65,18 @@ export class Selectable extends React.Component {
     }
 
     render() {
+        const {active, classNames, captureMouseEvents} = this.props
         if (!this.hasBeenActive)
             return null
         else
+        // A selectable is not unmounted when deactivated to allow for animated transitions.
+        // <Enabled/> is used to disconnect deactivated selectable from the Redux store.
             return (
-                <div className={[this.props.className, this.props.classNames.default, this.className].join(' ')}>
+                <div className={[
+                    active && captureMouseEvents ? styles.captureMouseEvents : null,
+                    classNames.default,
+                    this.className
+                ].join(' ')}>
                     <Enabled value={this.props.active}>
                         {this.props.children}
                     </Enabled>
@@ -87,7 +95,7 @@ Selectable.childContextTypes = {
 
 Selectable.propTypes = {
     active: PropTypes.bool,
-    className: PropTypes.string,
+    captureMouseEvents: PropTypes.any,
     classNames: PropTypes.objectOf(PropTypes.string),
     children: PropTypes.any
 }
