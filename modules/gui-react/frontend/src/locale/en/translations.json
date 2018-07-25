@@ -127,6 +127,13 @@
       "type": "Type",
       "loading": "Loading recipes"
     },
+    "menu": {
+      "recipeNotSaved": "Recipe is not saved.",
+      "duplicateRecipe": "Duplicate recipe",
+      "exportRecipe": "Export recipe",
+      "saveRecipe": "Save recipe",
+      "revertToOldRevision": "Revert to old revision..."
+    },
     "mosaic": {
       "create": "Mosaic",
       "mapToolbar": {

@@ -1,14 +1,17 @@
 import actionBuilder from 'action-builder'
+import {recipePath} from 'app/home/body/process/recipe'
+import backend from 'backend'
 import flexy from 'flexy.module.css'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {map} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import {Button, IconButton} from 'widget/button'
 import {HoldButton} from 'widget/holdButton'
 import {CenteredProgress} from 'widget/progress'
 import styles from './createOrLoadRecipe.module.css'
-import {deleteRecipe, duplicateRecipe$, loadRecipe$, loadRecipes$} from './recipe'
+import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
 
 const CreateOrLoadRecipe = ({recipeId}) =>
     <div className={[styles.container, flexy.container].join(' ')}>
@@ -18,7 +21,7 @@ const CreateOrLoadRecipe = ({recipeId}) =>
             <CreateButton label={msg('process.changeDetection.create')} recipeId={recipeId} type='CHANGE_DETECTION'/>
             <CreateButton label={msg('process.timeSeries.create')} recipeId={recipeId} type='TIME_SERIES'/>
         </div>
-        <RecipeList/>
+        <RecipeList recipeId={recipeId}/>
     </div>
 
 CreateOrLoadRecipe.propTypes = {
@@ -43,9 +46,25 @@ class RecipeList extends React.Component {
             .dispatch()
     }
 
-    duplicateRecipe(recipeId) {
-        this.props.asyncActionBuilder('DUPLICATE_RECIPE', duplicateRecipe$(recipeId))
+    duplicateRecipe(recipeIdToDuplicate) {
+        this.props.asyncActionBuilder('DUPLICATE_RECIPE', this.duplicateRecipe$(recipeIdToDuplicate))
             .dispatch()
+    }
+
+    duplicateRecipe$(recipeIdToDuplicate) {
+        const {recipeId} = this.props
+        return backend.recipe.load$(recipeIdToDuplicate).pipe(
+            map(recipe => ({
+                    ...recipe,
+                    id: recipeId,
+                    title: (recipe.title || recipe.placeholder) + '_copy'
+                })
+            ),
+            map(duplicate =>
+                actionBuilder('DUPLICATE_RECIPE', {duplicate})
+                    .set(recipePath(recipeId), duplicate)
+                    .build())
+        )
     }
 
     render() {

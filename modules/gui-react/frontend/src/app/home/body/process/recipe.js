@@ -6,6 +6,7 @@ import _ from 'lodash'
 import {from, of, Subject} from 'rxjs'
 import {map, switchMap} from 'rxjs/operators'
 import {select, subscribe} from 'store'
+import {addTab} from 'widget/tabs'
 
 export const recipePath = (recipeId, path) => {
     const recipeTabIndex = select('process.tabs')
@@ -103,28 +104,14 @@ export const loadRecipe$ = (recipeId) => {
     }
 }
 
-export const duplicateRecipe$ = (recipeId) => {
-    const selectedTabId = select('process.selectedTabId')
-    return backend.recipe.load$(recipeId).pipe(
-        map(recipe => ({
-                ...recipe,
-                id: selectedTabId,
-                title: (recipe.title || recipe.placeholder) + '_copy'
-            })
-        ),
-        switchMap(duplicate =>
-            saveRecipe$(duplicate).pipe(
-                map(action => [
-                    action,
-                    actionBuilder('SELECT_RECIPE', {duplicate})
-                        .set(recipePath(selectedTabId), duplicate)
-                        .build()
-                ])
-            )
-        )
-    )
+export const addRecipe = (recipe) => {
+    const tab = addTab('process')
+    recipe.id = tab.id
+    return actionBuilder('SELECT_RECIPE')
+        .set(recipePath(recipe.id), recipe)
+        .set('process.selectedTabId', recipe.id)
+        .dispatch()
 }
-
 
 export const deleteRecipe$ = (recipeId) =>
     backend.recipe.delete$(recipeId).pipe(
@@ -175,7 +162,6 @@ saveToBackend$.pipe(
         if (prevRecipe) {
             const revisionId = `${prevRecipe.id}:${Date.now()}`
             const prevRecipeWithoutUi = _.omit(prevRecipe, ['ui'])
-            console.log({revisionId, prevRecipeWithoutUi})
 
             gzip$(prevRecipeWithoutUi, {to: 'string'}).subscribe(revision =>
                 saveRevisionToLocalStorage(prevRecipe.id, revision)

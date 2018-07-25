@@ -9,12 +9,14 @@ import Tooltip from 'widget/tooltip'
 import TabContent from './tabContent'
 import styles from './tabs.module.css'
 
-const addTab = (statePath) => {
+export const addTab = (statePath) => {
     const id = guid()
+    const tab = {id, placeholder: msg('widget.tabs.newTab')}
     actionBuilder('ADD_TAB')
-        .push(path(statePath, 'tabs'), {id, placeholder: msg('widget.tabs.newTab')})
+        .push(path(statePath, 'tabs'), tab)
         .set(path(statePath, 'selectedTabId'), id)
         .dispatch()
+    return tab
 }
 
 const getTabIndex = (id, statePath) =>
