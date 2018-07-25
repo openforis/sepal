@@ -12,7 +12,7 @@ import {ErrorMessage, Input} from 'widget/form'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = new RecipeState(ownProps.recipeId)
+    const recipeState = RecipeState(ownProps.recipeId)
     return {
         columns: recipeState('ui.fusionTable.columns'),
         rows: recipeState('ui.fusionTable.rows')
@@ -25,7 +25,7 @@ class FusionTableSection extends React.Component {
         this.fusionTableChanged$ = new Subject()
         this.fusionTableColumnChanged$ = new Subject()
         this.fusionTableRowChanged$ = new Subject()
-        this.recipe = new RecipeActions(props.recipeId)
+        this.recipe = RecipeActions(props.recipeId)
     }
 
     loadFusionTableColumns(fusionTableId) {

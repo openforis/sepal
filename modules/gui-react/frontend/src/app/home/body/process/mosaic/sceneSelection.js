@@ -38,7 +38,7 @@ class SceneSelection extends React.Component {
         this.state = {
             scenes: []
         }
-        this.recipe = new RecipeActions(props.recipeId)
+        this.recipe = RecipeActions(props.recipeId)
     }
 
     render() {

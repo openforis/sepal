@@ -60,7 +60,7 @@ class BandSelection extends React.Component {
 
     constructor(props) {
         super(props)
-        this.recipeActions = new RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(props.recipeId)
         this.options.forEach(option => {
             if (option.options)
                 option.options.forEach(option => this.optionByValue[option.value] = option)

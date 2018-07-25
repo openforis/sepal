@@ -18,7 +18,7 @@ class PolygonSection extends React.Component {
     constructor(props) {
         super(props)
         this.whereLabelsShown = props.labelsShown
-        this.recipeActions = new RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(props.recipeId)
     }
 
     componentDidMount() {

@@ -27,7 +27,7 @@ class SceneAreas extends React.Component {
     constructor(props) {
         super(props)
         const {aoi, source} = props
-        this.recipeActions = new RecipeActions(props.recipeId)
+        this.recipeActions = RecipeActions(props.recipeId)
         this.state = {
             show: true
         }
