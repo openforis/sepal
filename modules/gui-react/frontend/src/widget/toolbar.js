@@ -1,11 +1,11 @@
 import actionBuilder from 'action-builder'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReactDOM from 'react-dom'
 import {connect, select} from 'store'
 import buttonColors from 'style/button-colors.module.css'
 import {Msg} from 'translate'
 import Icon from 'widget/icon'
+import Portal from 'widget/portal'
 import Tooltip from 'widget/tooltip'
 import styles from './toolbar.module.css'
 
@@ -132,12 +132,13 @@ export class PanelButton extends React.Component {
                             }}/>
                         {
                             panelContainer && selected
-                                ? ReactDOM.createPortal(
-                                <PanelButtonContext.Provider value={{top, bottom, right, left}}>
-                                    {children}
-                                </PanelButtonContext.Provider>,
-                                panelContainer)
-                                : null
+                                ? (
+                                    <Portal container={panelContainer}>
+                                        <PanelButtonContext.Provider value={{top, bottom, right, left}}>
+                                            {children}
+                                        </PanelButtonContext.Provider>,
+                                    </Portal>
+                                ) : null
                         }
                     </React.Fragment>
                 }

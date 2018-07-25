@@ -1,10 +1,10 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReactDOM from 'react-dom'
 import Select, {components} from 'react-select'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
+import Portal from 'widget/portal'
 import styles from './comboBox.css'
 
 
@@ -39,11 +39,11 @@ class ComboBox extends React.Component {
         if (children)
             components.SingleValue = createSingleValue(children)
         return (
-            <div className={[styles.comboBox, controlClassName, input.error ? 'error' : null].join(' ')} ref={this.element}>
-                {ReactDOM.createPortal(
-                    <div ref={this.menuPortalTarget} className={[menuClassName, 'portalTarget'].join(' ')}/>,
-                    document.body
-                )}
+            <div className={[styles.comboBox, controlClassName, input.error ? 'error' : null].join(' ')}
+                 ref={this.element}>
+                <Portal>
+                    <div ref={this.menuPortalTarget} className={[menuClassName, 'portalTarget'].join(' ')}/>
+                </Portal>
                 <Select
                     {...props}
                     name={input.name}

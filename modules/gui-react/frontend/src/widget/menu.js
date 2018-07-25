@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReactDOM from 'react-dom'
 import {connect, select} from 'store'
 import Icon from 'widget/icon'
+import Portal from 'widget/portal'
 import styles from './menu.module.css'
 
 const mapStateToProps = () => ({
@@ -48,8 +48,7 @@ class Menu extends React.Component {
                     : null}
             </button>
             {open
-                ? ReactDOM.createPortal(
-                    <React.Fragment>
+                ? <Portal>
                         <MenuContext.Provider value={this}>
                             <div className={styles.captureClicks} onClick={() => this.toggleOpen()}/>
                             <ul className={styles.list} style={this.menuStyle()}>
@@ -63,8 +62,7 @@ class Menu extends React.Component {
                                 {children}
                             </ul>
                         </MenuContext.Provider>
-                    </React.Fragment>,
-                    document.body)
+                </Portal>
                 : null}
         </React.Fragment>
     }

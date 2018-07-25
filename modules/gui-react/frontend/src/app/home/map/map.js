@@ -4,10 +4,10 @@ import api from 'backend'
 import GoogleMapsLoader from 'google-maps'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReactDOM from 'react-dom'
 import {NEVER, Observable, Subject} from 'rxjs'
 import {map, mergeMap, takeUntil} from 'rxjs/operators'
 import {connect, select} from 'store'
+import Portal from 'widget/portal'
 import './map.module.css'
 
 export let sepalMap = null
@@ -379,7 +379,7 @@ export class MapLayer extends React.Component {
             </div>
         )
         return shown && mapPanes
-            ? ReactDOM.createPortal(content, mapPanes.overlayMouseTarget)
+            ? <Portal content={content} container={mapPanes.overlayMouseTarget}/>
             : null
     }
 

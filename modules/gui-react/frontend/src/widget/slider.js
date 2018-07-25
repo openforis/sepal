@@ -3,10 +3,10 @@ import Hammer from 'hammerjs'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import ReactDOM from 'react-dom'
 import ReactResizeDetector from 'react-resize-detector'
 import {animationFrameScheduler, fromEvent, interval, merge, Subject} from 'rxjs'
 import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
+import Portal from 'widget/portal'
 import ViewportResizeDetector from 'widget/viewportResizeDetector'
 import styles from './slider.module.css'
 
@@ -59,15 +59,16 @@ class Draggable extends React.Component {
                 <div className={[styles.range, styles.rightRange].join(' ')} style={{left: `${position}px`}}/>
                 {this.renderPreview()}
                 <div className={styles.clickTarget} ref={this.clickTarget}/>
-                <div className={[styles.cursor, styles.handle, this.state.dragging ? styles.dragging : null].join(' ')} ref={this.handle}
+                <div className={[styles.cursor, styles.handle, this.state.dragging ? styles.dragging : null].join(' ')}
+                     ref={this.handle}
                      style={{left: `${position}px`}}/>
                 <ViewportResizeDetector onChange={() => this.setClickTargetBoundingRect()}/>
                 {this.state.dragging
-                    ? ReactDOM.createPortal(
-                        <div className={styles.cursorOverlay}/>,
-                        document.body
-                    )
-                    : null
+                    ? (
+                        <Portal>
+                            <div className={styles.cursorOverlay}/>
+                        </Portal>
+                    ) : null
                 }
 
             </div>

@@ -160,7 +160,6 @@ saveToBackend$.pipe(
     switchMap(recipe => {
         const prevRecipe = findPrevRecipe(recipe)
         if (prevRecipe) {
-            const revisionId = `${prevRecipe.id}:${Date.now()}`
             const prevRecipeWithoutUi = _.omit(prevRecipe, ['ui'])
 
             gzip$(prevRecipeWithoutUi, {to: 'string'}).subscribe(revision =>

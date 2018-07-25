@@ -6,7 +6,8 @@ const Portal = ({container = document.body, children}) =>
 
 Portal.propTypes = {
     container: PropTypes.object,
-    children: PropTypes.any.isRequired
+    content: PropTypes.any,
+    children: PropTypes.any
 }
 
 export default Portal
