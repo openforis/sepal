@@ -27,11 +27,10 @@ class IFrame extends React.Component {
                 <div>
                     {appState !== 'READY' && this.loading(label, alt)}
                     <iframe
-                        ref={(iframe) => this.iframe = iframe}
                         width='100%'
                         height='100%'
                         frameBorder='0'
-                        src={path} 
+                        src={'/api' + path}
                         title={label || alt}
                         style={{display: appState === 'READY' ? 'block' : 'none'}}
                         onLoad={() => appReady(this.props.app)}
