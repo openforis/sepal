@@ -23,10 +23,10 @@ class ProcessMenu extends React.Component {
                     {unsaved
                         ? this.renderUnsavedRecipeItems()
                         : this.renderSavedRecipeItems()}
-                    <MenuItem onClick={() => this.duplicateRecipe()}>
+                    <MenuItem onSelect={() => this.duplicateRecipe()}>
                         <Msg id='process.menu.duplicateRecipe'/>
                     </MenuItem>
-                    <MenuItem onClick={() => exportRecipe(recipe)}>
+                    <MenuItem onSelect={() => exportRecipe(recipe)}>
                         <Msg id='process.menu.exportRecipe'/>
                     </MenuItem>
                 </Menu>
@@ -38,7 +38,7 @@ class ProcessMenu extends React.Component {
     renderUnsavedRecipeItems() {
         const {recipe} = this.props
         return (
-            <MenuItem onClick={() => saveRecipe(recipe)}>
+            <MenuItem onSelect={() => saveRecipe(recipe)}>
                 <Msg id='process.menu.saveRecipe'/>
             </MenuItem>
         )
@@ -46,7 +46,7 @@ class ProcessMenu extends React.Component {
 
     renderSavedRecipeItems() {
         return (
-            <MenuItem>
+            <MenuItem onSelect={() => console.log('show old revisions')}>
                 <Msg id='process.menu.revertToOldRevision'/>
             </MenuItem>
         )

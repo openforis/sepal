@@ -81,16 +81,16 @@ export default connect(mapStateToProps)(Menu)
 
 const MenuContext = React.createContext()
 
-export const MenuItem = ({onClick, children}) =>
+export const MenuItem = ({onSelect, children}) =>
     <MenuContext.Consumer>
         {(menu) =>
             <li className={styles.menuItem} onClick={(e) => {
                 menu.toggleOpen()
-                onClick && onClick(e)
+                onSelect && onSelect(e)
             }}>{children}</li>
         }
     </MenuContext.Consumer>
 
 MenuItem.propTypes = {
-    onClick: PropTypes.func
+    onSelect: PropTypes.func
 }
