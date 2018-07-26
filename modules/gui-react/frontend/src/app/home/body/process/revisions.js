@@ -77,7 +77,7 @@ class Revisions extends React.Component {
 
     revertToRevision(revision) {
         const {recipeId, asyncActionBuilder} = this.props
-        this.props.asyncActionBuilder('REVERT_TO_REVISION',
+        asyncActionBuilder('REVERT_TO_REVISION',
             revertToRevision$(recipeId, revision).pipe(
                 map(() => showRevisionsPanel(recipeId, false))
             ))

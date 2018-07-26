@@ -509,6 +509,10 @@
       "create": "Time series"
     }
   },
+  "tasks": {
+    "removeAll.tooltip": "Remove all completed, failed, or stopped tasks",
+    "none": "You have no background tasks."
+  },
   "user": {
     "panel": {
       "title": "User profile"
@@ -575,7 +579,9 @@
     "done": "Done",
     "more": "More",
     "less": "Less",
-    "retry": "Retry"
+    "retry": "Retry",
+    "restart": "Restart",
+    "stop": "Stop"
   },
   "widget": {
     "seasonSelect": {

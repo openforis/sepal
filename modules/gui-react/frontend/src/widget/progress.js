@@ -1,12 +1,12 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './progress.module.css'
-import PropTypes from 'prop-types'
 
-export const Progress = ({title, className}) =>
+export const Progress = ({title, status = 'ACTIVE', className}) =>
     <div className={[styles.progressContainer, className].join(' ')}>
         {title}
         <div className={styles.progress}>
-            <div className={styles.indeterminate}/>
+            <div className={[styles.bar, styles[status]].join(' ')}/>
         </div>
     </div>
 

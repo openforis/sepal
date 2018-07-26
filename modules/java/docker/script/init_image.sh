@@ -14,7 +14,7 @@ apt-get -y update && apt-get install -qq -y \
 export SDKMAN_DIR=/usr/local/lib/sdkman
 curl -s get.sdkman.io | bash
 source "$SDKMAN_DIR/bin/sdkman-init.sh"
-yes | sdk install java 8.0.171-oracle
+yes | sdk install java 8.0.181-oracle
 
 ln -s `which java` /usr/local/bin/java
 ln -s `which groovy` /usr/local/bin/groovy

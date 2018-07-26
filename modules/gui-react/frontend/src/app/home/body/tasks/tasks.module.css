@@ -1,3 +1,138 @@
 .container {
-    background-color: #008800;
+    padding-top: 1rem;
+    padding-right: 1rem;
+}
+
+.toolbar {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    margin: 0 4rem 1rem 1rem;
+}
+
+.none {
+    text-align: center;
+    margin-top: 30%;
+    color: #ccc;
+    font-style: italic;
+}
+
+.tasks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 21rem);
+    grid-template-rows: repeat(auto-fill, 18rem);
+    grid-row-gap: 2rem;
+    grid-column-gap: 2rem;
+    justify-content: center;
+    padding: 2rem;
+    overflow: auto;
+}
+
+.task {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid rgba(255, 255, 255, 0.105);
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.name {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.progress {
+    margin-bottom: 0.5rem;
+}
+
+.statusDescription {
+    color: #999;
+    height: 5rem;
+    overflow-y: auto;
+}
+
+.overlay {
+    display: none;
+}
+
+.task:hover .overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: hsla(0, 0%, 0%, 0.7);
+}
+
+.overlay button {
+    width: 10rem;
+    border-radius: var(--button-border-radius);
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin: 0.5rem;
+}
+
+.restart {
+    --bg-hue: 222;
+    --bg-sat: 44%;
+    color: var(--button-default-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 37%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 39%);
+}
+
+.restart:focus {
+    color: var(--button-default-focus-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 35%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 38%);
+}
+
+.restart:hover {
+    color: var(--button-default-hover-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
+}
+
+.restart:active {
+    color: var(--button-default-active-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 31%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 33%);
+}
+
+.remove, .stop {
+    --bg-hue: 0;
+    --bg-sat: 38%;
+    color: var(--button-default-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 37%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 39%);
+}
+
+.remove:focus, .stop:focus {
+    color: var(--button-default-focus-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 35%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 38%);
+}
+
+.remove:hover, .stop:hover {
+    color: var(--button-default-hover-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
+}
+
+.remove:active, .stop:active {
+    color: var(--button-default-active-color);
+    background-color: hsl(var(--bg-hue), var(--bg-sat), 31%);
+    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 33%);
+}
+.overlay svg {
+    color: white;
+    width: 1.5rem !important;
+    text-align: left;
 }

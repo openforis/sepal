@@ -1,6 +1,8 @@
+import actionBuilder from 'action-builder'
+import backend from 'backend'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {EMPTY, interval} from 'rxjs'
+import {EMPTY, interval, merge} from 'rxjs'
 import {delay, exhaustMap, map, switchMap} from 'rxjs/operators'
 import {connect} from 'store'
 import {currentUser, loadCurrentUser$} from 'user'
@@ -19,8 +21,10 @@ const mapStateToProps = () => ({
 
 const refreshUserAccessTokens$ = (user) => {
     const oneMinute = 60 * 1000
+    const minRefreshTime = oneMinute
+    const maxRefreshTime = 20 * oneMinute
     const calculateDelayMillis = (expiryDate) =>
-        Math.max(oneMinute, expiryDate - 5 * oneMinute - Date.now())
+        Math.min(maxRefreshTime, Math.max(minRefreshTime, expiryDate - 5 * oneMinute - Date.now()))
     return interval(0).pipe(
         delay(calculateDelayMillis(user.googleTokens.accessTokenExpiryDate)),
         exhaustMap(() => loadCurrentUser$().pipe(
@@ -36,9 +40,27 @@ const refreshUserAccessTokens$ = (user) => {
     )
 }
 
+const updateTasks$ = () => {
+    const loadAll$ = backend.tasks.loadAll$()
+    return merge(
+        loadAll$,
+        interval(5 * 1000).pipe(
+            exhaustMap(() => loadAll$),
+        )
+    ).pipe(map(tasks =>
+            actionBuilder('UPDATE_TASKS')
+                .set('tasks', tasks)
+                .dispatch()
+        )
+    )
+}
+
 
 class Home extends React.Component {
     componentWillMount() {
+        this.props.asyncActionBuilder('SCHEDULE_UPDATE_TASKS',
+            updateTasks$())
+            .dispatch()
         if (this.props.user.googleTokens)
             this.props.asyncActionBuilder('SCHEDULE_USER_INFO_REFRESH',
                 refreshUserAccessTokens$(this.props.user))

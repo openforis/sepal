@@ -129,9 +129,8 @@ const api = {
     },
     recipe: {
         loadAll$: () =>
-            get$('/api/processing-recipes').pipe(
-                map(e => e.response)
-            ),
+            get$('/api/processing-recipes')
+                .pipe(toResponse),
         save$: (recipe) => {
             const name = recipe.title || recipe.placeholder
             return gzip$(_.omit(recipe, ['ui'])).pipe(
@@ -147,13 +146,23 @@ const api = {
         delete$: (recipeId) =>
             delete$(`/api/processing-recipes/${recipeId}`),
         load$: (recipeId) =>
-            get$(`/api/processing-recipes/${recipeId}`).pipe(
-                map(e => e.response)
-            ),
+            get$(`/api/processing-recipes/${recipeId}`)
+                .pipe(toResponse),
     },
     tasks: {
+        loadAll$: () =>
+            get$('/api/tasks')
+                .pipe(toResponse),
         submit$: (task) =>
-            postJson$('/api/tasks', task)
+            postJson$('/api/tasks', task),
+        restart$: (taskId) =>
+            post$(`/api/tasks/task/${taskId}/execute`),
+        cancel$: (taskId) =>
+            post$(`/api/tasks/task/${taskId}/cancel`),
+        remove$: (taskId) =>
+            post$(`/api/tasks/task/${taskId}/remove`),
+        removeAll$: () =>
+            post$(`/api/tasks/remove`)
     }
 }
 export default api
