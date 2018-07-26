@@ -1,6 +1,5 @@
 .simple {
     max-width: 20rem;
-    min-height: 21rem;
 }
 
 .advanced {
@@ -36,7 +35,7 @@
 }
 
 .simpleLayout {
-    min-height: 9rem;
+    min-height: 13rem;
 }
 
 .targetDateLabel {
