@@ -1,10 +1,10 @@
 import api from 'backend'
-import './gateone'
-import './gateone.css'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
 import {currentUser} from 'user'
+import './gateone'
+import './gateone.css'
 
 let terminalId = null
 
@@ -21,7 +21,9 @@ class Terminal extends React.Component {
     render() {
         return (
             <div id='terminal'>
-                <div id='gateone'/>
+                <div className='container'>
+                    <div id='gateone'/>
+                </div>
             </div>
         )
     }
