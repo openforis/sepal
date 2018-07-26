@@ -92,7 +92,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    flex-grow: 1;
     padding-top: 1.5rem;
     padding-bottom: 1.5rem;
+    overflow-y: auto;
 }

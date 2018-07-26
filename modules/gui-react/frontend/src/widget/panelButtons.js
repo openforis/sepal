@@ -231,8 +231,13 @@ class PanelButtons extends React.Component {
 }
 
 PanelButtons.propTypes = {
+    isActionForm: PropTypes.any,
+    applyLabel: PropTypes.string,
+    cancelLabel: PropTypes.string,
     form: PropTypes.object.isRequired,
-    statePath: PropTypes.string.isRequired
+    statePath: PropTypes.string.isRequired,
+    onCancel: PropTypes.func,
+    onApply: PropTypes.func
 }
 
 export default connect(mapStateToProps)(PanelButtons)

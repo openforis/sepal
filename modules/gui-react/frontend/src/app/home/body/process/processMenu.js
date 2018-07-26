@@ -1,3 +1,4 @@
+import {showRevisionsPanel} from 'app/home/body/process/revisions'
 import React from 'react'
 import {connect, select} from 'store'
 import {Msg, msg} from 'translate'
@@ -44,8 +45,9 @@ class ProcessMenu extends React.Component {
     }
 
     renderSavedRecipeItems() {
+        const {recipe} = this.props
         return (
-            <MenuItem onSelect={() => console.log('show old revisions')}>
+            <MenuItem onSelect={() => showRevisionsPanel(recipe.id)}>
                 <Msg id='process.menu.revertToOldRevision'/>
             </MenuItem>
         )

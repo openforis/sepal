@@ -1,3 +1,4 @@
+import Revisions from 'app/home/body/process/revisions'
 import React from 'react'
 import Tabs from 'widget/tabs'
 import Classification from './classification/classification'
@@ -6,24 +7,30 @@ import Mosaic from './mosaic/mosaic'
 import ProcessMenu from './processMenu'
 import {saveRecipe} from './recipe'
 
-const Process = () => {
-    const contents = ({id, type}) => {
-        switch (type) {
-            case 'MOSAIC':
-                return <Mosaic recipeId={id}/>
-            case 'CLASSIFICATION':
-                return <Classification recipeId={id}/>
-            default:
-                return <CreateOrLoadRecipe recipeId={id}/>
-        }
+const recipeComponent = (id, type) => {
+    switch (type) {
+        case 'MOSAIC':
+            return <Mosaic recipeId={id}/>
+        case 'CLASSIFICATION':
+            return <Classification recipeId={id}/>
+        default:
+            return <CreateOrLoadRecipe recipeId={id}/>
     }
+}
 
+
+const Process = () => {
     return (
         <Tabs
             statePath='process'
             tabActions={(recipeId) => <ProcessMenu recipeId={recipeId}/>}
             onTitleChanged={recipe => saveRecipe(recipe)}>
-            {contents}
+            {({id, type}) =>
+                <React.Fragment>
+                    {recipeComponent(id, type)}
+                    <Revisions recipeId={id}/>
+                </React.Fragment>
+            }
         </Tabs>
     )
 }

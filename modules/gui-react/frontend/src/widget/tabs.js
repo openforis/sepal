@@ -33,7 +33,7 @@ const renameTab = (id, title, tabPath, onTitleChanged) => {
     setTimeout(() => onTitleChanged && onTitleChanged(select(tabPath)), 0)
 }
 
-const closeTab = (id, statePath) => {
+export const closeTab = (id, statePath) => {
     const updateSelectedTab = (root, stateBuilder) => {
         if (root.selectedTabId !== id)
             return
@@ -55,7 +55,7 @@ const closeTab = (id, statePath) => {
         .dispatch()
 }
 
-const selectTab = (id, statePath) => {
+export const selectTab = (id, statePath) => {
     actionBuilder('SELECT_TAB')
         .set(path(statePath, 'selectedTabId'), id)
         .dispatch()

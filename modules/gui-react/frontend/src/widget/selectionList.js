@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import UnstyledSelectionList from 'widget/unstyledSelectionList'
-import styles from './buttons.module.css'
+import styles from './selectionList.module.css'
 
-const Buttons = (props) =>
+const SelectionList = (props) =>
     <UnstyledSelectionList styles={styles} {...props}/>
 
-Buttons.propTypes = {
+SelectionList.propTypes = {
     className: PropTypes.string,
     input: PropTypes.object,
     options: PropTypes.array,
@@ -14,4 +14,4 @@ Buttons.propTypes = {
     onChange: PropTypes.any
 }
 
-export default Buttons
+export default SelectionList

@@ -10,3 +10,13 @@ export const gzip$ = (content, options = {}) =>
             return reject(exception)
         }
     }))
+
+export const ungzip$ = (compressed, options = {}) =>
+    from(new Promise((resolve, reject) => {
+        try {
+            return resolve(JSON.parse(pako.inflate(compressed, options)))
+        } catch
+            (exception) {
+            return reject(exception)
+        }
+    }))

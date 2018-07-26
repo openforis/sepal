@@ -140,7 +140,8 @@ const api = {
                         body: contents,
                         headers: {'Content-Type': 'application/octet-stream'}
                     })
-                )
+                ),
+                map(() => recipe)
             )
         },
         delete$: (recipeId) =>

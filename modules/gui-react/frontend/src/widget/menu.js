@@ -49,19 +49,18 @@ class Menu extends React.Component {
             </button>
             {open
                 ? <Portal>
-                        <MenuContext.Provider value={this}>
-                            <div className={styles.captureClicks} onClick={() => this.toggleOpen()}/>
-                            <ul className={styles.list} style={this.menuStyle()}>
-                                {warning
-                                    ?
-                                    <li className={styles.warning}>
-                                        <Icon name='exclamation-triangle'/>
-                                        {warning}
-                                    </li>
-                                    : null}
-                                {children}
-                            </ul>
-                        </MenuContext.Provider>
+                    <MenuContext.Provider value={this}>
+                        <div className={styles.captureClicks} onClick={() => this.toggleOpen()}/>
+                        <ul className={styles.list} style={this.menuStyle()}>
+                            {warning ?
+                                <li className={styles.warning}>
+                                    <Icon name='exclamation-triangle'/>
+                                    {warning}
+                                </li>
+                                : null}
+                            {children}
+                        </ul>
+                    </MenuContext.Provider>
                 </Portal>
                 : null}
         </React.Fragment>

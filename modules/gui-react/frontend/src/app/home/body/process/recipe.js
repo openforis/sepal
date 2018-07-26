@@ -1,12 +1,12 @@
 import actionBuilder from 'action-builder'
 import backend from 'backend'
-import {gzip$} from 'gzip'
+import {gzip$, ungzip$} from 'gzip'
 import JSZip from 'jszip'
 import _ from 'lodash'
 import {from, of, Subject} from 'rxjs'
 import {map, switchMap} from 'rxjs/operators'
 import {select, subscribe} from 'store'
-import {addTab} from 'widget/tabs'
+import {addTab, closeTab} from 'widget/tabs'
 
 export const recipePath = (recipeId, path) => {
     const recipeTabIndex = select('process.tabs')
@@ -158,14 +158,9 @@ subscribe('process.tabs', (recipes) => {
 
 saveToBackend$.pipe(
     switchMap(recipe => {
-        const prevRecipe = findPrevRecipe(recipe)
-        if (prevRecipe) {
-            const prevRecipeWithoutUi = _.omit(prevRecipe, ['ui'])
-
-            gzip$(prevRecipeWithoutUi, {to: 'string'}).subscribe(revision =>
-                saveRevisionToLocalStorage(prevRecipe.id, revision)
-            )
-        }
+        gzip$(_.omit(recipe, ['ui']), {to: 'string'}).subscribe(revision =>
+            saveRevisionToLocalStorage(recipe.id, revision)
+        )
         return backend.recipe.save$(recipe)
     })
 ).subscribe()
@@ -189,4 +184,32 @@ const expireRevisionFromLocalStorage = (recipeId) => {
         .key
     localStorage.removeItem(keyToExpire)
     return true
+}
+
+export const getRevisions = (recipeId) =>
+    _(localStorage)
+        .keys()
+        .map(key => (key.split(':')))
+        .filter(([id, timestamp]) => recipeId === id)
+        .map(([id, timestamp]) => timestamp)
+        .sortBy()
+        .reverse()
+        .value()
+
+export const revertToRevision$ = (recipeId, revision) => {
+    const compressed = localStorage[`${recipeId}:${revision}`]
+    return ungzip$(compressed, {to: 'string'}).pipe(
+        map(recipe => {
+            prevTabs = prevTabs.filter(tab => tab.id !== recipeId)
+            closeTab(recipeId, 'process')
+            const selectedTabId = select('process.selectedTabId')
+            actionBuilder('REVERT_RECIPE')
+                .set(recipePath(selectedTabId), recipe)
+                .set('process.selectedTabId', recipeId)
+                .dispatch()
+            console.log('saving', recipe)
+            backend.recipe.save$(recipe).subscribe()
+            return recipe
+        })
+    )
 }

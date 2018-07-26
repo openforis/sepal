@@ -1,0 +1,23 @@
+.panel {
+    min-height: 18rem;
+    max-height: 30rem;
+    max-width: 24rem;
+}
+
+.content {
+    margin: 0;
+    padding: 0;
+}
+
+.label {
+    display: flex;
+    justify-content: space-between;
+}
+
+.date {
+
+}
+
+.fromNow {
+    color: gray;
+}

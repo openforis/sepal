@@ -134,6 +134,10 @@
       "saveRecipe": "Save recipe",
       "revertToOldRevision": "Revert to old revision..."
     },
+    "revisions": {
+      "title": "Revisions",
+      "revert": "Revert to revision"
+    },
     "mosaic": {
       "create": "Mosaic",
       "mapToolbar": {
