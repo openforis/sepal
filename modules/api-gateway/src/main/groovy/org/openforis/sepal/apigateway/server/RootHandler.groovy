@@ -69,7 +69,7 @@ class RootHandler implements HttpHandler {
             endpointHandler = new CachedHandler(endpointHandler)
         if (endpointConfig.noCache)
             endpointHandler = new NoCacheHandler(endpointHandler)
-//        endpointHandler = gzipHandler(endpointHandler)
+        endpointHandler = gzipHandler(endpointHandler)
         def sessionConfig = new SessionCookieConfig(cookieName: "SEPAL-SESSIONID", secure: endpointConfig.https)
         return new SessionAttachmentHandler(endpointHandler, sessionManager, sessionConfig)
     }
