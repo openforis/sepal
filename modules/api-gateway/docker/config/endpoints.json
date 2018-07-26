@@ -22,8 +22,8 @@
   },
   {
     "prefix": "false",
-    "path": "/api/gateone/ws",
-    "target": "https://gateone:8000/ws/",
+    "path": "/gateone/ws",
+    "target": "https://gateone:8000/ws",
     "https": "true",
     "authenticate": "true"
   },
@@ -31,6 +31,13 @@
     "prefix": "true",
     "path": "/api/gateone/",
     "target": "https://gateone:8000/",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "false",
+    "path": "/api/gateone/auth-object",
+    "target": "http://sepal:1025/api/gateone/auth-object",
     "https": "true",
     "authenticate": "true"
   },

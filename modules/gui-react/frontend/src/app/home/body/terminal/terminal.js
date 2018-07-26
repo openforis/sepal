@@ -1,6 +1,6 @@
 import api from 'backend'
-// import './gateone'
-// import './gateone.css'
+import './gateone'
+import './gateone.css'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {connect} from 'store'
