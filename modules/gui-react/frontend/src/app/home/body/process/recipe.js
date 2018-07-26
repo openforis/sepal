@@ -168,7 +168,7 @@ saveToBackend$.pipe(
 
 const saveRevisionToLocalStorage = (recipeId, revision) => {
     try {
-        localStorage.setItem(`${recipeId}:${Date.now()}`, revision)
+        localStorage.setItem(`sepal:${recipeId}:${Date.now()}`, revision)
     } catch (exception) {
         if (expireRevisionFromLocalStorage(recipeId))
             saveRevisionToLocalStorage(recipeId, revision)
@@ -178,7 +178,9 @@ const saveRevisionToLocalStorage = (recipeId, revision) => {
 const expireRevisionFromLocalStorage = (recipeId) => {
     const keyToExpire = _(localStorage)
         .keys()
-        .map(key => ({key, timestamp: key.split(':')[1]}))
+        .filter(key => key.startsWith('sepal:'))
+        .map(key => ({key, timestamp: key.split(':')[2]}))
+        .filter(value => value)
         .sortBy({key: 1})
         .first()
         .key
@@ -189,15 +191,16 @@ const expireRevisionFromLocalStorage = (recipeId) => {
 export const getRevisions = (recipeId) =>
     _(localStorage)
         .keys()
+        .filter(key => key.startsWith('sepal:'))
         .map(key => (key.split(':')))
-        .filter(([id, timestamp]) => recipeId === id)
-        .map(([id, timestamp]) => timestamp)
+        .filter(([prefix, id, timestamp]) => recipeId === id)
+        .map(([prefix, id, timestamp]) => timestamp)
         .sortBy()
         .reverse()
         .value()
 
 export const revertToRevision$ = (recipeId, revision) => {
-    const compressed = localStorage[`${recipeId}:${revision}`]
+    const compressed = localStorage[`sepal:${recipeId}:${revision}`]
     return ungzip$(compressed, {to: 'string'}).pipe(
         map(recipe => {
             prevTabs = prevTabs.filter(tab => tab.id !== recipeId)
