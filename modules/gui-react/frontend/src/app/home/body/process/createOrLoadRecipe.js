@@ -20,6 +20,7 @@ const CreateOrLoadRecipe = ({recipeId}) =>
             <CreateButton label={msg('process.classification.create')} recipeId={recipeId} type='CLASSIFICATION'/>
             <CreateButton label={msg('process.changeDetection.create')} recipeId={recipeId} type='CHANGE_DETECTION'/>
             <CreateButton label={msg('process.timeSeries.create')} recipeId={recipeId} type='TIME_SERIES'/>
+            <CreateButton label={msg('process.landCover')} recipeId={recipeId} type='LAND_COVER'/>
         </div>
         <RecipeList recipeId={recipeId}/>
     </div>

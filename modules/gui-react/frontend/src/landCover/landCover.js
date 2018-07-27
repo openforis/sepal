@@ -1,4 +1,5 @@
 import api from 'backend'
+import styles from './landCover.module.css'
 import React from 'react'
 import {connect} from 'store'
 
@@ -63,7 +64,7 @@ class LandCover extends React.Component {
 
     render() {
         return (
-            <div>
+            <div className={styles.landCover}>
                 <button onClick={this.createComposites.bind(this)}>Create composites</button>
                 <br/><br/>
                 <button onClick={this.classify.bind(this)}>Classify</button>

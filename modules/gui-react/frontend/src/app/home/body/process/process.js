@@ -1,4 +1,5 @@
 import Revisions from 'app/home/body/process/revisions'
+import LandCover from 'landCover/landCover'
 import React from 'react'
 import Tabs from 'widget/tabs'
 import Classification from './classification/classification'
@@ -13,6 +14,8 @@ const recipeComponent = (id, type) => {
             return <Mosaic recipeId={id}/>
         case 'CLASSIFICATION':
             return <Classification recipeId={id}/>
+        case 'LAND_COVER':
+            return <LandCover recipeId={id}/>
         default:
             return <CreateOrLoadRecipe recipeId={id}/>
     }
