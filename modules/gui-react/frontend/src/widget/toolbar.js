@@ -136,7 +136,7 @@ export class PanelButton extends React.Component {
                                     <Portal container={panelContainer}>
                                         <PanelButtonContext.Provider value={{top, bottom, right, left}}>
                                             {children}
-                                        </PanelButtonContext.Provider>,
+                                        </PanelButtonContext.Provider>
                                     </Portal>
                                 ) : null
                         }
