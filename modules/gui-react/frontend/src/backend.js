@@ -196,9 +196,10 @@ const transformRecipeForPreview = (recipe) => {
 
 const transformRecipeForRetrieval = (recipe) => {
     const name = recipe.title || recipe.placeholder
-    const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', recipe.ui.retrieveOptions.destination], {name})
+    const destination = recipe.ui.retrieveOptions.destination
+    const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', destination], {name})
     return {
-        'operation': 'sepal.image.sepal_export',
+        'operation': `sepal.image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
         'params':
             {
                 title: taskTitle,
