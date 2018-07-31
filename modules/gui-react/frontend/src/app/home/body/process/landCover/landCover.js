@@ -1,26 +1,11 @@
 import api from 'backend'
-import styles from './landCover.module.css'
 import React from 'react'
 import {connect} from 'store'
+import {recipePath} from '../classification/classificationRecipe'
+import LandCoverToolbar from './landCoverToolbar'
+import MapToolbar from 'app/home/map/mapToolbar'
 
 class LandCover extends React.Component {
-    createComposites() {
-        this.props.asyncActionBuilder('CREATE_COMPOSITES',
-            api.tasks.submit$({
-                operation: 'sepal.landcover.create_composites',
-                params: {
-                    assetPath: 'land-cover-test/myanmar',
-                    fromYear: 2015,
-                    toYear: 2016,
-                    aoiFusionTable: '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F',
-                    keyColumn: 'ISO',
-                    keyValue: 'MMR',
-                    sensors: ['L8', 'L7'],
-                    scale: 3000
-                }
-            })
-        ).dispatch()
-    }
 
     classify() {
         this.props.asyncActionBuilder('CLASSIFY',
@@ -57,20 +42,16 @@ class LandCover extends React.Component {
         ).dispatch()
     }
 
-    // Find out which step
-    //      Start with a recipe step, then validate that expected assets and fusion tables are available
-
-    // Get the task id, and use it to monitor state
-
     render() {
+        const {recipeId} = this.props
         return (
-            <div className={styles.landCover}>
-                <button onClick={this.createComposites.bind(this)}>Create composites</button>
-                <br/><br/>
-                <button onClick={this.classify.bind(this)}>Classify</button>
-                <br/><br/>
-                <button onClick={this.assessAccuracy.bind(this)}>Assess accuracy</button>
-            </div>
+            <React.Fragment>
+                <MapToolbar
+                    statePath={recipePath(recipeId, 'ui')}
+                    mapContext={recipeId}
+                    labelLayerIndex={1}/>
+                <LandCoverToolbar recipeId={recipeId}/>
+            </React.Fragment>
         )
     }
 }

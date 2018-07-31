@@ -1,5 +1,5 @@
 import Revisions from 'app/home/body/process/revisions'
-import LandCover from 'landCover/landCover'
+import LandCover from './landCover/landCover'
 import React from 'react'
 import Tabs from 'widget/tabs'
 import Classification from './classification/classification'

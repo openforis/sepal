@@ -507,6 +507,33 @@
     },
     "timeSeries": {
       "create": "Time series"
+    },
+    "landCover": {
+      "create": "RLCMS",
+      "panel": {
+        "period": {
+          "title": "Period",
+          "button": "PER",
+          "tooltip": "Specify time period",
+          "startYear": {
+            "label": "Start year",
+            "malformed": "Not a year"
+          },
+          "endYear": {
+            "label": "End year",
+            "malformed": "Not a year"
+          },
+          "startBeforeEnd": "Start must be before end year"
+        },
+        "topology": {
+          "title": "Topology",
+          "button": "TOP",
+          "tooltip": "Select topology"
+        },
+        "createComposites": {
+          "tooltip": "Create composites"
+        }
+      }
     }
   },
   "tasks": {
@@ -545,7 +572,8 @@
       "LOAD_DIRECTORY": "Load user directory",
       "REMOVE_FILE": "Delete file",
       "LOAD_APPS": "Load applications",
-      "RUN_APP": "Open application"
+      "RUN_APP": "Open application",
+      "SCHEDULE_UPDATE_TASKS": "Update background tasks"
     }
   },
   "bands": {

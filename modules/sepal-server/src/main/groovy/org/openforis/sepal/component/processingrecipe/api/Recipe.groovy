@@ -21,6 +21,6 @@ class Recipe {
     }
 
     enum Type {
-        MOSAIC, CLASSIFICATION, CHANGE_DETECTION, ASSET
+        MOSAIC, CLASSIFICATION, CHANGE_DETECTION, ASSET, LAND_COVER
     }
 }

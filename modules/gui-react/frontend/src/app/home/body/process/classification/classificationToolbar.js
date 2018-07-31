@@ -17,6 +17,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
+
 class ClassificationToolbar extends React.Component {
     render() {
         const {recipeId, initialized} = this.props

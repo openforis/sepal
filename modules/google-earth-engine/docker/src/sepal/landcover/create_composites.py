@@ -3,6 +3,7 @@ import landcoverPackage
 
 from ..export.image_to_asset import ImageToAsset
 from ..task.task import ThreadTask, Task
+from ..aoi import Aoi
 
 
 def create(spec, context):
@@ -14,21 +15,18 @@ class CreateComposites(ThreadTask):
         super(CreateComposites, self).__init__('create_composites')
         self.credentials = credentials
         self.asset_path = spec['assetPath']
-        self.from_year = spec['fromYear']
-        self.to_year = spec['toYear']
-        self.aoi_fusion_table = spec['aoiFusionTable']
-        self.key_column = spec['keyColumn']
-        self.key_value = spec['keyValue']
+        self.from_year = spec['startYear']
+        self.to_year = spec['endYear']
+        self.aoi = Aoi.create(spec['aoi']).geometry()
         self.sensors = spec['sensors']
         self.scale = spec['scale']
         self.tasks = []
 
     def run(self):
         ee.InitializeThread(self.credentials)
-        aoi = self._aoi()
 
         self.tasks = [
-            self._create_composite_task(year, aoi)
+            self._create_composite_task(year, self.aoi)
             for year in range(self.from_year, self.to_year + 1)
         ]
 
@@ -39,11 +37,6 @@ class CreateComposites(ThreadTask):
         completed = len([task for task in self.tasks if task.state == Task.RESOLVED])
         total = len(self.tasks)
         return 'Created composite {0} of {1}'.format(completed, total)
-
-    def _aoi(self):
-        return ee.FeatureCollection('ft:' + self.aoi_fusion_table) \
-            .filterMetadata(self.key_column, 'equals', self.key_value) \
-            .geometry()
 
     def _create_composite_task(self, year, aoi):
         composite = create_composite(
@@ -63,8 +56,7 @@ class CreateComposites(ThreadTask):
 
     def __str__(self):
         return '{0}()'.format(
-            type(self).__name__, self.from_year, self.to_year, self.aoi_fusion_table, self.key_column, self.key_value,
-            self.sensors
+            type(self).__name__, self.from_year, self.to_year, str(self.aoi)
         )
 
 
