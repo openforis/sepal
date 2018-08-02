@@ -21,7 +21,7 @@ class CreateLandCoverMap(ThreadTask):
         self.primitive_types = spec['primitiveTypes']
         self.start_year = spec['startYear']
         self.end_year = spec['endYear']
-        self.training_data_by_year = spec['trainingDataByYear']
+        self.training_data = spec['trainingData']
         self.scale = spec['scale']
         self.drive_folder = None
         self.drive_folder_name = '_'.join(['Sepal', self.asset_path.split('/')[-1], str(uuid.uuid4())])
@@ -42,35 +42,53 @@ class CreateLandCoverMap(ThreadTask):
 
     def _create_primitive_tasks(self):
         primitive_tasks = []
-        for year in range(self.start_year, self.end_year + 1):
-            training_data_year = year \
-                if year in self.training_data_by_year \
-                else self.training_data_by_year.keys()[0]
-            training_data = self.training_data_by_year[training_data_year]
-            training_data_collection = ee.FeatureCollection('ft:' + training_data['tableId'])
-            for primitive_type in self.primitive_types:
-                primitive_training_data_collection = self._to_primitive_training_data(
-                    training_data_collection=training_data_collection,
-                    class_column=training_data['classColumn'],
-                    primitive_class=training_data['classByPrimitive'][primitive_type]
-                )
+        for primitive_type in self.primitive_types:
+            samples = self._sample_primitive(primitive_type)
+
+            for year in range(self.start_year, self.end_year + 1):
                 primitive_tasks.append(
                     CreatePrimitive(
                         credentials=self.credentials,
                         scale=self.scale,
                         year=year,
                         primitive_type=primitive_type,
-                        training_data_collection=primitive_training_data_collection,
+                        samples=samples,
                         asset_path=self.asset_path,
                         drive_folder_name=self.drive_folder_name
                     ))
         return primitive_tasks
 
-    def _to_primitive_training_data(self, training_data_collection, class_column, primitive_class):
-        def to_primitive_feature(feature):
-            return feature.set('class', ee.Number(feature.get(class_column)).eq(primitive_class))
+    def _sample_primitive(self, primitive_type):
+        training_data_collection = ee.FeatureCollection('ft:' + self.training_data['tableId'])
+        primitive_training_data_collection = self._to_primitive_training_data(
+            training_data_collection=training_data_collection,
+            year_column=self.training_data['yearColumn'],
+            class_column=self.training_data['classColumn'],
+            primitive_class=self.training_data['classByPrimitive'][primitive_type]
+        )
+        samples = ee.FeatureCollection([])
+        for year in range(self.start_year, self.end_year + 1):
+            composite = ee.Image(_to_asset_id('{0}-{1}'.format(self.asset_path, year)))
+            yearly_training_data = primitive_training_data_collection \
+                .filter(ee.Filter.eq('year', ee.Number(year)))
+            yearly_sample = sample(composite=composite, training_data=yearly_training_data)
+            samples = ee.FeatureCollection(samples.merge(yearly_sample).copyProperties(yearly_sample))
+        return samples
 
-        return training_data_collection.map(to_primitive_feature)
+    def _to_primitive_training_data(self, training_data_collection, year_column, class_column, primitive_class):
+        def to_primitive_feature(feature, int_class):
+            return feature \
+                .set('class', int_class) \
+                .set('year', feature.get(year_column))
+
+        ee_primitive_class = ee.Number(int(primitive_class)) if primitive_class.isdigit() else primitive_class
+        return ee.FeatureCollection(training_data_collection
+                                    .filter(ee.Filter.eq(class_column, ee_primitive_class))
+                                    .map(lambda feature: to_primitive_feature(feature, 1))
+                                    .merge(
+            training_data_collection.filter(ee.Filter.neq(class_column, ee_primitive_class))
+                .map(lambda feature: to_primitive_feature(feature, 0))
+        ).copyProperties(training_data_collection))
 
     def status_message(self):
         return 'Some CreateLandCoverMap status message'
@@ -129,7 +147,7 @@ class CreatePrimitive(ThreadTask):
             year,
             asset_path,
             primitive_type,
-            training_data_collection,
+            samples,
             drive_folder_name
     ):
         super(CreatePrimitive, self).__init__('create_primitive')
@@ -137,19 +155,14 @@ class CreatePrimitive(ThreadTask):
         self.scale = scale
         self.year = year
         self.primitive_name = primitive_type
-        self.training_data_collection = training_data_collection
+        self.samples = samples
         self.asset_path = asset_path
         self.composite = ee.Image(_to_asset_id('{0}-{1}'.format(asset_path, year)))
         self.drive_folder_name = drive_folder_name
 
     def run(self):
         ee.InitializeThread(self.credentials)
-        samples = sample(
-            composite=self.composite,
-            training_data=self.training_data_collection
-        )
-
-        return self._create_primitive(samples) \
+        return self._create_primitive(self.samples) \
             .then(self.resolve, self.reject)
 
         # return self._sample() \

@@ -19,11 +19,17 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
+    const recipeId = ownProps.recipeId
+    const recipeState = RecipeState(recipeId)
+    let values = recipeState('ui.trainingData')
+    if (!values) {
+        const model = recipeState('model.trainingData')
+        values = modelToValues(model)
+        RecipeActions(recipeId).setTrainingData({values, model}).dispatch()
+    }
     return {
-        values: recipeState('ui.trainingData'),
-        columns: recipeState('ui.fusionTable.columns'),
-        rows: recipeState('ui.fusionTable.rows')
+        values,
+        columns: recipeState('ui.fusionTable.columns')
     }
 }
 
@@ -67,7 +73,10 @@ class TrainingData extends React.Component {
                 <PanelButtons
                     form={form}
                     statePath={recipePath(recipeId, 'ui')}
-                    onApply={trainingData => this.recipeActions.setTrainingData(trainingData).dispatch()}/>
+                    onApply={values => this.recipeActions.setTrainingData({
+                        values,
+                        model: valuesToModel(values)
+                    }).dispatch()}/>
             </Panel>
         )
     }
@@ -118,5 +127,13 @@ class TrainingData extends React.Component {
 TrainingData.propTypes = {
     recipeId: PropTypes.string,
 }
+
+const valuesToModel = (values) => ({
+    ...values
+})
+
+const modelToValues = (model = {}) => ({
+    ...model
+})
 
 export default form({fields, mapStateToProps})(TrainingData)

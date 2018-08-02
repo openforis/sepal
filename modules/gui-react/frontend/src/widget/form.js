@@ -354,12 +354,17 @@ export const ErrorMessage = (props) => {
                 )
                 .find(error => error)
             return (
-                <div className={styles.errorMessage}>
+                <div className={[styles.errorMessage, props.className].join(' ')}>
                     {error}
                 </div>
             )
         }}
     </FormContext.Consumer>
+}
+
+ErrorMessage.propTypes = {
+    'for': PropTypes.any.isRequired,
+    className: PropTypes.string
 }
 
 export class Input extends React.Component {

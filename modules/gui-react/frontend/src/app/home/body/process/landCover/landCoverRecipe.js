@@ -31,13 +31,14 @@ export const RecipeActions = (id) => {
                 'model.period': model,
             }, {values, model})
         },
-        setTopology({values, model}) {
-            return setAll('SET_TOPOLOGY', {
-                'ui.topology': values,
-                'model.topology': model,
+        setTypology({values, model}) {
+            return setAll('SET_TYPOLOGY', {
+                'ui.typology': values,
+                'model.typology': model,
             }, {values, model})
         },
         setTrainingData({values, model}) {
+            console.log({values, model})
             return setAll('SET_TRAINING_DATA', {
                 'ui.trainingData': values,
                 'model.trainingData': model,
@@ -48,6 +49,9 @@ export const RecipeActions = (id) => {
                 'ui.compositeOptions': values,
                 'model.compositeOptions': model,
             }, {values, model})
+        },
+        setFusionTableColumns(columns) {
+            return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
         },
         setInitialized(initialized) {
             return set('SET_INITIALIZED', 'ui.initialized', !!initialized, {initialized})
@@ -63,7 +67,7 @@ const initRecipe = (recipe) => {
 
     const model = recipe.model
     if (model)
-        return actions.setInitialized(model.aoi && model.period && model.topology).dispatch()
+        return actions.setInitialized(model.aoi && model.period && model.typology).dispatch()
 
     const now = moment()
     let endYear = now.year()
@@ -74,7 +78,7 @@ const initRecipe = (recipe) => {
         }
     }).dispatch()
 
-    actions.setTopology({
+    actions.setTypology({
         model:
             { // TODO: Create a panel for collecting this data
                 primitiveTypes: ['primitiveA', 'primitiveB']
@@ -82,17 +86,7 @@ const initRecipe = (recipe) => {
     }).dispatch()
 
     actions.setTrainingData({
-        model: {
-            [endYear]: { // TODO: Create a panel for collecting this data
-                type: 'fusionTable',
-                tableId: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
-                classColumn: 'class',
-                classByPrimitive: {
-                    'primitiveA': 1,
-                    'primitiveB': 2,
-                }
-            }
-        }
+        model: {}
     }).dispatch()
 
     actions.setCompositeOptions({
@@ -119,10 +113,10 @@ export const createLandCoverMap = (recipe) => {
         operation: 'sepal.landcover.create_land_cover_map',
         params: {
             assetPath: recipe.title || recipe.placeholder,
-            primitiveTypes: recipe.model.topology.primitiveTypes,
+            primitiveTypes: recipe.model.typology.primitiveTypes,
             startYear: recipe.model.period.startYear,
             endYear: recipe.model.period.endYear,
-            trainingDataByYear: recipe.model.trainingData,
+            trainingData: recipe.model.trainingData,
             scale: 3000
         }
     }).subscribe()

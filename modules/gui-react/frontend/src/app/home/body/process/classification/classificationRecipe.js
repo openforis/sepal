@@ -29,9 +29,6 @@ export const RecipeActions = (id) => {
         setFusionTableColumns(columns) {
             return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
         },
-        setFusionTableRows(rows) {
-            return set('SET_FUSION_TABLE_ROWS', 'ui.fusionTable.rows', rows, {rows})
-        },
         setTrainingData(trainingDataForm) {
             return setAll('SET_TRAINING_DATA', {
                 'ui.trainingData': {...trainingDataForm},

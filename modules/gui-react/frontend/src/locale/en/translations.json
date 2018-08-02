@@ -220,7 +220,7 @@
               "fusionTable.label": "Fusion Table",
               "fusionTable.placeholder": "Enter a Fusion Table ID",
               "fusionTable.required": "Fusion Table must be specified",
-              "fusionTable.invalid": "Invalid Fution Table ID",
+              "fusionTable.invalid": "Invalid Fusion Table ID",
               "column.label": "Column",
               "column.placeholder.loading": "Loading columns...",
               "column.placeholder.noFusionTable": "Enter a Fusion Table ID first",
@@ -525,15 +525,38 @@
           },
           "startBeforeEnd": "Start must be before end year"
         },
-        "topology": {
-          "title": "Topology",
+        "typology": {
+          "title": "Typology",
           "button": "TOP",
-          "tooltip": "Select topology"
+          "tooltip": "Select typology"
         },
         "trainingData": {
-          "title": "Training data",
           "button": "TRN",
-          "tooltip": "Collect or select training data"
+          "tooltip": "Configure training data source",
+          "title": "Training data",
+          "form": {
+            "fusionTable": {
+              "label": "Fusion table",
+              "placeholder": "Enter a Fusion Table ID",
+              "required": "Fusion Table must be specified",
+              "invalid": "Invalid Fusion Table ID"
+            },
+            "yearColumn": {
+              "label": "Year column",
+              "placeholder.loading": "Loading columns...",
+              "placeholder.noFusionTable": "Enter a Fusion Table ID first",
+              "placeholder.loaded": "Select a column...",
+              "required": "A column must be selected"
+            },
+            "classColumn": {
+              "label": "Class column",
+              "placeholder.loading": "Loading columns...",
+              "placeholder.noFusionTable": "Enter a Fusion Table ID first",
+              "placeholder.loaded": "Select a column...",
+              "required": "A column must be selected"
+            },
+            "yearAndClassColumnsSame": "Year and class columns are the same"
+          }
         },
         "compositeOptions": {
           "title": "Composite options",
@@ -542,6 +565,9 @@
         },
         "createComposites": {
           "tooltip": "Create composites"
+        },
+        "createLandCoverMap": {
+          "tooltip": "Create land-cover map"
         }
       }
     }

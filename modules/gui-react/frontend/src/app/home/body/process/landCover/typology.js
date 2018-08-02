@@ -5,23 +5,23 @@ import {msg} from 'translate'
 import {form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
-import styles from './topology.module.css'
+import styles from './typology.module.css'
 
 const fields = {}
 
 const mapStateToProps = (state, ownProps) => {
     const recipeId = ownProps.recipeId
     const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.topology')
+    let values = recipeState('ui.typology')
     if (!values) {
-        const model = recipeState('model.topology')
+        const model = recipeState('model.typology')
         values = modelToValues(model)
-        RecipeActions(recipeId).setTopology({values, model}).dispatch()
+        RecipeActions(recipeId).setTypology({values, model}).dispatch()
     }
     return {values}
 }
 
-class Topology extends React.Component {
+class Typology extends React.Component {
     constructor(props) {
         super(props)
         const {recipeId} = props
@@ -35,7 +35,7 @@ class Topology extends React.Component {
             <Panel className={styles.panel}>
                 <PanelHeader
                     icon='cog'
-                    title={msg('process.landCover.panel.topology.title')}/>
+                    title={msg('process.landCover.panel.typology.title')}/>
 
                 <PanelContent>
                     {this.renderContent()}
@@ -44,7 +44,7 @@ class Topology extends React.Component {
                 <PanelButtons
                     statePath={recipePath(recipeId, 'ui')}
                     form={form}
-                    onApply={values => this.recipeActions.setTopology({
+                    onApply={values => this.recipeActions.setTypology({
                         values,
                         model: valuesToModel(values)
                     }).dispatch()}/>
@@ -55,17 +55,17 @@ class Topology extends React.Component {
     renderContent() {
         return (
             <div className={styles.content}>
-                Select (or create?) a topology somehow here.
+                Select (or create?) a typology somehow here.
             </div>
         )
     }
 }
 
-Topology.propTypes = {
+Typology.propTypes = {
     recipeId: PropTypes.string,
 }
 
-export default form({fields, mapStateToProps})(Topology)
+export default form({fields, mapStateToProps})(Typology)
 
 const valuesToModel = (values) => ({
     ...values
