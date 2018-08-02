@@ -530,6 +530,16 @@
           "button": "TOP",
           "tooltip": "Select topology"
         },
+        "trainingData": {
+          "title": "Training data",
+          "button": "TRN",
+          "tooltip": "Collect or select training data"
+        },
+        "compositeOptions": {
+          "title": "Composite options",
+          "button": "CMP",
+          "tooltip": "Configure how composite is created"
+        },
         "createComposites": {
           "tooltip": "Create composites"
         }

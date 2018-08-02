@@ -6,7 +6,6 @@ from promise import Promise
 
 from .. import drive
 from ..export.image_to_asset import ImageToAsset
-from ..export.table_to_drive import TableToDrive
 from ..task.task import ThreadTask, Task
 
 
@@ -19,8 +18,11 @@ class CreateLandCoverMap(ThreadTask):
         super(CreateLandCoverMap, self).__init__('create_land_cover_map')
         self.credentials = credentials
         self.asset_path = spec['assetPath']
+        self.primitive_types = spec['primitiveTypes']
+        self.start_year = spec['startYear']
+        self.end_year = spec['endYear']
+        self.training_data_by_year = spec['trainingDataByYear']
         self.scale = spec['scale']
-        self.years = spec['years']
         self.drive_folder = None
         self.drive_folder_name = '_'.join(['Sepal', self.asset_path.split('/')[-1], str(uuid.uuid4())])
 
@@ -34,29 +36,41 @@ class CreateLandCoverMap(ThreadTask):
             .then(self._assemble, self.reject) \
             .then(self.resolve, self.reject)
 
-        # TODO: Add a thematic smoothing step
-        # TODO: Check if asset is already present - if so delete it or skip the export?
-
     def close(self):
         if self.drive_folder:
             drive.delete(self.credentials, self.drive_folder)
 
     def _create_primitive_tasks(self):
         primitive_tasks = []
-        for year, year_spec in self.years.iteritems():
-            year = int(year)
-            for primitive_type, training_data_fusion_table in year_spec['trainingDataFusionTables'].iteritems():
+        for year in range(self.start_year, self.end_year + 1):
+            training_data_year = year \
+                if year in self.training_data_by_year \
+                else self.training_data_by_year.keys()[0]
+            training_data = self.training_data_by_year[training_data_year]
+            training_data_collection = ee.FeatureCollection('ft:' + training_data['tableId'])
+            for primitive_type in self.primitive_types:
+                primitive_training_data_collection = self._to_primitive_training_data(
+                    training_data_collection=training_data_collection,
+                    class_column=training_data['classColumn'],
+                    primitive_class=training_data['classByPrimitive'][primitive_type]
+                )
                 primitive_tasks.append(
                     CreatePrimitive(
                         credentials=self.credentials,
                         scale=self.scale,
                         year=year,
                         primitive_type=primitive_type,
-                        training_data_fusion_table=training_data_fusion_table,
+                        training_data_collection=primitive_training_data_collection,
                         asset_path=self.asset_path,
                         drive_folder_name=self.drive_folder_name
                     ))
         return primitive_tasks
+
+    def _to_primitive_training_data(self, training_data_collection, class_column, primitive_class):
+        def to_primitive_feature(feature):
+            return feature.set('class', ee.Number(feature.get(class_column)).eq(primitive_class))
+
+        return training_data_collection.map(to_primitive_feature)
 
     def status_message(self):
         return 'Some CreateLandCoverMap status message'
@@ -65,7 +79,7 @@ class CreateLandCoverMap(ThreadTask):
         primitive_collection = ee.ImageCollection([task.primitive_asset() for task in self.primitive_tasks])
 
         tasks = []
-        for year in self.years:
+        for year in range(self.start_year, self.end_year + 1):
             year = int(year)
             export_primitive, export_probability = self._assemble_year(
                 year,
@@ -115,7 +129,7 @@ class CreatePrimitive(ThreadTask):
             year,
             asset_path,
             primitive_type,
-            training_data_fusion_table,
+            training_data_collection,
             drive_folder_name
     ):
         super(CreatePrimitive, self).__init__('create_primitive')
@@ -123,7 +137,7 @@ class CreatePrimitive(ThreadTask):
         self.scale = scale
         self.year = year
         self.primitive_name = primitive_type
-        self.training_data_fusion_table = training_data_fusion_table
+        self.training_data_collection = training_data_collection
         self.asset_path = asset_path
         self.composite = ee.Image(_to_asset_id('{0}-{1}'.format(asset_path, year)))
         self.drive_folder_name = drive_folder_name
@@ -132,7 +146,7 @@ class CreatePrimitive(ThreadTask):
         ee.InitializeThread(self.credentials)
         samples = sample(
             composite=self.composite,
-            training_data=ee.FeatureCollection('ft:' + self.training_data_fusion_table)
+            training_data=self.training_data_collection
         )
 
         return self._create_primitive(samples) \
@@ -149,33 +163,31 @@ class CreatePrimitive(ThreadTask):
     def primitive_asset_path(self):
         return '{0}-{1}-{2}-map'.format(self.asset_path, self.year, self.primitive_name)
 
-    def _sample(self):
-        samples = sample(
-            composite=self.composite,
-            training_data=ee.FeatureCollection('ft:' + self.training_data_fusion_table)
-        )
-        return self.dependent(
-            TableToDrive(
-                credentials=self.credentials,
-                table=samples,
-                description='sample-{0}-{1}'.format(self.year, self.primitive_name),
-                folder=self.drive_folder_name,
-                fileFormat='CSV'
-            )).submit()
+    # def _sample(self):
+    #     samples = sample(
+    #         composite=self.composite,
+    #         training_data=ee.FeatureCollection('ft:' + self.training_data_fusion_table)
+    #     )
+    #     return self.dependent(
+    #         TableToDrive(
+    #             credentials=self.credentials,
+    #             table=samples,
+    #             description='sample-{0}-{1}'.format(self.year, self.primitive_name),
+    #             folder=self.drive_folder_name,
+    #             fileFormat='CSV'
+    #         )).submit()
 
     def _export_sample_csv_to_fusion_table(self, value):
         # TODO: Implement...
         print('_export_sample_to_ft: ', value)
         return Promise.resolve('1GnoD3wtYpi0jSwyh1FqsfMdzCs135TDJjMFcjvI8')
 
-    def _create_primitive(self, sample_fusion_table):
-        # training_data = ee.FeatureCollection('ft:' + sample_fusion_table)
-        training_data = sample_fusion_table  # TODO: For now, the feature collection is passed, not the fusion table
+    def _create_primitive(self, sampled_data):
         primitive = create_primitive(
             year=self.year,
             type=self.primitive_name,
             composite=self.composite,
-            training_data=training_data
+            training_data=sampled_data
         )
 
         return self.dependent(
@@ -216,7 +228,7 @@ def create_primitive(year, type, composite, training_data):
     :param year: The year to create primitive for
     :param type: The type of primitive to create
     :param composite: The composite to create the primitive for as ee.Image
-    :param training_data: ee.ImageCollection with the training data and sampled properties
+    :param training_data: ee.FeatureCollection with the classes and sampled properties
     :return: An ee.Image with the primitive with a year property set.
     '''
     return landcoverPackage.primitive(

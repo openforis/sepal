@@ -1,38 +1,22 @@
 import api from 'backend'
 import React from 'react'
-import {connect} from 'store'
-import {recipePath} from '../classification/classificationRecipe'
+import {connect, select} from 'store'
+import {recipePath, RecipeState} from './landCoverRecipe'
 import LandCoverToolbar from './landCoverToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
+import {sepalMap} from 'app/home/map/map'
+
+const mapStateToProps = (state, ownProps) => {
+    const recipeState = RecipeState(ownProps.recipeId)
+    return {
+        initialized: recipeState('ui.initialized'),
+        aoi: recipeState('model.aoi'),
+        tabCount: select('process.tabs').length
+    }
+}
 
 class LandCover extends React.Component {
-
-    classify() {
-        this.props.asyncActionBuilder('CLASSIFY',
-            api.tasks.submit$({
-                operation: 'sepal.landcover.create_land_cover_map',
-                params: {
-                    assetPath: 'land-cover-test/myanmar',
-                    scale: 3000,
-                    years: {
-                        2015: {
-                            trainingDataFusionTables: {
-                                primitiveA: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
-                                primitiveB: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
-                            }
-                        },
-                        2016: {
-                            trainingDataFusionTables: {
-                                primitiveA: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
-                                primitiveB: '1kprIURiogZxAKo2Dmvnt5RVEiN0FuuPNUR4Z4COD',
-                            }
-                        }
-                    }
-                }
-            })
-        ).dispatch()
-    }
-
     assessAccuracy() {
         this.props.asyncActionBuilder('ASSES_ACCURACY',
             api.tasks.submit$({
@@ -54,6 +38,23 @@ class LandCover extends React.Component {
             </React.Fragment>
         )
     }
+
+
+    // TODO: This is duplicated from mosaic. Will end up in classification too. Higher order component? AoiTab...
+    componentDidMount() {
+        const {recipeId, aoi, componentWillUnmount$} = this.props
+        setAoiLayer({
+            contextId: recipeId,
+            aoi,
+            destroy$: componentWillUnmount$,
+            onInitialized: () => {
+                if (this.props.tabCount === 1) {
+                    sepalMap.setContext(recipeId)
+                    sepalMap.getContext(recipeId).fitLayer('aoi')
+                }
+            }
+        })
+    }
 }
 
-export default connect()(LandCover)
+export default connect(mapStateToProps)(LandCover)
