@@ -48,7 +48,7 @@ class CreateComposites(ThreadTask):
             ImageToAsset(
                 credentials=self.credentials,
                 image=composite,
-                region=composite.geometry().bounds(),
+                region=self.aoi.bounds(),
                 description=None,
                 assetPath='{0}-{1}'.format(self.asset_path, year),
                 scale=self.scale

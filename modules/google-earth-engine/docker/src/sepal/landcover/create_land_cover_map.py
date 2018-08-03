@@ -5,6 +5,7 @@ import landcoverPackage
 from promise import Promise
 
 from .. import drive
+from ..aoi import Aoi
 from ..export.image_to_asset import ImageToAsset
 from ..task.task import ThreadTask, Task
 
@@ -22,6 +23,7 @@ class CreateLandCoverMap(ThreadTask):
         self.start_year = spec['startYear']
         self.end_year = spec['endYear']
         self.training_data = spec['trainingData']
+        self.aoi = Aoi.create(spec['aoi']).geometry()
         self.scale = spec['scale']
         self.drive_folder = None
         self.drive_folder_name = '_'.join(['Sepal', self.asset_path.split('/')[-1], str(uuid.uuid4())])
@@ -54,7 +56,8 @@ class CreateLandCoverMap(ThreadTask):
                         primitive_type=primitive_type,
                         samples=samples,
                         asset_path=self.asset_path,
-                        drive_folder_name=self.drive_folder_name
+                        drive_folder_name=self.drive_folder_name,
+                        aoi=self.aoi
                     ))
         return primitive_tasks
 
@@ -99,39 +102,29 @@ class CreateLandCoverMap(ThreadTask):
         tasks = []
         for year in range(self.start_year, self.end_year + 1):
             year = int(year)
-            export_primitive, export_probability = self._assemble_year(
+            export_assembly = self._assemble_year(
                 year,
                 primitive_collection
             )
-            tasks.append(export_primitive)
-            tasks.append(export_probability)
+            tasks.append(export_assembly)
         return Task.submit_all(tasks)
 
     def _assemble_year(self, year, primitive_collection):
         year_filter = ee.Filter.eq('year', year)
-        (primitive, probability) = assemble(
+        assembly = assemble(
             year=year,
             primitive_collection=primitive_collection.filter(year_filter)
         )
-        export_primitive = self.dependent(
+        export_assembly = self.dependent(
             ImageToAsset(
                 credentials=self.credentials,
-                image=primitive,
-                region=primitive.geometry(),
+                image=assembly,
+                region=self.aoi.bounds(),
                 description=None,
                 assetPath='{0}-{1}-assembled'.format(self.asset_path, year),
                 scale=self.scale
             ))
-        export_probability = self.dependent(
-            ImageToAsset(
-                credentials=self.credentials,
-                image=probability,
-                region=probability.geometry(),
-                description=None,
-                assetPath='{0}-{1}-assembled_probability'.format(self.asset_path, year),
-                scale=self.scale
-            ))
-        return export_primitive, export_probability
+        return export_assembly
 
     def __str__(self):
         return '{0}()'.format(
@@ -148,6 +141,7 @@ class CreatePrimitive(ThreadTask):
             asset_path,
             primitive_type,
             samples,
+            aoi,
             drive_folder_name
     ):
         super(CreatePrimitive, self).__init__('create_primitive')
@@ -157,6 +151,7 @@ class CreatePrimitive(ThreadTask):
         self.primitive_name = primitive_type
         self.samples = samples
         self.asset_path = asset_path
+        self.aoi = aoi
         self.composite = ee.Image(_to_asset_id('{0}-{1}'.format(asset_path, year)))
         self.drive_folder_name = drive_folder_name
 
@@ -207,7 +202,7 @@ class CreatePrimitive(ThreadTask):
             ImageToAsset(
                 credentials=self.credentials,
                 image=primitive,
-                region=primitive.geometry(),
+                region=self.aoi.bounds(),
                 description=None,
                 assetPath=self.primitive_asset_path(),
                 scale=self.scale

@@ -81,7 +81,7 @@ const initRecipe = (recipe) => {
     actions.setTypology({
         model:
             { // TODO: Create a panel for collecting this data
-                primitiveTypes: ['primitiveA', 'primitiveB']
+                primitiveTypes: ['otherland', 'settlement', 'forest', 'grassland', 'cropland', 'wetland']
             }
     }).dispatch()
 
@@ -103,7 +103,7 @@ export const createComposites = (recipe) => {
             endYear: recipe.model.period.endYear,
             aoi: recipe.model.aoi,
             sensors: ['L8', 'L7'], // TODO: Make sensors configurable
-            scale: 3000
+            scale: 30
         }
     }).subscribe()
 }
@@ -116,8 +116,9 @@ export const createLandCoverMap = (recipe) => {
             primitiveTypes: recipe.model.typology.primitiveTypes,
             startYear: recipe.model.period.startYear,
             endYear: recipe.model.period.endYear,
+            aoi: recipe.model.aoi,
             trainingData: recipe.model.trainingData,
-            scale: 3000
+            scale: 30,
         }
     }).subscribe()
 }
