@@ -256,9 +256,9 @@ const transformAoi = (aoi) => {
         case 'fusionTable':
             return {
                 type: 'fusionTable',
-                tableName: aoi.id,
+                id: aoi.id,
                 keyColumn: aoi.keyColumn,
-                keyValue: aoi.key
+                key: aoi.key
             }
         case 'polygon':
             return {
