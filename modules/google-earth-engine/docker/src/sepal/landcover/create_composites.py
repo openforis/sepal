@@ -50,7 +50,7 @@ class CreateComposites(ThreadTask):
                 image=composite,
                 region=self.aoi.bounds(),
                 description=None,
-                assetPath='{0}-{1}'.format(self.asset_path, year),
+                assetPath='{0}/{1}-composite'.format(self.asset_path, year),
                 scale=self.scale
             ))
 

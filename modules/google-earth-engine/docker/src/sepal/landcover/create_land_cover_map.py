@@ -121,7 +121,7 @@ class CreateLandCoverMap(ThreadTask):
                 image=assembly,
                 region=self.aoi.bounds(),
                 description=None,
-                assetPath='{0}-{1}-assembled'.format(self.asset_path, year),
+                assetPath='{0}/{1}-assembly'.format(self.asset_path, year),
                 scale=self.scale
             ))
         return export_assembly
@@ -169,7 +169,7 @@ class CreatePrimitive(ThreadTask):
         return ee.Image(_to_asset_id(self.primitive_asset_path()))
 
     def primitive_asset_path(self):
-        return '{0}-{1}-{2}-map'.format(self.asset_path, self.year, self.primitive_name)
+        return '{0}/{1}-{2}'.format(self.asset_path, self.year, self.primitive_name)
 
     # def _sample(self):
     #     samples = sample(
