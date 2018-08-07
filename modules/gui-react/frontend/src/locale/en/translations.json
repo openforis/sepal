@@ -527,7 +527,7 @@
         },
         "typology": {
           "title": "Typology",
-          "button": "TOP",
+          "button": "TYP",
           "tooltip": "Select typology"
         },
         "trainingData": {
