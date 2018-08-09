@@ -85,5 +85,5 @@ echo "*** Installing Jupyter ***"
 echo "**************************"
 /usr/local/bin/pip3 install jupyter
 jupyter notebook --generate-config
-/usr/bin/python2 -m pip2 install ipykernel
+/usr/bin/python2 -m pip install ipykernel
 /usr/bin/python2 -m ipykernel install
