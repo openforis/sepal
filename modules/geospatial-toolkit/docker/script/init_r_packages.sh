@@ -8,8 +8,7 @@ echo "*****************************************"
 set -e
 # libudunits2-dev required for udunits, needed by mapview
 apt-get install -y \
-    build-dep \
-    r-cran-rmpi \
+    build-dep r-cran-rmpi \
     libudunits2-dev
 
 export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
