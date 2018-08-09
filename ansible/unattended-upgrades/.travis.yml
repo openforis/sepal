@@ -6,7 +6,7 @@ before_install:
   - sudo apt-get update -qq
 
 install:
-  - pip install ansible
+  - pip2 install ansible
   - "echo localhost > inventory remote_user=root"
 
 script:

@@ -1,6 +1,6 @@
 dependencies:
   pre:
-    - sudo pip install -r tests/requirements.txt
+    - sudo pip2 install -r tests/requirements.txt
 
 test:
   pre:

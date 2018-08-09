@@ -8,7 +8,7 @@ before_install:
 
 install:
   # Install Ansible.
-  - sudo pip install -r tests/requirements.txt
+  - sudo pip2 install -r tests/requirements.txt
 
 script:
   - tests/tests.sh

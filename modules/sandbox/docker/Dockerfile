@@ -11,6 +11,6 @@ RUN chmod -R 500 /script && \
     /script/init_image.sh
 
 ADD geo-web-viz /usr/local/lib/geo-web-viz
-RUN pip install -r /usr/local/lib/geo-web-viz/requirements.txt
+RUN pip2 install -r /usr/local/lib/geo-web-viz/requirements.txt
 
 CMD ["/script/init_container.sh"]

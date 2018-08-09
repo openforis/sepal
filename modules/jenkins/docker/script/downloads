@@ -27,4 +27,4 @@ sh -c 'echo deb http://pkg.jenkins-ci.org/debian binary/ > /etc/apt/sources.list
 apt-get update && apt-get install -y jenkins ansible
 
 easy_install pip
-pip install boto six
+pip2 install boto six
