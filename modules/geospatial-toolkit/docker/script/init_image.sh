@@ -11,7 +11,7 @@ apt-get -y update && apt-get install -y software-properties-common
 apt-add-repository ppa:ubuntugis/ubuntugis-unstable -y
 
 # Repository for R
-echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/apt/sources.list
+echo "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/" | tee -a /etc/apt/sources.list
 gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 gpg -a --export E084DAB9 | apt-key add -
 
@@ -32,7 +32,7 @@ echo
 echo "*********************************"
 echo "*** Installing misc utilities ***"
 echo "*********************************"
-apt-get install -y \
+DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     aria2 \
     autoconf \
     bc \
@@ -57,9 +57,9 @@ apt-get install -y \
     libgtk2.0-dev \
     libffi-dev \
     libgmp3-dev \
-    libgstreamer0.10-dev \
-    libgstreamer-plugins-base0.10-dev \
-    libpython3.5-dev \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    libpython3-dev \
     libproj-dev \
     libssl-dev \
     libxcursor-dev \
@@ -79,7 +79,8 @@ apt-get install -y \
     python-pyshp \
     python-rasterio \
     python-scikits-learn \
-    python-scikits.statsmodels \
+    python-statsmodels-lib \
+    python-statsmodels \
     python-virtualenv \
     rsync \
     saga \
@@ -95,10 +96,21 @@ apt-get install -y \
     xml-twig-tools \
     zip
 
-pip install python-dateutil
-pip install pyCrypto
-pip install oauth2client
-pip install earthengine-api
-pip install google-api-python-client
-pip install awscli
-pip install --upgrade pip
+echo
+echo "************************************"
+echo "*** Installing misc python tools ***"
+echo "************************************"
+pip2 install python-dateutil
+pip2 install pyCrypto
+pip2 install oauth2client
+pip2 install earthengine-api
+pip2 install google-api-python-client
+pip2 install awscli
+pip2 install --upgrade pip
+pip3 install python-dateutil
+pip3 install pyCrypto
+pip3 install oauth2client
+pip3 install earthengine-api
+pip3 install google-api-python-client
+pip3 install awscli
+pip3 install --upgrade pip

@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:bionic
 MAINTAINER OpenForis
 EXPOSE 8080
 EXPOSE 5000
