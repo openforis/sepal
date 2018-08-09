@@ -15,7 +15,6 @@ RUN pip2 install -r /requirements.txt
 ADD src /src
 
 RUN cd /src/ceo/static && \
-    ln -s /usr/bin/nodejs /usr/bin/node && \
     yarn install
 
 CMD ["/script/init_container.sh"]
