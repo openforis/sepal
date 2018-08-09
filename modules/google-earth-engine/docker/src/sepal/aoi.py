@@ -83,7 +83,9 @@ class FusionTable(Aoi):
         self.key_column = spec['keyColumn']
         self.value_column = spec['keyValue']
         table = ee.FeatureCollection('ft:' + self.table_name)
-        aoi = table.filterMetadata(self.key_column, 'equals', self.value_column)
+        if table.limit(0).getInfo()['columns'][self.value_column] == 'Number':
+            self.value_column = float(self.value_column)
+        aoi = table.filter(ee.Filter.eq(self.key_column, self.value_column))
         geometry = aoi.geometry().buffer(10000)
         Aoi.__init__(self, geometry)
 
