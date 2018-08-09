@@ -290,7 +290,6 @@ var updateFusionTableColumns = function (ftId, callback) {
                 fusionTableColumnAutocomplete = fusionTableColumn.sepalAutocomplete({
                     lookup: columns
                         .map(function (item) {
-                            console.log({item})
                             return {data: item.name, value: item.name}
                         }),
                     onChange: function (selection) {
