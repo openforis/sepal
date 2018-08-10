@@ -125,8 +125,8 @@ class AbstractUserTest extends Specification {
     }
 
 
-    File googleAccessTokenFile(String username) {
-        new File(new File(homeDirectory, username), '.google-access-token')
+    File earthEngineCredentialsFile(String username) {
+        new File(new File(homeDirectory, "${username}/.config/earthengine"), 'credentials')
     }
 
     private final username(Map args) {

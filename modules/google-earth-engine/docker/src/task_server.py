@@ -10,7 +10,6 @@ from flask import Flask, Blueprint, Response
 from flask import request
 
 from sepal import gee
-from sepal.file_credentials import FileCredentials
 from sepal.task import repository
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
@@ -21,7 +20,7 @@ app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 thread_local = local()
 
-access_token_file = None
+earthengine_credentials_file = None
 
 Context = namedtuple('Context', 'credentials, download_dir')
 
@@ -29,8 +28,8 @@ Context = namedtuple('Context', 'credentials, download_dir')
 @http.before_request
 def before():
     credentials = gee.service_account_credentials
-    if path.exists(access_token_file):
-        credentials = FileCredentials(access_token_file)
+    if path.exists(earthengine_credentials_file):
+        credentials = 'persistent'
     logger.debug('Using credentials: ' + str(credentials))
     thread_local.context = Context(credentials=credentials, download_dir=sys.argv[3])
     ee.InitializeThread(credentials)
@@ -66,8 +65,8 @@ def cancel():
 
 
 def init():
-    global access_token_file
-    access_token_file = sys.argv[5]
+    global earthengine_credentials_file
+    earthengine_credentials_file = sys.argv[5]
 
     global username
     username = sys.argv[4]

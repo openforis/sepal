@@ -1,5 +1,7 @@
 package org.openforis.sepal.component.user.adapter
 
+import groovy.json.JsonOutput
+
 class GoogleAccessTokenFileGateway {
     private final String homeDirectory
 
@@ -7,21 +9,25 @@ class GoogleAccessTokenFileGateway {
         this.homeDirectory = homeDirectory
     }
 
-    void save(String username, String accessToken) {
-        if (!accessToken) {
+    void save(String username, String refreshToken) {
+        if (!refreshToken) {
             delete(username)
             return
         }
-        def file = new File("$homeDirectory/$username", '.google-access-token')
+        def file = credentialsFile(username)
         if (!file.exists()) {
             file.parentFile.mkdirs()
             file.createNewFile()
         }
-        file.write(accessToken)
+        file.write(JsonOutput.toJson([refresh_token: refreshToken]))
     }
 
     void delete(String username) {
-        new File("$homeDirectory/$username", '.google-access-token').delete()
+        credentialsFile(username).delete()
+    }
+
+    private File credentialsFile(String username) {
+        new File("$homeDirectory/$username/.config/earthengine/", 'credentials')
     }
 
 }

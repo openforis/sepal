@@ -1,5 +1,6 @@
 package component.user
 
+import groovy.json.JsonSlurper
 import org.openforis.sepal.command.ExecutionFailed
 import org.openforis.sepal.component.user.adapter.GoogleOAuthException
 import org.openforis.sepal.component.user.adapter.InvalidToken
@@ -16,8 +17,8 @@ class RefreshGoogleAccessTokenTest extends AbstractUserTest {
         then:
         googleOAuthClient.refreshed(tokens)
         loadUser(user.username).googleTokens == googleOAuthClient.tokens
-        googleAccessTokenFile(user.username).exists()
-        googleAccessTokenFile(user.username).text == refreshed.accessToken
+        earthEngineCredentialsFile(user.username).exists()
+        new JsonSlurper().parse(earthEngineCredentialsFile(user.username)) == [refresh_token: refreshed.refreshToken]
     }
 
     def 'Given an invalid refresh token, when refreshing token, null is returned, and token is removed from user'() {
@@ -31,7 +32,7 @@ class RefreshGoogleAccessTokenTest extends AbstractUserTest {
         then:
         !googleOAuthClient.refreshed(tokens)
         !loadUser(user.username).googleTokens
-        !googleAccessTokenFile(user.username).exists()
+        !earthEngineCredentialsFile(user.username).exists()
     }
 
     def 'Given failing OAuth, when refreshing token, exception is thrown'() {
@@ -46,8 +47,8 @@ class RefreshGoogleAccessTokenTest extends AbstractUserTest {
         thrown ExecutionFailed
         !googleOAuthClient.refreshed(tokens)
         loadUser(user.username).googleTokens == tokens
-        googleAccessTokenFile(user.username).exists()
-        googleAccessTokenFile(user.username).text == tokens.accessToken
+        earthEngineCredentialsFile(user.username).exists()
+        new JsonSlurper().parse(earthEngineCredentialsFile(user.username)) == [refresh_token: tokens.refreshToken]
     }
 
     def 'Given no tokens specified, when refreshing token, token for user is refreshed'() {

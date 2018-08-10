@@ -14,7 +14,7 @@ class RevokeGoogleAccountAccessTest extends AbstractUserTest {
         then:
         googleOAuthClient.revoked(tokens)
         !loadUser(user.username).googleTokens
-        !googleAccessTokenFile(user.username).exists()
+        !earthEngineCredentialsFile(user.username).exists()
     }
 
     def 'Given an invalid token, token is removed from user'() {
@@ -27,7 +27,7 @@ class RevokeGoogleAccountAccessTest extends AbstractUserTest {
 
         then:
         !loadUser(user.username).googleTokens
-        !googleAccessTokenFile(user.username).exists()
+        !earthEngineCredentialsFile(user.username).exists()
 
     }
 }

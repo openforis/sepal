@@ -1,5 +1,6 @@
 package component.user
 
+import groovy.json.JsonSlurper
 import org.openforis.sepal.component.user.command.AssociateGoogleAccount
 
 class AssociateGoogleAccountTest extends AbstractUserTest {
@@ -12,8 +13,8 @@ class AssociateGoogleAccountTest extends AbstractUserTest {
         then:
         def userTokens = loadUser(testUsername).googleTokens
         userTokens == googleOAuthClient.tokens
-        googleAccessTokenFile(user.username).exists()
-        googleAccessTokenFile(user.username).text == userTokens.accessToken
+        earthEngineCredentialsFile(user.username).exists()
+        new JsonSlurper().parse(earthEngineCredentialsFile(user.username)) == [refresh_token: userTokens.refreshToken]
     }
 
     def 'Given non-whitelisted google account, when associating, tokens are not associated'() {

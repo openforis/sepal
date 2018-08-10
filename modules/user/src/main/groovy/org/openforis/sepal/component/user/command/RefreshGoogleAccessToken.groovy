@@ -44,7 +44,7 @@ class RefreshGoogleAccessTokenHandler implements CommandHandler<GoogleTokens, Re
             LOG.info("Invalid refresh token. Sepal credentials will be used. command: $command, error: $e.message")
         }
         userRepository.updateGoogleTokens(command.username, refreshedToken)
-        googleAccessTokenFileGateway.save(command.username, refreshedToken?.accessToken)
+        googleAccessTokenFileGateway.save(command.username, refreshedToken?.refreshToken)
         return refreshedToken
     }
 }
