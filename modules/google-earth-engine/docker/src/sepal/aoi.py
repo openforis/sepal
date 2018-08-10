@@ -86,7 +86,7 @@ class FusionTable(Aoi):
         if table.limit(0).getInfo()['columns'][self.key_column] == 'Number':
             self.key_value = float(self.key_value)
         aoi = table.filter(ee.Filter.eq(self.key_column, self.key_value))
-        geometry = aoi.geometry().buffer(10000)
+        geometry = aoi.geometry()
         Aoi.__init__(self, geometry)
 
     def __str__(self):
