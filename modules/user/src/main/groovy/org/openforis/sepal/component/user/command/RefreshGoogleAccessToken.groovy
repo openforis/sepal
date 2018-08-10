@@ -34,8 +34,11 @@ class RefreshGoogleAccessTokenHandler implements CommandHandler<GoogleTokens, Re
 
     GoogleTokens execute(RefreshGoogleAccessToken command) {
         def tokens = command.tokens ?: userRepository.lookupUser(command.username).googleTokens
-        if (!tokens || !tokens.shouldBeRefreshed(System.currentTimeMillis()))
+        if (!tokens || !tokens.shouldBeRefreshed(System.currentTimeMillis())) {
+            if (!tokens)
+                googleAccessTokenFileGateway.delete(command.username)
             return null
+        }
 
         def refreshedToken = null
         try {
