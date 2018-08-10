@@ -1,0 +1,6 @@
+python-dateutil
+pyCrypto
+oauth2client
+google-api-python-client
+git+git://github.com/openforis/earthengine-api.git@v0.1.145#egg=earthengine-api&subdirectory=python
+awscli
