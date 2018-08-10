@@ -4,7 +4,8 @@
 apt-get -y update && apt-get install -y software-properties-common sudo
 
 curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
-apt-get install -y nodejs
+apt-get install -y nodejs\
+ bzip2
 
 useradd -m -d "${JENKINS_HOME}"  jenkins
 useradd -m -d /home/github github
