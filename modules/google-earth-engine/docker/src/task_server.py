@@ -11,6 +11,7 @@ from flask import request
 
 from sepal import gee
 from sepal.task import repository
+import oauth2client.client
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
@@ -29,10 +30,17 @@ Context = namedtuple('Context', 'credentials, download_dir')
 def before():
     credentials = gee.service_account_credentials
     if path.exists(earthengine_credentials_file):
-        credentials = 'persistent'
+        credentials = _persistent_credentials()
     logger.debug('Using credentials: ' + str(credentials))
     thread_local.context = Context(credentials=credentials, download_dir=sys.argv[3])
     ee.InitializeThread(credentials)
+
+def _persistent_credentials():
+    tokens = json.load(open(earthengine_credentials_file))
+    refresh_token = tokens['refresh_token']
+    return oauth2client.client.OAuth2Credentials(
+        None, None, None, refresh_token,
+        None, 'https://accounts.google.com/o/oauth2/token', None)
 
 
 @http.route('/healthcheck', methods=['GET'])

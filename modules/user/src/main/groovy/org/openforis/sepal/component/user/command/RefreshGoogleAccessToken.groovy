@@ -40,14 +40,14 @@ class RefreshGoogleAccessTokenHandler implements CommandHandler<GoogleTokens, Re
             return null
         }
 
-        def refreshedToken = null
+        def refreshedTokens = null
         try {
-            refreshedToken = oAuthClient.refreshAccessToken(command.username, tokens)
+            refreshedTokens = oAuthClient.refreshAccessToken(command.username, tokens)
         } catch (InvalidToken e) {
             LOG.info("Invalid refresh token. Sepal credentials will be used. command: $command, error: $e.message")
         }
-        userRepository.updateGoogleTokens(command.username, refreshedToken)
-        googleAccessTokenFileGateway.save(command.username, refreshedToken?.refreshToken)
-        return refreshedToken
+        userRepository.updateGoogleTokens(command.username, refreshedTokens)
+        googleAccessTokenFileGateway.save(command.username, refreshedTokens)
+        return refreshedTokens
     }
 }

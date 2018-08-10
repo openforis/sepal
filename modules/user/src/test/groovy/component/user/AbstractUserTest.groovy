@@ -1,6 +1,7 @@
 package component.user
 
 import fake.*
+import groovy.json.JsonSlurper
 import org.openforis.sepal.component.user.UserComponent
 import org.openforis.sepal.component.user.adapter.GoogleAccessTokenFileGateway
 import org.openforis.sepal.component.user.adapter.SmtpEmailGateway
@@ -129,7 +130,20 @@ class AbstractUserTest extends Specification {
         new File(new File(homeDirectory, "${username}/.config/earthengine"), 'credentials')
     }
 
+    GoogleTokens googleTokensFromFile(username) {
+        def file = earthEngineCredentialsFile(username)
+        if (!file.exists())
+            return null
+        def json = new JsonSlurper().parse(file)
+        return new GoogleTokens(
+                refreshToken: json.refresh_token,
+                accessToken: json.access_token,
+                accessTokenExpiryDate: json.access_token_expiry_date
+        )
+    }
+
     private final username(Map args) {
         args.username ?: testUsername
     }
+
 }

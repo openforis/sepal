@@ -14,7 +14,7 @@ class AssociateGoogleAccountTest extends AbstractUserTest {
         def userTokens = loadUser(testUsername).googleTokens
         userTokens == googleOAuthClient.tokens
         earthEngineCredentialsFile(user.username).exists()
-        new JsonSlurper().parse(earthEngineCredentialsFile(user.username)) == [refresh_token: userTokens.refreshToken]
+        googleTokensFromFile(user.username) == userTokens
     }
 
     def 'Given non-whitelisted google account, when associating, tokens are not associated'() {

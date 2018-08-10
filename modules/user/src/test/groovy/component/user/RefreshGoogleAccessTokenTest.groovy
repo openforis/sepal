@@ -18,7 +18,7 @@ class RefreshGoogleAccessTokenTest extends AbstractUserTest {
         googleOAuthClient.refreshed(tokens)
         loadUser(user.username).googleTokens == googleOAuthClient.tokens
         earthEngineCredentialsFile(user.username).exists()
-        new JsonSlurper().parse(earthEngineCredentialsFile(user.username)) == [refresh_token: refreshed.refreshToken]
+        googleTokensFromFile(user.username) == refreshed
     }
 
     def 'Given an invalid refresh token, when refreshing token, null is returned, and token is removed from user'() {
@@ -48,7 +48,7 @@ class RefreshGoogleAccessTokenTest extends AbstractUserTest {
         !googleOAuthClient.refreshed(tokens)
         loadUser(user.username).googleTokens == tokens
         earthEngineCredentialsFile(user.username).exists()
-        new JsonSlurper().parse(earthEngineCredentialsFile(user.username)) == [refresh_token: tokens.refreshToken]
+        googleTokensFromFile(user.username) == tokens
     }
 
     def 'Given no tokens specified, when refreshing token, token for user is refreshed'() {

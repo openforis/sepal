@@ -42,7 +42,7 @@ class AssociateGoogleAccountHandler implements CommandHandler<GoogleTokens, Asso
             tokens = null
         }
         userRepository.updateGoogleTokens(command.username, tokens)
-        googleAccessTokenFileGateway.save(command.username, tokens?.refreshToken)
+        googleAccessTokenFileGateway.save(command.username, tokens)
         return tokens
     }
 }

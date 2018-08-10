@@ -66,6 +66,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     libxinerama-dev \
     libxrandr-dev \
     libxt-dev \
+    mlocate \
     nano \
     parallel \
     pkg-config \
@@ -105,6 +106,7 @@ pip2 install pyCrypto
 pip2 install oauth2client
 pip2 install earthengine-api
 pip2 install google-api-python-client
+pip2 install git+git://github.com/openforis/earthengine-api.git@v0.1.145#egg=earthengine-api&subdirectory=python
 pip2 install awscli
 pip2 install --upgrade pip
 pip3 install python-dateutil
@@ -112,5 +114,6 @@ pip3 install pyCrypto
 pip3 install oauth2client
 pip3 install earthengine-api
 pip3 install google-api-python-client
+pip3 install git+git://github.com/openforis/earthengine-api.git@v0.1.145#egg=earthengine-api&subdirectory=python
 pip3 install awscli
 pip3 install --upgrade pip
