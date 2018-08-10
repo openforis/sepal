@@ -60,6 +60,11 @@ class UserEndpoint {
                 def user = component.submit(new Authenticate(username, password))
                 if (user) {
                     LOG.info('Authenticated ' + user)
+                    component.submit(
+                            new RefreshGoogleAccessToken(
+                                    username: user.username,
+                                    tokens: user.googleTokens
+                            ))
                     send toJson(user)
                 } else {
                     LOG.info('Authentication failed: ' + params.user)
