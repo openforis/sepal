@@ -272,7 +272,7 @@ var updateFusionTableColumns = function (ftId, callback) {
     fusionTableValue.disable()
     if (ftId) {
         var user = UserMV.getCurrentUser()
-        var keyParam = user.googleTokens ? 'access_token=' + user.googleTokens.accessToken : 'key=' + GoogleMapsLoader.KEY
+        var keyParam = user.googleTokens ? 'maxResults=5000&access_token=' + user.googleTokens.accessToken : 'key=' + GoogleMapsLoader.KEY
 
         var params = {
             url: 'https://www.googleapis.com/fusiontables/v2/tables/' + ftId + '/columns?' + keyParam,
