@@ -1,17 +1,19 @@
 import json
 import logging
+import os
+import sys
 from collections import namedtuple
 from os import path
 from threading import local
 
 import ee
-import sys
+import oauth2client.client
+import oauth2client.client
 from flask import Flask, Blueprint, Response
 from flask import request
 
 from sepal import gee
 from sepal.task import repository
-import oauth2client.client
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
@@ -21,26 +23,45 @@ app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 thread_local = local()
 
-earthengine_credentials_file = None
+earthengine_credentials_file = os.path.expanduser('~/.config/earthengine/credentials')
 
 Context = namedtuple('Context', 'credentials, download_dir')
 
 
+class AccessTokenCredentials(oauth2client.client.OAuth2Credentials):
+    def __init__(self):
+        super(AccessTokenCredentials, self).__init__(
+            AccessTokenCredentials._read_access_token(),
+            None, None, None, None, None, None
+        )
+
+    @staticmethod
+    def create():
+        if path.exists(earthengine_credentials_file) \
+                and AccessTokenCredentials._read_access_token():
+            return AccessTokenCredentials()
+        else:
+            return None
+
+    @staticmethod
+    def _read_access_token():
+        return json.load(open(earthengine_credentials_file)).get('access_token')
+
+    def _refresh(self, http):
+        self.access_token = AccessTokenCredentials._read_access_token()
+
+    def __str__(self):
+        return 'AccessTokenCredentials()'
+
+
 @http.before_request
 def before():
-    credentials = gee.service_account_credentials
-    if path.exists(earthengine_credentials_file):
-        credentials = _persistent_credentials()
+    credentials = AccessTokenCredentials.create()
+    if not credentials:
+        credentials = gee.service_account_credentials
     logger.debug('Using credentials: ' + str(credentials))
     thread_local.context = Context(credentials=credentials, download_dir=sys.argv[3])
     ee.InitializeThread(credentials)
-
-def _persistent_credentials():
-    tokens = json.load(open(earthengine_credentials_file))
-    refresh_token = tokens['refresh_token']
-    return oauth2client.client.OAuth2Credentials(
-        None, None, None, refresh_token,
-        None, 'https://accounts.google.com/o/oauth2/token', None)
 
 
 @http.route('/healthcheck', methods=['GET'])
@@ -73,9 +94,6 @@ def cancel():
 
 
 def init():
-    global earthengine_credentials_file
-    earthengine_credentials_file = sys.argv[5]
-
     global username
     username = sys.argv[4]
 
