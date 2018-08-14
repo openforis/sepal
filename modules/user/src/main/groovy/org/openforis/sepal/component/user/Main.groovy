@@ -24,7 +24,7 @@ class Main extends AbstractMain {
                     userComponent
             )
             start new Server(serverConfig.port, endpoints)
-            addShutdownHook { instance.stop() }
+            addShutdownHook { stop() }
         } catch (Exception e) {
             LOG.error('Failed to start user module', e)
             System.exit(1)
