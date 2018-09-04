@@ -143,9 +143,10 @@ var setState = function (e, newState, params) {
     geeAssetId2.val(newState.geeAssetId2)
     
     fusionTableId.val(newState.fusionTableId)
-    updateFusionTableClass(newState.fusionTableId)
-    if (newState.fusionTableClassColumn)
-      fusionTableClassColumn.val(newState.fusionTableClassColumn).data('reset-btn').enable()
+    updateFusionTableClass(newState.fusionTableId, function () {
+      if (newState.fusionTableClassColumn)
+        fusionTableClassColumn.val(newState.fusionTableClassColumn).data('reset-btn').enable()
+    })
     
     rowAlgorithms.find('button').removeClass('active')
     if (newState.algorithm)
@@ -242,7 +243,7 @@ var restoreAoi = function (s, params) {
   
 }
 
-var updateFusionTableClass = function (ftId) {
+var updateFusionTableClass = function (ftId, callback) {
   if (fusionTableClassColumnAutocomplete)
     fusionTableClassColumnAutocomplete.sepalAutocomplete('dispose')
   
@@ -268,6 +269,8 @@ var updateFusionTableClass = function (ftId) {
         })
         
         fusionTableClassColumn.enable()
+        if (callback)
+            callback()
       }, error: function (xhr, ajaxOptions, thrownError) {
         FormValidator.addError(fusionTableId)
         FormValidator.showError(formNotify, xhr.responseJSON.error.message)
