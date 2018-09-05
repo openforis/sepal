@@ -16,13 +16,14 @@ class JdbcRecipeRepository implements RecipeRepository {
     void save(Recipe recipe) {
         def updated = sql.executeUpdate('''
                 UPDATE recipe 
-                SET name = ?, contents = ?, update_time = ? 
-                WHERE id = ?''', [recipe.name, recipe.contents, recipe.updateTime, recipe.id])
+                SET type_version = ?, name = ?, contents = ?, update_time = ? 
+                WHERE id = ?''', [recipe.typeVersion, recipe.name, recipe.contents, recipe.updateTime, recipe.id])
         if (!updated)
             sql.executeInsert('''
-                INSERT INTO recipe(id, name, type, username, contents, creation_time, update_time) 
-                VALUES(?, ?, ?, ?, ?, ?, ?)''', [
-                    recipe.id, recipe.name, recipe.type.name(), recipe.username, recipe.contents, recipe.creationTime, recipe.updateTime
+                INSERT INTO recipe(id, name, type, type_version, username, contents, creation_time, update_time) 
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', [
+                    recipe.id, recipe.name, recipe.type.name(), recipe.typeVersion, recipe.username, recipe.contents,
+                    recipe.creationTime, recipe.updateTime
             ])
     }
 
@@ -33,7 +34,7 @@ class JdbcRecipeRepository implements RecipeRepository {
     Recipe getById(String id) {
         def recipe = null
         sql.eachRow('''
-                SELECT id, name, type, username, contents, creation_time, update_time 
+                SELECT id, name, type, type_version, username, contents, creation_time, update_time 
                 FROM recipe 
                 WHERE id = ? AND NOT removed''', [id]) {
             recipe = toRecipe(it)
@@ -44,7 +45,7 @@ class JdbcRecipeRepository implements RecipeRepository {
     List<Recipe> list(String username) {
         def recipes = []
         sql.eachRow('''
-                SELECT id, name, type, username, NULL AS contents, creation_time, update_time 
+                SELECT id, name, type, type_version, username, NULL AS contents, creation_time, update_time 
                 FROM recipe 
                 WHERE username = ? AND NOT removed
                 ORDER BY name, update_time''', [username]) {
@@ -53,11 +54,22 @@ class JdbcRecipeRepository implements RecipeRepository {
         return recipes
     }
 
+    void eachOfTypeBeforeVersion(Recipe.Type type, int version, Closure callback) {
+        sql.eachRow('''
+                SELECT id, name, type, type_version, username, contents, creation_time, update_time 
+                FROM recipe 
+                WHERE type = ? AND type_version < ? AND NOT removed
+                ORDER BY creation_time''', [type.name(), version]) {
+            callback(toRecipe(it))
+        }
+    }
+
     private Recipe toRecipe(GroovyResultSet row) {
         new Recipe(
                 id: row.id,
                 name: row.name,
                 type: row.type as Recipe.Type,
+                typeVersion: row.type_version,
                 username: row.username,
                 contents: row.longText('contents'),
                 creationTime: new Date(row.creation_time.time),

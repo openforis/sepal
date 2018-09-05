@@ -9,4 +9,6 @@ interface RecipeRepository {
     Recipe getById(String id)
 
     List<Recipe> list(String username)
+
+    void eachOfTypeBeforeVersion(Recipe.Type type, int version, Closure callback)
 }

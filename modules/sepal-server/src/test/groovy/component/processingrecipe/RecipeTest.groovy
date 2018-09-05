@@ -39,7 +39,7 @@ abstract class RecipeTest extends Specification {
         component.submit(new LoadRecipe(id: id))
     }
 
-    List<Recipe> listRecipes(String username) {
+    List<Recipe> listRecipes(String username = testUsername) {
         component.submit(new ListRecipes(username: username))
     }
 
@@ -48,8 +48,9 @@ abstract class RecipeTest extends Specification {
                 id: args.id ?: UUID.randomUUID().toString(),
                 name: args.name ?: 'some-name',
                 type: Recipe.Type.MOSAIC,
+                typeVersion: args.typeVersion ?: 1,
                 username: args.username ?: testUsername,
-                contents: args.containsKey('contents') ? args.contents : 'some-contents',
+                contents: args.containsKey('contents') ? args.contents : '"some-contents"',
                 creationTime: clock.now(),
                 updateTime: clock.now()
         )
