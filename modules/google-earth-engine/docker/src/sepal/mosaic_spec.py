@@ -25,7 +25,7 @@ class MosaicSpec(ImageSpec):
         self.shadow_tolerance = _to_float(spec, 'shadowTolerance', 1)
         self.haze_tolerance = _to_float(spec, 'hazeTolerance', 0.05)
         self.greenness_weight = _to_float(spec, 'greennessWeight', 0)
-        self.bands = spec.get('bands', [])
+        self.bands = _bands_by_band_combo.get(', '.join(spec.get('bands', [])), [])
         self.median_composite = spec.get('median_composite', False)
         self.mask_clouds = spec.get('maskClouds', False)
         self.mask_snow = spec.get('maskSnow', False)
@@ -64,6 +64,18 @@ class MosaicSpec(ImageSpec):
     def _data_sets(self):
         raise AssertionError('Method in subclass expected to have been invoked')
 
+
+_bands_by_band_combo = {
+    'RED, GREEN, BLUE': ['red', 'green', 'blue'],
+    'NIR, RED, GREEN': ['nir', 'red', 'green'],
+    'NIR, SWIR1, RED': ['nir', 'swir1', 'red'],
+    'SWIR2, NIR, RED': ['swir2', 'nir', 'red'],
+    'SWIR2, SWIR1, RED': ['swir2', 'swir1', 'red'],
+    'SWIR2, NIR, GREEN': ['swir2', 'nir', 'green'],
+    'UNIX_TIME_DAYS': ['unixTimeDays'],
+    'DAY_OF_YEAR': ['dayOfYear'],
+    'DAYS_FROM_TARGET': ['daysFromTarget']
+}
 
 _toa_viz_by_bands = {
     'red, green, blue': lambda params: {

@@ -57,13 +57,13 @@ class Composite extends React.Component {
                             value: 'SR',
                             label: msg('process.mosaic.panel.composite.form.surfaceReflectance.label'),
                             tooltip: 'process.mosaic.panel.composite.form.surfaceReflectance',
-                            disabled: source !== 'landsat'
+                            disabled: source !== 'LANDSAT'
                         },
                         {
                             value: 'BRDF',
                             label: msg('process.mosaic.panel.composite.form.brdf.label'),
                             tooltip: 'process.mosaic.panel.composite.form.brdf',
-                            disabled: source !== 'landsat'
+                            disabled: source !== 'LANDSAT'
                         }
                     ]}/>
                 </div>
@@ -74,7 +74,7 @@ class Composite extends React.Component {
                     <PercentileField input={shadowPercentile}/>
                     <PercentileField
                         input={hazePercentile}
-                        disabled={source === 'landsat' && corrections.value.includes('SR')}/>
+                        disabled={source === 'LANDSAT' && corrections.value.includes('SR')}/>
                     <PercentileField input={ndviPercentile}/>
                     <PercentileField input={dayOfYearPercentile}/>
                 </div>

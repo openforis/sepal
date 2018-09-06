@@ -13,7 +13,7 @@ export const removeAoiLayer = (contextId) => {
 export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => {
     const layerId = 'aoi'
     switch (aoi && aoi.type) {
-        case 'country':
+        case 'COUNTRY':
             return setFusionTableLayer({
                 contextId,
                 layerSpec: {
@@ -27,7 +27,7 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => 
                 destroy$,
                 onInitialized
             })
-        case 'fusionTable':
+        case 'FUSION_TABLE':
             return setFusionTableLayer({
                 contextId,
                 layerSpec: {
@@ -42,7 +42,7 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => 
                 onInitialized
             })
 
-        case 'polygon':
+        case 'POLYGON':
             return setPolygonLayer({
                 contextId,
                 layerSpec: {

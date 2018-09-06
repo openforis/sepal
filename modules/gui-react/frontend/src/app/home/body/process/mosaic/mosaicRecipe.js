@@ -179,7 +179,7 @@ const initRecipe = (recipeState) => {
 
     actions.setLabelsShown(false).dispatch()
     actions.setSceneAreasShown(true).dispatch()
-    actions.setBands('red, green, blue').dispatch()
+    actions.setBands('RED, GREEN, BLUE').dispatch()
     actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
 
     const model = recipeState.model
@@ -199,7 +199,7 @@ const initRecipe = (recipeState) => {
 
     actions.setSources({
         model: {
-            landsat: ['landsat8']
+            LANDSAT: ['LANDSAT_8']
         }
     }).dispatch()
 

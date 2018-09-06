@@ -1,27 +1,27 @@
 import moment from 'moment'
 
-export const sources = ['landsat', 'sentinel2']
+export const sources = ['LANDSAT', 'SENTINEL_2']
 
 export const imageSourceById = {
-    landsat: {
+    LANDSAT: {
         dataSets: [
-            'landsat8',
-            'landsat7',
-            'landsat45',
-            'landsat8T2',
-            'landsat7T2',
-            'landsat45T2'
+            'LANDSAT_8',
+            'LANDSAT_7',
+            'LANDSAT_TM',
+            'LANDSAT_8_T2',
+            'LANDSAT_7_T2',
+            'LANDSAT_TM_T2'
         ]
     },
-    sentinel2: {
+    SENTINEL_2: {
         dataSets: [
-            'sentinel2'
+            'SENTINEL_2'
         ]
     }
 }
 
 export const dataSetById = {
-    landsat8: {
+    LANDSAT_8: {
         fromYear: 2013,
         quality: 1,
         name: 'Landsat 8',
@@ -31,7 +31,7 @@ export const dataSetById = {
             'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2'
         ]
     },
-    landsat7: {
+    LANDSAT_7: {
         fromYear: 1999,
         quality: 2,
         name: 'Landsat 7',
@@ -41,7 +41,7 @@ export const dataSetById = {
             'pan', 'thermal', 'thermal2'
         ]
     },
-    landsat45: {
+    LANDSAT_TM: {
         fromYear: 1982,
         toYear: 2012,
         quality: 2,
@@ -52,7 +52,7 @@ export const dataSetById = {
             'thermal'
         ]
     },
-    landsat8T2: {
+    LANDSAT_8_T2: {
         fromYear: 2013,
         quality: 3,
         name: 'Landsat 8, tier 2',
@@ -62,7 +62,7 @@ export const dataSetById = {
             'aerosol', 'pan', 'cirrus', 'thermal', 'thermal2'
         ]
     },
-    landsat7T2: {
+    LANDSAT_7_T2: {
         fromYear: 1999,
         quality: 3,
         name: 'Landsat 7, tier 2',
@@ -72,7 +72,7 @@ export const dataSetById = {
             'pan', 'thermal', 'thermal2'
         ]
     },
-    landsat45T2: {
+    LANDSAT_TM_T2: {
         fromYear: 1984,
         toYear: 2012,
         quality: 3,
@@ -83,7 +83,7 @@ export const dataSetById = {
             'thermal'
         ]
     },
-    sentinel2: {
+    SENTINEL_2: {
         fromYear: 2015,
         quality: 1,
         name: 'Sentinel 2',

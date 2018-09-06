@@ -151,8 +151,7 @@ class SceneSelection extends React.Component {
             {
                 id: scene.id,
                 date: scene.date,
-                dateSet: scene.dataSet,
-                cloudCover: scene.cloudCover
+                dataSet: scene.dataSet
             }
         ])
     }

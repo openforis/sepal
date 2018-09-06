@@ -64,7 +64,7 @@ class PolygonSection extends React.Component {
         setAoiLayer({
             contextId: recipeId,
             aoi: {
-                type: 'polygon',
+                type: 'POLYGON',
                 path: polygon.value,
                 bounds: bounds.value
             },

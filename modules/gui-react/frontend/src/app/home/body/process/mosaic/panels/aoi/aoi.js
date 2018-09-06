@@ -87,17 +87,17 @@ class Aoi extends React.Component {
                 component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
             },
             {
-                value: 'country',
+                value: 'COUNTRY',
                 title: msg('process.mosaic.panel.areaOfInterest.form.country.title'),
                 component: <CountrySection recipeId={recipeId} inputs={inputs}/>
             },
             {
-                value: 'fusionTable',
+                value: 'FUSION_TABLE',
                 title: msg('process.mosaic.panel.areaOfInterest.form.fusionTable.title'),
                 component: <FusionTableSection recipeId={recipeId} inputs={inputs}/>
             },
             {
-                value: 'polygon',
+                value: 'POLYGON',
                 title: msg('process.mosaic.panel.areaOfInterest.form.polygon.title'),
                 component: <PolygonSection recipeId={recipeId} inputs={inputs}/>
             },
@@ -138,26 +138,26 @@ export default form({fields, mapStateToProps})(Aoi)
 
 const valuesToModel = (values) => {
     switch (values.section) {
-        case 'country':
+        case 'COUNTRY':
             return {
-                type: 'fusionTable',
+                type: 'FUSION_TABLE',
                 id: countryFusionTable,
                 keyColumn: 'id',
                 key: values.area || values.country,
                 level: values.area ? 'area' : 'country',
                 bounds: values.bounds
             }
-        case 'fusionTable':
+        case 'FUSION_TABLE':
             return {
-                type: 'fusionTable',
+                type: 'FUSION_TABLE',
                 id: values.fusionTable,
                 keyColumn: values.fusionTableColumn,
                 key: values.fusionTableRow,
                 bounds: values.bounds
             }
-        case 'polygon':
+        case 'POLYGON':
             return {
-                type: 'polygon',
+                type: 'POLYGON',
                 path: values.polygon,
                 bounds: values.bounds
             }
@@ -167,24 +167,24 @@ const valuesToModel = (values) => {
 }
 
 const modelToValues = (model = {}) => {
-    if (model.type === 'fusionTable')
+    if (model.type === 'FUSION_TABLE')
         if (model.id === countryFusionTable)
             return {
-                section: 'country',
+                section: 'COUNTRY',
                 [model.level]: model.key,
                 bounds: model.bounds
             }
         else
             return {
-                section: 'fusionTable',
+                section: 'FUSION_TABLE',
                 fusionTable: model.id,
                 fusionTableColumn: model.keyColumn,
                 fusionTableRow: model.key,
                 bounds: model.bounds
             }
-    else if (model.type === 'polygon')
+    else if (model.type === 'POLYGON')
         return {
-            section: 'polygon',
+            section: 'POLYGON',
             polygon: model.path,
             bounds: model.bounds
         }

@@ -131,7 +131,7 @@ class CountrySection extends React.Component {
         setAoiLayer({
             contextId: recipeId,
             aoi: {
-                type: 'country',
+                type: 'COUNTRY',
                 countryCode: country.value,
                 areaCode: area.value
             },

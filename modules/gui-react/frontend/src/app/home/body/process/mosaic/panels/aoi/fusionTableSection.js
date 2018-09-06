@@ -158,7 +158,7 @@ class FusionTableSection extends React.Component {
         setAoiLayer({
             contextId: recipeId,
             aoi: {
-                type: 'fusionTable',
+                type: 'FUSION_TABLE',
                 id: fusionTable.value,
                 keyColumn: fusionTableColumn.value,
                 key: fusionTableRow.value,

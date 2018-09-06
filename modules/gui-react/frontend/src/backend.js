@@ -110,8 +110,7 @@ const api = {
                                     return {
                                         id: scene.id,
                                         dataSet: scene.dataSet,
-                                        date: scene.date,
-                                        cloudCover: scene.cloudCover
+                                        date: scene.date
                                     }
                                 }
                             )
@@ -253,14 +252,14 @@ const daysFromTarget = (dateString, dates) => {
 
 const transformAoi = (aoi) => {
     switch (aoi.type) {
-        case 'fusionTable':
+        case 'FUSION_TABLE':
             return {
                 type: 'fusionTable',
                 id: aoi.id,
                 keyColumn: aoi.keyColumn,
                 key: aoi.key
             }
-        case 'polygon':
+        case 'POLYGON':
             return {
                 type: 'polygon',
                 path: aoi.path
@@ -272,51 +271,23 @@ const transformAoi = (aoi) => {
 
 const toSensors = (sources) =>
     Object.values(sources)[0].map((dataSet) => {
-        switch (dataSet) {
-            case 'landsat8':
-                return 'LANDSAT_8'
-            case 'landsat7':
-                return 'LANDSAT_7'
-            case 'landsat45':
-                return 'LANDSAT_TM'
-            case 'landsat8T2':
-                return 'LANDSAT_8_T2'
-            case 'landsat7T2':
-                return 'LANDSAT_7_T2'
-            case 'landsat45T2':
-                return 'LANDSAT_TM_T2'
-            case 'sentinel2':
-                return 'SENTINEL2A'
-            default:
-                throw new Error('Invalid dataSet: ' + dataSet)
-        }
+        if (dataSet === 'SENTINEL_2')
+            return 'SENTINEL2A'
+        else
+            return dataSet
     })
 
 const transformBackDataSet = (dataSet) => {
-    switch (dataSet) {
-        case 'LANDSAT_8':
-            return 'landsat8'
-        case 'LANDSAT_7':
-            return 'landsat7'
-        case 'LANDSAT_TM':
-            return 'landsat45'
-        case 'LANDSAT_8_T2':
-            return 'landsat8T2'
-        case 'LANDSAT_7_T2':
-            return 'landsat7T2'
-        case 'LANDSAT_TM_T2':
-            return 'landsat45T2'
-        case 'SENTINEL2A':
-            return 'sentinel2'
-        default:
-            throw new Error('Invalid dataSet: ' + dataSet)
-    }
+    if (dataSet === 'SENTINEL2A')
+        return 'SENTINEL_2'
+    else
+        return dataSet
 }
 
 const sourcesToDataSet = (sources) =>
-    sources.landsat ? 'LANDSAT' : 'SENTINEL2'
+    sources.LANDSAT ? 'LANDSAT' : 'SENTINEL2'
 
 const sourceToDataSet = (source) =>
-    source === 'landsat' ? 'LANDSAT' : 'SENTINEL2'
+    source === 'LANDSAT' ? 'LANDSAT' : 'SENTINEL2'
 
 const toResponse = map((e) => e.response)

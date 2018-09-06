@@ -39,20 +39,20 @@ class BandSelection extends React.Component {
         {
             label: msg('process.mosaic.bands.combinations'),
             options: [
-                {value: 'red, green, blue', label: 'RED, GREEN, BLUE'},
-                {value: 'nir, red, green', label: 'NIR, RED, GREEN'},
-                {value: 'nir, swir1, red', label: 'NIR, SWIR1, RED'},
-                {value: 'swir2, nir, red', label: 'SWIR2, NIR, RED'},
-                {value: 'swir2, swir1, red', label: 'SWIR2, SWIR1, RED'},
-                {value: 'swir2, nir, green', label: 'SWIR2, NIR, GREEN'},
+                {value: 'RED, GREEN, BLUE', label: 'RED, GREEN, BLUE'},
+                {value: 'NIR, RED, GREEN', label: 'NIR, RED, GREEN'},
+                {value: 'NIR, SWIR1, RED', label: 'NIR, SWIR1, RED'},
+                {value: 'SWIR2, NIR, RED', label: 'SWIR2, NIR, RED'},
+                {value: 'SWIR2, SWIR1, RED', label: 'SWIR2, SWIR1, RED'},
+                {value: 'SWIR2, NIR, GREEN', label: 'SWIR2, NIR, GREEN'},
             ]
         },
         {
             label: msg('process.mosaic.bands.metadata'),
             options: [
-                {value: 'unixTimeDays', label: msg('bands.unixTimeDays')},
-                {value: 'dayOfYear', label: msg('bands.dayOfYear')},
-                {value: 'daysFromTarget', label: msg('bands.daysFromTarget')}
+                {value: 'UNIX_TIME_DAYS', label: msg('bands.unixTimeDays')},
+                {value: 'DAY_OF_YEAR', label: msg('bands.dayOfYear')},
+                {value: 'DAYS_FROM_TARGET', label: msg('bands.daysFromTarget')}
             ]
         }
     ]
@@ -71,9 +71,9 @@ class BandSelection extends React.Component {
 
     render() {
         const {source, surfaceReflectance, median, inputs: {selection, panSharpen}} = this.props
-        const canPanSharpen = source === 'landsat'
+        const canPanSharpen = source === 'LANDSAT'
             && !surfaceReflectance
-            && ['red, green, blue', 'nir, red, green'].includes(selection.value)
+            && ['RED, GREEN, BLUE', 'NIR, RED, GREEN'].includes(selection.value)
         const options = median
             ? this.options[0].options
             : this.options

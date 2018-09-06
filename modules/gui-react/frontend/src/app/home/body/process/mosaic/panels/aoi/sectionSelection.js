@@ -10,15 +10,15 @@ export default class SectionSelection extends React.Component {
         const {inputs: {section}} = this.props
         const options = [
             {
-                value: 'country',
+                value: 'COUNTRY',
                 label: msg('process.mosaic.panel.areaOfInterest.form.country.title')
             },
             {
-                value: 'fusionTable',
+                value: 'FUSION_TABLE',
                 label: msg('process.mosaic.panel.areaOfInterest.form.fusionTable.title')
             },
             {
-                value: 'polygon',
+                value: 'POLYGON',
                 label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title')
             }
         ]
