@@ -53,6 +53,7 @@ R -e "pacman::p_load(\
         'RStoolbox',\
         'shiny',\
         'shinyBS',\
+        'shinycssloaders',\
         'shinydashboard',\
         'shinyFiles',\
         'shinyjs',\
