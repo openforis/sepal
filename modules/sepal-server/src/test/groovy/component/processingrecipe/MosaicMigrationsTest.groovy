@@ -50,7 +50,7 @@ class MosaicMigrationsTest extends RecipeTest {
                     "BRDF"
                   ],
                   "filters": [
-                    {"HAZE": 0.95}
+                    {"type": "HAZE", "percentile": 0.95}
                   ],
                   "mask": [
                     "SNOW"
@@ -119,7 +119,7 @@ class MosaicMigrationsTest extends RecipeTest {
                     "BRDF"
                   ],
                   "filters": [
-                    {"HAZE": 0.95}
+                    {"type": "HAZE", "percentile": 0.95}
                   ],
                   "mask": [
                     "SNOW"

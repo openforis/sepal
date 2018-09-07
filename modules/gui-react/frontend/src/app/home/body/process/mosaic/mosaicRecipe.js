@@ -213,10 +213,7 @@ const initRecipe = (recipeState) => {
     actions.setCompositeOptions({
         model: {
             corrections: ['SR', 'BRDF'],
-            shadowPercentile: 0,
-            hazePercentile: 0,
-            ndviPercentile: 0,
-            dayOfYearPercentile: 0,
+            filters: [],
             mask: ['CLOUDS', 'SNOW'],
             compose: 'MEDOID'
         }

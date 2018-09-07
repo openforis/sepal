@@ -165,9 +165,29 @@ Composite.propTypes = {
 export default form({fields, mapStateToProps})(Composite)
 
 const valuesToModel = (values) => ({
-    ...values
+    corrections: values.corrections,
+    filters: [
+        {type: 'SHADOW', percentile: values.shadowPercentile},
+        {type: 'HAZE', percentile: values.hazePercentile},
+        {type: 'NDVI', percentile: values.ndviPercentile},
+        {type: 'DAY_OF_YEAR', percentile: values.dayOfYearPercentile},
+    ].filter(({percentile}) => percentile),
+    mask: values.mask,
+    compose: values.compose,
 })
 
-const modelToValues = (model) => ({
-    ...model
-})
+const modelToValues = (model) => {
+    const getPercentile = (type) => {
+        const filter = model.filters.find(filter => filter.type === type)
+        return filter ? filter.percentile : 0
+    }
+    return ({
+        corrections: model.corrections,
+        shadowPercentile: getPercentile('SHADOW'),
+        hazePercentile: getPercentile('HAZE'),
+        ndviPercentile: getPercentile('NDVI'),
+        dayOfYearPercentile: getPercentile('DAY_OF_YEAR'),
+        mask: model.mask,
+        compose: model.compose,
+    })
+}
