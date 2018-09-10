@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
-import UserProfilePanel from './userProfilePanel'
+import UserProfilePanel from './userDetails'
 import {connect} from 'store'
 
 const mapStateToProps = (state) => {

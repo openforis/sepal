@@ -5,10 +5,10 @@ import {msg, Msg} from 'translate'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
-import styles from './userProfilePanel.module.css'
+import styles from './userDetails.module.css'
 import Http from 'http-client'
 import {Field, ErrorMessage, form, Input} from 'widget/form'
-import {updateUserProfile$} from 'user'
+import {updateUserDetails$} from 'user'
 import Notifications from 'app/notifications'
 
 const fields = {
@@ -40,17 +40,17 @@ const mapStateToProps = (state) => {
     }
 }
 
-class UserProfilePanel extends React.Component {
+class UserDetails extends React.Component {
     closePanel() {
         this.props.close()
     }
 
-    updateUserProfile(userProfile) {
+    updateUserDetails(userDetails) {
         this.closePanel()
-        updateUserProfile$(userProfile)
+        updateUserDetails$(userDetails)
             .subscribe(
-                () => Notifications.success('user.updateProfile').dispatch(),
-                (error) => Notifications.caught('user.updateProfile', null, error).dispatch()
+                () => Notifications.success('user.updateDetails').dispatch(),
+                (error) => Notifications.caught('user.updateDetails', null, error).dispatch()
             )
             
     }
@@ -97,8 +97,8 @@ class UserProfilePanel extends React.Component {
                     </PanelContent>
                     <PanelButtons
                         form={form}
-                        statePath='userProfile'
-                        onApply={userProfile => this.updateUserProfile(userProfile)}
+                        statePath='userDetails'
+                        onApply={userDetails => this.updateUserDetails(userDetails)}
                         onCancel={() => this.cancel()}/>
                 </Panel>
             </Portal>
@@ -106,10 +106,10 @@ class UserProfilePanel extends React.Component {
     }
 }
 
-UserProfilePanel.propTypes = {
+UserDetails.propTypes = {
     close: PropTypes.func.isRequired,
     form: PropTypes.object,
     inputs: PropTypes.object
 }
 
-export default form({fields, mapStateToProps})(UserProfilePanel)
+export default form({fields, mapStateToProps})(UserDetails)

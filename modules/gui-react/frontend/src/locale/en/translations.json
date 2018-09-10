@@ -578,7 +578,7 @@
   },
   "user": {
     "panel": {
-      "title": "User profile",
+      "title": "User details",
       "form": {
         "name": {
           "label": "Name",
@@ -593,8 +593,8 @@
         }
       }
     },
-    "updateProfile.success.title": "User profile has been updated",
-    "updateProfile.error.title": "Could not update user profile"
+    "updateDetails.success.title": "User details has been updated",
+    "updateDetails.error.title": "Could not update user details"
   },
   "unauthorized.warning": {
     "title": "You are not logged in",

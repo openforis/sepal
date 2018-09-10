@@ -11,19 +11,16 @@ export const resetInvalidCredentials = () =>
         .del('user.invalidCredentials')
         .dispatch()
 
-
-export function loadCurrentUser$() {
-    return api.user.loadCurrentUser$().pipe(
+export const loadCurrentUser$ = () => 
+    api.user.loadCurrentUser$().pipe(
         map((user) =>
             actionBuilder('SET_CURRENT_USER', {user})
                 .set('user.currentUser', user)
                 .build()
         )
     )
-}
 
-
-export function login$(username, password) {
+export const login$ = (username, password) => {
     resetInvalidCredentials()
     return api.user.login$(username, password).pipe(
         map((user) => actionBuilder('CREDENTIALS_POSTED')
@@ -34,50 +31,46 @@ export function login$(username, password) {
     )
 }
 
-export function requestPasswordReset$(email) {
-    return api.user.requestPasswordReset$(email).pipe(
+export const requestPasswordReset$ = (email) =>
+    api.user.requestPasswordReset$(email).pipe(
         filter(() => false)
     )
-}
 
-export function validateToken$(token) {
-    return api.user.validateToken$(token).pipe(
+export const validateToken$ = (token) =>
+    api.user.validateToken$(token).pipe(
         map(({user}) =>
             actionBuilder('TOKEN_VALIDATED', {valid: !!user})
                 .set('user.tokenUser', user)
                 .build())
     )
-}
 
-export const tokenUser = () => select('user.tokenUser')
+export const tokenUser = () => 
+    select('user.tokenUser')
 
-export function resetPassword$(token, username, password) {
-    return api.user.resetPassword$(token, username, password).pipe(
+export const resetPassword$ = (token, username, password) =>
+    api.user.resetPassword$(token, username, password).pipe(
         switchMap(
             () => login$(username, password)
         )
     )
-}
 
-export function logout() {
+export const logout = () =>
     actionBuilder('LOGOUT')
         .del('user')
         .dispatch()
-}
 
-export function updateUserProfile$(userProfile) {
-    actionBuilder('UPDATE_USER_PROFILE', userProfile)
-        .set('user.currentUser.name', userProfile.name)
-        .set('user.currentUser.email', userProfile.email)
-        .set('user.currentUser.organization', userProfile.organization)
+export const updateUserDetails$ = ({name, email, organization}) => {
+    actionBuilder('UPDATE_USER_DETAILS', {name, email, organization})
+        .set('user.currentUser.name', name)
+        .set('user.currentUser.email', email)
+        .set('user.currentUser.organization', organization)
         .dispatch()
-    return api.user.update$(userProfile)
+    return api.user.updateUserDetails$({name, email, organization})
 }
 
-export function profile() {
-    console.log('user profile')
-}
+export const changeUserPassword$ = ({oldPassword, newPassword}) =>
+    api.user.changePassword$({oldPassword, newPassword})
 
-export function info() {
-    console.log('user info')
+export const info = () => {
+    // console.log('user info')
 }

@@ -32,9 +32,13 @@ const api = {
             }),
         logout$: () => 
             null, // TODO: Implement...
-        update$: (userProfile) =>
+        updateUserDetails$: ({name, email, organization}) =>
             post$('/api/user/current/details', {
-                body: userProfile
+                body: {name, email, organization}
+            }),
+        changePassword$: ({oldPassword, newPassword}) =>
+            post$('/api/user/current/password', {
+                body: {oldPassword, newPassword}
             })
     },
     files: {
