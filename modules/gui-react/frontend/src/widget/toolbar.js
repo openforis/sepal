@@ -141,8 +141,7 @@ export class PanelButton extends React.Component {
                                 ) : null
                         }
                     </React.Fragment>
-                }
-                }
+                }}
             </Context.Consumer>
         )
     }
