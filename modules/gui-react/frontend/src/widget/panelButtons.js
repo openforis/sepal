@@ -199,6 +199,7 @@ class PanelButtons extends React.Component {
     renderFormButtons() {
         const {isActionForm, applyLabel = msg('button.ok'), cancelLabel = msg('button.cancel'), form} = this.props
         const dirty = form.isDirty()
+        const showCancelButton = isActionForm || dirty
         return (
             <div>
                 <button
@@ -210,7 +211,7 @@ class PanelButtons extends React.Component {
                     disabled={!dirty && !isActionForm}
                     onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before canceling
                     className={styles.cancel}
-                    style={{opacity: isActionForm || dirty ? 1 : 0}}>
+                    style={{opacity: showCancelButton ? 1 : 0}}>
                     <Icon name={'undo-alt'}/>
                     <span>{cancelLabel}</span>
                 </button>
@@ -218,7 +219,7 @@ class PanelButtons extends React.Component {
                     type='submit'
                     onClick={(e) => {
                         e.preventDefault()
-                        this.ok()
+                        dirty ? this.ok() : this.cancel()
                     }}
                     disabled={form.isInvalid()}
                     className={styles.apply}>
