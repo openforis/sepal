@@ -47,6 +47,8 @@ export default class EarthEngineImageLayer {
 
     removeFromMap(googleMap) {
         sepalMap.removeListener(this.boundsChangedListener)
+        // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
+        googleMap.overlayMapTypes.removeAt(this.layerIndex)
         googleMap.overlayMapTypes.setAt(this.layerIndex, null)
     }
 
