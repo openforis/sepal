@@ -43,8 +43,7 @@ export function requestPasswordReset$(email) {
 export function validateToken$(token) {
     return api.user.validateToken$(token).pipe(
         map(({user}) =>
-            actionBuilder('TOKEN_VALIDATED',
-                {valid: !!user})
+            actionBuilder('TOKEN_VALIDATED', {valid: !!user})
                 .set('user.tokenUser', user)
                 .build())
     )
@@ -64,6 +63,15 @@ export function logout() {
     actionBuilder('LOGOUT')
         .del('user')
         .dispatch()
+}
+
+export function updateUserProfile$(userProfile) {
+    actionBuilder('UPDATE_USER_PROFILE', userProfile)
+        .set('user.currentUser.name', userProfile.name)
+        .set('user.currentUser.email', userProfile.email)
+        .set('user.currentUser.organization', userProfile.organization)
+        .dispatch()
+    return api.user.update$(userProfile)
 }
 
 export function profile() {

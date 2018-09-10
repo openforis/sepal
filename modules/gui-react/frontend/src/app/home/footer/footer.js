@@ -3,12 +3,11 @@ import styles from './footer.module.css'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import Tooltip from 'widget/tooltip'
-import {profile, info, logout} from 'user'
-// import UserInfo from '../user/userInfo'
+import {info, logout} from 'user'
 import UserProfile from '../user/userProfile'
 import MenuMode from '../menu/menuMode'
 
-const Footer = ({className, user}) => {
+const Footer = ({className}) => {
     return (
         <div className={className}>
             <div className={styles.footer}>
@@ -21,7 +20,7 @@ const Footer = ({className, user}) => {
                 </div>
                 <div>
                     <HourlyCost/>
-                    <UserProfile className={styles.user} user={user}/>
+                    <UserProfile className={styles.user}/>
                     <Logout/>
                 </div>
             </div>
@@ -40,17 +39,6 @@ const Logout = () =>
             <Icon name={'sign-out-alt'}/>
         </button>
     </Tooltip>
-
-// const User = ({user}) =>
-//     <Tooltip msg='home.sections.user.profile' top>
-//         <button className={styles.user} onClick={profile}>
-//             {user.username}
-//         </button>
-//     </Tooltip>
-
-// User.propTypes = {
-//     user: PropTypes.object
-// }
 
 const Title = () => {
     const wikiURL = 'https://github.com/openforis/sepal/wiki'

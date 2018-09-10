@@ -578,8 +578,23 @@
   },
   "user": {
     "panel": {
-      "title": "User profile"
-    }
+      "title": "User profile",
+      "form": {
+        "name": {
+          "label": "Name",
+          "required": "Name is required"
+        },
+        "email": {
+          "label": "Email",
+          "required": "Email is required"
+        },
+        "organization": {
+          "label": "Organization"
+        }
+      }
+    },
+    "updateProfile.success.title": "User profile has been updated",
+    "updateProfile.error.title": "Could not update user profile"
   },
   "unauthorized.warning": {
     "title": "You are not logged in",
