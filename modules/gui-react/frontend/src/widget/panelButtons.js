@@ -147,10 +147,8 @@ class PanelButtons extends React.Component {
         )
     }
 
-    renderWizardButtons() {
-        const {form} = this.props
-        const {first, last} = this.state
-        const back =
+    renderBackButton() {
+        return (
             <button
                 type='button'
                 onClick={(e) => {
@@ -162,7 +160,12 @@ class PanelButtons extends React.Component {
                 <Icon name={'chevron-left'}/>
                 <span><Msg id='button.back'/></span>
             </button>
-        const next =
+        )
+    }
+
+    renderNextButton() {
+        const {form} = this.props
+        return (
             <button
                 type='submit'
                 onClick={(e) => {
@@ -174,8 +177,12 @@ class PanelButtons extends React.Component {
                 <span><Msg id='button.next'/></span>
                 <Icon name={'chevron-right'}/>
             </button>
+        )
+    }
 
-        const done =
+    renderDoneButton() {
+        const {form} = this.props
+        return (
             <button
                 type='submit'
                 onClick={(e) => {
@@ -187,45 +194,63 @@ class PanelButtons extends React.Component {
                 <Icon name={'check'}/>
                 <span><Msg id='button.done'/></span>
             </button>
+        )
+    }
 
+    renderWizardButtons() {
+        const {first, last} = this.state
         return (
             <div>
-                {!first ? back : null}
-                {!last ? next : done}
+                {!first ? this.renderBackButton() : null}
+                {!last ? this.renderNextButton() : this.renderDoneButton()}
             </div>
         )
     }
 
-    renderFormButtons() {
-        const {isActionForm, applyLabel = msg('button.ok'), cancelLabel = msg('button.cancel'), form} = this.props
+    renderCancelButton() {
+        const {isActionForm, cancelLabel = msg('button.cancel'), form} = this.props
         const dirty = form.isDirty()
         const showCancelButton = isActionForm || dirty
         return (
+            <button
+                type='button'
+                onClick={(e) => {
+                    e.preventDefault()
+                    this.cancel()
+                }}
+                disabled={!dirty && !isActionForm}
+                onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before canceling
+                className={styles.cancel}
+                style={{opacity: showCancelButton ? 1 : 0}}>
+                <Icon name={'undo-alt'}/>
+                <span>{cancelLabel}</span>
+            </button>
+        )
+    }
+
+    renderOkButton() {
+        const {applyLabel = msg('button.ok'), form} = this.props
+        const dirty = form.isDirty()
+        return (
+            <button
+                type='submit'
+                onClick={(e) => {
+                    e.preventDefault()
+                    dirty ? this.ok() : this.cancel()
+                }}
+                disabled={form.isInvalid()}
+                className={styles.apply}>
+                <Icon name={'check'}/>
+                <span>{applyLabel}</span>
+            </button>
+        )
+    }
+
+    renderFormButtons() {
+        return (
             <div>
-                <button
-                    type='button'
-                    onClick={(e) => {
-                        e.preventDefault()
-                        this.cancel()
-                    }}
-                    disabled={!dirty && !isActionForm}
-                    onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before canceling
-                    className={styles.cancel}
-                    style={{opacity: showCancelButton ? 1 : 0}}>
-                    <Icon name={'undo-alt'}/>
-                    <span>{cancelLabel}</span>
-                </button>
-                <button
-                    type='submit'
-                    onClick={(e) => {
-                        e.preventDefault()
-                        dirty ? this.ok() : this.cancel()
-                    }}
-                    disabled={form.isInvalid()}
-                    className={styles.apply}>
-                    <Icon name={'check'}/>
-                    <span>{applyLabel}</span>
-                </button>
+                {this.renderCancelButton()}
+                {this.renderOkButton()}
             </div>
         )
     }
