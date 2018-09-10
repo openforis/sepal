@@ -1,34 +1,40 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
-import UserProfilePanel from './userDetails'
+import UserDetails from './userDetails'
+import ChangePassword from './changePassword'
 import {connect} from 'store'
+import actionBuilder from 'action-builder'
 
 const mapStateToProps = (state) => {
     const user = state.user.currentUser
     return {
         username: user.username,
+        ui: state.user.ui
     }
 }
 
+const action = (mode) =>
+    actionBuilder('USER_PROFILE')
+        .set('user.ui', mode)
+        .dispatch()
+
+export const userDetails = () =>
+    action('USER_DETAILS')
+
+export const changePassword = () =>
+    action('CHANGE_PASSWORD')
+
+export const closePanel = () =>
+    action()
+
 class UserProfile extends React.Component {
-    state = {
-        open: false
-    }
-
-    open() {
-        this.setState(prevState => ({...prevState, open: true}))
-    }
-
-    close() {
-        this.setState(prevState => ({...prevState, open: false}))
-    }
-
     renderButton() {
-        const {className, username} = this.props
+        const {className, username, ui} = this.props
+        const isIdle = !ui
         return (
             <Tooltip msg='home.sections.user.profile' top>
-                <button className={className} onClick={() => this.open()}>
+                <button className={className} onClick={() => isIdle ? userDetails() : null}>
                     {username}
                 </button>
             </Tooltip>
@@ -36,18 +42,22 @@ class UserProfile extends React.Component {
     }
 
     render() {
-        const {open} = this.state
+        const showUserDetails = this.props.ui === 'USER_DETAILS'
+        const showChangePassword = this.props.ui === 'CHANGE_PASSWORD'
         return (
             <React.Fragment>
                 {this.renderButton()}
-                {open ? <UserProfilePanel close={() => this.close()}/> : null}
+                {showUserDetails ? <UserDetails/> : null}
+                {showChangePassword ? <ChangePassword/> : null}
             </React.Fragment>
         )
     }
 }
 
 UserProfile.propTypes = {
-    className: PropTypes.string
+    className: PropTypes.string,
+    username: PropTypes.string,
+    ui: PropTypes.bool
 }
 
 export default connect(mapStateToProps)(UserProfile)

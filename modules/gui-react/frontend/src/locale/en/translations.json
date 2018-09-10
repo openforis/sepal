@@ -577,7 +577,7 @@
     "none": "You have no background tasks."
   },
   "user": {
-    "panel": {
+    "userDetails": {
       "title": "User details",
       "form": {
         "name": {
@@ -591,10 +591,30 @@
         "organization": {
           "label": "Organization"
         }
-      }
+      },
+      "useGoogleAccount": "Use Google account",
+      "success.title": "User details has been updated",
+      "caught.title": "Could not update user details"
     },
-    "updateDetails.success.title": "User details has been updated",
-    "updateDetails.error.title": "Could not update user details"
+    "changePassword": {
+      "title": "Change password",
+      "form": {
+        "oldPassword": {
+          "label": "Current password",
+          "required": "Current password is required"
+        },
+        "newPassword": {
+          "label": "New password",
+          "required": "New password is required"
+        },
+        "confirmPassword": {
+          "label": "New password (confirm)",
+          "required": "New password is required"
+        }
+      },
+      "success.title": "User password has been changed",
+      "caught.title": "Could not change user password"
+    }
   },
   "unauthorized.warning": {
     "title": "You are not logged in",
