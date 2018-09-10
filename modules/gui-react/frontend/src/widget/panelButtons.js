@@ -218,7 +218,7 @@ class PanelButtons extends React.Component {
                     e.preventDefault()
                     this.cancel()
                 }}
-                disabled={!dirty && !isActionForm}
+                disabled={!showCancelButton}
                 onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before canceling
                 className={styles.cancel}
                 style={{opacity: showCancelButton ? 1 : 0}}>
