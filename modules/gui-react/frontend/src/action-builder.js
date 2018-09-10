@@ -25,7 +25,9 @@ export default function actionBuilder(type, props) {
                 const pathList = toPathList(path)
                 const prevValue = select(pathList, state)
                 if (prevValue !== value)
-                    return immutableState.set(pathList, value)
+                    return value
+                        ? immutableState.set(pathList, value)
+                        : immutableState.del(pathList)
             })
             return this
         },
