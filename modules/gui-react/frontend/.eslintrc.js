@@ -1,4 +1,5 @@
 module.exports = {
+    "parser": "babel-eslint",
     "env": {
         "browser": true,
         "es6": true
@@ -8,15 +9,21 @@ module.exports = {
         "plugin:react/recommended"
     ],
     "parserOptions": {
+        "ecmaVersion": 6,
         "ecmaFeatures": {
-            "experimentalObjectRestSpread": true,
             "jsx": true
         },
         "sourceType": "module"
     },
     "plugins": [
-        "react"
+        "react",
+        "sort-imports-es6-autofix"
     ],
+    "settings": {
+        "react": {
+            "version": "16.4"
+        }
+    },
     "rules": {
         "indent": [
             "error",
@@ -33,6 +40,39 @@ module.exports = {
         "semi": [
             "error",
             "never"
-        ]
+        ],
+        "comma-spacing": [
+            "error", {
+                "before": false,
+                "after": true
+            }
+        ],
+        "no-trailing-spaces": [
+            "error", {
+                "skipBlankLines": true,
+                "ignoreComments": false
+            }
+        ],
+        "object-curly-spacing": [
+            "error",
+            "never"
+        ],
+        "eol-last": [
+            "error", 
+            "always"
+        ],
+        "react/jsx-tag-spacing": [
+            "error", {
+                "closingSlash": "never",
+                "beforeSelfClosing": "never",
+                "afterOpening": "never",
+                "beforeClosing": "allow"
+            }
+        ],
+        "sort-imports-es6-autofix/sort-imports-es6": ["error", {
+            "ignoreCase": false,
+            "ignoreMemberSort": false,
+            "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+        }]
     }
 };
