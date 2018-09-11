@@ -100,7 +100,7 @@ class CsvBackedSentinel2GatewayWithCoverageAndFootprint implements DataSetMetada
         def month = id.substring(4, 6) as int
         def day = id.substring(6, 8) as int
         def awsPath = "$utmCode/$latitudeBand/$square/$year/$month/$day/0"
-        def base = 'http://sentinel-s2-l1c.s3.amazonaws.com/tiles'
+        def base = 'https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles'
         return URI.create("$base/$awsPath/preview.jpg")
     }
 
