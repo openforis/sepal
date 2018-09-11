@@ -1,12 +1,14 @@
 module.exports = {
-    "parser": "babel-eslint",
+    // "parser": "babel-eslint",
     "env": {
         "browser": true,
         "es6": true
     },
     "extends": [
         "eslint:recommended",
-        "plugin:react/recommended"
+        "plugin:react/recommended",
+        "plugin:import/errors",
+        "plugin:import/warnings"
     ],
     "parserOptions": {
         "ecmaVersion": 6,
@@ -17,6 +19,7 @@ module.exports = {
     },
     "plugins": [
         "react",
+        "import",
         "sort-imports-es6-autofix"
     ],
     "settings": {
@@ -78,6 +81,11 @@ module.exports = {
                 "noSortAlphabetically": false
             }
         ],
+        "import/no-unresolved": 0,
+        "import/named": 2,
+        "import/namespace": 2,
+        "import/default": 2,
+        "import/export": 2,
         "sort-imports-es6-autofix/sort-imports-es6": ["error", {
             "ignoreCase": false,
             "ignoreMemberSort": false,
