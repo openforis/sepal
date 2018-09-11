@@ -69,6 +69,15 @@ module.exports = {
                 "beforeClosing": "allow"
             }
         ],
+        "react/sort-prop-types": [
+            "error", {
+                "ignoreCase": true,
+                "callbacksLast": true,
+                "requiredFirst": true,
+                "sortShapeProp": true,
+                "noSortAlphabetically": false
+            }
+        ],
         "sort-imports-es6-autofix/sort-imports-es6": ["error", {
             "ignoreCase": false,
             "ignoreMemberSort": false,
