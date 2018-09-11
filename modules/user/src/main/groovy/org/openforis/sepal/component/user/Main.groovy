@@ -2,6 +2,8 @@ package org.openforis.sepal.component.user
 
 import groovymvc.security.UsernamePasswordVerifier
 import org.openforis.sepal.component.user.adapter.LdapUsernamePasswordVerifier
+import org.openforis.sepal.component.user.adapter.TerminalBackedExternalUserDataGateway
+import org.openforis.sepal.component.user.api.ExternalUserDataGateway
 import org.openforis.sepal.endpoint.Endpoints
 import org.openforis.sepal.endpoint.Server
 import org.openforis.sepal.security.PathRestrictionsFactory
@@ -18,7 +20,11 @@ class Main extends AbstractMain {
     Main() {
         try {
             def serverConfig = new ServerConfig()
-            def userComponent = start UserComponent.create(createUsernamePasswordVerifier(serverConfig), serverConfig)
+            def userComponent = start UserComponent.create(
+                createUsernamePasswordVerifier(serverConfig),
+                createExternalUserDataGateway(),
+                serverConfig
+            )
             def endpoints = new Endpoints(
                     PathRestrictionsFactory.create(),
                     userComponent
@@ -33,6 +39,10 @@ class Main extends AbstractMain {
 
     UsernamePasswordVerifier createUsernamePasswordVerifier(ServerConfig serverConfig) {
         new LdapUsernamePasswordVerifier(serverConfig.ldapHost)
+    }
+
+    ExternalUserDataGateway createExternalUserDataGateway() {
+        new TerminalBackedExternalUserDataGateway()
     }
 
     static void main(String[] args) {
