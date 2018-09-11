@@ -24,8 +24,8 @@ export default class PanelSections extends React.Component {
 
 PanelSections.propTypes = {
     inputs: PropTypes.object.isRequired,
-    selected: PropTypes.any.isRequired,
-    sections: PropTypes.any.isRequired
+    sections: PropTypes.any.isRequired,
+    selected: PropTypes.any.isRequired
 }
 
 class Section extends React.Component {
@@ -77,7 +77,7 @@ class Section extends React.Component {
 }
 
 Section.propTypes = {
+    inputs: PropTypes.any,
     section: PropTypes.any,
-    onBack: PropTypes.any,
-    inputs: PropTypes.any
+    onBack: PropTypes.any
 }

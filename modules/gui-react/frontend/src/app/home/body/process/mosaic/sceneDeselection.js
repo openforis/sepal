@@ -1,8 +1,7 @@
-import {inDateRange, RecipeActions, RecipeState, SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {RecipeActions, RecipeState, SceneSelectionType, inDateRange} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {connect} from 'store'
 import {objectEquals} from 'collections'
 import React from 'react'
-import {connect} from 'store'
-
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)

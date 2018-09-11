@@ -1,9 +1,9 @@
-import React from 'react'
-import {connect} from 'store'
-import {appReady, appState} from 'apps'
 import {CenteredProgress} from 'widget/progress'
+import {appReady, appState} from 'apps'
+import {connect} from 'store'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
+import React from 'react'
 
 const mapStateToProps = (_, currentProps) => ({
     appState: appState(currentProps.app.path),
@@ -18,10 +18,10 @@ class IFrame extends React.Component {
     }
     render() {
         const {app: {path, label, alt}, appState} = this.props
-        if (appState === 'REQUESTED') 
+        if (appState === 'REQUESTED')
             return this.initializing(label, alt)
         
-        return appState === 'REQUESTED' 
+        return appState === 'REQUESTED'
             ? this.initializing(label, alt)
             : (
                 <div>
@@ -42,9 +42,9 @@ class IFrame extends React.Component {
 
 IFrame.propTypes = {
     app: PropTypes.shape({
-        path: PropTypes.string,
+        alt: PropTypes.string,
         label: PropTypes.string,
-        alt: PropTypes.string
+        path: PropTypes.string
     }),
     appState: PropTypes.string
 }

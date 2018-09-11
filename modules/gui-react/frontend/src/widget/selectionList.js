@@ -9,8 +9,8 @@ const SelectionList = (props) =>
 SelectionList.propTypes = {
     className: PropTypes.string,
     input: PropTypes.object,
-    options: PropTypes.array,
     multiple: PropTypes.any,
+    options: PropTypes.array,
     onChange: PropTypes.any
 }
 

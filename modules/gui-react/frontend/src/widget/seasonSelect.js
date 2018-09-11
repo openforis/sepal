@@ -195,11 +195,11 @@ export default class SeasonSelect extends React.Component {
 }
 
 SeasonSelect.propTypes = {
-    startDate: PropTypes.object.isRequired,
-    endDate: PropTypes.object.isRequired,
     centerDate: PropTypes.object.isRequired,
-    disabled: PropTypes.any,
+    endDate: PropTypes.object.isRequired,
+    startDate: PropTypes.object.isRequired,
     className: PropTypes.string,
+    disabled: PropTypes.any,
     onChange: PropTypes.func
 }
 

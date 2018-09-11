@@ -1,14 +1,14 @@
-import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {Field, form} from 'widget/form'
+import {Msg, msg} from 'translate'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {arrayEquals} from 'collections'
+import {imageSourceById, sources} from 'sources'
+import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
+import Buttons from 'widget/buttons'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {imageSourceById, sources} from 'sources'
-import {msg, Msg} from 'translate'
-import Buttons from 'widget/buttons'
-import {Field, form} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import styles from './sources.module.css'
 import updateSource from './updateSource'
 
@@ -138,10 +138,11 @@ class Sources extends React.Component {
 }
 
 Sources.propTypes = {
-    recipeId: PropTypes.string,
-    form: PropTypes.object,
-    fields: PropTypes.object,
     action: PropTypes.func,
+    fields: PropTypes.object,
+    form: PropTypes.object,
+    inputs: PropTypes.object,
+    recipeId: PropTypes.string,
     values: PropTypes.object
 }
 

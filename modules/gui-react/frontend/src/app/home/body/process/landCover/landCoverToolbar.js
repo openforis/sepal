@@ -1,16 +1,15 @@
+import {PanelButton, Toolbar, ToolbarButton} from 'widget/toolbar'
+import {PanelWizard} from 'widget/panel'
+import {RecipeState, createComposites, createLandCoverMap, recipePath} from './landCoverRecipe'
+import {connect} from 'store'
+import Aoi from '../mosaic/panels/aoi/aoi'
+import CompositeOptions from './compositeOptions'
+import Period from './period'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import {PanelWizard} from 'widget/panel'
-import {PanelButton, Toolbar, ToolbarButton} from 'widget/toolbar'
-import {createComposites, createLandCoverMap, recipePath, RecipeState} from './landCoverRecipe'
-import styles from './landCoverToolbar.module.css'
-import Aoi from '../mosaic/panels/aoi/aoi'
-import Period from './period'
-import Typology from './typology'
-import CompositeOptions from './compositeOptions'
 import TrainingData from './trainingData'
-
+import Typology from './typology'
+import styles from './landCoverToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)

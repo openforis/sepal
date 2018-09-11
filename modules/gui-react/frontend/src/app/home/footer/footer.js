@@ -1,11 +1,11 @@
-import React from 'react'
-import styles from './footer.module.css'
-import Icon from 'widget/icon'
-import PropTypes from 'prop-types'
-import Tooltip from 'widget/tooltip'
 import {info, logout} from 'user'
-import UserProfile from '../user/userProfile'
+import Icon from 'widget/icon'
 import MenuMode from '../menu/menuMode'
+import PropTypes from 'prop-types'
+import React from 'react'
+import Tooltip from 'widget/tooltip'
+import UserProfile from '../user/userProfile'
+import styles from './footer.module.css'
 
 const Footer = ({className}) => {
     return (
@@ -29,8 +29,8 @@ const Footer = ({className}) => {
 }
 
 Footer.propTypes = {
-    user: PropTypes.object,
-    className: PropTypes.string
+    className: PropTypes.string,
+    user: PropTypes.object
 }
 
 const Logout = () =>

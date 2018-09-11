@@ -98,10 +98,10 @@ class DatePicker extends React.Component {
 DatePicker.propTypes = {
     className: PropTypes.string,
     date: PropTypes.object,
-    startDate: PropTypes.any,
     endDate: PropTypes.any,
-    resolution: PropTypes.string,
     input: PropTypes.object,
+    resolution: PropTypes.string,
+    startDate: PropTypes.any,
     onChange: PropTypes.func
 }
 
@@ -362,10 +362,10 @@ const getDateFormat = (resolution) => {
 
 DatePickerControl.propTypes = {
     date: PropTypes.object,
-    startDate: PropTypes.any,
     endDate: PropTypes.any,
-    resolution: PropTypes.string,
     input: PropTypes.object,
+    resolution: PropTypes.string,
+    startDate: PropTypes.any,
     onSelect: PropTypes.func
 }
 

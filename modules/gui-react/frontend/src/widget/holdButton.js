@@ -55,10 +55,10 @@ export class HoldButton extends React.Component {
 }
 
 HoldButton.propTypes = {
-    icon: PropTypes.string,
-    onClickHold: PropTypes.func,
-    tabIndex: PropTypes.number,
-    disabled: PropTypes.bool,
+    children: PropTypes.any,
     className: PropTypes.string,
-    children: PropTypes.any
+    disabled: PropTypes.bool,
+    icon: PropTypes.string,
+    tabIndex: PropTypes.number,
+    onClickHold: PropTypes.func
 }

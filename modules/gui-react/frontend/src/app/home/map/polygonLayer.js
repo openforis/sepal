@@ -1,7 +1,7 @@
-import {sepalMap} from 'app/home/map/map'
-import {of} from 'rxjs'
-import {fromGoogleBounds, google, polygonOptions} from './map'
 import './map.module.css'
+import {fromGoogleBounds, google, polygonOptions} from './map'
+import {of} from 'rxjs'
+import {sepalMap} from 'app/home/map/map'
 
 export const setPolygonLayer = (
     {

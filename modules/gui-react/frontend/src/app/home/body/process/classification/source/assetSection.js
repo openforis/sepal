@@ -1,7 +1,7 @@
+import {ErrorMessage, Input} from 'widget/form'
+import {Msg, msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg, Msg} from 'translate'
-import {ErrorMessage, Input} from 'widget/form'
 
 export default class AssetSection extends React.Component {
     render() {
@@ -13,7 +13,7 @@ export default class AssetSection extends React.Component {
                 <Input
                     autoFocus
                     input={asset}
-                    placeholder={msg(`process.classification.panel.source.form.asset.placeholder`)}
+                    placeholder={msg('process.classification.panel.source.form.asset.placeholder')}
                     spellCheck={false}
                 />
                 <ErrorMessage for={asset}/>

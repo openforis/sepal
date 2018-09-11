@@ -1,10 +1,10 @@
+import {Msg} from 'translate'
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {connect} from 'store'
+import {sepalMap} from '../../../../../map/map'
 import {setAoiLayer} from 'app/home/map/aoiLayer'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import {Msg} from 'translate'
-import {sepalMap} from '../../../../../map/map'
 import styles from './aoi.module.css'
 
 const mapStateToProps = (state, ownProps) => {
@@ -78,7 +78,9 @@ class PolygonSection extends React.Component {
 
 PolygonSection.propTypes = {
     recipeId: PropTypes.string.isRequired,
-    inputs: PropTypes.object.isRequired
+    inputs: PropTypes.object.isRequired,
+    labelsShown: PropTypes.any,
+    componentWillUnmount$: PropTypes.func
 }
 
 export default connect(mapStateToProps)(PolygonSection)

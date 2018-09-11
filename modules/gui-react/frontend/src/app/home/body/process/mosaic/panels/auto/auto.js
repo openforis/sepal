@@ -1,10 +1,10 @@
+import {Constraint, ErrorMessage, Field, Input, form} from 'widget/form'
+import {Msg, msg} from 'translate'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg, Msg} from 'translate'
-import {Constraint, ErrorMessage, Field, form, Input} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import {RecipeActions, recipePath, RecipeState} from '../../mosaicRecipe'
 import styles from './auto.module.css'
 
 const fields = {
@@ -95,6 +95,7 @@ Auto.propTypes = {
     recipeId: PropTypes.string,
     form: PropTypes.object,
     fields: PropTypes.object,
+    inputs: PropTypes.object,
     constraints: PropTypes.shape({}),
     action: PropTypes.func,
     values: PropTypes.object

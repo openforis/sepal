@@ -1,6 +1,6 @@
-import globalActionBuilder from 'action-builder'
+import {RecipeState, recipePath} from '../recipe'
 import backend from 'backend'
-import {recipePath, RecipeState} from '../recipe'
+import globalActionBuilder from 'action-builder'
 
 export {recipePath, RecipeState}
 
@@ -49,18 +49,18 @@ export const RecipeActions = (id) => {
 
 const createSource = (sourceForm) => {
     switch (sourceForm.section) {
-        case 'recipe':
-            return {
-                type: 'recipe',
-                id: sourceForm.recipe
-            }
-        case 'asset':
-            return {
-                type: 'asset',
-                id: sourceForm.asset
-            }
-        default:
-            throw new Error('Invalid source section: ' + sourceForm.section)
+    case 'recipe':
+        return {
+            type: 'recipe',
+            id: sourceForm.recipe
+        }
+    case 'asset':
+        return {
+            type: 'asset',
+            id: sourceForm.asset
+        }
+    default:
+        throw new Error('Invalid source section: ' + sourceForm.section)
     }
 }
 

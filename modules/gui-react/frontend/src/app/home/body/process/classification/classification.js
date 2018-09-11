@@ -1,12 +1,12 @@
+import {connect} from 'store'
+import {recipePath} from './classificationRecipe'
+import ClassificationPreview from './classificationPreview'
+import ClassificationToolbar from './classificationToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import ClassificationPreview from './classificationPreview'
-import {recipePath} from './classificationRecipe'
-import ClassificationToolbar from './classificationToolbar'
 
-const mapStateToProps = (state, ownProps) => {
+const mapStateToProps = () => {
     return {}
 }
 

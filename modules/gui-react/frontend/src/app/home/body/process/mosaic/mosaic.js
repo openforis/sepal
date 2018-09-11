@@ -1,20 +1,20 @@
+import {RecipeState, recipePath} from './mosaicRecipe'
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
-import ShowSceneAreaToggle from 'app/home/body/process/mosaic/showSceneAreaToggle'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {sepalMap} from 'app/home/map/map'
-import MapToolbar from 'app/home/map/mapToolbar'
-import PropTypes from 'prop-types'
-import React from 'react'
 import {connect, select} from 'store'
+import {sepalMap} from 'app/home/map/map'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
 import AutoSelectScenes from './autoSelectScenes'
 import BandSelection from './bandSelection'
-import styles from './mosaic.module.css'
+import MapToolbar from 'app/home/map/mapToolbar'
 import MosaicPreview from './mosaicPreview'
-import {recipePath, RecipeState} from './mosaicRecipe'
 import MosaicToolbar from './panels/mosaicToolbar'
+import PropTypes from 'prop-types'
+import React from 'react'
 import SceneAreas from './sceneAreas'
 import SceneDeselection from './sceneDeselection'
 import SceneSelection from './sceneSelection'
+import ShowSceneAreaToggle from 'app/home/body/process/mosaic/showSceneAreaToggle'
+import styles from './mosaic.module.css'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -67,7 +67,7 @@ class Mosaic extends React.Component {
             onInitialized: () => {
                 if (this.props.tabCount === 1)
                     sepalMap.setContext(recipeId)
-                    sepalMap.getContext(recipeId).fitLayer('aoi')
+                sepalMap.getContext(recipeId).fitLayer('aoi')
             }
         })
     }

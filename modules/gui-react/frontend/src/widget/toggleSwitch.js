@@ -44,10 +44,10 @@ class ToggleSwitch extends React.Component {
 }
 
 ToggleSwitch.propTypes = {
-    on: PropTypes.boolm,
-    onIcon: PropTypes.string,
     offIcon: PropTypes.string,
-    onChange: PropTypes.func
+    on: PropTypes.boolm,
+    onChange: PropTypes.func,
+    onIcon: PropTypes.string
 }
 
 export default ToggleSwitch

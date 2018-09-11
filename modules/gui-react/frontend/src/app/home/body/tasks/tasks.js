@@ -1,12 +1,12 @@
-import backend from 'backend'
-import React from 'react'
-import Hammer from 'react-hammerjs'
-import {connect, select} from 'store'
-import {Msg} from 'translate'
 import {IconButton} from 'widget/button'
-import Icon from 'widget/icon'
+import {Msg} from 'translate'
 import {Progress} from 'widget/progress'
+import {connect, select} from 'store'
+import Hammer from 'react-hammerjs'
+import Icon from 'widget/icon'
+import React from 'react'
 import Tooltip from 'widget/tooltip'
+import backend from 'backend'
 import styles from './tasks.module.css'
 
 const mapStateToProps = () => ({

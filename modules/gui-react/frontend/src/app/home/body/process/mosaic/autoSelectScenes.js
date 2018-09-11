@@ -1,11 +1,11 @@
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import backend from 'backend'
-import React from 'react'
 import {Subject} from 'rxjs'
-import {map, takeUntil} from 'rxjs/operators'
 import {connect} from 'store'
+import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import MapStatus from 'widget/mapStatus'
+import React from 'react'
+import backend from 'backend'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -21,12 +21,12 @@ class AutoSelectScenes extends React.Component {
         this.recipeActions = RecipeActions(recipeId)
         this.request$ = new Subject()
         this.request$.subscribe(() => {
-                this.recipeActions.setAutoSelectScenesState('RUNNING').dispatch()
-                asyncActionBuilder('AUTO_SELECT_SCENES',
-                    this.autoSelectScenes$())
-                    .onComplete(() => this.recipeActions.setAutoSelectScenesState(null))
-                    .dispatch()
-            }
+            this.recipeActions.setAutoSelectScenesState('RUNNING').dispatch()
+            asyncActionBuilder('AUTO_SELECT_SCENES',
+                this.autoSelectScenes$())
+                .onComplete(() => this.recipeActions.setAutoSelectScenesState(null))
+                .dispatch()
+        }
         )
     }
 

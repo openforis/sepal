@@ -1,19 +1,19 @@
-import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
-import {sepalMap} from 'app/home/map/map'
-import _ from 'lodash'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {msg} from 'translate'
 import {Field, form} from 'widget/form'
 import {Panel} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import PanelSections from 'widget/panelSections'
-import {RecipeActions, recipePath, RecipeState} from '../../mosaicRecipe'
-import styles from './aoi.module.css'
+import {RecipeActions, RecipeState, recipePath} from '../../mosaicRecipe'
+import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
+import {msg} from 'translate'
+import {sepalMap} from 'app/home/map/map'
 import CountrySection from './countrySection'
 import FusionTableSection from './fusionTableSection'
+import PanelButtons from 'widget/panelButtons'
+import PanelSections from 'widget/panelSections'
 import PolygonSection from './polygonSection'
+import PropTypes from 'prop-types'
+import React from 'react'
 import SectionSelection from './sectionSelection'
+import _ from 'lodash'
+import styles from './aoi.module.css'
 
 const fields = {
     section: new Field()
@@ -131,7 +131,11 @@ class Aoi extends React.Component {
 }
 
 Aoi.propTypes = {
-    recipeId: PropTypes.string.isRequired
+    recipeId: PropTypes.string.isRequired,
+    componentWillUnmount$: PropTypes.func,
+    form: PropTypes.object,
+    inputs: PropTypes.object,
+    values: PropTypes.object
 }
 
 export default form({fields, mapStateToProps})(Aoi)

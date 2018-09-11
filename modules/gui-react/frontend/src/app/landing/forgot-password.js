@@ -1,13 +1,13 @@
-import React from 'react'
-import {requestPasswordReset$} from 'user'
-import {history, Link} from 'route'
-import {Field, ErrorMessage, form, Input} from 'widget/form'
-import Icon from 'widget/icon'
-import {SubmitButton} from 'widget/button'
+import {ErrorMessage, Field, Input, form} from 'widget/form'
+import {Link, history} from 'route'
 import {Msg, msg} from 'translate'
-import PropTypes from 'prop-types'
-import styles from './forgot-password.module.css'
+import {SubmitButton} from 'widget/button'
+import {requestPasswordReset$} from 'user'
+import Icon from 'widget/icon'
 import Notifications from 'app/notifications'
+import PropTypes from 'prop-types'
+import React from 'react'
+import styles from './forgot-password.module.css'
 
 const fields = {
     email: new Field()
@@ -58,12 +58,13 @@ export class ForgotPassword extends React.Component {
 }
 
 ForgotPassword.propTypes = {
-    asyncActionBuilder: PropTypes.func,
     action: PropTypes.func,
-    form: PropTypes.object, 
+    asyncActionBuilder: PropTypes.func,
     fields: PropTypes.shape({
         email: PropTypes.string
-    })
+    }),
+    form: PropTypes.object,
+    inputs: PropTypes.object
 }
 
 export const LoginLink = ({tabIndex}) =>

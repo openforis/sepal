@@ -119,12 +119,12 @@ class Tabs extends React.Component {
 }
 
 Tabs.propTypes = {
-    tabs: PropTypes.array,
-    selectedTabId: PropTypes.string,
     statePath: PropTypes.string.isRequired,
+    children: PropTypes.any,
+    selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
-    onTitleChanged: PropTypes.func,
-    children: PropTypes.children
+    tabs: PropTypes.array,
+    onTitleChanged: PropTypes.func
 }
 
 export default connect(mapStateToProps)(Tabs)
@@ -231,11 +231,11 @@ class Tab extends React.Component {
 
 Tab.propTypes = {
     id: PropTypes.string,
-    title: PropTypes.string,
     placeholder: PropTypes.string,
-    onTitleChanged: PropTypes.func,
+    selected: PropTypes.any,
     statePath: PropTypes.string,
-    selected: PropTypes.any
+    title: PropTypes.string,
+    onTitleChanged: PropTypes.func
 }
 
 const NewTab = ({onAdd}) =>

@@ -1,12 +1,12 @@
-import actionBuilder from 'action-builder'
-import backend from 'backend'
+import {Subject, from, of} from 'rxjs'
+import {addTab, closeTab} from 'widget/tabs'
 import {gzip$, ungzip$} from 'gzip'
-import JSZip from 'jszip'
-import _ from 'lodash'
-import {from, of, Subject} from 'rxjs'
 import {map, switchMap} from 'rxjs/operators'
 import {select, subscribe} from 'store'
-import {addTab, closeTab} from 'widget/tabs'
+import JSZip from 'jszip'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
+import backend from 'backend'
 
 export const recipePath = (recipeId, path) => {
     const recipeTabIndex = select('process.tabs')
@@ -137,23 +137,23 @@ let prevTabs = []
 const findPrevRecipe = (recipe) =>
     prevTabs.find(prevRecipe => prevRecipe.id === recipe.id) || {}
 subscribe('process.tabs', (recipes) => {
-        if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
-            const recipesToSave = recipes
-                .filter(recipe =>
-                    (select('process.recipes') || []).find(saved =>
-                        saved.id === recipe.id
-                    )
+    if (recipes && (prevTabs.length === 0 || prevTabs !== recipes)) {
+        const recipesToSave = recipes
+            .filter(recipe =>
+                (select('process.recipes') || []).find(saved =>
+                    saved.id === recipe.id
                 )
-                .filter(recipe => {
-                    const prevRecipe = findPrevRecipe(recipe)
-                    return prevRecipe.model && !_.isEqual(prevRecipe.model, recipe.model)
-                })
-            if (recipesToSave.length > 0) {
-                recipesToSave.forEach(recipe => saveToBackend$.next(recipe))
-            }
-            prevTabs = recipes
+            )
+            .filter(recipe => {
+                const prevRecipe = findPrevRecipe(recipe)
+                return prevRecipe.model && !_.isEqual(prevRecipe.model, recipe.model)
+            })
+        if (recipesToSave.length > 0) {
+            recipesToSave.forEach(recipe => saveToBackend$.next(recipe))
         }
+        prevTabs = recipes
     }
+}
 )
 
 saveToBackend$.pipe(

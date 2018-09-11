@@ -1,15 +1,15 @@
+import {Field, Label, form} from 'widget/form'
+import {Msg, msg} from 'translate'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {currentUser} from 'user'
+import {dataSetById} from 'sources'
 import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
-import _ from 'lodash'
+import Buttons from 'widget/buttons'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {dataSetById} from 'sources'
-import {msg, Msg} from 'translate'
-import {currentUser} from 'user'
-import Buttons from 'widget/buttons'
-import {Field, form, Label} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import _ from 'lodash'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -88,9 +88,9 @@ class Retrieve extends React.Component {
 
         const bandOptions = this.allBandOptions
             .map(group => ({
-                    ...group,
-                    options: group.options.filter(option => availableBands.has(option.value))
-                })
+                ...group,
+                options: group.options.filter(option => availableBands.has(option.value))
+            })
             )
             .filter(group =>
                 group.options.length
@@ -163,10 +163,10 @@ class Retrieve extends React.Component {
 }
 
 Retrieve.propTypes = {
-    recipeId: PropTypes.string,
-    form: PropTypes.object,
-    fields: PropTypes.object,
     action: PropTypes.func,
+    fields: PropTypes.object,
+    form: PropTypes.object,
+    recipeId: PropTypes.string,
     values: PropTypes.object
 }
 

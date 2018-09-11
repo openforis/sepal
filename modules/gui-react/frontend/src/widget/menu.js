@@ -69,10 +69,10 @@ class Menu extends React.Component {
 
 Menu.propTypes = {
     appDimensions: PropTypes.object,
-    warning: PropTypes.any,
-    onClick: PropTypes.func,
+    children: PropTypes.any,
     className: PropTypes.string,
-    children: PropTypes.any
+    warning: PropTypes.any,
+    onClick: PropTypes.func
 }
 
 export default connect(mapStateToProps)(Menu)
@@ -90,6 +90,6 @@ export const MenuItem = ({onSelect, children}) =>
     </MenuContext.Consumer>
 
 MenuItem.propTypes = {
-    onSelect: PropTypes.func,
-    children: PropTypes.children
+    children: PropTypes.children,
+    onSelect: PropTypes.func
 }

@@ -1,10 +1,10 @@
-import React from 'react'
-import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
-import {Field, ErrorMessage, form, Input} from 'widget/form'
+import {ErrorMessage, Field, Input, form} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
-import {SubmitButton} from 'widget/button'
 import {Msg, msg} from 'translate'
+import {SubmitButton} from 'widget/button'
+import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
 import PropTypes from 'prop-types'
+import React from 'react'
 
 const fields = {
     username: new Field()
@@ -66,13 +66,14 @@ class Login extends React.Component {
 }
 
 Login.propTypes = {
-    form: PropTypes.object,
-    fields: PropTypes.shape({
-        username: PropTypes.object,
-        password: PropTypes.object,
-    }),
     action: PropTypes.func,
-    asyncActionBuilder: PropTypes.func
+    asyncActionBuilder: PropTypes.func,
+    fields: PropTypes.shape({
+        password: PropTypes.object,
+        username: PropTypes.object,
+    }),
+    form: PropTypes.object,
+    inputs:PropTypes.object
 }
 
 export default form({fields, mapStateToProps})(Login)

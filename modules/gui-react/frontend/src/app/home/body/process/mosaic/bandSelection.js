@@ -1,10 +1,10 @@
+import {Field, form} from 'widget/form'
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import _ from 'lodash'
-import React from 'react'
 import {msg} from 'translate'
 import Checkbox from 'widget/checkbox'
 import ComboBox from 'widget/comboBox'
-import {Field, form} from 'widget/form'
+import React from 'react'
+import _ from 'lodash'
 import styles from './bandSelection.module.css'
 
 const fields = {

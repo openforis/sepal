@@ -1,10 +1,10 @@
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import React from 'react'
-import Hammer from 'react-hammerjs'
-import {dataSetById} from 'sources'
 import {connect} from 'store'
+import {dataSetById} from 'sources'
 import {msg} from 'translate'
+import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
+import React from 'react'
 import styles from './scenePreview.module.css'
 
 const mapStateToProps = (state, ownProps) => {
@@ -39,7 +39,7 @@ class ScenePreview extends React.Component {
                                 <LabelValue name='dataSet' value={dataSetById[dataSet].name} icon='rocket'/>
                                 <LabelValue name='date' value={date} icon='calendar'/>
                                 <LabelValue name='daysFromTarget' value={daysFromTargetString}
-                                            icon='calendar-check'/>
+                                    icon='calendar-check'/>
                                 <LabelValue name='cloudCover' value={cloudCover + '%'} icon='cloud'/>
                             </div>
                         </div>

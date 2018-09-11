@@ -8,8 +8,8 @@ const CenteredPanel = ({className, children}) =>
     </div>
 
 CenteredPanel.propTypes = {
-    className: PropTypes.string,
-    children: PropTypes.any
+    children: PropTypes.any,
+    className: PropTypes.string
 }
 
 export default CenteredPanel

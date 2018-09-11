@@ -34,11 +34,11 @@ export class AnimateEnter extends React.Component {
 }
 
 AnimateEnter.propTypes = {
-    className: PropTypes.string,
     name: PropTypes.string.isRequired,
-    duration: PropTypes.number,
+    children: PropTypes.any,
+    className: PropTypes.string,
     delay: PropTypes.number,
-    children: PropTypes.any
+    duration: PropTypes.number
 }
 
 export const AnimateReplacement = ({currentKey, timeout = 500, classNames, children, ...props}) =>
@@ -53,10 +53,10 @@ export const AnimateReplacement = ({currentKey, timeout = 500, classNames, child
     </TransitionGroup>
     
 AnimateReplacement.propTypes = {
-    currentKey: PropTypes.any.isRequired,
-    timeout: PropTypes.number,
     classNames: PropTypes.any.isRequired,
-    children: PropTypes.any
+    currentKey: PropTypes.any.isRequired,
+    children: PropTypes.any,
+    timeout: PropTypes.number
 }
 
 function randomString() {

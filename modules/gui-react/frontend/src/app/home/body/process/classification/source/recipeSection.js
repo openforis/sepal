@@ -1,10 +1,10 @@
+import {ErrorMessage} from 'widget/form'
+import {Msg} from 'translate'
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import ComboBox from 'widget/comboBox'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect, select} from 'store'
-import {Msg} from 'translate'
-import ComboBox from 'widget/comboBox'
-import {ErrorMessage} from 'widget/form'
-import {msg} from 'translate'
 
 const mapStateToProps = () => {
     return {
@@ -34,7 +34,8 @@ class RecipeSection extends React.Component {
 }
 
 RecipeSection.propTypes = {
-    recipe: PropTypes.object.isRequired
+    recipe: PropTypes.object.isRequired,
+    recipes: PropTypes.array
 }
 
 export default connect(mapStateToProps)(RecipeSection)

@@ -1,8 +1,8 @@
+import {msg} from 'translate'
 import {removeAoiLayer} from 'app/home/map/aoiLayer'
+import Buttons from 'widget/buttons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg} from 'translate'
-import Buttons from 'widget/buttons'
 import styles from './aoi.module.css'
 
 export default class SectionSelection extends React.Component {

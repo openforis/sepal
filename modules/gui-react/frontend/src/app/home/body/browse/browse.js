@@ -1,39 +1,39 @@
-import actionBuilder from 'action-builder'
-import Notifications from 'app/notifications'
-import api from 'backend'
-import flexy from 'flexy.module.css'
-import Path from 'path'
-import PropTypes from 'prop-types'
-import React from 'react'
+import {HoldButton} from 'widget/holdButton'
+import {IconButton} from 'widget/button'
 import {Observable} from 'rxjs'
 import {catchError, map} from 'rxjs/operators'
 import {connect, select} from 'store'
 import {msg} from 'translate'
-import {IconButton} from 'widget/button'
-import {HoldButton} from 'widget/holdButton'
 import Icon from 'widget/icon'
+import Notifications from 'app/notifications'
+import Path from 'path'
+import PropTypes from 'prop-types'
+import React from 'react'
 import Tooltip from 'widget/tooltip'
+import actionBuilder from 'action-builder'
+import api from 'backend'
+import flexy from 'flexy.module.css'
 import styles from './browse.module.css'
 
 // const files = {
 //     'loaded': {
 //         '/': {
 //             files: [
-//                 {name: 'file1', isDirectory: false, size: 100}, 
+//                 {name: 'file1', isDirectory: false, size: 100},
 //                 {name: 'dir1', isDirectory: true}
 //             ]
 //         },
 //         '/dir1': {
 //             files: [
-//                 {name: 'file2', isDirectory: false, size: 200}, 
-//                 {name: 'file3', isDirectory: false, size: 300}, 
+//                 {name: 'file2', isDirectory: false, size: 200},
+//                 {name: 'file3', isDirectory: false, size: 300},
 //                 {name: 'dir2', isDirectory: true}
 //             ]
 //         },
 //         '/dir1/dir2': {
 //             files: [
-//                 {name: 'file4', isDirectory: false, size: 400}, 
-//                 {name: 'file5', isDirectory: false, size: 500}, 
+//                 {name: 'file4', isDirectory: false, size: 400},
+//                 {name: 'file5', isDirectory: false, size: 500},
 //             ],
 //             collapsed: true
 //         },
@@ -104,7 +104,7 @@ const removeDirectory$ = (path) => {
 }
 
 class Browse extends React.Component {
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         this.loadDirectory('/')
     }
 
@@ -277,7 +277,7 @@ class Browse extends React.Component {
         return expanded && !directory.files
             ? this.renderSpinner()
             : (
-                <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}> 
+                <span className={[styles.icon, styles.directory].join(' ')} onClick={toggleDirectory}>
                     <Icon name={'chevron-right'} className={expanded ? styles.expanded : styles.collapsed}/>
                 </span>
             )
@@ -298,7 +298,7 @@ class Browse extends React.Component {
             return (
                 <li key={file.name}>
                     <div className={this.isSelected(fullPath) ? styles.selected : null}
-                         onClick={() => this.toggleSelection(fullPath, file.isDirectory)}>
+                        onClick={() => this.toggleSelection(fullPath, file.isDirectory)}>
                         {this.renderIcon(fullPath, file)}
                         <span className={styles.fileName}>{file.name}</span>
                         {this.renderFileInfo(fullPath, file)}
@@ -325,18 +325,18 @@ class Browse extends React.Component {
                 )}
                 <Tooltip msg='browse.controls.download' bottom disabled={!oneFileSelected}>
                     <IconButton icon='download'
-                                onClick={this.downloadSelected.bind(this)}
-                                disabled={!oneFileSelected}/>
+                        onClick={this.downloadSelected.bind(this)}
+                        disabled={!oneFileSelected}/>
                 </Tooltip>
                 <Tooltip msg='browse.controls.remove' bottom disabled={nothingSelected}>
                     <HoldButton icon='trash-alt'
-                                onClickHold={this.removeSelected.bind(this)}
-                                disabled={nothingSelected}/>
+                        onClickHold={this.removeSelected.bind(this)}
+                        disabled={nothingSelected}/>
                 </Tooltip>
                 <Tooltip msg='browse.controls.clearSelection' bottom disabled={nothingSelected}>
                     <IconButton icon='times'
-                                onClick={this.clearSelection.bind(this)}
-                                disabled={nothingSelected}
+                        onClick={this.clearSelection.bind(this)}
+                        disabled={nothingSelected}
                     />
                 </Tooltip>
             </div>

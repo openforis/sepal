@@ -46,11 +46,11 @@ class TabContent extends React.Component {
 }
 
 TabContent.propTypes = {
-    tab: PropTypes.any,
+    children: PropTypes.any,
     selected: PropTypes.any,
-    onEnable: PropTypes.func,
+    tab: PropTypes.any,
     onDisable: PropTypes.func,
-    children: PropTypes.children
+    onEnable: PropTypes.func
 }
 
 export default connect()(TabContent)

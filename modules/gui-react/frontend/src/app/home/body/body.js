@@ -1,22 +1,22 @@
-import {loadApps$, requestedApps, runApp$} from 'apps'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {isPathInLocation, location} from 'route'
-import {connect} from 'store'
-import {msg} from 'translate'
 import {CenteredProgress} from 'widget/progress'
 import {Select} from 'widget/selectable'
+import {connect} from 'store'
 import {initGoogleMapsApi$} from '../map/map'
+import {isPathInLocation, location} from 'route'
+import {loadApps$, requestedApps, runApp$} from 'apps'
+import {msg} from 'translate'
 import Account from './account/account'
 import AppLaunchPad from './appLaunchPad/appLaunchPad'
-import styles from './body.module.css'
 import Browse from './browse/browse'
 import IFrame from './iframe'
 import Process from './process/process'
+import PropTypes from 'prop-types'
+import React from 'react'
 import Section from './section'
 import Tasks from './tasks/tasks'
 import Terminal from './terminal/terminal'
 import Users from './users/users'
+import styles from './body.module.css'
 
 const mapStateToProps = () => ({
     requestedApps: requestedApps(),
@@ -24,7 +24,7 @@ const mapStateToProps = () => ({
 })
 
 class Body extends React.Component {
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         this.props.asyncActionBuilder('LOAD_APPS',
             loadApps$())
             .dispatch()
@@ -33,7 +33,7 @@ class Body extends React.Component {
             .dispatch()
     }
 
-    componentWillReceiveProps({action, location, requestedApps}) {
+    UNSAFE_componentWillReceiveProps({action, location, requestedApps}) {
         if (action('LOAD_APPS').dispatched && isPathInLocation('/app/sandbox')) {
             const path = location.pathname.replace(/^\/app/, '')
             const notRunning = !requestedApps.find((app) => path === app.path)
@@ -92,8 +92,8 @@ class Body extends React.Component {
 }
 
 Body.propTypes = {
-    asyncActionBuilder: PropTypes.func,
     action: PropTypes.func,
+    asyncActionBuilder: PropTypes.func,
     className: PropTypes.string,
     location: PropTypes.object,
     requestedApps: PropTypes.array

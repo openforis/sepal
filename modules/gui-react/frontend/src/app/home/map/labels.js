@@ -1,7 +1,6 @@
-import actionBuilder from 'action-builder'
-import {google, sepalMap} from 'app/home/map/map'
 import {NEVER, of} from 'rxjs'
-
+import {google, sepalMap} from 'app/home/map/map'
+import actionBuilder from 'action-builder'
 
 export default class Labels {
     static showLabelsAction({layerIndex = 1, shown, statePath, mapContext}) {

@@ -32,14 +32,14 @@ export const Panel = ({top, bottom, right, left, center, modal, className, child
     </PanelButtonContext.Consumer>
 
 Panel.propTypes = {
-    top: PropTypes.any,
+    children: PropTypes.any.isRequired,
     bottom: PropTypes.any,
-    right: PropTypes.any,
-    left: PropTypes.any,
     center: PropTypes.any,
-    modal: PropTypes.any,
     className: PropTypes.string,
-    children: PropTypes.any.isRequired
+    left: PropTypes.any,
+    modal: PropTypes.any,
+    right: PropTypes.any,
+    top: PropTypes.any
 }
 
 
@@ -55,9 +55,9 @@ export const PanelHeader = ({icon, title, children}) =>
     </div>
 
 PanelHeader.propTypes = {
-    title: PropTypes.string,
-    icon: PropTypes.string,
     children: PropTypes.any,
+    icon: PropTypes.string,
+    title: PropTypes.string,
 }
 
 
@@ -68,8 +68,8 @@ export const PanelContent = ({className, children}) =>
 
 
 PanelContent.propTypes = {
-    className: PropTypes.string,
     children: PropTypes.any.isRequired,
+    className: PropTypes.string,
 }
 
 
@@ -101,9 +101,9 @@ class PanelWizard extends React.Component {
 PanelWizard.propTypes = {
     panels: PropTypes.array.isRequired,
     statePath: PropTypes.string.isRequired,
-    selectedPanel: PropTypes.any,
+    children: PropTypes.children,
     initialized: PropTypes.any,
-    children: PropTypes.children
+    selectedPanel: PropTypes.any
 }
 
 PanelWizard = connect(mapStateToProps)(PanelWizard)

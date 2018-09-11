@@ -27,8 +27,8 @@ Select.childContextTypes = {
 }
 
 Select.propTypes = {
-    className: PropTypes.string,
-    children: PropTypes.any
+    children: PropTypes.any,
+    className: PropTypes.string
 }
 
 export class Selectable extends React.Component {
@@ -96,6 +96,6 @@ Selectable.childContextTypes = {
 Selectable.propTypes = {
     active: PropTypes.bool,
     captureMouseEvents: PropTypes.any,
-    classNames: PropTypes.objectOf(PropTypes.string),
-    children: PropTypes.any
+    children: PropTypes.any,
+    classNames: PropTypes.objectOf(PropTypes.string)
 }

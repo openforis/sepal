@@ -1,16 +1,16 @@
-import actionBuilder from 'action-builder'
+import {ErrorMessage} from 'widget/form'
+import {Msg, msg} from 'translate'
+import {Subject} from 'rxjs'
+import {connect, select} from 'store'
 import {countryFusionTable, setAoiLayer} from 'app/home/map/aoiLayer'
+import {map, takeUntil} from 'rxjs/operators'
 import {queryFusionTable$} from 'app/home/map/fusionTable'
 import {sepalMap} from 'app/home/map/map'
-import _ from 'lodash'
+import ComboBox from 'widget/comboBox'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Subject} from 'rxjs'
-import {map, takeUntil} from 'rxjs/operators'
-import {connect, select} from 'store'
-import {Msg, msg} from 'translate'
-import ComboBox from 'widget/comboBox'
-import {ErrorMessage} from 'widget/form'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
 
 const loadCountries$ = () => {
     return queryFusionTable$(`
@@ -144,7 +144,10 @@ class CountrySection extends React.Component {
 
 CountrySection.propTypes = {
     recipeId: PropTypes.string.isRequired,
-    inputs: PropTypes.object.isRequired
+    inputs: PropTypes.object.isRequired,
+    action: PropTypes.func,
+    asyncActionBuilder: PropTypes.func,
+    componentWillUnmount$: PropTypes.func
 }
 
 export default connect(mapStateToProps)(CountrySection)

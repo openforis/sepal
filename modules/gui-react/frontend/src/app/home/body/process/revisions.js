@@ -1,17 +1,16 @@
-import actionBuilder from 'action-builder'
-import {getRevisions, recipePath, RecipeState, revertToRevision$} from 'app/home/body/process/recipe'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {map} from 'rxjs/operators'
-import {msg} from 'translate'
 import {Field, form} from 'widget/form'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeState, getRevisions, recipePath, revertToRevision$} from 'app/home/body/process/recipe'
+import {map} from 'rxjs/operators'
+import {msg} from 'translate'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
+import PropTypes from 'prop-types'
+import React from 'react'
 import SelectionList from 'widget/selectionList'
+import actionBuilder from 'action-builder'
+import moment from 'moment'
 import styles from './revisions.module.css'
-
 
 const fields = {
     revision: new Field()
@@ -90,5 +89,3 @@ Revisions.propTypes = {
 }
 
 export default form({fields, mapStateToProps})(Revisions)
-
-

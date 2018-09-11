@@ -1,12 +1,12 @@
+import {Field, Label, form} from 'widget/form'
+import {Msg, msg} from 'translate'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState, SceneSelectionType} from '../../mosaicRecipe'
 import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
+import Buttons from 'widget/buttons'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Msg, msg} from 'translate'
-import Buttons from 'widget/buttons'
-import {Field, form, Label} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import {RecipeActions, RecipeState, SceneSelectionType} from '../../mosaicRecipe'
 import styles from './scenes.module.css'
 
 const fields = {
@@ -119,10 +119,10 @@ class Scenes extends React.Component {
 }
 
 Scenes.propTypes = {
-    recipeId: PropTypes.string,
-    form: PropTypes.object,
-    fields: PropTypes.object,
     action: PropTypes.func,
+    fields: PropTypes.object,
+    form: PropTypes.object,
+    recipeId: PropTypes.string,
     values: PropTypes.object
 }
 

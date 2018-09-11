@@ -1,13 +1,13 @@
+import {Field, Label, form} from 'widget/form'
+import {Msg, msg} from 'translate'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
+import Buttons from 'widget/buttons'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg, Msg} from 'translate'
-import Buttons from 'widget/buttons'
-import {Field, form, Label} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
 import Slider from 'widget/slider'
-import {RecipeActions, RecipeState} from '../../mosaicRecipe'
 import styles from './composite.module.css'
 
 const fields = {
@@ -136,6 +136,19 @@ class Composite extends React.Component {
     }
 }
 
+Composite.propTypes = {
+    action: PropTypes.func,
+    disabled: PropTypes.any,
+    fields: PropTypes.object,
+    form: PropTypes.object,
+    inputs: PropTypes.object,
+    recipeId: PropTypes.string,
+    source: PropTypes.string,
+    values: PropTypes.object
+}
+
+export default form({fields, mapStateToProps})(Composite)
+
 const PercentileField = ({input, disabled = false}) => {
     const percentile = input.value
     let type = 'percentile'
@@ -154,15 +167,10 @@ const PercentileField = ({input, disabled = false}) => {
     )
 }
 
-Composite.propTypes = {
-    recipeId: PropTypes.string,
-    form: PropTypes.object,
-    fields: PropTypes.object,
-    action: PropTypes.func,
-    values: PropTypes.object
+PercentileField.propTypes = {
+    disabled: PropTypes.any,
+    input: PropTypes.object
 }
-
-export default form({fields, mapStateToProps})(Composite)
 
 const valuesToModel = (values) => ({
     corrections: values.corrections,

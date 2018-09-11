@@ -1,13 +1,13 @@
+import {Field, Label, form} from 'widget/form'
+import {Msg, msg} from 'translate'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState} from '../classificationRecipe'
+import {currentUser} from 'user'
 import {recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
+import Buttons from 'widget/buttons'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {msg, Msg} from 'translate'
-import {currentUser} from 'user'
-import Buttons from 'widget/buttons'
-import {Field, form, Label} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import {RecipeActions, RecipeState} from '../classificationRecipe'
 import styles from './retrieve.module.css'
 
 const fields = {
@@ -91,7 +91,10 @@ class Retrieve extends React.Component {
 }
 
 Retrieve.propTypes = {
-    recipeId: PropTypes.string
+    recipeId: PropTypes.string,
+    user: PropTypes.object,
+    inputs: PropTypes.object,
+    form: PropTypes.object
 }
 
 export default form({fields, mapStateToProps})(Retrieve)

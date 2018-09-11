@@ -21,9 +21,9 @@ export default class IconSwitch extends React.Component {
 
 IconSwitch.propTypes = {
     className: PropTypes.string,
-    on: PropTypes.bool,
     icon: PropTypes.string,
-    onClassName: PropTypes.string,
     offClassName: PropTypes.string,
-    onChange: PropTypes.func
+    on: PropTypes.bool,
+    onChange: PropTypes.func,
+    onClassName: PropTypes.string
 }

@@ -1,12 +1,12 @@
+import {Link, isPathInLocation} from 'route'
+import {connect} from 'store'
+import {isFloating} from './menuMode'
 import {quitApp, requestedApps} from 'apps'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {isPathInLocation, Link} from 'route'
-import {connect} from 'store'
-import Icon from 'widget/icon'
 import Tooltip from 'widget/tooltip'
 import styles from './menu.module.css'
-import {isFloating} from './menuMode'
 
 const mapStateToProps = () => ({
     requestedApps: requestedApps(),
@@ -41,9 +41,9 @@ class Menu extends React.Component {
 }
 
 Menu.propTypes = {
-    className: PropTypes.string,
     floating: PropTypes.bool.isRequired,
     requestedApps: PropTypes.arrayOf(PropTypes.object).isRequired,
+    className: PropTypes.string,
     user: PropTypes.object
 }
 
@@ -62,8 +62,8 @@ const SectionLink = ({name, icon}) => {
 }
 
 SectionLink.propTypes = {
-    name: PropTypes.string,
-    icon: PropTypes.string
+    icon: PropTypes.string,
+    name: PropTypes.string
 }
 
 const AppLink = ({app: {path, label, alt}}) => {
@@ -86,10 +86,10 @@ const AppLink = ({app: {path, label, alt}}) => {
 }
 
 AppLink.propTypes = {
-    app: PropTypes.object,
-    path: PropTypes.string,
-    label: PropTypes.string,
     alt: PropTypes.string,
+    app: PropTypes.object,
+    label: PropTypes.string,
+    path: PropTypes.string,
     onRemove: PropTypes.func
 }
 

@@ -1,10 +1,10 @@
-import React from 'react'
 import {connect, select} from 'store'
-import styles from './menuMode.module.css'
+import IconSwitch from 'widget/iconSwitch'
+import PropTypes from 'prop-types'
+import React from 'react'
 import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
-import PropTypes from 'prop-types'
-import IconSwitch from 'widget/iconSwitch'
+import styles from './menuMode.module.css'
 
 export function isFloating() {
     return select('menu.floating') == null ? false : !!select('menu.floating')
@@ -37,7 +37,7 @@ class MenuMode extends React.Component {
                 </Tooltip>
             </div>
         )
-    }   
+    }
 }
 
 MenuMode.propTypes = {

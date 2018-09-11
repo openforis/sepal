@@ -1,14 +1,14 @@
+import {ErrorMessage, Field, Input, form} from 'widget/form'
+import {Msg, msg} from 'translate'
+import {Panel, PanelContent, PanelHeader} from 'widget/panel'
+import {RecipeActions, RecipeState, recipePath} from '../classificationRecipe'
+import {Subject} from 'rxjs'
 import {loadFusionTableColumns$} from 'app/home/map/fusionTable'
+import {map, takeUntil} from 'rxjs/operators'
+import ComboBox from 'widget/comboBox'
+import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Subject} from 'rxjs'
-import {map, takeUntil} from 'rxjs/operators'
-import {Msg, msg} from 'translate'
-import ComboBox from 'widget/comboBox'
-import {ErrorMessage, Field, form, Input} from 'widget/form'
-import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import PanelButtons from 'widget/panelButtons'
-import {RecipeActions, recipePath, RecipeState} from '../classificationRecipe'
 import styles from './trainingData.module.css'
 
 const fields = {
@@ -44,13 +44,13 @@ class TrainingData extends React.Component {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
             loadFusionTableColumns$(fusionTableId, {retries: 1, validStatuses: [200, 404]}).pipe(
                 map(columns => {
-                        if (!columns)
-                            this.props.inputs.fusionTable.setInvalid(
-                                msg('process.classification.panel.trainingData.form.fusionTable.invalid')
-                            )
-                        return (columns || [])
-                            .filter((column) => column.type !== 'LOCATION')
-                    }
+                    if (!columns)
+                        this.props.inputs.fusionTable.setInvalid(
+                            msg('process.classification.panel.trainingData.form.fusionTable.invalid')
+                        )
+                    return (columns || [])
+                        .filter((column) => column.type !== 'LOCATION')
+                }
                 ),
                 map(columns => this.recipeActions.setFusionTableColumns(columns)),
                 takeUntil(this.fusionTableChanged$))
@@ -95,7 +95,7 @@ class TrainingData extends React.Component {
                     <Input
                         autoFocus
                         input={fusionTable}
-                        placeholder={msg(`process.classification.panel.trainingData.form.fusionTable.placeholder`)}
+                        placeholder={msg('process.classification.panel.trainingData.form.fusionTable.placeholder')}
                         spellCheck={false}
                         onChange={(e) => {
                             fusionTableColumn.set('')
@@ -126,6 +126,8 @@ class TrainingData extends React.Component {
 
 TrainingData.propTypes = {
     recipeId: PropTypes.string,
+    asyncActionBuilder: PropTypes.func,
+    form: PropTypes.object
 }
 
 const valuesToModel = (values) => ({

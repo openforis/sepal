@@ -109,9 +109,9 @@ class UserDetails extends React.Component {
 }
 
 UserDetails.propTypes = {
-    open: PropTypes.bool,
     form: PropTypes.object,
-    inputs: PropTypes.object
+    inputs: PropTypes.object,
+    open: PropTypes.bool
 }
 
 export default form({fields, mapStateToProps})(UserDetails)

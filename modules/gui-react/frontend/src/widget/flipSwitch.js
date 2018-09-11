@@ -22,10 +22,10 @@ class FlipSwitch extends React.Component {
 }
 
 FlipSwitch.propTypes = {
-    on: PropTypes.bool,
     offIcon: PropTypes.string,
-    onIcon: PropTypes.string,
-    onChange: PropTypes.func
+    on: PropTypes.bool,
+    onChange: PropTypes.func,
+    onIcon: PropTypes.string
 }
 
 export default FlipSwitch

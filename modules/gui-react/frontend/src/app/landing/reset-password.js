@@ -1,13 +1,12 @@
-import React from 'react'
-import {resetPassword$, tokenUser, validateToken$} from 'user'
-import {history, query} from 'route'
-import {Field, ErrorMessage, form, Input, Constraint} from 'widget/form'
-import {SubmitButton} from 'widget/button'
-import {Msg, msg} from 'translate'
-import Notifications from 'app/notifications'
 import {CenteredProgress} from 'widget/progress'
+import {Constraint, ErrorMessage, Field, Input, form} from 'widget/form'
+import {Msg, msg} from 'translate'
 import {PropTypes} from 'prop-types'
-
+import {SubmitButton} from 'widget/button'
+import {history, query} from 'route'
+import {resetPassword$, tokenUser, validateToken$} from 'user'
+import Notifications from 'app/notifications'
+import React from 'react'
 
 const fields = {
     username: null,
@@ -29,9 +28,8 @@ const mapStateToProps = () => ({
     user: tokenUser()
 })
 
-
 class ResetPassword extends React.Component {
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         const token = query().token
         this.props.asyncActionBuilder('VALIDATE_TOKEN',
             validateToken$(token))
@@ -45,7 +43,7 @@ class ResetPassword extends React.Component {
             .dispatch()
     }
 
-    componentWillReceiveProps(nextProps) {
+    UNSAFE_componentWillReceiveProps(nextProps) {
         const {user, inputs: {username}} = nextProps
         username.set(user && user.username)
     }
@@ -118,15 +116,16 @@ class ResetPassword extends React.Component {
 }
 
 ResetPassword.propTypes = {
-    asyncActionBuilder: PropTypes.func,
     action: PropTypes.func,
-    user: PropTypes.object,
-    form: PropTypes.object,
+    asyncActionBuilder: PropTypes.func,
     fields: PropTypes.shape({
-        username: PropTypes.object,
         password: PropTypes.object,
-        password2: PropTypes.object
-    })
+        password2: PropTypes.object,
+        username: PropTypes.object
+    }),
+    form: PropTypes.object,
+    inputs: PropTypes.object,
+    user: PropTypes.object
 }
 
 export default form({fields, constraints, mapStateToProps})(ResetPassword)

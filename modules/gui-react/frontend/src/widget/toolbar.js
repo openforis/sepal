@@ -59,16 +59,16 @@ class Toolbar extends React.Component {
 }
 
 Toolbar.propTypes = {
+    bottom: PropTypes.any,
+    children: PropTypes.any,
     className: PropTypes.string,
     horizontal: PropTypes.any,
-    vertical: PropTypes.any,
-    panel: PropTypes.any,
-    top: PropTypes.any,
-    bottom: PropTypes.any,
     left: PropTypes.any,
+    panel: PropTypes.any,
     right: PropTypes.any,
     statePath: PropTypes.any,
-    children: PropTypes.any
+    top: PropTypes.any,
+    vertical: PropTypes.any
 }
 
 
@@ -100,12 +100,12 @@ export class ToolbarButton extends React.Component {
 }
 
 ToolbarButton.propTypes = {
+    className: PropTypes.string,
     disabled: PropTypes.any,
-    selected: PropTypes.any,
     icon: PropTypes.string,
     label: PropTypes.string,
+    selected: PropTypes.any,
     tooltip: PropTypes.string,
-    className: PropTypes.string,
     onClick: PropTypes.func
 }
 
@@ -156,13 +156,13 @@ export class PanelButton extends React.Component {
 }
 
 PanelButton.propTypes = {
+    children: PropTypes.any.isRequired,
     name: PropTypes.string.isRequired,
+    disabled: PropTypes.any,
     icon: PropTypes.string,
     label: PropTypes.string,
     tooltip: PropTypes.string,
-    disabled: PropTypes.any,
-    onClick: PropTypes.func,
-    children: PropTypes.any.isRequired
+    onClick: PropTypes.func
 }
 
 export const PanelButtonContext = React.createContext()

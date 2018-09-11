@@ -260,8 +260,8 @@ class Draggable extends React.Component {
 
 Draggable.propTypes = {
     input: PropTypes.object,
-    minValue: PropTypes.number,
     maxValue: PropTypes.number,
+    minValue: PropTypes.number,
     ticks: PropTypes.any,
     width: PropTypes.number
 }
@@ -293,7 +293,7 @@ export default class Slider extends React.Component {
 
 Slider.propTypes = {
     input: PropTypes.object.isRequired,
-    minValue: PropTypes.number,
     maxValue: PropTypes.number,
+    minValue: PropTypes.number,
     ticks: PropTypes.any
 }

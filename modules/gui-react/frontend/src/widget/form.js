@@ -404,13 +404,13 @@ export class Input extends React.Component {
 
 Input.propTypes = {
     input: PropTypes.object.isRequired,
-    validate: PropTypes.oneOf(['onChange', 'onBlur']),
-    onChange: PropTypes.func,
-    onBlur: PropTypes.func,
+    autoComplete: PropTypes.string,
+    className: PropTypes.string,
     placeholder: PropTypes.string,
     tabIndex: PropTypes.number,
-    autoComplete: PropTypes.string,
-    className: PropTypes.string
+    validate: PropTypes.oneOf(['onChange', 'onBlur']),
+    onBlur: PropTypes.func,
+    onChange: PropTypes.func
 }
 
 export class Label extends React.Component {
@@ -444,15 +444,15 @@ export class Label extends React.Component {
 }
  
 Label.propTypes = {
-    className: PropTypes.string,
-    tooltip: PropTypes.string,
-    left: PropTypes.bool,
-    right: PropTypes.bool,
-    top: PropTypes.bool,
     bottom: PropTypes.bool,
-    topLeft: PropTypes.bool,
-    topRight: PropTypes.bool,
     bottomLeft: PropTypes.bool,
     bottomRight: PropTypes.bool,
-    children: PropTypes.any
+    children: PropTypes.any,
+    className: PropTypes.string,
+    left: PropTypes.bool,
+    right: PropTypes.bool,
+    tooltip: PropTypes.string,
+    top: PropTypes.bool,
+    topLeft: PropTypes.bool,
+    topRight: PropTypes.bool
 }

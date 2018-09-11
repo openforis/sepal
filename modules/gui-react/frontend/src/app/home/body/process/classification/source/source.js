@@ -69,6 +69,8 @@ class Source extends React.Component {
 
 Source.propTypes = {
     recipeId: PropTypes.string,
+    form: PropTypes.object,
+    inputs: PropTypes.object
 }
 
 export default form({fields, mapStateToProps})(Source)

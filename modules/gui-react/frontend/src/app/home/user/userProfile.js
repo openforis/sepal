@@ -1,9 +1,9 @@
+import {connect} from 'store'
+import ChangePassword from './changePassword'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
 import UserDetails from './userDetails'
-import ChangePassword from './changePassword'
-import {connect} from 'store'
 import actionBuilder from 'action-builder'
 
 const mapStateToProps = (state) => {
@@ -56,8 +56,8 @@ class UserProfile extends React.Component {
 
 UserProfile.propTypes = {
     className: PropTypes.string,
-    username: PropTypes.string,
-    ui: PropTypes.bool
+    ui: PropTypes.bool,
+    username: PropTypes.string
 }
 
 export default connect(mapStateToProps)(UserProfile)

@@ -27,12 +27,12 @@ export const Button = ({icon, iconType, tabIndex, onClick, className, children, 
 }
 
 Button.propTypes = {
+    children: PropTypes.any,
+    className: PropTypes.string,
     icon: PropTypes.string,
     iconType: PropTypes.string,
-    onClick: PropTypes.func,
     tabIndex: PropTypes.number,
-    className: PropTypes.string,
-    children: PropTypes.any
+    onClick: PropTypes.func
 }
 
 export const SubmitButton = ({icon, tabIndex, onClick, className, children, ...props}) =>

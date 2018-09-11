@@ -1,11 +1,11 @@
-import api from 'backend'
-import React from 'react'
+import {RecipeState, recipePath} from './landCoverRecipe'
 import {connect, select} from 'store'
-import {recipePath, RecipeState} from './landCoverRecipe'
+import {sepalMap} from 'app/home/map/map'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
 import LandCoverToolbar from './landCoverToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {sepalMap} from 'app/home/map/map'
+import React from 'react'
+import api from 'backend'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)

@@ -1,17 +1,17 @@
-import actionBuilder from 'action-builder'
+import {Button, IconButton} from 'widget/button'
+import {CenteredProgress} from 'widget/progress'
+import {HoldButton} from 'widget/holdButton'
+import {connect, select} from 'store'
+import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
+import {map} from 'rxjs/operators'
+import {msg} from 'translate'
 import {recipePath} from 'app/home/body/process/recipe'
-import backend from 'backend'
-import flexy from 'flexy.module.css'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {map} from 'rxjs/operators'
-import {connect, select} from 'store'
-import {msg} from 'translate'
-import {Button, IconButton} from 'widget/button'
-import {HoldButton} from 'widget/holdButton'
-import {CenteredProgress} from 'widget/progress'
+import actionBuilder from 'action-builder'
+import backend from 'backend'
+import flexy from 'flexy.module.css'
 import styles from './createOrLoadRecipe.module.css'
-import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
 
 const CreateOrLoadRecipe = ({recipeId}) =>
     <div className={[styles.container, flexy.container].join(' ')}>
@@ -36,7 +36,7 @@ const mapStateToProps = () => ({
 })
 
 class RecipeList extends React.Component {
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         if (!this.props.recipes)
             this.props.asyncActionBuilder('LOAD_RECIPES', loadRecipes$())
                 .dispatch()
@@ -56,10 +56,10 @@ class RecipeList extends React.Component {
         const {recipeId} = this.props
         return backend.recipe.load$(recipeIdToDuplicate).pipe(
             map(recipe => ({
-                    ...recipe,
-                    id: recipeId,
-                    title: (recipe.title || recipe.placeholder) + '_copy'
-                })
+                ...recipe,
+                id: recipeId,
+                title: (recipe.title || recipe.placeholder) + '_copy'
+            })
             ),
             map(duplicate =>
                 actionBuilder('DUPLICATE_RECIPE', {duplicate})
@@ -122,7 +122,7 @@ const setTabType = (recipeId, type, title) =>
 
 const CreateButton = ({recipeId, type, label}) =>
     <Button icon='plus-circle' onClick={() => setTabType(recipeId, type, label)}
-            className={styles.createButton}>{label}</Button>
+        className={styles.createButton}>{label}</Button>
 
 const RecipeButton = ({icon, iconType, onClick}) =>
     <IconButton icon={icon} iconType={iconType} onClick={onClick} className={styles.recipeButton}/>

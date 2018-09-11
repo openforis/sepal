@@ -1,14 +1,13 @@
+import {PanelButton, Toolbar} from 'widget/toolbar'
+import {PanelWizard} from 'widget/panel'
+import {RecipeState, recipePath} from './classificationRecipe'
+import {connect} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import {PanelWizard} from 'widget/panel'
-import {PanelButton, Toolbar} from 'widget/toolbar'
-import {recipePath, RecipeState} from './classificationRecipe'
-import styles from './classificationToolbar.module.css'
 import Retrieve from './retrieve/retrieve'
 import Source from './source/source'
 import TrainingData from './trainingData/trainingData'
-
+import styles from './classificationToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -16,7 +15,6 @@ const mapStateToProps = (state, ownProps) => {
         initialized: recipeState('ui.initialized'),
     }
 }
-
 
 class ClassificationToolbar extends React.Component {
     render() {

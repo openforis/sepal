@@ -38,18 +38,18 @@ export default class Tooltip extends React.Component {
 }
 
 Tooltip.propTypes = {
-    className: PropTypes.string,
-    msg: PropTypes.any,
-    rawMsg: PropTypes.string,
-    left: PropTypes.bool,
-    right: PropTypes.bool,
-    top: PropTypes.bool,
     bottom: PropTypes.bool,
-    topLeft: PropTypes.bool,
-    topRight: PropTypes.bool,
     bottomLeft: PropTypes.bool,
     bottomRight: PropTypes.bool,
-    disabled: PropTypes.bool,
+    children: PropTypes.object,
+    className: PropTypes.string,
     delay: PropTypes.number,
-    children: PropTypes.object
+    disabled: PropTypes.bool,
+    left: PropTypes.bool,
+    msg: PropTypes.any,
+    rawMsg: PropTypes.string,
+    right: PropTypes.bool,
+    top: PropTypes.bool,
+    topLeft: PropTypes.bool,
+    topRight: PropTypes.bool
 }

@@ -1,10 +1,10 @@
-import React from 'react'
-import {resetPassword$, validateToken$} from 'user'
-import {query} from 'route'
-import {Field, ErrorMessage, form, Input} from 'widget/form'
-import {SubmitButton} from 'widget/button'
+import {ErrorMessage, Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
+import {SubmitButton} from 'widget/button'
+import {query} from 'route'
+import {resetPassword$, validateToken$} from 'user'
 import PropTypes from 'prop-types'
+import React from 'react'
 
 const fields = {
     username: null,
@@ -16,7 +16,7 @@ const fields = {
 }
 
 class SetupAccount extends React.Component {
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         const token = query().token
         this.props.asyncActionBuilder('Validating token',
             validateToken$(token))
@@ -72,10 +72,11 @@ class SetupAccount extends React.Component {
 }
 
 SetupAccount.propTypes = {
-    form: PropTypes.object,
-    fields: PropTypes.object,
     action: PropTypes.func,
-    asyncActionBuilder: PropTypes.func
+    asyncActionBuilder: PropTypes.func,
+    fields: PropTypes.object,
+    form: PropTypes.object,
+    inputs: PropTypes.object
 }
 
 export default form({fields})(SetupAccount)

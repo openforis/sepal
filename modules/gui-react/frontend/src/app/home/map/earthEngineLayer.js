@@ -1,8 +1,8 @@
-import ee from 'earthengine-api'
-import _ from 'lodash'
-import {of} from 'rxjs'
 import {map} from 'rxjs/operators'
+import {of} from 'rxjs'
 import {sepalMap} from './map'
+import _ from 'lodash'
+import ee from 'earthengine-api'
 
 export default class EarthEngineImageLayer {
     constructor({layerIndex, bounds, mapId$, props, onProgress}) {

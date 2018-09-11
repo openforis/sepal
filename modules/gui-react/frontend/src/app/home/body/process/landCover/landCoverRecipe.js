@@ -1,7 +1,7 @@
-import globalActionBuilder from 'action-builder'
-import {recipePath, RecipeState as GlobalRecipeState} from '../recipe'
-import moment from 'moment'
+import {RecipeState as GlobalRecipeState, recipePath} from '../recipe'
 import api from '../../../../../backend'
+import globalActionBuilder from 'action-builder'
+import moment from 'moment'
 
 export {recipePath}
 export const RecipeState = (recipeId) => {
@@ -38,7 +38,7 @@ export const RecipeActions = (id) => {
             }, {values, model})
         },
         setTrainingData({values, model}) {
-            console.log({values, model})
+            // console.log({values, model})
             return setAll('SET_TRAINING_DATA', {
                 'ui.trainingData': values,
                 'model.trainingData': model,

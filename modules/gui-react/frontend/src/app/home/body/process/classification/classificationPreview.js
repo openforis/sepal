@@ -1,8 +1,8 @@
+import {connect} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
 
-const mapStateToProps = (state, ownProps) => {
+const mapStateToProps = () => {
     return {}
 }
 

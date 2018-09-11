@@ -1,17 +1,17 @@
-import actionBuilder from 'action-builder'
-import backend from 'backend'
-import PropTypes from 'prop-types'
-import React from 'react'
 import {EMPTY, interval, merge} from 'rxjs'
-import {delay, exhaustMap, map, switchMap} from 'rxjs/operators'
 import {connect} from 'store'
 import {currentUser, loadCurrentUser$} from 'user'
+import {delay, exhaustMap, map, switchMap} from 'rxjs/operators'
+import {isFloating} from './menu/menuMode'
 import Body from './body/body'
 import Footer from './footer/footer'
-import styles from './home.module.css'
 import Map from './map/map'
 import Menu from './menu/menu'
-import {isFloating} from './menu/menuMode'
+import PropTypes from 'prop-types'
+import React from 'react'
+import actionBuilder from 'action-builder'
+import backend from 'backend'
+import styles from './home.module.css'
 
 const mapStateToProps = () => ({
     floatingMenu: isFloating(),
@@ -29,7 +29,7 @@ const refreshUserAccessTokens$ = (user) => {
         delay(calculateDelayMillis(user.googleTokens.accessTokenExpiryDate)),
         exhaustMap(() => loadCurrentUser$().pipe(
             map((currentUserAction) => {
-                console.log({currentUserAction})
+                // console.log({currentUserAction})
                 currentUserAction.dispatch()
                 return currentUserAction.user.googleTokens.accessTokenExpiryDate
             }),
@@ -48,16 +48,16 @@ const updateTasks$ = () => {
             exhaustMap(() => loadAll$),
         )
     ).pipe(map(tasks =>
-            actionBuilder('UPDATE_TASKS')
-                .set('tasks', tasks)
-                .dispatch()
-        )
+        actionBuilder('UPDATE_TASKS')
+            .set('tasks', tasks)
+            .dispatch()
+    )
     )
 }
 
 
 class Home extends React.Component {
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         this.props.asyncActionBuilder('SCHEDULE_UPDATE_TASKS',
             updateTasks$())
             .dispatch()
@@ -85,9 +85,10 @@ class Home extends React.Component {
 }
 
 Home.propTypes = {
-    user: PropTypes.object.isRequired,
-    floatingMenu: PropTypes.bool.isRequired,
     floatingFooter: PropTypes.bool.isRequired,
+    floatingMenu: PropTypes.bool.isRequired,
+    user: PropTypes.object.isRequired,
+    asyncActionBuilder: PropTypes.func
 }
 
 export default connect(mapStateToProps)(Home)

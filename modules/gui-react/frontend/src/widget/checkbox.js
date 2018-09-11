@@ -20,10 +20,10 @@ const Checkbox = ({label, input, tabIndex, className, onChange}) =>
     </label>
 
 Checkbox.propTypes = {
-    label: PropTypes.string.isRequired,
     input: PropTypes.object.isRequired,
-    tabIndex: PropTypes.number,
+    label: PropTypes.string.isRequired,
     className: PropTypes.string,
+    tabIndex: PropTypes.number,
     onChange: PropTypes.func
 }
 

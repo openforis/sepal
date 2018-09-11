@@ -1,9 +1,9 @@
 import {appList, requestedApps, runApp$} from 'apps'
+import {connect, dispatch} from 'store'
+import {history} from 'route'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {history} from 'route'
-import {connect, dispatch} from 'store'
-import Icon from 'widget/icon'
 import styles from './appLaunchPad.module.css'
 
 const mapStateToProps = () => ({

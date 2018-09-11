@@ -1,15 +1,15 @@
-import {setAoiLayer} from 'app/home/map/aoiLayer'
-import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
-import {sepalMap} from 'app/home/map/map'
-import _ from 'lodash'
-import React from 'react'
-import {Subject} from 'rxjs'
-import {map, takeUntil} from 'rxjs/operators'
-import {connect} from 'store'
-import {Msg, msg} from 'translate'
-import ComboBox from 'widget/comboBox'
 import {ErrorMessage, Input} from 'widget/form'
+import {Msg, msg} from 'translate'
 import {RecipeActions, RecipeState} from '../../mosaicRecipe'
+import {Subject} from 'rxjs'
+import {connect} from 'store'
+import {loadFusionTableColumns$, queryFusionTable$} from 'app/home/map/fusionTable'
+import {map, takeUntil} from 'rxjs/operators'
+import {sepalMap} from 'app/home/map/map'
+import {setAoiLayer} from 'app/home/map/aoiLayer'
+import ComboBox from 'widget/comboBox'
+import React from 'react'
+import _ from 'lodash'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -32,13 +32,13 @@ class FusionTableSection extends React.Component {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
             loadFusionTableColumns$(fusionTableId, {retries: 1, validStatuses: [200, 404]}).pipe(
                 map((columns) => {
-                        if (!columns)
-                            this.props.inputs.fusionTable.setInvalid(
-                                msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.invalid')
-                            )
-                        return (columns || [])
-                            .filter((column) => column.type !== 'LOCATION')
-                    }
+                    if (!columns)
+                        this.props.inputs.fusionTable.setInvalid(
+                            msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.invalid')
+                        )
+                    return (columns || [])
+                        .filter((column) => column.type !== 'LOCATION')
+                }
                 ),
                 map(this.recipe.setFusionTableColumns),
                 takeUntil(this.fusionTableChanged$))
@@ -96,7 +96,7 @@ class FusionTableSection extends React.Component {
                     <Input
                         autoFocus
                         input={fusionTable}
-                        placeholder={msg(`process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.placeholder`)}
+                        placeholder={msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.placeholder')}
                         spellCheck={false}
                         onChange={(e) => {
                             fusionTableColumn.set('')

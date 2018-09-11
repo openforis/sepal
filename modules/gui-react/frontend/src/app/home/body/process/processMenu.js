@@ -1,9 +1,9 @@
-import {showRevisionsPanel} from 'app/home/body/process/revisions'
-import React from 'react'
-import {connect, select} from 'store'
 import {Msg, msg} from 'translate'
+import {RecipeState, addRecipe, exportRecipe, saveRecipe} from './recipe'
+import {connect, select} from 'store'
+import {showRevisionsPanel} from 'app/home/body/process/revisions'
 import Menu, {MenuItem} from 'widget/menu'
-import {addRecipe, exportRecipe, RecipeState, saveRecipe} from './recipe'
+import React from 'react'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)

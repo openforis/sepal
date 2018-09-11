@@ -106,11 +106,11 @@ class ChangePassword extends React.Component {
 }
 
 ChangePassword.propTypes = {
-    asyncActionBuilder: PropTypes.func,
     action: PropTypes.func,
-    open: PropTypes.bool,
+    asyncActionBuilder: PropTypes.func,
     form: PropTypes.object,
-    inputs: PropTypes.object
+    inputs: PropTypes.object,
+    open: PropTypes.bool
 }
 
 export default form({fields, constraints, mapStateToProps})(ChangePassword)
