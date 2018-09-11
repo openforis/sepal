@@ -22,19 +22,33 @@ export default class EarthEngineImageLayer {
             new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', this.mapId, this.token)
         )
         googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
-        const notifyOnProgress = () => {
-            const tiles = {
-                count: layer.getLoadingTilesCount()
-                    + layer.getLoadedTilesCount()
-                    + layer.getFailedTilesCount(),
-                loading: layer.getLoadingTilesCount(),
-                failed: layer.getFailedTilesCount(),
-                loaded: layer.getLoadedTilesCount()
-            }
-            tiles.complete = tiles.count === tiles.loaded + layer.getFailedTilesCount()
 
-            if (tiles.count > 0)
-                this.onProgress(tiles)
+        const notifyOnProgress = () => {
+            // Manually calculate stats, since GEE returns stats from multiple zoom-levels
+            const tileStatuses = layer.tilesById.getValues()
+                .filter(tile => tile.zoom === googleMap.getZoom())
+                .map(tile => tile.getStatus())
+            const Status = ee.layers.AbstractTile.Status
+
+            const loading = tileStatuses.filter(status => status === Status.LOADING).length
+                + tileStatuses.filter(status => status === Status.NEW).length
+                + tileStatuses.filter(status => status === Status.THROTTLED).length
+            const loaded = tileStatuses.filter(status => status === Status.LOADED).length
+            const failed = tileStatuses.filter(status => status === Status.FAILED).length
+                + tileStatuses.filter(status => status === Status.ABORTED).length
+
+
+            const tileStats = {
+                count: loading + loaded + failed,
+                loading,
+                failed,
+                loaded
+            }
+            console.log(tileStats)
+            tileStats.complete = tileStats.count === tileStats.loaded + tileStats.failed
+
+            if (tileStats.count > 0)
+                this.onProgress(tileStats)
             else
                 setTimeout(notifyOnProgress, 100)
         }
@@ -48,8 +62,8 @@ export default class EarthEngineImageLayer {
     removeFromMap(googleMap) {
         sepalMap.removeListener(this.boundsChangedListener)
         // [HACK] Prevent flashing of removed layers, which happens when just setting layer to null
-        googleMap.overlayMapTypes.removeAt(this.layerIndex)
-        googleMap.overlayMapTypes.setAt(this.layerIndex, null)
+        googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
+        googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
     }
 
     hide(googleMap, hidden) {
