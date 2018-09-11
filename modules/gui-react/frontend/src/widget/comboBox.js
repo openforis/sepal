@@ -1,12 +1,11 @@
-import PropTypes from 'prop-types'
-import React from 'react'
-import Select, {components} from 'react-select'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import Icon from 'widget/icon'
 import Portal from 'widget/portal'
+import PropTypes from 'prop-types'
+import React from 'react'
+import Select, {components} from 'react-select'
 import styles from './comboBox.css'
-
 
 const mapStateToProps = () => ({
     appDimensions: select('dimensions')
@@ -39,8 +38,7 @@ class ComboBox extends React.Component {
         if (children)
             components.SingleValue = createSingleValue(children)
         return (
-            <div className={[styles.comboBox, controlClassName, input.error ? 'error' : null].join(' ')}
-                 ref={this.element}>
+            <div ref={this.element} className={[styles.comboBox, controlClassName, input.error ? 'error' : null].join(' ')}>
                 <Portal>
                     <div ref={this.menuPortalTarget} className={[menuClassName, 'portalTarget'].join(' ')}/>
                 </Portal>
@@ -138,12 +136,8 @@ const LoadingIndicator = () => {
     )
 }
 
-
-const createSingleValue = (children) =>
-    (props) => {
-        return (
-            <components.SingleValue {...props}>
-                {children && children(props)}
-            </components.SingleValue>
-        )
-    }
+const createSingleValue = (children) => (props) => (
+    <components.SingleValue {...props}>
+        {children && children(props)}
+    </components.SingleValue>
+)

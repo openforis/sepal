@@ -1,8 +1,8 @@
-import PropTypes from 'prop-types'
-import React from 'react'
 import {fromEvent, merge, timer} from 'rxjs'
 import {switchMap, take, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './holdButton.module.css'
 
 export class HoldButton extends React.Component {
@@ -12,7 +12,7 @@ export class HoldButton extends React.Component {
     }
 
     render() {
-        const {icon, tabIndex, className, onClickHold, ...props} = this.props
+        const {icon, tabIndex, className, ...props} = this.props
         return (
             <button
                 ref={this.button}

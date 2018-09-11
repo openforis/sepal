@@ -1,22 +1,24 @@
-import actionBuilder from 'action-builder'
+import {connect} from 'store'
+import {currentUser, loadCurrentUser$} from 'user'
 import Home from 'app/home/home'
 import Landing from 'app/landing/landing'
 import Notifications from 'app/notifications'
-import 'bootstrap/dist/css/bootstrap-reboot.css'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
-import {connect} from 'store'
-import {currentUser, loadCurrentUser$} from 'user'
-import '../style/button-colors.default.css'
-import './app.css'
+import actionBuilder from 'action-builder'
+
+import css1 from 'bootstrap/dist/css/bootstrap-reboot.css'
+import css2 from './app.css'
+import css3 from '../style/button-colors.default.css'
+const CSS = {css1, css2, css3} // eslint-disable-line no-unused-vars
 
 const mapStateToProps = () => ({
     currentUser: currentUser()
 })
 
 class App extends React.Component {
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         this.props.asyncActionBuilder('LOAD_CURRENT_USER',
             loadCurrentUser$())
             .dispatch()

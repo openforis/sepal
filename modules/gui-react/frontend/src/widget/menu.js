@@ -1,8 +1,8 @@
-import PropTypes from 'prop-types'
-import React from 'react'
 import {connect, select} from 'store'
 import Icon from 'widget/icon'
 import Portal from 'widget/portal'
+import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './menu.module.css'
 
 const mapStateToProps = () => ({
@@ -68,6 +68,7 @@ class Menu extends React.Component {
 }
 
 Menu.propTypes = {
+    appDimensions: PropTypes.object,
     warning: PropTypes.any,
     onClick: PropTypes.func,
     className: PropTypes.string,
@@ -89,5 +90,6 @@ export const MenuItem = ({onSelect, children}) =>
     </MenuContext.Consumer>
 
 MenuItem.propTypes = {
-    onSelect: PropTypes.func
+    onSelect: PropTypes.func,
+    children: PropTypes.children
 }

@@ -1,7 +1,7 @@
-import actionBuilder from 'action-builder'
-import api from 'backend'
 import {filter, map, switchMap} from 'rxjs/operators'
 import {select} from 'store'
+import actionBuilder from 'action-builder'
+import api from 'backend'
 
 export const currentUser = () => select('user.currentUser')
 export const invalidCredentials = () => select('user.invalidCredentials')
@@ -11,7 +11,7 @@ export const resetInvalidCredentials = () =>
         .del('user.invalidCredentials')
         .dispatch()
 
-export const loadCurrentUser$ = () => 
+export const loadCurrentUser$ = () =>
     api.user.loadCurrentUser$().pipe(
         map((user) =>
             actionBuilder('SET_CURRENT_USER', {user})
@@ -44,7 +44,7 @@ export const validateToken$ = (token) =>
                 .build())
     )
 
-export const tokenUser = () => 
+export const tokenUser = () =>
     select('user.tokenUser')
 
 export const resetPassword$ = (token, username, password) =>

@@ -1,9 +1,9 @@
-import fontawesome from '@fortawesome/fontawesome'
-import far from '@fortawesome/fontawesome-free-regular'
-import fas from '@fortawesome/fontawesome-free-solid'
 import FontAwesomeIcon from '@fortawesome/react-fontawesome'
 import PropTypes from 'prop-types'
 import React from 'react'
+import far from '@fortawesome/fontawesome-free-regular'
+import fas from '@fortawesome/fontawesome-free-solid'
+import fontawesome from '@fortawesome/fontawesome'
 import styles from './icon.module.css'
 
 fontawesome.library.add(fas)
@@ -27,12 +27,12 @@ Icon.propTypes = Object.assign(FontAwesomeIcon.propTypes, {
 
 const fontAwesomeCollection = (type) => {
     switch (type) {
-        case 'solid':
-            return 'fas'
-        case 'regular':
-            return 'far'
-        default:
-            return 'fas'
+    case 'solid':
+        return 'fas'
+    case 'regular':
+        return 'far'
+    default:
+        return 'fas'
     }
 }
 

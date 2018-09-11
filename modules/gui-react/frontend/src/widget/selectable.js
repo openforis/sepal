@@ -1,6 +1,6 @@
+import {Enabled} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Enabled} from 'store'
 import styles from './selectable.module.css'
 
 export class Select extends React.Component {
@@ -46,7 +46,7 @@ export class Selectable extends React.Component {
         return {active: this.active}
     }
 
-    componentWillReceiveProps(nextProps) {
+    UNSAFE_componentWillReceiveProps(nextProps) {
         if (this.props.active && !nextProps.active) {
             this.className = this.props.classNames.out
             this.active = false

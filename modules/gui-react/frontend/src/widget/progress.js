@@ -12,7 +12,8 @@ export const Progress = ({title, status = 'ACTIVE', className}) =>
 
 Progress.propTypes = {
     title: PropTypes.string,
-    className: PropTypes.string
+    className: PropTypes.string,
+    status: PropTypes.string
 }
 
 export const CenteredProgress = ({className, title}) =>

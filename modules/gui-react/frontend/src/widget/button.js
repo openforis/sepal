@@ -1,7 +1,7 @@
-import React from 'react'
 import Icon from 'widget/icon'
-import styles from './button.module.css'
 import PropTypes from 'prop-types'
+import React from 'react'
+import styles from './button.module.css'
 
 export const Button = ({icon, iconType, tabIndex, onClick, className, children, ...props}) => {
     function handleClick(e) {
@@ -28,6 +28,7 @@ export const Button = ({icon, iconType, tabIndex, onClick, className, children, 
 
 Button.propTypes = {
     icon: PropTypes.string,
+    iconType: PropTypes.string,
     onClick: PropTypes.func,
     tabIndex: PropTypes.number,
     className: PropTypes.string,

@@ -1,12 +1,12 @@
-import _ from 'lodash'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
 import {connect} from 'store'
 import {msg} from 'translate'
-import styles from './form.module.css'
 import Icon from './icon'
+import PropTypes from 'prop-types'
+import React from 'react'
 import Tooltip from './tooltip'
+import _ from 'lodash'
+import moment from 'moment'
+import styles from './form.module.css'
 
 export function form({fields = {}, constraints = {}, mapStateToProps}) {
     return (WrappedComponent) => {
@@ -56,7 +56,7 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                 this.props.subscribe(description, stream$, observer)
             }
 
-            componentWillReceiveProps(nextProps) {
+            UNSAFE_componentWillReceiveProps(nextProps) {
                 if ('errors' in nextProps)
                     this.setState((prevState) =>
                         ({...prevState, errors: nextProps.errors})
@@ -275,15 +275,15 @@ class FormProperty {
 
     notEmpty(messageId, messageArgs) {
         return this.predicate(value => {
-                if (Array.isArray(value))
-                    return value.length > 0
-                else if (value === Object(value))
-                    return Object.keys(value).length > 0
-                else
-                    return !!value
-            },
-            messageId,
-            messageArgs
+            if (Array.isArray(value))
+                return value.length > 0
+            else if (value === Object(value))
+                return Object.keys(value).length > 0
+            else
+                return !!value
+        },
+        messageId,
+        messageArgs
         )
     }
 
@@ -413,44 +413,38 @@ Input.propTypes = {
     className: PropTypes.string
 }
 
-export const Label = (
-    {
-        tooltip,
-        children,
-        left,
-        right,
-        top,
-        bottom,
-        topLeft,
-        topRight,
-        bottomLeft,
-        bottomRight,
-        className,
-        ...props,
-    }) => tooltip ? (
-        <Tooltip
-            msg={tooltip}
-            left={left}
-            right={right}
-            top={top}
-            bottom={bottom}
-            topLeft={topLeft}
-            topRight={topRight}
-            bottomLeft={bottomLeft}
-            bottomRight={bottomRight}
-            className={[className, styles.label].join(' ')}>
-            <span>
-                <label {...props}>
-                    {children}
-                    <Icon name='question-circle'/>
-                </label>
-            </span>
-        </Tooltip>
-    ) :
-    <label {...props}>{children}</label>
-
-
+export class Label extends React.Component {
+    render() {
+        const {tooltip, children,
+            left, right, top, bottom, topLeft, topRight, bottomLeft, bottomRight, className,
+            ...props} = this.props
+        return (
+            tooltip ? (
+                <Tooltip
+                    msg={tooltip}
+                    left={left}
+                    right={right}
+                    top={top}
+                    bottom={bottom}
+                    topLeft={topLeft}
+                    topRight={topRight}
+                    bottomLeft={bottomLeft}
+                    bottomRight={bottomRight}
+                    className={[className, styles.label].join(' ')}>
+                    <span>
+                        <label {...props}>
+                            {children}
+                            <Icon name='question-circle'/>
+                        </label>
+                    </span>
+                </Tooltip>
+            ) : <label {...props}>{children}</label>
+        )
+    }
+}
+ 
 Label.propTypes = {
+    className: PropTypes.string,
     tooltip: PropTypes.string,
     left: PropTypes.bool,
     right: PropTypes.bool,

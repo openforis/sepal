@@ -1,8 +1,7 @@
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Icon from 'widget/icon'
 import styles from './mapStatus.module.css'
-
 
 export default class MapStatus extends React.Component {
     state = {}
@@ -26,5 +25,6 @@ export default class MapStatus extends React.Component {
 
 MapStatus.propTypes = {
     loading: PropTypes.any,
-    message: PropTypes.string
+    message: PropTypes.string,
+    error: PropTypes.string
 }

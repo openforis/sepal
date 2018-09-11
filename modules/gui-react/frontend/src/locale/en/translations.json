@@ -605,15 +605,17 @@
         },
         "newPassword": {
           "label": "New password",
-          "required": "New password is required"
+          "required": "New password is required",
+          "notMatching": "Passwords are not matching"
         },
         "confirmPassword": {
           "label": "New password (confirm)",
           "required": "New password is required"
         }
       },
+      "updating": "Updating...",
       "success.title": "User password has been changed",
-      "caught.title": "Could not change user password"
+      "error.title": "Could not change user password"
     }
   },
   "unauthorized.warning": {

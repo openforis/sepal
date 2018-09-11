@@ -1,20 +1,20 @@
+import {IntlProvider, addLocaleData, injectIntl} from 'react-intl'
+import {Provider} from 'react-redux'
+import {Router} from 'react-router-dom'
+import {applyMiddleware, createStore} from 'redux'
+import {composeWithDevTools} from 'redux-devtools-extension'
+import {initIntl} from 'translate'
+import {initStore} from 'store'
+import {reducer as notificationsReducer} from 'react-notification-system-redux'
+import {syncHistoryAndStore} from 'route'
+import App from 'app/app'
+import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom'
-import {composeWithDevTools} from 'redux-devtools-extension'
-import {applyMiddleware, createStore} from 'redux'
-import {initStore} from 'store'
-import {Provider} from 'react-redux'
-import {addLocaleData, injectIntl, IntlProvider} from 'react-intl'
+import createHistory from 'history/createBrowserHistory'
 import en from 'react-intl/locale-data/en'
 import es from 'react-intl/locale-data/es'
 import flat from 'flat'
-import {initIntl} from 'translate'
-import {reducer as notificationsReducer} from 'react-notification-system-redux'
-import App from 'app/app'
-import createHistory from 'history/createBrowserHistory'
-import {syncHistoryAndStore} from 'route'
-import {Router} from 'react-router-dom'
-import PropTypes from 'prop-types'
 
 // https://github.com/jcbvm/i18n-editor
 addLocaleData([...en, ...es])
@@ -87,4 +87,4 @@ ReactDOM.render(
         </IntlInit>
     </IntlProvider>,
     document.getElementById('app')
-) 
+)

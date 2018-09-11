@@ -1,7 +1,7 @@
-import React from 'react'
 import Icon from 'widget/icon'
-import styles from './flipSwitch.module.css'
 import PropTypes from 'prop-types'
+import React from 'react'
+import styles from './flipSwitch.module.css'
 
 class FlipSwitch extends React.Component {
     toggle() {

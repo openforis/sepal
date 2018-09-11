@@ -1,9 +1,9 @@
-import Notifications from 'app/notifications'
-import base64 from 'base-64'
-import {of, range, throwError, timer} from 'rxjs'
 import {ajax} from 'rxjs/ajax'
 import {catchError, flatMap, map, retryWhen, zip} from 'rxjs/operators'
 import {logout} from 'user'
+import {of, range, throwError, timer} from 'rxjs'
+import Notifications from 'app/notifications'
+import base64 from 'base-64'
 
 const DEFAULT_RETRIES = 4
 

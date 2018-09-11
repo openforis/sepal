@@ -1,12 +1,12 @@
-import actionBuilder from 'action-builder'
-import rstudioIcon from 'app/home/body/appLaunchPad/r-studio.png'
-import Notifications from 'app/notifications'
-import api from 'backend'
-import {history, isPathInLocation} from 'route'
-import {EMPTY, interval, of, Subject, throwError} from 'rxjs'
+import {EMPTY, Subject, interval, of, throwError} from 'rxjs'
 import {catchError, concat, exhaustMap, filter, first, map, switchMap, takeUntil} from 'rxjs/operators'
-import {select} from 'store'
+import {history, isPathInLocation} from 'route'
 import {msg} from 'translate'
+import {select} from 'store'
+import Notifications from 'app/notifications'
+import actionBuilder from 'action-builder'
+import api from 'backend'
+import rstudioIcon from 'app/home/body/appLaunchPad/r-studio.png'
 
 export const appList = () =>
     select('apps.list') || []

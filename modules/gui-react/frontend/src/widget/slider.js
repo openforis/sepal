@@ -1,13 +1,13 @@
+import {Subject, animationFrameScheduler, fromEvent, interval, merge} from 'rxjs'
+import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
 import {range} from 'collections'
 import Hammer from 'hammerjs'
-import _ from 'lodash'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
-import {animationFrameScheduler, fromEvent, interval, merge, Subject} from 'rxjs'
-import {distinctUntilChanged, filter, map, pairwise, scan, switchMap, takeUntil} from 'rxjs/operators'
-import Portal from 'widget/portal'
 import ViewportResizeDetector from 'widget/viewportResizeDetector'
+import _ from 'lodash'
 import styles from './slider.module.css'
 
 const clamp = ({value, min, max}) => Math.max(min, Math.min(max, value))
@@ -45,7 +45,7 @@ class Draggable extends React.Component {
         const position = this.state.previewPosition
         return position !== null ? (
             <div className={[styles.cursor, styles.preview].join(' ')} ref={this.preview}
-                 style={{left: `${position}px`}}/>
+                style={{left: `${position}px`}}/>
         ) : null
     }
 
@@ -60,8 +60,8 @@ class Draggable extends React.Component {
                 {this.renderPreview()}
                 <div className={styles.clickTarget} ref={this.clickTarget}/>
                 <div className={[styles.cursor, styles.handle, this.state.dragging ? styles.dragging : null].join(' ')}
-                     ref={this.handle}
-                     style={{left: `${position}px`}}/>
+                    ref={this.handle}
+                    style={{left: `${position}px`}}/>
                 <ViewportResizeDetector onChange={() => this.setClickTargetBoundingRect()}/>
                 {this.state.dragging
                     ? (

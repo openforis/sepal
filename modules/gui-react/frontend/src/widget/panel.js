@@ -1,10 +1,10 @@
-import actionBuilder from 'action-builder'
-import PropTypes from 'prop-types'
-import React from 'react'
+import {PanelButtonContext} from './toolbar'
 import {connect, select} from 'store'
 import Icon from 'widget/icon'
+import PropTypes from 'prop-types'
+import React from 'react'
+import actionBuilder from 'action-builder'
 import styles from './panel.module.css'
-import {PanelButtonContext} from './toolbar'
 
 export const Panel = ({top, bottom, right, left, center, modal, className, children}) =>
     <PanelButtonContext.Consumer>
@@ -100,7 +100,10 @@ class PanelWizard extends React.Component {
 
 PanelWizard.propTypes = {
     panels: PropTypes.array.isRequired,
-    statePath: PropTypes.string.isRequired
+    statePath: PropTypes.string.isRequired,
+    selectedPanel: PropTypes.any,
+    initialized: PropTypes.any,
+    children: PropTypes.children
 }
 
 PanelWizard = connect(mapStateToProps)(PanelWizard)

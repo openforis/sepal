@@ -1,10 +1,10 @@
 import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {gzip$} from 'gzip'
 import {delete$, get$, post$, postJson$} from 'http-client'
-import _ from 'lodash'
-import moment from 'moment'
+import {gzip$} from 'gzip'
 import {map, switchMap} from 'rxjs/operators'
 import {msg} from 'translate'
+import _ from 'lodash'
+import moment from 'moment'
 
 
 const api = {
@@ -30,7 +30,7 @@ const api = {
             post$('/api/user/password/reset', {
                 body: {token, password}
             }),
-        logout$: () => 
+        logout$: () =>
             null, // TODO: Implement...
         updateUserDetails$: ({name, email, organization}) =>
             post$('/api/user/current/details', {

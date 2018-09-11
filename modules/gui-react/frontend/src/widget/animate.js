@@ -1,6 +1,6 @@
-import React from 'react'
 import {CSSTransition, TransitionGroup} from 'react-transition-group'
 import PropTypes from 'prop-types'
+import React from 'react'
 import styles from './animate.module.css'
 
 export class AnimateEnter extends React.Component {
@@ -34,9 +34,11 @@ export class AnimateEnter extends React.Component {
 }
 
 AnimateEnter.propTypes = {
+    className: PropTypes.string,
     name: PropTypes.string.isRequired,
     duration: PropTypes.number,
     delay: PropTypes.number,
+    children: PropTypes.any
 }
 
 export const AnimateReplacement = ({currentKey, timeout = 500, classNames, children, ...props}) =>
@@ -53,7 +55,8 @@ export const AnimateReplacement = ({currentKey, timeout = 500, classNames, child
 AnimateReplacement.propTypes = {
     currentKey: PropTypes.any.isRequired,
     timeout: PropTypes.number,
-    classNames: PropTypes.any.isRequired
+    classNames: PropTypes.any.isRequired,
+    children: PropTypes.any
 }
 
 function randomString() {

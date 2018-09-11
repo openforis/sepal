@@ -22,7 +22,7 @@ const constraints = {
     passwordsMatch: new Constraint(['password', 'password2'])
         .predicate(({password, password2}) =>
             !password || password === password2,
-            'landing.reset-password.password2.not-matching')
+        'landing.reset-password.password2.not-matching')
 }
 
 const mapStateToProps = () => ({

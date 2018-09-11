@@ -1,9 +1,9 @@
-import actionBuilder from 'action-builder'
+import * as router from 'react-router-dom'
+import {state} from 'store'
 import PropTypes from 'prop-types'
 import QueryString from 'qs'
 import React from 'react'
-import * as router from 'react-router-dom'
-import {state} from 'store'
+import actionBuilder from 'action-builder'
 
 let historyInstance = null
 export const history = () => ({

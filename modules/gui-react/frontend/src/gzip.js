@@ -1,6 +1,5 @@
-import pako from 'pako'
 import {from} from 'rxjs'
-
+import pako from 'pako'
 
 export const gzip$ = (content, options = {}) =>
     from(new Promise((resolve, reject) => {
@@ -16,7 +15,7 @@ export const ungzip$ = (compressed, options = {}) =>
         try {
             return resolve(JSON.parse(pako.inflate(compressed, options)))
         } catch
-            (exception) {
+        (exception) {
             return reject(exception)
         }
     }))

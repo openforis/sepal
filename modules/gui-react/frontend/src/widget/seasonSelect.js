@@ -1,15 +1,15 @@
-import {intersect} from 'collections'
-import Hammer from 'hammerjs'
-import moment from 'moment'
-import PropTypes from 'prop-types'
-import React from 'react'
-import Media from 'react-media'
-import ReactResizeDetector from 'react-resize-detector'
+import {ErrorMessage} from 'widget/form'
+import {Msg} from 'translate'
 import {animationFrameScheduler, fromEvent, interval} from 'rxjs'
 import {distinctUntilChanged, filter, map, scan, switchMap, takeUntil} from 'rxjs/operators'
-import {Msg} from 'translate'
+import {intersect} from 'collections'
 import DatePicker from 'widget/datePicker'
-import {ErrorMessage} from 'widget/form'
+import Hammer from 'hammerjs'
+import Media from 'react-media'
+import PropTypes from 'prop-types'
+import React from 'react'
+import ReactResizeDetector from 'react-resize-detector'
+import moment from 'moment'
 import styles from './seasonSelect.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -316,25 +316,25 @@ class Axis extends React.Component {
             .map((i) => [dateRange.monthIndexToPosition(i), i])
             .filter(([position, i]) => position >= 0)
             .map(([position, i]) => {
-                    const axisStyle = {left: `${position}px`}
-                    return <div
-                        key={i}
-                        style={axisStyle}/>
-                }
+                const axisStyle = {left: `${position}px`}
+                return <div
+                    key={i}
+                    style={axisStyle}/>
+            }
             )
         const months = [...Array(24).keys()]
             .filter((i) => i % 2)
             .map((i) => {
-                    const monthStyle = {
-                        left: `${dateRange.monthIndexToPosition(i)}px`,
-                        width: `${dateRange.monthIndexToPosition(i + 1) - dateRange.monthIndexToPosition(i)}px`,
-                    }
-                    return <div
-                        key={i}
-                        style={monthStyle}>
-                        {moment(dateRange.state.minDate).add(i, 'months').format('MMM')}
-                    </div>
+                const monthStyle = {
+                    left: `${dateRange.monthIndexToPosition(i)}px`,
+                    width: `${dateRange.monthIndexToPosition(i + 1) - dateRange.monthIndexToPosition(i)}px`,
                 }
+                return <div
+                    key={i}
+                    style={monthStyle}>
+                    {moment(dateRange.state.minDate).add(i, 'months').format('MMM')}
+                </div>
+            }
             )
         return (
             <div>

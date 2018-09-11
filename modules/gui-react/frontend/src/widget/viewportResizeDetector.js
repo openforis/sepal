@@ -1,6 +1,6 @@
-import React from 'react'
 import {connect, select} from 'store'
 import PropTypes from 'prop-types'
+import React from 'react'
 
 const mapStateToProps = () => ({
     dimensions: select('dimensions') || []

@@ -1,12 +1,12 @@
-import actionBuilder from 'action-builder'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {connect, select} from 'store'
-import buttonColors from 'style/button-colors.module.css'
 import {Msg} from 'translate'
+import {connect, select} from 'store'
 import Icon from 'widget/icon'
 import Portal from 'widget/portal'
+import PropTypes from 'prop-types'
+import React from 'react'
 import Tooltip from 'widget/tooltip'
+import actionBuilder from 'action-builder'
+import buttonColors from 'style/button-colors.module.css'
 import styles from './toolbar.module.css'
 
 const Context = React.createContext()
@@ -85,7 +85,7 @@ export class ToolbarButton extends React.Component {
             <Context.Consumer>
                 {({horizontal, panel}) =>
                     <Tooltip msg={tooltip} top={horizontal} left={!horizontal}
-                             disabled={!!(disabled || (panel && selected))}>
+                        disabled={!!(disabled || (panel && selected))}>
                         <button
                             className={[selected && !disabled ? styles.selected : null, className].join(' ')}
                             onClick={onClick}

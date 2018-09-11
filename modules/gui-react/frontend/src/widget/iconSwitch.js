@@ -1,7 +1,7 @@
-import React from 'react'
 import Icon from 'widget/icon'
-import styles from './iconSwitch.module.css'
 import PropTypes from 'prop-types'
+import React from 'react'
+import styles from './iconSwitch.module.css'
 
 export default class IconSwitch extends React.Component {
     toggle() {

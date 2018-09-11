@@ -1,12 +1,11 @@
-import actionBuilder from 'action-builder'
+import {Msg, msg} from 'translate'
+import {PanelWizardContext} from './panel'
+import {connect, select} from 'store'
+import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect, select} from 'store'
-import {msg, Msg} from 'translate'
-import Icon from 'widget/icon'
+import actionBuilder from 'action-builder'
 import styles from 'widget/panelButtons.module.css'
-import {PanelWizardContext} from './panel'
-
 
 const mapStateToProps = (state, ownProps) => {
     const {statePath} = ownProps
@@ -79,7 +78,8 @@ class PanelButtons extends React.Component {
 
     render() {
         const {initialized} = this.props
-        return (<PanelWizardContext.Consumer>
+        return (
+            <PanelWizardContext.Consumer>
                 {panels => {
                     this.panels = panels || []
                     return (
@@ -257,13 +257,16 @@ class PanelButtons extends React.Component {
 }
 
 PanelButtons.propTypes = {
+    initialized: PropTypes.any,
+    modalOnDirty: PropTypes.any,
     isActionForm: PropTypes.any,
     applyLabel: PropTypes.string,
     cancelLabel: PropTypes.string,
     form: PropTypes.object.isRequired,
     statePath: PropTypes.string.isRequired,
     onCancel: PropTypes.func,
-    onApply: PropTypes.func
+    onApply: PropTypes.func,
+    additionalButtons: PropTypes.array
 }
 
 export default connect(mapStateToProps)(PanelButtons)

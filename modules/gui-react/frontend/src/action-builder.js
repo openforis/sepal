@@ -1,6 +1,6 @@
+import {dispatch} from 'store'
 import {toPathList} from 'collections'
 import immutable from 'object-path-immutable'
-import {dispatch} from 'store'
 
 export default function actionBuilder(type, props) {
     const operations = []

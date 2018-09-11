@@ -70,11 +70,11 @@ class Aoi extends React.Component {
         const aoi = RecipeState(recipeId)('ui.aoi')
         this.aoiUnchanged = _.isEqual(aoi, this.initialAoi)
         setAoiLayer({
-                contextId: recipeId,
-                aoi: aoi,
-                fill: false,
-                destroy$: componentWillUnmount$
-            }
+            contextId: recipeId,
+            aoi: aoi,
+            fill: false,
+            destroy$: componentWillUnmount$
+        }
         )
     }
 
@@ -118,10 +118,10 @@ class Aoi extends React.Component {
         const {recipeId} = this.props
         const recipeState = RecipeState(recipeId)
         setAoiLayer({
-                contextId: recipeId,
-                aoi: recipeState && recipeState('model.aoi'),
-                fill: false
-            }
+            contextId: recipeId,
+            aoi: recipeState && recipeState('model.aoi'),
+            fill: false
+        }
         )
         if (this.aoiUnchanged) {
             sepalMap.fitBounds(this.initialBounds)
@@ -138,31 +138,31 @@ export default form({fields, mapStateToProps})(Aoi)
 
 const valuesToModel = (values) => {
     switch (values.section) {
-        case 'COUNTRY':
-            return {
-                type: 'FUSION_TABLE',
-                id: countryFusionTable,
-                keyColumn: 'id',
-                key: values.area || values.country,
-                level: values.area ? 'area' : 'country',
-                bounds: values.bounds
-            }
-        case 'FUSION_TABLE':
-            return {
-                type: 'FUSION_TABLE',
-                id: values.fusionTable,
-                keyColumn: values.fusionTableColumn,
-                key: values.fusionTableRow,
-                bounds: values.bounds
-            }
-        case 'POLYGON':
-            return {
-                type: 'POLYGON',
-                path: values.polygon,
-                bounds: values.bounds
-            }
-        default:
-            throw new Error('Invalid aoi section: ' + values.section)
+    case 'COUNTRY':
+        return {
+            type: 'FUSION_TABLE',
+            id: countryFusionTable,
+            keyColumn: 'id',
+            key: values.area || values.country,
+            level: values.area ? 'area' : 'country',
+            bounds: values.bounds
+        }
+    case 'FUSION_TABLE':
+        return {
+            type: 'FUSION_TABLE',
+            id: values.fusionTable,
+            keyColumn: values.fusionTableColumn,
+            key: values.fusionTableRow,
+            bounds: values.bounds
+        }
+    case 'POLYGON':
+        return {
+            type: 'POLYGON',
+            path: values.polygon,
+            bounds: values.bounds
+        }
+    default:
+        throw new Error('Invalid aoi section: ' + values.section)
     }
 }
 

@@ -1,7 +1,8 @@
+import {Enabled, connect} from 'store'
 import {sepalMap} from 'app/home/map/map'
-import flexy from 'flexy.module.css'
+import PropTypes from 'prop-types'
 import React from 'react'
-import {connect, Enabled} from 'store'
+import flexy from 'flexy.module.css'
 import styles from './tabs.module.css'
 
 class TabContent extends React.Component {
@@ -42,6 +43,14 @@ class TabContent extends React.Component {
         const {tab: {id}} = this.props
         sepalMap.removeContext(id)
     }
+}
+
+TabContent.propTypes = {
+    tab: PropTypes.any,
+    selected: PropTypes.any,
+    onEnable: PropTypes.func,
+    onDisable: PropTypes.func,
+    children: PropTypes.children
 }
 
 export default connect()(TabContent)

@@ -1,12 +1,12 @@
+import {connect, select} from 'store'
+import {msg} from 'translate'
+import PropTypes from 'prop-types'
+import React from 'react'
+import TabContent from './tabContent'
+import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
 import flexy from 'flexy.module.css'
 import guid from 'guid'
-import PropTypes from 'prop-types'
-import React from 'react'
-import {connect, select} from 'store'
-import {msg} from 'translate'
-import Tooltip from 'widget/tooltip'
-import TabContent from './tabContent'
 import styles from './tabs.module.css'
 
 export const addTab = (statePath) => {
@@ -78,7 +78,7 @@ class Tabs extends React.Component {
             addTab(statePath)
     }
 
-    componentWillReceiveProps(nextProps) {
+    UNSAFE_componentWillReceiveProps(nextProps) {
         const {tabs, statePath} = nextProps
         if (tabs.length === 0)
             addTab(statePath)
@@ -119,9 +119,12 @@ class Tabs extends React.Component {
 }
 
 Tabs.propTypes = {
+    tabs: PropTypes.array,
+    selectedTabId: PropTypes.string,
     statePath: PropTypes.string.isRequired,
     tabActions: PropTypes.func,
-    onTitleChanged: PropTypes.func
+    onTitleChanged: PropTypes.func,
+    children: PropTypes.children
 }
 
 export default connect(mapStateToProps)(Tabs)
@@ -206,7 +209,7 @@ class Tab extends React.Component {
                                 onBlur={() => this.saveTitle()}/>
                             : null
                         }
-                        </span>
+                    </span>
                     <button
                         className={styles.close}
                         onClick={(e) => {
@@ -226,7 +229,20 @@ class Tab extends React.Component {
     }
 }
 
+Tab.propTypes = {
+    id: PropTypes.string,
+    title: PropTypes.string,
+    placeholder: PropTypes.string,
+    onTitleChanged: PropTypes.func,
+    statePath: PropTypes.string,
+    selected: PropTypes.any
+}
+
 const NewTab = ({onAdd}) =>
     <div className={styles.newTab} onClick={onAdd}>
         +
     </div>
+
+NewTab.propTypes = {
+    onAdd: PropTypes.func
+}

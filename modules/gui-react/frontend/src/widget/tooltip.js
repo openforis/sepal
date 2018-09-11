@@ -1,51 +1,44 @@
+import './tooltip.css'
+import 'rc-tooltip/assets/bootstrap.css'
+import {msg as message} from 'translate'
 import PropTypes from 'prop-types'
 import RcTooltip from 'rc-tooltip'
-import 'rc-tooltip/assets/bootstrap.css'
-import './tooltip.css'
 import React from 'react'
-import {msg as message} from 'translate'
 
+export default class Tooltip extends React.Component {
+    placement() {
+        const {left, right, top, bottom, topLeft, topRight, bottomLeft, bottomRight} = this.props
+        return left ? 'left' :
+            right ? 'right' :
+                top ? 'top' :
+                    bottom ? 'bottom' :
+                        topLeft ? 'topLeft' :
+                            topRight ? 'topRight' :
+                                bottomLeft ? 'bottomLeft' :
+                                    bottomRight ? 'bottomRight' :
+                                        'top'
+    }
 
-const Tooltip =
-    ({
-         msg,
-         rawMsg,
-         left,
-         right,
-         top,
-         bottom,
-         topLeft,
-         topRight,
-         bottomLeft,
-         bottomRight,
-         disabled = false,
-         delay = 0.5,
-         className,
-         children,
-         ...otherProps
-     }) => !disabled ? (
-        <span className={className}>
-                <RcTooltip
-                    overlay={msg ? message([msg, 'tooltip']) : rawMsg}
-                    placement={
-                        left ? 'left' :
-                            right ? 'right' :
-                                top ? 'top' :
-                                    bottom ? 'bottom' :
-                                        topLeft ? 'topLeft' :
-                                            topRight ? 'topRight' :
-                                                bottomLeft ? 'bottomLeft' :
-                                                    bottomRight ? 'bottomRight' :
-                                                        'top'}
-                    mouseEnterDelay={delay}
-                    trigger={['hover']}
-                    {...otherProps}>
-                    {children}
-                </RcTooltip>
-            </span>
-    ) : <div>{children}</div>
+    render() {
+        const {className, msg, rawMsg, disabled = false, delay = .5, children, ...otherProps} = this.props
+        return (
+            !disabled ? (
+                <span className={className}>
+                    <RcTooltip
+                        overlay={msg ? message([msg, 'tooltip']) : rawMsg}
+                        placement={this.placement()}
+                        mouseEnterDelay={delay}
+                        trigger={['hover']}
+                        {...otherProps}>
+                        {children}
+                    </RcTooltip>
+                </span>
+            ) : <div>{children}</div>        )
+    }
+}
 
 Tooltip.propTypes = {
+    className: PropTypes.string,
     msg: PropTypes.any,
     rawMsg: PropTypes.string,
     left: PropTypes.bool,
@@ -60,5 +53,3 @@ Tooltip.propTypes = {
     delay: PropTypes.number,
     children: PropTypes.object
 }
-
-export default Tooltip

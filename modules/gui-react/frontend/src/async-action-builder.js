@@ -1,8 +1,8 @@
-import actionBuilder from 'action-builder'
-import Notifications from 'app/notifications'
-import {takeUntil} from 'rxjs/operators'
 import {dispatch} from 'store'
 import {msg} from 'translate'
+import {takeUntil} from 'rxjs/operators'
+import Notifications from 'app/notifications'
+import actionBuilder from 'action-builder'
 
 export default function asyncActionBuilder(type, action$, component) {
     if (!type) throw new Error('Action type is required')
@@ -42,7 +42,7 @@ export default function asyncActionBuilder(type, action$, component) {
                     if (actions && !(actions instanceof Array))
                         actions = [actions]
                     actions.forEach((action) => addActions(action))
-                    console.log('error', error)
+                    // console.log('error', error)
                     if (actions.length === 0)
                         addActions(Notifications.caught(
                             'action',
