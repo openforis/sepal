@@ -1,9 +1,9 @@
-import Http from 'http-client'
-import {of} from 'rxjs'
-import {map} from 'rxjs/operators'
-import {subscribe} from 'store'
-import {fromGoogleBounds, google, polygonOptions, sepalMap} from './map'
 import './map.module.css'
+import {fromGoogleBounds, google, polygonOptions, sepalMap} from './map'
+import {map} from 'rxjs/operators'
+import {of} from 'rxjs'
+import {subscribe} from 'store'
+import Http from 'http-client'
 
 let googleTokens = null
 subscribe('user.currentUser.googleTokens', (tokens) => googleTokens = tokens)
@@ -101,20 +101,20 @@ class FusionTableLayer {
             WHERE '${this.keyColumn}' = '${this.key}'
         `).pipe(
             map((e) => {
-                    const googleBounds = new google.maps.LatLngBounds()
-                    if (!e.response.rows[0])
-                        throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.tableId}`)
-                    try {
-                        e.response.rows[0].forEach((o) =>
-                            eachLatLng(o, (latLng) => googleBounds.extend(latLng))
-                        )
-                        this.bounds = fromGoogleBounds(googleBounds)
-                        return this.bounds
-                    } catch (e) {
-                        console.error('Failed to get bounds', e)
-                        throw e
-                    }
+                const googleBounds = new google.maps.LatLngBounds()
+                if (!e.response.rows[0])
+                    throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.tableId}`)
+                try {
+                    e.response.rows[0].forEach((o) =>
+                        eachLatLng(o, (latLng) => googleBounds.extend(latLng))
+                    )
+                    this.bounds = fromGoogleBounds(googleBounds)
+                    return this.bounds
+                } catch (e) {
+                    // console.error('Failed to get bounds', e)
+                    throw e
                 }
+            }
             )
         )
     }

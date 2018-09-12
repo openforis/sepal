@@ -1,5 +1,7 @@
 import updateSource from './updateSource'
 
+/* eslint-disable no-undef */
+
 it('no source, in range for both landsat and sentinel2 -> no source or data set', () => {
     expect(
         updateSource(null, null, '2018-01-01', '2019-01-01')
@@ -59,3 +61,5 @@ it('toDate on first date of a data set -> data set is excluded', () => {
         ['landsat', ['landsat7', 'landsat45']]
     )
 })
+
+/* eslint-disable no-undef */

@@ -67,8 +67,8 @@ class IntlInitializer extends React.Component {
 }
 
 IntlInitializer.propTypes = {
-    intl: PropTypes.object,
-    children: PropTypes.any
+    children: PropTypes.any,
+    intl: PropTypes.object
 }
 
 const IntlInit = injectIntl(IntlInitializer)

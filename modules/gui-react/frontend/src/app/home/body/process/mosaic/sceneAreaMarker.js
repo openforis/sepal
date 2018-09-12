@@ -1,7 +1,7 @@
+import {MapObject, google, googleMap, sepalMap} from 'app/home/map/map'
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
-import {google, googleMap, MapObject, sepalMap} from 'app/home/map/map'
-import React from 'react'
 import {connect} from 'store'
+import React from 'react'
 import styles from './sceneAreas.module.css'
 
 const mapStateToProps = (state, ownProps) => {

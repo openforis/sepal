@@ -1,9 +1,9 @@
+import {Toolbar, ToolbarButton} from 'widget/toolbar'
+import {connect, select} from 'store'
+import {sepalMap} from './map'
 import Labels from 'app/home/map/labels'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect, select} from 'store'
-import {Toolbar, ToolbarButton} from 'widget/toolbar'
-import {sepalMap} from './map'
 import styles from './mapToolbar.module.css'
 
 const mapStateToProps = (state, ownProps) => ({
@@ -55,9 +55,9 @@ class MapToolbar extends React.Component {
 }
 
 MapToolbar.propTypes = {
-    statePath: PropTypes.string.isRequired,
-    mapContext: PropTypes.string.isRequired,
     labelLayerIndex: PropTypes.any.isRequired,
+    mapContext: PropTypes.string.isRequired,
+    statePath: PropTypes.string.isRequired,
     children: PropTypes.any
 }
 

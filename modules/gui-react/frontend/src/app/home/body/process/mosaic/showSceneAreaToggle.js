@@ -1,8 +1,8 @@
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
+import {ToolbarButton} from 'widget/toolbar'
+import {connect} from 'store'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {connect} from 'store'
-import {ToolbarButton} from 'widget/toolbar'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)

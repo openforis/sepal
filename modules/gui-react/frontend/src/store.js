@@ -135,6 +135,6 @@ export class Enabled extends React.Component {
 }
 
 Enabled.propTypes = {
-    value: PropTypes.any.isRequired,
-    children: PropTypes.any.isRequired
+    children: PropTypes.any.isRequired,
+    value: PropTypes.any.isRequired
 }

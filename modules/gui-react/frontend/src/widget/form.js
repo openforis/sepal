@@ -137,7 +137,7 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                     if (!state.invalidValue[name])
                         state.errors[name] = this.checkFieldError(name)
                     const constraintName = this.constraintNamesByFieldName[name]
-                    constraintName && constraintName.forEach(constraint =>
+                    constraintName && constraintName.forEach((constraint) =>
                         state.errors[constraintName] = this.checkConstraintError(constraintName)
                     )
                     return state

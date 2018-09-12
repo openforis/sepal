@@ -37,6 +37,6 @@ export default class SectionSelection extends React.Component {
 }
 
 SectionSelection.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    inputs: PropTypes.object.isRequired
+    inputs: PropTypes.object.isRequired,
+    recipeId: PropTypes.string.isRequired
 }

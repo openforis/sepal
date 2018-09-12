@@ -1,14 +1,14 @@
-import actionBuilder from 'action-builder'
-import Notifications from 'app/notifications'
-import api from 'backend'
+import './map.module.css'
+import {NEVER, Observable, Subject} from 'rxjs'
+import {connect, select} from 'store'
+import {map, mergeMap, takeUntil} from 'rxjs/operators'
 import GoogleMapsLoader from 'google-maps'
+import Notifications from 'app/notifications'
+import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {NEVER, Observable, Subject} from 'rxjs'
-import {map, mergeMap, takeUntil} from 'rxjs/operators'
-import {connect, select} from 'store'
-import Portal from 'widget/portal'
-import './map.module.css'
+import actionBuilder from 'action-builder'
+import api from 'backend'
 
 export let sepalMap = null
 export let google = null

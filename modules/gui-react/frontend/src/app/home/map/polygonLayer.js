@@ -7,7 +7,7 @@ export const setPolygonLayer = (
     {
         contextId,
         layerSpec: {id, path},
-        fill,
+        _fill,
         destroy$,
         onInitialized
     }) => {
@@ -44,7 +44,7 @@ class PolygonLayer {
         this.layer.setMap(googleMap)
     }
 
-    removeFromMap(googleMap) {
+    removeFromMap(_googleMap) {
         this.layer.setMap(null)
     }
 

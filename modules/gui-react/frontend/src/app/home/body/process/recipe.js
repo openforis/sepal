@@ -175,7 +175,7 @@ const saveRevisionToLocalStorage = (recipeId, revision) => {
     }
 }
 
-const expireRevisionFromLocalStorage = (recipeId) => {
+const expireRevisionFromLocalStorage = (_recipeId) => {
     const keyToExpire = _(localStorage)
         .keys()
         .filter(key => key.startsWith('sepal:'))
@@ -193,8 +193,8 @@ export const getRevisions = (recipeId) =>
         .keys()
         .filter(key => key.startsWith('sepal:'))
         .map(key => (key.split(':')))
-        .filter(([prefix, id, timestamp]) => recipeId === id)
-        .map(([prefix, id, timestamp]) => timestamp)
+        .filter(([_prefix, id, _timestamp]) => recipeId === id)
+        .map(([_prefix, _id, timestamp]) => timestamp)
         .sortBy()
         .reverse()
         .value()
@@ -210,7 +210,7 @@ export const revertToRevision$ = (recipeId, revision) => {
                 .set(recipePath(selectedTabId), recipe)
                 .set('process.selectedTabId', recipeId)
                 .dispatch()
-            console.log('saving', recipe)
+            // console.log('saving', recipe)
             backend.recipe.save$(recipe).subscribe()
             return recipe
         })

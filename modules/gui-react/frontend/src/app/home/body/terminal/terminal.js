@@ -1,8 +1,8 @@
-import api from 'backend'
-import PropTypes from 'prop-types'
-import React from 'react'
 import {connect} from 'store'
 import {currentUser} from 'user'
+import PropTypes from 'prop-types'
+import React from 'react'
+import api from 'backend'
 // import './gateone'
 import './gateone.css'
 
@@ -13,7 +13,7 @@ const mapStateToProps = () => ({
 })
 
 class Terminal extends React.Component {
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         api.terminal.init$()
             .subscribe(({authObject}) => this.initTerminal(authObject))
     }

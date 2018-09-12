@@ -314,7 +314,7 @@ class Axis extends React.Component {
         const {dateRange} = this.props
         const ticks = [...Array(25).keys()]
             .map((i) => [dateRange.monthIndexToPosition(i), i])
-            .filter(([position, i]) => position >= 0)
+            .filter(([position, _i]) => position >= 0)
             .map(([position, i]) => {
                 const axisStyle = {left: `${position}px`}
                 return <div

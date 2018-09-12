@@ -44,7 +44,7 @@ export default class EarthEngineImageLayer {
                 failed,
                 loaded
             }
-            console.log(tileStats)
+            // console.log(tileStats)
             tileStats.complete = tileStats.count === tileStats.loaded + tileStats.failed
 
             if (tileStats.count > 0)
