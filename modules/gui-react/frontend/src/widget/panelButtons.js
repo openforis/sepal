@@ -259,7 +259,13 @@ class PanelButtons extends React.Component {
 PanelButtons.propTypes = {
     form: PropTypes.object.isRequired,
     statePath: PropTypes.string.isRequired,
-    additionalButtons: PropTypes.array,
+    additionalButtons: PropTypes.arrayOf(
+        PropTypes.shape({
+            key: PropTypes.string.isRequired,
+            label: PropTypes.string.isRequired,
+            onClick: PropTypes.func
+        })
+    ),
     applyLabel: PropTypes.string,
     cancelLabel: PropTypes.string,
     initialized: PropTypes.any,

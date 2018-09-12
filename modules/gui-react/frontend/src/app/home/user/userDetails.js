@@ -95,9 +95,11 @@ class UserDetails extends React.Component {
                         onApply={userDetails => this.updateUserDetails(userDetails)}
                         onCancel={() => this.cancel()}
                         additionalButtons={[{
+                            key: 'changePassword',
                             label: msg('user.changePassword.title'),
                             onClick: () => changePassword()
                         }, {
+                            key: 'useGoogleAccount',
                             label: msg('user.userDetails.useGoogleAccount'),
                             onClick: (e) => useUserGoogleAccount(e)
                         }]}/>

@@ -56,7 +56,7 @@ class UserProfile extends React.Component {
 
 UserProfile.propTypes = {
     className: PropTypes.string,
-    ui: PropTypes.bool,
+    ui: PropTypes.string,
     username: PropTypes.string
 }
 
