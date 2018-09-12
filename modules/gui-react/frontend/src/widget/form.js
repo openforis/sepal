@@ -136,8 +136,8 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                     const state = Object.assign({}, prevState)
                     if (!state.invalidValue[name])
                         state.errors[name] = this.checkFieldError(name)
-                    const constraintName = this.constraintNamesByFieldName[name]
-                    constraintName && constraintName.forEach((constraint) =>
+                    const constraintNames = this.constraintNamesByFieldName[name]
+                    constraintNames && constraintNames.forEach((constraintName) =>
                         state.errors[constraintName] = this.checkConstraintError(constraintName)
                     )
                     return state
@@ -441,7 +441,7 @@ export class Label extends React.Component {
         )
     }
 }
- 
+
 Label.propTypes = {
     bottom: PropTypes.bool,
     bottomLeft: PropTypes.bool,
