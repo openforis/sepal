@@ -47,6 +47,7 @@
     "eject": "NODE_PATH=src/ react-app-rewired eject"
   },
   "devDependencies": {
+    "babel-eslint": "^9.0.0",
     "eslint": "5.5.0",
     "eslint-plugin-import": "2.14.0",
     "eslint-plugin-react": "7.11.1",
