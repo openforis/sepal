@@ -90,6 +90,6 @@ export const MenuItem = ({onSelect, children}) =>
     </MenuContext.Consumer>
 
 MenuItem.propTypes = {
-    children: PropTypes.children,
+    children: PropTypes.any,
     onSelect: PropTypes.func
 }

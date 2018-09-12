@@ -244,8 +244,7 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
         }
 
         Form.displayName = `Form(${getDisplayName(WrappedComponent)})`
-        Form = connect(mapStateToProps ? mapStateToProps : null)(Form)
-        return Form
+        return connect(mapStateToProps ? mapStateToProps : null)(Form)
     }
 }
 

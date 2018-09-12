@@ -101,7 +101,7 @@ class PanelWizard extends React.Component {
 PanelWizard.propTypes = {
     panels: PropTypes.array.isRequired,
     statePath: PropTypes.string.isRequired,
-    children: PropTypes.children,
+    children: PropTypes.any,
     initialized: PropTypes.any,
     selectedPanel: PropTypes.any
 }
