@@ -8,7 +8,6 @@ import Http from 'http-client'
 import Notifications from 'app/notifications'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
-import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './userDetails.module.css'
 
@@ -108,10 +107,6 @@ class UserDetails extends React.Component {
     }
 }
 
-UserDetails.propTypes = {
-    form: PropTypes.object,
-    inputs: PropTypes.object,
-    open: PropTypes.bool
-}
+UserDetails.propTypes = {}
 
 export default form({fields, mapStateToProps})(UserDetails)

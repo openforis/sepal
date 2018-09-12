@@ -119,15 +119,10 @@ class Scenes extends React.Component {
 }
 
 Scenes.propTypes = {
-    action: PropTypes.func,
-    fields: PropTypes.object,
-    form: PropTypes.object,
-    recipeId: PropTypes.string,
-    values: PropTypes.object
+    recipeId: PropTypes.string
 }
 
 export default form({fields, mapStateToProps})(Scenes)
-
 
 const valuesToModel = (values) => ({
     ...values

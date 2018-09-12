@@ -57,15 +57,7 @@ export class ForgotPassword extends React.Component {
     }
 }
 
-ForgotPassword.propTypes = {
-    action: PropTypes.func,
-    asyncActionBuilder: PropTypes.func,
-    fields: PropTypes.shape({
-        email: PropTypes.string
-    }),
-    form: PropTypes.object,
-    inputs: PropTypes.object
-}
+ForgotPassword.propTypes = {}
 
 export const LoginLink = ({tabIndex}) =>
     <div className={styles.forgotPassword}>

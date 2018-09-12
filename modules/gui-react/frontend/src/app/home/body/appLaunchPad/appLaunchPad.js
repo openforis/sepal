@@ -35,8 +35,7 @@ class AppLaunchPad extends React.Component {
 
 AppLaunchPad.propTypes = {
     apps: PropTypes.arrayOf(PropTypes.object),
-    requestedApps: PropTypes.arrayOf(PropTypes.object),
-    asyncActionBuilder: PropTypes.func
+    requestedApps: PropTypes.arrayOf(PropTypes.object)
 }
 
 const App = ({app, onClick}) =>
@@ -61,8 +60,8 @@ const Image = ({src, alt}) => {
 }
 
 Image.propTypes = {
-    src: PropTypes.string,
-    alt: PropTypes.string
+    alt: PropTypes.string,
+    src: PropTypes.string
 }
 
 export default connect(mapStateToProps)(AppLaunchPad)

@@ -356,13 +356,11 @@ class Browse extends React.Component {
 Browse.propTypes = {
     loaded: PropTypes.objectOf(
         PropTypes.shape({
-            open: PropTypes.bool,
-            files: PropTypes.arrayOf(PropTypes.object)
+            files: PropTypes.arrayOf(PropTypes.object),
+            open: PropTypes.bool
         })
     ),
-    selected: PropTypes.object,
-    action: PropTypes.func,
-    asyncActionBuilder: PropTypes.func
+    selected: PropTypes.object
 }
 
 export default connect(mapStateToProps)(Browse)

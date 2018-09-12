@@ -92,9 +92,7 @@ class Retrieve extends React.Component {
 
 Retrieve.propTypes = {
     recipeId: PropTypes.string,
-    user: PropTypes.object,
-    inputs: PropTypes.object,
-    form: PropTypes.object
+    user: PropTypes.object
 }
 
 export default form({fields, mapStateToProps})(Retrieve)

@@ -137,14 +137,9 @@ class Composite extends React.Component {
 }
 
 Composite.propTypes = {
-    action: PropTypes.func,
     disabled: PropTypes.any,
-    fields: PropTypes.object,
-    form: PropTypes.object,
-    inputs: PropTypes.object,
     recipeId: PropTypes.string,
-    source: PropTypes.string,
-    values: PropTypes.object
+    source: PropTypes.string
 }
 
 export default form({fields, mapStateToProps})(Composite)

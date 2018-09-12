@@ -116,15 +116,6 @@ class ResetPassword extends React.Component {
 }
 
 ResetPassword.propTypes = {
-    action: PropTypes.func,
-    asyncActionBuilder: PropTypes.func,
-    fields: PropTypes.shape({
-        password: PropTypes.object,
-        password2: PropTypes.object,
-        username: PropTypes.object
-    }),
-    form: PropTypes.object,
-    inputs: PropTypes.object,
     user: PropTypes.object
 }
 

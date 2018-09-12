@@ -77,10 +77,9 @@ class PolygonSection extends React.Component {
 }
 
 PolygonSection.propTypes = {
-    recipeId: PropTypes.string.isRequired,
     inputs: PropTypes.object.isRequired,
-    labelsShown: PropTypes.any,
-    componentWillUnmount$: PropTypes.func
+    recipeId: PropTypes.string.isRequired,
+    labelsShown: PropTypes.any
 }
 
 export default connect(mapStateToProps)(PolygonSection)

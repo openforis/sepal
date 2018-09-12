@@ -138,12 +138,7 @@ class Sources extends React.Component {
 }
 
 Sources.propTypes = {
-    action: PropTypes.func,
-    fields: PropTypes.object,
-    form: PropTypes.object,
-    inputs: PropTypes.object,
-    recipeId: PropTypes.string,
-    values: PropTypes.object
+    recipeId: PropTypes.string
 }
 
 export default form({fields, mapStateToProps})(Sources)

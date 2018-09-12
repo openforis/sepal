@@ -92,13 +92,7 @@ class Auto extends React.Component {
 }
 
 Auto.propTypes = {
-    recipeId: PropTypes.string,
-    form: PropTypes.object,
-    fields: PropTypes.object,
-    inputs: PropTypes.object,
-    constraints: PropTypes.shape({}),
-    action: PropTypes.func,
-    values: PropTypes.object
+    recipeId: PropTypes.string
 }
 
 export default form({fields, constraints, mapStateToProps})(Auto)

@@ -52,9 +52,7 @@ class App extends React.Component {
 }
 
 App.propTypes = {
-    asyncActionBuilder: PropTypes.func,
-    currentUser: PropTypes.object,
-    action: PropTypes.func
+    currentUser: PropTypes.object
 }
 
 const Loader = () =>

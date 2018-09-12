@@ -3,7 +3,6 @@ import {ForgotPasswordLink} from './forgot-password'
 import {Msg, msg} from 'translate'
 import {SubmitButton} from 'widget/button'
 import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
-import PropTypes from 'prop-types'
 import React from 'react'
 
 const fields = {
@@ -65,16 +64,7 @@ class Login extends React.Component {
     }
 }
 
-Login.propTypes = {
-    action: PropTypes.func,
-    asyncActionBuilder: PropTypes.func,
-    fields: PropTypes.shape({
-        password: PropTypes.object,
-        username: PropTypes.object,
-    }),
-    form: PropTypes.object,
-    inputs:PropTypes.object
-}
+Login.propTypes = {}
 
 export default form({fields, mapStateToProps})(Login)
 

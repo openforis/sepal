@@ -92,8 +92,6 @@ class Body extends React.Component {
 }
 
 Body.propTypes = {
-    action: PropTypes.func,
-    asyncActionBuilder: PropTypes.func,
     className: PropTypes.string,
     location: PropTypes.object,
     requestedApps: PropTypes.array

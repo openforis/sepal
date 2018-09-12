@@ -3,7 +3,6 @@ import {Msg, msg} from 'translate'
 import {SubmitButton} from 'widget/button'
 import {query} from 'route'
 import {resetPassword$, validateToken$} from 'user'
-import PropTypes from 'prop-types'
 import React from 'react'
 
 const fields = {
@@ -71,12 +70,6 @@ class SetupAccount extends React.Component {
     }
 }
 
-SetupAccount.propTypes = {
-    action: PropTypes.func,
-    asyncActionBuilder: PropTypes.func,
-    fields: PropTypes.object,
-    form: PropTypes.object,
-    inputs: PropTypes.object
-}
+SetupAccount.propTypes = {}
 
 export default form({fields})(SetupAccount)

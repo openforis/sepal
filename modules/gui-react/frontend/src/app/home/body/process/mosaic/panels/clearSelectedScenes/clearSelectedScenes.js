@@ -40,11 +40,7 @@ class ClearSelectedScenes extends React.Component {
 }
 
 ClearSelectedScenes.propTypes = {
-    recipeId: PropTypes.string,
-    form: PropTypes.object,
-    fields: PropTypes.object,
-    action: PropTypes.func,
-    values: PropTypes.object
+    recipeId: PropTypes.string
 }
 
 export default form({fields})(ClearSelectedScenes)

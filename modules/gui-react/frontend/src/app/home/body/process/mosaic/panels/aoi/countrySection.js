@@ -143,11 +143,8 @@ class CountrySection extends React.Component {
 }
 
 CountrySection.propTypes = {
-    recipeId: PropTypes.string.isRequired,
     inputs: PropTypes.object.isRequired,
-    action: PropTypes.func,
-    asyncActionBuilder: PropTypes.func,
-    componentWillUnmount$: PropTypes.func
+    recipeId: PropTypes.string.isRequired
 }
 
 export default connect(mapStateToProps)(CountrySection)

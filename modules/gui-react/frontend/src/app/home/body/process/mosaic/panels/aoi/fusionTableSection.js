@@ -20,6 +20,8 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class FusionTableSection extends React.Component {
+    x = {}
+
     constructor(props) {
         super(props)
         this.fusionTableChanged$ = new Subject()

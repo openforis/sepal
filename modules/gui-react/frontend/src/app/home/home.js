@@ -87,8 +87,7 @@ class Home extends React.Component {
 Home.propTypes = {
     floatingFooter: PropTypes.bool.isRequired,
     floatingMenu: PropTypes.bool.isRequired,
-    user: PropTypes.object.isRequired,
-    asyncActionBuilder: PropTypes.func
+    user: PropTypes.object.isRequired
 }
 
 export default connect(mapStateToProps)(Home)

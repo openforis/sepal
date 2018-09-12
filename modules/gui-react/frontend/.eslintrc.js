@@ -7,11 +7,11 @@ module.exports = {
     "extends": [
         "eslint:recommended",
         "plugin:react/recommended",
-        "plugin:import/errors",
-        "plugin:import/warnings"
+        // "plugin:import/errors",
+        // "plugin:import/warnings"
     ],
     "parserOptions": {
-        "ecmaVersion": 6,
+        "ecmaVersion": 9,
         "ecmaFeatures": {
             "jsx": true
         },
@@ -19,7 +19,7 @@ module.exports = {
     },
     "plugins": [
         "react",
-        "import",
+        // "import",
         "sort-imports-es6-autofix"
     ],
     "settings": {
@@ -72,6 +72,7 @@ module.exports = {
                 "beforeClosing": "allow"
             }
         ],
+        "react/prop-types": 0,
         "react/sort-prop-types": [
             "error", {
                 "ignoreCase": true,
@@ -81,11 +82,11 @@ module.exports = {
                 "noSortAlphabetically": false
             }
         ],
-        "import/no-unresolved": 0,
-        "import/named": 2,
-        "import/namespace": 2,
-        "import/default": 2,
-        "import/export": 2,
+        // "import/no-unresolved": 0,
+        // "import/named": 0,
+        // "import/namespace": 0,
+        // "import/default": 0,
+        // "import/export": 0,
         "sort-imports-es6-autofix/sort-imports-es6": ["error", {
             "ignoreCase": false,
             "ignoreMemberSort": false,

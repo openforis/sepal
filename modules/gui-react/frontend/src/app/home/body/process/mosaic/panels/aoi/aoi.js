@@ -131,11 +131,7 @@ class Aoi extends React.Component {
 }
 
 Aoi.propTypes = {
-    recipeId: PropTypes.string.isRequired,
-    componentWillUnmount$: PropTypes.func,
-    form: PropTypes.object,
-    inputs: PropTypes.object,
-    values: PropTypes.object
+    recipeId: PropTypes.string.isRequired
 }
 
 export default form({fields, mapStateToProps})(Aoi)

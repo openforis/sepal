@@ -7,7 +7,6 @@ import {userDetails} from './userProfile'
 import Notifications from 'app/notifications'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
-import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './changePassword.module.css'
 
@@ -105,12 +104,6 @@ class ChangePassword extends React.Component {
     }
 }
 
-ChangePassword.propTypes = {
-    action: PropTypes.func,
-    asyncActionBuilder: PropTypes.func,
-    form: PropTypes.object,
-    inputs: PropTypes.object,
-    open: PropTypes.bool
-}
+ChangePassword.propTypes = {}
 
 export default form({fields, constraints, mapStateToProps})(ChangePassword)

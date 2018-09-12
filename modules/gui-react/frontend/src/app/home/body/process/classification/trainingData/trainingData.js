@@ -125,9 +125,7 @@ class TrainingData extends React.Component {
 }
 
 TrainingData.propTypes = {
-    recipeId: PropTypes.string,
-    asyncActionBuilder: PropTypes.func,
-    form: PropTypes.object
+    recipeId: PropTypes.string
 }
 
 const valuesToModel = (values) => ({
