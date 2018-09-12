@@ -56,6 +56,11 @@ module.exports = {
                 "ignoreComments": false
             }
         ],
+        "no-unused-vars": [
+            "error", {
+                "argsIgnorePattern": "^_"
+            }
+        ],
         "object-curly-spacing": [
             "error",
             "never"
