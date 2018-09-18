@@ -21,7 +21,7 @@ const mapStateToProps = (state) => {
     })
 }
 
-const toOpts = ({level, messageId, values = {}, message, autoDismiss = 15}) => ({
+const toOpts = ({level, messageId, values = {}, message, autoDismiss = 5}) => ({
     title: msg([messageId, level, 'title'].join('.'), values),
     message: message || msg([messageId, level, 'message'].join('.'), values, ' '),
     position: 'tr',

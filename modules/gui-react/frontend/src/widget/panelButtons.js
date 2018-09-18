@@ -128,16 +128,17 @@ class PanelButtons extends React.Component {
 
     renderAdditionalButtons() {
         const {additionalButtons = []} = this.props
-        const renderButton = (button) =>
+        const renderButton = ({key, label, disabled, onClick, className}) =>
             <button
                 type='button'
-                key={button.key}
+                key={key}
+                disabled={disabled}
                 onClick={(e) => {
                     e.preventDefault()
-                    button.onClick(e)
+                    onClick(e)
                 }}
-                className={button.className || styles.default}>
-                <span>{button.label}</span>
+                className={className || styles.default}>
+                <span>{label}</span>
             </button>
 
         return (
@@ -263,7 +264,8 @@ PanelButtons.propTypes = {
         PropTypes.shape({
             key: PropTypes.string.isRequired,
             label: PropTypes.string.isRequired,
-            onClick: PropTypes.func
+            onClick: PropTypes.func.isRequired,
+            disabled: PropTypes.any,
         })
     ),
     applyLabel: PropTypes.string,

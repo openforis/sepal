@@ -601,12 +601,14 @@
       "form": {
         "oldPassword": {
           "label": "Current password",
-          "required": "Current password is required"
+          "required": "Current password is required",
+          "incorrect": "Incorrect password"
         },
         "newPassword": {
           "label": "New password",
           "required": "New password is required",
-          "notMatching": "Passwords are not matching"
+          "notMatching": "Passwords are not matching",
+          "invalid": "Passwords must be at least 8 characters long"
         },
         "confirmPassword": {
           "label": "New password (confirm)",
@@ -614,8 +616,10 @@
         }
       },
       "updating": "Updating...",
-      "success.title": "User password has been changed",
-      "error.title": "Could not change user password"
+      "success": {
+        "title": "User password has been changed",
+        "message": " "
+      }
     }
   },
   "unauthorized.warning": {

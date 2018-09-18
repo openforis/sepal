@@ -1,7 +1,7 @@
 import {ErrorMessage, Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
-import {changePassword, closePanel} from './userProfile'
+import {showChangePassword, closePanel} from './userProfile'
 import {map} from 'rxjs/operators'
 import {updateUserDetails$} from 'user'
 import Http from 'http-client'
@@ -97,10 +97,12 @@ class UserDetails extends React.Component {
                         additionalButtons={[{
                             key: 'changePassword',
                             label: msg('user.changePassword.title'),
-                            onClick: () => changePassword()
+                            disabled: form.isDirty(),
+                            onClick: () => showChangePassword()
                         }, {
                             key: 'useGoogleAccount',
                             label: msg('user.userDetails.useGoogleAccount'),
+                            disabled: form.isDirty(),
                             onClick: (e) => useUserGoogleAccount(e)
                         }]}/>
                 </Panel>

@@ -19,10 +19,10 @@ const action = (mode) =>
         .set('user.ui', mode)
         .dispatch()
 
-export const userDetails = () =>
+export const showUserDetails = () =>
     action('USER_DETAILS')
 
-export const changePassword = () =>
+export const showChangePassword = () =>
     action('CHANGE_PASSWORD')
 
 export const closePanel = () =>
@@ -34,7 +34,7 @@ class UserProfile extends React.Component {
         const isIdle = !ui
         return (
             <Tooltip msg='home.sections.user.profile' top>
-                <button className={className} onClick={() => isIdle ? userDetails() : null}>
+                <button className={className} onClick={() => isIdle ? showUserDetails() : null}>
                     {username}
                 </button>
             </Tooltip>

@@ -3,7 +3,7 @@ import {Constraint, ErrorMessage, Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {changeUserPassword$} from 'user'
-import {userDetails} from './userProfile'
+import {showUserDetails} from './userProfile'
 import Notifications from 'app/notifications'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
@@ -14,41 +14,43 @@ const fields = {
     oldPassword: new Field()
         .notBlank('user.changePassword.form.oldPassword.required'),
     newPassword: new Field()
-        .notBlank('user.changePassword.form.newPassword.required'),
+        .notBlank('user.changePassword.form.newPassword.required')
+        .match(/^.{8,100}$/, 'user.changePassword.form.newPassword.invalid'),
     confirmPassword: new Field()
         .notBlank('user.changePassword.form.confirmPassword.required')
 }
 
 const constraints = {
     passwordsMatch: new Constraint(['newPassword', 'confirmPassword'])
+        .skip(({newPassword, confirmPassword}) => !newPassword || !confirmPassword)
         .predicate(({newPassword, confirmPassword}) =>
             !newPassword || newPassword === confirmPassword,
         'user.changePassword.form.newPassword.notMatching')
 }
 
-const mapStateToProps = () => ({
-    values: {}
-})
+const mapStateToProps = () => ({values: {}})
 
 class ChangePassword extends React.Component {
     changePassword(userPasswords) {
-        this.props.asyncActionBuilder('UPDATE_PASSWORD', changeUserPassword$(userPasswords))
-            .onComplete(() => ([
-                Notifications.success('user.changePassword')
-            ]))
-            .onError(() => ([
-                Notifications.error('user.changePassword')
-            ]))
-            .dispatch()
+        this.props.stream('CHANGE_PASSWORD',
+            changeUserPassword$(userPasswords),
+            ({status}) => {
+                if (status === 'success') {
+                    Notifications.success('user.changePassword').dispatch()
+                    showUserDetails()
+                } else
+                    this.props.inputs.oldPassword.setInvalid(msg('user.changePassword.form.oldPassword.incorrect'))
+            }
+        )
     }
 
     cancel() {
-        userDetails()
+        showUserDetails()
     }
 
     renderPanel() {
         const {form, inputs: {oldPassword, newPassword, confirmPassword}} = this.props
-        return this.props.action('UPDATE_PASSWORD').dispatching
+        return this.props.stream('CHANGE_PASSWORD') === 'ACTIVE'
             ? <CenteredProgress title={msg('user.changePassword.updating')}/>
             : <React.Fragment>
                 <PanelContent>
@@ -69,7 +71,7 @@ class ChangePassword extends React.Component {
                             input={newPassword}
                             spellCheck={false}
                         />
-                        <ErrorMessage for={[newPassword, 'passwordsMatch']}/>
+                        <ErrorMessage for={newPassword}/>
                     </div>
                     <div>
                         <label><Msg id='user.changePassword.form.confirmPassword.label'/></label>
@@ -78,7 +80,7 @@ class ChangePassword extends React.Component {
                             input={confirmPassword}
                             spellCheck={false}
                         />
-                        <ErrorMessage for={confirmPassword}/>
+                        <ErrorMessage for={[confirmPassword, 'passwordsMatch']}/>
                     </div>
                 </PanelContent>
                 <PanelButtons

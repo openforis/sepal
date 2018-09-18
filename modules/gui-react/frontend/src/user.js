@@ -4,11 +4,11 @@ import actionBuilder from 'action-builder'
 import api from 'backend'
 
 export const currentUser = () => select('user.currentUser')
-export const invalidCredentials = () => select('user.invalidCredentials')
+export const invalidCredentials = () => select('user.login.invalidCredentials')
 
 export const resetInvalidCredentials = () =>
     actionBuilder('RESET_INVALID_CREDENTIALS')
-        .del('user.invalidCredentials')
+        .del('user.login.invalidCredentials')
         .dispatch()
 
 export const loadCurrentUser$ = () =>
@@ -25,7 +25,7 @@ export const login$ = (username, password) => {
     return api.user.login$(username, password).pipe(
         map((user) => actionBuilder('CREDENTIALS_POSTED')
             .set('user.currentUser', user)
-            .set('user.invalidCredentials', !user)
+            .set('user.login.invalidCredentials', !user)
             .build()
         )
     )
@@ -69,7 +69,11 @@ export const updateUserDetails$ = ({name, email, organization}) => {
 }
 
 export const changeUserPassword$ = ({oldPassword, newPassword}) =>
-    api.user.changePassword$({oldPassword, newPassword})
+    api.user.changePassword$({oldPassword, newPassword}).pipe(
+        map(({status}) => actionBuilder('PASSWORD_CHANGE_POSTED', {status})
+            .build()
+        )
+    )
 
 export const info = () => {
     // console.log('user info')

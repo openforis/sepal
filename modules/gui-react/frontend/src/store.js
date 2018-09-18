@@ -1,10 +1,12 @@
 import {Subject} from 'rxjs'
 import {connect as connectToRedux} from 'react-redux'
+import {takeUntil} from 'rxjs/operators'
 import {toPathList} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
 import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
+
 
 let storeInstance = null
 const storeInitListeners = []
@@ -66,6 +68,7 @@ export function connect(mapStateToProps) {
                 return React.createElement(WrappedComponent, {
                     ...this.props,
                     asyncActionBuilder: this.asyncActionBuilder,
+                    stream: stream(this),
                     onEnable: (listener) => this.onEnable = listener,
                     onDisable: (listener) => this.onDisable = listener,
                     componentId: this.id,
@@ -83,8 +86,7 @@ export function connect(mapStateToProps) {
             }
         }
 
-        ConnectedComponent.displayName = `Store(${WrappedComponent.displayName})`
-        return (props) =>
+        const ComponentWithContext = (props) =>
             <EnabledContext.Consumer>
                 {enabled =>
                     <ConnectedComponent {...props} enabled={enabled}>
@@ -92,6 +94,11 @@ export function connect(mapStateToProps) {
                     </ConnectedComponent>
                 }
             </EnabledContext.Consumer>
+
+        ConnectedComponent.displayName
+            = ComponentWithContext.displayName
+            = `Store(${WrappedComponent.displayName})`
+        return ComponentWithContext
     }
 }
 
@@ -137,4 +144,32 @@ export class Enabled extends React.Component {
 Enabled.propTypes = {
     children: PropTypes.any.isRequired,
     value: PropTypes.any.isRequired
+}
+
+const stream = (component) => {
+    return (name, stream$, ...subscriber) => {
+        component.state || (component.state = {})
+
+        const stateKey = 'stream.' + name
+        if (!stream$)
+            return component.state[stateKey]
+
+        const transformed$ = stream$.pipe(
+            takeUntil(component.componentWillUnmount$)
+        )
+
+        const setStatus = (status) =>
+            component.setState((prevState) => ({...prevState, [stateKey]: status}))
+
+        setStatus('ACTIVE')
+
+        transformed$.subscribe(
+            null,
+            () => setStatus('FAILED'),
+            () => setStatus('COMPLETED'),
+        )
+
+        if (subscriber.length > 0)
+            transformed$.subscribe(...subscriber)
+    }
 }
