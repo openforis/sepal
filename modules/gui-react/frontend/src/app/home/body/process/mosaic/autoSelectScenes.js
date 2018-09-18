@@ -5,7 +5,7 @@ import {map, takeUntil} from 'rxjs/operators'
 import {msg} from 'translate'
 import MapStatus from 'widget/mapStatus'
 import React from 'react'
-import backend from 'backend'
+import api from 'api'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -31,7 +31,7 @@ class AutoSelectScenes extends React.Component {
     }
 
     autoSelectScenes$() {
-        return backend.gee.autoSelectScenes$(this.props.recipe).pipe(
+        return api.gee.autoSelectScenes$(this.props.recipe).pipe(
             map(scenes =>
                 this.recipeActions.setSelectedScenes(scenes)
             ),

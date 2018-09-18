@@ -7,9 +7,8 @@ import Icon from 'widget/icon'
 import MapStatus from 'widget/mapStatus'
 import React from 'react'
 import _ from 'lodash'
-import backend from 'backend'
+import api from 'api'
 import styles from './mosaicPreview.module.css'
-
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -107,7 +106,7 @@ class MosaicPreview extends React.Component {
             ? new EarthEngineImageLayer({
                 layerIndex: 0,
                 bounds: recipe.model.aoi.bounds,
-                mapId$: backend.gee.preview$(recipe),
+                mapId$: api.gee.preview$(recipe),
                 props: recipe.model,
                 onProgress: (tiles) => this.onProgress(tiles)
             })

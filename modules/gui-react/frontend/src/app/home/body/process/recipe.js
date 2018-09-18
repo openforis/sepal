@@ -6,7 +6,7 @@ import {select, subscribe} from 'store'
 import JSZip from 'jszip'
 import _ from 'lodash'
 import actionBuilder from 'action-builder'
-import backend from 'backend'
+import api from 'api'
 
 export const recipePath = (recipeId, path) => {
     const recipeTabIndex = select('process.tabs')
@@ -78,7 +78,7 @@ export const exportRecipe = (recipe) => {
 }
 
 export const loadRecipes$ = () =>
-    backend.recipe.loadAll$().pipe(
+    api.recipe.loadAll$().pipe(
         map((recipes) => actionBuilder('SET_RECIPES', {recipes})
             .set('process.recipes', recipes)
             .build())
@@ -94,7 +94,7 @@ export const loadRecipe$ = (recipeId) => {
                 .build()
         ])
     } else {
-        return backend.recipe.load$(recipeId).pipe(
+        return api.recipe.load$(recipeId).pipe(
             map(recipe =>
                 actionBuilder('OPEN_RECIPE')
                     .set(recipePath(selectedTabId), recipe)
@@ -114,7 +114,7 @@ export const addRecipe = (recipe) => {
 }
 
 export const deleteRecipe$ = (recipeId) =>
-    backend.recipe.delete$(recipeId).pipe(
+    api.recipe.delete$(recipeId).pipe(
         map(() => {
             const recipes = select('process.recipes')
                 .filter(recipe => recipe.id !== recipeId)
@@ -126,7 +126,6 @@ export const deleteRecipe$ = (recipeId) =>
 
 export const deleteRecipe = (recipeId) =>
     deleteRecipe$(recipeId).subscribe(action => action.dispatch())
-
 
 const isRecipeOpen = (recipeId) =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
@@ -161,10 +160,9 @@ saveToBackend$.pipe(
         gzip$(_.omit(recipe, ['ui']), {to: 'string'}).subscribe(revision =>
             saveRevisionToLocalStorage(recipe.id, revision)
         )
-        return backend.recipe.save$(recipe)
+        return api.recipe.save$(recipe)
     })
 ).subscribe()
-
 
 const saveRevisionToLocalStorage = (recipeId, revision) => {
     try {
@@ -211,7 +209,7 @@ export const revertToRevision$ = (recipeId, revision) => {
                 .set('process.selectedTabId', recipeId)
                 .dispatch()
             // console.log('saving', recipe)
-            backend.recipe.save$(recipe).subscribe()
+            api.recipe.save$(recipe).subscribe()
             return recipe
         })
     )

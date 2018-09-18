@@ -10,7 +10,7 @@ import Menu from './menu/menu'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
-import backend from 'backend'
+import api from 'api'
 import styles from './home.module.css'
 
 const mapStateToProps = () => ({
@@ -28,7 +28,7 @@ const refreshUserAccessTokens$ = (user) => {
     return interval(0).pipe(
         delay(calculateDelayMillis(user.googleTokens.accessTokenExpiryDate)),
         exhaustMap(() => loadCurrentUser$().pipe(
-            map((currentUserAction) => {
+            map(currentUserAction => {
                 // console.log({currentUserAction})
                 currentUserAction.dispatch()
                 return currentUserAction.user.googleTokens.accessTokenExpiryDate
@@ -40,31 +40,54 @@ const refreshUserAccessTokens$ = (user) => {
     )
 }
 
+// const refreshUserReport$ = () =>  {
+//     const refreshSeconds = 10
+//     const loadCurrentUserReport$ = backend.user.loadCurrentUserReport$()
+//     return merge(
+//         loadCurrentUserReport$,
+//         interval(refreshSeconds * 1000).pipe(
+//             exhaustMap(() => loadCurrentUserReport$)
+//         )
+//     ).pipe(
+//         map(currentUserReport =>
+//             actionBuilder('UPDATE_CURRENT_USER_REPORT')
+//                 .set('user.currentUserReport', currentUserReport)
+//                 .dispatch()
+//         )
+//     )
+// }
+
 const updateTasks$ = () => {
-    const loadAll$ = backend.tasks.loadAll$()
+    const refreshSeconds = 5
+    // const loadAll$ = backend.tasks.loadAll$()
+    const loadAll$ = api.tasks.loadAll$()
     return merge(
         loadAll$,
-        interval(5 * 1000).pipe(
+        interval(refreshSeconds * 1000).pipe(
             exhaustMap(() => loadAll$),
         )
-    ).pipe(map(tasks =>
-        actionBuilder('UPDATE_TASKS')
-            .set('tasks', tasks)
-            .dispatch()
-    )
+    ).pipe(
+        map(tasks =>
+            actionBuilder('UPDATE_TASKS')
+                .set('tasks', tasks)
+                .dispatch()
+        )
     )
 }
 
-
 class Home extends React.Component {
     UNSAFE_componentWillMount() {
-        this.props.asyncActionBuilder('SCHEDULE_UPDATE_TASKS',
-            updateTasks$())
-            .dispatch()
-        if (this.props.user.googleTokens)
-            this.props.asyncActionBuilder('SCHEDULE_USER_INFO_REFRESH',
-                refreshUserAccessTokens$(this.props.user))
-                .dispatch()
+        // this.props.stream('SCHEDULE_USER_REPORT_REFRESH',
+        //     refreshUserReport$()
+        // )
+        this.props.stream('SCHEDULE_UPDATE_TASKS',
+            updateTasks$()
+        )
+        if (this.props.user.googleTokens) {
+            this.props.stream('SCHEDULE_USER_INFO_REFRESH',
+                refreshUserAccessTokens$(this.props.user)
+            )
+        }
     }
 
     render() {

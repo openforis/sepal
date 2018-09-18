@@ -1,7 +1,7 @@
 import {RecipeState as ParentRecipeState, recipePath} from '../recipe'
 import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
 import Labels from '../../../map/labels'
-import backend from 'backend'
+import api from 'api'
 import globalActionBuilder from 'action-builder'
 import moment from 'moment'
 
@@ -159,7 +159,7 @@ export const RecipeActions = (id) => {
                     'ui.retrieveState': 'SUBMITTED',
                     'ui.retrieveOptions': retrieveOptions,
                 })
-                .sideEffect(recipe => backend.gee.retrieveMosaic(recipe))
+                .sideEffect(recipe => api.gee.retrieveMosaic(recipe))
                 .build()
         },
         setRetrieveState(state) {

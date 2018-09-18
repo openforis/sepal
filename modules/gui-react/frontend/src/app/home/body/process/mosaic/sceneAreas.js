@@ -9,7 +9,7 @@ import MapStatus from 'widget/mapStatus'
 import PropTypes from 'prop-types'
 import React from 'react'
 import SceneAreaMarker from './sceneAreaMarker'
-import backend from 'backend'
+import api from 'api'
 import styles from './sceneAreas.module.css'
 
 const mapStateToProps = (state, ownProps) => {
@@ -77,7 +77,7 @@ class SceneAreas extends React.Component {
         this.loadSceneArea$.next()
         this.recipeActions.setSceneAreas(null).dispatch()
         this.props.asyncActionBuilder('LOAD_SCENE_AREAS',
-            backend.gee.sceneAreas$({aoi, source}).pipe(
+            api.gee.sceneAreas$({aoi, source}).pipe(
                 map(sceneAreas =>
                     this.recipeActions.setSceneAreas(sceneAreas)
                 ),

@@ -1,5 +1,5 @@
 import {RecipeState, recipePath} from '../recipe'
-import backend from 'backend'
+import api from 'api'
 import globalActionBuilder from 'action-builder'
 
 export {recipePath, RecipeState}
@@ -41,7 +41,7 @@ export const RecipeActions = (id) => {
                     'ui.retrieveState': 'SUBMITTED',
                     'ui.retrieveOptions': retrieveOptions,
                 })
-                .sideEffect(recipe => backend.gee.retrieveClassification(recipe))
+                .sideEffect(recipe => api.gee.retrieveClassification(recipe))
                 .build()
         },
     }

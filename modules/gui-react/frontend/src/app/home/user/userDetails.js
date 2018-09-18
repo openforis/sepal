@@ -9,7 +9,7 @@ import Notifications from 'app/notifications'
 import PanelButtons from 'widget/panelButtons'
 import Portal from 'widget/portal'
 import React from 'react'
-import backend from 'backend'
+import api from 'api'
 import styles from './userDetails.module.css'
 
 const fields = {
@@ -34,14 +34,14 @@ const mapStateToProps = () => {
 class UserDetails extends React.Component {
     useUserGoogleAccount(e) {
         e.preventDefault()
-        backend.user.getGoogleAccessRequestUrl$(window.location.hostname)
+        api.user.getGoogleAccessRequestUrl$(window.location.hostname)
             .subscribe(({url}) => window.location = url)
     }
 
     useSepalGoogleAccount(e) {
         e.preventDefault()
         this.props.stream('USE_SEPAL_GOOGLE_ACCOUNT',
-            backend.user.revokeGoogleAccess$().pipe(
+            api.user.revokeGoogleAccess$().pipe(
                 switchMap(() => loadCurrentUser$()),
                 map(loadCurrentUser => loadCurrentUser.dispatch())
             )

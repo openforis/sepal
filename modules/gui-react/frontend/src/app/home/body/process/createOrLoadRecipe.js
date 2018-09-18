@@ -9,7 +9,7 @@ import {recipePath} from 'app/home/body/process/recipe'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
-import backend from 'backend'
+import api from 'api'
 import flexy from 'flexy.module.css'
 import styles from './createOrLoadRecipe.module.css'
 
@@ -54,7 +54,7 @@ class RecipeList extends React.Component {
 
     duplicateRecipe$(recipeIdToDuplicate) {
         const {recipeId} = this.props
-        return backend.recipe.load$(recipeIdToDuplicate).pipe(
+        return api.recipe.load$(recipeIdToDuplicate).pipe(
             map(recipe => ({
                 ...recipe,
                 id: recipeId,

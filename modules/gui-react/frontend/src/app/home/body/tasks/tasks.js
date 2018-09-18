@@ -6,7 +6,7 @@ import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
-import backend from 'backend'
+import api from 'api'
 import styles from './tasks.module.css'
 
 const mapStateToProps = () => ({
@@ -102,7 +102,7 @@ class Tasks extends React.Component {
             statusDescription: 'Restarting...'
         }))
         asyncActionBuilder('RESTART_TASK',
-            backend.tasks.restart$(task.id)
+            api.tasks.restart$(task.id)
         ).dispatch()
     }
 
@@ -114,7 +114,7 @@ class Tasks extends React.Component {
             tasks: tasks.filter(t => t.id !== task.id)
         }))
         asyncActionBuilder('REMOVE_TASK',
-            backend.tasks.remove$(task.id)
+            api.tasks.remove$(task.id)
         ).dispatch()
     }
 
@@ -126,7 +126,7 @@ class Tasks extends React.Component {
             tasks: tasks.filter(t => !['FAILED', 'COMPLETED', 'CANCELED'].includes(t.status))
         }))
         asyncActionBuilder('REMOVE_ALL_TASK',
-            backend.tasks.removeAll$()
+            api.tasks.removeAll$()
         ).dispatch()
     }
 
@@ -138,7 +138,7 @@ class Tasks extends React.Component {
             statusDescription: 'Stopping...'
         }))
         asyncActionBuilder('STOP_TASK',
-            backend.tasks.cancel$(task.id)
+            api.tasks.cancel$(task.id)
         ).dispatch()
     }
 

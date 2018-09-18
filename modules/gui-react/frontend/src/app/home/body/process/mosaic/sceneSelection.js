@@ -13,7 +13,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
-import backend from 'backend'
+import api from 'api'
 import styles from './sceneSelection.module.css'
 
 const fields = {
@@ -128,7 +128,7 @@ class SceneSelection extends React.Component {
         const {sceneAreaId, dates, sources, sceneSelectionOptions, asyncActionBuilder} = this.props
         this.setScenes([])
         asyncActionBuilder('LOAD_SCENES',
-            backend.gee.scenesInSceneArea$({sceneAreaId, dates, sources, sceneSelectionOptions}).pipe(
+            api.gee.scenesInSceneArea$({sceneAreaId, dates, sources, sceneSelectionOptions}).pipe(
                 map(scenes => this.setScenes(scenes))
             )
         ).dispatch()
