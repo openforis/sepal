@@ -12,7 +12,7 @@ class UserTestMain extends Main {
     private FakeExternalUserDataGateway userDataGateway
 
     private FakeExternalUserDataGateway createFakeExternalUserDataGateway() {
-        def userDataGateway = new FakeExternalUserDataGateway()
+        userDataGateway = new FakeExternalUserDataGateway()
         userDataGateway.createdUser(new User(
             id: 1,
             name: 'Sepal Admin',
