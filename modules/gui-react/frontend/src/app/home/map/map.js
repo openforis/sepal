@@ -8,7 +8,7 @@ import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
-import api from 'backend'
+import api from 'api'
 
 export let sepalMap = null
 export let google = null
@@ -125,7 +125,6 @@ const createMap = (mapElement) => {
             }
             google.maps.event.addListener(drawingManager, 'overlaycomplete', drawingListener)
             drawingManager.setMap(googleMap)
-
 
         },
         isMaxZoom() {
@@ -310,7 +309,6 @@ const toGoogleBounds = (bounds) => {
     )
 }
 
-
 export const polygonOptions = (fill) => ({
     fillColor: '#FBFAF2',
     fillOpacity: fill ? 0.07 : 0.000000000000000000000000000001,
@@ -354,7 +352,6 @@ Map.propTypes = {
 }
 
 export default connect(mapStateToProps)(Map)
-
 
 export class MapLayer extends React.Component {
     state = {

@@ -42,7 +42,7 @@ const refreshUserAccessTokens$ = (user) => {
 
 // const refreshUserReport$ = () =>  {
 //     const refreshSeconds = 10
-//     const loadCurrentUserReport$ = backend.user.loadCurrentUserReport$()
+//     const loadCurrentUserReport$ = api.user.loadCurrentUserReport$()
 //     return merge(
 //         loadCurrentUserReport$,
 //         interval(refreshSeconds * 1000).pipe(
@@ -59,7 +59,6 @@ const refreshUserAccessTokens$ = (user) => {
 
 const updateTasks$ = () => {
     const refreshSeconds = 5
-    // const loadAll$ = backend.tasks.loadAll$()
     const loadAll$ = api.tasks.loadAll$()
     return merge(
         loadAll$,

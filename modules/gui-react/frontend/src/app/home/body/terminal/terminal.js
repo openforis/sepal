@@ -2,7 +2,7 @@ import {connect} from 'store'
 import {currentUser} from 'user'
 import PropTypes from 'prop-types'
 import React from 'react'
-import api from 'backend'
+import api from 'api'
 // import './gateone'
 import './gateone.css'
 

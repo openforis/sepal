@@ -5,9 +5,9 @@ import {msg} from 'translate'
 import {select} from 'store'
 import Notifications from 'app/notifications'
 import actionBuilder from 'action-builder'
-import api from 'backend'
-import rstudioIcon from 'app/home/body/appLaunchPad/r-studio.png'
+import api from 'api'
 import jupyterIcon from 'app/home/body/appLaunchPad/jupyter.png'
+import rstudioIcon from 'app/home/body/appLaunchPad/r-studio.png'
 
 export const appList = () =>
     select('apps.list') || []

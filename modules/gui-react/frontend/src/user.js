@@ -1,7 +1,7 @@
 import {filter, map, switchMap} from 'rxjs/operators'
 import {select} from 'store'
 import actionBuilder from 'action-builder'
-import api from 'backend'
+import api from 'api'
 
 export const currentUser = () => select('user.currentUser')
 export const invalidCredentials = () => select('user.login.invalidCredentials')
@@ -74,7 +74,3 @@ export const changeUserPassword$ = ({oldPassword, newPassword}) =>
             .build()
         )
     )
-
-export const info = () => {
-    // console.log('user info')
-}

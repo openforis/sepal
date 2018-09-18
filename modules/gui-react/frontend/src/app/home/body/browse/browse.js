@@ -11,7 +11,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
-import api from 'backend'
+import api from 'api'
 import flexy from 'flexy.module.css'
 import styles from './browse.module.css'
 

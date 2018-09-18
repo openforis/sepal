@@ -5,7 +5,7 @@ import {setAoiLayer} from 'app/home/map/aoiLayer'
 import LandCoverToolbar from './landCoverToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'
 import React from 'react'
-import api from 'backend'
+import api from 'api'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
@@ -38,7 +38,6 @@ class LandCover extends React.Component {
             </React.Fragment>
         )
     }
-
 
     // TODO: This is duplicated from mosaic. Will end up in classification too. Higher order component? AoiTab...
     componentDidMount() {

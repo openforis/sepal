@@ -1,5 +1,5 @@
 import {RecipeState as GlobalRecipeState, recipePath} from '../recipe'
-import api from '../../../../../backend'
+import api from 'api'
 import globalActionBuilder from 'action-builder'
 import moment from 'moment'
 
