@@ -6,7 +6,7 @@ echo "*************************************"
 echo "*** Installing Google Cloud Tools ***"
 echo "*************************************"
 
-wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-152.0.0-linux-x86_64.tar.gz
+wget -nv https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-152.0.0-linux-x86_64.tar.gz
 tar -xzf google-cloud-sdk-152.0.0-linux-x86_64.tar.gz
 mv google-cloud-sdk /usr/local/lib
 /usr/local/lib/google-cloud-sdk/install.sh -q

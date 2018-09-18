@@ -43,7 +43,7 @@ echo "*********************************"
 echo "*** Installing RStudio Server ***"
 echo "*********************************"
 rstudio=rstudio-server-1.1.414-amd64.deb
-wget https://download2.rstudio.org/$rstudio
+wget -nv https://download2.rstudio.org/$rstudio
 gdebi -n $rstudio
 printf '%s\n' \
     "server-app-armor-enabled=0" \
@@ -55,7 +55,7 @@ echo "*******************************"
 echo "*** Installing Shiny Server ***"
 echo "*******************************"
 shinyServer=shiny-server-1.5.7.907-amd64.deb
-wget https://download3.rstudio.org/ubuntu-14.04/x86_64/$shinyServer
+wget -nv https://download3.rstudio.org/ubuntu-14.04/x86_64/$shinyServer
 gdebi -n $shinyServer
 chown shiny:root /usr/lib/R/library
 rm $shinyServer

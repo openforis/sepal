@@ -28,7 +28,7 @@ apt-get install -y \
 	 perl \
 	 spatialite-bin
 
-wget http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
+wget -nv http://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
 chmod u+x OpenForisToolkit.run
 yes 1 | ./OpenForisToolkit.run
 rm OpenForisToolkit.run

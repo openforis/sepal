@@ -2,7 +2,7 @@
 set -e
 mkdir -p ~/lib ~/bin
 cd ~/lib
-wget http://webpages.sou.edu/~sahrk/dgg/dggrid.v62/dggrid.v62.tar.gz
+wget -nv http://webpages.sou.edu/~sahrk/dgg/dggrid.v62/dggrid.v62.tar.gz
 dggrid=dggrid.v62
 tar xvzf ${dggrid}.tar.gz --warning=no-unknown-keyword
 rm -f ${dggrid}.tar.gz

@@ -31,5 +31,5 @@ done
 cd /
 
 mkdir -p ${OSK_HOME}/Database/
-wget https://www.dropbox.com/s/qvujm3l0ba0frch/OFST_db.sqlite?dl=0
+wget -nv https://www.dropbox.com/s/qvujm3l0ba0frch/OFST_db.sqlite?dl=0
 mv OFST_db.sqlite?dl=0 ${OSK_HOME}/Database/OFST_db.sqlite

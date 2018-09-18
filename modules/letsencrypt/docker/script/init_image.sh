@@ -14,7 +14,7 @@ apt-get update -y && apt-get install -y\
  ca-certificates
 
 cd /root
-wget https://dl.eff.org/certbot-auto
+wget -nv https://dl.eff.org/certbot-auto
 chmod a+x certbot-auto
 
 # Renew the certificate twice a day. It will not have any effect unless it's about to expire
