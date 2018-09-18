@@ -28,7 +28,7 @@ class UserEndpoint {
             def nameConstraints = [notBlank(), maxLength(1000)]
             def emailConstraints = [notBlank(), email()]
             def organizationConstraints = [maxLength(1000)]
-            def passwordConstraints = custom { it ==~ /^.{6,100}$/ }
+            def passwordConstraints = custom { it ==~ /^.{8,100}$/ }
 
             constrain(InviteUser, [
                     invitedUsername: usernameConstraints,
