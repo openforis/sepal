@@ -20,6 +20,16 @@ export const loadCurrentUser$ = () =>
         )
     )
 
+export const loadCurrentUserReport$ = () => {
+    api.user.loadCurrentUserReport$().pipe(
+        map((userReport) =>
+            actionBuilder('SET_CURRENT_USER_REPORT', {userReport})
+                .set('user.currentUserReport', userReport)
+                .build()
+        )
+    )
+}
+
 export const login$ = (username, password) => {
     resetInvalidCredentials()
     return api.user.login$(username, password).pipe(

@@ -10,13 +10,15 @@ const mapStateToProps = (state) => {
     const user = state.user.currentUser
     return {
         username: user.username,
-        ui: state.user.ui
+        panel: state.ui && state.ui.userProfile,
+        modal: state.ui && state.ui.modal
     }
 }
 
 const action = (mode) =>
     actionBuilder('USER_PROFILE')
-        .set('user.ui', mode)
+        .set('ui.userProfile', mode)
+        .set('ui.modal', !!mode)
         .dispatch()
 
 export const showUserDetails = () =>
@@ -29,12 +31,18 @@ export const closePanel = () =>
     action()
 
 class UserProfile extends React.Component {
+    buttonHandler() {
+        const {panel, modal} = this.props
+        if (!panel && !modal) {
+            showUserDetails()
+        }
+    }
+
     renderButton() {
-        const {className, username, ui} = this.props
-        const isIdle = !ui
+        const {className, username, modal} = this.props
         return (
-            <Tooltip msg='home.sections.user.profile' top>
-                <button className={className} onClick={() => isIdle ? showUserDetails() : null}>
+            <Tooltip msg='home.sections.user.profile' top disabled={modal}>
+                <button className={className} onClick={() => this.buttonHandler()}>
                     {username}
                 </button>
             </Tooltip>
@@ -42,8 +50,9 @@ class UserProfile extends React.Component {
     }
 
     render() {
-        const showUserDetails = this.props.ui === 'USER_DETAILS'
-        const showChangePassword = this.props.ui === 'CHANGE_PASSWORD'
+        const {panel} = this.props
+        const showUserDetails = panel === 'USER_DETAILS'
+        const showChangePassword = panel === 'CHANGE_PASSWORD'
         return (
             <React.Fragment>
                 {this.renderButton()}
@@ -55,9 +64,7 @@ class UserProfile extends React.Component {
 }
 
 UserProfile.propTypes = {
-    className: PropTypes.string,
-    ui: PropTypes.string,
-    username: PropTypes.string
+    className: PropTypes.string
 }
 
 export default connect(mapStateToProps)(UserProfile)

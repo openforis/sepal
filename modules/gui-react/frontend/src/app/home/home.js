@@ -40,22 +40,22 @@ const refreshUserAccessTokens$ = (user) => {
     )
 }
 
-// const refreshUserReport$ = () =>  {
-//     const refreshSeconds = 10
-//     const loadCurrentUserReport$ = api.user.loadCurrentUserReport$()
-//     return merge(
-//         loadCurrentUserReport$,
-//         interval(refreshSeconds * 1000).pipe(
-//             exhaustMap(() => loadCurrentUserReport$)
-//         )
-//     ).pipe(
-//         map(currentUserReport =>
-//             actionBuilder('UPDATE_CURRENT_USER_REPORT')
-//                 .set('user.currentUserReport', currentUserReport)
-//                 .dispatch()
-//         )
-//     )
-// }
+const refreshUserReport$ = () =>  {
+    const refreshSeconds = 10
+    const loadCurrentUserReport$ = api.user.loadCurrentUserReport$()
+    return merge(
+        loadCurrentUserReport$,
+        interval(refreshSeconds * 1000).pipe(
+            exhaustMap(() => loadCurrentUserReport$)
+        )
+    ).pipe(
+        map(currentUserReport =>
+            actionBuilder('UPDATE_CURRENT_USER_REPORT')
+                .set('user.currentUserReport', currentUserReport)
+                .dispatch()
+        )
+    )
+}
 
 const updateTasks$ = () => {
     const refreshSeconds = 5
@@ -76,9 +76,9 @@ const updateTasks$ = () => {
 
 class Home extends React.Component {
     UNSAFE_componentWillMount() {
-        // this.props.stream('SCHEDULE_USER_REPORT_REFRESH',
-        //     refreshUserReport$()
-        // )
+        this.props.stream('SCHEDULE_USER_REPORT_REFRESH',
+            refreshUserReport$()
+        )
         this.props.stream('SCHEDULE_UPDATE_TASKS',
             updateTasks$()
         )

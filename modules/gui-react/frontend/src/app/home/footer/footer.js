@@ -1,9 +1,10 @@
-import {info, logout} from 'user'
+import {logout} from 'user'
 import Icon from 'widget/icon'
 import MenuMode from '../menu/menuMode'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
+import UserBudget from '../user/userBudget'
 import UserProfile from '../user/userProfile'
 import styles from './footer.module.css'
 
@@ -19,7 +20,7 @@ const Footer = ({className}) => {
                     <Copyright/>
                 </div>
                 <div>
-                    <HourlyCost/>
+                    <UserBudget className={styles.user}/>
                     <UserProfile className={styles.user}/>
                     <Logout/>
                 </div>
@@ -53,12 +54,5 @@ const Copyright = () => {
     const thisYear = new Date().getFullYear()
     return <span className={styles.copyright}>&copy;{thisYear}</span>
 }
-
-const HourlyCost = () =>
-    <Tooltip msg='home.sections.user.info'>
-        <button className={styles.hourlyCost} onClick={info}>
-            <Icon name='dollar-sign'/> 0/h
-        </button>
-    </Tooltip>
 
 export default Footer

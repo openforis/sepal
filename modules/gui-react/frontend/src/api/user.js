@@ -7,7 +7,7 @@ export default {
             validStatuses: [200, 401]
         }).pipe(toResponse),
     loadCurrentUserReport$: () =>
-        get$('/api/sandbox/report')
+        get$('/api/sessions/report')
             .pipe(toResponse),
     login$: (username, password) =>
         post$('/api/user/login', {

@@ -628,6 +628,9 @@
         "title": "User password has been changed",
         "message": " "
       }
+    },
+    "userBudget": {
+      "title": "User budget"
     }
   },
   "unauthorized.warning": {

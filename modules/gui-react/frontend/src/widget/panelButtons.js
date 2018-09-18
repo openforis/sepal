@@ -4,9 +4,9 @@ import {connect, select} from 'store'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
+import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
 import styles from 'widget/panelButtons.module.css'
-import Tooltip from 'widget/tooltip'
 
 const mapStateToProps = (state, ownProps) => {
     const {statePath} = ownProps
