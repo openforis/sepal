@@ -1,6 +1,8 @@
 ---
+- file: path="/var/log/sepal-build" state=directory
+
 - name: "{{ module }} | Building Docker Image: {{ image_name if image_name is defined else 'localhost/openforis/' + module }}"
-  command: "docker build -t {{ image_name if image_name is defined else 'localhost/openforis/' + module }} /opt/sepal/modules/{{ module }}/docker"
+  shell: "docker build -t {{ image_name if image_name is defined else 'localhost/openforis/' + module }} /opt/sepal/modules/{{ module }}/docker | tee /var/log/sepal-build/{{ module }}.log"
 
 - name: "{{ module }} | Tagging Docker Image: {{ image_name if image_name is defined else 'localhost/openforis/' + module }}"
   command: "docker tag {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:latest {{ image_name if image_name is defined else 'localhost/openforis/' + module }}:{{ version }}"
