@@ -6,6 +6,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
+import actionBuilder from 'action-builder'
 
 
 let storeInstance = null
@@ -148,25 +149,34 @@ Enabled.propTypes = {
 
 const stream = (component) => {
     return (name, stream$, ...subscriber) => {
-        component.state || (component.state = {})
-
-        const stateKey = 'stream.' + name
+        const componentPath = `stream.${component.id}`
+        const statePath = `${componentPath}.${name}`
         if (!stream$)
-            return component.state[stateKey]
+            return select(statePath)
 
         const transformed$ = stream$.pipe(
             takeUntil(component.componentWillUnmount$)
         )
 
         const setStatus = (status) =>
-            component.setState((prevState) => ({...prevState, [stateKey]: status}))
+            actionBuilder('SET_STREAM_STATUS', {statePath, status})
+                .set(statePath, status)
+                .dispatch()
 
         setStatus('ACTIVE')
 
+        let unmounted = false
+        component.componentWillUnmount$.subscribe(() => {
+            unmounted = true
+            select(componentPath) && actionBuilder('REMOVE_STREAM_STATUS', {componentPath, name})
+                .del(componentPath)
+                .dispatch()
+        })
+
         transformed$.subscribe(
             null,
-            () => setStatus('FAILED'),
-            () => setStatus('COMPLETED'),
+            () => unmounted || setStatus('FAILED'),
+            () => unmounted || setStatus('COMPLETED')
         )
 
         if (subscriber.length > 0)
