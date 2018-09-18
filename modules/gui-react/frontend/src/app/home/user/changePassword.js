@@ -23,9 +23,10 @@ const fields = {
 const constraints = {
     passwordsMatch: new Constraint(['newPassword', 'confirmPassword'])
         .skip(({newPassword, confirmPassword}) => !newPassword || !confirmPassword)
-        .predicate(({newPassword, confirmPassword}) =>
-            !newPassword || newPassword === confirmPassword,
-        'user.changePassword.form.newPassword.notMatching')
+        .predicate(
+            ({newPassword, confirmPassword}) => !newPassword || newPassword === confirmPassword,
+            'user.changePassword.form.newPassword.notMatching'
+        )
 }
 
 const mapStateToProps = () => ({values: {}})
