@@ -39,7 +39,13 @@ const api = {
         changePassword$: ({oldPassword, newPassword}) =>
             post$('/api/user/current/password', {
                 body: {oldPassword, newPassword}
-            }).pipe(toResponse)
+            }).pipe(toResponse),
+        getGoogleAccessRequestUrl$: (destinationUrl) =>
+            get$(`/api/user/google/access-request-url?destinationUrl=${destinationUrl}`)
+                .pipe(toResponse),
+        revokeGoogleAccess$: () =>
+            post$('/api/user/google/revoke-access')
+                .pipe(toResponse)
     },
     files: {
         loadFiles$: (path) =>
@@ -109,19 +115,19 @@ const api = {
                 }
             }).pipe(
                 map(({response: scenesBySceneArea}) => {
-                        Object.keys(scenesBySceneArea).forEach((sceneAreaId) =>
-                            scenesBySceneArea[sceneAreaId] = scenesBySceneArea[sceneAreaId].map((sceneOldFormat) => {
-                                    const scene = transformOldSceneToNew(sceneAreaId, recipe.model.dates, sceneOldFormat)
-                                    return {
-                                        id: scene.id,
-                                        dataSet: scene.dataSet,
-                                        date: scene.date
-                                    }
-                                }
-                            )
+                    Object.keys(scenesBySceneArea).forEach((sceneAreaId) =>
+                        scenesBySceneArea[sceneAreaId] = scenesBySceneArea[sceneAreaId].map((sceneOldFormat) => {
+                            const scene = transformOldSceneToNew(sceneAreaId, recipe.model.dates, sceneOldFormat)
+                            return {
+                                id: scene.id,
+                                dataSet: scene.dataSet,
+                                date: scene.date
+                            }
+                        }
                         )
-                        return scenesBySceneArea
-                    }
+                    )
+                    return scenesBySceneArea
+                }
                 )
             ),
         retrieveMosaic: (recipe) =>
@@ -257,20 +263,20 @@ const daysFromTarget = (dateString, dates) => {
 
 const transformAoi = (aoi) => {
     switch (aoi.type) {
-        case 'FUSION_TABLE':
-            return {
-                type: 'fusionTable',
-                id: aoi.id,
-                keyColumn: aoi.keyColumn,
-                key: aoi.key
-            }
-        case 'POLYGON':
-            return {
-                type: 'polygon',
-                path: aoi.path
-            }
-        default:
-            throw new Error('Invalid AOI type: ', aoi)
+    case 'FUSION_TABLE':
+        return {
+            type: 'fusionTable',
+            id: aoi.id,
+            keyColumn: aoi.keyColumn,
+            key: aoi.key
+        }
+    case 'POLYGON':
+        return {
+            type: 'polygon',
+            path: aoi.path
+        }
+    default:
+        throw new Error('Invalid AOI type: ', aoi)
     }
 }
 

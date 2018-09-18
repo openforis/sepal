@@ -6,6 +6,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
 import styles from 'widget/panelButtons.module.css'
+import Tooltip from 'widget/tooltip'
 
 const mapStateToProps = (state, ownProps) => {
     const {statePath} = ownProps
@@ -128,18 +129,19 @@ class PanelButtons extends React.Component {
 
     renderAdditionalButtons() {
         const {additionalButtons = []} = this.props
-        const renderButton = ({key, label, disabled, onClick, className}) =>
-            <button
-                type='button'
-                key={key}
-                disabled={disabled}
-                onClick={(e) => {
-                    e.preventDefault()
-                    onClick(e)
-                }}
-                className={className || styles.default}>
-                <span>{label}</span>
-            </button>
+        const renderButton = ({key, label, disabled, tooltip, onClick, className}) =>
+            <Tooltip key={key} msg={tooltip} bottom disabled={!tooltip || disabled}>
+                <button
+                    type='button'
+                    disabled={disabled}
+                    onClick={(e) => {
+                        e.preventDefault()
+                        onClick(e)
+                    }}
+                    className={className || styles.default}>
+                    <span>{label}</span>
+                </button>
+            </Tooltip>
 
         return (
             <div className={styles.additionalButtons}>

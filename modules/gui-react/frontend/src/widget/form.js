@@ -427,7 +427,7 @@ Input.propTypes = {
 export class Label extends React.Component {
     render() {
         const {tooltip, children,
-            left, right, top, bottom, topLeft, topRight, bottomLeft, bottomRight, className,
+            left, right, top, bottom, topLeft, topRight, bottomLeft, bottomRight,
             ...props} = this.props
         return (
             tooltip ? (
@@ -440,16 +440,15 @@ export class Label extends React.Component {
                     topLeft={topLeft}
                     topRight={topRight}
                     bottomLeft={bottomLeft}
-                    bottomRight={bottomRight}
-                    className={[className, styles.label].join(' ')}>
+                    bottomRight={bottomRight}>
                     <span>
-                        <label {...props}>
+                        <label {...props} className={styles.label}>
                             {children}
                             <Icon name='question-circle'/>
                         </label>
                     </span>
                 </Tooltip>
-            ) : <label {...props}>{children}</label>
+            ) : <label {...props} className={styles.label}>{children}</label>
         )
     }
 }
@@ -459,7 +458,6 @@ Label.propTypes = {
     bottomLeft: PropTypes.bool,
     bottomRight: PropTypes.bool,
     children: PropTypes.any,
-    className: PropTypes.string,
     left: PropTypes.bool,
     right: PropTypes.bool,
     tooltip: PropTypes.string,

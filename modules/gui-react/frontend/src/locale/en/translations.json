@@ -592,7 +592,15 @@
           "label": "Organization"
         }
       },
-      "useGoogleAccount": "Use Google account",
+      "useUserGoogleAccount": {
+        "label": "Use my Google account",
+        "tooltip": "Give Sepal permission to use your Google drive and manage your Earth Engine assets. This gives you full access to Sepal's functionality."
+      },
+      "useSepalGoogleAccount": {
+        "label": "Use Sepal's Google account",
+        "tooltip": "Revoke Sepal's permission to use your Google drive and manage your Earth Engine assets. Some features like exporting to Earth Engine assets will not be available."
+      },
+      "switchingToSepalGoogleAccount": "Switching to Sepal's Google Account",
       "success.title": "User details has been updated",
       "caught.title": "Could not update user details"
     },

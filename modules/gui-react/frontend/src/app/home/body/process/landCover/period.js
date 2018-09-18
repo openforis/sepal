@@ -1,5 +1,4 @@
-import {Constraint} from 'widget/form'
-import {ErrorMessage, Field, Label, form} from 'widget/form'
+import {Constraint, ErrorMessage, Field, Label, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from './landCoverRecipe'
@@ -74,9 +73,11 @@ class Period extends React.Component {
         const {inputs: {startYear, endYear}} = this.props
         return (
             <div className={styles.content}>
-                <Label className={styles.startYearLabel}>
-                    <Msg id='process.landCover.panel.period.startYear.label'/>
-                </Label>
+                <div className={styles.startYearLabel}>
+                    <Label>
+                        <Msg id='process.landCover.panel.period.startYear.label'/>
+                    </Label>
+                </div>
                 <div className={styles.startYear}>
                     <DatePicker
                         input={startYear}
@@ -85,9 +86,11 @@ class Period extends React.Component {
                         resolution='year'/>
                     <ErrorMessage for={startYear}/>
                 </div>
-                <Label className={styles.endYearLabel}>
-                    <Msg id='process.landCover.panel.period.endYear.label'/>
-                </Label>
+                <div className={styles.endYearLabel}>
+                    <Label>
+                        <Msg id='process.landCover.panel.period.endYear.label'/>
+                    </Label>
+                </div>
                 <div className={styles.endYear}>
                     <DatePicker
                         input={endYear}

@@ -20,20 +20,18 @@ export default class Tooltip extends React.Component {
     }
 
     render() {
-        const {className, msg, rawMsg, disabled = false, delay = .5, children, ...otherProps} = this.props
+        const {msg, rawMsg, disabled = false, delay = .5, children, ...otherProps} = this.props
         return (
             !disabled ? (
-                <span className={className}>
-                    <RcTooltip
-                        overlay={msg ? message([msg, 'tooltip']) : rawMsg}
-                        placement={this.placement()}
-                        mouseEnterDelay={delay}
-                        trigger={['hover']}
-                        {...otherProps}>
-                        {children}
-                    </RcTooltip>
-                </span>
-            ) : <div>{children}</div>        )
+                <RcTooltip
+                    overlay={msg ? message([msg, 'tooltip']) : rawMsg}
+                    placement={this.placement()}
+                    mouseEnterDelay={delay}
+                    trigger={['hover']}
+                    {...otherProps}>
+                    {children}
+                </RcTooltip>
+            ) : <React.Fragment>{children}</React.Fragment>)
     }
 }
 
@@ -42,7 +40,6 @@ Tooltip.propTypes = {
     bottomLeft: PropTypes.bool,
     bottomRight: PropTypes.bool,
     children: PropTypes.object,
-    className: PropTypes.string,
     delay: PropTypes.number,
     disabled: PropTypes.bool,
     left: PropTypes.bool,
