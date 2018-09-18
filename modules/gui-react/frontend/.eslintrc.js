@@ -66,7 +66,7 @@ module.exports = {
             "never"
         ],
         "eol-last": [
-            "error", 
+            "error",
             "always"
         ],
         "react/jsx-tag-spacing": [
