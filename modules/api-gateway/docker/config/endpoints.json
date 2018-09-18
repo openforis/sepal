@@ -120,6 +120,13 @@
   },
   {
     "prefix": "true",
+    "path": "/api/sessions/",
+    "target": "http://sepal:1025/api/sessions",
+    "https": "true",
+    "authenticate": "true"
+  },
+  {
+    "prefix": "true",
     "path": "/api/data/",
     "target": "http://sepal:1025/api/data",
     "https": "true",
