@@ -14,6 +14,8 @@ export default {
             username, password,
             validStatuses: [200, 401]
         }).pipe(toResponse),
+    logout$: () =>
+        post$('/api/user/logout').pipe(toResponse),
     requestPasswordReset$: (email) =>
         post$('/api/user/password/reset-request', {
             body: {email}
@@ -26,8 +28,6 @@ export default {
         post$('/api/user/password/reset', {
             body: {token, password}
         }),
-    logout$: () =>
-        null, // TODO: Implement...
     updateUserDetails$: ({name, email, organization}) =>
         post$('/api/user/current/details', {
             body: {name, email, organization}

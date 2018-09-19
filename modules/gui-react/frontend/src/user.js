@@ -64,10 +64,12 @@ export const resetPassword$ = (token, username, password) =>
         )
     )
 
-export const logout = () =>
+export const logout = () => {
     actionBuilder('LOGOUT')
         .del('user')
         .dispatch()
+    api.user.logout$().subscribe()
+}
 
 export const updateUserDetails$ = ({name, email, organization}) => {
     actionBuilder('UPDATE_USER_DETAILS', {name, email, organization})
