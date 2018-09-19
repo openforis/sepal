@@ -6,7 +6,6 @@ import {select} from 'store'
 import Notifications from 'app/notifications'
 import actionBuilder from 'action-builder'
 import api from 'api'
-import jupyterIcon from 'app/home/body/appLaunchPad/jupyter.png'
 import rstudioIcon from 'app/home/body/appLaunchPad/r-studio.png'
 
 export const appList = () =>
@@ -38,15 +37,14 @@ export const loadApps$ = () =>
                 endpoint: 'geo-web-viz'
             }
             const rStudio = {
-                path: '/sandbox/rstudio',
+                path: '/sandbox/rstudio/',
                 image: rstudioIcon,
                 alt: 'RStudio',
                 endpoint: 'rstudio'
             }
             const jupyter = {
-                path: '/sandbox/jupyter-tree',
-                image: jupyterIcon,
-                alt: 'Jupyter notebook',
+                path: '/sandbox/jupyter/tree',
+                label: 'Jupyter Notebook',
                 endpoint: 'jupyter'
             }
             return actionBuilder('SET_APPS')
