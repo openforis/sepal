@@ -17,7 +17,7 @@ const mapStateToProps = (state, ownProps) => {
 class PolygonSection extends React.Component {
     constructor(props) {
         super(props)
-        this.whereLabelsShown = props.labelsShown
+        this.wereLabelsShown = props.labelsShown
         this.recipeActions = RecipeActions(props.recipeId)
     }
 
@@ -32,7 +32,7 @@ class PolygonSection extends React.Component {
 
     componentWillUnmount() {
         this.disableDrawingMode()
-        this.recipeActions.setLabelsShown(this.whereLabelsShown).dispatch()
+        this.recipeActions.setLabelsShown(this.wereLabelsShown).dispatch()
     }
 
     disableDrawingMode() {
