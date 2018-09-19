@@ -232,14 +232,14 @@ class PanelButtons extends React.Component {
     }
 
     renderOkButton() {
-        const {applyLabel = msg('button.ok'), form} = this.props
+        const {isActionForm, applyLabel = msg('button.ok'), form} = this.props
         const dirty = form.isDirty()
         return (
             <button
                 type='submit'
                 onClick={(e) => {
                     e.preventDefault()
-                    dirty ? this.ok() : this.cancel()
+                    dirty || isActionForm ? this.ok() : this.cancel()
                 }}
                 disabled={form.isInvalid()}
                 className={styles.apply}>

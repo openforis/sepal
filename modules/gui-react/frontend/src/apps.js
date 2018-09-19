@@ -38,16 +38,21 @@ export const loadApps$ = () =>
                 endpoint: 'geo-web-viz'
             }
             const rStudio = {
-                path: '/sandbox/rstudio',
+                path: '/sandbox/rstudio/',
                 image: rstudioIcon,
                 alt: 'RStudio',
                 endpoint: 'rstudio'
             }
             const jupyter = {
-                path: '/sandbox/jupyter-tree',
+                path: '/sandbox/jupyter/tree',
                 image: jupyterIcon,
                 alt: 'Jupyter notebook',
-                endpoint: 'jupyter'
+                endpoint: 'jupyter',
+                style: {
+                    height: '90%',
+                    width: '90%',
+                    objectFit: 'contain'
+                }
             }
             return actionBuilder('SET_APPS')
                 .set('apps.list', [dataVis, rStudio, jupyter, ...apps])
