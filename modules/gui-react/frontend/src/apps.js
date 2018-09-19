@@ -6,6 +6,7 @@ import {select} from 'store'
 import Notifications from 'app/notifications'
 import actionBuilder from 'action-builder'
 import api from 'api'
+import jupyterIcon from 'app/home/body/appLaunchPad/jupyter.png'
 import rstudioIcon from 'app/home/body/appLaunchPad/r-studio.png'
 
 export const appList = () =>
@@ -44,8 +45,14 @@ export const loadApps$ = () =>
             }
             const jupyter = {
                 path: '/sandbox/jupyter/tree',
-                label: 'Jupyter Notebook',
-                endpoint: 'jupyter'
+                image: jupyterIcon,
+                alt: 'Jupyter notebook',
+                endpoint: 'jupyter',
+                style: {
+                    height: '90%',
+                    width: '90%',
+                    objectFit: 'contain'
+                }
             }
             return actionBuilder('SET_APPS')
                 .set('apps.list', [dataVis, rStudio, jupyter, ...apps])

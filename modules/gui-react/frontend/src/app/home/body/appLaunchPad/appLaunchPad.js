@@ -40,7 +40,7 @@ AppLaunchPad.propTypes = {
 
 const App = ({app, onClick}) =>
     <button className={styles.app} onClick={() => onClick(app)}>
-        <Image src={app.image}/>
+        <Image style={app.style} src={app.image}/>
         <Icon name={app.icon} alt={app.alt}/>
         <div>
             <div className={styles.title}>{app.label}</div>
@@ -53,9 +53,9 @@ App.propTypes = {
     onClick: PropTypes.func
 }
 
-const Image = ({src, alt}) => {
+const Image = ({style, src, alt}) => {
     return src
-        ? <img src={src} alt={alt}/>
+        ? <img src={src} alt={alt} style={style}/>
         : null
 }
 
