@@ -7,7 +7,7 @@ import tasks from './api/tasks'
 import terminal from './api/terminal'
 import user from './api/user'
 
-const api = {
+export default {
     apps,
     files,
     gee,
@@ -17,5 +17,3 @@ const api = {
     terminal,
     user
 }
-
-export default api

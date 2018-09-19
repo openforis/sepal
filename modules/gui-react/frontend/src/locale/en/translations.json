@@ -631,6 +631,25 @@
     },
     "userBudget": {
       "title": "User budget"
+    },
+    "report": {
+      "resources": {
+        "title": "Resources",
+        "monthlyInstance": "Monthly instance budget (US$)",
+        "monthlyStorage": "Monthly instance budget (US$)",
+        "storage": "Storage (GB)",
+        "quota": "Quota",
+        "used": "Used",
+        "used%": "Used (%)"
+      },
+      "sessions": {
+        "title": "Sessions",
+        "noSessions": "No active sessions",
+        "instanceType": "Instance type",
+        "time": "Date/time started",
+        "cost": "Cost",
+        "chargeGranularity": "Min. time"
+      }
     }
   },
   "unauthorized.warning": {
