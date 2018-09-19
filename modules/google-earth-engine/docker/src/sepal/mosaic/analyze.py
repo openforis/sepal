@@ -19,7 +19,7 @@ class _Analyze(ImageOperation):
         self.data_set = data_set
 
     def apply(self):
-        self.image = self.image.resample('bicubic')
+        # self.image = self.image.resample('bicubic')
         self._normalize_band_names()
         self.image = self.data_set.analyze(self.image)
         self.set('ndsi',
