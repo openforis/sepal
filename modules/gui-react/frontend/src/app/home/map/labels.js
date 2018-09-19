@@ -31,7 +31,9 @@ export default class Labels {
     }
 
     removeFromMap(googleMap) {
-        googleMap.overlayMapTypes.setAt(this.layerIndex, null)
+        // [HACK] Prevent Google Maps locking up the GUI when zooming
+        googleMap.overlayMapTypes.insertAt(this.layerIndex, null)
+        googleMap.overlayMapTypes.removeAt(this.layerIndex + 1)
     }
 
     initialize$() {
