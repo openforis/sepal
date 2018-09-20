@@ -135,7 +135,7 @@
   {
     "prefix": "true",
     "path": "/api/sandbox/jupyter/",
-    "target": "http://sepal:9191/jupyter/sandbox/jupyter/",
+    "target": "http://sepal:9191/jupyter/api/sandbox/jupyter/",
     "rewriteRedirects": "false",
     "https": "true",
     "authenticate": "true"
