@@ -1,4 +1,3 @@
-import {Msg} from 'translate'
 import {connect, select} from 'store'
 import Icon from 'widget/icon'
 import Portal from 'widget/portal'
