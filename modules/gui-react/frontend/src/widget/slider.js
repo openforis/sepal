@@ -10,13 +10,14 @@ import ViewportResizeDetector from 'widget/viewportResizeDetector'
 import _ from 'lodash'
 import styles from './slider.module.css'
 
-const clamp = ({value, min, max}) => Math.max(min, Math.min(max, value))
-const scale = ({value, from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
+const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
+const scale = (value, {from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
 const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
 
 class Draggable extends React.Component {
     state = {
-        previewPosition: null
+        previewPosition: null,
+        clickTargetOffset: null
     }
     handle = React.createRef()
     clickTarget = React.createRef()
@@ -78,7 +79,6 @@ class Draggable extends React.Component {
     componentDidUpdate(prevProps) {
         if (!this.state.inhibitInput && !_.isEqual(prevProps, this.props))
             this.setHandlePosition(this.toPosition(this.props.input.value))
-
     }
 
     componentWillUnmount() {
@@ -86,24 +86,21 @@ class Draggable extends React.Component {
     }
 
     toPosition(value) {
-        return scale({
-            value,
+        return scale(value, {
             from: {min: this.props.minValue, max: this.props.maxValue},
             to: {min: 0, max: this.props.width}
         })
     }
 
     toValue(position) {
-        return scale({
-            value: position,
+        return scale(position, {
             from: {min: 0, max: this.props.width},
             to: {min: this.props.minValue, max: this.props.maxValue}
         })
     }
 
     clampPosition(position) {
-        return clamp({
-            value: position,
+        return clamp(position, {
             min: 0,
             max: this.props.width
         })
@@ -228,7 +225,11 @@ class Draggable extends React.Component {
                 fromEvent(this.clickTarget.current, 'mouseleave').pipe(
                     map(() => null)
                 )
-            ).subscribe(previewPosition => this.setPreviewPosition(previewPosition))
+            ).pipe(
+                distinctUntilChanged()
+            ).subscribe(previewPosition =>
+                this.setPreviewPosition(previewPosition)
+            )
         )
 
         // enable fullscreen pointer while dragging, disable when drag end
@@ -236,7 +237,9 @@ class Draggable extends React.Component {
             merge(
                 panStart$.pipe(map(() => true)),
                 panEnd$.pipe(map(() => false))
-            ).subscribe((dragging) => this.setDragging(dragging))
+            ).subscribe(dragging =>
+                this.setDragging(dragging)
+            )
         )
 
         // enable input when stopped, disabled when moving
@@ -253,7 +256,9 @@ class Draggable extends React.Component {
 
         // render animation
         this.subscriptions.push(
-            move$.subscribe(position => this.setHandlePosition(position))
+            move$.subscribe(position =>
+                this.setHandlePosition(position)
+            )
         )
     }
 }
