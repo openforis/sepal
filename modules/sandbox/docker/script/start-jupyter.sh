@@ -22,5 +22,5 @@ sudo -iu $sandbox_user jupyter notebook\
  --ip=0.0.0.0\
  --port=8888\
  --NotebookApp.token=''\
- --NotebookApp.base_url='/sandbox/jupyter/'\
+ --NotebookApp.base_url='/api/sandbox/jupyter/'\
  --NotebookApp.notebook_dir="/home/$sandbox_user"
