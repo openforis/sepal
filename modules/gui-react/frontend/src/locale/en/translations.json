@@ -697,9 +697,13 @@
             "AUTO_SELECT_SCENES": "Auto-select scenes",
             "LOAD_DIRECTORY": "Load user directory",
             "REMOVE_FILE": "Delete file",
+            "REMOVE_DIRECTORY": "Delete directory",
             "LOAD_APPS": "Load applications",
             "RUN_APP": "Open application",
-            "SCHEDULE_UPDATE_TASKS": "Update background tasks"
+            "SCHEDULE_UPDATE_TASKS": "Update background tasks",
+            "RESTART_TASK": "Restart task",
+            "STOP_TASK": "Stop task",
+            "REMOVE_TASK": "Remove task"
         }
     },
     "bands": {
