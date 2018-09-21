@@ -11,7 +11,8 @@ export default {
         const name = recipe.title || recipe.placeholder
         return gzip$(_.omit(recipe, ['ui'])).pipe(
             switchMap(contents =>
-                post$(`/api/processing-recipes/${recipe.id}?type=${recipe.type}&name=${name}`, {
+                post$(`/api/processing-recipes/${recipe.id}`, {
+                    query: {type: recipe.type, name: name},
                     body: contents,
                     headers: {'Content-Type': 'application/octet-stream'}
                 })

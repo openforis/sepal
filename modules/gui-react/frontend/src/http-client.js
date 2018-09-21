@@ -7,24 +7,43 @@ import base64 from 'base-64'
 
 const DEFAULT_RETRIES = 4
 
-export const get$ = (url, {retries = DEFAULT_RETRIES, headers, validStatuses, ...args} = {}) =>
-    execute$(url, 'GET', {
+export const get$ = (url, {retries = DEFAULT_RETRIES, query, headers, validStatuses, ...args} = {}) => {
+    return execute$(url, 'GET', {
         retries,
+        query,
+        headers,
+        validStatuses, ...args
+    })
+}
+
+export const post$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+    execute$(url, 'POST', {
+        retries,
+        query,
+        body,
         headers,
         validStatuses, ...args
     })
 
-export const post$ = (url, {retries = DEFAULT_RETRIES, headers, validStatuses, ...args} = {}) =>
-    execute$(url, 'POST', {
-        retries,
-        headers,
-        validStatuses, ...args
-    })
+export const postForm$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
+    post$(
+        url, {
+            retries,
+            query,
+            body: toQueryString(body),
+            headers: {
+                ...headers,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            validStatuses,
+            args
+        })
 
-export const postJson$ = (url, body, {retries = DEFAULT_RETRIES, headers, validStatuses, ...args} = {}) =>
+export const postJson$ = (url, {retries = DEFAULT_RETRIES, query, body, headers, validStatuses, ...args} = {}) =>
     execute$(url, 'POST', {
         retries,
-        body: JSON.stringify(body),
+        body: body && JSON.stringify(body),
+        query,
         headers: {
             ...headers,
             'Content-Type': 'application/json'
@@ -42,14 +61,23 @@ export const delete$ = (url, {retries = DEFAULT_RETRIES, headers, validStatuses,
 
 export default {get$, post$, postJson$, delete$}
 
-function execute$(url, method, {retries, username, password, headers, validStatuses, ...args}) {
+function toQueryString(object) {
+    return object &&
+        Object.keys(object)
+            .map(key => `${key}=${encodeURIComponent(object[key])}`)
+            .join('&')
+}
+
+function execute$(url, method, {retries, query, username, password, headers, validStatuses, ...args}) {
+    const queryString = toQueryString(query)
+    let urlWithQuery = queryString ? `${url}?${queryString}` : url
     headers = {'No-auth-challenge': true, ...headers}
     if (username || password)
         headers = {
             'Authorization': 'Basic ' + base64.encode(username + ':' + password),
             ...headers
         }
-    return ajax({url, method, headers, ...args}).pipe(
+    return ajax({url: urlWithQuery, method, headers, ...args}).pipe(
         map(e => {
             if (!validStatuses || validStatuses.includes(e.status))
                 return e

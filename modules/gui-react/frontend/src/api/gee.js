@@ -1,12 +1,15 @@
-import {get$, post$, postJson$} from 'http-client'
+import {get$, postForm$, postJson$} from 'http-client'
 import {map} from 'rxjs/operators'
 import moment from 'moment'
 
 export default {
     preview$: ({recipe, ...params}) =>
-        postJson$('/api/gee/preview', {recipe, ...params}, {retries: 0}),
+        postJson$('/api/gee/preview', {body: {recipe, ...params}, retries: 0}),
     sceneAreas$: ({aoi, source}) =>
-        get$('/api/gee/sceneareas?' + transformQueryForSceneAreas(aoi, source)).pipe(
+        get$('/api/gee/sceneareas', {query: {
+            aoi: JSON.stringify(aoi),
+            dataSet: sourceToDataSet(source)
+        }}).pipe(
             map(e =>
                 e.response.map(sceneArea =>
                     ({id: sceneArea.sceneAreaId, polygon: sceneArea.polygon})
@@ -14,8 +17,12 @@ export default {
             )
         ),
     scenesInSceneArea$: ({sceneAreaId, dates, sources, sceneSelectionOptions}) =>
-        get$(`/api/data/sceneareas/${sceneAreaId}?`
-                + transformQueryForScenesInSceneArea({dates, sources})).pipe(
+        get$(`/api/data/sceneareas/${sceneAreaId}`, {
+            query: {
+                dataSet: sourceToDataSet(Object.keys(sources)[0]),
+                targetDayOfYear: targetDayOfYear(dates)
+            }
+        }).pipe(
             map(({response: scenes}) =>
                 scenes
                     .map((scene) => transformOldSceneToNew(sceneAreaId, dates, scene))
@@ -30,7 +37,7 @@ export default {
             )
         ),
     autoSelectScenes$: (recipe) =>
-        post$('/api/data/best-scenes', {
+        postForm$('/api/data/best-scenes', {
             body: {
                 targetDayOfYearWeight: recipe.model.sceneSelectionOptions.targetDateWeight,
                 cloudCoverTarget: 0.0001,
@@ -73,16 +80,6 @@ const transformOldSceneToNew = (sceneAreaId, dates, {sceneId, sensor, acquisitio
     cloudCover: Math.round(cloudCover),
     browseUrl
 })
-
-const transformQueryForSceneAreas = (aoi, source) =>
-    // `aoi=${JSON.stringify(transformAoi(aoi))}&dataSet=${sourceToDataSet(source)}`
-    `aoi=${JSON.stringify(aoi)}&dataSet=${sourceToDataSet(source)}` // TODO: Send this as JSON body
-
-const transformQueryForScenesInSceneArea = ({dates, sources}) =>
-    'dataSet=' + sourceToDataSet(Object.keys(sources)[0])
-    + '&targetDayOfYear=' + targetDayOfYear(dates)
-    + '&fromDate=' + fromDate(dates)
-    + '&toDate=' + toDate(dates)
 
 const targetDayOfYear = (dates) =>
     moment(dates.targetDate, DATE_FORMAT).dayOfYear()

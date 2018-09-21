@@ -37,7 +37,7 @@ export default {
             body: {oldPassword, newPassword}
         }).pipe(toResponse),
     getGoogleAccessRequestUrl$: (destinationUrl) =>
-        get$(`/api/user/google/access-request-url?destinationUrl=${destinationUrl}`)
+        get$('/api/user/google/access-request-url', {destinationUrl})
             .pipe(toResponse),
     revokeGoogleAccess$: () =>
         post$('/api/user/google/revoke-access')

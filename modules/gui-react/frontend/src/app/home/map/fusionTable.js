@@ -26,12 +26,17 @@ export const setFusionTableLayer = (
 
 export const queryFusionTable$ = (query, args = {}) => {
     query = query.replace(/\s+/g, ' ').trim()
-    return Http.post$(`https://www.googleapis.com/fusiontables/v2/query?sql=${query}&${authParam()}`, args)
+    return Http.post$('https://www.googleapis.com/fusiontables/v2/query', {
+        ...args,
+        query: {sql: query, ...authParam()}
+    })
 }
 
 export const loadFusionTableColumns$ = (tableId, args) => {
     return Http.get$(
-        `https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns?${authParam()}`,
+        `https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns`, {
+            query: {...authParam()}
+        },
         args
     ).pipe(
         map((e) => e.response.items)
@@ -40,9 +45,8 @@ export const loadFusionTableColumns$ = (tableId, args) => {
 
 const authParam = () =>
     googleTokens
-        ? `access_token=${googleTokens.accessToken}`
-        : `key=${sepalMap.getKey()}`
-
+        ? {access_token: googleTokens.accessToken}
+        : {key: sepalMap.getKey()}
 
 class FusionTableLayer {
     constructor({tableId, keyColumn, key, bounds, fill}) {
@@ -101,20 +105,20 @@ class FusionTableLayer {
             WHERE '${this.keyColumn}' = '${this.key}'
         `).pipe(
             map((e) => {
-                const googleBounds = new google.maps.LatLngBounds()
-                if (!e.response.rows[0])
-                    throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.tableId}`)
-                try {
-                    e.response.rows[0].forEach((o) =>
-                        eachLatLng(o, (latLng) => googleBounds.extend(latLng))
-                    )
-                    this.bounds = fromGoogleBounds(googleBounds)
-                    return this.bounds
-                } catch (e) {
-                    // console.error('Failed to get bounds', e)
-                    throw e
+                    const googleBounds = new google.maps.LatLngBounds()
+                    if (!e.response.rows[0])
+                        throw new Error(`No ${this.keyColumn} = ${this.key} in ${this.tableId}`)
+                    try {
+                        e.response.rows[0].forEach((o) =>
+                            eachLatLng(o, (latLng) => googleBounds.extend(latLng))
+                        )
+                        this.bounds = fromGoogleBounds(googleBounds)
+                        return this.bounds
+                    } catch (e) {
+                        // console.error('Failed to get bounds', e)
+                        throw e
+                    }
                 }
-            }
             )
         )
     }
