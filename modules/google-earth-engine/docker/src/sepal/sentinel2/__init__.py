@@ -66,7 +66,7 @@ class Sentinel2AutomaticMosaicSpec(Sentinel2MosaicSpec):
 class Sentinel2ManualMosaicSpec(Sentinel2MosaicSpec):
     def __init__(self, spec):
         super(Sentinel2ManualMosaicSpec, self).__init__(spec)
-        self.scene_ids = spec['sceneIds']
+        self.scene_ids = [scene['id'] for sublist in spec['recipe']['model']['scenes'].values() for scene in sublist]
 
         def acquisition(scene):
             date = datetime.strptime(scene[:8], '%Y%m%d')

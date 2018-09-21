@@ -28,8 +28,7 @@ class MosaicPreview extends React.Component {
             return (
                 <MapStatus loading={false} error={error}/>
             )
-        }
-        else if (initializing)
+        } else if (initializing)
             return (
                 <MapStatus message={msg('process.mosaic.preview.initializing')}/>
             )
@@ -78,40 +77,39 @@ class MosaicPreview extends React.Component {
 
     isPreviewShown() {
         const {recipe} = this.props
-        return recipe.ui.initialized
-            && !recipe.ui.autoSelectingScenes
-            && recipe.model.bands
+        return !recipe.ui.autoSelectingScenes
             && (recipe.model.sceneSelectionOptions.type === SceneSelectionType.ALL
                 || (recipe.model.scenes
                     && Object.keys(recipe.model.scenes).find(sceneAreaId => recipe.model.scenes[sceneAreaId].length > 0)))
     }
 
     componentDidMount() {
-        this.updateLayer()
+        this.updateLayer(this.toPreviewRequest(this.props.recipe))
     }
 
     componentDidUpdate(prevProps) {
         const {recipe} = this.props
-        const layerChanged = !_.isEqual(recipe.model, prevProps.recipe.model)
+        const previewRequest = this.toPreviewRequest(recipe)
+        const layerChanged = !_.isEqual(previewRequest, this.toPreviewRequest(prevProps.recipe))
         if (layerChanged)
-            this.updateLayer()
+            this.updateLayer(previewRequest)
         const context = sepalMap.getContext(recipe.id)
         context.hideLayer('preview', this.isHidden(recipe))
     }
 
-    updateLayer() {
-        const {recipe, componentWillUnmount$} = this.props
+    updateLayer(previewRequest) {
+        const {recipeId, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = this.isPreviewShown()
             ? new EarthEngineImageLayer({
                 layerIndex: 0,
-                bounds: recipe.model.aoi.bounds,
-                mapId$: api.gee.preview$(recipe),
-                props: recipe.model,
+                bounds: previewRequest.recipe.model.aoi.bounds,
+                mapId$: api.gee.preview$(previewRequest),
+                props: previewRequest,
                 onProgress: (tiles) => this.onProgress(tiles)
             })
             : null
-        const context = sepalMap.getContext(recipe.id)
+        const context = sepalMap.getContext(recipeId)
         const changed = context.setLayer({
             id: 'preview',
             layer,
@@ -127,6 +125,16 @@ class MosaicPreview extends React.Component {
     isHidden() {
         const {recipe} = this.props
         return !this.isPreviewShown() || !recipe || !recipe.ui || !!recipe.ui.selectedPanel
+    }
+
+    toPreviewRequest(recipe) {
+        return {
+            recipe: _.omit(recipe, ['ui']),
+            bands: {
+                selection: recipe.ui.bands.selection.split(', '),
+                panSharpen: recipe.ui.bands.panSharpen
+            }
+        }
     }
 }
 

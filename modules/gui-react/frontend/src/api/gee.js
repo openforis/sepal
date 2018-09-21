@@ -1,12 +1,10 @@
-import {SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {get$, post$, postJson$} from 'http-client'
 import {map} from 'rxjs/operators'
-import {msg} from 'translate'
 import moment from 'moment'
 
 export default {
-    preview$: (recipe) =>
-        postJson$('/api/gee/preview', transformRecipeForPreview(recipe), {retries: 0}),
+    preview$: ({recipe, ...params}) =>
+        postJson$('/api/gee/preview', {recipe, ...params}, {retries: 0}),
     sceneAreas$: ({aoi, source}) =>
         get$('/api/gee/sceneareas?' + transformQueryForSceneAreas(aoi, source)).pipe(
             map(e =>
@@ -61,56 +59,10 @@ export default {
                 return scenesBySceneArea
             }
             )
-        ),
-    retrieveMosaic: (recipe) =>
-        postJson$('/api/tasks', transformRecipeForRetrieval(recipe))
-            .subscribe(),
-    retrieveClassification: (recipe) =>
-        postJson$('/api/tasks', transformRecipeForRetrieval(recipe))
-            .subscribe()
+        )
 }
 
 const DATE_FORMAT = 'YYYY-MM-DD'
-
-const transformRecipeForPreview = (recipe) => {
-    const sceneIds = []
-    if (recipe.model.sceneSelectionOptions.type === SceneSelectionType.SELECT)
-        Object.keys(recipe.model.scenes).forEach(sceneAreaId => recipe.model.scenes[sceneAreaId].forEach(scene => sceneIds.push(scene.id)))
-    return {
-        aoi: transformAoi(recipe.model.aoi),
-        dates: recipe.model.dates,
-        dataSet: sourcesToDataSet(recipe.model.sources),
-        sensors: toSensors(recipe.model.sources),
-        targetDayOfYearWeight: recipe.model.compositeOptions.dayOfYearPercentile / 100,
-        shadowTolerance: 1 - recipe.model.compositeOptions.shadowPercentile / 100,
-        hazeTolerance: 1 - recipe.model.compositeOptions.hazePercentile / 100,
-        greennessWeight: recipe.model.compositeOptions.ndviPercentile / 100,
-        bands: recipe.model.bands,
-        panSharpening: !!recipe.model.panSharpen,
-        surfaceReflectance: recipe.model.compositeOptions.corrections.includes('SR'),
-        medianComposite: recipe.model.compositeOptions.compose === 'MEDIAN',
-        brdfCorrect: recipe.model.compositeOptions.corrections.includes('BRDF'),
-        maskClouds: recipe.model.compositeOptions.mask.includes('CLOUDS'),
-        maskSnow: recipe.model.compositeOptions.mask.includes('SNOW'),
-        sceneIds: sceneIds,
-        type: recipe.model.sceneSelectionOptions.type === SceneSelectionType.ALL ? 'automatic' : 'manual'
-    }
-}
-
-const transformRecipeForRetrieval = (recipe) => {
-    const name = recipe.title || recipe.placeholder
-    const destination = recipe.ui.retrieveOptions.destination
-    const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', destination], {name})
-    return {
-        'operation': `sepal.image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
-        'params':
-            {
-                title: taskTitle,
-                description: name,
-                image: transformRecipeForPreview(recipe)
-            }
-    }
-}
 
 const transformOldSceneToNew = (sceneAreaId, dates, {sceneId, sensor, acquisitionDate, cloudCover, browseUrl}) => ({
     id: sceneId,
@@ -123,7 +75,8 @@ const transformOldSceneToNew = (sceneAreaId, dates, {sceneId, sensor, acquisitio
 })
 
 const transformQueryForSceneAreas = (aoi, source) =>
-    `aoi=${JSON.stringify(transformAoi(aoi))}&dataSet=${sourceToDataSet(source)}`
+    // `aoi=${JSON.stringify(transformAoi(aoi))}&dataSet=${sourceToDataSet(source)}`
+    `aoi=${JSON.stringify(aoi)}&dataSet=${sourceToDataSet(source)}` // TODO: Send this as JSON body
 
 const transformQueryForScenesInSceneArea = ({dates, sources}) =>
     'dataSet=' + sourceToDataSet(Object.keys(sources)[0])
@@ -151,25 +104,6 @@ const daysFromTarget = (dateString, dates) => {
 
     const min = Math.min(...diffs.map(Math.abs))
     return diffs.find(diff => Math.abs(diff) === min)
-}
-
-const transformAoi = (aoi) => {
-    switch (aoi.type) {
-    case 'FUSION_TABLE':
-        return {
-            type: 'fusionTable',
-            id: aoi.id,
-            keyColumn: aoi.keyColumn,
-            key: aoi.key
-        }
-    case 'POLYGON':
-        return {
-            type: 'polygon',
-            path: aoi.path
-        }
-    default:
-        throw new Error('Invalid AOI type: ', aoi)
-    }
 }
 
 const toSensors = (sources) =>

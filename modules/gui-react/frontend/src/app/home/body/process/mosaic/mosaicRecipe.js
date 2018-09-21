@@ -1,6 +1,8 @@
 import {RecipeState as ParentRecipeState, recipePath} from '../recipe'
 import {isDataSetInDateRange, isSourceInDateRange} from 'sources'
+import {msg} from 'translate'
 import Labels from '../../../map/labels'
+import _ from 'lodash'
 import api from 'api'
 import globalActionBuilder from 'action-builder'
 import moment from 'moment'
@@ -10,8 +12,8 @@ const DATE_FORMAT = 'YYYY-MM-DD'
 export {recipePath}
 
 export const SceneSelectionType = Object.freeze({
-    ALL: 'all',
-    SELECT: 'select'
+    ALL: 'ALL',
+    SELECT: 'SELECT'
 })
 
 export const RecipeState = (recipeId) => {
@@ -101,14 +103,12 @@ export const RecipeActions = (id) => {
         },
         setBands(bands) {
             return setAll('SET_BANDS', {
-                'ui.bands.selection': bands,
-                'model.bands': bands ? bands.split(',').map(band => band.trim()) : null
+                'ui.bands.selection': bands
             }, {bands})
         },
         setPanSharpen(enabled) {
             return setAll('SET_PAN_SHARPEN', {
-                'ui.bands.panSharpen': enabled,
-                'model.panSharpen': enabled
+                'ui.bands.panSharpen': enabled
             }, {enabled})
         },
         setModal(enabled) {
@@ -159,7 +159,7 @@ export const RecipeActions = (id) => {
                     'ui.retrieveState': 'SUBMITTED',
                     'ui.retrieveOptions': retrieveOptions,
                 })
-                .sideEffect(recipe => api.gee.retrieveMosaic(recipe))
+                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .build()
         },
         setRetrieveState(state) {
@@ -179,7 +179,7 @@ const initRecipe = (recipeState) => {
 
     actions.setLabelsShown(false).dispatch()
     actions.setSceneAreasShown(true).dispatch()
-    actions.setBands('RED, GREEN, BLUE').dispatch()
+    actions.setBands('red, green, blue').dispatch()
     actions.setAutoSelectSceneCount({min: 1, max: 99}).dispatch()
 
     const model = recipeState.model
@@ -218,6 +218,23 @@ const initRecipe = (recipeState) => {
             compose: 'MEDOID'
         }
     }).dispatch()
+}
+
+const submitRetrieveRecipeTask = (recipe) => {
+    const name = recipe.title || recipe.placeholder
+    const destination = recipe.ui.retrieveOptions.destination
+    const taskTitle = msg(['process.mosaic.panel.retrieve.form.task', destination], {name})
+    const bands = recipe.ui.retrieveOptions.bands
+    const task = {
+        'operation': `sepal.image.${destination === 'SEPAL' ? 'sepal_export' : 'asset_export'}`,
+        'params':
+            {
+                title: taskTitle,
+                description: name,
+                image: {recipe: _.omit(recipe, ['ui']), bands: {selection: bands}}
+            }
+    }
+    return api.tasks.submit$(task).subscribe()
 }
 
 export const inDateRange = (date, dates) => {

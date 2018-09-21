@@ -29,8 +29,8 @@ class Aoi:
         :rtype: Aoi
         """
         type = {
-            'polygon': Polygon,
-            'fusionTable': FusionTable,
+            'POLYGON': Polygon,
+            'FUSION_TABLE': FusionTable,
         }[spec['type']]
         return type(spec)
 
@@ -61,7 +61,7 @@ class Aoi:
 
     def geometry(self):
         """Gets the ee.Geometry of this Aoi.
-    
+
         :return: The ee.Geometry
         :rtype: ee.Geometry
         """

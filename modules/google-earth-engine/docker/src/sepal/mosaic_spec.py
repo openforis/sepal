@@ -12,28 +12,31 @@ from mosaic import Mosaic
 class MosaicSpec(ImageSpec):
     def __init__(self, spec):
         super(MosaicSpec, self).__init__()
-        dates = spec['dates']
+        recipe = spec['recipe']
+        model = recipe['model']
+        dates = model['dates']
+        bands = spec.get('bands', {})
         self.spec = spec
-        self.aoi = Aoi.create(spec['aoi'])
+        self.aoi = Aoi.create(model['aoi'])
         self.target_date = parse_date(dates['targetDate'])
         self.season_start = parse_date(dates['seasonStart'])
         self.season_end = parse_date(dates['seasonEnd'])
         self.years_before = int(dates['yearsBefore'])
         self.years_after = int(dates['yearsAfter'])
         self.target_day = day_of_year(parse_date(dates['targetDate']))
-        self.target_day_weight = _to_float(spec, 'targetDayOfYearWeight', 0)
-        self.shadow_tolerance = _to_float(spec, 'shadowTolerance', 1)
-        self.haze_tolerance = _to_float(spec, 'hazeTolerance', 0.05)
-        self.greenness_weight = _to_float(spec, 'greennessWeight', 0)
-        self.bands = _bands_by_band_combo.get(', '.join(spec.get('bands', [])), [])
-        self.median_composite = spec.get('median_composite', False)
-        self.mask_clouds = spec.get('maskClouds', False)
-        self.mask_snow = spec.get('maskSnow', False)
-        self.brdf_correct = bool(spec.get('brdfCorrect', False))
         self.from_date = add_years(parse_date(dates['seasonStart']), - int(dates['yearsBefore']))
         self.to_date = add_years(parse_date(dates['seasonEnd']), int(dates['yearsAfter']))
-        self.surface_reflectance = bool(spec.get('surfaceReflectance', False))
-        self.pan_sharpen = bool(spec.get('panSharpening', False))
+        self.target_day_weight = self._filter('DAY_OF_YEAR')
+        self.shadow_tolerance = 1 - self._filter('SHADOW')
+        self.haze_tolerance = 1 - self._filter('HAZE')
+        self.greenness_weight = self._filter('NDVI')
+        self.bands = bands.get('selection', [])
+        self.median_composite = model['compositeOptions']['compose'] == 'MEDIAN'
+        self.mask_clouds = 'CLOUDS' in model['compositeOptions']['mask']
+        self.mask_snow = 'SNOW' in model['compositeOptions']['mask']
+        self.brdf_correct = 'BRDF' in model['compositeOptions']['corrections']
+        self.surface_reflectance = 'SR' in model['compositeOptions']['corrections']
+        self.pan_sharpen = bool(bands.get('panSharpen', False))
 
     def _viz_params(self):
         viz_by_band = _sr_viz_by_bands if self.surface_reflectance else _toa_viz_by_bands
@@ -64,18 +67,12 @@ class MosaicSpec(ImageSpec):
     def _data_sets(self):
         raise AssertionError('Method in subclass expected to have been invoked')
 
+    def _filter(self, type):
+        filters_of_type = [filter for filter in self.spec['recipe']['model']['compositeOptions']['filters'] if
+                           filter['type'] == type]
+        filter = filters_of_type[0] if len(filters_of_type) else None
+        return _to_float(filter, 'percentile', 0) / 100
 
-_bands_by_band_combo = {
-    'RED, GREEN, BLUE': ['red', 'green', 'blue'],
-    'NIR, RED, GREEN': ['nir', 'red', 'green'],
-    'NIR, SWIR1, RED': ['nir', 'swir1', 'red'],
-    'SWIR2, NIR, RED': ['swir2', 'nir', 'red'],
-    'SWIR2, SWIR1, RED': ['swir2', 'swir1', 'red'],
-    'SWIR2, NIR, GREEN': ['swir2', 'nir', 'green'],
-    'UNIX_TIME_DAYS': ['unixTimeDays'],
-    'DAY_OF_YEAR': ['dayOfYear'],
-    'DAYS_FROM_TARGET': ['daysFromTarget']
-}
 
 _toa_viz_by_bands = {
     'red, green, blue': lambda params: {
@@ -183,6 +180,8 @@ def _to_int(spec, key, default):
 
 
 def _get(default, key, spec):
+    if not spec:
+        return 0
     value = spec.get(key, default)
     if value == None or value == '':
         value = default

@@ -40,7 +40,7 @@ class LandsatMosaicSpec(MosaicSpec):
 class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
     def __init__(self, spec):
         super(LandsatAutomaticMosaicSpec, self).__init__(spec)
-        self.sensors = spec['sensors']
+        self.sensors = spec['recipe']['model']['sources'].values()[0]
 
     def _data_sets(self):
         image_filter = ee.Filter.And(
@@ -82,7 +82,7 @@ class LandsatAutomaticMosaicSpec(LandsatMosaicSpec):
 class LandsatManualMosaicSpec(LandsatMosaicSpec):
     def __init__(self, spec):
         super(LandsatManualMosaicSpec, self).__init__(spec)
-        self.sceneIds = spec['sceneIds']
+        self.sceneIds = [scene['id'] for sublist in spec['recipe']['model']['scenes'].values() for scene in sublist]
 
         def acquisition(scene):
             date = datetime.strptime(scene[9:16], '%Y%j')

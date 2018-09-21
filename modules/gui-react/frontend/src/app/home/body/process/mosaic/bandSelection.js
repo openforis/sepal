@@ -15,15 +15,7 @@ const fields = {
 const mapStateToProps = (state, ownProps) => {
     const recipeId = ownProps.recipeId
     const recipeState = RecipeState(recipeId)
-    let values = recipeState('ui.bands')
-    if (!values) {
-        values = bandsAndPanSharpenToValues({
-            bands: recipeState('model.bands'),
-            panSharpen: recipeState('model.panSharpen')
-        })
-        RecipeActions(recipeId).setBands(values.selection).dispatch()
-        RecipeActions(recipeId).setPanSharpen(values.panSharpen).dispatch()
-    }
+    let values = recipeState('ui.bands') || {}
     const compositeOptions = recipeState('model.compositeOptions')
     return {
         source: recipeState.source(),
@@ -39,20 +31,20 @@ class BandSelection extends React.Component {
         {
             label: msg('process.mosaic.bands.combinations'),
             options: [
-                {value: 'RED, GREEN, BLUE', label: 'RED, GREEN, BLUE'},
-                {value: 'NIR, RED, GREEN', label: 'NIR, RED, GREEN'},
-                {value: 'NIR, SWIR1, RED', label: 'NIR, SWIR1, RED'},
-                {value: 'SWIR2, NIR, RED', label: 'SWIR2, NIR, RED'},
-                {value: 'SWIR2, SWIR1, RED', label: 'SWIR2, SWIR1, RED'},
-                {value: 'SWIR2, NIR, GREEN', label: 'SWIR2, NIR, GREEN'},
+                {value: 'red, green, blue', label: 'RED, GREEN, BLUE'},
+                {value: 'nir, red, green', label: 'NIR, RED, GREEN'},
+                {value: 'nir, swir1, red', label: 'NIR, SWIR1, RED'},
+                {value: 'swir2, nir, red', label: 'SWIR2, NIR, RED'},
+                {value: 'swir2, swir1, red', label: 'SWIR2, SWIR1, RED'},
+                {value: 'swir2, nir, green', label: 'SWIR2, NIR, GREEN'},
             ]
         },
         {
             label: msg('process.mosaic.bands.metadata'),
             options: [
-                {value: 'UNIX_TIME_DAYS', label: msg('bands.unixTimeDays')},
-                {value: 'DAY_OF_YEAR', label: msg('bands.dayOfYear')},
-                {value: 'DAYS_FROM_TARGET', label: msg('bands.daysFromTarget')}
+                {value: 'unixTimeDays', label: msg('bands.unixTimeDays')},
+                {value: 'dayOfYear', label: msg('bands.dayOfYear')},
+                {value: 'daysFromTarget', label: msg('bands.daysFromTarget')}
             ]
         }
     ]
@@ -73,7 +65,7 @@ class BandSelection extends React.Component {
         const {source, surfaceReflectance, median, inputs: {selection, panSharpen}} = this.props
         const canPanSharpen = source === 'LANDSAT'
             && !surfaceReflectance
-            && ['RED, GREEN, BLUE', 'NIR, RED, GREEN'].includes(selection.value)
+            && ['red, green, blue', 'nir, red, green'].includes(selection.value)
         const options = median
             ? this.options[0].options
             : this.options
