@@ -1,4 +1,5 @@
 import {connect, select} from 'store'
+import {msg} from 'translate'
 import IconSwitch from 'widget/iconSwitch'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -25,7 +26,7 @@ class MenuMode extends React.Component {
         const {className, floating} = this.props
         return (
             <div className={className}>
-                <Tooltip msg={floating ? 'home.sections.expand' : 'home.sections.collapse'} right>
+                <Tooltip msg={msg(floating ? 'home.sections.expand.tooltip' : 'home.sections.collapse.tooltip')} right>
                     <div className={styles.menuMode}>
                         <IconSwitch
                             className={styles.switch}

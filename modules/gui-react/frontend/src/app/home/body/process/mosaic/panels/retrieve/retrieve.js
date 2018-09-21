@@ -146,8 +146,8 @@ class Retrieve extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    statePath={recipePath(recipeId, 'ui')}
                     form={form}
+                    statePath={recipePath(recipeId, 'ui')}
                     isActionForm={true}
                     applyLabel={msg('process.mosaic.panel.retrieve.apply')}
                     onApply={values => this.recipeActions.retrieve(values).dispatch()}/>

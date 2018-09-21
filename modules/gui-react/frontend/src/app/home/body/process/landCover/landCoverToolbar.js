@@ -2,6 +2,7 @@ import {PanelButton, Toolbar, ToolbarButton} from 'widget/toolbar'
 import {PanelWizard} from 'widget/panel'
 import {RecipeState, createComposites, createLandCoverMap, recipePath} from './landCoverRecipe'
 import {connect} from 'store'
+import {msg} from 'translate'
 import Aoi from '../mosaic/panels/aoi/aoi'
 import CompositeOptions from './compositeOptions'
 import Period from './period'
@@ -38,14 +39,14 @@ class LandCoverToolbar extends React.Component {
                     <ToolbarButton
                         name='createComposites'
                         icon={creatingComposites ? 'spinner' : 'cloud-download-alt'}
-                        tooltip='process.landCover.panel.createComposites'
+                        tooltip={msg('process.landCover.panel.createComposites.tooltip')}
                         // disabled={!initialized || creatingComposites}
                         disabled={!initialized}
                         onClick={() => this.createComposites()}/>
                     <ToolbarButton
                         name='createPrimitives'
                         icon={creatingPrimitives ? 'spinner' : 'cloud-download-alt'}
-                        tooltip='process.landCover.panel.createLandCoverMap'
+                        tooltip={msg('process.landCover.panel.createLandCoverMap.tooltip')}
                         disabled={!trainingData.classColumn}
                         // disabled={!creatingComposites || recipe.model.trainingData.classColumn}
                         onClick={() => this.createLandCoverMap()}/>
@@ -56,32 +57,32 @@ class LandCoverToolbar extends React.Component {
                     className={styles.bottom}>
                     <PanelButton
                         name='areaOfInterest'
-                        label='process.mosaic.panel.areaOfInterest.button'
-                        tooltip='process.mosaic.panel.areaOfInterest'>
+                        label={msg('process.mosaic.panel.areaOfInterest.button')}
+                        tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}>
                         <Aoi recipeId={recipeId}/>
                     </PanelButton>
                     <PanelButton
                         name='period'
-                        label='process.landCover.panel.period.button'
-                        tooltip='process.landCover.panel.period'>
+                        label={msg('process.landCover.panel.period.button')}
+                        tooltip={msg('process.landCover.panel.period.tooltip')}>
                         <Period recipeId={recipeId}/>
                     </PanelButton>
                     <PanelButton
                         name='typology'
-                        label='process.landCover.panel.typology.button'
-                        tooltip='process.landCover.panel.typology'>
+                        label={msg('process.landCover.panel.typology.button')}
+                        tooltip={msg('process.landCover.panel.typology.tooltip')}>
                         <Typology recipeId={recipeId}/>
                     </PanelButton>
                     <PanelButton
                         name='compositeOptions'
-                        label='process.landCover.panel.compositeOptions.button'
-                        tooltip='process.landCover.panel.compositeOptions'>
+                        label={msg('process.landCover.panel.compositeOptions.button')}
+                        tooltip={msg('process.landCover.panel.compositeOptions.tooltip')}>
                         <CompositeOptions recipeId={recipeId}/>
                     </PanelButton>
                     <PanelButton
                         name='trainingData'
-                        label='process.landCover.panel.trainingData.button'
-                        tooltip='process.landCover.panel.trainingData'>
+                        label={msg('process.landCover.panel.trainingData.button')}
+                        tooltip={msg('process.landCover.panel.trainingData.tooltip')}>
                         <TrainingData recipeId={recipeId}/>
                     </PanelButton>
                 </Toolbar>

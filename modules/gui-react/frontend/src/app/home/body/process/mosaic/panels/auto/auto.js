@@ -49,15 +49,14 @@ class Auto extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    statePath={recipePath(recipeId, 'ui')}
                     form={form}
+                    statePath={recipePath(recipeId, 'ui')}
                     isActionForm={true}
                     applyLabel={msg('process.mosaic.panel.auto.form.selectScenes')}
                     onApply={(sceneCount) => this.recipeActions.autoSelectScenes(sceneCount).dispatch()}/>
             </Panel>
         )
     }
-
 
     renderContent() {
         const {inputs: {min, max}} = this.props

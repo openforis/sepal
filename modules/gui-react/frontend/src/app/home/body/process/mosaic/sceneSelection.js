@@ -60,8 +60,8 @@ class SceneSelection extends React.Component {
                     </div>
 
                     <PanelButtons
-                        statePath={recipePath(recipeId, 'ui')}
                         form={form}
+                        statePath={recipePath(recipeId, 'ui')}
                         modalOnDirty={false}
                         onApply={({selectedScenes}) => this.onApply(selectedScenes)}
                         onCancel={() => this.deselectSceneArea()}/>

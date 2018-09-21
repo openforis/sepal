@@ -107,8 +107,8 @@ class Aoi extends React.Component {
                 <PanelSections inputs={inputs} selected={inputs.section} sections={sections}/>
 
                 <PanelButtons
-                    statePath={recipePath(recipeId, 'ui')}
                     form={form}
+                    statePath={recipePath(recipeId, 'ui')}
                     onApply={(values) => this.onApply(values)}/>
             </Panel>
         )

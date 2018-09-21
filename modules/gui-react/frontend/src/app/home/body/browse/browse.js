@@ -323,17 +323,17 @@ class Browse extends React.Component {
                         })}
                     </span>
                 )}
-                <Tooltip msg='browse.controls.download' bottom disabled={!oneFileSelected}>
+                <Tooltip msg={msg('browse.controls.download.tooltip')} bottom disabled={!oneFileSelected}>
                     <IconButton icon='download'
                         onClick={this.downloadSelected.bind(this)}
                         disabled={!oneFileSelected}/>
                 </Tooltip>
-                <Tooltip msg='browse.controls.remove' bottom disabled={nothingSelected}>
+                <Tooltip msg={msg('browse.controls.remove.tooltip')} bottom disabled={nothingSelected}>
                     <HoldButton icon='trash-alt'
                         onClickHold={this.removeSelected.bind(this)}
                         disabled={nothingSelected}/>
                 </Tooltip>
-                <Tooltip msg='browse.controls.clearSelection' bottom disabled={nothingSelected}>
+                <Tooltip msg={msg('browse.controls.clearSelection.tooltip')} bottom disabled={nothingSelected}>
                     <IconButton icon='times'
                         onClick={this.clearSelection.bind(this)}
                         disabled={nothingSelected}

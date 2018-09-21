@@ -2,6 +2,7 @@ import {PanelButton, Toolbar} from 'widget/toolbar'
 import {PanelWizard} from 'widget/panel'
 import {RecipeState, recipePath} from './classificationRecipe'
 import {connect} from 'store'
+import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Retrieve from './retrieve/retrieve'
@@ -31,7 +32,7 @@ class ClassificationToolbar extends React.Component {
                     <PanelButton
                         name='retrieve'
                         icon='cloud-download-alt'
-                        tooltip='process.classification.panel.retrieve'
+                        tooltip={msg('process.classification.panel.retrieve.tooltip')}
                         disabled={!initialized}>
                         <Retrieve recipeId={recipeId}/>
                     </PanelButton>
@@ -42,15 +43,15 @@ class ClassificationToolbar extends React.Component {
                     className={styles.bottom}>
                     <PanelButton
                         name='mosaic'
-                        label='process.classification.panel.source.button'
-                        tooltip='process.classification.panel.source'>
+                        label={msg('process.classification.panel.source.button')}
+                        tooltip={msg('process.classification.panel.source.tooltip')}>
                         <Source recipeId={recipeId}/>
                     </PanelButton>
 
                     <PanelButton
                         name='trainingData'
-                        label='process.classification.panel.trainingData.button'
-                        tooltip='process.classification.panel.trainingData'>
+                        label={msg('process.classification.panel.trainingData.button')}
+                        tooltip={msg('process.classification.panel.trainingData.tooltip')}>
                         <TrainingData recipeId={recipeId}/>
                     </PanelButton>
                 </Toolbar>

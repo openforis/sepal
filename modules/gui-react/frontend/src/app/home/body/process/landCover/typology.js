@@ -28,7 +28,6 @@ class Typology extends React.Component {
         this.recipeActions = RecipeActions(recipeId)
     }
 
-
     render() {
         const {recipeId, form} = this.props
         return (
@@ -42,8 +41,8 @@ class Typology extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    statePath={recipePath(recipeId, 'ui')}
                     form={form}
+                    statePath={recipePath(recipeId, 'ui')}
                     onApply={values => this.recipeActions.setTypology({
                         values,
                         model: valuesToModel(values)

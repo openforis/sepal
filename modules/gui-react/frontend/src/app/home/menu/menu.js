@@ -1,6 +1,7 @@
 import {Link, isPathInLocation} from 'route'
 import {connect} from 'store'
 import {isFloating} from './menuMode'
+import {msg} from 'translate'
 import {quitApp, requestedApps} from 'apps'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
@@ -52,7 +53,7 @@ const SectionLink = ({name, icon}) => {
     const activeClass = isPathInLocation(linkPath) ? styles.active : null
     return (
         <Link to={linkPath} onMouseDown={(e) => e.preventDefault()}>
-            <Tooltip msg={'home.sections.' + name} right>
+            <Tooltip msg={msg(`home.sections.${name}.tooltip`)} right>
                 <button className={[`${styles[name]}`, activeClass].join(' ')}>
                     <Icon name={icon}/>
                 </button>
@@ -75,7 +76,7 @@ const AppLink = ({app: {path, label, alt}}) => {
                 <Icon name='times'/>
             </div>
             <Link to={linkPath} onMouseDown={(e) => e.preventDefault()}>
-                <Tooltip rawMsg={label || alt} right>
+                <Tooltip msg={label || alt} right>
                     <button className={activeClass}>
                         <Icon name='cubes'/>
                     </button>

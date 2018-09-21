@@ -125,8 +125,8 @@ class Composite extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    statePath={recipePath(recipeId, 'ui')}
                     form={form}
+                    statePath={recipePath(recipeId, 'ui')}
                     onApply={values => this.recipeActions.setCompositeOptions({
                         values,
                         model: valuesToModel(values)

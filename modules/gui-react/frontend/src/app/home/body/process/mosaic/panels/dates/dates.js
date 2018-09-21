@@ -125,8 +125,8 @@ class Dates extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    statePath={recipePath(recipeId, 'ui')}
                     form={form}
+                    statePath={recipePath(recipeId, 'ui')}
                     onApply={values => this.recipeActions.setDates({values, model: valuesToModel(values)}).dispatch()}
                     additionalButtons={[{
                         key: 'advanced',
@@ -220,7 +220,6 @@ Dates.propTypes = {
 }
 
 export default form({fields, mapStateToProps})(Dates)
-
 
 const valuesToModel = (values) => {
     const DATE_FORMAT = 'YYYY-MM-DD'

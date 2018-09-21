@@ -29,8 +29,8 @@ class ClearSelectedScenes extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    statePath={recipePath(recipeId, 'ui')}
                     form={form}
+                    statePath={recipePath(recipeId, 'ui')}
                     isActionForm={true}
                     applyLabel={msg('process.mosaic.panel.clearSelectedScenes.apply')}
                     onApply={() => this.recipeActions.setSelectedScenes({}).dispatch()}/>

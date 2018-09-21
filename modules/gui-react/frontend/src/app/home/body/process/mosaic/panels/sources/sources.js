@@ -116,8 +116,8 @@ class Sources extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    statePath={recipePath(recipeId, 'ui')}
                     form={form}
+                    statePath={recipePath(recipeId, 'ui')}
                     onApply={values => this.recipeActions.setSources({
                         values,
                         model: valuesToModel(values)
@@ -142,7 +142,6 @@ Sources.propTypes = {
 }
 
 export default form({fields, mapStateToProps})(Sources)
-
 
 const valuesToModel = (values) => {
     return {[values.source]: values.dataSets ? [...values.dataSets] : null}

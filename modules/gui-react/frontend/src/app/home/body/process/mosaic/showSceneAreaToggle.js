@@ -1,6 +1,7 @@
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {ToolbarButton} from 'widget/toolbar'
 import {connect} from 'store'
+import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -27,7 +28,7 @@ class ShowSceneAreaToggle extends React.Component {
                 disabled={!sceneAreasLoaded}
                 onClick={() => this.recipeActions.setSceneAreasShown(!sceneAreasShown).dispatch()}
                 icon={'th'}
-                tooltip={`process.mosaic.mapToolbar.sceneAreas.${sceneAreasShown ? 'hide' : 'show'}`}/>
+                tooltip={msg(`process.mosaic.mapToolbar.sceneAreas.${sceneAreasShown ? 'hide' : 'show'}.tooltip`)}/>
         )
     }
 }

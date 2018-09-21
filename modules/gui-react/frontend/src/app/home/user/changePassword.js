@@ -85,8 +85,8 @@ class ChangePassword extends React.Component {
                     </div>
                 </PanelContent>
                 <PanelButtons
-                    isActionForm={true}
                     form={form}
+                    isActionForm={true}
                     statePath='userPassword'
                     onApply={(userPasswords) => this.changePassword(userPasswords)}
                     onCancel={() => this.cancel()}/>

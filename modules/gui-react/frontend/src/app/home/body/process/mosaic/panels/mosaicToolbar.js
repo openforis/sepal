@@ -2,6 +2,7 @@ import {PanelButton, Toolbar} from 'widget/toolbar'
 import {PanelWizard} from 'widget/panel'
 import {RecipeState, SceneSelectionType, recipePath} from '../mosaicRecipe'
 import {connect} from 'store'
+import {msg} from 'translate'
 import Aoi from 'app/home/body/process/mosaic/panels/aoi/aoi'
 import Auto from 'app/home/body/process/mosaic/panels/auto/auto'
 import ClearSelectedScenes from 'app/home/body/process/mosaic/panels/clearSelectedScenes/clearSelectedScenes'
@@ -43,21 +44,21 @@ class MosaicToolbar extends React.Component {
                     <PanelButton
                         name='auto'
                         icon='magic'
-                        tooltip='process.mosaic.panel.auto'
+                        tooltip={msg('process.mosaic.panel.auto.tooltip')}
                         disabled={!sceneAreasLoaded}>
                         <Auto recipeId={recipeId}/>
                     </PanelButton>
                     <PanelButton
                         name='clearSelectedScenes'
                         icon='trash'
-                        tooltip='process.mosaic.panel.clearSelectedScenes'
+                        tooltip={msg('process.mosaic.panel.clearSelectedScenes.tooltip')}
                         disabled={!scenesSelected}>
                         <ClearSelectedScenes recipeId={recipeId}/>
                     </PanelButton>
                     <PanelButton
                         name='retrieve'
                         icon='cloud-download-alt'
-                        tooltip='process.mosaic.panel.retrieve'
+                        tooltip={msg('process.mosaic.panel.retrieve.tooltip')}
                         disabled={!initialized || (sceneSelectionType === SceneSelectionType.SELECT && !scenesSelected)}>
                         <Retrieve recipeId={recipeId}/>
                     </PanelButton>
@@ -65,32 +66,32 @@ class MosaicToolbar extends React.Component {
                 <Toolbar statePath={this.statePath} vertical bottom right panel className={styles.bottom}>
                     <PanelButton
                         name='areaOfInterest'
-                        label='process.mosaic.panel.areaOfInterest.button'
-                        tooltip='process.mosaic.panel.areaOfInterest'>
+                        label={msg('process.mosaic.panel.areaOfInterest.button')}
+                        tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}>
                         <Aoi recipeId={recipeId}/>
                     </PanelButton>
                     <PanelButton
                         name='dates'
-                        label='process.mosaic.panel.dates.button'
-                        tooltip='process.mosaic.panel.dates'>
+                        label={msg('process.mosaic.panel.dates.button')}
+                        tooltip={msg('process.mosaic.panel.dates.tooltip')}>
                         <Dates recipeId={recipeId}/>
                     </PanelButton>
                     <PanelButton
                         name='sources'
-                        label='process.mosaic.panel.sources.button'
-                        tooltip='process.mosaic.panel.sources'>
+                        label={msg('process.mosaic.panel.sources.button')}
+                        tooltip={msg('process.mosaic.panel.sources.tooltip')}>
                         <Sources recipeId={recipeId}/>
                     </PanelButton>
                     <PanelButton
                         name='scenes'
-                        label='process.mosaic.panel.scenes.button'
-                        tooltip='process.mosaic.panel.scenes'>
+                        label={msg('process.mosaic.panel.scenes.button')}
+                        tooltip={msg('process.mosaic.panel.scenes.tooltip')}>
                         <Scenes recipeId={recipeId}/>
                     </PanelButton>
                     <PanelButton
                         name='composite'
-                        label='process.mosaic.panel.composite.button'
-                        tooltip='process.mosaic.panel.composite'>
+                        label={msg('process.mosaic.panel.composite.button')}
+                        tooltip={msg('process.mosaic.panel.composite.tooltip')}>
                         <Composite recipeId={recipeId}/>
                     </PanelButton>
                 </Toolbar>

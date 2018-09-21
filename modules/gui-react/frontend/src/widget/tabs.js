@@ -129,7 +129,6 @@ Tabs.propTypes = {
 
 export default connect(mapStateToProps)(Tabs)
 
-
 class Tab extends React.Component {
     constructor(props) {
         super(props)
@@ -185,7 +184,7 @@ class Tab extends React.Component {
         let {id, title, placeholder, selected, statePath} = this.props
         title = this.state.title || title
         return (
-            <Tooltip rawMsg={title || placeholder} bottom delay={1}>
+            <Tooltip msg={title || placeholder} bottom delay={1}>
                 <div
                     className={[styles.tab, selected && styles.selected].join(' ')}
                     onClick={() => selectTab(id, statePath)}>

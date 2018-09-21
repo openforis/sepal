@@ -1,4 +1,5 @@
 import {connect} from 'store'
+import {msg} from 'translate'
 import ChangePassword from './changePassword'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -41,7 +42,7 @@ class UserProfile extends React.Component {
     renderButton() {
         const {className, username, modal} = this.props
         return (
-            <Tooltip msg='home.sections.user.profile' top disabled={modal}>
+            <Tooltip msg={msg('home.sections.user.profile.tooltip')} top disabled={modal}>
                 <button className={className} onClick={() => this.buttonHandler()}>
                     {username}
                 </button>

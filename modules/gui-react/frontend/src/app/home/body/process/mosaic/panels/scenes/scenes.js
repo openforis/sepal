@@ -107,8 +107,8 @@ class Scenes extends React.Component {
                 </PanelContent>
 
                 <PanelButtons
-                    statePath={recipePath(recipeId, 'ui')}
                     form={form}
+                    statePath={recipePath(recipeId, 'ui')}
                     onApply={values => this.recipeActions.setSceneSelectionOptions({
                         values,
                         model: valuesToModel(values)

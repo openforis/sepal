@@ -1,6 +1,5 @@
 import './tooltip.css'
 import 'rc-tooltip/assets/bootstrap.css'
-import {msg as message} from 'translate'
 import PropTypes from 'prop-types'
 import RcTooltip from 'rc-tooltip'
 import React from 'react'
@@ -20,11 +19,11 @@ export default class Tooltip extends React.Component {
     }
 
     render() {
-        const {msg, rawMsg, disabled = false, delay = .5, children, ...otherProps} = this.props
+        const {msg, disabled = false, delay = .5, children, ...otherProps} = this.props
         return (
             !disabled ? (
                 <RcTooltip
-                    overlay={msg ? message([msg, 'tooltip']) : rawMsg}
+                    overlay={msg}
                     placement={this.placement()}
                     mouseEnterDelay={delay}
                     trigger={['hover']}
@@ -36,6 +35,7 @@ export default class Tooltip extends React.Component {
 }
 
 Tooltip.propTypes = {
+    msg: PropTypes.any.isRequired,
     bottom: PropTypes.bool,
     bottomLeft: PropTypes.bool,
     bottomRight: PropTypes.bool,
@@ -43,8 +43,6 @@ Tooltip.propTypes = {
     delay: PropTypes.number,
     disabled: PropTypes.bool,
     left: PropTypes.bool,
-    msg: PropTypes.any,
-    rawMsg: PropTypes.string,
     right: PropTypes.bool,
     top: PropTypes.bool,
     topLeft: PropTypes.bool,
