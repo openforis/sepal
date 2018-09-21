@@ -71,15 +71,11 @@ Toolbar.propTypes = {
     vertical: PropTypes.any
 }
 
-
 Toolbar = connect(mapStateToProps)(Toolbar)
 export {Toolbar}
 
-
 export class ToolbarButton extends React.Component {
     render() {
-        const renderLabel = (msg) => <Msg id={msg}/>
-        const renderIcon = (icon) => <Icon name={icon}/>
         const {disabled, selected, icon, label, tooltip, className, onClick} = this.props
         return (
             <Context.Consumer>
@@ -90,7 +86,7 @@ export class ToolbarButton extends React.Component {
                             className={[selected && !disabled ? styles.selected : null, className].join(' ')}
                             onClick={onClick}
                             disabled={disabled}>
-                            {icon ? renderIcon(icon) : renderLabel(label)}
+                            {icon ? <Icon name={icon}/> : label}
                         </button>
                     </Tooltip>
                 }
