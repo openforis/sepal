@@ -30,6 +30,7 @@
     "react-media": "1.8.0",
     "react-notification-system": "0.2.17",
     "react-notification-system-redux": "1.2.0",
+    "react-number-format": "^3.6.0",
     "react-redux": "5.0.7",
     "react-resize-detector": "3.0.1",
     "react-router-dom": "4.3.1",
