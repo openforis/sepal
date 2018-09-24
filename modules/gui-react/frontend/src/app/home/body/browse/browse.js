@@ -254,7 +254,7 @@ class Browse extends React.Component {
         const isImage = (path) => ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(path))
         return (
             <span className={styles.icon}>
-                <Icon name={isImage(path) ? 'file-image-o' : 'file'}/>
+                <Icon name={isImage(path) ? 'file-image' : 'file'}/>
             </span>
         )
     }
