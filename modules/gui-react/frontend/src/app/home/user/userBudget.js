@@ -11,7 +11,7 @@ import styles from './userBudget.module.css'
 
 const mapStateToProps = (state) => {
     return {
-        userReport: state.user && state.user.currentUserReport || {},
+        userReport: (state.user && state.user.currentUserReport) || {},
         panel: state.ui && state.ui.userBudget,
         modal: state.ui && state.ui.modal
     }

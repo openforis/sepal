@@ -64,27 +64,27 @@ class ClassificationPreview extends React.Component {
         return !!recipe.ui.selectedPanel
     }
 
-    // onError() {
-    //     this.setState(prevState => ({
-    //         ...prevState,
-    //         error:
-    //             <div>
-    //                 <Msg id='process.mosaic.preview.error'/>
-    //                 <div className={styles.retry}>
-    //                     <a
-    //                         href=''
-    //                         onClick={(e) => {
-    //                             e.preventDefault()
-    //                             this.reload()
-    //                         }}>
-    //                         <Icon name='sync'/>
-    //                         <Msg id='button.retry'/>
-    //                     </a>
-    //                 </div>
-    //
-    //             </div>
-    //     }))
-    // }
+    onError() {
+        this.setState(prevState => ({
+            ...prevState,
+            error:
+                <div>
+                    <Msg id='process.mosaic.preview.error'/>
+                    <div className={styles.retry}>
+                        <a
+                            href=''
+                            onClick={(e) => {
+                                e.preventDefault()
+                                this.reload()
+                            }}>
+                            <Icon name='sync'/>
+                            <Msg id='button.retry'/>
+                        </a>
+                    </div>
+
+                </div>
+        }))
+    }
 }
 
 ClassificationPreview.propTypes = {

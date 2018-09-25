@@ -3,6 +3,7 @@ import {switchMap, take, takeUntil} from 'rxjs/operators'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import styles from './holdButton.module.css'
 
 export class HoldButton extends React.Component {
@@ -19,7 +20,7 @@ export class HoldButton extends React.Component {
                 className={[styles.hold, className].join(' ')}
                 tabIndex={tabIndex}
                 onClick={e => e.stopPropagation()}
-                {...props}>
+                {..._.omit(props, ['onClickHold'])}>
                 <Icon name={icon}/>
             </button>
         )

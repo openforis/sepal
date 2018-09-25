@@ -155,8 +155,3 @@ const SelectedBands = ({recipeActions, selectedOption, canPanSharpen, panSharpen
 }
 
 export default form({fields, mapStateToProps})(BandSelection)
-
-const bandsAndPanSharpenToValues = ({bands, panSharpen}) => ({
-    selection: bands.join(', '),
-    panSharpen: panSharpen
-})
