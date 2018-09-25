@@ -4,10 +4,10 @@ import {takeUntil} from 'rxjs/operators'
 import {toPathList} from 'collections'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
+import actionBuilder from 'action-builder'
 import asyncActionBuilder from 'async-action-builder'
 import guid from 'guid'
-import actionBuilder from 'action-builder'
-
 
 let storeInstance = null
 const storeInitListeners = []
@@ -39,13 +39,27 @@ export function select(path) {
     }, state())
 }
 
+function includeDispatchingProp(mapStateToProps) {
+    return (state, ownProps) => {
+        return {
+            ...mapStateToProps(state, ownProps),
+            actions: state.actions || {}
+        }
+    }
+}
+
 export function connect(mapStateToProps) {
     mapStateToProps = mapStateToProps ? mapStateToProps : () => ({})
+    
     return (WrappedComponent) => {
         const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component'
-        WrappedComponent = connectToRedux(includeDispatchingProp(mapStateToProps))(WrappedComponent)
-        WrappedComponent.prototype.shouldComponentUpdate = (nextProps) => {
-            return nextProps.enabled !== false
+        WrappedComponent = connectToRedux(includeDispatchingProp(mapStateToProps), null, null, {
+            areStatePropsEqual: _.isEqual
+        })(WrappedComponent)
+
+        var shouldComponentUpdate = WrappedComponent.prototype.shouldComponentUpdate
+        WrappedComponent.prototype.shouldComponentUpdate = function(nextProps, nextState) {
+            return nextProps.enabled !== false && shouldComponentUpdate.call(this, nextProps, nextState)
         }
 
         class ConnectedComponent extends React.Component {
@@ -54,6 +68,10 @@ export function connect(mapStateToProps) {
                 this.id = `${displayName}:${guid()}`
                 this.componentWillUnmount$ = new Subject()
                 this.asyncActionBuilder = this.asyncActionBuilder.bind(this)
+                this.action = this.action.bind(this)
+                this.setDisableListener = this.setDisableListener.bind(this)
+                this.setEnableListener = this.setEnableListener.bind(this)
+                this.stream = stream(this)
             }
 
             componentWillUnmount() {
@@ -65,13 +83,33 @@ export function connect(mapStateToProps) {
                 return asyncActionBuilder(type, action$, this)
             }
 
+            action(type) {
+                const actions = select('actions') || {}
+                const componentActions = actions[this.id] || {}
+                const undispatched = !componentActions[type]
+                const dispatching = componentActions[type] === 'DISPATCHING'
+                const completed = componentActions[type] === 'COMPLETED'
+                const failed = componentActions[type] === 'FAILED'
+                const dispatched = completed || failed
+                return {undispatched, dispatching, completed, failed, dispatched}
+            }
+
+            setDisableListener(listener) {
+                this.onDisable = listener
+            }
+            
+            setEnableListener(listener) {
+                this.onEnable = listener
+            }
+
             render() {
                 return React.createElement(WrappedComponent, {
                     ...this.props,
                     asyncActionBuilder: this.asyncActionBuilder,
-                    stream: stream(this),
-                    onEnable: (listener) => this.onEnable = listener,
-                    onDisable: (listener) => this.onDisable = listener,
+                    action: this.action,
+                    stream: this.stream,
+                    onEnable: this.setEnableListener,
+                    onDisable: this.setDisableListener,
                     componentId: this.id,
                     componentWillUnmount$: this.componentWillUnmount$
                 })
@@ -103,25 +141,6 @@ export function connect(mapStateToProps) {
     }
 }
 
-function includeDispatchingProp(mapStateToProps) {
-    return (state, ownProps) => {
-        const actions = state.actions || {}
-        const componentActions = actions[ownProps.componentId] || {}
-        const action = (type) => {
-            const undispatched = !componentActions[type]
-            const dispatching = componentActions[type] === 'DISPATCHING'
-            const completed = componentActions[type] === 'COMPLETED'
-            const failed = componentActions[type] === 'FAILED'
-            const dispatched = completed || failed
-            return {undispatched, dispatching, completed, failed, dispatched}
-        }
-        return {
-            ...mapStateToProps(state, ownProps),
-            action
-        }
-    }
-}
-
 export function dispatchable(action) {
     return {
         ...action,
@@ -148,15 +167,11 @@ Enabled.propTypes = {
 }
 
 const stream = (component) => {
-    return (name, stream$, ...subscriber) => {
+    return (name, stream$, onSuccess, onError, onComplete) => {
         const componentPath = `stream.${component.id}`
         const statePath = `${componentPath}.${name}`
         if (!stream$)
             return select(statePath)
-
-        const transformed$ = stream$.pipe(
-            takeUntil(component.componentWillUnmount$)
-        )
 
         const setStatus = (status) =>
             actionBuilder('SET_STREAM_STATUS', {statePath, status})
@@ -173,13 +188,21 @@ const stream = (component) => {
                 .dispatch()
         })
 
-        transformed$.subscribe(
-            null,
-            () => unmounted || setStatus('FAILED'),
-            () => unmounted || setStatus('COMPLETED')
-        )
-
-        if (subscriber.length > 0)
-            transformed$.subscribe(...subscriber)
+        stream$
+            .pipe(
+                takeUntil(component.componentWillUnmount$)
+            ).subscribe(
+                next => {
+                    onSuccess && onSuccess(next)
+                },
+                error => {
+                    unmounted || setStatus('FAILED')
+                    onError && onError(error)
+                },
+                () => {
+                    unmounted || setStatus('COMPLETED')
+                    onComplete && onComplete()
+                }
+            )
     }
 }
