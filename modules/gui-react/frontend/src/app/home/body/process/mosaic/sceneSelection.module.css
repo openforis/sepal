@@ -96,6 +96,10 @@
     border-top: 1px solid #514F4E;
 }
 
+.details > * {
+    white-space: nowrap;
+}
+
 .dataSet {
     grid-area: dataSet;
 }
