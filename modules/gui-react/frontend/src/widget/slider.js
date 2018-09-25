@@ -12,33 +12,78 @@ import styles from './slider.module.css'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 const scale = (value, {from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min
+const normalize = (value, range) => scale(value, {from: range, to: {min: 0, max: 1}})
 const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
 
-class Draggable extends React.Component {
-    state = {
-        previewPosition: null,
-        clickTargetOffset: null
-    }
-    handle = React.createRef()
-    clickTarget = React.createRef()
-    subscriptions = []
-
-    ticksPosition(ticks) {
-        return Array.isArray(ticks) ? ticks : range(0, ticks + 1).map(i => i / ticks)
-    }
-
-    renderAxis(ticks) {
-        return (
-            <div className={styles.axis}>
-                {this.ticksPosition(ticks).map(position => this.renderTick(position))}
-            </div>
-        )
+class SliderContainer extends React.Component {
+    ticks() {
+        const {ticks = 10} = this.props
+        const equidistantTicks = (ticks) => range(0, ticks).map(i => i / (ticks - 1))
+        return Array.isArray(ticks)
+            ? ticks.map(tick => normalize(tick, {min: this.props.minValue, max: this.props.maxValue}))
+            : equidistantTicks(Math.max(2, ticks))
     }
 
     renderTick(position) {
         const cursor = Math.trunc(position * this.props.width)
         return (
             <div key={position} className={styles.tick} style={{left: `${cursor}px`}}/>
+        )
+    }
+
+    renderAxis(ticks) {
+        return (
+            <div className={styles.axis}>
+                {ticks.map(position => this.renderTick(position))}
+            </div>
+        )
+    }
+
+    render() {
+        const {input, minValue, maxValue, width} = this.props
+        const ticks = this.ticks()
+        return (
+            <div>
+                {this.renderAxis(ticks)}
+                <SliderDynamics
+                    input={input}
+                    minValue={minValue}
+                    maxValue={maxValue}
+                    width={width}
+                    ticks={ticks}/>
+            </div>
+        )
+    }
+}
+
+SliderContainer.propTypes = {
+    input: PropTypes.object,
+    maxValue: PropTypes.number,
+    minValue: PropTypes.number,
+    ticks: PropTypes.any,
+    width: PropTypes.number
+}
+
+class SliderDynamics extends React.Component {
+    state = {
+        position: null,
+        previewPosition: null,
+        clickTargetOffset: null,
+        dragging: null,
+        inhibitInput: null
+    }
+    clickTarget = React.createRef()
+    handle = React.createRef()
+    subscriptions = []
+
+    renderRanges() {
+        const {position} = this.state
+        const {width} = this.props
+        return (
+            <React.Fragment>
+                <div className={[styles.range, styles.leftRange].join(' ')} style={{right: `${width - position}px`}}/>
+                <div className={[styles.range, styles.rightRange].join(' ')} style={{left: `${position}px`}}/>
+            </React.Fragment>
         )
     }
 
@@ -50,118 +95,42 @@ class Draggable extends React.Component {
         ) : null
     }
 
-    render() {
-        const position = this.state.position
-        const width = this.props.width
+    renderClickTarget() {
         return (
-            <div>
-                {this.renderAxis(this.props.ticks)}
-                <div className={[styles.range, styles.leftRange].join(' ')} style={{right: `${width - position}px`}}/>
-                <div className={[styles.range, styles.rightRange].join(' ')} style={{left: `${position}px`}}/>
-                {this.renderPreview()}
-                <div className={styles.clickTarget} ref={this.clickTarget}/>
-                <div className={[styles.cursor, styles.handle, this.state.dragging ? styles.dragging : null].join(' ')}
-                    ref={this.handle}
-                    style={{left: `${position}px`}}/>
-                <ViewportResizeDetector onChange={() => this.setClickTargetBoundingRect()}/>
-                {this.state.dragging
-                    ? (
-                        <Portal>
-                            <div className={styles.cursorOverlay}/>
-                        </Portal>
-                    ) : null
-                }
-
-            </div>
+            <div className={styles.clickTarget} ref={this.clickTarget}/>
         )
     }
 
-    componentDidUpdate(prevProps) {
-        if (!this.state.inhibitInput && !_.isEqual(prevProps, this.props))
-            this.setHandlePosition(this.toPosition(this.props.input.value))
+    renderHandle() {
+        const {position, dragging} = this.state
+        return (
+            <div className={[styles.cursor, styles.handle, dragging ? styles.dragging : null].join(' ')}
+                ref={this.handle}
+                style={{left: `${position}px`}}/>
+        )
     }
 
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => subscription.unsubscribe())
+    renderOverlay() {
+        const {dragging} = this.state
+        return dragging
+            ? (
+                <Portal>
+                    <div className={styles.cursorOverlay}/>
+                </Portal>
+            ) : null
     }
 
-    toPosition(value) {
-        return scale(value, {
-            from: {min: this.props.minValue, max: this.props.maxValue},
-            to: {min: 0, max: this.props.width}
-        })
-    }
-
-    toValue(position) {
-        return scale(position, {
-            from: {min: 0, max: this.props.width},
-            to: {min: this.props.minValue, max: this.props.maxValue}
-        })
-    }
-
-    clampPosition(position) {
-        return clamp(position, {
-            min: 0,
-            max: this.props.width
-        })
-    }
-
-    snapPosition(value) {
-        if (Array.isArray(this.props.ticks)) {
-            const closest = _(this.props.ticks)
-                .map(tick => tick * this.props.width)
-                .map(position => ({position, distance: Math.abs(position - value)}))
-                .sortBy('distance')
-                .head()
-            return closest.position
-        }
-        if (Number.isInteger(this.props.ticks)) {
-            const stepSize = this.props.width / this.props.ticks
-            const step = Math.round(value / stepSize)
-            return step * stepSize
-        }
-        return value
-    }
-
-    setClickTargetBoundingRect() {
-        const clickTargetOffset = Math.trunc(this.clickTarget.current.getBoundingClientRect().left)
-        if (this.state.clickTargetOffset !== clickTargetOffset) {
-            this.setState(prevState => ({
-                ...prevState,
-                clickTargetOffset
-            }))
-        }
-    }
-
-    setHandlePosition(position) {
-        if (position >= 0) {
-            position = Math.round(position)
-            if (position !== this.state.position) {
-                this.setState(prevState => ({...prevState, position}))
-                this.props.input.set(
-                    Math.round(
-                        this.toValue(
-                            this.snapPosition(position)
-                        )
-                    )
-                )
-            }
-        }
-    }
-
-    setPreviewPosition(previewPosition) {
-        this.setState(prevState => ({
-            ...prevState,
-            previewPosition
-        }))
-    }
-
-    setInhibitInput(inhibitInput) {
-        this.setState(prevState => ({...prevState, inhibitInput}))
-    }
-
-    setDragging(dragging) {
-        this.setState(prevState => ({...prevState, dragging}))
+    render() {
+        return (
+            <React.Fragment>
+                {this.renderRanges()}
+                {this.renderPreview()}
+                {this.renderClickTarget()}
+                {this.renderHandle()}
+                {this.renderOverlay()}
+                <ViewportResizeDetector onChange={() => this.setClickTargetOffset()}/>
+            </React.Fragment>
+        )
     }
 
     componentDidMount() {
@@ -261,18 +230,97 @@ class Draggable extends React.Component {
             )
         )
     }
+
+    componentWillUnmount() {
+        this.subscriptions.forEach(subscription => subscription.unsubscribe())
+    }
+
+    componentDidUpdate(prevProps) {
+        if (!this.state.inhibitInput && !_.isEqual(prevProps, this.props))
+            this.setHandlePosition(this.toPosition(this.props.input.value))
+    }
+
+    toPosition(value) {
+        return scale(value, {
+            from: {min: this.props.minValue, max: this.props.maxValue},
+            to: {min: 0, max: this.props.width}
+        })
+    }
+
+    toValue(position) {
+        return scale(position, {
+            from: {min: 0, max: this.props.width},
+            to: {min: this.props.minValue, max: this.props.maxValue}
+        })
+    }
+
+    clampPosition(position) {
+        return clamp(position, {
+            min: 0,
+            max: this.props.width
+        })
+    }
+
+    snapPosition(value) {
+        const closest = _(this.props.ticks)
+            .map(tick => tick * this.props.width)
+            .map(position => ({position, distance: Math.abs(position - value)}))
+            .sortBy('distance')
+            .head()
+        return closest.position
+    }
+
+    setHandlePosition(position) {
+        if (position >= 0) {
+            position = Math.round(position)
+            if (position !== this.state.position) {
+                this.setState(prevState => ({...prevState, position}))
+                this.props.input.set(
+                    Math.round(this.toValue(this.snapPosition(position)))
+                )
+            }
+        }
+    }
+
+    setPreviewPosition(previewPosition) {
+        this.setState(prevState => ({
+            ...prevState,
+            previewPosition
+        }))
+    }
+
+    setInhibitInput(inhibitInput) {
+        this.setState(prevState => ({...prevState, inhibitInput}))
+    }
+
+    setDragging(dragging) {
+        this.setState(prevState => ({...prevState, dragging}))
+    }
+
+    setClickTargetOffset() {
+        const clickTargetOffset = Math.trunc(this.clickTarget.current.getBoundingClientRect().left)
+        if (this.state.clickTargetOffset !== clickTargetOffset) {
+            this.setState(prevState => ({
+                ...prevState,
+                clickTargetOffset
+            }))
+        }
+    }
+
 }
 
-Draggable.propTypes = {
+SliderDynamics.propTypes = {
     input: PropTypes.object,
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
-    ticks: PropTypes.any,
+    ticks: PropTypes.array,
     width: PropTypes.number
 }
 
 export default class Slider extends React.Component {
-    state = {}
+    state = {
+        width: null
+    }
 
     render() {
         const {input, minValue, maxValue, ticks} = this.props
@@ -284,7 +332,7 @@ export default class Slider extends React.Component {
                         onResize={width => {
                             return this.setState(prevState => ({...prevState, width}))
                         }}/>
-                    <Draggable
+                    <SliderContainer
                         input={input}
                         minValue={minValue !== undefined ? minValue : 0}
                         maxValue={maxValue !== undefined ? maxValue : 100}
