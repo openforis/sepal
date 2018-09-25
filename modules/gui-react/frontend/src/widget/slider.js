@@ -17,24 +17,31 @@ const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * 
 
 class SliderContainer extends React.Component {
     ticks() {
-        const {ticks = 10} = this.props
+        const {ticks = 10, width} = this.props
+        
         const equidistantTicks = (ticks) => range(0, ticks).map(i => i / (ticks - 1))
-        return Array.isArray(ticks)
-            ? ticks.map(tick => normalize(tick, {min: this.props.minValue, max: this.props.maxValue}))
-            : equidistantTicks(Math.max(2, ticks))
+        
+        return (Array.isArray(ticks) ? ticks : equidistantTicks(Math.max(2, ticks)))
+            .map(tick => [
+                width * normalize(tick, {min: this.props.minValue, max: this.props.maxValue}),
+                tick
+            ])
     }
 
-    renderTick(position) {
-        const cursor = Math.trunc(position * this.props.width)
+    renderTick([position, value]) {
+        const left = `${Math.trunc(position)}px`
         return (
-            <div key={position} className={styles.tick} style={{left: `${cursor}px`}}/>
+            <React.Fragment key={value}>
+                <div className={styles.tick} style={{left}}></div>
+                <div className={styles.label} style={{left}}>{value}</div>
+            </React.Fragment>
         )
     }
 
     renderAxis(ticks) {
         return (
             <div className={styles.axis}>
-                {ticks.map(position => this.renderTick(position))}
+                {ticks.map(tick => this.renderTick(tick))}
             </div>
         )
     }
@@ -263,8 +270,7 @@ class SliderDynamics extends React.Component {
 
     snapPosition(value) {
         const closest = _(this.props.ticks)
-            .map(tick => tick * this.props.width)
-            .map(position => ({position, distance: Math.abs(position - value)}))
+            .map(([position]) => ({position, distance: Math.abs(position - value)}))
             .sortBy('distance')
             .head()
         return closest.position

@@ -1,5 +1,5 @@
 .container {
-    --container-height: 3rem;
+    --container-height: 3.5rem;
     --slider-size: 1px;
     --handle-height: 1.5rem;
     --handle-width: 1.5rem;
@@ -42,6 +42,14 @@
     width: 1px;
     top: calc(-1* var(--tick-half-height));
     bottom: calc(-1* var(--tick-half-height));
+}
+
+.label {
+    position: absolute;
+    width: 2rem;
+    text-align: center;
+    margin-left: -1rem;
+    margin-top: .7rem;
 }
 
 .cursor {
