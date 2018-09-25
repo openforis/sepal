@@ -1,5 +1,5 @@
 .container {
-    --container-height: 3.5rem;
+    --container-height: 3rem;
     --slider-size: 1px;
     --handle-height: 1.5rem;
     --handle-width: 1.5rem;
@@ -8,11 +8,9 @@
     --tick-half-height: .4rem;
     width: 100%;
     height: var(--container-height);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    overflow: hidden;
+    margin-top: 1rem;
     padding: 0 calc(var(--handle-width) / 2);
+    /* overflow: hidden; */
 }
 
 .slider {
