@@ -136,7 +136,7 @@ class DataSearchEndpoint {
                 response.contentType = "application/json"
                 def clientQuery = new JsonSlurper().parseText(params.required('query', String))
                 def query = new SceneQuery(
-                    sceneAreaId: params.required(sceneAreaId),
+                    sceneAreaId: params.required('sceneAreaId'),
                     source: clientQuery.sources.keySet().first(),
                     dataSets: clientQuery.sources.values().flatten(),
                     fromDate: subtractFromDate(clientQuery.dates.seasonStart, clientQuery.dates.yearsBefore as int, YEARS),
