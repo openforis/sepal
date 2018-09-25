@@ -8,7 +8,7 @@ class Aoi:
             'id_column': 'name',
             'coordinates': lambda sceneArea: sceneArea[0]['coordinates'][0]
         },
-        'SENTINEL2': {
+        'SENTINEL_2': {
             'table_id': 'ft:1z3OSnCDFQqUHIXlU_hwVc5h4ZrDP2VdQNNfG3RZB',
             'id_column': 'name',
             'coordinates': lambda sceneArea: sceneArea[0]['geometries'][1]['coordinates'][0]
@@ -52,7 +52,7 @@ class Aoi:
             .getInfo()
         scene_areas = [
             {
-                'sceneAreaId': scene_area[1],
+                'id': scene_area[1],
                 'polygon': map(lambda lnglat: list(reversed(lnglat)), table['coordinates'](scene_area)),
             }
             for scene_area in scene_area_table

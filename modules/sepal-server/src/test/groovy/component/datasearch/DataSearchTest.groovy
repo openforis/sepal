@@ -14,7 +14,6 @@ import org.openforis.sepal.user.GoogleTokens
 import org.openforis.sepal.user.User
 import spock.lang.Specification
 
-import static org.openforis.sepal.component.datasearch.api.DataSet.LANDSAT
 import static org.openforis.sepal.util.DateTime.parseDateString
 
 class DataSearchTest extends Specification {
@@ -48,7 +47,7 @@ class DataSearchTest extends Specification {
         when:
         def sceneAreas = component.submit(new FindSceneAreasForAoi(
                 sepalUser,
-                LANDSAT,
+                'LANDSAT',
                 new FusionTableShape(
                         tableName: SOME_FUSION_TABLE,
                         keyColumn: SOME_KEY_COLUMN,
@@ -97,7 +96,7 @@ class DataSearchTest extends Specification {
         updateSceneMetaData()
 
         then:
-        usgs.lastUpdateBySensor() == [(scene.sensorId): date]
+        usgs.lastUpdateBySensor() == [(scene.dataSet): date]
     }
 
     def 'When finding scenes from one scene area, scenes from other scene areas are excluded'() {
@@ -131,9 +130,9 @@ class DataSearchTest extends Specification {
 
         when:
         def sceneAreasBySceneAreas = component.submit(new FindBestScenes(
-                dataSet: LANDSAT,
+                source: LANDSAT,
                 sceneAreaIds: [SCENE_AREA_ID],
-                sensorIds: [scene.sensorId],
+                dataSets: [scene.dataSet],
                 fromDate: new Date(0),
                 toDate: new Date(),
                 targetDayOfYear: 1,
@@ -154,9 +153,9 @@ class DataSearchTest extends Specification {
 
         when:
         def scenesBySceneAreas = component.submit(new FindBestScenes(
-                dataSet: LANDSAT,
+                source: LANDSAT,
                 sceneAreaIds: [SCENE_AREA_ID],
-                sensorIds: [cloudFreeScene.sensorId],
+                dataSets: [cloudFreeScene.dataSet],
                 fromDate: new Date(0),
                 toDate: new Date(),
                 targetDayOfYear: 1,
@@ -179,9 +178,9 @@ class DataSearchTest extends Specification {
 
         when:
         def scenesBySceneAreas = component.submit(new FindBestScenes(
-                dataSet: LANDSAT,
+                source: LANDSAT,
                 sceneAreaIds: [SCENE_AREA_ID],
-                sensorIds: [cloudyScene.sensorId],
+                dataSets: [cloudyScene.dataSet],
                 fromDate: new Date(0),
                 toDate: new Date(),
                 targetDayOfYear: 1,
@@ -235,9 +234,9 @@ class DataSearchTest extends Specification {
             sceneAreaId) {
         return new SceneMetaData(
                 id: UUID.randomUUID() as String,
-                dataSet: LANDSAT,
+                source: 'LANDSAT',
                 sceneAreaId: sceneAreaId,
-                sensorId: 'LANDSAT_8',
+                dataSet: 'LANDSAT_8',
                 acquisitionDate: acquisitionDate,
                 cloudCover: cloudCover,
                 sunAzimuth: 123.4,
@@ -261,7 +260,7 @@ class FakeGateway implements DataSetMetadataGateway {
 
     void eachSceneUpdatedSince(Map<String, Date> lastUpdateBySensor, Closure callback) throws SceneMetaDataRetrievalFailed {
         this.lastUpdateBySensor = lastUpdateBySensor
-        def scenes = scenes.findAll { it.acquisitionDate > lastUpdateBySensor[it.sensorId] }
+        def scenes = scenes.findAll { it.acquisitionDate > lastUpdateBySensor[it.dataSet] }
         callback.call(scenes)
     }
 

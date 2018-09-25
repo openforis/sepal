@@ -1,25 +1,16 @@
 import {delete$, get$, post$} from 'http-client'
-import {gzip$} from 'gzip'
-import {map, switchMap} from 'rxjs/operators'
-import _ from 'lodash'
+import {map} from 'rxjs/operators'
 
 export default {
     loadAll$: () =>
         get$('/api/processing-recipes')
             .pipe(toResponse),
-    save$: (recipe) => {
-        const name = recipe.title || recipe.placeholder
-        return gzip$(_.omit(recipe, ['ui'])).pipe(
-            switchMap(contents =>
-                post$(`/api/processing-recipes/${recipe.id}`, {
-                    query: {type: recipe.type, name: name},
-                    body: contents,
-                    headers: {'Content-Type': 'application/octet-stream'}
-                })
-            ),
-            map(() => recipe)
-        )
-    },
+    save$: ({id, type, name, gzippedContents}) =>
+        post$(`/api/processing-recipes/${id}`, {
+            query: {type, name},
+            body: gzippedContents,
+            headers: {'Content-Type': 'application/octet-stream'}
+        }).pipe(toResponse),
     delete$: (recipeId) =>
         delete$(`/api/processing-recipes/${recipeId}`),
     load$: (recipeId) =>

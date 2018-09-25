@@ -1,21 +1,18 @@
 package org.openforis.sepal.component.datasearch.query
 
-import org.openforis.sepal.component.datasearch.api.DataSet
+
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.SceneMetaDataProvider
 import org.openforis.sepal.component.datasearch.api.SceneQuery
-import org.openforis.sepal.component.datasearch.internal.Scenes2
 import org.openforis.sepal.query.Query
 import org.openforis.sepal.query.QueryHandler
 import org.openforis.sepal.util.annotation.Data
 
-import static org.openforis.sepal.component.datasearch.api.DataSet.LANDSAT
-
 @Data
 class FindBestScenes implements Query<Map<String, List<SceneMetaData>>> {
-    DataSet dataSet
+    String source
     Collection<String> sceneAreaIds
-    Collection<String> sensorIds
+    Collection<String> dataSets
     Date fromDate
     Date toDate
     int targetDayOfYear
@@ -33,49 +30,25 @@ class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaDa
     }
 
     Map<String, List<SceneMetaData>> execute(FindBestScenes query) {
-        if (query.dataSet == LANDSAT)
+        if (query.source == 'LANDSAT')
             landsat(query)
         else
             sentinel2(query)
     }
-
-//    private Map<String, List<SceneMetaData>> sentinel2(FindBestScenes query) {
-//        def allScenes = [] as List<SceneMetaData>
-//        query.sceneAreaIds.each { sceneAreaId ->
-//            sceneMetaDataProvider.eachScene(
-//                    new SceneQuery(
-//                            dataSet: query.dataSet,
-//                            sceneAreaId: sceneAreaId,
-//                            sensorIds: query.sensorIds,
-//                            fromDate: query.fromDate,
-//                            toDate: query.toDate,
-//                            targetDayOfYear: query.targetDayOfYear),
-//                    query.targetDayOfYearWeight) {
-//                allScenes << it
-//                return true
-//            }
-//        }
-//
-//        return new Scenes2(0.05, allScenes).selectScenes(
-//                query.cloudCoverTarget,
-//                query.minScenes,
-//                query.maxScenes
-//        )
-//    }
 
     private Map<String, List<SceneMetaData>> sentinel2(FindBestScenes query) {
         query.sceneAreaIds.collectEntries { sceneAreaId ->
             def scenes = []
             def cloudCover = 1
             sceneMetaDataProvider.eachScene(
-                    new SceneQuery(
-                            dataSet: query.dataSet,
-                            sceneAreaId: sceneAreaId,
-                            sensorIds: query.sensorIds,
-                            fromDate: query.fromDate,
-                            toDate: query.toDate,
-                            targetDayOfYear: query.targetDayOfYear),
-                    query.targetDayOfYearWeight) { SceneMetaData scene ->
+                new SceneQuery(
+                    source: query.source,
+                    sceneAreaId: sceneAreaId,
+                    dataSets: query.dataSets,
+                    fromDate: query.fromDate,
+                    toDate: query.toDate,
+                    targetDayOfYear: query.targetDayOfYear),
+                query.targetDayOfYearWeight) { SceneMetaData scene ->
                 scenes << scene
                 cloudCover *= scene.cloudCover / 100
                 if (query.maxScenes <= scenes.size())
@@ -91,14 +64,14 @@ class FindBestScenesHandler implements QueryHandler<Map<String, List<SceneMetaDa
             def scenes = []
             def cloudCover = 1
             sceneMetaDataProvider.eachScene(
-                    new SceneQuery(
-                            dataSet: query.dataSet,
-                            sceneAreaId: sceneAreaId,
-                            sensorIds: query.sensorIds,
-                            fromDate: query.fromDate,
-                            toDate: query.toDate,
-                            targetDayOfYear: query.targetDayOfYear),
-                    query.targetDayOfYearWeight) { SceneMetaData scene ->
+                new SceneQuery(
+                    source: query.source,
+                    sceneAreaId: sceneAreaId,
+                    dataSets: query.dataSets,
+                    fromDate: query.fromDate,
+                    toDate: query.toDate,
+                    targetDayOfYear: query.targetDayOfYear),
+                query.targetDayOfYearWeight) { SceneMetaData scene ->
                 scenes << scene
                 cloudCover *= scene.cloudCover / 100
                 if (query.maxScenes <= scenes.size())

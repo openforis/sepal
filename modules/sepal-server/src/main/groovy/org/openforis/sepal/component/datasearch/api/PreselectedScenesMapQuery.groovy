@@ -4,7 +4,7 @@ import org.openforis.sepal.util.annotation.Data
 
 @Data
 class PreselectedScenesMapQuery {
-    DataSet dataSet
+    String source
     List<String> sceneIds
     Aoi aoi
     int targetDayOfYear

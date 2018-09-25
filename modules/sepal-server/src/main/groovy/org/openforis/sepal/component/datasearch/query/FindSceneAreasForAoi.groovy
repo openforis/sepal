@@ -1,6 +1,6 @@
 package org.openforis.sepal.component.datasearch.query
 
-import org.openforis.sepal.component.datasearch.api.DataSet
+
 import org.openforis.sepal.component.datasearch.api.SceneArea
 import org.openforis.sepal.component.datasearch.api.Aoi
 import org.openforis.sepal.component.datasearch.api.GoogleEarthEngineGateway
@@ -12,7 +12,7 @@ import org.openforis.sepal.util.annotation.Data
 @Data
 class FindSceneAreasForAoi implements Query<List<SceneArea>> {
     User user
-    DataSet dataSet
+    String source
     Aoi aoi
 }
 
@@ -24,6 +24,6 @@ class FindSceneAreasForAoiHandler implements QueryHandler<List<SceneArea>, FindS
     }
 
     List<SceneArea> execute(FindSceneAreasForAoi query) {
-        return sceneAreaProvider.findSceneAreasInAoi(query.dataSet, query.aoi, query.user)
+        return sceneAreaProvider.findSceneAreasInAoi(query.source, query.aoi, query.user)
     }
 }

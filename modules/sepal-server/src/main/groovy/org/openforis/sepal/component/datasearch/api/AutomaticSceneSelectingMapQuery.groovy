@@ -4,7 +4,7 @@ import org.openforis.sepal.util.annotation.Data
 
 @Data
 class AutomaticSceneSelectingMapQuery {
-    DataSet dataSet
+    String source
     Date fromDate
     Date toDate
     List<String> sensors

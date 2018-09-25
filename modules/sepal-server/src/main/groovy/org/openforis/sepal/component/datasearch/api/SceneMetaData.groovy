@@ -5,9 +5,9 @@ import org.openforis.sepal.util.annotation.ImmutableData
 @ImmutableData
 class SceneMetaData {
     String id
-    DataSet dataSet
+    String source
     String sceneAreaId
-    String sensorId
+    String dataSet
     Date acquisitionDate
     double cloudCover // In percentage
     double coverage // In percentage

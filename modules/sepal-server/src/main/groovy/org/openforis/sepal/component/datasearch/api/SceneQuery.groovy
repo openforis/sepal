@@ -1,16 +1,18 @@
 package org.openforis.sepal.component.datasearch.api
 
+
 import org.openforis.sepal.util.DateTime
 import org.openforis.sepal.util.annotation.ImmutableData
 
 @ImmutableData
 class SceneQuery {
-    DataSet dataSet
     String sceneAreaId
-    List<String> sensorIds
+    String source
+    Collection<String> dataSets
+    int targetDayOfYear
+    double targetDayOfYearWeight
     Date fromDate
     Date toDate
-    int targetDayOfYear
 
     int getSeasonStartDayOfYear() {
         DateTime.dayOfYearIgnoringLeapDay(fromDate)

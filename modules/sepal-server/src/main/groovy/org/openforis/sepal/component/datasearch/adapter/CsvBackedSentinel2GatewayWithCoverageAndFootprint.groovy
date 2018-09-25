@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
 
-import static org.openforis.sepal.component.datasearch.api.DataSet.SENTINEL2
-
 class CsvBackedSentinel2GatewayWithCoverageAndFootprint implements DataSetMetadataGateway {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private final File workingDir
@@ -25,44 +23,42 @@ class CsvBackedSentinel2GatewayWithCoverageAndFootprint implements DataSetMetada
     void eachSceneUpdatedSince(
             Map<String, Date> lastUpdateBySensor,
             Closure callback
-    ) throws DataSetMetadataGateway.SceneMetaDataRetrievalFailed {
-        Sensor.values().each { sensor ->
-            updatedSince(sensor, lastUpdateBySensor[sensor.name()], callback)
-        }
+    ) throws SceneMetaDataRetrievalFailed {
+        updatedSince(lastUpdateBySensor['SENTINEL_2'], callback)
     }
 
-    private void updatedSince(sensor, lastUpdate, Closure callback) {
+    private void updatedSince(lastUpdate, Closure callback) {
         def scenes = []
         readers.each { reader ->
             reader.eachLine {
-                def scene = toSceneMetaData(sensor, it)
+                def scene = toSceneMetaData(it)
                 if (scene && lastUpdate && scene.acquisitionDate < lastUpdate)
                     return true
                 if (scene)
                     scenes << scene
                 if (scenes.size() >= 10000) {
-                    LOG.info("Initializing scene meta-data: Providing batch of ${scenes.size()} scenes from $sensor")
+                    LOG.info("Initializing scene meta-data: Providing batch of ${scenes.size()} scenes")
                     callback.call(scenes)
                     scenes.clear()
                 }
             }
         }
         if (scenes) {
-            LOG.info("Initializing scene meta-data: Providing last ${scenes.size()} scenes from $sensor")
+            LOG.info("Initializing scene meta-data: Providing last ${scenes.size()} scenes")
             callback.call(scenes)
         }
     }
 
-    private SceneMetaData toSceneMetaData(sensor, data) {
+    private SceneMetaData toSceneMetaData(data) {
         try {
             if (isSceneIncluded(data)) {
                 def id = data['system:index'] as String
                 id = id.substring(id.indexOf('_') + 1)
                 return new SceneMetaData(
                         id: id,
-                        dataSet: SENTINEL2,
+                        source: 'SENTINEL_2',
                         sceneAreaId: id.substring(33),
-                        sensorId: sensor,
+                        dataSet: 'SENTINEL_2',
                         acquisitionDate: parseDate(id.substring(0, 15)),
                         cloudCover: data.CLOUDY_PIXEL_PERCENTAGE.toDouble(),
                         coverage: data.DATA_COVERAGE_PERCENTAGE.toDouble(),
@@ -120,9 +116,5 @@ class CsvBackedSentinel2GatewayWithCoverageAndFootprint implements DataSetMetada
         def dateFormat = new SimpleDateFormat('yyyyMMdd\'T\'HHmmss')
         dateFormat.timeZone = TimeZone.getTimeZone("GMT")
         dateFormat.parse(s)
-    }
-
-    private static enum Sensor {
-        SENTINEL2A
     }
 }

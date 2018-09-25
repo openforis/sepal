@@ -34,40 +34,40 @@ class ToImageMapHandler implements QueryHandler<Map, ToImageMap> {
 
     private Map toImageMap(AutomaticSceneSelectingMapQuery query) {
         return [
-                type                 : 'automatic',
-                dataSet              : query.dataSet.name(),
-                aoi                  : query.aoi.params,
-                targetDayOfYear      : query.targetDayOfYear,
-                targetDayOfYearWeight: query.targetDayOfYearWeight,
-                shadowTolerance      : query.shadowTolerance,
-                medianComposite      : query.medianComposite,
-                brdfCorrect          : query.brdfCorrect,
-                maskWater            : query.maskWater,
-                maskSnow             : query.maskSnow,
-                bands                : query.bands,
-                sensors              : query.sensors,
-                fromDate             : query.fromDate,
-                toDate               : query.toDate,
+            type                 : 'automatic',
+            source              : query.source,
+            aoi                  : query.aoi.params,
+            targetDayOfYear      : query.targetDayOfYear,
+            targetDayOfYearWeight: query.targetDayOfYearWeight,
+            shadowTolerance      : query.shadowTolerance,
+            medianComposite      : query.medianComposite,
+            brdfCorrect          : query.brdfCorrect,
+            maskWater            : query.maskWater,
+            maskSnow             : query.maskSnow,
+            bands                : query.bands,
+            sensors              : query.sensors,
+            fromDate             : query.fromDate,
+            toDate               : query.toDate,
         ]
     }
 
     private Map toImageMap(PreselectedScenesMapQuery query) {
         return [
-                type                 : 'manual',
-                dataSet              : query.dataSet.name(),
-                aoi                  : query.aoi.params,
-                targetDayOfYear      : query.targetDayOfYear,
-                targetDayOfYearWeight: query.targetDayOfYearWeight,
-                shadowTolerance      : query.shadowTolerance,
-                hazeTolerance        : query.hazeTolerance,
-                greennessWeight      : query.greennessWeight,
-                medianComposite      : query.medianComposite,
-                brdfCorrect          : query.brdfCorrect,
-                maskClouds           : query.maskClouds,
-                maskSnow             : query.maskSnow,
-                bands                : query.bands,
-                sceneIds             : query.sceneIds,
-                panSharpening        : query.panSharpening
+            type                 : 'manual',
+            source              : query.source,
+            aoi                  : query.aoi.params,
+            targetDayOfYear      : query.targetDayOfYear,
+            targetDayOfYearWeight: query.targetDayOfYearWeight,
+            shadowTolerance      : query.shadowTolerance,
+            hazeTolerance        : query.hazeTolerance,
+            greennessWeight      : query.greennessWeight,
+            medianComposite      : query.medianComposite,
+            brdfCorrect          : query.brdfCorrect,
+            maskClouds           : query.maskClouds,
+            maskSnow             : query.maskSnow,
+            bands                : query.bands,
+            sceneIds             : query.sceneIds,
+            panSharpening        : query.panSharpening
         ]
     }
 

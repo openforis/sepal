@@ -7,7 +7,7 @@ class FakeGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
     private final Map<Aoi, Collection<SceneArea>> sceneAreasByFusionTable = [:]
 
 
-    Collection<SceneArea> findSceneAreasInAoi(DataSet dataSet, Aoi aoi, User user) {
+    Collection<SceneArea> findSceneAreasInAoi(String dataSet, Aoi aoi, User user) {
         return sceneAreasByFusionTable[aoi]
     }
 

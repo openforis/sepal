@@ -160,7 +160,7 @@ saveToBackend$.pipe(
         gzip$(_.omit(recipe, ['ui']), {to: 'string'}).subscribe(revision =>
             saveRevisionToLocalStorage(recipe.id, revision)
         )
-        return api.recipe.save$(recipe)
+        return save$(recipe)
     })
 ).subscribe()
 
@@ -208,9 +208,18 @@ export const revertToRevision$ = (recipeId, revision) => {
                 .set(recipePath(selectedTabId), recipe)
                 .set('process.selectedTabId', recipeId)
                 .dispatch()
-            // console.log('saving', recipe)
-            api.recipe.save$(recipe).subscribe()
+            save$(recipe).subscribe()
             return recipe
         })
+    )
+}
+
+const save$ = (recipe) => {
+    const name = recipe.title || recipe.placeholder
+    return gzip$(_.omit(recipe, ['ui'])).pipe(
+        switchMap(gzippedContents =>
+            api.recipe.save$({id: recipe.id, type: recipe.type, name, gzippedContents})
+        ),
+        map(() => recipe)
     )
 }

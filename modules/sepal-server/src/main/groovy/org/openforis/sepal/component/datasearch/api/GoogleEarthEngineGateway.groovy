@@ -4,7 +4,7 @@ import org.openforis.sepal.user.User
 
 interface GoogleEarthEngineGateway {
 
-    Collection<SceneArea> findSceneAreasInAoi(DataSet dataSet, Aoi aoi, User user)
+    Collection<SceneArea> findSceneAreasInAoi(String dataSet, Aoi aoi, User user)
 
     MapLayer preview(Map image, User user)
 }

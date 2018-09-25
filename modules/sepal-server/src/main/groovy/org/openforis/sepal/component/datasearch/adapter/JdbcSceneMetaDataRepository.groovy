@@ -1,7 +1,6 @@
 package org.openforis.sepal.component.datasearch.adapter
 
 import groovy.sql.Sql
-import org.openforis.sepal.component.datasearch.api.DataSet
 import org.openforis.sepal.component.datasearch.api.SceneMetaData
 import org.openforis.sepal.component.datasearch.api.SceneMetaDataRepository
 import org.openforis.sepal.component.datasearch.api.SceneQuery
@@ -28,8 +27,8 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
 
     private void update(SceneMetaData scene, Sql sql) {
         def params = scene.with {
-            [sensorId, sceneAreaId, acquisitionDate, DateTime.dayOfYearIgnoringLeapDay(acquisitionDate), cloudCover,
-             sunAzimuth, sunElevation, browseUrl.toString(), updateTime, dataSet.metaDataSource, id]
+            [dataSet, sceneAreaId, acquisitionDate, DateTime.dayOfYearIgnoringLeapDay(acquisitionDate), cloudCover,
+             sunAzimuth, sunElevation, browseUrl.toString(), updateTime, source, id]
         }
 
         def rowsUpdated = sql.executeUpdate('''
@@ -54,16 +53,39 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
     }
 
     List<SceneMetaData> findScenesInSceneArea(SceneQuery query) {
-        return sql.rows("""
-                SELECT id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, 
-                       sun_azimuth, sun_elevation, browse_url, update_time
-                FROM scene_meta_data
-                WHERE scene_area_id = ?
-                AND acquisition_date >= ? AND acquisition_date <= ? AND acquisition_date <= ?
-                AND ${dayOfYearConstraint(query)}""",
-                [query.sceneAreaId, query.fromDate, query.toDate, latestAcquisitionDate(),
-                 query.seasonStartDayOfYear, query.seasonEndDayOfYear])
-                .collect { toSceneMetaData(it) }
+        def scenes = []
+        sql.eachRow("""
+            SELECT id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, 
+                   sun_azimuth, sun_elevation, browse_url, update_time,
+                   
+                    (1 - :targetDayOfYearWeight) * cloud_cover / 100.0 + :targetDayOfYearWeight *
+                    LEAST(
+                        ABS(day_of_year - :targetDayOfYear),
+                        365 - ABS(day_of_year - :targetDayOfYear)) / 182.0 as sort_weight,
+                        
+                    LEAST(
+                        ABS(day_of_year - :targetDayOfYear),
+                        365 - ABS(day_of_year - :targetDayOfYear)) days_from_target_date
+                        
+            FROM scene_meta_data
+            WHERE scene_area_id = :sceneAreaId
+            AND acquisition_date >= :fromDate AND acquisition_date <= :toDate 
+            AND acquisition_date <= :latestAcquisitionDate
+            AND ${namedDayOfYearConstraint(query)}
+            ORDER BY sort_weight, cloud_cover, days_from_target_date""" as String,
+            [
+                sceneAreaId: query.sceneAreaId,
+                fromDate: query.fromDate,
+                toDate: query.toDate,
+                latestAcquisitionDate: latestAcquisitionDate(),
+                seasonStartDayOfYear: query.seasonStartDayOfYear,
+                seasonEndDayOfYear: query.seasonEndDayOfYear,
+                targetDayOfYear: query.targetDayOfYear,
+                targetDayOfYearWeight: query.targetDayOfYearWeight
+            ]) {
+            scenes << this.toSceneMetaData(it)
+        }
+        return scenes
     }
 
     void eachScene(SceneQuery query, double targetDayOfYearWeight, Closure<Boolean> callback) {
@@ -80,17 +102,16 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                     sun_azimuth, sun_elevation, browse_url, update_time
                 FROM scene_meta_data
                 WHERE scene_area_id  = ?
-                AND sensor_id in (${placeholders(query.sensorIds)})
+                AND sensor_id in (${placeholders(query.dataSets)})
                 AND acquisition_date >= ? AND acquisition_date <= ? AND acquisition_date <= ?
-                AND ${dayOfYearConstraint(query)}
+                AND ${positionalDayOfYearConstraint(query)}
                 ORDER BY sort_weight, cloud_cover, days_from_target_date""" as String
-
 
         sql.withTransaction { Connection conn ->
             def ps = conn.prepareStatement(q)
             def i = 0
             ps.setString(++i, query.sceneAreaId)
-            query.sensorIds.each {
+            query.dataSets.each {
                 ps.setString(++i, it)
             }
             ps.setDate(++i, new java.sql.Date(query.fromDate.time))
@@ -102,9 +123,9 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
             while (rs.next()) {
                 def scene = new SceneMetaData(
                         id: rs.getString('id'),
-                        dataSet: query.dataSet,
+                        source: query.source,
                         sceneAreaId: rs.getString('scene_area_id'),
-                        sensorId: rs.getString('sensor_id'),
+                        dataSet: rs.getString('sensor_id'),
                         acquisitionDate: new Date(rs.getTimestamp('acquisition_date').time as long),
                         cloudCover: rs.getDouble('cloud_cover'),
                         sunAzimuth: rs.getDouble('sun_azimuth'),
@@ -120,7 +141,7 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
         }
     }
 
-    Map<String, Date> lastUpdateBySensor(DataSet dataSet) {
+    Map<String, Date> lastUpdateBySensor(String source) {
         def lastUpdates = [:]
         def sql = new Sql(connectionManager.dataSource)
         sql.withTransaction {
@@ -128,25 +149,31 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
                     SELECT sensor_id, MAX(update_time) last_update
                     FROM scene_meta_data
                     WHERE meta_data_source = ?
-                    GROUP BY sensor_id''', [dataSet.metaDataSource]).each {
+                    GROUP BY sensor_id''', [source]).each {
                 lastUpdates[it.sensor_id] = new Date(it.last_update.time as long)
             }
         }
         return lastUpdates
     }
 
-    private String dayOfYearConstraint(SceneQuery query) {
+    private String namedDayOfYearConstraint(SceneQuery query) {
+        return query.seasonStartDayOfYear < query.seasonEndDayOfYear ?
+                "(day_of_year >= :seasonStartDayOfYear AND day_of_year < :seasonEndDayOfYear)" :
+                "(day_of_year >= :seasonStartDayOfYear OR day_of_year < :seasonEndDayOfYear)"
+    }
+
+    private String positionalDayOfYearConstraint(SceneQuery query) {
         return query.seasonStartDayOfYear < query.seasonEndDayOfYear ?
                 "(day_of_year >= ? AND day_of_year < ?)" :
                 "(day_of_year >= ? OR day_of_year < ?)"
     }
 
-    private SceneMetaData toSceneMetaData(Map row) {
+    SceneMetaData toSceneMetaData(row) {
         new SceneMetaData(
                 id: row.id,
-                dataSet: DataSet.fromMetaDataSource(row.meta_data_source),
+                source: row.meta_data_source,
                 sceneAreaId: row.scene_area_id,
-                sensorId: row.sensor_id,
+                dataSet: row.sensor_id,
                 acquisitionDate: new Date(row.acquisition_date.time as long),
                 cloudCover: row.cloud_cover,
                 sunAzimuth: row.sun_azimuth,

@@ -7,7 +7,6 @@ import org.openforis.sepal.component.datasearch.api.SceneMetaDataRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.component.datasearch.api.DataSet.SENTINEL2
 
 class UpdateSentinel2SceneMetaData extends AbstractCommand<Void> {
 }
@@ -24,7 +23,7 @@ class UpdateSentinel2SceneMetaDataHandler implements CommandHandler<Void, Update
 
     Void execute(UpdateSentinel2SceneMetaData command) {
         LOG.info('Updating Sentinel 2 scene meta-data')
-        sentinel2.eachSceneUpdatedSince(sceneMetaDataRepository.lastUpdateBySensor(SENTINEL2)) {
+        sentinel2.eachSceneUpdatedSince(sceneMetaDataRepository.lastUpdateBySensor('SENTINEL_2')) {
             LOG.info("Storing Sentinel 2 scene meta-data for ${it.size()} scenes")
             sceneMetaDataRepository.updateAll(it)
         }

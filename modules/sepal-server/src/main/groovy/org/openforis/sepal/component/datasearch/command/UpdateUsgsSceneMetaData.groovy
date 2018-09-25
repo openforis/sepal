@@ -7,7 +7,6 @@ import org.openforis.sepal.component.datasearch.api.SceneMetaDataRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.openforis.sepal.component.datasearch.api.DataSet.LANDSAT
 
 class UpdateUsgsSceneMetaData extends AbstractCommand<Void> {
 }
@@ -24,7 +23,7 @@ class UpdateUsgsSceneMetaDataHandler implements CommandHandler<Void, UpdateUsgsS
 
     Void execute(UpdateUsgsSceneMetaData command) {
         LOG.info('Updating USGS scene meta-data')
-        usgs.eachSceneUpdatedSince(sceneMetaDataRepository.lastUpdateBySensor(LANDSAT)) {
+        usgs.eachSceneUpdatedSince(sceneMetaDataRepository.lastUpdateBySensor('LANDSAT')) {
             LOG.info("Storing USGS scene meta-data for ${it.size()} scenes")
             sceneMetaDataRepository.updateAll(it)
         }

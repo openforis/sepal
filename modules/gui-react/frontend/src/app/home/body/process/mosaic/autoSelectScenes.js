@@ -31,7 +31,15 @@ class AutoSelectScenes extends React.Component {
     }
 
     autoSelectScenes$() {
-        return api.gee.autoSelectScenes$(this.props.recipe).pipe(
+        const recipe = this.props.recipe
+        return api.gee.autoSelectScenes$({
+            sceneAreaIds: recipe.ui.sceneAreas.map(sceneArea => sceneArea.id),
+            sources: recipe.model.sources,
+            dates: recipe.model.dates,
+            sceneSelectionOptions: recipe.model.sceneSelectionOptions,
+            sceneCount: recipe.ui.sceneCount,
+            cloudCoverTarget: 0.001
+        }).pipe(
             map(scenes =>
                 this.recipeActions.setSelectedScenes(scenes)
             ),

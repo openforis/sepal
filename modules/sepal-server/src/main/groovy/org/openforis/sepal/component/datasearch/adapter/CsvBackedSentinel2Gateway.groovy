@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
 
-import static org.openforis.sepal.component.datasearch.api.DataSet.SENTINEL2
-
 class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     public static final String CSV_FILE_NAME = 'sentinel2.csv'
@@ -63,9 +61,9 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
                 def coverage = size ? size / (size - size * cloudCover / 100d) : cloudCover
                 return new SceneMetaData(
                         id: id,
-                        dataSet: SENTINEL2,
+                        source: 'SENTINEL_2',
                         sceneAreaId: data.MGRS_TILE,
-                        sensorId: sensor,
+                        dataSet: sensor,
                         acquisitionDate: parseDate(data.SENSING_TIME),
                         cloudCover: data.CLOUD_COVER.toDouble(),
                         browseUrl: browseUrl(awsPath),
@@ -112,7 +110,7 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
     }
 
     private URI browseUrl(awsPath) {
-        def base = 'http://sentinel-s2-l1c.s3.amazonaws.com/tiles'
+        def base = 'https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles'
         return URI.create("$base/$awsPath/preview.jpg")
     }
 
@@ -139,6 +137,6 @@ class CsvBackedSentinel2Gateway implements DataSetMetadataGateway {
     }
 
     private static enum Sensor {
-        SENTINEL2A
+        SENTINEL_2
     }
 }

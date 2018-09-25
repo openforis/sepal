@@ -9,7 +9,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static org.openforis.sepal.component.datasearch.adapter.CsvBackedUsgsGateway.Sensor.*
-import static org.openforis.sepal.component.datasearch.api.DataSet.LANDSAT
 import static org.openforis.sepal.util.DateTime.parseDateString
 import static org.openforis.sepal.util.DateTime.startOfDay
 
@@ -92,9 +91,9 @@ class CsvBackedUsgsGateway implements DataSetMetadataGateway {
                 def sensorId = data.COLLECTION_CATEGORY == 'T2' ? sensor.name() + '_T2' : sensor.name()
                 return new SceneMetaData(
                         id: data.sceneID,
-                        dataSet: LANDSAT,
+                        source: 'LANDSAT',
                         sceneAreaId: "${data.path}_${data.row}",
-                        sensorId: sensorId,
+                        dataSet: sensorId,
                         acquisitionDate: parseDateString(data.acquisitionDate),
                         cloudCover: cloudCover(sensor, data),
                         coverage: 100,

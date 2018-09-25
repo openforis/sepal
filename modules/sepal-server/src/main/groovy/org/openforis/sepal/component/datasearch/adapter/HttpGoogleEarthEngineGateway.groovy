@@ -14,11 +14,11 @@ class HttpGoogleEarthEngineGateway implements GoogleEarthEngineGateway {
         this.targetUri = targetUri
     }
 
-    Collection<SceneArea> findSceneAreasInAoi(DataSet dataSet, Aoi aoi, User user) {
+    Collection<SceneArea> findSceneAreasInAoi(String source, Aoi aoi, User user) {
         def response = endpoint.get(
                 path: 'sceneareas',
                 contentType: JSON,
-                query: [dataSet: dataSet.name(), aoi: toJson(aoi.params)],
+                query: [source: source, aoi: toJson(aoi.params)],
                 headers: ['sepal-user': toJson(user)]
         )
         return response.data.collect {
