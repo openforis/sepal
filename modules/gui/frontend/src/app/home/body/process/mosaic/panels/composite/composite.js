@@ -56,13 +56,13 @@ class Composite extends React.Component {
                         {
                             value: 'SR',
                             label: msg('process.mosaic.panel.composite.form.surfaceReflectance.label'),
-                            tooltip: 'process.mosaic.panel.composite.form.surfaceReflectance',
+                            tooltip: msg('process.mosaic.panel.composite.form.surfaceReflectance.tooltip'),
                             disabled: source !== 'LANDSAT'
                         },
                         {
                             value: 'BRDF',
                             label: msg('process.mosaic.panel.composite.form.brdf.label'),
-                            tooltip: 'process.mosaic.panel.composite.form.brdf',
+                            tooltip: msg('process.mosaic.panel.composite.form.brdf.tooltip'),
                             disabled: source !== 'LANDSAT'
                         }
                     ]}/>
@@ -85,12 +85,12 @@ class Composite extends React.Component {
                             {
                                 value: 'CLOUDS',
                                 label: msg('process.mosaic.panel.composite.form.clouds.label'),
-                                tooltip: 'process.mosaic.panel.composite.form.clouds'
+                                tooltip: msg('process.mosaic.panel.composite.form.clouds.tooltip')
                             },
                             {
                                 value: 'SNOW',
                                 label: msg('process.mosaic.panel.composite.form.snow.label'),
-                                tooltip: 'process.mosaic.panel.composite.form.snow'
+                                tooltip: msg('process.mosaic.panel.composite.form.snow.tooltip')
                             },
                         ]}/>
                     </div>
@@ -100,12 +100,12 @@ class Composite extends React.Component {
                             {
                                 value: 'MEDOID',
                                 label: msg('process.mosaic.panel.composite.form.medoid.label'),
-                                tooltip: 'process.mosaic.panel.composite.form.medoid'
+                                tooltip: msg('process.mosaic.panel.composite.form.medoid.tooltip')
                             },
                             {
                                 value: 'MEDIAN',
                                 label: msg('process.mosaic.panel.composite.form.median.label'),
-                                tooltip: 'process.mosaic.panel.composite.form.median'
+                                tooltip: msg('process.mosaic.panel.composite.form.median.tooltip')
                             },
                         ]}/>
                     </div>

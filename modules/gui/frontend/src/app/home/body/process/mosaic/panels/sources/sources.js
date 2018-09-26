@@ -85,7 +85,7 @@ class Sources extends React.Component {
             ({
                 value,
                 label: msg(['process.mosaic.panel.sources.form.dataSets.options', value, 'label']),
-                tooltip: ['process.mosaic.panel.sources.form.dataSets.options', value],
+                tooltip: msg(['process.mosaic.panel.sources.form.dataSets.options', value, 'tooltip']),
                 disabled: !this.isDataSetInDateRange(value)
             })
         )
