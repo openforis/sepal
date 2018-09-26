@@ -19,7 +19,7 @@
         <module>modules/sepal-server</module>
         <module>modules/task-executor</module>
         <module>modules/ssh-gateway</module>
-        <module>modules/gui-react</module>
+        <module>modules/gui</module>
     </modules>
 
     <properties>

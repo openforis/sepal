@@ -70,13 +70,7 @@
             <resource>
                 <directory>frontend</directory>
                 <includes>
-                    <include>dist/**</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>frontend/public</directory>
-                <includes>
-                    <include>dist/static/**</include>
+                    <include>build/**</include>
                 </includes>
             </resource>
         </resources>
@@ -98,7 +92,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.openforis.sepal.gui.Main</mainClass>
+                                    <mainClass>org.openforis.sepal.guireact.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -135,7 +129,7 @@
             </plugin>
 
 
-            <!-- Install node, npm, bower, and gulp locally. Trigger gulp build. -->
+            <!-- Install node and npm-->
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
@@ -150,8 +144,8 @@
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v8.4.0</nodeVersion>
-                            <npmVersion>5.3.0</npmVersion>
+                            <nodeVersion>v10.4.1</nodeVersion>
+                            <npmVersion>6.1.0</npmVersion>
                         </configuration>
                     </execution>
                     <execution>
@@ -165,12 +159,12 @@
                     </execution>
 
                     <execution>
-                        <id>Webpack build</id>
+                        <id>npm run build</id>
                         <goals>
-                            <goal>webpack</goal>
+                            <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>-p</arguments>
+                            <arguments>run build</arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -189,7 +183,7 @@
                             </includes>
                         </fileset>
                         <fileset>
-                            <directory>frontend/dist</directory>
+                            <directory>frontend/build</directory>
                         </fileset>
                     </filesets>
                 </configuration>

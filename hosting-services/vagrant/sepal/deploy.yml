@@ -66,7 +66,7 @@
     - { role: build-module, module: sandbox }
     - { role: build-module, module: user }
     - { role: build-module, module: sepal-server }
-    - { role: build-module, module: gui-react }
+    - { role: build-module, module: gui }
     - { role: build-module, module: ceo }
     - { role: build-module, module: peatlands }
     - { role: build-module, module: task-executor }
@@ -83,7 +83,7 @@
     - { role: run-module, module: google-earth-engine }
     - { role: run-module, module: user }
     - { role: run-module, module: sepal-server, container_name: sepal }
-    - { role: run-module, module: gui-react }
+    - { role: run-module, module: gui }
     - { role: run-module, module: peatlands }
     - { role: run-module, module: ceo }
     - { role: run-module, module: ssh-gateway }
