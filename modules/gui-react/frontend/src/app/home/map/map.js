@@ -7,6 +7,7 @@ import Notifications from 'app/notifications'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
+import _ from 'lodash'
 import actionBuilder from 'action-builder'
 import api from 'api'
 
@@ -66,7 +67,7 @@ const createMap = (mapElement) => {
         rotateControl: false,
         fullscreenControl: false,
         backgroundColor: '#131314',
-        gestureHandling: 'greedy',
+        gestureHandling: 'greedy'
     })
     googleMap.mapTypes.set('styled_map', new google.maps.StyledMapType(defaultStyle, {name: 'sepalMap'}))
     googleMap.setMapTypeId('styled_map')
@@ -386,9 +387,12 @@ export class MapLayer extends React.Component {
     }
 }
 
-export class MapObject extends React.Component {
+class WrappedMapObject extends React.Component {
     render() {
         const {lat, lng, width, height, className, children} = this.props
+        const shown = googleMap.getBounds().contains({lng, lat})
+        if (!shown)
+            return null
         return (
             <ProjectionContext.Consumer>
                 {projection => {
@@ -408,7 +412,12 @@ export class MapObject extends React.Component {
             </ProjectionContext.Consumer>
         )
     }
+
+    componentWillUnmount() {
+
+    }
 }
+export const MapObject = connect(state => ({projectionChange: state.map.projectionChange}))(WrappedMapObject)
 
 const ProjectionContext = React.createContext()
 
@@ -418,6 +427,8 @@ onInit((google) =>
         constructor(component) {
             super()
             this.component = component
+            this.xyz = null
+
         }
 
         onAdd() {
@@ -425,11 +436,21 @@ onInit((google) =>
         }
 
         draw() {
-            this.component.setState((prevState) => ({...prevState, projection: this.getProjection()}))
+            const projection = this.getProjection() // TODO: Zooming changes the projection...
+            const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(0, 0))
+            const xyz = [point.x, point.y, sepalMap.getZoom()]
+            if (!_.isEqual(this.xyz, xyz)) {
+                this.xyz = xyz
+                this.component.setState((prevState) => ({...prevState, projection}))
+                actionBuilder('PROJECTION_CHANGED', {xyz})
+                    .set('map.projectionChange', xyz)
+                    .dispatch()
+            }
         }
 
         onRemove() {
             this.show(false)
+            google.maps.event.removeListener(this.projectionChangeListener)
         }
 
         show(shown) {

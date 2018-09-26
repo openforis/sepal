@@ -1,4 +1,4 @@
-import {MapObject, google, googleMap, sepalMap} from 'app/home/map/map'
+import {MapObject, google, googleMap} from 'app/home/map/map'
 import {RecipeActions, RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {connect} from 'store'
 import React from 'react'
@@ -10,7 +10,8 @@ const mapStateToProps = (state, ownProps) => {
     const selectedScenes = recipeState(['model.scenes', sceneAreaId]) || []
     return {
         selectedSceneCount: selectedScenes.length,
-        loading: recipeState('ui.autoSelectingScenes')
+        loading: recipeState('ui.autoSelectingScenes'),
+        zoom: state.map.zoom
     }
 }
 
@@ -38,8 +39,7 @@ class SceneAreaMarker extends React.Component {
     }
 
     render() {
-        const {sceneAreaId, selectedSceneCount, loading} = this.props
-        const zoom = sepalMap.getZoom()
+        const {zoom, sceneAreaId, selectedSceneCount, loading} = this.props
         const scale = Math.min(1, Math.pow(zoom, 2.5) / Math.pow(8, 2.5))
         const size = `${1.5 * 4 * scale}rem`
         const halfSize = `${1.5 * 2 * scale}rem`
