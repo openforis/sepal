@@ -58,31 +58,38 @@ class JdbcSceneMetaDataRepository implements SceneMetaDataRepository {
             SELECT id, meta_data_source, sensor_id, scene_area_id, acquisition_date, cloud_cover, 
                    sun_azimuth, sun_elevation, browse_url, update_time,
                    
-                    (1 - :targetDayOfYearWeight) * cloud_cover / 100.0 + :targetDayOfYearWeight *
+                    (1 - ?) * cloud_cover / 100.0 + ? *
                     LEAST(
-                        ABS(day_of_year - :targetDayOfYear),
-                        365 - ABS(day_of_year - :targetDayOfYear)) / 182.0 as sort_weight,
+                        ABS(day_of_year - ?),
+                        365 - ABS(day_of_year - ?)) / 182.0 as sort_weight,
                         
                     LEAST(
-                        ABS(day_of_year - :targetDayOfYear),
-                        365 - ABS(day_of_year - :targetDayOfYear)) days_from_target_date
+                        ABS(day_of_year - ?),
+                        365 - ABS(day_of_year - ?)) days_from_target_date
                         
             FROM scene_meta_data
-            WHERE scene_area_id = :sceneAreaId
-            AND acquisition_date >= :fromDate AND acquisition_date <= :toDate 
-            AND acquisition_date <= :latestAcquisitionDate
-            AND ${namedDayOfYearConstraint(query)}
+            WHERE scene_area_id = ?
+            AND acquisition_date >= ? AND acquisition_date <= ? 
+            AND acquisition_date <= ?
+            AND ${positionalDayOfYearConstraint(query)}
+            AND sensor_id in (${placeholders(query.dataSets)})
             ORDER BY sort_weight, cloud_cover, days_from_target_date""" as String,
-            [
-                sceneAreaId: query.sceneAreaId,
-                fromDate: query.fromDate,
-                toDate: query.toDate,
-                latestAcquisitionDate: latestAcquisitionDate(),
-                seasonStartDayOfYear: query.seasonStartDayOfYear,
-                seasonEndDayOfYear: query.seasonEndDayOfYear,
-                targetDayOfYear: query.targetDayOfYear,
-                targetDayOfYearWeight: query.targetDayOfYearWeight
-            ]) {
+            ([
+                query.targetDayOfYearWeight,
+                query.targetDayOfYearWeight,
+                query.targetDayOfYear,
+                query.targetDayOfYear,
+                query.targetDayOfYear,
+                query.targetDayOfYear,
+                query.sceneAreaId,
+                query.fromDate,
+                query.toDate,
+                latestAcquisitionDate(),
+                query.seasonStartDayOfYear,
+                query.seasonEndDayOfYear,
+                query.dataSets
+            ].flatten() as List<Object>)
+        ) {
             scenes << this.toSceneMetaData(it)
         }
         return scenes

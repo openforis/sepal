@@ -52,27 +52,33 @@ class MosaicPreview extends React.Component {
             ...prevState,
             error:
                 <div>
-                    <Msg id='process.mosaic.preview.error'/>
-                    <div className={styles.retry}>
-                        <a
-                            href=''
-                            onClick={(e) => {
-                                e.preventDefault()
-                                this.reload()
-                            }}>
-                            <Icon name='sync'/>
-                            <Msg id='button.retry'/>
-                        </a>
+                    <div>
+                        <Msg id='process.mosaic.preview.error'/>
+                        <div className={styles.retry}>
+                            <a
+                                href=''
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    this.reload()
+                                }}>
+                                <Icon name='sync'/>
+                                <Msg id='button.retry'/>
+                            </a>
+                        </div>
                     </div>
-
                 </div>
         }))
     }
 
     reload() {
-        const {recipeId} = this.props
-        this.setState(prevState => ({...prevState, error: null}))
-        sepalMap.getContext(recipeId).setLayer({id: 'preview', layer: null})
+        const {recipe} = this.props
+        const context = sepalMap.getContext(recipe.id)
+        context.removeLayer('preview')
+        this.updateLayer(this.toPreviewRequest(recipe))
+
+        // const {recipeId} = this.props
+        // this.setState(prevState => ({...prevState, error: null}))
+        // sepalMap.getContext(recipeId).setLayer({id: 'preview', layer: null})
     }
 
     isPreviewShown() {
