@@ -87,7 +87,7 @@ function execute$(url, method, {retries, query, username, password, headers, val
         catchError(e => {
             if (validStatuses && validStatuses.includes(e.status))
                 return of(e)
-            else if (e.status === 401) {
+            else if (e.status === 401 && isRelative(url)) {
                 Notifications.warning('unauthorized').dispatch()
                 logout()
             } else
@@ -107,4 +107,8 @@ function execute$(url, method, {retries, query, username, password, headers, val
             )
         })
     )
+}
+
+function isRelative(url) {
+    return /^\w+:\/\//i.test(url)
 }
