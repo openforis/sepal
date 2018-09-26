@@ -15,6 +15,7 @@ import ReactResizeDetector from 'react-resize-detector'
 import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
 import api from 'api'
 import styles from './sceneSelection.module.css'
+import format from 'format'
 
 const fields = {
     selectedScenes: new Field()
@@ -197,7 +198,7 @@ const Scene = ({selected, scene, onAdd, onRemove, className, recipe}) => {
                 </div>
                 <div className={styles.cloudCover}>
                     <Icon name='cloud'/>
-                    {cloudCover}
+                    {format.integer(cloudCover)}
                 </div>
             </div>
             {selected
