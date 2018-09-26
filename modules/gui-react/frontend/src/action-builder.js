@@ -33,15 +33,6 @@ export default function actionBuilder(type, props) {
             return this
         },
 
-        assign(path, value) {
-            operations.push((immutableState, state) => {
-                const pathList = toPathList(path)
-                const prevValue = select(pathList, state)
-                return immutableState.set(pathList, _.assign({}, prevValue, value))()
-            })
-            return this
-        },
-
         setValueByTemplate(path, template, value) {
             path = toPathList(path)
             operations.push((immutableState, state) => {
@@ -60,7 +51,7 @@ export default function actionBuilder(type, props) {
                 const index = select(path, state)
                     .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
                 return (index !== -1)
-                    ? immutableState.set([...path, index], _.assign({}, select([...path, index], state), value))
+                    ? immutableState.assign([...path, index], value)
                     : immutableState
             })
             return this
