@@ -50,6 +50,7 @@ export default function actionBuilder(type, props) {
             operations.push((immutableState, state) => {
                 const index = select(path, state)
                     .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
+                console.log({index})
                 return (index !== -1)
                     ? immutableState.assign([...path, index], value)
                     : immutableState
