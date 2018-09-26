@@ -45,7 +45,6 @@ export function form({fields = {}, constraints = {}, mapStateToProps}) {
                     )
                 }
 
-
                 this.handleChange = this.handleChange.bind(this)
                 this.value = this.value.bind(this)
                 this.validateField = this.validateField.bind(this)

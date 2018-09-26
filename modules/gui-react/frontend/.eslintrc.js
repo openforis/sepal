@@ -65,7 +65,8 @@ module.exports = {
         ],
         "no-unused-vars": [
             "error", {
-                "argsIgnorePattern": "^_"
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_"
             }
         ],
         "object-curly-spacing": [

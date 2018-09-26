@@ -6,25 +6,26 @@ import React from 'react'
 import actionBuilder from 'action-builder'
 import styles from './panel.module.css'
 
-export const Panel = ({top, bottom, right, left, center, modal, className, children}) =>
+export const Panel = ({top, bottom, right, left, center, inline, modal, form = true, className, children}) =>
     <PanelButtonContext.Consumer>
         {panelButtonPosition => {
             top = top || (panelButtonPosition && panelButtonPosition.top)
             bottom = bottom || (panelButtonPosition && panelButtonPosition.bottom)
             right = right || (panelButtonPosition && panelButtonPosition.right)
-            left = left || (panelButtonPosition && panelButtonPosition.left)
-            const panel =
-                <form className={[
-                    styles.panel,
-                    top ? styles.top : null,
-                    bottom ? styles.bottom : null,
-                    right ? styles.right : null,
-                    left ? styles.bottom : null,
-                    center ? styles.center : null,
-                    className
-                ].join(' ')}>
-                    {children}
-                </form>
+            inline = inline || (panelButtonPosition && panelButtonPosition.inline)
+            const classNames = [
+                styles.panel,
+                top ? styles.top : null,
+                bottom ? styles.bottom : null,
+                right ? styles.right : null,
+                left ? styles.bottom : null,
+                center ? styles.center : null,
+                inline ? styles.inline : null,
+                className
+            ].join(' ')
+            const panel = form
+                ? <form className={classNames}>{children}</form>
+                : <div className={classNames}>{children}</div>
             return modal
                 ? <div className={styles.modal}>{panel}</div>
                 : panel
@@ -36,12 +37,13 @@ Panel.propTypes = {
     bottom: PropTypes.any,
     center: PropTypes.any,
     className: PropTypes.string,
+    form: PropTypes.any,
+    inline: PropTypes.any,
     left: PropTypes.any,
     modal: PropTypes.any,
     right: PropTypes.any,
     top: PropTypes.any
 }
-
 
 export const PanelHeader = ({icon, title, children}) =>
     <div className={styles.header}>
@@ -60,18 +62,15 @@ PanelHeader.propTypes = {
     title: PropTypes.string,
 }
 
-
 export const PanelContent = ({className, children}) =>
     <div className={[styles.content, className].join(' ')}>
         {children}
     </div>
 
-
 PanelContent.propTypes = {
     children: PropTypes.any.isRequired,
     className: PropTypes.string,
 }
-
 
 const mapStateToProps = (state, ownProps) => {
     const {statePath} = ownProps

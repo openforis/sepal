@@ -1,16 +1,19 @@
 import {dispatch} from 'store'
 import {toPathList} from 'collections'
+import _ from 'lodash'
 import immutable from 'object-path-immutable'
 
 export default function actionBuilder(type, props) {
     const operations = []
     const sideEffects = []
     let prefix = ''
+
     return {
         within(_prefix) {
             prefix = _prefix
             return this
         },
+        
         withState(path, callback) {
             operations.push((immutableState) => {
                 const currentState = immutableState.value()
@@ -25,9 +28,32 @@ export default function actionBuilder(type, props) {
                 const pathList = toPathList(path)
                 const prevValue = select(pathList, state)
                 if (prevValue !== value)
-                    return value
-                        ? immutableState.set(pathList, value)
-                        : immutableState.del(pathList)
+                    return immutableState.set(pathList, value)
+            })
+            return this
+        },
+
+        setValueByTemplate(path, template, value) {
+            path = toPathList(path)
+            operations.push((immutableState, state) => {
+                const index = select(path, state)
+                    .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
+                return (index !== -1)
+                    ? immutableState.set([...path, index], value)
+                    : immutableState
+            })
+            return this
+        },
+
+        assignValueByTemplate(path, template, value) {
+            path = toPathList(path)
+            operations.push((immutableState, state) => {
+                const index = select(path, state)
+                    .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
+                console.log({index})
+                return (index !== -1)
+                    ? immutableState.assign([...path, index], value)
+                    : immutableState
             })
             return this
         },
@@ -35,6 +61,19 @@ export default function actionBuilder(type, props) {
         setAll(values) {
             Object.keys(values).forEach((path) =>
                 this.set(path, values[path]))
+            return this
+        },
+
+        map(path, callback) {
+            operations.push((immutableState, state) => {
+                const collection = select(path, state)
+                if (!Array.isArray(collection)) return immutableState
+                return collection
+                    .map(callback)
+                    .map((value, index) => ({index, value}))
+                    .filter(({index, value}) => value !== collection[index])
+                    .reduce((immutableState, {index, value}) => immutableState.set([path, index], value), immutableState)
+            })
             return this
         },
 
@@ -51,10 +90,8 @@ export default function actionBuilder(type, props) {
         },
 
         pushIfMissing(path, value, uniqueKeyProp) {
-            operations.push((immutableState) => {
-                const currentState = immutableState.value()
-                immutableState = immutable(currentState)
-                const collection = select(path, currentState)
+            operations.push((immutableState, state) => {
+                const collection = select(path, state)
                 const equals = (item) => uniqueKeyProp
                     ? item[uniqueKeyProp] === value[uniqueKeyProp]
                     : item === value
@@ -72,13 +109,11 @@ export default function actionBuilder(type, props) {
             return this
         },
 
-        delValueByKey(path, key, keyValue) {
+        delValueByTemplate(path, template) {
             path = toPathList(path)
-
-            operations.push((immutableState) => {
-                const currentState = immutableState.value()
-                immutableState = immutable(currentState)
-                const index = select(path, currentState).findIndex((value) => value[key] === keyValue)
+            operations.push((immutableState, state) => {
+                const index = select(path, state)
+                    .findIndex(value => _.isEqual(template, _.pick(value, _.keys(template))))
                 return (index !== -1)
                     ? immutableState.del([...path, index])
                     : immutableState
@@ -88,11 +123,8 @@ export default function actionBuilder(type, props) {
 
         delValue(path, value) {
             path = toPathList(path)
-
-            operations.push((immutableState) => {
-                const currentState = immutableState.value()
-                immutableState = immutable(currentState)
-                const index = select(path, currentState).indexOf(value)
+            operations.push((immutableState, state) => {
+                const index = select(path, state).indexOf(value)
                 return (index !== -1)
                     ? immutableState.del([...path, index])
                     : immutableState
