@@ -1,0 +1,49 @@
+.panel {
+    /* min-height: 15rem; */
+    max-height: 50rem;
+    max-width: 60rem;
+}
+
+.report {
+    padding: 0 1rem;
+}
+
+.report table {
+    margin: auto;
+    width: 100%;
+}
+
+.report .title {
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+}
+
+.report .section:not(:first-child) {
+    margin-top: 3rem;
+}
+
+.report th {
+    font-weight: normal;
+    font-size: .8rem;
+    text-transform: uppercase;
+    text-decoration: underline;
+    color: #dddddd;
+    padding: .2rem .5rem;
+}
+
+.report td {
+    font-size: 1rem;
+    padding: .2rem .5rem;
+}
+
+.report tr.clickable:hover {
+    background-color: #404040;
+    cursor: pointer;
+}
+
+.number {
+    width: 8rem;
+    text-align: right;
+}

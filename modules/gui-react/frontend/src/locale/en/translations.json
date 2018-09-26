@@ -91,7 +91,7 @@
             "collapse.tooltip": "Collapse menu (floating)",
             "user": {
                 "profile.tooltip": "Manage user profile",
-                "info.tooltip": "Show user info"
+                "report.tooltip": "Show user report"
             }
         }
     },
@@ -601,8 +601,10 @@
                 "tooltip": "Revoke Sepal's permission to use your Google drive and manage your Earth Engine assets. Some features like exporting to Earth Engine assets will not be available."
             },
             "switchingToSepalGoogleAccount": "Switching to Sepal's Google Account",
-            "success.title": "User details has been updated",
-            "caught.title": "Could not update user details"
+            "update": {
+                "success.title": "User details have been updated",
+                "caught.title": "Could not update user details"
+            }
         },
         "changePassword": {
             "title": "Change password",
@@ -629,33 +631,38 @@
                 "message": " "
             }
         },
-        "userBudget": {
-            "title": "User budget"
-        },
         "userSession": {
             "form": {
                 "name": {
                     "label": "Instance name"
                 },
                 "keepAlive": {
-                    "label": "Keep alive (hours)"
+                    "label": "Keep alive",
+                    "info": "Keep instance alive for at least {value} hours."
                 }
             },
             "suspend": {
                 "label": "Suspend",
                 "tooltip": "Suspend current session. Suspended sessions can be resumed."
             },
+            "update": {
+                "success.title": "User session has been updated",
+                "error.title": "Could not update user session"
+            },
             "stop": {
                 "label": "Stop",
-                "tooltip": "Stop current session. Stopped sessions cannot be resumed."
+                "tooltip": "Stop current session. Stopped sessions cannot be resumed.",
+                "success.title": "Session stopped.",
+                "error.title": "Could not stop session."
             }
         },
         "report": {
+            "title": "User report",
             "resources": {
                 "title": "Resources",
-                "monthlyInstance": "Monthly instance budget (US$)",
-                "monthlyStorage": "Monthly instance budget (US$)",
-                "storage": "Storage (GB)",
+                "monthlyInstance": "Monthly instance budget",
+                "monthlyStorage": "Monthly instance budget",
+                "storage": "Storage",
                 "quota": "Quota",
                 "used": "Used",
                 "used%": "Used"
@@ -667,7 +674,8 @@
                 "instanceDescription": "Instance description",
                 "time": "Date/time started",
                 "cost": "Cost",
-                "hourlyCost": "Hourly cost"
+                "hourlyCost": "Hourly cost",
+                "earliestTimeoutHours": "Keep alive"
             }
         }
     },
@@ -755,6 +763,9 @@
     },
     "format": {
         "dollars": "${value}",
-        "dollarsPerHour": "${value}/hr"
+        "dollarsPerHour": "${value}/hr",
+        "hour": "{value}hr",
+        "GB": "{value}GB",
+        "percent": "{value}%"
     }
 }

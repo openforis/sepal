@@ -52,8 +52,8 @@ class UserDetails extends React.Component {
         closePanel()
         updateUserDetails$(userDetails)
             .subscribe(
-                () => Notifications.success('user.userDetails').dispatch(),
-                (error) => Notifications.caught('user.userDetails', null, error).dispatch()
+                () => Notifications.success('user.userDetails.update').dispatch(),
+                (error) => Notifications.caught('user.userDetails.update', null, error).dispatch()
             )
     }
 

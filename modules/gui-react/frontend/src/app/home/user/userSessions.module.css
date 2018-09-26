@@ -1,0 +1,8 @@
+.clickable:hover {
+    background-color: #404040;
+    cursor: pointer;
+}
+
+.number {
+    text-align: right;
+}

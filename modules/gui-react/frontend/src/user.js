@@ -86,3 +86,27 @@ export const changeUserPassword$ = ({oldPassword, newPassword}) =>
             .build()
         )
     )
+
+export const updateUserSession$ = (session) =>
+    api.user.updateUserSession$(session).pipe(
+        map(() =>
+            actionBuilder('UPDATE_USER_SESSION_POSTED', {session})
+                .assignValueByTemplate('user.currentUserReport.sessions', {
+                    id: session.id
+                }, {
+                    earliestTimeoutHours: session.keepAlive
+                })
+                .dispatch()
+        )
+    )
+
+export const stopUserSession$ = (session) =>
+    api.user.stopUserSession$(session).pipe(
+        map(() =>
+            actionBuilder('STOP_USER_SESSION_POSTED', {session})
+                .delValueByTemplate('user.currentUserReport.sessions', {
+                    id: session.id
+                })
+                .dispatch()
+        )
+    )

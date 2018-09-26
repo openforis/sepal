@@ -56,7 +56,7 @@ export default {
     updateUserSession$: (session) =>
         post$(`/api/sandbox/session/${session.id}/earliestTimeoutTime`, {
             body: {
-                hours: session.earliestTimeoutHours
+                hours: session.keepAlive
             }
         }).pipe(toResponse),
 
