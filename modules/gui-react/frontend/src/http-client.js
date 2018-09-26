@@ -85,13 +85,14 @@ function execute$(url, method, {retries, query, username, password, headers, val
                 return throwError(e)
         }),
         catchError(e => {
-            if (validStatuses && validStatuses.includes(e.status))
+            if (validStatuses && validStatuses.includes(e.status)) {
                 return of(e)
-            else if (e.status === 401 && isRelative(url)) {
+            } else if (e.status === 401 && isRelative(url)) {
                 Notifications.warning('unauthorized').dispatch()
                 logout()
-            } else
+            } else {
                 return throwError(e)
+            }
         }),
         retryWhen(function (error$) {
             return error$.pipe(

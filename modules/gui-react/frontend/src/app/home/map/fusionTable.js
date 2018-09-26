@@ -35,9 +35,9 @@ export const queryFusionTable$ = (query, args = {}) => {
 export const loadFusionTableColumns$ = (tableId, args) => {
     return Http.get$(
         `https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns`, {
+            ...args,
             query: {...authParam()}
-        },
-        args
+        }
     ).pipe(
         map((e) => e.response.items)
     )

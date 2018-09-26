@@ -48,7 +48,6 @@ class FusionTableSection extends React.Component {
             .dispatch()
     }
 
-
     loadFusionTableRows(column) {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_ROWS',
             queryFusionTable$(`
@@ -67,7 +66,6 @@ class FusionTableSection extends React.Component {
             )
         ).dispatch()
     }
-
 
     updateBounds(updatedBounds) {
         const {recipeId, inputs: {bounds}} = this.props
