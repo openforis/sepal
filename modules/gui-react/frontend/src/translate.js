@@ -13,11 +13,8 @@ Msg.propTypes = {
 }
 
 export const msg = (id, values = {}, defaultMessage) => {
-    const toString = (id) => {
-        if (!Array.isArray(id))
-            return id
-        return id.map((element) => toString(element)).join('.')
-    }
+    const toString = (id) =>
+        Array.isArray(id) ? id.map((element) => toString(element)).join('.') : id
     const idString = toString(id)
     return intl.formatMessage({
         id: String(idString),
