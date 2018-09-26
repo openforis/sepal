@@ -24,7 +24,7 @@ export default class MapStatus extends React.Component {
 }
 
 MapStatus.propTypes = {
-    error: PropTypes.string,
+    error: PropTypes.any,
     loading: PropTypes.any,
     message: PropTypes.string
 }

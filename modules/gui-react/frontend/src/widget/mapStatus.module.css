@@ -23,7 +23,7 @@
     margin-right: 0.5rem;
 }
 
-.status * {
+.status > * {
     display: inline-block;
 }
 
