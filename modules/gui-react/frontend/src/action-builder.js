@@ -32,6 +32,17 @@ export default function actionBuilder(type, props) {
             return this
         },
 
+        setValueByKey(path, key, keyValue, value) {
+            path = toPathList(path)
+            operations.push((immutableState, state) => {
+                const index = select(path, state).findIndex((value) => value[key] === keyValue)
+                return (index !== -1)
+                    ? immutableState.set([...path, index], value)
+                    : immutableState
+            })
+            return this
+        },
+
         setAll(values) {
             Object.keys(values).forEach((path) =>
                 this.set(path, values[path]))
