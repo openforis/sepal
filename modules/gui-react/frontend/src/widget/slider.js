@@ -18,9 +18,9 @@ const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * 
 class SliderContainer extends React.Component {
     ticks() {
         const {ticks = 10, width} = this.props
-        
+
         const equidistantTicks = (ticks) => range(0, ticks).map(i => i / (ticks - 1))
-        
+
         return (Array.isArray(ticks) ? ticks : equidistantTicks(Math.max(2, ticks)))
             .map(tick => [
                 width * normalize(tick, {min: this.props.minValue, max: this.props.maxValue}),
@@ -32,8 +32,11 @@ class SliderContainer extends React.Component {
         const left = `${Math.trunc(position)}px`
         return (
             <React.Fragment key={value}>
-                <div className={styles.tick} style={{left}}></div>
-                <div className={styles.label} style={{left}}>{value}</div>
+                <div className={styles.tick} style={{left}}/>
+                {this.props.showTickLabels
+                    ? <div className={styles.label} style={{left}}>{value}</div>
+                    : null}
+
             </React.Fragment>
         )
     }
@@ -329,7 +332,7 @@ export default class Slider extends React.Component {
     }
 
     render() {
-        const {input, minValue, maxValue, ticks} = this.props
+        const {input, minValue, maxValue, ticks, showTickLabels} = this.props
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
@@ -343,6 +346,7 @@ export default class Slider extends React.Component {
                         minValue={minValue !== undefined ? minValue : 0}
                         maxValue={maxValue !== undefined ? maxValue : 100}
                         ticks={ticks}
+                        showTickLabels={showTickLabels}
                         width={this.state.width}/>
                 </div>
             </div>
@@ -354,5 +358,6 @@ Slider.propTypes = {
     input: PropTypes.object.isRequired,
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
-    ticks: PropTypes.any
+    ticks: PropTypes.any,
+    showTickLabels: PropTypes.any
 }

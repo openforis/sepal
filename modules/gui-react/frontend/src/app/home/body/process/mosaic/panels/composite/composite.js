@@ -156,7 +156,7 @@ const PercentileField = ({input, disabled = false}) => {
             <div className={styles.label}>
                 <Msg id={['process.mosaic.panel.composite.form.filters', input.name, type]} percentile={percentile}/>
             </div>
-            <Slider input={input} minValue={0} maxValue={100} ticks={[0, 10, 25, 50, 75, 90, 100]}/>
+            <Slider input={input} minValue={0} maxValue={100} ticks={[0, 10, 25, 50, 75, 90, 100]} showTickLabels={false}/>
             <div className={disabled ? styles.disabledOverlay : null}/>
         </div>
     )
