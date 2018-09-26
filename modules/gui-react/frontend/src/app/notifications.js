@@ -36,9 +36,10 @@ const toOpts = ({level, messageId, values = {}, message, autoDismiss = 5}) => ({
 
 const errorMessage = (error) => {
     if (!error) return null
-    return error.status === 0
-        ? 'Failed to connect to Sepal. Either your internet connection failed, or Sepal is unavailable at the moment.'
-        : 'Sepal responded with an error. Please try again.'
+    const connectionError = error.request && error.status === 0
+    return connectionError
+        ? msg('notifications.error.connectionError')
+        : msg('notifications.error.generic')
 }
 
 const notify = (level, messageId, values) =>
