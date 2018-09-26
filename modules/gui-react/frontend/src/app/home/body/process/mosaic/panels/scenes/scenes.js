@@ -65,17 +65,17 @@ class Scenes extends React.Component {
             {
                 value: 0,
                 label: msg('process.mosaic.panel.scenes.form.targetDateWeight.cloudFree.label'),
-                tooltip: 'process.mosaic.panel.scenes.form.targetDateWeight.cloudFree'
+                // tooltip: msg('process.mosaic.panel.scenes.form.targetDateWeight.cloudFree.tooltip')
             },
             {
                 value: 0.5,
                 label: msg('process.mosaic.panel.scenes.form.targetDateWeight.balanced.label'),
-                tooltip: 'process.mosaic.panel.scenes.form.targetDateWeight.balanced'
+                // tooltip: msg('process.mosaic.panel.scenes.form.targetDateWeight.balanced.tooltip')
             },
             {
                 value: 1,
                 label: msg('process.mosaic.panel.scenes.form.targetDateWeight.targetDate.label'),
-                tooltip: 'process.mosaic.panel.scenes.form.targetDateWeight.targetDate'
+                // tooltip: msg('process.mosaic.panel.scenes.form.targetDateWeight.targetDate.tooltip')
             },
         ]
         return (
