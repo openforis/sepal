@@ -275,7 +275,7 @@
                 "sources": {
                     "title": "Sources",
                     "button": "SRC",
-                    "tooltip": "Select sources",
+                    "tooltip": "Select image source",
                     "form": {
                         "source": {
                             "label": "Satellite family",
