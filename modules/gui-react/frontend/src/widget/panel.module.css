@@ -8,7 +8,7 @@
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
     pointer-events: all;
-    right: 4rem;
+    /* right: 0; */
     z-index: 3;
     width: calc(100% - 5rem);
     --scaling-factor: .8 !important;
@@ -36,10 +36,14 @@
 
 .panel.center {
     top: 0;
-    right: 3rem;
+    right: 0;
     bottom: 0;
     left: 0;
     margin: auto;
+}
+
+.panel.inline {
+    position: relative;
 }
 
 .modal {
