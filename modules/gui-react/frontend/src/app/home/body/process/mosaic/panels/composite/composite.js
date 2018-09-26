@@ -78,35 +78,37 @@ class Composite extends React.Component {
                     <PercentileField input={ndviPercentile}/>
                     <PercentileField input={dayOfYearPercentile}/>
                 </div>
-                <div className={styles.mask}>
-                    <Label>Mask</Label>
-                    <Buttons input={mask} multiple={true} options={[
-                        {
-                            value: 'CLOUDS',
-                            label: msg('process.mosaic.panel.composite.form.clouds.label'),
-                            tooltip: 'process.mosaic.panel.composite.form.clouds'
-                        },
-                        {
-                            value: 'SNOW',
-                            label: msg('process.mosaic.panel.composite.form.snow.label'),
-                            tooltip: 'process.mosaic.panel.composite.form.snow'
-                        },
-                    ]}/>
-                </div>
-                <div className={styles.compose}>
-                    <Label>Composing method</Label>
-                    <Buttons input={compose} options={[
-                        {
-                            value: 'MEDOID',
-                            label: msg('process.mosaic.panel.composite.form.medoid.label'),
-                            tooltip: 'process.mosaic.panel.composite.form.medoid'
-                        },
-                        {
-                            value: 'MEDIAN',
-                            label: msg('process.mosaic.panel.composite.form.median.label'),
-                            tooltip: 'process.mosaic.panel.composite.form.median'
-                        },
-                    ]}/>
+                <div className={styles.inline}>
+                    <div className={styles.mask}>
+                        <Label>Mask</Label>
+                        <Buttons input={mask} multiple={true} options={[
+                            {
+                                value: 'CLOUDS',
+                                label: msg('process.mosaic.panel.composite.form.clouds.label'),
+                                tooltip: 'process.mosaic.panel.composite.form.clouds'
+                            },
+                            {
+                                value: 'SNOW',
+                                label: msg('process.mosaic.panel.composite.form.snow.label'),
+                                tooltip: 'process.mosaic.panel.composite.form.snow'
+                            },
+                        ]}/>
+                    </div>
+                    <div className={styles.compose}>
+                        <Label>Composing method</Label>
+                        <Buttons input={compose} options={[
+                            {
+                                value: 'MEDOID',
+                                label: msg('process.mosaic.panel.composite.form.medoid.label'),
+                                tooltip: 'process.mosaic.panel.composite.form.medoid'
+                            },
+                            {
+                                value: 'MEDIAN',
+                                label: msg('process.mosaic.panel.composite.form.median.label'),
+                                tooltip: 'process.mosaic.panel.composite.form.median'
+                            },
+                        ]}/>
+                    </div>
                 </div>
             </div>
         )
@@ -145,20 +147,17 @@ Composite.propTypes = {
 export default form({fields, mapStateToProps})(Composite)
 
 const PercentileField = ({input, disabled = false}) => {
-    const percentile = input.value
-    let type = 'percentile'
-    if (percentile === 0)
-        type = 'off'
-    else if (percentile === 100)
-        type = 'max'
     return (
-        <div className={[styles.slider, disabled ? styles.disabled : null].join(' ')}>
-            <div className={styles.label}>
-                <Msg id={['process.mosaic.panel.composite.form.filters', input.name, type]} percentile={percentile}/>
-            </div>
-            <Slider input={input} minValue={0} maxValue={100} ticks={[0, 10, 25, 50, 75, 90, 100]} showTickLabels={false}/>
-            <div className={disabled ? styles.disabledOverlay : null}/>
-        </div>
+        <Slider
+            input={input}
+            minValue={0}
+            maxValue={100}
+            ticks={[0, 10, 25, 50, 75, 90, 100]}
+            info={percentile => {
+                const type = percentile === 0 ? 'off' : percentile === 100 ? 'max' : 'percentile'
+                return msg(['process.mosaic.panel.composite.form.filters', input.name, type], {percentile})
+            }}
+            disabled={disabled}/>
     )
 }
 

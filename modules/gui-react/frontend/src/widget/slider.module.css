@@ -1,28 +1,46 @@
-.container {
-    --container-height: 3rem;
-    --slider-size: 1px;
+.wrapper {
+    --container-height: 2.5rem;
+    --slider-height: 1px;
     --handle-height: 1.5rem;
     --handle-width: 1.5rem;
     --handle-radius: 100%;
     --axis-color: hsl(0, 0%, 40%);
-    --tick-half-height: .4rem;
+    --label-color: hsl(0, 0%, 60%);
+    --tick-height: 1rem;
+    position: relative;
+}
+
+.disabled {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: hsla(36, 8%, 15%, .7);
+    z-index: 10;
+}
+
+.container {
     width: 100%;
     height: var(--container-height);
     margin-top: 1rem;
     padding: 0 calc(var(--handle-width) / 2);
-    /* overflow: hidden; */
+
+    overflow: hidden;
+    padding-top: 1px;
+    margin-top: .3rem;
 }
 
 .slider {
     position: relative;
     width: 100%;
-    height: var(--slider-size);
+    height: var(--slider-height);
 }
 
 .clickTarget {
     position: absolute;
-    top: calc(-1 * var(--handle-height) / 2);
-    bottom: calc(-1 * var(--handle-height) / 2);
+    top: calc(-.5 * var(--handle-height));
+    bottom: calc(-1.5 * var(--handle-height));
     left: 0;
     right: 0;
     cursor: pointer;
@@ -38,13 +56,21 @@
     position: absolute;
     background-color: var(--axis-color);
     width: 1px;
-    top: calc(-1* var(--tick-half-height));
-    bottom: calc(-1* var(--tick-half-height));
+    top: calc(-.5 * var(--tick-height));
+    bottom: calc(-.5 * var(--tick-height));
+}
+
+.info {
+    font-size: 0.9rem;
+    color: #ccc;
+    /* margin-left: 1.5rem; */
 }
 
 .label {
     position: absolute;
     width: 2rem;
+    font-size: .75rem;
+    color: var(--label-color);
     text-align: center;
     margin-left: -1rem;
     margin-top: .7rem;
@@ -52,7 +78,7 @@
 
 .cursor {
     position: absolute;
-    top: calc((var(--handle-height) - var(--slider-size)) / -2);
+    top: calc((var(--handle-height) - var(--slider-height)) / -2);
     margin-left: calc((var(--handle-width)) / -2);
     height: var(--handle-height);
     width: var(--handle-width);
@@ -66,7 +92,8 @@
 }
 
 .cursor.preview {
-    background-color: hsla(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 26%, .3);
+    background-color: hsla(40, 69%, 32%, .5);
+    border-color: hsl(40, 69%, 32%);
 }
 
 .handle:hover {

@@ -6,27 +6,8 @@
     margin-bottom: 2rem;
 }
 
-.slider {
-    position: relative;
-    margin-bottom: 1rem;
-}
-
-.slider .label {
-    font-size: 0.9rem;
-    color: #ccc;
-    margin-left: 1.5rem;
-}
-
-.slider.disabled {
-    pointer-events: none;
-}
-
-.disabledOverlay {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background-color: hsla(36, 8%, 15%, .7);
-    z-index: 10;
+.inline {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between; 
 }

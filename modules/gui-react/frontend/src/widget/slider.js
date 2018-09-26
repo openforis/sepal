@@ -16,11 +16,11 @@ const normalize = (value, range) => scale(value, {from: range, to: {min: 0, max:
 const lerp = (rate, speed = 1) => (value, target) => value + (target - value) * (rate * speed)
 
 class SliderContainer extends React.Component {
+    clickTarget = React.createRef()
+    
     ticks() {
         const {ticks = 10, width} = this.props
-
         const equidistantTicks = (ticks) => range(0, ticks).map(i => i / (ticks - 1))
-
         return (Array.isArray(ticks) ? ticks : equidistantTicks(Math.max(2, ticks)))
             .map(tick => [
                 width * normalize(tick, {min: this.props.minValue, max: this.props.maxValue}),
@@ -32,11 +32,8 @@ class SliderContainer extends React.Component {
         const left = `${Math.trunc(position)}px`
         return (
             <React.Fragment key={value}>
-                <div className={styles.tick} style={{left}}/>
-                {this.props.showTickLabels
-                    ? <div className={styles.label} style={{left}}>{value}</div>
-                    : null}
-
+                <div className={styles.tick} style={{left}}></div>
+                <div className={styles.label} style={{left}}>{value}</div>
             </React.Fragment>
         )
     }
@@ -49,28 +46,50 @@ class SliderContainer extends React.Component {
         )
     }
 
-    render() {
+    renderClickTarget() {
+        return (
+            <div className={styles.clickTarget} ref={this.clickTarget}/>
+        )
+    }
+
+    renderDynamics(ticks) {
         const {input, minValue, maxValue, width} = this.props
+        return (
+            <SliderDynamics
+                input={input}
+                minValue={minValue}
+                maxValue={maxValue}
+                width={width}
+                ticks={ticks}
+                clickTarget={this.clickTarget}/>
+        )
+    }
+
+    render() {
         const ticks = this.ticks()
         return (
             <div>
                 {this.renderAxis(ticks)}
-                <SliderDynamics
-                    input={input}
-                    minValue={minValue}
-                    maxValue={maxValue}
-                    width={width}
-                    ticks={ticks}/>
+                {this.renderClickTarget()}
+                {this.renderDynamics(ticks)}
             </div>
         )
     }
 }
 
 SliderContainer.propTypes = {
-    input: PropTypes.object,
+    input: PropTypes.object.isRequired,
+    disabled: PropTypes.any,
+    info: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.func
+    ]),
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
-    ticks: PropTypes.any,
+    ticks: PropTypes.oneOfType([
+        PropTypes.number,
+        PropTypes.array
+    ]),
     width: PropTypes.number
 }
 
@@ -82,7 +101,6 @@ class SliderDynamics extends React.Component {
         dragging: null,
         inhibitInput: null
     }
-    clickTarget = React.createRef()
     handle = React.createRef()
     subscriptions = []
 
@@ -105,12 +123,6 @@ class SliderDynamics extends React.Component {
         ) : null
     }
 
-    renderClickTarget() {
-        return (
-            <div className={styles.clickTarget} ref={this.clickTarget}/>
-        )
-    }
-
     renderHandle() {
         const {position, dragging} = this.state
         return (
@@ -130,15 +142,20 @@ class SliderDynamics extends React.Component {
             ) : null
     }
 
+    renderViewportResizer() {
+        return (
+            <ViewportResizeDetector onChange={() => this.setClickTargetOffset()}/>
+        )
+    }
+
     render() {
         return (
             <React.Fragment>
                 {this.renderRanges()}
                 {this.renderPreview()}
-                {this.renderClickTarget()}
                 {this.renderHandle()}
                 {this.renderOverlay()}
-                <ViewportResizeDetector onChange={() => this.setClickTargetOffset()}/>
+                {this.renderViewportResizer()}
             </React.Fragment>
         )
     }
@@ -149,7 +166,7 @@ class SliderDynamics extends React.Component {
         })
         handle.get('pan').set({direction: Hammer.DIRECTION_HORIZONTAL})
 
-        const click = new Hammer(this.clickTarget.current, {
+        const click = new Hammer(this.props.clickTarget.current, {
             threshold: 1
         })
 
@@ -198,10 +215,10 @@ class SliderDynamics extends React.Component {
                 drag$.pipe(
                     map(cursor => this.snapPosition(cursor)),
                 ),
-                fromEvent(this.clickTarget.current, 'mousemove').pipe(
+                fromEvent(this.props.clickTarget.current, 'mousemove').pipe(
                     map(e => this.snapPosition(e.clientX - this.state.clickTargetOffset)),
                 ),
-                fromEvent(this.clickTarget.current, 'mouseleave').pipe(
+                fromEvent(this.props.clickTarget.current, 'mouseleave').pipe(
                     map(() => null)
                 )
             ).pipe(
@@ -307,7 +324,7 @@ class SliderDynamics extends React.Component {
     }
 
     setClickTargetOffset() {
-        const clickTargetOffset = Math.trunc(this.clickTarget.current.getBoundingClientRect().left)
+        const clickTargetOffset = Math.trunc(this.props.clickTarget.current.getBoundingClientRect().left)
         if (this.state.clickTargetOffset !== clickTargetOffset) {
             this.setState(prevState => ({
                 ...prevState,
@@ -331,8 +348,17 @@ export default class Slider extends React.Component {
         width: null
     }
 
-    render() {
-        const {input, minValue, maxValue, ticks, showTickLabels} = this.props
+    renderInfo() {
+        const {input, info} = this.props
+        return info ? (
+            <div className={styles.info}>
+                {_.isFunction(info) ? info(input.value) : info}
+            </div>
+        ) : null
+    }
+
+    renderSlider() {
+        const {input, minValue, maxValue, ticks, info, disabled} = this.props
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
@@ -346,9 +372,27 @@ export default class Slider extends React.Component {
                         minValue={minValue !== undefined ? minValue : 0}
                         maxValue={maxValue !== undefined ? maxValue : 100}
                         ticks={ticks}
-                        showTickLabels={showTickLabels}
-                        width={this.state.width}/>
+                        info={info}
+                        width={this.state.width}
+                        disabled={disabled}/>
                 </div>
+            </div>
+        )
+    }
+
+    renderDisabledOverlay() {
+        const {disabled} = this.props
+        return disabled ? (
+            <div className={styles.disabled}/>
+        ) : null
+    }
+
+    render() {
+        return (
+            <div className={styles.wrapper}>
+                {this.renderInfo()}
+                {this.renderSlider()}
+                {this.renderDisabledOverlay()}
             </div>
         )
     }
@@ -356,8 +400,15 @@ export default class Slider extends React.Component {
 
 Slider.propTypes = {
     input: PropTypes.object.isRequired,
+    disabled: PropTypes.any,
+    info: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.func
+    ]),
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
-    ticks: PropTypes.any,
-    showTickLabels: PropTypes.any
+    ticks: PropTypes.oneOfType([
+        PropTypes.number,
+        PropTypes.array
+    ])
 }
