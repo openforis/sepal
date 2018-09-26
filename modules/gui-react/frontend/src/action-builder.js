@@ -35,7 +35,7 @@ export default function actionBuilder(type, props) {
         setValueByKey(path, key, keyValue, value) {
             path = toPathList(path)
             operations.push((immutableState, state) => {
-                const index = select(path, state).findIndex((value) => value[key] === keyValue)
+                const index = select(path, state).findIndex(value => value[key] === keyValue)
                 return (index !== -1)
                     ? immutableState.set([...path, index], value)
                     : immutableState
@@ -97,7 +97,7 @@ export default function actionBuilder(type, props) {
         delValueByKey(path, key, keyValue) {
             path = toPathList(path)
             operations.push((immutableState, state) => {
-                const index = select(path, state).findIndex((value) => value[key] === keyValue)
+                const index = select(path, state).findIndex(value => value[key] === keyValue)
                 return (index !== -1)
                     ? immutableState.del([...path, index])
                     : immutableState
