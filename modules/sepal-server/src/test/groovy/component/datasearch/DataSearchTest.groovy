@@ -120,7 +120,7 @@ class DataSearchTest extends Specification {
         updateSceneMetaData()
 
         expect:
-        findScenesInDateRange('2015-01-02', '2015-01-04') == [scene2, scene3, scene4]
+        findScenesInDateRange('2015-01-02', '2015-01-04').toSet() == [scene2, scene3].toSet()
     }
 
     def 'When finding best scenes, scenes are returned'() {
@@ -130,7 +130,7 @@ class DataSearchTest extends Specification {
 
         when:
         def sceneAreasBySceneAreas = component.submit(new FindBestScenes(
-                source: LANDSAT,
+                source: 'LANDSAT',
                 sceneAreaIds: [SCENE_AREA_ID],
                 dataSets: [scene.dataSet],
                 fromDate: new Date(0),
@@ -153,7 +153,7 @@ class DataSearchTest extends Specification {
 
         when:
         def scenesBySceneAreas = component.submit(new FindBestScenes(
-                source: LANDSAT,
+                source: 'LANDSAT',
                 sceneAreaIds: [SCENE_AREA_ID],
                 dataSets: [cloudFreeScene.dataSet],
                 fromDate: new Date(0),
@@ -178,7 +178,7 @@ class DataSearchTest extends Specification {
 
         when:
         def scenesBySceneAreas = component.submit(new FindBestScenes(
-                source: LANDSAT,
+                source: 'LANDSAT',
                 sceneAreaIds: [SCENE_AREA_ID],
                 dataSets: [cloudyScene.dataSet],
                 fromDate: new Date(0),
@@ -200,7 +200,7 @@ class DataSearchTest extends Specification {
     }
 
     List<SceneMetaData> findScenesInArea(String sceneAreaId) {
-        findScenes(new Date(Long.MIN_VALUE), new Date(Long.MAX_VALUE), sceneAreaId)
+        findScenes(new Date(0), new Date(Long.MAX_VALUE), sceneAreaId)
     }
 
     List<SceneMetaData> findScenesInDateRange(String from, String to) {
@@ -208,10 +208,18 @@ class DataSearchTest extends Specification {
     }
 
     List<SceneMetaData> findScenes(
-            Date from = new Date(Long.MIN_VALUE),
+            Date from = new Date(0),
             Date to = new Date(Long.MAX_VALUE),
             String sceneAreaId = SCENE_AREA_ID) {
-        def query = new SceneQuery(sceneAreaId: sceneAreaId, fromDate: from, toDate: to)
+        def query = new SceneQuery(
+            sceneAreaId: sceneAreaId,
+            fromDate: from,
+            toDate: to,
+            source: 'LANDSAT',
+            dataSets: ['LANDSAT_8'],
+            targetDayOfYear: 123,
+            targetDayOfYearWeight: 0.5,
+        )
         return component.submit(new FindScenesForSceneArea(query))
     }
 
