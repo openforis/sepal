@@ -4,7 +4,9 @@ rebuild=false
 if [ -f ./docker/binary/sepal-gui.jar ]; then
     found=$(find . \
         -not \( -path ./target -prune \) \
-        -not \( -path ./frontend/dist -prune \) \
+        -not \( -path ./frontend/build -prune \) \
+        -not \( -path ./frontend/node -prune \) \
+        -not \( -path ./frontend/node_modules -prune \) \
         -newer ./docker/binary/sepal-gui.jar \
         -print -quit)
     if [ ! -z "$found" ]; then
