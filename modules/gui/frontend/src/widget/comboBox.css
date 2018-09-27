@@ -83,9 +83,9 @@
 }
 
 .comboBox__option--is-selected {
-    background-color: hsla(var(--selected-hue), var(--selected-sat), 26%, .5) !important;
+    background-color: var(--button-selected-background-color) !important;
 }
 
 .comboBox__option--is-focused {
-    background-color: hsl(var(--selected-hue), var(--selected-sat), 26%) !important;
+    background-color: var(--button-default-hover-background-color) !important;
 }

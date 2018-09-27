@@ -1,4 +1,7 @@
 .buttons {
+
+    /* calculated colors */
+    
     --button-default-color: hsla(0, 0%, 80%, 1);
     --button-default-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), var(--btn-def-bg-l), var(--btn-def-bg-a));
     --button-default-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 2%), var(--btn-def-bg-a));

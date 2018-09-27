@@ -4,7 +4,7 @@
     --padding-right-left: .8rem;
     --padding: var(--padding-top-bottom) var(--padding-right-left);
     position: absolute;
-    background-color: hsla(36, 8%, 15%, .95);
+    background-color: var(--panel-default-background-color);
     border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
     border-radius: .5rem;
     pointer-events: all;

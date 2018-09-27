@@ -11,7 +11,9 @@ import actionBuilder from 'action-builder'
 import css1 from 'bootstrap/dist/css/bootstrap-reboot.css'
 import css2 from './app.css'
 import css3 from '../style/button-colors.default.css'
-const CSS = {css1, css2, css3} // eslint-disable-line no-unused-vars
+import css4 from '../style/button-colors.module.css'
+
+const _css = [css1, css2, css3, css4]
 
 const mapStateToProps = () => ({
     currentUser: currentUser()

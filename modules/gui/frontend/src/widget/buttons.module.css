@@ -24,7 +24,7 @@
     padding: 0 1rem;
     cursor: pointer;
 
-    --btn-sel-bg-hue: 130 !important;
+    --btn-sel-bg-h: 130 !important;
 }
 
 .buttons button + button {
