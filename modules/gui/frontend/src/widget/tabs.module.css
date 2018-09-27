@@ -46,7 +46,7 @@
     min-width: 9rem;
     position: relative;
     background-color: #2B2B29;
-    border-bottom: 3px solid hsla(0, 0%, 100%, .15);
+    border-bottom: 3px solid var(--tab-default-border-color);
     border-top-right-radius: 0.5rem;
     border-top-left-radius: 0.5rem;
     height: 2.5rem;
@@ -63,7 +63,7 @@
 
 .tab.selected {
     background-color: #1c1c1c;
-    border-bottom: 3px solid hsl(var(--selected-hue), var(--selected-sat), 40%);
+    border-bottom: 3px solid var(--tab-selected-border-color);
 }
 
 .tab:hover {

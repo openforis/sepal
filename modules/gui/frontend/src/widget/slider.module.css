@@ -16,19 +16,16 @@
     right: 0;
     bottom: 0;
     left: 0;
-    background-color: hsla(36, 8%, 15%, .7);
+    background-color: var(--panel-default-overlay-color);
     z-index: 10;
 }
 
 .container {
     width: 100%;
     height: var(--container-height);
-    margin-top: 1rem;
-    padding: 0 calc(var(--handle-width) / 2);
-
-    overflow: hidden;
-    padding-top: 1px;
     margin-top: .3rem;
+    padding: 1px calc(var(--handle-width) / 2) 0;
+    overflow: hidden;
 }
 
 .slider {
@@ -83,27 +80,27 @@
     height: var(--handle-height);
     width: var(--handle-width);
     border-radius: var(--handle-radius);
+    transform: rotateZ(45deg);
     border: none;
 }
 
 .cursor.handle {
-    background-color: hsl(40, 69%, 32%);
+    background-color: var(--button-selected-background-color);
     z-index: 2;
 }
 
+.cursor.handle:hover {
+    background-color: var(--button-selected-hover-background-color);
+    cursor: pointer;
+}
+
+.cursor.handle.dragging {
+    background-color: var(--button-selected-active-background-color);
+    cursor: pointer;
+}
+
 .cursor.preview {
-    background-color: hsla(40, 69%, 32%, .5);
-    border-color: hsl(40, 69%, 32%);
-}
-
-.handle:hover {
-    background-color: hsl(40, 69%, 35%);
-    cursor: pointer;
-}
-
-.handle.dragging {
-    background-color: hsl(40, 69%, 35%);
-    cursor: pointer;
+    background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), var(--btn-sel-bg-l), .5);
 }
 
 .range {

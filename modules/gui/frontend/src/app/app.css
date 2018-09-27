@@ -12,46 +12,14 @@ html {
     --button-border-radius: .2rem;
     --container-border-radius: .4rem;
 
-    --btn-bg-hue: 40;
-    --btn-bg-sat: 8%;
-
-    --btn-sel-bg-hue: var(--selected-hue);
-    --btn-sel-bg-sat: var(--selected-sat);
-
-    --button-default-color: hsl(0, 0%, 90%);
-    --button-default-background-color: hsl(var(--btn-bg-hue), var(--btn-bg-sat), 20%);
-    --button-default-border: 1px solid hsl(var(--btn-bg-hue), var(--btn-bg-sat), 22%);
-
-    --button-default-focus-color: hsl(0, 0%, 90%);
-    --button-default-focus-background-color: hsl(var(--btn-bg-hue), var(--btn-bg-sat), 23%);
-    --button-default-focus-border: 1px solid hsl(var(--btn-bg-hue), var(--btn-bg-sat), 25%);
-
-    --button-default-hover-color: hsl(0, 0%, 100%);
-    --button-default-hover-background-color: hsl(var(--btn-bg-hue), var(--btn-bg-sat), 25%);
-    --button-default-hover-border: 1px solid hsl(var(--btn-bg-hue), var(--btn-bg-sat), 27%);
-
-    --button-default-active-color: hsl(0, 0%, 100%);
-    --button-default-active-background-color: hsl(var(--btn-bg-hue), var(--btn-bg-sat), 26%);
-    --button-default-active-border: 1px solid hsl(var(--btn-bg-hue), var(--btn-bg-sat), 28%);
-
-    --button-selected-color: hsl(0, 0%, 100%);
-    --button-selected-background-color: hsl(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 26%);
-    --button-selected-border: 1px solid hsl(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 28%);
-
-    --button-selected-focus-color: hsl(0, 0%, 100%);
-    --button-selected-focus-background-color: hsl(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 24%);
-    --button-selected-focus-border: 1px solid hsl(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 26%);
-
-    --button-selected-hover-color: hsl(0, 0%, 100%);
-    --button-selected-hover-background-color: hsl(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 23%);
-    --button-selected-hover-border: 1px solid hsl(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 25%);
-
-    --button-selected-active-color: hsl(0, 0%, 100%);
-    --button-selected-active-background-color: hsl(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 22%);
-    --button-selected-active-border: 1px solid hsl(var(--btn-sel-bg-hue), var(--btn-sel-bg-sat), 24%);
+    --panel-default-background-color: hsla(36, 8%, 15%, .95);
+    --panel-default-overlay-color: hsla(36, 8%, 15%, .7);
 
     --selected-panel-border-width: 1px;
     --selected-panel-border-color: var(--wireframe-color);
+
+    --tab-default-border-color: hsla(0, 0%, 100%, .15);
+    --tab-selected-border-color: hsl(var(--selected-hue), var(--selected-sat), 40%);
 
     font-size: calc(14px * var(--scaling-factor));
 }
