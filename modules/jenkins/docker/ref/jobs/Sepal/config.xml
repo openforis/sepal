@@ -70,7 +70,7 @@
     <prebuilders/>
     <postbuilders>
         <hudson.tasks.Shell>
-            <command>${WORKSPACE}/hosting-services/common/operations/build-and-push-images.sh $BUILD_NUMBER $WORKSPACE
+            <command>${WORKSPACE}/hosting-services/common/operations/build-and-push-images.sh $BUILD_NUMBER $WORKSPACE /data/jenkins/workspace/Sepal
             </command>
         </hudson.tasks.Shell>
     </postbuilders>
