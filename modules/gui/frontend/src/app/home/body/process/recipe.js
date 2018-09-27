@@ -1,4 +1,4 @@
-import {Subject, from, of} from 'rxjs'
+import {EMPTY, Subject, from, of} from 'rxjs'
 import {addTab, closeTab} from 'widget/tabs'
 import {gzip$, ungzip$} from 'gzip'
 import {map, switchMap} from 'rxjs/operators'
@@ -30,7 +30,7 @@ export const RecipeState = (recipeId) => {
 
 export const saveRecipe$ = (recipe) => {
     if (!recipe.type)
-        return
+        return EMPTY
     const listItem = {
         id: recipe.id,
         name: recipe.title || recipe.placeholder,
