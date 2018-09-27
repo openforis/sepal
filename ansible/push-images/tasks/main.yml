@@ -1,7 +1,7 @@
 ---
 
 - name: Copy the push script
-  template: src="push_images.sh" dest="/data/ansible/" mode="u=rwx,g=Rx,o=Rx"
+  template: src="push_images.sh" dest="/data/ansible/" mode="u=rwx,g=rx,o=rx"
 
 - name: Pushing the images to the local repo
   shell: "/data/ansible/push_images.sh"
