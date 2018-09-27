@@ -87,7 +87,7 @@ const removeFile$ = (path) => {
         const directory = Path.dirname(path)
         const fileName = Path.basename(path)
         return actionBuilder('FILE_REMOVED', {directory, fileName})
-            .delValueByKey(['files', 'loaded', directory, 'files'], 'name', fileName)
+            .delValueByTemplate(['files', 'loaded', directory, 'files'], {name: fileName})
             .build()
     })
 }
@@ -97,7 +97,7 @@ const removeDirectory$ = (path) => {
         const directory = Path.dirname(path)
         const fileName = Path.basename(path)
         return actionBuilder('DIRECTORY_REMOVED', path)
-            .delValueByKey(['files', 'loaded', directory, 'files'], 'name', fileName)
+            .delValueByTemplate(['files', 'loaded', directory, 'files'], {name: fileName})
             .del(['files', 'loaded', path])
             .build()
     })
