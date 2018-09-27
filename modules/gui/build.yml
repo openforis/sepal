@@ -3,17 +3,17 @@
 - name: "gui | Install Maven"
   apt: name="maven"
 
-- name: "gui | Determine if jar should be built"
-  script: "{{ module_dir }}/should-rebuild.sh {{ module_dir }}"
-  delegate_to: 127.0.0.1
-  become: no
-  register: should_rebuild
-  changed_when: should_rebuild.stdout_lines[0] == 'true'
+#- name: "gui | Determine if jar should be built"
+#  script: "{{ module_dir }}/should-rebuild.sh {{ module_dir }}"
+#  delegate_to: 127.0.0.1
+#  become: no
+#  register: should_rebuild
+#  changed_when: should_rebuild.stdout_lines[0] == 'true'
 
 - name: "gui | Build jar"
   shell: mvn clean package -DskipTests --projects modules/gui --also-make chdir="{{ module_dir }}/../.."
   delegate_to: 127.0.0.1
   become: no
-  when: should_rebuild.changed
+#  when: should_rebuild.changed
 
 - include_tasks: "{{ build_image_task }}"
