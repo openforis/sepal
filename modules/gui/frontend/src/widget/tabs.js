@@ -13,14 +13,14 @@ export const addTab = (statePath) => {
     const id = guid()
     const tab = {id, placeholder: msg('widget.tabs.newTab')}
     actionBuilder('ADD_TAB')
-        .push(path(statePath, 'tabs'), tab)
-        .set(path(statePath, 'selectedTabId'), id)
+        .push([statePath, 'tabs'], tab)
+        .set([statePath, 'selectedTabId'], id)
         .dispatch()
     return tab
 }
 
 const getTabIndex = (id, statePath) =>
-    select(path(statePath, 'tabs'))
+    select([statePath, 'tabs'])
         .findIndex((tab) => tab.id === id)
 
 const toTabPath = (id, statePath) =>
@@ -46,29 +46,25 @@ export const closeTab = (id, statePath) => {
             nextSelectedId = tabs[tabIndex + 1].id
         else if (!first)
             nextSelectedId = tabs[tabIndex - 1].id
-        return stateBuilder.set(path(statePath, 'selectedTabId'), nextSelectedId)
+        return stateBuilder.set([statePath, 'selectedTabId'], nextSelectedId)
     }
 
     actionBuilder('CLOSE_TAB')
         .withState(statePath, updateSelectedTab)
-        .delValueByKey(path(statePath, 'tabs'), 'id', id)
+        .delValueByTemplate([statePath, 'tabs'], {id})
         .dispatch()
 }
 
 export const selectTab = (id, statePath) => {
     actionBuilder('SELECT_TAB')
-        .set(path(statePath, 'selectedTabId'), id)
+        .set([statePath, 'selectedTabId'], id)
         .dispatch()
 }
 
 const mapStateToProps = (state, ownProps) => ({
-    tabs: select(path(ownProps.statePath, 'tabs')) || [],
-    selectedTabId: select(path(ownProps.statePath, 'selectedTabId'))
+    tabs: select([ownProps.statePath, 'tabs']) || [],
+    selectedTabId: select([ownProps.statePath, 'selectedTabId'])
 })
-
-const path = (...paths) => {
-    return paths.join('.')
-}
 
 class Tabs extends React.Component {
     constructor(props) {
