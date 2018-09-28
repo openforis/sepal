@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:bionic
 MAINTAINER OpenForis
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current \
@@ -7,8 +7,9 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     VERSION=2018-07-10
 # VERSION used to force complete rebuild of image
 
+ADD config /config
 ADD config/OFGTMethod /usr/local/share/OFGTMethod
-RUN chmod +x /usr/local/bin/*; sync && mkdir /script
+RUN chmod +x /usr/local/bin/*; sync && chmod -R 400 /config; sync && mkdir /script
 
 ADD script/init_image.sh /script
 RUN chmod u+x /script/init_image.sh; sync && /script/init_image.sh

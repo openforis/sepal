@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:bionic
 MAINTAINER OpenForis
 EXPOSE 5001
 
@@ -10,7 +10,7 @@ RUN chmod -R 500 /script && \
     /script/init_image.sh
 
 ADD requirements.txt /requirements.txt
-RUN pip install -r /requirements.txt
+RUN pip2 install -r /requirements.txt
 
 ADD src /src
 CMD [ "/script/init_container.sh" ]

@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:bionic
 MAINTAINER OpenForis
 EXPOSE 7767
 
@@ -10,12 +10,11 @@ RUN chmod -R 500 /script && \
     /script/init_image.sh
 
 ADD requirements.txt /requirements.txt
-RUN pip install -r /requirements.txt
+RUN pip2 install -r /requirements.txt
 
 ADD src /src
 
 RUN cd /src/peatlands/static && \
-    ln -s /usr/bin/nodejs /usr/bin/node && \
     yarn install
 
 CMD ["/script/init_container.sh"]

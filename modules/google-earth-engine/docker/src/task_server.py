@@ -1,16 +1,18 @@
 import json
 import logging
+import os
+import sys
 from collections import namedtuple
 from os import path
 from threading import local
 
 import ee
-import sys
+import oauth2client.client
+import oauth2client.client
 from flask import Flask, Blueprint, Response
 from flask import request
 
 from sepal import gee
-from sepal.file_credentials import FileCredentials
 from sepal.task import repository
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
@@ -21,16 +23,42 @@ app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 thread_local = local()
 
-access_token_file = None
+earthengine_credentials_file = os.path.expanduser('~/.config/earthengine/credentials')
 
 Context = namedtuple('Context', 'credentials, download_dir')
 
 
+class AccessTokenCredentials(oauth2client.client.OAuth2Credentials):
+    def __init__(self):
+        super(AccessTokenCredentials, self).__init__(
+            AccessTokenCredentials._read_access_token(),
+            None, None, None, None, None, None
+        )
+
+    @staticmethod
+    def create():
+        if path.exists(earthengine_credentials_file) \
+                and AccessTokenCredentials._read_access_token():
+            return AccessTokenCredentials()
+        else:
+            return None
+
+    @staticmethod
+    def _read_access_token():
+        return json.load(open(earthengine_credentials_file)).get('access_token')
+
+    def _refresh(self, http):
+        self.access_token = AccessTokenCredentials._read_access_token()
+
+    def __str__(self):
+        return 'AccessTokenCredentials()'
+
+
 @http.before_request
 def before():
-    credentials = gee.service_account_credentials
-    if path.exists(access_token_file):
-        credentials = FileCredentials(access_token_file)
+    credentials = AccessTokenCredentials.create()
+    if not credentials:
+        credentials = gee.service_account_credentials
     logger.debug('Using credentials: ' + str(credentials))
     thread_local.context = Context(credentials=credentials, download_dir=sys.argv[3])
     ee.InitializeThread(credentials)
@@ -66,9 +94,6 @@ def cancel():
 
 
 def init():
-    global access_token_file
-    access_token_file = sys.argv[5]
-
     global username
     username = sys.argv[4]
 

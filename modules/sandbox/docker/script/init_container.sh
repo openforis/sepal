@@ -36,6 +36,8 @@ printf '%s\n' \
     >> /etc/environment
 
 cp /etc/environment /etc/R/Renviron.site
+# LD_LIBRARY_PATH includes /usr/lib/x86_64-linux-gnu. Make sure /lib/x86_64-linux-gnu is also included
+sed -i -e 's/\/usr\/lib\/x86_64-linux-gnu/\/usr\/lib\/x86_64-linux-gnu:\/lib\/x86_64-linux-gnu/g' /usr/lib/R/etc/ldpaths
 
 ln -sf /config/ldap.conf /etc/ldap.conf
 ln -sf /config/ldap.conf /etc/ldap/ldap.conf

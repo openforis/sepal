@@ -5,4 +5,4 @@ apt-get -y update && apt-get install -y \
  cron \
  python-pip
 
-pip install awscli
+pip2 install awscli
