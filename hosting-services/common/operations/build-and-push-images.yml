@@ -10,6 +10,8 @@
   roles:
     - { role: build-module, module: letsencrypt }
     - { role: build-module, module: java }
+    - { role: build-module, module: zookeeper }
+    - { role: build-module, module: kafka }
     - { role: build-module, module: ldap-backup }
     - { role: build-module, module: ldap }
     - { role: build-module, module: haproxy }

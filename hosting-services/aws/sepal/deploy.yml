@@ -31,6 +31,8 @@
     - { role: docker-login }
 
     - { role: run-module, module: backup }
+    - { role: run-module, module: haproxy }
+    - { role: run-module, module: kafka }
     - { role: run-module, module: ldap }
     - { role: run-module, module: ldap-backup }
     - { role: run-module, module: mysql }
