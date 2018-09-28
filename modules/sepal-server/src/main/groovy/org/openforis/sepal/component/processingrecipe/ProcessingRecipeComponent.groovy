@@ -3,8 +3,10 @@ package org.openforis.sepal.component.processingrecipe
 import groovymvc.Controller
 import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.processingrecipe.adapter.JdbcRecipeRepository
+import org.openforis.sepal.component.processingrecipe.api.Recipe
 import org.openforis.sepal.component.processingrecipe.command.*
 import org.openforis.sepal.component.processingrecipe.endpoint.ProcessingRecipeEndpoint
+import org.openforis.sepal.component.processingrecipe.migration.Migrations
 import org.openforis.sepal.component.processingrecipe.migration.MosaicMigrations
 import org.openforis.sepal.component.processingrecipe.query.ListRecipes
 import org.openforis.sepal.component.processingrecipe.query.ListRecipesHandler
@@ -20,24 +22,31 @@ import org.openforis.sepal.util.SystemClock
 
 class ProcessingRecipeComponent extends DataSourceBackedComponent implements EndpointRegistry {
     static final String SCHEMA = 'processing_recipe'
+    static final Map<Recipe.Type, Migrations> MIGRATIONS_BY_RECIPE_TYPE = [
+        (Recipe.Type.MOSAIC): new MosaicMigrations()
+    ]
 
     static ProcessingRecipeComponent create() {
         def connectionManager = SqlConnectionManager.create(DatabaseConfig.fromPropertiesFile(SCHEMA))
+
         return new ProcessingRecipeComponent(
-                connectionManager,
-                new AsynchronousEventDispatcher(),
-                new SystemClock())
+            connectionManager,
+            new AsynchronousEventDispatcher(),
+            MIGRATIONS_BY_RECIPE_TYPE,
+            new SystemClock()
+        )
     }
 
     ProcessingRecipeComponent(
-            SqlConnectionManager connectionManager,
-            HandlerRegistryEventDispatcher eventDispatcher,
-            Clock clock
+        SqlConnectionManager connectionManager,
+        HandlerRegistryEventDispatcher eventDispatcher,
+        Map<Recipe.Type, Migrations> migrationsByRecipeType,
+        Clock clock
     ) {
         super(connectionManager, eventDispatcher)
         def repository = new JdbcRecipeRepository(connectionManager)
 
-        command(SaveRecipe, new SaveRecipeHandler(repository, clock))
+        command(SaveRecipe, new SaveRecipeHandler(repository, migrationsByRecipeType, clock))
         command(RemoveRecipe, new RemoveRecipeHandler(repository))
         command(MigrateRecipes, new MigrateRecipesHandler(repository))
 
@@ -48,7 +57,10 @@ class ProcessingRecipeComponent extends DataSourceBackedComponent implements End
 
 
     void onStart() {
-        submit(new MigrateRecipes(migrations: new MosaicMigrations()))
+        MIGRATIONS_BY_RECIPE_TYPE.values().each {
+            submit(new MigrateRecipes(migrations: it))
+        }
+
     }
 
     void registerEndpointsWith(Controller controller) {

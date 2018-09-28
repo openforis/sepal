@@ -3,11 +3,21 @@ package org.openforis.sepal.component.processingrecipe.migration
 import groovy.json.JsonOutput
 import org.openforis.sepal.component.processingrecipe.api.Recipe
 
-abstract class Migrations {
+interface Migrations {
+    void addMigration(int version, Closure<Map> closure)
+
+    Recipe migrate(Recipe recipe)
+
+    int getCurrentVersion()
+
+    Recipe.Type getType()
+}
+
+abstract class AbstractMigrations implements Migrations {
     final Map<Integer, Closure<Map>> migrations = [:]
     final Recipe.Type type
 
-    Migrations(Recipe.Type type) {
+    AbstractMigrations(Recipe.Type type) {
         this.type = type
     }
 

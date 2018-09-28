@@ -4,6 +4,7 @@ import org.openforis.sepal.command.AbstractCommand
 import org.openforis.sepal.command.CommandHandler
 import org.openforis.sepal.component.processingrecipe.api.Recipe
 import org.openforis.sepal.component.processingrecipe.api.RecipeRepository
+import org.openforis.sepal.component.processingrecipe.migration.Migrations
 import org.openforis.sepal.util.Clock
 import org.openforis.sepal.util.annotation.Data
 
@@ -15,15 +16,17 @@ class SaveRecipe extends AbstractCommand<Void> {
 class SaveRecipeHandler implements CommandHandler<Void, SaveRecipe> {
     private final RecipeRepository repository
     private final Clock clock
+    private Map<Recipe.Type, Migrations> migrationsByRecipeType
 
-    SaveRecipeHandler(RecipeRepository repository, Clock clock) {
+    SaveRecipeHandler(RecipeRepository repository, Map<Recipe.Type, Migrations> migrationsByRecipeType, Clock clock) {
         this.repository = repository
+        this.migrationsByRecipeType = migrationsByRecipeType
         this.clock = clock
     }
 
     Void execute(SaveRecipe command) {
         def recipe = command.recipe.creationTime ? command.recipe.updated(clock.now()) : command.recipe.created(clock.now())
-        repository.save(recipe)
+        repository.save(recipe.withTypeVersion(migrationsByRecipeType[recipe.type].currentVersion))
         return null
     }
 }

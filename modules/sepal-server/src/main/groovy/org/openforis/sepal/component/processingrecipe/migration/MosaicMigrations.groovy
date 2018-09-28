@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter
 
 import static java.time.format.DateTimeFormatter.ISO_DATE
 
-class MosaicMigrations extends Migrations {
+class MosaicMigrations extends AbstractMigrations {
     public static final String OLD_COUNTRY_FUSION_TABLE = '15_cKgOA-AkdD6EiO-QW9JXM8_1-dPuuj1dqFr17F'
     public static final String NEW_COUNTRY_FUSION_TABLE = '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU'
 
