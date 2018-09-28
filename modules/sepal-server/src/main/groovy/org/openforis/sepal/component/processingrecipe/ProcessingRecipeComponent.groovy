@@ -5,6 +5,7 @@ import org.openforis.sepal.component.DataSourceBackedComponent
 import org.openforis.sepal.component.processingrecipe.adapter.JdbcRecipeRepository
 import org.openforis.sepal.component.processingrecipe.command.*
 import org.openforis.sepal.component.processingrecipe.endpoint.ProcessingRecipeEndpoint
+import org.openforis.sepal.component.processingrecipe.migration.MosaicMigrations
 import org.openforis.sepal.component.processingrecipe.query.ListRecipes
 import org.openforis.sepal.component.processingrecipe.query.ListRecipesHandler
 import org.openforis.sepal.component.processingrecipe.query.LoadRecipe
@@ -43,6 +44,11 @@ class ProcessingRecipeComponent extends DataSourceBackedComponent implements End
         query(LoadRecipe, new LoadRecipeHandler(repository))
         query(ListRecipes, new ListRecipesHandler(repository))
 
+    }
+
+
+    void onStart() {
+        submit(new MigrateRecipes(migrations: new MosaicMigrations()))
     }
 
     void registerEndpointsWith(Controller controller) {
