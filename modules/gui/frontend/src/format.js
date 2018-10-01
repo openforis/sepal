@@ -12,6 +12,15 @@ const decimal = (value, decimals = 2) =>
         decimalScale={decimals}
         fixedDecimalScale={true}/>
 
+const GB = (value, decimals = 2) =>
+    <NumberFormat
+        value={value}
+        displayType={'text'}
+        thousandSeparator={true}
+        decimalScale={decimals}
+        fixedDecimalScale={true}
+        suffix={'GB'}/>
+
 const dollars = (value, decimals = 2) =>
     <NumberFormat
         value={value}
@@ -30,6 +39,16 @@ const dollarsPerHour = (value, decimals = 2) =>
         fixedDecimalScale={true}
         prefix={'$'}
         suffix={'/hr'}/>
+
+const dollarsPerMonth = (value, decimals = 0) =>
+    <NumberFormat
+        value={value}
+        displayType={'text'}
+        thousandSeparator={true}
+        decimalScale={decimals}
+        fixedDecimalScale={true}
+        prefix={'$'}
+        suffix={'/mon'}/>
 
 const hours = (value, decimals = 2) =>
     <NumberFormat
@@ -61,8 +80,10 @@ const date = (date) =>
 export default {
     integer,
     decimal,
+    GB,
     dollars,
     dollarsPerHour,
+    dollarsPerMonth,
     hours,
     percent,
     fullDateTime,

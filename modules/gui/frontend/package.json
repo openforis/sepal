@@ -26,6 +26,8 @@
     "react": "16.4.1",
     "react-dom": "16.4.1",
     "react-hammerjs": "^1.0.1",
+    "react-highlight-words": "^0.14.0",
+    "react-highlighter": "^0.4.3",
     "react-intl": "2.4.0",
     "react-media": "1.8.0",
     "react-notification-system": "0.2.17",

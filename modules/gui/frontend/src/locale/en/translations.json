@@ -666,8 +666,8 @@
             "title": "User report",
             "resources": {
                 "title": "Resources",
-                "monthlyInstance": "Monthly instance budget",
-                "monthlyStorage": "Monthly instance budget",
+                "monthlyInstance": "Instance budget",
+                "monthlyStorage": "Storage budget",
                 "storage": "Storage",
                 "quota": "Quota",
                 "used": "Used",
