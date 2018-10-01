@@ -41,7 +41,7 @@ class AssociateGoogleAccountHandler implements CommandHandler<GoogleTokens, Asso
         this.googleAccessTokenFileGateway = googleAccessTokenFileGateway
         this.messageQueue = messageBroker.createMessageQueue('user.associate_google_account', Map) {
             def user = it.user
-            googleAccessTokenFileGateway.save(user.username, it.accessToken)
+            googleAccessTokenFileGateway.save(user.username, it.tokens)
             changeListener.changed(user.username, user.toMap())
         }
     }
@@ -54,7 +54,7 @@ class AssociateGoogleAccountHandler implements CommandHandler<GoogleTokens, Asso
         }
         userRepository.updateGoogleTokens(command.username, tokens)
         def user = userRepository.lookupUser(command.username)
-        messageQueue.publish(user: user, accessToken: tokens?.accessToken)
+        messageQueue.publish(user: user, tokens: tokens)
         return tokens
     }
 }

@@ -22,7 +22,6 @@ class GoogleAccessTokenFileGateway {
         }
         file.write(JsonOutput.toJson([
                 access_token            : tokens.accessToken,
-                refresh_token           : tokens.refreshToken,
                 access_token_expiry_date: tokens.accessTokenExpiryDate
         ]))
     }

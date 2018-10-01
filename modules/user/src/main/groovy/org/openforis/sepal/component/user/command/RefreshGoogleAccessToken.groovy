@@ -38,7 +38,7 @@ class RefreshGoogleAccessTokenHandler implements CommandHandler<GoogleTokens, Re
         this.googleAccessTokenFileGateway = googleAccessTokenFileGateway
         this.messageQueue = messageBroker.createMessageQueue('user.refresh_google_access_token', Map) {
             def user = it.user
-            googleAccessTokenFileGateway.save(user.username, it.accessToken)
+            googleAccessTokenFileGateway.save(user.username, it.tokens)
             changeListener.changed(user.username, user.toMap())
         }
     }
@@ -56,7 +56,7 @@ class RefreshGoogleAccessTokenHandler implements CommandHandler<GoogleTokens, Re
         }
         userRepository.updateGoogleTokens(command.username, refreshedToken)
         def user = userRepository.lookupUser(command.username)
-        messageQueue.publish(user: user, accessToken: refreshedToken?.accessToken)
+        messageQueue.publish(user: user, tokens: refreshedToken)
         return refreshedToken
     }
 }
