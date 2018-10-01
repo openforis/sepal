@@ -1,3 +1,4 @@
+import {Controls, Data} from './paginate'
 import {connect} from 'store'
 import {map, share, zip} from 'rxjs/operators'
 import {msg} from 'translate'
@@ -5,6 +6,7 @@ import {of} from 'rxjs'
 import Highlight from 'react-highlighter'
 import Highlighter from 'react-highlight-words'
 import Icon from 'widget/icon'
+import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
@@ -24,17 +26,6 @@ const budgetReport$ = of(budgetReport).pipe(
     zip(userList$),
     map(([budgetReport]) => budgetReport)
 )
-
-const paginate = (items, pageNumber, pageLength = 25) => {
-    const pageItems = items.slice((pageNumber - 1) * pageLength, pageNumber * pageLength)
-    return {
-        items: pageItems,
-        pageNumber,
-        pageLength,
-        totalItems: items.length,
-        totalPages: Math.ceil(items.length / pageLength)
-    }
-}
 
 class Users extends React.Component {
     state = {
@@ -74,40 +65,6 @@ class Users extends React.Component {
                 report: budgetReport[user.username || {}]
             }))
         }))
-    }
-
-    renderUser(user) {
-        const {
-            id,
-            name,
-            username,
-            status,
-            report: {
-                monthlyInstanceBudget,
-                monthlyInstanceSpending,
-                monthlyStorageBudget,
-                monthlyStorageSpending,
-                storageQuota,
-                storageUsed
-            }
-        } = user
-        return (
-            <tr key={id} className={styles.clickable}>
-                {/* <td>{name}</td> */}
-                {/* <td>{username}</td> */}
-                {/* <td><Highlighter textToHighlight={name} searchWords={[this.state.filter]} autoEscape={true}/></td> */}
-                {/* <td><Highlighter textToHighlight={username} searchWords={[this.state.filter]} autoEscape={true}/></td> */}
-                <td><Highlight search={this.state.filter} matchClass={styles.highlight}>{name}</Highlight></td>
-                <td><Highlight search={this.state.filter} matchClass={styles.highlight}>{username}</Highlight></td>
-                <td>{status}</td>
-                <td className={styles.number}>{format.dollars(monthlyInstanceBudget, 0)}</td>
-                <td className={styles.number}>{format.dollars(monthlyInstanceSpending)}</td>
-                <td className={styles.number}>{format.dollars(monthlyStorageBudget, 0)}</td>
-                <td className={styles.number}>{format.dollars(monthlyStorageSpending)}</td>
-                <td className={styles.number}>{format.GB(storageQuota, 0)}</td>
-                <td className={styles.number}>{format.GB(storageUsed)}</td>
-            </tr>
-        )
     }
 
     setSorting(sortingOrder) {
@@ -164,7 +121,6 @@ class Users extends React.Component {
     }
 
     renderUsers() {
-        const page = paginate(this.getUsers(), this.state.page)
         return (
             <div className={styles.container}>
                 <div>
@@ -228,11 +184,31 @@ class Users extends React.Component {
                             </tr>
                         </thead>
                         <tbody>
-                            {page.items.map(user => this.renderUser(user))}
+                            <Paginate items={this.getUsers()} limit={20} page={this.state.page}>
+                                {/* <Data items={this.getUsers()} limit={10}> */}
+                                {user => {
+                                    const {id, name, username, status, report: {monthlyInstanceBudget, monthlyInstanceSpending, monthlyStorageBudget, monthlyStorageSpending, storageQuota, storageUsed}} = user
+                                    return (
+                                        <tr key={id} className={styles.clickable}>
+                                            <td><Highlight search={this.state.filter} matchClass={styles.highlight}>{name}</Highlight></td>
+                                            <td><Highlight search={this.state.filter} matchClass={styles.highlight}>{username}</Highlight></td>
+                                            <td>{status}</td>
+                                            <td className={styles.number}>{format.dollars(monthlyInstanceBudget, 0)}</td>
+                                            <td className={styles.number}>{format.dollars(monthlyInstanceSpending)}</td>
+                                            <td className={styles.number}>{format.dollars(monthlyStorageBudget, 0)}</td>
+                                            <td className={styles.number}>{format.dollars(monthlyStorageSpending)}</td>
+                                            <td className={styles.number}>{format.GB(storageQuota, 0)}</td>
+                                            <td className={styles.number}>{format.GB(storageUsed)}</td>
+                                        </tr>
+                                    )
+                                }}
+                                {/* </Data> */}
+                            </Paginate>
                         </tbody>
                     </table>
                     <div>
-                        <span>Page no. {page.pageNumber} of {page.totalPages}</span>
+                        {/* <Controls/> */}
+                        {/* <span>Page no. {page.pageNumber} of {page.totalPages}</span> */}
                         <button onClick={() => this.prevPage()}>Previous page</button>
                         <button onClick={() => this.nextPage()}>Next page</button>
                     </div>
@@ -251,3 +227,22 @@ class Users extends React.Component {
 }
 
 export default connect()(Users)
+
+class Paginate extends React.Component {
+    render() {
+        const {items, limit, page} = this.props
+        const pageItems = items.slice((page - 1) * limit, page * limit)
+        return (
+            <React.Fragment>
+                {pageItems.map(item => this.props.children(item))}
+            </React.Fragment>
+        )
+    }
+}
+
+Paginate.propTypes = {
+    children: PropTypes.func.isRequired,
+    items: PropTypes.array.isRequired,
+    limit: PropTypes.number.isRequired,
+    page: PropTypes.number.isRequired
+}
