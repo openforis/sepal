@@ -99,7 +99,7 @@
         groups: docker
 
     - name: Login to docker registry
-      command: "echo '{{ docker_password }}' | docker login --password-stdin -u '{{ docker_username }}' {{ docker_repository_host }}"
+      command: "docker login -p '{{ docker_password }}' -u '{{ docker_username }}' {{ docker_repository_host }}"
 
     - name: Pull sandbox
       command: "docker pull {{ docker_repository_host }}/openforis/sandbox:{{ version }}"
