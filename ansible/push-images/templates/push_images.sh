@@ -3,6 +3,8 @@ set -e
 
 echo "{{ docker_password }}" | docker login localhost -u "{{ docker_username }}" --password-stdin
 docker push localhost/openforis/backup:{{ version }}
+docker push localhost/openforis/zookeeper:{{ version }}
+docker push localhost/openforis/kafka:{{ version }}
 docker push localhost/openforis/ldap:{{ version }}
 docker push localhost/openforis/ldap-backup:{{ version }}
 docker push localhost/openforis/user:{{ version }}
