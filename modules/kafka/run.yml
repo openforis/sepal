@@ -13,7 +13,7 @@
     - "docker-compose.yml"
     - "docker-compose.syslog.yml"
   environment:
-    ZOOKEEPER_IMAGE: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/zookeeper"
+    ZOOKEEPER_IMAGE: "{{ docker_repository_host + '/' if docker_repository_host else '' }}openforis/zookeeper:{{ version }}"
     KAFKA_IMAGE: "{{ image }}"
     SYSLOG_ADDRESS: "{{ syslog_address }}"
     WORKDIR: "/data/kafka"
