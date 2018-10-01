@@ -580,6 +580,9 @@
         "userDetails": {
             "title": "User details",
             "form": {
+                "username": {
+                    "label": "Username"
+                },
                 "name": {
                     "label": "Name",
                     "required": "Name is required"
@@ -590,6 +593,9 @@
                 },
                 "organization": {
                     "label": "Organization"
+                },
+                "status": {
+                    "label": "Status"
                 }
             },
             "useUserGoogleAccount": {

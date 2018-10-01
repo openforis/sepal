@@ -1,0 +1,138 @@
+[{
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": [],
+    "id": 10012,
+    "username": "agerrand",
+    "email": "adam.gerrand@fao.org",
+    "googleTokens": null,
+    "name": "Adam Gerrand",
+    "admin": false,
+    "organization": "UN-FAO - Indonesia"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": ["application_admin"],
+    "id": 10011,
+    "username": "paolini",
+    "email": "luca.paolini@fao.org",
+    "googleTokens": null,
+    "name": "Luca Paolini",
+    "admin": true,
+    "organization": "FAO"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": [],
+    "id": 10010,
+    "username": "vollrath",
+    "email": "andreas.vollrath@fao.org",
+    "googleTokens": null,
+    "name": "Andreas Vollrath",
+    "admin": false,
+    "organization": "FAO"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": [],
+    "id": 10009,
+    "username": "finegold",
+    "email": "yelena.finegold@fao.org",
+    "googleTokens": {
+        "accessToken": "ya29.Glv5BYSMyYq8E_Q46_4beIcOzgCiWXlluvUt1HkZkxTt4islbdL2l26kS3NCto7485yc-Os5LlNddc6IlmIIcRs10Do4IuCy2vaOq7d6tL6eTXHmGHrMREFmsaX_",
+        "refreshToken": "1/TZFquXsGV4sDjSbXSS0Xc4FlqYluiy0mgKKNU53CJa0",
+        "accessTokenExpiryDate": 1534246665000,
+        "REFRESH_IF_EXPIRES_IN_MINUTES": 5
+    },
+    "name": "Yelena Finegold",
+    "admin": false,
+    "organization": "UN-FAO"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": [],
+    "id": 10008,
+    "username": "gelet",
+    "email": "melakeneh.gelet@fao.org",
+    "googleTokens": null,
+    "name": "Melakeneh Gelet",
+    "admin": false,
+    "organization": "UN-FAO"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": [],
+    "id": 10007,
+    "username": "africagis",
+    "email": "africagis@gmail.com",
+    "googleTokens": null,
+    "name": "africagis",
+    "admin": false,
+    "organization": "me"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": [],
+    "id": 10006,
+    "username": "pausdiaz",
+    "email": "alfonso.sanchezpausdiaz@fao.org",
+    "googleTokens": null,
+    "name": "Alfonso Sanchez Paus Diaz",
+    "admin": false,
+    "organization": "FAO"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": ["application_admin"],
+    "id": 10005,
+    "username": "fontanarosa",
+    "email": "roberto.fontanarosa@fao.org",
+    "googleTokens": null,
+    "name": "Roberto Fontanarosa",
+    "admin": true,
+    "organization": "FAO"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": [],
+    "id": 10004,
+    "username": "minotogna",
+    "email": "cosimo.togna@fao.org",
+    "googleTokens": null,
+    "name": "Mino Togna",
+    "admin": false,
+    "organization": "FAO"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": ["application_admin"],
+    "id": 10003,
+    "username": "lindquist",
+    "email": "erik.lindquist@fao.org",
+    "googleTokens": null,
+    "name": "Erik Lindquist",
+    "admin": true,
+    "organization": "FAO"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": ["application_admin"],
+    "id": 10002,
+    "username": "wiell",
+    "email": "daniel.wiell@fao.org",
+    "googleTokens": null,
+    "name": "Daniel Wiell",
+    "admin": true,
+    "organization": "FAO"
+}, {
+    "systemUser": false,
+    "status": "ACTIVE",
+    "roles": ["application_admin"],
+    "id": 10001,
+    "username": "admin",
+    "email": "admin@sepal.io",
+    "googleTokens": null,
+    "name": "Admin",
+    "admin": true,
+    "organization": "FAO"
+}]

@@ -1,3 +1,18 @@
 .container {
     background-color: #008800;
 }
+
+.clickable {
+    padding: .2rem .5rem;
+    border: 1px solid gray;
+    margin-top: .5rem;
+}
+
+.clickable:hover {
+    background-color: #404040;
+    cursor: pointer;
+}
+
+.number {
+    text-align: right;
+}

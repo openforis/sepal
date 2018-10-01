@@ -1,0 +1,98 @@
+{
+    "agerrand": {
+        "monthlyInstanceBudget": 1.0,
+        "monthlyInstanceSpending": 0.0,
+        "monthlyStorageBudget": 1.0,
+        "monthlyStorageSpending": 0.0,
+        "storageQuota": 20.0,
+        "storageUsed": 0.0
+    },
+    "paolini": {
+        "monthlyInstanceBudget": 1.0,
+        "monthlyInstanceSpending": 0.15,
+        "monthlyStorageBudget": 1.0,
+        "monthlyStorageSpending": 0.0,
+        "storageQuota": 20.0,
+        "storageUsed": 0.0
+    },
+    "vollrath": {
+        "monthlyInstanceBudget": 200.0,
+        "monthlyInstanceSpending": 0.0,
+        "monthlyStorageBudget": 100.0,
+        "monthlyStorageSpending": 0.16,
+        "storageQuota": 500.0,
+        "storageUsed": 0.49
+    },
+    "finegold": {
+        "monthlyInstanceBudget": 1.0,
+        "monthlyInstanceSpending": 0.0,
+        "monthlyStorageBudget": 1.0,
+        "monthlyStorageSpending": 0.32,
+        "storageQuota": 20.0,
+        "storageUsed": 0.97
+    },
+    "gelet": {
+        "monthlyInstanceBudget": 1.0,
+        "monthlyInstanceSpending": 0.0,
+        "monthlyStorageBudget": 1.0,
+        "monthlyStorageSpending": 0.0,
+        "storageQuota": 20.0,
+        "storageUsed": 0.01
+    },
+    "africagis": {
+        "monthlyInstanceBudget": 1.0,
+        "monthlyInstanceSpending": 0.0,
+        "monthlyStorageBudget": 1.0,
+        "monthlyStorageSpending": 0.05,
+        "storageQuota": 20.0,
+        "storageUsed": 0.14
+    },
+    "pausdiaz": {
+        "monthlyInstanceBudget": 1.0,
+        "monthlyInstanceSpending": 0.0,
+        "monthlyStorageBudget": 1.0,
+        "monthlyStorageSpending": 0.0,
+        "storageQuota": 20.0,
+        "storageUsed": 0.0
+    },
+    "fontanarosa": {
+        "monthlyInstanceBudget": 1.0,
+        "monthlyInstanceSpending": 0.0,
+        "monthlyStorageBudget": 1.0,
+        "monthlyStorageSpending": 0.02,
+        "storageQuota": 20.0,
+        "storageUsed": 0.05
+    },
+    "minotogna": {
+        "monthlyInstanceBudget": 10.0,
+        "monthlyInstanceSpending": 0.0,
+        "monthlyStorageBudget": 10.0,
+        "monthlyStorageSpending": 2.64,
+        "storageQuota": 20.0,
+        "storageUsed": 7.97
+    },
+    "lindquist": {
+        "monthlyInstanceBudget": 100.0,
+        "monthlyInstanceSpending": 0.0,
+        "monthlyStorageBudget": 100.0,
+        "monthlyStorageSpending": 0.94,
+        "storageQuota": 200.0,
+        "storageUsed": 2.84
+    },
+    "wiell": {
+        "monthlyInstanceBudget": 30.0,
+        "monthlyInstanceSpending": 0.25,
+        "monthlyStorageBudget": 10.0,
+        "monthlyStorageSpending": 0.36,
+        "storageQuota": 100.0,
+        "storageUsed": 1.07
+    },
+    "admin": {
+        "monthlyInstanceBudget": 10.0,
+        "monthlyInstanceSpending": 0.0,
+        "monthlyStorageBudget": 10.0,
+        "monthlyStorageSpending": 0.42,
+        "storageQuota": 100.0,
+        "storageUsed": 1.28
+    }
+}
