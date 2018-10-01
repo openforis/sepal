@@ -12,6 +12,7 @@ import org.openforis.sepal.util.NamedThreadFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
@@ -65,7 +66,7 @@ class KafkaEventDispatcher implements HandlerRegistryEventDispatcher {
     }
 
     private pollForEvents() {
-        consumer.poll(100)
+        consumer.poll(Duration.ofSeconds(5))
                 .forEach { notifyHandlers(it) }
     }
 
@@ -85,7 +86,7 @@ class KafkaEventDispatcher implements HandlerRegistryEventDispatcher {
         def key = UUID.randomUUID().toString()
         def value = JsonOutput.toJson(event)
         def record = new ProducerRecord("my-topic", key, value)
-        producer.send(record);
+        producer.send(record)
     }
 
     def <E extends Event> KafkaEventDispatcher register(Class<E> eventType, EventHandler<E> handler) {

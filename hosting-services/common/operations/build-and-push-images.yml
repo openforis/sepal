@@ -15,7 +15,6 @@
     - { role: build-module, module: ldap-backup }
     - { role: build-module, module: ldap }
     - { role: build-module, module: haproxy }
-    - { role: build-module, module: nginx }
     - { role: build-module, module: backup }
     - { role: build-module, module: mysql-backup }
     - { role: build-module, module: mysql }

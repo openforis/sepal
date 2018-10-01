@@ -1,1 +1,1 @@
-FROM wurstmeister/kafka:2.11-1.1.0
+FROM wurstmeister/kafka:2.11-2.0.0

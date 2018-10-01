@@ -3,6 +3,7 @@ package org.openforis.sepal.component.hostingservice.aws
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model.*
+import org.openforis.sepal.component.workerinstance.WorkerInstanceConfig
 import org.openforis.sepal.component.workerinstance.api.InstanceProvider
 import org.openforis.sepal.component.workerinstance.api.WorkerInstance
 import org.openforis.sepal.component.workerinstance.api.WorkerReservation
@@ -17,7 +18,7 @@ final class AwsInstanceProvider implements InstanceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(this)
     private static final String SECURITY_GROUP = 'Sandbox'
     private final JobScheduler jobScheduler
-    private final int sepalVersion
+    private final String currentSepalVersion
     private final String region
     private final String availabilityZone
     private final String environment
@@ -27,7 +28,7 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     AwsInstanceProvider(JobScheduler jobScheduler, AwsConfig config) {
         this.jobScheduler = jobScheduler
-        sepalVersion = config.sepalVersion
+        currentSepalVersion = config.sepalVersion
         region = config.region
         availabilityZone = config.availabilityZone
         environment = config.environment
@@ -144,10 +145,10 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private List<Tag> launchTags() {
         [
-                tag('Environment', environment),
-                tag('Type', 'Worker'),
-                tag('Version', sepalVersion as String),
-                tag('Starting', 'true')
+            tag('Environment', environment),
+            tag('Type', 'Worker'),
+            tag('Version', currentSepalVersion),
+            tag('Starting', 'true')
         ]
     }
 
@@ -200,7 +201,7 @@ final class AwsInstanceProvider implements InstanceProvider {
         def awsInstances = client.describeInstances(request).reservations
                 .collect { it.instances }.flatten() as List<Instance>
         def instancesWithValidVersion = awsInstances.findAll {
-            instanceVersion(it) >= sepalVersion
+            !WorkerInstanceConfig.isOlderVersion(instanceVersion(it), currentSepalVersion)
         }
         terminateOldIdle(awsInstances)
         return instancesWithValidVersion.collect { toWorkerInstance(it) }
@@ -208,14 +209,14 @@ final class AwsInstanceProvider implements InstanceProvider {
 
     private List<Instance> terminateOldIdle(List<Instance> awsInstances) {
         awsInstances.findAll {
-            instanceVersion(it) < sepalVersion && tagValue(it, 'State') == 'idle'
+            WorkerInstanceConfig.isOlderVersion(instanceVersion(it), currentSepalVersion) && tagValue(it, 'State') == 'idle'
         }.each {
             terminate(it.instanceId)
         }
     }
 
-    private int instanceVersion(Instance instance) {
-        tagValue(instance, 'Version') as int
+    private String instanceVersion(Instance instance) {
+        tagValue(instance, 'Version')
     }
 
     private List<Instance> launch(String instanceType, int count) {
@@ -235,12 +236,12 @@ final class AwsInstanceProvider implements InstanceProvider {
     private String fetchImageId(String availabilityZone) {
         def request = new DescribeImagesRequest()
         request.withFilters(
-                new Filter("tag:Version", [sepalVersion as String]),
+                new Filter("tag:Version", [currentSepalVersion]),
                 new Filter('tag:AvailabilityZone', [availabilityZone])
         )
         def response = client.describeImages(request)
         if (!response?.images)
-            throw new UnableToGetImageId("sepalVersion: $sepalVersion, region: $region, availabilityZone: $availabilityZone")
+            throw new UnableToGetImageId("sepalVersion: $currentSepalVersion, region: $region, availabilityZone: $availabilityZone")
         def image = response.images.first()
         LOG.info("Using sandbox image $image.imageId")
         return image.imageId

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
+set -e
 
-docker login localhost -u "{{ docker_username }}" -p "{{ docker_password }}"
-docker push localhost/openforis/elk:{{ version }}
-docker push localhost/openforis/nginx:{{ version }}
-docker push localhost/openforis/rsyslog:{{ version }}
+echo "{{ docker_password }}" | docker login localhost -u "{{ docker_username }}" --password-stdin
 docker push localhost/openforis/backup:{{ version }}
+docker push localhost/openforis/zookeeper:{{ version }}
+docker push localhost/openforis/kafka:{{ version }}
 docker push localhost/openforis/ldap:{{ version }}
 docker push localhost/openforis/ldap-backup:{{ version }}
 docker push localhost/openforis/user:{{ version }}
