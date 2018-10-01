@@ -79,12 +79,6 @@ class Users extends React.Component {
         })
     }
 
-    renderSorting(sorting) {
-        return this.state.sortingOrder === sorting ? (
-            <Icon name={this.state.sortingDirection === 1 ? 'sort-down' : 'sort-up'}/>
-        ) : null
-    }
-
     setFilter(filter) {
         this.setState(prevState => ({
             ...prevState,
@@ -118,6 +112,14 @@ class Users extends React.Component {
             )
         }
         return this.state.users
+    }
+
+    renderSorting(sorting) {
+        return this.state.sortingOrder === sorting
+            ? this.state.sortingDirection === 1
+                ? <Icon name={'sort-down'}/>
+                : <Icon name={'sort-up'}/>
+            : <Icon name={'sort'}/>
     }
 
     renderUsers() {
