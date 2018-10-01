@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 docker login localhost -u "{{ docker_username }}" -p "{{ docker_password }}"
 docker push localhost/openforis/elk:{{ version }}
