@@ -38,6 +38,7 @@
        hosting_service: vagrant
        syslog_host: "172.17.0.1"
        syslog_address: "tcp://172.17.0.1:514"
+       workspace: "/opt/sepal/"
 
   post_tasks:
     - name: docker system prune
