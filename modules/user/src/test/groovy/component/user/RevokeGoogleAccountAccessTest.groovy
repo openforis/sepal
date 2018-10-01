@@ -2,10 +2,9 @@ package component.user
 
 import org.openforis.sepal.component.user.adapter.InvalidToken
 import org.openforis.sepal.component.user.command.RevokeGoogleAccountAccess
-import org.openforis.sepal.user.User
 
 class RevokeGoogleAccountAccessTest extends AbstractUserTest {
-    def 'When revoking access, access is removed from Google, user has no Google tokens, and change listener is notified'() {
+    def 'When revoking access, access is removed from Google and user has no Google tokens'() {
         def user = activeUser()
         def tokens = associateGoogleAccount(username: user.username)
 
@@ -14,10 +13,8 @@ class RevokeGoogleAccountAccessTest extends AbstractUserTest {
 
         then:
         googleOAuthClient.revoked(tokens)
-        def revokedUser = loadUser(user.username)
-        !revokedUser.googleTokens
-        !googleAccessTokenFile(user.username).exists()
-        changeListener.lastChange(user.username) == revokedUser.toMap()
+        !loadUser(user.username).googleTokens
+        !earthEngineCredentialsFile(user.username).exists()
     }
 
     def 'Given an invalid token, token is removed from user'() {
@@ -30,7 +27,7 @@ class RevokeGoogleAccountAccessTest extends AbstractUserTest {
 
         then:
         !loadUser(user.username).googleTokens
-        !googleAccessTokenFile(user.username).exists()
+        !earthEngineCredentialsFile(user.username).exists()
 
     }
 }
