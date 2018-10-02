@@ -83,7 +83,3 @@ export function syncHistoryAndStore(history, store) {
 
 export const isPathInLocation = (path) =>
     new RegExp(`^${path}([?#/].*)?$`).test(location().pathname)
-
-export const replaceIfPathInLocation = (pathPrefix, destinationPath) => {
-    isPathInLocation(pathPrefix) && history().replace(destinationPath).dispatch()
-}
