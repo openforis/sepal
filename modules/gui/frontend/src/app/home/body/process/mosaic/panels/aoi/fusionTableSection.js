@@ -33,15 +33,14 @@ class FusionTableSection extends React.Component {
     loadFusionTableColumns(fusionTableId) {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
             loadFusionTableColumns$(fusionTableId, {retries: 1, validStatuses: [200, 404]}).pipe(
-                map((columns) => {
-                    if (!columns)
+                map(response => {
+                    if (response.error)
                         this.props.inputs.fusionTable.setInvalid(
-                            msg('process.mosaic.panel.areaOfInterest.form.fusionTable.fusionTable.invalid')
+                            msg(response.error.key)
                         )
-                    return (columns || [])
+                    return (response.columns || [])
                         .filter((column) => column.type !== 'LOCATION')
-                }
-                ),
+                }),
                 map(this.recipe.setFusionTableColumns),
                 takeUntil(this.fusionTableChanged$))
         )

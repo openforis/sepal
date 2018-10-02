@@ -220,7 +220,6 @@
                             "fusionTable.label": "Fusion Table",
                             "fusionTable.placeholder": "Enter a Fusion Table ID",
                             "fusionTable.required": "Fusion Table must be specified",
-                            "fusionTable.invalid": "Invalid Fusion Table ID",
                             "column.label": "Column",
                             "column.placeholder.loading": "Loading columns...",
                             "column.placeholder.noFusionTable": "Enter a Fusion Table ID first",
@@ -770,6 +769,11 @@
         "comboBox": {
             "loading": "Loading..."
         }
+    },
+    "fusionTable": {
+        "unauthorized": "You don't have access to this Fusion Table",
+        "notFound": "Fusion Table not found",
+        "failedToLoad": "Failed to load Fusion Table"
     },
     "format": {
         "dollars": "${value}",

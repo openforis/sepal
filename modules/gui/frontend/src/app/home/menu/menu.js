@@ -48,9 +48,11 @@ Menu.propTypes = {
     user: PropTypes.object
 }
 
-const SectionLink = ({name, icon}) => {
+export default connect(mapStateToProps)(Menu)
+
+let SectionLink = ({active, name, icon}) => {
     const linkPath = '/' + name
-    const activeClass = isPathInLocation(linkPath) ? styles.active : null
+    const activeClass = active ? styles.active : null
     return (
         <Link to={linkPath} onMouseDown={(e) => e.preventDefault()}>
             <Tooltip msg={msg(`home.sections.${name}.tooltip`)} right>
@@ -66,16 +68,20 @@ SectionLink.propTypes = {
     icon: PropTypes.string,
     name: PropTypes.string
 }
+SectionLink = connect(
+    (state, {name}) => ({
+        active: isPathInLocation('/' + name)
+    })
+)(SectionLink)
 
-const AppLink = ({app: {path, label, alt}}) => {
-    const linkPath = '/app' + path
-    const activeClass = isPathInLocation(linkPath) ? styles.active : null
+let AppLink = ({active, app: {path, label, alt}}) => {
+    const activeClass = active ? styles.active : null
     return (
         <div className={styles.app}>
             <div className={styles.stop} onClick={() => quitApp(path)}>
                 <Icon name='times'/>
             </div>
-            <Link to={linkPath} onMouseDown={(e) => e.preventDefault()}>
+            <Link to={'/app' + path} onMouseDown={(e) => e.preventDefault()}>
                 <Tooltip msg={label || alt} right>
                     <button className={activeClass}>
                         <Icon name='cubes'/>
@@ -93,5 +99,8 @@ AppLink.propTypes = {
     path: PropTypes.string,
     onRemove: PropTypes.func
 }
-
-export default connect(mapStateToProps)(Menu)
+AppLink = connect(
+    (state, {app: {path}}) => ({
+        active: isPathInLocation('/app' + path)
+    })
+)(AppLink)

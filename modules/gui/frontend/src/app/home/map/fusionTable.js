@@ -32,15 +32,36 @@ export const queryFusionTable$ = (query, args = {}) => {
     })
 }
 
-export const loadFusionTableColumns$ = (tableId, args) => {
+export const loadFusionTableColumns$ = (tableId) => {
     return Http.get$(
         `https://www.googleapis.com/fusiontables/v2/tables/${tableId}/columns`, {
-            ...args,
+            validStatuses: [200, 401, 404],
             query: {...authParam()}
         }
     ).pipe(
-        map((e) => e.response.items)
+        map(({response}) => {
+            if (response.error) {
+                return {
+                    columns: [],
+                    error: {
+                        key: errorKey(response.error),
+                        code: response.error.code
+                    }
+                }
+            } else
+                return {
+                    columns: response.items
+                }
+        })
     )
+}
+
+const errorKey = (error) => {
+    switch(error.code) {
+    case 401: return 'fusionTable.unauthorized'
+    case 404: return 'fusionTable.notFound'
+    default: return 'fusionTable.failedToLoad'
+    }
 }
 
 const authParam = () =>
