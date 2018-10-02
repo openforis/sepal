@@ -1,49 +1,10 @@
 .container {
     padding: 2rem;
-    overflow-y: scroll;
-}
-
-.container table {
-    margin: auto;
-    width: 100%;
-}
-
-.container tr.clickable {
-    padding: .2rem .5rem;
-    margin-top: .5rem;
-}
-
-.container tr.clickable:hover {
-    background-color: #404040;
-    cursor: pointer;
-}
-
-.container th {
-    font-weight: normal;
-    font-size: .8rem;
-    text-transform: uppercase;
-    text-decoration: underline;
-    color: #dddddd;
-    background-color: #303030;
-    padding: .2rem .5rem;
-    vertical-align: bottom;
-}
-
-.container th.clickable {
-    cursor: pointer;
-}
-
-.container td {
-    font-size: 1rem;
-    padding: .2rem .5rem;
 }
 
 .number {
     width: 5rem;
     text-align: right;
-}
-
-.highlight {
 }
 
 .pageControls {
@@ -56,4 +17,73 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+}
+
+.grid {
+    display: grid;
+    grid-template-areas: 
+        "name username status ib  ib  sb  sb  st  st "
+        "name username status ibq ibu sbq sbu stq stu";
+    grid-template-columns: 3fr 1.5fr 1fr repeat(6, 1fr);
+    grid-template-rows: auto;
+    column-gap: 1rem;
+    width: 100%;
+    padding: .1rem .3rem;
+}
+
+.grid > * {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.grid > .name {
+    grid-area: name;
+    align-self: end;
+}
+
+.grid > .username {
+    grid-area: username;
+    align-self: end;
+}
+
+.grid > .status {
+    grid-area: status;
+    align-self: end;
+}
+
+.grid > .instanceBudget {
+    grid-area: ib;
+    text-align: center;
+}
+
+.grid > .storageBudget {
+    grid-area: sb;
+    text-align: center;
+}
+
+.grid > .storage {
+    grid-area: st;
+    text-align: center;
+}
+
+.heading {
+    background-color: var(--button-default-background-color);
+    color: var(--button-default-color);
+    font-weight: normal;
+    font-size: .9rem;
+    text-transform: uppercase;
+    user-select: none;
+}
+
+.clickable:hover {
+    cursor: pointer;
+}
+
+.users > :nth-child(even) {
+    background-color: hsla(0, 0%, 100%, .04);
+}
+
+.users > *:hover {
+    background-color: var(--button-selected-background-color);
+    color: var(--button-selected-color);
 }

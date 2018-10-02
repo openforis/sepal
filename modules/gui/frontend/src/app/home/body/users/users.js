@@ -106,59 +106,75 @@ class Users extends React.Component {
             : <Icon name={'sort'}/>
     }
 
-    renderHeaders() {
+    renderHeadings() {
         return (
-            <React.Fragment>
-                <tr>
-                    <th className={styles.clickable} rowSpan={2} onClick={() => this.setSorting('name')}>
-                        {msg('user.userDetails.form.name.label')}
-                        {this.renderSorting('name')}
-                    </th>
-                    <th className={styles.clickable} rowSpan={2} onClick={() => this.setSorting('username')}>
-                        {msg('user.userDetails.form.username.label')}
-                        {this.renderSorting('username')}
-                    </th>
-                    <th className={styles.clickable} rowSpan={2} onClick={() => this.setSorting('status')}>
-                        {msg('user.userDetails.form.status.label')}
-                        {this.renderSorting('status')}
-                    </th>
-                    <th colSpan={2} style={{textAlign: 'center'}}>{msg('user.report.resources.monthlyInstance')}</th>
-                    <th colSpan={2} style={{textAlign: 'center'}}>{msg('user.report.resources.monthlyStorage')}</th>
-                    <th colSpan={2} style={{textAlign: 'center'}}>{msg('user.report.resources.storage')}</th>
-                </tr>
-                <tr>
-                    <th className={[styles.number, styles.clickable].join(' ')}
-                        onClick={() => this.setSorting('report.monthlyInstanceBudget')}>
-                        {msg('user.report.resources.quota')}
-                        {this.renderSorting('report.monthlyInstanceBudget')}
-                    </th>
-                    <th className={[styles.number, styles.clickable].join(' ')}
-                        onClick={() => this.setSorting('report.monthlyInstanceSpending')}>
-                        {msg('user.report.resources.used')}
-                        {this.renderSorting('report.monthlyInstanceSpending')}
-                    </th>
-                    <th className={[styles.number, styles.clickable].join(' ')}
-                        onClick={() => this.setSorting('report.monthlyStorageBudget')}>
-                        {msg('user.report.resources.quota')}
-                        {this.renderSorting('report.monthlyStorageBudget')}
-                    </th>
-                    <th className={[styles.number, styles.clickable].join(' ')}
-                        onClick={() => this.setSorting('report.monthlyStorageSpending')}>
-                        {msg('user.report.resources.used')}
-                        {this.renderSorting('report.monthlyStorageSpending')}
-                    </th>
-                    <th className={[styles.number, styles.clickable].join(' ')}
-                        onClick={() => this.setSorting('report.storageQuota')}>
-                        {msg('user.report.resources.quota')}
-                        {this.renderSorting('report.storageQuota')}
-                    </th>
-                    <th className={[styles.number, styles.clickable].join(' ')}
-                        onClick={() => this.setSorting('report.storageUsed')}>
-                        {msg('user.report.resources.used')}
-                        {this.renderSorting('report.storageUsed')}
-                    </th>
-                </tr>
-            </React.Fragment>
+            <div className={styles.grid}>
+                <div className={[styles.name, styles.clickable].join(' ')}
+                    onClick={() => this.setSorting('name')}>
+                    {msg('user.userDetails.form.name.label')}
+                    {this.renderSorting('name')}
+                </div>
+
+                <div className={[styles.username, styles.clickable].join(' ')}
+                    onClick={() => this.setSorting('username')}>
+                    {msg('user.userDetails.form.username.label')}
+                    {this.renderSorting('username')}
+                </div>
+
+                <div className={[styles.status, styles.clickable].join(' ')}
+                    onClick={() => this.setSorting('status')}>
+                    {msg('user.userDetails.form.status.label')}
+                    {this.renderSorting('status')}
+                </div>
+
+                <div className={styles.instanceBudget}>
+                    {msg('user.report.resources.monthlyInstance')}
+                </div>
+
+                <div className={styles.storageBudget}>
+                    {msg('user.report.resources.monthlyStorage')}
+                </div>
+
+                <div className={styles.storage}>
+                    {msg('user.report.resources.storage')}
+                </div>
+
+                <div className={[styles.number, styles.clickable].join(' ')}
+                    onClick={() => this.setSorting('report.monthlyInstanceBudget')}>
+                    {msg('user.report.resources.quota')}
+                    {this.renderSorting('report.monthlyInstanceBudget')}
+                </div>
+
+                <div className={[styles.number, styles.clickable].join(' ')}
+                    onClick={() => this.setSorting('report.monthlyInstanceSpending')}>
+                    {msg('user.report.resources.used')}
+                    {this.renderSorting('report.monthlyInstanceSpending')}
+                </div>
+
+                <div className={[styles.number, styles.clickable].join(' ')}
+                    onClick={() => this.setSorting('report.monthlyStorageBudget')}>
+                    {msg('user.report.resources.quota')}
+                    {this.renderSorting('report.monthlyStorageBudget')}
+                </div>
+
+                <div className={[styles.number, styles.clickable].join(' ')}
+                    onClick={() => this.setSorting('report.monthlyStorageSpending')}>
+                    {msg('user.report.resources.used')}
+                    {this.renderSorting('report.monthlyStorageSpending')}
+                </div>
+
+                <div className={[styles.number, styles.clickable].join(' ')}
+                    onClick={() => this.setSorting('report.storageQuota')}>
+                    {msg('user.report.resources.quota')}
+                    {this.renderSorting('report.storageQuota')}
+                </div>
+
+                <div className={[styles.number, styles.clickable].join(' ')}
+                    onClick={() => this.setSorting('report.storageUsed')}>
+                    {msg('user.report.resources.used')}
+                    {this.renderSorting('report.storageUsed')}
+                </div>
+            </div>
         )
     }
 
@@ -168,17 +184,17 @@ class Users extends React.Component {
                 {user => {
                     const {id, name, username, status, report: {monthlyInstanceBudget, monthlyInstanceSpending, monthlyStorageBudget, monthlyStorageSpending, storageQuota, storageUsed}} = user
                     return (
-                        <tr key={id} className={styles.clickable}>
-                            <td><Highlight search={this.state.filter} matchClass={styles.highlight}>{name}</Highlight></td>
-                            <td><Highlight search={this.state.filter} matchClass={styles.highlight}>{username}</Highlight></td>
-                            <td>{status}</td>
-                            <td className={styles.number}>{format.dollars(monthlyInstanceBudget, 0)}</td>
-                            <td className={styles.number}>{format.dollars(monthlyInstanceSpending)}</td>
-                            <td className={styles.number}>{format.dollars(monthlyStorageBudget, 0)}</td>
-                            <td className={styles.number}>{format.dollars(monthlyStorageSpending)}</td>
-                            <td className={styles.number}>{format.GB(storageQuota, 0)}</td>
-                            <td className={styles.number}>{format.GB(storageUsed)}</td>
-                        </tr>
+                        <div key={id} className={[styles.grid, styles.clickable].join(' ')}>
+                            <div><Highlight search={this.state.filter} matchClass={styles.highlight}>{name}</Highlight></div>
+                            <div><Highlight search={this.state.filter} matchClass={styles.highlight}>{username}</Highlight></div>
+                            <div>{status}</div>
+                            <div className={styles.number}>{format.dollars(monthlyInstanceBudget, 0)}</div>
+                            <div className={styles.number}>{format.dollars(monthlyInstanceSpending)}</div>
+                            <div className={styles.number}>{format.dollars(monthlyStorageBudget, 0)}</div>
+                            <div className={styles.number}>{format.dollars(monthlyStorageSpending)}</div>
+                            <div className={styles.number}>{format.GB(storageQuota, 0)}</div>
+                            <div className={styles.number}>{format.GB(storageUsed)}</div>
+                        </div>
                     )
                 }}
             </PageData>
@@ -203,8 +219,8 @@ class Users extends React.Component {
             <PageInfo>
                 {({pageNumber, pageCount, itemCount}) =>
                     <div className={styles.pageInfo}>
-                        <div>{itemCount} matching results</div>
-                        <div>Page {pageNumber} of {pageCount}</div>
+                        <div>{msg('users.count', {count: itemCount})}</div>
+                        <div>{msg('users.page', {pageNumber, pageCount})}</div>
                     </div>
                 }
             </PageInfo>
@@ -218,14 +234,15 @@ class Users extends React.Component {
                     <Pageable items={this.getUsers()} limit={20}>
                         {this.renderControls()}
                         {this.renderInfo()}
-                        <table>
-                            <thead>
-                                {this.renderHeaders()}
-                            </thead>
-                            <tbody>
-                                {this.renderUsers()}
-                            </tbody>
-                        </table>
+
+                        <div className={styles.heading}>
+                            {this.renderHeadings()}
+                        </div>
+
+                        <div className={styles.users}>
+                            {this.renderUsers()}
+                        </div>
+
                     </Pageable>
                 </div>
             </div>

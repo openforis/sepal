@@ -685,6 +685,10 @@
             }
         }
     },
+    "users": {
+        "count": "{count} users",
+        "page": "Page {pageNumber} of {pageCount}"
+    },
     "unauthorized.warning": {
         "title": "You are not logged in",
         "message": "Perhaps you have been inactive too long?"
