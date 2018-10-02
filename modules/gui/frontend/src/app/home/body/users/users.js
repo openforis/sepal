@@ -8,6 +8,7 @@ import Icon from 'widget/icon'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
+import escapeStringRegexp from 'escape-string-regexp'
 import format from 'format'
 import styles from './users.module.css'
 
@@ -87,7 +88,7 @@ class Users extends React.Component {
     getUsers() {
         const searchProperties = ['name', 'username', 'email', 'organization']
         if (this.state.filter) {
-            const filter = RegExp(this.state.filter, 'i')
+            const filter = RegExp(escapeStringRegexp(this.state.filter), 'i')
             return this.state.users.filter(user =>
                 _.find(searchProperties, searchProperty =>
                     filter.test(user[searchProperty])

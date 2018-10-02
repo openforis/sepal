@@ -11,6 +11,7 @@
     "bootstrap": "4.1.1",
     "cross-fetch": "2.2.1",
     "earthengine-api": "git+https://github.com/openforis/earthengine-api.git#v0.1.146",
+    "escape-string-regexp": "^1.0.5",
     "flat": "4.0.0",
     "google-maps": "3.3.0",
     "hammerjs": "2.0.8",
