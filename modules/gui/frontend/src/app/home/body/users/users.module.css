@@ -1,8 +1,5 @@
 .container {
-    /* display: flex;
-    flex-direction: row;
-    justify-content: space-around; */
-    padding: 0 1rem;
+    padding: 1rem;
     overflow-y: scroll;
 }
 
@@ -47,4 +44,16 @@
 }
 
 .highlight {
+}
+
+.pageControls {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.pageInfo {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }

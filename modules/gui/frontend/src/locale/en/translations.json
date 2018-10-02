@@ -779,5 +779,8 @@
             "connectionError": "Failed to connect to server. Either your internet connection failed, or server is unavailable at the moment.",
             "generic": "Sepal encountered an error. Please try again or contact support if the problem persists."
         }
+    },
+    "pagination": {
+        "info": "Page {pageNumber} of {pageCount}. Total results: {itemCount}"
     }
 }
