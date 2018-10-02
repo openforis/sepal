@@ -127,15 +127,15 @@ class Users extends React.Component {
                     {this.renderSorting('status')}
                 </div>
 
-                <div className={styles.instanceBudget}>
+                <div className={[styles.instanceBudget, styles.group].join(' ')}>
                     {msg('user.report.resources.monthlyInstance')}
                 </div>
 
-                <div className={styles.storageBudget}>
+                <div className={[styles.storageBudget, styles.group].join(' ')}>
                     {msg('user.report.resources.monthlyStorage')}
                 </div>
 
-                <div className={styles.storage}>
+                <div className={[styles.storage, styles.group].join(' ')}>
                     {msg('user.report.resources.storage')}
                 </div>
 
@@ -215,11 +215,15 @@ class Users extends React.Component {
     }
 
     renderInfo() {
+        const {filter} = this.state
+        const results = (count) => filter
+            ? msg('users.countWithFilter', {count, filter})
+            : msg('users.countNoFilter', {count})
         return (
             <PageInfo>
                 {({pageNumber, pageCount, itemCount}) =>
                     <div className={styles.pageInfo}>
-                        <div>{msg('users.count', {count: itemCount})}</div>
+                        <div>{results(itemCount)}</div>
                         <div>{msg('users.page', {pageNumber, pageCount})}</div>
                     </div>
                 }

@@ -75,6 +75,10 @@
     user-select: none;
 }
 
+.group {
+    /* font-weight: bolder; */
+}
+
 .clickable:hover {
     cursor: pointer;
 }

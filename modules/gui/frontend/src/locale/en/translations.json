@@ -685,7 +685,8 @@
         }
     },
     "users": {
-        "count": "{count} users",
+        "countNoFilter": "{count} total users",
+        "countWithFilter": "{count} users matching \"{filter}\"",
         "page": "Page {pageNumber} of {pageCount}"
     },
     "unauthorized.warning": {
