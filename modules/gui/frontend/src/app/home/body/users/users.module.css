@@ -1,18 +1,50 @@
 .container {
-    background-color: #008800;
+    /* display: flex;
+    flex-direction: row;
+    justify-content: space-around; */
+    padding: 0 1rem;
+    overflow-y: scroll;
 }
 
-.clickable {
+.container table {
+    margin: auto;
+    width: 100%;
+}
+
+.container tr.clickable {
     padding: .2rem .5rem;
-    border: 1px solid gray;
     margin-top: .5rem;
 }
 
-.clickable:hover {
+.container tr.clickable:hover {
     background-color: #404040;
     cursor: pointer;
 }
 
+.container th {
+    font-weight: normal;
+    font-size: .8rem;
+    text-transform: uppercase;
+    text-decoration: underline;
+    color: #dddddd;
+    background-color: #303030;
+    padding: .2rem .5rem;
+    vertical-align: bottom;
+}
+
+.container th.clickable {
+    cursor: pointer;
+}
+
+.container td {
+    font-size: 1rem;
+    padding: .2rem .5rem;
+}
+
 .number {
+    width: 5rem;
     text-align: right;
+}
+
+.highlight {
 }

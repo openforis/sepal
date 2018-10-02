@@ -62,6 +62,14 @@ export default {
 
     stopUserSession$: (session) =>
         delete$(`/api/sandbox/session/${session.id}`),
+
+    getUserList$: () =>
+        get$('/api/user/list')
+            .pipe(toResponse),
+
+    getBudgetReport$: () =>
+        get$('/api/budget/report')
+            .pipe(toResponse)
 }
 
 const toResponse = map(e => e.response)
