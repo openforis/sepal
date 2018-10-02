@@ -57,15 +57,14 @@ class TrainingData extends React.Component {
     loadFusionTableColumns(fusionTableId) {
         this.props.asyncActionBuilder('LOAD_FUSION_TABLE_COLUMNS',
             loadFusionTableColumns$(fusionTableId, {retries: 1, validStatuses: [200, 404]}).pipe(
-                map(columns => {
-                    if (!columns)
+                map(response => {
+                    if (response.error)
                         this.props.inputs.fusionTable.setInvalid(
-                            msg('process.landCover.panel.trainingData.form.fusionTable.invalid')
+                            msg(response.error.key)
                         )
-                    return (columns || [])
+                    return (response.columns || [])
                         .filter((column) => column.type !== 'LOCATION')
-                }
-                ),
+                }),
                 map(columns => this.recipeActions.setFusionTableColumns(columns)),
                 takeUntil(this.fusionTableChanged$))
         )

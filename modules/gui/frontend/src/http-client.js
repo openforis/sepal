@@ -111,5 +111,5 @@ function execute$(url, method, {retries, query, username, password, headers, val
 }
 
 function isRelative(url) {
-    return /^\w+:\/\//i.test(url)
+    return !/^\w+:\/\//i.test(url) // Not starting with protocol://
 }
