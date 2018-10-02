@@ -35,6 +35,6 @@ class WorkerInstanceConfig {
     }
 
     static boolean isOlderVersion(String sepalVersion1, String sepalVersion2) {
-        Comparator.comparingInt{it.find(/\d*/)}.compare(sepalVersion1, sepalVersion2) < 0
+        Comparator.comparingInt { it.find(/\d*/) as int }.compare(sepalVersion1, sepalVersion2) < 0
     }
 }
