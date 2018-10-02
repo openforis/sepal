@@ -3,7 +3,7 @@ import {currentUser} from 'user'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
-// import './gateone'
+import './gateone'
 import './gateone.css'
 
 let terminalId = null
