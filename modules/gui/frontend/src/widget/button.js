@@ -28,27 +28,27 @@ const renderButton = ({type, className, ref, tabIndex, onMouseDown, shown, disab
         style={{visibility: shown ? 'visible' : 'hidden'}}
         ref={ref}
         tabIndex={tabIndex}
-        disabled={disabled}
+        disabled={disabled || !shown}
         onMouseDown={onMouseDown}>
         {contents}
     </button>
 
-const renderHammer = ({onClick, disabled}, contents) =>
-    onClick && !disabled ? (
+const renderHammer = ({onClick, shown, disabled}, contents) =>
+    onClick && shown && !disabled ? (
         <Hammer onTap={onClick}>
             {contents}
         </Hammer>
     ) : contents
 
-const renderTooltip = ({tooltip, tooltipPlacement, tooltipDisabled, disabled}, contents) =>
-    tooltip && !tooltipDisabled && !disabled ? (
+const renderTooltip = ({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled}, contents) =>
+    tooltip && !tooltipDisabled && shown && !disabled ? (
         <Tooltip msg={tooltip} placement={tooltipPlacement}>
             {contents}
         </Tooltip>
     ) : contents
 
-const renderLink = ({link, disabled}, contents) =>
-    link && !disabled ? (
+const renderLink = ({link, shown, disabled}, contents) =>
+    link && shown && !disabled ? (
         <Link to={link} onMouseDown={e => e.preventDefault()}>
             {contents}
         </Link>
@@ -72,9 +72,9 @@ export const Button = ({
     tooltipPlacement,
     tooltipDisabled
 }) =>
-    renderLink({link, disabled},
-        renderTooltip({tooltip, tooltipPlacement, tooltipDisabled},
-            renderHammer({onClick, disabled},
+    renderLink({link, shown, disabled},
+        renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
+            renderHammer({onClick, shown, disabled},
                 renderButton({type, className, ref, tabIndex, onMouseDown, shown, disabled, selected},
                     renderContents({icon, label, children})
                 )
