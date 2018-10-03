@@ -2,7 +2,7 @@ import {CenteredProgress} from 'widget/progress'
 import {Select} from 'widget/selectable'
 import {connect} from 'store'
 import {initGoogleMapsApi$} from '../map/map'
-import {isPathInLocation, location} from 'route'
+import {isPathInLocation, location, history} from 'route'
 import {loadApps$, requestedApps, runApp$} from 'apps'
 import {msg} from 'translate'
 import Account from './account/account'
@@ -31,6 +31,11 @@ class Body extends React.Component {
         this.props.asyncActionBuilder('INIT_GOOGLE_MAPS_API',
             initGoogleMapsApi$())
             .dispatch()
+    }
+
+    componentDidUpdate() {
+        if (this.props.location.pathname === '/')
+            history().replace('/process').dispatch()
     }
 
     UNSAFE_componentWillReceiveProps({action, location, requestedApps}) {
