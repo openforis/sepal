@@ -22,12 +22,12 @@ const classNames = ({className, look}) =>
         lookStyles[look]
     ].join(' ')
 
-const renderButton = ({type, className, look, ref, tabIndex, onMouseDown, shown, disabled}, contents) =>
+const renderButton = ({type, className, look, reference, tabIndex, onMouseDown, shown, disabled}, contents) =>
     <button
         type={type}
         className={classNames({className, look})}
         style={{visibility: shown ? 'visible' : 'hidden'}}
-        ref={ref}
+        ref={reference}
         tabIndex={tabIndex}
         disabled={disabled || !shown}
         onMouseDown={onMouseDown}>
@@ -59,7 +59,7 @@ export const Button = ({
     type = 'button',
     className,
     look = 'default',
-    ref,
+    reference,
     tabIndex,
     icon,
     label,
@@ -76,7 +76,7 @@ export const Button = ({
     renderLink({link, shown, disabled},
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
             renderHammer({onClick, shown, disabled},
-                renderButton({type, className, look, ref, tabIndex, onMouseDown, shown, disabled},
+                renderButton({type, className, look, reference, tabIndex, onMouseDown, shown, disabled},
                     renderContents({icon, label, children})
                 )
             )
@@ -90,8 +90,8 @@ Button.propTypes = {
     icon: PropTypes.string,
     label: PropTypes.string,
     link: PropTypes.string,
-    look: PropTypes.oneOf(['default', 'apply', 'cancel']),
-    ref: PropTypes.object,
+    look: PropTypes.oneOf(['default', 'highlight', 'apply', 'cancel']),
+    reference: PropTypes.object,
     shown: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,

@@ -41,7 +41,7 @@ class Menu extends React.Component {
         return <React.Fragment>
             <Button
                 className={[styles.menu, open ? styles.open : null, className].join(' ')}
-                ref={this.button}
+                reference={this.button}
                 onClick={() => this.toggleOpen()}>
                 <Icon name='bars'/>
                 {warning && !open ? <Icon name='exclamation-triangle' className={styles.warning}/> : null}
