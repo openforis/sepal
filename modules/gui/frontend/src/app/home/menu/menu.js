@@ -1,13 +1,12 @@
 import {Button} from 'widget/button'
-import {Link, isPathInLocation} from 'route'
 import {connect} from 'store'
 import {isFloating} from './menuMode'
+import {isPathInLocation} from 'route'
 import {msg} from 'translate'
 import {quitApp, requestedApps} from 'apps'
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import styles from './menu.module.css'
 
 const mapStateToProps = () => ({

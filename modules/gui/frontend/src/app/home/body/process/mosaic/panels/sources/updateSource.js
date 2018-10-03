@@ -1,7 +1,6 @@
 import {arrayEquals} from 'collections'
 import {dataSetById, imageSourceById, isDataSetInDateRange, isSourceInDateRange, sources} from 'sources'
 
-
 const updateSource = (source, dataSets, fromDate, toDate) => {
     const isSourceInRange = (sourceId) => isSourceInDateRange(sourceId, fromDate, toDate)
     const isDataSetInRange = (dataSetId) => isDataSetInDateRange(dataSetId, fromDate, toDate)

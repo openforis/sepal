@@ -41,7 +41,6 @@ export default class SeasonSelect extends React.Component {
             return {...prevState, centerDate, startDate, endDate}
         }
 
-
         const minDate = calcMinDate(centerDate)
         const maxDate = calcMaxDate(centerDate)
         const centerDay = centerDate.diff(minDate, 'days')

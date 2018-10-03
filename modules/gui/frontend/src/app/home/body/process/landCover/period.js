@@ -45,7 +45,6 @@ class Period extends React.Component {
         this.recipeActions = RecipeActions(recipeId)
     }
 
-
     render() {
         const {recipeId, form} = this.props
         return (

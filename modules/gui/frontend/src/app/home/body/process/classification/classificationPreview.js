@@ -1,4 +1,5 @@
 import {Msg} from 'translate'
+import {RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {connect} from 'store'
 import {sepalMap} from 'app/home/map/map'
 import EarthEngineImageLayer from 'app/home/map/earthEngineLayer'
@@ -8,7 +9,6 @@ import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 import styles from 'app/home/body/process/mosaic/mosaicPreview.module.css'
-import {RecipeState} from 'app/home/body/process/mosaic/mosaicRecipe'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)

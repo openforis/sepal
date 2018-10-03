@@ -1,10 +1,11 @@
+import {Button} from '../../../../../widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {Field, form} from 'widget/form'
-import {Msg, msg} from 'translate'
 import {Panel, PanelHeader} from 'widget/panel'
 import {RecipeActions, RecipeState, recipePath} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {dataSetById} from 'sources'
 import {map} from 'rxjs/operators'
+import {msg} from 'translate'
 import {objectEquals} from 'collections'
 import Icon from 'widget/icon'
 import PanelButtons from 'widget/panelButtons'
@@ -13,9 +14,8 @@ import React from 'react'
 import ReactResizeDetector from 'react-resize-detector'
 import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
 import api from 'api'
-import styles from './sceneSelection.module.css'
 import format from 'format'
-import { Button } from '../../../../../widget/button';
+import styles from './sceneSelection.module.css'
 
 const fields = {
     selectedScenes: new Field()
@@ -212,12 +212,12 @@ const Scene = ({selected, scene, onAdd, onRemove, className, recipe}) => {
 const AvailableSceneOverlay = ({scene, onAdd, recipe}) =>
     <div className={styles.sceneOverlay}>
         <Button
-            className={styles.add} 
+            className={styles.add}
             icon='plus'
             label={msg('button.add')}
             onClick={() => onAdd(scene)}/>
         <Button
-            className={styles.preview} 
+            className={styles.preview}
             icon='eye'
             label={msg('process.mosaic.panel.sceneSelection.preview.label')}
             onClick={() => recipe.setSceneToPreview(scene).dispatch()}/>
@@ -226,12 +226,12 @@ const AvailableSceneOverlay = ({scene, onAdd, recipe}) =>
 const SelectedSceneOverlay = ({scene, onRemove, recipe}) =>
     <div className={styles.sceneOverlay}>
         <Button
-            className={styles.remove} 
+            className={styles.remove}
             icon='times'
             label={msg('button.remove')}
             onClick={() => onRemove(scene)}/>
         <Button
-            className={styles.preview} 
+            className={styles.preview}
             icon='eye'
             label={msg('process.mosaic.panel.sceneSelection.preview.label')}
             onClick={() => recipe.setSceneToPreview(scene).dispatch()}/>

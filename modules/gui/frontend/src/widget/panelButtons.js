@@ -1,11 +1,9 @@
 import {Button} from 'widget/button'
-import {Msg, msg} from 'translate'
 import {PanelWizardContext} from './panel'
 import {connect, select} from 'store'
-import Icon from 'widget/icon'
+import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
 import styles from 'widget/panelButtons.module.css'
 

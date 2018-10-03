@@ -1,5 +1,5 @@
+import {RecipeState, recipePath} from './classificationRecipe'
 import {connect} from 'store'
-import {recipePath, RecipeState} from './classificationRecipe'
 import ClassificationPreview from './classificationPreview'
 import ClassificationToolbar from './classificationToolbar'
 import MapToolbar from 'app/home/map/mapToolbar'

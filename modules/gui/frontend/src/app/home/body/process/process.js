@@ -21,7 +21,6 @@ const recipeComponent = (id, type) => {
     }
 }
 
-
 const Process = () => {
     return (
         <Tabs

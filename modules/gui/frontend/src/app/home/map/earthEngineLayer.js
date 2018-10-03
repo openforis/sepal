@@ -37,7 +37,6 @@ export default class EarthEngineImageLayer {
             const failed = tileStatuses.filter(status => status === Status.FAILED).length
                 + tileStatuses.filter(status => status === Status.ABORTED).length
 
-
             const tileStats = {
                 count: loading + loaded + failed,
                 loading,

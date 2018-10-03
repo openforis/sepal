@@ -1,10 +1,10 @@
+import './gateone'
+import './gateone.css'
 import {connect} from 'store'
 import {currentUser} from 'user'
 import PropTypes from 'prop-types'
 import React from 'react'
 import api from 'api'
-import './gateone'
-import './gateone.css'
 
 let terminalId = null
 

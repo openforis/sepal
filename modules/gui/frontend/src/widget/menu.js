@@ -1,10 +1,10 @@
+import {Button} from 'widget/button'
 import {connect, select} from 'store'
 import Icon from 'widget/icon'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './menu.module.css'
-import {Button} from 'widget/button'
 
 const mapStateToProps = () => ({
     appDimensions: select('dimensions')

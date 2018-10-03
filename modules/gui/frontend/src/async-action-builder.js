@@ -84,7 +84,6 @@ export default function asyncActionBuilder(type, action$, component) {
     }
 }
 
-
 function cleanupStateWhenComponentUnMounts(component) {
     component.componentWillUnmount$.subscribe(() =>
         actionBuilder('ASYNC_ACTION_REMOVE_COMPONENT', {componentId: component.id, notLogged: true})

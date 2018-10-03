@@ -57,7 +57,6 @@ Switch.propTypes = {
 export const Link = router.Link
 Link.propTypes = router.Link.propTypes
 
-
 function dispatchLocationChange(historyLocation) {
     const stateLocation = location() || {}
     if (stateLocation.pathname !== historyLocation.pathname)
