@@ -1,7 +1,9 @@
 import json
 import logging
+import argparse
 
 import ee
+import sys
 from flask import Flask, Blueprint, Response, request
 
 from sepal import gee
@@ -12,6 +14,10 @@ from sepal.drive.drive_cleanup import DriveCleanup
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 drive_cleanup = None
+
+sepal_host = None
+sepal_username = None
+sepal_password = None
 
 
 @http.before_request
@@ -43,8 +49,12 @@ def scene_areas():
     return Response(json.dumps(areas), mimetype='application/json')
 
 
-def init():
-    global drive_cleanup
+def init(server_args):
+    global username, download_dir, sepal_host, sepal_username, sepal_password, drive_cleanup
+    sepal_host = server_args.sepal_host
+    sepal_username = server_args.sepal_username
+    sepal_password = server_args.sepal_password
+
     drive_cleanup = DriveCleanup(gee.service_account_credentials)
     drive_cleanup.start()
 
@@ -56,7 +66,14 @@ def destroy():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    init()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gee-email', required=True, help='Earth Engine service account email')
+    parser.add_argument('--gee-key-path', required=True, help='Path to Earth Engine service account key')
+    parser.add_argument('--sepal-host', required=True, help='Sepal server host, e.g. sepal.io')
+    parser.add_argument('--sepal-username', required=True, help='Username to use when accessing sepal services')
+    parser.add_argument('--sepal-password', required=True, help='Password to use when accessing sepal services')
+    args, unknown = parser.parse_known_args()
+    init(args)
     app.register_blueprint(http)
     app.run(host='0.0.0.0', threaded=True, port=5001)
 

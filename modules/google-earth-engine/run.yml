@@ -15,5 +15,7 @@
     networks:
       - name: 'sepal'
     env:
+      SEPAL_HOST_SEPAL_ENV: "{{ sepal_host }}"
+      SEPAL_ADMIN_PASSWORD_SEPAL_ENV: "{{ sepal_machine_admin_password }}"
       EE_ACCOUNT_SEPAL_ENV: "{{ google_earth_engine_account }}"
       EE_PRIVATE_KEY_SEPAL_ENV: "{{ google_earth_engine_private_key }}"
