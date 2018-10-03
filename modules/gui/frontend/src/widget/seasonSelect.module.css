@@ -57,7 +57,7 @@
     width: 1px;
     bottom: -0.5rem;
     height: 4rem;
-    background-color: var(--button-selected-background-color);
+    background-color: var(--look-highlight-background-color);
     z-index: 1;
 }
 
@@ -67,8 +67,8 @@
     width: 5rem;
     left: calc(-2.5rem);
     text-align: center;
-    background-color: var(--button-selected-background-color);
-    border: var(--button-selected-border);
+    background-color: var(--look-highlight-background-color);
+    border: 1px solid var(--look-highlight-border-color);
     border-radius: 1rem;
 }
 
@@ -81,7 +81,7 @@
     position: absolute;
     bottom: -1px;
     height: 3px;
-    background-color: var(--button-selected-background-color);
+    background-color: var(--look-highlight-background-color);
 }
 
 .handle {

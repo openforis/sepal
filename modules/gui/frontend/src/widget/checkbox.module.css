@@ -25,7 +25,7 @@
     border-radius: 10%;
     bottom: 0;
     left: calc(-1 * var(--checkbox-left));
-    background-color: var(--button-default-background-color);
+    background-color: var(--look-default-background-color);
 }
 
 /* Checkmark */

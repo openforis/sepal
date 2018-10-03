@@ -7,6 +7,14 @@
     --axis-color: hsl(0, 0%, 40%);
     --label-color: hsl(0, 0%, 60%);
     --tick-height: 1rem;
+
+    --cursor-color: var(--look-highlight-background-color);
+    --cursor-hover-color: var(--look-highlight-hover-background-color);
+    --cursor-dragging-color: var(--look-highlight-active-background-color);
+    --cursor-preview-color: hsla(var(--look-highlight-h), var(--look-highlight-s), var(--look-highlight-l), .5);
+    --range-left-color: none;
+    --range-right-color: var(--look-highlight-background-color);
+
     position: relative;
 }
 
@@ -85,22 +93,22 @@
 }
 
 .cursor.handle {
-    background-color: var(--button-selected-background-color);
+    background-color: var(--cursor-color);
     z-index: 2;
 }
 
 .cursor.handle:hover {
-    background-color: var(--button-selected-hover-background-color);
+    background-color: var(--cursor-hover-color);
     cursor: pointer;
 }
 
 .cursor.handle.dragging {
-    background-color: var(--button-selected-active-background-color);
+    background-color: var(--cursor-dragging-color);
     cursor: pointer;
 }
 
 .cursor.preview {
-    background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), var(--btn-sel-bg-l), .5);
+    background-color: var(--cursor-preview-color);
 }
 
 .range {
@@ -111,8 +119,12 @@
     bottom: -1px;
 }
 
+.leftRange {
+    background-color: var(--range-left-color);
+}
+
 .rightRange {
-    background-color: var(--button-selected-background-color);
+    background-color: var(--range-right-color);
 }
 
 .cursorOverlay {

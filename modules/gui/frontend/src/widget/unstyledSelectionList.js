@@ -37,14 +37,14 @@ export default class UnstyledSelectionList extends React.Component {
     }
 
     renderButton(value, label, tooltip, disabled) {
-        const {styles} = this.props
         const button =
             <li key={value}>
                 <Button
-                    className={[
-                        this.isSelected(value) ? styles.selected : null,
-                        this.props.multiple ? styles.toggle : null
-                    ].join(' ')}
+                    // className={[
+                    //     this.isSelected(value) ? styles.selected : null,
+                    //     this.props.multiple ? styles.toggle : null
+                    // ].join(' ')}
+                    look={this.isSelected(value) ? 'highlight' : 'default'}
                     label={label}
                     disabled={disabled}
                     onClick={e => {

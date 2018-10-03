@@ -83,9 +83,11 @@
 }
 
 .comboBox__option--is-selected {
-    background-color: var(--button-selected-background-color) !important;
+    --option-selected-color: var(--look-highlight-background-color);
+    background-color: var(--option-selected-color) !important;
 }
 
 .comboBox__option--is-focused {
-    background-color: var(--button-default-hover-background-color) !important;
+    --option-hover-color: var(--look-highlight-hover-background-color);
+    background-color: var(--option-hover-color) !important;
 }

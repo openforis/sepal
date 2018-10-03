@@ -49,7 +49,7 @@ input::placeholder {
 
 a:hover {
     text-decoration: none;
-    color: var(--button-selected-hover-background-color);
+    color: var(--look-highlight-hover-background-color);
 }
 
 .app {

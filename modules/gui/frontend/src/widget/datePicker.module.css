@@ -93,15 +93,15 @@
 
 .date,
 .picker ul li.selected {
-    border: var(--button-selected-hover-border);
-    background-color: var(--button-selected-hover-background-color);
+    border: 1px solid var(--look-highlight-hover-border-color);
+    background-color: var(--look-highlight-hover-background-color);
 }
 
 .date:hover,
 .picker ul li.highlighted {
     color: white;
-    border: var(--button-selected-border);
-    background-color: var(--button-selected-background-color);
+    border: 1px solid var(--look-highlight-border-color);
+    background-color: var(--look-highlight-background-color);
 }
 
 .picker ul li:hover {

@@ -30,13 +30,13 @@
 }
 
 .newTab:hover {
-    color: var(--button-default-hover-color);
+    color: var(--look-default-hover-color);
     background-color: #2B2B29;
     border-radius: var(--button-border-radius);
 }
 
 .newTab:active {
-    color: var(--button-default-active-color);
+    color: var(--look-default-active-color);
     background-color: #2f2f2f;
 }
 
@@ -101,7 +101,7 @@
 
 .close:hover {
     background: #990003;
-    color: var(--button-default-hover-color);
+    color: var(--look-default-hover-color);
 }
 
 .title {

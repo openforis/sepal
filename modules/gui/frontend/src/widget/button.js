@@ -4,7 +4,7 @@ import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
-import buttonStyles from '../style/button-colors.module.css'
+import lookStyles from '../style/look.module.css'
 import styles from './button.module.css'
 
 const renderContents = ({icon, label, children}) =>
@@ -15,18 +15,17 @@ const renderContents = ({icon, label, children}) =>
         </div>
     )
 
-const classNames = ({className, look, selected}) =>
+const classNames = ({className, look}) =>
     className ? className : [
         styles.button,
-        buttonStyles.button,
-        styles[look],
-        selected ? styles.selected : null
+        lookStyles.look,
+        lookStyles[look]
     ].join(' ')
 
-const renderButton = ({type, className, look, ref, tabIndex, onMouseDown, shown, disabled, selected}, contents) =>
+const renderButton = ({type, className, look, ref, tabIndex, onMouseDown, shown, disabled}, contents) =>
     <button
         type={type}
-        className={classNames({className, look, selected})}
+        className={classNames({className, look})}
         style={{visibility: shown ? 'visible' : 'hidden'}}
         ref={ref}
         tabIndex={tabIndex}
@@ -69,7 +68,6 @@ export const Button = ({
     link,
     shown = true,
     disabled,
-    selected,
     children,
     tooltip,
     tooltipPlacement,
@@ -78,7 +76,7 @@ export const Button = ({
     renderLink({link, shown, disabled},
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
             renderHammer({onClick, shown, disabled},
-                renderButton({type, className, look, ref, tabIndex, onMouseDown, shown, disabled, selected},
+                renderButton({type, className, look, ref, tabIndex, onMouseDown, shown, disabled},
                     renderContents({icon, label, children})
                 )
             )
@@ -94,7 +92,6 @@ Button.propTypes = {
     link: PropTypes.string,
     look: PropTypes.oneOf(['default', 'apply', 'cancel']),
     ref: PropTypes.object,
-    selected: PropTypes.any,
     shown: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,

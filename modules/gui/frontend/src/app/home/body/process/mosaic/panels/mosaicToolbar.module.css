@@ -1,18 +1,18 @@
 .top, .bottom {
-    --btn-def-h: 37;
-    --btn-def-s: 27%;
-    --btn-def-l: 25%;
-    --btn-def-a: .9;
+    --look-default-h: 37;
+    --look-default-s: 27%;
+    --look-default-l: 25%;
+    --look-default-a: .9;
 
-    --btn-sel-h: 40;
-    --btn-sel-s: 8%;
-    --btn-sel-l: 15%;
-    --btn-sel-a: .95;
+    --look-highlight-h: 40;
+    --look-highlight-s: 8%;
+    --look-highlight-l: 15%;
+    --look-highlight-a: .95;
 
-    --btn-dis-h: 37;
-    --btn-dis-s: 10%;
-    --btn-dis-l: 20%;
-    --btn-dis-a: .9;
+    --look-disabled-h: 37;
+    --look-disabled-s: 10%;
+    --look-disabled-l: 20%;
+    --look-disabled-a: .9;
 }
 
 .top {

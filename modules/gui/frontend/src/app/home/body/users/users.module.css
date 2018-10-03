@@ -67,8 +67,8 @@
 }
 
 .heading {
-    background-color: var(--button-default-background-color);
-    color: var(--button-default-color);
+    background-color: var(--look-default-background-color);
+    color: var(--look-default-color);
     font-weight: normal;
     font-size: .9rem;
     text-transform: uppercase;
@@ -88,6 +88,6 @@
 }
 
 .users > *:hover {
-    background-color: var(--button-selected-background-color);
-    color: var(--button-selected-color);
+    background-color: var(--look-highlight-background-color);
+    color: var(--look-highlight-color);
 }

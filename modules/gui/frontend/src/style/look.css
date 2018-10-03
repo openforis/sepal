@@ -1,0 +1,50 @@
+html {
+    /* default */
+
+    --look-default-h: 40;
+    --look-default-s: 8%;
+    --look-default-l: 20%;
+    --look-default-a: 1;
+
+    /* highlight */
+
+    --look-highlight-h: 40;
+    --look-highlight-s: 60%;
+    --look-highlight-l: 26%;
+    --look-highlight-a: 1;
+
+    /* apply */
+
+    --look-apply-h: 222;
+    --look-apply-s: 44%;
+    --look-apply-l: 37%;
+    --look-apply-a: 1;
+
+    /* cancel */
+
+    --look-cancel-h: 0;
+    --look-cancel-s: 38%;
+    --look-cancel-l: 33%;
+    --look-cancel-a: 1;
+
+    /* disabled */
+
+    --look-disabled-h: 40;
+    --look-disabled-s: 8%;
+    --look-disabled-l: 20%;
+    --look-disabled-a: 1;
+
+    /* default */
+
+    --look-default-background-color: hsla(var(--look-default-h), var(--look-default-s), var(--look-default-l), var(--look-default-a));
+    --look-default-focus-background-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + 3%), var(--look-default-a));
+    --look-default-hover-background-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + 5%), var(--look-default-a));
+    --look-default-active-background-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + 3%), var(--look-default-a));
+
+    /* highlight */
+
+    --look-highlight-background-color: hsla(var(--look-highlight-h), var(--look-highlight-s), var(--look-highlight-l), var(--look-highlight-a));
+    --look-highlight-focus-background-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) - 2%), var(--look-highlight-a));
+    --look-highlight-hover-background-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) + 3%), var(--look-highlight-a));
+    --look-highlight-active-background-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) + 0%), var(--look-highlight-a));
+}

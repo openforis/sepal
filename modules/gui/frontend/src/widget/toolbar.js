@@ -4,7 +4,7 @@ import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import actionBuilder from 'action-builder'
-import buttonColors from 'style/button-colors.module.css'
+import lookStyles from 'style/look.module.css'
 import styles from './toolbar.module.css'
 
 const Context = React.createContext()
@@ -23,7 +23,7 @@ class Toolbar extends React.Component {
         const {statePath, horizontal, vertical, panel, top, bottom, left, right, className, modal, selectedPanel} = this.props
         const classNames = [
             styles.toolbar,
-            buttonColors.button,
+            lookStyles.look,
             horizontal && styles.horizontal,
             vertical && styles.vertical,
             panel && styles.panelButton,

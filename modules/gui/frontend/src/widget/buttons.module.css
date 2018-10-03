@@ -1,6 +1,6 @@
 .buttons {
     --vertical-gap: .5rem;
-    --horizontal-gap: 1rem;
+    --horizontal-gap: .5rem;
     list-style: none;
     margin: 0;
     margin-right: calc(-1 * var(--horizontal-gap));
@@ -15,69 +15,7 @@
 }
 
 .buttons button {
-    color: var(--button-default-color);
-    background-color: var(--button-default-background-color);
-    border: var(--button-default-border);
-    border-radius: var(--button-border-radius);
-    line-height: 2rem;
     text-transform: uppercase;
-    padding: 0 1rem;
-    cursor: pointer;
-
-    --btn-sel-bg-h: 130 !important;
-}
-
-.buttons button + button {
-    margin-left: 1rem;
-}
-
-.buttons button:focus {
-    color: var(--button-default-focus-color);
-    background-color: var(--button-default-focus-background-color);
-    border: var(--button-default-focus-border);
-}
-
-.buttons button:hover {
-    color: var(--button-default-hover-color);
-    background-color: var(--button-default-hover-background-color);
-    border: var(--button-default-hover-border);
-}
-
-.buttons button:active {
-    color: var(--button-default-active-color);
-    background-color: var(--button-default-active-background-color);
-    border: var(--button-default-active-border);
-}
-
-.buttons button.selected {
-    color: var(--button-selected-color);
-    background-color: var(--button-selected-background-color);
-    border: var(--button-selected-border);
-}
-
-.buttons button.selected:focus {
-    color: var(--button-selected-focus-color);
-    background-color: var(--button-selected-focus-background-color);
-    border: var(--button-selected-focus-border);
-}
-
-.buttons button.selected:hover {
-    color: var(--button-selected-hover-color);
-    background-color: var(--button-selected-hover-background-color);
-    border: var(--button-selected-hover-border);
-}
-
-.buttons button.selected:active {
-    color: var(--button-selected-active-color);
-    background-color: var(--button-selected-active-background-color);
-    border: var(--button-selected-active-border);
-}
-
-.buttons button:disabled, .buttons button.selected:disabled {
-    color: var(--button-default-color);
-    background-color: var(--button-default-background-color);
-    border: var(--button-default-border);
-    cursor: default;
 }
 
 .group {

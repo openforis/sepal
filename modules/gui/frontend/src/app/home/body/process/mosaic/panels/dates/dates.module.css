@@ -95,25 +95,25 @@ button.moreLess {
     padding: .1rem 1rem;
     cursor: pointer;
 
-    color: var(--button-default-color);
-    background-color: var(--button-default-background-color);
-    border: var(--button-default-border);
+    color: var(--look-default-color);
+    background-color: var(--look-default-background-color);
+    border: 1px solid var(--look-default-border-color);
 }
 
 button.moreLess:focus {
-    color: var(--button-default-focus-color);
-    background-color: var(--button-default-focus-background-color);
-    border: var(--button-default-focus-border);
+    color: var(--look-default-focus-color);
+    background-color: var(--look-default-focus-background-color);
+    border: 1px solid var(--look-default-focus-border-color);
 }
 
 button.moreLess:hover {
-    color: var(--button-default-hover-color);
-    background-color: var(--button-default-hover-background-color);
-    border: var(--button-default-hover-border);
+    color: var(--look-default-hover-color);
+    background-color: var(--look-default-hover-background-color);
+    border: 1px solid var(--look-default-hover-border-color);
 }
 
 button.moreLess:active {
-    color: var(--button-default-active-color);
-    background-color: var(--button-default-active-background-color);
-    border: var(--button-default-active-border);
+    color: var(--look-default-active-color);
+    background-color: var(--look-default-active-background-color);
+    border: 1px solid var(--look-default-active-border-color);
 }

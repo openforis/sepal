@@ -12,63 +12,63 @@
 
 .buttons button {
     width: 100%;
-    color: var(--button-default-color);
+    /* color: var(--look-default-color);
     background-color: hsl(0, 0%, 13%);
-    border: 1px solid hsl(0, 0%, 16%);
+    border: 1px solid hsl(0, 0%, 16%); */
     /*border-radius: var(--button-border-radius);*/
-    line-height: 2rem;
+    /* line-height: 2rem; */
     text-align: left;
     padding: .5rem 1rem;
     cursor: pointer;
 
-    --btn-sel-bg-h: 130 !important;
+    /* --look-highlight-h: 130 !important; */
 }
 
-.buttons button:focus {
-    color: var(--button-default-focus-color);
-    background-color: var(--button-default-focus-background-color);
-    border: var(--button-default-focus-border);
+/* .buttons button:focus {
+    color: var(--look-default-focus-color);
+    background-color: var(--look-default-focus-background-color);
+    border: 1px solid var(--look-default-focus-border-color);
 }
 
 .buttons button:hover {
-    color: var(--button-default-hover-color);
-    background-color: var(--button-default-hover-background-color);
-    border: var(--button-default-hover-border);
+    color: var(--look-default-hover-color);
+    background-color: var(--look-default-hover-background-color);
+    border: 1px solid var(--look-default-hover-border-color);
 }
 
 .buttons button:active {
-    color: var(--button-default-active-color);
-    background-color: var(--button-default-active-background-color);
-    border: var(--button-default-active-border);
+    color: var(--look-default-active-color);
+    background-color: var(--look-default-active-background-color);
+    border: 1px solid var(--look-default-active-border-color);
 }
 
 .buttons button.selected {
-    color: var(--button-selected-color);
-    background-color: var(--button-selected-background-color);
-    border: var(--button-selected-border);
+    color: var(--look-highlight-color);
+    background-color: var(--look-highlight-background-color);
+    border: 1px solid var(--look-highlight-border-color);
 }
 
 .buttons button.selected:focus {
-    color: var(--button-selected-focus-color);
-    background-color: var(--button-selected-focus-background-color);
-    border: var(--button-selected-focus-border);
+    color: var(--look-highlight-focus-color);
+    background-color: var(--look-highlight-focus-background-color);
+    border: 1px solid var(--look-highlight-focus-border-color);
 }
 
 .buttons button.selected:hover {
-    color: var(--button-selected-hover-color);
-    background-color: var(--button-selected-hover-background-color);
-    border: var(--button-selected-hover-border);
+    color: var(--look-highlight-hover-color);
+    background-color: var(--look-highlight-hover-background-color);
+    border: 1px solid var(--look-highlight-hover-border-color);
 }
 
 .buttons button.selected:active {
-    color: var(--button-selected-active-color);
-    background-color: var(--button-selected-active-background-color);
-    border: var(--button-selected-active-border);
+    color: var(--look-highlight-active-color);
+    background-color: var(--look-highlight-active-background-color);
+    border: 1px solid var(--look-highlight-active-border-color);
 }
 
 .buttons button:disabled, .buttons button.selected:disabled {
     color: #6b6b6b;
-    background-color: var(--button-default-background-color);
-    border: var(--button-default-border);
+    background-color: var(--look-default-background-color);
+    border: 1px solid var(--look-default-border-color);
     cursor: default;
-}
+} */

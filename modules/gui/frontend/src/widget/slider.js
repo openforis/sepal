@@ -9,6 +9,7 @@ import ReactResizeDetector from 'react-resize-detector'
 import ViewportResizeDetector from 'widget/viewportResizeDetector'
 import _ from 'lodash'
 import styles from './slider.module.css'
+// import lookStyles from '../styles/look.module.css'
 
 const clamp = (value, {min, max}) => Math.max(min, Math.min(max, value))
 const scale = (value, {from, to}) => (value - from.min) * (to.max - to.min) / (from.max - from.min) + to.min

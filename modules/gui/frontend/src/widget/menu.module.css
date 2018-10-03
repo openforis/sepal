@@ -11,7 +11,7 @@ button.menu {
 }
 
 button.menu:hover {
-    color: var(--button-default-hover-color);
+    color: var(--look-default-hover-color);
     background-color: #2B2B29;
     border-radius: var(--button-border-radius);
     cursor: pointer;
@@ -39,14 +39,14 @@ button.menu:hover {
 }
 
 .open {
-    color: var(--button-default-hover-color);
+    color: var(--look-default-hover-color);
     background-color: var(--wireframe-color);
     border-radius: var(--button-border-radius);
     border-bottom-right-radius: unset;
 }
 
 button.menu:active {
-    color: var(--button-default-active-color);
+    color: var(--look-default-active-color);
     background-color: #2f2f2f;
 }
 

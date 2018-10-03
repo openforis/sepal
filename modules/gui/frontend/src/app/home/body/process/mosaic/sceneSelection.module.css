@@ -147,80 +147,80 @@
 }
 
 .sceneOverlay .add {
-    --bg-hue: 222;
-    --bg-sat: 44%;
-    color: var(--button-default-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 37%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 39%);
+    -hue: 222;
+    -sat: 44%;
+    color: var(--look-default-color);
+    background-color: hsl(var(-hue), var(-sat), 37%);
+    border: 1px solid hsl(var(-hue), var(-sat), 39%);
 }
 
 .sceneOverlay .add:focus {
-    color: var(--button-default-focus-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 35%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 38%);
+    color: var(--look-default-focus-color);
+    background-color: hsl(var(-hue), var(-sat), 35%);
+    border: 1px solid hsl(var(-hue), var(-sat), 38%);
 }
 
 .sceneOverlay .add:hover {
-    color: var(--button-default-hover-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
+    color: var(--look-default-hover-color);
+    background-color: hsl(var(-hue), var(-sat), 33%);
+    border: 1px solid hsl(var(-hue), var(-sat), 35%);
 }
 
 .sceneOverlay .add:active {
-    color: var(--button-default-active-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 31%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 33%);
+    color: var(--look-default-active-color);
+    background-color: hsl(var(-hue), var(-sat), 31%);
+    border: 1px solid hsl(var(-hue), var(-sat), 33%);
 }
 
 .sceneOverlay .remove {
-    --bg-hue: 0;
-    --bg-sat: 38%;
-    color: var(--button-default-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 37%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 39%);
+    -hue: 0;
+    -sat: 38%;
+    color: var(--look-default-color);
+    background-color: hsl(var(-hue), var(-sat), 37%);
+    border: 1px solid hsl(var(-hue), var(-sat), 39%);
 }
 
 .sceneOverlay .remove:focus {
-    color: var(--button-default-focus-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 35%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 38%);
+    color: var(--look-default-focus-color);
+    background-color: hsl(var(-hue), var(-sat), 35%);
+    border: 1px solid hsl(var(-hue), var(-sat), 38%);
 }
 
 .sceneOverlay .remove:hover {
-    color: var(--button-default-hover-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 33%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 35%);
+    color: var(--look-default-hover-color);
+    background-color: hsl(var(-hue), var(-sat), 33%);
+    border: 1px solid hsl(var(-hue), var(-sat), 35%);
 }
 
 .sceneOverlay .remove:active {
-    color: var(--button-default-active-color);
-    background-color: hsl(var(--bg-hue), var(--bg-sat), 31%);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 33%);
+    color: var(--look-default-active-color);
+    background-color: hsl(var(-hue), var(-sat), 31%);
+    border: 1px solid hsl(var(-hue), var(-sat), 33%);
 }
 
 .sceneOverlay .preview {
-    --bg-hue: 0;
-    --bg-sat: 0%;
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 78%);
-    color: var(--button-default-color);
+    -hue: 0;
+    -sat: 0%;
+    border: 1px solid hsl(var(-hue), var(-sat), 78%);
+    color: var(--look-default-color);
 }
 
 .sceneOverlay .preview:focus {
-    color: var(--button-default-focus-color);
-    background-color: hsla(var(--bg-hue), var(--bg-sat), 50%, 0.1);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 77%);
+    color: var(--look-default-focus-color);
+    background-color: hsla(var(-hue), var(-sat), 50%, 0.1);
+    border: 1px solid hsl(var(-hue), var(-sat), 77%);
 }
 
 .sceneOverlay .preview:hover {
-    color: var(--button-default-hover-color);
-    background-color: hsla(var(--bg-hue), var(--bg-sat), 50%, 0.4);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 75%);
+    color: var(--look-default-hover-color);
+    background-color: hsla(var(-hue), var(-sat), 50%, 0.4);
+    border: 1px solid hsl(var(-hue), var(-sat), 75%);
 }
 
 .sceneOverlay .preview:active {
-    color: var(--button-default-active-color);
-    background-color: hsla(var(--bg-hue), var(--bg-sat), 55%, 0.4);
-    border: 1px solid hsl(var(--bg-hue), var(--bg-sat), 73%);
+    color: var(--look-default-active-color);
+    background-color: hsla(var(-hue), var(-sat), 55%, 0.4);
+    border: 1px solid hsl(var(-hue), var(-sat), 73%);
 }
 
 .list {

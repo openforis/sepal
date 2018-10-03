@@ -1,6 +1,6 @@
 
 .footer {
-    --button-default-color: #a0a0a0;
+    --look-default-color: #a0a0a0;
     --highlight-color: #c8c8c8;
     display: flex;
     flex-direction: row;
@@ -14,7 +14,7 @@
 }
 
 .footer button, .footer div, .footer a {
-    color: var(--button-default-color);
+    color: var(--look-default-color);
 }
 
 .footer button {

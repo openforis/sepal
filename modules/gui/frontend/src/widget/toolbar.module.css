@@ -10,7 +10,7 @@
     position: absolute;
     --button-margin: .5rem;
     --button-size: 2.5rem;
-    --button-panel-background-color: rgba(0, 0, 0, 0.5);
+    --look-panel-background-color: rgba(0, 0, 0, 0.5);
     --icon-size: 1.1rem;
     pointer-events: all;
     z-index: 0;
@@ -24,7 +24,7 @@
     bottom: calc(-1 * var(--button-margin));
     left: calc(-1 * var(--button-margin));
     right: calc(-1 * var(--button-margin));
-    background-color: var(--button-panel-background-color);
+    background-color: var(--look-panel-background-color);
     border: none;
     border-radius: var(--container-border-radius);
 }
@@ -70,41 +70,41 @@
     border-style: solid;
     border-radius: var(--button-border-radius);
     padding: 0;
-    color: var(--button-default-color);
-    background-color: var(--button-default-background-color);
-    border-color: var(--button-default-border-color);
+    color: var(--look-default-color);
+    background-color: var(--look-default-background-color);
+    border-color: var(--look-default-border-color);
 }
 
 .toolbar button:hover:not(:disabled) {
-    color: var(--button-default-hover-color);
-    background-color: var(--button-default-hover-background-color);
-    border-color: var(--button-default-hover-border-color);
+    color: var(--look-default-hover-color);
+    background-color: var(--look-default-hover-background-color);
+    border-color: var(--look-default-hover-border-color);
     cursor: pointer;
 }
 
 .toolbar button.selected,
 .toolbar button.selected:disabled {
-    color: var(--button-selected-color);
-    background-color: var(--button-selected-background-color);
-    border-color: var(--button-selected-border-color);
+    color: var(--look-highlight-color);
+    background-color: var(--look-highlight-background-color);
+    border-color: var(--look-highlight-border-color);
 }
 
 .toolbar button.selected:hover:not(:disabled) {
-    color: var(--button-selected-hover-color);
-    background-color: var(--button-selected-hover-background-color);
-    border-color: var(--button-selected-hover-border-color);
+    color: var(--look-highlight-hover-color);
+    background-color: var(--look-highlight-hover-background-color);
+    border-color: var(--look-highlight-hover-border-color);
 }
 
 .toolbar button:active:not(:disabled) {
-    color: var(--button-default-active-color);
-    background-color: var(--button-default-active-background-color);
-    border-color: var(--button-default-active-border-color);
+    color: var(--look-default-active-color);
+    background-color: var(--look-default-active-background-color);
+    border-color: var(--look-default-active-border-color);
 }
 
 .toolbar button.selected:active:not(:disabled) {
-    color: var(--button-selected-active-color);
-    background-color: var(--button-selected-active-background-color);
-    border-color: var(--button-selected-active-border-color);
+    color: var(--look-highlight-active-color);
+    background-color: var(--look-highlight-active-background-color);
+    border-color: var(--look-highlight-active-border-color);
 }
 
 .toolbar.vertical.panelButton button.selected, button.panelButton.selected {
@@ -119,9 +119,9 @@
 }
 
 .toolbar button:disabled {
-    color: var(--button-disabled-color);
-    background-color: var(--button-disabled-background-color);
-    border-color: var(--button-disabled-border-color);
+    color: var(--look-disabled-color);
+    background-color: var(--look-disabled-background-color);
+    border-color: var(--look-disabled-border-color);
 }
 
 .toolbar button svg {
