@@ -23,7 +23,7 @@ class Toolbar extends React.Component {
         const {statePath, horizontal, vertical, panel, top, bottom, left, right, className, modal, selectedPanel} = this.props
         const classNames = [
             styles.toolbar,
-            buttonColors.buttons,
+            buttonColors.button,
             horizontal && styles.horizontal,
             vertical && styles.vertical,
             panel && styles.panelButton,

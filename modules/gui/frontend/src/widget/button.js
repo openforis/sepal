@@ -4,6 +4,7 @@ import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
+import buttonStyles from '../style/button-colors.module.css'
 import styles from './button.module.css'
 
 const renderContents = ({icon, label, children}) =>
@@ -17,6 +18,7 @@ const renderContents = ({icon, label, children}) =>
 const classNames = ({className, look, selected}) =>
     className ? className : [
         styles.button,
+        buttonStyles.button,
         styles[look],
         selected ? styles.selected : null
     ].join(' ')

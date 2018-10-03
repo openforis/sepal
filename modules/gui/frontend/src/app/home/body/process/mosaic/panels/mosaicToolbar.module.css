@@ -1,18 +1,18 @@
 .top, .bottom {
-    --btn-def-bg-h: 37;
-    --btn-def-bg-s: 27%;
-    --btn-def-bg-l: 25%;
-    --btn-def-bg-a: .9;
+    --btn-def-h: 37;
+    --btn-def-s: 27%;
+    --btn-def-l: 25%;
+    --btn-def-a: .9;
 
-    --btn-sel-bg-h: 40;
-    --btn-sel-bg-s: 8%;
-    --btn-sel-bg-l: 15%;
-    --btn-sel-bg-a: .95;
+    --btn-sel-h: 40;
+    --btn-sel-s: 8%;
+    --btn-sel-l: 15%;
+    --btn-sel-a: .95;
 
-    --btn-dis-bg-h: 37;
-    --btn-dis-bg-s: 10%;
-    --btn-dis-bg-l: 20%;
-    --btn-dis-bg-a: .9;
+    --btn-dis-h: 37;
+    --btn-dis-s: 10%;
+    --btn-dis-l: 20%;
+    --btn-dis-a: .9;
 }
 
 .top {

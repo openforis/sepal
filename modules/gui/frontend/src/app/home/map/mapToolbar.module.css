@@ -1,18 +1,18 @@
 .mapToolbar {
-    --btn-def-bg-h: 196;
-    --btn-def-bg-s: 27%;
-    --btn-def-bg-l: 20%;
-    --btn-def-bg-a: .9;
+    --btn-def-h: 196;
+    --btn-def-s: 27%;
+    --btn-def-l: 20%;
+    --btn-def-a: .9;
 
-    --btn-sel-bg-h: 196;
-    --btn-sel-bg-s: 27%;
-    --btn-sel-bg-l: 40%;
-    --btn-sel-bg-a: .9;
+    --btn-sel-h: 196;
+    --btn-sel-s: 27%;
+    --btn-sel-l: 40%;
+    --btn-sel-a: .9;
 
-    --btn-dis-bg-h: 196;
-    --btn-dis-bg-s: 5%;
-    --btn-dis-bg-l: 15%;
-    --btn-dis-bg-a: .9;
+    --btn-dis-h: 196;
+    --btn-dis-s: 5%;
+    --btn-dis-l: 15%;
+    --btn-dis-a: .9;
 
     margin-right: 6rem;
 }
