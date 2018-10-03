@@ -1,7 +1,8 @@
 .button {
     border-radius: var(--button-border-radius);
     font-size: .9rem;
-    padding: .1rem 1rem;
+    line-height: 1.9rem;
+    padding: 0 .8rem;
     cursor: pointer;
     transition: all 100ms ease-in-out;
 }
