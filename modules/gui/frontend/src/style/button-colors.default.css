@@ -1,57 +1,100 @@
 html {
 
-    /* base colors */
+    /* default */
 
     --btn-def-bg-h: 40;
     --btn-def-bg-s: 8%;
     --btn-def-bg-l: 20%;
-    --btn-def-bg-a: 1;
+
+    --button-default-color: hsla(0, 0%, 80%, 1);
+    --button-default-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), var(--btn-def-bg-l));
+    --button-default-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 2%));
+    
+    --button-default-focus-color: hsla(0, 0%, 80%, 1);
+    --button-default-focus-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 3%));
+    --button-default-focus-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 5%));
+    
+    --button-default-hover-color: hsla(0, 0%, 100%, 1);
+    --button-default-hover-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 5%));
+    --button-default-hover-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 7%));
+    
+    --button-default-active-color: hsla(0, 0%, 100%, 1);
+    --button-default-active-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 3%));
+    --button-default-active-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 5%));
+
+    /* selected */
 
     --btn-sel-bg-h: 40;
     --btn-sel-bg-s: 60%;
     --btn-sel-bg-l: 26%;
-    --btn-sel-bg-a: 1;
+
+    --button-selected-color: hsla(0, 0%, 100%, 1);
+    --button-selected-background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), var(--btn-sel-bg-l));
+    --button-selected-border-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) + 2%));
+    
+    --button-selected-focus-color: hsla(0, 0%, 100%, 1);
+    --button-selected-focus-background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) - 2%));
+    --button-selected-focus-border-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), var(--btn-sel-bg-l));
+    
+    --button-selected-hover-color: hsla(0, 0%, 100%, 1);
+    --button-selected-hover-background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) + 3%));
+    --button-selected-hover-border-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) + 5%));
+    
+    --button-selected-active-color: hsla(0, 0%, 100%, 1);
+    --button-selected-active-background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) + 0%));
+    --button-selected-active-border-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) - 2%));
+    
+    /* apply */
+
+    --btn-apply-bg-h: 222;
+    --btn-apply-bg-s: 44%;
+    --btn-apply-bg-l: 37%;
+
+    --button-apply-color: hsla(0, 0%, 100%, 1);
+    --button-apply-background-color: hsla(var(--btn-apply-bg-h), var(--btn-apply-bg-s), var(--btn-apply-bg-l));
+    --button-apply-border-color: hsla(var(--btn-apply-bg-h), var(--btn-apply-bg-s), calc(var(--btn-apply-bg-l) + 2%));
+    
+    --button-apply-focus-color: hsla(0, 0%, 100%, 1);
+    --button-apply-focus-background-color: hsla(var(--btn-apply-bg-h), var(--btn-apply-bg-s), calc(var(--btn-apply-bg-l) - 2%));
+    --button-apply-focus-border-color: hsla(var(--btn-apply-bg-h), var(--btn-apply-bg-s), var(--btn-apply-bg-l));
+    
+    --button-apply-hover-color: hsla(0, 0%, 100%, 1);
+    --button-apply-hover-background-color: hsla(var(--btn-apply-bg-h), var(--btn-apply-bg-s), calc(var(--btn-apply-bg-l) + 3%));
+    --button-apply-hover-border-color: hsla(var(--btn-apply-bg-h), var(--btn-apply-bg-s), calc(var(--btn-apply-bg-l) + 5%));
+    
+    --button-apply-active-color: hsla(0, 0%, 100%, 1);
+    --button-apply-active-background-color: hsla(var(--btn-apply-bg-h), var(--btn-apply-bg-s), calc(var(--btn-apply-bg-l) + 0%));
+    --button-apply-active-border-color: hsla(var(--btn-apply-bg-h), var(--btn-apply-bg-s), calc(var(--btn-apply-bg-l) - 2%));
+
+    /* cancel */
+
+    --btn-cancel-bg-h: 0;
+    --btn-cancel-bg-s: 38%;
+    --btn-cancel-bg-l: 33%;
+
+    --button-cancel-color: hsla(0, 0%, 100%, 1);
+    --button-cancel-background-color: hsla(var(--btn-cancel-bg-h), var(--btn-cancel-bg-s), var(--btn-cancel-bg-l));
+    --button-cancel-border-color: hsla(var(--btn-cancel-bg-h), var(--btn-cancel-bg-s), calc(var(--btn-cancel-bg-l) + 2%));
+    
+    --button-cancel-focus-color: hsla(0, 0%, 100%, 1);
+    --button-cancel-focus-background-color: hsla(var(--btn-cancel-bg-h), var(--btn-cancel-bg-s), calc(var(--btn-cancel-bg-l) - 2%));
+    --button-cancel-focus-border-color: hsla(var(--btn-cancel-bg-h), var(--btn-cancel-bg-s), var(--btn-cancel-bg-l));
+    
+    --button-cancel-hover-color: hsla(0, 0%, 100%, 1);
+    --button-cancel-hover-background-color: hsla(var(--btn-cancel-bg-h), var(--btn-cancel-bg-s), calc(var(--btn-cancel-bg-l) + 3%));
+    --button-cancel-hover-border-color: hsla(var(--btn-cancel-bg-h), var(--btn-cancel-bg-s), calc(var(--btn-cancel-bg-l) + 5%));
+    
+    --button-cancel-active-color: hsla(0, 0%, 100%, 1);
+    --button-cancel-active-background-color: hsla(var(--btn-cancel-bg-h), var(--btn-cancel-bg-s), calc(var(--btn-cancel-bg-l) + 0%));
+    --button-cancel-active-border-color: hsla(var(--btn-cancel-bg-h), var(--btn-cancel-bg-s), calc(var(--btn-cancel-bg-l) - 2%));
+
+    /* disabled */
 
     --btn-dis-bg-h: 40;
     --btn-dis-bg-s: 8%;
     --btn-dis-bg-l: 20%;
-    --btn-dis-bg-a: 1;
 
-    /* calculated colors */
-
-    --button-default-color: hsla(0, 0%, 80%, 1);
-    --button-default-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), var(--btn-def-bg-l), var(--btn-def-bg-a));
-    --button-default-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 2%), var(--btn-def-bg-a));
-    
-    --button-default-focus-color: hsla(0, 0%, 80%, 1);
-    --button-default-focus-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 3%), var(--btn-def-bg-a));
-    --button-default-focus-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 5%), var(--btn-def-bg-a));
-    
-    --button-default-hover-color: hsla(0, 0%, 100%, 1);
-    --button-default-hover-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 5%), var(--btn-def-bg-a));
-    --button-default-hover-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 7%), var(--btn-def-bg-a));
-    
-    --button-default-active-color: hsla(0, 0%, 100%, 1);
-    --button-default-active-background-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 3%), var(--btn-def-bg-a));
-    --button-default-active-border-color: hsla(var(--btn-def-bg-h), var(--btn-def-bg-s), calc(var(--btn-def-bg-l) + 5%), var(--btn-def-bg-a));
-    
-    --button-selected-color: hsla(0, 0%, 100%, 1);
-    --button-selected-background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), var(--btn-sel-bg-l), var(--btn-sel-bg-a));
-    --button-selected-border-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) + 2%), var(--btn-sel-bg-a));
-    
-    --button-selected-focus-color: hsla(0, 0%, 100%, 1);
-    --button-selected-focus-background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) - 2%), var(--btn-sel-bg-a));
-    --button-selected-focus-border-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), var(--btn-sel-bg-l), var(--btn-sel-bg-a));
-    
-    --button-selected-hover-color: hsla(0, 0%, 100%, 1);
-    --button-selected-hover-background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) + 3%), var(--btn-sel-bg-a));
-    --button-selected-hover-border-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) + 5%), var(--btn-sel-bg-a));
-    
-    --button-selected-active-color: hsla(0, 0%, 100%, 1);
-    --button-selected-active-background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) + 0%), var(--btn-sel-bg-a));
-    --button-selected-active-border-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) - 2%), var(--btn-sel-bg-a));
-    
     --button-disabled-color: hsla(0, 0%, 35%, 1);
-    --button-disabled-background-color: hsla(var(--btn-dis-bg-h), var(--btn-dis-bg-s), var(--btn-dis-bg-l), var(--btn-dis-bg-a));
-    --button-disabled-border-color: hsla(var(--btn-dis-bg-h), var(--btn-dis-bg-s), calc(var(--btn-dis-bg-l) + 2%), var(--btn-dis-bg-a));
+    --button-disabled-background-color: hsla(var(--btn-dis-bg-h), var(--btn-dis-bg-s), var(--btn-dis-bg-l));
+    --button-disabled-border-color: hsla(var(--btn-dis-bg-h), var(--btn-dis-bg-s), calc(var(--btn-dis-bg-l) + 2%));
 }

@@ -128,10 +128,10 @@ class PanelButtons extends React.Component {
 
     renderAdditionalButtons() {
         const {additionalButtons = []} = this.props
-        const renderButton = ({key, label, disabled, tooltip, onClick, className}) =>
+        const renderButton = ({key, look, label, disabled, tooltip, onClick}) =>
             <Button
                 key={key}
-                className={className || styles.default}
+                look={look}
                 label={label}
                 disabled={disabled}
                 onClick={(e) => {
@@ -143,7 +143,7 @@ class PanelButtons extends React.Component {
                 tooltipDisabled={!tooltip || disabled}
             />
         return (
-            <div className={styles.additionalButtons}>
+            <div>
                 {additionalButtons.map(renderButton)}
             </div>
         )
@@ -152,8 +152,7 @@ class PanelButtons extends React.Component {
     renderBackButton() {
         return (
             <Button
-                className={styles.default}
-                icon={'chevron-left'}
+                icon='chevron-left'
                 label={msg('button.back')}
                 onClick={e => {
                     e.preventDefault()
@@ -169,8 +168,8 @@ class PanelButtons extends React.Component {
         return (
             <Button
                 type='submit'
-                className={styles.apply}
-                icon={'chevron-right'}
+                look='apply'
+                icon='chevron-right'
                 label={msg('button.next')}
                 disabled={form.isInvalid()}
                 onClick={e => {
@@ -186,8 +185,8 @@ class PanelButtons extends React.Component {
         return (
             <Button
                 type='submit'
-                className={styles.apply}
-                icon={'check'}
+                look='apply'
+                icon='check'
                 label={msg('button.done')}
                 disabled={form.isInvalid()}
                 onClick={e => {
@@ -214,8 +213,8 @@ class PanelButtons extends React.Component {
         const showCancelButton = isActionForm || dirty
         return (
             <Button
-                className={styles.cancel}
-                icon={'undo-alt'}
+                look='cancel'
+                icon='undo-alt'
                 label={cancelLabel}
                 shown={showCancelButton}
                 disabled={!showCancelButton}
@@ -234,8 +233,8 @@ class PanelButtons extends React.Component {
         return (
             <Button
                 type='submit'
-                className={styles.apply}
-                icon={'check'}
+                look='apply'
+                icon='check'
                 label={applyLabel}
                 disabled={form.isInvalid()}
                 onClick={e => {

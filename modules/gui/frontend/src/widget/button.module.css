@@ -1,15 +1,17 @@
 .button {
-    padding: 0 1rem;
     border-radius: var(--button-border-radius);
-    line-height: 2rem;
-    text-transform: uppercase;
+    font-size: .9rem;
+    padding: .1rem 1rem;
     cursor: pointer;
+    transition: all 100ms ease-in-out;
 }
 
+/* space between buttons */
 .button + .button {
     margin-left: .5rem;
 }
 
+/* space between icon and label */
 .contents > * + * {
     margin-left: .5rem;
 }
@@ -66,9 +68,63 @@
     border: var(--button-selected-active-border);
 }
 
+/* apply */
+
+.button.apply {
+    color: var(--button-apply-color);
+    background-color: var(--button-apply-background-color);
+    border: var(--button-apply-border);
+}
+
+.button.apply:focus {
+    color: var(--button-apply-focus-color);
+    background-color: var(--button-apply-focus-background-color);
+    border: var(--button-apply-focus-border);
+}
+
+.button.apply:hover {
+    color: var(--button-apply-hover-color);
+    background-color: var(--button-apply-hover-background-color);
+    border: var(--button-apply-hover-border);
+}
+
+.button.apply:active {
+    color: var(--button-apply-active-color);
+    background-color: var(--button-apply-active-background-color);
+    border: var(--button-apply-active-border);
+}
+
+/* cancel */
+
+.button.cancel {
+    color: var(--button-cancel-color);
+    background-color: var(--button-cancel-background-color);
+    border: var(--button-cancel-border);
+}
+
+.button.cancel:focus {
+    color: var(--button-cancel-focus-color);
+    background-color: var(--button-cancel-focus-background-color);
+    border: var(--button-cancel-focus-border);
+}
+
+.button.cancel:hover {
+    color: var(--button-cancel-hover-color);
+    background-color: var(--button-cancel-hover-background-color);
+    border: var(--button-cancel-hover-border);
+}
+
+.button.cancel:active {
+    color: var(--button-cancel-active-color);
+    background-color: var(--button-cancel-active-background-color);
+    border: var(--button-cancel-active-border);
+}
+
 /* shared disabled styling */
 
 .button.default:disabled,
+.button.apply:disabled,
+.button.cancel:disabled,
 .button.selected:disabled {
     color: var(--button-disabled-color);
     background-color: var(--button-disabled-background-color);
