@@ -27,12 +27,12 @@
     color: var(--highlight-color);
 }
 
-.user {
+.button {
     margin-left: 1rem;
     text-transform: lowercase;
 }
 
-.user svg {
+.button svg {
     font-size: .8rem;
 }
 

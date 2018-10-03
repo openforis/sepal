@@ -1,9 +1,9 @@
+import {Button} from 'widget/button'
 import {connect} from 'store'
 import {msg} from 'translate'
 import ChangePassword from './changePassword'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import UserDetails from './userDetails'
 import actionBuilder from 'action-builder'
 
@@ -42,11 +42,13 @@ class UserProfile extends React.Component {
     renderButton() {
         const {className, username, modal} = this.props
         return (
-            <Tooltip msg={msg('home.sections.user.profile.tooltip')} top disabled={modal}>
-                <button className={className} onClick={() => this.buttonHandler()}>
-                    {username}
-                </button>
-            </Tooltip>
+            <Button
+                className={className}
+                label={username}
+                onClick={() => this.buttonHandler()}
+                tooltip={msg('home.sections.user.profile.tooltip')}
+                tooltipPlacement='top'
+                tooltipDisabled={modal}/>
         )
     }
 

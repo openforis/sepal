@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {connect, select} from 'store'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
@@ -205,14 +206,13 @@ class Tab extends React.Component {
                             : null
                         }
                     </span>
-                    <button
+                    <Button
                         className={styles.close}
-                        onClick={(e) => {
+                        label='&times;'
+                        onClick={e => {
                             e.stopPropagation()
                             closeTab(id, statePath)
-                        }}>
-                        &times;
-                    </button>
+                        }}/>
                 </div>
             </Tooltip>
         )

@@ -238,15 +238,12 @@ class Users extends React.Component {
                     <Pageable items={this.getUsers()} limit={20}>
                         {this.renderControls()}
                         {this.renderInfo()}
-
                         <div className={styles.heading}>
                             {this.renderHeadings()}
                         </div>
-
                         <div className={styles.users}>
                             {this.renderUsers()}
                         </div>
-
                     </Pageable>
                 </div>
             </div>

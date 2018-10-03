@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {appList, requestedApps, runApp$} from 'apps'
 import {connect, dispatch} from 'store'
 import {history} from 'route'
@@ -39,14 +40,16 @@ AppLaunchPad.propTypes = {
 }
 
 const App = ({app, onClick}) =>
-    <button className={styles.app} onClick={() => onClick(app)}>
+    <Button
+        className={styles.app}
+        onClick={() => onClick(app)}>
         <Image style={app.style} src={app.image}/>
         <Icon name={app.icon} alt={app.alt}/>
         <div>
             <div className={styles.title}>{app.label}</div>
             <div className={styles.description}>{app.description}</div>
         </div>
-    </button>
+    </Button>
 
 App.propTypes = {
     app: PropTypes.object,

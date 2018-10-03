@@ -166,14 +166,13 @@ export default class SeasonSelect extends React.Component {
 
     startDateChanged(startDate, always) {
         if (always || !this.state.startDate.isSame(startDate))
-            this.setState(
-                (prevState) => {
-                    startDate = SeasonSelect.constrainStartDate(startDate, prevState.centerDate)
-                    const maxEndDate = moment(startDate).add(1, 'years')
-                    const endDate = moment.min(prevState.endDate, maxEndDate)
-                    this.notifyChange(startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT))
-                    return {...prevState, startDate, endDate}
-                })
+            this.setState(prevState => {
+                startDate = SeasonSelect.constrainStartDate(startDate, prevState.centerDate)
+                const maxEndDate = moment(startDate).add(1, 'years')
+                const endDate = moment.min(prevState.endDate, maxEndDate)
+                this.notifyChange(startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT))
+                return {...prevState, startDate, endDate}
+            })
 
     }
 
@@ -183,14 +182,13 @@ export default class SeasonSelect extends React.Component {
 
     endDateChanged(endDate, always) {
         if (always || !this.state.endDate.isSame(endDate))
-            this.setState(
-                (prevState) => {
-                    endDate = SeasonSelect.constrainEndDate(endDate, prevState.centerDate)
-                    const maxStartDate = moment(endDate).subtract(1, 'years')
-                    const startDate = moment.max(prevState.startDate, maxStartDate)
-                    this.notifyChange(startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT))
-                    return {...prevState, startDate, endDate}
-                })
+            this.setState(prevState => {
+                endDate = SeasonSelect.constrainEndDate(endDate, prevState.centerDate)
+                const maxStartDate = moment(endDate).subtract(1, 'years')
+                const startDate = moment.max(prevState.startDate, maxStartDate)
+                this.notifyChange(startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT))
+                return {...prevState, startDate, endDate}
+            })
     }
 }
 

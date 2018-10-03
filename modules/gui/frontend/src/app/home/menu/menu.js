@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {Link, isPathInLocation} from 'route'
 import {connect} from 'store'
 import {isFloating} from './menuMode'
@@ -51,16 +52,15 @@ Menu.propTypes = {
 export default connect(mapStateToProps)(Menu)
 
 let SectionLink = ({active, name, icon}) => {
-    const linkPath = '/' + name
+    const link = '/' + name
     const activeClass = active ? styles.active : null
     return (
-        <Link to={linkPath} onMouseDown={(e) => e.preventDefault()}>
-            <Tooltip msg={msg(`home.sections.${name}.tooltip`)} right>
-                <button className={[`${styles[name]}`, activeClass].join(' ')}>
-                    <Icon name={icon}/>
-                </button>
-            </Tooltip>
-        </Link>
+        <Button
+            className={[styles[name], activeClass].join(' ')}
+            icon={icon}
+            link={link}
+            tooltip={msg(`home.sections.${name}.tooltip`)}
+            tooltipPlacement='right'/>
     )
 }
 
@@ -81,13 +81,12 @@ let AppLink = ({active, app: {path, label, alt}}) => {
             <div className={styles.stop} onClick={() => quitApp(path)}>
                 <Icon name='times'/>
             </div>
-            <Link to={'/app' + path} onMouseDown={(e) => e.preventDefault()}>
-                <Tooltip msg={label || alt} right>
-                    <button className={activeClass}>
-                        <Icon name='cubes'/>
-                    </button>
-                </Tooltip>
-            </Link>
+            <Button
+                className={activeClass}
+                icon='cube'
+                link={'/app' + path}
+                tooltip={label || alt}
+                tooltipPlacement='right'/>
         </div>
     )
 }

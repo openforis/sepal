@@ -12,8 +12,8 @@ html {
     --btn-sel-bg-l: 26%;
     --btn-sel-bg-a: 1;
 
-    --btn-dis-bg-h: 37;
-    --btn-dis-bg-s: 10%;
+    --btn-dis-bg-h: 40;
+    --btn-dis-bg-s: 8%;
     --btn-dis-bg-l: 20%;
     --btn-dis-bg-a: 1;
 
@@ -51,7 +51,7 @@ html {
     --button-selected-active-background-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) + 0%), var(--btn-sel-bg-a));
     --button-selected-active-border-color: hsla(var(--btn-sel-bg-h), var(--btn-sel-bg-s), calc(var(--btn-sel-bg-l) - 2%), var(--btn-sel-bg-a));
     
-    --button-disabled-color: hsla(0, 0%, 65%, 1);
+    --button-disabled-color: hsla(0, 0%, 35%, 1);
     --button-disabled-background-color: hsla(var(--btn-dis-bg-h), var(--btn-dis-bg-s), var(--btn-dis-bg-l), var(--btn-dis-bg-a));
     --button-disabled-border-color: hsla(var(--btn-dis-bg-h), var(--btn-dis-bg-s), calc(var(--btn-dis-bg-l) + 2%), var(--btn-dis-bg-a));
 }

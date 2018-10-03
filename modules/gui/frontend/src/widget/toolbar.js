@@ -1,9 +1,8 @@
+import {Button} from 'widget/button'
 import {connect, select} from 'store'
-import Icon from 'widget/icon'
 import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import actionBuilder from 'action-builder'
 import buttonColors from 'style/button-colors.module.css'
 import styles from './toolbar.module.css'
@@ -75,19 +74,20 @@ export {Toolbar}
 
 export class ToolbarButton extends React.Component {
     render() {
-        const {disabled, selected, icon, label, tooltip, className, onClick} = this.props
+        const {className, icon, label, tooltip, disabled, selected, onClick} = this.props
         return (
             <Context.Consumer>
                 {({horizontal, panel}) =>
-                    <Tooltip msg={tooltip} top={horizontal} left={!horizontal}
-                        disabled={!!(disabled || (panel && selected))}>
-                        <button
-                            className={[selected && !disabled ? styles.selected : null, className].join(' ')}
-                            onClick={onClick}
-                            disabled={disabled}>
-                            {icon ? <Icon name={icon}/> : label}
-                        </button>
-                    </Tooltip>
+                    <Button
+                        className={[selected && !disabled ? styles.selected : null, className].join(' ')}
+                        icon={icon}
+                        label={label}
+                        disabled={disabled}
+                        onClick={onClick}
+                        tooltip={tooltip}
+                        tooltipPlacement={horizontal ? 'top' : 'left'}
+                        tooltipDisabled={!!(disabled || (panel && selected))}
+                    />
                 }
             </Context.Consumer>
         )

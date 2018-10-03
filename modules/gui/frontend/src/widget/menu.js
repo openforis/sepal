@@ -4,6 +4,7 @@ import Portal from 'widget/portal'
 import PropTypes from 'prop-types'
 import React from 'react'
 import styles from './menu.module.css'
+import {Button} from 'widget/button'
 
 const mapStateToProps = () => ({
     appDimensions: select('dimensions')
@@ -38,15 +39,13 @@ class Menu extends React.Component {
         const {warning, className, children} = this.props
         const {open} = this.state
         return <React.Fragment>
-            <button
-                ref={this.button}
+            <Button
                 className={[styles.menu, open ? styles.open : null, className].join(' ')}
+                ref={this.button}
                 onClick={() => this.toggleOpen()}>
                 <Icon name='bars'/>
-                {warning && !open
-                    ? <Icon name='exclamation-triangle' className={styles.warning}/>
-                    : null}
-            </button>
+                {warning && !open ? <Icon name='exclamation-triangle' className={styles.warning}/> : null}
+            </Button>
             {open
                 ? <Portal>
                     <MenuContext.Provider value={this}>

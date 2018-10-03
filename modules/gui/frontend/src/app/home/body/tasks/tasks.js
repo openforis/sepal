@@ -1,9 +1,8 @@
+import {Button} from 'widget/button'
 import {IconButton} from 'widget/legacyButton'
 import {Msg, msg} from 'translate'
 import {Progress} from 'widget/progress'
 import {connect, select} from 'store'
-import Hammer from 'react-hammerjs'
-import Icon from 'widget/icon'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
 import api from 'api'
@@ -24,26 +23,23 @@ class Tasks extends React.Component {
             <div className={styles.overlay}>
                 {['FAILED', 'COMPLETED', 'CANCELED'].includes(task.status) ? (
                     <React.Fragment>
-                        <Hammer onTap={() => this.restartTask(task)}>
-                            <button className={styles.restart}>
-                                <Icon name='undo'/>
-                                <Msg id='button.restart'/>
-                            </button>
-                        </Hammer>
-                        <Hammer onTap={() => this.removeTask(task)}>
-                            <button className={styles.remove}>
-                                <Icon name='times'/>
-                                <Msg id='button.remove'/>
-                            </button>
-                        </Hammer>
+                        <Button
+                            className={styles.restart}
+                            icon='undo'
+                            label={msg('button.restart')}
+                            onClick={() => this.restartTask(task)}/>
+                        <Button
+                            className={styles.remove}
+                            icon='times'
+                            label={msg('button.remove')}
+                            onClick={() => this.removeTask(task)}/>
                     </React.Fragment>
                 ) : task.status === 'ACTIVE' ?
-                    <Hammer onTap={() => this.stopTask(task)}>
-                        <button
-                            className={styles.stop}>
-                            <Icon name='stop'/>
-                            <Msg id='button.stop'/></button>
-                    </Hammer>
+                    <Button
+                        className={styles.stop}
+                        icon='stop'
+                        label={msg('button.stop')}
+                        onClick={() => this.stopTask(task)}/>
                     : null}
             </div>
         )
@@ -68,7 +64,6 @@ class Tasks extends React.Component {
                         icon='times'
                         onClick={() => this.removeAllTasks()}/>
                 </Tooltip>
-
             </div>
         )
     }

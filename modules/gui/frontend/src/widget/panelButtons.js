@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import {Msg, msg} from 'translate'
 import {PanelWizardContext} from './panel'
 import {connect, select} from 'store'
@@ -130,19 +131,19 @@ class PanelButtons extends React.Component {
     renderAdditionalButtons() {
         const {additionalButtons = []} = this.props
         const renderButton = ({key, label, disabled, tooltip, onClick, className}) =>
-            <Tooltip key={key} msg={tooltip} bottom disabled={!tooltip || disabled}>
-                <button
-                    type='button'
-                    disabled={disabled}
-                    onClick={(e) => {
-                        e.preventDefault()
-                        onClick(e)
-                    }}
-                    className={className || styles.default}>
-                    <span>{label}</span>
-                </button>
-            </Tooltip>
-
+            <Button
+                key={key}
+                className={className || styles.default}
+                label={label}
+                disabled={disabled}
+                onClick={(e) => {
+                    e.preventDefault()
+                    onClick(e)
+                }}
+                tooltip={tooltip}
+                tooltipPlacement='bottom'
+                tooltipDisabled={!tooltip || disabled}
+            />
         return (
             <div className={styles.additionalButtons}>
                 {additionalButtons.map(renderButton)}
@@ -152,51 +153,50 @@ class PanelButtons extends React.Component {
 
     renderBackButton() {
         return (
-            <button
-                type='button'
-                onClick={(e) => {
+            <Button
+                className={styles.default}
+                icon={'chevron-left'}
+                label={msg('button.back')}
+                onClick={e => {
                     e.preventDefault()
                     this.back()
                 }}
-                onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before going back
-                className={styles.default}>
-                <Icon name={'chevron-left'}/>
-                <span><Msg id='button.back'/></span>
-            </button>
+                onMouseDown={e => e.preventDefault()} // Prevent onBlur validation before going back
+            />
         )
     }
 
     renderNextButton() {
         const {form} = this.props
         return (
-            <button
+            <Button
                 type='submit'
-                onClick={(e) => {
+                className={styles.apply}
+                icon={'chevron-right'}
+                label={msg('button.next')}
+                disabled={form.isInvalid()}
+                onClick={e => {
                     e.preventDefault()
                     this.next()
                 }}
-                disabled={form.isInvalid()}
-                className={styles.apply}>
-                <span><Msg id='button.next'/></span>
-                <Icon name={'chevron-right'}/>
-            </button>
+            />
         )
     }
 
     renderDoneButton() {
         const {form} = this.props
         return (
-            <button
+            <Button
                 type='submit'
-                onClick={(e) => {
+                className={styles.apply}
+                icon={'check'}
+                label={msg('button.done')}
+                disabled={form.isInvalid()}
+                onClick={e => {
                     e.preventDefault()
                     this.done()
                 }}
-                disabled={form.isInvalid()}
-                className={styles.apply}>
-                <Icon name={'check'}/>
-                <span><Msg id='button.done'/></span>
-            </button>
+            />
         )
     }
 
@@ -215,19 +215,18 @@ class PanelButtons extends React.Component {
         const dirty = form.isDirty()
         const showCancelButton = isActionForm || dirty
         return (
-            <button
-                type='button'
-                onClick={(e) => {
+            <Button
+                className={styles.cancel}
+                icon={'undo-alt'}
+                label={cancelLabel}
+                shown={showCancelButton}
+                disabled={!showCancelButton}
+                onClick={e => {
                     e.preventDefault()
                     this.cancel()
                 }}
-                disabled={!showCancelButton}
-                onMouseDown={(e) => e.preventDefault()} // Prevent onBlur validation before canceling
-                className={styles.cancel}
-                style={{opacity: showCancelButton ? 1 : 0}}>
-                <Icon name={'undo-alt'}/>
-                <span>{cancelLabel}</span>
-            </button>
+                onMouseDown={e => e.preventDefault()} // Prevent onBlur validation before canceling
+            />
         )
     }
 
@@ -235,17 +234,18 @@ class PanelButtons extends React.Component {
         const {isActionForm, applyLabel = msg('button.ok'), form} = this.props
         const dirty = form.isDirty()
         return (
-            <button
+            <Button
                 type='submit'
-                onClick={(e) => {
+                className={styles.apply}
+                icon={'check'}
+                label={applyLabel}
+                disabled={form.isInvalid()}
+                onClick={e => {
                     e.preventDefault()
                     dirty || isActionForm ? this.ok() : this.cancel()
                 }}
-                disabled={form.isInvalid()}
-                className={styles.apply}>
-                <Icon name={'check'}/>
-                <span>{applyLabel}</span>
-            </button>
+                onMouseDown={e => e.preventDefault()} // Prevent onBlur validation before canceling
+            />
         )
     }
 

@@ -1,3 +1,4 @@
+import {Button} from 'widget/button'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Tooltip from 'widget/tooltip'
@@ -39,18 +40,18 @@ export default class UnstyledSelectionList extends React.Component {
         const {styles} = this.props
         const button =
             <li key={value}>
-                <button
+                <Button
                     className={[
                         this.isSelected(value) ? styles.selected : null,
                         this.props.multiple ? styles.toggle : null
                     ].join(' ')}
+                    label={label}
                     disabled={disabled}
-                    onClick={(e) => {
+                    onClick={e => {
                         e.preventDefault()
                         this.select(value)
-                    }}>
-                    {label}
-                </button>
+                    }}
+                />
             </li>
         return tooltip && !disabled
             ? <Tooltip key={value} msg={tooltip} bottom>{button}</Tooltip>

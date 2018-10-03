@@ -6,8 +6,9 @@ import React from 'react'
 
 export default class Tooltip extends React.Component {
     placement() {
-        const {left, right, top, bottom, topLeft, topRight, bottomLeft, bottomRight} = this.props
-        return left ? 'left' :
+        const {placement, left, right, top, bottom, topLeft, topRight, bottomLeft, bottomRight} = this.props
+        return placement ||
+        left ? 'left' :
             right ? 'right' :
                 top ? 'top' :
                     bottom ? 'bottom' :
@@ -45,6 +46,7 @@ Tooltip.propTypes = {
     disabled: PropTypes.bool,
     left: PropTypes.bool,
     msg: PropTypes.any,
+    placement: PropTypes.string,
     right: PropTypes.bool,
     top: PropTypes.bool,
     topLeft: PropTypes.bool,

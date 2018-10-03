@@ -1,9 +1,8 @@
+import {Button} from 'widget/button'
 import {msg} from 'translate'
-import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
-import styles from './pageable.module.css'
 
 const {Provider, Consumer} = React.createContext()
 
@@ -103,19 +102,11 @@ PageData.propTypes = {
 
 export const PageControls = (props) => {
     const renderDefaultControls = (pageable) =>
-        <div className={styles.controls}>
-            <button onClick={() => pageable.firstPage()} disabled={pageable.isFirstPage}>
-                <Icon name='fast-backward'/>
-            </button>
-            <button onClick={() => pageable.prevPage()} disabled={pageable.isFirstPage}>
-                <Icon name='backward'/>
-            </button>
-            <button onClick={() => pageable.nextPage()} disabled={pageable.isLastPage}>
-                <Icon name='forward'/>
-            </button>
-            <button onClick={() => pageable.lastPage()} disabled={pageable.isLastPage}>
-                <Icon name='fast-forward'/>
-            </button>
+        <div>
+            <Button icon='fast-backward' onClick={() => pageable.firstPage()} disabled={pageable.isFirstPage}/>
+            <Button icon='backward' onClick={() => pageable.prevPage()} disabled={pageable.isFirstPage}/>
+            <Button icon='forward' onClick={() => pageable.nextPage()} disabled={pageable.isLastPage}/>
+            <Button icon='fast-forward' onClick={() => pageable.lastPage()} disabled={pageable.isLastPage}/>
         </div>
 
     const renderCustomControls = ({isFirstPage, isLastPage, firstPage, lastPage, prevPage, nextPage}) =>
@@ -139,7 +130,7 @@ PageControls.propTypes = {
 
 export const PageInfo = (props) => {
     const renderDefaultInfo = ({pageNumber, pageCount, itemCount}) =>
-        <div className={styles.info}>
+        <div>
             {msg('pagination.info', {pageNumber, pageCount, itemCount})}
         </div>
     

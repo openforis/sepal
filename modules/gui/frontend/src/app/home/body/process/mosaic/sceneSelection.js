@@ -6,7 +6,6 @@ import {RecipeActions, RecipeState, recipePath} from 'app/home/body/process/mosa
 import {dataSetById} from 'sources'
 import {map} from 'rxjs/operators'
 import {objectEquals} from 'collections'
-import Hammer from 'react-hammerjs'
 import Icon from 'widget/icon'
 import PanelButtons from 'widget/panelButtons'
 import PropTypes from 'prop-types'
@@ -16,6 +15,7 @@ import ScenePreview from 'app/home/body/process/mosaic/scenePreview'
 import api from 'api'
 import styles from './sceneSelection.module.css'
 import format from 'format'
+import { Button } from '../../../../../widget/button';
 
 const fields = {
     selectedScenes: new Field()
@@ -211,34 +211,30 @@ const Scene = ({selected, scene, onAdd, onRemove, className, recipe}) => {
 
 const AvailableSceneOverlay = ({scene, onAdd, recipe}) =>
     <div className={styles.sceneOverlay}>
-        <Hammer onTap={() => onAdd(scene)}>
-            <button className={styles.add} onClick={(e) => e.preventDefault()}>
-                <Icon name='plus'/>
-                <Msg id='button.add'/>
-            </button>
-        </Hammer>
-        <Hammer onTap={() => recipe.setSceneToPreview(scene).dispatch()}>
-            <button className={styles.preview} onClick={(e) => e.preventDefault()}>
-                <Icon name='eye'/>
-                <Msg id='process.mosaic.panel.sceneSelection.preview.label'/>
-            </button>
-        </Hammer>
+        <Button
+            className={styles.add} 
+            icon='plus'
+            label={msg('button.add')}
+            onClick={() => onAdd(scene)}/>
+        <Button
+            className={styles.preview} 
+            icon='eye'
+            label={msg('process.mosaic.panel.sceneSelection.preview.label')}
+            onClick={() => recipe.setSceneToPreview(scene).dispatch()}/>
     </div>
 
 const SelectedSceneOverlay = ({scene, onRemove, recipe}) =>
     <div className={styles.sceneOverlay}>
-        <Hammer onTap={() => onRemove(scene)}>
-            <button className={styles.remove} onClick={(e) => e.preventDefault()}>
-                <Icon name='times'/>
-                <Msg id='button.remove'/>
-            </button>
-        </Hammer>
-        <Hammer onTap={() => recipe.setSceneToPreview(scene).dispatch()}>
-            <button className={styles.preview} onClick={(e) => e.preventDefault()}>
-                <Icon name='eye'/>
-                <Msg id='process.mosaic.panel.sceneSelection.preview.label'/>
-            </button>
-        </Hammer>
+        <Button
+            className={styles.remove} 
+            icon='times'
+            label={msg('button.remove')}
+            onClick={() => onRemove(scene)}/>
+        <Button
+            className={styles.preview} 
+            icon='eye'
+            label={msg('process.mosaic.panel.sceneSelection.preview.label')}
+            onClick={() => recipe.setSceneToPreview(scene).dispatch()}/>
     </div>
 
 SceneSelection.propTypes = {

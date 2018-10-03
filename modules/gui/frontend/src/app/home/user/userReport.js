@@ -1,10 +1,9 @@
+import {Button} from 'widget/button'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {connect} from 'store'
 import {msg} from 'translate'
-import Icon from 'widget/icon'
 import Portal from 'widget/portal'
 import React from 'react'
-import Tooltip from 'widget/tooltip'
 import UserSessions from './userSessions'
 import actionBuilder from 'action-builder'
 import format from 'format'
@@ -112,11 +111,14 @@ class Usage extends React.Component {
     renderButton() {
         const {className, modal} = this.props
         return (
-            <Tooltip msg={msg('home.sections.user.report.tooltip')} disabled={modal}>
-                <button className={className} onClick={() => this.buttonHandler()}>
-                    <Icon name='dollar-sign'/> 0/h
-                </button>
-            </Tooltip>
+            <Button
+                className={className}
+                icon='dollar-sign'
+                label='0/h'
+                onClick={() => this.buttonHandler()}
+                tooltip={msg('home.sections.user.report.tooltip')}
+                tooltipPlacement='top'
+                tooltipDisabled={modal}/>
         )
     }
 

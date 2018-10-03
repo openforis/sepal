@@ -1,0 +1,77 @@
+.button {
+    padding: 0 1rem;
+    border-radius: var(--button-border-radius);
+    line-height: 2rem;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.button + .button {
+    margin-left: .5rem;
+}
+
+.contents > * + * {
+    margin-left: .5rem;
+}
+
+/* default styling */
+
+.button.default {
+    color: var(--button-default-color);
+    background-color: var(--button-default-background-color);
+    border: var(--button-default-border);
+}
+
+.button.default:focus {
+    color: var(--button-default-focus-color);
+    background-color: var(--button-default-focus-background-color);
+    border: var(--button-default-focus-border);
+}
+
+.button.default:hover {
+    color: var(--button-default-hover-color);
+    background-color: var(--button-default-hover-background-color);
+    border: var(--button-default-hover-border);
+}
+
+.button.default:active {
+    color: var(--button-default-active-color);
+    background-color: var(--button-default-active-background-color);
+    border: var(--button-default-active-border);
+}
+
+/* selected styling */
+
+.button.selected {
+    color: var(--button-selected-color);
+    background-color: var(--button-selected-background-color);
+    border: var(--button-selected-border);
+}
+
+.button.selected:focus {
+    color: var(--button-selected-focus-color);
+    background-color: var(--button-selected-focus-background-color);
+    border: var(--button-selected-focus-border);
+}
+
+.button.selected:hover {
+    color: var(--button-selected-hover-color);
+    background-color: var(--button-selected-hover-background-color);
+    border: var(--button-selected-hover-border);
+}
+
+.button.selected:active {
+    color: var(--button-selected-active-color);
+    background-color: var(--button-selected-active-background-color);
+    border: var(--button-selected-active-border);
+}
+
+/* shared disabled styling */
+
+.button.default:disabled,
+.button.selected:disabled {
+    color: var(--button-disabled-color);
+    background-color: var(--button-disabled-background-color);
+    border: var(--button-disabled-border);
+    cursor: default;
+}
