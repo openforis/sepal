@@ -1,10 +1,11 @@
+import argparse
 import json
 import logging
 import os
-import sys
 from collections import namedtuple
 from os import path
 from threading import local
+from sepal.sepal_api import SepalApi
 
 import ee
 import oauth2client.client
@@ -22,10 +23,16 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 thread_local = local()
+username = None
+download_dir = None
+
+sepal_host = None
+sepal_username = None
+sepal_password = None
 
 earthengine_credentials_file = os.path.expanduser('~/.config/earthengine/credentials')
 
-Context = namedtuple('Context', 'credentials, download_dir')
+Context = namedtuple('Context', 'credentials, download_dir, sepal_api')
 
 
 class AccessTokenCredentials(oauth2client.client.OAuth2Credentials):
@@ -60,7 +67,11 @@ def before():
     if not credentials:
         credentials = gee.service_account_credentials
     logger.debug('Using credentials: ' + str(credentials))
-    thread_local.context = Context(credentials=credentials, download_dir=sys.argv[3])
+    thread_local.context = Context(
+        credentials=credentials,
+        download_dir=download_dir,
+        sepal_api=SepalApi(host=sepal_host, username=sepal_username, password=sepal_password),
+    )
     ee.InitializeThread(credentials)
 
 
@@ -93,9 +104,13 @@ def cancel():
     return '', 204
 
 
-def init():
-    global username
-    username = sys.argv[4]
+def init(server_args):
+    global username, download_dir, sepal_host, sepal_username, sepal_password
+    username = server_args.username
+    download_dir = server_args.download_dir
+    sepal_host = server_args.sepal_host
+    sepal_username = server_args.sepal_username
+    sepal_password = server_args.sepal_password
 
 
 def destroy():
@@ -104,7 +119,16 @@ def destroy():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    init()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gee-email', required=True, help='Earth Engine service account email')
+    parser.add_argument('--gee-key-path', required=True, help='Path to Earth Engine service account key')
+    parser.add_argument('--sepal-host', required=True, help='Sepal server host, e.g. sepal.io')
+    parser.add_argument('--sepal-username', required=True, help='Username to use when accessing sepal services')
+    parser.add_argument('--sepal-password', required=True, help='Password to use when accessing sepal services')
+    parser.add_argument('--username', required=True, help='Username of user executing tasks')
+    parser.add_argument('--download-dir', required=True, help='Directory where downloaded data should be stored')
+    args, unknown = parser.parse_known_args()
+    init(args)
     app.register_blueprint(http)
     app.run(host='0.0.0.0', threaded=True, port=5002)
 

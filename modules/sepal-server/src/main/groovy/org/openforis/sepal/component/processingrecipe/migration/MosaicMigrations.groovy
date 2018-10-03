@@ -61,11 +61,11 @@ class MosaicMigrations extends AbstractMigrations {
     }
 
     private static filter(value, name) {
-        value != null && value > 0 ? [type: name, percentile: value as double] : null
+        value != null && (value as String).isNumber() && (value as double) > 0 ? [type: name, percentile: value as double] : null
     }
 
     private static inverseFilter(value, name) {
-        value != null && value < 1 ? [type: name, percentile: 1 - (value as double)] : null
+        value != null && (value as String).isNumber() && (value as double) < 1 ? [type: name, percentile: 1 - (value as double)] : null
     }
 
     private static aoi(r) {

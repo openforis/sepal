@@ -16,6 +16,7 @@ from ..task.task import ThreadTask
 
 def create(spec, context):
     return SepalExport(
+        sepal_api=context.sepal_api,
         credentials=context.credentials,
         download_dir=context.download_dir,
         description=spec['description'],
@@ -28,8 +29,9 @@ class SepalExport(ThreadTask):
                         'state, export_status, download_status, '
                         'set_band_names_status, build_vrt_status, build_overviews_status')
 
-    def __init__(self, credentials, download_dir, description, image_spec):
+    def __init__(self, sepal_api, credentials, download_dir, description, image_spec):
         super(SepalExport, self).__init__()
+        self.sepal_api = sepal_api
         self.credentials = credentials
         self.drive_path = '_'.join(['Sepal', description, str(uuid.uuid4())])
         self.download_dir = download_dir
@@ -47,7 +49,7 @@ class SepalExport(ThreadTask):
         ee.InitializeThread(self.credentials)
         self._drive_folder = drive.create_folder(self.credentials, self.drive_path)
         self.dependent(drive.Touch([self.drive_path])).submit()
-        image_spec = image_spec_factory.create(self.image_spec)
+        image_spec = image_spec_factory.create(self.sepal_api, self.image_spec)
         self._export = self.dependent(
             ImageToDrive(
                 credentials=self.credentials,

@@ -13,6 +13,8 @@ cd ${OSK_HOME}
 
 echo -ne " Getting the Open Foris SAR Toolkit ..."
 git clone https://github.com/openforis/opensarkit
+cd opensarkit
+git checkout s1_fixes
 
 echo "OPENSARKIT=${OSK_HOME}/opensarkit" | tee -a /etc/environment
 echo "OST_DB=${OSK_HOME}/Database/OFST_db.sqlite" | tee -a /etc/environment

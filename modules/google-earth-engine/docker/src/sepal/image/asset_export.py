@@ -9,6 +9,7 @@ from ..task.task import ThreadTask
 
 def create(spec, context):
     return AssetExport(
+        sepal_api=context.sepal_api,
         credentials=context.credentials,
         description=spec['description'],
         image_spec=spec['image']
@@ -20,8 +21,9 @@ class AssetExport(ThreadTask):
                         'state, export_status, download_status, '
                         'set_band_names_status, build_vrt_status, build_overviews_status')
 
-    def __init__(self, credentials, description, image_spec):
+    def __init__(self, sepal_api, credentials, description, image_spec):
         super(AssetExport, self).__init__()
+        self.sepal_api = sepal_api
         self.credentials = credentials
         self.description = description
         self.image_spec = image_spec
@@ -30,7 +32,7 @@ class AssetExport(ThreadTask):
 
     def run(self):
         ee.InitializeThread(self.credentials)
-        image_spec = image_spec_factory.create(self.image_spec)
+        image_spec = image_spec_factory.create(self.sepal_api, self.image_spec)
         self._export = self.dependent(
             ImageToAsset(
                 credentials=self.credentials,

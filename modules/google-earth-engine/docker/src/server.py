@@ -1,3 +1,4 @@
+import argparse
 import json
 import logging
 
@@ -8,10 +9,13 @@ from sepal import gee
 from sepal import image_spec_factory
 from sepal.aoi import Aoi
 from sepal.drive.drive_cleanup import DriveCleanup
+from sepal.sepal_api import SepalApi
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 drive_cleanup = None
+
+sepal_api = None
 
 
 @http.before_request
@@ -31,7 +35,7 @@ def healthcheck():
 
 @http.route('/preview', methods=['POST'])
 def preview():
-    image_spec = image_spec_factory.create(request.get_json())
+    image_spec = image_spec_factory.create(sepal_api, request.get_json())
     image_preview = image_spec.preview()
     return Response(json.dumps(image_preview), mimetype='application/json')
 
@@ -43,8 +47,14 @@ def scene_areas():
     return Response(json.dumps(areas), mimetype='application/json')
 
 
-def init():
-    global drive_cleanup
+def init(server_args):
+    global username, download_dir, sepal_host, sepal_username, sepal_password, drive_cleanup
+    sepal_api = SepalApi(
+        host=server_args.sepal_host,
+        username=server_args.sepal_username,
+        password=server_args.sepal_password
+    )
+
     drive_cleanup = DriveCleanup(gee.service_account_credentials)
     drive_cleanup.start()
 
@@ -56,7 +66,14 @@ def destroy():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    init()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gee-email', required=True, help='Earth Engine service account email')
+    parser.add_argument('--gee-key-path', required=True, help='Path to Earth Engine service account key')
+    parser.add_argument('--sepal-host', required=True, help='Sepal server host, e.g. sepal.io')
+    parser.add_argument('--sepal-username', required=True, help='Username to use when accessing sepal services')
+    parser.add_argument('--sepal-password', required=True, help='Password to use when accessing sepal services')
+    args, unknown = parser.parse_known_args()
+    init(args)
     app.register_blueprint(http)
     app.run(host='0.0.0.0', threaded=True, port=5001)
 

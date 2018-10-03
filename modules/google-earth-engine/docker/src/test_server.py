@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import argparse
 import logging
 
 import ee
@@ -28,11 +29,11 @@ def index():
     return render_template('index.html', countries=countries)
 
 
-def init():
+def init(args):
     print('Init running')
     for module in modules:
         app.register_blueprint(module.http)
-        module.init()
+        module.init(args)
 
 
 def destroy():
@@ -41,8 +42,17 @@ def destroy():
 
 
 if __name__ == '__main__':
-    init()
     logging.basicConfig(level=logging.INFO)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gee-email', required=True, help='Earth Engine service account email')
+    parser.add_argument('--gee-key-path', required=True, help='Path to Earth Engine service account key')
+    parser.add_argument('--sepal-host', required=True, help='Sepal server host, e.g. sepal.io')
+    parser.add_argument('--sepal-username', required=True, help='Username to use when accessing sepal services')
+    parser.add_argument('--sepal-password', required=True, help='Password to use when accessing sepal services')
+    parser.add_argument('--username', required=True, help='Username of user executing tasks')
+    parser.add_argument('--download-dir', required=True, help='Directory where downloaded data should be stored')
+    args, unknown = parser.parse_known_args()
+    init(args)
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
     logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
     logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
