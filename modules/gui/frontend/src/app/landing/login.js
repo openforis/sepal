@@ -1,7 +1,7 @@
 import {ErrorMessage, Field, Input, form} from 'widget/form'
 import {ForgotPasswordLink} from './forgot-password'
 import {Msg, msg} from 'translate'
-import {SubmitButton} from 'widget/button'
+import {SubmitButton} from 'widget/legacyButton'
 import {invalidCredentials, login$, resetInvalidCredentials} from 'user'
 import React from 'react'
 

@@ -1,6 +1,6 @@
 import {ErrorMessage, Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
-import {SubmitButton} from 'widget/button'
+import {SubmitButton} from 'widget/legacyButton'
 import {query} from 'route'
 import {resetPassword$, validateToken$} from 'user'
 import React from 'react'

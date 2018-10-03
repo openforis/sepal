@@ -74,7 +74,7 @@
 }
 
 .buttons button:disabled, .buttons button.selected:disabled {
-    color: #6b6b6b;
+    color: var(--button-default-color);
     background-color: var(--button-default-background-color);
     border: var(--button-default-border);
     cursor: default;

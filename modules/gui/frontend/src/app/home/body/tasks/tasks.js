@@ -1,4 +1,4 @@
-import {IconButton} from 'widget/button'
+import {IconButton} from 'widget/legacyButton'
 import {Msg, msg} from 'translate'
 import {Progress} from 'widget/progress'
 import {connect, select} from 'store'

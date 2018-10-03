@@ -1,6 +1,6 @@
-import {Button, IconButton} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {HoldButton} from 'widget/holdButton'
+import {IconButton, LegacyButton} from 'widget/legacyButton'
 import {connect, select} from 'store'
 import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
 import {map} from 'rxjs/operators'
@@ -121,8 +121,8 @@ const setTabType = (recipeId, type, title) =>
         .dispatch()
 
 const CreateButton = ({recipeId, type, label}) =>
-    <Button icon='plus-circle' onClick={() => setTabType(recipeId, type, label)}
-        className={styles.createButton}>{label}</Button>
+    <LegacyButton icon='plus-circle' onClick={() => setTabType(recipeId, type, label)}
+        className={styles.createButton}>{label}</LegacyButton>
 
 const RecipeButton = ({icon, iconType, onClick}) =>
     <IconButton icon={icon} iconType={iconType} onClick={onClick} className={styles.recipeButton}/>

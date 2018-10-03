@@ -1,7 +1,7 @@
 import {ErrorMessage, Field, Input, form} from 'widget/form'
 import {Link, history} from 'route'
 import {Msg, msg} from 'translate'
-import {SubmitButton} from 'widget/button'
+import {SubmitButton} from 'widget/legacyButton'
 import {requestPasswordReset$} from 'user'
 import Icon from 'widget/icon'
 import Notifications from 'app/notifications'

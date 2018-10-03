@@ -1,9 +1,9 @@
 import Icon from 'widget/icon'
 import PropTypes from 'prop-types'
 import React from 'react'
-import styles from './button.module.css'
+import styles from './legacyButton.module.css'
 
-export const Button = ({icon, iconType, tabIndex, onClick, className, children, ...props}) => {
+export const LegacyButton = ({icon, iconType, tabIndex, onClick, className, children, ...props}) => {
     function handleClick(e) {
         if (onClick) {
             e.preventDefault()
@@ -26,7 +26,7 @@ export const Button = ({icon, iconType, tabIndex, onClick, className, children, 
     )
 }
 
-Button.propTypes = {
+LegacyButton.propTypes = {
     children: PropTypes.any,
     className: PropTypes.string,
     icon: PropTypes.string,
@@ -36,19 +36,19 @@ Button.propTypes = {
 }
 
 export const SubmitButton = ({icon, tabIndex, onClick, className, children, ...props}) =>
-    <Button
+    <LegacyButton
         icon={icon}
         tabIndex={tabIndex}
         onClick={onClick}
         className={`${styles.submit} ${className}`}
         {...props}>
         {children}
-    </Button>
+    </LegacyButton>
 
-SubmitButton.propTypes = Button.propTypes
+SubmitButton.propTypes = LegacyButton.propTypes
 
 export const IconButton = ({icon, iconType, tabIndex, onClick, className, ...props}) =>
-    <Button
+    <LegacyButton
         icon={icon}
         iconType={iconType}
         tabIndex={tabIndex}
@@ -56,4 +56,4 @@ export const IconButton = ({icon, iconType, tabIndex, onClick, className, ...pro
         className={`${styles.icon} ${className}`}
         {...props}/>
 
-IconButton.propTypes = Button.propTypes
+IconButton.propTypes = LegacyButton.propTypes

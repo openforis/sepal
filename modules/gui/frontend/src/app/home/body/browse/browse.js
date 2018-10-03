@@ -1,5 +1,5 @@
 import {HoldButton} from 'widget/holdButton'
-import {IconButton} from 'widget/button'
+import {IconButton} from 'widget/legacyButton'
 import {Observable} from 'rxjs'
 import {catchError, map} from 'rxjs/operators'
 import {connect, select} from 'store'
