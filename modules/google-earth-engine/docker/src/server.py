@@ -1,23 +1,21 @@
+import argparse
 import json
 import logging
-import argparse
 
 import ee
-import sys
 from flask import Flask, Blueprint, Response, request
 
 from sepal import gee
 from sepal import image_spec_factory
 from sepal.aoi import Aoi
 from sepal.drive.drive_cleanup import DriveCleanup
+from sepal.sepal_api import SepalApi
 
 app = Flask(__name__)
 http = Blueprint(__name__, __name__)
 drive_cleanup = None
 
-sepal_host = None
-sepal_username = None
-sepal_password = None
+sepal_api = None
 
 
 @http.before_request
@@ -37,7 +35,7 @@ def healthcheck():
 
 @http.route('/preview', methods=['POST'])
 def preview():
-    image_spec = image_spec_factory.create(request.get_json())
+    image_spec = image_spec_factory.create(sepal_api, request.get_json())
     image_preview = image_spec.preview()
     return Response(json.dumps(image_preview), mimetype='application/json')
 
@@ -51,9 +49,11 @@ def scene_areas():
 
 def init(server_args):
     global username, download_dir, sepal_host, sepal_username, sepal_password, drive_cleanup
-    sepal_host = server_args.sepal_host
-    sepal_username = server_args.sepal_username
-    sepal_password = server_args.sepal_password
+    sepal_api = SepalApi(
+        host=server_args.sepal_host,
+        username=server_args.sepal_username,
+        password=server_args.sepal_password
+    )
 
     drive_cleanup = DriveCleanup(gee.service_account_credentials)
     drive_cleanup.start()

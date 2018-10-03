@@ -8,7 +8,7 @@ from sentinel2 import Sentinel2AutomaticMosaicSpec
 from sentinel2 import Sentinel2ManualMosaicSpec
 
 
-def create(spec):
+def create(sepal_api, spec):
     """Creates ImageSpec.
     :rtype: ImageSpec
     """
@@ -16,9 +16,9 @@ def create(spec):
     if image_type == 'MOSAIC':
         return _createMosaic(spec)
     if image_type == 'CLASSIFICATION':
-        return Classification(spec, create)
+        return Classification(sepal_api, spec, create)
     if image_type == 'CHANGE_DETECTION':
-        return ChangeDetection(spec, create)
+        return ChangeDetection(sepal_api, spec, create)
     if image_type == 'ASSET':
         return Asset(spec)
     else:

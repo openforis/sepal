@@ -1,9 +1,11 @@
+import argparse
 import json
 import logging
 import os
 from collections import namedtuple
 from os import path
 from threading import local
+from sepal.sepal_api import SepalApi
 
 import ee
 import oauth2client.client
@@ -30,7 +32,7 @@ sepal_password = None
 
 earthengine_credentials_file = os.path.expanduser('~/.config/earthengine/credentials')
 
-Context = namedtuple('Context', 'credentials, download_dir')
+Context = namedtuple('Context', 'credentials, download_dir, sepal_api')
 
 
 class AccessTokenCredentials(oauth2client.client.OAuth2Credentials):
@@ -65,7 +67,11 @@ def before():
     if not credentials:
         credentials = gee.service_account_credentials
     logger.debug('Using credentials: ' + str(credentials))
-    thread_local.context = Context(credentials=credentials, download_dir=download_dir)
+    thread_local.context = Context(
+        credentials=credentials,
+        download_dir=download_dir,
+        sepal_api=SepalApi(host=sepal_host, username=sepal_username, password=sepal_password),
+    )
     ee.InitializeThread(credentials)
 
 
@@ -113,6 +119,7 @@ def destroy():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
+    parser = argparse.ArgumentParser()
     parser.add_argument('--gee-email', required=True, help='Earth Engine service account email')
     parser.add_argument('--gee-key-path', required=True, help='Path to Earth Engine service account key')
     parser.add_argument('--sepal-host', required=True, help='Sepal server host, e.g. sepal.io')

@@ -7,12 +7,12 @@ from ..image_spec import ImageSpec
 
 
 class Classification(ImageSpec):
-    def __init__(self, spec, create_image_spec):
+    def __init__(self, sepal_api, spec, create_image_spec):
         super(Classification, self).__init__()
         self.spec = spec
         self.trainingData = ee.FeatureCollection('ft:' + spec['tableName'])
         self.classProperty = spec['classProperty']
-        self.imageToClassify = create_image_spec(spec['imageToClassify'])
+        self.imageToClassify = create_image_spec(sepal_api, spec['imageToClassify'])
         self.aoi = self.imageToClassify._aoi
         self.scale = self.imageToClassify.scale
         self.bands = ['class']

@@ -7,13 +7,13 @@ from ..image_spec import ImageSpec
 
 
 class ChangeDetection(ImageSpec):
-    def __init__(self, spec, create_image_spec):
+    def __init__(self, sepal_api, spec, create_image_spec):
         super(ChangeDetection, self).__init__()
         self.spec = spec
         self.trainingData = ee.FeatureCollection('ft:' + spec['tableName'])
         self.classProperty = spec['classProperty']
-        self.fromImage = create_image_spec(spec['fromImage'])
-        self.toImage = create_image_spec(spec['toImage'])
+        self.fromImage = create_image_spec(sepal_api, spec['fromImage'])
+        self.toImage = create_image_spec(sepal_api, spec['toImage'])
         self.aoi = self.fromImage._aoi
         self.scale = self.fromImage.scale
         self.bands = ['class']
