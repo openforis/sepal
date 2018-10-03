@@ -103,10 +103,18 @@ PageData.propTypes = {
 export const PageControls = (props) => {
     const renderDefaultControls = (pageable) =>
         <div>
-            <Button icon='fast-backward' onClick={() => pageable.firstPage()} disabled={pageable.isFirstPage}/>
-            <Button icon='backward' onClick={() => pageable.prevPage()} disabled={pageable.isFirstPage}/>
-            <Button icon='forward' onClick={() => pageable.nextPage()} disabled={pageable.isLastPage}/>
-            <Button icon='fast-forward' onClick={() => pageable.lastPage()} disabled={pageable.isLastPage}/>
+            <Button icon='fast-backward'
+                onClick={() => pageable.firstPage()}
+                disabled={pageable.isFirstPage}/>
+            <Button icon='backward'
+                onClick={() => pageable.prevPage()}
+                disabled={pageable.isFirstPage}/>
+            <Button icon='forward'
+                onClick={() => pageable.nextPage()}
+                disabled={pageable.isLastPage}/>
+            <Button icon='fast-forward'
+                onClick={() => pageable.lastPage()}
+                disabled={pageable.isLastPage}/>
         </div>
 
     const renderCustomControls = ({isFirstPage, isLastPage, firstPage, lastPage, prevPage, nextPage}) =>
