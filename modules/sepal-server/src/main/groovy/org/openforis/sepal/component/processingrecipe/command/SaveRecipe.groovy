@@ -16,9 +16,9 @@ class SaveRecipe extends AbstractCommand<Void> {
 class SaveRecipeHandler implements CommandHandler<Void, SaveRecipe> {
     private final RecipeRepository repository
     private final Clock clock
-    private Map<Recipe.Type, Migrations> migrationsByRecipeType
+    private Map<String, Migrations> migrationsByRecipeType
 
-    SaveRecipeHandler(RecipeRepository repository, Map<Recipe.Type, Migrations> migrationsByRecipeType, Clock clock) {
+    SaveRecipeHandler(RecipeRepository repository, Map<String, Migrations> migrationsByRecipeType, Clock clock) {
         this.repository = repository
         this.migrationsByRecipeType = migrationsByRecipeType
         this.clock = clock
@@ -26,7 +26,8 @@ class SaveRecipeHandler implements CommandHandler<Void, SaveRecipe> {
 
     Void execute(SaveRecipe command) {
         def recipe = command.recipe.creationTime ? command.recipe.updated(clock.now()) : command.recipe.created(clock.now())
-        repository.save(recipe.withTypeVersion(migrationsByRecipeType[recipe.type].currentVersion))
+        def migrations = migrationsByRecipeType[recipe.type]
+        repository.save(recipe.withTypeVersion(migrations ? migrations.currentVersion : 1))
         return null
     }
 }

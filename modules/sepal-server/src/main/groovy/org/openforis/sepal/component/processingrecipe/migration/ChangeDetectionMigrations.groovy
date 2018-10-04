@@ -4,7 +4,7 @@ import org.openforis.sepal.component.processingrecipe.api.Recipe
 
 class ChangeDetectionMigrations extends AbstractMigrations {
     ChangeDetectionMigrations() {
-        super(Recipe.Type.CLASSIFICATION)
+        super('CHANGE_DETECTION')
         addMigration(1, { [:] })
     }
 }

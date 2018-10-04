@@ -4,7 +4,7 @@ import org.openforis.sepal.component.processingrecipe.api.Recipe
 
 class ClassificationMigrations extends AbstractMigrations {
     ClassificationMigrations() {
-        super(Recipe.Type.CLASSIFICATION)
+        super('CLASSIFICATION')
         addMigration(1, { [:] })
     }
 }

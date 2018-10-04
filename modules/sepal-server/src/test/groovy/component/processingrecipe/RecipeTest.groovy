@@ -21,7 +21,7 @@ abstract class RecipeTest extends Specification {
     final connectionManager = new SqlConnectionManager(database.dataSource)
     final clock = new FakeClock()
     final migrations = new DelegatingMigrations(new DummyMigrations([:]))
-    final migrationsByRecipeType = [(Recipe.Type.MOSAIC): migrations]
+    final migrationsByRecipeType = [MOSAIC: migrations]
     final component = new ProcessingRecipeComponent(
         connectionManager,
         eventDispatcher,
@@ -54,7 +54,7 @@ abstract class RecipeTest extends Specification {
         new Recipe(
             id: args.id ?: UUID.randomUUID().toString(),
             name: args.name ?: 'some-name',
-            type: Recipe.Type.MOSAIC,
+            type: args.type ?: 'MOSAIC',
             typeVersion: args.typeVersion ?: currentTypeVersion,
             username: args.username ?: testUsername,
             contents: args.containsKey('contents') ? args.contents : '"some-contents"',
@@ -95,7 +95,7 @@ class DelegatingMigrations implements Migrations {
 
 class DummyMigrations extends AbstractMigrations {
     DummyMigrations(Map<Integer, Closure> migrationsByVersion) {
-        super(Recipe.Type.MOSAIC)
+        super('MOSAIC')
         migrationsByVersion.each { addMigration(it.key, it.value) }
     }
 }

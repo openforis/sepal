@@ -22,7 +22,7 @@ class JdbcRecipeRepository implements RecipeRepository {
             sql.executeInsert('''
                 INSERT INTO recipe(id, name, type, type_version, username, contents, creation_time, update_time) 
                 VALUES(?, ?, ?, ?, ?, ?, ?, ?)''', [
-                    recipe.id, recipe.name, recipe.type.name(), recipe.typeVersion, recipe.username, recipe.contents,
+                    recipe.id, recipe.name, recipe.type, recipe.typeVersion, recipe.username, recipe.contents,
                     recipe.creationTime, recipe.updateTime
             ])
     }
@@ -54,12 +54,12 @@ class JdbcRecipeRepository implements RecipeRepository {
         return recipes
     }
 
-    void eachOfTypeBeforeVersion(Recipe.Type type, int version, Closure callback) {
+    void eachOfTypeBeforeVersion(String type, int version, Closure callback) {
         sql.eachRow('''
                 SELECT id, name, type, type_version, username, contents, creation_time, update_time 
                 FROM recipe 
                 WHERE type = ? AND type_version < ? AND NOT removed
-                ORDER BY creation_time''', [type.name(), version]) {
+                ORDER BY creation_time''', [type, version]) {
             callback(toRecipe(it))
         }
     }
@@ -68,7 +68,7 @@ class JdbcRecipeRepository implements RecipeRepository {
         new Recipe(
                 id: row.id,
                 name: row.name,
-                type: row.type as Recipe.Type,
+                type: row.type,
                 typeVersion: row.type_version,
                 username: row.username,
                 contents: row.longText('contents'),

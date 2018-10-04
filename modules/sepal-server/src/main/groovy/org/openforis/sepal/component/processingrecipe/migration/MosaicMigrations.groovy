@@ -13,7 +13,7 @@ class MosaicMigrations extends AbstractMigrations {
     public static final String NEW_COUNTRY_FUSION_TABLE = '1iCjlLvNDpVtI80HpYrxEtjnw2w6sLEHX0QVTLqqU'
 
     MosaicMigrations() {
-        super(Recipe.Type.MOSAIC)
+        super('MOSAIC')
         addMigration(1, { r ->
             [
                 id: r.id,
