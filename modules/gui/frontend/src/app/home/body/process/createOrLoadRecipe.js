@@ -1,7 +1,6 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {HoldButton} from 'widget/holdButton'
-import {IconButton} from 'widget/legacyButton'
 import {connect, select} from 'store'
 import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
 import {map} from 'rxjs/operators'
@@ -87,9 +86,9 @@ class RecipeList extends React.Component {
                             <div className={styles.name}>{recipe.name}</div>
                             <div className={styles.type}>{recipe.type}</div>
                             <div className={styles.duplicate}>
-                                <RecipeButton
+                                <Button
+                                    look='highlight'
                                     icon='clone'
-                                    iconType='regular'
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         this.duplicateRecipe(recipe.id)
@@ -130,9 +129,6 @@ const CreateButton = ({recipeId, type, label}) =>
         icon='plus-circle'
         label={label}
         onClick={() => setTabType(recipeId, type, label)}/>
-
-const RecipeButton = ({icon, iconType, onClick}) =>
-    <IconButton icon={icon} iconType={iconType} onClick={onClick} className={styles.recipeButton}/>
 
 function formatDate(date) {
     const pad = (value) => ('' + value).length < 2 ? '0' + value : value
