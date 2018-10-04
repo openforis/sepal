@@ -7,6 +7,34 @@ import Tooltip from 'widget/tooltip'
 import lookStyles from '../style/look.module.css'
 import styles from './button.module.css'
 
+const hammerOptions = ({_onClick, onClickHold}) => {
+    const options = {
+        tapOnly: {
+            recognizers: {
+                tap: {
+                    time: 10000
+                },
+                press: {
+                    pointers: 0
+                }
+            }
+        },
+        tapAndPress: {
+            recognizers: {
+                tap: {
+                    time: 750
+                },
+                press: {
+                    time: 750
+                }
+            }
+        }
+    }
+    return onClickHold
+        ? options.tapAndPress
+        : options.tapOnly
+}
+
 const renderContents = ({icon, label, children}) =>
     children ? children : (
         <div className={styles.contents}>
@@ -34,9 +62,12 @@ const renderButton = ({type, className, look, size, tabIndex, onMouseDown, shown
         {contents}
     </button>
 
-const renderHammer = ({onClick, shown, disabled}, contents) =>
-    onClick && shown && !disabled ? (
-        <Hammer onClick={onClick}>
+const renderHammer = ({onClick, onClickHold, shown, disabled}, contents) =>
+    shown && !disabled ? (
+        <Hammer
+            onTap={onClick}
+            onPress={onClickHold}
+            options={hammerOptions({onClick, onClickHold})}>
             {contents}
         </Hammer>
     ) : contents
@@ -65,6 +96,7 @@ export const Button = ({
     label,
     onMouseDown,
     onClick,
+    onClickHold,
     link,
     shown = true,
     disabled,
@@ -75,7 +107,7 @@ export const Button = ({
 }) =>
     renderLink({link, shown, disabled},
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
-            renderHammer({onClick, shown, disabled},
+            renderHammer({onClick, onClickHold, shown, disabled},
                 renderButton({type, className, look, size, tabIndex, onMouseDown, shown, disabled},
                     renderContents({icon, label, children})
                 )
@@ -99,6 +131,7 @@ Button.propTypes = {
     tooltipPlacement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
     type: PropTypes.string,
     onClick: PropTypes.func,
+    onClickHold: PropTypes.func,
     onMouseDown: PropTypes.func
 }
 
