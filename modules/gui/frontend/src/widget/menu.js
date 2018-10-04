@@ -39,13 +39,14 @@ class Menu extends React.Component {
         const {warning, className, children} = this.props
         const {open} = this.state
         return <React.Fragment>
-            <Button
-                className={[styles.menu, open ? styles.open : null, className].join(' ')}
-                reference={this.button}
-                onClick={() => this.toggleOpen()}>
-                <Icon name='bars'/>
-                {warning && !open ? <Icon name='exclamation-triangle' className={styles.warning}/> : null}
-            </Button>
+            <div ref={this.button}>
+                <Button
+                    className={[styles.menu, open ? styles.open : null, className].join(' ')}
+                    onClick={() => this.toggleOpen()}>
+                    <Icon name='bars'/>
+                    {warning && !open ? <Icon name='exclamation-triangle' className={styles.warning}/> : null}
+                </Button>
+            </div>
             {open
                 ? <Portal>
                     <MenuContext.Provider value={this}>
