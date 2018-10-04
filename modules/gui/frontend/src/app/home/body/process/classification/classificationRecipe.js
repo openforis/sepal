@@ -1,9 +1,14 @@
-import {RecipeState, recipePath} from '../recipe'
+import {RecipeState as ParentRecipeState, recipePath} from '../recipe'
 import api from 'api'
 import globalActionBuilder from 'action-builder'
 
-export {recipePath, RecipeState}
+export {recipePath}
 
+export const RecipeState = (recipeId) => {
+    const recipeState = ParentRecipeState(recipeId)
+    initRecipe(recipeState())
+    return recipeState
+}
 export const RecipeActions = (id) => {
 
     const actionBuilder = (name, props) => {
@@ -20,20 +25,17 @@ export const RecipeActions = (id) => {
             .build()
 
     return {
-        setSource(sourceForm) {
+        setSource({values, model}) {
             return setAll('SET_SOURCE', {
-                'ui.source': {...sourceForm},
-                'source': createSource(sourceForm),
-            }, {sourceForm})
+                'ui.source': values,
+                'model.source': model,
+            }, {values, model})
         },
-        setFusionTableColumns(columns) {
-            return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
-        },
-        setTrainingData(trainingDataForm) {
+        setTrainingData({values, model}) {
             return setAll('SET_TRAINING_DATA', {
-                'ui.trainingData': {...trainingDataForm},
-                'trainingData': createTrainingData(trainingDataForm),
-            }, {trainingDataForm})
+                'ui.trainingData': values,
+                'model.trainingData': model,
+            }, {values, model})
         },
         retrieve(retrieveOptions) {
             return actionBuilder('REQUEST_CLASSIFICATION_RETRIEVAL', {retrieveOptions})
@@ -44,30 +46,21 @@ export const RecipeActions = (id) => {
                 .sideEffect(recipe => api.gee.retrieveClassification(recipe))
                 .build()
         },
+        setFusionTableColumns(columns) {
+            return set('SET_FUSION_TABLE_COLUMNS', 'ui.fusionTable.columns', columns, {columns})
+        },
+        setInitialized(initialized) {
+            return set('SET_INITIALIZED', 'ui.initialized', !!initialized, {initialized})
+        }
     }
 }
 
-const createSource = (sourceForm) => {
-    switch (sourceForm.section) {
-    case 'recipe':
-        return {
-            type: 'recipe',
-            id: sourceForm.recipe
-        }
-    case 'asset':
-        return {
-            type: 'asset',
-            id: sourceForm.asset
-        }
-    default:
-        throw new Error('Invalid source section: ' + sourceForm.section)
-    }
-}
+const initRecipe = (recipeState) => {
+    if (!recipeState || recipeState.ui)
+        return
 
-const createTrainingData = (trainingDataForm) => {
-    return {
-        type: 'fusionTable',
-        id: trainingDataForm.fusionTable,
-        classColumn: trainingDataForm.fusionTableColumn,
-    }
+    const actions = RecipeActions(recipeState.id)
+    const model = recipeState.model
+    if (model)
+        return actions.setInitialized(model.source && model.trainingData).dispatch()
 }

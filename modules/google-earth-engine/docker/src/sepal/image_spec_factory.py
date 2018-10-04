@@ -1,9 +1,10 @@
+from asset import Asset
 from changedetection import ChangeDetection
 from classification import Classification
-from asset import Asset
 from image_spec import ImageSpec
 from landsat import LandsatAutomaticMosaicSpec
 from landsat import LandsatManualMosaicSpec
+from reciperef import RecipeRef
 from sentinel2 import Sentinel2AutomaticMosaicSpec
 from sentinel2 import Sentinel2ManualMosaicSpec
 
@@ -14,18 +15,20 @@ def create(sepal_api, spec):
     """
     image_type = spec['recipe']['type']
     if image_type == 'MOSAIC':
-        return _createMosaic(spec)
+        return _create_mosaic(spec)
     if image_type == 'CLASSIFICATION':
         return Classification(sepal_api, spec, create)
     if image_type == 'CHANGE_DETECTION':
         return ChangeDetection(sepal_api, spec, create)
     if image_type == 'ASSET':
         return Asset(spec)
+    if image_type == 'RECIPE_REF':
+        return RecipeRef(sepal_api, spec, create)
     else:
         raise Exception('Unexpected image image_type: ' + str(image_type))
 
 
-def _createMosaic(spec):
+def _create_mosaic(spec):
     model = spec['recipe']['model']
     source = model['sources'].keys()[0]
     scene_selection_type = model['sceneSelectionOptions']['type']

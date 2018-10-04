@@ -9,13 +9,13 @@ export default class SectionSelection extends React.Component {
         const {section} = this.props
         const options = [
             {
-                value: 'recipe',
+                value: 'RECIPE_REF',
                 label: msg('process.classification.panel.source.recipe.title')
             },
             {
-                value: 'asset',
+                value: 'ASSET',
                 label: msg('process.classification.panel.source.asset.title')
-            }
+            },
         ]
         return (
             <Buttons

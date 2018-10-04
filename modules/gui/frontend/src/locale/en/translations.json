@@ -499,6 +499,12 @@
                         }
                     }
                 }
+            },
+            "preview": {
+                "initializing": "Loading preview...",
+                "loading": "Loaded {loaded} of {count} tiles",
+                "tilesFailed": "{failed} failed",
+                "error": "Failed to create preview"
             }
         },
         "changeDetection": {

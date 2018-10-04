@@ -48,7 +48,7 @@ def scene_areas():
 
 
 def init(server_args):
-    global username, download_dir, sepal_host, sepal_username, sepal_password, drive_cleanup
+    global sepal_api, drive_cleanup
     sepal_api = SepalApi(
         host=server_args.sepal_host,
         username=server_args.sepal_username,

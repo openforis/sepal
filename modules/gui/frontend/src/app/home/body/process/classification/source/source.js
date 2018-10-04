@@ -23,10 +23,15 @@ const fields = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-    const recipeState = RecipeState(ownProps.recipeId)
-    return {
-        values: recipeState('ui.source'),
+    const recipeId = ownProps.recipeId
+    const recipeState = RecipeState(recipeId)
+    const model = recipeState('model.source')
+    let values = recipeState('ui.source')
+    if (!values) {
+        values = modelToValues(model)
+        RecipeActions(recipeId).setSource({values, model}).dispatch()
     }
+    return {model, values}
 }
 
 class Source extends React.Component {
@@ -44,12 +49,12 @@ class Source extends React.Component {
                 component: <SectionSelection section={inputs.section}/>
             },
             {
-                value: 'recipe',
+                value: 'RECIPE_REF',
                 title: msg('process.classification.panel.source.recipe.title'),
                 component: <RecipeSection recipe={inputs.recipe}/>
             },
             {
-                value: 'asset',
+                value: 'ASSET',
                 title: msg('process.classification.panel.source.asset.title'),
                 component: <AssetSection asset={inputs.asset}/>
             }
@@ -61,7 +66,10 @@ class Source extends React.Component {
                 <PanelButtons
                     form={form}
                     statePath={recipePath(recipeId, 'ui')}
-                    onApply={source => this.recipeActions.setSource(source).dispatch()}/>
+                    onApply={values => this.recipeActions.setSource({
+                        values,
+                        model: valuesToModel(values)
+                    }).dispatch()}/>
             </Panel>
         )
     }
@@ -72,3 +80,39 @@ Source.propTypes = {
 }
 
 export default form({fields, mapStateToProps})(Source)
+
+const valuesToModel = (values) => {
+    switch (values.section) {
+    case 'ASSET':
+        return {
+            type: 'ASSET',
+            id: values.asset
+        }
+    case 'RECIPE_REF':
+        return {
+            type: 'RECIPE_REF',
+            id: values.recipe
+        }
+    default:
+        throw new Error('Unexpected source section: ' + values.section)
+    }
+}
+
+const modelToValues = (model = {}) => {
+    switch (model.type) {
+    case 'ASSET':
+        return {
+            section: 'ASSET',
+            asset: model.id
+        }
+    case 'RECIPE_REF':
+        return {
+            section: 'RECIPE_REF',
+            recipe: model.id
+        }
+    case undefined:
+        return {}
+    default:
+        throw new Error('Unexpected source type: ' + model.type)
+    }
+}

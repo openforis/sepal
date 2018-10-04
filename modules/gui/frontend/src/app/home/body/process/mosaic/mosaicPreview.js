@@ -75,10 +75,6 @@ class MosaicPreview extends React.Component {
         const context = sepalMap.getContext(recipe.id)
         context.removeLayer('preview')
         this.updateLayer(this.toPreviewRequest(recipe))
-
-        // const {recipeId} = this.props
-        // this.setState(prevState => ({...prevState, error: null}))
-        // sepalMap.getContext(recipeId).setLayer({id: 'preview', layer: null})
     }
 
     isPreviewShown() {

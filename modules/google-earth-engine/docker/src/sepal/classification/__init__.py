@@ -10,11 +10,12 @@ class Classification(ImageSpec):
     def __init__(self, sepal_api, spec, create_image_spec):
         super(Classification, self).__init__()
         self.spec = spec
-        self.trainingData = ee.FeatureCollection('ft:' + spec['tableName'])
-        self.classProperty = spec['classProperty']
-        self.imageToClassify = create_image_spec(sepal_api, spec['imageToClassify'])
-        self.aoi = self.imageToClassify._aoi
-        self.scale = self.imageToClassify.scale
+        model = spec['recipe']['model']
+        self.trainingData = ee.FeatureCollection('ft:' + model['trainingData']['fusionTable'])
+        self.classProperty = model['trainingData']['fusionTableColumn']
+        self.source = create_image_spec(sepal_api, {'recipe': model['source']})
+        self.aoi = self.source.aoi
+        self.scale = self.source.scale
         self.bands = ['class']
 
     def _viz_params(self):
@@ -26,7 +27,7 @@ class Classification(ImageSpec):
         # return {'bands': 'uncertainty', 'min': 0, 'max': 1, 'palette': 'green, yellow, orange, red'}
 
     def _ee_image(self):
-        return _Operation(self.imageToClassify, self.trainingData, self.classProperty).apply()
+        return _Operation(self.source, self.trainingData, self.classProperty).apply()
 
 
 class _Operation(ImageOperation):
