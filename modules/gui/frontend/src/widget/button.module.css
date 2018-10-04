@@ -67,20 +67,23 @@
     top: 100%;
 }
 
+/* mouseout effect */
 .button.hold:not(:disabled):before {
     top: 90%;
     background: hsla(0, 0%, 100%, 0.2);
-    transition: top 150ms ease-in-out;
+    transition: top 100ms ease-in-out;
 }
 
+/* mouseover effect */
 .button.hold:not(:disabled):hover:before {
-    top: 70%;
+    top: 75%;
     background: hsla(0, 0%, 100%, 0.2);
     transition: top 150ms ease-in-out;
 }
 
+/* click-and-hold effect */
 .button.hold:not(:disabled):hover:active:before {
-    animation: fill 750ms ease-in-out forwards normal;
+    animation: fill 750ms ease-out forwards normal;
 }
 
 @keyframes fill {
