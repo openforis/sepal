@@ -7,32 +7,50 @@ import Tooltip from 'widget/tooltip'
 import lookStyles from '../style/look.module.css'
 import styles from './button.module.css'
 
-const hammerOptions = ({_onClick, onClickHold}) => {
-    const options = {
-        tapOnly: {
-            recognizers: {
-                tap: {
-                    time: 10000
-                },
-                press: {
-                    pointers: 0
-                }
-            }
-        },
-        tapAndPress: {
-            recognizers: {
-                tap: {
-                    time: 750
-                },
-                press: {
-                    time: 750
-                }
+const hammerOptions = ({onClick, onClickHold}) => {
+    const tapOnly = {
+        recognizers: {
+            tap: {
+                time: 10000
+            },
+            press: {
+                enable: false
             }
         }
     }
-    return onClickHold
-        ? options.tapAndPress
-        : options.tapOnly
+    const tapAndPress = {
+        recognizers: {
+            tap: {
+                time: 750
+            },
+            press: {
+                time: 750
+            }
+        }
+    }
+    const pressOnly = {
+        recognizers: {
+            tap: {
+                enable: false
+            },
+            press: {
+                time: 750
+            }
+        }
+    }
+    const nothing = {
+        recognizers: {
+            tap: {
+                enable: false
+            },
+            press: {
+                enable: false
+            }
+        }
+    }
+    return onClick
+        ? (onClickHold ? tapAndPress : tapOnly)
+        : (onClickHold ? pressOnly : nothing)
 }
 
 const renderContents = ({icon, label, children}) =>
@@ -58,18 +76,25 @@ const renderButton = ({type, className, look, size, tabIndex, onMouseDown, shown
         style={{visibility: shown ? 'visible' : 'hidden'}}
         tabIndex={tabIndex}
         disabled={disabled || !shown}
-        onMouseDown={onMouseDown}>
+        onMouseDown={e => onMouseDown && onMouseDown(e)}>
         {contents}
     </button>
 
 const renderHammer = ({onClick, onClickHold, shown, disabled}, contents) =>
     shown && !disabled ? (
         <Hammer
-            onTap={onClick}
-            onPress={onClickHold}
+            onTap={e => onClick && onClick(e.srcEvent, e)}
+            onPressUp={e => onClickHold && onClickHold(e.srcEvent, e)}
             options={hammerOptions({onClick, onClickHold})}>
             {contents}
         </Hammer>
+    ) : contents
+
+const renderPropagationStopper = ({stopPropagation}, contents) =>
+    stopPropagation ? (
+        <span onClick={e => e.stopPropagation()}>
+            {contents}
+        </span>
     ) : contents
 
 const renderTooltip = ({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled}, contents) =>
@@ -100,6 +125,7 @@ export const Button = ({
     link,
     shown = true,
     disabled,
+    stopPropagation,
     children,
     tooltip,
     tooltipPlacement,
@@ -107,9 +133,11 @@ export const Button = ({
 }) =>
     renderLink({link, shown, disabled},
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
-            renderHammer({onClick, onClickHold, shown, disabled},
-                renderButton({type, className, look, size, tabIndex, onMouseDown, shown, disabled},
-                    renderContents({icon, label, children})
+            renderPropagationStopper({stopPropagation},
+                renderHammer({onClick, onClickHold, shown, disabled},
+                    renderButton({type, className, look, size, tabIndex, onMouseDown, shown, disabled},
+                        renderContents({icon, label, children})
+                    )
                 )
             )
         )
@@ -125,6 +153,7 @@ Button.propTypes = {
     look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'apply', 'cancel']),
     shown: PropTypes.any,
     size: PropTypes.oneOf(['normal', 'large', 'x-large']),
+    stopPropagation: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
     tooltipDisabled: PropTypes.any,
