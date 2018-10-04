@@ -88,7 +88,7 @@ Button.propTypes = {
     icon: PropTypes.string,
     label: PropTypes.string,
     link: PropTypes.string,
-    look: PropTypes.oneOf(['default', 'highlight', 'apply', 'cancel']),
+    look: PropTypes.oneOf(['default', 'highlight', 'transparent', 'apply', 'cancel']),
     shown: PropTypes.any,
     tabIndex: PropTypes.number,
     tooltip: PropTypes.string,
