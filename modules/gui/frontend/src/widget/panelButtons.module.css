@@ -8,9 +8,3 @@
     border-top: var(--wireframe);
     transition: opacity 200ms ease-in-out;
 }
-
-@media (max-width: 576px) {
-    .buttons i {
-        display: none;
-    }
-}
