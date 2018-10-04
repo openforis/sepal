@@ -10,14 +10,14 @@ interface Migrations {
 
     int getCurrentVersion()
 
-    Recipe.Type getType()
+    String getType()
 }
 
 abstract class AbstractMigrations implements Migrations {
     final Map<Integer, Closure<Map>> migrations = [:]
-    final Recipe.Type type
+    final String type
 
-    AbstractMigrations(Recipe.Type type) {
+    AbstractMigrations(String type) {
         this.type = type
     }
 

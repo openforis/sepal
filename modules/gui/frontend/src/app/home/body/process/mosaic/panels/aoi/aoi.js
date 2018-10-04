@@ -74,8 +74,7 @@ class Aoi extends React.Component {
             aoi: aoi,
             fill: false,
             destroy$: componentWillUnmount$
-        }
-        )
+        })
     }
 
     render() {

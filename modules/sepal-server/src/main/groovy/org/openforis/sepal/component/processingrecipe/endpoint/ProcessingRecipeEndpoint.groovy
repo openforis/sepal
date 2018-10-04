@@ -30,7 +30,7 @@ class ProcessingRecipeEndpoint {
                 component.submit(new SaveRecipe(new Recipe(
                         id: params.id,
                         name: params.name,
-                        type: params.type as Recipe.Type,
+                        type: params.type,
                         username: sepalUser.username,
                         contents: contents
                 )))
@@ -46,7 +46,7 @@ class ProcessingRecipeEndpoint {
                 def recipe = component.submit(new LoadRecipe(params.id))
                 if (!recipe)
                     return halt(404)
-                if (recipe.username != sepalUser.username) {
+                if (recipe.username != sepalUser.username && !sepalUser.admin) {
                     LOG.warn("User $sepalUser.username tries to load recipe from other user: $recipe")
                     return halt(404)
                 }
@@ -65,7 +65,7 @@ class ProcessingRecipeEndpoint {
             [
                     id          : it.id,
                     name        : it.name,
-                    type        : it.type.name(),
+                    type        : it.type,
                     creationTime: it.creationTime,
                     updateTime  : it.updateTime
             ]

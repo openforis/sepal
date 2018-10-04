@@ -8,7 +8,7 @@ class Recipe {
     String id
     int typeVersion
     String name
-    Type type
+    String type
     String username
     String contents
     Date creationTime
@@ -32,9 +32,5 @@ class Recipe {
 
     Recipe withContents(String contents) {
         new Recipe(id: id, name: name, type: type, typeVersion: typeVersion, username: username, contents: contents, creationTime: creationTime, updateTime: updateTime)
-    }
-
-    enum Type {
-        MOSAIC, CLASSIFICATION, CHANGE_DETECTION, ASSET, LAND_COVER
     }
 }

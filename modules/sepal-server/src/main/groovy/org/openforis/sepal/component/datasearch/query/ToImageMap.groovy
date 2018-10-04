@@ -14,7 +14,6 @@ import org.openforis.sepal.util.annotation.Data
 import static java.util.Calendar.DAY_OF_YEAR
 import static org.openforis.sepal.component.datasearch.api.FusionTableShape.COUNTRY_CODE_FUSION_TABLE_COLUMN
 import static org.openforis.sepal.component.datasearch.api.FusionTableShape.COUNTRY_FUSION_TABLE
-import static org.openforis.sepal.component.processingrecipe.api.Recipe.Type.*
 
 @Data
 class ToImageMap implements Query<Map> {
@@ -102,7 +101,7 @@ class ToImageMapHandler implements QueryHandler<Map, ToImageMap> {
         def contents = new JsonSlurper().parseText(recipe.contents)
         def imageType = recipe.type
         switch (imageType) {
-            case MOSAIC:
+            case 'MOSAIC':
                 def aoi = contents.polygon ?
                         [type: 'polygon', path: new JsonSlurper().parseText(contents.polygon) as List] :
                         [type     : 'fusionTable',
@@ -128,7 +127,7 @@ class ToImageMapHandler implements QueryHandler<Map, ToImageMap> {
                         bands                : contents.bands,
                         sceneIds             : sceneIds
                 ]
-            case CLASSIFICATION:
+            case 'CLASSIFICATION':
                 return [
                         imageType      : CLASSIFICATION.name(),
                         imageToClassify: toImageMap(contents.imageToClassify),
@@ -136,7 +135,7 @@ class ToImageMapHandler implements QueryHandler<Map, ToImageMap> {
                         classProperty  : contents.classProperty,
                         algorithm      : contents.algorithm
                 ]
-            case CHANGE_DETECTION:
+            case 'CHANGE_DETECTION':
                 return [
                         imageType    : CHANGE_DETECTION.name(),
                         fromImage    : toImageMap(contents.inputRecipe1),

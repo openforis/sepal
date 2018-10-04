@@ -22,8 +22,8 @@ import org.openforis.sepal.util.SystemClock
 
 class ProcessingRecipeComponent extends DataSourceBackedComponent implements EndpointRegistry {
     static final String SCHEMA = 'processing_recipe'
-    static final Map<Recipe.Type, Migrations> MIGRATIONS_BY_RECIPE_TYPE = [
-        (Recipe.Type.MOSAIC): new MosaicMigrations()
+    static final Map<String, Migrations> MIGRATIONS_BY_RECIPE_TYPE = [
+        MOSAIC: new MosaicMigrations()
     ]
 
     static ProcessingRecipeComponent create() {
@@ -40,7 +40,7 @@ class ProcessingRecipeComponent extends DataSourceBackedComponent implements End
     ProcessingRecipeComponent(
         SqlConnectionManager connectionManager,
         HandlerRegistryEventDispatcher eventDispatcher,
-        Map<Recipe.Type, Migrations> migrationsByRecipeType,
+        Map<String, Migrations> migrationsByRecipeType,
         Clock clock
     ) {
         super(connectionManager, eventDispatcher)

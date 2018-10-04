@@ -23,4 +23,14 @@ class SaveRecipeTest extends RecipeTest {
 
         getRecipeById(recipe.id).typeVersion == currentTypeVersion
     }
+
+    def 'When saving with a type without migrations, type version is 1'() {
+        def recipe = newRecipe(type: 'TYPE_WITHOUT_MIGRATIONS')
+
+        when:
+        saveRecipe(recipe)
+
+        then:
+        getRecipeById(recipe.id).typeVersion == 1
+    }
 }
