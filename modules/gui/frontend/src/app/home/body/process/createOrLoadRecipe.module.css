@@ -12,20 +12,6 @@
     justify-content: center;
 }
 
-.createButton {
-    font-size: .9rem;
-    line-height: .9rem;
-    width: 14rem;
-    display: inline-flex;
-    justify-content: center;
-    margin: .5rem;
-}
-
-.createButton i {
-    font-size: .9rem;
-    line-height: .9rem;
-}
-
 .recipesTable {
     width: 61rem;
     max-width: 100%;
