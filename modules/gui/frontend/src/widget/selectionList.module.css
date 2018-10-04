@@ -12,63 +12,7 @@
 
 .buttons button {
     width: 100%;
-    /* color: var(--look-default-color);
-    background-color: hsl(0, 0%, 13%);
-    border: 1px solid hsl(0, 0%, 16%); */
-    /*border-radius: var(--button-border-radius);*/
-    /* line-height: 2rem; */
     text-align: left;
     padding: .5rem 1rem;
     cursor: pointer;
-
-    /* --look-highlight-h: 130 !important; */
 }
-
-/* .buttons button:focus {
-    color: var(--look-default-focus-color);
-    background-color: var(--look-default-focus-background-color);
-    border: 1px solid var(--look-default-focus-border-color);
-}
-
-.buttons button:hover {
-    color: var(--look-default-hover-color);
-    background-color: var(--look-default-hover-background-color);
-    border: 1px solid var(--look-default-hover-border-color);
-}
-
-.buttons button:active {
-    color: var(--look-default-active-color);
-    background-color: var(--look-default-active-background-color);
-    border: 1px solid var(--look-default-active-border-color);
-}
-
-.buttons button.selected {
-    color: var(--look-highlight-color);
-    background-color: var(--look-highlight-background-color);
-    border: 1px solid var(--look-highlight-border-color);
-}
-
-.buttons button.selected:focus {
-    color: var(--look-highlight-focus-color);
-    background-color: var(--look-highlight-focus-background-color);
-    border: 1px solid var(--look-highlight-focus-border-color);
-}
-
-.buttons button.selected:hover {
-    color: var(--look-highlight-hover-color);
-    background-color: var(--look-highlight-hover-background-color);
-    border: 1px solid var(--look-highlight-hover-border-color);
-}
-
-.buttons button.selected:active {
-    color: var(--look-highlight-active-color);
-    background-color: var(--look-highlight-active-background-color);
-    border: 1px solid var(--look-highlight-active-border-color);
-}
-
-.buttons button:disabled, .buttons button.selected:disabled {
-    color: #6b6b6b;
-    background-color: var(--look-default-background-color);
-    border: 1px solid var(--look-default-border-color);
-    cursor: default;
-} */
