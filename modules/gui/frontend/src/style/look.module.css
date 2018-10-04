@@ -38,7 +38,7 @@
     
     /* transparent */
 
-    --look-transparent-color: hsla(0, 0%, 80%, 1);
+    --look-transparent-color: hsla(0, 0%, 70%, 1);
     --look-transparent-background-color: hsla(var(--look-transparent-h), var(--look-transparent-s), var(--look-transparent-l), var(--look-transparent-a));
     --look-transparent-border-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + 2%), var(--look-transparent-a));
     
