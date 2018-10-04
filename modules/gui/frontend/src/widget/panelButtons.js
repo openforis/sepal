@@ -1,4 +1,4 @@
-import {Button} from 'widget/button'
+import {Button, ButtonGroup} from 'widget/button'
 import {PanelWizardContext} from './panel'
 import {connect, select} from 'store'
 import {msg} from 'translate'
@@ -143,9 +143,9 @@ class PanelButtons extends React.Component {
                 tooltipDisabled={!tooltip || disabled}
             />
         return (
-            <div>
+            <ButtonGroup>
                 {additionalButtons.map(renderButton)}
-            </div>
+            </ButtonGroup>
         )
     }
 
@@ -200,10 +200,10 @@ class PanelButtons extends React.Component {
     renderWizardButtons() {
         const {first, last} = this.state
         return (
-            <div>
+            <ButtonGroup>
                 {!first ? this.renderBackButton() : null}
                 {!last ? this.renderNextButton() : this.renderDoneButton()}
-            </div>
+            </ButtonGroup>
         )
     }
 
@@ -248,10 +248,10 @@ class PanelButtons extends React.Component {
 
     renderFormButtons() {
         return (
-            <div>
+            <ButtonGroup>
                 {this.renderCancelButton()}
                 {this.renderOkButton()}
-            </div>
+            </ButtonGroup>
         )
     }
 }

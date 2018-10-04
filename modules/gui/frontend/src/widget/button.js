@@ -101,3 +101,12 @@ Button.propTypes = {
     onClick: PropTypes.func,
     onMouseDown: PropTypes.func
 }
+
+export const ButtonGroup = ({children}) =>
+    <div className={styles.group}>
+        {children}
+    </div>
+
+ButtonGroup.propTypes = {
+    children: PropTypes.array.isRequired
+}

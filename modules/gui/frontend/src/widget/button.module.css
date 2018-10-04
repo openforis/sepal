@@ -35,3 +35,8 @@
         margin-left: 0;
     }
 }
+
+/* spacing between buttons */
+.group * + * {
+    margin-left: .5rem;
+}

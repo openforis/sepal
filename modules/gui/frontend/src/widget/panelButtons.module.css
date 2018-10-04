@@ -8,8 +8,3 @@
     border-top: var(--wireframe);
     transition: opacity 200ms ease-in-out;
 }
-
-/* spacing between buttons */
-.buttons * + * {
-    margin-left: .5rem;
-}
