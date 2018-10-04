@@ -23,12 +23,9 @@ class AppLaunchPad extends React.Component {
 
     render() {
         const {apps} = this.props
-        const items = apps.map(
-            (app) => <App key={app.path} app={app} onClick={this.runApp.bind(this)}/>
-        )
         return (
             <div className={styles.apps}>
-                {items}
+                {apps.map(app => <App key={app.path} app={app} onClick={this.runApp.bind(this)}/>)}
             </div>
         )
     }
@@ -41,13 +38,15 @@ AppLaunchPad.propTypes = {
 
 const App = ({app, onClick}) =>
     <Button
-        className={styles.app}
+        look='transparent'
         onClick={() => onClick(app)}>
-        <Image style={app.style} src={app.image}/>
-        <Icon name={app.icon} alt={app.alt}/>
-        <div>
-            <div className={styles.title}>{app.label}</div>
-            <div className={styles.description}>{app.description}</div>
+        <div className={styles.app}>
+            <Image style={app.style} src={app.image}/>
+            <Icon name={app.icon} alt={app.alt}/>
+            <div>
+                <div className={styles.title}>{app.label}</div>
+                <div className={styles.description}>{app.description}</div>
+            </div>
         </div>
     </Button>
 

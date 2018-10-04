@@ -10,37 +10,12 @@
 }
 
 .app {
-    height: 9rem;
+    height: 100%;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid rgba(255, 255, 255, 0.105);
-    border-radius: 3px;
-    background-color: rgba(255, 255, 255, 0.1);
     overflow: hidden;
-    cursor: pointer;
-    transition: .1s ease-in-out;
-}
-
-.title {
-    text-transform: uppercase;
-    text-align: center;
-    line-height: 1.2;
-}
-
-.app:focus {
-    background-color: hsla(0, 0%, 100%, .15);
-}
-
-.app:hover {
-    border: 2px solid rgba(255, 255, 255, 0.105);
-    background-color: hsla(0, 0%, 100%, .02);
-}
-
-.app:active {
-    border: 2px solid rgba(96, 71, 90, .15);
-    background-color: hsla(0, 0%, 100%, .05);
 }
 
 .app i {
@@ -60,7 +35,13 @@
     width: 50%;
 }
 
-.description {
+.app .title {
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.app .description {
     margin-top: .3rem;
     color: #ababab;
     line-height: 1.2;
