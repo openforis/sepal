@@ -7,16 +7,12 @@
     transition: all 100ms ease-in-out;
 }
 
-/* space between buttons */
-.button + .button {
-    margin-left: .5rem;
-}
-
-/* space between icon and label */
+/* spacing between icon and label */
 .button > .contents > * + * {
     margin-left: .5rem;
 }
 
+/* suppress icon for small devices */
 @media (max-width: 576px) {
     .button i {
         display: none;
