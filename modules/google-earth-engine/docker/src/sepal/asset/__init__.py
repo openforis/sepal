@@ -7,7 +7,7 @@ from ..aoi import Geometry
 class Asset(ImageSpec):
     def __init__(self, spec):
         super(Asset, self).__init__()
-        image = ee.Image(spec['id'])
+        image = ee.Image(spec['recipe']['id'])
         self.image = image
         self.aoi = Geometry(image.geometry())
         self.scale = image.projection().nominalScale().getInfo()
