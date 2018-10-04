@@ -61,18 +61,19 @@ const renderContents = ({icon, label, children}) =>
         </div>
     )
 
-const classNames = ({className, look, size}) =>
+const classNames = ({className, look, size, onClickHold}) =>
     className ? className : [
         styles.button,
         styles[size],
         lookStyles.look,
-        lookStyles[look]
+        lookStyles[look],
+        onClickHold ? styles.hold : null
     ].join(' ')
 
-const renderButton = ({type, className, look, size, tabIndex, onMouseDown, shown, disabled}, contents) =>
+const renderButton = ({type, className, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled}, contents) =>
     <button
         type={type}
-        className={classNames({className, look, size})}
+        className={classNames({className, look, size, onClickHold})}
         style={{visibility: shown ? 'visible' : 'hidden'}}
         tabIndex={tabIndex}
         disabled={disabled || !shown}
@@ -135,7 +136,7 @@ export const Button = ({
         renderTooltip({tooltip, tooltipPlacement, tooltipDisabled, shown, disabled},
             renderPropagationStopper({stopPropagation},
                 renderHammer({onClick, onClickHold, shown, disabled},
-                    renderButton({type, className, look, size, tabIndex, onMouseDown, shown, disabled},
+                    renderButton({type, className, look, size, tabIndex, onMouseDown, onClickHold, shown, disabled},
                         renderContents({icon, label, children})
                     )
                 )

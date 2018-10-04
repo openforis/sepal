@@ -95,10 +95,11 @@ class RecipeList extends React.Component {
                                     }}/>
                             </div>
                             <div className={styles.delete}>
-                                <HoldButton
+                                <Button
                                     icon='trash-alt'
                                     className={styles.recipeButton}
-                                    onClickHold={() => deleteRecipe(recipe.id)}/>
+                                    onClickHold={() => deleteRecipe(recipe.id)}
+                                    stopPropagation={true}/>
                             </div>
                         </div>
                     )}

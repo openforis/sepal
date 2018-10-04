@@ -1,4 +1,5 @@
 .button {
+    position: relative;
     border-radius: var(--button-border-radius);
     padding: 0 .8rem;
     cursor: pointer;
@@ -18,6 +19,10 @@
 .button.x-large {
     font-size: 1.2rem;
     line-height: 2.7rem;
+}
+
+.button > * {
+    position: relative;
 }
 
 /* spacing between icon and label */
@@ -45,4 +50,50 @@
 
 .group > * {
     margin: calc(var(--button-spacing) / 2);
+}
+
+.button.hold {
+    outline: none;
+    overflow: hidden;
+    vertical-align: bottom;
+}
+
+.button.hold:before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 100%;
+}
+
+.button.hold:not(:disabled):before {
+    top: 90%;
+    background: hsla(0, 0%, 100%, 0.2);
+    transition: top 150ms ease-in-out;
+}
+
+.button.hold:not(:disabled):hover:before {
+    top: 70%;
+    background: hsla(0, 0%, 100%, 0.2);
+    transition: top 150ms ease-in-out;
+}
+
+.button.hold:not(:disabled):hover:active:before {
+    animation: fill 750ms ease-in-out forwards normal;
+}
+
+@keyframes fill {
+    0% {
+        top: 70%;
+        background: hsla(0, 0%, 100%, .2);
+        }
+    90% {
+        top: 0;
+        background-color: hsla(0, 0%, 100%, .2);
+    }
+    100% {
+        top: 0;
+        background-color: hsla(0, 100%, 50%, 1);
+    }
 }
