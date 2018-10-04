@@ -1,10 +1,23 @@
 .button {
     border-radius: var(--button-border-radius);
-    font-size: .9rem;
-    line-height: 1.9rem;
     padding: 0 .8rem;
     cursor: pointer;
     transition: all 100ms ease-in-out;
+}
+
+.button.normal {
+    font-size: .9rem;
+    line-height: 1.9rem;
+}
+
+.button.large {
+    font-size: 1rem;
+    line-height: 2.3rem;
+}
+
+.button.x-large {
+    font-size: 1.2rem;
+    line-height: 2.7rem;
 }
 
 /* spacing between icon and label */
@@ -21,4 +34,15 @@
     .button > .contents > * + * {
         margin-left: 0;
     }
+}
+
+.group {
+    --button-spacing: .5rem;
+    display: flex;
+    flex-flow: row wrap;
+    margin: calc(var(--button-spacing) / -2);
+}
+
+.group > * {
+    margin: calc(var(--button-spacing) / 2);
 }

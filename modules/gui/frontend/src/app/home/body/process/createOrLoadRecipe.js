@@ -1,6 +1,6 @@
+import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
 import {HoldButton} from 'widget/holdButton'
-import {IconButton, LegacyButton} from 'widget/legacyButton'
 import {connect, select} from 'store'
 import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
 import {map} from 'rxjs/operators'
@@ -16,11 +16,13 @@ import styles from './createOrLoadRecipe.module.css'
 const CreateOrLoadRecipe = ({recipeId}) =>
     <div className={[styles.container, flexy.container].join(' ')}>
         <div className={styles.createButtons}>
-            <CreateButton label={msg('process.mosaic.create')} recipeId={recipeId} type='MOSAIC'/>
-            <CreateButton label={msg('process.classification.create')} recipeId={recipeId} type='CLASSIFICATION'/>
-            <CreateButton label={msg('process.changeDetection.create')} recipeId={recipeId} type='CHANGE_DETECTION'/>
-            <CreateButton label={msg('process.timeSeries.create')} recipeId={recipeId} type='TIME_SERIES'/>
-            <CreateButton label={msg('process.landCover.create')} recipeId={recipeId} type='LAND_COVER'/>
+            <ButtonGroup>
+                <CreateButton label={msg('process.mosaic.create')} recipeId={recipeId} type='MOSAIC'/>
+                <CreateButton label={msg('process.classification.create')} recipeId={recipeId} type='CLASSIFICATION'/>
+                <CreateButton label={msg('process.changeDetection.create')} recipeId={recipeId} type='CHANGE_DETECTION'/>
+                <CreateButton label={msg('process.timeSeries.create')} recipeId={recipeId} type='TIME_SERIES'/>
+                <CreateButton label={msg('process.landCover.create')} recipeId={recipeId} type='LAND_COVER'/>
+            </ButtonGroup>
         </div>
         <RecipeList recipeId={recipeId}/>
     </div>
@@ -84,9 +86,9 @@ class RecipeList extends React.Component {
                             <div className={styles.name}>{recipe.name}</div>
                             <div className={styles.type}>{recipe.type}</div>
                             <div className={styles.duplicate}>
-                                <RecipeButton
+                                <Button
+                                    look='highlight'
                                     icon='clone'
-                                    iconType='regular'
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         this.duplicateRecipe(recipe.id)
@@ -121,11 +123,12 @@ const setTabType = (recipeId, type, title) =>
         .dispatch()
 
 const CreateButton = ({recipeId, type, label}) =>
-    <LegacyButton icon='plus-circle' onClick={() => setTabType(recipeId, type, label)}
-        className={styles.createButton}>{label}</LegacyButton>
-
-const RecipeButton = ({icon, iconType, onClick}) =>
-    <IconButton icon={icon} iconType={iconType} onClick={onClick} className={styles.recipeButton}/>
+    <Button
+        look='transparent'
+        size='x-large'
+        icon='plus-circle'
+        label={label}
+        onClick={() => setTabType(recipeId, type, label)}/>
 
 function formatDate(date) {
     const pad = (value) => ('' + value).length < 2 ? '0' + value : value

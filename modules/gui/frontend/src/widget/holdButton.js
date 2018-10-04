@@ -7,10 +7,8 @@ import _ from 'lodash'
 import styles from './holdButton.module.css'
 
 export class HoldButton extends React.Component {
-    constructor(props) {
-        super(props)
-        this.button = React.createRef()
-    }
+    button = React.createRef()
+    subscriptions = []
 
     render() {
         const {icon, tabIndex, className, ...props} = this.props
@@ -34,7 +32,7 @@ export class HoldButton extends React.Component {
         const windowMouseUp$ = fromEvent(window, 'mouseup')
         const cancel$ = merge(buttonMouseLeave$, windowMouseUp$)
 
-        buttonMouseDown$.pipe(
+        const clickHold$ = buttonMouseDown$.pipe(
             switchMap(() => {
                 return timer(750).pipe(
                     takeUntil(cancel$),
@@ -46,12 +44,19 @@ export class HoldButton extends React.Component {
                     )
                 )
             })
-        ).subscribe(() => {
-            const {onClickHold, disabled} = this.props
-            if (onClickHold && !disabled)
-                onClickHold()
-        })
+        )
+        
+        this.subscriptions.push(
+            clickHold$.subscribe(() => {
+                const {onClickHold, disabled} = this.props
+                if (onClickHold && !disabled)
+                    onClickHold()
+            })
+        )
+    }
 
+    componentWillUnmount() {
+        this.subscriptions.forEach(subscription => subscription.unsubscribe())
     }
 }
 
