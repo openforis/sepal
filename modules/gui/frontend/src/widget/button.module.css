@@ -16,3 +16,13 @@
 .button > .contents > * + * {
     margin-left: .5rem;
 }
+
+@media (max-width: 576px) {
+    .button i {
+        display: none;
+    }
+    
+    .button > .contents > * + * {
+        margin-left: 0;
+    }
+}
