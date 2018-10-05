@@ -153,6 +153,7 @@ const PercentileField = ({input, disabled = false}) => {
             minValue={0}
             maxValue={100}
             ticks={[0, 10, 25, 50, 75, 90, 100]}
+            range='right'
             info={percentile => {
                 const type = percentile === 0 ? 'off' : percentile === 100 ? 'max' : 'percentile'
                 return msg(['process.mosaic.panel.composite.form.filters', input.name, type], {percentile})

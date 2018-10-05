@@ -12,8 +12,7 @@
     --cursor-hover-color: var(--look-highlight-hover-background-color);
     --cursor-dragging-color: var(--look-highlight-active-background-color);
     --cursor-preview-color: hsla(var(--look-highlight-h), var(--look-highlight-s), var(--look-highlight-l), .5);
-    --range-left-color: none;
-    --range-right-color: var(--look-highlight-background-color);
+    --range-color: var(--look-highlight-background-color);
 
     position: relative;
 }
@@ -117,14 +116,7 @@
     right: 0;
     top: -1px;
     bottom: -1px;
-}
-
-.leftRange {
-    background-color: var(--range-left-color);
-}
-
-.rightRange {
-    background-color: var(--range-right-color);
+    background-color: var(--range-color);
 }
 
 .cursorOverlay {

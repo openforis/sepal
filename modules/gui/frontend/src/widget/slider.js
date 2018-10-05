@@ -54,7 +54,7 @@ class SliderContainer extends React.Component {
     }
 
     renderDynamics(ticks) {
-        const {input, minValue, maxValue, width} = this.props
+        const {input, minValue, maxValue, width, range} = this.props
         return (
             <SliderDynamics
                 input={input}
@@ -62,6 +62,7 @@ class SliderContainer extends React.Component {
                 maxValue={maxValue}
                 width={width}
                 ticks={ticks}
+                range={range}
                 clickTarget={this.clickTarget}/>
         )
     }
@@ -105,13 +106,23 @@ class SliderDynamics extends React.Component {
     handle = React.createRef()
     subscriptions = []
 
-    renderRanges() {
+    renderLeftRange() {
         const {position} = this.state
         const {width} = this.props
+        return <div className={styles.range} style={{right: `${width - position}px`}}/>
+    }
+
+    renderRightRange() {
+        const {position} = this.state
+        return <div className={styles.range} style={{left: `${position}px`}}/>
+    }
+
+    renderRanges() {
+        const {range} = this.props
         return (
             <React.Fragment>
-                <div className={[styles.range, styles.leftRange].join(' ')} style={{right: `${width - position}px`}}/>
-                <div className={[styles.range, styles.rightRange].join(' ')} style={{left: `${position}px`}}/>
+                {range === 'left' ? this.renderLeftRange() : null}
+                {range === 'right' ? this.renderRightRange() : null}
             </React.Fragment>
         )
     }
@@ -359,7 +370,7 @@ export default class Slider extends React.Component {
     }
 
     renderSlider() {
-        const {input, minValue, maxValue, ticks, info, disabled} = this.props
+        const {input, minValue, maxValue, ticks, range = 'left', info, disabled} = this.props
         return (
             <div className={styles.container}>
                 <div className={styles.slider}>
@@ -373,6 +384,7 @@ export default class Slider extends React.Component {
                         minValue={minValue !== undefined ? minValue : 0}
                         maxValue={maxValue !== undefined ? maxValue : 100}
                         ticks={ticks}
+                        range={range}
                         info={info}
                         width={this.state.width}
                         disabled={disabled}/>
@@ -408,6 +420,7 @@ Slider.propTypes = {
     ]),
     maxValue: PropTypes.number,
     minValue: PropTypes.number,
+    range: PropTypes.oneOf(['none', 'left', 'right']),
     ticks: PropTypes.oneOfType([
         PropTypes.number,
         PropTypes.array
