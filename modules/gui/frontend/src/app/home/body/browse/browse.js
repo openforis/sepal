@@ -1,4 +1,4 @@
-import {HoldButton} from 'widget/holdButton'
+import {Button} from 'widget/button'
 import {IconButton} from 'widget/legacyButton'
 import {Observable} from 'rxjs'
 import {catchError, map} from 'rxjs/operators'
@@ -329,9 +329,11 @@ class Browse extends React.Component {
                         disabled={!oneFileSelected}/>
                 </Tooltip>
                 <Tooltip msg={msg('browse.controls.remove.tooltip')} bottom disabled={nothingSelected}>
-                    <HoldButton icon='trash-alt'
+                    <Button
+                        icon='trash-alt'
                         onClickHold={this.removeSelected.bind(this)}
-                        disabled={nothingSelected}/>
+                        disabled={nothingSelected}
+                        stopPropagation={true}/>
                 </Tooltip>
                 <Tooltip msg={msg('browse.controls.clearSelection.tooltip')} bottom disabled={nothingSelected}>
                     <IconButton icon='times'

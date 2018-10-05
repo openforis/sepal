@@ -132,6 +132,7 @@
             "duplicateRecipe": "Duplicate recipe",
             "exportRecipe": "Export recipe",
             "saveRecipe": "Save recipe",
+            "deleteRecipe": "Delete recipe",
             "revertToOldRevision": "Revert to old revision..."
         },
         "revisions": {

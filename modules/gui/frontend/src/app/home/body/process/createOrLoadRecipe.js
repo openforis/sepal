@@ -1,6 +1,5 @@
 import {Button, ButtonGroup} from 'widget/button'
 import {CenteredProgress} from 'widget/progress'
-import {HoldButton} from 'widget/holdButton'
 import {connect, select} from 'store'
 import {deleteRecipe, loadRecipe$, loadRecipes$} from './recipe'
 import {map} from 'rxjs/operators'
@@ -87,18 +86,19 @@ class RecipeList extends React.Component {
                             <div className={styles.type}>{recipe.type}</div>
                             <div className={styles.duplicate}>
                                 <Button
-                                    look='highlight'
                                     icon='clone'
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        this.duplicateRecipe(recipe.id)
-                                    }}/>
+                                    tooltip={msg('process.menu.duplicateRecipe')}
+                                    tooltipPlacement='bottom'
+                                    onClick={() => this.duplicateRecipe(recipe.id)}
+                                    stopPropagation={true}/>
                             </div>
                             <div className={styles.delete}>
-                                <HoldButton
+                                <Button
                                     icon='trash-alt'
-                                    className={styles.recipeButton}
-                                    onClickHold={() => deleteRecipe(recipe.id)}/>
+                                    tooltip={msg('process.menu.deleteRecipe')}
+                                    tooltipPlacement='bottom'
+                                    onClickHold={() => deleteRecipe(recipe.id)}
+                                    stopPropagation={true}/>
                             </div>
                         </div>
                     )}
