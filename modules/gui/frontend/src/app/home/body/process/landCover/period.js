@@ -73,9 +73,7 @@ class Period extends React.Component {
         return (
             <div className={styles.content}>
                 <div className={styles.startYearLabel}>
-                    <Label>
-                        <Msg id='process.landCover.panel.period.startYear.label'/>
-                    </Label>
+                    <Label msg={msg('process.landCover.panel.period.startYear.label')}/>
                 </div>
                 <div className={styles.startYear}>
                     <DatePicker
@@ -86,9 +84,7 @@ class Period extends React.Component {
                     <ErrorMessage for={startYear}/>
                 </div>
                 <div className={styles.endYearLabel}>
-                    <Label>
-                        <Msg id='process.landCover.panel.period.endYear.label'/>
-                    </Label>
+                    <Label msg={msg('process.landCover.panel.period.endYear.label')}/>
                 </div>
                 <div className={styles.endYear}>
                     <DatePicker

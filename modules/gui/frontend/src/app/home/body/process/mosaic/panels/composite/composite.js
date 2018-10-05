@@ -51,9 +51,7 @@ class Composite extends React.Component {
         return (
             <div className={styles.content}>
                 <div className={styles.corrections}>
-                    <Label>
-                        <Msg id='process.mosaic.panel.composite.form.corrections.label'/>
-                    </Label>
+                    <Label msg={msg('process.mosaic.panel.composite.form.corrections.label')}/>
                     <Buttons input={corrections} multiple={true} options={[
                         {
                             value: 'SR',
@@ -70,9 +68,9 @@ class Composite extends React.Component {
                     ]}/>
                 </div>
                 <div className={styles.filters}>
-                    <Label tooltip={msg('process.mosaic.panel.composite.form.filters.tooltip')}>
-                        <Msg id='process.mosaic.panel.composite.form.filters.label'/>
-                    </Label>
+                    <Label
+                        msg={msg('process.mosaic.panel.composite.form.filters.label')}
+                        tooltip={msg('process.mosaic.panel.composite.form.filters.tooltip')}/>
                     <PercentileField input={shadowPercentile}/>
                     <PercentileField
                         input={hazePercentile}
@@ -82,9 +80,7 @@ class Composite extends React.Component {
                 </div>
                 <div className={styles.inline}>
                     <div className={styles.mask}>
-                        <Label>
-                            <Msg id='process.mosaic.panel.composite.form.mask.label'/>
-                        </Label>
+                        <Label msg={msg('process.mosaic.panel.composite.form.mask.label')}/>
                         <Buttons input={mask} multiple={true} options={[
                             {
                                 value: 'CLOUDS',
@@ -99,9 +95,7 @@ class Composite extends React.Component {
                         ]}/>
                     </div>
                     <div className={styles.compose}>
-                        <Label>
-                            <Msg id='process.mosaic.panel.composite.form.composingMethod.label'/>
-                        </Label>
+                        <Label msg={msg('process.mosaic.panel.composite.form.composingMethod.label')}/>
                         <Buttons input={compose} options={[
                             {
                                 value: 'MEDOID',

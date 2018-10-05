@@ -110,9 +110,7 @@ class Retrieve extends React.Component {
         return (
             <div className={styles.form}>
                 <div>
-                    <Label>
-                        <Msg id='process.mosaic.panel.retrieve.form.bands.label'/>
-                    </Label>
+                    <Label msg={msg('process.mosaic.panel.retrieve.form.bands.label')}/>
                     <Buttons
                         input={bands}
                         multiple={true}
@@ -120,9 +118,7 @@ class Retrieve extends React.Component {
                 </div>
 
                 <div>
-                    <Label>
-                        <Msg id='process.mosaic.panel.retrieve.form.destination.label'/>
-                    </Label>
+                    <Label msg={msg('process.mosaic.panel.retrieve.form.destination.label')}/>
                     <Buttons
                         input={destination}
                         multiple={false}

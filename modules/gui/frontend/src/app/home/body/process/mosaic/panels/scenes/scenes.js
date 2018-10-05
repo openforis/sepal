@@ -48,9 +48,7 @@ class Scenes extends React.Component {
         ]
         return (
             <div className={styles.types}>
-                <Label>
-                    <Msg id='process.mosaic.panel.scenes.form.type.label'/>
-                </Label>
+                <Label msg={msg('process.mosaic.panel.scenes.form.type.label')}/>
                 <Buttons
                     className={styles.sources}
                     input={type}
@@ -80,10 +78,7 @@ class Scenes extends React.Component {
         ]
         return (
             <div>
-                <Label>
-                    <Msg id='process.mosaic.panel.scenes.form.targetDateWeight.label'/>
-                </Label>
-
+                <Label msg={msg('process.mosaic.panel.scenes.form.targetDateWeight.label')}/>
                 <Buttons
                     input={targetDateWeight}
                     options={options}/>

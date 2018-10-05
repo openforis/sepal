@@ -143,10 +143,9 @@ class Dates extends React.Component {
             <div className={styles.advancedLayout}>
                 <Label
                     className={styles.targetDateLabel}
+                    msg={msg('process.mosaic.panel.dates.form.targetDate.label')}
                     tooltip={msg('process.mosaic.panel.dates.form.targetDate.tooltip')}
-                    right>
-                    <Msg id='process.mosaic.panel.dates.form.targetDate.label'/>
-                </Label>
+                    tooltipPlacement='right'/>
                 <div className={styles.targetDateInput}>
                     <DatePicker
                         input={targetDate}
@@ -155,9 +154,11 @@ class Dates extends React.Component {
                     <ErrorMessage for={targetDate}/>
                 </div>
 
-                <Label className={styles.yearsLabel} tooltip={msg('process.mosaic.panel.dates.form.years.tooltip')} right>
-                    <Msg id='process.mosaic.panel.dates.form.years.label'/>
-                </Label>
+                <Label
+                    className={styles.yearsLabel}
+                    msg={msg('process.mosaic.panel.dates.form.years.label')}
+                    tooltip={msg('process.mosaic.panel.dates.form.years.tooltip')}
+                    tooltipPlacement='right'/>
                 <div className={styles.yearsInput}>
                     <div>
                         <Input type='number' input={yearsBefore} maxLength={2} min={0} max={99}/>
@@ -172,9 +173,11 @@ class Dates extends React.Component {
                     <ErrorMessage for={[yearsBefore, yearsAfter]}/>
                 </div>
 
-                <Label className={styles.seasonLabel} tooltip={msg('process.mosaic.panel.dates.form.season.tooltip')} right>
-                    <Msg id='process.mosaic.panel.dates.form.season.label'/>
-                </Label>
+                <Label
+                    className={styles.seasonLabel}
+                    msg={msg('process.mosaic.panel.dates.form.season.label')}
+                    tooltip={msg('process.mosaic.panel.dates.form.season.tooltip')}
+                    tooltipPlacement='right'/>
                 <SeasonSelect
                     startDate={seasonStart}
                     endDate={seasonEnd}
@@ -191,10 +194,9 @@ class Dates extends React.Component {
             <div className={styles.simpleLayout}>
                 <Label
                     className={styles.yearLabel}
+                    msg='process.mosaic.panel.dates.form.targetYear.label'
                     tooltip={msg('process.mosaic.panel.dates.form.targetYear.tooltip')}
-                    right>
-                    <Msg id='process.mosaic.panel.dates.form.targetYear.label'/>
-                </Label>
+                    tooltipPlacement='right'/>
                 <div className={styles.targetDateInput}>
                     <DatePicker
                         input={targetYear}

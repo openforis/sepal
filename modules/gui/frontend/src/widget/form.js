@@ -424,43 +424,42 @@ Input.propTypes = {
 }
 
 export class Label extends React.Component {
-    render() {
-        const {tooltip, children,
-            left, right, top, bottom, topLeft, topRight, bottomLeft, bottomRight,
-            ...props} = this.props
+    renderContents() {
+        const {msg, children} = this.props
+        return children ? children : msg
+    }
+
+    renderLabel(contents) {
         return (
-            tooltip ? (
-                <Tooltip
-                    msg={tooltip}
-                    left={left}
-                    right={right}
-                    top={top}
-                    bottom={bottom}
-                    topLeft={topLeft}
-                    topRight={topRight}
-                    bottomLeft={bottomLeft}
-                    bottomRight={bottomRight}>
-                    <span>
-                        <label {...props} className={styles.label}>
-                            {children}
-                            <Icon name='question-circle'/>
-                        </label>
-                    </span>
-                </Tooltip>
-            ) : <label {...props} className={styles.label}>{children}</label>
+            <label className={styles.label}>
+                {contents}
+            </label>
         )
+    }
+
+    renderLabelWithTooltip(contents) {
+        const {tooltip, tooltipPlacement} = this.props
+        return (
+            <Tooltip msg={tooltip} placement={tooltipPlacement}>
+                <label className={styles.label}>
+                    {contents}
+                    <Icon name='question-circle'/>
+                </label>
+            </Tooltip>
+        )
+    }
+    
+    render() {
+        const {tooltip} = this.props
+        return tooltip
+            ? this.renderLabelWithTooltip(this.renderContents())
+            : this.renderLabel(this.renderContents())
     }
 }
 
 Label.propTypes = {
-    bottom: PropTypes.bool,
-    bottomLeft: PropTypes.bool,
-    bottomRight: PropTypes.bool,
-    children: PropTypes.any,
-    left: PropTypes.bool,
-    right: PropTypes.bool,
+    children: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+    msg: PropTypes.string,
     tooltip: PropTypes.string,
-    top: PropTypes.bool,
-    topLeft: PropTypes.bool,
-    topRight: PropTypes.bool
+    tooltipPlacement: PropTypes.string
 }
