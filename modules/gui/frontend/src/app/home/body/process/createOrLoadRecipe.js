@@ -125,7 +125,7 @@ const setTabType = (recipeId, type, title) =>
 const CreateButton = ({recipeId, type, label}) =>
     <Button
         look='transparent'
-        size='x-large'
+        size='large'
         icon='plus-circle'
         label={label}
         onClick={() => setTabType(recipeId, type, label)}/>
