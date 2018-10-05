@@ -1,10 +1,10 @@
 import {map} from 'rxjs/operators'
 import {of} from 'rxjs'
-import {sepalMap} from './map'
+import {sepalMap, googleMap} from './map'
 import _ from 'lodash'
 import ee from 'earthengine-api'
 
-export default class EarthEngineImageLayer {
+export default class EarthEngineLayer {
     constructor({layerIndex, bounds, mapId$, props, onProgress}) {
         this.layerIndex = layerIndex
         this.bounds = bounds
@@ -22,6 +22,7 @@ export default class EarthEngineImageLayer {
             new ee.layers.EarthEngineTileSource('https://earthengine.googleapis.com/map', this.mapId, this.token)
         )
         googleMap.overlayMapTypes.setAt(this.layerIndex, layer)
+        // googleMap.fitBounds(googleMap.getBounds())
 
         const notifyOnProgress = () => {
             // Manually calculate stats, since GEE returns stats from multiple zoom-levels
@@ -46,7 +47,7 @@ export default class EarthEngineImageLayer {
             // console.log(tileStats)
             tileStats.complete = tileStats.count === tileStats.loaded + tileStats.failed
 
-            if (tileStats.count > 0)
+            if (this.onProgress && tileStats.count > 0)
                 this.onProgress(tileStats)
             else
                 setTimeout(notifyOnProgress, 100)
@@ -55,7 +56,6 @@ export default class EarthEngineImageLayer {
         notifyOnProgress()
         layer.addEventListener('tile-load', notifyOnProgress)
         layer.addEventListener('tile-fail', notifyOnProgress)
-        layer.name = 'preview'
     }
 
     removeFromMap(googleMap) {

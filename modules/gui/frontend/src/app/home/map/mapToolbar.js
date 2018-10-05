@@ -10,12 +10,13 @@ import styles from './mapToolbar.module.css'
 const mapStateToProps = (state, ownProps) => ({
     labelsShown: select([ownProps.statePath, 'labelsShown']),
     zoomLevel: sepalMap.getZoom(),
-    isZooming: select('map.zooming')
+    isZooming: select('map.zooming'),
+    hasBounds: sepalMap.getContext(ownProps.mapContext).isLayerInitialized('aoi')
 })
 
 class MapToolbar extends React.Component {
     render() {
-        const {statePath, mapContext, labelsShown, labelLayerIndex, isZooming, children} = this.props
+        const {statePath, mapContext, labelsShown, labelLayerIndex, isZooming, hasBounds, children} = this.props
         return (
             <Toolbar className={styles.mapToolbar} horizontal top right>
                 <ToolbarButton
@@ -35,7 +36,7 @@ class MapToolbar extends React.Component {
                     icon={'search'}
                     tooltip={msg('process.mosaic.mapToolbar.zoom.tooltip')}/>
                 <ToolbarButton
-                    disabled={!sepalMap.getContext(mapContext).hasLayer('aoi')}
+                    disabled={!hasBounds}
                     onClick={() => sepalMap.getContext(mapContext).fitLayer('aoi')}
                     icon={'bullseye'}
                     tooltip={msg('process.mosaic.mapToolbar.centerMap.tooltip')}/>

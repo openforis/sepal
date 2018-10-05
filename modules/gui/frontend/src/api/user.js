@@ -46,7 +46,7 @@ export default {
         }).pipe(toResponse),
 
     getGoogleAccessRequestUrl$: (destinationUrl) =>
-        get$('/api/user/google/access-request-url', {destinationUrl})
+        get$('/api/user/google/access-request-url', {query: {destinationUrl}})
             .pipe(toResponse),
 
     revokeGoogleAccess$: () =>

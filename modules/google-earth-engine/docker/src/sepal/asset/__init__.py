@@ -1,15 +1,16 @@
 import ee
 
 from ..image_spec import ImageSpec
-from ..aoi import Geometry
+from ..aoi import AssetAoi
 
 
 class Asset(ImageSpec):
     def __init__(self, spec):
         super(Asset, self).__init__()
-        image = ee.Image(spec['id'])
+        id = spec['recipe']['id']
+        image = ee.Image(id)
         self.image = image
-        self.aoi = Geometry(image.geometry())
+        self.aoi = AssetAoi(image.geometry(), {'type': 'ASSET', 'id': id})
         self.scale = image.projection().nominalScale().getInfo()
         self.bands = image.bandNames().getInfo()
 
