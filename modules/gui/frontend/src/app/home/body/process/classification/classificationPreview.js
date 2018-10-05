@@ -4,12 +4,12 @@ import {connect} from 'store'
 import {sepalMap} from 'app/home/map/map'
 import EarthEngineImageLayer from 'app/home/map/earthEngineLayer'
 import Icon from 'widget/icon'
+import MapStatus from 'widget/mapStatus'
 import PropTypes from 'prop-types'
 import React from 'react'
 import _ from 'lodash'
 import api from 'api'
 import styles from 'app/home/body/process/classification/classificationPreview.module.css'
-import MapStatus from 'widget/mapStatus'
 
 const mapStateToProps = (state, ownProps) => {
     const recipeState = RecipeState(ownProps.recipeId)
