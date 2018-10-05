@@ -33,6 +33,7 @@ class Users extends React.Component {
         sortingDirection: 1,
         filter: ''
     }
+    search = React.createRef()
 
     componentDidMount() {
         this.props.stream('LOAD_USER_LIST',
@@ -205,7 +206,9 @@ class Users extends React.Component {
         return (
             <div className={styles.pageControls}>
                 <input
+                    style={{opacity: 0}}
                     type="text"
+                    ref={this.search}
                     value={this.state.filter}
                     placeholder={'filter results'}
                     onChange={e => this.setFilter(e.target.value)}/>
@@ -231,9 +234,23 @@ class Users extends React.Component {
         )
     }
 
+    onKeyDown({key}) {
+        const keyMap = {
+            Escape: () => {
+                this.setFilter('')
+            }
+        }
+        const keyAction = keyMap[key]
+        keyAction && keyAction()
+        this.search.current.focus()
+    }
+
     render() {
         return (
-            <div className={styles.container}>
+            <div
+                className={styles.container}
+                tabIndex='0'
+                onKeyDown={e => this.onKeyDown(e)}>
                 <div>
                     <Pageable items={this.getUsers()} limit={20}>
                         {this.renderControls()}
