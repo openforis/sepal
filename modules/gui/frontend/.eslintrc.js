@@ -2,6 +2,7 @@ module.exports = {
     "parser": "babel-eslint",
     "env": {
         "browser": true,
+        "amd": true,
         "es6": true
     },
     "extends": [
@@ -48,6 +49,11 @@ module.exports = {
             "error", {
                 "before": false,
                 "after": true
+            }
+        ],
+        "no-multi-spaces": [
+            "error", {
+                ignoreEOLComments: true
             }
         ],
         "no-multiple-empty-lines": [

@@ -8,17 +8,17 @@
 
 .button.normal {
     font-size: .9rem;
-    line-height: 1.9rem;
+    line-height: 1.8rem;
 }
 
 .button.large {
-    font-size: 1rem;
-    line-height: 2.3rem;
+    font-size: 1.1rem;
+    line-height: 2.2rem;
 }
 
 .button.x-large {
-    font-size: 1.2rem;
-    line-height: 2.7rem;
+    font-size: 1.3rem;
+    line-height: 2.6rem;
 }
 
 .button > * {

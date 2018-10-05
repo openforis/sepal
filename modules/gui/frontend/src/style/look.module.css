@@ -18,6 +18,10 @@
     --look-default-active-background-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + 3%), var(--look-default-a));
     --look-default-active-border-color: hsla(var(--look-default-h), var(--look-default-s), calc(var(--look-default-l) + 5%), var(--look-default-a));
 
+    --look-default-disabled-color: hsla(0, 0%, 35%, 1);
+    --look-default-disabled-background-color: hsla(var(--look-default-h), calc(var(--look-default-s) * .3), calc(var(--look-default-l) * .8), var(--look-default-a));
+    --look-default-disabled-border-color: hsla(var(--look-default-h), calc(var(--look-default-s) * .3), calc(var(--look-default-l) * .8), var(--look-default-a));
+
     /* highlight */
 
     --look-highlight-color: hsla(0, 0%, 100%, 1);
@@ -36,6 +40,10 @@
     --look-highlight-active-background-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) + 0%), var(--look-highlight-a));
     --look-highlight-active-border-color: hsla(var(--look-highlight-h), var(--look-highlight-s), calc(var(--look-highlight-l) - 2%), var(--look-highlight-a));
     
+    --look-highlight-disabled-color: hsla(0, 0%, 60%, 1);
+    --look-highlight-disabled-background-color: hsla(var(--look-highlight-h), calc(var(--look-highlight-s) * .3), calc(var(--look-highlight-l) * .8), var(--look-highlight-a));
+    --look-highlight-disabled-border-color: hsla(var(--look-highlight-h), calc(var(--look-highlight-s) * .3), calc(var(--look-highlight-l) * .8), var(--look-highlight-a));
+
     /* transparent */
 
     --look-transparent-color: hsla(0, 0%, 70%, 1);
@@ -53,6 +61,10 @@
     --look-transparent-active-color: hsla(0, 0%, 100%, 1);
     --look-transparent-active-background-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + 3%), var(--look-transparent-a));
     --look-transparent-active-border-color: hsla(var(--look-transparent-h), var(--look-transparent-s), calc(var(--look-transparent-l) + 5%), var(--look-transparent-a));
+
+    --look-transparent-disabled-color: hsla(0, 0%, 35%, 1);
+    --look-transparent-disabled-background-color: hsla(var(--look-transparent-h), calc(var(--look-transparent-s) * .5), calc(var(--look-transparent-l) * .9), var(--look-transparent-a));
+    --look-transparent-disabled-border-color: hsla(var(--look-transparent-h), calc(var(--look-transparent-s) * .5), calc(var(--look-transparent-l) * .9), var(--look-transparent-a));
 
     /* apply */
 
@@ -72,6 +84,10 @@
     --look-apply-active-background-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) + 0%), var(--look-apply-a));
     --look-apply-active-border-color: hsla(var(--look-apply-h), var(--look-apply-s), calc(var(--look-apply-l) - 2%), var(--look-apply-a));
 
+    --look-apply-disabled-color: var(--look-default-disabled-color);
+    --look-apply-disabled-background-color: var(--look-default-disabled-background-color);
+    --look-apply-disabled-border-color: var(--look-apply-disabled-border-color);
+
     /* cancel */
 
     --look-cancel-color: hsla(0, 0%, 100%, 1);
@@ -90,11 +106,9 @@
     --look-cancel-active-background-color: hsla(var(--look-cancel-h), var(--look-cancel-s), calc(var(--look-cancel-l) + 0%), var(--look-cancel-a));
     --look-cancel-active-border-color: hsla(var(--look-cancel-h), var(--look-cancel-s), calc(var(--look-cancel-l) - 2%), var(--look-cancel-a));
 
-    /* disabled */
-
-    --look-disabled-color: hsla(0, 0%, 35%, 1);
-    --look-disabled-background-color: hsla(var(--look-disabled-h), var(--look-disabled-s), var(--look-disabled-l), var(--look-disabled-a));
-    --look-disabled-border-color: hsla(var(--look-disabled-h), var(--look-disabled-s), calc(var(--look-disabled-l) + 2%), var(--look-disabled-a));
+    --look-cancel-disabled-color: var(--look-default-disabled-color);
+    --look-cancel-disabled-background-color: var(--look-default-disabled-background-color);
+    --look-cancel-disabled-border-color: var(--look-apply-disabled-border-color);
 }
 
 /* default */
@@ -123,6 +137,12 @@
     border: 1px solid var(--look-default-active-border-color);
 }
 
+.look.default:disabled {
+    color: var(--look-default-disabled-color);
+    background-color: var(--look-default-disabled-background-color);
+    border: 1px solid var(--look-default-disabled-border-color);
+}
+
 /* transparent */
 
 .look.transparent {
@@ -147,6 +167,12 @@
     color: var(--look-transparent-active-color);
     background-color: var(--look-transparent-active-background-color);
     border: 1px solid var(--look-transparent-active-border-color);
+}
+
+.look.transparent:disabled {
+    color: var(--look-transparent-disabled-color);
+    background-color: var(--look-transparent-disabled-background-color);
+    border: 1px solid var(--look-transparent-disabled-border-color);
 }
 
 /* highlight */
@@ -175,6 +201,12 @@
     border: 1px solid var(--look-highlight-active-border-color);
 }
 
+.look.highlight:disabled {
+    color: var(--look-highlight-disabled-color);
+    background-color: var(--look-highlight-disabled-background-color);
+    border: 1px solid var(--look-highlight-disabled-border-color);
+}
+
 /* apply */
 
 .look.apply {
@@ -199,6 +231,12 @@
     color: var(--look-apply-active-color);
     background-color: var(--look-apply-active-background-color);
     border: 1px solid var(--look-apply-active-border-color);
+}
+
+.look.apply:disabled {
+    color: var(--look-apply-disabled-color);
+    background-color: var(--look-apply-disabled-background-color);
+    border: 1px solid var(--look-apply-disabled-border-color);
 }
 
 /* cancel */
@@ -227,14 +265,14 @@
     border: 1px solid var(--look-cancel-active-border-color);
 }
 
+.look.cancel:disabled {
+    color: var(--look-cancel-disabled-color);
+    background-color: var(--look-cancel-disabled-background-color);
+    border: 1px solid var(--look-cancel-disabled-border-color);
+}
+
 /* disabled */
 
-.look.default:disabled,
-.look.highlight:disabled, 
-.look.apply:disabled,
-.look.cancel:disabled {
-    color: var(--look-disabled-color);
-    background-color: var(--look-disabled-background-color);
-    border: 1px solid var(--look-disabled-border-color);
+.look:disabled {
     cursor: default;
 }

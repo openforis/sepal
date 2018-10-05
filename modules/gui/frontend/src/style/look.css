@@ -34,13 +34,6 @@ html {
     --look-cancel-l: 33%;
     --look-cancel-a: 1;
 
-    /* disabled */
-
-    --look-disabled-h: 40;
-    --look-disabled-s: 8%;
-    --look-disabled-l: 20%;
-    --look-disabled-a: 1;
-
     /* default */
 
     --look-default-background-color: hsla(var(--look-default-h), var(--look-default-s), var(--look-default-l), var(--look-default-a));

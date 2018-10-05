@@ -119,9 +119,9 @@
 }
 
 .toolbar button:disabled {
-    color: var(--look-disabled-color);
-    background-color: var(--look-disabled-background-color);
-    border-color: var(--look-disabled-border-color);
+    color: var(--look-default-disabled-color);
+    background-color: var(--look-default-disabled-background-color);
+    border-color: var(--look-default-disabled-border-color);
 }
 
 .toolbar button svg {

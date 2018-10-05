@@ -6,12 +6,6 @@
     pointer-events: all;
 }
 
-.createButtons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
 .recipesTable {
     width: 61rem;
     max-width: 100%;
@@ -52,19 +46,13 @@
 }
 
 .name {
-    flex-basis: 47%;
+    flex-basis: 50%;
 }
 
 .type {
-    flex-basis: 37%;
+    flex-basis: 35%;
 }
 
-.duplicate {
-    flex-basis: 8%;
-    text-align: right;
-}
-
-.delete {
-    flex-basis: 8%;
-    text-align: right;
+.buttons {
+    flex-basis: 15%;
 }

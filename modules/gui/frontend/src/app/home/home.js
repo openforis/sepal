@@ -40,7 +40,7 @@ const refreshUserAccessTokens$ = (user) => {
     )
 }
 
-const refreshUserReport$ = () =>  {
+const refreshUserReport$ = () => {
     const refreshSeconds = 10
     const loadCurrentUserReport$ = api.user.loadCurrentUserReport$()
     return merge(

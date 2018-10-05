@@ -1,4 +1,4 @@
-import {Button} from 'widget/button'
+import {Button, ButtonGroup} from 'widget/button'
 import {msg} from 'translate'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -102,7 +102,7 @@ PageData.propTypes = {
 
 export const PageControls = (props) => {
     const renderDefaultControls = (pageable) =>
-        <div>
+        <ButtonGroup>
             <Button icon='fast-backward'
                 onClick={() => pageable.firstPage()}
                 disabled={pageable.isFirstPage}/>
@@ -115,7 +115,7 @@ export const PageControls = (props) => {
             <Button icon='fast-forward'
                 onClick={() => pageable.lastPage()}
                 disabled={pageable.isLastPage}/>
-        </div>
+        </ButtonGroup>
 
     const renderCustomControls = ({isFirstPage, isLastPage, firstPage, lastPage, prevPage, nextPage}) =>
         <React.Fragment>

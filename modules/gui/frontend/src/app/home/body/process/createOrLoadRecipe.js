@@ -14,15 +14,13 @@ import styles from './createOrLoadRecipe.module.css'
 
 const CreateOrLoadRecipe = ({recipeId}) =>
     <div className={[styles.container, flexy.container].join(' ')}>
-        <div className={styles.createButtons}>
-            <ButtonGroup>
-                <CreateButton label={msg('process.mosaic.create')} recipeId={recipeId} type='MOSAIC'/>
-                <CreateButton label={msg('process.classification.create')} recipeId={recipeId} type='CLASSIFICATION'/>
-                <CreateButton label={msg('process.changeDetection.create')} recipeId={recipeId} type='CHANGE_DETECTION'/>
-                <CreateButton label={msg('process.timeSeries.create')} recipeId={recipeId} type='TIME_SERIES'/>
-                <CreateButton label={msg('process.landCover.create')} recipeId={recipeId} type='LAND_COVER'/>
-            </ButtonGroup>
-        </div>
+        <ButtonGroup>
+            <CreateButton label={msg('process.mosaic.create')} recipeId={recipeId} type='MOSAIC'/>
+            <CreateButton label={msg('process.classification.create')} recipeId={recipeId} type='CLASSIFICATION'/>
+            <CreateButton label={msg('process.changeDetection.create')} recipeId={recipeId} type='CHANGE_DETECTION'/>
+            <CreateButton label={msg('process.timeSeries.create')} recipeId={recipeId} type='TIME_SERIES'/>
+            <CreateButton label={msg('process.landCover.create')} recipeId={recipeId} type='LAND_COVER'/>
+        </ButtonGroup>
         <RecipeList recipeId={recipeId}/>
     </div>
 
@@ -60,19 +58,46 @@ class RecipeList extends React.Component {
                 ...recipe,
                 id: recipeId,
                 title: (recipe.title || recipe.placeholder) + '_copy'
-            })
-            ),
+            })),
             map(duplicate =>
                 actionBuilder('DUPLICATE_RECIPE', {duplicate})
                     .set(recipePath(recipeId), duplicate)
-                    .build())
+                    .build()
+            )
         )
     }
 
-    render() {
-        const {recipes, action} = this.props
-        if (!recipes && !action('LOAD_RECIPES').dispatched)
-            return <CenteredProgress title={msg('process.recipe.loading')}/>
+    renderProgress() {
+        return <CenteredProgress title={msg('process.recipe.loading')}/>
+    }
+
+    renderRecipe(recipe) {
+        return (
+            <div key={recipe.id} className={styles.recipe} onClick={() => this.loadRecipe(recipe.id)}>
+                <div className={styles.name}>{recipe.name}</div>
+                <div className={styles.type}>{recipe.type}</div>
+                <div className={styles.buttons}>
+                    <ButtonGroup>
+                        <Button
+                            icon='clone'
+                            tooltip={msg('process.menu.duplicateRecipe')}
+                            tooltipPlacement='bottom'
+                            onClick={() => this.duplicateRecipe(recipe.id)}
+                            stopPropagation={true}/>
+                        <Button
+                            icon='trash-alt'
+                            tooltip={msg('process.menu.deleteRecipe')}
+                            tooltipPlacement='bottom'
+                            onClickHold={() => deleteRecipe(recipe.id)}
+                            stopPropagation={true}/>
+                    </ButtonGroup>
+                </div>
+            </div>
+        )
+    }
+
+    renderRecipies() {
+        const {recipes} = this.props
         return (
             <div className={[styles.recipesTable, flexy.container].join(' ')}>
                 <div className={styles.recipesHeader}>
@@ -80,31 +105,17 @@ class RecipeList extends React.Component {
                     <div className={styles.type}>{msg('process.recipe.type')}</div>
                 </div>
                 <div className={[styles.recipeRows, flexy.scrollable].join(' ')}>
-                    {(recipes || []).map((recipe) =>
-                        <div key={recipe.id} className={styles.recipe} onClick={() => this.loadRecipe(recipe.id)}>
-                            <div className={styles.name}>{recipe.name}</div>
-                            <div className={styles.type}>{recipe.type}</div>
-                            <div className={styles.duplicate}>
-                                <Button
-                                    icon='clone'
-                                    tooltip={msg('process.menu.duplicateRecipe')}
-                                    tooltipPlacement='bottom'
-                                    onClick={() => this.duplicateRecipe(recipe.id)}
-                                    stopPropagation={true}/>
-                            </div>
-                            <div className={styles.delete}>
-                                <Button
-                                    icon='trash-alt'
-                                    tooltip={msg('process.menu.deleteRecipe')}
-                                    tooltipPlacement='bottom'
-                                    onClickHold={() => deleteRecipe(recipe.id)}
-                                    stopPropagation={true}/>
-                            </div>
-                        </div>
-                    )}
+                    {(recipes || []).map((recipe) => this.renderRecipe(recipe))}
                 </div>
             </div>
         )
+    }
+
+    render() {
+        const {recipes, action} = this.props
+        return !recipes && !action('LOAD_RECIPES').dispatched
+            ? this.renderProgress()
+            : this.renderRecipies()
     }
 }
 
@@ -125,7 +136,7 @@ const setTabType = (recipeId, type, title) =>
 const CreateButton = ({recipeId, type, label}) =>
     <Button
         look='transparent'
-        size='x-large'
+        size='large'
         icon='plus-circle'
         label={label}
         onClick={() => setTabType(recipeId, type, label)}/>
