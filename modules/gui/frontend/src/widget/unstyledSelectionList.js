@@ -54,7 +54,10 @@ export default class UnstyledSelectionList extends React.Component {
                 />
             </li>
         return tooltip && !disabled
-            ? <Tooltip key={value} msg={tooltip} bottom>{button}</Tooltip>
+            ? <Tooltip
+                key={value}
+                msg={tooltip}
+                placement='bottom'>{button}</Tooltip>
             : button
     }
 

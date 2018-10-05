@@ -181,7 +181,10 @@ class Tab extends React.Component {
         let {id, title, placeholder, selected, statePath} = this.props
         title = this.state.title || title
         return (
-            <Tooltip msg={title || placeholder} bottom delay={1}>
+            <Tooltip
+                msg={title || placeholder}
+                placement='bottom'
+                delay={1}>
                 <div
                     className={[styles.tab, selected && styles.selected].join(' ')}
                     onClick={() => selectTab(id, statePath)}>

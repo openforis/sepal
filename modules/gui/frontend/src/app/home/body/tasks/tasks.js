@@ -59,7 +59,9 @@ class Tasks extends React.Component {
     renderToolbar() {
         return (
             <div className={styles.toolbar}>
-                <Tooltip msg={msg('tasks.removeAll.tooltip')} bottom>
+                <Tooltip
+                    msg={msg('tasks.removeAll.tooltip')}
+                    placement='bottom'>
                     <IconButton
                         icon='times'
                         onClick={() => this.removeAllTasks()}/>

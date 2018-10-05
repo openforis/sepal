@@ -26,7 +26,9 @@ class MenuMode extends React.Component {
         const {className, floating} = this.props
         return (
             <div className={className}>
-                <Tooltip msg={msg(floating ? 'home.sections.expand.tooltip' : 'home.sections.collapse.tooltip')} right>
+                <Tooltip
+                    msg={msg(floating ? 'home.sections.expand.tooltip' : 'home.sections.collapse.tooltip')}
+                    placement='right'>
                     <div className={styles.menuMode}>
                         <IconSwitch
                             className={styles.switch}

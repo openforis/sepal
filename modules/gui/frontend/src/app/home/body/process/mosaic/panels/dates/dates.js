@@ -145,7 +145,7 @@ class Dates extends React.Component {
                     className={styles.targetDateLabel}
                     msg={msg('process.mosaic.panel.dates.form.targetDate.label')}
                     tooltip={msg('process.mosaic.panel.dates.form.targetDate.tooltip')}
-                    tooltipPlacement='right'/>
+                    tooltipPlacement='topLeft'/>
                 <div className={styles.targetDateInput}>
                     <DatePicker
                         input={targetDate}
@@ -158,7 +158,7 @@ class Dates extends React.Component {
                     className={styles.yearsLabel}
                     msg={msg('process.mosaic.panel.dates.form.years.label')}
                     tooltip={msg('process.mosaic.panel.dates.form.years.tooltip')}
-                    tooltipPlacement='right'/>
+                    tooltipPlacement='topLeft'/>
                 <div className={styles.yearsInput}>
                     <div>
                         <Input type='number' input={yearsBefore} maxLength={2} min={0} max={99}/>
@@ -177,7 +177,7 @@ class Dates extends React.Component {
                     className={styles.seasonLabel}
                     msg={msg('process.mosaic.panel.dates.form.season.label')}
                     tooltip={msg('process.mosaic.panel.dates.form.season.tooltip')}
-                    tooltipPlacement='right'/>
+                    tooltipPlacement='topLeft'/>
                 <SeasonSelect
                     startDate={seasonStart}
                     endDate={seasonEnd}
@@ -194,9 +194,9 @@ class Dates extends React.Component {
             <div className={styles.simpleLayout}>
                 <Label
                     className={styles.yearLabel}
-                    msg='process.mosaic.panel.dates.form.targetYear.label'
+                    msg={msg('process.mosaic.panel.dates.form.targetYear.label')}
                     tooltip={msg('process.mosaic.panel.dates.form.targetYear.tooltip')}
-                    tooltipPlacement='right'/>
+                    tooltipPlacement='topRight'/>
                 <div className={styles.targetDateInput}>
                     <DatePicker
                         input={targetYear}

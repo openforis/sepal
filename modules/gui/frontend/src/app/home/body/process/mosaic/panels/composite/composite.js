@@ -70,7 +70,8 @@ class Composite extends React.Component {
                 <div className={styles.filters}>
                     <Label
                         msg={msg('process.mosaic.panel.composite.form.filters.label')}
-                        tooltip={msg('process.mosaic.panel.composite.form.filters.tooltip')}/>
+                        tooltip={msg('process.mosaic.panel.composite.form.filters.tooltip')}
+                        tooltipPlacement='topLeft'/>
                     <PercentileField input={shadowPercentile}/>
                     <PercentileField
                         input={hazePercentile}
