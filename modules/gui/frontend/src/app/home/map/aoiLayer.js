@@ -52,6 +52,7 @@ export const setAoiLayer = ({contextId, aoi, fill, destroy$, onInitialized}) => 
             destroy$,
             onInitialized
         })
+
     default:
         removeAoiLayer(contextId)
     }

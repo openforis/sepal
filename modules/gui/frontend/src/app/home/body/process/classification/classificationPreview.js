@@ -2,7 +2,7 @@ import {Msg, msg} from 'translate'
 import {RecipeState} from 'app/home/body/process/classification/classificationRecipe'
 import {connect} from 'store'
 import {sepalMap} from 'app/home/map/map'
-import EarthEngineImageLayer from 'app/home/map/earthEngineLayer'
+import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import Icon from 'widget/icon'
 import MapStatus from 'widget/mapStatus'
 import PropTypes from 'prop-types'
@@ -61,8 +61,8 @@ class ClassificationPreview extends React.Component {
     updateLayer(previewRequest) {
         const {recipeId, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
-        const layer = new EarthEngineImageLayer({
-            layerIndex: 0, // TODO: Figure out bounds
+        const layer = new EarthEngineLayer({
+            layerIndex: 1,
             mapId$: api.gee.preview$(previewRequest),
             props: previewRequest,
             onProgress: (tiles) => this.onProgress(tiles)

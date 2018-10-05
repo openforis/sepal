@@ -40,6 +40,14 @@ def preview():
     return Response(json.dumps(image_preview), mimetype='application/json')
 
 
+@http.route('/recipe/geometry', methods=['POST'])
+def recipe_geometry():
+    image_spec = image_spec_factory.create(sepal_api, request.get_json())
+    geometry = image_spec.geometry()
+    return Response(json.dumps(geometry), mimetype='application/json')
+
+
+
 @http.route('/sceneareas')
 def scene_areas():
     aoi = Aoi.create(json.loads(request.values['aoi']))

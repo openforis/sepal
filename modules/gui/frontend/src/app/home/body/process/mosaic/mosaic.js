@@ -65,9 +65,10 @@ class Mosaic extends React.Component {
             aoi,
             destroy$: componentWillUnmount$,
             onInitialized: () => {
-                if (this.props.tabCount === 1)
+                if (this.props.tabCount === 1) {
                     sepalMap.setContext(recipeId)
-                sepalMap.getContext(recipeId).fitLayer('aoi')
+                    sepalMap.getContext(recipeId).fitLayer('aoi')
+                }
             }
         })
     }

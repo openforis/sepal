@@ -201,6 +201,9 @@ const createMap = (mapElement) => {
                             layer.removeFromMap(googleMap)
                         delete layerById[id]
                     },
+                    isLayerInitialized(id) {
+                        return !!(this.hasLayer(id) && layerById[id].__initialized__)
+                    },
                     hasLayer(id) {
                         return !!layerById[id]
                     },

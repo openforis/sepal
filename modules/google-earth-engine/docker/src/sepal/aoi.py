@@ -15,8 +15,9 @@ class Aoi:
         }
     }
 
-    def __init__(self, geometry):
+    def __init__(self, geometry, spec=None):
         self._geometry = geometry
+        self.spec = spec
 
     @staticmethod
     def create(spec):
@@ -72,7 +73,7 @@ class Polygon(Aoi):
     def __init__(self, spec):
         self.path = spec['path']
         geometry = ee.Geometry(ee.Geometry.Polygon(coords=[self.path]), opt_geodesic=False)
-        Aoi.__init__(self, geometry)
+        Aoi.__init__(self, geometry, spec)
 
     def __str__(self):
         return 'Polygon(path: ' + self.path + ')'
@@ -86,7 +87,7 @@ class FusionTable(Aoi):
         table = ee.FeatureCollection('ft:' + self.table_name)
         aoi = table.filterMetadata(self.key_column, 'equals', self.value_column)
         geometry = aoi.geometry()
-        Aoi.__init__(self, geometry)
+        Aoi.__init__(self, geometry, spec)
 
     def __str__(self):
         return 'FusionTable(table_name: ' + self.table_name \
@@ -94,6 +95,6 @@ class FusionTable(Aoi):
                + ', value_column: ' + self.value_column + ')'
 
 
-class Geometry(Aoi):
-    def __init__(self, geometry):
-        Aoi.__init__(self, geometry)
+class AssetAoi(Aoi):
+    def __init__(self, geometry, spec):
+        Aoi.__init__(self, geometry, spec)

@@ -2,7 +2,7 @@ import {Msg, msg} from 'translate'
 import {RecipeState, SceneSelectionType} from 'app/home/body/process/mosaic/mosaicRecipe'
 import {connect} from 'store'
 import {sepalMap} from 'app/home/map/map'
-import EarthEngineImageLayer from 'app/home/map/earthEngineLayer'
+import EarthEngineLayer from 'app/home/map/earthEngineLayer'
 import Icon from 'widget/icon'
 import MapStatus from 'widget/mapStatus'
 import React from 'react'
@@ -103,7 +103,7 @@ class MosaicPreview extends React.Component {
         const {recipeId, componentWillUnmount$} = this.props
         const {initializing, error} = this.state
         const layer = this.isPreviewShown()
-            ? new EarthEngineImageLayer({
+            ? new EarthEngineLayer({
                 layerIndex: 0,
                 bounds: previewRequest.recipe.model.aoi.bounds,
                 mapId$: api.gee.preview$(previewRequest),

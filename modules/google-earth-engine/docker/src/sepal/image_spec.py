@@ -29,6 +29,20 @@ class ImageSpec(object):
             'token': ee_preview['token']
         }
 
+    def geometry(self):
+        geometry = self.aoi._geometry
+        feature = ee.Feature(geometry)
+        bounds_polygon = ee.List(geometry.bounds().coordinates().get(0))
+        bounds = ee.List([bounds_polygon.get(0), bounds_polygon.get(2)]).getInfo()
+        mapId = feature.getMapId({
+            'color': '#272723'
+        })
+        return {
+            'mapId': mapId['mapid'],
+            'token': mapId['token'],
+            'bounds': bounds
+        }
+
     @abstractmethod
     def _ee_image(self):
         """Creates an ee.Image based on the spec.

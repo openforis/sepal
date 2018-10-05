@@ -21,7 +21,10 @@ export default {
                     sceneAreaIds, sources, dates, sceneSelectionOptions, sceneCount, cloudCoverTarget
                 })
             }
-        }).pipe(toResponse)
+        }).pipe(toResponse),
+    recipeGeometry$: (recipe) =>
+        postJson$('/api/gee/recipe/geometry', {body: {recipe}})
+            .pipe(toResponse)
 }
 
 const toResponse = map(e => e.response)
