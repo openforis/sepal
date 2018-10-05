@@ -145,7 +145,7 @@ export const Button = ({
     )
 
 Button.propTypes = {
-    children: PropTypes.array,
+    children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
     className: PropTypes.string,
     disabled: PropTypes.any,
     icon: PropTypes.string,
