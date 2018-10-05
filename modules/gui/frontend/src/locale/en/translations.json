@@ -354,13 +354,16 @@
                     "button": "CMP",
                     "tooltip": "Configure composite creation",
                     "form": {
-                        "surfaceReflectance": {
-                            "label": "Surface reflectance",
-                            "tooltip": "Use scenes atmospherically corrected surface reflectance."
-                        },
-                        "brdf": {
-                            "label": "BRDF correction",
-                            "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+                        "corrections": {
+                            "label": "Corrections",
+                            "surfaceReflectance": {
+                                "label": "Surface reflectance",
+                                "tooltip": "Use scenes atmospherically corrected surface reflectance."
+                            },
+                            "brdf": {
+                                "label": "BRDF correction",
+                                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+                            }
                         },
                         "filters": {
                             "label": "Pixel filters",
@@ -386,21 +389,27 @@
                                 "max": "Pixel closest to target day"
                             }
                         },
-                        "clouds": {
-                            "label": "Clouds",
-                            "tooltip": "Mask clouds instead of just trying to use cloud-free pixels. Can cause built-up areas to be masked out."
+                        "mask": {
+                            "label": "Mask",
+                            "clouds": {
+                                "label": "Clouds",
+                                "tooltip": "Mask clouds instead of just trying to use cloud-free pixels. Can cause built-up areas to be masked out."
+                            },
+                            "snow": {
+                                "label": "Snow",
+                                "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
+                            }
                         },
-                        "snow": {
-                            "label": "Snow",
-                            "tooltip": "Mask snow. This tend to leave pixels where with shadowy snow"
-                        },
-                        "medoid": {
-                            "label": "Medoid",
-                            "tooltip": "Use the medoid of remaining pixels."
-                        },
-                        "median": {
-                            "label": "Median",
-                            "tooltip": "Use the median of remaining pixels. Pixel value will be artificial, and metadata for mosaic will be unavailable."
+                        "composingMethod": {
+                            "label": "Composing method",
+                            "medoid": {
+                                "label": "Medoid",
+                                "tooltip": "Use the medoid of remaining pixels."
+                            },
+                            "median": {
+                                "label": "Median",
+                                "tooltip": "Use the median of remaining pixels. Pixel value will be artificial, and metadata for mosaic will be unavailable."
+                            }
                         }
                     }
                 },

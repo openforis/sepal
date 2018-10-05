@@ -51,24 +51,26 @@ class Composite extends React.Component {
         return (
             <div className={styles.content}>
                 <div className={styles.corrections}>
-                    <Label>Corrections</Label>
+                    <Label>
+                        <Msg id='process.mosaic.panel.composite.form.corrections.label'/>
+                    </Label>
                     <Buttons input={corrections} multiple={true} options={[
                         {
                             value: 'SR',
-                            label: msg('process.mosaic.panel.composite.form.surfaceReflectance.label'),
-                            tooltip: msg('process.mosaic.panel.composite.form.surfaceReflectance.tooltip'),
+                            label: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.label'),
+                            tooltip: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.tooltip'),
                             disabled: source !== 'LANDSAT'
                         },
                         {
                             value: 'BRDF',
-                            label: msg('process.mosaic.panel.composite.form.brdf.label'),
-                            tooltip: msg('process.mosaic.panel.composite.form.brdf.tooltip'),
+                            label: msg('process.mosaic.panel.composite.form.corrections.brdf.label'),
+                            tooltip: msg('process.mosaic.panel.composite.form.corrections.brdf.tooltip'),
                             disabled: source !== 'LANDSAT'
                         }
                     ]}/>
                 </div>
                 <div className={styles.filters}>
-                    <Label tooltip={'process.mosaic.panel.composite.form.filters'}>
+                    <Label tooltip={msg('process.mosaic.panel.composite.form.filters.tooltip')}>
                         <Msg id='process.mosaic.panel.composite.form.filters.label'/>
                     </Label>
                     <PercentileField input={shadowPercentile}/>
@@ -80,32 +82,36 @@ class Composite extends React.Component {
                 </div>
                 <div className={styles.inline}>
                     <div className={styles.mask}>
-                        <Label>Mask</Label>
+                        <Label>
+                            <Msg id='process.mosaic.panel.composite.form.mask.label'/>
+                        </Label>
                         <Buttons input={mask} multiple={true} options={[
                             {
                                 value: 'CLOUDS',
-                                label: msg('process.mosaic.panel.composite.form.clouds.label'),
-                                tooltip: msg('process.mosaic.panel.composite.form.clouds.tooltip')
+                                label: msg('process.mosaic.panel.composite.form.mask.clouds.label'),
+                                tooltip: msg('process.mosaic.panel.composite.form.mask.clouds.tooltip')
                             },
                             {
                                 value: 'SNOW',
-                                label: msg('process.mosaic.panel.composite.form.snow.label'),
-                                tooltip: msg('process.mosaic.panel.composite.form.snow.tooltip')
+                                label: msg('process.mosaic.panel.composite.form.mask.snow.label'),
+                                tooltip: msg('process.mosaic.panel.composite.form.mask.snow.tooltip')
                             },
                         ]}/>
                     </div>
                     <div className={styles.compose}>
-                        <Label>Composing method</Label>
+                        <Label>
+                            <Msg id='process.mosaic.panel.composite.form.composingMethod.label'/>
+                        </Label>
                         <Buttons input={compose} options={[
                             {
                                 value: 'MEDOID',
-                                label: msg('process.mosaic.panel.composite.form.medoid.label'),
-                                tooltip: msg('process.mosaic.panel.composite.form.medoid.tooltip')
+                                label: msg('process.mosaic.panel.composite.form.composingMethod.medoid.label'),
+                                tooltip: msg('process.mosaic.panel.composite.form.composingMethod.medoid.tooltip')
                             },
                             {
                                 value: 'MEDIAN',
-                                label: msg('process.mosaic.panel.composite.form.median.label'),
-                                tooltip: msg('process.mosaic.panel.composite.form.median.tooltip')
+                                label: msg('process.mosaic.panel.composite.form.composingMethod.median.label'),
+                                tooltip: msg('process.mosaic.panel.composite.form.composingMethod.median.tooltip')
                             },
                         ]}/>
                     </div>
