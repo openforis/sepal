@@ -1,11 +1,11 @@
 {
-    "id": 10011, 
     "username": "paolini", 
     "name": "Luca Paolini", 
     "email": "luca.paolini@fao.org", 
     "organization": "FAO",
-    "status": "ACTIVE", 
-    
+
+    "id": 10011, 
+    "status": "ACTIVE",
     "monthlyInstanceBudget": 1, 
     "monthlyStorageBudget": 1, 
     "storageQuota": 20

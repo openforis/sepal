@@ -74,9 +74,6 @@
         }
     },
     "home": {
-        "footer": {
-            "logout.label": "Logout"
-        },
         "sections": {
             "dashboard.tooltip": "TBD",
             "process.tooltip": "Process geo data",
@@ -596,7 +593,9 @@
             "title": "User details",
             "form": {
                 "username": {
-                    "label": "Username"
+                    "label": "Username",
+                    "required": "Username is required",
+                    "format": "Username should start with a letter"
                 },
                 "name": {
                     "label": "Name",
@@ -607,11 +606,31 @@
                     "required": "Email is required"
                 },
                 "organization": {
-                    "label": "Organization"
+                    "label": "Organization",
+                    "required": "Organization is required"
                 },
                 "status": {
                     "label": "Status"
+                },
+                "monthlyLimits": {
+                    "label": "Monthly limits"
+                },
+                "monthlyInstanceBudget": {
+                    "label": "Instance US$",
+                    "required:": "Monthly instance budget is required",
+                    "atLeast1": "Monthly instance budget must be at least 1"
+                },
+                "monthlyStorageBudget": {
+                    "label": "Storage US$",
+                    "required:": "Monthly storage budget is required",
+                    "atLeast1": "Monthly storage budget must be at least 1"
+                },
+                "storageQuota": {
+                    "label": "Storage GB",
+                    "required:": "Monthly storage quota is required",
+                    "atLeast1": "Monthly storage must be at least 1"
                 }
+    
             },
             "useUserGoogleAccount": {
                 "label": "Use my Google account",
@@ -624,7 +643,7 @@
             "switchingToSepalGoogleAccount": "Switching to Sepal's Google Account",
             "update": {
                 "success.title": "User details have been updated",
-                "caught.title": "Could not update user details"
+                "error.title": "Could not update user details"
             }
         },
         "changePassword": {
@@ -703,7 +722,8 @@
     "users": {
         "countNoFilter": "{count} total users",
         "countWithFilter": "{count} users matching \"{filter}\"",
-        "page": "Page {pageNumber} of {pageCount}"
+        "page": "Page {pageNumber} of {pageCount}",
+        "add.label": "Add user"
     },
     "unauthorized.warning": {
         "title": "You are not logged in",

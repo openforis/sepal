@@ -71,14 +71,16 @@ export const logout = () => {
     api.user.logout$().subscribe()
 }
 
-export const updateUserDetails$ = ({name, email, organization}) => {
-    actionBuilder('UPDATE_USER_DETAILS', {name, email, organization})
-        .set('user.currentUser.name', name)
-        .set('user.currentUser.email', email)
-        .set('user.currentUser.organization', organization)
-        .dispatch()
-    return api.user.updateUserDetails$({name, email, organization})
-}
+export const updateCurrentUserDetails$ = ({name, email, organization}) =>
+    api.user.updateCurrentUserDetails$({name, email, organization}).pipe(
+        map(({name, email, organization}) =>
+            actionBuilder('UPDATE_USER_DETAILS', {name, email, organization})
+                .set('user.currentUser.name', name)
+                .set('user.currentUser.email', email)
+                .set('user.currentUser.organization', organization)
+                .dispatch()
+        )
+    )
 
 export const changeUserPassword$ = ({oldPassword, newPassword}) =>
     api.user.changePassword$({oldPassword, newPassword}).pipe(
@@ -110,3 +112,11 @@ export const stopUserSession$ = (session) =>
                 .dispatch()
         )
     )
+
+// export const updateUserDetails$ = ({username, name, email, organization}) => {
+//     return api.user.updateCurrentUserDetails$({username, name, email, organization})
+// }
+
+// export const updateUserBudget$ = ({username, monthlyInstanceBudget, monthlyStorageBudget, storageQuota}) => {
+//     return api.user.updateUserBudget$({username, monthlyInstanceBudget, monthlyStorageBudget, storageQuota})
+// }

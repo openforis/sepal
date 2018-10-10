@@ -35,10 +35,10 @@ export default {
             body: {token, password}
         }),
 
-    updateUserDetails$: ({name, email, organization}) =>
+    updateCurrentUserDetails$: ({name, email, organization}) =>
         post$('/api/user/current/details', {
             body: {name, email, organization}
-        }),
+        }).pipe(toResponse),
 
     changePassword$: ({oldPassword, newPassword}) =>
         post$('/api/user/current/password', {
@@ -69,7 +69,17 @@ export default {
 
     getBudgetReport$: () =>
         get$('/api/budget/report')
-            .pipe(toResponse)
+            .pipe(toResponse),
+
+    updateUserDetails$: (userDetails) =>
+        post$('/api/user/details', {
+            body: userDetails
+        }).pipe(toResponse),
+
+    updateUserBudget$: (budget) =>
+        post$('/api/budget', {
+            body: budget
+        }).pipe(toResponse)
 }
 
 const toResponse = map(e => e.response)

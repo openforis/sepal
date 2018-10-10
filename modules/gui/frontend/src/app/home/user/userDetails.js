@@ -3,7 +3,7 @@ import {ErrorMessage, Field, Input, form} from 'widget/form'
 import {Msg, msg} from 'translate'
 import {Panel, PanelContent, PanelHeader} from 'widget/panel'
 import {closePanel, showChangePassword} from './userProfile'
-import {currentUser, loadCurrentUser$, updateUserDetails$} from 'user'
+import {currentUser, loadCurrentUser$, updateCurrentUserDetails$} from 'user'
 import {map, switchMap} from 'rxjs/operators'
 import Notifications from 'app/notifications'
 import PanelButtons from 'widget/panelButtons'
@@ -49,12 +49,12 @@ class UserDetails extends React.Component {
     }
 
     updateUserDetails(userDetails) {
+        this.props.stream('UPDATE_CURRENT_USER_DETAILS',
+            updateCurrentUserDetails$(userDetails),
+            () => Notifications.success('user.userDetails.update').dispatch(),
+            error => Notifications.caught('user.userDetails.update', null, error).dispatch()
+        )
         closePanel()
-        updateUserDetails$(userDetails)
-            .subscribe(
-                () => Notifications.success('user.userDetails.update').dispatch(),
-                (error) => Notifications.caught('user.userDetails.update', null, error).dispatch()
-            )
     }
 
     cancel() {
