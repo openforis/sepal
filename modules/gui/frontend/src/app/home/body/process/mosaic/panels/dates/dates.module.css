@@ -8,11 +8,12 @@
 
 .advancedLayout {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     grid-template-areas:
-        'targetDate'
-        'years'
-        'season';
+        'targetDate  season'
+        'yearsBefore .'
+        'yearsAfter  .';
+    grid-column-gap: 3rem;
     grid-row-gap: 1rem;
 }
 
@@ -28,6 +29,18 @@
         grid-column-gap: 3rem;
         grid-row-gap: 3rem;
     }
+    .targetDate {
+        justify-self: center;
+    }
+    .seasonLabel {
+        display: none;
+    }
+    .yearsBefore {
+        align-self: end;
+    }
+    .yearsAfter {
+        align-self: end;
+    }    
 }
 
 .simpleLayout {
@@ -36,7 +49,6 @@
 
 .targetDate {
     grid-area: targetDate;
-    justify-self: center;
 }
 
 .years {
@@ -45,12 +57,10 @@
 
 .yearsBefore {
     grid-area: yearsBefore;
-    align-self: end;
 }
 
 .yearsAfter {
     grid-area: yearsAfter;
-    align-self: end;
 }
 
 .yearsInput {
