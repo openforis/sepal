@@ -116,6 +116,7 @@ export const addRecipe = (recipe) => {
 export const deleteRecipe$ = (recipeId) =>
     api.recipe.delete$(recipeId).pipe(
         map(() => {
+            closeTab(recipeId, 'process')
             const recipes = select('process.recipes')
                 .filter(recipe => recipe.id !== recipeId)
             return actionBuilder('SET_RECIPES', {recipes})
